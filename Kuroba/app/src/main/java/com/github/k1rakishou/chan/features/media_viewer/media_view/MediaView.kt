@@ -2,10 +2,13 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.content.Context
 import android.util.AttributeSet
+import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbarViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
@@ -40,20 +43,15 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private var _bound = false
   private var _shown = false
   private var _preloadingCalled = false
-  private var _thumbnailFullyLoaded = false
 
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
+  private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
 
   val bound: Boolean
     get() = _bound
   val shown: Boolean
     get() = _shown
-
-  fun initToolbar(toolbar: MediaViewerToolbar) {
-    this._mediaViewToolbar = toolbar
-    toolbar.onCreate(this)
-  }
 
   fun markMediaAsDownloaded() {
     _mediaViewToolbar?.markMediaAsDownloaded()
@@ -90,8 +88,11 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     Logger.d(TAG, "onBind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
-  fun onShow() {
+  fun onShow(mediaViewerToolbar: MediaViewerToolbar) {
     _shown = true
+    this._mediaViewToolbar = mediaViewerToolbar
+    this._mediaViewToolbar!!.attach(viewableMedia, this)
+
     show()
 
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
@@ -99,6 +100,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   fun onHide() {
     _shown = false
+    this._mediaViewToolbar?.detach()
+    this._mediaViewToolbar = null
+
     hide()
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
@@ -108,7 +112,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _shown = false
     _bound = false
     _preloadingCalled = false
-    _thumbnailFullyLoaded = false
     _mediaViewToolbar?.onDestroy()
 
     cancellableToast.cancel()
@@ -135,16 +138,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     } else {
       mediaViewToolbar?.showToolbar()
     }
-  }
-
-  protected fun onThumbnailFullyLoaded() {
-    if (_thumbnailFullyLoaded) {
-      return
-    }
-
-    _thumbnailFullyLoaded = true
-
-    mediaViewToolbar?.onThumbnailFullyLoaded(viewableMedia)
   }
 
   @CallSuper

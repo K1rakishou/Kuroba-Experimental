@@ -18,7 +18,6 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
@@ -104,8 +103,6 @@ class VideoMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
-    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_video_view_toolbar)
-    initToolbar(toolbar)
 
     muteUnmuteButton = actualVideoPlayerView.findViewById(R.id.exo_mute)
     muteUnmuteButton.setEnabledFast(false)
@@ -214,7 +211,6 @@ class VideoMediaView(
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()
-        onThumbnailFullyLoaded()
       }
     )
 

@@ -22,6 +22,7 @@ import kotlinx.coroutines.CompletableDeferred
 class MediaViewerAdapter(
   private val context: Context,
   private val viewModel: MediaViewerControllerViewModel,
+  private val mediaViewerToolbar: MediaViewerToolbar,
   private val mediaViewContract: MediaViewContract,
   private val initialPagerIndex: Int,
   private val viewableMediaList: List<ViewableMedia>,
@@ -92,7 +93,7 @@ class MediaViewerAdapter(
         loadedView.mediaView.mediaViewState.updateFrom(viewModel.getPrevMediaViewStateOrNull(mediaLocation))
 
         loadedView.mediaView.startPreloading()
-        loadedView.mediaView.onShow()
+        loadedView.mediaView.onShow(mediaViewerToolbar)
       }
     }
   }
@@ -195,14 +196,6 @@ class MediaViewerAdapter(
       .firstOrNull { loadedView -> loadedView.mediaView.viewableMedia == viewableMedia }
       ?: return
 
-    if (!view.mediaView.bound) {
-      view.mediaView.onBind()
-    }
-
-    if (!view.mediaView.shown) {
-      view.mediaView.onShow()
-    }
-
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.viewableMedia != view.mediaView.viewableMedia) {
         if (loadedView.mediaView.shown) {
@@ -213,6 +206,14 @@ class MediaViewerAdapter(
           viewModel.storeMediaViewState(loadedView.mediaView.viewableMedia.mediaLocation, mediaViewState)
         }
       }
+    }
+
+    if (!view.mediaView.bound) {
+      view.mediaView.onBind()
+    }
+
+    if (!view.mediaView.shown) {
+      view.mediaView.onShow(mediaViewerToolbar)
     }
 
     Logger.d(TAG, "doBind(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
@@ -245,7 +246,7 @@ class MediaViewerAdapter(
       }
 
       if (loadedView.viewIndex == initialPagerIndex && !loadedView.mediaView.shown) {
-        loadedView.mediaView.onShow()
+        loadedView.mediaView.onShow(mediaViewerToolbar)
       }
     }
 

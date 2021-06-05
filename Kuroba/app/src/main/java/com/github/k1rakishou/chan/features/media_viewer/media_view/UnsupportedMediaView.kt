@@ -8,7 +8,6 @@ import android.view.MotionEvent
 import android.view.View
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -46,9 +45,6 @@ class UnsupportedMediaView(
     setWillNotDraw(false)
 
     val movableContainer = findViewById<ConstraintLayout>(R.id.movable_container)
-
-    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_video_view_toolbar)
-    initToolbar(toolbar)
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -88,7 +84,6 @@ class UnsupportedMediaView(
 
   override fun bind() {
     onThumbnailFullyLoadedFunc()
-    onThumbnailFullyLoaded()
   }
 
   override fun show() {

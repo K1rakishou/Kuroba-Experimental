@@ -39,9 +39,4 @@
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
-        android:id="@+id/full_video_view_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="@dimen/toolbar_height"/>
-
 </FrameLayout>

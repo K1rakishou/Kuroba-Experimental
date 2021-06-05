@@ -69,6 +69,7 @@ class MediaViewerController(
   private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
   private lateinit var appearPreviewImage: AppearTransitionImageView
   private lateinit var pager: OptionalSwipeViewPager
+  private lateinit var mediaViewerToolbar: MediaViewerToolbar
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
@@ -106,10 +107,12 @@ class MediaViewerController(
 
     mediaViewerRootLayout = view.findViewById(R.id.media_viewer_root_layout)
     appearPreviewImage = view.findViewById(R.id.appear_preview_image)
+
+    mediaViewerToolbar = view.findViewById(R.id.media_viewer_toolbar)
+    mediaViewerToolbar.onCreate()
+
     pager = view.findViewById(R.id.pager)
-
     pager.addOnPageChangeListener(this)
-
     // TODO(KurobaEx): make this setting configurable
     pager.offscreenPageLimit = PersistableChanState.mediaViewerOffscreenItemsCount.get()
 
@@ -148,6 +151,7 @@ class MediaViewerController(
 
     mediaViewerAdapter?.onDestroy()
     mediaLongClickMenuHelper.onDestroy()
+    mediaViewerToolbar.onDestroy()
 
     pager.removeOnPageChangeListener(this)
     pager.adapter = null
@@ -268,6 +272,7 @@ class MediaViewerController(
     val adapter = MediaViewerAdapter(
       context = context,
       viewModel = viewModel,
+      mediaViewerToolbar = mediaViewerToolbar,
       mediaViewContract = this@MediaViewerController,
       initialPagerIndex = mediaViewerState.initialPagerIndex,
       viewableMediaList = mediaViewerState.loadedMedia,

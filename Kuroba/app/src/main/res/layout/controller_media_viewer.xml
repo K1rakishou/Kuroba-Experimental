@@ -31,4 +31,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent"
         android:visibility="gone" />
 
+    <com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
+        android:id="@+id/media_viewer_toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/toolbar_height"/>
+
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>

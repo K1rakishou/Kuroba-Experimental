@@ -16,7 +16,6 @@ import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
@@ -88,9 +87,6 @@ class GifMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualGifView = findViewById(R.id.actual_gif_view)
     loadingBar = findViewById(R.id.loading_bar)
-
-    val toolbar = findViewById<MediaViewerToolbar>(R.id.full_gif_view_toolbar)
-    initToolbar(toolbar)
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -189,7 +185,6 @@ class GifMediaView(
       ),
       onThumbnailFullyLoaded = {
         onThumbnailFullyLoadedFunc()
-        onThumbnailFullyLoaded()
       }
     )
 

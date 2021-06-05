@@ -6,6 +6,8 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.updateLayoutParams
@@ -33,6 +35,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
+
+  private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
 
   private val toolbarCloseButton: AppCompatImageButton
   private val toolbarTitle: TextView
@@ -101,51 +105,42 @@ class MediaViewerToolbar @JvmOverloads constructor(
     hideToolbar()
   }
 
-  private fun fireOnReloadButtonClickCallback() {
-    if (!toolbarReloadButton.isEnabled) {
-      return
-    }
-
-    scope.launch {
-      toolbarReloadButton.setEnabledFast(false)
-
-      try {
-        mediaViewerToolbarCallbacks?.onReloadButtonClick()
-      } finally {
-        toolbarReloadButton.setEnabledFast(true)
-      }
-    }
-  }
-
-  fun isDownloadAllowed(): Boolean = toolbarDownloadButton.isEnabled
-
-  fun downloadMedia() {
-    fireOnDownloadButtonClickCallback(isLongClick = false)
-  }
-
-  private fun fireOnDownloadButtonClickCallback(isLongClick: Boolean) {
-    if (!toolbarDownloadButton.isEnabled) {
-      return
-    }
-
-    scope.launch {
-      toolbarDownloadButton.setEnabledFast(false)
-
-      try {
-        val startedDownloading = mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = isLongClick)
-          ?: false
-
-        // Only enable the button back if we didn't start the image downloading
-        toolbarDownloadButton.setEnabledFast(startedDownloading.not())
-      } catch (error: Throwable) {
-        toolbarDownloadButton.setEnabledFast(true)
-      }
-    }
-  }
-
-  fun onCreate(callbacks: MediaViewerToolbarCallbacks) {
+  fun attach(viewableMedia: ViewableMedia, callbacks: MediaViewerToolbarCallbacks) {
+    check(this.mediaViewerToolbarCallbacks == null) { "Callbacks are already set!" }
+    this.currentViewableMedia = viewableMedia
     this.mediaViewerToolbarCallbacks = callbacks
 
+    val toolbarState = toolbarViewModel.restore(viewableMedia.mediaLocation)
+    if (toolbarState != null) {
+      toolbarGoToPostButton.setEnabledFast(toolbarState.goToPostButtonEnabled)
+      toolbarReloadButton.setEnabledFast(toolbarState.reloadButtonEnabled)
+      toolbarDownloadButton.setEnabledFast(toolbarState.downloadButtonEnabled)
+      setVisibilityFast(if (toolbarState.toolbarShown) View.VISIBLE else View.GONE)
+
+      return
+    }
+
+    toolbarReloadButton.setEnabledFast(true)
+    toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
+    toolbarGoToPostButton.setEnabledFast(viewableMedia.canGoToMediaPost())
+  }
+
+  fun detach() {
+    currentViewableMedia?.let { viewableMedia ->
+      val toolbarState = MediaViewerToolbarViewModel.ToolbarState(
+        goToPostButtonEnabled = toolbarGoToPostButton.isEnabled,
+        reloadButtonEnabled = toolbarReloadButton.isEnabled,
+        downloadButtonEnabled = toolbarDownloadButton.isEnabled,
+        toolbarShown = visibility == View.VISIBLE
+      )
+
+      toolbarViewModel.store(viewableMedia.mediaLocation, toolbarState)
+    }
+
+    this.mediaViewerToolbarCallbacks = null
+  }
+
+  fun onCreate() {
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
@@ -157,15 +152,13 @@ class MediaViewerToolbar @JvmOverloads constructor(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
-  fun onThumbnailFullyLoaded(viewableMedia: ViewableMedia) {
-    toolbarReloadButton.setEnabledFast(true)
-    toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
-    toolbarGoToPostButton.setEnabledFast(viewableMedia.canGoToMediaPost())
+  fun isDownloadAllowed(): Boolean = toolbarDownloadButton.isEnabled
+
+  fun downloadMedia() {
+    fireOnDownloadButtonClickCallback(isLongClick = false)
   }
 
   fun updateWithViewableMedia(currentIndex: Int, totalMediaCount: Int, viewableMedia: ViewableMedia) {
-    this.currentViewableMedia = viewableMedia
-
     updateToolbarTitleAndSubtitle(currentIndex, totalMediaCount, viewableMedia)
   }
 
@@ -192,6 +185,42 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     updateLayoutParams<ViewGroup.LayoutParams> {
       height = AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top()
+    }
+  }
+
+  private fun fireOnReloadButtonClickCallback() {
+    if (!toolbarReloadButton.isEnabled) {
+      return
+    }
+
+    scope.launch {
+      toolbarReloadButton.setEnabledFast(false)
+
+      try {
+        mediaViewerToolbarCallbacks?.onReloadButtonClick()
+      } finally {
+        toolbarReloadButton.setEnabledFast(true)
+      }
+    }
+  }
+
+  private fun fireOnDownloadButtonClickCallback(isLongClick: Boolean) {
+    if (!toolbarDownloadButton.isEnabled) {
+      return
+    }
+
+    scope.launch {
+      toolbarDownloadButton.setEnabledFast(false)
+
+      try {
+        val startedDownloading = mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = isLongClick)
+          ?: false
+
+        // Only enable the button back if we didn't start the image downloading
+        toolbarDownloadButton.setEnabledFast(startedDownloading.not())
+      } catch (error: Throwable) {
+        toolbarDownloadButton.setEnabledFast(true)
+      }
     }
   }
 
