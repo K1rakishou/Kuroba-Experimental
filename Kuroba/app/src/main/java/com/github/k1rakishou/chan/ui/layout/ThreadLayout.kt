@@ -331,10 +331,6 @@ class ThreadLayout @JvmOverloads constructor(
       return true
     }
 
-    if (isReplyLayoutOpen()) {
-      return true
-    }
-
     return threadListLayout.canChildScrollUp()
   }
 
