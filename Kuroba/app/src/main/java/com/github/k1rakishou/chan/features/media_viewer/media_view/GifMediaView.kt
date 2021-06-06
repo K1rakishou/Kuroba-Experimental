@@ -221,14 +221,14 @@ class GifMediaView(
         loadingBar.setVisibilityFast(GONE)
       }
 
+      onUpdateTransparency()
+
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
       if (gifImageViewDrawable != null) {
         if (!gifImageViewDrawable.isPlaying) {
           gifImageViewDrawable.start()
         }
       }
-
-      onUpdateTransparency()
     }
   }
 

@@ -200,6 +200,7 @@ class FullImageMediaView(
   override fun show() {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
+    onUpdateTransparency()
 
     if (!hasContent) {
       scope.launch {
@@ -222,7 +223,6 @@ class FullImageMediaView(
           }
 
         loadingBar.setVisibilityFast(GONE)
-        onUpdateTransparency()
       }
     }
   }

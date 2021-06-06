@@ -9,7 +9,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 /**
- * A storage for the default post background color per site.
+ * A storage for the default post background color per site. Used as a background for transparent
+ * images/gifs if "transparencyOn" setting is disabled.
  * */
 class ChanPostBackgroundColorStorage(
   private val boardManager: BoardManager,
@@ -20,12 +21,12 @@ class ChanPostBackgroundColorStorage(
 
     colorMap[Chan4.SITE_DESCRIPTOR] = ChanBackgroundColors(
       sfwColor = DEFAULT_COLOR,
-      nsfwColor = 0xF0E0D6L.toInt()
+      nsfwColor = 0xFFF0E0D6L.toInt()
     )
 
     colorMap[Dvach.SITE_DESCRIPTOR] = ChanBackgroundColors(
-      sfwColor = 0xDDDDDDL.toInt(),
-      nsfwColor = 0xDDDDDDL.toInt()
+      sfwColor = 0xFFDDDDDDL.toInt(),
+      nsfwColor = 0xFFDDDDDDL.toInt()
     )
 
     // TODO: 6/5/2021 add colors for the rest of the sites
@@ -66,6 +67,6 @@ class ChanPostBackgroundColorStorage(
   data class ChanBackgroundColors(val sfwColor: Int, val nsfwColor: Int)
 
   companion object {
-    private const val DEFAULT_COLOR = 0xD6DAF0L.toInt()
+    private const val DEFAULT_COLOR = 0xFFD6DAF0L.toInt()
   }
 }
