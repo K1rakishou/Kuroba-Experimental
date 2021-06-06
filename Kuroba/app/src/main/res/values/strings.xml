@@ -211,7 +211,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_copy_image_thumbnail_url">Copy image thumbnail url</string>
     <string name="action_copy_image_original_name">Copy original file name</string>
     <string name="action_copy_image_server_name">Copy server file name</string>
-    <string name="action_copy_image_file_hash_hex">Copy file hash HEX</string>
+    <string name="action_copy_image_file_hash_hex">Copy file hash</string>
     <string name="action_filter_image_by_hash">Filter posts with this image\'s hash</string>
     <string name="action_share_content">Share file content</string>
     <string name="action_download_content">Download file</string>
@@ -1103,7 +1103,7 @@ Don't have a 4chan Pass?<br>
     <string name="captcha_layout_v2_refresh_cookies">Refresh cookies</string>
     <string name="image_url_copied_to_clipboard">URL copied to clipboard</string>
     <string name="image_file_name_copied_to_clipboard">File name copied to clipboard</string>
-    <string name="image_file_hash_copied_to_clipboard">File hash HEX copied to clipboard</string>
+    <string name="image_file_hash_copied_to_clipboard">File hash copied to clipboard</string>
     <string name="link_text_copied_to_clipboard">Link text copied to clipboard</string>
     <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
 

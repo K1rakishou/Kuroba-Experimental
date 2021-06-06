@@ -128,7 +128,7 @@ class MediaLongClickMenuHelper(
         AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
       }
       ACTION_IMAGE_COPY_MD5_HASH_HEX -> {
-        AndroidUtils.setClipboardContent("File hash HEX", viewableMedia.viewableMediaMeta.mediaHash)
+        AndroidUtils.setClipboardContent("File hash", viewableMedia.viewableMediaMeta.mediaHash)
         AppModuleAndroidUtils.showToast(context, R.string.image_file_hash_copied_to_clipboard)
       }
       ACTION_OPEN_IN_BROWSER -> {

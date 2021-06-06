@@ -118,7 +118,7 @@ class ThumbnailLongtapOptionsHelper(
         AppModuleAndroidUtils.showToast(context, R.string.image_file_name_copied_to_clipboard)
       }
       IMAGE_COPY_MD5_HASH_HEX -> {
-        AndroidUtils.setClipboardContent("File hash HEX", postImage.fileHash)
+        AndroidUtils.setClipboardContent("File hash", postImage.fileHash)
         AppModuleAndroidUtils.showToast(context, R.string.image_file_hash_copied_to_clipboard)
       }
       FILTER_POSTS_WITH_THIS_IMAGE_HASH -> {
