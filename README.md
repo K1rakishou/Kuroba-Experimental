@@ -66,6 +66,7 @@ Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimenta
 - Lainchan
 - Sushichan
 - Wired-7 (thanks to @Wired-7)
+- 370chan.info (thanks to @alcharkov)
 
 ##### Currently supported 4chan archives
 - ArchivedMoe
