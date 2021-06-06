@@ -25,17 +25,10 @@ import org.nibor.autolink.LinkExtractor
 import org.nibor.autolink.LinkSpan
 import org.nibor.autolink.LinkType
 import java.util.*
-import java.util.regex.Pattern
 
 object CommentParserHelper {
   private const val TAG = "CommentParserHelper"
   private val LINK_EXTRACTOR = LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build()
-  private val imageUrlPattern = Pattern.compile(
-    ".*/(.+?)\\.(jpg|png|jpeg|gif|webm|mp4|pdf|bmp|webp|mp3|swf|m4a|ogg|flac)",
-    Pattern.CASE_INSENSITIVE
-  )
-  private val noThumbLinkSuffixes =
-    arrayOf("webm", "pdf", "mp4", "mp3", "swf", "m4a", "ogg", "flac")
 
   /**
    * Similar to other [detectLinks] but this one allow links modification (changing link's text to
