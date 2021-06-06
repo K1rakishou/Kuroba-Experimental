@@ -91,6 +91,12 @@ class CircularChunkedLoadingBar @JvmOverloads constructor(
   fun setChunkProgress(chunk: Int, progress: Float) {
     BackgroundUtils.ensureMainThread()
 
+    if (chunk < 0 || chunk >= chunkLoadingProgress.size) {
+      // When media prefetching is turned on there happens a little race condition where
+      // FileCacheV2.onStart() callback may be called later than FileCacheV2.onProgress().
+      return
+    }
+
     val clampedProgress = Math.min(Math.max(progress, MIN_PROGRESS), MAX_PROGRESS)
     chunkLoadingProgress[chunk] = clampedProgress
     invalidate()
