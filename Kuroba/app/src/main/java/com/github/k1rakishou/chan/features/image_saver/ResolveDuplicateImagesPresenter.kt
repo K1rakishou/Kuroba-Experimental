@@ -76,6 +76,9 @@ internal class ResolveDuplicateImagesPresenter(
           BatchUpdate.SelectAllLocal -> {
             duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.Skip)
           }
+          BatchUpdate.SelectAllDuplicates -> {
+            duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate)
+          }
         }
 
         currentState.duplicateImages[index] = updatedImage
@@ -95,6 +98,7 @@ internal class ResolveDuplicateImagesPresenter(
       val duplicateImageIndex = currentState.duplicateImages.indexOfFirst { duplicateImage ->
         return@indexOfFirst duplicateImage.localImage === clickedDuplicateImage
           || duplicateImage.serverImage === clickedDuplicateImage
+          || duplicateImage.dupImage === clickedDuplicateImage
       }
 
       val duplicateImage = currentState.duplicateImages.getOrNull(duplicateImageIndex)
@@ -104,6 +108,7 @@ internal class ResolveDuplicateImagesPresenter(
       }
 
       val updatedDuplicateImage = when (clickedDuplicateImage) {
+        is DupImage -> duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate)
         is ServerImage -> duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.Overwrite)
         is LocalImage -> duplicateImage.copy(resolution = ImageSaverV2Options.DuplicatesResolution.Skip)
         else -> throw IllegalArgumentException("Unknown duplicateImage: ${clickedDuplicateImage.javaClass.simpleName}")
@@ -231,16 +236,15 @@ internal class ResolveDuplicateImagesPresenter(
     val actualDuplicateImages = mutableListOf<DuplicateImage>()
 
     duplicateImages.forEach { imageDownloadRequest ->
+      val serverImage = getServerImage(images, imageDownloadRequest)
       val localImage = imageDownloadRequest.duplicateFileUri
         ?.let { duplicateFileUri -> getLocalImage(duplicateFileUri) }
-      val serverImage = getServerImage(images, imageDownloadRequest)
+      val dupImage = localImage
+        ?.let { local -> DupImage(local.uri, local.fileName, local.extension, local.size) }
 
-      // Skip
-      if (serverImage == null && localImage == null) {
-        return@forEach
-      }
-
-      val resolution = if (localImage == null) {
+      val resolution = if (serverImage == null && localImage == null) {
+        ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate
+      } else if (localImage == null) {
         ImageSaverV2Options.DuplicatesResolution.Overwrite
       } else {
         ImageSaverV2Options.DuplicatesResolution.AskWhatToDo
@@ -252,6 +256,7 @@ internal class ResolveDuplicateImagesPresenter(
         locked = locked,
         serverImage = serverImage,
         localImage = localImage,
+        dupImage = dupImage,
         resolution = resolution
       )
     }
@@ -286,13 +291,10 @@ internal class ResolveDuplicateImagesPresenter(
       return null
     }
 
-    val extension = chanPostImage.extension
-      ?.toUpperCase(Locale.ENGLISH)
-
     return ServerImage(
       url = url,
       fileName = getPostImageFileName(chanPostImage),
-      extension = extension,
+      extension = chanPostImage.extension?.uppercase(Locale.ENGLISH),
       size = chanPostImage.size
     )
   }
@@ -342,7 +344,8 @@ internal class ResolveDuplicateImagesPresenter(
   enum class BatchUpdate {
     SelectNone,
     SelectAllFromServer,
-    SelectAllLocal
+    SelectAllLocal,
+    SelectAllDuplicates
   }
 
   companion object {

@@ -18,19 +18,21 @@
             android:id="@+id/server_image_container"
             android:layout_width="0dp"
             android:layout_height="match_parent"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:layout_marginStart="4dp"
+            android:layout_marginEnd="2dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/divider"
+            app:layout_constraintEnd_toStartOf="@+id/local_image_container"
+            app:layout_constraintHorizontal_chainStyle="spread"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintTop_toTopOf="parent">
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#807f7f7f"/>
+                android:background="#807f7f7f" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/server_image_view"
@@ -39,10 +41,13 @@
 
             <com.github.k1rakishou.chan.ui.view.SelectionCheckView
                 android:id="@+id/server_image_checkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="8dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -76,32 +81,24 @@
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
-        <View
-            android:id="@+id/divider"
-            android:layout_width="32dp"
-            android:layout_height="match_parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/local_image_container"
-            app:layout_constraintStart_toEndOf="@id/server_image_container"
-            app:layout_constraintTop_toTopOf="parent"/>
-
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/local_image_container"
             android:layout_width="0dp"
             android:layout_height="match_parent"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="2dp"
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
-            android:layout_marginEnd="4dp"
             app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toEndOf="@+id/divider"
+            app:layout_constraintEnd_toStartOf="@+id/duplicate_image_container"
+            app:layout_constraintStart_toEndOf="@id/server_image_container"
             app:layout_constraintTop_toTopOf="parent">
 
             <View
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
-                android:background="#807f7f7f"/>
+                android:background="#807f7f7f" />
 
             <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/local_image_view"
@@ -110,10 +107,13 @@
 
             <com.github.k1rakishou.chan.ui.view.SelectionCheckView
                 android:id="@+id/local_image_checkbox"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintTop_toTopOf="parent" />
 
@@ -137,6 +137,72 @@
 
                 <TextView
                     android:id="@+id/local_image_size_and_extension"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp"
+                    android:ellipsize="end"
+                    android:textColor="#fff"
+                    tools:text="JPG 1024 KB" />
+
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/duplicate_image_container"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginStart="2dp"
+            android:layout_marginEnd="4dp"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toEndOf="@+id/local_image_container"
+            app:layout_constraintTop_toTopOf="parent">
+
+            <View
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:background="#807f7f7f" />
+
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/duplicate_image_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <com.github.k1rakishou.chan.ui.view.SelectionCheckView
+                android:id="@+id/duplicate_image_checkbox"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:layout_marginTop="8dp"
+                android:layout_marginEnd="8dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent" />
+
+            <LinearLayout
+                android:id="@+id/duplicate_image_info_container"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="#80000000"
+                android:orientation="vertical"
+                android:paddingStart="2dp"
+                android:paddingEnd="2dp"
+                app:layout_constraintBottom_toBottomOf="parent">
+
+                <TextView
+                    android:id="@+id/duplicate_image_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="20dp"
+                    android:ellipsize="middle"
+                    android:textColor="#fff"
+                    tools:text="1534534534124124" />
+
+                <TextView
+                    android:id="@+id/duplicate_image_size_and_extension"
                     android:layout_width="match_parent"
                     android:layout_height="20dp"
                     android:ellipsize="end"

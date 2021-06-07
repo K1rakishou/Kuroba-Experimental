@@ -50,7 +50,7 @@
                         android:id="@+id/select_all_from_server"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.5"
+                        android:layout_weight="0.33"
                         android:gravity="center"
                         android:text="@string/image_saver_images_from_server"/>
 
@@ -58,9 +58,17 @@
                         android:id="@+id/select_all_local"
                         android:layout_width="0dp"
                         android:layout_height="match_parent"
-                        android:layout_weight="0.5"
+                        android:layout_weight="0.33"
                         android:gravity="center_vertical"
                         android:text="@string/image_saver_local_images_on_disk" />
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+                        android:id="@+id/select_all_duplicates"
+                        android:layout_width="0dp"
+                        android:layout_height="match_parent"
+                        android:layout_weight="0.33"
+                        android:gravity="center_vertical"
+                        android:text="@string/image_saver_duplicates" />
 
                 </LinearLayout>
 

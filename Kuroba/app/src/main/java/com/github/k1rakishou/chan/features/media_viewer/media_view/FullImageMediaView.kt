@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
 import android.graphics.Color
+import android.net.Uri
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
@@ -69,7 +70,7 @@ class FullImageMediaView(
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private var fullImageDeferred = CompletableDeferred<File>()
+  private var fullImageDeferred = CompletableDeferred<FilePath>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
@@ -191,7 +192,11 @@ class FullImageMediaView(
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
     } else if (viewableMedia.mediaLocation is MediaLocation.Local) {
-      fullImageDeferred.complete(File(viewableMedia.mediaLocation.path))
+      if (viewableMedia.mediaLocation.isUri) {
+        fullImageDeferred.complete(FilePath.UriPath(Uri.parse(viewableMedia.mediaLocation.path)))
+      } else {
+        fullImageDeferred.complete(FilePath.JavaPath(viewableMedia.mediaLocation.path))
+      }
     }
   }
 
@@ -220,8 +225,8 @@ class FullImageMediaView(
             actualImageView.setVisibilityFast(View.INVISIBLE)
             thumbnailMediaView.setError(error.errorMessageOrClassName())
           }
-          .onSuccess { file ->
-            setBigImageFromFile(file)
+          .onSuccess { filePath ->
+            setBigImageFromFile(filePath)
           }
 
         loadingBar.setVisibilityFast(GONE)
@@ -262,7 +267,7 @@ class FullImageMediaView(
     cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
 
     fullImageDeferred.cancel()
-    fullImageDeferred = CompletableDeferred<File>()
+    fullImageDeferred = CompletableDeferred<FilePath>()
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualImageView.setVisibilityFast(View.INVISIBLE)
@@ -300,7 +305,7 @@ class FullImageMediaView(
 
         override fun onSuccess(file: File) {
           BackgroundUtils.ensureMainThread()
-          fullImageDeferred.complete(file)
+          fullImageDeferred.complete(FilePath.JavaPath(file.absolutePath))
         }
 
         override fun onNotFound() {
@@ -327,7 +332,7 @@ class FullImageMediaView(
     )
   }
 
-  private suspend fun setBigImageFromFile(file: File) {
+  private suspend fun setBigImageFromFile(filePath: FilePath) {
     coroutineScope {
       val animationAwaitable = CompletableDeferred<Unit>()
 
@@ -374,7 +379,13 @@ class FullImageMediaView(
       })
 
       actualImageView.setOnClickListener(null)
-      actualImageView.setImage(ImageSource.uri(file.absolutePath).tiling(true))
+
+      val imageSource = when (filePath) {
+        is FilePath.JavaPath -> ImageSource.uri(filePath.path).tiling(true)
+        is FilePath.UriPath -> ImageSource.uri(filePath.uri).tiling(true)
+      }
+
+      actualImageView.setImage(imageSource)
 
       // Trigger the SubsamplingScaleImageView to start loading the full image but don't show it yet.
       actualImageView.alpha = 0f
@@ -440,6 +451,11 @@ class FullImageMediaView(
     override fun updateFrom(other: MediaViewState?) {
 
     }
+  }
+
+  sealed class FilePath {
+    data class JavaPath(val path: String) : FilePath()
+    data class UriPath(val uri: Uri) : FilePath()
   }
 
   companion object {

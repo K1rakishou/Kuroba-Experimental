@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
+import android.net.Uri
 import android.util.LruCache
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
@@ -193,101 +194,6 @@ class MediaViewerControllerViewModel : ViewModel() {
     return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
   }
 
-  private fun collectMixedMedia(
-    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.MixedMediaParcelableHolder
-  ): MediaViewerControllerState? {
-    val totalSize = viewableMediaParcelableHolder.local.size + viewableMediaParcelableHolder.remote.size
-    val viewableMediaList = mutableListWithCap<ViewableMedia>(totalSize)
-
-    val localMediaMapped = viewableMediaParcelableHolder.local.map { localMediaLocation ->
-      val mediaLocation = MediaLocation.Local(localMediaLocation.path, localMediaLocation.isUri)
-      val fileName = localMediaLocation.path.substringAfter("/")
-        .let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
-      val extension = StringUtils.extractFileNameExtension(fileName)
-
-      val meta = ViewableMediaMeta(
-        ownerPostDescriptor = null,
-        serverMediaName = fileName,
-        originalMediaName = null,
-        extension = extension,
-        mediaWidth = null,
-        mediaHeight = null,
-        mediaSize = null,
-        mediaHash = null,
-        isSpoiler = false
-      )
-
-      if (extension == null) {
-        return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
-      }
-
-      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-        ?: return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
-
-      if (mimeType.startsWith("video/")) {
-        return@map ViewableMedia.Video(mediaLocation, null, null, meta)
-      } else if (mimeType.startsWith("image/")) {
-        if (mimeType.endsWith("gif")) {
-          return@map ViewableMedia.Gif(mediaLocation, null, null, meta)
-        } else {
-          return@map ViewableMedia.Image(mediaLocation, null, null, meta)
-        }
-      }
-
-      return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
-    }
-
-    val remoteMediaMapped = viewableMediaParcelableHolder.remote.mapNotNull { remoteMediaLocation ->
-      if (remoteMediaLocation.urlRaw.toHttpUrlOrNull() == null) {
-        return@mapNotNull null
-      }
-
-      val fileName = remoteMediaLocation.url.pathSegments.lastOrNull()
-        ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
-      val extension = StringUtils.extractFileNameExtension(remoteMediaLocation.urlRaw)
-
-      val meta = ViewableMediaMeta(
-        ownerPostDescriptor = null,
-        serverMediaName = fileName,
-        originalMediaName = null,
-        extension = extension,
-        mediaWidth = null,
-        mediaHeight = null,
-        mediaSize = null,
-        mediaHash = null,
-        isSpoiler = false
-      )
-
-      if (extension == null) {
-        return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
-      }
-
-      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
-        ?: return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
-
-      if (mimeType.startsWith("video/")) {
-        return@mapNotNull ViewableMedia.Video(remoteMediaLocation, null, null, meta)
-      } else if (mimeType.startsWith("image/")) {
-        if (mimeType.endsWith("gif")) {
-          return@mapNotNull ViewableMedia.Gif(remoteMediaLocation, null, null, meta)
-        } else {
-          return@mapNotNull ViewableMedia.Image(remoteMediaLocation, null, null, meta)
-        }
-      }
-
-      return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
-    }
-
-    viewableMediaList.addAll(localMediaMapped)
-    viewableMediaList.addAll(remoteMediaMapped)
-
-    if (viewableMediaList.isEmpty()) {
-      return null
-    }
-
-    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
-  }
-
   private fun collectThreadMedia(
     viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ThreadMediaParcelableHolder
   ): MediaViewerControllerState? {
@@ -390,6 +296,119 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
 
     return MediaViewerControllerState(output.images, actualInitialPagerIndex)
+  }
+
+  private fun collectMixedMedia(
+    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.MixedMediaParcelableHolder
+  ): MediaViewerControllerState? {
+    val viewableMediaList = viewableMediaParcelableHolder.mixedMedia.mapNotNull { mediaLocation ->
+      return@mapNotNull when (mediaLocation) {
+        is MediaLocation.Local -> mapLocalMedia(mediaLocation)
+        is MediaLocation.Remote -> mapRemoteMedia(mediaLocation)
+      }
+    }
+
+    if (viewableMediaList.isEmpty()) {
+      return null
+    }
+
+    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
+  }
+
+  private fun mapRemoteMedia(mediaLocation: MediaLocation.Remote): ViewableMedia? {
+    if (mediaLocation.urlRaw.toHttpUrlOrNull() == null) {
+      return null
+    }
+
+    val fileName = mediaLocation.url.pathSegments.lastOrNull()
+      ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
+    val extension = StringUtils.extractFileNameExtension(mediaLocation.urlRaw)
+
+    val meta = ViewableMediaMeta(
+      ownerPostDescriptor = null,
+      serverMediaName = fileName,
+      originalMediaName = null,
+      extension = extension,
+      mediaWidth = null,
+      mediaHeight = null,
+      mediaSize = null,
+      mediaHash = null,
+      isSpoiler = false
+    )
+
+    if (extension == null) {
+      return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+    }
+
+    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+      ?: return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+
+    if (mimeType.startsWith("video/")) {
+      return ViewableMedia.Video(mediaLocation, null, null, meta)
+    } else if (mimeType.startsWith("image/")) {
+      if (mimeType.endsWith("gif")) {
+        return ViewableMedia.Gif(mediaLocation, null, null, meta)
+      } else {
+        return ViewableMedia.Image(mediaLocation, null, null, meta)
+      }
+    }
+
+    return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+  }
+
+  private fun mapLocalMedia(mediaLocation: MediaLocation.Local): ViewableMedia? {
+    val uri = try {
+      Uri.parse(mediaLocation.path)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "mapLocalMedia() Failed to parse uri: '${mediaLocation.path}'", error)
+      return null
+    }
+
+    val fullFileName = uri.lastPathSegment?.let { lastPathSegment ->
+      if (lastPathSegment.contains("/")) {
+        return@let lastPathSegment.substringAfterLast("/")
+      }
+
+      return@let lastPathSegment
+    }
+
+    if (fullFileName == null) {
+      return null
+    }
+
+    val fileName = StringUtils.removeExtensionFromFileName(fullFileName)
+    val extension = StringUtils.extractFileNameExtension(fullFileName)
+
+    val meta = ViewableMediaMeta(
+      ownerPostDescriptor = null,
+      serverMediaName = fileName,
+      originalMediaName = null,
+      extension = extension,
+      mediaWidth = null,
+      mediaHeight = null,
+      mediaSize = null,
+      mediaHash = null,
+      isSpoiler = false
+    )
+
+    if (extension == null) {
+      return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+    }
+
+    val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+      ?: return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+
+    if (mimeType.startsWith("video/")) {
+      return ViewableMedia.Video(mediaLocation, null, null, meta)
+    } else if (mimeType.startsWith("image/")) {
+      if (mimeType.endsWith("gif")) {
+        return ViewableMedia.Gif(mediaLocation, null, null, meta)
+      } else {
+        return ViewableMedia.Image(mediaLocation, null, null, meta)
+      }
+    }
+
+    return ViewableMedia.Unsupported(mediaLocation, null, null, meta)
   }
 
   private fun processChanPostImage(

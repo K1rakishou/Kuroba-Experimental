@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.features.image_saver.epoxy
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.View
+import android.view.View.OnClickListener
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
@@ -21,6 +23,7 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
+import com.github.k1rakishou.chan.features.image_saver.DupImage
 import com.github.k1rakishou.chan.features.image_saver.IDuplicateImage
 import com.github.k1rakishou.chan.features.image_saver.LocalImage
 import com.github.k1rakishou.chan.features.image_saver.ServerImage
@@ -32,6 +35,7 @@ import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import okhttp3.HttpUrl
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
@@ -40,8 +44,6 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : ConstraintLayout(context, attrs, defStyleAttr) {
-  private val divider: View
-
   private val serverImageContainer: ConstraintLayout
   private val serverImageView: AppCompatImageView
   private val serverImageCheckbox: SelectionCheckView
@@ -56,13 +58,22 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   private val localImageName: TextView
   private val localImageSizeAndExtension: TextView
 
+  private val duplicateImageContainer: ConstraintLayout
+  private val duplicateImageView: AppCompatImageView
+  private val duplicateImageCheckbox: SelectionCheckView
+  private val duplicateImageInfoContainer: LinearLayout
+  private val duplicateImageName: TextView
+  private val duplicateImageSizeAndExtension: TextView
+
   private val circularProgressDrawable: CircularProgressDrawable
 
   private var serverImage: ServerImage? = null
   private var localImage: LocalImage? = null
+  private var dupImage: DupImage? = null
 
   private var serverImageRequestDisposable: Disposable? = null
   private var localImageRequestDisposable: Disposable? = null
+  private var duplicateImageRequestDisposable: Disposable? = null
 
   private var wholeViewLocked = false
 
@@ -77,8 +88,6 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
     inflate(context, R.layout.epoxy_duplicate_image_view, this)
 
-    divider = findViewById(R.id.divider)
-
     serverImageContainer = findViewById(R.id.server_image_container)
     serverImageView = findViewById(R.id.server_image_view)
     serverImageCheckbox = findViewById(R.id.server_image_checkbox)
@@ -92,6 +101,13 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     localImageInfoContainer = findViewById(R.id.local_image_info_container)
     localImageName = findViewById(R.id.local_image_name)
     localImageSizeAndExtension = findViewById(R.id.local_image_size_and_extension)
+
+    duplicateImageContainer = findViewById(R.id.duplicate_image_container)
+    duplicateImageView = findViewById(R.id.duplicate_image_view)
+    duplicateImageCheckbox = findViewById(R.id.duplicate_image_checkbox)
+    duplicateImageInfoContainer = findViewById(R.id.duplicate_image_info_container)
+    duplicateImageName = findViewById(R.id.duplicate_image_name)
+    duplicateImageSizeAndExtension = findViewById(R.id.duplicate_image_size_and_extension)
 
     val duplicateImageViewRoot = findViewById<ConstraintLayout>(R.id.duplicate_image_view_root)
     duplicateImageViewRoot.updateMargins(top = dp(4f), bottom = dp(4f))
@@ -114,6 +130,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
     serverImageView.setImageBitmap(null)
     localImageView.setImageBitmap(null)
+    duplicateImageView.setImageBitmap(null)
 
     wholeViewLocked = false
   }
@@ -121,6 +138,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   @AfterPropsSet
   fun afterPropsSet() {
     loadLocalImage()
+    loadDuplicateImage()
     loadServerImage()
   }
 
@@ -129,7 +147,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     serverImageRequestDisposable = null
 
     val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(serverImageView)
-    val useGrayScale = wholeViewLocked || (!serverImageCheckbox.checked() && localImageCheckbox.checked())
+    val useGrayScale = wholeViewLocked || duplicateImageCheckbox.checked() || localImageCheckbox.checked()
 
     val transformation = if (useGrayScale) {
       listOf(GRAYSCALE_TRANSFORMATION)
@@ -162,7 +180,7 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     localImageRequestDisposable = null
 
     val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(localImageView)
-    val useGrayScale = wholeViewLocked || (!localImageCheckbox.checked() && serverImageCheckbox.checked())
+    val useGrayScale = wholeViewLocked || duplicateImageCheckbox.checked() || serverImageCheckbox.checked()
 
     val transformation = if (useGrayScale) {
       listOf(GRAYSCALE_TRANSFORMATION)
@@ -189,6 +207,42 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
         Scale.FIT,
         transformation,
         { bitmapDrawable -> localImageView.setImageDrawable(bitmapDrawable) }
+      )
+    }
+  }
+
+  private fun loadDuplicateImage() {
+    duplicateImageRequestDisposable?.dispose()
+    duplicateImageRequestDisposable = null
+
+    val imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(duplicateImageView)
+    val useGrayScale = wholeViewLocked || localImageCheckbox.checked() || serverImageCheckbox.checked()
+
+    val transformation = if (useGrayScale) {
+      listOf(GRAYSCALE_TRANSFORMATION)
+    } else {
+      emptyList<Transformation>()
+    }
+
+    circularProgressDrawable.start()
+    duplicateImageView.setImageDrawable(circularProgressDrawable)
+
+    if (dupImage == null) {
+      duplicateImageRequestDisposable = imageLoaderV2.loadFromResources(
+        context,
+        R.drawable.ic_image_not_found,
+        imageSize,
+        Scale.FIT,
+        transformation
+      ) { bitmapDrawable -> duplicateImageView.setImageDrawable(bitmapDrawable) }
+    } else {
+      duplicateImageRequestDisposable = imageLoaderV2.loadFromDisk(
+        context,
+        InputFile.FileUri(context.applicationContext, dupImage!!.uri),
+        imageSize,
+        Scale.FIT,
+        transformation,
+        { bitmapDrawable -> duplicateImageView.setImageDrawable(bitmapDrawable) }
       )
     }
   }
@@ -230,6 +284,22 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
     }
   }
 
+  @SuppressLint("SetTextI18n")
+  @ModelProp
+  fun setDupImage(dupImage: DupImage?) {
+    this.dupImage = dupImage
+
+    if (dupImage == null) {
+      duplicateImageInfoContainer.setVisibilityFast(View.GONE)
+      duplicateImageName.text = null
+    } else {
+      duplicateImageInfoContainer.setVisibilityFast(View.VISIBLE)
+      duplicateImageName.text = dupImage.fileName
+
+      duplicateImageSizeAndExtension.text = formatExtensionWithFileSize(dupImage.extension, dupImage.size)
+    }
+  }
+
   private fun formatExtensionWithFileSize(extension: String?, fileSize: Long): String {
     return buildString {
       if (extension != null) {
@@ -244,42 +314,76 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   @ModelProp
   fun setDuplicateResolution(resolution: ImageSaverV2Options.DuplicatesResolution) {
     when (resolution) {
-      // TODO(KurobaEx v0.7.0):
-      ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate,
-      ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
+      ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate -> {
         serverImageCheckbox.setChecked(false)
         localImageCheckbox.setChecked(false)
+        duplicateImageCheckbox.setChecked(true)
       }
       ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
         serverImageCheckbox.setChecked(true)
         localImageCheckbox.setChecked(false)
+        duplicateImageCheckbox.setChecked(false)
       }
       ImageSaverV2Options.DuplicatesResolution.Skip -> {
         serverImageCheckbox.setChecked(false)
         localImageCheckbox.setChecked(true)
+        duplicateImageCheckbox.setChecked(false)
+      }
+      ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
+        serverImageCheckbox.setChecked(false)
+        localImageCheckbox.setChecked(false)
+        duplicateImageCheckbox.setChecked(false)
       }
     }
   }
 
   @CallbackProp
-  fun setOnImageClickListener(listener: ((IDuplicateImage) -> Unit)?) {
-    if (wholeViewLocked || (serverImage == null && localImage == null)) {
-      serverImageContainer.setOnClickListener(null)
-      localImageContainer.setOnClickListener(null)
+  fun setOnImageCheckboxClickListener(listener: ((IDuplicateImage) -> Unit)?) {
+    if (wholeViewLocked || (serverImage == null && localImage == null && dupImage == null)) {
+      serverImageCheckbox.setOnClickListener(null)
+      localImageCheckbox.setOnClickListener(null)
+      duplicateImageCheckbox.setOnClickListener(null)
       return
     }
 
-    serverImageContainer.setOnClickListener {
+    serverImageCheckbox.setOnClickListener {
       if (!wholeViewLocked && serverImage != null) {
         listener?.invoke(serverImage!!)
       }
     }
 
-    localImageContainer.setOnClickListener {
+    localImageCheckbox.setOnClickListener {
       if (!wholeViewLocked && localImage != null) {
         listener?.invoke(localImage!!)
       }
     }
+
+    duplicateImageCheckbox.setOnClickListener {
+      if (!wholeViewLocked && dupImage != null) {
+        listener?.invoke(dupImage!!)
+      }
+    }
+  }
+
+  @CallbackProp
+  fun setOnImageClickListener(listener: ((HttpUrl?, Uri?) -> Unit)?) {
+    if (wholeViewLocked || (serverImage == null && localImage == null && dupImage == null)) {
+      serverImageContainer.setOnClickListener(null)
+      localImageContainer.setOnClickListener(null)
+      duplicateImageContainer.setOnClickListener(null)
+      return
+    }
+
+    val viewClickListener = OnClickListener {
+      val url = serverImage?.url
+      val localUri = localImage?.uri
+
+      listener?.invoke(url, localUri)
+    }
+
+    serverImageContainer.setOnClickListener(viewClickListener)
+    localImageContainer.setOnClickListener(viewClickListener)
+    duplicateImageContainer.setOnClickListener(viewClickListener)
   }
 
   companion object {

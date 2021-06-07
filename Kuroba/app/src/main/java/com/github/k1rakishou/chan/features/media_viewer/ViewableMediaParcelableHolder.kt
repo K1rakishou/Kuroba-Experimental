@@ -71,8 +71,7 @@ sealed class ViewableMediaParcelableHolder {
 
   @Parcelize
   data class MixedMediaParcelableHolder(
-    val local: List<MediaLocation.Local>,
-    val remote: List<MediaLocation.Remote>
+    val mixedMedia: List<MediaLocation>
   ) : ViewableMediaParcelableHolder(), Parcelable
 
   @Parcelize
@@ -261,15 +260,15 @@ data class ViewableMediaMeta(
   val isSpoiler: Boolean
 )
 
-sealed class MediaLocation {
+sealed class MediaLocation : Parcelable{
 
   @Parcelize
-  data class Remote(val urlRaw: String) : MediaLocation(), Parcelable {
+  data class Remote(val urlRaw: String) : MediaLocation() {
     @IgnoredOnParcel
     val url by lazy { urlRaw.toHttpUrl() }
   }
 
   @Parcelize
-  data class Local(val path: String, val isUri: Boolean) : MediaLocation(), Parcelable
+  data class Local(val path: String, val isUri: Boolean) : MediaLocation()
 
 }

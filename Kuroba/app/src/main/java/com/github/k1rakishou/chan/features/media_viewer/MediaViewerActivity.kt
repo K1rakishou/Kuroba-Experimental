@@ -297,16 +297,14 @@ class MediaViewerActivity : ControllerHostActivity(),
         if (URLUtil.isFileUrl(uri)) {
           Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
           return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
-            local = listOf(MediaLocation.Local(uri, isUri = false)),
-            remote = emptyList()
+            mixedMedia = listOf(MediaLocation.Local(uri, isUri = false))
           )
         }
 
         if (URLUtil.isContentUrl(uri)) {
           Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
           return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
-            local = listOf(MediaLocation.Local(uri, isUri = true)),
-            remote = emptyList()
+            mixedMedia = listOf(MediaLocation.Local(uri, isUri = true))
           )
         }
 
@@ -320,8 +318,7 @@ class MediaViewerActivity : ControllerHostActivity(),
           }
 
           return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
-            local = emptyList(),
-            remote = listOf(MediaLocation.Remote(finalUrl))
+            mixedMedia = listOf(MediaLocation.Remote(finalUrl))
           )
         }
 
@@ -373,8 +370,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     @JvmStatic
     fun mixedMedia(
       context: Context,
-      local: List<MediaLocation.Local>,
-      remote: List<MediaLocation.Remote>,
+      mixedMedia: List<MediaLocation>
     ) {
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_MIXED_MEDIA_ACTION
@@ -383,7 +379,7 @@ class MediaViewerActivity : ControllerHostActivity(),
         bundleOf(
           Pair(
             MIXED_MEDIA_PARAM,
-            ViewableMediaParcelableHolder.MixedMediaParcelableHolder(local, remote)
+            ViewableMediaParcelableHolder.MixedMediaParcelableHolder(mixedMedia)
           )
         )
       )

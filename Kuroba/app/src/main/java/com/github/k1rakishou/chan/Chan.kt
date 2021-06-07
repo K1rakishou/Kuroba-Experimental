@@ -499,16 +499,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private fun provideApplicationFileManager(): FileManager {
     val directoryManager = DirectoryManager(this)
 
-    // Add new base directories here
-    var resolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols
-
-    if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Stable) {
-      resolutionStrategy = BadPathSymbolResolutionStrategy.ThrowAnException
-    }
-
     return FileManager(
       appContext = this,
-      badPathSymbolResolutionStrategy = resolutionStrategy,
+      badPathSymbolResolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols,
       directoryManager = directoryManager
     )
   }
@@ -524,16 +517,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private fun provideImageSaverFileManagerWrapper(): ImageSaverFileManagerWrapper {
     val directoryManager = DirectoryManager(this)
 
-    // Add new base directories here
-    var resolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols
-
-    if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Stable) {
-      resolutionStrategy = BadPathSymbolResolutionStrategy.ThrowAnException
-    }
-
     val fileManager = FileManager(
       appContext = this,
-      badPathSymbolResolutionStrategy = resolutionStrategy,
+      badPathSymbolResolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols,
       directoryManager = directoryManager
     )
 

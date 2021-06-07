@@ -1257,9 +1257,10 @@ Don't have a 4chan Pass?<br>
     <string name="setting_exclusion_zones_zone_added_message">New exclusion zone added. Restart the app for the changes to kick in.</string>
 
     <string name="image_saver_resolve_duplicate_images">Resolve duplicate images</string>
-    <string name="image_saver_resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is.</string>
-    <string name="image_saver_images_from_server">Images from server</string>
-    <string name="image_saver_local_images_on_disk">Local images on disk</string>
+    <string name="image_saver_resolve_duplicate_images_explanation">Select images that you want to retain. In case of selecting server image, the local duplicate will be overwritten with server image. In case of selecting local image, it will be left as is. In case of selecting duplicate image the image will be downloaded again from the server and a duplicate label will be appended to it\'s name (e.g. "image_(1).png")</string>
+    <string name="image_saver_images_from_server">Server images</string>
+    <string name="image_saver_local_images_on_disk">Local images</string>
+    <string name="image_saver_duplicates">Duplicate images</string>
     <string name="image_saver_out_of_disk_space">Out of disk space!</string>
     <string name="image_saver_failed_to_access_root_dir">Failed to access root directory!\nClick \"show settings\" and then check that it exists and you have access to it!</string>
     <string name="image_saver_root_dir_is_inaccessible">Root directory is inaccessible</string>

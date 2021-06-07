@@ -15,6 +15,7 @@ internal data class DuplicateImage(
   val locked: Boolean,
   val serverImage: ServerImage?,
   val localImage: LocalImage?,
+  val dupImage: DupImage?,
   val resolution: ImageSaverV2Options.DuplicatesResolution
 )
 
@@ -28,6 +29,13 @@ internal data class ServerImage(
 ) : IDuplicateImage
 
 internal data class LocalImage(
+  val uri: Uri,
+  val fileName: String,
+  val extension: String?,
+  val size: Long
+) : IDuplicateImage
+
+internal data class DupImage(
   val uri: Uri,
   val fileName: String,
   val extension: String?,
