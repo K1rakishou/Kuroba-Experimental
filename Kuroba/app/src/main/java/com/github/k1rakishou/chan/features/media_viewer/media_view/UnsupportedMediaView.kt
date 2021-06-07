@@ -6,11 +6,14 @@ import android.graphics.Canvas
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
@@ -28,6 +31,8 @@ class UnsupportedMediaView(
   mediaViewContract = mediaViewContract,
   mediaViewState = initialMediaViewState
 ) {
+  private val mediaViewNotSupportedMessage: TextView
+
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
 
@@ -41,7 +46,14 @@ class UnsupportedMediaView(
     inflate(context, R.layout.media_view_unsupported, this)
     setWillNotDraw(false)
 
+    mediaViewNotSupportedMessage = findViewById(R.id.media_not_supported_message)
     val movableContainer = findViewById<ConstraintLayout>(R.id.movable_container)
+
+    if (viewableMedia.mediaLocation is MediaLocation.Remote) {
+      mediaViewNotSupportedMessage.text = getString(R.string.media_viewer_media_is_not_supported_downloadable)
+    } else {
+      mediaViewNotSupportedMessage.text = getString(R.string.media_viewer_media_is_not_supported_not_downloadable)
+    }
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,

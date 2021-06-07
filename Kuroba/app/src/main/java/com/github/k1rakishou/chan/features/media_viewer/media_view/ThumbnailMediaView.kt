@@ -77,8 +77,11 @@ class ThumbnailMediaView @JvmOverloads constructor(
     val thumbnailLocation = extractThumbnailLocation(parameters)
 
     requestDisposable = when (thumbnailLocation) {
-      is MediaLocation.Local -> TODO()
       is MediaLocation.Remote -> loadRemoteMedia(thumbnailLocation.url, parameters, onThumbnailFullyLoaded)
+      is MediaLocation.Local -> {
+        onThumbnailFullyLoaded()
+        null
+      }
       null -> {
         onThumbnailFullyLoaded()
         null

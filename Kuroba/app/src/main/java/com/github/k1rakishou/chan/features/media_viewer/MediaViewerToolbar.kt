@@ -124,7 +124,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       return
     }
 
-    toolbarReloadButton.setEnabledFast(true)
+    toolbarReloadButton.setEnabledFast(viewableMedia.canReloadMedia())
     toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
     toolbarGoToPostButton.setEnabledFast(viewableMedia.canGoToMediaPost())
   }

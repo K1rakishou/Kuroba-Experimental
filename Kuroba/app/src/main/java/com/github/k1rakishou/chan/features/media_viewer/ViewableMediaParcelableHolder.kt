@@ -9,7 +9,8 @@ import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
-import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import java.util.*
 
 sealed class ViewableMediaParcelableHolder {
 
@@ -69,12 +70,15 @@ sealed class ViewableMediaParcelableHolder {
   }
 
   @Parcelize
-  data class LocalMediaParcelableHolder(val filePathList: List<String>) : ViewableMediaParcelableHolder(), Parcelable {
-
-  }
+  data class MixedMediaParcelableHolder(
+    val local: List<MediaLocation.Local>,
+    val remote: List<MediaLocation.Remote>
+  ) : ViewableMediaParcelableHolder(), Parcelable
 
   @Parcelize
-  data class RemoteMediaParcelableHolder(val urlList: List<String>) : ViewableMediaParcelableHolder(), Parcelable
+  data class ReplyAttachMediaParcelableHolder(
+    val replyUuidList: List<UUID>
+  ) : ViewableMediaParcelableHolder(), Parcelable
 
 }
 
@@ -113,6 +117,10 @@ sealed class ViewableMedia(
         append(viewableMediaMeta.extension!!)
       }
     }
+  }
+
+  fun canReloadMedia(): Boolean {
+    return mediaLocation !is MediaLocation.Local
   }
 
   fun canMediaBeDownloaded(): Boolean {
@@ -255,8 +263,13 @@ data class ViewableMediaMeta(
 
 sealed class MediaLocation {
 
-  data class Remote(val url: HttpUrl) : MediaLocation()
+  @Parcelize
+  data class Remote(val urlRaw: String) : MediaLocation(), Parcelable {
+    @IgnoredOnParcel
+    val url by lazy { urlRaw.toHttpUrl() }
+  }
 
-  data class Local(val path: String, val isUri: Boolean) : MediaLocation()
+  @Parcelize
+  data class Local(val path: String, val isUri: Boolean) : MediaLocation(), Parcelable
 
 }

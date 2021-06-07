@@ -187,6 +187,8 @@ class GifMediaView(
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadCancelableDownload = startFullGifPreloading(viewableMedia.mediaLocation)
+    }  else if (viewableMedia.mediaLocation is MediaLocation.Local) {
+      fullGifDeferred.complete(File(viewableMedia.mediaLocation.path))
     }
   }
 
@@ -224,20 +226,16 @@ class GifMediaView(
       onUpdateTransparency()
 
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-      if (gifImageViewDrawable != null) {
-        if (!gifImageViewDrawable.isPlaying) {
-          gifImageViewDrawable.start()
-        }
+      if (gifImageViewDrawable != null && !gifImageViewDrawable.isPlaying) {
+        gifImageViewDrawable.start()
       }
     }
   }
 
   override fun hide() {
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-    if (gifImageViewDrawable != null) {
-      if (gifImageViewDrawable.isPlaying) {
-        gifImageViewDrawable.pause()
-      }
+    if (gifImageViewDrawable != null && gifImageViewDrawable.isPlaying) {
+      gifImageViewDrawable.pause()
     }
   }
 

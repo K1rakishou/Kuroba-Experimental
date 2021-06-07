@@ -25,7 +25,8 @@ import kotlin.coroutines.resumeWithException
 
 class ExoPlayerWrapper(
   private val context: Context,
-  private val cacheDataSourceFactory: DataSource.Factory,
+  private val cachedHttpDataSourceFactory: DataSource.Factory,
+  private val fileDataSourceFactory: DataSource.Factory,
   private val mediaViewContract: MediaViewContract,
   private val onAudioDetected: () -> Unit
 ) {
@@ -40,55 +41,57 @@ class ExoPlayerWrapper(
 
   suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
     coroutineScope {
-      when (mediaLocation) {
-        is MediaLocation.Local -> TODO()
+      val mediaSource = when (mediaLocation) {
+        is MediaLocation.Local -> {
+          ProgressiveMediaSource.Factory(fileDataSourceFactory)
+            .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.path)))
+        }
         is MediaLocation.Remote -> {
-          val mediaUri = Uri.parse(mediaLocation.url.toString())
-          val mediaSource = ProgressiveMediaSource.Factory(cacheDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(mediaUri))
-
-          actualExoPlayer.stop()
-          actualExoPlayer.playWhenReady = false
-          actualExoPlayer.setMediaSource(mediaSource)
-
-          if (prevWindowIndex >= 0 && prevPosition >= 0) {
-            actualExoPlayer.seekTo(prevWindowIndex, prevPosition)
-          }
-
-          actualExoPlayer.prepare()
-
-          firstFrameRendered?.cancel()
-          firstFrameRendered = CompletableDeferred()
-
-          actualExoPlayer.addListener(object : Player.Listener {
-            override fun onRenderedFirstFrame() {
-              firstFrameRendered?.complete(Unit)
-              actualExoPlayer.removeListener(this)
-
-              coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
-                if (cause is CancellationException) {
-                  actualExoPlayer.removeListener(this)
-                }
-              }
-            }
-          })
-
-          actualExoPlayer.addAnalyticsListener(object : AnalyticsListener {
-            override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
-              onAudioDetected()
-              actualExoPlayer.removeAnalyticsListener(this)
-
-              coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
-                if (cause is CancellationException) {
-                  actualExoPlayer.removeAnalyticsListener(this)
-                }
-              }
-            }
-          })
-
-          _hasContent = awaitForContentOrError()
+          ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
+            .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
         }
       }
+
+      actualExoPlayer.stop()
+      actualExoPlayer.playWhenReady = false
+      actualExoPlayer.setMediaSource(mediaSource)
+
+      if (prevWindowIndex >= 0 && prevPosition >= 0) {
+        actualExoPlayer.seekTo(prevWindowIndex, prevPosition)
+      }
+
+      actualExoPlayer.prepare()
+
+      firstFrameRendered?.cancel()
+      firstFrameRendered = CompletableDeferred()
+
+      actualExoPlayer.addListener(object : Player.Listener {
+        override fun onRenderedFirstFrame() {
+          firstFrameRendered?.complete(Unit)
+          actualExoPlayer.removeListener(this)
+
+          coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              actualExoPlayer.removeListener(this)
+            }
+          }
+        }
+      })
+
+      actualExoPlayer.addAnalyticsListener(object : AnalyticsListener {
+        override fun onAudioEnabled(eventTime: AnalyticsListener.EventTime, counters: DecoderCounters) {
+          onAudioDetected()
+          actualExoPlayer.removeAnalyticsListener(this)
+
+          coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+            if (cause is CancellationException) {
+              actualExoPlayer.removeAnalyticsListener(this)
+            }
+          }
+        }
+      })
+
+      _hasContent = awaitForContentOrError()
     }
   }
 

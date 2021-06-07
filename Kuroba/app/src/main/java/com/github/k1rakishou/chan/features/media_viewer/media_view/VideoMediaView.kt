@@ -47,7 +47,8 @@ class VideoMediaView(
   initialMediaViewState: VideoMediaViewState,
   mediaViewContract: MediaViewContract,
   private val viewModel: MediaViewerControllerViewModel,
-  private val cacheDataSourceFactory: DataSource.Factory,
+  private val cachedHttpDataSourceFactory: DataSource.Factory,
+  private val fileDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Video,
@@ -72,7 +73,8 @@ class VideoMediaView(
 
   private val mainVideoPlayer = ExoPlayerWrapper(
     context = context,
-    cacheDataSourceFactory = cacheDataSourceFactory,
+    cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+    fileDataSourceFactory = fileDataSourceFactory,
     mediaViewContract = mediaViewContract,
     onAudioDetected = {
       updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted())
@@ -213,7 +215,10 @@ class VideoMediaView(
       }
     )
 
-    if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
+    val canPreloadRemote = viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)
+    val mediaIsLocal = viewableMedia.mediaLocation is MediaLocation.Local
+
+    if (canPreloadRemote || mediaIsLocal) {
       preloadingJob = startFullVideoPreloading(viewableMedia.mediaLocation)
     }
   }

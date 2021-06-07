@@ -468,7 +468,7 @@ class CloseMediaActionHelper(
         return
       }
 
-      if (!scroller!!.computeScrollOffset()) {
+      if (scroller == null || !scroller!!.computeScrollOffset()) {
         endTracking()
 
         if (isFinishing) {

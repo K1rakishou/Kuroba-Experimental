@@ -58,11 +58,12 @@ class ImageReencodingPresenter(
 
   private val callback: ImageReencodingPresenterCallback
   private val chanDescriptor: ChanDescriptor
-  private val fileUuid: UUID
   private val imageOptions: ImageOptions
 
   private var scope = KurobaCoroutineScope()
   private var bitmapReencodeJob: Job? = null
+
+  val fileUuid: UUID
 
   val imageFormat: Bitmap.CompressFormat?
     get() {

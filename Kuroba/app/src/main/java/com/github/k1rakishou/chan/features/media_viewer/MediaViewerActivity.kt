@@ -33,6 +33,7 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 
 class MediaViewerActivity : ControllerHostActivity(),
@@ -270,6 +271,20 @@ class MediaViewerActivity : ControllerHostActivity(),
           ?.getBundle(MEDIA_VIEWER_PARAMS)
           ?.getParcelable<ViewableMediaParcelableHolder.ThreadMediaParcelableHolder>(THREAD_DESCRIPTOR_PARAM)
       }
+      VIEW_MIXED_MEDIA_ACTION -> {
+        Logger.d(TAG, "handleNewIntent() action=${action}")
+
+        return intent.extras
+          ?.getBundle(MEDIA_VIEWER_PARAMS)
+          ?.getParcelable<ViewableMediaParcelableHolder.MixedMediaParcelableHolder>(MIXED_MEDIA_PARAM)
+      }
+      VIEW_REPLY_ATTACH_MEDIA_ACTION -> {
+        Logger.d(TAG, "handleNewIntent() action=${action}")
+
+        return intent.extras
+          ?.getBundle(MEDIA_VIEWER_PARAMS)
+          ?.getParcelable<ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder>(REPLY_ATTACH_MEDIA_PARAM)
+      }
       Intent.ACTION_SEND -> {
         Logger.d(TAG, "handleNewIntent() action=${action}")
 
@@ -281,17 +296,33 @@ class MediaViewerActivity : ControllerHostActivity(),
 
         if (URLUtil.isFileUrl(uri)) {
           Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
-          return ViewableMediaParcelableHolder.LocalMediaParcelableHolder(listOf(uri))
-        } else if (URLUtil.isHttpUrl(uri) || URLUtil.isHttpsUrl(uri)) {
+          return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
+            local = listOf(MediaLocation.Local(uri, isUri = false)),
+            remote = emptyList()
+          )
+        }
+
+        if (URLUtil.isContentUrl(uri)) {
+          Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
+          return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
+            local = listOf(MediaLocation.Local(uri, isUri = true)),
+            remote = emptyList()
+          )
+        }
+
+        if (URLUtil.isHttpUrl(uri) || URLUtil.isHttpsUrl(uri)) {
           Logger.d(TAG, "handleNewIntent() action=${action} uri=$uri")
 
-          val finalUri = if (URLUtil.isHttpUrl(uri)) {
-            uri.replace("http", "https")
+          val finalUrl = if (URLUtil.isHttpUrl(uri)) {
+            uri.replaceFirst("http://", "https://")
           } else {
             uri
           }
 
-          return ViewableMediaParcelableHolder.RemoteMediaParcelableHolder(listOf(finalUri))
+          return ViewableMediaParcelableHolder.MixedMediaParcelableHolder(
+            local = emptyList(),
+            remote = listOf(MediaLocation.Remote(finalUrl))
+          )
         }
 
         Logger.e(TAG, "handleNewIntent() action=${action} Unsupported uri=$uri")
@@ -309,10 +340,56 @@ class MediaViewerActivity : ControllerHostActivity(),
 
     private const val VIEW_CATALOG_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.catalog.media.action"
     private const val VIEW_THREAD_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.thread.media.action"
+    private const val VIEW_MIXED_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.mixed.media.action"
+    private const val VIEW_REPLY_ATTACH_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.reply_attach.media.action"
 
     private const val MEDIA_VIEWER_PARAMS = "MEDIA_VIEWER_PARAMS"
     private const val CATALOG_DESCRIPTOR_PARAM = "CATALOG_DESCRIPTOR"
     private const val THREAD_DESCRIPTOR_PARAM = "THREAD_DESCRIPTOR"
+    private const val MIXED_MEDIA_PARAM = "MIXED_MEDIA"
+    private const val REPLY_ATTACH_MEDIA_PARAM = "REPLY_ATTACH_MEDIA"
+
+
+    @JvmStatic
+    fun replyAttachMedia(
+      context: Context,
+      replyUuidList: List<UUID>
+    ) {
+      val intent = Intent(context, MediaViewerActivity::class.java)
+      intent.action = VIEW_REPLY_ATTACH_MEDIA_ACTION
+      intent.putExtra(
+        MEDIA_VIEWER_PARAMS,
+        bundleOf(
+          Pair(
+            REPLY_ATTACH_MEDIA_PARAM,
+            ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder(replyUuidList)
+          )
+        )
+      )
+
+      context.startActivity(intent)
+    }
+
+    @JvmStatic
+    fun mixedMedia(
+      context: Context,
+      local: List<MediaLocation.Local>,
+      remote: List<MediaLocation.Remote>,
+    ) {
+      val intent = Intent(context, MediaViewerActivity::class.java)
+      intent.action = VIEW_MIXED_MEDIA_ACTION
+      intent.putExtra(
+        MEDIA_VIEWER_PARAMS,
+        bundleOf(
+          Pair(
+            MIXED_MEDIA_PARAM,
+            ViewableMediaParcelableHolder.MixedMediaParcelableHolder(local, remote)
+          )
+        )
+      )
+
+      context.startActivity(intent)
+    }
 
     fun catalogAlbum(
       context: Context,

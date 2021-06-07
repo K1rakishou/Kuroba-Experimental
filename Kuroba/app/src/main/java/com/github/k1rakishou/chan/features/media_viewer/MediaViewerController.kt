@@ -35,6 +35,7 @@ import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
+import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -278,7 +279,8 @@ class MediaViewerController(
       viewableMediaList = mediaViewerState.loadedMedia,
       previewThumbnailLocation = previewThumbnailLocation,
       mediaViewerScrollerHelper = mediaViewerScrollerHelper,
-      cacheDataSourceFactory = createCacheDataSourceFactory(mediaViewerState.loadedMedia),
+      cachedHttpDataSourceFactory = createCacheDataSourceFactory(mediaViewerState.loadedMedia),
+      fileDataSourceFactory = FileDataSource.Factory(),
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
       isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
       swipeDirection = { pager.swipeDirection }

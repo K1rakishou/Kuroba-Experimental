@@ -190,6 +190,8 @@ class FullImageMediaView(
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       preloadCancelableDownload = startFullImagePreloading(viewableMedia.mediaLocation)
+    } else if (viewableMedia.mediaLocation is MediaLocation.Local) {
+      fullImageDeferred.complete(File(viewableMedia.mediaLocation.path))
     }
   }
 

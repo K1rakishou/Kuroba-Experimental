@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.features.reencoding;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 import android.widget.CompoundButton;
@@ -34,6 +33,7 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
@@ -45,18 +45,13 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.Locale;
 import java.util.UUID;
 
 import javax.inject.Inject;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
 
 public class ImageOptionsController
         extends BaseFloatingController
@@ -189,16 +184,10 @@ public class ImageOptionsController
         viewHolder.setOnClickListener(this);
 
         preview.setOnClickListener(v -> {
-            boolean isCurrentlyVisible = optionsHolder.getVisibility() == VISIBLE;
-            optionsHolder.setVisibility(isCurrentlyVisible ? GONE : VISIBLE);
-            Point p = getDisplaySize(context);
-            int dimX1 = isCurrentlyVisible ? p.x : MATCH_PARENT;
-            int dimY1 = isCurrentlyVisible ? p.y : dp(300);
-            preview.setLayoutParams(new LinearLayout.LayoutParams(dimX1, dimY1, 0));
-            ConstraintLayout.LayoutParams params = (ConstraintLayout.LayoutParams) container.getLayoutParams();
-            params.width = isCurrentlyVisible ? p.x : dp(300);
-            params.height = WRAP_CONTENT;
-            container.setLayoutParams(params);
+            MediaViewerActivity.replyAttachMedia(
+                    context,
+                    Collections.singletonList(presenter.getFileUuid())
+            );
         });
 
         imageOptionsCancel.setOnClickListener(this);

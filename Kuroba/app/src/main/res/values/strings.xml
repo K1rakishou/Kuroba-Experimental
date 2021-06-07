@@ -1320,6 +1320,7 @@ Don't have a 4chan Pass?<br>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
-    <string name="media_viewer_media_is_not_supported">Media is not supported but you can still download it.</string>
+    <string name="media_viewer_media_is_not_supported_downloadable">Media is not supported but you still can download it.</string>
+    <string name="media_viewer_media_is_not_supported_not_downloadable">Media is not supported.</string>
 
 </resources>

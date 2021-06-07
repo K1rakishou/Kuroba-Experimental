@@ -2,7 +2,8 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/movable_container"
@@ -30,12 +31,12 @@
             android:layout_marginTop="32dp"
             android:layout_marginEnd="32dp"
             android:gravity="center_horizontal"
-            android:text="@string/media_viewer_media_is_not_supported"
             android:textColor="#fff"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@+id/warning_icon" />
+            app:layout_constraintTop_toBottomOf="@+id/warning_icon"
+            tools:text="@string/media_viewer_media_is_not_supported_downloadable"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 

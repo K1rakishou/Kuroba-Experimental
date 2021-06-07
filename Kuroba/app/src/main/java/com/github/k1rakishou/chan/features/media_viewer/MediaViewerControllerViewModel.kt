@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
@@ -14,6 +15,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -26,7 +28,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
@@ -37,6 +38,8 @@ class MediaViewerControllerViewModel : ViewModel() {
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
+  @Inject
+  lateinit var replyManager: ReplyManager
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
@@ -93,8 +96,8 @@ class MediaViewerControllerViewModel : ViewModel() {
           is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
             viewableMediaParcelableHolder.transitionInfo
           }
-          is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> null
-          is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> null
+          is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> null
+          is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> null
         }
 
         _transitionInfoFlow.emit(transitionInfo)
@@ -109,12 +112,11 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
           collectThreadMedia(viewableMediaParcelableHolder)
         }
-        is ViewableMediaParcelableHolder.LocalMediaParcelableHolder -> {
-          // TODO(KurobaEx):
-          null
+        is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> {
+          collectMixedMedia(viewableMediaParcelableHolder)
         }
-        is ViewableMediaParcelableHolder.RemoteMediaParcelableHolder -> {
-          collectMediaFromUrls(viewableMediaParcelableHolder)
+        is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> {
+          collectAttachReplyMedia(viewableMediaParcelableHolder)
         }
       }
 
@@ -127,17 +129,30 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
   }
 
-  private fun collectMediaFromUrls(
-    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.RemoteMediaParcelableHolder
+  private fun collectAttachReplyMedia(
+    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder
   ): MediaViewerControllerState? {
-    val viewableMediaList = viewableMediaParcelableHolder.urlList.mapNotNull { url ->
-      val actualUrl = url.toHttpUrlOrNull()
-        ?: return@mapNotNull null
+    val viewableMediaList = viewableMediaParcelableHolder.replyUuidList.mapNotNull { replyUuid ->
+      val replyFile = replyManager.getReplyFileByFileUuid(replyUuid)
+        .peekError { error -> Logger.e(TAG, "Failed to access reply file with UUID: $replyUuid", error) }
+        .valueOrNull()
 
-      val mediaLocation = MediaLocation.Remote(actualUrl)
-      val fileName = actualUrl.pathSegments.lastOrNull()
-        ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
-      val extension = StringUtils.extractFileNameExtension(url)
+      if (replyFile == null) {
+        return@mapNotNull null
+      }
+
+      val originalFileName = replyFile.getReplyFileMeta()
+        .peekError { error -> Logger.e(TAG, "Failed to read meta of file with UUID: $replyUuid", error) }
+        .valueOrNull()
+        ?.originalFileName
+
+      if (originalFileName == null) {
+        return@mapNotNull null
+      }
+
+      val mediaLocation = MediaLocation.Local(replyFile.fileOnDisk.absolutePath, isUri = false)
+      val fileName = StringUtils.removeExtensionFromFileName(originalFileName)
+      val extension = StringUtils.extractFileNameExtension(originalFileName)
 
       val meta = ViewableMediaMeta(
         ownerPostDescriptor = null,
@@ -170,6 +185,101 @@ class MediaViewerControllerViewModel : ViewModel() {
 
       return@mapNotNull ViewableMedia.Unsupported(mediaLocation, null, null, meta)
     }
+
+    if (viewableMediaList.isEmpty()) {
+      return null
+    }
+
+    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
+  }
+
+  private fun collectMixedMedia(
+    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.MixedMediaParcelableHolder
+  ): MediaViewerControllerState? {
+    val totalSize = viewableMediaParcelableHolder.local.size + viewableMediaParcelableHolder.remote.size
+    val viewableMediaList = mutableListWithCap<ViewableMedia>(totalSize)
+
+    val localMediaMapped = viewableMediaParcelableHolder.local.map { localMediaLocation ->
+      val mediaLocation = MediaLocation.Local(localMediaLocation.path, localMediaLocation.isUri)
+      val fileName = localMediaLocation.path.substringAfter("/")
+        .let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
+      val extension = StringUtils.extractFileNameExtension(fileName)
+
+      val meta = ViewableMediaMeta(
+        ownerPostDescriptor = null,
+        serverMediaName = fileName,
+        originalMediaName = null,
+        extension = extension,
+        mediaWidth = null,
+        mediaHeight = null,
+        mediaSize = null,
+        mediaHash = null,
+        isSpoiler = false
+      )
+
+      if (extension == null) {
+        return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+      }
+
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        ?: return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+
+      if (mimeType.startsWith("video/")) {
+        return@map ViewableMedia.Video(mediaLocation, null, null, meta)
+      } else if (mimeType.startsWith("image/")) {
+        if (mimeType.endsWith("gif")) {
+          return@map ViewableMedia.Gif(mediaLocation, null, null, meta)
+        } else {
+          return@map ViewableMedia.Image(mediaLocation, null, null, meta)
+        }
+      }
+
+      return@map ViewableMedia.Unsupported(mediaLocation, null, null, meta)
+    }
+
+    val remoteMediaMapped = viewableMediaParcelableHolder.remote.mapNotNull { remoteMediaLocation ->
+      if (remoteMediaLocation.urlRaw.toHttpUrlOrNull() == null) {
+        return@mapNotNull null
+      }
+
+      val fileName = remoteMediaLocation.url.pathSegments.lastOrNull()
+        ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
+      val extension = StringUtils.extractFileNameExtension(remoteMediaLocation.urlRaw)
+
+      val meta = ViewableMediaMeta(
+        ownerPostDescriptor = null,
+        serverMediaName = fileName,
+        originalMediaName = null,
+        extension = extension,
+        mediaWidth = null,
+        mediaHeight = null,
+        mediaSize = null,
+        mediaHash = null,
+        isSpoiler = false
+      )
+
+      if (extension == null) {
+        return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
+      }
+
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+        ?: return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
+
+      if (mimeType.startsWith("video/")) {
+        return@mapNotNull ViewableMedia.Video(remoteMediaLocation, null, null, meta)
+      } else if (mimeType.startsWith("image/")) {
+        if (mimeType.endsWith("gif")) {
+          return@mapNotNull ViewableMedia.Gif(remoteMediaLocation, null, null, meta)
+        } else {
+          return@mapNotNull ViewableMedia.Image(remoteMediaLocation, null, null, meta)
+        }
+      }
+
+      return@mapNotNull ViewableMedia.Unsupported(remoteMediaLocation, null, null, meta)
+    }
+
+    viewableMediaList.addAll(localMediaMapped)
+    viewableMediaList.addAll(remoteMediaMapped)
 
     if (viewableMediaList.isEmpty()) {
       return null
@@ -291,7 +401,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     BackgroundUtils.ensureBackgroundThread()
 
     val imageLocation = chanPostImage.imageUrl
-      ?.let { imageUrl -> MediaLocation.Remote(imageUrl) }
+      ?.let { imageUrl -> MediaLocation.Remote(imageUrl.toString()) }
 
     if (imageLocation == null) {
       // No actual image, nothing to do
@@ -299,12 +409,12 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
 
     val previewLocation = chanPostImage.actualThumbnailUrl
-      ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl) }
+      ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl.toString()) }
       ?: MediaLocation.Remote(DEFAULT_THUMBNAIL)
 
     val spoilerLocation = if (chanPostImage.spoiler) {
       chanPostImage.spoilerThumbnailUrl
-        ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl) }
+        ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl.toString()) }
     } else {
       null
     }
@@ -355,7 +465,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   companion object {
     private const val TAG = "MediaViewerControllerViewModel"
-    private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png").toHttpUrl()
+    private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png")
 
     @JvmStatic
     fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {
