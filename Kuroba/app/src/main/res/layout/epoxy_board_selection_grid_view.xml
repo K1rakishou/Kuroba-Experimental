@@ -14,10 +14,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:gravity="center_horizontal"
-        android:textSize="18sp"
-        android:maxLines="1"
+        android:textSize="16sp"
+        android:singleLine="true"
         android:ellipsize="end"
-        tools:text="/a/" />
+        tools:text="/verylongboardname/" />
 
     <com.google.android.material.textview.MaterialTextView
         android:id="@+id/board_name"

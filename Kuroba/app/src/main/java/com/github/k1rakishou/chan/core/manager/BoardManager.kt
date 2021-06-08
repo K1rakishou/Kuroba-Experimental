@@ -5,8 +5,8 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
+import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -79,7 +79,7 @@ class BoardManager(
 
         allLoadedSites.forEach { chanSiteData ->
           ordersMap[chanSiteData.siteDescriptor] = mutableListWithCap(64)
-          boardsMap[chanSiteData.siteDescriptor] = mutableMapWithCap(64)
+          boardsMap[chanSiteData.siteDescriptor] = linkedMapWithCap(64)
         }
 
         loadBoardsResult.value.forEach { (siteDescriptor, chanBoards) ->
@@ -201,18 +201,15 @@ class BoardManager(
 
   suspend fun activateDeactivateBoards(
     siteDescriptor: SiteDescriptor,
-    boardDescriptorsSet: LinkedHashSet<BoardDescriptor>,
+    boardDescriptors: Collection<BoardDescriptor>,
     activate: Boolean
   ): Boolean {
-    if (boardDescriptorsSet.isEmpty()) {
+    if (boardDescriptors.isEmpty()) {
       return false
     }
 
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
-
-    val boardDescriptors = boardDescriptorsSet
-      .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
 
     // Very bad, but whatever we only do this in one place where it's not critical
     val result = boardRepository.activateDeactivateBoards(

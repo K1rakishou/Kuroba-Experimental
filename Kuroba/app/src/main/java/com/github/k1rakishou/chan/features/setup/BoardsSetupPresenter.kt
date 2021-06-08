@@ -128,7 +128,7 @@ class BoardsSetupPresenter(
 
     val activateResult = boardManager.activateDeactivateBoards(
       siteDescriptor = boardDescriptor.siteDescriptor,
-      boardDescriptorsSet = linkedSetOf(boardDescriptor),
+      boardDescriptors = linkedSetOf(boardDescriptor),
       activate = true
     )
 

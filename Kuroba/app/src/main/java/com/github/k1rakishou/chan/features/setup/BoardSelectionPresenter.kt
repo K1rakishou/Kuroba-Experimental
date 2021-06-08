@@ -8,7 +8,7 @@ import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
-import com.github.k1rakishou.chan.utils.AlphanumComparator
+import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -124,7 +124,11 @@ class BoardSelectionPresenter(
 
     boardManager.viewAllBoards(chanSiteData.siteDescriptor, iteratorFunc)
 
-    return boardCellDataList.sortedWith(COMPARATOR)
+    return InputWithQuerySorter.sort(
+      input = boardCellDataList,
+      query = query,
+      textSelector = { boardCellData -> boardCellData.boardDescriptor.boardCode }
+    )
   }
 
   private fun setState(state: BoardSelectionControllerState) {
@@ -133,9 +137,5 @@ class BoardSelectionPresenter(
 
   companion object {
     private const val TAG = "BoardSelectionPresenter"
-
-    private val COMPARATOR = AlphanumComparator<BoardCellData> { boardCellData ->
-      boardCellData.boardDescriptor.boardCode
-    }
   }
 }
