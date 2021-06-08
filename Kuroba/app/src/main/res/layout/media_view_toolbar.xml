@@ -14,7 +14,8 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="6dp"
-        android:src="@drawable/ic_clear_white_24dp" />
+        android:src="@drawable/ic_clear_white_24dp"
+        android:tint="#fff" />
 
     <LinearLayout
         android:layout_width="0dp"
@@ -55,7 +56,8 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="6dp"
-        android:src="@drawable/ic_subdirectory_arrow_left_white_24dp" />
+        android:src="@drawable/ic_subdirectory_arrow_left_white_24dp"
+        android:tint="#fff" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/toolbar_reload_button"
@@ -65,7 +67,8 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="6dp"
-        android:src="@drawable/ic_refresh_white_24dp" />
+        android:src="@drawable/ic_refresh_white_24dp"
+        android:tint="#fff" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/toolbar_download_button"
@@ -75,7 +78,8 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="6dp"
-        android:src="@drawable/ic_file_download_white_24dp" />
+        android:src="@drawable/ic_file_download_white_24dp"
+        android:tint="#fff" />
 
     <androidx.appcompat.widget.AppCompatImageButton
         android:id="@+id/toolbar_options_button"
@@ -85,6 +89,7 @@
         android:clickable="true"
         android:focusable="true"
         android:padding="6dp"
-        android:src="@drawable/ic_more_vert_white_24dp" />
+        android:src="@drawable/ic_more_vert_white_24dp"
+        android:tint="#fff" />
 
 </LinearLayout>

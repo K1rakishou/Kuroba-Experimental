@@ -164,6 +164,7 @@ class PostImageThumbnailViewContainer(
       thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
       thumbnailFileSize.setVisibilityFast(View.VISIBLE)
       postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
+      fileInfoContainer.setVisibilityFast(View.VISIBLE)
 
       val newInfoTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
         .coerceIn(thumbnailInfoTextSizeMin, thumbnailInfoTextSizeMax)
@@ -189,6 +190,7 @@ class PostImageThumbnailViewContainer(
       thumbnailFileDimens.setVisibilityFast(View.GONE)
       thumbnailFileSize.setVisibilityFast(View.GONE)
       postFileNameInfoTextView.setVisibilityFast(View.GONE)
+      fileInfoContainer.setVisibilityFast(View.GONE)
     }
   }
 
