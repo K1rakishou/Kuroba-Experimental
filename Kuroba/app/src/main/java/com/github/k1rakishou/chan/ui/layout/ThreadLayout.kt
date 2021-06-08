@@ -225,6 +225,8 @@ class ThreadLayout @JvmOverloads constructor(
     this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
     this.threadControllerType = threadControllerType
 
+    Logger.d(TAG, "ThreadLayout.create(threadControllerType=$threadControllerType)")
+
     // View binding
     loadView = findViewById(R.id.loadview)
     replyButton = findViewById(R.id.reply_button)
@@ -266,6 +268,8 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   fun destroy() {
+    Logger.d(TAG, "ThreadLayout.destroy(threadControllerType=$threadControllerType)")
+
     drawerCallbacks = null
     threadControllerType = null
 

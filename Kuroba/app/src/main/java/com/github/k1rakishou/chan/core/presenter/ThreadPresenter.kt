@@ -201,6 +201,8 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    Logger.d(TAG, "bindChanDescriptor(chanDescriptor=$chanDescriptor)")
+
     threadPresenterCallback?.showLoading()
 
     this.currentLoadThreadJob?.cancel()
@@ -235,6 +237,8 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
+    Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
+
     if (currentChanDescriptor != null) {
       chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)

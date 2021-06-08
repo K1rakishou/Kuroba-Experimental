@@ -174,7 +174,7 @@ class ChanThreadTicker(
   }
 
   fun stopTicker(resetCurrentChanDescriptor: Boolean) {
-    Logger.d(TAG, "stopTicker()")
+    Logger.d(TAG, "stopTicker(resetCurrentChanDescriptor=$resetCurrentChanDescriptor)")
 
     chanTickerData.resetAll()
 

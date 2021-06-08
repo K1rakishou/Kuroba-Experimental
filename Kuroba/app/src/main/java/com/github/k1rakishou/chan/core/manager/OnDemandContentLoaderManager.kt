@@ -184,7 +184,7 @@ class OnDemandContentLoaderManager(
     BackgroundUtils.ensureMainThread()
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
 
-    Logger.d(TAG, "cancelAllForLoadable called for $threadDescriptor")
+    Logger.d(TAG, "cancelAllForDescriptor called for $threadDescriptor")
 
     rwLock.write {
       val postLoaderDataList = activeLoaders[threadDescriptor]
