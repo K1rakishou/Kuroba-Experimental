@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
@@ -21,7 +22,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMen
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
-import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -66,8 +66,10 @@ class MediaViewerController(
   lateinit var chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
 
-  private lateinit var mediaViewerRootLayout: TouchBlockingFrameLayoutNoBackground
+  private lateinit var mediaViewerRootLayout: MediaViewerRootLayout
   private lateinit var appearPreviewImage: AppearTransitionImageView
   private lateinit var pager: OptionalSwipeViewPager
   private lateinit var mediaViewerToolbar: MediaViewerToolbar

@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImage
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerRootLayout;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView;
@@ -327,6 +328,7 @@ public interface ActivityComponent {
     void inject(PostCell postCell);
     void inject(AlbumViewCell albumViewCell);
     void inject(NavigationControllerContainerLayout navigationControllerContainerLayout);
+    void inject(MediaViewerRootLayout mediaViewerRootLayout);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);
     void inject(MainControllerPresenter mainControllerPresenter);
