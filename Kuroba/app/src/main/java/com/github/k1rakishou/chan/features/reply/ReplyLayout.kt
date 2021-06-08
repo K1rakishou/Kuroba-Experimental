@@ -618,7 +618,10 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override suspend fun bindReplyImages(chanDescriptor: ChanDescriptor) {
-    replyLayoutFilesArea.onBind(chanDescriptor, threadListLayoutFilesCallback!!, this)
+    val callback = threadListLayoutFilesCallback
+      ?: return
+
+    replyLayoutFilesArea.onBind(chanDescriptor, callback, this)
   }
 
   override fun unbindReplyImages(chanDescriptor: ChanDescriptor) {
