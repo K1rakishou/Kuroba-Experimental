@@ -324,7 +324,6 @@ internal class ResolveDuplicateImagesPresenter(
     }
 
     val fileNameWithExtension = fileManager.getName(localImage)
-
     val fileName = StringUtils.removeExtensionFromFileName(fileNameWithExtension)
     val extension = StringUtils.extractFileNameExtension(fileNameWithExtension)
 

@@ -280,9 +280,15 @@ class GifMediaView(
   private suspend fun setBigGifFromFile(file: File) {
     coroutineScope {
       val drawable = try {
-        GifDrawable(file.absolutePath)
+        createGifDrawableSafe(file)
       } catch (e: Throwable) {
         Logger.e(TAG, "Error while trying to set a gif file", e)
+
+        if (e is GifIsTooBigException) {
+          cancellableToast.showToast(context, "Failed to draw Gif. Error: ${e.message}")
+          return@coroutineScope
+        }
+
         thumbnailMediaView.setError(e.errorMessageOrClassName())
         return@coroutineScope
       }
@@ -309,6 +315,16 @@ class GifMediaView(
 
       animationAwaitable.await()
     }
+  }
+
+  private fun createGifDrawableSafe(file: File): GifDrawable {
+    val gifDrawable = GifDrawable(file.absolutePath)
+
+    if (gifDrawable.allocationByteCount > MAX_GIF_SIZE) {
+      throw GifIsTooBigException(gifDrawable.allocationByteCount)
+    }
+
+    return gifDrawable
   }
 
   private fun startFullGifPreloading(mediaLocationRemote: MediaLocation.Remote): CancelableDownload? {
@@ -426,7 +442,11 @@ class GifMediaView(
     }
   }
 
+  private class GifIsTooBigException(sizeInBytes: Long) : Exception("Gif is too big! (${sizeInBytes / (1024 * 1024)} MB)")
+
   companion object {
     private const val TAG = "GifMediaView"
+    // 99 MB. Max - 1 just in case. The max allowed by Android Canvas is 100 MB.
+    private const val MAX_GIF_SIZE = 99 * 1024 * 1024
   }
 }
