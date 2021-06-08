@@ -14,7 +14,6 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
@@ -63,8 +62,6 @@ class VideoMediaView(
 
   @Inject
   lateinit var cacheHandler: CacheHandler
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
@@ -125,6 +122,8 @@ class VideoMediaView(
       },
       invalidateFunc = { invalidate() },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
+      topPaddingFunc = { toolbarHeight() },
+      bottomPaddingFunc = { playerControlsHeight() },
       topGestureInfo = CloseMediaActionHelper.GestureInfo(
         gestureLabelText = getString(R.string.download),
         onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
@@ -220,52 +219,6 @@ class VideoMediaView(
 
     if (canPreloadRemote || mediaIsLocal) {
       preloadingJob = startFullVideoPreloading(viewableMedia.mediaLocation)
-    }
-  }
-
-  private fun updateAudioIcon(soundCurrentlyMuted: Boolean) {
-    muteUnmuteButton.setEnabledFast(true)
-
-    if (soundCurrentlyMuted) {
-      muteUnmuteButton.setImageResource(R.drawable.ic_volume_off_white_24dp)
-    } else {
-      muteUnmuteButton.setImageResource(R.drawable.ic_volume_up_white_24dp)
-    }
-  }
-
-  private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
-    return scope.launch {
-      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected == true
-
-      val showBufferingJob = scope.launch {
-        delay(125L)
-        bufferingProgressView.setVisibilityFast(View.VISIBLE)
-      }
-
-      try {
-        actualVideoPlayerView.setOnClickListener(null)
-        actualVideoPlayerView.useController = true
-        actualVideoPlayerView.controllerAutoShow = false
-        actualVideoPlayerView.controllerHideOnTouch = false
-        actualVideoPlayerView.controllerShowTimeoutMs = -1
-        actualVideoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
-        actualVideoPlayerView.useArtwork = false
-        actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
-        actualVideoPlayerView.player = mainVideoPlayer.actualExoPlayer
-
-        updatePlayerControlsInsets()
-        updateExoBufferingViewColors()
-
-        mainVideoPlayer.preload(mediaLocation, mediaViewState.prevPosition, mediaViewState.prevWindowIndex)
-        fullVideoDeferred.complete(Unit)
-      } catch (error: Throwable) {
-        fullVideoDeferred.completeExceptionally(error)
-      } finally {
-        preloadingJob = null
-
-        showBufferingJob.cancel()
-        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
-      }
     }
   }
 
@@ -381,6 +334,65 @@ class VideoMediaView(
 
   override fun onInsetsChanged() {
     updatePlayerControlsInsets()
+  }
+
+  private fun playerControlsHeight(): Int {
+    val bottomInset = globalWindowInsetsManager.bottom()
+
+    if (!actualVideoPlayerView.isControllerVisible) {
+      return bottomInset
+    }
+
+    return actualVideoPlayerView
+      .findChild { childView -> childView.id == R.id.exo_controls_view_root }
+      ?.height
+      ?: bottomInset
+  }
+
+  private fun updateAudioIcon(soundCurrentlyMuted: Boolean) {
+    muteUnmuteButton.setEnabledFast(true)
+
+    if (soundCurrentlyMuted) {
+      muteUnmuteButton.setImageResource(R.drawable.ic_volume_off_white_24dp)
+    } else {
+      muteUnmuteButton.setImageResource(R.drawable.ic_volume_up_white_24dp)
+    }
+  }
+
+  private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
+    return scope.launch {
+      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected == true
+
+      val showBufferingJob = scope.launch {
+        delay(125L)
+        bufferingProgressView.setVisibilityFast(View.VISIBLE)
+      }
+
+      try {
+        actualVideoPlayerView.setOnClickListener(null)
+        actualVideoPlayerView.useController = true
+        actualVideoPlayerView.controllerAutoShow = false
+        actualVideoPlayerView.controllerHideOnTouch = false
+        actualVideoPlayerView.controllerShowTimeoutMs = -1
+        actualVideoPlayerView.setShowBuffering(PlayerView.SHOW_BUFFERING_NEVER)
+        actualVideoPlayerView.useArtwork = false
+        actualVideoPlayerView.setShutterBackgroundColor(Color.TRANSPARENT)
+        actualVideoPlayerView.player = mainVideoPlayer.actualExoPlayer
+
+        updatePlayerControlsInsets()
+        updateExoBufferingViewColors()
+
+        mainVideoPlayer.preload(mediaLocation, mediaViewState.prevPosition, mediaViewState.prevWindowIndex)
+        fullVideoDeferred.complete(Unit)
+      } catch (error: Throwable) {
+        fullVideoDeferred.completeExceptionally(error)
+      } finally {
+        preloadingJob = null
+
+        showBufferingJob.cancel()
+        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
+      }
+    }
   }
 
   private fun updateMuteUnMuteState() {

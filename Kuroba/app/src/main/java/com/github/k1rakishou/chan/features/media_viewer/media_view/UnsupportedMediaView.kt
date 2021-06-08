@@ -63,6 +63,8 @@ class UnsupportedMediaView(
       movableContainerFunc = { movableContainer },
       invalidateFunc = { invalidate() },
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
+      topPaddingFunc = { toolbarHeight() },
+      bottomPaddingFunc = { globalWindowInsetsManager.bottom() },
       topGestureInfo = CloseMediaActionHelper.GestureInfo(
         gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
         onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },

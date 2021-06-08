@@ -2,11 +2,13 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbarViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -32,6 +34,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var chanPostBackgroundColorStorage: ChanPostBackgroundColorStorage
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var _mediaViewToolbar: MediaViewerToolbar? = null
   protected val mediaViewToolbar: MediaViewerToolbar?
@@ -49,6 +53,17 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     get() = _bound
   val shown: Boolean
     get() = _shown
+
+  fun toolbarHeight(): Int {
+    val toolbar = mediaViewToolbar
+      ?: return 0
+
+    if (toolbar.visibility != View.VISIBLE) {
+      return 0
+    }
+
+    return toolbar.toolbarHeight()
+  }
 
   fun markMediaAsDownloaded() {
     _mediaViewToolbar?.markMediaAsDownloaded()

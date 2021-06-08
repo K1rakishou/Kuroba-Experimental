@@ -35,6 +35,8 @@ class CloseMediaActionHelper(
   private val movableContainerFunc: () -> View,
   private val invalidateFunc: () -> Unit,
   private val closeMediaViewer: () -> Unit,
+  private val topPaddingFunc: () -> Int,
+  private val bottomPaddingFunc: () -> Int,
   private val topGestureInfo: GestureInfo? = null,
   private val bottomGestureInfo: GestureInfo? = null
 ) {
@@ -274,12 +276,12 @@ class CloseMediaActionHelper(
     }
 
     val width = canvas.width
-    if (width == 0) {
+    if (width <= 0) {
       return
     }
 
     val height = canvas.height
-    if (height == 0) {
+    if (height <= 0) {
       return
     }
 
@@ -287,12 +289,6 @@ class CloseMediaActionHelper(
       currentTouchPosition == null -> return
       currentTouchPosition!!.y == 0f -> 1f
       else -> currentTouchPosition!!.y
-    }
-
-    val centerPointY = if (height > width) {
-      height - (height / 3f)
-    } else {
-      height / 2f
     }
 
     val textToTouchPositionOffset = if (height > width) {
@@ -305,6 +301,16 @@ class CloseMediaActionHelper(
       DEAD_ZONE_HEIGHT_PORT
     } else {
       DEAD_ZONE_HEIGHT_LAND
+    }
+
+    val centerPointY = initialTouchPosition?.y
+      ?.coerceIn(
+        textToTouchPositionOffset + (TEXT_SIZE / 2f) + topPaddingFunc(),
+        height - (TEXT_SIZE / 2f) - textToTouchPositionOffset - bottomPaddingFunc()
+      )
+
+    if (centerPointY == null) {
+      return
     }
 
     if (topGestureInfo != null && topGestureInfo.gestureCanBeExecuted()) {
