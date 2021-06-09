@@ -70,6 +70,7 @@ class CloseMediaActionHelper(
   private var isInsideBottomGestureBounds = false
 
   private var initialTouchPosition: PointF? = null
+  private var initialTouchPositionForActions: PointF? = null
   private var currentTouchPosition: PointF? = null
   private var trackingStart: Long? = null
   private var tracking = false
@@ -181,6 +182,10 @@ class CloseMediaActionHelper(
 
     currentTouchPosition!!.set(event.x, event.y)
 
+    if (SystemClock.elapsedRealtime() - trackingStart!! >= tapTimeout && initialTouchPositionForActions == null) {
+      initialTouchPositionForActions = PointF(event.x, event.y)
+    }
+
     val deltaX = event.x - initialTouchPosition!!.x
     val deltaY = event.y - initialTouchPosition!!.y
 
@@ -234,6 +239,7 @@ class CloseMediaActionHelper(
       velocityTracker = null
 
       currentTouchPosition = null
+      initialTouchPositionForActions = null
       trackingStart = null
 
       isInsideTopGestureBounds = false
@@ -303,7 +309,7 @@ class CloseMediaActionHelper(
       DEAD_ZONE_HEIGHT_LAND
     }
 
-    val centerPointY = initialTouchPosition?.y
+    val centerPointY = initialTouchPositionForActions?.y
       ?.coerceIn(
         textToTouchPositionOffset + (TEXT_SIZE / 2f) + topPaddingFunc(),
         height - (TEXT_SIZE / 2f) - textToTouchPositionOffset - bottomPaddingFunc()
@@ -317,19 +323,19 @@ class CloseMediaActionHelper(
       isInsideTopGestureBounds = currentTouchPositionY < centerPointY
         && ((centerPointY - currentTouchPositionY) > deadZoneHeight)
 
-      val topTextPosition = centerPointY - textToTouchPositionOffset - (TEXT_SIZE / 2)
+      val topTextPositionY = centerPointY - textToTouchPositionOffset - (TEXT_SIZE / 2)
       val topText = getTopText(isInsideTopGestureBounds, topGestureInfo, width)
-      val topTextScale = (1f - (currentTouchPositionY / height)).coerceIn(MIN_SCALE, MAX_SCALE)
+      val topTextScale = calcTopTextScale(currentTouchPositionY, centerPointY, textToTouchPositionOffset)
 
       canvas.withSave {
         canvas.scale(
           topTextScale,
           topTextScale,
           topText.width / 2f,
-          topTextPosition + (topText.height / 2f)
+          topTextPositionY + (topText.height / 2f)
         )
 
-        canvas.translate(0f, topTextPosition)
+        canvas.translate(0f, topTextPositionY)
         topText.draw(this)
       }
     } else {
@@ -340,24 +346,38 @@ class CloseMediaActionHelper(
       isInsideBottomGestureBounds = currentTouchPositionY > centerPointY
         && ((currentTouchPositionY - centerPointY) > deadZoneHeight)
 
-      val bottomTextPosition = centerPointY + textToTouchPositionOffset - (TEXT_SIZE / 2)
+      val bottomTextPositionY = centerPointY + textToTouchPositionOffset - (TEXT_SIZE / 2)
       val bottomText = getBottomText(isInsideBottomGestureBounds, bottomGestureInfo, width)
-      val bottomTextScale = (currentTouchPositionY / height).coerceIn(MIN_SCALE, MAX_SCALE)
+      val bottomTextScale = calcBottomTextScale(currentTouchPositionY, centerPointY, textToTouchPositionOffset)
 
       canvas.withSave {
         canvas.scale(
           bottomTextScale,
           bottomTextScale,
           bottomText.width / 2f,
-          bottomTextPosition + (bottomText.height / 2f)
+          bottomTextPositionY + (bottomText.height / 2f)
         )
 
-        canvas.translate(0f, bottomTextPosition)
+        canvas.translate(0f, bottomTextPositionY)
         bottomText.draw(this)
       }
     } else {
       isInsideBottomGestureBounds = false
     }
+  }
+
+  private fun calcBottomTextScale(currentTouchPositionY: Float, centerPointY: Float, textToTouchPositionOffset: Int): Float {
+    val bottomScalePositionY = centerPointY + textToTouchPositionOffset - (TEXT_SIZE / 2f)
+    val distanceToTopScalePosY = (bottomScalePositionY - currentTouchPositionY)
+
+    return (1f - (distanceToTopScalePosY / textToTouchPositionOffset)).coerceIn(.3f, 1f)
+  }
+
+  private fun calcTopTextScale(currentTouchPositionY: Float, centerPointY: Float, textToTouchPositionOffset: Int): Float {
+    val topScalePositionY = centerPointY - textToTouchPositionOffset + (TEXT_SIZE / 2f)
+    val distanceToTopScalePosY = (currentTouchPositionY - topScalePositionY)
+
+    return (1f - (distanceToTopScalePosY / textToTouchPositionOffset)).coerceIn(.3f, 1f)
   }
 
   private fun getBottomText(
@@ -532,8 +552,6 @@ class CloseMediaActionHelper(
     private val DEAD_ZONE_HEIGHT_LAND = dp(40f)
     private val TEXT_SIZE = sp(60f).toFloat()
     private const val SCROLL_ANIMATION_DURATION = 250
-    private const val MIN_SCALE = 0.3f
-    private const val MAX_SCALE = 3f
   }
 
 }
