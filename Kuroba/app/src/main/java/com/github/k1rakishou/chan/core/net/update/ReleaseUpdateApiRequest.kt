@@ -16,9 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.net.update
 
-import android.os.Build
 import android.text.Spanned
-import androidx.core.text.parseAsHtml
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
@@ -26,9 +24,6 @@ import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest.Releas
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.google.gson.stream.JsonReader
-import com.vladsch.flexmark.html.HtmlRenderer
-import com.vladsch.flexmark.parser.Parser
-import com.vladsch.flexmark.util.ast.Node
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -64,18 +59,7 @@ class ReleaseUpdateApiRequest(
   
   private fun readBody(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {
     val updateComment = reader.nextString()
-
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-      val updateLog: Node = Parser.builder()
-        .build()
-        .parse(updateComment)
-      
-      val changelog = HtmlRenderer.builder().build().render(updateLog)
-      
-      responseRelease.body = ("Changelog:\n${changelog}".trimIndent()).parseAsHtml()
-    } else {
-      responseRelease.body = "Changelog:\n${updateComment}".trimIndent().toSpanned()
-    }
+    responseRelease.body = "Changelog:\n${updateComment}".trimIndent().toSpanned()
   }
   
   private fun readApkUrl(reader: JsonReader, responseRelease: ReleaseUpdateApiResponse) {

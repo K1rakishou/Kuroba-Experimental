@@ -282,8 +282,6 @@ dependencies {
     implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
-    // noinspection GradleDependency we want to get rid of this dependency eventually.
-    implementation 'com.vladsch.flexmark:flexmark:0.60.2'
     implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"
     implementation "io.reactivex.rxjava2:rxandroid:${versions.rxandroid}"
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
