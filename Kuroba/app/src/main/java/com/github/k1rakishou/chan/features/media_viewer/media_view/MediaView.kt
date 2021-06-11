@@ -10,6 +10,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbarViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -39,6 +40,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   lateinit var chanPostBackgroundColorStorage: ChanPostBackgroundColorStorage
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+
+  private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
   private var _mediaViewToolbar: MediaViewerToolbar? = null
   protected val mediaViewToolbar: MediaViewerToolbar?
@@ -199,6 +202,12 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.media_viewer_open_album_action),
           onGestureTriggeredFunc = { mediaViewContract.openAlbum(viewableMedia) },
           gestureCanBeExecuted = {
+            val mediaViewerOpenedFromAlbum = controllerViewModel.mediaViewerOptions.value.mediaViewerOpenedFromAlbum
+            if (mediaViewerOpenedFromAlbum) {
+              // To avoid being able to open nested album controllers.
+              return@GestureInfo false
+            }
+
             return@GestureInfo viewableMedia.viewableMediaMeta.ownerPostDescriptor != null
               && mediaViewContract.viewerChanDescriptor != null
           }

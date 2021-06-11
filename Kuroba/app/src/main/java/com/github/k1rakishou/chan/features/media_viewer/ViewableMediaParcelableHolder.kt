@@ -88,7 +88,7 @@ sealed class ViewableMediaParcelableHolder {
 }
 
 @Parcelize
-data class MediaViewerOptions(val showGoToPostToolbarButton: Boolean = false) : Parcelable
+data class MediaViewerOptions(val mediaViewerOpenedFromAlbum: Boolean = false) : Parcelable
 
 sealed class ViewableMedia(
   open val mediaLocation: MediaLocation,

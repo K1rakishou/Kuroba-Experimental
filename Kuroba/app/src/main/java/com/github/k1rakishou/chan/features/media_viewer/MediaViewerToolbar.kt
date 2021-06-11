@@ -262,7 +262,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
   private fun updateToolbarStateFromViewOptions(mediaViewerOptions: MediaViewerOptions) {
     toolbarGoToPostButton.setVisibilityFast(
-      if (mediaViewerOptions.showGoToPostToolbarButton) VISIBLE else GONE
+      if (mediaViewerOptions.mediaViewerOpenedFromAlbum) VISIBLE else GONE
     )
   }
 

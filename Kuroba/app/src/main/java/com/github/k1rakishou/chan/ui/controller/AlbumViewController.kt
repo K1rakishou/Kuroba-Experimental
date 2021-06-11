@@ -431,7 +431,7 @@ class AlbumViewController(
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
-          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
+          mediaViewerOptions = MediaViewerOptions(mediaViewerOpenedFromAlbum = true)
         )
       }
       is ChanDescriptor.ThreadDescriptor -> {
@@ -441,7 +441,7 @@ class AlbumViewController(
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
-          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
+          mediaViewerOptions = MediaViewerOptions(mediaViewerOpenedFromAlbum = true)
         )
       }
     }
