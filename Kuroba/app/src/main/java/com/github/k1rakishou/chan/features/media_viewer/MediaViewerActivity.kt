@@ -387,12 +387,13 @@ class MediaViewerActivity : ControllerHostActivity(),
       context.startActivity(intent)
     }
 
-    fun catalogAlbum(
+    fun catalogMedia(
       context: Context,
       catalogDescriptor: ChanDescriptor.CatalogDescriptor,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,
       lastTouchCoordinates: Point,
+      mediaViewerOptions: MediaViewerOptions
     ) {
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_CATALOG_MEDIA_ACTION
@@ -408,7 +409,8 @@ class MediaViewerActivity : ControllerHostActivity(),
                 transitionThumbnailUrl = transitionThumbnailUrl,
                 lastTouchPosX = lastTouchCoordinates.x,
                 lastTouchPosY = lastTouchCoordinates.y,
-              )
+              ),
+              mediaViewerOptions = mediaViewerOptions
             )
           )
         )
@@ -417,12 +419,13 @@ class MediaViewerActivity : ControllerHostActivity(),
       context.startActivity(intent)
     }
 
-    fun threadAlbum(
+    fun threadMedia(
       context: Context,
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,
       lastTouchCoordinates: Point,
+      mediaViewerOptions: MediaViewerOptions
     ) {
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_THREAD_MEDIA_ACTION
@@ -438,7 +441,8 @@ class MediaViewerActivity : ControllerHostActivity(),
                 transitionThumbnailUrl = transitionThumbnailUrl,
                 lastTouchPosX = lastTouchCoordinates.x,
                 lastTouchPosY = lastTouchCoordinates.y,
-              )
+              ),
+              mediaViewerOptions = mediaViewerOptions
             )
           )
         )

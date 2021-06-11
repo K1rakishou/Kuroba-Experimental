@@ -25,7 +25,8 @@ sealed class ViewableMediaParcelableHolder {
   data class CatalogMediaParcelableHolder(
     val catalogDescriptorParcelable: DescriptorParcelable,
     val initialImageUrl: String?,
-    val transitionInfo: TransitionInfo?
+    val transitionInfo: TransitionInfo?,
+    val mediaViewerOptions: MediaViewerOptions
   ) : ViewableMediaParcelableHolder(), Parcelable {
     @IgnoredOnParcel
     val catalogDescriptor by lazy { catalogDescriptorParcelable.toChanDescriptor() as ChanDescriptor.CatalogDescriptor }
@@ -34,12 +35,14 @@ sealed class ViewableMediaParcelableHolder {
       fun fromCatalogDescriptor(
         catalogDescriptor: ChanDescriptor.CatalogDescriptor,
         initialImageUrl: String?,
-        transitionInfo: TransitionInfo?
+        transitionInfo: TransitionInfo?,
+        mediaViewerOptions: MediaViewerOptions
       ) : CatalogMediaParcelableHolder {
         return CatalogMediaParcelableHolder(
           catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor),
           initialImageUrl = initialImageUrl,
-          transitionInfo = transitionInfo
+          transitionInfo = transitionInfo,
+          mediaViewerOptions = mediaViewerOptions
         )
       }
     }
@@ -49,7 +52,8 @@ sealed class ViewableMediaParcelableHolder {
   data class ThreadMediaParcelableHolder(
     val threadDescriptorParcelable: DescriptorParcelable,
     val initialImageUrl: String?,
-    val transitionInfo: TransitionInfo?
+    val transitionInfo: TransitionInfo?,
+    val mediaViewerOptions: MediaViewerOptions
   ) : ViewableMediaParcelableHolder(), Parcelable {
     @IgnoredOnParcel
     val threadDescriptor by lazy { threadDescriptorParcelable.toChanDescriptor() as ChanDescriptor.ThreadDescriptor }
@@ -58,12 +62,14 @@ sealed class ViewableMediaParcelableHolder {
       fun fromThreadDescriptor(
         threadDescriptor: ChanDescriptor.ThreadDescriptor,
         initialImageUrl: String?,
-        transitionInfo: TransitionInfo?
+        transitionInfo: TransitionInfo?,
+        mediaViewerOptions: MediaViewerOptions
       ) : ThreadMediaParcelableHolder {
         return ThreadMediaParcelableHolder(
           threadDescriptorParcelable = DescriptorParcelable.fromDescriptor(threadDescriptor),
           initialImageUrl = initialImageUrl,
-          transitionInfo = transitionInfo
+          transitionInfo = transitionInfo,
+          mediaViewerOptions = mediaViewerOptions
         )
       }
     }
@@ -80,6 +86,9 @@ sealed class ViewableMediaParcelableHolder {
   ) : ViewableMediaParcelableHolder(), Parcelable
 
 }
+
+@Parcelize
+data class MediaViewerOptions(val showGoToPostToolbarButton: Boolean = false) : Parcelable
 
 sealed class ViewableMedia(
   open val mediaLocation: MediaLocation,

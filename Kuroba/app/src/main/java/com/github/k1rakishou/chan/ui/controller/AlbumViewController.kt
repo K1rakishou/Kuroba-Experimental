@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
@@ -310,21 +311,23 @@ class AlbumViewController(
 
     when (descriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        MediaViewerActivity.catalogAlbum(
+        MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = descriptor,
           initialImageUrl = images[index].imageUrl?.toString(),
           transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
-          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
+          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
         )
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        MediaViewerActivity.threadAlbum(
+        MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = descriptor,
           initialImageUrl = images[index].imageUrl?.toString(),
           transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
-          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
+          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
         )
       }
     }

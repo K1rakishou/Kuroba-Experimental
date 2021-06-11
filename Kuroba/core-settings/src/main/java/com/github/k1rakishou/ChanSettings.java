@@ -16,6 +16,11 @@
  */
 package com.github.k1rakishou;
 
+import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -28,11 +33,6 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
-
-import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -108,6 +108,7 @@ public class ChanSettings {
     public enum ImageGestureActionType implements OptionSettingItem {
         SaveImage("save_image"),
         CloseImage("close_image"),
+        OpenGallery("open_gallery"),
         Disabled("disabled");
 
         String key;
@@ -394,8 +395,8 @@ public class ChanSettings {
     public static BooleanSetting moveBookmarksWithUnreadRepliesToTop;
     public static BooleanSetting ignoreDarkNightMode;
     public static RangeSetting bookmarkGridViewWidth;
-    public static OptionsSetting<ImageGestureActionType> imageSwipeUpGesture;
-    public static OptionsSetting<ImageGestureActionType> imageSwipeDownGesture;
+    public static OptionsSetting<ImageGestureActionType> mediaViewerTopGestureAction;
+    public static OptionsSetting<ImageGestureActionType> mediaViewerBottomGestureAction;
     public static BooleanSetting drawerMoveLastAccessedThreadToTop;
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
@@ -618,15 +619,15 @@ public class ChanSettings {
                     chanSettingsInfo.getBookmarkGridViewInfo().getMaxWidth()
             );
 
-            imageSwipeUpGesture = new OptionsSetting<>(
+            mediaViewerTopGestureAction = new OptionsSetting<>(
                     provider,
-                    "image_swipe_up_gesture",
+                    "media_viewer_top_gesture_action",
                     ImageGestureActionType.class,
                     ImageGestureActionType.CloseImage
             );
-            imageSwipeDownGesture = new OptionsSetting<>(
+            mediaViewerBottomGestureAction = new OptionsSetting<>(
                     provider,
-                    "image_swipe_down_gesture",
+                    "media_viewer_bottom_gesture_action",
                     ImageGestureActionType.class,
                     ImageGestureActionType.SaveImage
             );

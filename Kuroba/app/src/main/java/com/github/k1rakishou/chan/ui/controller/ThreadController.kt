@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -276,21 +277,23 @@ abstract class ThreadController(
   ) {
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        MediaViewerActivity.catalogAlbum(
+        MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
-          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
+          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = false)
         )
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        MediaViewerActivity.threadAlbum(
+        MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = chanDescriptor,
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
-          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates()
+          lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
+          mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = false)
         )
       }
     }

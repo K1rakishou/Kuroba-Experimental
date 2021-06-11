@@ -46,12 +46,8 @@ import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
-import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
-import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
-import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -109,17 +105,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var appDependenciesInitializer: AppDependenciesInitializer
   @Inject
-  lateinit var bookmarkWatcherCoordinator: BookmarkWatcherCoordinator
-  @Inject
-  lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
-  @Inject
-  lateinit var threadBookmarkGroupManager: ThreadBookmarkGroupManager
-  @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
-  @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var reportManager: ReportManager
   @Inject

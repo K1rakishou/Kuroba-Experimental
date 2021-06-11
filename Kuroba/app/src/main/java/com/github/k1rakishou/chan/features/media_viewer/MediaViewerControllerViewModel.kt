@@ -44,6 +44,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
+  private val _mediaViewerOptions = MutableStateFlow<MediaViewerOptions>(MediaViewerOptions())
   private val mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(PersistableChanState.mediaViewerOffscreenItemsCount.get())
 
   private var lastPagerIndex = -1
@@ -60,6 +61,8 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = _transitionInfoFlow.asSharedFlow()
   val mediaViewerState: StateFlow<MediaViewerControllerState?>
     get() = _mediaViewerState.asStateFlow()
+  val mediaViewerOptions: StateFlow<MediaViewerOptions>
+    get() = _mediaViewerOptions
 
   fun toggleIsSoundMuted() {
     _isSoundMuted = _isSoundMuted.not()
@@ -88,6 +91,15 @@ class MediaViewerControllerViewModel : ViewModel() {
   ): Boolean {
     return withContext(Dispatchers.Default) {
       BackgroundUtils.ensureBackgroundThread()
+
+      val options = when (viewableMediaParcelableHolder) {
+        is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> viewableMediaParcelableHolder.mediaViewerOptions
+        is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> viewableMediaParcelableHolder.mediaViewerOptions
+        is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> MediaViewerOptions()
+        is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> MediaViewerOptions()
+      }
+
+      _mediaViewerOptions.emit(options)
 
       if (isNotActivityRecreation) {
         val transitionInfo = when (viewableMediaParcelableHolder) {

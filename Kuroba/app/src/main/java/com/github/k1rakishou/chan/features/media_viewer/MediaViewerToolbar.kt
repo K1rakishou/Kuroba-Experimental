@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -40,6 +41,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
 
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
+  private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
   private val toolbarCloseButton: AppCompatImageButton
   private val toolbarTitle: TextView
@@ -105,6 +107,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
 
+    scope.launch {
+      controllerViewModel.mediaViewerOptions.collect { mediaViewerOptions ->
+        updateToolbarStateFromViewOptions(mediaViewerOptions)
+      }
+    }
+
     doOnPreDraw { onInsetsChanged() }
     setVisibilityFast(View.GONE)
   }
@@ -113,6 +121,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
     check(this.mediaViewerToolbarCallbacks == null) { "Callbacks are already set!" }
     this.currentViewableMedia = viewableMedia
     this.mediaViewerToolbarCallbacks = callbacks
+
+    updateToolbarStateFromViewOptions(controllerViewModel.mediaViewerOptions.value)
 
     val toolbarState = toolbarViewModel.restore(viewableMedia.mediaLocation)
     if (toolbarState != null) {
@@ -244,6 +254,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
     updateLayoutParams<ViewGroup.LayoutParams> {
       height = AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top()
     }
+  }
+
+  private fun updateToolbarStateFromViewOptions(mediaViewerOptions: MediaViewerOptions) {
+    toolbarGoToPostButton.setVisibilityFast(
+      if (mediaViewerOptions.showGoToPostToolbarButton) VISIBLE else GONE
+    )
   }
 
   private fun fireOnReloadButtonClickCallback() {
