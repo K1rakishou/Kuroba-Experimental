@@ -17,6 +17,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -63,6 +64,8 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = _mediaViewerState.asStateFlow()
   val mediaViewerOptions: StateFlow<MediaViewerOptions>
     get() = _mediaViewerOptions
+  val chanDescriptor: ChanDescriptor?
+    get() = mediaViewerState.value?.descriptor
 
   fun toggleIsSoundMuted() {
     _isSoundMuted = _isSoundMuted.not()
@@ -93,10 +96,18 @@ class MediaViewerControllerViewModel : ViewModel() {
       BackgroundUtils.ensureBackgroundThread()
 
       val options = when (viewableMediaParcelableHolder) {
-        is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> viewableMediaParcelableHolder.mediaViewerOptions
-        is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> viewableMediaParcelableHolder.mediaViewerOptions
-        is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> MediaViewerOptions()
-        is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> MediaViewerOptions()
+        is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
+          viewableMediaParcelableHolder.mediaViewerOptions
+        }
+        is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
+          viewableMediaParcelableHolder.mediaViewerOptions
+        }
+        is ViewableMediaParcelableHolder.MixedMediaParcelableHolder -> {
+          MediaViewerOptions()
+        }
+        is ViewableMediaParcelableHolder.ReplyAttachMediaParcelableHolder -> {
+          MediaViewerOptions()
+        }
       }
 
       _mediaViewerOptions.emit(options)
@@ -203,7 +214,11 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
-    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
+    return MediaViewerControllerState(
+      descriptor = null,
+      loadedMedia = viewableMediaList,
+      initialPagerIndex = 0
+    )
   }
 
   private fun collectThreadMedia(
@@ -258,7 +273,11 @@ class MediaViewerControllerViewModel : ViewModel() {
       }
     }
 
-    return MediaViewerControllerState(output.images, actualInitialPagerIndex)
+    return MediaViewerControllerState(
+      descriptor = viewableMediaParcelableHolder.threadDescriptor,
+      loadedMedia = output.images,
+      initialPagerIndex = actualInitialPagerIndex
+    )
   }
 
   private fun collectCatalogMedia(
@@ -307,7 +326,11 @@ class MediaViewerControllerViewModel : ViewModel() {
       }
     }
 
-    return MediaViewerControllerState(output.images, actualInitialPagerIndex)
+    return MediaViewerControllerState(
+      descriptor = viewableMediaParcelableHolder.catalogDescriptor,
+      loadedMedia = output.images,
+      initialPagerIndex = actualInitialPagerIndex
+    )
   }
 
   private fun collectMixedMedia(
@@ -324,7 +347,11 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
-    return MediaViewerControllerState(loadedMedia = viewableMediaList, initialPagerIndex = 0)
+    return MediaViewerControllerState(
+      descriptor = null,
+      loadedMedia = viewableMediaList,
+      initialPagerIndex = 0
+    )
   }
 
   private fun mapRemoteMedia(mediaLocation: MediaLocation.Remote): ViewableMedia? {
@@ -488,6 +515,7 @@ class MediaViewerControllerViewModel : ViewModel() {
   }
 
   class MediaViewerControllerState(
+    val descriptor: ChanDescriptor?,
     val loadedMedia: List<ViewableMedia>,
     val initialPagerIndex: Int = 0
   ) {

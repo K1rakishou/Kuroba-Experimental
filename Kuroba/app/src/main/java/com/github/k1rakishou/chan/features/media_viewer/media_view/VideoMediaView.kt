@@ -124,8 +124,8 @@ class VideoMediaView(
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topPaddingFunc = { toolbarHeight() },
       bottomPaddingFunc = { playerControlsHeight() },
-      topGestureInfo = createTopGestureAction(),
-      bottomGestureInfo = createBottomGestureAction()
+      topGestureInfo = createGestureAction(isTopGesture = true),
+      bottomGestureInfo = createGestureAction(isTopGesture = false)
     )
 
     gestureDetector = GestureDetector(

@@ -106,7 +106,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   fun onShow(mediaViewerToolbar: MediaViewerToolbar) {
     _shown = true
     this._mediaViewToolbar = mediaViewerToolbar
-    this._mediaViewToolbar!!.attach(viewableMedia, this)
+    this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
     show()
 
@@ -172,31 +172,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     mediaViewContract.onOptionsButtonClick(viewableMedia)
   }
 
-  protected fun createTopGestureAction(): CloseMediaActionHelper.GestureInfo? {
-    when (ChanSettings.mediaViewerTopGestureAction.get()) {
-      ChanSettings.ImageGestureActionType.SaveImage -> {
-        return CloseMediaActionHelper.GestureInfo(
-          gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
-          onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
-          gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
-        )
-      }
-      ChanSettings.ImageGestureActionType.CloseImage -> {
-        return CloseMediaActionHelper.GestureInfo(
-          gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
-          onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
-          gestureCanBeExecuted = { true }
-        )
-      }
-      ChanSettings.ImageGestureActionType.Disabled -> {
-        return null
-      }
-      null -> return null
+  protected fun createGestureAction(isTopGesture: Boolean): CloseMediaActionHelper.GestureInfo? {
+    val gestureSetting = if (isTopGesture) {
+      ChanSettings.mediaViewerTopGestureAction.get()
+    } else {
+      ChanSettings.mediaViewerBottomGestureAction.get()
     }
-  }
 
-  protected fun createBottomGestureAction(): CloseMediaActionHelper.GestureInfo? {
-    when (ChanSettings.mediaViewerBottomGestureAction.get()) {
+    when (gestureSetting) {
       ChanSettings.ImageGestureActionType.SaveImage -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
@@ -209,6 +192,16 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
           onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
           gestureCanBeExecuted = { true }
+        )
+      }
+      ChanSettings.ImageGestureActionType.OpenAlbum -> {
+        return CloseMediaActionHelper.GestureInfo(
+          gestureLabelText = AppModuleAndroidUtils.getString(R.string.media_viewer_open_album_action),
+          onGestureTriggeredFunc = { mediaViewContract.openAlbum(viewableMedia) },
+          gestureCanBeExecuted = {
+            return@GestureInfo viewableMedia.viewableMediaMeta.ownerPostDescriptor != null
+              && mediaViewContract.viewerChanDescriptor != null
+          }
         )
       }
       ChanSettings.ImageGestureActionType.Disabled -> {

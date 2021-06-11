@@ -108,6 +108,7 @@ public class ChanSettings {
     public enum ImageGestureActionType implements OptionSettingItem {
         SaveImage("save_image"),
         CloseImage("close_image"),
+        OpenAlbum("open_album"),
         Disabled("disabled");
 
         String key;

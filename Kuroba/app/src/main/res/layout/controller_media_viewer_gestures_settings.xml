@@ -70,6 +70,12 @@
                         android:text="@string/controller_image_viewer_save_media"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_up_open_album"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_open_album"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_up_disabled"
                         android:layout_width="match_parent"
                         android:layout_height="36dp"
@@ -103,6 +109,12 @@
                         android:layout_width="match_parent"
                         android:layout_height="36dp"
                         android:text="@string/controller_image_viewer_save_media"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
+                        android:id="@+id/image_viewer_gestures_swipe_down_open_album"
+                        android:layout_width="match_parent"
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_open_album"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_down_disabled"

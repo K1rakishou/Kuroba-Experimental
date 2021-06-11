@@ -183,7 +183,11 @@ class MediaViewerAdapter(
 
     if (position != initialPagerIndex || initialImageBindHappened) {
       viewableMedia.viewableMediaMeta.ownerPostDescriptor?.let { postDescriptor ->
-        mediaViewerScrollerHelper.onScrolledTo(postDescriptor, viewableMedia.mediaLocation)
+        mediaViewerScrollerHelper.onScrolledTo(
+          chanDescriptor = viewModel.chanDescriptor,
+          postDescriptor = postDescriptor,
+          mediaLocation = viewableMedia.mediaLocation
+        )
       }
     }
 

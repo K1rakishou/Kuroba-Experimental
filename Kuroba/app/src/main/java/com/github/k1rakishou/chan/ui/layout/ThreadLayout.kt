@@ -99,6 +99,7 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -668,8 +669,8 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
   }
 
-  override fun showAlbum(images: List<ChanPostImage>, index: Int) {
-    callback.showAlbum(images, index)
+  override fun showAlbum(initialImageUrl: HttpUrl?) {
+    callback.showAlbum(initialImageUrl)
   }
 
   override fun scrollTo(displayPosition: Int, smooth: Boolean) {
@@ -1164,7 +1165,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
-    fun showAlbum(images: @JvmSuppressWildcards List<ChanPostImage>, index: Int)
+    fun showAlbum(initialImageUrl: HttpUrl?)
     fun onShowPosts()
     fun onShowError()
     fun presentController(controller: Controller, animated: Boolean)

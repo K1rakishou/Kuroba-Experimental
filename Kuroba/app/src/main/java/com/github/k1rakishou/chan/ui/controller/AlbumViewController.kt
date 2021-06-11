@@ -30,9 +30,11 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
+import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
@@ -51,24 +53,27 @@ import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState.albumLayoutGridMode
 import com.github.k1rakishou.persist_state.PersistableChanState.showAlbumViewsImageDetails
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class AlbumViewController(
   context: Context,
+  private val chanDescriptor: ChanDescriptor
 ) : Controller(context), RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
   private lateinit var recyclerView: ColorizableGridRecyclerView
 
-  private var postImages: List<ChanPostImage>? = null
+  private var postImages = mutableListOf<ChanPostImage>()
   private var targetIndex = -1
-  private var chanDescriptor: ChanDescriptor? = null
 
   private var fastScroller: FastScroller? = null
   private var albumAdapter: AlbumAdapter? = null
@@ -90,6 +95,8 @@ class AlbumViewController(
     }
 
   @Inject
+  lateinit var chanThreadManager: ChanThreadManager
+  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper
@@ -97,6 +104,8 @@ class AlbumViewController(
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
   @Inject
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
+  @Inject
+  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -104,6 +113,20 @@ class AlbumViewController(
 
   override fun onCreate() {
     super.onCreate()
+
+    navigation.title = when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        ChanPostUtils.getTitle(null, chanDescriptor)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        ChanPostUtils.getTitle(
+          chanThreadManager.getChanThread(chanDescriptor)?.getOriginalPost(),
+          chanDescriptor
+        )
+      }
+    }
+
+    navigation.subtitle = AppModuleAndroidUtils.getQuantityString(R.plurals.image, postImages.size, postImages.size)
 
     // View setup
     view = AppModuleAndroidUtils.inflate(context, R.layout.controller_album_view)
@@ -147,9 +170,16 @@ class AlbumViewController(
 
     mainScope.launch {
       mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
-        .collect { chanPostImage ->
-          val index = postImages?.indexOf(chanPostImage)
-            ?: return@collect
+        .collect { scrollToImageEvent ->
+          val descriptor = scrollToImageEvent.chanDescriptor
+          if (descriptor != chanDescriptor) {
+            return@collect
+          }
+
+          val index = postImages.indexOf(scrollToImageEvent.chanPostImage)
+          if (index < 0) {
+            return@collect
+          }
 
           scrollToInternal(index)
         }
@@ -157,7 +187,7 @@ class AlbumViewController(
 
     mainScope.launch {
       mediaViewerGoToImagePostHelper.mediaViewerGoToPostEventsFlow
-        .collect { chanPostImage -> goToPost(chanPostImage) }
+        .collect { goToPostEvent -> goToPost(goToPostEvent) }
     }
 
     requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this)
@@ -235,18 +265,86 @@ class AlbumViewController(
     )
   }
 
-  fun setImages(
-    chanDescriptor: ChanDescriptor?,
-    postImages: List<ChanPostImage>,
-    index: Int,
-    title: String?
-  ) {
-    this.chanDescriptor = chanDescriptor
-    this.postImages = postImages
+  fun tryCollectingImages(initialImageUrl: HttpUrl?): Boolean {
+    val (images, index) = collectImages(initialImageUrl)
 
-    navigation.title = title
-    navigation.subtitle = AppModuleAndroidUtils.getQuantityString(R.plurals.image, postImages.size, postImages.size)
-    targetIndex = index
+    if (images.isEmpty()) {
+      return false
+    }
+
+    val input = FilterOutHiddenImagesUseCase.Input(
+      images = images,
+      index = index,
+      isOpeningAlbum = true,
+      postDescriptorSelector = { chanPostImage -> chanPostImage.ownerPostDescriptor }
+    )
+
+    val output = filterOutHiddenImagesUseCase.filter(input)
+    val filteredImages = output.images
+    val newIndex = output.index
+
+    if (filteredImages.isEmpty()) {
+      return false
+    }
+
+    targetIndex = newIndex
+
+    postImages.clear()
+    postImages.addAll(filteredImages)
+
+    return true
+  }
+
+  private fun collectImages(initialImageUrl: HttpUrl?): Pair<List<ChanPostImage>, Int> {
+    var imageIndexToScroll = 0
+    var index = 0
+
+    when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        val chanCatalog = chanThreadManager.getChanCatalog(chanDescriptor)
+        if (chanCatalog == null) {
+          return emptyList<ChanPostImage>() to imageIndexToScroll
+        }
+
+        val postImages = mutableListWithCap<ChanPostImage>(chanCatalog.postsCount())
+
+        chanCatalog.iteratePostsOrdered { chanOriginalPost ->
+          chanOriginalPost.iteratePostImages { chanPostImage ->
+            postImages += chanPostImage
+
+            if (initialImageUrl != null && chanPostImage.imageUrl == initialImageUrl) {
+              imageIndexToScroll = index
+            }
+
+            ++index
+          }
+        }
+
+        return postImages to imageIndexToScroll
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        val chanThread = chanThreadManager.getChanThread(chanDescriptor)
+        if (chanThread == null) {
+          return emptyList<ChanPostImage>() to imageIndexToScroll
+        }
+
+        val postImages = mutableListWithCap<ChanPostImage>(chanThread.postsCount)
+
+        chanThread.iteratePostsOrdered { chanPost ->
+          chanPost.iteratePostImages { chanPostImage ->
+            postImages += chanPostImage
+
+            if (initialImageUrl != null && chanPostImage.imageUrl == initialImageUrl) {
+              imageIndexToScroll = index
+            }
+
+            ++index
+          }
+        }
+
+        return postImages to imageIndexToScroll
+      }
+    }
   }
 
   private fun onToggleAlbumViewsImageInfoToggled(subItem: ToolbarMenuSubItem) {
@@ -275,23 +373,41 @@ class AlbumViewController(
     menuItem.setImage(gridDrawable)
   }
 
-  private fun goToPost(postImage: ChanPostImage) {
+  private fun goToPost(goToPostEvent: MediaViewerGoToImagePostHelper.GoToPostEvent) {
+    val postImage = goToPostEvent.chanPostImage
+    val chanDescriptor = goToPostEvent.chanDescriptor
+
     var threadController: ThreadController? = null
     if (previousSiblingController is ThreadController) {
-      //phone mode
+      // phone mode
       threadController = previousSiblingController as ThreadController?
     } else if (previousSiblingController is DoubleNavigationController) {
-      //slide mode
+      // slide mode
       val doubleNav = previousSiblingController as DoubleNavigationController
-      if (doubleNav.getRightController() is ThreadController) {
-        threadController = doubleNav.getRightController() as ThreadController?
+      if (doubleNav is ThreadSlideController) {
+        if (doubleNav.leftOpen()) {
+          threadController = doubleNav.getLeftController() as ThreadController
+        } else {
+          threadController = doubleNav.getRightController() as ThreadController
+        }
+      } else if (doubleNav.getRightController() is ThreadController) {
+        threadController = doubleNav.getRightController() as ThreadController
       }
     } else if (previousSiblingController == null) {
-      //split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
+      // split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
       val splitNav = parentController!!.parentController!!.presentedByController as SplitNavigationController?
-      threadController = splitNav!!.rightController.childControllers[0] as ThreadController
+
+      threadController = when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          splitNav!!.leftController.childControllers[0] as ThreadController
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          splitNav!!.rightController.childControllers[0] as ThreadController
+        }
+      }
+
       threadController.selectPostImage(postImage)
-      //clear the popup here because split nav is weirdly laid out in the stack
+      // clear the popup here because split nav is weirdly laid out in the stack
       splitNav.popController()
     }
 
@@ -302,20 +418,18 @@ class AlbumViewController(
   }
 
   private fun openImage(postImage: ChanPostImage) {
-    val images = postImages
-      ?: return
-    val index = postImages?.indexOf(postImage)
-      ?: return
-    val descriptor = chanDescriptor
-      ?: return
+    val index = postImages.indexOf(postImage)
+    if (index < 0) {
+      return
+    }
 
-    when (descriptor) {
+    when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         MediaViewerActivity.catalogMedia(
           context = context,
-          catalogDescriptor = descriptor,
-          initialImageUrl = images[index].imageUrl?.toString(),
-          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          catalogDescriptor = chanDescriptor,
+          initialImageUrl = postImages[index].imageUrl?.toString(),
+          transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
           mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
         )
@@ -323,9 +437,9 @@ class AlbumViewController(
       is ChanDescriptor.ThreadDescriptor -> {
         MediaViewerActivity.threadMedia(
           context = context,
-          threadDescriptor = descriptor,
-          initialImageUrl = images[index].imageUrl?.toString(),
-          transitionThumbnailUrl = images[index].getThumbnailUrl()!!.toString(),
+          threadDescriptor = chanDescriptor,
+          initialImageUrl = postImages[index].imageUrl?.toString(),
+          transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
           mediaViewerOptions = MediaViewerOptions(showGoToPostToolbarButton = true)
         )

@@ -163,6 +163,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_preview_thread_in_archive">Preview in archive</string>
     <string name="action_open_archive">Open in archive</string>
     <string name="action_open_browser">Open in a browser</string>
+    <string name="action_catalog_album">Catalog album</string>
     <string name="action_change_gestures">Change image viewer gestures</string>
     <string name="action_open_thread_by_id">Open thread by ID</string>
     <string name="action_open_thread_by_url">Open thread by url</string>
@@ -396,6 +397,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="controller_image_viewer_bottom_gesture_action">Bottom gesture action</string>
     <string name="controller_image_viewer_close_media_viewer">Close media viewer</string>
     <string name="controller_image_viewer_save_media">Save media</string>
+    <string name="controller_image_viewer_open_album">Open album</string>
     <string name="controller_image_viewer_disabled">Disabled</string>
 
     <string name="controller_image_save_options_image_name_options">Image name options</string>
@@ -1324,5 +1326,6 @@ Don't have a 4chan Pass?<br>
     <string name="selected_text_is_empty">Selected text is empty</string>
     <string name="media_viewer_media_is_not_supported_downloadable">Media is not supported but you still can download it.</string>
     <string name="media_viewer_media_is_not_supported_not_downloadable">Media is not supported.</string>
+    <string name="media_viewer_open_album_action">Open album</string>
 
 </resources>

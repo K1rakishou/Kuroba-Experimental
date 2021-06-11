@@ -98,8 +98,8 @@ class FullImageMediaView(
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topPaddingFunc = { toolbarHeight() },
       bottomPaddingFunc = { globalWindowInsetsManager.bottom() },
-      topGestureInfo = createTopGestureAction(),
-      bottomGestureInfo = createBottomGestureAction()
+      topGestureInfo = createGestureAction(isTopGesture = true),
+      bottomGestureInfo = createGestureAction(isTopGesture = false)
     )
 
     gestureDetectorListener = GestureDetectorListener(

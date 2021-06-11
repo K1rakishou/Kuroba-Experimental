@@ -10,24 +10,25 @@ import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 
-class MediaViewerScrollerHelper(
+class MediaViewerOpenAlbumHelper(
   private val chanThreadManager: ChanThreadManager
 ) {
-  private val _mediaViewerScrollEventsFlow = MutableSharedFlow<ScrollToImageEvent>(
+
+  private val _mediaViewerOpenAlbumEventsFlow = MutableSharedFlow<OpenAlbumEvent>(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
 
-  val mediaViewerScrollEventsFlow: SharedFlow<ScrollToImageEvent>
-    get() = _mediaViewerScrollEventsFlow.asSharedFlow()
+  val mediaViewerOpenAlbumEventsFlow: SharedFlow<OpenAlbumEvent>
+    get() = _mediaViewerOpenAlbumEventsFlow.asSharedFlow()
 
-  fun onScrolledTo(
+  fun openAlbum(
     chanDescriptor: ChanDescriptor?,
     postDescriptor: PostDescriptor,
     mediaLocation: MediaLocation
-  ) {
+  ): Boolean {
     if (chanDescriptor == null || mediaLocation !is MediaLocation.Remote) {
-      return
+      return false
     }
 
     val chanPostImage = chanThreadManager.getPost(postDescriptor)
@@ -35,13 +36,14 @@ class MediaViewerScrollerHelper(
       ?.firstOrNull { chanPostImage -> chanPostImage.imageUrl == mediaLocation.url }
 
     if (chanPostImage == null) {
-      return
+      return false
     }
 
-    _mediaViewerScrollEventsFlow.tryEmit(ScrollToImageEvent(chanDescriptor, chanPostImage))
+    _mediaViewerOpenAlbumEventsFlow.tryEmit(OpenAlbumEvent(chanDescriptor, chanPostImage))
+    return true
   }
 
-  data class ScrollToImageEvent(
+  data class OpenAlbumEvent(
     val chanDescriptor: ChanDescriptor,
     val chanPostImage: ChanPostImage
   )

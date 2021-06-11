@@ -28,6 +28,7 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.GravityCompat
+import androidx.core.view.doOnPreDraw
 import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
@@ -95,7 +96,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -964,8 +964,12 @@ class MainController(
   private fun updateRecyclerLayoutMode() {
     val isGridMode = PersistableChanState.drawerNavHistoryGridMode.get()
     if (isGridMode) {
-      val screenWidth = AndroidUtils.getDisplaySize(context).x
-      val spanCount = (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+      if (drawer.width <= 0) {
+        drawer.doOnPreDraw { updateRecyclerLayoutMode() }
+        return
+      }
+
+      val spanCount = (drawer.width / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
         spanSizeLookup = controller.spanSizeLookup
@@ -1032,7 +1036,7 @@ class MainController(
     private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
 
     private const val MIN_SPAN_COUNT = 2
-    private const val MAX_SPAN_COUNT = 10
+    private const val MAX_SPAN_COUNT = 6
 
     private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
     private const val ACTION_SHOW_BOOKMARKS = 1

@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
@@ -30,6 +31,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
@@ -68,6 +70,13 @@ class MediaViewerController(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
+  @Inject
+  lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
+
+  private var chanDescriptor: ChanDescriptor? = null
+
+  override val viewerChanDescriptor: ChanDescriptor?
+    get() = chanDescriptor
 
   private lateinit var mediaViewerRootLayout: MediaViewerRootLayout
   private lateinit var appearPreviewImage: AppearTransitionImageView
@@ -156,6 +165,7 @@ class MediaViewerController(
     mediaLongClickMenuHelper.onDestroy()
     mediaViewerToolbar.onDestroy()
 
+    chanDescriptor = null
     pager.removeOnPageChangeListener(this)
     pager.adapter = null
 
@@ -251,6 +261,23 @@ class MediaViewerController(
     )
   }
 
+  override fun openAlbum(viewableMedia: ViewableMedia) {
+    val postDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor
+      ?: return
+
+    val albumOpened = mediaViewerOpenAlbumHelper.openAlbum(
+      chanDescriptor = chanDescriptor,
+      postDescriptor = postDescriptor,
+      mediaLocation = viewableMedia.mediaLocation
+    )
+
+    if (!albumOpened) {
+      return
+    }
+
+    closeMediaViewer()
+  }
+
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
     mediaViewerAdapter?.onSystemUiVisibilityChanged(systemUIHidden)
   }
@@ -259,6 +286,8 @@ class MediaViewerController(
     mediaViewerState: MediaViewerControllerViewModel.MediaViewerControllerState?
   ) {
     BackgroundUtils.ensureMainThread()
+
+    this.chanDescriptor = mediaViewerState?.descriptor
 
     if (mediaViewerState == null) {
       return

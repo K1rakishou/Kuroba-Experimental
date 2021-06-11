@@ -41,6 +41,9 @@ class MediaViewerGesturesSettingsController(context: Context) : BaseFloatingCont
       ChanSettings.ImageGestureActionType.CloseImage -> {
         swipeUpGroup.check(R.id.image_viewer_gestures_swipe_up_close_image)
       }
+      ChanSettings.ImageGestureActionType.OpenAlbum -> {
+        swipeUpGroup.check(R.id.image_viewer_gestures_swipe_up_open_album)
+      }
       ChanSettings.ImageGestureActionType.Disabled -> {
         swipeUpGroup.check(R.id.image_viewer_gestures_swipe_up_disabled)
       }
@@ -53,6 +56,9 @@ class MediaViewerGesturesSettingsController(context: Context) : BaseFloatingCont
       }
       ChanSettings.ImageGestureActionType.CloseImage -> {
         swipeDownGroup.check(R.id.image_viewer_gestures_swipe_down_close_image)
+      }
+      ChanSettings.ImageGestureActionType.OpenAlbum -> {
+        swipeDownGroup.check(R.id.image_viewer_gestures_swipe_down_open_album)
       }
       ChanSettings.ImageGestureActionType.Disabled -> {
         swipeDownGroup.check(R.id.image_viewer_gestures_swipe_down_disabled)
@@ -68,6 +74,9 @@ class MediaViewerGesturesSettingsController(context: Context) : BaseFloatingCont
         R.id.image_viewer_gestures_swipe_up_save_image -> {
           ChanSettings.ImageGestureActionType.SaveImage
         }
+        R.id.image_viewer_gestures_swipe_up_open_album -> {
+          ChanSettings.ImageGestureActionType.OpenAlbum
+        }
         R.id.image_viewer_gestures_swipe_up_disabled -> {
           ChanSettings.ImageGestureActionType.Disabled
         }
@@ -81,6 +90,9 @@ class MediaViewerGesturesSettingsController(context: Context) : BaseFloatingCont
         }
         R.id.image_viewer_gestures_swipe_down_save_image -> {
           ChanSettings.ImageGestureActionType.SaveImage
+        }
+        R.id.image_viewer_gestures_swipe_down_open_album -> {
+          ChanSettings.ImageGestureActionType.OpenAlbum
         }
         R.id.image_viewer_gestures_swipe_down_disabled -> {
           ChanSettings.ImageGestureActionType.Disabled

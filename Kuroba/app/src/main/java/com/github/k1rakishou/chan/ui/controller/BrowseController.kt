@@ -259,6 +259,7 @@ class BrowseController(
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
       .addSortMenu()
       .addDevMenu()
+      .withSubItem(ACTION_CATALOG_ALBUM, R.string.action_catalog_album, { threadLayout.presenter.showAlbum() })
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
@@ -807,6 +808,7 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
     private const val ACTION_OPEN_THREAD_BY_URL = 910
+    private const val ACTION_CATALOG_ALBUM = 911
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

@@ -65,8 +65,8 @@ class UnsupportedMediaView(
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topPaddingFunc = { toolbarHeight() },
       bottomPaddingFunc = { globalWindowInsetsManager.bottom() },
-      topGestureInfo = createTopGestureAction(),
-      bottomGestureInfo = createBottomGestureAction()
+      topGestureInfo = createGestureAction(isTopGesture = true),
+      bottomGestureInfo = createGestureAction(isTopGesture = false)
     )
 
     gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))

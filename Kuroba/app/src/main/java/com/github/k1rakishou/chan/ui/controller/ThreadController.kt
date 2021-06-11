@@ -34,10 +34,10 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
-import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
@@ -64,6 +64,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import org.greenrobot.eventbus.EventBus
 import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
@@ -87,8 +88,6 @@ abstract class ThreadController(
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
   @Inject
-  lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
-  @Inject
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -102,6 +101,8 @@ abstract class ThreadController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  @Inject
+  lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -164,7 +165,26 @@ abstract class ThreadController(
 
     mainScope.launch {
       mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
-        .collect { chanPostImage -> threadLayout.presenter.scrollToImage(chanPostImage, true) }
+        .collect { scrollToImageEvent ->
+          val descriptor = scrollToImageEvent.chanDescriptor
+          if (descriptor != chanDescriptor) {
+            return@collect
+          }
+
+          threadLayout.presenter.scrollToImage(scrollToImageEvent.chanPostImage, true)
+        }
+    }
+
+    mainScope.launch {
+      mediaViewerOpenAlbumHelper.mediaViewerOpenAlbumEventsFlow
+        .collect { openAlbumEvent ->
+          val descriptor = openAlbumEvent.chanDescriptor
+          if (descriptor != chanDescriptor) {
+            return@collect
+          }
+
+          showAlbum(openAlbumEvent.chanPostImage.imageUrl)
+        }
     }
 
     onThemeChanged()
@@ -299,29 +319,14 @@ abstract class ThreadController(
     }
   }
 
-  override fun showAlbum(images: List<ChanPostImage>, index: Int) {
-    if (threadLayout.presenter.currentChanDescriptor == null) {
+  override fun showAlbum(initialImageUrl: HttpUrl?) {
+    val descriptor = chanDescriptor
+      ?: return
+
+    val albumViewController = AlbumViewController(context, descriptor)
+    if (!albumViewController.tryCollectingImages(initialImageUrl)) {
       return
     }
-
-    val input = FilterOutHiddenImagesUseCase.Input(
-      images = images,
-      index = index,
-      isOpeningAlbum = true,
-      postDescriptorSelector = { chanPostImage -> chanPostImage.ownerPostDescriptor }
-    )
-
-    val output = filterOutHiddenImagesUseCase.filter(input)
-    val filteredImages = output.images
-    val newIndex = output.index
-
-    if (filteredImages.isEmpty()) {
-      showToast("No images left to show after filtering out images of hidden/removed posts");
-      return
-    }
-
-    val albumViewController = AlbumViewController(context)
-    albumViewController.setImages(chanDescriptor, filteredImages, newIndex, navigation.title)
 
     if (doubleNavigationController != null) {
       doubleNavigationController!!.pushController(albumViewController)

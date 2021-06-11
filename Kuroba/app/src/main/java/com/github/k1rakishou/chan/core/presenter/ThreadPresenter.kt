@@ -80,6 +80,7 @@ import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
+import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -502,22 +503,20 @@ class ThreadPresenter @Inject constructor(
     }
 
     val displayPosition = position[0]
-    val images: MutableList<ChanPostImage> = ArrayList()
-    var index = 0
+    var initialImageUrl: HttpUrl? = null
 
-    for (i in postDescriptors.indices) {
-      val postDescriptor = postDescriptors[i]
+    for (index in postDescriptors.indices) {
+      val postDescriptor = postDescriptors.getOrNull(index)
+        ?: continue
       val postImages = chanThreadManager.getPost(postDescriptor)?.postImages
         ?: continue
 
-      images.addAll(postImages)
-
-      if (i == displayPosition) {
-        index = images.size
+      if (index == displayPosition) {
+        initialImageUrl = postImages.firstOrNull()?.imageUrl
       }
     }
 
-    threadPresenterCallback?.showAlbum(images, index)
+    threadPresenterCallback?.showAlbum(initialImageUrl)
   }
 
   override fun onPostBind(postDescriptor: PostDescriptor) {
@@ -2210,7 +2209,7 @@ class ThreadPresenter @Inject constructor(
     fun hidePostsPopup()
 
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
-    fun showAlbum(images: List<ChanPostImage>, index: Int)
+    fun showAlbum(initialImageUrl: HttpUrl?)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
     fun highlightPost(postDescriptor: PostDescriptor)

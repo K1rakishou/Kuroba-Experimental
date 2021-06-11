@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 import android.view.MotionEvent;
 import android.view.View;
@@ -41,9 +44,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class ThreadSlideController
         extends Controller
@@ -292,7 +292,7 @@ public class ThreadSlideController
         return super.onBack();
     }
 
-    private boolean leftOpen() {
+    public boolean leftOpen() {
         return slidingPaneLayout.isOpen();
     }
 

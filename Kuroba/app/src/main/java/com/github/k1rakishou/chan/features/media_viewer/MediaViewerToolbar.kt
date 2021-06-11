@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -54,6 +55,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   private val scope = KurobaCoroutineScope()
 
   private var mediaViewerToolbarCallbacks: MediaViewerToolbarCallbacks? = null
+  private var chanDescriptor: ChanDescriptor? = null
   private var currentViewableMedia: ViewableMedia? = null
   private var hideShowAnimation: ValueAnimator? = null
 
@@ -78,7 +80,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     toolbarCloseButton.setOnClickListener { mediaViewerToolbarCallbacks?.onCloseButtonClick() }
     toolbarGoToPostButton.setOnClickListener {
-      if (mediaViewerToolbarCallbacks == null) {
+      if (mediaViewerToolbarCallbacks == null || chanDescriptor == null) {
         return@setOnClickListener
       }
 
@@ -87,7 +89,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       val mediaLocation = currentViewableMedia?.mediaLocation
         ?: return@setOnClickListener
 
-      if (mediaViewerGoToImagePostHelper.tryGoToPost(postDescriptor, mediaLocation)) {
+      if (mediaViewerGoToImagePostHelper.tryGoToPost(chanDescriptor, postDescriptor, mediaLocation)) {
         mediaViewerToolbarCallbacks?.onCloseButtonClick()
       }
     }
@@ -117,8 +119,9 @@ class MediaViewerToolbar @JvmOverloads constructor(
     setVisibilityFast(View.GONE)
   }
 
-  fun attach(viewableMedia: ViewableMedia, callbacks: MediaViewerToolbarCallbacks) {
+  fun attach(chanDescriptor: ChanDescriptor?, viewableMedia: ViewableMedia, callbacks: MediaViewerToolbarCallbacks) {
     check(this.mediaViewerToolbarCallbacks == null) { "Callbacks are already set!" }
+    this.chanDescriptor = chanDescriptor
     this.currentViewableMedia = viewableMedia
     this.mediaViewerToolbarCallbacks = callbacks
 
@@ -152,6 +155,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
 
     this.mediaViewerToolbarCallbacks = null
+    this.chanDescriptor = null
   }
 
   fun onCreate() {

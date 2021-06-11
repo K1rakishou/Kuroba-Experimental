@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
@@ -145,6 +146,12 @@ class HelperModule {
   @Singleton
   fun provideMediaViewerGoToImagePostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToImagePostHelper {
     return MediaViewerGoToImagePostHelper(chanThreadManager)
+  }
+
+  @Provides
+  @Singleton
+  fun provideMediaViewerOpenAlbumHelper(chanThreadManager: ChanThreadManager): MediaViewerOpenAlbumHelper {
+    return MediaViewerOpenAlbumHelper(chanThreadManager)
   }
 
   @Provides
