@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerAdapter
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -50,6 +51,11 @@ class MediaViewerMenuHelper(
       isCurrentlySelected = ChanSettings.revealImageSpoilers.get()
     )
 
+    options += FloatingListMenuItem(
+      key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
+      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
+    )
+
     return options
   }
 
@@ -66,12 +72,17 @@ class MediaViewerMenuHelper(
       ACTION_AUTO_REVEAL_SPOILERS -> {
         ChanSettings.revealImageSpoilers.toggle()
       }
+      ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
+        val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
+        presentControllerFunc(mediaViewerGesturesSettingsController)
+      }
     }
   }
 
   companion object {
     const val ACTION_ALLOW_IMAGE_TRANSPARENCY = 100
     const val ACTION_AUTO_REVEAL_SPOILERS = 101
+    const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 102
   }
 
 }

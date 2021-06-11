@@ -98,16 +98,8 @@ class FullImageMediaView(
       closeMediaViewer = { mediaViewContract.closeMediaViewer() },
       topPaddingFunc = { toolbarHeight() },
       bottomPaddingFunc = { globalWindowInsetsManager.bottom() },
-      topGestureInfo = CloseMediaActionHelper.GestureInfo(
-        gestureLabelText = getString(R.string.download),
-        onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
-        gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
-      ),
-      bottomGestureInfo = CloseMediaActionHelper.GestureInfo(
-        gestureLabelText = getString(R.string.close),
-        onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
-        gestureCanBeExecuted = { true }
-      )
+      topGestureInfo = createTopGestureAction(),
+      bottomGestureInfo = createBottomGestureAction()
     )
 
     gestureDetectorListener = GestureDetectorListener(

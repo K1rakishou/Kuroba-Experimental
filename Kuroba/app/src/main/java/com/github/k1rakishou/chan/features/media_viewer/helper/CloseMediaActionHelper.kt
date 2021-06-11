@@ -69,6 +69,9 @@ class CloseMediaActionHelper(
   private var isInsideTopGestureBounds = false
   private var isInsideBottomGestureBounds = false
 
+  private var topHapticExecuted = false
+  private var bottomHapticExecuted = false
+
   private var initialTouchPosition: PointF? = null
   private var initialTouchPositionForActions: PointF? = null
   private var currentTouchPosition: PointF? = null
@@ -263,6 +266,9 @@ class CloseMediaActionHelper(
     topTextHighlightedCached = null
     bottomTextNormalCached = null
     bottomTextHighlightedCached = null
+
+    topHapticExecuted = false
+    bottomHapticExecuted = false
   }
 
   fun onDraw(canvas: Canvas) {
@@ -323,6 +329,15 @@ class CloseMediaActionHelper(
       isInsideTopGestureBounds = currentTouchPositionY < centerPointY
         && ((centerPointY - currentTouchPositionY) > deadZoneHeight)
 
+      if (isInsideTopGestureBounds) {
+        if (!topHapticExecuted) {
+          topHapticExecuted = true
+          movableContainerFunc().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+      } else {
+        topHapticExecuted = false
+      }
+
       val topTextPositionY = centerPointY - textToTouchPositionOffset - (TEXT_SIZE / 2)
       val topText = getTopText(isInsideTopGestureBounds, topGestureInfo, width)
       val topTextScale = calcTopTextScale(currentTouchPositionY, centerPointY, textToTouchPositionOffset)
@@ -345,6 +360,15 @@ class CloseMediaActionHelper(
     if (bottomGestureInfo != null && bottomGestureInfo.gestureCanBeExecuted()) {
       isInsideBottomGestureBounds = currentTouchPositionY > centerPointY
         && ((currentTouchPositionY - centerPointY) > deadZoneHeight)
+
+      if (isInsideBottomGestureBounds) {
+        if (!bottomHapticExecuted) {
+          bottomHapticExecuted = true
+          movableContainerFunc().performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
+        }
+      } else {
+        bottomHapticExecuted = false
+      }
 
       val bottomTextPositionY = centerPointY + textToTouchPositionOffset - (TEXT_SIZE / 2)
       val bottomText = getBottomText(isInsideBottomGestureBounds, bottomGestureInfo, width)
@@ -546,9 +570,9 @@ class CloseMediaActionHelper(
     private val FLING_MAX_VELOCITY = dp(3000f).toFloat()
     private val FLING_ANIMATION_DIST = dp(4000f)
     private val INTERPOLATOR = DecelerateInterpolator(2f)
-    private val TEXT_TO_TOUCH_POSITION_OFFSET_PORT = dp(100f)
-    private val TEXT_TO_TOUCH_POSITION_OFFSET_LAND = dp(64f)
-    private val DEAD_ZONE_HEIGHT_PORT = dp(64f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET_PORT = dp(72f)
+    private val TEXT_TO_TOUCH_POSITION_OFFSET_LAND = dp(60f)
+    private val DEAD_ZONE_HEIGHT_PORT = dp(52f)
     private val DEAD_ZONE_HEIGHT_LAND = dp(40f)
     private val TEXT_SIZE = sp(60f).toFloat()
     private const val SCROLL_ANIMATION_DURATION = 250

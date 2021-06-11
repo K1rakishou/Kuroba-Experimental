@@ -391,11 +391,11 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <string name="controller_bookmarks_set_grid_view_width_text">Bookmark views width when in grid mode (pixels).</string>
 
-    <string name="controller_image_viewer_title">Image viewer gestures settings</string>
-    <string name="controller_image_viewer_swipe_up_gesture_action">Swipe up gesture action</string>
-    <string name="controller_image_viewer_swipe_down_action">Swipe down gesture action</string>
-    <string name="controller_image_viewer_close_image">Close image</string>
-    <string name="controller_image_viewer_save_image">Save image</string>
+    <string name="controller_media_viewer_title">Media viewer gestures settings</string>
+    <string name="controller_image_viewer_top_gesture_action">Top gesture action</string>
+    <string name="controller_image_viewer_bottom_gesture_action">Bottom gesture action</string>
+    <string name="controller_image_viewer_close_media_viewer">Close media viewer</string>
+    <string name="controller_image_viewer_save_media">Save media</string>
     <string name="controller_image_viewer_disabled">Disabled</string>
 
     <string name="controller_image_save_options_image_name_options">Image name options</string>
@@ -690,6 +690,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_remove_image_spoilers">Remove image spoilers</string>
     <string name="settings_remove_image_spoilers_description">Always reveal spoiler thumbnails and images</string>
     <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
+    <string name="setting_media_viewer_gesture_settings">Media viewer gesture settings</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
     <string name="setting_fetch_image_opacity">Image opacity</string>

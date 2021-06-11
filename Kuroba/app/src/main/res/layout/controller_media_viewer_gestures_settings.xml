@@ -30,7 +30,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 android:gravity="center_horizontal"
-                android:text="@string/controller_image_viewer_title"
+                android:text="@string/controller_media_viewer_title"
                 android:textSize="18sp"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
@@ -55,24 +55,24 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_horizontal"
-                        android:text="@string/controller_image_viewer_swipe_up_gesture_action"/>
+                        android:text="@string/controller_image_viewer_top_gesture_action"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_up_close_image"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:text="@string/controller_image_viewer_close_image"/>
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_close_media_viewer"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_up_save_image"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:text="@string/controller_image_viewer_save_image"/>
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_save_media"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_up_disabled"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="36dp"
                         android:text="@string/controller_image_viewer_disabled"/>
 
                 </RadioGroup>
@@ -90,24 +90,24 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:gravity="center_horizontal"
-                        android:text="@string/controller_image_viewer_swipe_down_action"/>
+                        android:text="@string/controller_image_viewer_bottom_gesture_action"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_down_close_image"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:text="@string/controller_image_viewer_close_image"/>
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_close_media_viewer"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_down_save_image"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
-                        android:text="@string/controller_image_viewer_save_image"/>
+                        android:layout_height="36dp"
+                        android:text="@string/controller_image_viewer_save_media"/>
 
                     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableRadioButton
                         android:id="@+id/image_viewer_gestures_swipe_down_disabled"
                         android:layout_width="match_parent"
-                        android:layout_height="40dp"
+                        android:layout_height="36dp"
                         android:text="@string/controller_image_viewer_disabled"/>
 
                 </RadioGroup>

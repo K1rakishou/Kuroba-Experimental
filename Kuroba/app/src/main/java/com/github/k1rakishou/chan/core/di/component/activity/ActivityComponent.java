@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImage
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerRootLayout;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView;
@@ -247,6 +248,7 @@ public interface ActivityComponent {
     void inject(SimpleListItemsReorderingController simpleListItemsReorderingController);
     void inject(CaptchaContainerController captchaContainerController);
     void inject(MediaViewerController mediaViewerController);
+    void inject(MediaViewerGesturesSettingsController mediaViewerGesturesSettingsController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

@@ -7,14 +7,17 @@ import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbarViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
+import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
@@ -167,6 +170,52 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   override fun onOptionsButtonClick() {
     mediaViewContract.onOptionsButtonClick(viewableMedia)
+  }
+
+  protected fun createTopGestureAction(): CloseMediaActionHelper.GestureInfo? {
+    when (ChanSettings.mediaViewerTopGestureAction.get()) {
+      ChanSettings.ImageGestureActionType.SaveImage -> {
+        return CloseMediaActionHelper.GestureInfo(
+          gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
+          onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
+          gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
+        )
+      }
+      ChanSettings.ImageGestureActionType.CloseImage -> {
+        return CloseMediaActionHelper.GestureInfo(
+          gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
+          onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
+          gestureCanBeExecuted = { true }
+        )
+      }
+      ChanSettings.ImageGestureActionType.Disabled -> {
+        return null
+      }
+      null -> return null
+    }
+  }
+
+  protected fun createBottomGestureAction(): CloseMediaActionHelper.GestureInfo? {
+    when (ChanSettings.mediaViewerBottomGestureAction.get()) {
+      ChanSettings.ImageGestureActionType.SaveImage -> {
+        return CloseMediaActionHelper.GestureInfo(
+          gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
+          onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
+          gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
+        )
+      }
+      ChanSettings.ImageGestureActionType.CloseImage -> {
+        return CloseMediaActionHelper.GestureInfo(
+          gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
+          onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
+          gestureCanBeExecuted = { true }
+        )
+      }
+      ChanSettings.ImageGestureActionType.Disabled -> {
+        return null
+      }
+      null -> return null
+    }
   }
 
   override fun toString(): String {
