@@ -1035,7 +1035,7 @@ class MainController(
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
     private const val SETTINGS_BADGE_COUNTER_MAX_NUMBERS = 2
 
-    private const val MIN_SPAN_COUNT = 2
+    private const val MIN_SPAN_COUNT = 3
     private const val MAX_SPAN_COUNT = 6
 
     private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
@@ -1045,6 +1045,6 @@ class MainController(
     private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
     private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
-    private val GRID_COLUMN_WIDTH = dp(96f)
+    private val GRID_COLUMN_WIDTH = dp(80f)
   }
 }
