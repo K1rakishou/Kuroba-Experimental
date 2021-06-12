@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerAdapter
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
-import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -147,7 +146,7 @@ class MediaLongClickMenuHelper(
         AppModuleAndroidUtils.shareLink(mediaUrl.toString())
       }
       ACTION_SHARE_MEDIA_CONTENT -> {
-        shareMediaContent(context, viewableMedia)
+        shareMediaContent(viewableMedia)
       }
       ACTION_DOWNLOAD_MEDIA_FILE_CONTENT -> {
         downloadMediaFile(context, false, viewableMedia)
@@ -188,21 +187,14 @@ class MediaLongClickMenuHelper(
     presentControllerFunc(ImageSaverV2OptionsController(context, options))
   }
 
-  private suspend fun shareMediaContent(context: Context, viewableMedia: ViewableMedia) {
-    val remoteMediaLocation = viewableMedia.mediaLocation as MediaLocation.Remote
+  private suspend fun shareMediaContent(viewableMedia: ViewableMedia) {
+    val remoteMediaLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
       ?: return
-    val downloadFileName = viewableMedia.viewableMediaMeta.serverMediaName
+    val downloadFileName = viewableMedia.viewableMediaMeta.formatFullServerMediaName()
       ?: return
     val mediaUrl = remoteMediaLocation.url
 
-    val loadingViewController = LoadingViewController(context, true)
-    presentControllerFunc(loadingViewController)
-
-    try {
-      imageSaverV2.downloadMediaAndShare(mediaUrl, downloadFileName)
-    } finally {
-      loadingViewController.stopPresenting()
-    }
+    imageSaverV2.downloadMediaAndShare(mediaUrl, downloadFileName)
   }
 
   private fun showImageSearchOptions(context: Context, viewableMedia: ViewableMedia) {

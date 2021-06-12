@@ -267,7 +267,21 @@ data class ViewableMediaMeta(
   val mediaSize: Long?,
   val mediaHash: String?,
   val isSpoiler: Boolean
-)
+) {
+
+  fun formatFullServerMediaName(): String? {
+    if (serverMediaName.isNullOrEmpty()) {
+      return null
+    }
+
+    if (extension.isNullOrEmpty()) {
+      return serverMediaName
+    }
+
+    return "${serverMediaName}.${extension}"
+  }
+
+}
 
 sealed class MediaLocation : Parcelable{
 
