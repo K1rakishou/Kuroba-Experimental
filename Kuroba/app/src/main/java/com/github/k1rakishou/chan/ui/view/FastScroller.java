@@ -567,7 +567,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
 
                 verticalScrollTo(me.getY());
             }
-        } else if (me.getAction() == MotionEvent.ACTION_UP && mState == STATE_DRAGGING) {
+        } else if ((me.getAction() == MotionEvent.ACTION_UP || me.getAction() == MotionEvent.ACTION_CANCEL) && mState == STATE_DRAGGING) {
             mVerticalDragY = 0;
             setState(STATE_VISIBLE);
             mDragState = DRAG_NONE;
