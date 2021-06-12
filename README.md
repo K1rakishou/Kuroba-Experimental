@@ -38,7 +38,22 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Lots of other tiny improvements.
 
-Screenshots can be found [here](https://github.com/K1rakishou/Kuroba-Experimental/tree/develop/fastlane/metadata/android/en-US/images)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/1.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/1.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/2.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/2.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/3.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/3.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/4.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/4.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/5.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/5.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/6.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/6.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/7.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/7.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/8.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/8.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/9.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/9.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/10.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/11.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/11.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/12.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/12.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/13.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/13.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/14.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/14.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/15.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/15.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/16.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/16.png)
 
 ### New stuff and important annoncements:
 
