@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.search
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerStateData
@@ -165,8 +166,12 @@ internal class GlobalSearchPresenter(
       SiteGlobalSearchType.SearchNotSupported -> {
         throw IllegalStateException("Must not be used here")
       }
-      SiteGlobalSearchType.SimpleQuerySearch -> {
-        return SearchParameters.SimpleQuerySearchParameters(query = "")
+      SiteGlobalSearchType.SimpleQuerySearch,
+      SiteGlobalSearchType.SimpleQueryBoardSearch -> {
+        return SearchParameters.SimpleQuerySearchParameters(
+          query = "",
+          searchBoard = SearchBoard.AllBoards
+        )
       }
       SiteGlobalSearchType.FuukaSearch -> {
         return SearchParameters.FuukaSearchParameters(

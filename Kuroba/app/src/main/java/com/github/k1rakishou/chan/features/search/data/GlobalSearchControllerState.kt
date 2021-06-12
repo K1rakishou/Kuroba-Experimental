@@ -38,11 +38,22 @@ sealed class SearchParameters {
   abstract fun getCurrentQuery(): String
 
   data class SimpleQuerySearchParameters(
-    override val query: String
+    override val query: String,
+    val searchBoard: SearchBoard
   ) : SearchParameters() {
 
     override fun getCurrentQuery(): String {
-      return query
+      return buildString {
+        append("/${searchBoard.boardCode()}/")
+
+        if (query.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append(" ")
+          }
+
+          append("Comment: '$query'")
+        }
+      }
     }
 
     override fun isValid(): Boolean {

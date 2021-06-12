@@ -12,13 +12,12 @@ import com.github.k1rakishou.chan.features.search.epoxy.epoxySelectableBoardItem
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
 
 class SelectBoardForSearchController(
   context: Context,
-  private val archiveSupportSearchOnAllBoards: Boolean,
-  private val siteDescriptor: SiteDescriptor,
+  private val siteSupportSearchOnAllBoards: Boolean,
+  private val searchBoardProvider: () -> Collection<SearchBoard>,
   private val prevSelectedBoard: SearchBoard?,
   private val onBoardSelected: (SearchBoard) -> Unit
 ) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
@@ -67,16 +66,11 @@ class SelectBoardForSearchController(
   private fun renderArchiveSiteBoardsSupportingSearch() {
     val boardsSupportingSearch = mutableListOf<SearchBoard>()
 
-    if (archiveSupportSearchOnAllBoards) {
+    if (siteSupportSearchOnAllBoards) {
       boardsSupportingSearch += SearchBoard.AllBoards
     }
 
-    boardsSupportingSearch.addAll(
-      archivesManager.getBoardsSupportingSearch(siteDescriptor)
-        .toList()
-        .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
-        .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
-    )
+    boardsSupportingSearch.addAll(searchBoardProvider())
 
     if (boardsSupportingSearch.isEmpty()) {
       pop()
@@ -125,7 +119,7 @@ class SelectBoardForSearchController(
   }
 
   companion object {
-    private const val SPAN_COUNT = 3
+    private const val SPAN_COUNT = 4
   }
 
 }

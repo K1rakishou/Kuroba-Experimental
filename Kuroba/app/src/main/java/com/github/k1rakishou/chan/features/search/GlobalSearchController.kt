@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
@@ -36,6 +37,8 @@ class GlobalSearchController(context: Context)
 
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
@@ -161,9 +164,14 @@ class GlobalSearchController(context: Context)
     val selectedSite = dataState.sitesWithSearch.selectedSite
 
     val canRenderSearchButton = when (selectedSite.siteGlobalSearchType) {
-      SiteGlobalSearchType.SimpleQuerySearch -> renderSimpleQuerySearch(dataState)
+      SiteGlobalSearchType.SimpleQuerySearch,
+      SiteGlobalSearchType.SimpleQueryBoardSearch -> {
+        renderSimpleQuerySearch(dataState, selectedSite.siteGlobalSearchType)
+      }
       SiteGlobalSearchType.FuukaSearch,
-      SiteGlobalSearchType.FoolFuukaSearch -> renderFoolFuukaSearch(dataState)
+      SiteGlobalSearchType.FoolFuukaSearch -> {
+        renderFoolFuukaSearch(dataState)
+      }
       SiteGlobalSearchType.SearchNotSupported -> false
     }
 
@@ -199,6 +207,7 @@ class GlobalSearchController(context: Context)
       when (searchType) {
         SiteGlobalSearchType.SearchNotSupported,
         SiteGlobalSearchType.SimpleQuerySearch,
+        SiteGlobalSearchType.SimpleQueryBoardSearch,
         SiteGlobalSearchType.FuukaSearch -> {
           return SearchParameters.FuukaSearchParameters(
             query = query,
@@ -230,6 +239,10 @@ class GlobalSearchController(context: Context)
       boardCode(selectedBoardCode)
       bindClickCallback {
         val boardsSupportingSearch = archivesManager.getBoardsSupportingSearch(selectedSiteDescriptor)
+          .toList()
+          .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
+          .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
+
         if (boardsSupportingSearch.isEmpty()) {
           showToast(R.string.no_boards_supporting_search_found)
           return@bindClickCallback
@@ -237,9 +250,9 @@ class GlobalSearchController(context: Context)
 
         val controller = SelectBoardForSearchController(
           context = context,
-          archiveSupportSearchOnAllBoards = false,
+          siteSupportSearchOnAllBoards = false,
           prevSelectedBoard = searchParameters.searchBoard,
-          siteDescriptor = selectedSiteDescriptor,
+          searchBoardProvider = { boardsSupportingSearch },
           onBoardSelected = { searchBoard ->
             val updatedSearchParameters = createFuukaOrFoolFuukaSearchParams(
               siteDescriptor = selectedSiteDescriptor,
@@ -300,34 +313,78 @@ class GlobalSearchController(context: Context)
     ).isValid()
   }
 
-  private fun EpoxyController.renderSimpleQuerySearch(dataState: GlobalSearchControllerStateData): Boolean {
+  private fun EpoxyController.renderSimpleQuerySearch(
+    dataState: GlobalSearchControllerStateData,
+    siteGlobalSearchType: SiteGlobalSearchType
+  ): Boolean {
     val sitesWithSearch = dataState.sitesWithSearch
     val searchParameters = dataState.searchParameters as SearchParameters.SimpleQuerySearchParameters
-    var initialQuery = searchParameters.query
+    val selectedSiteDescriptor = sitesWithSearch.selectedSite.siteDescriptor
+
+    var searchQuery = searchParameters.query
+    var selectedBoard = searchParameters.searchBoard
+    var selectedBoardCode: String? = selectedBoard.boardCode()
 
     // When site selection changes with want to redraw epoxySearchInputView with new initialQuery
     val selectedSiteName = sitesWithSearch.selectedSite.siteDescriptor.siteName
 
     if (resetSearchParameters) {
-      initialQuery = ""
+      searchQuery = ""
+      selectedBoard = SearchBoard.AllBoards
+      selectedBoardCode = null
 
       resetSearchParameters = false
     }
 
     epoxySearchInputView {
       id("global_search_simple_query_search_view_$selectedSiteName")
-      initialQuery(initialQuery)
+      initialQuery(searchQuery)
       hint(context.getString(R.string.post_comment_search_query_hint))
       onTextEnteredListener { query ->
-        val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(query)
+        val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(query, selectedBoard)
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
       }
       onBind { _, view, _ -> addViewToInputViewRefSet(view) }
       onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
+    if (siteGlobalSearchType == SiteGlobalSearchType.SimpleQueryBoardSearch) {
+      epoxyBoardSelectionButtonView {
+        id("global_search_board_selection_button_view_$selectedSiteName")
+        boardCode(selectedBoardCode)
+        bindClickCallback {
+          val boardsSupportingSearch = boardManager.getAllBoardDescriptorsForSite(selectedSiteDescriptor)
+            .sortedBy { bd -> bd.boardCode }
+            .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
+
+          if (boardsSupportingSearch.isEmpty()) {
+            showToast(R.string.no_boards_supporting_search_found)
+            return@bindClickCallback
+          }
+
+          val controller = SelectBoardForSearchController(
+            context = context,
+            siteSupportSearchOnAllBoards = true,
+            prevSelectedBoard = searchParameters.searchBoard,
+            searchBoardProvider = { boardsSupportingSearch },
+            onBoardSelected = { searchBoard ->
+              val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(
+                query = searchQuery,
+                searchBoard = searchBoard
+              )
+
+              presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
+            }
+          )
+
+          requireNavController().presentController(controller)
+        }
+      }
+    }
+
     return SearchParameters.SimpleQuerySearchParameters(
-      query = initialQuery
+      query = searchQuery,
+      searchBoard = selectedBoard
     ).isValid()
   }
 

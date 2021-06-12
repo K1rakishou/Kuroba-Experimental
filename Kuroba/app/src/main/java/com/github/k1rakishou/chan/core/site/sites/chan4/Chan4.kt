@@ -389,11 +389,13 @@ open class Chan4 : SiteBase() {
     override suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
       searchParams as Chan4SearchParams
       val page = searchParams.getCurrentPage()
+      val boardCode = searchParams.boardCode
 
-      // https://find.4chan.org/?q=test&o=0
+      // https://find.4chan.org/?q=test&b=g&o=0
       val searchUrl = requireNotNull(endpoints().search())
         .newBuilder()
         .addQueryParameter("q", searchParams.query)
+        .addBoardCodeParameter(boardCode)
         .addQueryParameter("o", page.toString())
         .build()
 
@@ -408,6 +410,14 @@ open class Chan4 : SiteBase() {
         proxiedOkHttpClient,
         searchParams
       ).execute()
+    }
+
+    private fun HttpUrl.Builder.addBoardCodeParameter(boardCode: String?): HttpUrl.Builder {
+      if (boardCode.isNullOrEmpty()) {
+        return this
+      }
+
+      return addQueryParameter("b", boardCode)
     }
   }
 
@@ -505,7 +515,7 @@ open class Chan4 : SiteBase() {
     return settings
   }
 
-  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQuerySearch
+  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQueryBoardSearch
 
   class Chan4SiteRequestModifier(
     site: Chan4,

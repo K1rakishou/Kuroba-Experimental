@@ -190,7 +190,17 @@ internal class SearchResultsPresenter(
 
     val requestSearchParams = when (val params = searchParameters) {
       is SearchParameters.SimpleQuerySearchParameters -> {
-        Chan4SearchParams(siteDescriptor, params.query, currentPage)
+        val boardCode = when (params.searchBoard) {
+          SearchBoard.AllBoards -> null
+          is SearchBoard.SingleBoard -> params.searchBoard.boardCode()
+        }
+
+        Chan4SearchParams(
+          boardCode = boardCode,
+          siteDescriptor = siteDescriptor,
+          query = params.query,
+          page = currentPage
+        )
       }
       is SearchParameters.AdvancedSearchParameters -> {
         when (params) {

@@ -13,6 +13,7 @@ interface SearchParams {
 }
 
 data class Chan4SearchParams(
+  val boardCode: String?,
   override val siteDescriptor: SiteDescriptor,
   override val query: String,
   val page: Int?
