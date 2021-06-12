@@ -10,7 +10,7 @@ sealed class SearchBoard {
   }
 
   object AllBoards : SearchBoard() {
-    override fun boardCode(): String = "all"
+    override fun boardCode(): String = "GLOBAL"
   }
 
 }
