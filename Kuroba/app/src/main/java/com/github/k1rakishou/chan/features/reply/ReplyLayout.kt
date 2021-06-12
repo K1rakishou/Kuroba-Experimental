@@ -74,7 +74,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder.CaptchaValidationListener
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
-import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
@@ -111,8 +111,6 @@ import com.google.android.material.textview.MaterialTextView
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 import kotlin.coroutines.resume
 
@@ -151,6 +149,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
+  @Inject
+  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -345,7 +345,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
-    EventBus.getDefault().register(this)
 
     globalWindowInsetsManager.addKeyboardUpdatesListener(this)
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -370,7 +369,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
-    EventBus.getDefault().unregister(this)
 
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeKeyboardUpdatesListener(this)
@@ -534,6 +532,13 @@ class ReplyLayout @JvmOverloads constructor(
     coroutineScope.launch {
       globalViewStateManager.listenForBottomNavViewSwipeUpGestures()
         .collect { processBottomNavViewSwipeUpEvents() }
+    }
+
+    coroutineScope.launch {
+      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
+        Logger.d(TAG, "Updating ReplyLayout wrapping mode because app settings were updated")
+        setWrappingMode(presenter.isExpanded)
+      }
     }
 
     onThemeChanged()
@@ -1095,11 +1100,6 @@ class ReplyLayout @JvmOverloads constructor(
     } else {
       GONE
     }
-  }
-
-  @Subscribe
-  fun onEvent(message: RefreshUIMessage?) {
-    setWrappingMode(presenter.isExpanded)
   }
 
   override fun setExpanded(expanded: Boolean, isCleaningUp: Boolean) {

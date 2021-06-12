@@ -1,14 +1,5 @@
 package com.github.k1rakishou.chan.utils;
 
-import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
-import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
-
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -52,11 +43,18 @@ import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
-import org.greenrobot.eventbus.EventBus;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
+
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
+import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
     private static final String TAG = "AppModuleAndroidUtils";
@@ -355,10 +353,6 @@ public class AppModuleAndroidUtils {
         return networkInfo != null && networkInfo.isConnected();
     }
 
-    public static void postToEventBus(Object message) {
-        EventBus.getDefault().post(message);
-    }
-
     public static int getScreenOrientation() {
         int screenOrientation = getAppContext().getResources().getConfiguration().orientation;
         if (screenOrientation != ORIENTATION_LANDSCAPE && screenOrientation != ORIENTATION_PORTRAIT) {
@@ -583,15 +577,13 @@ public class AppModuleAndroidUtils {
             }
         }
 
-        throw new IllegalStateException(
-                "Unknown context wrapper " + context.getClass().getName());
+        throw new IllegalStateException("Unknown context wrapper " + context.getClass().getName());
     }
 
     public static boolean isLowRamDevice() {
         ActivityManager activityManager = getActivityManager();
         return activityManager != null && activityManager.isLowRamDevice();
     }
-
 
     public interface OnMeasuredCallback {
         /**

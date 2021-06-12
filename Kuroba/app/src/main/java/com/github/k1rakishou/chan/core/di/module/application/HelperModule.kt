@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
@@ -158,6 +159,12 @@ class HelperModule {
   @Singleton
   fun provideExoPlayerDiskCache(context: Context, appConstants: AppConstants): ExoPlayerCache {
     return ExoPlayerCache(context, appConstants)
+  }
+
+  @Provides
+  @Singleton
+  fun provideAppSettingsUpdateAppRefreshHelper(): AppSettingsUpdateAppRefreshHelper {
+    return AppSettingsUpdateAppRefreshHelper()
   }
 
 }

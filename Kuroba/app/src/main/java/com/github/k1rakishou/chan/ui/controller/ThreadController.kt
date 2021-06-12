@@ -41,8 +41,8 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAl
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.OpenExternalThreadHelper
-import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
 import com.github.k1rakishou.chan.ui.helper.ShowPostsInExternalThreadHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
@@ -65,8 +65,6 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
-import org.greenrobot.eventbus.EventBus
-import org.greenrobot.eventbus.Subscribe
 import javax.inject.Inject
 
 abstract class ThreadController(
@@ -103,6 +101,8 @@ abstract class ThreadController(
   lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
   @Inject
   lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
+  @Inject
+  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -121,8 +121,6 @@ abstract class ThreadController(
 
   override fun onCreate() {
     super.onCreate()
-
-    EventBus.getDefault().register(this)
 
     threadLayout = inflate(context, R.layout.layout_thread, null) as ThreadLayout
     threadLayout.create(this, threadControllerType)
@@ -187,6 +185,13 @@ abstract class ThreadController(
         }
     }
 
+    mainScope.launch {
+      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
+        Logger.d(TAG, "Reloading thread because app settings were updated")
+        threadLayout.presenter.normalLoad()
+      }
+    }
+
     onThemeChanged()
     themeEngine.addListener(this)
   }
@@ -211,8 +216,6 @@ abstract class ThreadController(
     threadLayout.destroy()
     applicationVisibilityManager.removeListener(this)
     themeEngine.removeListener(this)
-
-    EventBus.getDefault().unregister(this)
   }
 
   override fun onThemeChanged() {
@@ -263,12 +266,6 @@ abstract class ThreadController(
 
   override fun onApplicationVisibilityChanged(applicationVisibility: ApplicationVisibility) {
     threadLayout.presenter.onForegroundChanged(applicationVisibility.isInForeground())
-  }
-
-  @Subscribe
-  fun onEvent(message: RefreshUIMessage?) {
-    Logger.d(TAG, "onEvent reason=${message?.reason ?: "<reason is empty>"}")
-    threadLayout.presenter.normalLoad()
   }
 
   override fun onRefresh() {

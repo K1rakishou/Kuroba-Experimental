@@ -23,11 +23,10 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
-import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
 import kotlinx.coroutines.FlowPreview
@@ -40,6 +39,8 @@ class MainSettingsControllerV2(
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
+  @Inject
+  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 
   lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
@@ -175,9 +176,10 @@ class MainSettingsControllerV2(
     if (hasPendingRestart) {
       (context as StartActivity).restartApp()
     } else if (hasPendingUiRefresh) {
-      postToEventBus(RefreshUIMessage("SettingsController refresh"))
       hasPendingUiRefresh = false
       cancellableToast.showToast(context, "UI refreshed")
+
+      appSettingsUpdateAppRefreshHelper.settingsUpdated()
     }
   }
 

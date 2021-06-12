@@ -81,7 +81,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.dnsoverhttps.DnsOverHttps
-import org.greenrobot.eventbus.EventBus
 import java.io.IOException
 import java.io.PrintWriter
 import java.io.StringWriter
@@ -184,11 +183,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     PersistableChanState.init(createPersistableChanStateInfo())
 
     AppModuleAndroidUtils.printApplicationSignatureHash()
-
-    // remove this if you need to debug some sort of event bus issue
-    EventBus.builder()
-      .logNoSubscriberMessages(false)
-      .installDefaultEventBus()
   }
 
   override fun onCreate() {

@@ -14,14 +14,14 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
-import com.github.k1rakishou.chan.ui.helper.RefreshUIMessage
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.postToEventBus
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 
 class BehaviourSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val postHideManager: PostHideManager
+  private val postHideManager: PostHideManager,
+  private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 ) : BaseSettingsScreen(
   context,
   BehaviorScreen,
@@ -220,7 +220,8 @@ class BehaviourSettingsScreen(
           callback = {
             postHideManager.clearAllPostHides()
             showToast(context, R.string.setting_cleared_post_hides, Toast.LENGTH_LONG)
-            postToEventBus(RefreshUIMessage("clearhides"))
+
+            appSettingsUpdateAppRefreshHelper.settingsUpdated()
           }
         )
 

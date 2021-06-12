@@ -279,7 +279,6 @@ dependencies {
     implementation "org.jsoup:jsoup:${versions.jsoup}"
     implementation 'pl.droidsonroids.gif:android-gif-drawable:1.2.23'
     implementation 'com.davemorrissey.labs:subsampling-scale-image-view:3.10.0'
-    implementation 'org.greenrobot:eventbus:3.2.0'
     implementation 'org.nibor.autolink:autolink:0.10.0'
     implementation "com.google.code.gson:gson:${versions.gson}"
     implementation "io.reactivex.rxjava2:rxjava:${versions.rxjava}"

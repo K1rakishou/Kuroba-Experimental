@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.common.AppConstants
@@ -94,6 +95,8 @@ class SettingsCoordinator(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var twoCaptchaCheckBalanceUseCase: TwoCaptchaCheckBalanceUseCase
+  @Inject
+  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -131,7 +134,8 @@ class SettingsCoordinator(
     BehaviourSettingsScreen(
       context,
       navigationController,
-      postHideManager
+      postHideManager,
+      appSettingsUpdateAppRefreshHelper
     )
   }
 
