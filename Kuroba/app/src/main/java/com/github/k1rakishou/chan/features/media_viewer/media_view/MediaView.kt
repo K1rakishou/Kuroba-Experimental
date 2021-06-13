@@ -186,6 +186,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       ChanSettings.ImageGestureActionType.SaveImage -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
+          isClosingMediaViewerGesture = false,
           onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
           gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
         )
@@ -193,6 +194,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       ChanSettings.ImageGestureActionType.CloseImage -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
+          isClosingMediaViewerGesture = true,
           onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
           gestureCanBeExecuted = { true }
         )
@@ -200,6 +202,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       ChanSettings.ImageGestureActionType.OpenAlbum -> {
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.media_viewer_open_album_action),
+          isClosingMediaViewerGesture = true,
           onGestureTriggeredFunc = { mediaViewContract.openAlbum(viewableMedia) },
           gestureCanBeExecuted = {
             val mediaViewerOpenedFromAlbum = controllerViewModel.mediaViewerOptions.value.mediaViewerOpenedFromAlbum

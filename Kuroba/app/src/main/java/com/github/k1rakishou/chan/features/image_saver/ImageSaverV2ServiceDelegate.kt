@@ -610,7 +610,7 @@ class ImageSaverV2ServiceDelegate(
       )
 
       if (threadSubject.isNotNullNorBlank()) {
-        segments += DirectorySegment(threadSubject)
+        segments += DirectorySegment(StringUtils.dirNameRemoveBadCharacters(threadSubject)!!)
       }
     }
 

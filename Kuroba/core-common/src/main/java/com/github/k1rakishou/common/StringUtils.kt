@@ -6,7 +6,7 @@ import java.util.*
 
 object StringUtils {
   private val HEX_ARRAY = "0123456789ABCDEF".toLowerCase(Locale.ENGLISH).toCharArray()
-  private const val RESERVED_CHARACTERS = "|?*<\":>+\\[\\]/'\\\\\\s"
+  private const val RESERVED_CHARACTERS = "#|?*<\":>+\\[\\]/'\\\\\\s"
   private const val RESERVED_CHARACTERS_DIR = "[" + RESERVED_CHARACTERS + "." + "]"
   private const val RESERVED_CHARACTERS_FILE = "[" + RESERVED_CHARACTERS + "]"
   private const val UTF8_BOM = '\uFEFF'

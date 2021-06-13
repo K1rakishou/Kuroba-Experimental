@@ -206,8 +206,6 @@ class CloseMediaActionHelper(
       val velocityX = velocityTracker!!.xVelocity.toInt()
       val velocityY = velocityTracker!!.yVelocity.toInt()
 
-      finishingWithAnimation = true
-
       if (Math.abs(velocityX) > FLING_MIN_VELOCITY || Math.abs(velocityY) > FLING_MIN_VELOCITY) {
         scroller!!.setFriction(0.2f)
 
@@ -222,18 +220,35 @@ class CloseMediaActionHelper(
           deltaY.toInt() + FLING_ANIMATION_DIST
         )
 
+        finishingWithAnimation = true
         ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = true))
       } else {
         scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), SCROLL_ANIMATION_DURATION)
 
         if (isInsideTopGestureBounds && topGestureInfo != null) {
-          ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
-          topGestureInfo.onGestureTriggeredFunc()
+          finishingWithAnimation = topGestureInfo.isClosingMediaViewerGesture
+
+          if (finishingWithAnimation) {
+            FadeAnimation().animate { topGestureInfo.onGestureTriggeredFunc() }
+          } else {
+            ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
+            topGestureInfo.onGestureTriggeredFunc()
+          }
+
           movableContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         } else if (isInsideBottomGestureBounds && bottomGestureInfo != null) {
-          FadeAnimation().animate { bottomGestureInfo.onGestureTriggeredFunc() }
+          finishingWithAnimation = bottomGestureInfo.isClosingMediaViewerGesture
+
+          if (finishingWithAnimation) {
+            FadeAnimation().animate { bottomGestureInfo.onGestureTriggeredFunc() }
+          } else {
+            ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
+            bottomGestureInfo.onGestureTriggeredFunc()
+          }
+
           movableContainer.performHapticFeedback(HapticFeedbackConstants.VIRTUAL_KEY)
         } else {
+          finishingWithAnimation = false
           ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = false))
         }
       }
@@ -561,6 +576,7 @@ class CloseMediaActionHelper(
 
   class GestureInfo(
     val gestureLabelText: String,
+    val isClosingMediaViewerGesture: Boolean,
     val onGestureTriggeredFunc: () -> Unit,
     val gestureCanBeExecuted: () -> Boolean,
   )
