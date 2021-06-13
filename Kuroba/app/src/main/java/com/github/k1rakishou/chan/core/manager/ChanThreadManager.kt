@@ -60,6 +60,10 @@ class ChanThreadManager(
     chanPostRepository.awaitUntilInitialized()
   }
 
+  fun isThreadLockCurrentlyLocked(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    return chanThreadsCache.isThreadLockCurrentlyLocked(threadDescriptor)
+  }
+
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {

@@ -196,6 +196,14 @@ class ThreadStatusCell(
 
     chanDescriptor as ChanDescriptor.ThreadDescriptor
 
+    if (chanThreadManager.isThreadLockCurrentlyLocked(chanDescriptor)) {
+      // Since we update ThreadStatusCell every second there might be times when the ChanThread object
+      // is being updated with new posts and there are a lot of posts so it may hold the lock for
+      // quite some time. So to avoid freezing the whole app because of that we need to first check
+      // whether the ChanThread lock is locked and skip this updated if it's locked.
+      return
+    }
+
     val chanThread = chanThreadManager.getChanThread(chanDescriptor)
       ?: return
 

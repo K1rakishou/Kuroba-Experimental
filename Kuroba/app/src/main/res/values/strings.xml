@@ -1085,8 +1085,8 @@ Don't have a 4chan Pass?<br>
     <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
 
     <string name="thread_layout_load_progress_preparing">Preparing</string>
-    <string name="thread_layout_load_progress_downloading_json">Downloading JSON</string>
-    <string name="thread_layout_load_progress_reading_json">Reading JSON</string>
+    <string name="thread_layout_load_progress_requesting_json">Requesting JSON</string>
+    <string name="thread_layout_load_progress_reading_json_response">Reading JSON response</string>
     <string name="thread_layout_load_progress_processing_filters">Processing %1$d filters</string>
     <string name="thread_layout_load_progress_parsing_posts">Parsing %1$d posts</string>
     <string name="thread_layout_load_progress_persisting_posts">Persisting %1$d posts</string>

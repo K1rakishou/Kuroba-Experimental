@@ -1182,10 +1182,10 @@ class ThreadLayout @JvmOverloads constructor(
         getString(R.string.thread_layout_load_progress_preparing)
       }
       is ChanLoadProgressEvent.LoadingJson -> {
-        getString(R.string.thread_layout_load_progress_downloading_json)
+        getString(R.string.thread_layout_load_progress_requesting_json)
       }
       is ChanLoadProgressEvent.ReadingJson -> {
-        getString(R.string.thread_layout_load_progress_reading_json)
+        getString(R.string.thread_layout_load_progress_reading_json_response)
       }
       is ChanLoadProgressEvent.ProcessingFilters -> {
         getString(R.string.thread_layout_load_progress_processing_filters, chanLoadProgressEvent.filtersCount)

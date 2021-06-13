@@ -807,6 +807,10 @@ class ChanThread(
     }
   }
 
+  fun isThreadLockCurrentlyLocked(): Boolean {
+    return lock.isWriteLocked && !lock.isWriteLockedByCurrentThread
+  }
+
   companion object {
     private const val TAG = "ChanThread"
 

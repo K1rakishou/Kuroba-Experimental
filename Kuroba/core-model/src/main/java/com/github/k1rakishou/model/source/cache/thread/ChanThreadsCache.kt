@@ -31,6 +31,10 @@ class ChanThreadsCache(
   private val chanThreads = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
   private val lastEvictInvokeTime = AtomicLong(0L)
 
+  fun isThreadLockCurrentlyLocked(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    return chanThreads[threadDescriptor]?.isThreadLockCurrentlyLocked() ?: false
+  }
+
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     chanThreads[postDescriptor.threadDescriptor()]?.putPostHash(postDescriptor, hash)
   }
