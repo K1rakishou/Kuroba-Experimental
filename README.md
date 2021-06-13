@@ -54,6 +54,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/14.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/14.png)
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/15.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/15.png)
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/16.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/16.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/17.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/17.png)
+[<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/18.png" width=200>](fastlane/metadata/android/en-US/images/phoneScreenshots/18.png)
 
 ### New stuff and important annoncements:
 
