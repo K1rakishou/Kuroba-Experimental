@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.adapter
 
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -25,12 +27,21 @@ import com.github.k1rakishou.model.data.post.PostIndexed
 import java.util.*
 
 class PostsFilter(
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
   private val postHideHelper: PostHideHelper,
   private val order: Order
 ) {
 
   suspend fun applyFilter(chanDescriptor: ChanDescriptor, posts: MutableList<ChanPost>): List<PostIndexed> {
     val postsCount = posts.size
+
+    chanLoadProgressNotifier.sendProgressEvent(
+      ChanLoadProgressEvent.ApplyingFilters(
+        chanDescriptor = chanDescriptor,
+        postHidesCount = postHideHelper.countPostHides(posts),
+        postFiltersCount = postHideHelper.countMatchedFilters(posts)
+      )
+    )
 
     if (order != Order.BUMP && chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       processOrder(posts as MutableList<ChanOriginalPost>)

@@ -33,6 +33,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
@@ -62,6 +64,7 @@ import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper.RemovedPostsCallbacks
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutCallback
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
@@ -97,6 +100,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -148,9 +152,12 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var chanLoadProgressNotifier: ChanLoadProgressNotifier
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
+  private lateinit var progressStepText: ColorizableTextView
   private lateinit var loadView: LoadView
   private lateinit var replyButton: HidingFloatingActionButton
   private lateinit var threadListLayout: ThreadListLayout
@@ -244,6 +251,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     // Inflate thread loading layout
     progressLayout = inflate(context, R.layout.layout_thread_progress, this, false)
+    progressStepText = progressLayout.findViewById(R.id.loading_step)
 
     // View setup
     presenter.create(context, this)
@@ -263,6 +271,16 @@ class ThreadLayout @JvmOverloads constructor(
     } else {
       replyButton.setOnClickListener(this)
       replyButton.setToolbar(callback.toolbar!!)
+    }
+
+    launch {
+      chanLoadProgressNotifier.progressEventsFlow.collect { chanLoadProgressEvent ->
+        if (chanDescriptor != chanLoadProgressEvent.chanDescriptor) {
+          return@collect
+        }
+
+        handleLoadProgressEvent(chanLoadProgressEvent)
+      }
     }
 
     themeEngine.addListener(this)
@@ -1080,6 +1098,7 @@ class ThreadLayout @JvmOverloads constructor(
         }
 
         showReplyButton(false)
+        progressStepText.text = ""
       }
       Visible.THREAD -> {
         callback.hideSwipeRefreshLayout()
@@ -1153,6 +1172,44 @@ class ThreadLayout @JvmOverloads constructor(
       positiveButtonText = positiveButtonText,
       onPositiveButtonClickListener = { presenter.hideOrRemovePosts(hide, true, post, threadNo) }
     )
+  }
+
+  private fun handleLoadProgressEvent(chanLoadProgressEvent: ChanLoadProgressEvent) {
+    Logger.d(TAG, "handleLoadProgressEvent() $chanLoadProgressEvent")
+
+    progressStepText.text = when (chanLoadProgressEvent) {
+      is ChanLoadProgressEvent.Begin -> {
+        getString(R.string.thread_layout_load_progress_preparing)
+      }
+      is ChanLoadProgressEvent.LoadingJson -> {
+        getString(R.string.thread_layout_load_progress_downloading_json)
+      }
+      is ChanLoadProgressEvent.ReadingJson -> {
+        getString(R.string.thread_layout_load_progress_reading_json)
+      }
+      is ChanLoadProgressEvent.ProcessingFilters -> {
+        getString(R.string.thread_layout_load_progress_processing_filters, chanLoadProgressEvent.filtersCount)
+      }
+      is ChanLoadProgressEvent.ParsingPosts -> {
+        getString(R.string.thread_layout_load_progress_parsing_posts, chanLoadProgressEvent.postsToParseCount)
+      }
+      is ChanLoadProgressEvent.PersistingPosts -> {
+        getString(R.string.thread_layout_load_progress_persisting_posts, chanLoadProgressEvent.postsCount)
+      }
+      is ChanLoadProgressEvent.ApplyingFilters -> {
+        getString(
+          R.string.thread_layout_load_progress_applying_filters,
+          chanLoadProgressEvent.postHidesCount,
+          chanLoadProgressEvent.postFiltersCount
+        )
+      }
+      is ChanLoadProgressEvent.RefreshingPosts -> {
+        getString(R.string.thread_layout_load_progress_diffing_results)
+      }
+      is ChanLoadProgressEvent.End -> {
+        getString(R.string.thread_layout_load_progress_done)
+      }
+    }
   }
 
   interface ThreadLayoutCallback {

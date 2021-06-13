@@ -40,6 +40,8 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -126,6 +128,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var chanLoadProgressNotifier: ChanLoadProgressNotifier
 
   private val PARTY: ItemDecoration = object : ItemDecoration() {
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -629,13 +633,25 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     postAdapter.setCompact(boardPostViewMode != BoardPostViewMode.LIST)
 
-    val (filteredPosts, applyFilterDuration) = measureTimedValue { filter.applyFilter(descriptor, posts) }
-    val setThreadPostsDuration = measureTime { postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts) }
+    val (filteredPosts, applyFilterDuration) = measureTimedValue {
+      filter.applyFilter(descriptor, posts)
+    }
+
+    chanLoadProgressNotifier.sendProgressEvent(
+      ChanLoadProgressEvent.RefreshingPosts(descriptor)
+    )
+    val setThreadPostsDuration = measureTime {
+      postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts)
+    }
 
     val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
       restorePrevScrollPosition(chanDescriptor, initial)
     }
+
+    chanLoadProgressNotifier.sendProgressEvent(
+      ChanLoadProgressEvent.End(descriptor)
+    )
 
     return ShowPostsResult(
       result = true,

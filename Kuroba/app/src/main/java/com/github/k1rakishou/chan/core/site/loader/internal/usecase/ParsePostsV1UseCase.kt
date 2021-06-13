@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -23,14 +25,16 @@ class ParsePostsV1UseCase(
   filterEngine: FilterEngine,
   postFilterManager: PostFilterManager,
   savedReplyManager: SavedReplyManager,
-  boardManager: BoardManager
+  boardManager: BoardManager,
+  chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) : AbstractParsePostsUseCase(
   verboseLogsEnabled,
   chanPostRepository,
   filterEngine,
   postFilterManager,
   savedReplyManager,
-  boardManager
+  boardManager,
+  chanLoadProgressNotifier
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -50,12 +54,23 @@ class ParsePostsV1UseCase(
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
     val filters = loadFilters(chanDescriptor)
-    val filterProcessingDuration = measureTime { postParsingProcessFiltersStage(postBuildersToParse, filters) }
+
+    chanLoadProgressNotifier.sendProgressEvent(
+      ChanLoadProgressEvent.ProcessingFilters(chanDescriptor, filters.size)
+    )
+
+    val filterProcessingDuration = measureTime {
+      postParsingProcessFiltersStage(postBuildersToParse, filters)
+    }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
       "postsToParseSize=${postBuildersToParse.size}), " +
       "internalIds=${internalIds.size}, " +
       "filters=${filters.size}")
+
+    chanLoadProgressNotifier.sendProgressEvent(
+      ChanLoadProgressEvent.ParsingPosts(chanDescriptor, postBuildersToParse.size)
+    )
 
     val (parsedPosts, parsingDuration) = measureTimedValue {
       return@measureTimedValue processDataCollectionConcurrently(

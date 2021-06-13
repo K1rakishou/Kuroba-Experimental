@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -29,7 +30,8 @@ abstract class AbstractParsePostsUseCase(
   protected val filterEngine: FilterEngine,
   protected val postFilterManager: PostFilterManager,
   protected val savedReplyManager: SavedReplyManager,
-  protected val boardManager: BoardManager
+  protected val boardManager: BoardManager,
+  protected val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) {
 
   abstract suspend fun parseNewPostsPosts(

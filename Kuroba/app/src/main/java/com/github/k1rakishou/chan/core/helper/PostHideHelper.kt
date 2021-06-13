@@ -16,6 +16,14 @@ class PostHideHelper(
   private val postFilterManager: PostFilterManager
 ) {
 
+  fun countPostHides(posts: List<ChanPost>): Int {
+    return postHideManager.countPostHides(posts.map { it.postDescriptor })
+  }
+
+  fun countMatchedFilters(posts: List<ChanPost>): Int {
+    return postFilterManager.countMatchedFilters(posts.map { it.postDescriptor })
+  }
+
   /**
    * Searches for hidden posts in the PostHide table then checks whether there are posts with a reply
    * to already hidden posts and if there are hides them as well.

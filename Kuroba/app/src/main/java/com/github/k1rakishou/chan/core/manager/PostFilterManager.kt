@@ -15,6 +15,20 @@ class PostFilterManager {
   private val lock = ReentrantReadWriteLock()
   private val filterStorage = mutableMapWithCap<PostDescriptor, PostFilter>(512)
 
+  fun countMatchedFilters(postDescriptors: List<PostDescriptor>): Int {
+    return lock.read {
+      var counter = 0
+
+      postDescriptors.forEach { postDescriptor ->
+        if (filterStorage.containsKey(postDescriptor)) {
+          ++counter
+        }
+      }
+
+      return@read counter
+    }
+  }
+
   fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
     lock.write { filterStorage[postDescriptor] = postFilter }
   }

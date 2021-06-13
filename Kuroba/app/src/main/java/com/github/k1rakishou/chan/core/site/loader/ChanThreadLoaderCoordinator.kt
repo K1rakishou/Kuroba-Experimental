@@ -18,6 +18,8 @@ package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -80,7 +82,8 @@ class ChanThreadLoaderCoordinator(
   private val verboseLogsEnabled: Boolean,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val siteResolver: SiteResolver
+  private val siteResolver: SiteResolver,
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -101,7 +104,8 @@ class ChanThreadLoaderCoordinator(
       filterEngine,
       postFilterManager,
       savedReplyManager,
-      boardManager
+      boardManager,
+      chanLoadProgressNotifier
     )
   }
 
@@ -117,7 +121,8 @@ class ChanThreadLoaderCoordinator(
       parsePostsV1UseCase,
       storePostsInRepositoryUseCase,
       chanPostRepository,
-      chanCatalogSnapshotRepository
+      chanCatalogSnapshotRepository,
+      chanLoadProgressNotifier
     )
   }
 
@@ -157,10 +162,12 @@ class ChanThreadLoaderCoordinator(
           )
         }
 
-        val request = requestBuilder.build()
+        chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.LoadingJson(chanDescriptor))
 
         val (response, requestDuration) = try {
-          measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
+          measureTimedValue {
+            proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
+          }
         } catch (error: IOException) {
           if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
             throw error
@@ -179,13 +186,15 @@ class ChanThreadLoaderCoordinator(
           )
         }
 
+        chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.ReadingJson(chanDescriptor))
+
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
           val body = response.body
             ?: throw IOException("Response has no body")
 
           return@measureTimedValue body.byteStream().use { inputStream ->
             return@use readPostsFromResponse(
-              requestUrl = request.url.toString(),
+              requestUrl = url,
               responseBodyStream = inputStream,
               chanDescriptor = chanDescriptor,
               chanReadOptions = chanReadOptions,

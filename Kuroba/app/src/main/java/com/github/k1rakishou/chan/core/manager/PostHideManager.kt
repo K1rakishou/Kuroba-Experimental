@@ -31,6 +31,20 @@ class PostHideManager(
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
+  fun countPostHides(postDescriptors: List<PostDescriptor>): Int {
+    return lock.read {
+      var counter = 0
+
+      postDescriptors.forEach { postDescriptor ->
+        if (postHideMap.containsKey(postDescriptor)) {
+          ++counter
+        }
+      }
+
+      return@read counter
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val alreadyPreloaded = lock.read { alreadyPreloadedForThreadsSet.contains(threadDescriptor) }

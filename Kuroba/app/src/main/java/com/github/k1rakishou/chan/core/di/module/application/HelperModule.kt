@@ -5,6 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -48,7 +49,8 @@ class HelperModule {
     postFilterManager: PostFilterManager,
     siteManager: SiteManager,
     boardManager: BoardManager,
-    siteResolver: SiteResolver
+    siteResolver: SiteResolver,
+    chanLoadProgressNotifier: ChanLoadProgressNotifier
   ): ChanThreadLoaderCoordinator {
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
@@ -61,7 +63,8 @@ class HelperModule {
       ChanSettings.verboseLogs.get(),
       siteManager,
       boardManager,
-      siteResolver
+      siteResolver,
+      chanLoadProgressNotifier
     )
   }
 
@@ -165,6 +168,12 @@ class HelperModule {
   @Singleton
   fun provideAppSettingsUpdateAppRefreshHelper(): AppSettingsUpdateAppRefreshHelper {
     return AppSettingsUpdateAppRefreshHelper()
+  }
+
+  @Provides
+  @Singleton
+  fun provideChanLoadProgressNotifier(): ChanLoadProgressNotifier {
+    return ChanLoadProgressNotifier()
   }
 
 }

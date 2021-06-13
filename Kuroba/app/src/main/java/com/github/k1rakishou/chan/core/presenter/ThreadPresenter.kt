@@ -25,6 +25,8 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
@@ -84,6 +86,8 @@ import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ThreadPresenter @Inject constructor(
   private val cacheHandler: CacheHandler,
@@ -108,7 +112,8 @@ class ThreadPresenter @Inject constructor(
   private val chanThreadManager: ChanThreadManager,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: ThemeEngine,
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -268,14 +273,21 @@ class ThreadPresenter @Inject constructor(
     chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun onChanTickerTick(chanDescriptor: ChanDescriptor) {
     Logger.d(TAG, "onChanTickerTick($chanDescriptor)")
 
     chanPostRepository.awaitUntilInitialized()
 
     when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> preloadThreadInfo(chanDescriptor)
-      is ChanDescriptor.CatalogDescriptor -> preloadCatalogInfo(chanDescriptor)
+      is ChanDescriptor.ThreadDescriptor -> {
+        val preloadTime = measureTime { preloadThreadInfo(chanDescriptor) }
+        Logger.d(TAG, "onChanTickerTick($chanDescriptor), preloadThreadInfo took $preloadTime")
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        val preloadTime = measureTime { preloadCatalogInfo(chanDescriptor) }
+        Logger.d(TAG, "onChanTickerTick($chanDescriptor), preloadCatalogInfo took $preloadTime")
+      }
     }
 
     normalLoad()
@@ -394,6 +406,8 @@ class ThreadPresenter @Inject constructor(
         return@launch
       }
 
+      chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
+
       chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = currentChanDescriptor,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
@@ -403,21 +417,18 @@ class ThreadPresenter @Inject constructor(
       ) { threadLoadResult ->
         Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
 
-        if (threadLoadResult is ThreadLoadResult.Error) {
-          onChanLoaderError(threadLoadResult.exception)
+        when (threadLoadResult) {
+          is ThreadLoadResult.Error -> {
+            onChanLoaderError(threadLoadResult.exception)
+          }
+          is ThreadLoadResult.Loaded -> {
+            val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
 
-          chanThreadLoadingState = ChanThreadLoadingState.Loaded
-          currentLoadThreadJob = null
-
-          return@loadThreadOrCatalog
-        }
-
-        threadLoadResult as ThreadLoadResult.Loaded
-        val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
-
-        if (!successfullyProcessedNewPosts) {
-          val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
-          onChanLoaderError(error)
+            if (!successfullyProcessedNewPosts) {
+              val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
+              onChanLoaderError(error)
+            }
+          }
         }
 
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
@@ -2068,7 +2079,7 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
-      PostsFilter(postHideHelper, order)
+      PostsFilter(chanLoadProgressNotifier, postHideHelper, order)
     )
   }
 

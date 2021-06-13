@@ -1083,6 +1083,17 @@ Don't have a 4chan Pass?<br>
     <string name="thread_layout_remove_post">Remove post</string>
     <string name="thread_layout_hide_whole_chain_as_well">Would you like to hide the whole reply chain as well?</string>
     <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
+
+    <string name="thread_layout_load_progress_preparing">Preparing</string>
+    <string name="thread_layout_load_progress_downloading_json">Downloading JSON</string>
+    <string name="thread_layout_load_progress_reading_json">Reading JSON</string>
+    <string name="thread_layout_load_progress_processing_filters">Processing %1$d filters</string>
+    <string name="thread_layout_load_progress_parsing_posts">Parsing %1$d posts</string>
+    <string name="thread_layout_load_progress_persisting_posts">Persisting %1$d posts</string>
+    <string name="thread_layout_load_progress_applying_filters">Applying filters. Hidden/Removed posts count: %1$d. Posts matched by filters count: %2$d</string>
+    <string name="thread_layout_load_progress_diffing_results">Diffing new and old posts, applying results</string>
+    <string name="thread_layout_load_progress_done">Done</string>
+
     <string name="restore_posts">Restore posts</string>
     <string name="restored_n_posts">Restored %1$d posts</string>
     <string name="no_removed_posts_for_current_thread">No removed posts found for the current thread</string>

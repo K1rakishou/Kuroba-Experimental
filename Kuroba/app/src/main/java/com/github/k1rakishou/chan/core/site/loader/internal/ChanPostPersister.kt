@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
@@ -25,7 +27,8 @@ internal class ChanPostPersister(
   private val parsePostsV1UseCase: ParsePostsV1UseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val chanPostRepository: ChanPostRepository,
-  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
+  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
 ) : AbstractPostLoader() {
 
   @OptIn(ExperimentalTime::class)
@@ -64,6 +67,10 @@ internal class ChanPostPersister(
         // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
         chanPostRepository.markThreadAsDeleted(chanDescriptor, false)
       }
+
+      chanLoadProgressNotifier.sendProgressEvent(
+        ChanLoadProgressEvent.PersistingPosts(chanDescriptor, parsingResult.parsedPosts.size)
+      )
 
       val (storedPostsCount, storeDuration) = measureTimedValue {
         storePostsInRepositoryUseCase.storePosts(
