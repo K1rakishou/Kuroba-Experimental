@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView;
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem;
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
@@ -69,6 +70,7 @@ import kotlin.Unit;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
@@ -79,6 +81,7 @@ public class FiltersController
         implements ToolbarNavigationController.ToolbarSearchCallback,
         View.OnClickListener,
         ThemeEngine.ThemeChangesListener {
+    private static final int RECYCLER_BOTTOM_PADDING = dp(80f);
 
     @Inject
     FilterEngine filterEngine;
@@ -161,6 +164,14 @@ public class FiltersController
         recyclerView = view.findViewById(R.id.recycler_view);
         recyclerView.setLayoutManager(new LinearLayoutManager(context));
         recyclerView.setAdapter(adapter);
+
+        KotlinExtensionsKt.updatePaddings(
+                recyclerView,
+                null,
+                null,
+                null,
+                RECYCLER_BOTTOM_PADDING
+        );
 
         itemTouchHelper = new ItemTouchHelper(touchHelperCallback);
         itemTouchHelper.attachToRecyclerView(recyclerView);
