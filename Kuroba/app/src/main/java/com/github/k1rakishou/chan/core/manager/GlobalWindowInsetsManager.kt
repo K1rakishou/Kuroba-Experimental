@@ -34,24 +34,23 @@ class GlobalWindowInsetsManager {
   fun listenForWindowInsetsChanges(window: Window, mainRootLayoutMargins: View?) {
     ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
       val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
+      val newInsets = insets.replaceSystemWindowInsets(
+        insets.systemWindowInsetLeft,
+        insets.systemWindowInsetTop,
+        insets.systemWindowInsetRight,
+        insets.systemWindowInsetBottom
+      )
 
-      updateInsets(
-        insets.replaceSystemWindowInsets(
-          insets.systemWindowInsetLeft,
-          insets.systemWindowInsetTop,
-          insets.systemWindowInsetRight,
-          insets.systemWindowInsetBottom
+      if (updateInsets(newInsets) || isKeyboardOpened != isKeyboardOpen) {
+        updateKeyboardHeight(
+          FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
         )
-      )
 
-      updateKeyboardHeight(
-        FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
-      )
+        updateIsKeyboardOpened(isKeyboardOpen)
+        fireCallbacks()
 
-      updateIsKeyboardOpened(isKeyboardOpen)
-      fireCallbacks()
-
-      mainRootLayoutMargins?.updateMargins(left = left(), right = right())
+        mainRootLayoutMargins?.updateMargins(left = left(), right = right())
+      }
 
       return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
         view,
@@ -123,7 +122,17 @@ class GlobalWindowInsetsManager {
     keyboardHeight = height.coerceAtLeast(0)
   }
 
-  private fun updateInsets(insets: WindowInsetsCompat) {
+  private fun updateInsets(insets: WindowInsetsCompat): Boolean {
+    if (
+      currentInsets.left == insets.systemWindowInsetLeft
+      && currentInsets.right == insets.systemWindowInsetRight
+      && currentInsets.top == insets.systemWindowInsetTop
+      && currentInsets.bottom == insets.systemWindowInsetBottom
+    ) {
+      // Insets weren't changed no need to fire callbacks
+      return false
+    }
+
     currentInsets.set(
       insets.systemWindowInsetLeft,
       insets.systemWindowInsetTop,
@@ -132,6 +141,7 @@ class GlobalWindowInsetsManager {
     )
 
     initialized = true
+    return true
   }
 
   private fun fireCallbacks() {

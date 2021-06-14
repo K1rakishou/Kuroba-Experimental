@@ -5,8 +5,8 @@ import androidx.annotation.VisibleForTesting
 import java.lang.ref.WeakReference
 
 /**
- * A synchronizer class for CacheHandler that allows synchronization on a value of the key (by it's value).
- * This is very useful for CacheHandler since we won't to lock disk access per file separately not
+ * A synchronizer class for CacheHandler that allows synchronization on a value of the key.
+ * This is very useful for CacheHandler since we want to lock disk access per file separately not
  * for the whole disk at a time. This should drastically improve CacheHandler's performance when
  * many different threads access different files. In the previous implementation we would lock
  * access to disk globally every time a thread is doing something with a file which could slow down

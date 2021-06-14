@@ -1181,19 +1181,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     val recyclerTop = defaultPadding + toolbarHeight()
     var recyclerBottom = defaultPadding
-    val keyboardOpened = globalWindowInsetsManager.isKeyboardOpened
 
     // measurements
     if (replyOpen) {
       measureReplyLayout()
 
-      val bottomPadding = if (keyboardOpened) {
-        replyLayout.paddingBottom
-      } else {
-        0
-      }
-
-      recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop - bottomPadding)
+      recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop)
     } else {
       recyclerBottom += if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
         globalWindowInsetsManager.bottom()
@@ -1202,12 +1195,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
     }
 
-    recyclerView.setPadding(
-      defaultPadding,
-      recyclerTop,
-      recyclerRight,
-      recyclerBottom
-    )
+    recyclerView.setPadding(defaultPadding, recyclerTop, recyclerRight, recyclerBottom)
   }
 
   fun toolbarHeight(): Int {
