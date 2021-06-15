@@ -248,7 +248,7 @@ class FullImageMediaView(
     closeMediaActionHelper.onDestroy()
   }
 
-  override suspend fun onReloadButtonClick() {
+  override suspend fun reloadMedia() {
     if (preloadCancelableDownload != null) {
       return
     }

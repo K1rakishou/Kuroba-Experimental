@@ -247,7 +247,7 @@ class GifMediaView(
     actualGifView.setImageDrawable(null)
   }
 
-  override suspend fun onReloadButtonClick() {
+  override suspend fun reloadMedia() {
     if (preloadCancelableDownload != null) {
       return
     }

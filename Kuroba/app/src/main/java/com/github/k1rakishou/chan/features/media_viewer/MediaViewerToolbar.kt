@@ -275,7 +275,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       toolbarReloadButton.setEnabledFast(false)
 
       try {
-        mediaViewerToolbarCallbacks?.onReloadButtonClick()
+        mediaViewerToolbarCallbacks?.reloadMedia()
       } finally {
         toolbarReloadButton.setEnabledFast(true)
       }
@@ -291,7 +291,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       toolbarDownloadButton.setEnabledFast(false)
 
       try {
-        val startedDownloading = mediaViewerToolbarCallbacks?.onDownloadButtonClick(isLongClick = isLongClick)
+        val startedDownloading = mediaViewerToolbarCallbacks?.downloadMedia(isLongClick = isLongClick)
           ?: false
 
         // Only enable the button back if we didn't start the image downloading
@@ -339,8 +339,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
   interface MediaViewerToolbarCallbacks {
     fun onCloseButtonClick()
-    suspend fun onReloadButtonClick()
-    suspend fun onDownloadButtonClick(isLongClick: Boolean): Boolean
+    suspend fun reloadMedia()
+    suspend fun downloadMedia(isLongClick: Boolean): Boolean
     fun onOptionsButtonClick()
   }
 

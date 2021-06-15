@@ -288,7 +288,7 @@ class VideoMediaView(
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
-  override suspend fun onReloadButtonClick() {
+  override suspend fun reloadMedia() {
     if (preloadingJob != null) {
       return
     }

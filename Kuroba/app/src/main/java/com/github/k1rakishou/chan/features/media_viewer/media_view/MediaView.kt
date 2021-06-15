@@ -163,11 +163,11 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     mediaViewContract.closeMediaViewer()
   }
 
-  override suspend fun onReloadButtonClick() {
+  override suspend fun reloadMedia() {
 
   }
 
-  override suspend fun onDownloadButtonClick(isLongClick: Boolean): Boolean {
+  override suspend fun downloadMedia(isLongClick: Boolean): Boolean {
     return mediaViewContract.onDownloadButtonClick(viewableMedia, isLongClick)
   }
 

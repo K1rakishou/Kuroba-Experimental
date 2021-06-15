@@ -291,6 +291,14 @@ class MediaViewerAdapter(
     }
   }
 
+  suspend fun reloadMedia(viewableMedia: ViewableMedia) {
+    loadedViews.forEach { loadedView ->
+      if (loadedView.mediaView.viewableMedia == viewableMedia) {
+        loadedView.mediaView.reloadMedia()
+      }
+    }
+  }
+
   fun markMediaAsDownloaded(viewableMedia: ViewableMedia) {
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.viewableMedia == viewableMedia) {
