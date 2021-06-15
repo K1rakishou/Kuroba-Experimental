@@ -765,14 +765,10 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="database_posts_cleanup_remove_percent_description">Percent of posts/threads that will be removed from the database upon database cleanup. The higher this setting the more posts/threads will be removed at a time which may result in app taking more time to start up (Because all access to posts/threads database tables is blocked when clean up procedure is running). The max posts/threads in the database setting may also affect this. On the other hand the clean up procedure will be executed with higher intervals.</string>
 
     <!-- Media video options group -->
-    <string name="setting_video_options">Video options</string>
     <string name="setting_video_auto_loop">Enable automatic video-looping</string>
     <string name="setting_video_default_muted">Start videos muted</string>
-    <string name="setting_video_default_muted_description">If a video has audio, mute it by default</string>
     <string name="setting_headset_default_muted">Mute headset videos</string>
-    <string name="setting_headset_default_muted_description">Mute the video even if a wired headset is connected</string>
-    <string name="setting_video_open_external">Play videos with external player</string>
-    <string name="setting_video_open_external_description">Play videos in an external media player app</string>
+    <string name="setting_video_always_reset_to_start">Always reset videos to beginning</string>
 
     <!-- Save location group -->
     <string name="setting_save_location">Save location</string>
@@ -786,7 +782,6 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_image_auto_load_all">Always</string>
     <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
     <string name="setting_image_auto_load_none">Never</string>
-    <string name="setting_video_auto_loop_description">Automatically loop video content</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
 

@@ -16,11 +16,6 @@
  */
 package com.github.k1rakishou;
 
-import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
-
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -33,6 +28,11 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
+
+import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -331,7 +331,7 @@ public class ChanSettings {
     public static BooleanSetting videoAutoLoop;
     public static BooleanSetting videoDefaultMuted;
     public static BooleanSetting headsetDefaultMuted;
-    public static BooleanSetting videoOpenExternal;
+    public static BooleanSetting videoAlwaysResetToStart;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -525,7 +525,7 @@ public class ChanSettings {
             videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
             videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
             headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
-            videoOpenExternal = new BooleanSetting(provider, "preference_video_external", false);
+            videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,

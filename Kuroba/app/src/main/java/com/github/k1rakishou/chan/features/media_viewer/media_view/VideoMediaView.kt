@@ -12,6 +12,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.ProgressBar
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -218,7 +219,7 @@ class VideoMediaView(
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
-  override fun show() {
+  override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
     onSystemUiVisibilityChanged(isSystemUiHidden())
@@ -228,7 +229,7 @@ class VideoMediaView(
       playJob = scope.launch {
         if (hasContent) {
           // Already loaded and ready to play
-          switchToPlayerViewAndStartPlaying()
+          switchToPlayerViewAndStartPlaying(isLifecycleChange)
         } else {
           fullVideoDeferred.awaitCatching()
             .onFailure { error ->
@@ -246,7 +247,7 @@ class VideoMediaView(
             }
             .onSuccess {
               if (hasContent) {
-                switchToPlayerViewAndStartPlaying()
+                switchToPlayerViewAndStartPlaying(isLifecycleChange)
               }
             }
         }
@@ -256,7 +257,7 @@ class VideoMediaView(
     }
   }
 
-  override fun hide() {
+  override fun hide(isLifecycleChange: Boolean) {
     playJob?.cancel()
     playJob = null
 
@@ -311,7 +312,7 @@ class VideoMediaView(
     videoSoundDetected = false
 
     preloadingJob = startFullVideoPreloading(mediaLocation)
-    show()
+    show(isLifecycleChange = false)
   }
 
   override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
@@ -428,17 +429,25 @@ class VideoMediaView(
     }
   }
 
-  private suspend fun switchToPlayerViewAndStartPlaying() {
+  private suspend fun switchToPlayerViewAndStartPlaying(isLifecycleChange: Boolean) {
     actualVideoPlayerView.setVisibilityFast(VISIBLE)
 
-    if (mediaViewState.playing == null || mediaViewState.playing == true) {
-      mainVideoPlayer.startAndAwaitFirstFrame()
-    } else if (mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0) {
-      // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
-      // after the activity is paused and then unpaused (like when the user turns off/on the phone
-      // screen).
-      val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
-      mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
+    if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+      mediaViewState.resetPosition()
+      mainVideoPlayer.resetPosition()
+    }
+
+    when {
+      mediaViewState.playing == null || mediaViewState.playing == true -> {
+        mainVideoPlayer.startAndAwaitFirstFrame()
+      }
+      mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0 -> {
+        // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
+        // after the activity is paused and then unpaused (like when the user turns off/on the phone
+        // screen).
+        val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
+        mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
+      }
     }
 
     actualVideoPlayerView.useArtwork = mainVideoPlayer.hasNoVideo()
@@ -466,6 +475,12 @@ class VideoMediaView(
     var videoSoundDetected: Boolean? = null,
     var playing: Boolean? = null
   ) : MediaViewState {
+
+    fun resetPosition() {
+      prevPosition = -1
+      prevWindowIndex = -1
+    }
+
     override fun clone(): MediaViewState {
       return VideoMediaViewState(prevPosition, prevWindowIndex, videoSoundDetected, playing)
     }

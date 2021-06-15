@@ -497,22 +497,6 @@ sealed class MediaScreen(
 
   }
 
-  sealed class VideoGroup(
-    settingsId: String,
-    groupIdentifier: GroupIdentifier = getGroupIdentifier()
-  ) : IGroup, MediaScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-    object VideoAutoLoop : VideoGroup("video_auto_loop")
-    object VideoDefaultMuted : VideoGroup("video_default_muted")
-    object HeadsetDefaultMuted : VideoGroup("headset_default_muted")
-    object VideoOpenExternal : VideoGroup("video_open_external")
-
-    companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("video_group")
-    }
-  }
-
   sealed class LoadingGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = getGroupIdentifier()

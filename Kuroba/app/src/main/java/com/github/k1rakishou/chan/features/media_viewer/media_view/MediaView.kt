@@ -106,22 +106,22 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     Logger.d(TAG, "onBind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
-  fun onShow(mediaViewerToolbar: MediaViewerToolbar) {
+  fun onShow(mediaViewerToolbar: MediaViewerToolbar, isLifecycleChange: Boolean) {
     _shown = true
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
-    show()
+    show(isLifecycleChange)
 
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
-  fun onHide() {
+  fun onHide(isLifecycleChange: Boolean) {
     _shown = false
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
-    hide()
+    hide(isLifecycleChange)
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
@@ -141,8 +141,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   abstract fun preload()
   abstract fun bind()
-  abstract fun show()
-  abstract fun hide()
+  abstract fun show(isLifecycleChange: Boolean)
+  abstract fun hide(isLifecycleChange: Boolean)
   abstract fun unbind()
 
   protected open fun updateTransparency(backgroundColor: Int?) {

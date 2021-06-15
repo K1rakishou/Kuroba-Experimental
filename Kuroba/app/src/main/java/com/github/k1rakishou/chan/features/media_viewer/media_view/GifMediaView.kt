@@ -190,7 +190,7 @@ class GifMediaView(
 
   }
 
-  override fun show() {
+  override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
@@ -226,7 +226,7 @@ class GifMediaView(
     }
   }
 
-  override fun hide() {
+  override fun hide(isLifecycleChange: Boolean) {
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
     if (gifImageViewDrawable != null && gifImageViewDrawable.isPlaying) {
       gifImageViewDrawable.pause()
@@ -267,7 +267,7 @@ class GifMediaView(
     actualGifView.setImageDrawable(null)
 
     preloadCancelableDownload = startFullGifPreloading(mediaLocation)
-    show()
+    show(isLifecycleChange = false)
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")

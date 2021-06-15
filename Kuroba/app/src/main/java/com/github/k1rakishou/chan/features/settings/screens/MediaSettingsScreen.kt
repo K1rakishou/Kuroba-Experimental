@@ -20,7 +20,6 @@ class MediaSettingsScreen(
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMediaSavingSettingsGroup(),
-      buildVideoSettingsGroup(),
       buildLoadingSettingsGroup(),
       buildMiscSettingsGroup()
     )
@@ -120,55 +119,6 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_show_prefetch_loading_indicator_title },
           setting = ChanSettings.showPrefetchLoadingIndicator,
           dependsOnSetting = ChanSettings.prefetchMedia
-        )
-
-        group
-      }
-    )
-  }
-
-  private fun buildVideoSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = MediaScreen.VideoGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = {
-        val group = SettingsGroup(
-          groupTitle = context.getString(R.string.setting_video_options),
-          groupIdentifier = identifier
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.VideoGroup.VideoAutoLoop,
-          topDescriptionIdFunc = { R.string.setting_video_auto_loop },
-          bottomDescriptionIdFunc = { R.string.setting_video_auto_loop_description },
-          setting = ChanSettings.videoAutoLoop
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.VideoGroup.VideoDefaultMuted,
-          topDescriptionIdFunc = { R.string.setting_video_default_muted },
-          bottomDescriptionIdFunc = { R.string.setting_video_default_muted_description },
-          setting = ChanSettings.videoDefaultMuted
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.VideoGroup.HeadsetDefaultMuted,
-          topDescriptionIdFunc = { R.string.setting_headset_default_muted },
-          bottomDescriptionIdFunc = { R.string.setting_headset_default_muted_description },
-          setting = ChanSettings.headsetDefaultMuted,
-          dependsOnSetting = ChanSettings.videoDefaultMuted
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MediaScreen.VideoGroup.VideoOpenExternal,
-          topDescriptionIdFunc = { R.string.setting_video_open_external },
-          bottomDescriptionIdFunc = { R.string.setting_video_open_external_description },
-          setting = ChanSettings.videoOpenExternal
         )
 
         group

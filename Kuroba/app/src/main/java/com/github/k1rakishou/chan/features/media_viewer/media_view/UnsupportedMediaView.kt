@@ -89,13 +89,13 @@ class UnsupportedMediaView(
     onThumbnailFullyLoadedFunc()
   }
 
-  override fun show() {
+  override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
     onSystemUiVisibilityChanged(isSystemUiHidden())
   }
 
-  override fun hide() {
+  override fun hide(isLifecycleChange: Boolean) {
     // no-op
   }
 

@@ -51,6 +51,30 @@ class MediaViewerMenuHelper(
       isCurrentlySelected = ChanSettings.revealImageSpoilers.get()
     )
 
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_VIDEO_AUTO_LOOP,
+      name = AppModuleAndroidUtils.getString(R.string.setting_video_auto_loop),
+      isCurrentlySelected = ChanSettings.videoAutoLoop.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_VIDEO_START_MUTED,
+      name = AppModuleAndroidUtils.getString(R.string.setting_video_default_muted),
+      isCurrentlySelected = ChanSettings.videoDefaultMuted.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_VIDEO_START_MUTED_WITH_HEADSET,
+      name = AppModuleAndroidUtils.getString(R.string.setting_headset_default_muted),
+      isCurrentlySelected = ChanSettings.headsetDefaultMuted.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_VIDEO_ALWAYS_RESET_TO_START,
+      name = AppModuleAndroidUtils.getString(R.string.setting_video_always_reset_to_start),
+      isCurrentlySelected = ChanSettings.videoAlwaysResetToStart.get()
+    )
+
     options += FloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
       name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
@@ -72,6 +96,18 @@ class MediaViewerMenuHelper(
       ACTION_AUTO_REVEAL_SPOILERS -> {
         ChanSettings.revealImageSpoilers.toggle()
       }
+      ACTION_VIDEO_AUTO_LOOP -> {
+        ChanSettings.videoAutoLoop.toggle()
+      }
+      ACTION_VIDEO_START_MUTED -> {
+        ChanSettings.videoDefaultMuted.toggle()
+      }
+      ACTION_VIDEO_START_MUTED_WITH_HEADSET -> {
+        ChanSettings.headsetDefaultMuted.toggle()
+      }
+      ACTION_VIDEO_ALWAYS_RESET_TO_START -> {
+        ChanSettings.videoAlwaysResetToStart.toggle()
+      }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
         presentControllerFunc(mediaViewerGesturesSettingsController)
@@ -82,7 +118,11 @@ class MediaViewerMenuHelper(
   companion object {
     const val ACTION_ALLOW_IMAGE_TRANSPARENCY = 100
     const val ACTION_AUTO_REVEAL_SPOILERS = 101
-    const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 102
+    const val ACTION_VIDEO_AUTO_LOOP = 102
+    const val ACTION_VIDEO_START_MUTED = 103
+    const val ACTION_VIDEO_START_MUTED_WITH_HEADSET = 104
+    const val ACTION_VIDEO_ALWAYS_RESET_TO_START = 105
+    const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 106
   }
 
 }

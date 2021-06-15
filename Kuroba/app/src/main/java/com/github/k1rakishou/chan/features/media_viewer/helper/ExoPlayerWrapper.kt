@@ -221,6 +221,10 @@ class ExoPlayerWrapper(
     return actualExoPlayer.videoFormat == null
   }
 
+  fun resetPosition() {
+    actualExoPlayer.seekTo(0, 0)
+  }
+
   class ReusableExoPlayer(
     private var isUsed: Boolean,
     val exoPlayer: SimpleExoPlayer

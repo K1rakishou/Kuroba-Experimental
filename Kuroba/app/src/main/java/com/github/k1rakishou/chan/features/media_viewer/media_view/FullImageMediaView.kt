@@ -198,7 +198,7 @@ class FullImageMediaView(
 
   }
 
-  override fun show() {
+  override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onUpdateTransparency()
@@ -228,7 +228,7 @@ class FullImageMediaView(
     }
   }
 
-  override fun hide() {
+  override fun hide(isLifecycleChange: Boolean) {
     actualImageView.resetScaleAndCenter()
   }
 
@@ -269,7 +269,7 @@ class FullImageMediaView(
     actualImageView.recycle()
 
     preloadCancelableDownload = startFullImagePreloading(mediaLocation)
-    show()
+    show(isLifecycleChange = false)
   }
 
   private fun startFullImagePreloading(mediaLocationRemote: MediaLocation.Remote): CancelableDownload? {

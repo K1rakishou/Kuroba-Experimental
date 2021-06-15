@@ -19,6 +19,8 @@ class ChanPostBackgroundColorStorage(
   private val colors by lazy {
     val colorMap = mutableMapOf<SiteDescriptor, ChanBackgroundColors>()
 
+    // Make sure all colors explicitly include 0xFF alpha because otherwise SubsamplingImageView
+    // will skip the color.
     colorMap[Chan4.SITE_DESCRIPTOR] = ChanBackgroundColors(
       sfwColor = DEFAULT_COLOR,
       nsfwColor = 0xFFF0E0D6L.toInt()

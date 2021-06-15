@@ -57,7 +57,7 @@ class MediaViewerAdapter(
 
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.shown) {
-        loadedView.mediaView.onHide()
+        loadedView.mediaView.onHide(isLifecycleChange = true)
       }
 
       if (loadedView.mediaView.bound) {
@@ -73,7 +73,7 @@ class MediaViewerAdapter(
   fun onPause() {
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.shown) {
-        loadedView.mediaView.onHide()
+        loadedView.mediaView.onHide(isLifecycleChange = true)
 
         // Store media view state
         val mediaViewState = loadedView.mediaView.mediaViewState
@@ -94,7 +94,7 @@ class MediaViewerAdapter(
         loadedView.mediaView.mediaViewState.updateFrom(viewModel.getPrevMediaViewStateOrNull(mediaLocation))
 
         loadedView.mediaView.startPreloading()
-        loadedView.mediaView.onShow(mediaViewerToolbar)
+        loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = true)
       }
     }
   }
@@ -202,7 +202,7 @@ class MediaViewerAdapter(
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.viewableMedia != view.mediaView.viewableMedia) {
         if (loadedView.mediaView.shown) {
-          loadedView.mediaView.onHide()
+          loadedView.mediaView.onHide(isLifecycleChange = false)
 
           // Store media view state
           val mediaViewState = loadedView.mediaView.mediaViewState
@@ -216,7 +216,7 @@ class MediaViewerAdapter(
     }
 
     if (!view.mediaView.shown) {
-      view.mediaView.onShow(mediaViewerToolbar)
+      view.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = false)
     }
 
     Logger.d(TAG, "doBind(position: ${position}), loadedViewsCount=${loadedViews.size}, " +
@@ -249,7 +249,7 @@ class MediaViewerAdapter(
       }
 
       if (loadedView.viewIndex == initialPagerIndex && !loadedView.mediaView.shown) {
-        loadedView.mediaView.onShow(mediaViewerToolbar)
+        loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = false)
       }
     }
 
