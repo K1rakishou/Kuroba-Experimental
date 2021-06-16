@@ -413,6 +413,10 @@ class ReplyLayout @JvmOverloads constructor(
     )
 
     validCaptchasCount.setTextColor(Color.WHITE)
+
+    comment.text?.let { commentText ->
+      presenter.updateSpans(commentText)
+    }
   }
 
   private fun updateWrappingMode() {
@@ -952,6 +956,10 @@ class ReplyLayout @JvmOverloads constructor(
       }
 
       presenter.updateCommentCounter(text)
+
+      comment.text?.let { commentText ->
+        presenter.updateSpans(commentText)
+      }
     }
   }
 
@@ -1322,7 +1330,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onTextChanged(s: CharSequence, start: Int, before: Int, count: Int) {}
 
-  override fun afterTextChanged(s: Editable) {
+  override fun afterTextChanged(editable: Editable) {
     presenter.updateCommentCounter(comment.text)
 
     val commentInputState = CommentInputState(
@@ -1332,6 +1340,7 @@ class ReplyLayout @JvmOverloads constructor(
     )
 
     presenter.updateCommentEditingHistory(commentInputState)
+    presenter.updateSpans(editable)
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {

@@ -17,6 +17,8 @@
 package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
+import android.text.Editable
+import androidx.core.text.getSpans
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -31,6 +33,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
@@ -46,7 +49,10 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -79,7 +85,8 @@ class ReplyPresenter @Inject constructor(
   private val twoCaptchaSolver: TwoCaptchaSolver,
   private val dialogFactory: DialogFactory,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val captchaHolder: CaptchaHolder
+  private val captchaHolder: CaptchaHolder,
+  private val themeEngine: ThemeEngine
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -97,6 +104,7 @@ class ReplyPresenter @Inject constructor(
   private lateinit var context: Context
 
   private val highlightQuotesDebouncer = Debouncer(false)
+  private val updatePostTextSpansDebouncer = Debouncer(false)
 
   var isExpanded = false
     private set
@@ -778,6 +786,53 @@ class ReplyPresenter @Inject constructor(
       ?: return true
 
     return postingServiceDelegate.isReplyCurrentlyInProgress(descriptor)
+  }
+
+  fun updateSpans(commentText: Editable) {
+    updatePostTextSpansDebouncer.post({
+      commentText
+        .getSpans<ForegroundColorSpanHashed>(0, commentText.length)
+        .forEach { span -> commentText.removeSpan(span) }
+
+      var offset = 0
+      val newLine = "\n"
+      val newLineLen = newLine.length
+
+      val factor = if (ThemeEngine.isDarkColor(themeEngine.chanTheme.accentColor)) {
+        1.2f
+      } else {
+        0.8f
+      }
+
+      for (line in commentText.split(newLine)) {
+        val lineFormatted = line.trimStart()
+
+        if (lineFormatted.startsWith(">>") && lineFormatted.drop(2).toLongOrNull() != null) {
+          // quote
+          val span = ForegroundColorSpanHashed(
+            ThemeEngine.manipulateColor(themeEngine.chanTheme.postQuoteColor, factor)
+          )
+          commentText.setSpanSafe(span, offset, offset + line.length, 0)
+        } else if (lineFormatted.startsWith(">")) {
+          // greentext
+          val span = ForegroundColorSpanHashed(
+            ThemeEngine.manipulateColor(themeEngine.chanTheme.postInlineQuoteColor, factor)
+          )
+          commentText.setSpanSafe(span, offset, offset + line.length, 0)
+        } else {
+          CommentParserHelper.LINK_EXTRACTOR.extractLinks(line).forEach { link ->
+            val span = ForegroundColorSpanHashed(
+              ThemeEngine.manipulateColor(themeEngine.chanTheme.postLinkColor, factor)
+            )
+            val linkLength = link.endIndex - link.beginIndex
+
+            commentText.setSpanSafe(span, offset, offset + linkLength, 0)
+          }
+        }
+
+        offset += (line.length + newLineLen)
+      }
+    }, 250)
   }
 
   interface ReplyPresenterCallback {

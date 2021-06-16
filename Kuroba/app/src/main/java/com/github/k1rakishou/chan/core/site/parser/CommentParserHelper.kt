@@ -28,7 +28,7 @@ import java.util.*
 
 object CommentParserHelper {
   private const val TAG = "CommentParserHelper"
-  private val LINK_EXTRACTOR = LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build()
+  val LINK_EXTRACTOR = LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build()
 
   /**
    * Similar to other [detectLinks] but this one allow links modification (changing link's text to
