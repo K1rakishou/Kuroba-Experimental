@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/bottom_bar_aware_controller_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:paddingBottom="@dimen/bottom_nav_view_height"/>
+        android:paddingBottom="@dimen/navigation_view_size"/>
 
     <com.github.k1rakishou.chan.ui.toolbar.Toolbar
         android:id="@+id/toolbar"

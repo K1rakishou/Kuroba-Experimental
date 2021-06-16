@@ -103,13 +103,7 @@ public class SplitNavigationControllerLayout extends LinearLayout implements The
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        int widthMode = MeasureSpec.getMode(widthMeasureSpec);
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
-
-        if (widthMode == MeasureSpec.UNSPECIFIED) {
-            throw new IllegalArgumentException();
-        }
-
         int minWidth = Math.min(minimumLeftWidth, widthSize / 2);
         int leftWidth = Math.max(minWidth, (int) (widthSize * ratio));
         int rightWidth = widthSize - dividerWidth - leftWidth;

@@ -26,10 +26,8 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
-import androidx.appcompat.widget.TooltipCompat
 import androidx.core.view.GravityCompat
 import androidx.core.view.doOnPreDraw
-import androidx.core.view.forEach
 import androidx.drawerlayout.widget.DrawerLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -83,7 +81,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -96,13 +94,14 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
+import com.github.k1rakishou.chan.utils.countDigits
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
-import com.google.android.material.bottomnavigation.BottomNavigationView
+import com.google.android.material.badge.BadgeDrawable
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -151,14 +150,14 @@ class MainController(
   private lateinit var drawerLayout: DrawerLayout
   private lateinit var drawer: LinearLayout
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
-  private lateinit var bottomNavView: HidingBottomNavigationView
+  private lateinit var navigationViewContract: NavigationViewContract
   private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
   private val bottomNavViewGestureDetector by lazy {
     return@lazy BottomNavViewLongTapSwipeUpGestureDetector(
       context = context,
-      bottomNavView = bottomNavView,
+      navigationViewContract = navigationViewContract,
       onSwipedUpAfterLongPress = {
         globalViewStateManager.onBottomNavViewSwipeUpGestureTriggered()
       }
@@ -230,6 +229,9 @@ class MainController(
       return navigationController
     }
 
+  override val navigationViewContractType: NavigationViewContract.Type
+    get() = navigationViewContract.type
+
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
@@ -238,29 +240,34 @@ class MainController(
   override fun onCreate() {
     super.onCreate()
 
-    view = inflate(context, R.layout.controller_main)
+    view = if (ChanSettings.isSplitLayoutMode()) {
+      inflate(context, R.layout.controller_main_split_mode)
+    } else {
+      inflate(context, R.layout.controller_main)
+    }
+
     rootLayout = view.findViewById(R.id.main_root_layout)
     container = view.findViewById(R.id.main_controller_container)
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer_part)
     divider = view.findViewById(R.id.divider)
-    bottomNavView = view.findViewById(R.id.bottom_navigation_view)
+    navigationViewContract = view.findViewById(R.id.navigation_view) as NavigationViewContract
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
     epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
     epoxyRecyclerView.setController(controller)
 
     setBottomNavViewButtons()
-    bottomNavView.selectedItemId = R.id.action_browse
-    bottomNavView.elevation = dp(4f).toFloat()
-    bottomNavView.disableTooltips()
+    navigationViewContract.selectedMenuItemId = R.id.action_browse
+    navigationViewContract.viewElevation = dp(4f).toFloat()
+    navigationViewContract.disableTooltips()
 
     // Must be above bottomNavView
     bottomMenuPanel.elevation = dp(6f).toFloat()
 
-    bottomNavView.setOnNavigationItemSelectedListener { menuItem ->
-      if (bottomNavView.selectedItemId == menuItem.itemId) {
+    navigationViewContract.setOnNavigationItemSelectedListener { menuItem ->
+      if (navigationViewContract.selectedMenuItemId == menuItem.itemId) {
         return@setOnNavigationItemSelectedListener true
       }
 
@@ -268,24 +275,24 @@ class MainController(
       return@setOnNavigationItemSelectedListener true
     }
 
-    bottomNavView.setOnOuterInterceptTouchEventListener { event ->
+    navigationViewContract.setOnOuterInterceptTouchEventListener { event ->
       if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
         return@setOnOuterInterceptTouchEventListener false
       }
 
-      if (bottomNavView.selectedItemId == R.id.action_browse) {
+      if (navigationViewContract.selectedMenuItemId == R.id.action_browse) {
         return@setOnOuterInterceptTouchEventListener bottomNavViewGestureDetector.onInterceptTouchEvent(event)
       }
 
       return@setOnOuterInterceptTouchEventListener false
     }
 
-    bottomNavView.setOnOuterTouchEventListener { event ->
+    navigationViewContract.setOnOuterTouchEventListener { event ->
       if (!ChanSettings.replyLayoutOpenCloseGestures.get()) {
         return@setOnOuterTouchEventListener false
       }
 
-      if (bottomNavView.selectedItemId == R.id.action_browse) {
+      if (navigationViewContract.selectedMenuItemId == R.id.action_browse) {
         return@setOnOuterTouchEventListener bottomNavViewGestureDetector.onTouchEvent(event)
       }
 
@@ -370,27 +377,27 @@ class MainController(
 
   private fun setBottomNavViewButtons() {
     val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
-    bottomNavView.menu.clear()
+    navigationViewContract.navigationMenu.clear()
 
     bottomNavViewButtons.bottomNavViewButtons().forEachIndexed { index, bottomNavViewButton ->
       when (bottomNavViewButton) {
         BottomNavViewButton.Search -> {
-          bottomNavView.menu
+          navigationViewContract.navigationMenu
             .add(Menu.NONE, R.id.action_search, index, R.string.menu_search)
             .setIcon(R.drawable.ic_search_white_24dp)
         }
         BottomNavViewButton.Bookmarks -> {
-          bottomNavView.menu
+          navigationViewContract.navigationMenu
             .add(Menu.NONE, R.id.action_bookmarks, index, R.string.menu_bookmarks)
             .setIcon(R.drawable.ic_baseline_bookmarks)
         }
         BottomNavViewButton.Browse -> {
-          bottomNavView.menu
+          navigationViewContract.navigationMenu
             .add(Menu.NONE, R.id.action_browse, index, R.string.menu_browse)
             .setIcon(R.drawable.ic_baseline_laptop)
         }
         BottomNavViewButton.Settings -> {
-          bottomNavView.menu
+          navigationViewContract.navigationMenu
             .add(Menu.NONE, R.id.action_settings, index, R.string.menu_settings)
             .setIcon(R.drawable.ic_baseline_settings)
         }
@@ -409,7 +416,7 @@ class MainController(
     settingsNotificationManager.onThemeChanged()
 
     divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
-    bottomNavView.setBackgroundColor(themeEngine.chanTheme.primaryColor)
+    navigationViewContract.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
     val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(themeEngine.chanTheme.primaryColor)) {
       Color.DKGRAY
@@ -417,12 +424,12 @@ class MainController(
       ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
     }
 
-    bottomNavView.itemIconTintList = ColorStateList(
+    navigationViewContract.viewItemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
       intArrayOf(Color.WHITE, uncheckedColor)
     )
 
-    bottomNavView.itemTextColor = ColorStateList(
+    navigationViewContract.viewItemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
       intArrayOf(Color.WHITE, uncheckedColor)
     )
@@ -440,16 +447,33 @@ class MainController(
   }
 
   override fun onInsetsChanged() {
-    val bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
+    val navigationViewSize = getDimen(R.dimen.navigation_view_size)
 
     epoxyRecyclerView.updatePaddings(
       top = globalWindowInsetsManager.top(),
       bottom = globalWindowInsetsManager.bottom()
     )
 
-    bottomNavView.layoutParams.height = bottomNavBarHeight + globalWindowInsetsManager.bottom()
-    bottomNavView.updateMaxViewHeight(bottomNavBarHeight + globalWindowInsetsManager.bottom())
-    bottomNavView.updateBottomPadding(globalWindowInsetsManager.bottom())
+    when (navigationViewContract.type) {
+      NavigationViewContract.Type.BottomNavView -> {
+        navigationViewContract.actualView.layoutParams.height =
+          navigationViewSize + globalWindowInsetsManager.bottom()
+
+        navigationViewContract.updatePaddings(
+          leftPadding = null,
+          bottomPadding = globalWindowInsetsManager.bottom()
+        )
+      }
+      NavigationViewContract.Type.SideNavView -> {
+        navigationViewContract.actualView.layoutParams.width =
+          navigationViewSize + globalWindowInsetsManager.left()
+
+        navigationViewContract.updatePaddings(
+          leftPadding = globalWindowInsetsManager.left(),
+          bottomPadding = globalWindowInsetsManager.bottom()
+        )
+      }
+    }
   }
 
   fun pushChildController(childController: Controller) {
@@ -503,7 +527,7 @@ class MainController(
     if (topController is ToolbarNavigationController) {
       val toolbar = topController.toolbar
       if (toolbar != null) {
-        bottomNavView.setToolbar(toolbar)
+        navigationViewContract.setToolbar(toolbar)
       }
     }
   }
@@ -529,6 +553,7 @@ class MainController(
   fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {
     val bottomNavBarAwareNavigationController = BottomNavBarAwareNavigationController(
       context,
+      navigationViewContract.type,
       object : BottomNavBarAwareNavigationController.CloseBottomNavBarAwareNavigationControllerListener {
         override fun onCloseController() {
           closeBottomNavBarAwareNavigationControllerListener()
@@ -645,15 +670,15 @@ class MainController(
   }
 
   override fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean) {
-    bottomNavView.hide(lockTranslation, lockCollapse)
+    navigationViewContract.hide(lockTranslation, lockCollapse)
   }
 
   override fun showBottomNavBar(unlockTranslation: Boolean, unlockCollapse: Boolean) {
-    bottomNavView.show(unlockTranslation, unlockCollapse)
+    navigationViewContract.show(unlockTranslation, unlockCollapse)
   }
 
   override fun resetBottomNavViewState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
-    bottomNavView.resetState(unlockTranslation, unlockCollapse)
+    navigationViewContract.resetState(unlockTranslation, unlockCollapse)
   }
 
   override fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {
@@ -669,12 +694,12 @@ class MainController(
   }
 
   override fun showBottomPanel(items: List<BottomMenuPanelItem>) {
-    bottomNavView.isEnabled = false
+    navigationViewContract.actualView.isEnabled = false
     bottomMenuPanel.show(items)
   }
 
   override fun hideBottomPanel() {
-    bottomNavView.isEnabled = true
+    navigationViewContract.actualView.isEnabled = true
     bottomMenuPanel.hide()
   }
 
@@ -683,19 +708,19 @@ class MainController(
   }
 
   fun setBrowseMenuItemSelected() {
-    bottomNavView.updateMenuItem(R.id.action_browse) { isChecked = true }
+    navigationViewContract.updateMenuItem(R.id.action_browse) { isChecked = true }
   }
 
   fun setSettingsMenuItemSelected() {
-    bottomNavView.updateMenuItem(R.id.action_settings) { isChecked = true }
+    navigationViewContract.updateMenuItem(R.id.action_settings) { isChecked = true }
   }
 
   fun setBookmarksMenuItemSelected() {
-    bottomNavView.updateMenuItem(R.id.action_bookmarks) { isChecked = true }
+    navigationViewContract.updateMenuItem(R.id.action_bookmarks) { isChecked = true }
   }
 
   fun setGlobalSearchMenuItemSelected() {
-    bottomNavView.updateMenuItem(R.id.action_search) { isChecked = true }
+    navigationViewContract.updateMenuItem(R.id.action_search) { isChecked = true }
   }
 
   fun setDrawerEnabled(enabled: Boolean) {
@@ -745,16 +770,15 @@ class MainController(
 
   private fun onBookmarksBadgeStateChanged(state: MainControllerPresenter.BookmarksBadgeState) {
     if (state.totalUnseenPostsCount <= 0) {
-      if (bottomNavView.getBadge(R.id.action_bookmarks) != null) {
-        bottomNavView.removeBadge(R.id.action_bookmarks)
+      if (navigationViewContract.getBadge(R.id.action_bookmarks) != null) {
+        navigationViewContract.removeBadge(R.id.action_bookmarks)
       }
 
       return
     }
 
-    val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_bookmarks)
-
-    badgeDrawable.verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
+    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_bookmarks)
+    badgeDrawable.adjustBadgeDrawable()
     badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = state.totalUnseenPostsCount
 
@@ -780,16 +804,15 @@ class MainController(
     val notificationsCount = settingsNotificationManager.count()
 
     if (notificationsCount <= 0) {
-      if (bottomNavView.getBadge(R.id.action_settings) != null) {
-        bottomNavView.removeBadge(R.id.action_settings)
+      if (navigationViewContract.getBadge(R.id.action_settings) != null) {
+        navigationViewContract.removeBadge(R.id.action_settings)
       }
 
       return
     }
 
-    val badgeDrawable = bottomNavView.getOrCreateBadge(R.id.action_settings)
-
-    badgeDrawable.verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
+    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_settings)
+    badgeDrawable.adjustBadgeDrawable()
     badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = notificationsCount
 
@@ -798,6 +821,21 @@ class MainController(
       Color.WHITE
     } else {
       Color.BLACK
+    }
+  }
+
+  private fun BadgeDrawable.adjustBadgeDrawable() {
+    when (navigationViewContract.type) {
+      NavigationViewContract.Type.BottomNavView -> {
+        verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
+        horizontalOffset = 0
+        badgeGravity = BadgeDrawable.TOP_END
+      }
+      NavigationViewContract.Type.SideNavView -> {
+        verticalOffset = 0
+        horizontalOffset = number.countDigits() * BADGE_DRAWABLE_HORIZONTAL_OFFSET
+        badgeGravity = BadgeDrawable.TOP_START
+      }
     }
   }
 
@@ -1007,21 +1045,6 @@ class MainController(
     }
   }
 
-  private fun BottomNavigationView.updateMenuItem(menuItemId: Int, updater: MenuItem.() -> Unit) {
-    bottomNavView.menu.findItem(menuItemId)?.let { menuItem ->
-      updater(menuItem)
-    }
-
-    disableTooltips()
-  }
-
-  private fun BottomNavigationView.disableTooltips() {
-    menu.forEach { menuItem ->
-      val view = findViewById<View>(menuItem.itemId)
-      TooltipCompat.setTooltipText(view, null)
-    }
-  }
-
   private class MainEpoxyController : EpoxyController() {
     var callback: EpoxyController.() -> Unit = {}
 
@@ -1045,6 +1068,7 @@ class MainController(
     private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
     private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
+    private val BADGE_DRAWABLE_HORIZONTAL_OFFSET = dp(5f)
     private val GRID_COLUMN_WIDTH = dp(80f)
   }
 }

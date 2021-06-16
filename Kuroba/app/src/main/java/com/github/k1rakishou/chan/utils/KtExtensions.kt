@@ -22,8 +22,21 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.math.log10
 
 private val TAG = "KotlinExts"
+
+fun Int.countDigits(): Int {
+  if (this < 0) {
+    return 0
+  }
+
+  if (this == 0) {
+    return 1
+  }
+
+  return (log10(this.toDouble()).toInt() + 1)
+}
 
 fun removeExtensionIfPresent(filename: String): String {
   val index = filename.lastIndexOf('.')

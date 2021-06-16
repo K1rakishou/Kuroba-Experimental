@@ -428,8 +428,18 @@ class ReplyLayout @JvmOverloads constructor(
 
     this.currentOrientation = resources.configuration.orientation
 
+    val useReplyInputLandscapeMode =
+      currentOrientation == Configuration.ORIENTATION_LANDSCAPE && !ChanSettings.isSplitLayoutMode()
+
     // Inflate reply input
-    replyInputLayout = AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false) as ViewGroup
+    replyInputLayout = if (useReplyInputLandscapeMode) {
+      // Special type of reply layout for phones when using landscape orientation. Do not use together
+      // with SPLIT layout mode.
+      AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input_landscape, this, false) as ViewGroup
+    } else {
+      AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false) as ViewGroup
+    }
+
     replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
     replyInputMessageHolder = replyInputLayout.findViewById(R.id.reply_input_message_holder)
     name = replyInputLayout.findViewById(R.id.name)

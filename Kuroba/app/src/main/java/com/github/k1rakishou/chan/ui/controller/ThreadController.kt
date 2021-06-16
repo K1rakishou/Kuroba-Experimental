@@ -69,7 +69,7 @@ import javax.inject.Inject
 
 abstract class ThreadController(
   context: Context,
-  var drawerCallbacks: MainControllerCallbacks?
+  val mainControllerCallbacks: MainControllerCallbacks
 ) : Controller(context),
   ThreadLayoutCallback,
   OnRefreshListener,
@@ -123,8 +123,8 @@ abstract class ThreadController(
     super.onCreate()
 
     threadLayout = inflate(context, R.layout.layout_thread, null) as ThreadLayout
-    threadLayout.create(this, threadControllerType)
-    threadLayout.setDrawerCallbacks(drawerCallbacks)
+    threadLayout.create(this, threadControllerType, mainControllerCallbacks.navigationViewContractType)
+    threadLayout.setDrawerCallbacks(mainControllerCallbacks)
 
     swipeRefreshLayout = KurobaSwipeRefreshLayout(context)
 
@@ -212,7 +212,6 @@ abstract class ThreadController(
     super.onDestroy()
 
     toolbar?.removeToolbarHeightUpdatesCallback(this)
-    drawerCallbacks = null
     threadLayout.destroy()
     applicationVisibilityManager.removeListener(this)
     themeEngine.removeListener(this)
@@ -234,7 +233,7 @@ abstract class ThreadController(
   }
 
   fun passMotionEventIntoDrawer(event: MotionEvent): Boolean {
-    return drawerCallbacks?.passMotionEventIntoDrawer(event) ?: false
+    return mainControllerCallbacks.passMotionEventIntoDrawer(event)
   }
 
   fun passMotionEventIntoSlidingPaneLayout(event: MotionEvent): Boolean {

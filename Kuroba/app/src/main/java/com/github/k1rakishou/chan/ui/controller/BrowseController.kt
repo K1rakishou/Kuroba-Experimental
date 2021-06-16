@@ -64,8 +64,8 @@ import javax.inject.Inject
 
 class BrowseController(
   context: Context,
-  drawerCallbacks: MainControllerCallbacks?
-) : ThreadController(context, drawerCallbacks),
+  mainControllerCallbacks: MainControllerCallbacks
+) : ThreadController(context, mainControllerCallbacks),
   ThreadLayoutCallback,
   BrowsePresenter.Callback,
   SlideChangeListener,
@@ -121,19 +121,16 @@ class BrowseController(
   override fun onShow() {
     super.onShow()
 
-    if (drawerCallbacks != null) {
-      drawerCallbacks!!.resetBottomNavViewCheckState()
+    mainControllerCallbacks.resetBottomNavViewCheckState()
 
-      if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-        drawerCallbacks!!.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
-      }
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      mainControllerCallbacks.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
     }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
-    drawerCallbacks = null
     presenter.destroy()
   }
 
@@ -695,16 +692,14 @@ class BrowseController(
           if (splitNav.getRightController() is StyledToolbarNavigationController) {
             val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
             if (navigationController.top is ViewThreadController) {
-              val viewThreadController = navigationController.top as ViewThreadController?
-              viewThreadController!!.drawerCallbacks = drawerCallbacks
-
+              val viewThreadController = navigationController.top as ViewThreadController
               viewThreadController.loadThread(descriptor)
               viewThreadController.onShow()
             }
           } else {
             val navigationController = StyledToolbarNavigationController(context)
             splitNav.setRightController(navigationController, animated)
-            val viewThreadController = ViewThreadController(context, drawerCallbacks, descriptor)
+            val viewThreadController = ViewThreadController(context, mainControllerCallbacks, descriptor)
             navigationController.pushController(viewThreadController, false)
           }
           splitNav.switchToController(false, animated)
@@ -717,7 +712,7 @@ class BrowseController(
           } else {
             val viewThreadController = ViewThreadController(
               context,
-              drawerCallbacks,
+              mainControllerCallbacks,
               descriptor
             )
 
@@ -730,7 +725,7 @@ class BrowseController(
           // (BrowseController -> ToolbarNavigationController)
           val viewThreadController = ViewThreadController(
             context,
-            drawerCallbacks,
+            mainControllerCallbacks,
             descriptor
           )
 

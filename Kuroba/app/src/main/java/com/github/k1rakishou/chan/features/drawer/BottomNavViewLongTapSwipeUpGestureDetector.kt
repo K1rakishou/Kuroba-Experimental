@@ -6,7 +6,7 @@ import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.ViewConfiguration
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
-import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -15,7 +15,7 @@ import kotlin.math.abs
 
 class BottomNavViewLongTapSwipeUpGestureDetector(
   private val context: Context,
-  private val bottomNavView: HidingBottomNavigationView,
+  private val navigationViewContract: NavigationViewContract,
   private val onSwipedUpAfterLongPress: () -> Unit
 ) {
   private var longPressed = false
@@ -74,7 +74,7 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
           }
 
           longPressed = true
-          bottomNavView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+          navigationViewContract.actualView.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         }
       }
       MotionEvent.ACTION_MOVE -> {
@@ -152,7 +152,7 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
 
     tracking = true
 
-    bottomNavView.requestDisallowInterceptTouchEvent(true)
+    navigationViewContract.actualView.requestDisallowInterceptTouchEvent(true)
 
     initialTouchEvent?.recycle()
     initialTouchEvent = null
@@ -177,7 +177,7 @@ class BottomNavViewLongTapSwipeUpGestureDetector(
 
     cancelLongPressDetection()
 
-    bottomNavView.requestDisallowInterceptTouchEvent(false)
+    navigationViewContract.actualView.requestDisallowInterceptTouchEvent(false)
 
     velocityTracker?.recycle()
     velocityTracker = null

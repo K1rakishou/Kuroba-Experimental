@@ -68,6 +68,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.LoadView
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -227,7 +228,8 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun create(
     callback: ThreadLayoutCallback,
-    threadControllerType: ThreadSlideController.ThreadControllerType
+    threadControllerType: ThreadSlideController.ThreadControllerType,
+    navigationViewContractType: NavigationViewContract.Type
   ) {
     this.callback = callback
     this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
@@ -255,7 +257,7 @@ class ThreadLayout @JvmOverloads constructor(
 
     // View setup
     presenter.create(context, this)
-    threadListLayout.onCreate(presenter, this)
+    threadListLayout.onCreate(presenter, this, navigationViewContractType)
     postPopupHelper = PostPopupHelper(context, presenter, chanThreadManager, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)

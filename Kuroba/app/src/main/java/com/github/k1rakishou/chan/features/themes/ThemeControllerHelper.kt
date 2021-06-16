@@ -308,7 +308,7 @@ class ThemeControllerHelper(
       bottomNavView,
       LinearLayout.LayoutParams(
         ViewGroup.LayoutParams.MATCH_PARENT,
-        AppModuleAndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+        AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
       )
     )
 
@@ -322,7 +322,7 @@ class ThemeControllerHelper(
         CoordinatorLayout.LayoutParams.WRAP_CONTENT
       ).apply {
         gravity = Gravity.END or Gravity.BOTTOM
-        bottomMargin = AppModuleAndroidUtils.dp(16f) + AppModuleAndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+        bottomMargin = AppModuleAndroidUtils.dp(16f) + AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
         marginEnd = AppModuleAndroidUtils.dp(16f)
       }
     )
@@ -334,7 +334,7 @@ class ThemeControllerHelper(
         CoordinatorLayout.LayoutParams.WRAP_CONTENT
       ).apply {
         gravity = Gravity.START or Gravity.BOTTOM
-        bottomMargin = AppModuleAndroidUtils.dp(16f) + AppModuleAndroidUtils.getDimen(R.dimen.bottom_nav_view_height)
+        bottomMargin = AppModuleAndroidUtils.dp(16f) + AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
         marginStart = AppModuleAndroidUtils.dp(16f)
       }
     )

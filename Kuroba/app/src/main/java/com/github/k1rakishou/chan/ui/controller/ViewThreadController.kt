@@ -63,9 +63,9 @@ import kotlin.time.milliseconds
 
 open class ViewThreadController(
   context: Context,
-  drawerCallbacks: MainControllerCallbacks?,
+  mainControllerCallbacks: MainControllerCallbacks,
   startingThreadDescriptor: ThreadDescriptor
-) : ThreadController(context, drawerCallbacks),
+) : ThreadController(context, mainControllerCallbacks),
   ThreadLayoutCallback,
   ToobarThreedotMenuCallback,
   ReplyAutoCloseListener {
@@ -133,12 +133,10 @@ open class ViewThreadController(
     super.onShow()
     setPinIconState(false)
 
-    if (drawerCallbacks != null) {
-      drawerCallbacks?.resetBottomNavViewCheckState()
+    mainControllerCallbacks.resetBottomNavViewCheckState()
 
-      if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-        drawerCallbacks?.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
-      }
+    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      mainControllerCallbacks.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
     }
   }
 

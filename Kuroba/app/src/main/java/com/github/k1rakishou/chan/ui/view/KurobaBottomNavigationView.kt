@@ -2,21 +2,25 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.animation.Animator
 import android.content.Context
+import android.content.res.ColorStateList
 import android.util.AttributeSet
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.ViewGroup
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.common.updatePaddings
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import kotlin.math.max
+import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
 
-class HidingBottomNavigationView @JvmOverloads constructor(
+class KurobaBottomNavigationView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : BottomNavigationView(context, attrs, defStyleAttr), ToolbarCollapseCallback {
+) : BottomNavigationView(context, attrs, defStyleAttr), ToolbarCollapseCallback, NavigationViewContract {
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
@@ -25,24 +29,39 @@ class HidingBottomNavigationView @JvmOverloads constructor(
   private var lastCollapseTranslationOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
-  private var maxViewHeight: Int = 0
 
   private var interceptTouchEventListener: ((MotionEvent) -> Boolean)? = null
   private var touchEventListener: ((MotionEvent) -> Boolean)? = null
+
+  override val actualView: ViewGroup
+    get() = this
+  override val navigationMenu: Menu
+    get() = menu
+  override val type: NavigationViewContract.Type
+    get() = NavigationViewContract.Type.BottomNavView
+
+  override var viewItemTextColor: ColorStateList?
+    get() = itemTextColor
+    set(value) { itemTextColor = value }
+  override var viewItemIconTintList: ColorStateList?
+    get() = itemIconTintList
+    set(value) { itemIconTintList = value }
+  override var viewElevation: Float
+    get() = elevation
+    set(value) { elevation = value }
+  override var selectedMenuItemId: Int
+    get() = selectedItemId
+    set(value) { selectedItemId = value }
 
   init {
     setOnApplyWindowInsetsListener(null)
   }
 
-  fun updateMaxViewHeight(height: Int) {
-    maxViewHeight = max(height, maxViewHeight)
+  override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
+    updatePaddings(bottom = bottomPadding!!)
   }
 
-  fun updateBottomPadding(padding: Int) {
-    updatePaddings(bottom = padding)
-  }
-
-  fun setToolbar(toolbar: Toolbar) {
+  override fun setToolbar(toolbar: Toolbar) {
     this.toolbar = toolbar
 
     if (attachedToWindow && !attachedToToolbar) {
@@ -51,7 +70,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     }
   }
 
-  fun hide(lockTranslation: Boolean, lockCollapse: Boolean) {
+  override fun hide(lockTranslation: Boolean, lockCollapse: Boolean) {
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
     }
@@ -67,7 +86,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     }
   }
 
-  fun show(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+  override fun show(unlockTranslation: Boolean, unlockCollapse: Boolean) {
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
     }
@@ -83,7 +102,7 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     onCollapseAnimationInternal(collapse = false, isFromToolbarCallbacks = false)
   }
 
-  fun resetState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+  override fun resetState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
     isTranslationLocked = !unlockTranslation
     isCollapseLocked = !unlockCollapse
 
@@ -126,11 +145,11 @@ class HidingBottomNavigationView @JvmOverloads constructor(
     return super.onTouchEvent(event)
   }
 
-  fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
+  override fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
     this.interceptTouchEventListener = listener
   }
 
-  fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
+  override fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
     this.touchEventListener = listener
   }
 
@@ -175,6 +194,10 @@ class HidingBottomNavigationView @JvmOverloads constructor(
 
   override fun onCollapseAnimation(collapse: Boolean) {
     onCollapseAnimationInternal(collapse, true)
+  }
+
+  override fun setOnNavigationItemSelectedListener(listener: (MenuItem) -> Boolean) {
+    this.setOnNavigationItemSelectedListener(OnNavigationItemSelectedListener { item -> listener(item) })
   }
 
   private fun onCollapseAnimationInternal(collapse: Boolean, isFromToolbarCallbacks: Boolean) {

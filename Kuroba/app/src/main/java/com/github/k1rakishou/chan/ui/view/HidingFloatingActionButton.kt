@@ -117,7 +117,7 @@ class HidingFloatingActionButton
       // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
       // when in SPLIT mode.
       bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-        getDimen(R.dimen.bottom_nav_view_height)
+        getDimen(R.dimen.navigation_view_size)
       } else {
         0
       }

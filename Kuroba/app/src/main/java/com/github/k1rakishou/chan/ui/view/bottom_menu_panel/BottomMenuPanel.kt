@@ -51,7 +51,7 @@ class BottomMenuPanel @JvmOverloads constructor(
 
     layoutParams = FrameLayout.LayoutParams(
       LayoutParams.MATCH_PARENT,
-      getDimen(R.dimen.bottom_nav_view_height)
+      getDimen(R.dimen.navigation_view_size)
     )
 
     updateColors()
@@ -268,7 +268,7 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   private fun updatePaddings() {
-    layoutParams.height = getDimen(R.dimen.bottom_nav_view_height) + globalWindowInsetsManager.bottom()
+    layoutParams.height = getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom()
 
     if (globalWindowInsetsManager.isKeyboardOpened) {
       updatePadding(bottom = 0)

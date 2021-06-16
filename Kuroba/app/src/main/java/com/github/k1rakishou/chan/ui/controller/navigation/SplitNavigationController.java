@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
@@ -87,8 +88,10 @@ public class SplitNavigationController
         leftControllerView = new FrameLayout(context);
         rightControllerView = new FrameLayout(context);
 
-        int bottomNavViewHeight = (int) context.getResources().getDimension(R.dimen.bottom_nav_view_height);
-        KotlinExtensionsKt.updatePaddings(container, null, null, null, bottomNavViewHeight);
+        if (mainControllerCallbacks.getNavigationViewContractType() == NavigationViewContract.Type.BottomNavView) {
+            int bottomNavViewHeight = (int) context.getResources().getDimension(R.dimen.navigation_view_size);
+            KotlinExtensionsKt.updatePaddings(container, null, null, null, bottomNavViewHeight);
+        }
 
         container.setLeftView(leftControllerView);
         container.setRightView(rightControllerView);

@@ -6,8 +6,8 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
-import com.github.k1rakishou.chan.ui.view.HidingBottomNavigationView
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
+import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.core_logger.Logger
@@ -119,7 +119,7 @@ class SnackbarWrapper private constructor(
     }
   }
 
-  private fun findBottomNavigationView(snackbarView: View): HidingBottomNavigationView? {
+  private fun findBottomNavigationView(snackbarView: View): KurobaBottomNavigationView? {
     var parent = snackbarView.parent
 
     while (parent != null && parent !is DrawerWidthAdjustingLayout) {
@@ -133,8 +133,8 @@ class SnackbarWrapper private constructor(
 
     val drawer = parent
     val bottomNavView = drawer.findChild { view ->
-      view is HidingBottomNavigationView
-    } as? HidingBottomNavigationView
+      view is KurobaBottomNavigationView
+    } as? KurobaBottomNavigationView
 
     if (bottomNavView == null) {
       Logger.e("SnackbarWrapper", "Couldn't find HidingBottomNavigationView!!!")

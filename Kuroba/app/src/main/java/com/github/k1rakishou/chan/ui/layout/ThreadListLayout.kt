@@ -68,6 +68,7 @@ import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.ui.view.PostInfoMapItemDecoration
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -292,6 +293,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var fastScroller: FastScroller? = null
   private var postInfoMapItemDecoration: PostInfoMapItemDecoration? = null
   private var callback: ThreadListLayoutPresenterCallback? = null
+  private var navigationViewContractType: NavigationViewContract.Type = NavigationViewContract.Type.BottomNavView
   private var threadListLayoutCallback: ThreadListLayoutCallback? = null
   private var boardPostViewMode: BoardPostViewMode? = null
   private var spanCount = 2
@@ -379,11 +381,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onCreate(
     threadPresenter: ThreadPresenter,
-    threadListLayoutCallback: ThreadListLayoutCallback
+    threadListLayoutCallback: ThreadListLayoutCallback,
+    navigationViewContractType: NavigationViewContract.Type
   ) {
     this.callback = threadPresenter
     this.threadPresenter = threadPresenter
     this.threadListLayoutCallback = threadListLayoutCallback
+    this.navigationViewContractType = navigationViewContractType
 
     listScrollToBottomExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
@@ -841,7 +845,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     replyLayout.onOpen(open)
-    setRecyclerViewPadding()
+    replyLayout.requestWrappingModeUpdate()
 
     if (!open) {
       AndroidUtils.hideKeyboard(replyLayout)
@@ -1188,10 +1192,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       recyclerBottom += (replyLayout.measuredHeight - replyLayout.paddingTop)
     } else {
-      recyclerBottom += if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-        globalWindowInsetsManager.bottom()
-      } else {
-        globalWindowInsetsManager.bottom() + getDimen(R.dimen.bottom_nav_view_height)
+      recyclerBottom += when (navigationViewContractType) {
+        NavigationViewContract.Type.BottomNavView -> {
+          globalWindowInsetsManager.bottom() + getDimen(R.dimen.navigation_view_size)
+        }
+        NavigationViewContract.Type.SideNavView -> {
+          globalWindowInsetsManager.bottom()
+        }
       }
     }
 

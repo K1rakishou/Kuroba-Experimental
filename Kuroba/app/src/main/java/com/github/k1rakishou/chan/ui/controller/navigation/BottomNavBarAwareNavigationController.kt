@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
+import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
@@ -16,6 +17,7 @@ import javax.inject.Inject
 
 class BottomNavBarAwareNavigationController(
   context: Context,
+  private val navigationViewType: NavigationViewContract.Type,
   private val listener: CloseBottomNavBarAwareNavigationControllerListener
 ) :
   ToolbarNavigationController(context),
@@ -39,7 +41,7 @@ class BottomNavBarAwareNavigationController(
     view = inflate(context, R.layout.controller_navigation_bottom_nav_bar_aware)
     container = view.findViewById<View>(R.id.bottom_bar_aware_controller_container) as NavigationControllerContainerLayout
 
-    bottomNavBarHeight = getDimen(R.dimen.bottom_nav_view_height)
+    bottomNavBarHeight = getDimen(R.dimen.navigation_view_size)
 
     val toolbar = view.findViewById<Toolbar>(R.id.toolbar)
     setToolbar(toolbar)
@@ -73,9 +75,15 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onInsetsChanged() {
+    var bottom = globalWindowInsetsManager.bottom()
+
+    if (navigationViewType == NavigationViewContract.Type.BottomNavView) {
+      bottom += bottomNavBarHeight
+    }
+
     container.updatePaddings(
       top = requireToolbar().toolbarHeight,
-      bottom = bottomNavBarHeight + globalWindowInsetsManager.bottom()
+      bottom = bottom
     )
   }
 
