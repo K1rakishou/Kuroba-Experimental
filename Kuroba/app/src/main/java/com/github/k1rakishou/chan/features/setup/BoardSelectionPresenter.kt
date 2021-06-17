@@ -59,6 +59,7 @@ class BoardSelectionPresenter(
 
   private fun showActiveSitesWithBoardsSorted(query: String = "") {
     val resultMap = linkedMapOf<SiteCellData, List<BoardCellData>>()
+    val activeSiteCount = siteManager.activeSiteCount()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
       if (archivesManager.isSiteArchive(site.siteDescriptor())) {
@@ -74,7 +75,11 @@ class BoardSelectionPresenter(
         null
       )
 
-      resultMap[siteCellData] = collectBoards(query, chanSiteData)
+      val collectedBoards = collectBoards(query, chanSiteData, activeSiteCount)
+      if (collectedBoards.isNotEmpty()) {
+        resultMap[siteCellData] = collectedBoards
+      }
+
       return@viewActiveSitesOrderedWhile true
     }
 
@@ -93,7 +98,8 @@ class BoardSelectionPresenter(
 
   private fun collectBoards(
     query: String,
-    chanSiteData: ChanSiteData
+    chanSiteData: ChanSiteData,
+    activeSiteCount: Int
   ): List<BoardCellData> {
     val boardCellDataList = mutableListOf<BoardCellData>()
 
@@ -124,11 +130,17 @@ class BoardSelectionPresenter(
 
     boardManager.viewAllBoards(chanSiteData.siteDescriptor, iteratorFunc)
 
-    return InputWithQuerySorter.sort(
+    val sortedBoards = InputWithQuerySorter.sort(
       input = boardCellDataList,
       query = query,
       textSelector = { boardCellData -> boardCellData.boardDescriptor.boardCode }
     )
+
+    if (query.isEmpty() || activeSiteCount <= 1) {
+      return sortedBoards
+    }
+
+    return sortedBoards.take(MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE)
   }
 
   private fun setState(state: BoardSelectionControllerState) {
@@ -137,5 +149,6 @@ class BoardSelectionPresenter(
 
   companion object {
     private const val TAG = "BoardSelectionPresenter"
+    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE = 8
   }
 }

@@ -180,7 +180,15 @@ class BookmarkForegroundWatcher(
         return
       }
 
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() start waiting")
+      }
+
       delay(foregroundWatchIntervalMs() + calculateAndLogAdditionalInterval())
+
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "updateBookmarksWorkerLoop() done waiting")
+      }
 
       if (!isActive) {
         Logger.d(TAG, "updateBookmarksWorkerLoop() not active anymore (after delay), exiting")
@@ -201,7 +209,7 @@ class BookmarkForegroundWatcher(
     if (verboseLogsEnabled) {
       val foregroundInterval = foregroundWatchIntervalMs()
 
-      Logger.d(TAG, "bookmarkWatcherDelegate.doWork() completed, waiting for " +
+      Logger.d(TAG, "updateBookmarksWorkerLoop() doWork() completed, waiting for " +
         "${foregroundInterval}ms + (${(activeBookmarksCount / 10)} bookmarks * ${foregroundWatchAdditionalIntervalMs}ms) " +
         "(total wait time: ${foregroundInterval + additionalInterval}ms)")
     }
