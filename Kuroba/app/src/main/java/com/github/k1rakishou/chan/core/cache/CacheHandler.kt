@@ -360,12 +360,6 @@ class CacheHandler(
       MIN_TRIM_INTERVAL
     }
 
-    if (AppModuleAndroidUtils.isDevBuild()) {
-      Logger.d(TAG, "fileWasAdded() " +
-        "fileLen=${ChanPostUtils.getReadableFileSize(fileLen)}, " +
-        "totalSize=${ChanPostUtils.getReadableFileSize(totalSize)}")
-    }
-
     val canRunTrim = totalSize > fileCacheDiskSizeBytes
       && now - trimTime > minTrimInterval
       && trimRunning.compareAndSet(false, true)

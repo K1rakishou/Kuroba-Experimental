@@ -188,7 +188,13 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
           isClosingMediaViewerGesture = false,
           onGestureTriggeredFunc = { mediaViewToolbar?.downloadMedia() },
-          gestureCanBeExecuted = { mediaViewToolbar?.isDownloadAllowed() ?: false }
+          gestureCanBeExecuted = {
+            if (!gestureCanBeExecuted(gestureSetting)) {
+              return@GestureInfo false
+            }
+
+            return@GestureInfo mediaViewToolbar?.isDownloadAllowed() ?: false
+          }
         )
       }
       ChanSettings.ImageGestureActionType.CloseImage -> {
@@ -196,7 +202,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.close),
           isClosingMediaViewerGesture = true,
           onGestureTriggeredFunc = { mediaViewContract.closeMediaViewer() },
-          gestureCanBeExecuted = { true }
+          gestureCanBeExecuted = { gestureCanBeExecuted(gestureSetting) }
         )
       }
       ChanSettings.ImageGestureActionType.OpenAlbum -> {
@@ -205,6 +211,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
           isClosingMediaViewerGesture = true,
           onGestureTriggeredFunc = { mediaViewContract.openAlbum(viewableMedia) },
           gestureCanBeExecuted = {
+            if (!gestureCanBeExecuted(gestureSetting)) {
+              return@GestureInfo false
+            }
+
             val mediaViewerOpenedFromAlbum = controllerViewModel.mediaViewerOptions.value.mediaViewerOpenedFromAlbum
             if (mediaViewerOpenedFromAlbum) {
               // To avoid being able to open nested album controllers.
@@ -221,6 +231,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       }
       null -> return null
     }
+  }
+
+  open fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
+    return true
   }
 
   override fun toString(): String {

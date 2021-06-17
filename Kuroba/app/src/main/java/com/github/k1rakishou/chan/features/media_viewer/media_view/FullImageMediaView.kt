@@ -10,6 +10,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import com.davemorrissey.labs.subscaleview.ImageSource
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
@@ -144,6 +145,10 @@ class FullImageMediaView(
 
       return@setOnTouchListener result
     }
+  }
+
+  override fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
+    return actualImageView.imageViewportTouchSide.isTouchingAllSides
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
