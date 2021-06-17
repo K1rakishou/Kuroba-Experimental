@@ -16,10 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.captcha;
 
-import com.github.k1rakishou.chan.core.site.Site;
+import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 
 public interface AuthenticationLayoutInterface {
-    void initialize(Site site, AuthenticationLayoutCallback callback);
+    void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback);
     void reset();
     void hardReset();
     void onDestroy();

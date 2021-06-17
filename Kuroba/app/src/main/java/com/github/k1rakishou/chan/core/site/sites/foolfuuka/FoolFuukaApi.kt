@@ -26,7 +26,7 @@ class FoolFuukaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
 
-  override suspend fun loadThread(
+  override suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor

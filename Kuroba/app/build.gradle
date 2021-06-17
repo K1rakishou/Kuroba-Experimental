@@ -288,7 +288,7 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
-    implementation 'io.coil-kt:coil-base:1.2.0'
+    implementation 'io.coil-kt:coil-base:1.2.1'
 
     // noinspection GradleDependency wants to upgrade to older version
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
@@ -298,6 +298,9 @@ dependencies {
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
+
+    implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
 
     implementation "com.airbnb.android:epoxy:${versions.epoxy}"
     kapt "com.airbnb.android:epoxy-processor:${versions.epoxy}"

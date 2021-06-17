@@ -86,6 +86,14 @@ class CreateBoardManuallyUseCase(
       ++threadsInCatalogCounter
     }
 
+    override suspend fun addManyPosts(postBuilders: List<ChanPostBuilder>) {
+      postBuilders.forEach { postBuilder ->
+        check(postBuilder.op) { "PostBuilder is not OP!" }
+      }
+
+      threadsInCatalogCounter += postBuilders.size
+    }
+
     override suspend fun applyChanReadOptions() {
       // no-op
     }

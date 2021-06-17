@@ -25,7 +25,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import java.util.Map;
 
@@ -44,7 +43,7 @@ public interface SiteEndpoints {
         return null;
     }
 
-    HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg);
+    HttpUrl imageUrl(BoardDescriptor boardDescriptor, Map<String, String> arg);
     HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg);
     HttpUrl icon(String icon, Map<String, String> arg);
     HttpUrl boards();

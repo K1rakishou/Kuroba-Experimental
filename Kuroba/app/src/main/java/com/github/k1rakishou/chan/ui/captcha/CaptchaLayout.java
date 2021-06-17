@@ -16,6 +16,14 @@
  */
 package com.github.k1rakishou.chan.ui.captcha;
 
+import static android.view.View.MeasureSpec.AT_MOST;
+import static com.github.k1rakishou.ChanSettings.LayoutMode.AUTO;
+import static com.github.k1rakishou.ChanSettings.LayoutMode.SPLIT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -34,7 +42,6 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesJar;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -47,14 +54,6 @@ import com.google.gson.Gson;
 import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
-
-import static android.view.View.MeasureSpec.AT_MOST;
-import static com.github.k1rakishou.ChanSettings.LayoutMode.AUTO;
-import static com.github.k1rakishou.ChanSettings.LayoutMode.SPLIT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-import static com.github.k1rakishou.common.AndroidUtils.getDisplaySize;
-import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 
 public class CaptchaLayout
         extends WebView
@@ -99,10 +98,8 @@ public class CaptchaLayout
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback) {
+    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
         this.callback = callback;
-        SiteAuthentication authentication = site.actions().postAuthenticate();
-
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;
         this.isInvisible = authentication.type == SiteAuthentication.Type.CAPTCHA2_INVISIBLE;

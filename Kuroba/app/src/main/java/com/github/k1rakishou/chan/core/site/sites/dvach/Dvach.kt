@@ -38,7 +38,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.JsonSetting
@@ -67,6 +66,21 @@ class Dvach : CommonSite() {
   private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
 
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
+
+  val captchaV2NoJs = SiteAuthentication.fromCaptcha2nojs(
+    NORMAL_CAPTCHA_KEY,
+    "https://2ch.hk/api/captcha/recaptcha/mobile"
+  )
+
+  val captchaV2Js = SiteAuthentication.fromCaptcha2(
+    NORMAL_CAPTCHA_KEY,
+    "https://2ch.hk/api/captcha/recaptcha/mobile"
+  )
+
+  val captchaV2Invisible = SiteAuthentication.fromCaptcha2Invisible(
+    INVISIBLE_CAPTCHA_KEY,
+    "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
+  )
 
   override fun initialize() {
     super.initialize()
@@ -299,18 +313,9 @@ class Dvach : CommonSite() {
 
       override fun postAuthenticate(): SiteAuthentication {
         return when (captchaType.get()) {
-          CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(
-            NORMAL_CAPTCHA_KEY,
-            "https://2ch.hk/api/captcha/recaptcha/mobile"
-          )
-          CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(
-            NORMAL_CAPTCHA_KEY,
-            "https://2ch.hk/api/captcha/recaptcha/mobile"
-          )
-          CaptchaType.V2_INVISIBLE -> SiteAuthentication.fromCaptcha2Invisible(
-            INVISIBLE_CAPTCHA_KEY,
-            "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
-          )
+          CaptchaType.V2JS -> captchaV2Js
+          CaptchaType.V2NOJS -> captchaV2NoJs
+          CaptchaType.V2_INVISIBLE -> captchaV2Invisible
           else -> throw IllegalArgumentException()
         }
       }
@@ -346,7 +351,7 @@ class Dvach : CommonSite() {
 
     })
     setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
-    setApi(DvachApi(siteManager, boardManager, this))
+    setApi(DvachApiV2(moshi, siteManager, boardManager, this))
     setParser(DvachCommentParser(mockReplyManager))
 
     setPostingLimitationInfo(
@@ -372,7 +377,7 @@ class Dvach : CommonSite() {
     URL_HANDLER.url!!.toString(),
     URL_HANDLER.url!!.toString()
   ) {
-    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
+    override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
       val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
 
       return root.builder().s(path).url()

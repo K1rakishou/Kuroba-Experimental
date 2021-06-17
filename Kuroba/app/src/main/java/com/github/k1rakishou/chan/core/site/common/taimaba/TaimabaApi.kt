@@ -37,7 +37,7 @@ class TaimabaApi(
 ) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
-  override suspend fun loadThread(
+  override suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
@@ -161,7 +161,7 @@ class TaimabaApi(
       val image = ChanPostImageBuilder()
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .serverFilename(fileName)
         .extension(fileExt)
@@ -256,7 +256,7 @@ class TaimabaApi(
       return ChanPostImageBuilder()
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)

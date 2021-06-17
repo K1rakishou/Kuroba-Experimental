@@ -28,7 +28,7 @@ class YukilaApi(
     .getBuilder()
     .build()
 
-  override suspend fun loadThread(
+  override suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor

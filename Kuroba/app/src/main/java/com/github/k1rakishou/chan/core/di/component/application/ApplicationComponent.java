@@ -8,8 +8,8 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent;
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
-import com.github.k1rakishou.chan.core.di.module.application.GsonModule;
 import com.github.k1rakishou.chan.core.di.module.application.HelperModule;
+import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule;
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule;
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule;
 import com.github.k1rakishou.chan.core.di.module.application.NetModule;
@@ -46,7 +46,7 @@ import kotlinx.coroutines.CoroutineScope;
 @Component(modules = {
         AppModule.class,
         ExecutorsModule.class,
-        GsonModule.class,
+        JsonParserModule.class,
         HelperModule.class,
         LoaderModule.class,
         ManagerModule.class,
@@ -104,7 +104,7 @@ public interface ApplicationComponent {
         @BindsInstance
         Builder executorsModule(ExecutorsModule executorsModule);
         @BindsInstance
-        Builder gsonModule(GsonModule gsonModule);
+        Builder gsonModule(JsonParserModule jsonParserModule);
         @BindsInstance
         Builder loaderModule(LoaderModule loaderModule);
         @BindsInstance

@@ -617,7 +617,13 @@ class ImageSaverV2ServiceDelegate(
     if (imageSaverV2Options.subDirs.isNotNullNorBlank()) {
       val subDirs = imageSaverV2Options.subDirs!!.split('\\')
 
-      subDirs.forEach { subDir -> segments += DirectorySegment(subDir) }
+      subDirs.forEach { subDir ->
+        if (subDir.isBlank()) {
+          return@forEach
+        }
+
+        segments += DirectorySegment(subDir)
+      }
     }
 
     val resultDir = imageSaverFileManager.fileManager.create(rootDirectory, segments)

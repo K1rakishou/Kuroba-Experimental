@@ -10,6 +10,7 @@ interface IChanReaderProcessor {
   suspend fun setOp(op: ChanPostBuilder?)
   suspend fun getOp(): ChanPostBuilder?
   suspend fun addPost(postBuilder: ChanPostBuilder)
+  suspend fun addManyPosts(postBuilders: List<ChanPostBuilder>)
   suspend fun applyChanReadOptions()
   suspend fun getToParse(): List<ChanPostBuilder>
   suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor>

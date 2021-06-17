@@ -30,12 +30,13 @@ import com.google.gson.GsonBuilder
 import com.google.gson.TypeAdapter
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import javax.inject.Singleton
 
 @Module
-class GsonModule {
+class JsonParserModule {
 
   @Provides
   @Singleton
@@ -82,5 +83,11 @@ class GsonModule {
     return this
   }
 
+  @Provides
+  @Singleton
+  fun provideMoshi(): Moshi {
+    return Moshi.Builder()
+      .build()
+  }
 
 }

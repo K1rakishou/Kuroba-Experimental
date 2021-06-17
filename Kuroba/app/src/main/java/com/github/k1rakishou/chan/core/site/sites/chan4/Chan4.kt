@@ -42,7 +42,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
@@ -124,11 +123,11 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
-    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
+    override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
       val imageFile = arg["tim"].toString() + "." + arg["ext"]
 
       return i.newBuilder()
-        .addPathSegment(post.boardDescriptor!!.boardCode)
+        .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment(imageFile)
         .build()
     }

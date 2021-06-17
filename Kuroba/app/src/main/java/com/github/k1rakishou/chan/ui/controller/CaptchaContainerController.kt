@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
@@ -24,6 +25,7 @@ import javax.inject.Inject
 
 class CaptchaContainerController(
   context: Context,
+  private val afterPostingAttempt: Boolean,
   private val chanDescriptor: ChanDescriptor,
   private val authenticationCallback: (AuthenticationResult) -> Unit
 ) : BaseFloatingController(context), AuthenticationLayoutCallback {
@@ -87,13 +89,27 @@ class CaptchaContainerController(
 
     captchaContainer.removeAllViews()
 
+    var postAuthentication = site.actions().postAuthenticate()
+
+    if (afterPostingAttempt && postAuthentication.type == SiteAuthentication.Type.CAPTCHA2_INVISIBLE) {
+      if (site is Dvach) {
+        postAuthentication = site.captchaV2NoJs
+      } else {
+        showToast("Cannot override default invisible captcha for site '${chanDescriptor.siteDescriptor()}'.\n" +
+          "(most likely it was forgotten to be handled)")
+
+        pop()
+        return
+      }
+    }
+
     val authenticationLayout = createAuthenticationLayout(
-      authentication = site.actions().postAuthenticate(),
+      authentication = postAuthentication,
       useV2NoJsCaptcha = useV2NoJsCaptcha
     )
 
     captchaContainer.addView(authenticationLayout as View, 0)
-    authenticationLayout.initialize(site, this)
+    authenticationLayout.initialize(postAuthentication, this)
     authenticationLayout.reset()
   }
 

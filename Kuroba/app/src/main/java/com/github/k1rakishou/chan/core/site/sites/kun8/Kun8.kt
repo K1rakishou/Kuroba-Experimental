@@ -20,7 +20,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
-import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -50,7 +49,7 @@ class Kun8 : CommonSite() {
     })
 
     setEndpoints(object : VichanEndpoints(this, "https://8kun.top", "https://sys.8kun.top") {
-      override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
+      override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
         val ext = requireNotNull(arg["ext"]) { "\"ext\" parameter not found" }
         val fpath = arg["fpath"]?.toIntOrNull() ?: 1
@@ -58,7 +57,6 @@ class Kun8 : CommonSite() {
         val url = if (fpath == 1) {
           "https://media.8kun.top/file_store/$tim.$ext".toHttpUrlOrNull()
         } else {
-          val boardDescriptor = requireNotNull(post.boardDescriptor) { "BoardDescriptor is not set!" }
           "https://media.8kun.top/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
         }
 

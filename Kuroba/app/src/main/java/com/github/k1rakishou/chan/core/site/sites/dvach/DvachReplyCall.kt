@@ -32,6 +32,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -85,9 +86,15 @@ class DvachReplyCall internal constructor(
       if (reply.captchaResponse != null) {
         formBuilder.addFormDataPart("captcha_type", "recaptcha")
 
-        // TODO(KurobaEx): uhhh is it okay to use the same key for both normal and invisible
-        //  captcha? Seems to work just fine so I'm gonna just leave it.
-        formBuilder.addFormDataPart("captcha_key", Dvach.NORMAL_CAPTCHA_KEY)
+        val replyMode = site.requireSettingBySettingId<OptionsSetting<ReplyMode>>(
+          SiteSetting.SiteSettingId.LastUsedReplyMode
+        ).get()
+
+        if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
+          formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)
+        } else {
+          formBuilder.addFormDataPart("captcha_key", Dvach.NORMAL_CAPTCHA_KEY)
+        }
 
         val captchaChallenge = reply.captchaChallenge
         val captchaResponse = reply.captchaResponse

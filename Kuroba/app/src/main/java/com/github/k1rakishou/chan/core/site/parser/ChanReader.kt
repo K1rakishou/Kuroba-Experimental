@@ -34,11 +34,22 @@ abstract class ChanReader {
   abstract suspend fun getParser(): PostParser?
 
   @Throws(Exception::class)
-  abstract suspend fun loadThread(
+  abstract suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
   )
+
+  @Throws(Exception::class)
+  open suspend fun loadThreadIncremental(
+    requestUrl: String,
+    responseBodyStream: InputStream,
+    chanReaderProcessor: ChanReaderProcessor
+  ) {
+    // For most sites it's the same as the loadThreadFresh. For now only 2ch.hk supports incremental
+    // thread updates.
+    loadThreadFresh(requestUrl, responseBodyStream, chanReaderProcessor)
+  }
 
   @Throws(Exception::class)
   abstract suspend fun loadCatalog(

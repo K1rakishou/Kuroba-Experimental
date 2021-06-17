@@ -34,7 +34,7 @@ import com.github.k1rakishou.chan.core.di.component.application.ApplicationCompo
 import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
 import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule
-import com.github.k1rakishou.chan.core.di.module.application.GsonModule
+import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
 import com.github.k1rakishou.chan.core.di.module.application.NetModule
@@ -283,7 +283,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .appModule(AppModule())
       .executorsModule(ExecutorsModule())
       .roomDatabaseModule(RoomDatabaseModule())
-      .gsonModule(GsonModule())
+      .gsonModule(JsonParserModule())
       .loaderModule(LoaderModule())
       .managerModule(ManagerModule())
       .netModule(NetModule())

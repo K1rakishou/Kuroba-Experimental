@@ -68,7 +68,7 @@ class FutabaChanReader(
   }
 
   @Throws(Exception::class)
-  override suspend fun loadThread(
+  override suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
@@ -134,10 +134,6 @@ class FutabaChanReader(
     // 4chan pass leaf
     var since4pass = 0
 
-    // A sticky thread may as well be a rolling sticky thread. The difference is that in rolling
-    // sticky thread old posts will be deleted right away once they exceed the "sticky_cap" value.
-    var stickyCap = -1
-
     reader.beginObject()
 
     while (reader.hasNext()) {
@@ -188,7 +184,6 @@ class FutabaChanReader(
           reader.endArray()
         }
         "md5" -> fileHash = reader.nextString()
-        "sticky_cap" -> stickyCap = reader.nextInt()
         else -> {
           // Unknown/ignored key
           reader.skipValue()
@@ -210,7 +205,7 @@ class FutabaChanReader(
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)
@@ -236,10 +231,6 @@ class FutabaChanReader(
       op.threadImagesCount(builder.threadImagesCount)
       op.uniqueIps(builder.uniqueIps)
       op.lastModified(builder.lastModified)
-
-      if (builder.sticky) {
-        op.stickyCap(stickyCap)
-      }
 
       chanReaderProcessor.setOp(op)
     }
@@ -310,7 +301,7 @@ class FutabaChanReader(
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)

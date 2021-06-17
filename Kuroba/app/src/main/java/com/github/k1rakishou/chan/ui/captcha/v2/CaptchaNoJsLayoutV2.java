@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.captcha.v2;
 
+import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+
 import android.content.Context;
 import android.content.res.Configuration;
 import android.graphics.Typeface;
@@ -36,7 +39,6 @@ import androidx.core.view.ViewKt;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
-import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
@@ -56,9 +58,6 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
 
 public class CaptchaNoJsLayoutV2
         extends TouchBlockingFrameLayout
@@ -172,10 +171,9 @@ public class CaptchaNoJsLayoutV2
     }
 
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback) {
+    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
         this.callback = callback;
 
-        SiteAuthentication authentication = site.actions().postAuthenticate();
         if (authentication.type != CAPTCHA2_NOJS) {
             callback.onFallbackToV1CaptchaView();
             return;

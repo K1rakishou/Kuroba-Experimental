@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.captcha.v1;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.net.Uri;
@@ -31,7 +33,6 @@ import android.webkit.WebViewClient;
 import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
-import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback;
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface;
@@ -50,8 +51,6 @@ import okhttp3.Callback;
 import okhttp3.Request;
 import okhttp3.Response;
 import okhttp3.ResponseBody;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
 
 /**
  * It directly loads the captcha2 fallback url into a webview, and on each requests it executes
@@ -96,10 +95,8 @@ public class CaptchaNojsLayoutV1
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(Site site, AuthenticationLayoutCallback callback) {
+    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
         this.callback = callback;
-        SiteAuthentication authentication = site.actions().postAuthenticate();
-
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;
 

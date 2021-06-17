@@ -328,13 +328,20 @@ class ReplyPresenter @Inject constructor(
     showCaptcha(
       chanDescriptor = descriptor,
       replyMode = replyMode,
-      autoReply = false
+      autoReply = false,
+      afterPostingAttempt = false
     )
   }
 
-  private fun showCaptcha(chanDescriptor: ChanDescriptor, replyMode: ReplyMode, autoReply: Boolean) {
+  private fun showCaptcha(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    autoReply: Boolean,
+    afterPostingAttempt: Boolean
+  ) {
     val controller = CaptchaContainerController(
       context = context,
+      afterPostingAttempt = afterPostingAttempt,
       chanDescriptor = chanDescriptor
     ) { authenticationResult ->
       when (authenticationResult) {
@@ -451,7 +458,13 @@ class ReplyPresenter @Inject constructor(
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
     if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasToken()) {
-      showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
+      showCaptcha(
+        chanDescriptor = chanDescriptor,
+        replyMode = replyMode,
+        autoReply = true,
+        afterPostingAttempt = false
+      )
+
       return
     }
 
@@ -633,7 +646,13 @@ class ReplyPresenter @Inject constructor(
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
-        showCaptcha(chanDescriptor = chanDescriptor, replyMode = replyMode, autoReply = true)
+
+        showCaptcha(
+          chanDescriptor = chanDescriptor,
+          replyMode = replyMode,
+          autoReply = true,
+          afterPostingAttempt = true
+        )
       }
       else -> {
         Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse")

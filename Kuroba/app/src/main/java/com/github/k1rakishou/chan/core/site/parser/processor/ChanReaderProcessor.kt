@@ -60,6 +60,22 @@ class ChanReaderProcessor(
     }
   }
 
+  override suspend fun addManyPosts(postBuilders: List<ChanPostBuilder>) {
+    lock.withLock {
+      postBuilders.forEach { postBuilder ->
+        if (postBuilder.op) {
+          this.op = postBuilder
+        }
+
+        if (differsFromCached(postBuilder)) {
+          toParse.add(postBuilder)
+        }
+
+        postOrderedList.add(postBuilder.postDescriptor)
+      }
+    }
+  }
+
   override suspend fun applyChanReadOptions() {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return

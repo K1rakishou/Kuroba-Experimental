@@ -48,7 +48,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Dispatchers
@@ -350,7 +349,7 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
 
-    override fun imageUrl(post: ChanPostBuilder, arg: Map<String, String>): HttpUrl {
+    override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     

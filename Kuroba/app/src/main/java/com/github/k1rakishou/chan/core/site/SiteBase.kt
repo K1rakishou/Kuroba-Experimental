@@ -44,6 +44,7 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -67,6 +68,8 @@ abstract class SiteBase : Site, CoroutineScope {
 
   @Inject
   protected lateinit var httpCallManager: HttpCallManager
+  @Inject
+  protected lateinit var moshi: Moshi
   @Inject
   protected lateinit var siteManager: SiteManager
   @Inject

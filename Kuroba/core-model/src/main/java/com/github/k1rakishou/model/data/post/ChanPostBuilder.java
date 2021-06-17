@@ -30,14 +30,6 @@ public class ChanPostBuilder {
     public int totalRepliesCount = -1;
     public int threadImagesCount = -1;
     public int uniqueIps = -1;
-    /**
-     * When in rolling sticky thread this parameter means the maximum amount of posts in the
-     * thread. Once the capacity is exceeded old posts are deleted right away (except the OP).
-     * <p>
-     * Be really careful with this param since we use it in the database query when selecting
-     * thread's posts.
-     */
-    public int stickyCap = -1;
     public boolean sticky;
     public boolean closed;
     public boolean archived;
@@ -77,7 +69,6 @@ public class ChanPostBuilder {
         this.totalRepliesCount = other.totalRepliesCount;
         this.threadImagesCount = other.threadImagesCount;
         this.uniqueIps = other.uniqueIps;
-        this.stickyCap = other.stickyCap;
         this.sticky = other.sticky;
         this.closed = other.closed;
         this.archived = other.archived;
@@ -191,16 +182,6 @@ public class ChanPostBuilder {
 
     public ChanPostBuilder uniqueIps(int uniqueIps) {
         this.uniqueIps = uniqueIps;
-        return this;
-    }
-
-    public ChanPostBuilder stickyCap(int cap) {
-        this.stickyCap = cap;
-
-        if (this.stickyCap == 0) {
-            this.stickyCap = -1;
-        }
-
         return this;
     }
 

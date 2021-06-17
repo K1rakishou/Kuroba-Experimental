@@ -39,7 +39,7 @@ class VichanApi(
 ) : CommonApi(commonSite) {
 
   @Throws(Exception::class)
-  override suspend fun loadThread(
+  override suspend fun loadThreadFresh(
     requestUrl: String,
     responseBodyStream: InputStream,
     chanReaderProcessor: ChanReaderProcessor
@@ -163,7 +163,7 @@ class VichanApi(
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)
@@ -259,7 +259,7 @@ class VichanApi(
         .serverFilename(fileId)
         .thumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, false, board.customSpoilers, args))
         .spoilerThumbnailUrl(endpoints.thumbnailUrl(builder.boardDescriptor, true, board.customSpoilers, args))
-        .imageUrl(endpoints.imageUrl(builder, args))
+        .imageUrl(endpoints.imageUrl(builder.boardDescriptor, args))
         .filename(Parser.unescapeEntities(fileName, false))
         .extension(fileExt)
         .imageWidth(fileWidth)

@@ -29,6 +29,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.CoroutineScope
@@ -50,7 +51,8 @@ class HelperModule {
     siteManager: SiteManager,
     boardManager: BoardManager,
     siteResolver: SiteResolver,
-    chanLoadProgressNotifier: ChanLoadProgressNotifier
+    chanLoadProgressNotifier: ChanLoadProgressNotifier,
+    chanThreadsCache: ChanThreadsCache
   ): ChanThreadLoaderCoordinator {
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
@@ -64,7 +66,8 @@ class HelperModule {
       siteManager,
       boardManager,
       siteResolver,
-      chanLoadProgressNotifier
+      chanLoadProgressNotifier,
+      chanThreadsCache
     )
   }
 

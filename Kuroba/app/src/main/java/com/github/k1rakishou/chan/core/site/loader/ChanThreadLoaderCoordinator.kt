@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
@@ -42,6 +43,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
@@ -54,6 +56,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
+import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.IOException
 import java.io.InputStream
@@ -83,7 +86,8 @@ class ChanThreadLoaderCoordinator(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val siteResolver: SiteResolver,
-  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
+  private val chanThreadsCache: ChanThreadsCache
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -135,14 +139,16 @@ class ChanThreadLoaderCoordinator(
 
   @OptIn(ExperimentalTime::class)
   suspend fun loadThreadOrCatalog(
-    url: String,
+    site: Site,
     chanDescriptor: ChanDescriptor,
     chanCacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions,
     chanReadOptions: ChanReadOptions,
-    chanReader: ChanReader
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "loadThreadOrCatalog(url=$url, chanDescriptor=$chanDescriptor, " +
+    val chanLoadUrl = getChanUrl(site, chanDescriptor)
+    val chanReader = site.chanReader()
+
+    Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, chanDescriptor=$chanDescriptor, " +
       "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions, " +
       "chanReader=${chanReader.javaClass.simpleName})")
 
@@ -151,10 +157,10 @@ class ChanThreadLoaderCoordinator(
 
       return@withContext Try {
         val requestBuilder = Request.Builder()
-          .url(url)
+          .url(chanLoadUrl.url)
           .get()
 
-        siteResolver.findSiteForUrl(url)?.let { site ->
+        siteResolver.findSiteForUrl(chanLoadUrl.urlString)?.let { site ->
           site.requestModifier().modifyCatalogOrThreadGetRequest(
             site = site,
             chanDescriptor = chanDescriptor,
@@ -194,7 +200,7 @@ class ChanThreadLoaderCoordinator(
 
           return@measureTimedValue body.byteStream().use { inputStream ->
             return@use readPostsFromResponse(
-              requestUrl = url,
+              chanLoadUrl = chanLoadUrl,
               responseBodyStream = inputStream,
               chanDescriptor = chanDescriptor,
               chanReadOptions = chanReadOptions,
@@ -203,7 +209,9 @@ class ChanThreadLoaderCoordinator(
           }
         }
 
-        checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
+        if (!chanLoadUrl.isIncremental) {
+          checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
+        }
 
         val postParser = chanReader.getParser()
           ?: throw NullPointerException("PostParser cannot be null!")
@@ -216,7 +224,7 @@ class ChanThreadLoaderCoordinator(
           postParser = postParser
         )
 
-        loadRequestStatistics(url, chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
+        loadRequestStatistics(chanLoadUrl.url, chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
         return@Try threadLoadResult
       }.mapError { error -> ChanLoaderException(error) }
     }
@@ -224,7 +232,7 @@ class ChanThreadLoaderCoordinator(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun loadRequestStatistics(
-    url: String,
+    url: HttpUrl,
     chanDescriptor: ChanDescriptor,
     loadTimeInfo: ChanPostPersister.LoadTimeInfo?,
     requestDuration: Duration,
@@ -355,7 +363,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun readPostsFromResponse(
-    requestUrl: String,
+    chanLoadUrl: ChanLoadUrl,
     responseBodyStream: InputStream,
     chanDescriptor: ChanDescriptor,
     chanReadOptions: ChanReadOptions,
@@ -372,16 +380,81 @@ class ChanThreadLoaderCoordinator(
 
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
-          chanReader.loadThread(requestUrl, responseBodyStream, chanReaderProcessor)
+          if (chanLoadUrl.isIncremental) {
+            chanReader.loadThreadIncremental(chanLoadUrl.urlString, responseBodyStream, chanReaderProcessor)
+          } else {
+            chanReader.loadThreadFresh(chanLoadUrl.urlString, responseBodyStream, chanReaderProcessor)
+          }
         }
         is ChanDescriptor.CatalogDescriptor -> {
-          chanReader.loadCatalog(requestUrl, responseBodyStream, chanReaderProcessor)
+          chanReader.loadCatalog(chanLoadUrl.urlString, responseBodyStream, chanReaderProcessor)
         }
         else -> throw IllegalArgumentException("Unknown mode")
       }
 
       return@Try chanReaderProcessor
     }
+  }
+
+  private fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): ChanLoadUrl {
+    val isThreadCached = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanThreadsCache.getThreadPostsCount(chanDescriptor) > 1
+    } else {
+      false
+    }
+
+    if (!isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      return getChanUrlFullLoad(site, chanDescriptor)
+    }
+
+    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
+
+    val lastPost = chanThreadsCache.getLastPost(threadDescriptor)
+    if (lastPost == null) {
+      return getChanUrlFullLoad(site, chanDescriptor)
+    }
+
+    val threadPartialLoadUrl = getChanUrlIncrementalLoad(site, threadDescriptor, lastPost.postDescriptor)
+    if (threadPartialLoadUrl == null) {
+      // Not supported by the site
+      return getChanUrlFullLoad(site, chanDescriptor)
+    }
+
+    return threadPartialLoadUrl
+  }
+
+  private fun getChanUrlFullLoad(site: Site, chanDescriptor: ChanDescriptor): ChanLoadUrl {
+    val url = when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> site.endpoints().thread(chanDescriptor)
+      is ChanDescriptor.CatalogDescriptor -> site.endpoints().catalog(chanDescriptor.boardDescriptor)
+      else -> throw IllegalArgumentException("Unknown mode")
+    }
+
+    return ChanLoadUrl(url, isIncremental = false)
+  }
+
+  private fun getChanUrlIncrementalLoad(
+    site: Site,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    postDescriptor: PostDescriptor
+  ): ChanLoadUrl? {
+    check(threadDescriptor == postDescriptor.threadDescriptor()) {
+      "ThreadDescriptor ($threadDescriptor) differs from descriptor in this PostDescriptor ($postDescriptor)"
+    }
+
+    val incrementalLoadUrl = site.endpoints().threadPartial(postDescriptor)
+    if (incrementalLoadUrl == null) {
+      return null
+    }
+
+    return ChanLoadUrl(incrementalLoadUrl, isIncremental = true)
+  }
+
+  data class ChanLoadUrl(
+    val url: HttpUrl,
+    val isIncremental: Boolean
+  ) {
+    val urlString by lazy { url.toString() }
   }
 
   companion object {

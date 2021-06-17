@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.helper;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+
 import android.text.TextUtils;
 
 import androidx.annotation.AnyThread;
@@ -44,8 +46,6 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class FilterEngine {
     private static final String TAG = "FilterEngine";
@@ -117,7 +117,6 @@ public class FilterEngine {
      * @param post   the post content to test against
      * @return true if the filter matches and should be applied to the content, false if not
      */
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public boolean matches(ChanFilter filter, ChanPostBuilder post) {
         if (!post.moderatorCapcode.isEmpty() || post.sticky) {
@@ -169,7 +168,6 @@ public class FilterEngine {
         return false;
     }
 
-    // TODO(KurobaEx): move to native lib
     private boolean tryMatchPostFlagsWithFilter(ChanFilter filter, ChanPostBuilder post) {
         // figure out if the post has a country code, if so check the filter
         String countryCode = "";
@@ -188,7 +186,6 @@ public class FilterEngine {
         return false;
     }
 
-    // TODO(KurobaEx): move to native lib
     private boolean tryMatchPostImagesWithFilter(ChanFilter filter, ChanPostBuilder post) {
         for (ChanPostImage image : post.postImages) {
             if (typeMatches(filter, FilterType.IMAGE) && matches(filter, image.getFileHash(), false)) {
@@ -212,25 +209,21 @@ public class FilterEngine {
         return false;
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public boolean typeMatches(ChanFilter filter, FilterType type) {
         return typeMatches(filter.getType(), type);
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public boolean typeMatches(ChanFilterMutable filter, FilterType type) {
         return typeMatches(filter.getType(), type);
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     private boolean typeMatches(int filterType, FilterType type) {
         return (filterType & type.flag) != 0;
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public boolean matches(
             ChanFilter filter,
@@ -240,7 +233,6 @@ public class FilterEngine {
         return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile);
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public boolean matches(
             ChanFilterMutable filter,
@@ -250,7 +242,6 @@ public class FilterEngine {
         return matchesInternal(filter.getPattern(), filter.getType(), text, forceCompile);
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     private boolean matchesInternal(
             @Nullable String patternRaw,
@@ -297,7 +288,6 @@ public class FilterEngine {
         }
     }
 
-    // TODO(KurobaEx): move to native lib
     @AnyThread
     public Pattern compile(String rawPattern, int extraPatternFlags) {
         if (TextUtils.isEmpty(rawPattern)) {
@@ -349,7 +339,6 @@ public class FilterEngine {
         return pattern;
     }
 
-    // TODO(KurobaEx): move to native lib
     private String escapeRegex(String filthy) {
         // Escape regex special characters with a \
         return filterFilthyPattern.matcher(filthy).replaceAll("\\\\$1");

@@ -22,7 +22,6 @@ import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import java.util.Locale;
 import java.util.Map;
@@ -83,9 +82,9 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl imageUrl(ChanPostBuilder post, Map<String, String> arg) {
+    public HttpUrl imageUrl(BoardDescriptor boardDescriptor, Map<String, String> arg) {
         return sys.builder()
-                .s(post.boardDescriptor.getBoardCode())
+                .s(boardDescriptor.getBoardCode())
                 .s("src")
                 .s(arg.get("tim") + "." + arg.get("ext"))
                 .url();
