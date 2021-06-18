@@ -489,7 +489,10 @@ class ReplyLayoutFilesAreaPresenter(
     return state.value.attachables.any { replyAttachable -> replyAttachable is ReplyFileAttachable }
   }
 
-  fun refreshAttachedFiles(debounceTime: Long = REFRESH_FILES_DEBOUNCE_TIME) {
+  fun refreshAttachedFiles(
+    isReplyLayoutExpanded: Boolean = state.value.isReplyLayoutExpanded,
+    debounceTime: Long = REFRESH_FILES_DEBOUNCE_TIME
+  ) {
     refreshFilesExecutor.post(debounceTime) {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
@@ -498,7 +501,7 @@ class ReplyLayoutFilesAreaPresenter(
         val attachables = enumerateReplyAttachables(chanDescriptor).unwrap()
 
         val oldState = state.value
-        val newState = ReplyLayoutFilesState(attachables)
+        val newState = ReplyLayoutFilesState(isReplyLayoutExpanded, attachables)
         state.value = newState
 
         if (oldState != newState) {
@@ -581,7 +584,7 @@ class ReplyLayoutFilesAreaPresenter(
       }
 
       val newAttachFiles = enumerateReplyAttachables(chanDescriptor).unwrap()
-      state.value = ReplyLayoutFilesState(newAttachFiles)
+      state.value = ReplyLayoutFilesState(attachables = newAttachFiles)
     }
   }
 

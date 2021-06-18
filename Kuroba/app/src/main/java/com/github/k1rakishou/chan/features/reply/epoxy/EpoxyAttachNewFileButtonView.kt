@@ -2,8 +2,11 @@ package com.github.k1rakishou.chan.features.reply.epoxy
 
 import android.content.Context
 import android.util.AttributeSet
+import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.CallbackProp
+import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -57,6 +60,17 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
 
   override fun onThemeChanged() {
     // no-op
+  }
+
+  @ModelProp
+  fun expandedMode(isExpanded: Boolean) {
+    val newHeight = if (isExpanded) {
+      context.resources.getDimension(R.dimen.attach_new_file_button_height) * 2
+    } else {
+      context.resources.getDimension(R.dimen.attach_new_file_button_height)
+    }
+
+    newAttachableButton.updateLayoutParams<ViewGroup.LayoutParams> { height = newHeight.toInt() }
   }
 
   @CallbackProp

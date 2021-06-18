@@ -100,15 +100,15 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     epoxyRecyclerView = findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
 
-    updateLayoutManager(context)
+    updateLayoutManager(context, isReplyLayoutExpanded = false)
   }
 
   fun onCreate() {
     presenter.onCreate(this@ReplyLayoutFilesArea)
   }
 
-  fun updateLayoutManager() {
-    updateLayoutManager(context)
+  fun updateLayoutManager(isReplyLayoutExpanded: Boolean) {
+    updateLayoutManager(context, isReplyLayoutExpanded)
   }
 
   suspend fun onBind(
@@ -148,13 +148,9 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     epoxyRecyclerView.clear()
   }
 
-  fun onWrappingModeChanged(matchParent: Boolean, compactMode: Boolean) {
+  fun onWrappingModeChanged(matchParent: Boolean) {
     if (presenter.hasAttachedFiles()) {
-      val attachNewFileButtonHeight = if (compactMode) {
-        getDimen(R.dimen.attach_new_file_button_height_compact)
-      } else {
-        getDimen(R.dimen.attach_new_file_button_height)
-      }
+      val attachNewFileButtonHeight = getDimen(R.dimen.attach_new_file_button_height)
 
       epoxyRecyclerView.updateLayoutParams<ConstraintLayout.LayoutParams> {
         if (matchParent) {
@@ -209,6 +205,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           is ReplyNewAttachable -> {
             epoxyAttachNewFileButtonView {
               id("epoxy_attach_new_file_button_view")
+              expandedMode(state.isReplyLayoutExpanded)
               onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
               onLongClickListener { showPickFileOptions() }
             }
@@ -216,6 +213,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           is ReplyFileAttachable -> {
             epoxyReplyFileView {
               id("epoxy_reply_file_view_${replyAttachable.fileUuid}")
+              expandedMode(state.isReplyLayoutExpanded)
               attachmentFileUuid(replyAttachable.fileUuid)
               attachmentFileName(replyAttachable.fileName)
               attachmentSelected(replyAttachable.selected)
@@ -241,7 +239,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     controller.requestModelBuild()
   }
 
-  private fun updateLayoutManager(context: Context) {
+  private fun updateLayoutManager(context: Context, isReplyLayoutExpanded: Boolean) {
     epoxyRecyclerView.requestLayout()
 
     epoxyRecyclerView.doOnLayout {
@@ -254,21 +252,17 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       val attachNewFileButtonWidth =
         getDimen(R.dimen.attach_new_file_button_width)
 
-      val spanCount = (epoxyRecyclerViewWidth / attachNewFileButtonWidth)
-        .coerceAtLeast(MIN_FILES_PER_ROW)
-
-      val prevSpanCount = (epoxyRecyclerView.layoutManager as? GridLayoutManager)
-        ?.spanCount
-        ?: -1
-
-      if (prevSpanCount == spanCount) {
-        return@doOnLayout
+      val spanCount = if (isReplyLayoutExpanded) {
+        MIN_FILES_PER_ROW
+      } else {
+        (epoxyRecyclerViewWidth / attachNewFileButtonWidth)
+          .coerceAtLeast(MIN_FILES_PER_ROW)
       }
 
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount)
         .apply { spanSizeLookup = controller.spanSizeLookup }
 
-      presenter.refreshAttachedFiles()
+      presenter.refreshAttachedFiles(isReplyLayoutExpanded = isReplyLayoutExpanded)
     }
   }
 
@@ -496,7 +490,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
 
-    private const val MIN_FILES_PER_ROW = 1
+    private const val MIN_FILES_PER_ROW = 2
 
     private val BOTTOM_OFFSET = dp(24f)
   }

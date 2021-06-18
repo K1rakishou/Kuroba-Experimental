@@ -37,8 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="search_post_thumbnail_size">100dp</dimen>
 
     <dimen name="attach_new_file_button_width">140dp</dimen>
-    <dimen name="attach_new_file_button_height">120dp</dimen>
-    <dimen name="attach_new_file_button_height_compact">80dp</dimen>
+    <dimen name="attach_new_file_button_height">80dp</dimen>
     <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
     <dimen name="attach_new_file_button_wide_height">32dp</dimen>
 

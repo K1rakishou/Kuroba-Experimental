@@ -89,7 +89,6 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setAlphaFast
@@ -581,7 +580,7 @@ class ReplyLayout @JvmOverloads constructor(
     presenter.onOpen(open)
 
     if (open) {
-      replyLayoutFilesArea.updateLayoutManager()
+      replyLayoutFilesArea.updateLayoutManager(presenter.isExpanded)
       updateCommentButtonsHolderVisibility()
 
       if (proxyStorage.isDirty()) {
@@ -627,12 +626,7 @@ class ReplyLayout @JvmOverloads constructor(
       return
     }
 
-    if (isTablet()) {
-      comment.minHeight = REPLY_COMMENT_MIN_HEIGHT_TABLET
-    } else {
-      comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
-    }
-
+    comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
     captchaHolder.setListener(chanDescriptor, this)
   }
 
@@ -781,15 +775,7 @@ class ReplyLayout @JvmOverloads constructor(
       layoutParams = newLayoutParams
     }
 
-    val compactMode = if (!matchParent && globalWindowInsetsManager.isKeyboardOpened) {
-      val displayHeight = AndroidUtils.getDisplaySize(context).y
-
-      this.height + globalWindowInsetsManager.keyboardHeight + newPaddingTop > displayHeight
-    } else {
-      false
-    }
-
-    replyLayoutFilesArea.onWrappingModeChanged(matchParent, compactMode)
+    replyLayoutFilesArea.onWrappingModeChanged(matchParent)
   }
 
   private fun needUpdateLayoutParams(
@@ -1151,6 +1137,8 @@ class ReplyLayout @JvmOverloads constructor(
 
     more.setImageDrawable(moreDropdown)
     animator.start()
+
+    replyLayoutFilesArea.updateLayoutManager(expanded)
   }
 
   override fun openNameOptions(open: Boolean) {
@@ -1314,7 +1302,7 @@ class ReplyLayout @JvmOverloads constructor(
     currentOrientation = newOrientation
 
     updateCommentButtonsHolderVisibility()
-    replyLayoutFilesArea.updateLayoutManager()
+    replyLayoutFilesArea.updateLayoutManager(presenter.isExpanded)
     updateWrappingMode()
   }
 
@@ -1381,9 +1369,8 @@ class ReplyLayout @JvmOverloads constructor(
   companion object {
     private const val TAG = "ReplyLayout"
     private val REPLY_COMMENT_MIN_HEIGHT = dp(100f)
-    private val REPLY_COMMENT_MIN_HEIGHT_TABLET = dp(128f)
 
-    private const val REPLY_LAYOUT_EXPANDED_MAX_LINES = 10
+    private const val REPLY_LAYOUT_EXPANDED_MAX_LINES = 15
     private const val REPLY_LAYOUT_COLLAPSED_NORMAL_MAX_LINES = 5
   }
 }

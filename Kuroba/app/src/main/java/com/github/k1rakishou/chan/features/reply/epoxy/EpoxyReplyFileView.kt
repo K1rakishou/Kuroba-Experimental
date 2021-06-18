@@ -6,9 +6,11 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import android.view.View
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.ImageViewCompat
 import coil.size.Scale
 import coil.transform.GrayscaleTransformation
@@ -135,6 +137,17 @@ class EpoxyReplyFileView @JvmOverloads constructor(
 
       replyAttachmentImageView.setImageBitmap(bitmapDrawable.bitmap)
     }
+  }
+
+  @ModelProp
+  fun expandedMode(isExpanded: Boolean) {
+    val newHeight = if (isExpanded) {
+      context.resources.getDimension(R.dimen.attach_new_file_button_height) * 2
+    } else {
+      context.resources.getDimension(R.dimen.attach_new_file_button_height)
+    }
+
+    replyAttachmentRoot.updateLayoutParams<ViewGroup.LayoutParams> { height = newHeight.toInt() }
   }
 
   @ModelProp
