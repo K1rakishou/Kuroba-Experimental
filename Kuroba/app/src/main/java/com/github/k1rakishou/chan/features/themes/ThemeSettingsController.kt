@@ -25,6 +25,7 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
+import androidx.core.view.doOnPreDraw
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -130,7 +131,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
 
     updateCurrentThemeIndicator(true)
-    reload()
+    pager.doOnPreDraw { reload() }
 
     if (AndroidUtils.isAndroid10()) {
       showIgnoreDayNightModeDialog()
@@ -164,7 +165,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private fun reload() {
     val root = view.findViewById<LinearLayout>(R.id.root)
 
-    val adapter = Adapter()
+    val adapter = Adapter(pager.width)
     pager.adapter = adapter
     pager.setCurrentItem(currentItemIndex, false)
     pager.changeEdgeEffect(themeEngine.chanTheme)
@@ -418,7 +419,9 @@ class ThemeSettingsController(context: Context) : Controller(context),
     )
   }
 
-  private inner class Adapter : ViewPagerAdapter() {
+  private inner class Adapter(
+    private val postCellDataWidthNoPaddings: Int = 0
+  ) : ViewPagerAdapter() {
     val themeMap = mutableMapOf<Int, ChanTheme>()
 
     override fun getView(position: Int, parent: ViewGroup): View {
@@ -430,10 +433,13 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
       themeMap[position] = theme
 
-      return runBlocking { createSimpleThreadViewInternal(theme) }
+      return runBlocking { createSimpleThreadViewInternal(theme, postCellDataWidthNoPaddings) }
     }
 
-    private suspend fun createSimpleThreadViewInternal(theme: ChanTheme): CoordinatorLayout {
+    private suspend fun createSimpleThreadViewInternal(
+      theme: ChanTheme,
+      postCellDataWidthNoPaddings: Int
+    ): CoordinatorLayout {
       val navigationItem = NavigationItem()
       navigationItem.title = theme.name
       navigationItem.hasBack = false
@@ -452,7 +458,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
         ThemeControllerHelper.Options(
           showMoreThemesButton = true,
           refreshThemesControllerFunc = { reload() }
-        )
+        ),
+        postCellDataWidthNoPaddings
       )
     }
 

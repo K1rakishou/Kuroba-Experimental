@@ -33,6 +33,7 @@ data class PostCellData(
   val chanDescriptor: ChanDescriptor,
   val post: ChanPost,
   val postIndex: Int,
+  val postCellDataWidthNoPaddings: Int,
   var textSizeSp: Int,
   var highlighted: Boolean,
   var postSelected: Boolean,
@@ -162,6 +163,7 @@ data class PostCellData(
       chanDescriptor = chanDescriptor,
       post = post,
       postIndex = postIndex,
+      postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
       textSizeSp = textSizeSp,
       highlighted = highlighted,
       postSelected = postSelected,
@@ -327,7 +329,7 @@ data class PostCellData(
 
     postImages.forEach { postImage ->
       val fileInfoText = SpannableStringBuilder()
-      fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = postImages.size != 1))
+      fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
       fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
 
       if (postImages.size == 1) {

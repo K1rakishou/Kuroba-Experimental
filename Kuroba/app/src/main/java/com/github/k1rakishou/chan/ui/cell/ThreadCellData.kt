@@ -56,8 +56,10 @@ class ThreadCellData(
     postCellCallback: PostCellInterface.PostCellCallback,
     chanDescriptor: ChanDescriptor,
     postIndexedList: List<PostIndexed>,
+    postCellDataWidthNoPaddings: Int,
     theme: ChanTheme
   ) {
+    require(postCellDataWidthNoPaddings > 0) { "Bad postCellDataWidthNoPaddings: ${postCellDataWidthNoPaddings}" }
     BackgroundUtils.ensureMainThread()
 
     this._chanDescriptor = chanDescriptor
@@ -69,7 +71,8 @@ class ThreadCellData(
         postCellCallback = postCellCallback,
         chanDescriptor = chanDescriptor,
         theme = theme,
-        postIndexedList = postIndexedList
+        postIndexedList = postIndexedList,
+        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings
       )
     }
 
@@ -87,7 +90,8 @@ class ThreadCellData(
     postCellCallback: PostCellInterface.PostCellCallback,
     chanDescriptor: ChanDescriptor,
     theme: ChanTheme,
-    postIndexedList: List<PostIndexed>
+    postIndexedList: List<PostIndexed>,
+    postCellDataWidthNoPaddings: Int
   ): List<PostCellData> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -103,6 +107,7 @@ class ThreadCellData(
         chanDescriptor = chanDescriptor,
         post = postIndexed.post,
         postIndex = postIndexed.postIndex,
+        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
         textSizeSp = fontSize,
         theme = theme,
         postViewMode = postViewMode,
@@ -191,7 +196,8 @@ class ThreadCellData(
         postCellCallback = postCellCallback!!,
         chanDescriptor = chanDescriptor!!,
         theme = currentTheme,
-        postIndexedList = listOf(PostIndexed(updatedPost, postCellData.postIndex))
+        postIndexedList = listOf(PostIndexed(updatedPost, postCellData.postIndex)),
+        postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
       )
     }
 

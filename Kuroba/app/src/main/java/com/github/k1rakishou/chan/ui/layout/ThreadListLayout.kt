@@ -59,7 +59,6 @@ import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
-import com.github.k1rakishou.chan.ui.cell.PostCellWidthStorage
 import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
@@ -606,6 +605,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   @OptIn(ExperimentalTime::class)
   suspend fun showPosts(
+    recyclerViewWidth: Int,
     descriptor: ChanDescriptor,
     filter: PostsFilter,
     initial: Boolean
@@ -627,9 +627,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerView.layoutManager = layoutManager
       recyclerView.recycledViewPool.clear()
       party()
-
-      // Reset PostCellWidthStorage every time we fully reload a thread.
-      PostCellWidthStorage.reset()
     }
 
     setFastScroll(true)
@@ -645,7 +642,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ChanLoadProgressEvent.RefreshingPosts(descriptor)
     )
     val setThreadPostsDuration = measureTime {
-      postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts)
+      postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts, recyclerViewWidth)
     }
 
     val chanDescriptor = currentChanDescriptorOrNull()

@@ -122,7 +122,8 @@ class ThemeControllerHelper(
     theme: ChanTheme,
     navigationItem: NavigationItem,
     navigationController: NavigationController,
-    options: Options
+    options: Options,
+    postCellDataWidthNoPaddings: Int
   ): CoordinatorLayout {
     val parser = CommentParser(mockReplyManager)
       .addDefaultRules()
@@ -236,7 +237,7 @@ class ThemeControllerHelper(
       }
     )
 
-    adapter.setThread(dummyThreadDescriptor, theme, indexPosts(posts))
+    adapter.setThread(dummyThreadDescriptor, theme, indexPosts(posts), postCellDataWidthNoPaddings)
     adapter.setBoardPostViewMode(ChanSettings.BoardPostViewMode.LIST)
     postsView.adapter = adapter
 

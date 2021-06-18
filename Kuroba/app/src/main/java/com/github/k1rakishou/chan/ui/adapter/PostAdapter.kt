@@ -262,10 +262,19 @@ class PostAdapter(
   suspend fun setThread(
     chanDescriptor: ChanDescriptor,
     chanTheme: ChanTheme,
-    postIndexedList: List<PostIndexed>
+    postIndexedList: List<PostIndexed>,
+    postCellDataWidthNoPaddings: Int
   ) {
     BackgroundUtils.ensureMainThread()
-    threadCellData.updateThreadData(postCellCallback, chanDescriptor, postIndexedList, chanTheme)
+
+    threadCellData.updateThreadData(
+      postCellCallback,
+      chanDescriptor,
+      postIndexedList,
+      postCellDataWidthNoPaddings,
+      chanTheme
+    )
+
     showError(null)
     notifyDataSetChanged()
 

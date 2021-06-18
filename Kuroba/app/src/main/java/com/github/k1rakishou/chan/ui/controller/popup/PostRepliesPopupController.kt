@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.controller.popup
 import android.content.Context
 import android.util.LruCache
 import android.view.ViewGroup
+import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
@@ -20,6 +21,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.persist_state.IndexAndTop
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -92,7 +94,6 @@ class PostRepliesPopupController(
     )
 
     repliesAdapter.setHasStableIds(true)
-    repliesAdapter.setOrUpdateData(data.posts, themeEngine.chanTheme)
 
     postsView = dataView.findViewById(R.id.post_list)
     postsView.layoutManager = LinearLayoutManager(context)
@@ -100,7 +101,12 @@ class PostRepliesPopupController(
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
 
-    restoreScrollPosition(data.forPostWithDescriptor)
+    postsView.doOnPreDraw {
+      mainScope.launch {
+        repliesAdapter.setOrUpdateData(postsView.width, data.posts, themeEngine.chanTheme)
+        restoreScrollPosition(data.forPostWithDescriptor)
+      }
+    }
 
     return dataView
   }

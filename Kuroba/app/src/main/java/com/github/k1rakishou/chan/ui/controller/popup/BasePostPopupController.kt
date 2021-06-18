@@ -22,7 +22,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -66,9 +65,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   private lateinit var loadView: LoadView
   protected lateinit var postsView: ColorizableRecyclerView
 
-  protected val scope = KurobaCoroutineScope()
-  protected val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(scope)
-  protected val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(scope)
+  protected val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(mainScope)
+  protected val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(mainScope)
 
   protected val themeEngineInitialized: Boolean
     get() = ::themeEngine.isInitialized
@@ -101,8 +99,6 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     if (::postsView.isInitialized) {
       postsView.swapAdapter(null, true)
     }
-
-    scope.cancelChildren()
   }
 
   override fun onThemeChanged() {

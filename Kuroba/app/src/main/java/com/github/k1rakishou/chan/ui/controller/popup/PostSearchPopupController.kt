@@ -132,7 +132,7 @@ class PostSearchPopupController(
         updaterJob?.cancel()
         updaterJob = null
 
-        updaterJob = scope.launch {
+        updaterJob = mainScope.launch {
           onQueryUpdated(chanDescriptor, query)
           updaterJob = null
         }
@@ -168,7 +168,7 @@ class PostSearchPopupController(
     updaterJob?.cancel()
     updaterJob = null
 
-    updaterJob = scope.launch {
+    updaterJob = mainScope.launch {
       onQueryUpdated(chanDescriptor, prevQuery)
       updaterJob = null
     }
@@ -232,7 +232,7 @@ class PostSearchPopupController(
     this@PostSearchPopupController.currentPosts.addAll(resultPosts)
 
     repliesAdapter.setSearchQuery(PostCellData.SearchQuery(query, MIN_QUERY_LENGTH))
-    repliesAdapter.setOrUpdateData(resultPosts, themeEngine.chanTheme)
+    repliesAdapter.setOrUpdateData(postsView.width, resultPosts, themeEngine.chanTheme)
 
     postsView.post {
       if (!scrollPositionRestored) {

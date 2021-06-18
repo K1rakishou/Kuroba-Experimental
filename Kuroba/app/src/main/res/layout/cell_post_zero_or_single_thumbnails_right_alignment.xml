@@ -129,7 +129,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <FrameLayout
         android:id="@+id/go_to_post_button_container"
-        android:layout_width="wrap_content"
+        android:layout_width="@dimen/go_to_post_button_width"
         android:layout_height="match_parent"
         android:background="?attr/selectableItemBackground"
         android:clickable="true"
@@ -139,7 +139,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/go_to_post_button"
-            android:layout_width="40dp"
+            android:layout_width="match_parent"
             android:layout_height="40dp"
             android:layout_gravity="center_vertical"
             android:src="@drawable/ic_baseline_navigate_next_24" />

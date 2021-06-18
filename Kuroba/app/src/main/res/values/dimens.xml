@@ -47,4 +47,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_min">9sp</dimen>
     <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_max">12sp</dimen>
+    <dimen name="go_to_post_button_width">32dp</dimen>
 </resources>

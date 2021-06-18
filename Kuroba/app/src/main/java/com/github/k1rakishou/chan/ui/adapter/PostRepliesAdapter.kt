@@ -74,8 +74,18 @@ class PostRepliesAdapter(
     }
   }
 
-  suspend fun setOrUpdateData(postIndexedList: List<PostIndexed>, theme: ChanTheme) {
-    threadCellData.updateThreadData(postCellCallback, chanDescriptor, postIndexedList, theme)
+  suspend fun setOrUpdateData(
+    postCellDataWidthNoPaddings: Int,
+    postIndexedList: List<PostIndexed>,
+    theme: ChanTheme
+  ) {
+    threadCellData.updateThreadData(
+      postCellCallback,
+      chanDescriptor,
+      postIndexedList,
+      postCellDataWidthNoPaddings,
+      theme
+    )
 
     notifyDataSetChanged()
   }

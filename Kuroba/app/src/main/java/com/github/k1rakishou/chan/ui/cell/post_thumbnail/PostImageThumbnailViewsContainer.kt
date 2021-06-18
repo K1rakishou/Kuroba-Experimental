@@ -9,12 +9,10 @@ import android.widget.LinearLayout
 import androidx.constraintlayout.helper.widget.Flow
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.ConstraintSet
-import androidx.core.view.doOnPreDraw
 import androidx.core.view.updatePadding
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
-import com.github.k1rakishou.chan.ui.cell.PostCellWidthStorage
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
@@ -35,6 +33,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   private var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
   private var horizPaddingPx = 0
+  private var postCellDataWidthNoPaddings = 0
 
   private lateinit var thumbnailContainer: ViewGroup
 
@@ -62,7 +61,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       && this.prevChanPostImages != null
       && this.prevChanPostImages == postCellData.postImages
       && this.prevBoardPostViewMode == postCellData.boardPostViewMode
-      && this.postFileInfosHash == postCellData.postFileInfoMapHash) {
+      && this.postFileInfosHash == postCellData.postFileInfoMapHash
+      && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
+    ) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
@@ -71,6 +72,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     this.horizPaddingPx = horizPaddingPx
     this.prevBoardPostViewMode = postCellData.boardPostViewMode
     this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
+    this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
 
     if (childCount != 0) {
       removeAllViews()
@@ -139,20 +141,18 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    if (this.width <= 0 && PostCellWidthStorage.get(postCellData) <= 0) {
-      this.doOnPreDraw {
-        PostCellWidthStorage.update(postCellData, this.width)
-        bindMoreThanOneImage(this.width, postCellData)
-      }
-    } else {
-      val actualWidth = if (PostCellWidthStorage.get(postCellData) > 0) {
-        PostCellWidthStorage.get(postCellData)
-      } else {
-        this.width
-      }
+    // postCellDataWidthNoPaddings is the width of the recyclerview where the posts are displayed.
+    // But each post has paddings and we need to account for them, otherwise when displaying multiple
+    // thumbnails that may not fit into the container.
+    var actualWidth = postCellDataWidthNoPaddings - thumbnailContainer.paddingLeft - thumbnailContainer.paddingRight
 
-      bindMoreThanOneImage(actualWidth, postCellData)
+    // Don't forget to account for the "go to post" button which is shown when opening post replies
+    // or search.
+    if (postCellData.postViewMode.canShowGoToPostButton()) {
+      actualWidth -= GO_TO_POST_BUTTON_WIDTH
     }
+
+    bindMoreThanOneImage(actualWidth, postCellData)
   }
 
   fun unbindContainer() {
@@ -474,6 +474,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     private val MULTIPLE_THUMBNAILS_MIDDLE_MARGIN = dp(2f)
     private val THUMBNAILS_GAP_SIZE = dp(4f)
     private val MULTIPLE_THUMBNAILS_VERTICAL_MARGIN = dp(4f)
+    private val GO_TO_POST_BUTTON_WIDTH = getDimen(R.dimen.go_to_post_button_width)
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
     const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"

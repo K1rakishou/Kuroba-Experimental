@@ -421,7 +421,7 @@ class ThreadLayout @JvmOverloads constructor(
     val initial = visible != Visible.THREAD
 
     val (showPostsResult, totalDuration) = measureTimedValue {
-      threadListLayout.showPosts(descriptor, filter, initial)
+      threadListLayout.showPosts(loadView.width, descriptor, filter, initial)
     }
     val applyFilterDuration = showPostsResult.applyFilterDuration
     val setThreadPostsDuration = showPostsResult.setThreadPostsDuration

@@ -5,6 +5,7 @@ import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.Toast
 import androidx.core.content.ContextCompat
+import androidx.core.view.doOnPreDraw
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.chan.R
@@ -80,18 +81,20 @@ class ThemeGalleryController(
     loadingViewController = LoadingViewController(context, true, getString(R.string.theme_gallery_screen_loading_themes))
     presentController(loadingViewController)
 
-    mainScope.launch {
-      val themes = downloadThemeJsonFilesRepository.download()
-        .filter { chanTheme -> chanTheme.isLightTheme == lightThemes }
+    themesList.doOnPreDraw {
+      mainScope.launch {
+        val themes = downloadThemeJsonFilesRepository.download()
+          .filter { chanTheme -> chanTheme.isLightTheme == lightThemes }
 
-      loadingViewController.stopPresenting()
+        loadingViewController.stopPresenting()
 
-      if (themes.isEmpty()) {
-        showToast(R.string.theme_gallery_screen_loading_themes_failed, Toast.LENGTH_LONG)
-        return@launch
+        if (themes.isEmpty()) {
+          showToast(R.string.theme_gallery_screen_loading_themes_failed, Toast.LENGTH_LONG)
+          return@launch
+        }
+
+        adapter.setThemes(themes, themesList.width)
       }
-
-      adapter.setThemes(themes)
     }
   }
 
@@ -103,13 +106,14 @@ class ThemeGalleryController(
 
   inner class Adapter : RecyclerView.Adapter<ThemeViewHolder>() {
     private val themes = mutableListOf<ChanTheme>()
+    private var postCellDataWidthNoPaddings = 0
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ThemeViewHolder {
       return ThemeViewHolder(FrameLayout(context))
     }
 
     override fun onBindViewHolder(holder: ThemeViewHolder, position: Int) {
-      holder.onBind(themes[position])
+      holder.onBind(themes[position], postCellDataWidthNoPaddings)
     }
 
     override fun getItemId(position: Int): Long {
@@ -118,9 +122,10 @@ class ThemeGalleryController(
 
     override fun getItemCount(): Int = themes.size
 
-    fun setThemes(themes: List<ChanTheme>) {
+    fun setThemes(themes: List<ChanTheme>, postCellDataWidthNoPaddings: Int) {
       this.themes.clear()
       this.themes.addAll(themes)
+      this.postCellDataWidthNoPaddings = postCellDataWidthNoPaddings
 
       notifyDataSetChanged()
     }
@@ -129,7 +134,7 @@ class ThemeGalleryController(
 
   inner class ThemeViewHolder(itemView: FrameLayout) : RecyclerView.ViewHolder(itemView) {
 
-    fun onBind(chanTheme: ChanTheme) {
+    fun onBind(chanTheme: ChanTheme, postCellDataWidthNoPaddings: Int) {
       val navigationItem = NavigationItem()
       navigationItem.title = chanTheme.name
       navigationItem.hasBack = false
@@ -140,7 +145,8 @@ class ThemeGalleryController(
           chanTheme,
           navigationItem,
           requireNavController(),
-          ThemeControllerHelper.Options()
+          ThemeControllerHelper.Options(),
+          postCellDataWidthNoPaddings
         )
       }
 
