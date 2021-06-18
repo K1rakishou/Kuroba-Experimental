@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.DeleteResponse
@@ -46,8 +45,8 @@ interface SiteActions {
   fun isLoggedIn(): Boolean
   fun loginDetails(): AbstractLoginRequest?
 
-  suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> =
-    HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
+  suspend fun <T : SearchParams> search(searchParams: T):SearchResult =
+    SearchResult.Failure(SearchError.NotImplemented)
 
   suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null
 

@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import com.github.k1rakishou.chan.core.base.TestModule
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
@@ -24,6 +23,7 @@ import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.nhaarman.mockitokotlin2.any
 import com.nhaarman.mockitokotlin2.whenever
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -81,7 +81,7 @@ class Chan4SearchRequestTest {
     val chan4 = Mockito.mock(Site::class.java)
     val testSiteActions = TestSiteActions(testModule.provideProxiedOkHttpClient(), mockUrl)
 
-    val theme = DefaultDarkTheme(testModule.provideContext())
+    val theme = DefaultDarkTheme()
 
     whenever(siteManager.bySiteDescriptor(siteDescriptor)).thenReturn(chan4)
     whenever(siteManager.awaitUntilInitialized()).thenReturn(Unit)
@@ -90,7 +90,7 @@ class Chan4SearchRequestTest {
     whenever(simpleCommentParser.parseComment(any()))
       .then { answer -> answer.getArgument(1, CharSequence::class.java) }
 
-    val searchResult = globalSearchUseCase.execute(Chan4SearchParams(siteDescriptor, "test", null))
+    val searchResult = globalSearchUseCase.execute(Chan4SearchParams(null, siteDescriptor, "test", null))
     assertThat(searchResult, instanceOf(SearchResult.Success::class.java))
 
     searchResult as SearchResult.Success
@@ -148,7 +148,7 @@ class Chan4SearchRequestTest {
     override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>
       = JsonReaderRequest.JsonReaderResponse.UnknownServerError(NotImplementedError())
 
-    override suspend fun post(replyChanDescriptor: ChanDescriptor): Flow<SiteActions.PostResult> {
+    override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
       return flowOf(SiteActions.PostResult.PostError(NotImplementedError()))
     }
 
@@ -164,7 +164,7 @@ class Chan4SearchRequestTest {
     override fun isLoggedIn(): Boolean = false
     override fun loginDetails(): AbstractLoginRequest? = null
 
-    override suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+    override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
       searchParams as Chan4SearchParams
 
       val request = Request.Builder()

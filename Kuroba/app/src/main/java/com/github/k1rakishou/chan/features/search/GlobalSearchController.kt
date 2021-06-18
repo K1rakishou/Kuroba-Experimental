@@ -250,7 +250,7 @@ class GlobalSearchController(context: Context)
 
         val controller = SelectBoardForSearchController(
           context = context,
-          siteSupportSearchOnAllBoards = false,
+          supportsAllBoardsSearch = false,
           prevSelectedBoard = searchParameters.searchBoard,
           searchBoardProvider = { boardsSupportingSearch },
           onBoardSelected = { searchBoard ->
@@ -323,15 +323,21 @@ class GlobalSearchController(context: Context)
 
     var searchQuery = searchParameters.query
     var selectedBoard = searchParameters.searchBoard
-    var selectedBoardCode: String? = selectedBoard.boardCode()
+    var selectedBoardCode: String? = selectedBoard?.boardCode()
 
     // When site selection changes with want to redraw epoxySearchInputView with new initialQuery
     val selectedSiteName = sitesWithSearch.selectedSite.siteDescriptor.siteName
 
     if (resetSearchParameters) {
       searchQuery = ""
-      selectedBoard = SearchBoard.AllBoards
-      selectedBoardCode = null
+
+      selectedBoard = if (searchParameters is SearchParameters.DvachSearchParams) {
+        null
+      } else {
+        SearchBoard.AllBoards
+      }
+
+      selectedBoardCode = selectedBoard?.boardCode()
 
       resetSearchParameters = false
     }
@@ -341,7 +347,7 @@ class GlobalSearchController(context: Context)
       initialQuery(searchQuery)
       hint(context.getString(R.string.post_comment_search_query_hint))
       onTextEnteredListener { query ->
-        val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(query, selectedBoard)
+        val updatedSearchParameters = searchParameters.update(query, selectedBoard)
         presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
       }
       onBind { _, view, _ -> addViewToInputViewRefSet(view) }
@@ -364,13 +370,13 @@ class GlobalSearchController(context: Context)
 
           val controller = SelectBoardForSearchController(
             context = context,
-            siteSupportSearchOnAllBoards = true,
+            supportsAllBoardsSearch = searchParameters.supportsAllBoardsSearch,
             prevSelectedBoard = searchParameters.searchBoard,
             searchBoardProvider = { boardsSupportingSearch },
             onBoardSelected = { searchBoard ->
-              val updatedSearchParameters = SearchParameters.SimpleQuerySearchParameters(
+              val updatedSearchParameters = searchParameters.update(
                 query = searchQuery,
-                searchBoard = searchBoard
+                selectedBoard = searchBoard
               )
 
               presenter.reloadWithSearchParameters(updatedSearchParameters, sitesWithSearch)
@@ -382,9 +388,9 @@ class GlobalSearchController(context: Context)
       }
     }
 
-    return SearchParameters.SimpleQuerySearchParameters(
+    return searchParameters.update(
       query = searchQuery,
-      searchBoard = selectedBoard
+      selectedBoard = selectedBoard
     ).isValid()
   }
 

@@ -16,7 +16,7 @@ import javax.inject.Inject
 
 class SelectBoardForSearchController(
   context: Context,
-  private val siteSupportSearchOnAllBoards: Boolean,
+  private val supportsAllBoardsSearch: Boolean,
   private val searchBoardProvider: () -> Collection<SearchBoard>,
   private val prevSelectedBoard: SearchBoard?,
   private val onBoardSelected: (SearchBoard) -> Unit
@@ -66,7 +66,7 @@ class SelectBoardForSearchController(
   private fun renderArchiveSiteBoardsSupportingSearch() {
     val boardsSupportingSearch = mutableListOf<SearchBoard>()
 
-    if (siteSupportSearchOnAllBoards) {
+    if (supportsAllBoardsSearch) {
       boardsSupportingSearch += SearchBoard.AllBoards
     }
 

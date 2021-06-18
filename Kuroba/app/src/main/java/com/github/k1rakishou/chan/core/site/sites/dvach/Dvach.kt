@@ -28,6 +28,10 @@ import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachables
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
@@ -133,6 +137,8 @@ class Dvach : CommonSite() {
       else -> super.getSettingBySettingId(settingId)
     }
   }
+
+  override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQueryBoardSearch
 
   override fun setParser(commentParser: CommentParser) {
     postParser = DvachPostParser(commentParser, postFilterManager, archivesManager)
@@ -349,6 +355,31 @@ class Dvach : CommonSite() {
         ).execute()
       }
 
+      override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
+        val dvachSearchParams = searchParams as DvachSearchParams
+
+        // https://2ch.hk/makaba/makaba.fcgi?task=search&board=mobi&find=poco%20x3&json=1
+        val searchUrl = requireNotNull(endpoints().search())
+          .newBuilder()
+          .addQueryParameter("board", dvachSearchParams.boardCode)
+          .addQueryParameter("find", dvachSearchParams.query)
+          .addQueryParameter("json", "1")
+          .build()
+
+        val requestBuilder = Request.Builder()
+          .url(searchUrl)
+          .get()
+
+        this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
+
+        return DvachSearchRequest(
+          moshi,
+          requestBuilder.build(),
+          proxiedOkHttpClient,
+          dvachSearchParams,
+          siteManager
+        ).execute()
+      }
     })
     setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
     setApi(DvachApiV2(moshi, siteManager, boardManager, this))
@@ -473,6 +504,16 @@ class Dvach : CommonSite() {
         .addQueryParameter("task", "auth")
         .addQueryParameter("usercode", passcode)
         .addQueryParameter("json", "1")
+        .build()
+    }
+
+    override fun search(): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host(URL_HANDLER.url!!.host)
+        .addPathSegment("makaba")
+        .addPathSegment("makaba.fcgi")
+        .addQueryParameter("task", "search")
         .build()
     }
   }

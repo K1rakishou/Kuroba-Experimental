@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.core.usecase
 import android.text.SpannableString
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
+import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.FoolFuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
@@ -48,45 +48,27 @@ class GlobalSearchUseCase(
 
     val result = Try { site.actions().search(parameter) }
 
-    val htmlReaderResponse =  when (result) {
-      is ModularResult.Value -> result.value
+    when (result) {
+      is ModularResult.Value -> {
+        val searchResult = result.value
+
+        if (searchResult is SearchResult.Success) {
+          return processFoundSearchEntries(result.value as SearchResult.Success)
+        }
+
+        return searchResult
+      }
       is ModularResult.Error -> {
+        if (result.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+          val cloudFlareDetectedException =
+            result.error as CloudFlareHandlerInterceptor.CloudFlareDetectedException
+
+          val resultError = SearchError.CloudFlareDetectedError(cloudFlareDetectedException.requestUrl)
+          return SearchResult.Failure(resultError)
+        }
+
         Logger.e(TAG, "doSearch() Unknown error", result.error)
         return SearchResult.Failure(SearchError.UnknownError(result.error))
-      }
-    }
-
-    when (htmlReaderResponse) {
-      is HtmlReaderRequest.HtmlReaderResponse.Success -> {
-        if (htmlReaderResponse.result is SearchResult.Failure) {
-          val searchError = htmlReaderResponse.result.searchError
-          Logger.d(TAG, "doSearch() Failure, searchError=$searchError")
-
-          return htmlReaderResponse.result
-        }
-
-        Logger.d(TAG, "doSearch() Success")
-        return processFoundSearchEntries(htmlReaderResponse.result as SearchResult.Success)
-      }
-      is HtmlReaderRequest.HtmlReaderResponse.ServerError -> {
-        Logger.e(TAG, "doSearch() ServerError: ${htmlReaderResponse.statusCode}")
-        return SearchResult.Failure(SearchError.ServerError(htmlReaderResponse.statusCode))
-      }
-      is HtmlReaderRequest.HtmlReaderResponse.UnknownServerError -> {
-        if (htmlReaderResponse.isCloudFlareException()) {
-          val cloudFlareDetectedException =
-            htmlReaderResponse.error as CloudFlareHandlerInterceptor.CloudFlareDetectedException
-          val searchError = SearchError.CloudFlareDetectedError(cloudFlareDetectedException.requestUrl)
-
-          return SearchResult.Failure(searchError)
-        }
-
-        Logger.e(TAG, "doSearch() UnknownServerError", htmlReaderResponse.error)
-        return SearchResult.Failure(SearchError.UnknownError(htmlReaderResponse.error))
-      }
-      is HtmlReaderRequest.HtmlReaderResponse.ParsingError -> {
-        Logger.d(TAG, "doSearch() ParsingError", htmlReaderResponse.error)
-        return SearchResult.Failure(SearchError.UnknownError(htmlReaderResponse.error))
       }
     }
   }
@@ -151,6 +133,9 @@ class GlobalSearchUseCase(
 
     when (searchParams) {
       is Chan4SearchParams -> {
+        queries += searchParams.query
+      }
+      is DvachSearchParams -> {
         queries += searchParams.query
       }
       is FuukaSearchParams -> {

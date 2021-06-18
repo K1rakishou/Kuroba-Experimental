@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.SpannableStringBuilder
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
@@ -12,28 +11,61 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.joda.time.DateTime
+import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.FormElement
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
+import java.io.IOException
+import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
 class Chan4SearchRequest(
-  request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val request: Request,
+  private val proxiedOkHttpClient: ProxiedOkHttpClient,
   private val searchParams: Chan4SearchParams
-) : HtmlReaderRequest<SearchResult>(request, proxiedOkHttpClient) {
+) {
 
-  override suspend fun readHtml(url: String, document: Document): SearchResult {
+  suspend fun execute(): SearchResult {
+    return withContext(Dispatchers.IO) {
+      try {
+        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+
+        if (!response.isSuccessful) {
+          throw IOException("Bad status code: ${response.code}")
+        }
+
+        if (response.body == null) {
+          throw IOException("Response has no body")
+        }
+
+        return@withContext response.body!!.use { body ->
+          return@use body.byteStream().use { inputStream ->
+            val url = request.url.toString()
+
+            val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), url)
+            return@use readHtml(url, htmlDocument)
+          }
+        }
+      } catch (error: Throwable) {
+        return@withContext SearchResult.Failure(SearchError.UnknownError(error))
+      }
+    }
+  }
+
+  private fun readHtml(url: String, document: Document): SearchResult {
     BackgroundUtils.ensureBackgroundThread()
 
     val searchEntries = mutableListOf<SearchEntry>()
@@ -298,7 +330,7 @@ class Chan4SearchRequest(
       .firstOrNull { node -> node is Element && node.attr(CLASS_ATTR) == postClass }
 
     if (opPostNode == null) {
-      val error = SearchError.HtmlParsingError("Couldn't find node with class \"$postClass\"")
+      val error = SearchError.ParsingError("Couldn't find node with class \"$postClass\"")
       return SearchResult.Failure(error)
     }
 
@@ -330,7 +362,7 @@ class Chan4SearchRequest(
     }
 
     if (searchEntryPostBuilder.hasMissingInfo()) {
-      val error = SearchError.HtmlParsingError("Failed to parse OP, builder=${searchEntryPostBuilder}")
+      val error = SearchError.ParsingError("Failed to parse OP, builder=${searchEntryPostBuilder}")
       return SearchResult.Failure(error)
     }
 

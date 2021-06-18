@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -87,7 +86,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun <T : SearchParams> search(
     searchParams: T
-  ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+  ): SearchResult {
     searchParams as FoolFuukaSearchParams
 
     val searchUrl = requireNotNull(site.endpoints().search())

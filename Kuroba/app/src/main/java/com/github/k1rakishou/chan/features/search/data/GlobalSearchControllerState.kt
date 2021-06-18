@@ -37,14 +37,15 @@ sealed class SearchParameters {
 
   abstract fun getCurrentQuery(): String
 
-  data class SimpleQuerySearchParameters(
-    override val query: String,
-    val searchBoard: SearchBoard
-  ) : SearchParameters() {
+  abstract class SimpleQuerySearchParameters : SearchParameters() {
+    abstract val supportsAllBoardsSearch: Boolean
+    abstract val searchBoard: SearchBoard?
 
     override fun getCurrentQuery(): String {
       return buildString {
-        append("/${searchBoard.boardCode()}/")
+        if (searchBoard != null) {
+          append("/${searchBoard!!.boardCode()}/")
+        }
 
         if (query.isNotEmpty()) {
           if (isNotEmpty()) {
@@ -70,6 +71,35 @@ sealed class SearchParameters {
       }
 
       throw IllegalStateException("SimpleQuerySearchParameters are not valid! query='$query'")
+    }
+
+    abstract fun update(query: String, selectedBoard: SearchBoard?): SimpleQuerySearchParameters
+  }
+
+  data class Chan4SearchParams(
+    override val query: String,
+    override val supportsAllBoardsSearch: Boolean = true,
+    override val searchBoard: SearchBoard?,
+  ) : SimpleQuerySearchParameters() {
+
+    override fun update(query: String, selectedBoard: SearchBoard?): SimpleQuerySearchParameters {
+      return Chan4SearchParams(query, supportsAllBoardsSearch, selectedBoard)
+    }
+
+  }
+
+  data class DvachSearchParams(
+    override val query: String,
+    override val supportsAllBoardsSearch: Boolean = false,
+    override val searchBoard: SearchBoard?,
+  ) : SimpleQuerySearchParameters() {
+
+    override fun isValid(): Boolean {
+      return super.isValid() && (searchBoard != null && searchBoard !is SearchBoard.AllBoards)
+    }
+
+    override fun update(query: String, selectedBoard: SearchBoard?): SimpleQuerySearchParameters {
+      return DvachSearchParams(query, supportsAllBoardsSearch, selectedBoard)
     }
 
   }

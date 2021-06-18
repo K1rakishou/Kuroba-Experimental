@@ -177,7 +177,7 @@ internal class SearchResultsPresenter(
       SearchError.NotImplemented -> Logger.e(TAG, "NotImplemented")
       is SearchError.SiteNotFound -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.ServerError -> Logger.e(TAG, "${searchResult.searchError}")
-      is SearchError.HtmlParsingError -> Logger.e(TAG, "${searchResult.searchError}")
+      is SearchError.ParsingError -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchResult.searchError.error)
       is SearchError.CloudFlareDetectedError -> {
         Logger.e(TAG, "CloudFlare detected error, requestUrl=${searchResult.searchError.requestUrl}")
@@ -190,17 +190,36 @@ internal class SearchResultsPresenter(
 
     val requestSearchParams = when (val params = searchParameters) {
       is SearchParameters.SimpleQuerySearchParameters -> {
-        val boardCode = when (params.searchBoard) {
-          SearchBoard.AllBoards -> null
-          is SearchBoard.SingleBoard -> params.searchBoard.boardCode()
-        }
+        when (params) {
+          is SearchParameters.Chan4SearchParams -> {
+            val boardCode = when (params.searchBoard) {
+              is SearchBoard.SingleBoard -> params.searchBoard?.boardCode()
+              SearchBoard.AllBoards -> null
+              null -> null
+            }
 
-        Chan4SearchParams(
-          boardCode = boardCode,
-          siteDescriptor = siteDescriptor,
-          query = params.query,
-          page = currentPage
-        )
+            Chan4SearchParams(
+              boardCode = boardCode,
+              siteDescriptor = siteDescriptor,
+              query = params.query,
+              page = currentPage
+            )
+          }
+          is SearchParameters.DvachSearchParams -> {
+            val boardCode = when (params.searchBoard) {
+              is SearchBoard.SingleBoard -> params.searchBoard!!.boardCode()
+              SearchBoard.AllBoards -> throw IllegalStateException("All boards search is not supported")
+              null -> throw IllegalStateException("All boards search is not supported")
+            }
+
+            DvachSearchParams(
+              boardCode = boardCode,
+              siteDescriptor = siteDescriptor,
+              query = params.query
+            )
+          }
+          else -> throw IllegalStateException("Unknown SimpleQuerySearchParameters type: ${params.javaClass.simpleName}")
+        }
       }
       is SearchParameters.AdvancedSearchParameters -> {
         when (params) {
@@ -347,7 +366,7 @@ internal class SearchResultsPresenter(
       is SearchError.SiteNotFound -> "Site \"${siteDescriptor.siteName}\" was not found in the database"
       is SearchError.ServerError -> "Bad response status: ${failure.searchError.statusCode}"
       is SearchError.UnknownError -> "Unknown error: ${failure.searchError.error.errorMessageOrClassName()}"
-      is SearchError.HtmlParsingError -> "Html parsing error: ${failure.searchError.message}"
+      is SearchError.ParsingError -> "Html parsing error: ${failure.searchError.message}"
       is SearchError.CloudFlareDetectedError -> "CloudFlare detected! You need to pass CloudFlare checks to continue"
     }
   }

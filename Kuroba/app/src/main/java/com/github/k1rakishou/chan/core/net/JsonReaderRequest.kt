@@ -44,7 +44,7 @@ abstract class JsonReaderRequest<T>(
         }
 
         Logger.d(TAG, "Request \"${this@JsonReaderRequest.javaClass.simpleName}\" to \"${request.url}\" " +
-          "took ${timedValue.duration.inMilliseconds}ms")
+          "took ${timedValue.duration}")
 
         return@Try timedValue.value
       }.safeUnwrap { error ->

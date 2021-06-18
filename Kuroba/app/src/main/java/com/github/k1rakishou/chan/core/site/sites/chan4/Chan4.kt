@@ -4,7 +4,6 @@ import android.webkit.CookieManager
 import android.webkit.WebView
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -385,7 +384,7 @@ open class Chan4 : SiteBase() {
       )
     }
 
-    override suspend fun <T : SearchParams> search(searchParams: T): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
+    override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
       searchParams as Chan4SearchParams
       val page = searchParams.getCurrentPage()
       val boardCode = searchParams.boardCode

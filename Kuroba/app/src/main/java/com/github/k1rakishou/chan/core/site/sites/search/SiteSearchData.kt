@@ -23,6 +23,12 @@ data class Chan4SearchParams(
 
 }
 
+data class DvachSearchParams(
+  val boardCode: String,
+  override val siteDescriptor: SiteDescriptor,
+  override val query: String
+) : SearchParams
+
 data class FoolFuukaSearchParams(
   val boardDescriptor: BoardDescriptor,
   override val query: String,
@@ -80,7 +86,7 @@ sealed class SearchError  {
   data class ServerError(val statusCode: Int) : SearchError()
   data class UnknownError(val error: Throwable) : SearchError()
   data class CloudFlareDetectedError(val requestUrl: HttpUrl) : SearchError()
-  data class HtmlParsingError(val message: String) : SearchError()
+  data class ParsingError(val message: String) : SearchError()
 }
 
 data class SearchEntryPost(

@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.yukila
 
-import com.github.k1rakishou.chan.core.net.HtmlReaderRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
@@ -85,8 +84,8 @@ class YukilaActions(site: CommonSite) : CommonSite.CommonActions(site) {
 
   override suspend fun <T : SearchParams> search(
     searchParams: T
-  ): HtmlReaderRequest.HtmlReaderResponse<SearchResult> {
-    return HtmlReaderRequest.HtmlReaderResponse.Success(SearchResult.Failure(SearchError.NotImplemented))
+  ): SearchResult {
+    return SearchResult.Failure(SearchError.NotImplemented)
   }
 
 }

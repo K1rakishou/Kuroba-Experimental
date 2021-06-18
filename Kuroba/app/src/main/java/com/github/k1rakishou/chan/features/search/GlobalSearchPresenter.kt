@@ -168,10 +168,19 @@ internal class GlobalSearchPresenter(
       }
       SiteGlobalSearchType.SimpleQuerySearch,
       SiteGlobalSearchType.SimpleQueryBoardSearch -> {
-        return SearchParameters.SimpleQuerySearchParameters(
-          query = "",
-          searchBoard = SearchBoard.AllBoards
-        )
+        if (siteDescriptor.is4chan()) {
+          return SearchParameters.Chan4SearchParams(
+            query = "",
+            searchBoard = SearchBoard.AllBoards
+          )
+        } else if (siteDescriptor.isDvach()) {
+          return SearchParameters.DvachSearchParams(
+            query = "",
+            searchBoard = null
+          )
+        }
+
+        throw IllegalArgumentException("Unsupported site: $siteDescriptor")
       }
       SiteGlobalSearchType.FuukaSearch -> {
         return SearchParameters.FuukaSearchParameters(
