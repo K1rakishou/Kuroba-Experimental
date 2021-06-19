@@ -82,6 +82,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
 
                     downloaderClient = okHttpClient.newBuilder()
                             .dns(compositeDnsSelector)
+                            .addNetworkInterceptor(new GzipInterceptor())
                             .build();
                 }
             }

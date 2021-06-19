@@ -99,6 +99,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
 
                     coilClient = okHttpClient.newBuilder()
                             .dns(compositeDnsSelector)
+                            .addNetworkInterceptor(new GzipInterceptor())
                             .build();
                 }
             }

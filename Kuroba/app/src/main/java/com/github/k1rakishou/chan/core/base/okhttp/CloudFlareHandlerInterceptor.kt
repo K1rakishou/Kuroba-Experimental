@@ -47,7 +47,7 @@ class CloudFlareHandlerInterceptor(
 
     val response = chain.proceed(request)
 
-    if (response.code == 503) {
+    if (response.code == 503 || response.code == 403) {
       val body = response.body
       if (body != null) {
         if (tryDetectCloudFlareNeedle(body)) {
@@ -170,20 +170,13 @@ class CloudFlareHandlerInterceptor(
   private fun tryDetectCloudFlareNeedle(responseBody: ResponseBody): Boolean {
     return responseBody.use { body ->
       return@use body.byteStream().use { inputStream ->
-        val totalSize = Math.max(MAX_ALLOWED_CLOUD_FLARE_PAGE_SIZE, inputStream.available())
-        if (totalSize > MAX_ALLOWED_CLOUD_FLARE_PAGE_SIZE) {
-          // We assume that CloudFlare pages are supposed to be lightweight.
-          return@use false
-        }
-
-        val bytes = ByteArray(totalSize) { 0x00 }
-
+        val bytes = ByteArray(READ_BYTES_COUNT) { 0x00 }
         val read = inputStream.read(bytes)
-        if (read < 0) {
+        if (read <= 0) {
           return@use false
         }
 
-        if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2)) {
+        if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) && !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2)) {
           return@use false
         }
 
@@ -198,10 +191,11 @@ class CloudFlareHandlerInterceptor(
 
   companion object {
     private const val TAG = "CloudFlareHandlerInterceptor"
-    private const val MAX_ALLOWED_CLOUD_FLARE_PAGE_SIZE = 128 * 1024 // 128KB
+    private const val READ_BYTES_COUNT = 24 * 1024 // 24KB
 
     const val CF_CLEARANCE = "cf_clearance"
 
+    private val CLOUD_FLARE_NEEDLE1 = "<title>Please Wait... | Cloudflare</title>".toByteArray(StandardCharsets.UTF_8)
     private val CLOUD_FLARE_NEEDLE2 = "Checking your browser before accessing".toByteArray(StandardCharsets.UTF_8)
   }
 }

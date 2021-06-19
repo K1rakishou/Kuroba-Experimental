@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
@@ -48,6 +49,10 @@ class FuukaSearchRequest(
           }
         }
       } catch (error: Throwable) {
+        if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+          return@withContext SearchResult.Failure(SearchError.CloudFlareDetectedError(error.requestUrl))
+        }
+
         return@withContext SearchResult.Failure(SearchError.UnknownError(error))
       }
     }

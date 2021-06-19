@@ -76,53 +76,55 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
         )
 
         nest {
-          tag(
-            tagName = "td",
-            matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }
-          )
-
-          nest {
+          executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }) {
             tag(
-              tagName = "label",
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
-            )
-
-            extractRegularPostPosterInfo()
-
-            a(
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAttribute("onclick")) },
-              attrExtractorBuilderFunc = { extractAttrValueByKey("href") },
-              extractorFunc = { node, extractedAttributeValues, fuukaSearchPageCollector ->
-                extractPostInfo(fuukaSearchPageCollector, extractedAttributeValues)
-              }
-            )
-
-            tryExtractRegularPostMediaLink()
-
-            tag(
-              tagName = "blockquote",
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              tagName = "td",
+              matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }
             )
 
             nest {
               tag(
-                tagName = "p",
-                matchableBuilderFunc = { attr("itemprop", KurobaMatcher.PatternMatcher.stringEquals("text")) },
-                attrExtractorBuilderFunc = { extractHtml() },
-                extractorFunc = { node, extractedAttributeValues, fuukaSearchPageCollector ->
-                  fuukaSearchPageCollector.lastOrNull()?.let { searchEntryPostBuilder ->
-                    val comment = extractedAttributeValues.getHtml()
-                    if (comment == null) {
-                      Logger.e(TAG, "Failed to extract comment")
-                      return@let
-                    }
+                tagName = "label",
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              )
 
-                    searchEntryPostBuilder.commentRaw = comment
-                  }
+              extractRegularPostPosterInfo()
+
+              a(
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAttribute("onclick")) },
+                attrExtractorBuilderFunc = { extractAttrValueByKey("href") },
+                extractorFunc = { node, extractedAttributeValues, fuukaSearchPageCollector ->
+                  extractPostInfo(fuukaSearchPageCollector, extractedAttributeValues)
                 }
               )
-            }
 
+              tryExtractRegularPostMediaLink()
+
+              tag(
+                tagName = "blockquote",
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              )
+
+              nest {
+                tag(
+                  tagName = "p",
+                  matchableBuilderFunc = { attr("itemprop", KurobaMatcher.PatternMatcher.stringEquals("text")) },
+                  attrExtractorBuilderFunc = { extractHtml() },
+                  extractorFunc = { node, extractedAttributeValues, fuukaSearchPageCollector ->
+                    fuukaSearchPageCollector.lastOrNull()?.let { searchEntryPostBuilder ->
+                      val comment = extractedAttributeValues.getHtml()
+                      if (comment == null) {
+                        Logger.e(TAG, "Failed to extract comment")
+                        return@let
+                      }
+
+                      searchEntryPostBuilder.commentRaw = comment
+                    }
+                  }
+                )
+              }
+
+            }
           }
         }
       }

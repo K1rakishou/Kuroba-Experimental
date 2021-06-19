@@ -85,6 +85,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
 
                     proxiedClient = okHttpClient.newBuilder()
                             .dns(compositeDnsSelector)
+                            .addNetworkInterceptor(new GzipInterceptor())
                             .build();
                 }
             }

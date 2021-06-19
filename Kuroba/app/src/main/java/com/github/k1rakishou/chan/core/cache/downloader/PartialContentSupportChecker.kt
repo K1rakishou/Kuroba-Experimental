@@ -90,10 +90,10 @@ internal class PartialContentSupportChecker(
             checkedChanHosts[host] ?: false
           }
 
-          return if (supportsPartialContent) {
+          if (supportsPartialContent) {
             // Fast path: we already had a file size and already checked whether this
             // chan supports Partial Content. So we don't need to send HEAD request.
-            Single.just(
+            return Single.just(
               PartialContentCheckResult(
                 supportsPartialContentDownload = true,
                 // We are not sure about this one but it doesn't matter
@@ -102,11 +102,15 @@ internal class PartialContentSupportChecker(
                 length = fileSize
               )
             )
-          } else {
-            Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
           }
+
+          return Single.just(PartialContentCheckResult(supportsPartialContentDownload = false))
         }
+
+        // fallthrough
       }
+
+      // fallthrough
     }
 
     val cached = cachedResults.get(url)

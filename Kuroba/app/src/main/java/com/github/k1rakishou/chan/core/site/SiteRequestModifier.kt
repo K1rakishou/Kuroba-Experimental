@@ -30,6 +30,9 @@ abstract class SiteRequestModifier<T : Site>(
   protected val cookieHeaderKey = "Cookie"
   protected val userAgentHeaderKey = "User-Agent"
 
+  private val acceptEncodingHeaderKey = "Accept-Encoding"
+  private val gzip = "gzip"
+
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     if (httpCall.site.siteDescriptor().is4chan()) {
@@ -37,6 +40,8 @@ abstract class SiteRequestModifier<T : Site>(
     } else {
       requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
     }
+
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
@@ -46,6 +51,7 @@ abstract class SiteRequestModifier<T : Site>(
   @CallSuper
   open fun modifyThumbnailGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
@@ -55,6 +61,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
@@ -71,6 +78,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
@@ -79,6 +87,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
@@ -87,11 +96,13 @@ abstract class SiteRequestModifier<T : Site>(
     requestProperties: MutableMap<String, String>
   ) {
     requestProperties.put(userAgentHeaderKey, appConstants.userAgent)
+    requestProperties.put(acceptEncodingHeaderKey, gzip)
   }
 
   @CallSuper
   open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
 }
