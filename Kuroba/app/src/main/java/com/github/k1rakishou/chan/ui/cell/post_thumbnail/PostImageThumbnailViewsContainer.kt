@@ -20,7 +20,6 @@ import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
-import kotlin.collections.ArrayList
 
 class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   context: Context,
@@ -28,12 +27,15 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   defAttrStyle: Int = 0
 ) : FrameLayout(context, attributeSet, defAttrStyle) {
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
-  private var prevChanPostImages: MutableList<ChanPostImage>? = null
-  private var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null
-  private var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
   private var horizPaddingPx = 0
-  private var postCellDataWidthNoPaddings = 0
+
+  private val cachedThumbnailViewContainerInfoArray = arrayOf(
+    // PRE_BIND
+    CachedThumbnailViewContainerInfo(),
+    // BIND
+    CachedThumbnailViewContainerInfo()
+  )
 
   private lateinit var thumbnailContainer: ViewGroup
 
@@ -58,11 +60,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   ) {
     if (::thumbnailContainer.isInitialized
       && thumbnailViews != null
-      && this.prevChanPostImages != null
-      && this.prevChanPostImages == postCellData.postImages
-      && this.prevBoardPostViewMode == postCellData.boardPostViewMode
-      && this.postFileInfosHash == postCellData.postFileInfoMapHash
-      && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
+      && postCellDataIsTheSame(PRE_BIND, postCellData)
     ) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
@@ -70,9 +68,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
     this.horizPaddingPx = horizPaddingPx
-    this.prevBoardPostViewMode = postCellData.boardPostViewMode
-    this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
-    this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
+    cachedThumbnailViewContainerInfoArray[PRE_BIND].updateFrom(postCellData)
 
     if (childCount != 0) {
       removeAllViews()
@@ -121,13 +117,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    if (thumbnailViews != null
-      && this.prevChanPostImages != null
-      && this.prevChanPostImages == postCellData.postImages
-      && this.postFileInfosHash == postCellData.postFileInfoMapHash) {
+    if (thumbnailViews != null && postCellDataIsTheSame(BIND, postCellData)) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
+
+    cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
 
     if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
       unbindPostImages()
@@ -140,6 +135,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       bindZeroOrOneImage(postCellData)
       return
     }
+
+    val postCellDataWidthNoPaddings = cachedThumbnailViewContainerInfoArray[BIND].postCellDataWidthNoPaddings
 
     // postCellDataWidthNoPaddings is the width of the recyclerview where the posts are displayed.
     // But each post has paddings and we need to account for them, otherwise when displaying multiple
@@ -161,6 +158,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     if (childCount != 0) {
       removeAllViews()
     }
+
+    cachedThumbnailViewContainerInfoArray[PRE_BIND].unbindEverything()
+    cachedThumbnailViewContainerInfoArray[BIND].unbindEverything()
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -170,6 +170,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     check(postCellData.post.postImages.size > 1) {
       "Bad post images count: ${postCellData.post.postImages.size}"
     }
+
+    val prevChanPostImages = cachedThumbnailViewContainerInfoArray[BIND].prevChanPostImages
 
     if (childCount == 0 || thumbnailViews != null || prevChanPostImages != null) {
       // The post was unbound while we were waiting for the layout to happen
@@ -307,7 +309,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     thumbnailViews = resultThumbnailViews
-    prevChanPostImages = ArrayList(postCellData.postImages)
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -410,7 +411,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     thumbnailViews = resultThumbnailViews
-    prevChanPostImages = ArrayList(postCellData.postImages)
   }
 
   private fun unbindPostImages() {
@@ -424,8 +424,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     thumbnailViews?.clear()
     thumbnailViews = null
-    prevChanPostImages?.clear()
-    prevChanPostImages = null
+
+    cachedThumbnailViewContainerInfoArray[PRE_BIND].unbindPrevPostImages()
+    cachedThumbnailViewContainerInfoArray[BIND].unbindPrevPostImages()
+  }
+
+  private fun postCellDataIsTheSame(index: Int, postCellData: PostCellData): Boolean {
+    return cachedThumbnailViewContainerInfoArray[index].isTheSame(postCellData)
   }
 
   private fun calculatePostCellSingleThumbnailSize(): Int {
@@ -463,6 +468,45 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val spanCount: Int
   )
 
+  data class CachedThumbnailViewContainerInfo(
+    var prevChanPostImages: MutableList<ChanPostImage>? = null,
+    var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null,
+    var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null,
+    var postCellDataWidthNoPaddings: Int = 0,
+    var postCellThumbnailSizePercents: Int = 0,
+  ) {
+
+    fun updateFrom(postCellData: PostCellData) {
+      this.prevChanPostImages = postCellData.postImages.toMutableList()
+      this.prevBoardPostViewMode = postCellData.boardPostViewMode
+      this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
+      this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
+      this.postCellThumbnailSizePercents = postCellData.postCellThumbnailSizePercents
+    }
+
+    fun isTheSame(postCellData: PostCellData): Boolean {
+      return this.prevChanPostImages != null
+        && this.prevChanPostImages == postCellData.postImages
+        && this.prevBoardPostViewMode == postCellData.boardPostViewMode
+        && this.postFileInfosHash == postCellData.postFileInfoMapHash
+        && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
+        && this.postCellThumbnailSizePercents == postCellData.postCellThumbnailSizePercents
+    }
+
+    fun unbindPrevPostImages() {
+      prevChanPostImages?.clear()
+      prevChanPostImages = null
+    }
+
+    fun unbindEverything() {
+      prevChanPostImages = null
+      prevBoardPostViewMode = null
+      postFileInfosHash = null
+      postCellDataWidthNoPaddings = 0
+      postCellThumbnailSizePercents = 0
+    }
+  }
+
   interface PostCellThumbnailCallbacks {
     fun requestParentDisallowInterceptTouchEvents(disallow: Boolean)
   }
@@ -478,6 +522,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
     const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"
+
+    const val PRE_BIND = 0
+    const val BIND = 1
   }
 
 }

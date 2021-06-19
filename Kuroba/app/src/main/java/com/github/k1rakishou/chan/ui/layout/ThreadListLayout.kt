@@ -632,8 +632,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     setFastScroll(true)
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
-    postAdapter.setCompact(boardPostViewMode != BoardPostViewMode.LIST)
-
     val (filteredPosts, applyFilterDuration) = measureTimedValue {
       filter.applyFilter(descriptor, posts)
     }

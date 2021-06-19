@@ -327,11 +327,6 @@ class PostAdapter(
     notifyDataSetChanged()
   }
 
-  fun setCompact(compact: Boolean) {
-    threadCellData.setCompact(compact)
-    notifyDataSetChanged()
-  }
-
   fun getScrollPosition(displayPosition: Int): Int {
     return threadCellData.getScrollPosition(displayPosition)
   }

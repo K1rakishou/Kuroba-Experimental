@@ -288,7 +288,7 @@ class PostCell : LinearLayout,
 
   @SuppressLint("ClickableViewAccessibility")
   private fun preBindPost(postCellData: PostCellData) {
-    if (this.postCellData != null) {
+    if (this.postCellData != null && this.postCellData == postCellData) {
       return
     }
 
@@ -320,7 +320,7 @@ class PostCell : LinearLayout,
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
-    if (postCellData.postImages.size <= 1 && postAlignmentMode == ChanSettings.PostAlignmentMode.AlignRight) {
+    if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostAlignmentMode.AlignRight) {
       title.gravity = GravityCompat.END
       icons.rtl(true)
     } else {

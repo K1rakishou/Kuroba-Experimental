@@ -100,6 +100,13 @@ class ThreadCellData(
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
 
+    val postAlignmentMode = when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
+    }
+
+    val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
+
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
 
@@ -122,7 +129,9 @@ class ThreadCellData(
         stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),
-        searchQuery = defaultSearchQuery
+        searchQuery = defaultSearchQuery,
+        postAlignmentMode = postAlignmentMode,
+        postCellThumbnailSizePercents = postCellThumbnailSizePercents
       )
 
       postCellData.postCellCallback = postCellCallback
@@ -161,20 +170,24 @@ class ThreadCellData(
   }
 
   fun setBoardPostViewMode(boardPostViewMode: ChanSettings.BoardPostViewMode) {
+    val compact = boardPostViewMode != ChanSettings.BoardPostViewMode.LIST
     defaultBoardPostViewMode = boardPostViewMode
-
-    postCellDataList.forEach { postCellData ->
-      postCellData.boardPostViewMode = boardPostViewMode
-      postCellData.resetCommentTextCache()
-    }
-  }
-
-  fun setCompact(compact: Boolean) {
     defaultIsCompact = compact
 
     postCellDataList.forEach { postCellData ->
+      val compactChanged = postCellData.compact != compact
+      val boardPostViewModeChanged = postCellData.boardPostViewMode != boardPostViewMode
+
+      postCellData.boardPostViewMode = boardPostViewMode
       postCellData.compact = compact
-      postCellData.resetCatalogRepliesTextCache()
+
+      if (boardPostViewModeChanged) {
+        postCellData.resetCommentTextCache()
+      }
+
+      if (compactChanged) {
+        postCellData.resetCatalogRepliesTextCache()
+      }
     }
   }
 

@@ -48,7 +48,9 @@ data class PostCellData(
   var filterHash: Int,
   var filterHighlightedColor: Int,
   var postViewMode: PostViewMode,
-  var searchQuery: SearchQuery
+  var searchQuery: SearchQuery,
+  val postAlignmentMode: ChanSettings.PostAlignmentMode,
+  val postCellThumbnailSizePercents: Int
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -178,7 +180,9 @@ data class PostCellData(
       filterHash = filterHash,
       filterHighlightedColor = filterHighlightedColor,
       postViewMode = postViewMode,
-      searchQuery = searchQuery
+      searchQuery = searchQuery,
+      postAlignmentMode = postAlignmentMode,
+      postCellThumbnailSizePercents = postCellThumbnailSizePercents
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -227,7 +231,9 @@ data class PostCellData(
     }
 
     val postNoText = SpannableString.valueOf(
-      String.format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
+      String
+        .format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
+        .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
     )
 
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
@@ -239,7 +245,7 @@ data class PostCellData(
 
     val date = SpannableStringBuilder()
       .append(postNoText)
-      .append(' ')
+      .append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
       .append(calculatePostTime(post))
 
     date.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, date.length, 0)
