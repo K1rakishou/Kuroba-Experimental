@@ -5,14 +5,22 @@ import android.text.style.AbsoluteSizeSpan
 import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.ExperimentalUnitApi
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
+import androidx.compose.ui.unit.dp
 import androidx.core.text.getSpans
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
@@ -24,6 +32,26 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 object ComposeHelpers {
   private const val TAG = "ComposeHelpers"
+  val SCROLLBAR_WIDTH = 8.dp
+
+  @Composable
+  fun Modifier.simpleVerticalScrollbar(
+    state: LazyListState,
+    chanTheme: ChanTheme,
+    width: Dp = SCROLLBAR_WIDTH
+  ): Modifier {
+    return drawBehind {
+      val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
+      val offset = state.layoutInfo.visibleItemsInfo.first().index * elementHeight
+      val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
+
+      drawRect(
+        color = chanTheme.textColorHintCompose,
+        topLeft = Offset(this.size.width - width.toPx(), offset),
+        size = Size(width.toPx(), scrollbarHeight)
+      )
+    }
+  }
 
   @OptIn(ExperimentalUnitApi::class)
   fun Spanned.toAnnotatedString(themeEngine: ThemeEngine): AnnotatedString {

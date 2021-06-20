@@ -1295,7 +1295,7 @@ Don't have a 4chan Pass?<br>
     <string name="post_service_response_dvach_antispam_detected">Dvach anti-spam script detected</string>
     <string name="post_service_response_unknown_error">Unknown error</string>
 
-    <string name="controller_board_archive_title">%1$s archive</string>
+    <string name="controller_board_archive_title">/%1$s/ archive</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -30,6 +31,8 @@ import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -85,8 +88,8 @@ class BoardArchiveController(
             }
 
             Box(modifier = Modifier
-              .padding(top = topPadding.dp, bottom = bottomPadding.dp)
               .fillMaxSize()
+              .padding(top = topPadding.dp, bottom = bottomPadding.dp)
               .background(backColor)
             ) {
               BuildContent()
@@ -159,9 +162,14 @@ class BoardArchiveController(
       Color(chanTheme.dividerColor)
     }
 
+    val state = rememberLazyListState()
+
     LazyColumn(
+      state = state,
       modifier = Modifier
         .fillMaxSize()
+        .simpleVerticalScrollbar(state, chanTheme)
+        .padding(end = ComposeHelpers.SCROLLBAR_WIDTH)
         .imePadding()
     ) {
       item(key = "search_input") {
