@@ -2,8 +2,13 @@ package com.github.k1rakishou.core_themes
 
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.graphics.Typeface
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.TextFieldColors
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.Color
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 
 @SuppressLint("ResourceType")
@@ -42,6 +47,12 @@ abstract class ChanTheme {
 
   val isBackColorDark: Boolean
     get() = ThemeEngine.isDarkColor(backColor)
+
+  val accentColorCompose by lazy { Color(accentColor) }
+  val primaryColorCompose by lazy { Color(primaryColor) }
+  val backColorCompose by lazy { Color(backColor) }
+  val textColorPrimaryCompose by lazy { Color(textColorPrimary) }
+  val errorColorCompose by lazy { Color(errorColor) }
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
 
@@ -91,6 +102,38 @@ abstract class ChanTheme {
     return manipulateColor(backColor, .7f)
   }
 
+  @Composable
+  fun textFieldColors(): TextFieldColors {
+    val disabledAlpha = ContentAlpha.disabled
+
+    val backColorDisabled = remember(key1 = backColorCompose) { backColorCompose.copy(alpha = disabledAlpha) }
+    val iconColor = remember(key1 = backColorCompose) { backColorCompose.copy(alpha = TextFieldDefaults.IconOpacity) }
+
+    return TextFieldDefaults.outlinedTextFieldColors(
+      textColor = textColorPrimaryCompose,
+      disabledTextColor = textColorPrimaryCompose.copy(ContentAlpha.disabled),
+      backgroundColor = Color.Transparent,
+      cursorColor = accentColorCompose,
+      focusedBorderColor = accentColorCompose.copy(alpha = ContentAlpha.high),
+      unfocusedBorderColor = accentColorCompose.copy(alpha = ContentAlpha.medium),
+      disabledBorderColor = accentColorCompose.copy(alpha = ContentAlpha.disabled),
+      focusedLabelColor = accentColorCompose.copy(alpha = ContentAlpha.high),
+      unfocusedLabelColor = accentColorCompose.copy(ContentAlpha.medium),
+      disabledLabelColor = accentColorCompose.copy(ContentAlpha.disabled),
+      leadingIconColor = iconColor,
+      disabledLeadingIconColor = iconColor.copy(alpha = ContentAlpha.disabled),
+      errorLeadingIconColor = iconColor,
+      trailingIconColor = iconColor,
+      disabledTrailingIconColor = iconColor.copy(alpha = ContentAlpha.disabled),
+      placeholderColor = backColorDisabled.copy(ContentAlpha.medium),
+      disabledPlaceholderColor = backColorDisabled.copy(ContentAlpha.disabled),
+      errorBorderColor = errorColorCompose,
+      errorTrailingIconColor = errorColorCompose,
+      errorCursorColor = errorColorCompose,
+      errorLabelColor = errorColorCompose,
+    )
+  }
+
   data class DefaultColors(
     val disabledControlAlpha: Int,
     val controlNormalColor: Int
@@ -105,8 +148,8 @@ abstract class ChanTheme {
     private val ROBOTO_MEDIUM = Typeface.create("sans-serif-medium", Typeface.NORMAL)
     private val ROBOTO_CONDENSED = Typeface.create("sans-serif-condensed", Typeface.NORMAL)
 
-    private val CONTROL_LIGHT_COLOR = Color.parseColor("#FFAAAAAA")
-    private val CONTROL_DARK_COLOR = Color.parseColor("#FFCCCCCC")
+    private const val CONTROL_LIGHT_COLOR = 0xFFAAAAAAL.toInt()
+    private const val CONTROL_DARK_COLOR = 0xFFCCCCCCL.toInt()
 
     private const val MAX_ALPHA_FLOAT = 255f
   }

@@ -23,8 +23,20 @@ android {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
     }
+
     kotlinOptions {
-        jvmTarget = '1.8'
+        jvmTarget = JavaVersion.VERSION_1_8.toString()
+        freeCompilerArgs = ["-Xopt-in=kotlin.RequiresOptIn"]
+        jvmTarget = "1.8"
+        useIR = true
+    }
+
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = versions.compose_version
+        kotlinCompilerVersion = versions.kotlin_version
     }
 }
 
@@ -38,6 +50,8 @@ dependencies {
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation "com.google.android.material:material:${versions.material}"
     implementation "com.google.code.gson:gson:${versions.gson}"
+
+    implementation("androidx.compose.material:material:${versions.compose_version}")
 
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"

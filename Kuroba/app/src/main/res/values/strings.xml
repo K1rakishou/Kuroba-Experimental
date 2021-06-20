@@ -239,6 +239,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="order_activity">Thread activity</string>
 
     <string name="search_hint">Search</string>
+    <string name="search_nothing_found">Nothing found</string>
+    <string name="search_nothing_found_with_query">Nothing found by query \'%1$s\'</string>
+
     <string name="open_link_confirmation">Open this link?</string>
     <string name="open_link_failed">No applications were found to open this link</string>
     <string name="open_link_failed_url">No applications were found to open link \"%1$s\"</string>
@@ -1291,6 +1294,8 @@ Don't have a 4chan Pass?<br>
     <string name="post_service_response_authentication_required">Authentication required</string>
     <string name="post_service_response_dvach_antispam_detected">Dvach anti-spam script detected</string>
     <string name="post_service_response_unknown_error">Unknown error</string>
+
+    <string name="controller_board_archive_title">%1$s archive</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

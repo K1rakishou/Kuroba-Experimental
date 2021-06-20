@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
+import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
@@ -49,20 +50,45 @@ fun KurobaComposeErrorMessage(errorMessage: String) {
 }
 
 @Composable
-fun KurobaComposeText(text: String, modifier: Modifier = Modifier) {
-  KurobaComposeText(text = AnnotatedString(text), modifier)
+fun KurobaComposeText(text: String, modifier: Modifier = Modifier, color: Color? = null) {
+  KurobaComposeText(text = AnnotatedString(text), modifier = modifier, color = color)
 }
 
 @Composable
-fun KurobaComposeText(text: AnnotatedString, modifier: Modifier = Modifier) {
-  val chanTheme = LocalChanTheme.current
-  val textColorPrimary = remember(key1 = chanTheme.textColorPrimary) {
-    Color(chanTheme.textColorPrimary)
+fun KurobaComposeText(text: AnnotatedString, modifier: Modifier = Modifier, color: Color? = null) {
+  val textColorPrimary = if (color == null) {
+    val chanTheme = LocalChanTheme.current
+
+    remember(key1 = chanTheme.textColorPrimary) {
+      Color(chanTheme.textColorPrimary)
+    }
+  } else {
+    color
   }
 
   Text(
     color = textColorPrimary,
     text = text,
     modifier = modifier
+  )
+}
+
+@Composable
+fun KurobaComposeTextField(
+  value: String,
+  modifier: Modifier = Modifier,
+  onValueChange: (String) -> Unit,
+  maxLines: Int = Int.MAX_VALUE,
+  label: @Composable (() -> Unit)? = null,
+) {
+  val chanTheme = LocalChanTheme.current
+
+  TextField(
+    value = value,
+    label = label,
+    onValueChange = onValueChange,
+    maxLines = maxLines,
+    modifier = modifier,
+    colors = chanTheme.textFieldColors()
   )
 }

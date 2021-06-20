@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
@@ -34,6 +35,17 @@ fun ProvideChanTheme(
   }
 
   CompositionLocalProvider(LocalChanTheme provides chanTheme) {
-    content()
+    val originalColors = MaterialTheme.colors
+
+    val updatedColors = remember {
+      originalColors.copy(
+        primary = chanTheme.primaryColorCompose,
+        error = chanTheme.errorColorCompose
+      )
+    }
+
+    MaterialTheme(colors = updatedColors) {
+      content()
+    }
   }
 }

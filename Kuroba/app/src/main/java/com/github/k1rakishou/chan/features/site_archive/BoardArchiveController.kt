@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Divider
-import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -21,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.k1rakishou.chan.R
@@ -33,13 +33,17 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
+import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
+import com.google.accompanist.insets.imePadding
 import javax.inject.Inject
 
 class BoardArchiveController(
@@ -65,27 +69,27 @@ class BoardArchiveController(
   override fun onCreate() {
     super.onCreate()
 
-    navigation.title = "/${catalogDescriptor.boardCode()}/ Archive"
+    navigation.title = getString(R.string.controller_board_archive_title, catalogDescriptor.boardCode())
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
     onInsetsChanged()
 
     view = ComposeView(context).apply {
       setContent {
-        MaterialTheme {
-          ProvideChanTheme(themeEngine) {
-            ProvideWindowInsets {
-              val backColor = remember(key1 = themeEngine.chanTheme.backColor) {
-                Color(themeEngine.chanTheme.backColor)
-              }
+        ProvideChanTheme(themeEngine) {
+          ProvideWindowInsets {
+            val chanTheme = LocalChanTheme.current
 
-              Box(modifier = Modifier
-                .padding(top = topPadding.dp, bottom = bottomPadding.dp)
-                .fillMaxSize()
-                .background(backColor)
-              ) {
-                BuildContent()
-              }
+            val backColor = remember(key1 = chanTheme.backColor) {
+              Color(chanTheme.backColor)
+            }
+
+            Box(modifier = Modifier
+              .padding(top = topPadding.dp, bottom = bottomPadding.dp)
+              .fillMaxSize()
+              .background(backColor)
+            ) {
+              BuildContent()
             }
           }
         }
@@ -127,48 +131,84 @@ class BoardArchiveController(
       is AsyncData.Data -> archiveThreadsAsync.data
     }
 
-    if (archiveThreads.isEmpty()) {
-      KurobaComposeErrorMessage(errorMessage = "Nothing found")
-      return
-    }
-
     BuildListOfArchiveThreads(
-      archiveThreads = archiveThreads
-      ) { threadNo ->
-        if (blockClicking) {
-          return@BuildListOfArchiveThreads
-        }
-
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadNo)
-        onThreadClicked(threadDescriptor)
-        requireNavController().popController()
-
-        blockClicking = true
+      archiveThreads = archiveThreads,
+      viewModel = viewModel
+    ) { threadNo ->
+      if (blockClicking) {
+        return@BuildListOfArchiveThreads
       }
+
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadNo)
+      onThreadClicked(threadDescriptor)
+      requireNavController().popController()
+
+      blockClicking = true
+    }
   }
 
   @Composable
   private fun BuildListOfArchiveThreads(
+    viewModel: BoardArchiveViewModel,
     archiveThreads: List<BoardArchiveViewModel.ArchiveThread>,
     onThreadClicked: (Long) -> Unit
   ) {
-    val dividerColor = remember(key1 = themeEngine.chanTheme.dividerColor) {
-      Color(themeEngine.chanTheme.dividerColor)
+    val chanTheme = LocalChanTheme.current
+
+    val dividerColor = remember(key1 = chanTheme.dividerColor) {
+      Color(chanTheme.dividerColor)
     }
 
     LazyColumn(
       modifier = Modifier
         .fillMaxSize()
+        .imePadding()
     ) {
-      items(count = archiveThreads.size) { index ->
-        ArchiveThreadItem(index, archiveThreads[index], onThreadClicked)
+      item(key = "search_input") {
+        val searchQuery by remember(viewModel.searchQuery.value) { viewModel.searchQuery }
+        val textHintColor = remember(key1 = chanTheme.textColorHint) {
+          Color(chanTheme.textColorHint)
+        }
 
-        if (index >= 0 && index < archiveThreads.size) {
-          Divider(
-            modifier = Modifier.padding(horizontal = 2.dp),
-            color = dividerColor,
-            thickness = 1.dp
+        Column(modifier = Modifier.fillMaxSize()) {
+          KurobaComposeTextField(
+            value = searchQuery,
+            label = { KurobaComposeText(text = stringResource(id = R.string.search_hint), color = textHintColor) },
+            onValueChange = { query -> viewModel.updateSearchQuery(query) },
+            maxLines = 1,
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
           )
+        }
+      }
+
+      if (archiveThreads.isEmpty()) {
+        val searchQuery by viewModel.searchQuery
+        if (searchQuery.isEmpty()) {
+          item(key = "nothing_found_message") {
+            KurobaComposeErrorMessage(
+              errorMessage = stringResource(id = R.string.search_nothing_found)
+            )
+          }
+        } else {
+          item(key = "nothing_found_by_query_message_$searchQuery") {
+            KurobaComposeErrorMessage(
+              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+            )
+          }
+        }
+      } else {
+        items(count = archiveThreads.size) { index ->
+          ArchiveThreadItem(index, archiveThreads[index], onThreadClicked)
+
+          if (index >= 0 && index < archiveThreads.size) {
+            Divider(
+              modifier = Modifier.padding(horizontal = 2.dp),
+              color = dividerColor,
+              thickness = 1.dp
+            )
+          }
         }
       }
     }
