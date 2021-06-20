@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
+import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
@@ -252,6 +253,8 @@ class BrowseController(
       BoardPostViewMode.STAGGER -> R.string.action_switch_board
     }
 
+    val is4chan = threadLayout.presenter.currentChanDescriptor?.siteDescriptor()?.is4chan() ?: false
+
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
       .addSortMenu()
@@ -261,6 +264,7 @@ class BrowseController(
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
+      .withSubItem(ACTION_CHAN4_ARCHIVE, R.string.action_chan4_archive, is4chan, { chan4ArchiveClicked() })
       .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, { item -> upClicked(item) })
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
       .build()
@@ -551,6 +555,16 @@ class BrowseController(
     handleShareOrOpenInBrowser(true)
   }
 
+  private fun chan4ArchiveClicked() {
+    val boardArchiveController = BoardArchiveController(
+      context = context,
+      catalogDescriptor = chanDescriptor!! as CatalogDescriptor,
+      onThreadClicked = { threadDescriptor -> mainScope.launch { showThread(threadDescriptor, animated = true) } }
+    )
+
+    getCurrentControllerWithNavigation().pushController(boardArchiveController)
+  }
+
   private fun upClicked(item: ToolbarMenuSubItem) {
     threadLayout.presenter.scrollTo(0, false)
   }
@@ -606,23 +620,23 @@ class BrowseController(
       val board = boardManager.byBoardDescriptor(boardDescriptor)
         ?: return@launch
 
-      historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
+      val catalogDescriptor = CatalogDescriptor.create(boardDescriptor)
+
+      historyNavigationManager.moveNavElementToTop(catalogDescriptor)
       boardManager.updateCurrentBoard(boardDescriptor)
 
       navigation.title = "/" + boardDescriptor.boardCode + "/"
       navigation.subtitle = board.name ?: ""
+
+      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
 
       if (!menuBuiltOnce) {
         menuBuiltOnce = true
         buildMenu()
       }
 
-      val catalogDescriptor = CatalogDescriptor.create(
-        boardDescriptor.siteName(),
-        boardDescriptor.boardCode
-      )
+      updateMenuItems()
 
-      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
       requireNavController().requireToolbar().updateTitle(navigation)
     }
   }
@@ -776,6 +790,15 @@ class BrowseController(
     setBoard(boardDescriptor)
   }
 
+  private fun updateMenuItems() {
+    val chanDescriptor = threadLayout.presenter.currentChanDescriptor
+
+    navigation.findSubItem(ACTION_CHAN4_ARCHIVE)?.let { chan4ArchiveMenuItem ->
+      val is4chan = chanDescriptor?.siteDescriptor()?.is4chan() ?: false
+      chan4ArchiveMenuItem.visible = is4chan
+    }
+  }
+
   override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
     super.onLostFocus(wasFocused)
     check(wasFocused == threadControllerType) { "Unexpected controllerType: $wasFocused" }
@@ -804,6 +827,7 @@ class BrowseController(
     private const val ACTION_OPEN_THREAD_BY_ID = 909
     private const val ACTION_OPEN_THREAD_BY_URL = 910
     private const val ACTION_CATALOG_ALBUM = 911
+    private const val ACTION_CHAN4_ARCHIVE = 912
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

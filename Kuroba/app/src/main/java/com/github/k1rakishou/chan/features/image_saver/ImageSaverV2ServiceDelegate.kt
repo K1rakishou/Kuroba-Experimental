@@ -11,6 +11,8 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.doIoTaskWithAttempts
@@ -870,11 +872,11 @@ class ImageSaverV2ServiceDelegate(
         throw NotFoundException()
       }
 
-      throw IOException("Unsuccessful response, code: ${response.code}")
+      throw BadStatusResponseException(response.code)
     }
 
     val responseBody = response.body
-      ?: throw IOException("Response has no body")
+      ?: throw EmptyBodyResponseException()
 
     val outputFileStream = imageSaverFileManager.fileManager.getOutputStream(outputFile)
       ?: throw ResultFileAccessError(outputFile.getFullPath())

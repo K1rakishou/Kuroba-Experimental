@@ -10,7 +10,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.groupOrNull
-import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_parser.html.ExtractedAttributeValues
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCollector
@@ -18,15 +18,10 @@ import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandBufferBuild
 import com.github.k1rakishou.core_parser.html.KurobaHtmlParserCommandExecutor
 import com.github.k1rakishou.core_parser.html.KurobaMatcher
 import com.github.k1rakishou.core_parser.html.KurobaParserCommandBuilder
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import org.joda.time.DateTime
-import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
-import java.io.IOException
-import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
 class FoolFuukaSearchRequest(
@@ -370,30 +365,9 @@ class FoolFuukaSearchRequest(
   }
 
   suspend fun execute(): SearchResult {
-    return withContext(Dispatchers.IO) {
-      try {
-        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
-
-        if (!response.isSuccessful) {
-          throw IOException("Bad status code: ${response.code}")
-        }
-
-        if (response.body == null) {
-          throw IOException("Response has no body")
-        }
-
-        return@withContext response.body!!.use { body ->
-          return@use body.byteStream().use { inputStream ->
-            val url = request.url.toString()
-
-            val htmlDocument = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), url)
-            return@use readHtml(url, htmlDocument)
-          }
-        }
-      } catch (error: Throwable) {
-        return@withContext SearchResult.Failure(SearchError.UnknownError(error))
-      }
-    }
+    return proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(request)
+      .mapValue { document -> readHtml(request.url.toString(), document) }
+      .mapErrorToValue { error -> SearchResult.Failure(SearchError.UnknownError(error)) }
   }
 
   private suspend fun readHtml(url: String, document: Document): SearchResult {

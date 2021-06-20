@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
+import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
@@ -88,6 +89,8 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var gson: Gson
   @Inject
   protected lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+  @Inject
+  protected lateinit var simpleCommentParser: SimpleCommentParser
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

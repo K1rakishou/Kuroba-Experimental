@@ -397,7 +397,7 @@ class StartActivity : ControllerHostActivity(),
       mainNavigationController.pushController(slideController, false)
       slideController.setLeftController(browseController, false)
     } else {
-      mainNavigationController.pushController(browseController, false)
+      mainNavigationController.pushController(browseController!!, false)
     }
   }
 

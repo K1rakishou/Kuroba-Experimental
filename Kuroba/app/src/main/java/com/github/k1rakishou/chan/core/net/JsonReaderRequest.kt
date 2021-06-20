@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.net
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -24,7 +25,6 @@ import com.google.gson.stream.JsonReader
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 import kotlin.time.ExperimentalTime
@@ -57,7 +57,7 @@ abstract class JsonReaderRequest<T>(
       }
 
       if (response.body == null) {
-        return@withContext JsonReaderResponse.UnknownServerError(IOException("Response has no body"))
+        return@withContext JsonReaderResponse.UnknownServerError(EmptyBodyResponseException())
       }
 
       try {

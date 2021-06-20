@@ -52,8 +52,12 @@ class FuukaApi(
         return@readBodyHtml
       }
 
-      val postBuilders = collector.archivePosts.map { archivePost ->
-        return@map ArchiveThreadMapper.fromPost(threadDescriptor.boardDescriptor, archivePost)
+      val postBuilders = collector.archivePosts.mapNotNull { archivePost ->
+        if (!archivePost.isValid()) {
+          return@mapNotNull null
+        }
+
+        return@mapNotNull ArchiveThreadMapper.fromPost(threadDescriptor.boardDescriptor, archivePost)
       }
 
       val originalPost = postBuilders.firstOrNull()

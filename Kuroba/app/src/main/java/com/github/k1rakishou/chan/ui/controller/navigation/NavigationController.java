@@ -25,12 +25,13 @@ import com.github.k1rakishou.chan.controller.transition.ControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PopControllerTransition;
 import com.github.k1rakishou.chan.controller.transition.PushControllerTransition;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation;
 import com.github.k1rakishou.chan.core.navigation.HasNavigation;
 import com.github.k1rakishou.core_logger.Logger;
 
 import javax.inject.Inject;
 
-public abstract class NavigationController extends Controller implements HasNavigation {
+public abstract class NavigationController extends Controller implements ControllerWithNavigation, HasNavigation {
     private static final String TAG = "NavigationController";
 
     @Inject
@@ -44,14 +45,17 @@ public abstract class NavigationController extends Controller implements HasNavi
         super(context);
     }
 
+    @Override
     public boolean pushController(final Controller to) {
         return pushController(to, true);
     }
 
+    @Override
     public boolean pushController(final Controller to, boolean animated) {
         return pushController(to, animated ? new PushControllerTransition() : null);
     }
 
+    @Override
     public boolean pushController(final Controller to, ControllerTransition controllerTransition) {
         final Controller from = getTop();
 
@@ -69,14 +73,17 @@ public abstract class NavigationController extends Controller implements HasNavi
         return true;
     }
 
+    @Override
     public boolean popController() {
         return popController(true);
     }
 
+    @Override
     public boolean popController(boolean animated) {
         return popController(animated ? new PopControllerTransition() : null);
     }
 
+    @Override
     public boolean popController(ControllerTransition controllerTransition) {
         final Controller from = getTop();
         final Controller to = childControllers.size() > 1

@@ -100,6 +100,12 @@ abstract class SiteRequestModifier<T : Site>(
   }
 
   @CallSuper
+  open fun modifyArchiveGetRequest(site: T, requestBuilder: Request.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+  }
+
+  @CallSuper
   open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
     requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)

@@ -1,5 +1,14 @@
 package com.github.k1rakishou.chan.utils;
 
+import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
+import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
+import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
+import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
+
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
@@ -46,15 +55,6 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.content.res.Configuration.ORIENTATION_LANDSCAPE;
-import static android.content.res.Configuration.ORIENTATION_PORTRAIT;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Debug;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Release;
-import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
-import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 public class AppModuleAndroidUtils {
     private static final String TAG = "AppModuleAndroidUtils";
@@ -294,6 +294,14 @@ public class AppModuleAndroidUtils {
 
     public static int dp(float dp) {
         return (int) (dp * getRes().getDisplayMetrics().density);
+    }
+
+    public static int pxToDp(float px) {
+        return (int) (px / getRes().getDisplayMetrics().density);
+    }
+
+    public static int pxToDp(int px) {
+        return (int) (px / getRes().getDisplayMetrics().density);
     }
 
     public static int dp(Context context, float dp) {

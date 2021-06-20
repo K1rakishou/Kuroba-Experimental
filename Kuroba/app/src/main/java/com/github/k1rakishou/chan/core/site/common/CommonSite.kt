@@ -369,10 +369,6 @@ abstract class CommonSite : SiteBase() {
       throw IllegalStateException("Attempt to call abstract method")
     }
 
-    override fun archive(board: ChanBoard): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
-    }
-    
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }

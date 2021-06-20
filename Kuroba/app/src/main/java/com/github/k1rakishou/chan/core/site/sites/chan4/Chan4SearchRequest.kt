@@ -9,6 +9,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendCall
@@ -28,7 +30,6 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.FormElement
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 
@@ -44,11 +45,11 @@ class Chan4SearchRequest(
         val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
-          throw IOException("Bad status code: ${response.code}")
+          throw BadStatusResponseException(response.code)
         }
 
         if (response.body == null) {
-          throw IOException("Response has no body")
+          throw EmptyBodyResponseException()
         }
 
         return@withContext response.body!!.use { body ->

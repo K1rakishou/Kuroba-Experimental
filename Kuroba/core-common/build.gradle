@@ -40,6 +40,10 @@ dependencies {
     implementation "com.squareup.okhttp3:okhttp:${versions.okhttp}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "com.google.code.gson:gson:${versions.gson}"
+    implementation "org.jsoup:jsoup:${versions.jsoup}"
+
+    implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
 
     implementation "com.google.code.findbugs:jsr305:3.0.2"
     testImplementation "junit:junit:${versions.junit}"

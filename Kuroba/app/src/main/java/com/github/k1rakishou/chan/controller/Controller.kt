@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.controller.transition.FadeOutTransition
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
+import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -109,6 +110,14 @@ abstract class Controller(@JvmField var context: Context) {
     private set
 
   protected val cancellableToast = CancellableToast()
+
+  fun getCurrentControllerWithNavigation(): ControllerWithNavigation {
+    if (doubleNavigationController != null) {
+      return doubleNavigationController!!
+    } else {
+      return navigationController!!
+    }
+  }
 
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
     "Toolbar was not set"

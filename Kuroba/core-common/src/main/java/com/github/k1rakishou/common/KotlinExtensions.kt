@@ -17,6 +17,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
+import com.squareup.moshi.JsonAdapter
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
@@ -37,10 +38,18 @@ import okhttp3.Callback
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
+import okhttp3.ResponseBody
+import okio.BufferedSource
+import okio.buffer
+import okio.source
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.io.IOException
+import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.InterruptedIOException
 import java.lang.reflect.Type
+import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
@@ -74,6 +83,31 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
   }
 }
 
+inline fun <T : Any?> ResponseBody.useBufferedSource(useFunc: (BufferedSource) -> T): T {
+  return byteStream().use { inputStream ->
+    return@use inputStream.useBufferedSource(useFunc)
+  }
+}
+
+inline fun <T : Any?> InputStream.useBufferedSource(useFunc: (BufferedSource) -> T): T {
+  return source().use { source ->
+    return@use source.buffer().use { buffer ->
+      return@use useFunc(buffer)
+    }
+  }
+}
+
+inline fun <T : Any?> ResponseBody.useJsonReader(useFunc: (JsonReader) -> T): T {
+  return byteStream().use { inputStream ->
+    return@use InputStreamReader(inputStream).use { isr ->
+      return@use JsonReader(isr).use { jsonReader ->
+        return@use useFunc(jsonReader)
+      }
+    }
+  }
+}
+
+
 suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
   request: Request,
   gson: Gson
@@ -88,18 +122,62 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
 
       val body = response.body
       if (body == null) {
-        return@withContext JsonConversionResult.UnknownError(IOException("Response has no body"))
+        return@withContext JsonConversionResult.UnknownError(EmptyBodyResponseException())
       }
 
-      val result = body.byteStream().use { inputStream ->
-        return@use JsonReader(InputStreamReader(inputStream)).use { jsonReader ->
-          return@use gson.fromJson<T>(jsonReader, T::class.java)
-        }
-      }
+      val result = body.useJsonReader { jsonReader -> gson.fromJson<T>(jsonReader, T::class.java) }
 
       return@withContext JsonConversionResult.Success(result)
     } catch (error: Throwable) {
       return@withContext JsonConversionResult.UnknownError(error)
+    }
+  }
+}
+
+suspend inline fun OkHttpClient.suspendConvertIntoJsoupDocument(
+  request: Request,
+): ModularResult<Document> {
+  return withContext(Dispatchers.IO) {
+    return@withContext Try {
+      val response = suspendCall(request)
+
+      if (!response.isSuccessful) {
+        throw BadStatusResponseException(response.code)
+      }
+
+      if (response.body == null) {
+        throw EmptyBodyResponseException()
+      }
+
+      return@Try response.body!!.use { body ->
+        return@use body.byteStream().use { inputStream ->
+          val url = request.url.toString()
+
+          return@use Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), url)
+        }
+      }
+    }
+  }
+}
+
+suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithAdapter(
+  request: Request,
+  adapter: JsonAdapter<T>
+): ModularResult<out T> {
+  return withContext(Dispatchers.IO) {
+    return@withContext Try {
+      val response = suspendCall(request)
+
+      if (!response.isSuccessful) {
+        throw BadStatusResponseException(response.code)
+      }
+
+      val body = response.body
+      if (body == null) {
+        throw EmptyBodyResponseException()
+      }
+
+      return@Try body.useBufferedSource { bufferedSource -> adapter.fromJson(bufferedSource) as T }
     }
   }
 }
@@ -119,15 +197,10 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithType
 
       val body = response.body
       if (body == null) {
-        return@withContext JsonConversionResult.UnknownError(IOException("Response has no body"))
+        return@withContext JsonConversionResult.UnknownError(EmptyBodyResponseException())
       }
 
-      val result = body.byteStream().use { inputStream ->
-        return@use JsonReader(InputStreamReader(inputStream)).use { jsonReader ->
-          return@use gson.fromJson<T>(jsonReader, type)
-        }
-      }
-
+      val result = body.useJsonReader { jsonReader -> gson.fromJson<T>(jsonReader, type) }
       return@withContext JsonConversionResult.Success(result)
     } catch (error: Throwable) {
       return@withContext JsonConversionResult.UnknownError(error)
@@ -842,11 +915,14 @@ suspend fun OkHttpClient.readResponseAsString(request: Request): ModularResult<S
   return Try {
     val response = suspendCall(request)
     if (!response.isSuccessful) {
-      throw IOException("Bad response code: ${response.code}")
+      throw BadStatusResponseException(response.code)
     }
 
-    val responseBody = response.body
-      ?: throw IOException("Response has no body")
+    val responseBody = if (response.body == null) {
+      throw EmptyBodyResponseException()
+    } else {
+      response.body!!
+    }
 
     return@Try responseBody.string()
   }

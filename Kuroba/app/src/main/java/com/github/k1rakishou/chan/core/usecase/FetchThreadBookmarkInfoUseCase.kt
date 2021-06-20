@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.processDataCollectionConcurrently
@@ -89,7 +90,7 @@ class FetchThreadBookmarkInfoUseCase(
     }
 
     val body = response.body
-      ?: return ThreadBookmarkFetchResult.Error(IOException("Response has no body"), threadDescriptor)
+      ?: return ThreadBookmarkFetchResult.Error(EmptyBodyResponseException(), threadDescriptor)
 
     return body.byteStream().use { inputStream ->
       val postsCount = bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->

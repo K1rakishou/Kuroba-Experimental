@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.jsonArray
@@ -114,7 +115,7 @@ class DvachBoardsRequest internal constructor(
     }
 
     if (response.body == null) {
-      throw DvachBoardsRequestException.UnknownServerError(IOException("Response has no body"))
+      throw DvachBoardsRequestException.UnknownServerError(EmptyBodyResponseException())
     }
 
     try {

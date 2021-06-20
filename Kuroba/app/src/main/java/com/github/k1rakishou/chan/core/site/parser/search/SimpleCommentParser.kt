@@ -1,6 +1,9 @@
 package com.github.k1rakishou.chan.core.site.parser.search
 
 import android.text.SpannableString
+import android.text.SpannableStringBuilder
+import android.text.Spanned
+import android.text.SpannedString
 import android.text.TextUtils
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
@@ -58,18 +61,18 @@ open class SimpleCommentParser {
 
   open fun parseComment(
     commentRaw: CharSequence
-  ): CharSequence? {
-    var total: CharSequence? = null
+  ): Spanned? {
+    val total = SpannableStringBuilder()
 
     try {
       val comment = commentRaw.toString()
       val document = Jsoup.parseBodyFragment(comment)
       val nodes = document.body().childNodes()
-      val texts = ArrayList<CharSequence>(nodes.size)
 
-      nodes.mapNotNullTo(texts) { parseNode(it) }
+      nodes.forEach { node ->
+        total.append(parseNode(node))
+      }
 
-      total = TextUtils.concat(*texts.toTypedArray())
     } catch (e: Exception) {
       Logger.e(TAG, "Error parsing comment html", e)
       return null
@@ -80,7 +83,7 @@ open class SimpleCommentParser {
 
   private fun parseNode(
     node: Node
-  ): CharSequence? {
+  ): Spanned {
     if (node is TextNode) {
        return SpannableString(node.text())
     }
@@ -106,11 +109,11 @@ open class SimpleCommentParser {
         node
       )
 
-      return result ?: allInnerText
+      return SpannedString.valueOf(result ?: allInnerText)
     }
 
     Logger.e(TAG, "Unknown node instance: " + node.javaClass.name)
-    return ""
+    return SpannedString.valueOf("")
   }
 
   private fun handleTag(

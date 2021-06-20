@@ -23,9 +23,6 @@ class GzipInterceptor : Interceptor {
     val responseBody = response.body
       ?: return response
 
-    val gzipSource = GzipSource(responseBody.source())
-    val resultBody = gzipSource.buffer().asResponseBody(responseBody.contentType())
-
     val strippedHeaders = response.headers.newBuilder()
       .removeAll("Content-Encoding")
       .removeAll("Content-Length")
@@ -33,7 +30,7 @@ class GzipInterceptor : Interceptor {
 
     return response.newBuilder()
       .headers(strippedHeaders)
-      .body(resultBody)
+      .body(GzipSource(responseBody.source()).buffer().asResponseBody(responseBody.contentType()))
       .message(response.message)
       .build()
   }

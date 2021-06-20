@@ -108,6 +108,21 @@ open class PostLinkable(
     }
   }
 
+  fun isMarkedNo(): Boolean {
+    if (type != Type.QUOTE) {
+      return false
+    }
+
+    val value = when (linkableValue) {
+      is Value.LongValue -> linkableValue.value
+      else -> throw IllegalArgumentException(
+        "Unsupported value type: ${linkableValue::class.java.simpleName}"
+      )
+    }
+
+    return value == markedNo
+  }
+
   open fun getTheme(): ChanTheme = themeEngine.chanTheme
 
   override fun hashCode(): Int {

@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -196,7 +197,7 @@ class ChanThreadLoaderCoordinator(
 
         val (chanReaderProcessor, readPostsDuration) = measureTimedValue {
           val body = response.body
-            ?: throw IOException("Response has no body")
+            ?: throw EmptyBodyResponseException()
 
           return@measureTimedValue body.byteStream().use { inputStream ->
             return@use readPostsFromResponse(

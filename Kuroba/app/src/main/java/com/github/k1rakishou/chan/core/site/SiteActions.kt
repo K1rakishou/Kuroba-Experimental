@@ -23,11 +23,14 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
@@ -45,8 +48,11 @@ interface SiteActions {
   fun isLoggedIn(): Boolean
   fun loginDetails(): AbstractLoginRequest?
 
-  suspend fun <T : SearchParams> search(searchParams: T):SearchResult =
+  suspend fun <T : SearchParams> search(searchParams: T): SearchResult =
     SearchResult.Failure(SearchError.NotImplemented)
+
+  suspend fun archive(boardDescriptor: BoardDescriptor): ModularResult<List<NativeArchivePost>> =
+    ModularResult.value(emptyList())
 
   suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null
 

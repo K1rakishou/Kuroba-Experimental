@@ -79,6 +79,7 @@ import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelec
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelectionListView;
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionView;
 import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView;
+import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController;
 import com.github.k1rakishou.chan.features.themes.ThemeGalleryController;
 import com.github.k1rakishou.chan.features.themes.ThemeSettingsController;
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
@@ -249,6 +250,7 @@ public interface ActivityComponent {
     void inject(CaptchaContainerController captchaContainerController);
     void inject(MediaViewerController mediaViewerController);
     void inject(MediaViewerGesturesSettingsController mediaViewerGesturesSettingsController);
+    void inject(BoardArchiveController boardArchiveController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

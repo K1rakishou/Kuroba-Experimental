@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.processDataCollectionConcurrently
@@ -370,8 +371,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
     val responseBody = response.body
     if (responseBody == null) {
-      val error = IOException("Response has no body catalogJsonEndpoint=$catalogJsonEndpoint")
-      return CatalogFetchResult.Error(error)
+      return CatalogFetchResult.Error(EmptyBodyResponseException())
     }
 
     val filterWatchCatalogInfoObjectResult = responseBody.byteStream().use { inputStream ->

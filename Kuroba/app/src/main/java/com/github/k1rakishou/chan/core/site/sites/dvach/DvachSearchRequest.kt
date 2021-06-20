@@ -10,20 +10,15 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import okhttp3.Request
-import okio.buffer
-import okio.source
 import org.joda.time.DateTime
 import org.jsoup.parser.Parser
-import java.io.IOException
-import java.io.InputStream
 
 class DvachSearchRequest(
   private val moshi: Moshi,
@@ -34,37 +29,22 @@ class DvachSearchRequest(
 ) {
 
   suspend fun execute(): SearchResult {
-    return withContext(Dispatchers.IO) {
-      try {
-        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+    val dvachSearchResult = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
+      request,
+      moshi.adapter(DvachSearchResult::class.java)
+    )
 
-        if (!response.isSuccessful) {
-          throw IOException("Bad status code: ${response.code}")
-        }
-
-        if (response.body == null) {
-          throw IOException("Response has no body")
-        }
-
-        return@withContext response.body!!.use { body ->
-          return@use body.byteStream().use { inputStream ->
-            return@use readJson(inputStream)
-          }
-        }
-      } catch (error: Throwable) {
-        return@withContext SearchResult.Failure(SearchError.UnknownError(error))
-      }
+    val dvachSearch = if (dvachSearchResult is ModularResult.Error) {
+      return SearchResult.Failure(SearchError.UnknownError(dvachSearchResult.error))
+    } else {
+      dvachSearchResult.valueOrNull()!!
     }
+
+    return convertToSearchResult(dvachSearch)
   }
 
-  private fun readJson(inputStream: InputStream): SearchResult {
-    val dvachSearchResultAdapter = moshi.adapter(DvachSearchResult::class.java)
-
-    val dvachSearchResult = inputStream.source().buffer().use { buffer ->
-      dvachSearchResultAdapter.fromJson(buffer)
-    }
-
-    if (dvachSearchResult == null || dvachSearchResult.posts.isEmpty()) {
+  private fun convertToSearchResult(dvachSearchResult: DvachSearchResult): SearchResult {
+    if (dvachSearchResult.posts.isEmpty()) {
       return SearchResult.Success(searchParams, emptyList(), PageCursor.End, null)
     }
 

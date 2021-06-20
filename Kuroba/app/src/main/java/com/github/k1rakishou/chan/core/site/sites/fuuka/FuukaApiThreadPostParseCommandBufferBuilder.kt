@@ -190,60 +190,62 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         )
 
         nest {
-          tag(
-            tagName = "td",
-            matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }
-          )
-
-          nest {
+          executeIf(predicate = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }) {
             tag(
-              tagName = "label",
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
-            )
-
-            extractRegularPostPosterInfo()
-
-            a(
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAttribute("onclick")) },
-              attrExtractorBuilderFunc = { extractAttrValueByKey("href") },
-              extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-                extractPostInfo(false, archiveThreadPostCollector, extractedAttributeValues)
-              }
-            )
-
-            executeIf(predicate = {
-              tag(KurobaMatcher.TagMatcher.tagWithNameAttributeMatcher("span"))
-              tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher())
-            }) {
-              span(
-                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) },
-                attrExtractorBuilderFunc = { extractText() },
-                extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
-                  extractFileInfoPart1(archiveThreadPostCollector.lastPostOrNull()!!, extractedAttributeValues)
-                }
-              )
-            }
-
-            tryExtractRegularPostMediaLink()
-
-            tag(
-              tagName = "blockquote",
-              matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              tagName = "td",
+              matchableBuilderFunc = { className(KurobaMatcher.PatternMatcher.stringEquals("reply")) }
             )
 
             nest {
               tag(
-                tagName = "p",
-                matchableBuilderFunc = { attr("itemprop", KurobaMatcher.PatternMatcher.stringEquals("text")) },
-                attrExtractorBuilderFunc = { extractHtml() },
+                tagName = "label",
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              )
+
+              extractRegularPostPosterInfo()
+
+              a(
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagHasAttribute("onclick")) },
+                attrExtractorBuilderFunc = { extractAttrValueByKey("href") },
                 extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
-                  archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
-                    archivePost.comment = extractedAttributeValues.getHtml() ?: ""
-                  }
+                  extractPostInfo(false, archiveThreadPostCollector, extractedAttributeValues)
                 }
               )
-            }
 
+              executeIf(predicate = {
+                tag(KurobaMatcher.TagMatcher.tagWithNameAttributeMatcher("span"))
+                tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher())
+              }) {
+                span(
+                  matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) },
+                  attrExtractorBuilderFunc = { extractText() },
+                  extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
+                    extractFileInfoPart1(archiveThreadPostCollector.lastPostOrNull()!!, extractedAttributeValues)
+                  }
+                )
+              }
+
+              tryExtractRegularPostMediaLink()
+
+              tag(
+                tagName = "blockquote",
+                matchableBuilderFunc = { tag(KurobaMatcher.TagMatcher.tagNoAttributesMatcher()) }
+              )
+
+              nest {
+                tag(
+                  tagName = "p",
+                  matchableBuilderFunc = { attr("itemprop", KurobaMatcher.PatternMatcher.stringEquals("text")) },
+                  attrExtractorBuilderFunc = { extractHtml() },
+                  extractorFunc = { node, extractedAttributeValues, archiveThreadPostCollector ->
+                    archiveThreadPostCollector.lastPostOrNull()?.let { archivePost ->
+                      archivePost.comment = extractedAttributeValues.getHtml() ?: ""
+                    }
+                  }
+                )
+              }
+
+            }
           }
         }
       }
@@ -483,8 +485,9 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         ) {
           Logger.e(
             TAG, "Failed to parse file, tagText='$rawText', fileSizeValue=$fileSizeValue, " +
-            "fileSizeType=$fileSizeType, fileWidthAndHeight=$fileWidthAndHeight, " +
-            "originalFileName=$originalFileName")
+              "fileSizeType=$fileSizeType, fileWidthAndHeight=$fileWidthAndHeight, " +
+              "originalFileName=$originalFileName"
+          )
           return@let
         }
 
@@ -495,7 +498,8 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         if (width == null || height == null) {
           Logger.e(
             TAG, "Failed to extract file width and height, " +
-            "fileWidthAndHeight='$fileWidthAndHeight', width=$width, height=$height")
+              "fileWidthAndHeight='$fileWidthAndHeight', width=$width, height=$height"
+          )
           return@let
         }
 
@@ -532,14 +536,14 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
   companion object {
     private const val TAG = "FuukaApiThreadPostParseCommandBufferBuilder"
 
-//    File: 1.32 MB, 2688x4096,   EsGgXsxUcAQV0_h.jpg
+    //    File: 1.32 MB, 2688x4096,   EsGgXsxUcAQV0_h.jpg
 //    File:   694 KB, 2894x4093, EscP39vUUAEE9ol.jpg
 //    File: 694 B,   2894x4093,   EscP39vUUAEE9ol.png
 //    File: 694 B,   2894x4093,   EscP39vUUAEE9ol.webm
 //    File: 3.29 MB, 1920x1080, 【龍が如く極2】関西と関東の戦い！！？？止めるにぇ、桐生ちゃん！【ホロライブ_さくらみこ】※ネタバレあり 48-45 screenshot.png
     private val FILE_INFO_PATTERN = Pattern.compile("File:\\s+(\\d+(?:\\.\\d+)?)\\s+((?:[MK])?B),\\s+(\\d+x\\d+),\\s+(.*)\$")
 
-//    https://warosu.org/jp/thread/32638291
+    //    https://warosu.org/jp/thread/32638291
 //    https://warosu.org/jp/thread/32638291#p32638297
 //    https://warosu.org/jp/thread/32638291#p32638297_123
 //    https://warosu.org/jp/thread/S32638291#p32638297_123

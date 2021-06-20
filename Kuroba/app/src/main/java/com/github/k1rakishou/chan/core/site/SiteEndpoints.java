@@ -48,7 +48,6 @@ public interface SiteEndpoints {
     HttpUrl icon(String icon, Map<String, String> arg);
     HttpUrl boards();
     HttpUrl pages(ChanBoard board);
-    HttpUrl archive(ChanBoard board);
     HttpUrl reply(ChanDescriptor chanDescriptor);
     HttpUrl delete(ChanPost post);
     HttpUrl report(ChanPost post);
@@ -61,6 +60,11 @@ public interface SiteEndpoints {
 
     @Nullable
     default HttpUrl search() {
+        return null;
+    }
+
+    @Nullable
+    default HttpUrl archive(BoardDescriptor boardDescriptor) {
         return null;
     }
 

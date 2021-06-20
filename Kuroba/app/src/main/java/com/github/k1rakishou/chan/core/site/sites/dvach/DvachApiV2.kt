@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.bookmark.StickyThread
@@ -23,8 +24,6 @@ import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
-import okio.buffer
-import okio.source
 import org.jsoup.parser.Parser
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
@@ -52,8 +51,8 @@ class DvachApiV2(
     val endpoints = site.endpoints()
 
     val dvachThreadsFreshAdapter = moshi.adapter(DvachThreadsFresh::class.java)
-    val dvachThreadsFresh = responseBodyStream.source().buffer()
-      .use { buffer -> dvachThreadsFreshAdapter.fromJson(buffer) }
+    val dvachThreadsFresh = responseBodyStream
+      .useBufferedSource { bufferedSource -> dvachThreadsFreshAdapter.fromJson(bufferedSource) }
 
     val bumpLimit = dvachThreadsFresh?.bumpLimit
     val posters = dvachThreadsFresh?.posters
@@ -88,8 +87,8 @@ class DvachApiV2(
 
     val dvachThreadIncrementalAdapter = moshi.adapter(DvachThreadIncremental::class.java)
 
-    val dvachThreadIncremental = responseBodyStream.source().buffer()
-      .use { buffer -> dvachThreadIncrementalAdapter.fromJson(buffer) }
+    val dvachThreadIncremental = responseBodyStream
+      .useBufferedSource { bufferedSource -> dvachThreadIncrementalAdapter.fromJson(bufferedSource) }
 
     val threadPosts = dvachThreadIncremental?.posts
     val posters = dvachThreadIncremental?.posters
@@ -121,8 +120,8 @@ class DvachApiV2(
     val endpoints = site.endpoints()
 
     val dvachCatalogAdapter = moshi.adapter(DvachCatalog::class.java)
-    val catalogThreadPosts = responseBodyStream.source().buffer()
-      .use { buffer -> dvachCatalogAdapter.fromJson(buffer) }
+    val catalogThreadPosts = responseBodyStream
+      .useBufferedSource { bufferedSource -> dvachCatalogAdapter.fromJson(bufferedSource) }
       ?.threads
 
     if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {
@@ -205,9 +204,10 @@ class DvachApiV2(
     responseBodyStream: InputStream
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
+      // TODO(KurobaEx): use more lightweight data type, we don't need most of the fields of DvachPost here
       val dvachThreadsFreshAdapter = moshi.adapter(DvachThreadsFresh::class.java)
-      val dvachThreadsFresh = responseBodyStream.source().buffer()
-        .use { buffer -> dvachThreadsFreshAdapter.fromJson(buffer) }
+      val dvachThreadsFresh = responseBodyStream
+        .useBufferedSource { bufferedSource -> dvachThreadsFreshAdapter.fromJson(bufferedSource) }
 
       val bumpLimitCount = dvachThreadsFresh?.bumpLimit
       val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
@@ -268,9 +268,10 @@ class DvachApiV2(
     return ModularResult.Try {
       val endpoints = site.endpoints()
 
+      // TODO(KurobaEx): use more lightweight data type, we don't need most of the fields of DvachPost here
       val dvachCatalogAdapter = moshi.adapter(DvachCatalog::class.java)
-      val catalogThreadPosts = responseBodyStream.source().buffer()
-        .use { buffer -> dvachCatalogAdapter.fromJson(buffer) }
+      val catalogThreadPosts = responseBodyStream
+        .useBufferedSource { bufferedSource -> dvachCatalogAdapter.fromJson(bufferedSource) }
         ?.threads
 
       if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {

@@ -53,10 +53,6 @@ class YukilaEndpoints(
     throw NotImplementedError("pages")
   }
 
-  override fun archive(board: ChanBoard): HttpUrl {
-    throw NotImplementedError("archive")
-  }
-
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     throw NotImplementedError("reply")
   }

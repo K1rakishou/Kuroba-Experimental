@@ -28,12 +28,14 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -196,13 +198,6 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
-    override fun archive(board: ChanBoard): HttpUrl {
-      return b.newBuilder()
-        .addPathSegment(board.boardCode())
-        .addPathSegment("archive")
-        .build()
-    }
-
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       return sys.newBuilder()
         .addPathSegment(chanDescriptor.boardCode())
@@ -236,6 +231,13 @@ open class Chan4 : SiteBase() {
 
     override fun search(): HttpUrl {
       return search
+    }
+
+    override fun archive(boardDescriptor: BoardDescriptor): HttpUrl {
+      return b.newBuilder()
+        .addPathSegment(boardDescriptor.boardCode)
+        .addPathSegment("archive")
+        .build()
     }
   }
 
@@ -407,6 +409,22 @@ open class Chan4 : SiteBase() {
         requestBuilder.build(),
         proxiedOkHttpClient,
         searchParams
+      ).execute()
+    }
+
+    override suspend fun archive(boardDescriptor: BoardDescriptor): ModularResult<List<NativeArchivePost>> {
+      val archiveUrl = requireNotNull(endpoints().archive(boardDescriptor))
+
+      val requestBuilder = Request.Builder()
+        .url(archiveUrl)
+        .get()
+
+      this@Chan4.requestModifier().modifyArchiveGetRequest(this@Chan4, requestBuilder)
+
+      return Chan4ArchiveThreadsRequest(
+        requestBuilder.build(),
+        proxiedOkHttpClient,
+        simpleCommentParser
       ).execute()
     }
 
