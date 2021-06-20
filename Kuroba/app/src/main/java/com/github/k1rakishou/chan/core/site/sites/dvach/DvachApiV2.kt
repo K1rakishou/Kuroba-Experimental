@@ -204,10 +204,9 @@ class DvachApiV2(
     responseBodyStream: InputStream
   ): ModularResult<ThreadBookmarkInfoObject> {
     return ModularResult.Try {
-      // TODO(KurobaEx): use more lightweight data type, we don't need most of the fields of DvachPost here
-      val dvachThreadsFreshAdapter = moshi.adapter(DvachThreadsFresh::class.java)
+      val dvachBookmarkCatalogInfoAdapter = moshi.adapter(DvachBookmarkCatalogInfo::class.java)
       val dvachThreadsFresh = responseBodyStream
-        .useBufferedSource { bufferedSource -> dvachThreadsFreshAdapter.fromJson(bufferedSource) }
+        .useBufferedSource { bufferedSource -> dvachBookmarkCatalogInfoAdapter.fromJson(bufferedSource) }
 
       val bumpLimitCount = dvachThreadsFresh?.bumpLimit
       val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
@@ -268,10 +267,9 @@ class DvachApiV2(
     return ModularResult.Try {
       val endpoints = site.endpoints()
 
-      // TODO(KurobaEx): use more lightweight data type, we don't need most of the fields of DvachPost here
-      val dvachCatalogAdapter = moshi.adapter(DvachCatalog::class.java)
+      val dvachFilterWatchCatalogInfoAdapter = moshi.adapter(DvachFilterWatchCatalogInfo::class.java)
       val catalogThreadPosts = responseBodyStream
-        .useBufferedSource { bufferedSource -> dvachCatalogAdapter.fromJson(bufferedSource) }
+        .useBufferedSource { bufferedSource -> dvachFilterWatchCatalogInfoAdapter.fromJson(bufferedSource) }
         ?.threads
 
       if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {
@@ -455,6 +453,54 @@ class DvachApiV2(
     }
 
   }
+
+  @JsonClass(generateAdapter = true)
+  data class DvachBookmarkCatalogInfo(
+    @Json(name = "bump_limit")
+    val bumpLimit: Int,
+    @Json(name = "threads")
+    val threads: List<DvachThreadPostInfo>,
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachThreadPostInfo(
+    @Json(name = "posts")
+    val posts: List<DvachBookmarkPostInfo>
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachBookmarkPostInfo(
+    val num: Long,
+    val parent: Long,
+    val closed: Long,
+    val comment: String,
+    val sticky: Long,
+    val endless: Long,
+  ) {
+    val isOp: Boolean
+      get() = parent == 0L
+  }
+
+  @JsonClass(generateAdapter = true)
+  data class DvachFilterWatchCatalogInfo(
+    @Json(name = "threads")
+    val threads: List<DvachFilterWatchPostInfo>
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachFilterWatchPostInfo(
+    val num: Long,
+    val parent: Long,
+    val comment: String,
+    val subject: String,
+    val files: List<DvachFilterWatchFileInfo>?
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachFilterWatchFileInfo(
+    val path: String?,
+    val thumbnail: String,
+  )
 
   data class ExtraThreadInfo(
     @get:Synchronized
