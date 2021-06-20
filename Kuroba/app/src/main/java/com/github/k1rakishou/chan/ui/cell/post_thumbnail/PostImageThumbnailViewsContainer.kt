@@ -424,9 +424,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     thumbnailViews?.clear()
     thumbnailViews = null
-
-    cachedThumbnailViewContainerInfoArray[PRE_BIND].unbindPrevPostImages()
-    cachedThumbnailViewContainerInfoArray[BIND].unbindPrevPostImages()
   }
 
   private fun postCellDataIsTheSame(index: Int, postCellData: PostCellData): Boolean {
@@ -491,11 +488,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         && this.postFileInfosHash == postCellData.postFileInfoMapHash
         && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
         && this.postCellThumbnailSizePercents == postCellData.postCellThumbnailSizePercents
-    }
-
-    fun unbindPrevPostImages() {
-      prevChanPostImages?.clear()
-      prevChanPostImages = null
     }
 
     fun unbindEverything() {
