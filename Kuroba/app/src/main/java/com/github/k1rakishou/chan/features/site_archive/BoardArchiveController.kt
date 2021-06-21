@@ -83,14 +83,10 @@ class BoardArchiveController(
           ProvideWindowInsets {
             val chanTheme = LocalChanTheme.current
 
-            val backColor = remember(key1 = chanTheme.backColorCompose) {
-              chanTheme.backColorCompose
-            }
-
             Box(modifier = Modifier
               .fillMaxSize()
               .padding(top = topPadding.dp, bottom = bottomPadding.dp)
-              .background(backColor)
+              .background(chanTheme.backColorCompose)
             ) {
               BuildContent()
             }
@@ -158,10 +154,6 @@ class BoardArchiveController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val dividerColor = remember(key1 = chanTheme.dividerColorCompose) {
-      chanTheme.dividerColorCompose
-    }
-
     val state = rememberLazyListState()
 
     LazyColumn(
@@ -213,7 +205,7 @@ class BoardArchiveController(
           if (index >= 0 && index < archiveThreads.size) {
             Divider(
               modifier = Modifier.padding(horizontal = 2.dp),
-              color = dividerColor,
+              color = chanTheme.dividerColorCompose,
               thickness = 1.dp
             )
           }
@@ -230,10 +222,6 @@ class BoardArchiveController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val textColorSecondary = remember(key1 = chanTheme.textColorSecondaryCompose) {
-      chanTheme.textColorSecondaryCompose
-    }
-
     Column(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
@@ -244,7 +232,7 @@ class BoardArchiveController(
         "#${position + 1} No. ${archiveThread.threadNo}"
       }
 
-      KurobaComposeText(text = threadNo, color = textColorSecondary, fontSize = 12.sp)
+      KurobaComposeText(text = threadNo, color = chanTheme.textColorHintCompose, fontSize = 12.sp)
       KurobaComposeText(text = archiveThread.comment, fontSize = 14.sp)
     }
   }

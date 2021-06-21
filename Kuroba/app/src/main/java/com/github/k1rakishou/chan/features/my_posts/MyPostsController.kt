@@ -21,10 +21,7 @@ import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -44,6 +41,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -103,13 +101,9 @@ class MyPostsController(context: Context) :
           ProvideWindowInsets {
             val chanTheme = LocalChanTheme.current
 
-            val backColor = remember(key1 = chanTheme.backColor) {
-              Color(chanTheme.backColor)
-            }
-
             Box(modifier = Modifier
               .fillMaxSize()
-              .background(backColor)
+              .background(chanTheme.backColorCompose)
             ) {
               BuildContent()
             }
@@ -162,10 +156,6 @@ class MyPostsController(context: Context) :
     val chanTheme = LocalChanTheme.current
     val state = rememberLazyListState()
 
-    val dividerColor = remember(key1 = chanTheme.dividerColorCompose) {
-      chanTheme.dividerColorCompose
-    }
-
     LazyColumn(
       state = state,
       modifier = Modifier
@@ -205,7 +195,7 @@ class MyPostsController(context: Context) :
           if (index < groupedSavedReplies.savedReplyDataList.lastIndex) {
             Divider(
               modifier = Modifier.padding(horizontal = 4.dp),
-              color = dividerColor,
+              color = chanTheme.dividerColorCompose,
               thickness = 1.dp
             )
           }
@@ -227,15 +217,33 @@ class MyPostsController(context: Context) :
       .clickable { onHeaderClicked(groupedSavedReplies.threadDescriptor) }
       .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
-      KurobaComposeText(
-        text = groupedSavedReplies.headerTitle,
-        fontSize = 12.sp,
-        color = chanTheme.textColorSecondaryCompose,
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .align(Alignment.CenterStart)
-      )
+      Column(modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+      ) {
+
+        KurobaComposeText(
+          text = groupedSavedReplies.headerThreadInfo,
+          fontSize = 12.sp,
+          color = chanTheme.textColorHintCompose,
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+        )
+
+        if (groupedSavedReplies.headerThreadSubject.isNotNullNorEmpty()) {
+          Spacer(modifier = Modifier.height(2.dp))
+
+          KurobaComposeText(
+            text = groupedSavedReplies.headerThreadSubject,
+            fontSize = 14.sp,
+            maxLines = 5,
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+          )
+        }
+      }
     }
   }
 
@@ -259,7 +267,7 @@ class MyPostsController(context: Context) :
           text = groupedSavedReplyData.postHeader,
           fontSize = 12.sp,
           maxLines = 1,
-          color = chanTheme.textColorSecondaryCompose,
+          color = chanTheme.textColorHintCompose,
           modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()

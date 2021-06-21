@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
-import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -87,15 +86,12 @@ class MyPostsViewModel : BaseViewModel() {
           val firstSavedReply = savedReplies.firstOrNull()
             ?: return@mapNotNull null
 
-          val headerTitle = buildString {
+          val headerThreadInfo = buildString {
             append("Thread No. ")
             append(threadDescriptor.threadNo)
-
-            if (firstSavedReply.subject.isNotNullNorBlank()) {
-              appendLine()
-              append(firstSavedReply.subject)
-            }
           }
+
+          val headerThreadSubject = firstSavedReply.subject
 
           val savedReplyDataList = processSavedReplies(savedReplies)
           if (savedReplyDataList.isEmpty()) {
@@ -104,7 +100,8 @@ class MyPostsViewModel : BaseViewModel() {
 
           return@mapNotNull GroupedSavedReplies(
             threadDescriptor = threadDescriptor,
-            headerTitle = headerTitle,
+            headerThreadInfo = headerThreadInfo,
+            headerThreadSubject = headerThreadSubject,
             savedReplyDataList = savedReplyDataList
           )
         }
@@ -168,7 +165,8 @@ class MyPostsViewModel : BaseViewModel() {
 
   data class GroupedSavedReplies(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    val headerTitle: String,
+    val headerThreadInfo: String,
+    val headerThreadSubject: String?,
     val savedReplyDataList: List<SavedReplyData>
   )
 
