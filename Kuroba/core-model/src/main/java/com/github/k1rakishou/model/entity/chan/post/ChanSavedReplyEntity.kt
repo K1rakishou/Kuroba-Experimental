@@ -4,6 +4,7 @@ import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import org.joda.time.DateTime
 
 // We can't have this entity be connected to ChanPostEntity with a ForeignKey, because Posts in the
 // database serve as a cache and can be deleted pretty soon (like in a couple of days) after the
@@ -46,7 +47,13 @@ data class ChanSavedReplyEntity(
   @ColumnInfo(name = POST_SUB_NO_COLUMN_NAME)
   val postSubNo: Long,
   @ColumnInfo(name = POST_PASSWORD_COLUMN_NAME)
-  val postPassword: String?
+  val postPassword: String?,
+  @ColumnInfo(name = POST_COMMENT_COLUMN_NAME, defaultValue = "NULL")
+  val comment: String?,
+  @ColumnInfo(name = THREAD_SUBJECT_COLUMN_NAME, defaultValue = "NULL")
+  val subject: String?,
+  @ColumnInfo(name = CREATED_ON_COLUMN_NAME, defaultValue = "0")
+  val createdOn: DateTime
 ) {
 
   companion object {
@@ -59,6 +66,9 @@ data class ChanSavedReplyEntity(
     const val POST_NO_COLUMN_NAME = "post_no"
     const val POST_SUB_NO_COLUMN_NAME = "post_sub_no"
     const val POST_PASSWORD_COLUMN_NAME = "post_password"
+    const val POST_COMMENT_COLUMN_NAME = "post_comment"
+    const val THREAD_SUBJECT_COLUMN_NAME = "thread_subject"
+    const val CREATED_ON_COLUMN_NAME = "created_on"
   }
 
 }

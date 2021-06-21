@@ -8,9 +8,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
@@ -49,7 +48,8 @@ class FilterWatchesController(
   private val controller = FilterWatchesEpoxyController()
   private val needRestoreScrollPosition = AtomicBoolean(true)
 
-  private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private val topAdapterPosition: Int
     get() {
@@ -82,8 +82,6 @@ class FilterWatchesController(
 
   override fun onCreate() {
     super.onCreate()
-
-    threadLoadCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     view = AppModuleAndroidUtils.inflate(context, R.layout.controller_filter_watches)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -124,8 +122,10 @@ class FilterWatchesController(
   override fun onDestroy() {
     super.onDestroy()
 
-    epoxyRecyclerView.removeOnScrollListener(onScrollListener)
-    epoxyRecyclerView.clear()
+    if (::epoxyRecyclerView.isInitialized) {
+      epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+      epoxyRecyclerView.clear()
+    }
 
     presenter.onDestroy()
   }
@@ -225,9 +225,7 @@ class FilterWatchesController(
   }
 
   private fun onBookmarkClicked(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    threadLoadCoroutineExecutor.post {
-      (context as? StartActivity)?.loadThread(threadDescriptor, true)
-    }
+    startActivityCallback.loadThread(threadDescriptor, animated = true)
   }
 
   private fun updateLayoutManager(forced: Boolean = false) {

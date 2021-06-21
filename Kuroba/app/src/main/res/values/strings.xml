@@ -992,6 +992,8 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_filter_watches">Filter watches</string>
 
+    <string name="controller_my_posts">My posts</string>
+
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
     <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
 
@@ -1300,6 +1302,7 @@ Don't have a 4chan Pass?<br>
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>
 
+    <string name="my_posts_tab_title">My posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
 

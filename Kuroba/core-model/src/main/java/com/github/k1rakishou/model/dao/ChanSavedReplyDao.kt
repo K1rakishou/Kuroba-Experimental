@@ -12,6 +12,9 @@ abstract class ChanSavedReplyDao {
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun insertOrIgnore(toEntity: ChanSavedReplyEntity)
 
+  @Query("SELECT * FROM ${ChanSavedReplyEntity.TABLE_NAME}")
+  abstract suspend fun loadAll(): List<ChanSavedReplyEntity>
+
   @Query("""
     SELECT *
     FROM ${ChanSavedReplyEntity.TABLE_NAME}

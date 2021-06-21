@@ -263,7 +263,7 @@ class FullImageMediaView(
       return
     }
 
-    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    cacheHandler.deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<FilePath>()

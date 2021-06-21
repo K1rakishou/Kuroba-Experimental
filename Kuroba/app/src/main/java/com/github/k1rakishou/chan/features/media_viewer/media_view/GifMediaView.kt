@@ -257,7 +257,7 @@ class GifMediaView(
       return
     }
 
-    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    cacheHandler.deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullGifDeferred.cancel()
     fullGifDeferred = CompletableDeferred<File>()

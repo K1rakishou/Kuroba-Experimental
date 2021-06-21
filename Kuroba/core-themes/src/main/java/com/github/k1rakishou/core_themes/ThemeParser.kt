@@ -32,11 +32,9 @@ class ThemeParser(
     return withContext(Dispatchers.Default) {
       val result = Try {
         val serializableTheme = gson.fromJson(themeJson, SerializableTheme::class.java)
-
         if (serializableTheme.name.isBlank()) {
           return@Try ThemeParseResult.BadName(serializableTheme.name)
         }
-
 
         val unparsedFields = serializableTheme.getUnparsedFields()
         if (unparsedFields.isNotEmpty()) {
@@ -251,6 +249,9 @@ class ThemeParser(
     @Since(1.0)
     @SerializedName("back_color")
     val backColor: String? = null,
+    @Since(1.1)
+    @SerializedName("back_color_secondary")
+    val backColorSecondary: String? = null,
     @Since(1.0)
     @SerializedName("error_color")
     val errorColor: String? = null,
@@ -325,6 +326,11 @@ class ThemeParser(
       if (backColor == null || backColor.toColorOrNull() == null) {
         unparsedFields += "back_color"
       }
+      if (backColorSecondary == null || backColorSecondary.toColorOrNull() == null) {
+        if (backColor?.toColorOrNull() == null) {
+          unparsedFields += "back_color_secondary"
+        }
+      }
       if (errorColor == null || errorColor.toColorOrNull() == null) {
         unparsedFields += "error_color"
       }
@@ -390,6 +396,11 @@ class ThemeParser(
     }
 
     fun toChanTheme(defaultTheme: ChanTheme): ChanTheme {
+      val backColor = backColor.toColorOrNull()
+        ?: defaultTheme.backColor
+      val backColorSecondary = backColorSecondary.toColorOrNull()
+        ?: ChanTheme.backColorSecondaryDeprecated(backColor)
+
       return Theme(
         name = name,
         isLightTheme = isLightTheme,
@@ -397,7 +408,8 @@ class ThemeParser(
         lightNavBar = lightNavBar,
         accentColor = accentColor.toColorOrNull() ?: defaultTheme.accentColor,
         primaryColor = primaryColor.toColorOrNull() ?: defaultTheme.primaryColor,
-        backColor = backColor.toColorOrNull() ?: defaultTheme.backColor,
+        backColor = backColor,
+        backColorSecondary = backColorSecondary,
         errorColor = errorColor.toColorOrNull() ?: defaultTheme.errorColor,
         textColorPrimary = textColorPrimary.toColorOrNull() ?: defaultTheme.textColorPrimary,
         textColorSecondary = textColorSecondary.toColorOrNull() ?: defaultTheme.textColorSecondary,
@@ -422,6 +434,11 @@ class ThemeParser(
     }
 
     fun toChanThemeOrNull(): ChanTheme? {
+      val backColor = backColor.toColorOrNull()
+        ?: return null
+      val backColorSecondary = backColorSecondary.toColorOrNull()
+        ?: ChanTheme.backColorSecondaryDeprecated(backColor)
+
       return Theme(
         name = name,
         isLightTheme = isLightTheme,
@@ -429,7 +446,8 @@ class ThemeParser(
         lightNavBar = lightNavBar,
         accentColor = accentColor.toColorOrNull() ?: return null,
         primaryColor = primaryColor.toColorOrNull() ?: return null,
-        backColor = backColor.toColorOrNull() ?: return null,
+        backColor = backColor,
+        backColorSecondary = backColorSecondary,
         errorColor = errorColor.toColorOrNull() ?: return null,
         textColorPrimary = textColorPrimary.toColorOrNull() ?: return null,
         textColorSecondary = textColorSecondary.toColorOrNull() ?: return null,
@@ -527,7 +545,7 @@ class ThemeParser(
 
   companion object {
     private const val TAG = "ThemeParser"
-    private const val CURRENT_VERSION = 1.0
+    private const val CURRENT_VERSION = 1.1
 
     const val DARK_THEME_FILE_NAME = "kurobaex_theme_dark.json"
     const val LIGHT_THEME_FILE_NAME = "kurobaex_theme_light.json"

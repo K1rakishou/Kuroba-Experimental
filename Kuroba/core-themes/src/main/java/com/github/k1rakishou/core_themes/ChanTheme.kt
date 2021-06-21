@@ -21,6 +21,7 @@ abstract class ChanTheme {
   abstract val accentColor: Int
   abstract val primaryColor: Int
   abstract val backColor: Int
+  abstract val backColorSecondary: Int
   abstract val errorColor: Int
   abstract val textColorPrimary: Int
   abstract val textColorSecondary: Int
@@ -48,12 +49,15 @@ abstract class ChanTheme {
   val isBackColorDark: Boolean
     get() = ThemeEngine.isDarkColor(backColor)
 
-  val accentColorCompose by lazy { Color(accentColor) }
-  val primaryColorCompose by lazy { Color(primaryColor) }
-  val backColorCompose by lazy { Color(backColor) }
-  val textColorPrimaryCompose by lazy { Color(textColorPrimary) }
-  val textColorHintCompose by lazy { Color(textColorHint) }
-  val errorColorCompose by lazy { Color(errorColor) }
+  val accentColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(accentColor) }
+  val primaryColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(primaryColor) }
+  val backColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(backColor) }
+  val backColorSecondaryCompose by lazy(LazyThreadSafetyMode.NONE) { Color(backColorSecondary) }
+  val textColorPrimaryCompose by lazy(LazyThreadSafetyMode.NONE) { Color(textColorPrimary) }
+  val textColorSecondaryCompose by lazy(LazyThreadSafetyMode.NONE) { Color(textColorSecondary) }
+  val textColorHintCompose by lazy(LazyThreadSafetyMode.NONE) { Color(textColorHint) }
+  val errorColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(errorColor) }
+  val dividerColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(dividerColor) }
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
 
@@ -93,14 +97,10 @@ abstract class ChanTheme {
       ChanThemeColorId.AccentColor -> accentColor
       ChanThemeColorId.PostInlineQuoteColor -> postInlineQuoteColor
       ChanThemeColorId.PostQuoteColor -> postQuoteColor
-      ChanThemeColorId.BackColorSecondary -> backColorSecondary()
+      ChanThemeColorId.BackColorSecondary -> backColorSecondary
       ChanThemeColorId.PostLinkColor -> postLinkColor
       ChanThemeColorId.TextColorPrimary -> textColorPrimary
     }
-  }
-
-  fun backColorSecondary(): Int {
-    return manipulateColor(backColor, .7f)
   }
 
   @Composable
@@ -153,5 +153,10 @@ abstract class ChanTheme {
     private const val CONTROL_DARK_COLOR = 0xFFCCCCCCL.toInt()
 
     private const val MAX_ALPHA_FLOAT = 255f
+
+    @Deprecated("Automatic backColorSecondary calculation is deprecated! Use an actual color instead.")
+    fun backColorSecondaryDeprecated(backColor: Int): Int {
+      return manipulateColor(backColor, .7f)
+    }
   }
 }

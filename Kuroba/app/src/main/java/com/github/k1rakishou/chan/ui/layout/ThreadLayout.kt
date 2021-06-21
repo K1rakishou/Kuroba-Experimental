@@ -384,6 +384,10 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.gainedFocus(nowFocused, visible == Visible.THREAD)
   }
 
+  fun onShown(nowFocused: ThreadSlideController.ThreadControllerType) {
+    threadListLayout.onShown(nowFocused, visible == Visible.THREAD)
+  }
+
   fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
     threadListLayout.setBoardPostViewMode(boardPostViewMode)
   }

@@ -197,7 +197,7 @@ abstract class Controller(@JvmField var context: Context) {
       removeChildController(childControllers[0])
     }
 
-    if (AndroidUtils.removeFromParentView(view)) {
+    if (::view.isInitialized && AndroidUtils.removeFromParentView(view)) {
       if (LOG_STATES) {
         Logger.e("LOG_STATES", javaClass.simpleName + " view removed onDestroy")
       }

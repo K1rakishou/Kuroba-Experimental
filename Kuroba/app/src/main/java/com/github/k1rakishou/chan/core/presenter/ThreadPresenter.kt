@@ -665,10 +665,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
-      handleMarkedPost(markedPostNo)
-    }
-
+    handleMarkedPost()
     createNewNavHistoryElement(localChanDescriptor)
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
@@ -703,17 +700,22 @@ class ThreadPresenter @Inject constructor(
     return newPostsCount
   }
 
-  private fun handleMarkedPost(markedPostNo: Long) {
-    val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
-    if (markedPost == null) {
-      Logger.e(TAG, "handleMarkedPost() Failed to find post ($currentChanDescriptor, $markedPostNo)")
-      return
-    }
+  fun handleMarkedPost() {
+    val localChanDescriptor = currentChanDescriptor
+      ?: return
 
-    highlightPost(markedPost.postDescriptor)
+    chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
+      val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
+      if (markedPost == null) {
+        Logger.e(TAG, "handleMarkedPost() Failed to find post ($currentChanDescriptor, $markedPostNo)")
+        return@getAndConsumeMarkedPostNo
+      }
 
-    if (BackgroundUtils.isInForeground()) {
-      BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 250)
+      highlightPost(markedPost.postDescriptor)
+
+      if (BackgroundUtils.isInForeground()) {
+        BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 250)
+      }
     }
   }
 

@@ -29,6 +29,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
 
 class StartActivityStartupHandlerHelper(
@@ -477,7 +478,8 @@ class StartActivityStartupHandlerHelper(
   }
 
   interface StartActivityCallbacks {
-    suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
+    fun loadThreadAndMarkPost(postDescriptor: PostDescriptor, animated: Boolean)
+    fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
   }
 
   companion object {

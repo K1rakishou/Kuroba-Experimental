@@ -42,12 +42,28 @@ sealed class ModularResult<V : Any?> {
     return null
   }
 
+  fun unwrapValue(): V {
+    if (this is Value) {
+      return value
+    }
+
+    kotlin.error("Expected value but actual is error")
+  }
+
   fun errorOrNull(): Throwable? {
     if (this is Error) {
       return error
     }
 
     return null
+  }
+
+  fun unwrapError(): Throwable {
+    if (this is Error) {
+      return error
+    }
+
+    kotlin.error("Expected error but actual is value")
   }
 
   /**

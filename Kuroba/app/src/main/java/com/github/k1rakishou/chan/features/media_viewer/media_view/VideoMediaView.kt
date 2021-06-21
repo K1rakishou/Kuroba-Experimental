@@ -298,7 +298,7 @@ class VideoMediaView(
       return
     }
 
-    cacheHandler.deleteCacheFileByUrl(mediaLocation.url.toString())
+    cacheHandler.deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullVideoDeferred.cancel()
     fullVideoDeferred = CompletableDeferred<Unit>()

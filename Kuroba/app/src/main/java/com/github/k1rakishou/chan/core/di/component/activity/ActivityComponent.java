@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView;
+import com.github.k1rakishou.chan.features.my_posts.MyPostsController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
 import com.github.k1rakishou.chan.features.proxies.epoxy.EpoxyProxyView;
@@ -251,6 +252,7 @@ public interface ActivityComponent {
     void inject(MediaViewerController mediaViewerController);
     void inject(MediaViewerGesturesSettingsController mediaViewerGesturesSettingsController);
     void inject(BoardArchiveController boardArchiveController);
+    void inject(MyPostsController myPostsController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

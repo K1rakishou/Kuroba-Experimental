@@ -333,26 +333,26 @@ class StartActivity : ControllerHostActivity(),
     mainController.resetBottomNavViewState(unlockTranslation = true, unlockCollapse = true)
   }
 
-  fun loadThread(postDescriptor: PostDescriptor) {
+  override fun loadThreadAndMarkPost(postDescriptor: PostDescriptor, animated: Boolean) {
     lifecycleScope.launch {
       mainController.closeAllNonMainControllers()
 
-      if (!postDescriptor.isOP()) {
-        chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
-          chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
-        }
+      chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
+        chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
       }
 
-      browseController?.showThread(postDescriptor.threadDescriptor(), false)
+      browseController?.showThread(postDescriptor.threadDescriptor(), animated)
     }
   }
 
-  override suspend fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
-    mainController.loadThread(
-      threadDescriptor,
-      closeAllNonMainControllers = true,
-      animated = animated
-    )
+  override fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
+    lifecycleScope.launch {
+      mainController.loadThread(
+        threadDescriptor,
+        closeAllNonMainControllers = true,
+        animated = animated
+      )
+    }
   }
 
   override fun openControllerWrappedIntoBottomNavAwareController(controller: Controller) {

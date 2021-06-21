@@ -23,6 +23,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -42,7 +43,6 @@ import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
@@ -83,8 +83,8 @@ class BoardArchiveController(
           ProvideWindowInsets {
             val chanTheme = LocalChanTheme.current
 
-            val backColor = remember(key1 = chanTheme.backColor) {
-              Color(chanTheme.backColor)
+            val backColor = remember(key1 = chanTheme.backColorCompose) {
+              chanTheme.backColorCompose
             }
 
             Box(modifier = Modifier
@@ -128,7 +128,7 @@ class BoardArchiveController(
         return
       }
       is AsyncData.Error -> {
-        KurobaComposeErrorMessage(archiveThreadsAsync.throwable.errorMessageOrClassName())
+        KurobaComposeErrorMessage(archiveThreadsAsync.throwable)
         return
       }
       is AsyncData.Data -> archiveThreadsAsync.data
@@ -158,8 +158,8 @@ class BoardArchiveController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val dividerColor = remember(key1 = chanTheme.dividerColor) {
-      Color(chanTheme.dividerColor)
+    val dividerColor = remember(key1 = chanTheme.dividerColorCompose) {
+      chanTheme.dividerColorCompose
     }
 
     val state = rememberLazyListState()
@@ -228,6 +228,12 @@ class BoardArchiveController(
     archiveThread: BoardArchiveViewModel.ArchiveThread,
     onThreadClicked: (Long) -> Unit
   ) {
+    val chanTheme = LocalChanTheme.current
+
+    val textColorSecondary = remember(key1 = chanTheme.textColorSecondaryCompose) {
+      chanTheme.textColorSecondaryCompose
+    }
+
     Column(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
@@ -238,8 +244,8 @@ class BoardArchiveController(
         "#${position + 1} No. ${archiveThread.threadNo}"
       }
 
-      KurobaComposeText(text = threadNo)
-      KurobaComposeText(text = archiveThread.comment)
+      KurobaComposeText(text = threadNo, color = textColorSecondary, fontSize = 12.sp)
+      KurobaComposeText(text = archiveThread.comment, fontSize = 14.sp)
     }
   }
 

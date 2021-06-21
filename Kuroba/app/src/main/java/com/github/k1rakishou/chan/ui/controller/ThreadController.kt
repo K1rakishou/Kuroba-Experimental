@@ -199,6 +199,7 @@ abstract class ThreadController(
   override fun onShow() {
     super.onShow()
 
+    threadLayout.onShown(threadControllerType)
     threadLayout.gainedFocus(threadControllerType)
   }
 

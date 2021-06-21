@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
+import com.github.k1rakishou.chan.features.my_posts.MyPostsController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.widget.DisableableLayout
@@ -46,20 +47,27 @@ class TabHostController(
 
     tabLayout = view.findViewById(R.id.tab_layout)
     viewPager = view.findViewById(R.id.view_pager)
-
     viewPager.adapter = viewPagerAdapter
 
+    val pageType = getLastOpenedTabPageIndex(bookmarksToHighlight)
+
+    tabLayout.addTab(
+      tabLayout.newTab()
+        .setText(context.getString(R.string.my_posts_tab_title))
+        .setTag(PageType.MyPosts),
+      pageType == PageType.MyPosts
+    )
     tabLayout.addTab(
       tabLayout.newTab()
         .setText(context.getString(R.string.bookmarks_tab_title))
         .setTag(PageType.Bookmarks),
-      true
+      pageType == PageType.Bookmarks
     )
     tabLayout.addTab(
       tabLayout.newTab()
         .setText(context.getString(R.string.filter_watches_tab_title))
         .setTag(PageType.FilterWatches),
-      false
+      pageType == PageType.FilterWatches
     )
 
     tabLayout.addOnTabSelectedListener(simpleOnTabSelectedListener)
@@ -67,7 +75,7 @@ class TabHostController(
     viewPager.addOnPageChangeListener(simpleOnPageChangeListener)
     viewPager.setDisableableLayoutHandler(this)
 
-    onTabWithTypeSelected(getLastOpenedTabPageIndex(bookmarksToHighlight))
+    onTabWithTypeSelected(pageType)
     viewPagerAdapter.notifyDataSetChanged()
   }
 
@@ -159,6 +167,9 @@ class TabHostController(
 
     private fun createController(pageType: PageType): TabPageController {
       return when (pageType) {
+        PageType.MyPosts -> {
+          MyPostsController(context)
+        }
         PageType.Bookmarks -> {
           BookmarksController(
             context = context,
@@ -208,14 +219,16 @@ class TabHostController(
    * it may break everything.
    * */
   enum class PageType(val pageIndex: Int) {
-    Bookmarks(0),
-    FilterWatches(1);
+    MyPosts(0),
+    Bookmarks(1),
+    FilterWatches(2);
 
     companion object {
       fun fromInt(value: Int): PageType {
         return when (value) {
-          0 -> Bookmarks
-          1 -> FilterWatches
+          0 -> MyPosts
+          1 -> Bookmarks
+          2 -> FilterWatches
           else -> Bookmarks
         }
       }

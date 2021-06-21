@@ -15,7 +15,10 @@ object ChanSavedReplyMapper {
         postNo = chanSavedReplyEntity.postNo,
         postSubNo = chanSavedReplyEntity.postSubNo,
       ),
-      password = chanSavedReplyEntity.postPassword
+      password = chanSavedReplyEntity.postPassword,
+      comment = chanSavedReplyEntity.comment,
+      subject = chanSavedReplyEntity.subject,
+      createdOn = chanSavedReplyEntity.createdOn
     )
   }
 
@@ -26,7 +29,10 @@ object ChanSavedReplyMapper {
       threadNo = chanSavedReply.postDescriptor.threadDescriptor().threadNo,
       postNo = chanSavedReply.postDescriptor.postNo,
       postSubNo = chanSavedReply.postDescriptor.postSubNo,
-      postPassword = chanSavedReply.password
+      postPassword = chanSavedReply.password,
+      comment = chanSavedReply.comment,
+      subject = chanSavedReply.subject,
+      createdOn = chanSavedReply.createdOn
     )
   }
 

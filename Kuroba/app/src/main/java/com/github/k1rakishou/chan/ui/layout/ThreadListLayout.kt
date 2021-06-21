@@ -356,25 +356,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onThemeChanged() {
-    val backColor = kotlin.run {
-      if (boardPostViewMode != null && boardPostViewMode != BoardPostViewMode.LIST) {
-        if (themeEngine.chanTheme.backColor == 0) {
-          return@run themeEngine.chanTheme.backColor
-        }
-
-        val factor = if (themeEngine.chanTheme.isBackColorDark) {
-          1.2f
-        } else {
-          0.9f
-        }
-
-        return@run ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, factor)
-      }
-
-      return@run themeEngine.chanTheme.backColor
+    if (boardPostViewMode == BoardPostViewMode.LIST) {
+      setBackgroundColorFast(themeEngine.chanTheme.backColor)
+    } else {
+      setBackgroundColorFast(themeEngine.chanTheme.backColorSecondary)
     }
 
-    setBackgroundColorFast(backColor)
     replyLayout.setBackgroundColorFast(themeEngine.chanTheme.backColor)
   }
 
@@ -543,8 +530,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
-
-        setBackgroundColor(themeEngine.chanTheme.backColor)
       }
       BoardPostViewMode.GRID -> {
         val gridLayoutManager = object : GridLayoutManager(
@@ -568,8 +553,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         recyclerView.layoutManager = gridLayoutManager
         layoutManager = gridLayoutManager
-
-        setBackgroundColor(themeEngine.chanTheme.backColorSecondary())
       }
       BoardPostViewMode.STAGGER -> {
         val staggerLayoutManager = object : StaggeredGridLayoutManager(
@@ -591,8 +574,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         recyclerView.layoutManager = staggerLayoutManager
         layoutManager = staggerLayoutManager
-
-        setBackgroundColor(themeEngine.chanTheme.backColor)
       }
     }
 
@@ -771,6 +752,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     if (isThreadVisible) {
       showToolbarIfNeeded()
+    }
+  }
+
+  fun onShown(nowFocused: ThreadSlideController.ThreadControllerType, isThreadVisible: Boolean) {
+    if (nowFocused == ThreadSlideController.ThreadControllerType.Thread && isThreadVisible) {
+      threadPresenter?.handleMarkedPost()
     }
   }
 

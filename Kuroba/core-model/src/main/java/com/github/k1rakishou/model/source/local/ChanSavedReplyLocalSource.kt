@@ -12,6 +12,13 @@ class ChanSavedReplyLocalSource(
 ) : AbstractLocalSource(database) {
   private val chanSavedReplyDao = database.chanSavedReplyDao()
 
+  suspend fun loadAll(): List<ChanSavedReply> {
+    ensureInTransaction()
+
+    return chanSavedReplyDao.loadAll()
+      .map { chanSavedReplyEntity -> ChanSavedReplyMapper.fromEntity(chanSavedReplyEntity) }
+  }
+
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanSavedReply> {
     ensureInTransaction()
 

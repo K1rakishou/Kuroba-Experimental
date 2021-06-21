@@ -1142,7 +1142,19 @@ class PostingServiceDelegate(
         null
       }
 
-      savedReplyManager.saveReply(ChanSavedReply(responsePostDescriptor, password))
+      val comment = replyManager.readReply(prevChanDescriptor) { prevReply -> prevReply.comment }
+      val subject = chanThreadManager.getChanThread(responsePostDescriptor.threadDescriptor())
+        ?.getOriginalPost()
+        ?.let { chanOriginalPost -> ChanPostUtils.getTitle(chanOriginalPost, prevChanDescriptor) }
+
+      val chanSavedReply = ChanSavedReply(
+        postDescriptor = responsePostDescriptor,
+        comment = comment,
+        subject = subject,
+        password = password
+      )
+
+      savedReplyManager.saveReply(chanSavedReply)
     } else {
       Logger.e(TAG, "Couldn't create responsePostDescriptor, replyResponse=${replyResponse}")
     }

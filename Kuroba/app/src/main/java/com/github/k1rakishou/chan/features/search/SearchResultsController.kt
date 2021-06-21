@@ -5,9 +5,9 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.bypass.BypassMode
@@ -49,6 +49,9 @@ class SearchResultsController(
       themeEngine = themeEngine
     )
   }
+
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
@@ -213,7 +216,7 @@ class SearchResultsController(
   }
 
   private fun onSearchPostClicked(postDescriptor: PostDescriptor) {
-    (context as? StartActivity)?.loadThread(postDescriptor)
+    startActivityCallback.loadThreadAndMarkPost(postDescriptor, animated = true)
   }
 
   private fun updateTitle(totalFound: Int?) {

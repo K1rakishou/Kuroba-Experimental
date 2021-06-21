@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
@@ -10,6 +11,11 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
@@ -19,6 +25,7 @@ import kotlin.time.measureTime
 
 class SavedReplyManager(
   private val verboseLogsEnabled: Boolean,
+  private val chanThreadsCache: ChanThreadsCache,
   private val savedReplyRepository: ChanSavedReplyRepository
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -26,6 +33,10 @@ class SavedReplyManager(
   private val savedReplyMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>(128)
   @GuardedBy("lock")
   private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
+
+  private val _savedRepliesUpdateFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  val savedRepliesUpdateFlow: SharedFlow<Unit>
+    get() = _savedRepliesUpdateFlow.asSharedFlow()
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -45,16 +56,24 @@ class SavedReplyManager(
     }
   }
 
-  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val savedReplies = savedReplyRepository.preloadForThread(threadDescriptor)
-      .safeUnwrap { error ->
-        Logger.e(TAG, "Error while trying to preload saved replies for thread ($threadDescriptor)", error)
-        return
-      }
+  suspend fun loadAll(): ModularResult<Unit> {
+    return ModularResult.Try {
+      val allSavedReplies = savedReplyRepository.loadAll().unwrap()
 
-    lock.write {
-      savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
-      alreadyPreloadedSet.add(threadDescriptor)
+      lock.write {
+        val groupedSavedReplies = allSavedReplies.groupBy { savedReply -> savedReply.postDescriptor.threadDescriptor() }
+
+        groupedSavedReplies.entries.forEach { (threadDescriptor, savedReplies) ->
+          savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
+          alreadyPreloadedSet.add(threadDescriptor)
+        }
+      }
+    }
+  }
+
+  fun getAll(): Map<ChanDescriptor.ThreadDescriptor, List<ChanSavedReply>> {
+    return lock.write {
+      return@write savedReplyMap.toMap()
     }
   }
 
@@ -89,27 +108,6 @@ class SavedReplyManager(
     }
   }
 
-  fun getAllRepliesCatalog(
-    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
-    threadPostIds: Set<Long>
-  ): List<ChanSavedReply> {
-    return lock.read {
-      return@read threadPostIds.mapNotNull { threadPostId ->
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadPostId)
-
-        return@mapNotNull savedReplyMap[threadDescriptor]
-          ?.firstOrNull { chanSavedReply -> chanSavedReply.postDescriptor.postNo == threadPostId }
-      }
-    }
-  }
-
-  fun getAllRepliesThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanSavedReply> {
-    return lock.read {
-      return@read savedReplyMap[threadDescriptor]
-        ?: emptyList()
-    }
-  }
-
   suspend fun unsavePost(postDescriptor: PostDescriptor) {
     savedReplyRepository.unsavePost(postDescriptor)
       .safeUnwrap { error ->
@@ -117,18 +115,32 @@ class SavedReplyManager(
         return
       }
 
-    lock.write {
+    val updated = lock.write {
       val index = savedReplyMap[postDescriptor.threadDescriptor()]
         ?.indexOfFirst { chanSavedReply -> chanSavedReply.postDescriptor == postDescriptor } ?: -1
 
       if (index >= 0) {
         savedReplyMap[postDescriptor.threadDescriptor()]?.removeAt(index)
+        return@write true
       }
+
+      return@write false
+    }
+
+    if (updated) {
+      _savedRepliesUpdateFlow.tryEmit(Unit)
     }
   }
 
   suspend fun savePost(postDescriptor: PostDescriptor) {
-    val savedReply = ChanSavedReply(postDescriptor)
+    val post = chanThreadsCache.getPostFromCache(postDescriptor)
+
+    val comment = post?.postComment?.originalComment()?.toString()
+    val subject = chanThreadsCache.getOriginalPostFromCache(postDescriptor)?.let { chanOriginalPost ->
+      return@let ChanPostUtils.getTitle(chanOriginalPost, postDescriptor.descriptor)
+    }
+
+    val savedReply = ChanSavedReply(postDescriptor = postDescriptor, comment = comment, subject = subject)
     saveReply(savedReply)
   }
 
@@ -141,13 +153,20 @@ class SavedReplyManager(
         return
       }
 
-    lock.write {
+    val updated = lock.write {
       val index = savedReplyMap[postDescriptor.threadDescriptor()]
         ?.indexOfFirst { chanSavedReply -> chanSavedReply.postDescriptor == postDescriptor } ?: -1
 
       if (index < 0) {
         savedReplyMap[postDescriptor.threadDescriptor()]?.add(savedReply)
+        return@write true
       }
+
+      return@write false
+    }
+
+    if (updated) {
+      _savedRepliesUpdateFlow.tryEmit(Unit)
     }
   }
 
@@ -195,6 +214,19 @@ class SavedReplyManager(
       return@read postList
         .filter { post -> savedRepliesNoSet.contains(post.postNo) }
         .map { post -> post.postNo }
+    }
+  }
+
+  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val savedReplies = savedReplyRepository.preloadForThread(threadDescriptor)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "Error while trying to preload saved replies for thread ($threadDescriptor)", error)
+        return
+      }
+
+    lock.write {
+      savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
+      alreadyPreloadedSet.add(threadDescriptor)
     }
   }
 

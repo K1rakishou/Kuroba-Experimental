@@ -16,11 +16,10 @@ import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -96,10 +95,12 @@ class BookmarksController(
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
-  private lateinit var threadLoadCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
+
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private val bookmarksPresenter by lazy {
     BookmarksPresenter(
@@ -259,8 +260,6 @@ class BookmarksController(
 
   override fun onCreate() {
     super.onCreate()
-
-    threadLoadCoroutineExecutor = SerializedCoroutineExecutor(mainScope)
 
     view = inflate(context, R.layout.controller_bookmarks)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -808,9 +807,7 @@ class BookmarksController(
       return
     }
 
-    threadLoadCoroutineExecutor.post {
-      (context as? StartActivity)?.loadThread(threadDescriptor, true)
-    }
+    startActivityCallback.loadThread(threadDescriptor, animated = true)
   }
 
   private fun onRecyclerViewScrolled(recyclerView: RecyclerView) {

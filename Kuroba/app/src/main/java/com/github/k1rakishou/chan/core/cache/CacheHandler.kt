@@ -31,6 +31,8 @@ import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.withContext
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
@@ -66,7 +68,8 @@ class CacheHandler(
   private val chunksCacheDirFile: File,
   private val autoLoadThreadImages: Boolean
 ) {
-  private val executor = Executors.newSingleThreadExecutor()
+  private val trimExecutor = Executors.newSingleThreadExecutor()
+  private val cacheHandlerDisposable = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
 
   /**
    * An estimation of the current size of the directory. Used to check if trim must be run
@@ -210,6 +213,10 @@ class CacheHandler(
   fun cacheFileExists(fileUrl: String): Boolean {
     val fileName = formatCacheFileName(hashUrl(fileUrl))
     return synchronized(filesOnDiskCache) { filesOnDiskCache.contains(fileName) }
+  }
+
+  suspend fun deleteCacheFileByUrlSuspend(url: String): Boolean {
+    return withContext(cacheHandlerDisposable) { deleteCacheFile(hashUrl(url)) }
   }
 
   fun deleteCacheFileByUrl(url: String): Boolean {
@@ -365,7 +372,7 @@ class CacheHandler(
       && trimRunning.compareAndSet(false, true)
 
     if (canRunTrim) {
-      executor.execute {
+      trimExecutor.execute {
         try {
           trim()
         } catch (e: Exception) {
@@ -731,7 +738,7 @@ class CacheHandler(
 
   private fun clearChunksCacheDir() {
     if (trimChunksRunning.compareAndSet(false, true)) {
-      executor.execute { clearChunksCacheDirInternal() }
+      trimExecutor.execute { clearChunksCacheDirInternal() }
     }
   }
 
@@ -756,7 +763,7 @@ class CacheHandler(
       return
     }
 
-    executor.execute {
+    trimExecutor.execute {
       recalculateSize()
     }
   }

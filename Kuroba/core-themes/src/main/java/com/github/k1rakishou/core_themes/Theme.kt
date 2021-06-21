@@ -8,6 +8,7 @@ class Theme(
   override val accentColor: Int,
   override val primaryColor: Int,
   override val backColor: Int,
+  override val backColorSecondary: Int,
   override val errorColor: Int,
   override val textColorPrimary: Int,
   override val textColorSecondary: Int,

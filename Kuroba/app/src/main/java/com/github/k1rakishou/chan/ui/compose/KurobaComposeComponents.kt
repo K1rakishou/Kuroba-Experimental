@@ -13,7 +13,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.common.errorMessageOrClassName
 
 @Composable
 fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier) {
@@ -36,7 +39,7 @@ fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier) {
 
 @Composable
 fun KurobaComposeErrorMessage(error: Throwable) {
-  KurobaComposeErrorMessage(error.toString())
+  KurobaComposeErrorMessage(error.errorMessageOrClassName())
 }
 
 @Composable
@@ -50,12 +53,33 @@ fun KurobaComposeErrorMessage(errorMessage: String) {
 }
 
 @Composable
-fun KurobaComposeText(text: String, modifier: Modifier = Modifier, color: Color? = null) {
-  KurobaComposeText(text = AnnotatedString(text), modifier = modifier, color = color)
+fun KurobaComposeText(
+  text: String,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  textAlign: TextAlign? = null
+) {
+  KurobaComposeText(
+    text = AnnotatedString(text),
+    modifier = modifier,
+    color = color,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    textAlign = textAlign
+  )
 }
 
 @Composable
-fun KurobaComposeText(text: AnnotatedString, modifier: Modifier = Modifier, color: Color? = null) {
+fun KurobaComposeText(
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  textAlign: TextAlign? = null
+) {
   val textColorPrimary = if (color == null) {
     val chanTheme = LocalChanTheme.current
 
@@ -69,6 +93,9 @@ fun KurobaComposeText(text: AnnotatedString, modifier: Modifier = Modifier, colo
   Text(
     color = textColorPrimary,
     text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    textAlign = textAlign,
     modifier = modifier
   )
 }

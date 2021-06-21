@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
+import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
+import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCompat;
+
 import android.content.Context;
 
 import androidx.core.app.NotificationManagerCompat;
@@ -108,10 +112,6 @@ import dagger.Module;
 import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 import kotlinx.coroutines.CoroutineScope;
-
-import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
-import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
-import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCompat;
 
 @Module
 public class ManagerModule {
@@ -453,10 +453,12 @@ public class ManagerModule {
     @Provides
     @Singleton
     public SavedReplyManager provideSavedReplyManager(
+            ChanThreadsCache chanThreadsCache,
             ChanSavedReplyRepository chanSavedReplyRepository
     ) {
         return new SavedReplyManager(
                 ChanSettings.verboseLogs.get(),
+                chanThreadsCache,
                 chanSavedReplyRepository
         );
     }

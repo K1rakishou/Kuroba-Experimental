@@ -14,7 +14,13 @@ class ChanSavedReplyRepository(
   private val localSource: ChanSavedReplyLocalSource
 ) : AbstractRepository(database) {
 
-  // TODO(KurobaEx): remove old saved replies after some time
+  suspend fun loadAll(): ModularResult<List<ChanSavedReply>> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.loadAll()
+      }
+    }
+  }
 
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<List<ChanSavedReply>> {
     return applicationScope.dbCall {
@@ -39,6 +45,8 @@ class ChanSavedReplyRepository(
       }
     }
   }
+
+  // TODO(KurobaEx): remove old saved replies after some time
 
   private val TAG = "ChanSavedReplyRepository"
 }
