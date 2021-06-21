@@ -1,12 +1,18 @@
 package com.github.k1rakishou.chan.features.my_posts
 
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanSavedReply
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +30,11 @@ class MyPostsViewModel : BaseViewModel() {
   lateinit var savedReplyManager: SavedReplyManager
 
   private val _myPostsViewModelState = MutableStateFlow(MyPostsViewModelState())
+  private val searchQueryDebouncer = DebouncingCoroutineExecutor(mainScope)
+
+  private var _searchQuery by mutableStateOf<String?>(null)
+  val searchQuery: String?
+    get() = _searchQuery
 
   val myPostsViewModelState: StateFlow<MyPostsViewModelState>
     get() = _myPostsViewModelState.asStateFlow()
@@ -50,7 +61,13 @@ class MyPostsViewModel : BaseViewModel() {
     reloadSavedReplies()
   }
 
-  suspend fun reloadSavedReplies() {
+  fun updateQueryAndReload(newQuery: String?) {
+    this._searchQuery = newQuery
+
+    searchQueryDebouncer.post(150L, { reloadSavedReplies() })
+  }
+
+  private suspend fun reloadSavedReplies() {
     withContext(Dispatchers.Default) {
       _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Loading) }
 
@@ -80,32 +97,10 @@ class MyPostsViewModel : BaseViewModel() {
             }
           }
 
-          val savedReplyDataList = savedReplies
-            .sortedBy { chanSavedReply -> chanSavedReply.postDescriptor.postNo }
-            .map { savedReply ->
-              val dateTime = if (savedReply.createdOn.millis <= 0) {
-                null
-              } else {
-                DATE_TIME_PRINTER.print(savedReply.createdOn)
-              }
-
-              val postHeader = buildString {
-                append("Post No. ")
-                append(savedReply.postDescriptor.postNo)
-
-                if (dateTime != null) {
-                  append(" ")
-                  append(dateTime)
-                }
-              }
-
-              return@map SavedReplyData(
-                postDescriptor = savedReply.postDescriptor,
-                postHeader = postHeader,
-                comment = savedReply.comment ?: "<Empty comment>",
-                dateTime = dateTime
-              )
-            }
+          val savedReplyDataList = processSavedReplies(savedReplies)
+          if (savedReplyDataList.isEmpty()) {
+            return@mapNotNull null
+          }
 
           return@mapNotNull GroupedSavedReplies(
             threadDescriptor = threadDescriptor,
@@ -114,8 +109,57 @@ class MyPostsViewModel : BaseViewModel() {
           )
         }
 
-      _myPostsViewModelState.updateState { copy(savedRepliesGroupedAsync = AsyncData.Data(groupedSavedReplies)) }
+      _myPostsViewModelState.updateState {
+        copy(savedRepliesGroupedAsync = AsyncData.Data(groupedSavedReplies))
+      }
     }
+  }
+
+  private fun processSavedReplies(savedReplies: List<ChanSavedReply>): List<SavedReplyData> {
+    return savedReplies
+      .sortedBy { chanSavedReply -> chanSavedReply.postDescriptor.postNo }
+      .mapNotNull { savedReply ->
+        val dateTime = if (savedReply.createdOn.millis <= 0) {
+          null
+        } else {
+          DATE_TIME_PRINTER.print(savedReply.createdOn)
+        }
+
+        val postHeader = buildString {
+          append("Post No. ")
+          append(savedReply.postDescriptor.postNo)
+
+          if (dateTime != null) {
+            append(" ")
+            append(dateTime)
+          }
+        }
+
+        val comment = savedReply.comment ?: "<Empty comment>"
+
+        if (_searchQuery.isNotNullNorEmpty()) {
+          var matches = false
+
+          if (!matches && postHeader.contains(_searchQuery!!, ignoreCase = true)) {
+            matches = true
+          }
+
+          if (!matches && comment.contains(_searchQuery!!, ignoreCase = true)) {
+            matches = true
+          }
+
+          if (!matches) {
+            return@mapNotNull null
+          }
+        }
+
+        return@mapNotNull SavedReplyData(
+          postDescriptor = savedReply.postDescriptor,
+          postHeader = postHeader,
+          comment = comment,
+          dateTime = dateTime
+        )
+      }
   }
 
   data class MyPostsViewModelState(

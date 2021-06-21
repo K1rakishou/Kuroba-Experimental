@@ -355,9 +355,7 @@ class BookmarksController(
         exitReorderingModeIfActive()
         return@withMenuItemClickInterceptor true
       }
-      .withItem(R.drawable.ic_search_white_24dp) {
-        (navigationController as ToolbarNavigationController).showSearch()
-      }
+      .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, getBookmarksModeChangeToolbarButtonDrawableId()) {
         onChangeViewModeClicked()
       }

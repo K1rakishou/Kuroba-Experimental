@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
@@ -117,6 +118,15 @@ abstract class Controller(@JvmField var context: Context) {
     } else {
       return navigationController!!
     }
+  }
+
+  fun requireToolbarNavController(): ToolbarNavigationController {
+    val navController = requireNavController()
+    check(navController is ToolbarNavigationController) {
+      "navigationController is not ToolbarNavigationController"
+    }
+
+    return navController
   }
 
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {

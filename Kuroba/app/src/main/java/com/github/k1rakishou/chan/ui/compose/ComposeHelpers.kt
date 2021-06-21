@@ -5,10 +5,13 @@ import android.text.style.AbsoluteSizeSpan
 import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -40,16 +43,33 @@ object ComposeHelpers {
     chanTheme: ChanTheme,
     width: Dp = SCROLLBAR_WIDTH
   ): Modifier {
-    return drawBehind {
-      val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
-      val offset = state.layoutInfo.visibleItemsInfo.first().index * elementHeight
-      val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
+    val targetAlpha = if (state.isScrollInProgress) 1f else 0f
+    val duration = if (state.isScrollInProgress) 150 else 500
 
-      drawRect(
-        color = chanTheme.textColorHintCompose,
-        topLeft = Offset(this.size.width - width.toPx(), offset),
-        size = Size(width.toPx(), scrollbarHeight)
-      )
+    val alpha by animateFloatAsState(
+      targetValue = targetAlpha,
+      animationSpec = tween(durationMillis = duration)
+    )
+
+    return drawWithContent {
+      val firstVisibleElementIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index
+      val needDrawScrollbar = state.isScrollInProgress || alpha > 0.0f
+
+      // Draw scrollbar if scrolling or if the animation is still running and lazy column has content
+      if (needDrawScrollbar && firstVisibleElementIndex != null) {
+        val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
+        val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
+        val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
+
+        drawRect(
+          color = chanTheme.textColorHintCompose,
+          topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
+          size = Size(width.toPx(), scrollbarHeight),
+          alpha = alpha
+        )
+      }
+
+      drawContent()
     }
   }
 

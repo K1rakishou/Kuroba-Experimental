@@ -19,7 +19,6 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.SettingV2
-import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -72,9 +71,7 @@ class MainSettingsControllerV2(
     epoxyRecyclerView = view.findViewById(R.id.settings_recycler_view)
 
     navigation.buildMenu(context)
-      .withItem(R.drawable.ic_search_white_24dp) {
-        (navigationController as ToolbarNavigationController).showSearch()
-      }
+      .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .build()
 
     navigation.swipeable = false
@@ -148,7 +145,7 @@ class MainSettingsControllerV2(
         }
         is SettingsCoordinator.RenderAction.RenderScreen -> {
           navigation.title = renderAction.settingsScreen.title
-          (navigationController as ToolbarNavigationController).toolbar!!.updateTitle(navigation)
+          requireToolbarNavController().toolbar!!.updateTitle(navigation)
 
           renderScreen(renderAction.settingsScreen)
         }
