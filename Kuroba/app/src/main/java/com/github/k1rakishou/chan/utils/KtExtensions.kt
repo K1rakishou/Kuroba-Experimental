@@ -6,11 +6,14 @@ import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
 import android.widget.ImageView
+import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
 import androidx.core.view.doOnLayout
 import androidx.core.view.doOnPreDraw
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import com.airbnb.epoxy.AsyncEpoxyController
 import com.airbnb.epoxy.DiffResult
 import com.airbnb.epoxy.EpoxyController
@@ -19,6 +22,7 @@ import com.airbnb.epoxy.OnModelBuildFinishedListener
 import com.github.k1rakishou.chan.activity.SharingActivity
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
@@ -211,4 +215,23 @@ fun fixImageUrlIfNecessary(imageUrl: String?): String? {
 
   Logger.e(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")
   return null
+}
+
+inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(key: String? = null): VM {
+  if (key != null) {
+    return ViewModelProvider(this).get(key, VM::class.java)
+  } else {
+    return ViewModelProvider(this).get(VM::class.java)
+  }
+}
+
+inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(
+  key: String? = null,
+  crossinline vmFactory: () -> VM
+): VM {
+  if (key != null) {
+    return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(key, VM::class.java)
+  } else {
+    return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(VM::class.java)
+  }
 }

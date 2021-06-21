@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.features.my_posts
 
 import android.content.Context
-import androidx.activity.ComponentActivity
-import androidx.activity.viewModels
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -41,6 +39,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -57,7 +56,7 @@ class MyPostsController(context: Context) :
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val viewModel by lazy { (context as ComponentActivity).viewModels<MyPostsViewModel>().value }
+  private val viewModel by lazy { requireComponentActivity().viewModelByKey<MyPostsViewModel>() }
 
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
     get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)

@@ -19,16 +19,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.compose.AsyncData
-import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -37,12 +34,13 @@ import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScroll
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
@@ -53,7 +51,7 @@ class BoardArchiveController(
   context: Context,
   private val catalogDescriptor: ChanDescriptor.CatalogDescriptor,
   private val onThreadClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
-) : Controller(context), WindowInsetsListener {
+) : Controller(context), WindowInsetsListener, ToolbarNavigationController.ToolbarSearchCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -61,9 +59,13 @@ class BoardArchiveController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var blockClicking = false
-
   private var topPadding by mutableStateOf(0)
   private var bottomPadding by mutableStateOf(0)
+
+  private val viewModel by lazy {
+    val key = catalogDescriptor.serializeToString()
+    requireComponentActivity().viewModelByKey(key, { BoardArchiveViewModel(catalogDescriptor) })
+  }
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -73,6 +75,10 @@ class BoardArchiveController(
     super.onCreate()
 
     navigation.title = getString(R.string.controller_board_archive_title, catalogDescriptor.boardCode())
+
+    navigation.buildMenu(context)
+      .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
+      .build()
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
     onInsetsChanged()
@@ -107,12 +113,18 @@ class BoardArchiveController(
     bottomPadding = pxToDp(getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom())
   }
 
+  override fun onSearchVisibilityChanged(visible: Boolean) {
+    if (!visible) {
+      viewModel.updateQueryAndReload(null)
+    }
+  }
+
+  override fun onSearchEntered(entered: String) {
+    viewModel.updateQueryAndReload(entered)
+  }
+
   @Composable
   private fun BuildContent() {
-    val viewModel = viewModel<BoardArchiveViewModel>(
-      key = catalogDescriptor.serializeToString(),
-      factory = viewModelProviderFactoryOf { BoardArchiveViewModel(catalogDescriptor) }
-    )
     val boardArchiveControllerState = viewModel.state.collectAsState()
 
     val archiveThreads = when (val archiveThreadsAsync = boardArchiveControllerState.value.archiveThreadsAsync) {
@@ -164,28 +176,9 @@ class BoardArchiveController(
         .padding(end = ComposeHelpers.SCROLLBAR_WIDTH)
         .imePadding()
     ) {
-      item(key = "search_input") {
-        val searchQuery by remember(viewModel.searchQuery.value) { viewModel.searchQuery }
-        val textHintColor = remember(key1 = chanTheme.textColorHint) {
-          Color(chanTheme.textColorHint)
-        }
-
-        Column(modifier = Modifier.fillMaxSize()) {
-          KurobaComposeTextField(
-            value = searchQuery,
-            label = { KurobaComposeText(text = stringResource(id = R.string.search_hint), color = textHintColor) },
-            onValueChange = { query -> viewModel.updateSearchQuery(query) },
-            maxLines = 1,
-            modifier = Modifier
-              .fillMaxWidth()
-              .wrapContentHeight()
-          )
-        }
-      }
-
       if (archiveThreads.isEmpty()) {
         val searchQuery by viewModel.searchQuery
-        if (searchQuery.isEmpty()) {
+        if (searchQuery.isNullOrEmpty()) {
           item(key = "nothing_found_message") {
             KurobaComposeErrorMessage(
               errorMessage = stringResource(id = R.string.search_nothing_found)
@@ -194,7 +187,7 @@ class BoardArchiveController(
         } else {
           item(key = "nothing_found_by_query_message_$searchQuery") {
             KurobaComposeErrorMessage(
-              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery!!)
             )
           }
         }

@@ -28,12 +28,12 @@ class BoardArchiveViewModel(
 
   private val _state = MutableStateFlow(ViewModelState())
   private val searchDebouncer = Debouncer(false)
-  private var _searchQuery = mutableStateOf("")
+  private var _searchQuery = mutableStateOf<String?>(null)
   private var _archiveThreadsAsync: AsyncData<List<ArchiveThread>> = AsyncData.NotInitialized
 
   val state: StateFlow<ViewModelState>
     get() = _state.asStateFlow()
-  val searchQuery: State<String>
+  val searchQuery: State<String?>
     get() = _searchQuery
 
   override fun injectDependencies(component: ViewModelComponent) {
@@ -83,41 +83,45 @@ class BoardArchiveViewModel(
     _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(archiveThreads)) }
   }
 
-  fun updateSearchQuery(query: String) {
+  fun updateQueryAndReload(query: String?) {
     _searchQuery.value = query
 
     searchDebouncer.post({
-      if (query.isEmpty()) {
-        if (_archiveThreadsAsync is AsyncData.Data) {
-          _state.updateState { copy(archiveThreadsAsync = _archiveThreadsAsync) }
-        }
-
-        _searchQuery.value = ""
-        return@post
-      }
-
-      val archiveThreadsAsync = _archiveThreadsAsync
-      if (archiveThreadsAsync !is AsyncData.Data) {
-        _searchQuery.value = ""
-        return@post
-      }
-
-      val filteredArchiveThreads = archiveThreadsAsync.data.filter { archiveThread ->
-        val threadNoStr = archiveThread.threadNo.toString()
-        if (threadNoStr.contains(query, ignoreCase = true)) {
-          return@filter true
-        }
-
-        if (archiveThread.comment.contains(query, ignoreCase = true)) {
-          return@filter true
-        }
-
-        return@filter false
-      }
-
-      _searchQuery.value = query
-      _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(filteredArchiveThreads)) }
+      reloadArchiveThreads(query)
     }, 125L)
+  }
+
+  private fun reloadArchiveThreads(query: String?) {
+    if (query.isNullOrEmpty()) {
+      if (_archiveThreadsAsync is AsyncData.Data) {
+        _state.updateState { copy(archiveThreadsAsync = _archiveThreadsAsync) }
+      }
+
+      _searchQuery.value = null
+      return
+    }
+
+    val archiveThreadsAsync = _archiveThreadsAsync
+    if (archiveThreadsAsync !is AsyncData.Data) {
+      _searchQuery.value = null
+      return
+    }
+
+    val filteredArchiveThreads = archiveThreadsAsync.data.filter { archiveThread ->
+      val threadNoStr = archiveThread.threadNo.toString()
+      if (threadNoStr.contains(query, ignoreCase = true)) {
+        return@filter true
+      }
+
+      if (archiveThread.comment.contains(query, ignoreCase = true)) {
+        return@filter true
+      }
+
+      return@filter false
+    }
+
+    _searchQuery.value = query
+    _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(filteredArchiveThreads)) }
   }
 
   data class ViewModelState(

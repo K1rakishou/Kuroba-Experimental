@@ -22,6 +22,7 @@ import android.view.KeyEvent
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
 import com.github.k1rakishou.chan.activity.StartActivityCallbacks
@@ -138,8 +139,13 @@ abstract class Controller(@JvmField var context: Context) {
   }
 
   fun requireStartActivity(): StartActivityCallbacks {
-    return context as? StartActivityCallbacks
+    return (context as? StartActivityCallbacks)
       ?: throw IllegalStateException("Wrong context! Must be StartActivity")
+  }
+
+  fun requireComponentActivity(): ComponentActivity {
+    return (context as? ComponentActivity)
+      ?: throw IllegalStateException("Wrong context! Must be ComponentActivity")
   }
 
   fun isViewInitialized(): Boolean = ::view.isInitialized
