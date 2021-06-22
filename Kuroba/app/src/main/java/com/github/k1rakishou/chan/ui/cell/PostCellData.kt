@@ -386,6 +386,7 @@ data class PostCellData(
         catalogRepliesCount,
         catalogImagesCount
       )
+
       if (!ChanSettings.neverShowPages.get()) {
         val boardPage = postCellCallback?.getPage(postDescriptor)
         if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {

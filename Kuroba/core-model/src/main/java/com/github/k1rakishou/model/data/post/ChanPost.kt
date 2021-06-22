@@ -63,6 +63,9 @@ open class ChanPost(
   @get:Synchronized
   open val catalogImagesCount: Int
     get() = 0
+  @get:Synchronized
+  open val uniqueIps: Int
+    get() = 0
 
   val boardDescriptor: BoardDescriptor
     get() = postDescriptor.boardDescriptor()

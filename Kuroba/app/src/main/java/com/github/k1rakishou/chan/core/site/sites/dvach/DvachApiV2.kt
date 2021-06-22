@@ -156,15 +156,21 @@ class DvachApiV2(
         builder.opId(threadPost.num)
       }
 
-      builder.sticky(threadPost.sticky > 0L && builder.op)
-      builder.closed(threadPost.closed == 1L)
-      builder.name(threadPost.name)
-      builder.subject(threadPost.subject)
-      builder.comment(threadPost.comment)
-      builder.setUnixTimestampSeconds(threadPost.timestamp)
+      if (builder.op) {
+        builder.sticky(threadPost.sticky > 0L)
+        builder.closed(threadPost.closed == 1L)
 
-      if (posters != null) {
-        builder.uniqueIps(posters)
+        if (posters != null) {
+          builder.uniqueIps(posters)
+        }
+
+        if (threadPost.postsCount != null && postsCount > 0) {
+          builder.replies(threadPost.postsCount)
+        }
+
+        if (threadPost.filesCount != null && threadPost.filesCount > 0) {
+          builder.threadImagesCount(threadPost.filesCount)
+        }
       }
 
       if (threadPost.trip.startsWith("!!%")) {
@@ -177,13 +183,10 @@ class DvachApiV2(
         builder.tripcode(threadPost.trip)
       }
 
-      if (threadPost.postsCount != null && postsCount > 0) {
-        builder.replies(threadPost.postsCount)
-      }
-
-      if (threadPost.filesCountSafe > 0) {
-        builder.threadImagesCount(threadPost.filesCountSafe)
-      }
+      builder.name(threadPost.name)
+      builder.subject(threadPost.subject)
+      builder.comment(threadPost.comment)
+      builder.setUnixTimestampSeconds(threadPost.timestamp)
 
       val postImages = threadPost.files
         ?.mapNotNull { postFile -> postFile.toChanPostImage(board, endpoints) }
@@ -355,19 +358,12 @@ class DvachApiV2(
     val lasthit: Long,
     @Json(name = "posts_count")
     val postsCount: Int?,
+    @Json(name = "files_count")
+    val filesCount: Int?,
     val files: List<DvachFile>?
   ) {
     val isOp: Boolean
       get() = parent == 0L
-
-    val filesCountSafe: Int
-      get() {
-        if (files == null) {
-          return 0
-        }
-
-        return files.size
-      }
 
     val originalPostNo: Long
       get() {
