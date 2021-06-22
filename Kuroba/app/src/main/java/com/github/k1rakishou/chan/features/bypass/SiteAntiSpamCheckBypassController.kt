@@ -66,7 +66,7 @@ class SiteAntiSpamCheckBypassController(
 
       onCreateInternal()
     } catch (error: Throwable) {
-      onResult(CookieResult.Error(CloudFlareBypassException(error.errorMessageOrClassName())))
+      onResult(CookieResult.Error(BypassExceptions(error.errorMessageOrClassName())))
       pop()
     }
   }
@@ -74,6 +74,7 @@ class SiteAntiSpamCheckBypassController(
   override fun onDestroy() {
     super.onDestroy()
 
+    (webClient as BypassWebClient).destroy()
     webView.stopLoading()
 
     if (!cookieResultCompletableDeferred.isCompleted) {
@@ -92,6 +93,9 @@ class SiteAntiSpamCheckBypassController(
     val closableArea = view.findViewById<View>(R.id.closable_area)
     closableArea.setOnClickListener { pop() }
 
+    cookieManager.setAcceptCookie(true)
+    cookieManager.removeAllCookies(null)
+
     val webSettings: WebSettings = webView.settings
     webSettings.javaScriptEnabled = true
     webSettings.useWideViewPort = true
@@ -102,8 +106,6 @@ class SiteAntiSpamCheckBypassController(
     webSettings.databaseEnabled = true
 
     webView.webViewClient = webClient
-    cookieManager.removeAllCookies(null)
-
     webView.loadUrl(urlToOpen)
 
     mainScope.launch {
@@ -122,6 +124,9 @@ class SiteAntiSpamCheckBypassController(
       }
       is CookieResult.Error -> {
         Logger.e(TAG, "Error: ${cookieResult.exception.errorMessageOrClassName()}")
+      }
+      CookieResult.Timeout -> {
+        Logger.e(TAG, "Timeout")
       }
       CookieResult.Canceled -> {
         Logger.e(TAG, "Canceled")

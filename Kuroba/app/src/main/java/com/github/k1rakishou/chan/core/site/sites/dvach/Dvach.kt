@@ -586,6 +586,12 @@ class Dvach : CommonSite() {
       requestProperties.put(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
     }
 
+    override fun modifySearchGetRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifySearchGetRequest(site, requestBuilder)
+
+      addUserCodeCookie(site, requestBuilder)
+    }
+
     private fun addUserCodeCookie(
       site: Dvach,
       requestBuilder: Request.Builder

@@ -49,7 +49,7 @@ class DvachAntiSpamCheckBypassWebClient(
     ++pageLoadsCounter
 
     if (pageLoadsCounter > SiteAntiSpamCheckBypassController.MAX_PAGE_LOADS_COUNT) {
-      fail(CloudFlareBypassException("Exceeded max page load limit"))
+      fail(BypassExceptions("Exceeded max page load limit"))
     }
   }
 
@@ -62,7 +62,7 @@ class DvachAntiSpamCheckBypassWebClient(
     super.onReceivedError(view, errorCode, description, failingUrl)
 
     val error = description ?: "Unknown error while trying to load 2ch.hk page"
-    fail(CloudFlareBypassException(error))
+    fail(BypassExceptions(error))
   }
 
   companion object {

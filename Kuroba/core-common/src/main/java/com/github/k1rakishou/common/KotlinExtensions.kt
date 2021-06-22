@@ -14,6 +14,7 @@ import android.view.ViewGroup
 import android.view.ViewParent
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
@@ -114,6 +115,7 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
 ): JsonConversionResult<out T> {
   return withContext(Dispatchers.IO) {
     try {
+      Logger.d("suspendConvertIntoJsonObject", "url='${request.url}'")
       val response = suspendCall(request)
 
       if (!response.isSuccessful) {
@@ -139,6 +141,7 @@ suspend inline fun OkHttpClient.suspendConvertIntoJsoupDocument(
 ): ModularResult<Document> {
   return withContext(Dispatchers.IO) {
     return@withContext Try {
+      Logger.d("suspendConvertIntoJsoupDocument", "url='${request.url}'")
       val response = suspendCall(request)
 
       if (!response.isSuccessful) {
@@ -166,6 +169,7 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithAdap
 ): ModularResult<out T> {
   return withContext(Dispatchers.IO) {
     return@withContext Try {
+      Logger.d("suspendConvertIntoJsonObjectWithAdapter", "url='${request.url}'")
       val response = suspendCall(request)
 
       if (!response.isSuccessful) {
@@ -189,6 +193,7 @@ suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithType
 ): JsonConversionResult<out T> {
   return withContext(Dispatchers.IO) {
     try {
+      Logger.d("suspendConvertIntoJsonObjectWithType", "url='${request.url}'")
       val response = suspendCall(request)
 
       if (!response.isSuccessful) {

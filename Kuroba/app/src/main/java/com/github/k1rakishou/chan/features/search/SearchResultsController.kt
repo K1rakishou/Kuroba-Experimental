@@ -116,6 +116,9 @@ class SearchResultsController(
               "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
             )
           }
+          CookieResult.Timeout -> {
+            showToast(context, "Failed to pass CloudFlare checks, reason: Timeout when trying to bypass 2ch antispam system")
+          }
           CookieResult.Canceled -> {
             showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
           }

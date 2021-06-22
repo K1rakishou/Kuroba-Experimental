@@ -15,12 +15,16 @@
             android:id="@+id/web_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_margin="24dp"/>
+            android:layout_margin="24dp"
+            android:clickable="false"
+            android:focusable="false"/>
 
         <View
             android:id="@+id/closable_area"
             android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
+            android:layout_height="match_parent"
+            android:clickable="true"
+            android:focusable="true"/>
 
     </RelativeLayout>
 
