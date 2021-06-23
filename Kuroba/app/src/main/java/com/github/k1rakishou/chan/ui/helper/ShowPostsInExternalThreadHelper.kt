@@ -71,7 +71,7 @@ class ShowPostsInExternalThreadHelper(
         // we are walking the cross-thread link path.
       )
 
-      chanThreadManager.loadThreadOrCatalog(
+      val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = threadDescriptor,
         chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateIfCacheIsOlderThan(
           timePeriodMs = ChanCacheUpdateOptions.DEFAULT_PERIOD
@@ -79,69 +79,69 @@ class ShowPostsInExternalThreadHelper(
         chanLoadOptions = ChanLoadOptions.retainAll(),
         chanCacheOptions = chanCacheOptions,
         chanReadOptions = ChanReadOptions.default()
-      ) { threadLoadResult ->
-        loadingController.stopPresenting()
+      )
 
-        if (cancellationFlag.get()) {
-          showToastFunc("'${threadDescriptor}' thread loading canceled")
-          return@loadThreadOrCatalog
-        }
+      loadingController.stopPresenting()
 
-        val originalPostDescriptor = PostDescriptor.create(
-          siteName = postDescriptor.siteDescriptor().siteName,
-          boardCode = postDescriptor.boardDescriptor().boardCode,
-          threadNo = postDescriptor.postNo,
-          postNo = postDescriptor.postNo
-        )
-
-        if (threadLoadResult is ThreadLoadResult.Error) {
-          if (threadLoadResult.exception.isNotFound) {
-            showToastFunc("Failed to open ${postDescriptor} server returned 404")
-            showAvailableArchivesListFunc(originalPostDescriptor)
-            return@loadThreadOrCatalog
-          }
-
-          if (threadLoadResult.exception.isCoroutineCancellationError()) {
-            showToastFunc("'${threadDescriptor}' thread loading canceled")
-            return@loadThreadOrCatalog
-          }
-
-          Logger.e(TAG, "showPostsInExternalThread() Failed to load external " +
-            "thread '$threadDescriptor'", threadLoadResult.exception)
-
-          showToastFunc("Failed to load external thread '$threadDescriptor', " +
-            "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
-
-          return@loadThreadOrCatalog
-        }
-
-        val postsToShow = if (isPreviewingCatalogThread) {
-          chanThreadManager.getCatalogPreviewPosts(threadDescriptor)
-        } else {
-          chanThreadManager.getPost(postDescriptor)
-            ?.let { post -> listOf(post) }
-            ?: emptyList()
-        }
-
-        if (postsToShow.isEmpty()) {
-          if (postDescriptor.isOP()) {
-            showToastFunc("Failed to open ${postDescriptor} as both post and thread. " +
-              "There is something wrong with this post link.")
-            return@loadThreadOrCatalog
-          }
-
-          showToastFunc("Failed to open ${postDescriptor} as a post, trying to open it as a thread")
-          showAvailableArchivesListFunc(originalPostDescriptor)
-          return@loadThreadOrCatalog
-        }
-
-        postPopupHelper.showRepliesPopup(
-          threadDescriptor,
-          PostCellData.PostViewMode.ExternalPostsPopup,
-          postDescriptor,
-          postsToShow
-        )
+      if (cancellationFlag.get()) {
+        showToastFunc("'${threadDescriptor}' thread loading canceled")
+        return@launch
       }
+
+      val originalPostDescriptor = PostDescriptor.create(
+        siteName = postDescriptor.siteDescriptor().siteName,
+        boardCode = postDescriptor.boardDescriptor().boardCode,
+        threadNo = postDescriptor.postNo,
+        postNo = postDescriptor.postNo
+      )
+
+      if (threadLoadResult is ThreadLoadResult.Error) {
+        if (threadLoadResult.exception.isNotFound) {
+          showToastFunc("Failed to open ${postDescriptor} server returned 404")
+          showAvailableArchivesListFunc(originalPostDescriptor)
+          return@launch
+        }
+
+        if (threadLoadResult.exception.isCoroutineCancellationError()) {
+          showToastFunc("'${threadDescriptor}' thread loading canceled")
+          return@launch
+        }
+
+        Logger.e(TAG, "showPostsInExternalThread() Failed to load external " +
+          "thread '$threadDescriptor'", threadLoadResult.exception)
+
+        showToastFunc("Failed to load external thread '$threadDescriptor', " +
+          "error: ${threadLoadResult.exception.errorMessageOrClassName()}")
+
+        return@launch
+      }
+
+      val postsToShow = if (isPreviewingCatalogThread) {
+        chanThreadManager.getCatalogPreviewPosts(threadDescriptor)
+      } else {
+        chanThreadManager.getPost(postDescriptor)
+          ?.let { post -> listOf(post) }
+          ?: emptyList()
+      }
+
+      if (postsToShow.isEmpty()) {
+        if (postDescriptor.isOP()) {
+          showToastFunc("Failed to open ${postDescriptor} as both post and thread. " +
+            "There is something wrong with this post link.")
+          return@launch
+        }
+
+        showToastFunc("Failed to open ${postDescriptor} as a post, trying to open it as a thread")
+        showAvailableArchivesListFunc(originalPostDescriptor)
+        return@launch
+      }
+
+      postPopupHelper.showRepliesPopup(
+        threadDescriptor,
+        PostCellData.PostViewMode.ExternalPostsPopup,
+        postDescriptor,
+        postsToShow
+      )
     }
 
     loadingController.enableBack {

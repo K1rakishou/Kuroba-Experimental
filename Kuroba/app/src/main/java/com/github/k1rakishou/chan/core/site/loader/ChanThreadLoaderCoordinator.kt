@@ -59,7 +59,6 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
-import java.io.IOException
 import java.io.InputStream
 import java.util.*
 import kotlin.coroutines.CoroutineContext
@@ -172,10 +171,8 @@ class ChanThreadLoaderCoordinator(
         chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.LoadingJson(chanDescriptor))
 
         val (response, requestDuration) = try {
-          measureTimedValue {
-            proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
-          }
-        } catch (error: IOException) {
+          measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build()) }
+        } catch (error: Throwable) {
           if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
             throw error
           }
@@ -319,7 +316,7 @@ class ChanThreadLoaderCoordinator(
 
         val (threadLoadResult, _) = chanPostPersister.persistPosts(
           chanReaderProcessor = chanReaderProcessor,
-          cacheOptions = ChanCacheOptions.default(),
+          cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
           cacheUpdateOptions = cacheUpdateOptions,
           chanDescriptor = threadDescriptor,
           postParser = postParser
@@ -345,7 +342,7 @@ class ChanThreadLoaderCoordinator(
 
   private suspend fun fallbackPostLoadOnNetworkError(
     chanDescriptor: ChanDescriptor,
-    error: Exception
+    error: Throwable
   ): ThreadLoadResult {
     BackgroundUtils.ensureBackgroundThread()
 

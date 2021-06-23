@@ -1,6 +1,5 @@
 package com.github.k1rakishou.model.repository
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -254,10 +253,6 @@ class ChanPostRepository(
     descriptor: ChanDescriptor.CatalogDescriptor,
     count: Int
   ): ModularResult<List<ChanPost>> {
-    if (!ChanSettings.databasePostCachingEnabled.get()) {
-      return value(emptyList())
-    }
-
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     require(count > 0) { "Bad count param: $count" }
 
@@ -273,7 +268,7 @@ class ChanPostRepository(
         if (catalogPosts.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPosts,
-            cacheOptions = ChanCacheOptions.default()
+            cacheOptions = ChanCacheOptions.onlyCacheInMemory()
           )
         }
 
@@ -288,10 +283,6 @@ class ChanPostRepository(
     descriptor: ChanDescriptor.CatalogDescriptor,
     originalPostDescriptorList: Collection<PostDescriptor>
   ): ModularResult<List<ChanPost>> {
-    if (!ChanSettings.databasePostCachingEnabled.get()) {
-      return value(emptyList())
-    }
-
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.dbCall {
@@ -323,7 +314,7 @@ class ChanPostRepository(
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPostsFromDatabase,
-            cacheOptions = ChanCacheOptions.default()
+            cacheOptions = ChanCacheOptions.onlyCacheInMemory()
           )
         }
 
@@ -364,7 +355,7 @@ class ChanPostRepository(
         if (catalogPostsFromDatabase.isNotEmpty()) {
           chanThreadsCache.putManyCatalogPostsIntoCache(
             parsedPosts = catalogPostsFromDatabase.values.toList(),
-            cacheOptions = ChanCacheOptions.default()
+            cacheOptions = ChanCacheOptions.onlyCacheInMemory()
           )
         }
 
@@ -393,10 +384,6 @@ class ChanPostRepository(
   suspend fun preloadForThread(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): ModularResult<Unit> {
-    if (!ChanSettings.databasePostCachingEnabled.get()) {
-      return value(Unit)
-    }
-
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     ensureBackgroundThread()
 
@@ -412,7 +399,7 @@ class ChanPostRepository(
             chanThreadsCache.putManyThreadPostsIntoCache(
               threadDescriptor = threadDescriptor,
               parsedPosts = postsFromDatabase,
-              cacheOptions = ChanCacheOptions.default(),
+              cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
               cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
             )
           }
@@ -497,7 +484,7 @@ class ChanPostRepository(
         chanThreadsCache.putManyThreadPostsIntoCache(
           threadDescriptor = threadDescriptor,
           parsedPosts = postsFromDatabase,
-          cacheOptions = ChanCacheOptions.default(),
+          cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
           cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
         )
 
@@ -599,7 +586,7 @@ class ChanPostRepository(
       cacheOptions = cacheOptions
     )
 
-    if (ChanSettings.databasePostCachingEnabled.get() && postsToStoreIntoDatabase.isNotEmpty()) {
+    if (cacheOptions.canStoreInDatabase() && postsToStoreIntoDatabase.isNotEmpty()) {
       localSource.insertManyOriginalPosts(postsToStoreIntoDatabase, cacheOptions)
     }
 
@@ -640,7 +627,7 @@ class ChanPostRepository(
       cacheUpdateOptions = cacheUpdateOptions
     )
 
-    if (ChanSettings.databasePostCachingEnabled.get() && postsToStoreIntoDatabase.isNotEmpty()) {
+    if (cacheOptions.canStoreInDatabase() && postsToStoreIntoDatabase.isNotEmpty()) {
       localSource.insertPosts(postsToStoreIntoDatabase, cacheOptions)
     }
 
@@ -672,7 +659,7 @@ class ChanPostRepository(
           max(totalAmountOfPostsInDatabase, maxPostsAmount)
         }
 
-        val toDeleteCount = (postsInDatabaseToUse / (100f / ChanSettings.databasePostsCleanupRemovePercent.get().toFloat())).toInt()
+        val toDeleteCount = (postsInDatabaseToUse / 4)
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }
@@ -723,7 +710,7 @@ class ChanPostRepository(
           max(totalAmountOfThreadsInDatabase, maxThreadsAmount)
         }
 
-        val toDeleteCount = (threadsInDatabaseToUse / (100f / ChanSettings.databasePostsCleanupRemovePercent.get().toFloat())).toInt()
+        val toDeleteCount = (threadsInDatabaseToUse / 4)
         if (toDeleteCount <= 0) {
           return@tryWithTransaction ChanPostLocalSource.DeleteResult()
         }

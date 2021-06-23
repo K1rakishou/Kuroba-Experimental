@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.loader.internal
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderResponse
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ReloadPostsFromDatabaseUseCase
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -15,10 +14,6 @@ internal class DatabasePostLoader(
 ) : AbstractPostLoader() {
 
   suspend fun loadPosts(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
-    if (!ChanSettings.databasePostCachingEnabled.get()) {
-      return null
-    }
-
     BackgroundUtils.ensureBackgroundThread()
 
     val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadPosts(chanDescriptor)
@@ -37,10 +32,6 @@ internal class DatabasePostLoader(
   }
 
   suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanLoaderResponse? {
-    if (!ChanSettings.databasePostCachingEnabled.get()) {
-      return null
-    }
-
     BackgroundUtils.ensureBackgroundThread()
 
     val currentCatalogSnapshot = chanCatalogSnapshotRepository.getCatalogSnapshot(catalogDescriptor)

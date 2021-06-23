@@ -45,7 +45,6 @@ class ThreadDownloadManager(
     Logger.d(TAG, "ThreadDownloadManager is not ready yet, waiting...")
     val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
     Logger.d(TAG, "ThreadDownloadManager initialization completed, took $duration")
-
   }
 
   fun isReady() = suspendableInitializer.isInitialized()
@@ -86,6 +85,17 @@ class ThreadDownloadManager(
     }
   }
 
+  suspend fun getAllActiveThreads(): List<ChanDescriptor.ThreadDescriptor> {
+    ensureInitialized()
+
+    return mutex.withLock {
+      return@withLock threadDownloadsMap
+        .entries
+        .filter { (_, threadDownload) -> threadDownload.status.isRunning() }
+        .map { (_, threadDownload) -> threadDownload.threadDescriptor }
+    }
+  }
+
   suspend fun startDownloading(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     downloadMedia: Boolean = true
@@ -113,40 +123,38 @@ class ThreadDownloadManager(
   suspend fun stopDownloading(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     ensureInitialized()
 
-    val updateData = mutex.withLock {
-      val threadDownload = threadDownloadsMap[threadDescriptor]
-      if (threadDownload == null) {
-        return@withLock null
-      }
-
+    val updated = updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
       if (threadDownload.status != ThreadDownload.Status.Running) {
-        return@withLock null
+        return@updateThreadDownload null
       }
 
-      val prevStatus = threadDownload.status
-      threadDownload.status = ThreadDownload.Status.Stopped
+      return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Stopped)
+    })
 
-      return@withLock UpdateData(prevStatus, threadDownload)
+    if (updated) {
+      _threadDownloadUpdateFlow.emit(Event.StopDownload(threadDescriptor))
     }
 
-    if (updateData == null) {
-      Logger.d(TAG, "stopDownloading() does not exist, threadDescriptor=$threadDescriptor")
-      return
-    }
+    Logger.d(TAG, "stopDownloading() success=$updated, threadDescriptor=$threadDescriptor")
+  }
 
-    val updatedThreadDownload = updateData.threadDownload
+  suspend fun completeDownloading(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    ensureInitialized()
 
-    threadDownloadRepository.updateThreadDownload(updatedThreadDownload)
-      .safeUnwrap { error ->
-        Logger.e(TAG, "Failed to update thread download in the DB", error)
-        mutex.withLock { threadDownloadsMap[threadDescriptor]?.status = updateData.prevStatus }
-        return
+    val updated = updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
+      if (threadDownload.status != ThreadDownload.Status.Running
+        && threadDownload.status != ThreadDownload.Status.Stopped) {
+        return@updateThreadDownload null
       }
 
-    mutex.withLock { threadDownloadsMap[updatedThreadDownload.threadDescriptor] = updatedThreadDownload }
-    _threadDownloadUpdateFlow.emit(Event.StopDownload(threadDescriptor))
+      return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Completed)
+    })
 
-    Logger.d(TAG, "stopDownloading() success, threadDescriptor=$threadDescriptor")
+    if (updated) {
+      _threadDownloadUpdateFlow.emit(Event.CompleteDownload(threadDescriptor))
+    }
+
+    Logger.d(TAG, "completeDownloading() success=$updated, threadDescriptor=$threadDescriptor")
   }
 
   suspend fun cancelDownloading(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -169,8 +177,62 @@ class ThreadDownloadManager(
     Logger.d(TAG, "cancelDownloading() success, threadDescriptor=$threadDescriptor")
   }
 
-  private fun ensureInitialized() {
-    check(suspendableInitializer.isInitialized()) { "ThreadDownloadManager is not initialized yet! Use " }
+  private suspend fun updateThreadDownload(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    updaterFunc: (ThreadDownload) -> ThreadDownload?
+  ): Boolean {
+    ensureInitialized()
+
+    val updateData = mutex.withLock {
+      val oldThreadDownload = threadDownloadsMap[threadDescriptor]
+      if (oldThreadDownload == null) {
+        return@withLock null
+      }
+
+      val newThreadDownload = updaterFunc(oldThreadDownload)
+      if (newThreadDownload == null) {
+        return@withLock null
+      }
+
+      check(oldThreadDownload !== newThreadDownload) {
+        "updaterFunc must return an updated copy of ThreadDownload"
+      }
+
+      return@withLock UpdateData(oldThreadDownload, newThreadDownload)
+    }
+
+    if (updateData == null) {
+      Logger.d(TAG, "stopDownloading() does not exist, threadDescriptor=$threadDescriptor")
+      return false
+    }
+
+    val newThreadDownload = updateData.newThreadDownload
+
+    threadDownloadRepository.updateThreadDownload(newThreadDownload)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "Failed to update thread download in the DB", error)
+        mutex.withLock { threadDownloadsMap[threadDescriptor] = updateData.oldThreadDownload }
+        return false
+      }
+
+    mutex.withLock { threadDownloadsMap[newThreadDownload.threadDescriptor] = newThreadDownload }
+    return true
+  }
+
+  private suspend fun resumeThreadDownloadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val updated = updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
+      if (threadDownload.status != ThreadDownload.Status.Stopped) {
+        return@updateThreadDownload null
+      }
+
+      return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Running)
+    })
+
+    if (updated) {
+      _threadDownloadUpdateFlow.emit(Event.StartDownload(threadDescriptor))
+    }
+
+    Logger.d(TAG, "resumeThreadDownloadInternal() success=$updated, threadDescriptor=$threadDescriptor")
   }
 
   private suspend fun startThreadDownloadInternal(
@@ -205,63 +267,30 @@ class ThreadDownloadManager(
       }
     }
 
-    if (!success) {
-      mutex.withLock { threadDownloadsMap.remove(threadDescriptor) }
-    } else {
+    if (success) {
       _threadDownloadUpdateFlow.emit(Event.StartDownload(threadDescriptor))
+    } else {
+      mutex.withLock { threadDownloadsMap.remove(threadDescriptor) }
     }
 
     Logger.d(TAG, "startThreadDownloadInternal() threadDescriptor=$threadDescriptor, " +
       "downloadMedia=$downloadMedia, success=$success")
   }
 
-  private suspend fun resumeThreadDownloadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val updateData = mutex.withLock {
-      val threadDownload = threadDownloadsMap[threadDescriptor]
-      if (threadDownload == null) {
-        return@withLock null
-      }
-
-      if (threadDownload.status != ThreadDownload.Status.Stopped) {
-        return@withLock null
-      }
-
-      val prevStatus = threadDownload.status
-      threadDownload.status = ThreadDownload.Status.Running
-
-      return@withLock UpdateData(prevStatus, threadDownload)
-    }
-
-    if (updateData == null) {
-      Logger.d(TAG, "startDownloading() already running/completed or does not exist, " +
-        "threadDescriptor=$threadDescriptor")
-      return
-    }
-
-    val updatedThreadDownload = updateData.threadDownload
-
-    threadDownloadRepository.updateThreadDownload(updatedThreadDownload)
-      .safeUnwrap { error ->
-        Logger.e(TAG, "Failed to update thread download in the DB", error)
-        mutex.withLock { threadDownloadsMap[threadDescriptor]?.status = updateData.prevStatus }
-        return
-      }
-
-    mutex.withLock { threadDownloadsMap[updatedThreadDownload.threadDescriptor] = updatedThreadDownload }
-    _threadDownloadUpdateFlow.emit(Event.StartDownload(threadDescriptor))
-
-    Logger.d(TAG, "resumeThreadDownloadInternal() success, threadDescriptor=$threadDescriptor")
+  private fun ensureInitialized() {
+    check(suspendableInitializer.isInitialized()) { "ThreadDownloadManager is not initialized yet! Use " }
   }
 
   sealed class Event {
     data class StartDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
     data class StopDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
+    data class CompleteDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
     data class CancelDownload(val threadDescriptor: ChanDescriptor.ThreadDescriptor) : Event()
   }
 
   class UpdateData(
-    val prevStatus: ThreadDownload.Status,
-    val threadDownload: ThreadDownload
+    val oldThreadDownload: ThreadDownload,
+    val newThreadDownload: ThreadDownload
   )
 
   companion object {

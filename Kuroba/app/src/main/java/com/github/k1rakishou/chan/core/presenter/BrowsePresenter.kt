@@ -192,15 +192,14 @@ class BrowsePresenter @Inject constructor(
           chanDescriptor = threadDescriptor,
           chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
           chanLoadOptions = ChanLoadOptions.retainAll(),
-          chanCacheOptions = ChanCacheOptions.default(),
-          chanReadOptions = ChanReadOptions.default(),
-          onReloaded = {
-            activeThreads.remove(threadDescriptor)
-
-            Logger.d(TAG, "cacheEveryThreadClicked() $threadDescriptor cached, " +
-              "threads left: ${activeThreads.size}")
-          }
+          chanCacheOptions = ChanCacheOptions.onlyCacheInMemory(),
+          chanReadOptions = ChanReadOptions.default()
         )
+
+        activeThreads.remove(threadDescriptor)
+
+        Logger.d(TAG, "cacheEveryThreadClicked() $threadDescriptor cached, " +
+          "threads left: ${activeThreads.size}")
       }
     }
 

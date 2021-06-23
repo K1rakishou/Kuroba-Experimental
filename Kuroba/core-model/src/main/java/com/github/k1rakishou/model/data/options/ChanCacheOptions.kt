@@ -15,13 +15,18 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
   }
 
   companion object {
-    private val DEFAULT_OPTIONS = ChanCacheOptions(listOf(
-      ChanCacheOption.StoreEverywhere,
-      ChanCacheOption.CanAddInFrontOfTheMemoryCache
-    ))
+    fun onlyCacheInMemory(): ChanCacheOptions {
+      return ChanCacheOptions(listOf(
+        ChanCacheOption.StoreInMemory,
+        ChanCacheOption.CanAddInFrontOfTheMemoryCache
+      ))
+    }
 
-    fun default(): ChanCacheOptions {
-      return DEFAULT_OPTIONS
+    fun cacheEverywhere(): ChanCacheOptions {
+      return ChanCacheOptions(listOf(
+        ChanCacheOption.StoreEverywhere,
+        ChanCacheOption.CanAddInFrontOfTheMemoryCache
+      ))
     }
 
     fun singleOption(option: ChanCacheOption): ChanCacheOptions {

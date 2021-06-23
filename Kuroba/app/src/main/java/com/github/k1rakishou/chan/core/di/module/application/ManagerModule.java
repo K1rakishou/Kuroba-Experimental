@@ -719,12 +719,18 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ThreadDownloadingDelegate provideThreadDownloadingDelegate(
+            AppConstants appConstants,
             SiteManager siteManager,
-            ThreadDownloadManager threadDownloadManager
+            ThreadDownloadManager threadDownloadManager,
+            ChanThreadManager chanThreadManager,
+            ChanPostRepository chanPostRepository
     ) {
         return new ThreadDownloadingDelegate(
+                appConstants,
                 siteManager,
-                threadDownloadManager
+                threadDownloadManager,
+                chanThreadManager,
+                chanPostRepository
         );
     }
 

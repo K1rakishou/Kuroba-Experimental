@@ -233,8 +233,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       context = applicationContext,
       flavorType = flavorType,
       kurobaExUserAgent = kurobaExUserAgent,
-      maxPostsInDatabaseSettingValue = ChanSettings.databaseMaxPostsCount.get(),
-      maxThreadsInDatabaseSettingValue = ChanSettings.databaseMaxThreadsCount.get()
+      maxPostsInDatabaseSettingValue = 125000,
+      maxThreadsInDatabaseSettingValue = 12500
     )
 
     logAppConstantsAndSettings(appConstants)
@@ -381,7 +381,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
     Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
     Logger.d(TAG, "diskCacheCleanupRemovePercent = " + ChanSettings.diskCacheCleanupRemovePercent.get())
-    Logger.d(TAG, "databasePostsCleanupRemovePercent = " + ChanSettings.databasePostsCleanupRemovePercent.get())
     Logger.d(TAG, "userAgent = " + appConstants.userAgent)
     Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
   }

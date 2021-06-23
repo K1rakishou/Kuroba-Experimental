@@ -16,6 +16,11 @@
  */
 package com.github.k1rakishou;
 
+import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
+import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static java.util.concurrent.TimeUnit.HOURS;
+import static java.util.concurrent.TimeUnit.MINUTES;
+
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
@@ -28,11 +33,6 @@ import java.io.File;
 
 import kotlin.Lazy;
 import kotlin.LazyKt;
-
-import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
-import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
-import static java.util.concurrent.TimeUnit.HOURS;
-import static java.util.concurrent.TimeUnit.MINUTES;
 
 public class ChanSettings {
     private static final String TAG = "ChanSettings";
@@ -347,11 +347,6 @@ public class ChanSettings {
     public static RangeSetting diskCacheSizeMegabytes;
     public static RangeSetting prefetchDiskCacheSizeMegabytes;
     public static RangeSetting diskCacheCleanupRemovePercent;
-
-    public static BooleanSetting databasePostCachingEnabled;
-    public static RangeSetting databaseMaxPostsCount;
-    public static RangeSetting databaseMaxThreadsCount;
-    public static RangeSetting databasePostsCleanupRemovePercent;
     //endregion
 
     // region Captcha-solvers
@@ -550,11 +545,6 @@ public class ChanSettings {
             diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
             prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
             diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
-
-            databasePostCachingEnabled = new BooleanSetting(provider, "database_post_caching_enabled", false);
-            databaseMaxPostsCount = new RangeSetting(provider, "database_max_posts_count", 125000, databaseMinPostsCount(), 500000);
-            databaseMaxThreadsCount = new RangeSetting(provider, "database_max_threads_count", 12500, databaseMinThreadsCount(), 50000);
-            databasePostsCleanupRemovePercent = new RangeSetting(provider, "database_posts_cleanup_remove_posts_percent", 25, cleanupPercentsGetMin(), 75);
             //endregion
 
             // region Captcha-solvers
@@ -660,22 +650,6 @@ public class ChanSettings {
         }
 
         return 25;
-    }
-
-    private static int databaseMinThreadsCount() {
-        if (chanSettingsInfo.isDevBuild()) {
-            return 100;
-        }
-
-        return 1500;
-    }
-
-    private static int databaseMinPostsCount() {
-        if (chanSettingsInfo.isDevBuild()) {
-            return 1000;
-        }
-
-        return 15000;
     }
 
     private static int diskCacheSizePrefetchGetMin() {

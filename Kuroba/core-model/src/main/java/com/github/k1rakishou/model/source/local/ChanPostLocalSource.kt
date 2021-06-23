@@ -708,6 +708,14 @@ class ChanPostLocalSource(
           continue
         }
 
+        if (thread.threadDownloadId != null) {
+          skippedTotal += thread.postsCount
+
+          Logger.d(TAG, "deleteOldPosts() skipping downloading thread " +
+            "(threadNo = ${thread.threadNo}, posts count = ${thread.postsCount})")
+          continue
+        }
+
         if (deletedTotal >= toDeleteCount) {
           Logger.d(TAG, "deleteOldPosts() Deleted enough posts " +
             "(posts count = ${thread.postsCount}), exiting early")
@@ -763,6 +771,13 @@ class ChanPostLocalSource(
         if (thread.threadBookmarkId != null) {
           ++skippedTotal
           Logger.d(TAG, "deleteOldThreads() skipping bookmarked thread (threadNo = ${thread.threadNo}, " +
+            "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount)")
+          continue
+        }
+
+        if (thread.downloadThreadId != null) {
+          ++skippedTotal
+          Logger.d(TAG, "deleteOldThreads() skipping downloading thread (threadNo = ${thread.threadNo}, " +
             "deletedTotal = $deletedTotal, toDeleteCount = $toDeleteCount)")
           continue
         }

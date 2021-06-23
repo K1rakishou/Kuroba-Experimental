@@ -152,6 +152,8 @@ abstract class ChanThreadDao {
     FROM ${ChanThreadsWithPosts.VIEW_NAME} AS ctwp 
     LEFT OUTER JOIN thread_bookmark AS tb 
         ON ctwp.thread_id = tb.owner_thread_id 
+    LEFT OUTER JOIN thread_download_entity as tde
+        ON ctwp.thread_id = tde.owner_thread_database_id
     LIMIT :count OFFSET :offset
   """)
   abstract suspend fun selectThreadsWithPostsOtherThanOp(offset: Int, count: Int): List<ChanThreadsWithPosts>
@@ -166,6 +168,8 @@ abstract class ChanThreadDao {
     FROM ${OldChanPostThread.VIEW_NAME} AS ctwp 
     LEFT OUTER JOIN thread_bookmark AS tb 
         ON ctwp.thread_id = tb.owner_thread_id 
+    LEFT OUTER JOIN thread_download_entity as tde
+        ON ctwp.thread_id = tde.owner_thread_database_id
     LIMIT :count OFFSET :offset
   """)
   abstract suspend fun selectOldThreads(offset: Int, count: Int): List<OldChanPostThread>

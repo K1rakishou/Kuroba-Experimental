@@ -182,7 +182,7 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_DOWNLOAD_THREAD,
         R.string.action_start_thread_download,
-        true,
+        false,
         { item -> downloadOrStopDownloadThread(item) }
       )
       .withSubItem(

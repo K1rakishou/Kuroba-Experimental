@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -98,11 +97,8 @@ class ChanThreadManager(
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions,
-    onReloaded: suspend (ThreadLoadResult) -> Unit
-  ) {
-    BackgroundUtils.ensureMainThread()
-
+    chanReadOptions: ChanReadOptions
+  ): ThreadLoadResult {
     try {
       Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
         "chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
@@ -125,10 +121,10 @@ class ChanThreadManager(
               chanThreadsCache.forceUpdatePosts(chanDescriptor, chanLoadOption.postDescriptors)
             }
             ChanLoadOption.ClearMemoryAndDatabaseCaches,
-            ChanLoadOption.ClearMemoryCache,
-            ChanLoadOption.RetainAll -> {
+            ChanLoadOption.ClearMemoryCache -> {
               chanThreadsCache.deleteThread(chanDescriptor)
             }
+            ChanLoadOption.RetainAll -> error("Can't retain all here")
           }
         }
       }
@@ -152,14 +148,14 @@ class ChanThreadManager(
 
       when (threadLoaderResult) {
         is ModularResult.Value -> {
-          onReloaded.invoke(threadLoaderResult.value)
+          return threadLoaderResult.value
         }
         is ModularResult.Error -> {
           val error = threadLoaderResult.error
           if (error is ChanLoaderException) {
-            onReloaded.invoke(ThreadLoadResult.Error(error))
+            return ThreadLoadResult.Error(error)
           } else {
-            onReloaded.invoke(ThreadLoadResult.Error(ChanLoaderException(error)))
+            return ThreadLoadResult.Error(ChanLoaderException(error))
           }
         }
       }
@@ -413,8 +409,6 @@ class ChanThreadManager(
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions
   ): ModularResult<ThreadLoadResult> {
-    BackgroundUtils.ensureMainThread()
-
     awaitUntilDependenciesInitialized()
 
     when (chanDescriptor) {

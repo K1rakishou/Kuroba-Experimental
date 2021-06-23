@@ -31,13 +31,22 @@ class ThreadDownloadingCoordinator(
     appScope.launch {
       threadDownloadManager.threadDownloadUpdateFlow
         .debounce(Duration.seconds(1))
-        .collect { event ->
-          if (event is ThreadDownloadManager.Event.StartDownload) {
-            startOrRestartThreadDownloading(appContext, appConstants, eager = true)
-          } else if (!threadDownloadManager.hasActiveThreads()) {
-            cancelThreadDownloading(appContext, appConstants)
-          }
+        .collect { event -> onThreadDownloadUpdateEvent(event) }
+    }
+  }
+
+  private suspend fun onThreadDownloadUpdateEvent(event: ThreadDownloadManager.Event) {
+    when (event) {
+      is ThreadDownloadManager.Event.StartDownload -> {
+        startOrRestartThreadDownloading(appContext, appConstants, eager = true)
+      }
+      is ThreadDownloadManager.Event.CancelDownload,
+      is ThreadDownloadManager.Event.CompleteDownload,
+      is ThreadDownloadManager.Event.StopDownload -> {
+        if (!threadDownloadManager.hasActiveThreads()) {
+          cancelThreadDownloading(appContext, appConstants)
         }
+      }
     }
   }
 

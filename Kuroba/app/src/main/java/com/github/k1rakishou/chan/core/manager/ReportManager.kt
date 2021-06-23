@@ -384,13 +384,6 @@ class ReportManager(
       appendLine("prefetchDiskCacheSizeMegabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")
       appendLine("diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
 
-      appendLine("databasePostCachingEnabled: ${ChanSettings.databasePostCachingEnabled.get()}")
-      if (ChanSettings.databasePostCachingEnabled.get()) {
-        appendLine("databaseMaxPostsCount: ${ChanSettings.databaseMaxPostsCount.get()}")
-        appendLine("databaseMaxThreadsCount: ${ChanSettings.databaseMaxThreadsCount.get()}")
-        appendLine("databasePostsCleanupRemovePercent: ${ChanSettings.databasePostsCleanupRemovePercent.get()}")
-      }
-
       appendLine("ImageSaver root directory: ${PersistableChanState.imageSaverV2PersistedOptions.get().rootDirectoryUri}")
       appendLine("OkHttp IPv6 support enabled: ${ChanSettings.okHttpAllowIpv6.get()}")
       appendLine("OkHttp HTTP/2 support enabled: ${ChanSettings.okHttpAllowHttp2.get()}")

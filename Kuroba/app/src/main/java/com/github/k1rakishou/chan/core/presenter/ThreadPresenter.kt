@@ -380,7 +380,7 @@ class ThreadPresenter @Inject constructor(
     showLoading: Boolean = false,
     chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.retainAll(),
-    chanCacheOptions: ChanCacheOptions = ChanCacheOptions.default(),
+    chanCacheOptions: ChanCacheOptions = ChanCacheOptions.onlyCacheInMemory(),
     chanReadOptions: ChanReadOptions = ChanReadOptions.default()
   ) {
     BackgroundUtils.ensureMainThread()
@@ -408,32 +408,32 @@ class ThreadPresenter @Inject constructor(
 
       chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
-      chanThreadManager.loadThreadOrCatalog(
+      val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = currentChanDescriptor,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
         chanReadOptions = chanReadOptions
-      ) { threadLoadResult ->
-        Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
+      )
 
-        when (threadLoadResult) {
-          is ThreadLoadResult.Error -> {
-            onChanLoaderError(threadLoadResult.exception)
-          }
-          is ThreadLoadResult.Loaded -> {
-            val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
+      Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
 
-            if (!successfullyProcessedNewPosts) {
-              val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
-              onChanLoaderError(error)
-            }
+      when (threadLoadResult) {
+        is ThreadLoadResult.Error -> {
+          onChanLoaderError(threadLoadResult.exception)
+        }
+        is ThreadLoadResult.Loaded -> {
+          val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
+
+          if (!successfullyProcessedNewPosts) {
+            val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
+            onChanLoaderError(error)
           }
         }
-
-        chanThreadLoadingState = ChanThreadLoadingState.Loaded
-        currentLoadThreadJob = null
       }
+
+      chanThreadLoadingState = ChanThreadLoadingState.Loaded
+      currentLoadThreadJob = null
     }
   }
 

@@ -7,6 +7,7 @@ import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
+import com.github.k1rakishou.model.entity.download.ThreadDownloadEntity
 
 /**
  * Represents a thread with more than one post (that is not an original post) and which lastModified
@@ -43,7 +44,9 @@ data class ChanThreadsWithPosts(
   @ColumnInfo(name = POSTS_COUNT_COLUMN_NAME)
   val postsCount: Int,
   @ColumnInfo(name = THREAD_BOOKMARK_ID_COLUMN_NAME)
-  val threadBookmarkId: Long? = null
+  val threadBookmarkId: Long? = null,
+  @ColumnInfo(name = OWNER_THREAD_DATABASE_ID_COLUMN_NAME)
+  val threadDownloadId: Long? = null
 ) {
 
   companion object {
@@ -53,6 +56,7 @@ data class ChanThreadsWithPosts(
     const val THREAD_NO_COLUMN_NAME = ChanThreadEntity.THREAD_NO_COLUMN_NAME
     const val LAST_MODIFIED_COLUMN_NAME = ChanThreadEntity.LAST_MODIFIED_COLUMN_NAME
     const val THREAD_BOOKMARK_ID_COLUMN_NAME = ThreadBookmarkEntity.THREAD_BOOKMARK_ID_COLUMN_NAME
+    const val OWNER_THREAD_DATABASE_ID_COLUMN_NAME = ThreadDownloadEntity.OWNER_THREAD_DATABASE_ID_COLUMN_NAME
     const val POSTS_COUNT_COLUMN_NAME = "posts_count"
   }
 }

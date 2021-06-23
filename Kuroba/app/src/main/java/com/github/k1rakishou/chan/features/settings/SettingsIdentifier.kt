@@ -638,24 +638,6 @@ sealed class CachingScreen(
     }
   }
 
-  sealed class DatabaseCacheSizeGroup(
-    settingsId: String,
-    groupIdentifier: GroupIdentifier = MediaCacheSizeGroup.getGroupIdentifier()
-  ) : IGroup,
-    CachingScreen(groupIdentifier, SettingIdentifier(settingsId)) {
-
-    object DatabaseCachingEnabled : DatabaseCacheSizeGroup("database_caching_enabled")
-    object MaxDatabasePostsCount : DatabaseCacheSizeGroup("max_database_posts")
-    object MaxDatabaseThreadsCount : DatabaseCacheSizeGroup("max_database_threads")
-    object DatabasePostsCleanupRemovePercent : DatabaseCacheSizeGroup("database_posts_cleanup_remove_percent")
-
-    companion object : IGroupIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
-      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("database_cache_size_group")
-    }
-  }
-
-
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("caching_screen")
   }
