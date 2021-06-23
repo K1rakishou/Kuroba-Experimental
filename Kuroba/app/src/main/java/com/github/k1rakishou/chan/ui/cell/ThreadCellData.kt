@@ -35,7 +35,6 @@ class ThreadCellData(
   var defaultIsCompact: Boolean = false
   var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
-  var defaultNeverShowPages: Boolean = ChanSettings.neverShowPages.get()
   var defaultSearchQuery = PostCellData.SearchQuery()
 
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
@@ -99,6 +98,9 @@ class ThreadCellData(
     val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
+    val neverShowPages = ChanSettings.neverShowPages.get()
+    val tapNoReply = ChanSettings.tapNoReply.get()
+    val postFullDate = ChanSettings.postFullDate.get()
 
     val postAlignmentMode = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
@@ -125,7 +127,9 @@ class ThreadCellData(
         compact = defaultIsCompact,
         boardPostViewMode = defaultBoardPostViewMode,
         boardPostsSortOrder = boardPostsSortOrder,
-        neverShowPages = defaultNeverShowPages,
+        neverShowPages = neverShowPages,
+        tapNoReply = tapNoReply,
+        postFullDate = postFullDate,
         stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),

@@ -41,7 +41,9 @@ data class PostCellData(
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.BoardPostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
-  var neverShowPages: Boolean,
+  val neverShowPages: Boolean,
+  val tapNoReply: Boolean,
+  val postFullDate: Boolean,
   var compact: Boolean,
   var stub: Boolean,
   var theme: ChanTheme,
@@ -50,7 +52,7 @@ data class PostCellData(
   var postViewMode: PostViewMode,
   var searchQuery: SearchQuery,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
-  val postCellThumbnailSizePercents: Int
+  val postCellThumbnailSizePercents: Int,
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -174,6 +176,8 @@ data class PostCellData(
       boardPostViewMode = boardPostViewMode,
       boardPostsSortOrder = boardPostsSortOrder,
       neverShowPages = neverShowPages,
+      tapNoReply = tapNoReply,
+      postFullDate = postFullDate,
       compact = compact,
       stub = stub,
       theme = theme,
@@ -251,7 +255,7 @@ data class PostCellData(
     date.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, date.length, 0)
     date.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length, 0)
 
-    if (ChanSettings.tapNoReply.get()) {
+    if (tapNoReply) {
       date.setSpan(PostCell.PostNumberClickableSpan(postCellCallback, post), 0, postNoText.length, 0)
     }
 
@@ -287,7 +291,7 @@ data class PostCellData(
   }
 
   private fun calculatePostTime(post: ChanPost): CharSequence {
-    val postTime = if (ChanSettings.postFullDate.get()) {
+    val postTime = if (postFullDate) {
       ChanPostUtils.getLocalDate(post)
     } else {
       DateUtils.getRelativeTimeSpanString(post.timestamp * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS, 0)
@@ -387,7 +391,7 @@ data class PostCellData(
         catalogImagesCount
       )
 
-      if (!ChanSettings.neverShowPages.get()) {
+      if (!neverShowPages) {
         val boardPage = postCellCallback?.getPage(postDescriptor)
         if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {
           status += " Pg " + boardPage.currentPage
