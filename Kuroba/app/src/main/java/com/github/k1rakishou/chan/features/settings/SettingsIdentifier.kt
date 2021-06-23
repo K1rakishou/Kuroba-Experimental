@@ -268,6 +268,20 @@ sealed class WatcherScreen(
     }
   }
 
+  sealed class ThreadDownloaderGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = ThreadDownloaderGroup.getGroupIdentifier()
+  ) : IGroup,
+    WatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object ThreadDownloaderUpdateInterval : ThreadDownloaderGroup("thread_downloader_update_interval")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = WatcherScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("thread_downloader_group")
+    }
+  }
+
   companion object : IScreenIdentifier() {
     override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("watcher_screen")
   }

@@ -545,8 +545,8 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <!-- Main "Settings" group -->
     <string name="settings_group_settings">Settings</string>
-    <string name="settings_watch">Thread/Filter watchers</string>
-    <string name="settings_watch_summary_enabled">Thread/Filter watcher settings can be found here.</string>
+    <string name="settings_watch">Thread/Filter watchers, thread downloader</string>
+    <string name="settings_watch_summary_enabled">Thread/Filter watcher, thread downloader settings.</string>
     <string name="settings_sites">Sites</string>
     <string name="settings_appearance">Appearance</string>
     <string name="settings_appearance_description">Theme, layout, fonts, etc.</string>
@@ -569,7 +569,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Thread watcher -->
     <string name="setting_watch_summary_disabled">Off</string>
 
-    <string name="settings_screen_watch">Thread watcher/filter watcher settings</string>
+    <string name="settings_screen_watch">Thread/filter watcher, thread downloader settings</string>
     <string name="settings_thread_watcher_group">Thread watcher</string>
     <string name="setting_watch_info">To watch bookmarks for new posts, turn the thread watcher on.</string>
     <string name="setting_watch_enable_thread_watcher">Enable thread watcher</string>
@@ -600,8 +600,13 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_filter_watcher_group">Filter watcher</string>
     <string name="setting_watch_enable_filter_watcher">Enable filter watcher</string>
     <string name="setting_watch_enable_filter_watcher_description">Automatically bookmark threads that match regex patterns. Enabling this setting will make the watcher work in both foreground/background due to huge update intervals.</string>
-    <string name="setting_filter_watcher_foreground_timeout">Filter watcher update interval</string>
-    <string name="setting_filter_watcher_foreground_timeout_description">The interval between updates</string>
+    <string name="setting_filter_watcher_update_interval">Filter watcher update interval</string>
+    <string name="setting_filter_watcher_update_interval_description">The interval between updates</string>
+
+    <!-- Thread downloader -->
+    <string name="settings_thread_downloader_group">Thread downloader</string>
+    <string name="setting_thread_downloader_update_interval">Thread downloader update interval</string>
+    <string name="setting_thread_downloader_update_interval_description">The interval between updates</string>
 
     <string name="settings_group_about">About</string>
     <string name="settings_update_check">Tap to check for updates</string>

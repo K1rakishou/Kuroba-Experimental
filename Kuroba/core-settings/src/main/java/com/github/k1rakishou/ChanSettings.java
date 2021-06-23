@@ -251,6 +251,10 @@ public class ChanSettings {
     public static IntegerSetting filterWatchInterval;
     //endregion
 
+    //region THREAD DOWNLOADER
+    public static IntegerSetting threadDownloaderUpdateInterval;
+    //endregion
+
     //region APPEARANCE
     // Theme
     public static BooleanSetting isCurrentThemeDark;
@@ -417,6 +421,10 @@ public class ChanSettings {
             //region FILTER WATCHER
             filterWatchEnabled = new BooleanSetting(provider, "preference_filter_watch_enabled", false);
             filterWatchInterval = new IntegerSetting(provider, "preference_filter_watch_interval", (int) HOURS.toMillis(12));
+            //endregion
+
+            // region THREAD DOWNLOADER
+            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1));
             //endregion
 
             //region APPEARANCE

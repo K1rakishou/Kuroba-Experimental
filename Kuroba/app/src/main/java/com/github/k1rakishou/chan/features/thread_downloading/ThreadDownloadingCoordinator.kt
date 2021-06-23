@@ -7,14 +7,15 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.await
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -32,6 +33,12 @@ class ThreadDownloadingCoordinator(
       threadDownloadManager.threadDownloadUpdateFlow
         .debounce(Duration.seconds(1))
         .collect { event -> onThreadDownloadUpdateEvent(event) }
+    }
+
+    appScope.launch {
+      ChanSettings.threadDownloaderUpdateInterval.listenForChanges()
+        .asFlow()
+        .collect { startOrRestartThreadDownloading(appContext, appConstants, eager = true) }
     }
   }
 
@@ -64,12 +71,7 @@ class ThreadDownloadingCoordinator(
       val threadDownloadInterval = if (eager) {
         TimeUnit.SECONDS.toMillis(5)
       } else {
-        // TODO(KurobaEx): move to settings
-        if (isDevBuild()) {
-          TimeUnit.MINUTES.toMillis(1)
-        } else {
-          TimeUnit.HOURS.toMillis(1)
-        }
+        ChanSettings.threadDownloaderUpdateInterval.get().toLong()
       }
 
       val constraints = Constraints.Builder()

@@ -35,7 +35,67 @@ class WatcherSettingsScreen(
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildThreadWatcherSettingsGroup(),
-      buildFilterWatcherSettingsGroup()
+      buildFilterWatcherSettingsGroup(),
+      buildThreadDownloaderSettingsGroup()
+    )
+  }
+
+  private fun buildThreadDownloaderSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = WatcherScreen.ThreadDownloaderGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.settings_thread_downloader_group),
+          groupIdentifier = identifier
+        )
+
+        group += ListSettingV2.createBuilder<Int>(
+          context = context,
+          identifier = WatcherScreen.ThreadDownloaderGroup.ThreadDownloaderUpdateInterval,
+          topDescriptionIdFunc = { R.string.setting_thread_downloader_update_interval },
+          bottomDescriptionStringFunc = { itemName ->
+            getString(R.string.setting_thread_downloader_update_interval_description).toString() + "\n\n" + itemName
+          },
+          items = kotlin.run {
+            return@run if (AppModuleAndroidUtils.isDevBuild()) {
+              THREAD_DOWNLOADER_INTERVALS
+            } else {
+              THREAD_DOWNLOADER_INTERVALS.drop(1)
+            }
+          },
+          itemNameMapper = { timeout ->
+            return@createBuilder kotlin.run {
+              val isTimeoutInMinutes = if (AppModuleAndroidUtils.isDevBuild()) {
+                timeout == THREAD_DOWNLOADER_INTERVALS[0]
+                  || timeout == THREAD_DOWNLOADER_INTERVALS[1]
+                  || timeout == THREAD_DOWNLOADER_INTERVALS[2]
+                  || timeout == THREAD_DOWNLOADER_INTERVALS[3]
+              } else {
+                timeout == THREAD_DOWNLOADER_INTERVALS[0]
+                  || timeout == THREAD_DOWNLOADER_INTERVALS[1]
+                  || timeout == THREAD_DOWNLOADER_INTERVALS[2]
+              }
+
+              if (AppModuleAndroidUtils.isDevBuild() && isTimeoutInMinutes) {
+                return@run getString(
+                  R.string.minutes,
+                  TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()
+                )
+              }
+
+              return@run getString(
+                R.string.hours,
+                TimeUnit.MILLISECONDS.toHours(timeout.toLong()).toInt()
+              )
+            }
+          },
+          setting = ChanSettings.threadDownloaderUpdateInterval
+        )
+
+        group
+      }
     )
   }
 
@@ -61,16 +121,16 @@ class WatcherSettingsScreen(
         group += ListSettingV2.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.FilterWatcherUpdateInterval,
-          topDescriptionIdFunc = { R.string.setting_filter_watcher_foreground_timeout },
+          topDescriptionIdFunc = { R.string.setting_filter_watcher_update_interval },
           bottomDescriptionStringFunc = { itemName ->
-            getString(R.string.setting_filter_watcher_foreground_timeout_description).toString() + "\n\n" + itemName
+            getString(R.string.setting_filter_watcher_update_interval_description).toString() + "\n\n" + itemName
           },
           items = kotlin.run {
-             return@run if (AppModuleAndroidUtils.isDevBuild()) {
-               FILTER_WATCHER_INTERVALS
-             } else {
-               FILTER_WATCHER_INTERVALS.drop(1)
-             }
+            return@run if (AppModuleAndroidUtils.isDevBuild()) {
+              FILTER_WATCHER_INTERVALS
+            } else {
+              FILTER_WATCHER_INTERVALS.drop(1)
+            }
           },
           itemNameMapper = { timeout ->
             return@createBuilder kotlin.run {
@@ -147,7 +207,7 @@ class WatcherSettingsScreen(
             )
           },
           setting = ChanSettings.watchForegroundAdaptiveInterval,
-          dependsOnSetting =  ChanSettings.watchEnabled
+          dependsOnSetting = ChanSettings.watchEnabled
         )
 
         group += BooleanSettingV2.createBuilder(
@@ -320,6 +380,16 @@ class WatcherSettingsScreen(
       TimeUnit.HOURS.toMillis(8).toInt(),
       TimeUnit.HOURS.toMillis(12).toInt(),
       TimeUnit.HOURS.toMillis(24).toInt()
+    )
+
+    private val THREAD_DOWNLOADER_INTERVALS = listOf(
+      TimeUnit.MINUTES.toMillis(1).toInt(),
+      TimeUnit.MINUTES.toMillis(20).toInt(),
+      TimeUnit.MINUTES.toMillis(30).toInt(),
+      TimeUnit.MINUTES.toMillis(45).toInt(),
+      TimeUnit.HOURS.toMillis(1).toInt(),
+      TimeUnit.HOURS.toMillis(2).toInt(),
+      TimeUnit.HOURS.toMillis(4).toInt(),
     )
   }
 }
