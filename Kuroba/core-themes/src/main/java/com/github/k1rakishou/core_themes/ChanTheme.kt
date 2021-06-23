@@ -58,6 +58,7 @@ abstract class ChanTheme {
   val textColorHintCompose by lazy(LazyThreadSafetyMode.NONE) { Color(textColorHint) }
   val errorColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(errorColor) }
   val dividerColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(dividerColor) }
+  val postSubjectColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postSubjectColor) }
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
 

@@ -24,7 +24,7 @@ import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import javax.inject.Inject
 
-class MyPostsViewModel : BaseViewModel() {
+class SavedPostsViewModel : BaseViewModel() {
   @Inject
   lateinit var savedReplyManager: SavedReplyManager
 

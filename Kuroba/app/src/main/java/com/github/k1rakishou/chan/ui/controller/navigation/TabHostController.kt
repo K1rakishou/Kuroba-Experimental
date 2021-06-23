@@ -11,7 +11,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
-import com.github.k1rakishou.chan.features.my_posts.MyPostsController
+import com.github.k1rakishou.chan.features.my_posts.SavedPostsController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.widget.DisableableLayout
@@ -53,7 +53,7 @@ class TabHostController(
 
     tabLayout.addTab(
       tabLayout.newTab()
-        .setText(context.getString(R.string.my_posts_tab_title))
+        .setText(context.getString(R.string.saved_posts_tab_title))
         .setTag(PageType.MyPosts),
       pageType == PageType.MyPosts
     )
@@ -168,7 +168,7 @@ class TabHostController(
     private fun createController(pageType: PageType): TabPageController {
       return when (pageType) {
         PageType.MyPosts -> {
-          MyPostsController(context)
+          SavedPostsController(context)
         }
         PageType.Bookmarks -> {
           BookmarksController(

@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
-import com.github.k1rakishou.chan.ui.compose.ComposeHelpers
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
@@ -49,14 +48,14 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.imePadding
 import javax.inject.Inject
 
-class MyPostsController(context: Context) :
+class SavedPostsController(context: Context) :
   TabPageController(context),
   ToolbarNavigationController.ToolbarSearchCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val viewModel by lazy { requireComponentActivity().viewModelByKey<MyPostsViewModel>() }
+  private val viewModel by lazy { requireComponentActivity().viewModelByKey<SavedPostsViewModel>() }
 
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
     get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
@@ -66,7 +65,7 @@ class MyPostsController(context: Context) :
   }
 
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {
-    navigationItem.title = AppModuleAndroidUtils.getString(R.string.controller_my_posts)
+    navigationItem.title = AppModuleAndroidUtils.getString(R.string.controller_saved_posts)
     navigationItem.swipeable = false
 
     navigationItem.buildMenu(context)
@@ -148,7 +147,7 @@ class MyPostsController(context: Context) :
 
   @Composable
   private fun BuildSavedRepliesList(
-    savedRepliesGrouped: List<MyPostsViewModel.GroupedSavedReplies>,
+    savedRepliesGrouped: List<SavedPostsViewModel.GroupedSavedReplies>,
     onHeaderClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
     onReplyClicked: (PostDescriptor) -> Unit
   ) {
@@ -160,7 +159,6 @@ class MyPostsController(context: Context) :
       modifier = Modifier
         .fillMaxSize()
         .simpleVerticalScrollbar(state, chanTheme)
-        .padding(end = ComposeHelpers.SCROLLBAR_WIDTH)
         .imePadding()
     ) {
       if (savedRepliesGrouped.isEmpty()) {
@@ -182,21 +180,24 @@ class MyPostsController(context: Context) :
         return@LazyColumn
       }
 
-      savedRepliesGrouped.forEach { groupedSavedReplies ->
-        item {
-          GroupedSavedReplyHeader(groupedSavedReplies, chanTheme, onHeaderClicked)
-        }
+      savedRepliesGrouped.forEachIndexed { groupIndex, groupedSavedReplies ->
+        item(key = "card_${groupIndex}") {
+          Column(modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(horizontal = 4.dp, vertical = 4.dp)
+          ) {
+            GroupedSavedReplyHeader(groupedSavedReplies, chanTheme, onHeaderClicked)
 
-        items(groupedSavedReplies.savedReplyDataList.size) { index ->
-          val groupedSavedReplyData = groupedSavedReplies.savedReplyDataList[index]
-          GroupedSavedReply(groupedSavedReplyData, chanTheme, onReplyClicked)
+            groupedSavedReplies.savedReplyDataList.forEach { groupedSavedReplyData ->
+              Divider(
+                modifier = Modifier.padding(horizontal = 4.dp),
+                color = chanTheme.dividerColorCompose,
+                thickness = 1.dp
+              )
 
-          if (index < groupedSavedReplies.savedReplyDataList.lastIndex) {
-            Divider(
-              modifier = Modifier.padding(horizontal = 4.dp),
-              color = chanTheme.dividerColorCompose,
-              thickness = 1.dp
-            )
+              GroupedSavedReply(groupedSavedReplyData, chanTheme, onReplyClicked)
+            }
           }
         }
       }
@@ -205,13 +206,13 @@ class MyPostsController(context: Context) :
 
   @Composable
   private fun GroupedSavedReplyHeader(
-    groupedSavedReplies: MyPostsViewModel.GroupedSavedReplies,
+    groupedSavedReplies: SavedPostsViewModel.GroupedSavedReplies,
     chanTheme: ChanTheme,
     onHeaderClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Box(modifier = Modifier
-      .fillMaxSize()
-      .defaultMinSize(minHeight = 42.dp)
+      .fillMaxWidth()
+      .wrapContentHeight()
       .background(chanTheme.backColorSecondaryCompose)
       .clickable { onHeaderClicked(groupedSavedReplies.threadDescriptor) }
       .padding(horizontal = 4.dp, vertical = 4.dp)
@@ -221,6 +222,20 @@ class MyPostsController(context: Context) :
         .wrapContentHeight()
       ) {
 
+        if (groupedSavedReplies.headerThreadSubject.isNotNullNorEmpty()) {
+          KurobaComposeText(
+            text = groupedSavedReplies.headerThreadSubject,
+            fontSize = 14.sp,
+            color = chanTheme.postSubjectColorCompose,
+            maxLines = 3,
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+          )
+
+          Spacer(modifier = Modifier.height(2.dp))
+        }
+
         KurobaComposeText(
           text = groupedSavedReplies.headerThreadInfo,
           fontSize = 12.sp,
@@ -229,26 +244,13 @@ class MyPostsController(context: Context) :
             .fillMaxWidth()
             .wrapContentHeight()
         )
-
-        if (groupedSavedReplies.headerThreadSubject.isNotNullNorEmpty()) {
-          Spacer(modifier = Modifier.height(2.dp))
-
-          KurobaComposeText(
-            text = groupedSavedReplies.headerThreadSubject,
-            fontSize = 14.sp,
-            maxLines = 5,
-            modifier = Modifier
-              .fillMaxWidth()
-              .wrapContentHeight()
-          )
-        }
       }
     }
   }
 
   @Composable
   private fun GroupedSavedReply(
-    groupedSavedReplyData: MyPostsViewModel.SavedReplyData,
+    groupedSavedReplyData: SavedPostsViewModel.SavedReplyData,
     chanTheme: ChanTheme,
     onReplyClicked: (PostDescriptor) -> Unit
   ) {
@@ -256,6 +258,7 @@ class MyPostsController(context: Context) :
       .fillMaxSize()
       .defaultMinSize(minHeight = 42.dp)
       .clickable { onReplyClicked(groupedSavedReplyData.postDescriptor) }
+      .background(chanTheme.backColorSecondaryCompose)
       .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {
       Column(modifier = Modifier

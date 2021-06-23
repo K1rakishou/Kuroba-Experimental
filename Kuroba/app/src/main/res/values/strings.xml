@@ -168,7 +168,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_open_thread_by_id">Open thread by ID</string>
     <string name="action_open_thread_by_url">Open thread by url</string>
     <string name="action_share">Share</string>
-    <string name="action_chan4_archive">View 4chan archive</string>
+    <string name="action_chan4_archive">View archive</string>
     <string name="action_share_url">Share file url</string>
     <string name="action_go_to_post">Go to post</string>
     <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
@@ -992,7 +992,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_filter_watches">Filter watches</string>
 
-    <string name="controller_my_posts">My posts</string>
+    <string name="controller_saved_posts">Saved posts</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
     <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
@@ -1302,7 +1302,7 @@ Don't have a 4chan Pass?<br>
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>
 
-    <string name="my_posts_tab_title">My posts</string>
+    <string name="saved_posts_tab_title">Saved posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
 

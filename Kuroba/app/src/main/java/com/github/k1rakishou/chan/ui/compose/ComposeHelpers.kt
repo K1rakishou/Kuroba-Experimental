@@ -43,7 +43,7 @@ object ComposeHelpers {
     chanTheme: ChanTheme,
     width: Dp = SCROLLBAR_WIDTH
   ): Modifier {
-    val targetAlpha = if (state.isScrollInProgress) 1f else 0f
+    val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
     val duration = if (state.isScrollInProgress) 150 else 500
 
     val alpha by animateFloatAsState(
@@ -52,6 +52,8 @@ object ComposeHelpers {
     )
 
     return drawWithContent {
+      drawContent()
+
       val firstVisibleElementIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index
       val needDrawScrollbar = state.isScrollInProgress || alpha > 0.0f
 
@@ -68,8 +70,6 @@ object ComposeHelpers {
           alpha = alpha
         )
       }
-
-      drawContent()
     }
   }
 

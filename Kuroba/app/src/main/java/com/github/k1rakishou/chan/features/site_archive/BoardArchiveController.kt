@@ -29,7 +29,6 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.ui.compose.ComposeHelpers
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
@@ -173,7 +172,6 @@ class BoardArchiveController(
       modifier = Modifier
         .fillMaxSize()
         .simpleVerticalScrollbar(state, chanTheme)
-        .padding(end = ComposeHelpers.SCROLLBAR_WIDTH)
         .imePadding()
     ) {
       if (archiveThreads.isEmpty()) {
