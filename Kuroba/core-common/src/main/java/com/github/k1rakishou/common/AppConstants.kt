@@ -20,6 +20,7 @@ open class AppConstants(
   val proxiesFileName = PROXIES_FILE_NAME
   val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
   val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
+  val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
 
   // 128MB
   val exoPlayerDiskCacheMaxSize = 128L * 1024 * 1024

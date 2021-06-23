@@ -25,6 +25,7 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.repository.SiteRepository
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import com.github.k1rakishou.model.repository.ThreadDownloadRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
 import com.github.k1rakishou.model.source.cache.GenericSuspendableCacheSource
@@ -48,6 +49,7 @@ import com.github.k1rakishou.model.source.local.SeenPostLocalSource
 import com.github.k1rakishou.model.source.local.SiteLocalSource
 import com.github.k1rakishou.model.source.local.ThreadBookmarkGroupLocalSource
 import com.github.k1rakishou.model.source.local.ThreadBookmarkLocalSource
+import com.github.k1rakishou.model.source.local.ThreadDownloadLocalSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
@@ -330,6 +332,14 @@ class ModelModule {
     database: KurobaDatabase
   ): ImageDownloadRequestLocalSource {
     return ImageDownloadRequestLocalSource(database)
+  }
+
+  @Singleton
+  @Provides
+  fun provideThreadDownloadLocalSource(
+    database: KurobaDatabase
+  ): ThreadDownloadLocalSource {
+    return ThreadDownloadLocalSource(database)
   }
 
   /**
@@ -616,6 +626,20 @@ class ModelModule {
     localSource: ImageDownloadRequestLocalSource
   ): ImageDownloadRequestRepository {
     return ImageDownloadRequestRepository(
+      database,
+      dependencies.coroutineScope,
+      localSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideThreadDownloadRepository(
+    database: KurobaDatabase,
+    dependencies: ModelComponent.Dependencies,
+    localSource: ThreadDownloadLocalSource
+  ): ThreadDownloadRepository {
+    return ThreadDownloadRepository(
       database,
       dependencies.coroutineScope,
       localSource

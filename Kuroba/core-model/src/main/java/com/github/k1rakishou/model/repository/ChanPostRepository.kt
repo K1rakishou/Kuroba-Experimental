@@ -140,12 +140,12 @@ class ChanPostRepository(
     }
   }
 
-  suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Boolean> {
+  suspend fun createEmptyThreadIfNotExists(descriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Long> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     val threadDatabaseIdFromCache = chanDescriptorCache.getThreadIdByThreadDescriptorFromCache(descriptor)?.id
     if (threadDatabaseIdFromCache != null) {
-      return value(threadDatabaseIdFromCache >= 0L)
+      return value(threadDatabaseIdFromCache)
     }
 
     return applicationScope.dbCall {
@@ -158,7 +158,7 @@ class ChanPostRepository(
           )
         }
 
-        return@tryWithTransaction createdThreadDatabaseId >= 0
+        return@tryWithTransaction createdThreadDatabaseId
       }
     }
   }

@@ -181,14 +181,14 @@ class BookmarkFilterWatchableThreadsUseCase(
 
     if (bookmarksToCreate.isNotEmpty()) {
       val createdThreadBookmarks = bookmarksToCreate.mapNotNull { simpleThreadBookmark ->
-        val success = chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
+        val databaseId = chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
           .peekError { error ->
             Logger.e(TAG, "createEmptyThreadIfNotExists() " +
               "threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
           }
-          .valueOrNull() == true
+          .valueOrNull()
 
-        if (!success) {
+        if (databaseId == null || databaseId < 0L) {
           return@mapNotNull null
         }
 

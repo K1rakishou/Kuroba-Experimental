@@ -1124,11 +1124,13 @@ class PostingServiceDelegate(
       threadNo
     )
 
-    val createThreadSuccess = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
+    val databaseId = chanPostRepository.createEmptyThreadIfNotExists(newThreadDescriptor)
       .peekError { error ->
         Logger.e(TAG, "Failed to create empty thread in the database for $newThreadDescriptor", error)
       }
-      .valueOrNull() == true
+      .valueOrNull() ?: -1L
+
+    val createThreadSuccess = databaseId >= 0L
 
     if (createThreadSuccess && ChanSettings.postPinThread.get()) {
       bookmarkThread(newThreadDescriptor, threadNo)

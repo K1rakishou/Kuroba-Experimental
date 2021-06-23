@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksDeleted
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -51,6 +52,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescrip
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
+import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -58,8 +60,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
 open class ViewThreadController(
   context: Context,
@@ -74,6 +76,8 @@ open class ViewThreadController(
   lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var bookmarksManager: BookmarksManager
+  @Inject
+  lateinit var threadDownloadManager: ThreadDownloadManager
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
@@ -99,7 +103,7 @@ open class ViewThreadController(
     mainScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
-        .debounce(350.milliseconds)
+        .debounce(Duration.milliseconds(350))
         .collect { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) }
     }
 
@@ -175,6 +179,12 @@ open class ViewThreadController(
         R.string.action_force_reload,
         isDevBuild()
       ) { item -> forceReloadClicked(item) }
+      .withSubItem(
+        ACTION_DOWNLOAD_THREAD,
+        R.string.action_start_thread_download,
+        true,
+        { item -> downloadOrStopDownloadThread(item) }
+      )
       .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
         R.string.action_view_removed_posts
@@ -283,6 +293,29 @@ open class ViewThreadController(
       showLoading = true,
       chanLoadOptions = ChanLoadOptions.clearMemoryCache()
     )
+  }
+
+  private fun downloadOrStopDownloadThread(item: ToolbarMenuSubItem) {
+    mainScope.launch {
+      if (!threadDownloadManager.isReady()) {
+        return@launch
+      }
+
+      when (threadDownloadManager.getStatus(threadDescriptor)) {
+        ThreadDownload.Status.Running -> {
+          threadDownloadManager.stopDownloading(threadDescriptor)
+        }
+        ThreadDownload.Status.Stopped -> {
+          // TODO(KurobaEx): downloadMedia param
+          threadDownloadManager.startDownloading(threadDescriptor)
+        }
+        ThreadDownload.Status.Completed -> {
+          return@launch
+        }
+      }
+
+      updateThreadDownloadItem()
+    }
   }
 
   private fun forceReloadClicked(item: ToolbarMenuSubItem) {
@@ -525,9 +558,34 @@ open class ViewThreadController(
     navigation.title = ChanPostUtils.getTitle(originalPost, threadDescriptor)
   }
 
-  private fun updateMenuItems() {
+  private suspend fun updateMenuItems() {
     navigation.findSubItem(ACTION_PREVIEW_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
       retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+    }
+
+    updateThreadDownloadItem()
+  }
+
+  private suspend fun updateThreadDownloadItem() {
+    if (!threadDownloadManager.isReady()) {
+      return
+    }
+
+    navigation.findSubItem(ACTION_DOWNLOAD_THREAD)?.let { downloadThreadItem ->
+      val status = threadDownloadManager.getStatus(threadDescriptor)
+      downloadThreadItem.visible = status != ThreadDownload.Status.Completed
+
+      when (status) {
+        ThreadDownload.Status.Stopped -> {
+          downloadThreadItem.text = getString(R.string.action_start_thread_download)
+        }
+        ThreadDownload.Status.Running -> {
+          downloadThreadItem.text = getString(R.string.action_stop_thread_download)
+        }
+        ThreadDownload.Status.Completed -> {
+          downloadThreadItem.visible = false
+        }
+      }
     }
   }
 
@@ -653,6 +711,7 @@ open class ViewThreadController(
     private const val ACTION_THREAD_OPTIONS = 9009
     private const val ACTION_SCROLL_TO_TOP = 9010
     private const val ACTION_SCROLL_TO_BOTTOM = 9011
+    private const val ACTION_DOWNLOAD_THREAD = 9012
 
     private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9100
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101

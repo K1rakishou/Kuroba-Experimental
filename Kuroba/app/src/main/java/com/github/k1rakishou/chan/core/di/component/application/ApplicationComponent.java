@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service;
 import com.github.k1rakishou.chan.features.posting.PostingService;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingWorker;
 import com.github.k1rakishou.chan.ui.widget.SnackbarWrapper;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
@@ -65,6 +66,7 @@ public interface ApplicationComponent {
     void inject(Chan application);
     void inject(BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
     void inject(FilterWatcherWorker filterWatcherWorker);
+    void inject(ThreadDownloadingWorker threadDownloadingWorker);
     void inject(SiteBase siteBase);
     void inject(SnackbarWrapper snackbarWrapper);
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);

@@ -22,6 +22,7 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.repository.SiteRepository
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import com.github.k1rakishou.model.repository.ThreadDownloadRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.google.gson.Gson
 import dagger.BindsInstance
@@ -57,6 +58,7 @@ interface ModelComponent {
   fun getChanPostImageRepository(): ChanPostImageRepository
   fun getChanThreadsCache(): ChanThreadsCache
   fun getImageDownloadRequestRepository(): ImageDownloadRequestRepository
+  fun getThreadDownloadRepository(): ThreadDownloadRepository
 
   @Component.Builder
   interface Builder {

@@ -164,11 +164,10 @@ class FilterWatcherCoordinator(
 
     suspend fun startFilterWatching(
       appConstants: AppConstants,
-      appContext: Context,
-      replaceExisting: Boolean
+      appContext: Context
     ) {
       val tag = appConstants.filterWatchWorkUniqueTag
-      Logger.d(TAG, "startFilterWatching() called tag=$tag, replaceExisting=$replaceExisting")
+      Logger.d(TAG, "startFilterWatching() called tag=$tag")
 
       if (!pruneBlockedFilterWatcherWork(appConstants, appContext)) {
         Logger.d(TAG, "startFilterWatching($tag) can't continue because pruneOldWork is running")
@@ -201,10 +200,8 @@ class FilterWatcherCoordinator(
         .result
         .await()
 
-      Logger.d(
-        TAG, "startFilterWatching() enqueued work with tag $tag, " +
-          "filterWatchInterval=$filterWatchInterval, replaceExisting=$replaceExisting"
-      )
+      Logger.d(TAG, "startFilterWatching() enqueued work with tag $tag, " +
+          "filterWatchInterval=$filterWatchInterval")
     }
 
     suspend fun cancelFilterWatching(

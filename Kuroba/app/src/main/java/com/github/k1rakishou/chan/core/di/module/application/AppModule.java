@@ -37,12 +37,14 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -95,7 +97,9 @@ public class AppModule {
             FilterWatcherCoordinator filterWatcherCoordinator,
             ArchivesManager archivesManager,
             ChanFilterManager chanFilterManager,
-            ThreadBookmarkGroupManager threadBookmarkGroupManager
+            ThreadBookmarkGroupManager threadBookmarkGroupManager,
+            ThreadDownloadManager threadDownloadManager,
+            ThreadDownloadingCoordinator threadDownloadingCoordinator
     ) {
         return new AppDependenciesInitializer(
                 siteManager,
@@ -106,7 +110,9 @@ public class AppModule {
                 filterWatcherCoordinator,
                 archivesManager,
                 chanFilterManager,
-                threadBookmarkGroupManager
+                threadBookmarkGroupManager,
+                threadDownloadManager,
+                threadDownloadingCoordinator
         );
     }
 

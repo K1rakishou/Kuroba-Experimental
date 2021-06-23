@@ -38,8 +38,7 @@ class FilterWatcherWorker(
 
       FilterWatcherCoordinator.startFilterWatching(
         appConstants,
-        applicationContext,
-        replaceExisting = true
+        applicationContext
       )
 
       return Result.success()
@@ -62,8 +61,7 @@ class FilterWatcherWorker(
 
       FilterWatcherCoordinator.startFilterWatching(
         appConstants,
-        applicationContext,
-        replaceExisting = true
+        applicationContext
       )
     } else {
       Logger.d(TAG, "FilterWatcherWorker.doWork() work done. " +

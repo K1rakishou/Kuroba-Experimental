@@ -61,6 +61,7 @@ import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherDelegate;
@@ -80,6 +81,8 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelega
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
@@ -98,6 +101,7 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
+import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 
@@ -679,6 +683,48 @@ public class ManagerModule {
                 chanPostRepository,
                 twoCaptchaSolver,
                 captchaHolder
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThreadDownloadManager provideThreadDownloadManager(
+            CoroutineScope appScope,
+            ThreadDownloadRepository threadDownloadRepository,
+            ChanPostRepository chanPostRepository
+    ) {
+        return new ThreadDownloadManager(
+                appScope,
+                threadDownloadRepository,
+                chanPostRepository
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThreadDownloadingCoordinator provideThreadDownloadingCoordinator(
+            Context appContext,
+            CoroutineScope appScope,
+            AppConstants appConstants,
+            ThreadDownloadManager threadDownloadManager
+    ) {
+        return new ThreadDownloadingCoordinator(
+                appContext,
+                appScope,
+                appConstants,
+                threadDownloadManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public ThreadDownloadingDelegate provideThreadDownloadingDelegate(
+            SiteManager siteManager,
+            ThreadDownloadManager threadDownloadManager
+    ) {
+        return new ThreadDownloadingDelegate(
+                siteManager,
+                threadDownloadManager
         );
     }
 

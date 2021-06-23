@@ -19,6 +19,7 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
+import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 
 import javax.inject.Singleton;
@@ -179,6 +180,14 @@ public class RoomDatabaseModule {
             ModelComponent modelComponent
     ) {
         return modelComponent.getImageDownloadRequestRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ThreadDownloadRepository provideThreadDownloadRepository(
+            ModelComponent modelComponent
+    ) {
+        return modelComponent.getThreadDownloadRepository();
     }
 
 }
