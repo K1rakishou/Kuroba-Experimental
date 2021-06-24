@@ -778,9 +778,9 @@ class MainController(
     }
 
     val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_bookmarks)
-    badgeDrawable.adjustBadgeDrawable()
     badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = state.totalUnseenPostsCount
+    badgeDrawable.adjustBadgeDrawable()
 
     val backgroundColor = if (state.hasUnreadReplies) {
       themeEngine.chanTheme.accentColor
@@ -812,9 +812,9 @@ class MainController(
     }
 
     val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_settings)
-    badgeDrawable.adjustBadgeDrawable()
     badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
     badgeDrawable.number = notificationsCount
+    badgeDrawable.adjustBadgeDrawable()
 
     badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
     badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {

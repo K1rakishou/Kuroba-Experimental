@@ -18,7 +18,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <bool name="is_tablet">false</bool>
 
     <dimen name="toolbar_height">48dp</dimen>
-    <dimen name="navigation_view_size">52dp</dimen>
+    <dimen name="navigation_view_size">38dp</dimen>
     <dimen name="hiding_fab_margin">16dp</dimen>
 
     <dimen name="grid_card_width">120dp</dimen>

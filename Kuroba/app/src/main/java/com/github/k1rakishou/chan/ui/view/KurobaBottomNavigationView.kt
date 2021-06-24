@@ -55,6 +55,7 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
 
   init {
     setOnApplyWindowInsetsListener(null)
+    labelVisibilityMode = BottomNavigationView.LABEL_VISIBILITY_UNLABELED
   }
 
   override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
