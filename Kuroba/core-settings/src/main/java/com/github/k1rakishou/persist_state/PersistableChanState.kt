@@ -67,6 +67,8 @@ object PersistableChanState {
   lateinit var boardSelectionGridMode: BooleanSetting
   @JvmStatic
   lateinit var mediaViewerOffscreenItemsCount: RangeSetting
+  @JvmStatic
+  lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
 
   // TODO(KurobaEx): remove in v0.11.x
   @JvmStatic
@@ -139,6 +141,14 @@ object PersistableChanState {
       drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
       mediaViewerOffscreenItemsCount = RangeSetting(provider, "media_viewer_offscreen_items_count", 2, 1, 5)
+
+      threadDownloaderOptions = JsonSetting(
+        gson,
+        ThreadDownloaderOptions::class.java,
+        provider,
+        "thread_downloader_options",
+        ThreadDownloaderOptions()
+      )
 
       appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_bookmark_watcher_work_done", false)
       appHack_V08X_deleteAllBlockedFilterWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_filter_watcher_work_done", false)

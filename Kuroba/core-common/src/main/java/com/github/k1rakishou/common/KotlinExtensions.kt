@@ -892,7 +892,7 @@ suspend fun <T : Any> doIoTaskWithAttempts(attempts: Int, task: suspend (Int) ->
   }
 }
 
-fun IOException.isOutOfDiskSpaceError(): Boolean {
+fun Throwable.isOutOfDiskSpaceError(): Boolean {
   if (cause is ErrnoException) {
     val errorNumber: Int = (cause as ErrnoException).errno
     if (errorNumber == OsConstants.ENOSPC) {
@@ -983,6 +983,7 @@ suspend fun <T, R> processDataCollectionConcurrently(
           .map { data ->
             return@map async(dispatcher) {
               try {
+                ensureActive()
                 return@async processFunc(data)
               } catch (error: Throwable) {
                 return@async null
@@ -1015,6 +1016,7 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
           .mapIndexed { index, data ->
             return@mapIndexed async(dispatcher) {
               try {
+                ensureActive()
                 return@async processFunc(batchIndex.get() + index, data)
               } catch (error: Throwable) {
                 return@async null

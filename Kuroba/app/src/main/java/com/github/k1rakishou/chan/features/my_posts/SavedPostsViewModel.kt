@@ -87,7 +87,11 @@ class SavedPostsViewModel : BaseViewModel() {
             ?: return@mapNotNull null
 
           val headerThreadInfo = buildString {
-            append("Thread No. ")
+            append(threadDescriptor.siteName())
+            append("/")
+            append(threadDescriptor.boardCode())
+            append("/")
+            append(", Thread No. ")
             append(threadDescriptor.threadNo)
           }
 

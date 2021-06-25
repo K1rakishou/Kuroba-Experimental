@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
 import javax.inject.Inject
 
 class ThreadDownloadingWorker(
@@ -27,12 +28,18 @@ class ThreadDownloadingWorker(
 
     threadDownloadManager.awaitUntilInitialized()
 
-    threadDownloadingDelegate.doWork()
+    val rootDir = PersistableChanState.threadDownloaderOptions.get().locationUri()
+    if (rootDir == null) {
+      Logger.d(TAG, "threadDownloadingDelegate.doWork() rootDir is not set")
+      return Result.success()
+    }
+
+    threadDownloadingDelegate.doWork(rootDir)
       .peekError { error -> Logger.e(TAG, "threadDownloadingDelegate.doWork() unhandled error", error) }
       .ignore()
 
     val hasActiveThreads = threadDownloadManager.hasActiveThreads()
-    Logger.d(TAG, "threadDownloadingDelegate.doWork() done, hasActiveThreads=$hasActiveThreads")
+    val activeThreadsCount = threadDownloadManager.activeThreadsCount()
 
     if (hasActiveThreads) {
       ThreadDownloadingCoordinator.startOrRestartThreadDownloading(
@@ -42,6 +49,7 @@ class ThreadDownloadingWorker(
       )
     }
 
+    Logger.d(TAG, "threadDownloadingDelegate.doWork() done, activeThreadsCount=$activeThreadsCount")
     return Result.success()
   }
 

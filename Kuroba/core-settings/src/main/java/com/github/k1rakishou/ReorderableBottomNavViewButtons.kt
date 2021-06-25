@@ -35,6 +35,7 @@ data class ReorderableBottomNavViewButtons(
   companion object {
     val DEFAULT = listOf(
       BottomNavViewButton.Search,
+      BottomNavViewButton.Archive,
       BottomNavViewButton.Bookmarks,
       BottomNavViewButton.Browse,
       BottomNavViewButton.Settings
@@ -48,7 +49,8 @@ enum class BottomNavViewButton(val id: Long, val title: String) {
   Search(0, "Search"),
   Bookmarks(1, "Bookmarks"),
   Browse(2, "Browse"),
-  Settings(3, "Settings");
+  Settings(3, "Settings"),
+  Archive(4, "Archive");
 
   companion object {
     fun contains(id: Long): Boolean {

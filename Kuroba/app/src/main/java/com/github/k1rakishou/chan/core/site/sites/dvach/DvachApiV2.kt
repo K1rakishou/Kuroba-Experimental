@@ -290,6 +290,10 @@ class DvachApiV2(
         }
 
         val fullThumbnailUrl = catalogThreadPost.files?.firstOrNull()?.let { file ->
+          if (file.isSticker()) {
+            return@let null
+          }
+
           val args = SiteEndpoints.makeArgument("path", file.path, "thumbnail", file.thumbnail)
           return@let endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
         }
@@ -404,6 +408,10 @@ class DvachApiV2(
       board: ChanBoard,
       endpoints: SiteEndpoints
     ): ChanPostImage? {
+      if (path?.contains("/stickers/", ignoreCase = true) == true) {
+        return null
+      }
+
       var fileExt: String? = null
       var serverFileName: String? = null
 
@@ -496,7 +504,11 @@ class DvachApiV2(
   data class DvachFilterWatchFileInfo(
     val path: String?,
     val thumbnail: String,
-  )
+  ) {
+    fun isSticker(): Boolean {
+      return path?.contains("/stickers/", ignoreCase = true) == true
+    }
+  }
 
   data class ExtraThreadInfo(
     @get:Synchronized

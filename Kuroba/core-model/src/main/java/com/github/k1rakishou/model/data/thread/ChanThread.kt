@@ -497,6 +497,19 @@ class ChanThread(
     }
   }
 
+
+  fun getThreadPostImages(): List<ChanPostImage> {
+    return lock.read {
+      val resultList = mutableListWithCap<ChanPostImage>(threadPosts.size)
+
+      threadPosts.forEach { chanPost ->
+        resultList.addAll(chanPost.postImages)
+      }
+
+      return@read resultList
+    }
+  }
+
   fun postHasImages(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
       return@read postsByPostDescriptors[postDescriptor]?.postImages?.isNotEmpty()

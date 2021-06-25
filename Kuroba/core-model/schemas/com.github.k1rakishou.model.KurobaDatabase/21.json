@@ -2,7 +2,7 @@
   "formatVersion": 1,
   "database": {
     "version": 21,
-    "identityHash": "e7c5a90438427767e2c4bd7b6859f0ad",
+    "identityHash": "d6e84febd84113fc155dfa3e231347ff",
     "entities": [
       {
         "tableName": "chan_site_id",
@@ -2155,7 +2155,7 @@
       },
       {
         "tableName": "thread_download_entity",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_database_id` INTEGER NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `thread_no` INTEGER NOT NULL, `download_media` INTEGER NOT NULL, `status` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, `last_update_time` INTEGER, PRIMARY KEY(`owner_thread_database_id`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`owner_thread_database_id` INTEGER NOT NULL, `site_name` TEXT NOT NULL, `board_code` TEXT NOT NULL, `thread_no` INTEGER NOT NULL, `download_media` INTEGER NOT NULL, `status` INTEGER NOT NULL, `created_on` INTEGER NOT NULL, `thread_thumbnail_url` TEXT, `last_update_time` INTEGER, `download_result_msg` TEXT, PRIMARY KEY(`owner_thread_database_id`))",
         "fields": [
           {
             "fieldPath": "ownerThreadDatabaseId",
@@ -2200,9 +2200,21 @@
             "notNull": true
           },
           {
+            "fieldPath": "threadThumbnailUrl",
+            "columnName": "thread_thumbnail_url",
+            "affinity": "TEXT",
+            "notNull": false
+          },
+          {
             "fieldPath": "lastUpdateTime",
             "columnName": "last_update_time",
             "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "downloadResultMsg",
+            "columnName": "download_result_msg",
+            "affinity": "TEXT",
             "notNull": false
           }
         ],
@@ -2237,7 +2249,7 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e7c5a90438427767e2c4bd7b6859f0ad')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'd6e84febd84113fc155dfa3e231347ff')"
     ]
   }
 }

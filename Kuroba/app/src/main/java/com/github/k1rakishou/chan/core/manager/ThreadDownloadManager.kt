@@ -85,19 +85,27 @@ class ThreadDownloadManager(
     }
   }
 
-  suspend fun getAllActiveThreads(): List<ChanDescriptor.ThreadDescriptor> {
+  suspend fun activeThreadsCount(): Int {
+    ensureInitialized()
+
+    return mutex.withLock {
+      return@withLock threadDownloadsMap.values.count { threadDownload -> threadDownload.status.isRunning() }
+    }
+  }
+
+  suspend fun getAllActiveThreadDownloads(): List<ThreadDownload> {
     ensureInitialized()
 
     return mutex.withLock {
       return@withLock threadDownloadsMap
-        .entries
-        .filter { (_, threadDownload) -> threadDownload.status.isRunning() }
-        .map { (_, threadDownload) -> threadDownload.threadDescriptor }
+        .values
+        .filter { threadDownload -> threadDownload.status.isRunning() }
     }
   }
 
   suspend fun startDownloading(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    threadThumbnailUrl: String?,
     downloadMedia: Boolean = true
   ) {
     ensureInitialized()
@@ -116,7 +124,7 @@ class ThreadDownloadManager(
     if (alreadyExists) {
       resumeThreadDownloadInternal(threadDescriptor)
     } else {
-      startThreadDownloadInternal(threadDescriptor, downloadMedia)
+      startThreadDownloadInternal(threadDescriptor, downloadMedia, threadThumbnailUrl)
     }
   }
 
@@ -155,6 +163,31 @@ class ThreadDownloadManager(
     }
 
     Logger.d(TAG, "completeDownloading() success=$updated, threadDescriptor=$threadDescriptor")
+  }
+
+  suspend fun onDownloadProcessed(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    outOfDiskSpaceError: Boolean,
+    outputDirError: Boolean
+  ) {
+    ensureInitialized()
+
+    updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
+      val updateTime = DateTime.now()
+
+      val resultMessage = when {
+        outOfDiskSpaceError -> "Out of disk space error"
+        outputDirError -> "Output directory access error"
+        else -> null
+      }
+
+      return@updateThreadDownload threadDownload.copy(
+        lastUpdateTime = updateTime,
+        downloadResultMsg = resultMessage
+      )
+    })
+
+    Logger.d(TAG, "onDownloadProcessed() threadDescriptor=$threadDescriptor")
   }
 
   suspend fun cancelDownloading(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -237,7 +270,8 @@ class ThreadDownloadManager(
 
   private suspend fun startThreadDownloadInternal(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    downloadMedia: Boolean
+    downloadMedia: Boolean,
+    threadThumbnailUrl: String?
   ) {
     var success = false
 
@@ -252,7 +286,9 @@ class ThreadDownloadManager(
         downloadMedia = downloadMedia,
         status = ThreadDownload.Status.Running,
         createdOn = DateTime.now(),
-        lastUpdateTime = null
+        threadThumbnailUrl = threadThumbnailUrl,
+        lastUpdateTime = null,
+        downloadResultMsg = null
       )
 
       val threadDownloadCreated = threadDownloadRepository.createThreadDownload(threadDownload)

@@ -45,6 +45,7 @@ import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
+import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
@@ -242,6 +243,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val okHttpProtocols = okHttpProtocols
     val fileManager = provideApplicationFileManager()
     val imageSaverFileManagerWrapper =  provideImageSaverFileManagerWrapper()
+    val threadDownloaderFileManagerWrapper =  provideThreadDownloaderFileManagerWrapper()
 
     val themeEngine = ThemesModuleInjector.build(
       application = this,
@@ -274,6 +276,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .themeEngine(themeEngine)
       .fileManager(fileManager)
       .imageSaverFileManagerWrapper(imageSaverFileManagerWrapper)
+      .threadDownloaderFileManagerWrapper(threadDownloaderFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
       .normalDnsSelectorFactory(normalDnsCreatorFactory)
       .dnsOverHttpsSelectorFactory(dnsOverHttpsCreatorFactory)
@@ -505,6 +508,18 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
 
     return ImageSaverFileManagerWrapper(fileManager)
+  }
+
+  private fun provideThreadDownloaderFileManagerWrapper(): ThreadDownloaderFileManagerWrapper {
+    val directoryManager = DirectoryManager(this)
+
+    val fileManager = FileManager(
+      appContext = this,
+      badPathSymbolResolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols,
+      directoryManager = directoryManager
+    )
+
+    return ThreadDownloaderFileManagerWrapper(fileManager)
   }
 
   private enum class UnhandlerExceptionHandlerType {

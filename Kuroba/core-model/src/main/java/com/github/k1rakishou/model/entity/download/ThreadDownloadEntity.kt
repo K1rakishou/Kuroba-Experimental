@@ -28,8 +28,12 @@ data class ThreadDownloadEntity(
   val status: Int,
   @ColumnInfo(name = CREATED_ON_COLUMN_NAME)
   val createdOn: DateTime,
+  @ColumnInfo(name = THREAD_THUMBNAIL_URL_COLUMN_NAME)
+  val threadThumbnailUrl: String?,
   @ColumnInfo(name = LAST_UPDATE_TIME_COLUMN_NAME)
-  val lastUpdateTime: DateTime?
+  val lastUpdateTime: DateTime?,
+  @ColumnInfo(name = DOWNLOAD_RESULT_MSG_COLUMN_NAME)
+  val downloadResultMsg: String?
 ) {
 
   companion object {
@@ -42,7 +46,9 @@ data class ThreadDownloadEntity(
     const val BOARD_CODE_COLUMN_NAME = "board_code"
     const val THREAD_NO_COLUMN_NAME = "thread_no"
     const val CREATED_ON_COLUMN_NAME = "created_on"
+    const val THREAD_THUMBNAIL_URL_COLUMN_NAME = "thread_thumbnail_url"
     const val LAST_UPDATE_TIME_COLUMN_NAME = "last_update_time"
+    const val DOWNLOAD_RESULT_MSG_COLUMN_NAME = "download_result_msg"
 
   }
 }

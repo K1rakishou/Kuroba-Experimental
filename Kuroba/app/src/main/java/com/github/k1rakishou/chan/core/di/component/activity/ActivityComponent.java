@@ -83,6 +83,8 @@ import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView;
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController;
 import com.github.k1rakishou.chan.features.themes.ThemeGalleryController;
 import com.github.k1rakishou.chan.features.themes.ThemeSettingsController;
+import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController;
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
@@ -253,6 +255,8 @@ public interface ActivityComponent {
     void inject(MediaViewerGesturesSettingsController mediaViewerGesturesSettingsController);
     void inject(BoardArchiveController boardArchiveController);
     void inject(SavedPostsController savedPostsController);
+    void inject(ThreadDownloaderSettingsController threadDownloaderSettingsController);
+    void inject(LocalArchiveController localArchiveController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

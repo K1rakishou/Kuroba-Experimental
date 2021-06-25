@@ -71,11 +71,9 @@ class WatcherSettingsScreen(
                 timeout == THREAD_DOWNLOADER_INTERVALS[0]
                   || timeout == THREAD_DOWNLOADER_INTERVALS[1]
                   || timeout == THREAD_DOWNLOADER_INTERVALS[2]
-                  || timeout == THREAD_DOWNLOADER_INTERVALS[3]
               } else {
                 timeout == THREAD_DOWNLOADER_INTERVALS[0]
                   || timeout == THREAD_DOWNLOADER_INTERVALS[1]
-                  || timeout == THREAD_DOWNLOADER_INTERVALS[2]
               }
 
               if (AppModuleAndroidUtils.isDevBuild() && isTimeoutInMinutes) {
@@ -384,11 +382,11 @@ class WatcherSettingsScreen(
 
     private val THREAD_DOWNLOADER_INTERVALS = listOf(
       TimeUnit.MINUTES.toMillis(1).toInt(),
-      TimeUnit.MINUTES.toMillis(20).toInt(),
       TimeUnit.MINUTES.toMillis(30).toInt(),
       TimeUnit.MINUTES.toMillis(45).toInt(),
       TimeUnit.HOURS.toMillis(1).toInt(),
       TimeUnit.HOURS.toMillis(2).toInt(),
+      TimeUnit.HOURS.toMillis(3).toInt(),
       TimeUnit.HOURS.toMillis(4).toInt(),
     )
   }

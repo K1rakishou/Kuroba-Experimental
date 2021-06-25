@@ -424,7 +424,7 @@ public class ChanSettings {
             //endregion
 
             // region THREAD DOWNLOADER
-            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1));
+            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1), true);
             //endregion
 
             //region APPEARANCE

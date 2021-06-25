@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
 import com.github.k1rakishou.chan.core.helper.PostHideHelper;
 import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper;
+import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
@@ -720,17 +721,23 @@ public class ManagerModule {
     @Provides
     public ThreadDownloadingDelegate provideThreadDownloadingDelegate(
             AppConstants appConstants,
+            RealDownloaderOkHttpClient realDownloaderOkHttpClient,
             SiteManager siteManager,
+            SiteResolver siteResolver,
             ThreadDownloadManager threadDownloadManager,
             ChanThreadManager chanThreadManager,
-            ChanPostRepository chanPostRepository
+            ChanPostRepository chanPostRepository,
+            ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper
     ) {
         return new ThreadDownloadingDelegate(
                 appConstants,
+                realDownloaderOkHttpClient,
                 siteManager,
+                siteResolver,
                 threadDownloadManager,
                 chanThreadManager,
-                chanPostRepository
+                chanPostRepository,
+                threadDownloaderFileManagerWrapper
         );
     }
 

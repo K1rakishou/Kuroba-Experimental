@@ -10,7 +10,9 @@ data class ThreadDownload(
   val downloadMedia: Boolean,
   var status: Status = Status.Running,
   var createdOn: DateTime,
-  var lastUpdateTime: DateTime?
+  var threadThumbnailUrl: String?,
+  var lastUpdateTime: DateTime?,
+  var downloadResultMsg: String?
 ) {
 
   enum class Status(val rawValue: Int) {
@@ -36,7 +38,9 @@ data class ThreadDownload(
       downloadMedia = false,
       status = Status.Running,
       createdOn = DateTime.now(),
-      lastUpdateTime = null
+      threadThumbnailUrl = null,
+      lastUpdateTime = null,
+      downloadResultMsg = null
     )
   }
 }

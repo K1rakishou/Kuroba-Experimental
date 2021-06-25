@@ -65,6 +65,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
+import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -386,6 +387,11 @@ class MainController(
             .add(Menu.NONE, R.id.action_search, index, R.string.menu_search)
             .setIcon(R.drawable.ic_search_white_24dp)
         }
+        BottomNavViewButton.Archive -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_archive, index, R.string.menu_archive)
+            .setIcon(R.drawable.ic_baseline_archive_24)
+        }
         BottomNavViewButton.Bookmarks -> {
           navigationViewContract.navigationMenu
             .add(Menu.NONE, R.id.action_bookmarks, index, R.string.menu_bookmarks)
@@ -538,6 +544,12 @@ class MainController(
     setGlobalSearchMenuItemSelected()
   }
 
+  fun openArchiveController() {
+    closeAllNonMainControllers()
+    openControllerWrappedIntoBottomNavAwareController(LocalArchiveController(context))
+    setArchiveMenuItemSelected()
+  }
+
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
     openControllerWrappedIntoBottomNavAwareController(TabHostController(context, threadDescriptors, this))
@@ -582,6 +594,7 @@ class MainController(
   private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
     when (menuItem.itemId) {
       R.id.action_search -> openGlobalSearchController()
+      R.id.action_archive -> openArchiveController()
       R.id.action_browse -> closeAllNonMainControllers()
       R.id.action_bookmarks -> openBookmarksController(emptyList())
       R.id.action_settings -> openSettingsController()
@@ -709,6 +722,10 @@ class MainController(
 
   fun setBrowseMenuItemSelected() {
     navigationViewContract.updateMenuItem(R.id.action_browse) { isChecked = true }
+  }
+
+  fun setArchiveMenuItemSelected() {
+    navigationViewContract.updateMenuItem(R.id.action_archive) { isChecked = true }
   }
 
   fun setSettingsMenuItemSelected() {

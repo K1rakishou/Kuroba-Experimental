@@ -54,8 +54,8 @@ class TabHostController(
     tabLayout.addTab(
       tabLayout.newTab()
         .setText(context.getString(R.string.saved_posts_tab_title))
-        .setTag(PageType.MyPosts),
-      pageType == PageType.MyPosts
+        .setTag(PageType.SavedPosts),
+      pageType == PageType.SavedPosts
     )
     tabLayout.addTab(
       tabLayout.newTab()
@@ -167,7 +167,7 @@ class TabHostController(
 
     private fun createController(pageType: PageType): TabPageController {
       return when (pageType) {
-        PageType.MyPosts -> {
+        PageType.SavedPosts -> {
           SavedPostsController(context)
         }
         PageType.Bookmarks -> {
@@ -219,14 +219,14 @@ class TabHostController(
    * it may break everything.
    * */
   enum class PageType(val pageIndex: Int) {
-    MyPosts(0),
+    SavedPosts(0),
     Bookmarks(1),
     FilterWatches(2);
 
     companion object {
       fun fromInt(value: Int): PageType {
         return when (value) {
-          0 -> MyPosts
+          0 -> SavedPosts
           1 -> Bookmarks
           2 -> FilterWatches
           else -> Bookmarks

@@ -6,6 +6,7 @@ import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
 import android.view.Window
+import androidx.compose.ui.BiasAlignment
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
@@ -115,6 +116,19 @@ class GlobalWindowInsetsManager {
     return ConstraintLayoutBias(
       horizBias.coerceIn(0f, 1f),
       vertBias.coerceIn(0f, 1f)
+    )
+  }
+
+  fun lastTouchCoordinatesBiasAlignment(): BiasAlignment {
+    val dispWidth = displaySize.x.coerceAtLeast(1).toFloat()
+    val dispHeight = displaySize.y.coerceAtLeast(1).toFloat()
+
+    val horizBias = (lastTouchCoordinates.x.toFloat() / dispWidth) - (dispWidth / 2f)
+    val vertBias = (lastTouchCoordinates.y.toFloat() / dispHeight) - (dispHeight / 2f)
+
+    return BiasAlignment(
+      horizBias.coerceIn(-1f, 1f),
+      vertBias.coerceIn(-1f, 1f)
     )
   }
 

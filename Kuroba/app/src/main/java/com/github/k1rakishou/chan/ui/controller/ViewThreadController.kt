@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
@@ -306,8 +307,28 @@ open class ViewThreadController(
           threadDownloadManager.stopDownloading(threadDescriptor)
         }
         ThreadDownload.Status.Stopped -> {
-          // TODO(KurobaEx): downloadMedia param
-          threadDownloadManager.startDownloading(threadDescriptor)
+          val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
+            context = context,
+            downloadClicked = { downloadMedia ->
+              mainScope.launch {
+                val threadThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
+                  ?.getOriginalPost()
+                  ?.firstImage()
+                  ?.actualThumbnailUrl
+                  ?.toString()
+
+                threadDownloadManager.startDownloading(
+                  threadDescriptor = threadDescriptor,
+                  threadThumbnailUrl = threadThumbnailUrl,
+                  downloadMedia = downloadMedia
+                )
+
+                updateThreadDownloadItem()
+              }
+            }
+          )
+
+          presentController(threadDownloaderSettingsController, animated = true)
         }
         ThreadDownload.Status.Completed -> {
           return@launch

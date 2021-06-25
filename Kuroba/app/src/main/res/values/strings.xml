@@ -127,6 +127,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="permission_grant">Grant</string>
 
     <string name="menu_search">Search</string>
+    <string name="menu_archive">Archive</string>
     <string name="menu_bookmarks">Bookmarks</string>
     <string name="menu_browse">Browse</string>
     <string name="menu_settings">Settings</string>
@@ -1295,12 +1296,28 @@ Don't have a 4chan Pass?<br>
 
     <string name="controller_board_archive_title">/%1$s/ archive</string>
 
+    <string name="controller_local_archive_title">Local thread archive</string>
+
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>
 
     <string name="saved_posts_tab_title">Saved posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
+
+    <string name="share_success_start">New media share intent, processing…</string>
+    <string name="share_is_in_progress">Share is already in progress</string>
+    <string name="share_success_message">Added %1$d new file(s) to reply file storage</string>
+    <string name="share_error_message">Failed to add new file(s), see logs for more info</string>
+
+    <string name="media_viewer_media_is_not_supported_downloadable">Media is not supported but you still can download it.</string>
+    <string name="media_viewer_media_is_not_supported_not_downloadable">Media is not supported.</string>
+    <string name="media_viewer_open_album_action">Open album</string>
+
+    <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
+    <string name="thread_downloader_settings_controller_root_dir_label">Root directory:</string>
+    <string name="thread_downloader_settings_controller_set_root_dir">Click here to set root directory</string>
+    <string name="thread_downloader_settings_controller_canceled_with_reason">Canceled: %1$s</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
@@ -1315,11 +1332,6 @@ Don't have a 4chan Pass?<br>
     <string name="enter_image_video_url">Enter image/video url</string>
     <string name="refresh_posting_limits_info">Refresh posting limits info</string>
     <string name="must_be_logged_in">Must be logged in</string>
-
-    <string name="share_success_start">New media share intent, processing…</string>
-    <string name="share_is_in_progress">Share is already in progress</string>
-    <string name="share_success_message">Added %1$d new file(s) to reply file storage</string>
-    <string name="share_error_message">Failed to add new file(s), see logs for more info</string>
     <string name="attached_file_info">Attached file info</string>
     <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
     <string name="android_day_night_mode_dialog_title">Android 10 Day/Night mode</string>
@@ -1335,8 +1347,5 @@ Don't have a 4chan Pass?<br>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
-    <string name="media_viewer_media_is_not_supported_downloadable">Media is not supported but you still can download it.</string>
-    <string name="media_viewer_media_is_not_supported_not_downloadable">Media is not supported.</string>
-    <string name="media_viewer_open_album_action">Open album</string>
 
 </resources>

@@ -17,7 +17,9 @@ class Migration_v20_to_v21 : Migration(20, 21) {
           `download_media` INTEGER NOT NULL, 
           `status` INTEGER NOT NULL, 
           `created_on` INTEGER NOT NULL, 
+          `thread_thumbnail_url` TEXT, 
           `last_update_time` INTEGER, 
+          `download_result_msg` TEXT, 
           PRIMARY KEY(`owner_thread_database_id`)
         )
       """.trimIndent())

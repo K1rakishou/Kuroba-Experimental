@@ -1,17 +1,27 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import androidx.annotation.StringRes
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -118,4 +128,49 @@ fun KurobaComposeTextField(
     modifier = modifier,
     colors = chanTheme.textFieldColors()
   )
+}
+
+@Composable
+fun KurobaComposeCheckbox(
+  currentlyChecked: Boolean,
+  @StringRes text: Int,
+  onCheckChanged: (Boolean) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  KurobaComposeCheckbox(
+    currentlyChecked = currentlyChecked,
+    text = stringResource(id = text),
+    onCheckChanged = onCheckChanged,
+    modifier = modifier
+  )
+}
+
+@Composable
+fun KurobaComposeCheckbox(
+  currentlyChecked: Boolean,
+  text: String,
+  onCheckChanged: (Boolean) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  var isChecked by remember { mutableStateOf(currentlyChecked) }
+
+  Row(modifier = Modifier
+    .clickable {
+      isChecked = isChecked.not()
+      onCheckChanged(isChecked)
+    }
+    .then(modifier)
+  ) {
+    Checkbox(
+      checked = isChecked,
+      onCheckedChange = { checked ->
+        isChecked = checked
+        onCheckChanged(isChecked)
+      }
+    )
+
+    Spacer(modifier = Modifier.width(8.dp))
+
+    KurobaComposeText(text = text)
+  }
 }
