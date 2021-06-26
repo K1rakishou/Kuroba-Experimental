@@ -297,7 +297,7 @@ class BottomMenuPanel @JvmOverloads constructor(
     private const val HIDE_DELAY = 100L
 
     private val MENU_ITEM_PADDING = dp(24f)
-    private val MENU_SIZE = dp(32f)
+    private val MENU_SIZE = dp(24f)
     private val INTERPOLATOR = FastOutSlowInInterpolator()
   }
 }

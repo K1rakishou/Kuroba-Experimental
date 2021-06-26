@@ -10,8 +10,6 @@ class ProxySelectionHelper(
   private val proxyMenuItemClickListener: OnProxyItemClicked
 ) : BaseSelectionHelper<ProxyStorage.ProxyKey>() {
 
-  fun isInSelectionMode(): Boolean = selectedItems.isNotEmpty()
-
   fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
     if (selectedItems.isEmpty()) {
       return emptyList()

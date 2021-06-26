@@ -33,7 +33,7 @@ import javax.inject.Inject
 
 class MainSettingsControllerV2(
   context: Context,
-  private var drawerCallbacks: MainControllerCallbacks?
+  private val mainControllerCallbacks: MainControllerCallbacks
 ) : BaseSettingsController(context), ToolbarSearchCallback {
 
   @Inject
@@ -78,7 +78,7 @@ class MainSettingsControllerV2(
     navigation.hasDrawer = true
     navigation.hasBack = false
 
-    settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
+    settingsCoordinator = SettingsCoordinator(context, requireNavController(), mainControllerCallbacks)
     settingsCoordinator.onCreate()
 
     compositeDisposable.add(
@@ -98,8 +98,7 @@ class MainSettingsControllerV2(
   override fun onDestroy() {
     super.onDestroy()
 
-    drawerCallbacks?.hideBottomPanel()
-    drawerCallbacks = null
+    mainControllerCallbacks.hideBottomPanel()
 
     epoxyRecyclerView.removeOnScrollListener(scrollListener)
     epoxyRecyclerView.clear()

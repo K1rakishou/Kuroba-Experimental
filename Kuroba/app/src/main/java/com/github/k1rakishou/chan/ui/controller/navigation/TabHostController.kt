@@ -24,7 +24,7 @@ import com.google.android.material.tabs.TabLayout
 class TabHostController(
   context: Context,
   private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private val drawerCallbacks: MainControllerCallbacks?
+  private val mainControllerCallbacks: MainControllerCallbacks
 ) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback, DisableableLayout {
   private lateinit var tabLayout: ColorizableTabLayout
   private lateinit var viewPager: KurobaViewPager
@@ -174,7 +174,7 @@ class TabHostController(
           BookmarksController(
             context = context,
             bookmarksToHighlight = bookmarksToHighlight,
-            drawerCallbacks = drawerCallbacks
+            drawerCallbacks = mainControllerCallbacks
           )
         }
         PageType.FilterWatches -> {

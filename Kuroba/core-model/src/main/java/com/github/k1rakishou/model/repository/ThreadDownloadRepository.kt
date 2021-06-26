@@ -38,10 +38,10 @@ class ThreadDownloadRepository(
     }
   }
 
-  suspend fun deleteThreadDownload(threadDownload: ThreadDownload): ModularResult<Unit> {
+  suspend fun deleteThreadDownload(threadDownloads: Collection<ThreadDownload>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        return@tryWithTransaction localSource.deleteThreadDownload(threadDownload)
+        return@tryWithTransaction localSource.deleteThreadDownload(threadDownloads)
       }
     }
   }

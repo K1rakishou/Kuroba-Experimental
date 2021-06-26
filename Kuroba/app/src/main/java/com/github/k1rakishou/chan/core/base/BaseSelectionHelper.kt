@@ -1,17 +1,17 @@
 package com.github.k1rakishou.chan.core.base
 
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 
 abstract class BaseSelectionHelper<T> {
   protected val selectedItems = mutableSetOf<T>()
 
-  private val selectionUpdatesChannel = ConflatedBroadcastChannel<SelectionEvent>()
+  private val selectionUpdatesChannel = MutableSharedFlow<SelectionEvent>(extraBufferCapacity = 32)
 
-  fun listenForSelectionChanges(): Flow<SelectionEvent> {
+  fun listenForSelectionChanges(): SharedFlow<SelectionEvent> {
     return selectionUpdatesChannel
-      .asFlow()
+      .asSharedFlow()
   }
 
   open fun toggleSelection(items: Collection<T>) {
@@ -45,6 +45,8 @@ abstract class BaseSelectionHelper<T> {
     fireNewSelectionEvent(wasInSelectionMode, isInSelectionMode)
   }
 
+  open fun isInSelectionMode(): Boolean = selectedItems.isNotEmpty()
+
   open fun isSelected(item: T): Boolean = selectedItems.contains(item)
 
   open fun selectedItemsCount(): Int = selectedItems.size
@@ -72,10 +74,14 @@ abstract class BaseSelectionHelper<T> {
   }
 
   private fun onSelectionChanged(selectionEvent: SelectionEvent) {
-    selectionUpdatesChannel.offer(selectionEvent)
+    selectionUpdatesChannel.tryEmit(selectionEvent)
   }
 
   sealed class SelectionEvent {
+    fun isIsSelectionMode(): Boolean {
+      return this is EnteredSelectionMode || this is ItemSelectionToggled
+    }
+
     object EnteredSelectionMode : SelectionEvent()
     object ItemSelectionToggled : SelectionEvent()
     object ExitedSelectionMode : SelectionEvent()

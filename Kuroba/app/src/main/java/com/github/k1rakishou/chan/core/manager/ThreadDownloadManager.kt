@@ -205,24 +205,50 @@ class ThreadDownloadManager(
     Logger.d(TAG, "onDownloadProcessed() threadDescriptor=$threadDescriptor")
   }
 
-  suspend fun cancelDownloading(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  suspend fun cancelDownloads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
     ensureInitialized()
 
-    val threadDownload = mutex.withLock { threadDownloadsMap.remove(threadDescriptor) }
-    if (threadDownload == null) {
-      Logger.d(TAG, "cancelDownloading() does not exist, threadDescriptor=$threadDescriptor")
+    val removedThreadDownloads = mutex.withLock {
+      val removed = mutableListOf<ThreadDownload>()
+
+      threadDescriptors.forEach { threadDescriptor ->
+        val removeDownload = threadDownloadsMap.remove(threadDescriptor)
+        if (removeDownload != null) {
+          removed += removeDownload
+        }
+      }
+
+      return@withLock removed
+    }
+
+    if (removedThreadDownloads.isEmpty()) {
+      Logger.d(TAG, "cancelDownloads() nothing to cancel")
       return
     }
 
-    threadDownloadRepository.deleteThreadDownload(threadDownload)
+    threadDownloadRepository.deleteThreadDownload(removedThreadDownloads)
       .safeUnwrap { error ->
         Logger.e(TAG, "cancelDownloading() Failed to delete thread download from the DB", error)
-        mutex.withLock { threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload }
+
+        mutex.withLock {
+          removedThreadDownloads.forEach { threadDownload ->
+            threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload
+          }
+        }
+
         return
       }
 
-    _threadDownloadUpdateFlow.emit(Event.CancelDownload(threadDescriptor))
-    Logger.d(TAG, "cancelDownloading() success, threadDescriptor=$threadDescriptor")
+    removedThreadDownloads.forEach { threadDownload ->
+      chanPostRepository.deleteThread(threadDownload.threadDescriptor)
+        .peekError { error -> Logger.e(TAG, "deleteThread(${threadDownload.threadDescriptor}) error", error) }
+        .ignore()
+    }
+
+    threadDescriptors.forEach { threadDescriptor ->
+      _threadDownloadUpdateFlow.emit(Event.CancelDownload(threadDescriptor))
+      Logger.d(TAG, "cancelDownloading() success, threadDescriptor=$threadDescriptor")
+    }
   }
 
   suspend fun onThreadsProcessed() {
@@ -231,7 +257,7 @@ class ThreadDownloadManager(
     _threadsProcessedFlow.emit(Unit)
   }
 
-  private suspend fun updateThreadDownload(
+  suspend fun updateThreadDownload(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     updaterFunc: (ThreadDownload) -> ThreadDownload?
   ): Boolean {

@@ -546,7 +546,7 @@ class MainController(
 
   fun openArchiveController() {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(LocalArchiveController(context))
+    openControllerWrappedIntoBottomNavAwareController(LocalArchiveController(context, this))
     setArchiveMenuItemSelected()
   }
 

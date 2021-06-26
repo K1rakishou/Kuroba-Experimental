@@ -32,10 +32,12 @@ class ThreadDownloadLocalSource(
     )
   }
 
-  suspend fun deleteThreadDownload(threadDownload: ThreadDownload) {
+  suspend fun deleteThreadDownload(threadDownloads: Collection<ThreadDownload>) {
     ensureInTransaction()
 
-    threadDownloadDao.delete(threadDownload.ownerThreadDatabaseId)
+    threadDownloads.forEach { threadDownload ->
+      threadDownloadDao.delete(threadDownload.ownerThreadDatabaseId)
+    }
   }
 
   private val TAG = "ThreadDownloadingLocalSource"

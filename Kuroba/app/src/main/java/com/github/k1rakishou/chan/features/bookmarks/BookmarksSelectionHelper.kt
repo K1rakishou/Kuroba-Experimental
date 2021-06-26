@@ -10,8 +10,6 @@ class BookmarksSelectionHelper(
   private val bookmarkMenuItemClickListener: OnBookmarkMenuItemClicked
 ) : BaseSelectionHelper<ChanDescriptor.ThreadDescriptor>() {
 
-  fun isInSelectionMode(): Boolean = selectedItems.isNotEmpty()
-
   fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
     if (selectedItems.isEmpty()) {
       return emptyList()

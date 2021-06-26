@@ -122,6 +122,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <string name="bottom_menu_item_reorder">Reorder</string>
     <string name="bottom_menu_item_delete">Delete</string>
+    <string name="bottom_menu_item_stop">Stop</string>
+    <string name="bottom_menu_item_start">Start</string>
 
     <string name="permission_app_settings">App settings</string>
     <string name="permission_grant">Grant</string>
@@ -1300,6 +1302,10 @@ Don't have a 4chan Pass?<br>
     <string name="controller_local_archive_updating_threads">Updating all threads, this may take some time</string>
     <string name="controller_local_archive_thread_last_download_status_ok">Last thread update OK</string>
     <string name="controller_local_archive_thread_last_download_status_error">Last thread update error: %1$s</string>
+    <string name="controller_local_archive_selection_title">Selected %1$d threads</string>
+    <string name="controller_local_archive_delete_threads_description">"This action will delete thread(s) with all downloaded posts (Files are not deleted). Are you sure you want to do that?</string>
+    <string name="controller_local_archive_delete_one_thread">Delete %1$s archived thread?</string>
+    <string name="controller_local_archive_delete_many_threads">Delete %1$d archived threads?</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

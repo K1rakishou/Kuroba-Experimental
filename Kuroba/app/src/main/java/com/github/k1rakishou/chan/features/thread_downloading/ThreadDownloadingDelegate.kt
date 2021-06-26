@@ -13,6 +13,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.processDataCollectionConcurrentlyIndexed
 import com.github.k1rakishou.common.suspendCall
@@ -232,13 +233,13 @@ class ThreadDownloadingDelegate(
         }
 
         val thumbnailUrl = postImage.actualThumbnailUrl
-        if (thumbnailUrl != null && postImage.extension != null) {
-          val name = "${postImage.serverFilename}_thumbnail.${postImage.extension}"
+        val thumbnailName = postImage.actualThumbnailUrl?.pathSegments?.lastOrNull()
 
+        if (thumbnailUrl != null && thumbnailName.isNotNullNorEmpty()) {
           downloadImage(
             outputDirectory = outputDirectory,
             isThumbnail = true,
-            name = name,
+            name = thumbnailName,
             imageUrl = thumbnailUrl,
             outOfDiskSpaceError = outOfDiskSpaceError,
             outputDirError = outputDirError
@@ -246,13 +247,13 @@ class ThreadDownloadingDelegate(
         }
 
         val fullImageUrl = postImage.imageUrl
-        if (fullImageUrl != null) {
-          val name = "${postImage.serverFilename}_full.${postImage.extension}"
+        val fullImageName = postImage.imageUrl?.pathSegments?.lastOrNull()
 
+        if (fullImageUrl != null && fullImageName.isNotNullNorEmpty()) {
           downloadImage(
             outputDirectory = outputDirectory,
             isThumbnail = false,
-            name = name,
+            name = fullImageName,
             imageUrl = fullImageUrl,
             outOfDiskSpaceError = outOfDiskSpaceError,
             outputDirError = outputDirError
