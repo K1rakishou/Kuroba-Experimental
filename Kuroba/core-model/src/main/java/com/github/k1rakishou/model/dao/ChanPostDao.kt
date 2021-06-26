@@ -55,10 +55,16 @@ abstract class ChanPostDao {
   suspend fun selectOriginalPost(
     ownerThreadId: Long
   ): ChanPostFull? {
-    val originalPosts = selectOriginalPostGrouped(ownerThreadId)
+    val originalPosts = selectOriginalPostsGrouped(listOf(ownerThreadId))
     check(originalPosts.size <= 1) { "Bad originalPosts count: ${originalPosts.size}" }
 
     return originalPosts.firstOrNull()
+  }
+
+  suspend fun selectOriginalPosts(
+    ownerThreadIds: Collection<Long>
+  ): List<ChanPostFull> {
+    return selectOriginalPostsGrouped(ownerThreadIds)
   }
 
   suspend fun selectManyOriginalPostsByThreadIdList(
@@ -120,11 +126,11 @@ abstract class ChanPostDao {
         INNER JOIN ${ChanPostEntity.TABLE_NAME} cpe
             ON cpe.${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = cp_id.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
         WHERE 
-            cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
+            cp_id.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
         AND 
             cpe.${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_TRUE}
     """)
-  protected abstract suspend fun selectOriginalPostGrouped(ownerThreadId: Long): List<ChanPostFull>
+  protected abstract suspend fun selectOriginalPostsGrouped(ownerThreadIds: Collection<Long>): List<ChanPostFull>
 
   @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
   @Query("""

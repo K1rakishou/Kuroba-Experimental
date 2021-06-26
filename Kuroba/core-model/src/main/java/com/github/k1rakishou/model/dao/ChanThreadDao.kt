@@ -140,7 +140,7 @@ abstract class ChanThreadDao {
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} IN (:chanThreadIdList)
     """)
-  abstract suspend fun selectManyByThreadIdList(chanThreadIdList: List<Long>): List<ChanThreadEntity>
+  abstract suspend fun selectManyByThreadIdList(chanThreadIdList: Collection<Long>): List<ChanThreadEntity>
 
   @Query("""
     SELECT 

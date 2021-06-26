@@ -25,11 +25,15 @@ abstract class BaseViewModel : ViewModel() {
     mainScope.cancelChildren()
   }
 
-  protected inline fun <T> MutableStateFlow<T>.updateState(crossinline updater: T.() -> T) {
+  protected inline fun <T> MutableStateFlow<T>.updateState(crossinline updater: T.() -> T?) {
     val prevState = this.value
     val newState = updater(this.value)
-    check(prevState !== newState) { "State must be copied!" }
 
+    if (newState == null) {
+      return
+    }
+
+    check(prevState !== newState) { "State must be copied!" }
     this.value = newState
   }
 

@@ -100,6 +100,7 @@ class ThreadDownloadingDelegate(
       }
     }
 
+    threadDownloadManager.onThreadsProcessed()
     Logger.d(TAG, "doWorkInternal() success")
   }
 

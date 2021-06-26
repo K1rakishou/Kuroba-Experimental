@@ -75,6 +75,8 @@ class MainSettingsControllerV2(
       .build()
 
     navigation.swipeable = false
+    navigation.hasDrawer = true
+    navigation.hasBack = false
 
     settingsCoordinator = SettingsCoordinator(context, requireNavController(), drawerCallbacks)
     settingsCoordinator.onCreate()

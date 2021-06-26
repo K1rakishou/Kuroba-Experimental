@@ -556,6 +556,58 @@ class ChanPostLocalSource(
     return chanThreadDao.select(chanBoardEntity.boardId, threadDescriptor.threadNo)
   }
 
+  suspend fun getThreadOriginalPostsByDatabaseId(threadDatabaseIds: Collection<Long>): List<ChanOriginalPost> {
+    ensureInTransaction()
+
+    val chanThreadMap = chanThreadDao.selectManyByThreadIdList(threadDatabaseIds)
+      .associateBy { chanThreadEntity -> chanThreadEntity.threadId }
+
+    val boardsIdSet = chanThreadMap.map { (_, chanThreadEntity) -> chanThreadEntity.ownerBoardId }
+      .toSet()
+
+    val chanBoardMap = chanBoardDao.selectMany(boardsIdSet)
+      .associateBy { chanBoardIdEntity -> chanBoardIdEntity.boardId }
+
+    val chanPostFullList = chanPostDao.selectOriginalPosts(threadDatabaseIds)
+
+    val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
+
+    // Load posts' comments/subjects/tripcodes and other Spannables
+    val textSpansGroupedByPostId = postIdList
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { chunk -> chanTextSpanDao.selectManyByOwnerPostIdList(chunk) }
+      .groupBy { chanTextSpanEntity -> chanTextSpanEntity.ownerPostId }
+
+    val postAdditionalData = getPostsAdditionalData(postIdList)
+
+    return chanPostFullList
+      .mapNotNull { chanPostFull ->
+        val postTextSnapEntityList = textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
+        val chanThreadEntity = chanThreadMap[chanPostFull.chanPostIdEntity.ownerThreadId]
+          ?: return@mapNotNull null
+        val chanBoardIdEntity = chanBoardMap[chanThreadEntity.ownerBoardId]
+          ?: return@mapNotNull null
+
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          chanBoardIdEntity.ownerSiteName,
+          chanBoardIdEntity.boardCode,
+          chanThreadEntity.threadNo
+        )
+
+        require(chanPostFull.chanPostEntity.isOp) { "Must be original post" }
+
+        return@mapNotNull ChanPostEntityMapper.fromEntity(
+          gson,
+          threadDescriptor,
+          chanThreadEntity,
+          chanPostFull.chanPostIdEntity,
+          chanPostFull.chanPostEntity,
+          postTextSnapEntityList,
+          postAdditionalData
+        ) as ChanOriginalPost
+      }
+  }
+
   suspend fun countTotalAmountOfPosts(): Int {
     ensureInTransaction()
 

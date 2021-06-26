@@ -67,6 +67,8 @@ class SavedPostsController(context: Context) :
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {
     navigationItem.title = AppModuleAndroidUtils.getString(R.string.controller_saved_posts)
     navigationItem.swipeable = false
+    navigationItem.hasDrawer = true
+    navigationItem.hasBack = false
 
     navigationItem.buildMenu(context)
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
@@ -185,7 +187,7 @@ class SavedPostsController(context: Context) :
           Column(modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
-            .padding(horizontal = 4.dp, vertical = 4.dp)
+            .padding(2.dp)
           ) {
             GroupedSavedReplyHeader(groupedSavedReplies, chanTheme, onHeaderClicked)
 

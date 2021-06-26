@@ -16,6 +16,12 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
@@ -52,12 +58,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import kotlin.collections.ArraysKt;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen;
-import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
 
 public class Toolbar
         extends LinearLayout
@@ -542,6 +542,10 @@ public class Toolbar
 
     public boolean closeSearch() {
         return presenter.closeSearch();
+    }
+
+    public boolean isSearchOpened() {
+        return presenter.isSearchOpened();
     }
 
     public void enterSelectionMode(String text) {

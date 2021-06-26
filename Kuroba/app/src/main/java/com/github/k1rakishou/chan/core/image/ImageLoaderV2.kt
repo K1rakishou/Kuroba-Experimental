@@ -974,7 +974,7 @@ class ImageLoaderV2(
   }
 
   @Synchronized
-  private fun getImageNotFoundDrawable(context: Context): BitmapDrawable {
+  fun getImageNotFoundDrawable(context: Context): BitmapDrawable {
     if (imageNotFoundDrawable != null && imageNotFoundDrawable!!.isDarkTheme == themeEngine.chanTheme.isDarkTheme) {
       return imageNotFoundDrawable!!.bitmapDrawable
     }
@@ -1002,7 +1002,7 @@ class ImageLoaderV2(
   }
 
   @Synchronized
-  private fun getImageErrorLoadingDrawable(context: Context): BitmapDrawable {
+  fun getImageErrorLoadingDrawable(context: Context): BitmapDrawable {
     if (imageErrorLoadingDrawable != null && imageErrorLoadingDrawable!!.isDarkTheme == themeEngine.chanTheme.isDarkTheme) {
       return imageErrorLoadingDrawable!!.bitmapDrawable
     }

@@ -36,6 +36,10 @@ class ThreadDownloadManager(
   val threadDownloadUpdateFlow: SharedFlow<Event>
     get() = _threadDownloadUpdateFlow.asSharedFlow()
 
+  private val _threadsProcessedFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  val threadsProcessedFlow: SharedFlow<Unit>
+    get() = _threadsProcessedFlow.asSharedFlow()
+
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (suspendableInitializer.isInitialized()) {
@@ -93,6 +97,16 @@ class ThreadDownloadManager(
     }
   }
 
+  suspend fun getAllThreadDownloads(): List<ThreadDownload> {
+    ensureInitialized()
+
+    return mutex.withLock {
+      return@withLock threadDownloadsMap
+        .values
+        .map { threadDownload -> threadDownload.copy() }
+    }
+  }
+
   suspend fun getAllActiveThreadDownloads(): List<ThreadDownload> {
     ensureInitialized()
 
@@ -100,6 +114,7 @@ class ThreadDownloadManager(
       return@withLock threadDownloadsMap
         .values
         .filter { threadDownload -> threadDownload.status.isRunning() }
+        .map { threadDownload -> threadDownload.copy() }
     }
   }
 
@@ -208,6 +223,12 @@ class ThreadDownloadManager(
 
     _threadDownloadUpdateFlow.emit(Event.CancelDownload(threadDescriptor))
     Logger.d(TAG, "cancelDownloading() success, threadDescriptor=$threadDescriptor")
+  }
+
+  suspend fun onThreadsProcessed() {
+    ensureInitialized()
+
+    _threadsProcessedFlow.emit(Unit)
   }
 
   private suspend fun updateThreadDownload(

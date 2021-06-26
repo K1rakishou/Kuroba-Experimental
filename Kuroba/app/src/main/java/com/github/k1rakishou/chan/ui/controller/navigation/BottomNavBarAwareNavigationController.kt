@@ -47,7 +47,6 @@ class BottomNavBarAwareNavigationController(
     setToolbar(toolbar)
 
     requireToolbar().setCallback(this)
-    requireToolbar().hideArrowMenu()
     requireToolbar().addToolbarHeightUpdatesCallback(this)
 
     // Wait a little bit so that GlobalWindowInsetsManager have time to get initialized so we can
@@ -88,10 +87,26 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onMenuOrBackClicked(isArrow: Boolean) {
-    listener.onCloseController()
+    if (isArrow) {
+      if (toolbar?.isSearchOpened == true) {
+        toolbar?.closeSearch()
+        return
+      }
+
+      if (childControllers.size > 1) {
+        childControllers.last().navigationController?.popController()
+        return
+      }
+
+      listener.onCloseController()
+      return
+    }
+
+    listener.onShowMenu()
   }
 
   interface CloseBottomNavBarAwareNavigationControllerListener {
     fun onCloseController()
+    fun onShowMenu()
   }
 }

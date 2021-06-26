@@ -52,9 +52,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
                     <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
                         android:id="@+id/main_controller_container"
-                        android:layout_width="0dp"
-                        android:layout_height="match_parent"
-                        android:layout_weight="1" />
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent" />
 
                 </LinearLayout>
 

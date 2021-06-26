@@ -634,6 +634,16 @@ class ChanPostRepository(
     return postsThatDifferWithCache.size
   }
 
+  suspend fun getThreadOriginalPostsByDatabaseId(threadDatabaseIds: Collection<Long>): ModularResult<List<ChanOriginalPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.getThreadOriginalPostsByDatabaseId(threadDatabaseIds)
+      }
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun deleteOldPostsIfNeeded(forced: Boolean = false): ModularResult<ChanPostLocalSource.DeleteResult> {
     return applicationScope.dbCall {

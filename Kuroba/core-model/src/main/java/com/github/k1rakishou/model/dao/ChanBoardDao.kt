@@ -106,7 +106,7 @@ abstract class ChanBoardDao {
         FROM ${ChanBoardIdEntity.TABLE_NAME}
         WHERE ${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} IN (:boardIdList)
     """)
-  abstract suspend fun selectMany(boardIdList: List<Long>): List<ChanBoardIdEntity>
+  abstract suspend fun selectMany(boardIdList: Collection<Long>): List<ChanBoardIdEntity>
 
   suspend fun createNewBoardIdEntities(
     ownerSiteName: String,

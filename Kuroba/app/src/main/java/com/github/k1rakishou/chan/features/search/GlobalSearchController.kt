@@ -62,6 +62,8 @@ class GlobalSearchController(context: Context)
 
     navigation.title = getString(R.string.controller_search)
     navigation.swipeable = false
+    navigation.hasDrawer = true
+    navigation.hasBack = false
 
     view = inflate(context, R.layout.controller_global_search)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)

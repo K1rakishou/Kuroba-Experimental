@@ -570,6 +570,10 @@ class MainController(
         override fun onCloseController() {
           closeBottomNavBarAwareNavigationControllerListener()
         }
+
+        override fun onShowMenu() {
+          onMenuClicked()
+        }
       }
     )
 

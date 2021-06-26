@@ -143,6 +143,10 @@ public class ToolbarPresenter {
         return true;
     }
 
+    boolean isSearchOpened() {
+        return item.search;
+    }
+
     void enterSelectionMode(String text) {
         if (item == null || item.selectionMode) {
             return;

@@ -1297,6 +1297,9 @@ Don't have a 4chan Pass?<br>
     <string name="controller_board_archive_title">/%1$s/ archive</string>
 
     <string name="controller_local_archive_title">Local thread archive</string>
+    <string name="controller_local_archive_updating_threads">Updating all threads, this may take some time</string>
+    <string name="controller_local_archive_thread_last_download_status_ok">Last thread update OK</string>
+    <string name="controller_local_archive_thread_last_download_status_error">Last thread update error: %1$s</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

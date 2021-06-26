@@ -45,6 +45,10 @@ public abstract class ToolbarNavigationController extends NavigationController i
         toolbar.openSearchWithQuery(null);
     }
 
+    public void closeSearch() {
+        toolbar.closeSearch();
+    }
+
     @Override
     public void transition(Controller from, Controller to, boolean pushing, ControllerTransition controllerTransition) {
         super.transition(from, to, pushing, controllerTransition);

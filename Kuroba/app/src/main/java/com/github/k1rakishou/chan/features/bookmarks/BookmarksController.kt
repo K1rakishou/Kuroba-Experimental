@@ -349,6 +349,8 @@ class BookmarksController(
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {
     navigationItem.title = getString(R.string.controller_bookmarks)
     navigationItem.swipeable = false
+    navigationItem.hasDrawer = true
+    navigationItem.hasBack = false
 
     navigationItem.buildMenu(context)
       .withMenuItemClickInterceptor {
