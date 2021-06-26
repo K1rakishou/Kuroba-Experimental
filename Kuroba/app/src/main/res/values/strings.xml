@@ -161,8 +161,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
     <string name="action_force_reload">Force reload</string>
-    <string name="action_start_thread_download">Start thread download</string>
-    <string name="action_stop_thread_download">Stop thread download</string>
+    <string name="action_thread_download">Thread download</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_preview_thread_in_archive">Preview in archive</string>
@@ -185,6 +184,10 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_switch_catalog_grid">Catalog (grid) mode</string>
     <string name="action_switch_catalog_stagger">Catalog (stagger) mode</string>
     <string name="action_switch_board">Board mode</string>
+
+    <string name="action_start_thread_download">Start thread download</string>
+    <string name="action_stop_thread_download">Stop thread download</string>
+    <string name="action_thread_downloader_root_dir_options">Change thread downloader root directory</string>
 
     <string name="action_copy_link_text">Copy link text</string>
     <string name="action_copy_link_value">Copy link value</string>
@@ -1299,8 +1302,9 @@ Don't have a 4chan Pass?<br>
     <string name="controller_board_archive_title">/%1$s/ archive</string>
 
     <string name="controller_local_archive_title">Local thread archive</string>
+    <string name="controller_local_archive_title_updated">Local thread archive %1$d/%2$d</string>
     <string name="controller_local_archive_updating_threads">Updating all threads, this may take some time</string>
-    <string name="controller_local_archive_thread_last_download_status_ok">Last thread update OK</string>
+    <string name="controller_local_archive_thread_last_download_status_ok">Last thread update: OK</string>
     <string name="controller_local_archive_thread_last_download_status_error">Last thread update error: %1$s</string>
     <string name="controller_local_archive_selection_title">Selected %1$d threads</string>
     <string name="controller_local_archive_delete_threads_description">"This action will delete thread(s) with all downloaded posts (Files are not deleted). Are you sure you want to do that?</string>
@@ -1324,7 +1328,7 @@ Don't have a 4chan Pass?<br>
     <string name="media_viewer_open_album_action">Open album</string>
 
     <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
-    <string name="thread_downloader_settings_controller_root_dir_label">Root directory:</string>
+    <string name="thread_downloader_settings_controller_root_dir_label">Root directory (Thread downloader root dir is shared among all downloaded threads, changing it will change root dir of all downloaded threads):</string>
     <string name="thread_downloader_settings_controller_set_root_dir">Click here to set root directory</string>
     <string name="thread_downloader_settings_controller_canceled_with_reason">Canceled: %1$s</string>
 

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.content.Context
 import android.net.Uri
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
@@ -69,7 +70,6 @@ class ThreadDownloaderSettingsController(
           .fillMaxWidth()
           .padding(horizontal = 8.dp, vertical = 8.dp)
         ) {
-
           BuildThreadDownloaderSettings(onChangeRootDirClicked = { invokeDirectoryChooser() })
 
           BuilderThreadDownloaderButtons()
@@ -137,8 +137,11 @@ class ThreadDownloaderSettingsController(
           .fillMaxWidth()
       )
 
-      val threadDownloaderLocation by remember { viewModel.threadDownloaderLocation }
-      if (threadDownloaderLocation == null) {
+      val threadDownloaderLocation by viewModel.threadDownloaderLocation
+      val threadDownloaderDirAccessible by viewModel.threadDownloaderDirAccessible
+      val chanTheme = LocalChanTheme.current
+
+      if (threadDownloaderLocation == null || !threadDownloaderDirAccessible) {
         KurobaComposeText(
           text = stringResource(id = R.string.thread_downloader_settings_controller_set_root_dir),
           fontSize = 20.sp,
@@ -146,6 +149,8 @@ class ThreadDownloaderSettingsController(
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
+            .background(color = chanTheme.backColorSecondaryCompose)
+            .padding(4.dp)
             .clickable { onChangeRootDirClicked() }
         )
       } else {
@@ -155,6 +160,8 @@ class ThreadDownloaderSettingsController(
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
+            .background(color = chanTheme.backColorSecondaryCompose)
+            .padding(4.dp)
             .clickable { onChangeRootDirClicked() }
         )
       }

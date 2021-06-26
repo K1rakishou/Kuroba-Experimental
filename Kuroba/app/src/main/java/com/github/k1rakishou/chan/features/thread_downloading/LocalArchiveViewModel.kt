@@ -50,18 +50,22 @@ class LocalArchiveViewModel : BaseViewModel() {
     get() = _searchQuery
 
   private var _selectionMode = MutableCachedSharedFlow<BaseSelectionHelper.SelectionEvent?>(
-    extraBufferCapacity = 16,
+    extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
   val selectionMode: SharedFlow<BaseSelectionHelper.SelectionEvent?>
     get() = _selectionMode.sharedFlow
 
   private val _bottomPanelMenuItemClickEventFlow = MutableSharedFlow<MenuItemClickEvent>(
-    extraBufferCapacity = 16,
+    extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
   val bottomPanelMenuItemClickEventFlow: SharedFlow<MenuItemClickEvent>
     get() = _bottomPanelMenuItemClickEventFlow.asSharedFlow()
+
+  private val _controllerTitleInfoUpdatesFlow = MutableStateFlow<ControllerTitleInfo?>(null)
+  val controllerTitleInfoUpdatesFlow: StateFlow<ControllerTitleInfo?>
+    get() = _controllerTitleInfoUpdatesFlow.asStateFlow()
 
   private val selectedItems = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<Boolean>>()
 
@@ -393,6 +397,11 @@ class LocalArchiveViewModel : BaseViewModel() {
       cachedThreadDownloadViews += threadDownloadView.copy()
     }
 
+    val active = threadDownloadViews.count { threadDownloadView -> threadDownloadView.status.isRunning() }
+    val total = threadDownloadViews.size
+
+    _controllerTitleInfoUpdatesFlow.tryEmit(ControllerTitleInfo(active, total))
+
     if (searchQuery.value != null) {
       // Do not update the main state when in search mode because it will reset the filtered entries
       return
@@ -419,6 +428,11 @@ class LocalArchiveViewModel : BaseViewModel() {
   class AvailableActions(
     var canStop: Boolean = false,
     var canStart: Boolean = false
+  )
+
+  data class ControllerTitleInfo(
+    val activeDownloads: Int,
+    val totalDownloads: Int
   )
 
   data class MenuItemClickEvent(

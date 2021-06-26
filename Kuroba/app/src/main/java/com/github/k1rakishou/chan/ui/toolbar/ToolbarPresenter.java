@@ -27,7 +27,9 @@ public class ToolbarPresenter {
     private Callback callback;
     private ThemeEngine themeEngine;
 
+    @Nullable
     private NavigationItem item;
+    @Nullable
     private NavigationItem transition;
 
     public ToolbarPresenter(
@@ -144,6 +146,10 @@ public class ToolbarPresenter {
     }
 
     boolean isSearchOpened() {
+        if (item == null) {
+            return false;
+        }
+
         return item.search;
     }
 
@@ -161,6 +167,10 @@ public class ToolbarPresenter {
     }
 
     boolean isInSelectionMode() {
+        if (item == null) {
+            return false;
+        }
+
         return item.selectionMode;
     }
 
@@ -196,7 +206,7 @@ public class ToolbarPresenter {
     }
 
     void searchInput(@NonNull String input) {
-        if (!item.search) {
+        if (item == null || !item.search) {
             return;
         }
 

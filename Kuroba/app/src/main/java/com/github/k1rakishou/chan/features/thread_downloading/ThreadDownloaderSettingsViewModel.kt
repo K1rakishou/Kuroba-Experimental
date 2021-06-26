@@ -7,7 +7,13 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.ThreadDownloaderOptions
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class ThreadDownloaderSettingsViewModel : BaseViewModel() {
 
@@ -24,7 +30,18 @@ class ThreadDownloaderSettingsViewModel : BaseViewModel() {
     component.inject(this)
   }
 
+  @OptIn(ExperimentalTime::class)
   override suspend fun onViewModelReady() {
+    mainScope.launch {
+      PersistableChanState.threadDownloaderOptions.listenForChanges()
+        .asFlow()
+        .debounce(Duration.seconds(1))
+        .collect { options ->
+          options.locationUri()
+            ?.let { rootDirUri -> updateThreadDownloaderRootDir(rootDirUri) }
+        }
+    }
+
     threadDownloaderDirAccessible.value = isDirAccessible()
   }
 
@@ -56,7 +73,7 @@ class ThreadDownloaderSettingsViewModel : BaseViewModel() {
   }
 
   private fun updateThreadDownloaderOptions() {
-    PersistableChanState.threadDownloaderOptions.setSync(
+    PersistableChanState.threadDownloaderOptions.set(
       ThreadDownloaderOptions(
         threadDownloaderLocation.value?.toString(),
         downloadMedia.value

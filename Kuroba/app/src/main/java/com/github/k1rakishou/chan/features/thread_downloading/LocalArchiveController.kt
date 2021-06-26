@@ -74,9 +74,12 @@ import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class LocalArchiveController(
   context: Context,
@@ -102,6 +105,7 @@ class LocalArchiveController(
     component.inject(this)
   }
 
+  @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
 
@@ -138,6 +142,14 @@ class LocalArchiveController(
           onMenuItemClicked(menuItemClickEvent.archiveMenuItemType, menuItemClickEvent.items)
         }
     }
+
+    mainScope.launch {
+      viewModel.controllerTitleInfoUpdatesFlow
+        .debounce(Duration.seconds(1))
+        .collect { controllerTitleInfo -> updateControllerTitle(controllerTitleInfo) }
+    }
+
+    updateControllerTitle(viewModel.controllerTitleInfoUpdatesFlow.value)
 
     view = ComposeView(context).apply {
       setContent {
@@ -540,9 +552,7 @@ class LocalArchiveController(
   }
 
   private fun enterSelectionModeOrUpdate() {
-    val navController = requireNavController()
-    val toolbar = navController.requireToolbar()
-
+    val toolbar = requireNavController().requireToolbar()
     if (!toolbar.isInSelectionMode) {
       toolbar.enterSelectionMode(formatSelectionText())
       return
@@ -559,6 +569,31 @@ class LocalArchiveController(
       R.string.controller_local_archive_selection_title,
       viewModel.selectedItemsCount()
     )
+  }
+
+  private fun updateControllerTitle(controllerTitleInfo: LocalArchiveViewModel.ControllerTitleInfo?) {
+    if (controllerTitleInfo == null) {
+      return
+    }
+
+    val toolbar = requireNavController().requireToolbar()
+    if (toolbar.isInSelectionMode) {
+      return
+    }
+
+    val titleString = if (controllerTitleInfo.totalDownloads <= 0) {
+      getString(R.string.controller_local_archive_title)
+    } else {
+      getString(
+        R.string.controller_local_archive_title_updated,
+        controllerTitleInfo.activeDownloads,
+        controllerTitleInfo.totalDownloads
+      )
+    }
+
+    navigation.title = titleString
+
+    toolbar.updateTitle(navigation)
   }
 
 }

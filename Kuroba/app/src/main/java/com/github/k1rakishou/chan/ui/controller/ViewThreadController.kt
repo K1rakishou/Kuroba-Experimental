@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
+import android.net.Uri
 import androidx.core.content.ContextCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -47,6 +48,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.callback.directory.PermanentDirectoryChooserCallback
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -55,6 +58,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.persist_state.ThreadDownloaderOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -79,6 +84,8 @@ open class ViewThreadController(
   lateinit var bookmarksManager: BookmarksManager
   @Inject
   lateinit var threadDownloadManager: ThreadDownloadManager
+  @Inject
+  lateinit var fileChooser: FileChooser
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor
@@ -180,12 +187,7 @@ open class ViewThreadController(
         R.string.action_force_reload,
         isDevBuild()
       ) { item -> forceReloadClicked(item) }
-      .withSubItem(
-        ACTION_DOWNLOAD_THREAD,
-        R.string.action_start_thread_download,
-        false,
-        { item -> downloadOrStopDownloadThread(item) }
-      )
+      .withDownloadThreadOptions()
       .withSubItem(
         ACTION_VIEW_REMOVED_POSTS,
         R.string.action_view_removed_posts
@@ -259,6 +261,46 @@ open class ViewThreadController(
       ) { item -> onScrollbarLabelingOptionClicked(item) }
       .build()
   }
+
+  private fun NavigationItem.MenuOverflowBuilder.withDownloadThreadOptions(): NavigationItem.MenuOverflowBuilder {
+    return withNestedOverflow(
+      ACTION_DOWNLOAD_THREAD_OPTIONS,
+      R.string.action_thread_download,
+      true
+    )
+      .addNestedItem(
+        ACTION_DOWNLOAD_THREAD,
+        R.string.action_start_thread_download,
+        true,
+        null,
+        { item -> downloadOrStopDownloadThread(item) }
+      )
+      .addNestedItem(
+        ACTION_THREAD_DOWNLOADER_ROOT_DIR,
+        R.string.action_thread_downloader_root_dir_options,
+        true,
+        null,
+        { item -> onChangeThreadDownloaderRootDirOptionClicked() }
+      )
+      .build()
+  }
+
+  private fun onChangeThreadDownloaderRootDirOptionClicked() {
+    fileChooser.openChooseDirectoryDialog(object : PermanentDirectoryChooserCallback() {
+      override fun onCancel(reason: String) {
+        showToast("Canceled: $reason")
+      }
+
+      override fun onResult(uri: Uri) {
+        val prevDownloadMedia = PersistableChanState.threadDownloaderOptions.get().downloadMedia
+
+        PersistableChanState.threadDownloaderOptions.set(
+          ThreadDownloaderOptions(uri.toString(), prevDownloadMedia)
+        )
+      }
+    })
+  }
+
 
   private fun albumClicked(item: ToolbarMenuItem) {
     threadLayout.presenter.showAlbum()
@@ -732,11 +774,14 @@ open class ViewThreadController(
     private const val ACTION_THREAD_OPTIONS = 9009
     private const val ACTION_SCROLL_TO_TOP = 9010
     private const val ACTION_SCROLL_TO_BOTTOM = 9011
-    private const val ACTION_DOWNLOAD_THREAD = 9012
+    private const val ACTION_DOWNLOAD_THREAD_OPTIONS = 9012
 
     private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9100
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
+
+    private const val ACTION_DOWNLOAD_THREAD = 9200
+    private const val ACTION_THREAD_DOWNLOADER_ROOT_DIR = 9201
   }
 }

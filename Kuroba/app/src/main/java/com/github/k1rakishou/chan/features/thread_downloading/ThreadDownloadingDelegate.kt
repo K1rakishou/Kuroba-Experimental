@@ -15,7 +15,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
-import com.github.k1rakishou.common.processDataCollectionConcurrentlyIndexed
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
@@ -31,13 +31,14 @@ import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.ensureActive
-import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.Dispatchers
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.closeQuietly
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 class ThreadDownloadingDelegate(
   private val appConstants: AppConstants,
@@ -53,9 +54,16 @@ class ThreadDownloadingDelegate(
     get() = threadDownloaderFileManagerWrapper.fileManager
   private val okHttpClient: OkHttpClient
     get() = downloaderOkHttpClient.okHttpClient()
+  private val batchCount = appConstants.processorsCount
 
+  @OptIn(ExperimentalTime::class)
   suspend fun doWork(rootDir: Uri): ModularResult<Unit> {
-    return ModularResult.Try { doWorkInternal(rootDir) }
+    return ModularResult.Try {
+      val (result, duration) = measureTimedValue { doWorkInternal(rootDir) }
+      Logger.d(TAG, "doWorkInternal() took $duration")
+
+      return@Try result
+    }
   }
 
   private suspend fun doWorkInternal(rootDir: Uri) {
@@ -69,7 +77,6 @@ class ThreadDownloadingDelegate(
     }
 
     val threadDownloads = threadDownloadManager.getAllActiveThreadDownloads()
-    val batchCount = appConstants.processorsCount
 
     Logger.d(TAG, "doWorkInternal() start, batchCount=$batchCount, rootDir='$rootDir'")
     threadDownloads.forEach { threadDownload ->
@@ -79,13 +86,10 @@ class ThreadDownloadingDelegate(
     val outOfDiskSpaceError = AtomicBoolean(false)
     val outputDirError = AtomicBoolean(false)
 
-    processDataCollectionConcurrentlyIndexed(
-      dataList = threadDownloads,
-      batchCount = batchCount
-    ) { index, threadDownload ->
+    threadDownloads.forEachIndexed { index, threadDownload ->
       try {
         if (outOfDiskSpaceError.get()) {
-          return@processDataCollectionConcurrentlyIndexed
+          return@forEachIndexed
         }
 
         processThread(
@@ -173,6 +177,7 @@ class ThreadDownloadingDelegate(
       "closed: ${originalPost.closed}, " +
       "deleted: ${originalPost.deleted}, " +
       "postsCount: ${chanThread.postsCount}, " +
+      "imagesCount: ${chanThread.imagesCount}, " +
       "outOfDiskSpace: ${outOfDiskSpaceError.get()}, " +
       "outputDirError: ${outputDirError.get()}, "
 
@@ -220,45 +225,45 @@ class ThreadDownloadingDelegate(
       return
     }
 
-    supervisorScope {
-      for (postImage in chanThread.getThreadPostImages()) {
-        ensureActive()
+    processDataCollectionConcurrently(
+      dataList = chanThread.getThreadPostImages(),
+      batchCount = batchCount,
+      dispatcher = Dispatchers.IO
+    ) { postImage ->
+      if (outOfDiskSpaceError.get()) {
+        return@processDataCollectionConcurrently
+      }
 
-        if (outOfDiskSpaceError.get()) {
-          return@supervisorScope
-        }
+      if (outputDirError.get()) {
+        return@processDataCollectionConcurrently
+      }
 
-        if (outputDirError.get()) {
-          return@supervisorScope
-        }
+      val thumbnailUrl = postImage.actualThumbnailUrl
+      val thumbnailName = postImage.actualThumbnailUrl?.pathSegments?.lastOrNull()
 
-        val thumbnailUrl = postImage.actualThumbnailUrl
-        val thumbnailName = postImage.actualThumbnailUrl?.pathSegments?.lastOrNull()
+      if (thumbnailUrl != null && thumbnailName.isNotNullNorEmpty()) {
+        downloadImage(
+          outputDirectory = outputDirectory,
+          isThumbnail = true,
+          name = thumbnailName,
+          imageUrl = thumbnailUrl,
+          outOfDiskSpaceError = outOfDiskSpaceError,
+          outputDirError = outputDirError
+        )
+      }
 
-        if (thumbnailUrl != null && thumbnailName.isNotNullNorEmpty()) {
-          downloadImage(
-            outputDirectory = outputDirectory,
-            isThumbnail = true,
-            name = thumbnailName,
-            imageUrl = thumbnailUrl,
-            outOfDiskSpaceError = outOfDiskSpaceError,
-            outputDirError = outputDirError
-          )
-        }
+      val fullImageUrl = postImage.imageUrl
+      val fullImageName = postImage.imageUrl?.pathSegments?.lastOrNull()
 
-        val fullImageUrl = postImage.imageUrl
-        val fullImageName = postImage.imageUrl?.pathSegments?.lastOrNull()
-
-        if (fullImageUrl != null && fullImageName.isNotNullNorEmpty()) {
-          downloadImage(
-            outputDirectory = outputDirectory,
-            isThumbnail = false,
-            name = fullImageName,
-            imageUrl = fullImageUrl,
-            outOfDiskSpaceError = outOfDiskSpaceError,
-            outputDirError = outputDirError
-          )
-        }
+      if (fullImageUrl != null && fullImageName.isNotNullNorEmpty()) {
+        downloadImage(
+          outputDirectory = outputDirectory,
+          isThumbnail = false,
+          name = fullImageName,
+          imageUrl = fullImageUrl,
+          outOfDiskSpaceError = outOfDiskSpaceError,
+          outputDirError = outputDirError
+        )
       }
     }
 
