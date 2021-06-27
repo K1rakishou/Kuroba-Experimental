@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -20,10 +21,12 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.fsaf.file.FileSegment
 import com.github.k1rakishou.fsaf.file.Segment
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -49,7 +52,10 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
+import okhttp3.ResponseBody
+import okhttp3.internal.closeQuietly
 import java.io.IOException
+import java.io.InputStream
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
@@ -69,7 +75,9 @@ class ImageSaverV2ServiceDelegate(
   private val siteResolver: SiteResolver,
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadManager: ChanThreadManager,
+  private val threadDownloadManager: ThreadDownloadManager,
+  private val fileManager: FileManager
 ) {
   private val mutex = Mutex()
 
@@ -82,7 +90,7 @@ class ImageSaverV2ServiceDelegate(
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   private val notificationUpdatesFlow = MutableSharedFlow<ImageSaverDelegateResult>(
-    extraBufferCapacity = 128,
+    extraBufferCapacity = 16,
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
@@ -160,7 +168,9 @@ class ImageSaverV2ServiceDelegate(
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun downloadImagesInternal(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData): Int {
+  private suspend fun downloadImagesInternal(
+    imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData
+  ): Int {
     BackgroundUtils.ensureBackgroundThread()
 
     val uniqueId = imageDownloadInputData.uniqueId
@@ -821,11 +831,12 @@ class ImageSaverV2ServiceDelegate(
       }
 
       val imageUrl = checkNotNull(chanPostImage!!.imageUrl) { "Image url is empty!" }
+      val threadDescriptor = chanPostImage!!.ownerPostDescriptor.threadDescriptor()
 
       try {
         doIoTaskWithAttempts(MAX_IO_ERROR_RETRIES_COUNT) {
           try {
-            downloadFileIntoFile(imageUrl, actualOutputFile)
+            downloadFileIntoFile(imageUrl, actualOutputFile, threadDescriptor)
           } catch (error: IOException) {
             if (error.isOutOfDiskSpaceError()) {
               throw OutOfDiskSpaceException()
@@ -855,9 +866,42 @@ class ImageSaverV2ServiceDelegate(
   }
 
   @Throws(ResultFileAccessError::class, IOException::class, NotFoundException::class)
-  suspend fun downloadFileIntoFile(imageUrl: HttpUrl, outputFile: AbstractFile) {
+  suspend fun downloadFileIntoFile(
+    imageUrl: HttpUrl,
+    outputFile: AbstractFile,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor?
+  ) {
     BackgroundUtils.ensureBackgroundThread()
 
+    var localInputStream: InputStream? = null
+
+    try {
+      if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
+        localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, threadDescriptor)
+          ?.let { file -> fileManager.getInputStream(file) }
+      }
+
+      if (localInputStream == null) {
+        localInputStream = downloadAndGetResponseBody(imageUrl).source().inputStream()
+      }
+
+      val outputFileStream = imageSaverFileManager.fileManager.getOutputStream(outputFile)
+        ?: throw ResultFileAccessError(outputFile.getFullPath())
+
+      runInterruptible {
+        localInputStream!!.use { inputStream ->
+          outputFileStream.use { outputStream ->
+            inputStream.copyTo(outputStream)
+          }
+        }
+      }
+    } finally {
+      localInputStream?.closeQuietly()
+      localInputStream = null
+    }
+  }
+
+  private suspend fun downloadAndGetResponseBody(imageUrl: HttpUrl): ResponseBody {
     val requestBuilder = Request.Builder()
       .url(imageUrl)
 
@@ -875,19 +919,8 @@ class ImageSaverV2ServiceDelegate(
       throw BadStatusResponseException(response.code)
     }
 
-    val responseBody = response.body
+    return response.body
       ?: throw EmptyBodyResponseException()
-
-    val outputFileStream = imageSaverFileManager.fileManager.getOutputStream(outputFile)
-      ?: throw ResultFileAccessError(outputFile.getFullPath())
-
-    runInterruptible {
-      responseBody.source().inputStream().use { inputStream ->
-        outputFileStream.use { outputStream ->
-          inputStream.copyTo(outputStream)
-        }
-      }
-    }
   }
 
   private suspend fun getDownloadContext(

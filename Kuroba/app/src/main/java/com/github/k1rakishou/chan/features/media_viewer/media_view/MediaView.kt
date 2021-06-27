@@ -116,7 +116,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   fun startPreloading() {
-    if (_preloadingCalled  || hasContent) {
+    if (_preloadingCalled || hasContent) {
       return
     }
 

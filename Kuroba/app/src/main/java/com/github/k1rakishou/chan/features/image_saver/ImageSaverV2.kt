@@ -15,6 +15,7 @@ import com.github.k1rakishou.common.doIoTaskWithAttempts
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -167,15 +168,22 @@ class ImageSaverV2(
           ".${postImage.extension}"
         }
 
-        val fileName = postImage.serverFilename + extension
-        downloadMediaAndShare(postImage.imageUrl!!, fileName)
+        downloadMediaAndShare(
+          mediaUrl = postImage.imageUrl!!,
+          downloadFileName = postImage.serverFilename + extension,
+          threadDescriptor = postImage.ownerPostDescriptor.threadDescriptor()
+        )
       }
       withContext(Dispatchers.Main) { onShareResult(result) }
     }
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
-  suspend fun downloadMediaAndShare(mediaUrl: HttpUrl, downloadFileName: String) {
+  suspend fun downloadMediaAndShare(
+    mediaUrl: HttpUrl,
+    downloadFileName: String,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor?
+  ) {
     withContext(Dispatchers.Default) {
       Logger.d(TAG, "shareInternal('${mediaUrl}')")
 
@@ -213,7 +221,7 @@ class ImageSaverV2(
       try {
         doIoTaskWithAttempts(3) {
           try {
-            imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFileRaw)
+            imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFileRaw, threadDescriptor)
           } catch (error: Throwable) {
             if (error is IOException && error.isOutOfDiskSpaceError()) {
               throw ImageSaverV2ServiceDelegate.OutOfDiskSpaceException()

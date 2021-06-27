@@ -200,8 +200,9 @@ class MediaLongClickMenuHelper(
     val downloadFileName = viewableMedia.viewableMediaMeta.formatFullServerMediaName()
       ?: return
     val mediaUrl = remoteMediaLocation.url
+    val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
 
-    imageSaverV2.downloadMediaAndShare(mediaUrl, downloadFileName)
+    imageSaverV2.downloadMediaAndShare(mediaUrl, downloadFileName, threadDescriptor)
   }
 
   private fun showImageSearchOptions(context: Context, viewableMedia: ViewableMedia) {
