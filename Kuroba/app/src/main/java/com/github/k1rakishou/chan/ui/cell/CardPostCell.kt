@@ -295,7 +295,7 @@ class CardPostCell : ColorizableCardView,
         backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
       }
       else -> {
-        backgroundView.setBackgroundColorFast(theme.backColor)
+        backgroundView.setBackgroundColorFast(theme.backColorSecondary)
       }
     }
   }

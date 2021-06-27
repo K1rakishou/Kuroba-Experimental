@@ -101,6 +101,7 @@ class ThreadCellData(
     val neverShowPages = ChanSettings.neverShowPages.get()
     val tapNoReply = ChanSettings.tapNoReply.get()
     val postFullDate = ChanSettings.postFullDate.get()
+    val themeCopy = theme.fullCopy()
 
     val postAlignmentMode = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
@@ -118,7 +119,7 @@ class ThreadCellData(
         postIndex = postIndexed.postIndex,
         postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
         textSizeSp = fontSize,
-        theme = theme,
+        theme = themeCopy,
         postViewMode = postViewMode,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),

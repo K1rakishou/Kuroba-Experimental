@@ -356,12 +356,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   override fun onThemeChanged() {
-    if (boardPostViewMode == BoardPostViewMode.LIST) {
-      setBackgroundColorFast(themeEngine.chanTheme.backColor)
-    } else {
-      setBackgroundColorFast(themeEngine.chanTheme.backColorSecondary)
-    }
-
+    setBackgroundColorFast(themeEngine.chanTheme.backColor)
     replyLayout.setBackgroundColorFast(themeEngine.chanTheme.backColor)
   }
 
