@@ -614,7 +614,7 @@ class ReplyPresenter @Inject constructor(
     PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, replyMode, retrying)
   }
 
-  private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable?) {
+  private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable) {
     BackgroundUtils.ensureMainThread()
 
     if (exception is CancellationException) {
@@ -623,11 +623,7 @@ class ReplyPresenter @Inject constructor(
       Logger.e(TAG, "onPostError", exception)
     }
 
-    var errorMessage = getString(R.string.reply_error)
-    if (exception != null) {
-      errorMessage = getString(R.string.reply_error_message, exception.errorMessageOrClassName())
-    }
-
+    val errorMessage = getString(R.string.reply_error_message, exception.errorMessageOrClassName())
     callback.openMessage(errorMessage)
   }
 
@@ -655,11 +651,11 @@ class ReplyPresenter @Inject constructor(
         )
       }
       else -> {
-        Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse")
+        Logger.d(TAG, "onPostComplete() else branch replyResponse=$replyResponse, retrying=$retrying")
 
         if (retrying) {
           // To avoid infinite cycles
-          onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+          onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
           return
         }
 
@@ -668,7 +664,7 @@ class ReplyPresenter @Inject constructor(
             handleDvachAntiSpam(replyResponse, chanDescriptor, replyMode)
           }
           null -> {
-            onPostCompleteUnsuccessful(replyResponse, chanDescriptor)
+            onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
           }
         }
       }
@@ -685,19 +681,20 @@ class ReplyPresenter @Inject constructor(
       makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode, retrying = true)
     } else {
       // We failed to solve the anti spam check, show the error
-      onPostCompleteUnsuccessful(replyResponse = replyResponse, chanDescriptor = chanDescriptor)
+      onPostCompleteUnsuccessful(
+        replyResponse = replyResponse,
+        additionalErrorMessage = getString(R.string.reply_error_failed_to_process_dvach_anti_spam_locally)
+      )
     }
   }
 
-  private fun onPostCompleteUnsuccessful(replyResponse: ReplyResponse, chanDescriptor: ChanDescriptor) {
+  private fun onPostCompleteUnsuccessful(replyResponse: ReplyResponse, additionalErrorMessage: String? = null) {
     updateFloatingReplyMessageClickAction(replyResponse)
 
-    var errorMessage = getString(R.string.reply_error)
-    if (replyResponse.errorMessage != null) {
-      errorMessage = getString(
-        R.string.reply_error_message,
-        replyResponse.errorMessage
-      )
+    val errorMessage = when {
+      additionalErrorMessage != null -> getString(R.string.reply_error_message, additionalErrorMessage)
+      replyResponse.errorMessage != null -> getString(R.string.reply_error_message, replyResponse.errorMessage)
+      else -> getString(R.string.reply_error_message, replyResponse)
     }
 
     Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
