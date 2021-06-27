@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -80,6 +81,7 @@ open class ThumbnailView : AppCompatImageView {
   private val verboseLogs = ChanSettings.verboseLogs.get()
 
   private var imageUrl: String? = null
+  private var postDescriptor: PostDescriptor? = null
   private var imageSize: ImageLoaderV2.ImageSize? = null
 
   @Inject
@@ -150,6 +152,7 @@ open class ThumbnailView : AppCompatImageView {
 
   fun bindImageUrl(
     url: String,
+    postDescriptor: PostDescriptor,
     imageSize: ImageLoaderV2.ImageSize,
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
@@ -168,10 +171,11 @@ open class ThumbnailView : AppCompatImageView {
     }
 
     this.imageUrl = url
+    this.postDescriptor = postDescriptor
     this.imageSize = imageSize
     this._thumbnailViewOptions = thumbnailViewOptions
 
-    kurobaScope!!.launch { setUrlInternal(url, imageSize, thumbnailViewOptions) }
+    kurobaScope!!.launch { setUrlInternal(url, postDescriptor, imageSize, thumbnailViewOptions) }
   }
 
   fun unbindImageUrl() {
@@ -193,6 +197,7 @@ open class ThumbnailView : AppCompatImageView {
     alphaAnimator.end()
 
     imageUrl = null
+    postDescriptor = null
     imageSize = null
 
     setImageBitmap(null)
@@ -233,9 +238,9 @@ open class ThumbnailView : AppCompatImageView {
   }
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
-    if (error && imageUrl != null && imageSize != null && _thumbnailViewOptions != null) {
+    if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
       cacheHandler.deleteCacheFileByUrl(imageUrl!!)
-      bindImageUrl(imageUrl!!, imageSize!!, _thumbnailViewOptions!!)
+      bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
       return
     }
 
@@ -249,9 +254,9 @@ open class ThumbnailView : AppCompatImageView {
     }
 
     setOnThrottlingLongClickListener(token) { view ->
-      if (error && imageUrl != null && imageSize != null && _thumbnailViewOptions != null) {
+      if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
         cacheHandler.deleteCacheFileByUrl(imageUrl!!)
-        bindImageUrl(imageUrl!!, imageSize!!, _thumbnailViewOptions!!)
+        bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
         return@setOnThrottlingLongClickListener true
       }
 
@@ -318,6 +323,7 @@ open class ThumbnailView : AppCompatImageView {
 
   private suspend fun setUrlInternal(
     url: String,
+    postDescriptor: PostDescriptor,
     imageSize: ImageLoaderV2.ImageSize,
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
@@ -369,7 +375,7 @@ open class ThumbnailView : AppCompatImageView {
         }
 
         if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
-          bindImageUrl(url, imageSize, thumbnailViewOptions)
+          bindImageUrl(url, postDescriptor, imageSize, thumbnailViewOptions)
           return
         }
 
@@ -390,11 +396,12 @@ open class ThumbnailView : AppCompatImageView {
       }
 
       requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        url,
-        imageSize,
-        emptyList(),
-        listener
+        context = context,
+        requestUrl = url,
+        imageSize = imageSize,
+        transformations = emptyList(),
+        listener = listener,
+        postDescriptor = postDescriptor
       )
     }
 

@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -41,6 +42,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.thread.ChanThread
+import com.github.k1rakishou.model.data.thread.ThreadDownload
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -63,6 +65,8 @@ class ThreadStatusCell(
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var threadDownloadManager: ThreadDownloadManager
 
   private lateinit var statusCellText: TextView
 
@@ -210,30 +214,55 @@ class ThreadStatusCell(
     val canUpdate = chanThread.canUpdateThread()
     val builder = SpannableStringBuilder()
 
-    if (archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())) {
-      builder
-        .append(getString(R.string.controller_bookmarks_bookmark_of_archived_thread))
-        .append('\n')
-    }
-
     if (appendThreadStatusPart(chanThread, builder)) {
-      builder.append('\n')
+      builder.appendLine()
     }
 
     if (appendThreadRefreshPart(chanThread, builder)) {
-      builder.append('\n')
+      builder.appendLine()
     }
 
     val op = chanThread.getOriginalPost()
-
     val board = boardManager.byBoardDescriptor(op.postDescriptor.boardDescriptor())
     appendThreadStatisticsPart(chanThread, builder, op, board)
+
+    if (archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())) {
+      builder
+        .append(getString(R.string.controller_bookmarks_bookmark_of_archived_thread))
+    }
+
+    appendThreadDownloaderStats(chanDescriptor, builder)
+
+    builder.appendLine()
 
     statusCellText.text = builder
 
     if (canUpdate) {
       delay(UPDATE_INTERVAL_MS)
       schedule()
+    }
+  }
+
+  private suspend fun appendThreadDownloaderStats(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    builder: SpannableStringBuilder
+  ) {
+    when (threadDownloadManager.getStatus(threadDescriptor)) {
+      ThreadDownload.Status.Running -> {
+        builder
+          .append(getString(R.string.thread_status_downloading_running))
+      }
+      ThreadDownload.Status.Stopped -> {
+        builder
+          .append(getString(R.string.thread_status_downloading_stopped))
+      }
+      ThreadDownload.Status.Completed -> {
+        builder
+          .append(getString(R.string.thread_status_downloaded))
+      }
+      else -> {
+        // no-op
+      }
     }
   }
 
@@ -293,6 +322,9 @@ class ThreadStatusCell(
           .append(page)
       }
     }
+
+    builder
+      .appendLine()
   }
 
   private suspend fun appendThreadRefreshPart(

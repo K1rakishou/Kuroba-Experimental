@@ -1,6 +1,6 @@
 package com.github.k1rakishou.core_themes
 
-class Theme(
+data class Theme(
   override val name: String,
   override val isLightTheme: Boolean,
   override val lightStatusBar: Boolean,
@@ -29,4 +29,10 @@ class Theme(
   override val bookmarkCounterNotWatchingColor: Int,
   override val bookmarkCounterHasRepliesColor: Int,
   override val bookmarkCounterNormalColor: Int,
-) : ChanTheme()
+) : ChanTheme() {
+
+  override fun fullCopy(): ChanTheme {
+    return copy()
+  }
+
+}

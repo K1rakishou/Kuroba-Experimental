@@ -339,6 +339,21 @@ open class ViewThreadController(
   }
 
   private fun downloadOrStopDownloadThread(item: ToolbarMenuSubItem) {
+    val warningShown = PersistableChanState.threadDownloaderArchiveWarningShown.get()
+
+    if (!warningShown && archivesManager.isSiteArchive(threadDescriptor.siteDescriptor())) {
+      PersistableChanState.threadDownloaderArchiveWarningShown.set(true)
+
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = getString(R.string.thread_download_archive_thread_warning_title),
+        descriptionText = getString(R.string.thread_download_archive_thread_warning_description),
+        onPositiveButtonClickListener = { downloadOrStopDownloadThread(item) }
+      )
+
+      return
+    }
+
     mainScope.launch {
       if (!threadDownloadManager.isReady()) {
         return@launch

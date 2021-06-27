@@ -43,6 +43,8 @@ abstract class ChanTheme {
   abstract val bookmarkCounterHasRepliesColor: Int
   abstract val bookmarkCounterNormalColor: Int
 
+  abstract fun fullCopy(): ChanTheme
+
   val isDarkTheme: Boolean
     get() = !isLightTheme
 

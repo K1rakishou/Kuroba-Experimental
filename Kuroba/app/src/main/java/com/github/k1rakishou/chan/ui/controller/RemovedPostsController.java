@@ -1,5 +1,9 @@
 package com.github.k1rakishou.chan.ui.controller;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 import android.graphics.drawable.BitmapDrawable;
 import android.view.View;
@@ -40,10 +44,6 @@ import java.util.Locale;
 import javax.inject.Inject;
 
 import okhttp3.HttpUrl;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class RemovedPostsController
         extends BaseFloatingController
@@ -265,31 +265,7 @@ public class RemovedPostsController
                     // load only the first image
                     postImage.setVisibility(VISIBLE);
 
-                    imageLoaderV2.loadFromNetwork(
-                            getContext(),
-                            thumbnailUrl.toString(),
-                            new ImageLoaderV2.ImageSize.FixedImageSize(
-                                    postImage.getWidth(),
-                                    postImage.getHeight()
-                            ),
-                            Collections.emptyList(),
-                            new ImageLoaderV2.FailureAwareImageListener() {
-                                @Override
-                                public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
-                                    postImage.setImageBitmap(drawable.getBitmap());
-                                }
-
-                                @Override
-                                public void onNotFound() {
-                                    onResponseError(new IOException("Not found"));
-                                }
-
-                                @Override
-                                public void onResponseError(@NotNull Throwable error) {
-                                    Logger.e(TAG, "Error while trying to download post image", error);
-                                    postImage.setVisibility(GONE);
-                                }
-                            });
+                    loadImage(postImage, thumbnailUrl);
                 }
             }
 
@@ -297,6 +273,38 @@ public class RemovedPostsController
             viewHolder.setOnClickListener(v -> onItemClick(position));
 
             return convertView;
+        }
+
+        private void loadImage(AppCompatImageView postImage, HttpUrl thumbnailUrl) {
+            ImageLoaderV2.FailureAwareImageListener listener = new ImageLoaderV2.FailureAwareImageListener() {
+                @Override
+                public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
+                    postImage.setImageBitmap(drawable.getBitmap());
+                }
+
+                @Override
+                public void onNotFound() {
+                    onResponseError(new IOException("Not found"));
+                }
+
+                @Override
+                public void onResponseError(@NotNull Throwable error) {
+                    Logger.e(TAG, "Error while trying to download post image", error);
+                    postImage.setVisibility(GONE);
+                }
+            };
+
+            imageLoaderV2.loadFromNetwork(
+                    getContext(),
+                    thumbnailUrl.toString(),
+                    new ImageLoaderV2.ImageSize.FixedImageSize(
+                            postImage.getWidth(),
+                            postImage.getHeight()
+                    ),
+                    Collections.emptyList(),
+                    listener,
+                    null
+            );
         }
 
         public void onItemClick(int position) {

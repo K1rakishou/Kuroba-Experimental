@@ -88,6 +88,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -691,13 +692,17 @@ public class ManagerModule {
     @Provides
     public ThreadDownloadManager provideThreadDownloadManager(
             CoroutineScope appScope,
+            FileManager fileManager,
             ThreadDownloadRepository threadDownloadRepository,
-            ChanPostRepository chanPostRepository
+            ChanPostRepository chanPostRepository,
+            ChanThreadManager chanThreadManager
     ) {
         return new ThreadDownloadManager(
                 appScope,
+                fileManager,
                 threadDownloadRepository,
-                chanPostRepository
+                chanPostRepository,
+                chanThreadManager
         );
     }
 

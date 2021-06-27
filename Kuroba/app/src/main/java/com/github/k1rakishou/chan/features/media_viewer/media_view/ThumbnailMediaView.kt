@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
@@ -75,9 +76,17 @@ class ThumbnailMediaView @JvmOverloads constructor(
     }
 
     val thumbnailLocation = extractThumbnailLocation(parameters)
+    val postDescriptor = parameters.viewableMedia.viewableMediaMeta.ownerPostDescriptor
 
     requestDisposable = when (thumbnailLocation) {
-      is MediaLocation.Remote -> loadRemoteMedia(thumbnailLocation.url, parameters, onThumbnailFullyLoaded)
+      is MediaLocation.Remote -> {
+        loadRemoteMedia(
+          url = thumbnailLocation.url,
+          postDescriptor = postDescriptor,
+          parameters = parameters,
+          onThumbnailFullyLoaded = onThumbnailFullyLoaded
+        )
+      }
       is MediaLocation.Local -> {
         onThumbnailFullyLoaded()
         null
@@ -105,40 +114,45 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   private fun loadRemoteMedia(
     url: HttpUrl,
+    postDescriptor: PostDescriptor?,
     parameters: ThumbnailMediaViewParameters,
     onThumbnailFullyLoaded: () -> Unit
   ): Disposable {
+    val listener = object : ImageLoaderV2.FailureAwareImageListener {
+      override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+        requestDisposable = null
+
+        thumbnailView.setOriginalMediaPlayable(parameters.isOriginalMediaPlayable)
+        thumbnailView.setImageDrawable(drawable)
+
+        onThumbnailFullyLoaded()
+      }
+
+      override fun onNotFound() {
+        requestDisposable = null
+
+        setError(getString(R.string.image_not_found))
+        onThumbnailImageNotFoundError()
+        onThumbnailFullyLoaded()
+      }
+
+      override fun onResponseError(error: Throwable) {
+        requestDisposable = null
+
+        setError(error.errorMessageOrClassName())
+        onThumbnailImageError(error)
+        onThumbnailFullyLoaded()
+      }
+    }
+
     return imageLoaderV2.loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
       imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
       transformations = emptyList(),
-      listener = object : ImageLoaderV2.FailureAwareImageListener {
-        override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-          requestDisposable = null
-
-          thumbnailView.setOriginalMediaPlayable(parameters.isOriginalMediaPlayable)
-          thumbnailView.setImageDrawable(drawable)
-
-          onThumbnailFullyLoaded()
-        }
-
-        override fun onNotFound() {
-          requestDisposable = null
-
-          setError(getString(R.string.image_not_found))
-          onThumbnailImageNotFoundError()
-          onThumbnailFullyLoaded()
-        }
-
-        override fun onResponseError(error: Throwable) {
-          requestDisposable = null
-
-          setError(error.errorMessageOrClassName())
-          onThumbnailImageError(error)
-          onThumbnailFullyLoaded()
-        }
-      })
+      listener = listener,
+      postDescriptor = postDescriptor
+    )
   }
 
   private fun onThumbnailImageNotFoundError() {

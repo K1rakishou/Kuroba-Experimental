@@ -279,6 +279,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_load_failed_not_found">404 not found</string>
     <string name="thread_refresh_error_text_title">Error while trying to update thread:</string>
     <string name="thread_refresh_bar_inactive">Tap to refresh</string>
+    <string name="thread_status_downloading_running">(Downloading)</string>
+    <string name="thread_status_downloading_stopped">(Downloading stopped)</string>
+    <string name="thread_status_downloaded">(Downloaded)</string>
     <string name="thread_refresh_countdown">Loading in %1$ds</string>
     <string name="thread_load_failed_retry">Retry</string>
     <string name="thread_load_failed_open_in_archive">Open in archive</string>
@@ -1157,6 +1160,8 @@ Don't have a 4chan Pass?<br>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
     <string name="thread_follow_history_has_been_cleared">Thread follow history has been cleared</string>
     <string name="thread_loading_error_title">Failed to load thread</string>
+    <string name="thread_download_archive_thread_warning_title">Downloading archive threads</string>
+    <string name="thread_download_archive_thread_warning_description">You are trying to download a thread that is stored in third-party archive. Thread downloader periodically updates threads locally until it detects that a thread is closed, deleted or is not in the board catalog anymore. Since this is a third-party archive, neither of those conditions will ever be met. So archive threads will continue being downloaded pretty much forever. You will have to stop such downloads manually otherwise it will never stop and will continue to consume battery.</string>
 
     <string name="setting_youtube_dur_title">Enable Youtube durations</string>
     <string name="setting_youtube_dur_description">Adds duration parsing to Youtube titles; does not do anything with titles off</string>

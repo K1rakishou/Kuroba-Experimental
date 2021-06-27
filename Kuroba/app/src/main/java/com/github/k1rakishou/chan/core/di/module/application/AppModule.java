@@ -159,19 +159,20 @@ public class AppModule {
             CacheHandler cacheHandler,
             FileManager fileManager,
             SiteResolver siteResolver,
-            CoilOkHttpClient coilOkHttpClient
+            CoilOkHttpClient coilOkHttpClient,
+            ThreadDownloadManager threadDownloadManager
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
                 appScope,
-                appConstants,
                 coilImageLoader,
                 replyManager,
                 themeEngine,
                 cacheHandler,
                 fileManager,
                 siteResolver,
-                coilOkHttpClient
+                coilOkHttpClient,
+                threadDownloadManager
         );
     }
 

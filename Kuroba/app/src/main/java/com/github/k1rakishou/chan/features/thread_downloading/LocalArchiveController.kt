@@ -290,7 +290,6 @@ class LocalArchiveController(
     val selectionEvent by viewModel.collectSelectionModeAsState()
     val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
 
-
     Box(modifier = Modifier
       .fillMaxWidth()
       .height(128.dp)

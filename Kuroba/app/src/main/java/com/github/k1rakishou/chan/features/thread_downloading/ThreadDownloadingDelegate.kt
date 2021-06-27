@@ -200,24 +200,9 @@ class ThreadDownloadingDelegate(
 
     Logger.d(TAG, "processThreadMedia($index/$total) chanThread=${chanThread.threadDescriptor}")
 
-    val threadSubject = StringUtils.dirNameRemoveBadCharacters(
-      ChanPostUtils.getTitle(chanThread.getOriginalPost(), chanThread.threadDescriptor)
-    )
-
-    val directoryName = buildString {
-      append(chanThread.threadDescriptor.siteName())
-      append("_")
-      append(chanThread.threadDescriptor.boardCode())
-      append("_")
-      append(chanThread.threadDescriptor.threadNo)
-      append("_")
-
-      if (threadSubject.isNotNullNorBlank()) {
-        append(StringUtils.dirNameRemoveBadCharacters(threadSubject))
-      }
-    }
-
+    val directoryName = formatDirectoryName(chanThread)
     val outputDirectory = fileManager.create(rootDir, DirectorySegment(directoryName))
+
     if (outputDirectory == null) {
       Logger.d(TAG, "processThreadMedia($index/$total) " +
         "chanThread=${chanThread.threadDescriptor} failure! outputDirectory is null")
@@ -347,6 +332,25 @@ class ThreadDownloadingDelegate(
 
   companion object {
     private const val TAG = "ThreadDownloadingDelegate"
+
+    fun formatDirectoryName(chanThread: ChanThread): String {
+      val threadSubject = StringUtils.dirNameRemoveBadCharacters(
+        ChanPostUtils.getTitle(chanThread.getOriginalPost(), chanThread.threadDescriptor)
+      )
+
+      return buildString {
+        append(chanThread.threadDescriptor.siteName())
+        append("_")
+        append(chanThread.threadDescriptor.boardCode())
+        append("_")
+        append(chanThread.threadDescriptor.threadNo)
+        append("_")
+
+        if (threadSubject.isNotNullNorBlank()) {
+          append(StringUtils.dirNameRemoveBadCharacters(threadSubject))
+        }
+      }
+    }
   }
 
 }

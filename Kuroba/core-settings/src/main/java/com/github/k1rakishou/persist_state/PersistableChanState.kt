@@ -69,6 +69,8 @@ object PersistableChanState {
   lateinit var mediaViewerOffscreenItemsCount: RangeSetting
   @JvmStatic
   lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
+  @JvmStatic
+  lateinit var threadDownloaderArchiveWarningShown: BooleanSetting
 
   // TODO(KurobaEx): remove in v0.11.x
   @JvmStatic
@@ -149,6 +151,8 @@ object PersistableChanState {
         "thread_downloader_options",
         ThreadDownloaderOptions()
       )
+
+      threadDownloaderArchiveWarningShown = BooleanSetting(provider, "thread_downloader_archive_warning_shown", false)
 
       appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_bookmark_watcher_work_done", false)
       appHack_V08X_deleteAllBlockedFilterWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_filter_watcher_work_done", false)

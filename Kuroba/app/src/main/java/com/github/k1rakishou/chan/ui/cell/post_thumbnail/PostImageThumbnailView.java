@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.cell.post_thumbnail;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Rect;
@@ -50,8 +52,6 @@ import javax.inject.Inject;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import okhttp3.HttpUrl;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostImageThumbnailView extends ThumbnailView implements PostImageThumbnailViewContract {
     private static final String TAG = "PostImageThumbnailView";
@@ -205,6 +205,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
 
         bindImageUrl(
                 url,
+                postImage.getOwnerPostDescriptor(),
                 ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
                 thumbnailViewOptions
         );

@@ -31,4 +31,10 @@ data class DefaultDarkTheme(
   override val bookmarkCounterNotWatchingColor: Int = Color.parseColor("#898989"),
   override val bookmarkCounterHasRepliesColor: Int = Color.parseColor("#ff4444"),
   override val bookmarkCounterNormalColor: Int = Color.parseColor("#33B5E5"),
-) : ChanTheme()
+) : ChanTheme() {
+
+  override fun fullCopy(): ChanTheme {
+    return copy()
+  }
+
+}

@@ -19,9 +19,7 @@ fun ProvideChanTheme(
   themeEngine: ThemeEngine,
   content: @Composable () -> Unit
 ) {
-  var chanTheme by remember(key1 = themeEngine.chanTheme) {
-    mutableStateOf(themeEngine.chanTheme)
-  }
+  var chanTheme by remember(key1 = themeEngine.chanTheme) { mutableStateOf(themeEngine.chanTheme) }
 
   DisposableEffect(themeEngine.chanTheme) {
     val themeUpdateObserver = object : ThemeEngine.ThemeChangesListener {
@@ -37,7 +35,7 @@ fun ProvideChanTheme(
   CompositionLocalProvider(LocalChanTheme provides chanTheme) {
     val originalColors = MaterialTheme.colors
 
-    val updatedColors = remember {
+    val updatedColors = remember(key1 = themeEngine.chanTheme) {
       originalColors.copy(
         primary = chanTheme.primaryColorCompose,
         error = chanTheme.errorColorCompose

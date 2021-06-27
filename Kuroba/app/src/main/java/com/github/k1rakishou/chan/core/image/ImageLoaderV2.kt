@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -37,9 +38,14 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.AbstractFile
+import com.github.k1rakishou.fsaf.file.ExternalFile
+import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.exoplayer2.util.MimeTypes
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
 import java.io.FileOutputStream
@@ -54,14 +60,14 @@ import kotlin.time.measureTimedValue
 class ImageLoaderV2(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
-  private val appConstants: AppConstants,
   private val imageLoader: ImageLoader,
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
   private val cacheHandler: CacheHandler,
   private val fileManager: FileManager,
   private val siteResolver: SiteResolver,
-  private val coilOkHttpClient: CoilOkHttpClient
+  private val coilOkHttpClient: CoilOkHttpClient,
+  private val threadDownloadManager: ThreadDownloadManager
 ) {
   private val mutex = Mutex()
 
@@ -127,12 +133,14 @@ class ImageLoaderV2(
     )
   }
 
+  @JvmOverloads
   fun loadFromNetwork(
     context: Context,
     requestUrl: String,
     imageSize: ImageSize,
     transformations: List<Transformation>,
-    listener: FailureAwareImageListener
+    listener: FailureAwareImageListener,
+    postDescriptor: PostDescriptor? = null
   ): Disposable {
     BackgroundUtils.ensureMainThread()
 
@@ -141,7 +149,8 @@ class ImageLoaderV2(
       url = requestUrl,
       imageSize = imageSize,
       inputTransformations = transformations,
-      imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener)
+      imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener),
+      postDescriptor = postDescriptor
     )
   }
 
@@ -150,7 +159,10 @@ class ImageLoaderV2(
     url: String,
     imageSize: ImageSize,
     inputTransformations: List<Transformation>,
-    imageListenerParam: ImageListenerParam
+    imageListenerParam: ImageListenerParam,
+    // If postDescriptor is not null we will attempt to search for this file among downloaded
+    // threads files' first and if not found then attempt to load it from the network.
+    postDescriptor: PostDescriptor? = null
   ): Disposable {
     BackgroundUtils.ensureMainThread()
     val completableDeferred = CompletableDeferred<Unit>()
@@ -191,7 +203,7 @@ class ImageLoaderV2(
         }
 
         // 2. Check whether we have this bitmap cached on the disk
-        var imageFile = tryLoadFromDiskCacheOrNull(url)
+        var imageFile = tryLoadFromDiskCacheOrNull(url, postDescriptor)
 
         // 3. Failed to find this bitmap in the disk cache. Load it from the network.
         if (imageFile == null) {
@@ -301,19 +313,22 @@ class ImageLoaderV2(
   private suspend fun applyTransformationsToDrawable(
     context: Context,
     lifecycle: Lifecycle?,
-    imageFile: File?,
+    imageFile: AbstractFile?,
     activeListener: ActiveListener,
     url: String
   ): BitmapDrawable? {
-    if (imageFile == null) {
-      return null
+    val fileLocation = when (imageFile) {
+      is RawFile -> File(imageFile.getFullPath())
+      is ExternalFile -> imageFile.getUri()
+      null -> return null
+      else -> error("Unknown file type: ${imageFile.javaClass.simpleName}")
     }
 
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(true)
       allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
-      data(imageFile)
+      data(fileLocation)
       scale(Scale.FIT)
       transformations(activeListener.transformations + RESIZE_TRANSFORMATION)
       applyImageSize(activeListener.imageSize)
@@ -328,7 +343,8 @@ class ImageLoaderV2(
       }
       is ErrorResult -> {
         Logger.e(TAG, "applyTransformationsToDrawable() error, " +
-          "imageFile=${imageFile.absolutePath}, error=${result.throwable.errorMessageOrClassName()}")
+          "fileLocation=${fileLocation}, " +
+          "error=${result.throwable.errorMessageOrClassName()}")
 
         cacheHandler.deleteCacheFileByUrl(url)
         null
@@ -361,11 +377,16 @@ class ImageLoaderV2(
     context: Context,
     url: String,
     imageSize: ImageSize,
-  ): File? {
+  ): AbstractFile? {
     BackgroundUtils.ensureBackgroundThread()
 
     try {
-      return loadFromNetworkIntoFile(url)
+      val resultFile = loadFromNetworkIntoFile(url)
+      if (resultFile == null) {
+        return null
+      }
+
+      return fileManager.fromRawFile(resultFile)
     } catch (error: Throwable) {
       notifyListenersFailure(context, url, error)
 
@@ -531,8 +552,23 @@ class ImageLoaderV2(
     return true
   }
 
-  private fun tryLoadFromDiskCacheOrNull(url: String): File? {
+  private suspend fun tryLoadFromDiskCacheOrNull(url: String, postDescriptor: PostDescriptor?): AbstractFile? {
     BackgroundUtils.ensureBackgroundThread()
+
+    val httpUrl = url.toHttpUrlOrNull()
+
+    if (postDescriptor != null && httpUrl != null) {
+      val foundFile = threadDownloadManager.findDownloadedFile(
+        httpUrl = httpUrl,
+        threadDescriptor = postDescriptor.threadDescriptor()
+      )
+
+      if (foundFile != null && fileManager.getLength(foundFile) > 0L && fileManager.canRead(foundFile)) {
+        return foundFile
+      }
+
+      // fallthrough
+    }
 
     val cacheFile = cacheHandler.getCacheFileOrNull(url)
     if (cacheFile == null) {
@@ -547,7 +583,7 @@ class ImageLoaderV2(
       return null
     }
 
-    return cacheFile
+    return fileManager.fromRawFile(cacheFile)
   }
 
   fun loadFromResources(

@@ -1,14 +1,20 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.AbstractFile
+import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository
+import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -17,14 +23,17 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ThreadDownloadManager(
   private val appScope: CoroutineScope,
+  private val fileManager: FileManager,
   private val threadDownloadRepository: ThreadDownloadRepository,
-  private val chanPostRepository: ChanPostRepository
+  private val chanPostRepository: ChanPostRepository,
+  private val chanThreadManager: ChanThreadManager
 ) {
   private val mutex = Mutex()
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadDownloads")
@@ -297,6 +306,49 @@ class ThreadDownloadManager(
 
     mutex.withLock { threadDownloadsMap[newThreadDownload.threadDescriptor] = newThreadDownload }
     return true
+  }
+
+  suspend fun findDownloadedFile(
+    httpUrl: HttpUrl,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): AbstractFile? {
+    BackgroundUtils.ensureBackgroundThread()
+
+    val canUseThreadDownloaderCache = mutex.withLock {
+      val statusIsGood = threadDownloadsMap[threadDescriptor]?.status != null
+      val wasUpdatedAtLeastOnce = threadDownloadsMap[threadDescriptor]?.lastUpdateTime != null
+
+      return@withLock statusIsGood && wasUpdatedAtLeastOnce
+    }
+
+    if (!canUseThreadDownloaderCache) {
+      return null
+    }
+
+    val fileName = httpUrl.pathSegments.lastOrNull()
+    if (fileName == null) {
+      return null
+    }
+
+    val baseDirectoryUri = PersistableChanState.threadDownloaderOptions.get().locationUri()
+    if (baseDirectoryUri == null) {
+      return null
+    }
+
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    if (chanThread == null) {
+      return null
+    }
+
+    val baseDirectory = fileManager.fromUri(baseDirectoryUri)
+    if (baseDirectory == null) {
+      return null
+    }
+
+    val resultDirectory = baseDirectory
+      .clone(DirectorySegment(ThreadDownloadingDelegate.formatDirectoryName(chanThread)))
+
+    return fileManager.findFile(resultDirectory, fileName)
   }
 
   private suspend fun resumeThreadDownloadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
