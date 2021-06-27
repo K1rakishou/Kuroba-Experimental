@@ -26,8 +26,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
+import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
+import java.util.*
 import javax.inject.Inject
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -461,7 +463,7 @@ class LocalArchiveViewModel : BaseViewModel() {
       .appendLiteral(' ')
       .append(ISODateTimeFormat.hourMinuteSecond())
       .toFormatter()
-      .withZoneUTC()
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
   }
 
 }

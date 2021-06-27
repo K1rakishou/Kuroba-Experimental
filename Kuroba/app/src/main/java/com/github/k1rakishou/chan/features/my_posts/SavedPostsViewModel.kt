@@ -20,8 +20,10 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
+import java.util.*
 import javax.inject.Inject
 
 class SavedPostsViewModel : BaseViewModel() {
@@ -187,7 +189,7 @@ class SavedPostsViewModel : BaseViewModel() {
       .appendLiteral(' ')
       .append(ISODateTimeFormat.hourMinuteSecond())
       .toFormatter()
-      .withZoneUTC()
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
   }
 
 }

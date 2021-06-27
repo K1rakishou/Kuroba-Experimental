@@ -76,7 +76,7 @@ class WatcherSettingsScreen(
                   || timeout == THREAD_DOWNLOADER_INTERVALS[1]
               }
 
-              if (AppModuleAndroidUtils.isDevBuild() && isTimeoutInMinutes) {
+              if (isTimeoutInMinutes) {
                 return@run getString(
                   R.string.minutes,
                   TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()
