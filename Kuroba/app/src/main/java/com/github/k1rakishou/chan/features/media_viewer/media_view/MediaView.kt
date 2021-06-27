@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -67,6 +68,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var threadDownloadManager: ThreadDownloadManager
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
 
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
@@ -347,7 +350,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     url: HttpUrl,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): FilePath? {
-    val file = threadDownloadManager.findDownloadedFile(url, threadDescriptor)
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val file = threadDownloadManager.findDownloadedFile(url, chanThread)
     if (file == null) {
       return null
     }

@@ -10,6 +10,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository
@@ -32,8 +33,7 @@ class ThreadDownloadManager(
   private val appScope: CoroutineScope,
   private val fileManager: FileManager,
   private val threadDownloadRepository: ThreadDownloadRepository,
-  private val chanPostRepository: ChanPostRepository,
-  private val chanThreadManager: ChanThreadManager
+  private val chanPostRepository: ChanPostRepository
 ) {
   private val mutex = Mutex()
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadDownloads")
@@ -81,13 +81,16 @@ class ThreadDownloadManager(
     }
   }
 
-  suspend fun getStatus(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadDownload.Status {
+  suspend fun getStatus(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadDownload.Status? {
     ensureInitialized()
 
-    return mutex.withLock {
-      return@withLock threadDownloadsMap[threadDescriptor]?.status
-        ?: ThreadDownload.Status.Stopped
-    }
+    return mutex.withLock { threadDownloadsMap[threadDescriptor]?.status }
+  }
+
+  suspend fun isThreadFullyDownloaded(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    ensureInitialized()
+
+    return getStatus(threadDescriptor) == ThreadDownload.Status.Completed
   }
 
   suspend fun hasActiveThreads(): Boolean {
@@ -310,8 +313,14 @@ class ThreadDownloadManager(
 
   suspend fun findDownloadedFile(
     httpUrl: HttpUrl,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
+    chanThread: ChanThread?
   ): AbstractFile? {
+    if (chanThread == null) {
+      return null
+    }
+
+    val threadDescriptor = chanThread.threadDescriptor
+
     val canUseThreadDownloaderCache = canUseThreadDownloaderCache(threadDescriptor)
     if (!canUseThreadDownloaderCache) {
       return null
@@ -324,11 +333,6 @@ class ThreadDownloadManager(
 
     val baseDirectoryUri = PersistableChanState.threadDownloaderOptions.get().locationUri()
     if (baseDirectoryUri == null) {
-      return null
-    }
-
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-    if (chanThread == null) {
       return null
     }
 

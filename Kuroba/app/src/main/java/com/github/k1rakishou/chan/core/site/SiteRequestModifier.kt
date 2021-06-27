@@ -27,7 +27,6 @@ abstract class SiteRequestModifier<T : Site>(
   protected val site: T,
   protected val appConstants: AppConstants
 ) {
-  protected val cookieHeaderKey = "Cookie"
   protected val userAgentHeaderKey = "User-Agent"
 
   private val acceptEncodingHeaderKey = "Accept-Encoding"

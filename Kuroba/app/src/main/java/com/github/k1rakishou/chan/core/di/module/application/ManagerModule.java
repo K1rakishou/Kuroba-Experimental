@@ -698,15 +698,13 @@ public class ManagerModule {
             CoroutineScope appScope,
             FileManager fileManager,
             ThreadDownloadRepository threadDownloadRepository,
-            ChanPostRepository chanPostRepository,
-            ChanThreadManager chanThreadManager
+            ChanPostRepository chanPostRepository
     ) {
         return new ThreadDownloadManager(
                 appScope,
                 fileManager,
                 threadDownloadRepository,
-                chanPostRepository,
-                chanThreadManager
+                chanPostRepository
         );
     }
 

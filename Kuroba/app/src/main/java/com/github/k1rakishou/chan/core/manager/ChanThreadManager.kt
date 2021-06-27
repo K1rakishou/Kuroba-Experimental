@@ -25,10 +25,6 @@ import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import okhttp3.HttpUrl
 
-/**
- * The only manager class that can hold other manager classes. Do not use this class in other manager
- * classes to avoid circular dependencies.
- * */
 class ChanThreadManager(
   private val verboseLogs: Boolean,
   private val siteManager: SiteManager,

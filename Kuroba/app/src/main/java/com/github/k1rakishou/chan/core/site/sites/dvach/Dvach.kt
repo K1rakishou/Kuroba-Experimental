@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -113,18 +114,11 @@ class Dvach : CommonSite() {
   override fun settings(): List<SiteSetting> {
     val settings = ArrayList<SiteSetting>()
 
-    settings.add(
-      SiteOptionsSetting(
-        "Captcha type",
-        null,
-        captchaType,
-        mutableListOf("Javascript", "Noscript")
-      )
-    )
+    settings.addAll(super.settings())
 
-    settings.addAll(
-      super.settings()
-    )
+    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, mutableListOf("Javascript", "Noscript", "Invisible")))
+    settings.add(SiteSetting.SiteStringSetting("User code cookie", null, userCodeCookie))
+    settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
 
     return settings
   }
@@ -527,20 +521,17 @@ class Dvach : CommonSite() {
       super.modifyHttpCall(httpCall, requestBuilder)
 
       if (site.actions().isLoggedIn()) {
-        requestBuilder.addHeader(cookieHeaderKey, "passcode_auth=" + site.passCookie.get())
+        requestBuilder.appendCookieHeader("passcode_auth=" + site.passCookie.get())
       }
 
-      val antiSpamCookie = site.antiSpamCookie.get()
-      if (antiSpamCookie.isNotEmpty()) {
-        requestBuilder.addHeader(cookieHeaderKey, antiSpamCookie)
-      }
-
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
     override fun modifyThumbnailGetRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyThumbnailGetRequest(site, requestBuilder)
 
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
@@ -551,24 +542,35 @@ class Dvach : CommonSite() {
     ) {
       super.modifyCatalogOrThreadGetRequest(site, chanDescriptor, requestBuilder)
 
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
     override fun modifyFullImageHeadRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyFullImageHeadRequest(site, requestBuilder)
 
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
     override fun modifyFullImageGetRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyFullImageGetRequest(site, requestBuilder)
 
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
     override fun modifyMediaDownloadRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyMediaDownloadRequest(site, requestBuilder)
 
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifySearchGetRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifySearchGetRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
     }
 
@@ -578,18 +580,20 @@ class Dvach : CommonSite() {
     ) {
       super.modifyVideoStreamRequest(site, requestProperties)
 
-      val userCodeCookie = site.userCodeCookie.get()
-      if (userCodeCookie.isEmpty()) {
-        return
+      val fullCookie = buildString {
+        val userCodeCookie = site.userCodeCookie.get()
+        if (userCodeCookie.isNotEmpty()) {
+          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie};")
+        }
+
+        val antiSpamCookie = site.antiSpamCookie.get()
+        if (antiSpamCookie.isNotEmpty()) {
+          append(antiSpamCookie)
+          append(";")
+        }
       }
 
-      requestProperties.put(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
-    }
-
-    override fun modifySearchGetRequest(site: Dvach, requestBuilder: Request.Builder) {
-      super.modifySearchGetRequest(site, requestBuilder)
-
-      addUserCodeCookie(site, requestBuilder)
+      requestProperties.put("Cookie", fullCookie)
     }
 
     private fun addUserCodeCookie(
@@ -601,8 +605,16 @@ class Dvach : CommonSite() {
         return
       }
 
-      requestBuilder.addHeader(cookieHeaderKey, "${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
+      requestBuilder.appendCookieHeader("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
     }
+
+    private fun addAntiSpamCookie(requestBuilder: Request.Builder) {
+      val antiSpamCookie = site.antiSpamCookie.get()
+      if (antiSpamCookie.isNotEmpty()) {
+        requestBuilder.appendCookieHeader(antiSpamCookie)
+      }
+    }
+
   }
 
   @DoNotStrip

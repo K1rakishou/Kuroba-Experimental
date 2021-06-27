@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
@@ -52,7 +53,8 @@ class HelperModule {
     boardManager: BoardManager,
     siteResolver: SiteResolver,
     chanLoadProgressNotifier: ChanLoadProgressNotifier,
-    chanThreadsCache: ChanThreadsCache
+    chanThreadsCache: ChanThreadsCache,
+    threadDownloadManager: ThreadDownloadManager
   ): ChanThreadLoaderCoordinator {
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
@@ -67,7 +69,8 @@ class HelperModule {
       boardManager,
       siteResolver,
       chanLoadProgressNotifier,
-      chanThreadsCache
+      chanThreadsCache,
+      threadDownloadManager
     )
   }
 

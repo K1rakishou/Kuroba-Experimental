@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
@@ -160,7 +161,8 @@ public class AppModule {
             FileManager fileManager,
             SiteResolver siteResolver,
             CoilOkHttpClient coilOkHttpClient,
-            ThreadDownloadManager threadDownloadManager
+            ThreadDownloadManager threadDownloadManager,
+            ChanThreadManager chanThreadManager
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
@@ -172,7 +174,8 @@ public class AppModule {
                 fileManager,
                 siteResolver,
                 coilOkHttpClient,
-                threadDownloadManager
+                threadDownloadManager,
+                chanThreadManager
         );
     }
 

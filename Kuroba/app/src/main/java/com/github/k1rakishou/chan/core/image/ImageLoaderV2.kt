@@ -25,6 +25,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -67,7 +68,8 @@ class ImageLoaderV2(
   private val fileManager: FileManager,
   private val siteResolver: SiteResolver,
   private val coilOkHttpClient: CoilOkHttpClient,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val threadDownloadManager: ThreadDownloadManager,
+  private val chanThreadManager: ChanThreadManager
 ) {
   private val mutex = Mutex()
 
@@ -560,7 +562,7 @@ class ImageLoaderV2(
     if (postDescriptor != null && httpUrl != null) {
       val foundFile = threadDownloadManager.findDownloadedFile(
         httpUrl = httpUrl,
-        threadDescriptor = postDescriptor.threadDescriptor()
+        chanThread = chanThreadManager.getChanThread(postDescriptor.threadDescriptor())
       )
 
       if (foundFile != null && fileManager.getLength(foundFile) > 0L && fileManager.canRead(foundFile)) {

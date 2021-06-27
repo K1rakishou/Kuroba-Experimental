@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.helper
 import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -31,6 +32,7 @@ import kotlin.coroutines.resumeWithException
 class ExoPlayerWrapper(
   private val context: Context,
   private val threadDownloadManager: ThreadDownloadManager,
+  private val chanThreadManager: ChanThreadManager,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
   private val contentDataSourceFactory: DataSource.Factory,
@@ -111,7 +113,8 @@ class ExoPlayerWrapper(
 
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
     if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
-      val file = threadDownloadManager.findDownloadedFile(mediaLocation.url, threadDescriptor)
+      val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+      val file = threadDownloadManager.findDownloadedFile(mediaLocation.url, chanThread)
       if (file != null) {
         when (file) {
           is RawFile -> {

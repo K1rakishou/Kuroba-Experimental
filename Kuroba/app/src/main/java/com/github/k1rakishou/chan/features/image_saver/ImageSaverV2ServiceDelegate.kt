@@ -877,7 +877,9 @@ class ImageSaverV2ServiceDelegate(
 
     try {
       if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
-        localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, threadDescriptor)
+        val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+
+        localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, chanThread)
           ?.let { file -> fileManager.getInputStream(file) }
       }
 

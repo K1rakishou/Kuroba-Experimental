@@ -84,7 +84,6 @@ class DvachApiV2(
       ?: return
 
     val endpoints = site.endpoints()
-
     val dvachThreadIncrementalAdapter = moshi.adapter(DvachThreadIncremental::class.java)
 
     val dvachThreadIncremental = responseBodyStream

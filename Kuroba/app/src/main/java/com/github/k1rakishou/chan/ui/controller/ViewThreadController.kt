@@ -363,6 +363,7 @@ open class ViewThreadController(
         ThreadDownload.Status.Running -> {
           threadDownloadManager.stopDownloading(threadDescriptor)
         }
+        null,
         ThreadDownload.Status.Stopped -> {
           val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
             context = context,
@@ -654,6 +655,7 @@ open class ViewThreadController(
       downloadThreadItem.visible = status != ThreadDownload.Status.Completed
 
       when (status) {
+        null,
         ThreadDownload.Status.Stopped -> {
           downloadThreadItem.text = getString(R.string.action_start_thread_download)
         }

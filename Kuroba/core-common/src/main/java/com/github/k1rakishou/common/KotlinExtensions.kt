@@ -1031,3 +1031,23 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
       }
   }
 }
+
+private const val COOKIE_HEADER_NAME = "Cookie"
+
+fun Request.Builder.appendCookieHeader(value: String): Request.Builder {
+  val request = build()
+
+  val cookies = request.header(COOKIE_HEADER_NAME)
+  if (cookies == null) {
+    return addHeader(COOKIE_HEADER_NAME, value)
+  }
+
+  // Absolute retardiation but OkHttp doesn't allow doing it differently (or maybe I just don't know?)
+  val fullCookieValue = request.newBuilder()
+    .removeHeader(COOKIE_HEADER_NAME)
+    .addHeader(COOKIE_HEADER_NAME, "${cookies};${value}")
+    .build()
+    .header(COOKIE_HEADER_NAME)!!
+
+  return header(COOKIE_HEADER_NAME, fullCookieValue)
+}

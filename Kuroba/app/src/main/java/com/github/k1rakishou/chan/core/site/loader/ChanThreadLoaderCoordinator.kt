@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
@@ -87,7 +88,8 @@ class ChanThreadLoaderCoordinator(
   private val boardManager: BoardManager,
   private val siteResolver: SiteResolver,
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
-  private val chanThreadsCache: ChanThreadsCache
+  private val chanThreadsCache: ChanThreadsCache,
+  private val threadDownloadManager: ThreadDownloadManager
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -156,6 +158,19 @@ class ChanThreadLoaderCoordinator(
       BackgroundUtils.ensureBackgroundThread()
 
       return@withContext Try {
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          if (threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)) {
+            val success = databasePostLoader.loadPosts(chanDescriptor) != null
+            if (success) {
+              return@Try ThreadLoadResult.Loaded(chanDescriptor)
+            }
+
+            // fallthrough
+          }
+
+          // fallthrough
+        }
+
         val requestBuilder = Request.Builder()
           .url(chanLoadUrl.url)
           .get()
