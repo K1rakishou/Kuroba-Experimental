@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.content.Context
+import android.net.Uri
 import android.util.AttributeSet
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -9,7 +10,14 @@ import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.FileCacheListener
+import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
+import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbarViewModel
@@ -17,10 +25,21 @@ import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
+import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.ExternalFile
+import com.github.k1rakishou.fsaf.file.RawFile
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.runBlocking
+import okhttp3.HttpUrl
+import java.io.File
 import javax.inject.Inject
 
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
@@ -37,9 +56,17 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
+  lateinit var fileCacheV2: FileCacheV2
+  @Inject
+  lateinit var fileManager: FileManager
+  @Inject
+  lateinit var cacheHandler: CacheHandler
+  @Inject
   lateinit var chanPostBackgroundColorStorage: ChanPostBackgroundColorStorage
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var threadDownloadManager: ThreadDownloadManager
 
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
@@ -233,8 +260,116 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     }
   }
 
+  protected suspend fun startFullMediaPreloading(
+    loadingBar: CircularChunkedLoadingBar,
+    mediaLocationRemote: MediaLocation.Remote,
+    fullMediaDeferred: CompletableDeferred<FilePath>,
+    onEndFunc: () -> Unit,
+  ): CancelableDownload? {
+    val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
+    if (threadDescriptor != null) {
+      val filePath = tryLoadFromExternalDiskCache(mediaLocationRemote.url, threadDescriptor)
+      if (filePath != null) {
+        fullMediaDeferred.complete(filePath)
+        onEndFunc()
+        return null
+      }
+    }
+
+    val extraInfo = DownloadRequestExtraInfo(
+      fileSize = viewableMedia.viewableMediaMeta.mediaSize ?: -1,
+      fileHash = viewableMedia.viewableMediaMeta.mediaHash
+    )
+
+    return fileCacheV2.enqueueDownloadFileRequest(
+      mediaLocationRemote.url,
+      extraInfo,
+      object : FileCacheListener() {
+        override fun onStart(chunksCount: Int) {
+          super.onStart(chunksCount)
+          BackgroundUtils.ensureMainThread()
+
+          loadingBar.setVisibilityFast(VISIBLE)
+          loadingBar.setChunksCount(chunksCount)
+        }
+
+        override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
+          super.onProgress(chunkIndex, downloaded, total)
+          BackgroundUtils.ensureMainThread()
+
+          loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
+        }
+
+        override fun onSuccess(file: File) {
+          BackgroundUtils.ensureMainThread()
+          fullMediaDeferred.complete(FilePath.JavaPath(file.absolutePath))
+        }
+
+        override fun onNotFound() {
+          BackgroundUtils.ensureMainThread()
+          fullMediaDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
+        }
+
+        override fun onFail(exception: Exception) {
+          BackgroundUtils.ensureMainThread()
+          fullMediaDeferred.completeExceptionally(exception)
+        }
+
+        override fun onEnd() {
+          super.onEnd()
+          BackgroundUtils.ensureMainThread()
+
+          if (!shown) {
+            loadingBar.setVisibilityFast(GONE)
+          }
+
+          onEndFunc()
+        }
+      }
+    )
+  }
+
+  protected fun canAutoLoad(): Boolean {
+    val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
+    if (threadDescriptor != null) {
+      val canUseThreadDownloaderCache = runBlocking { threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor) }
+      if (canUseThreadDownloaderCache) {
+        return true
+      }
+
+      // fallthrough
+    }
+
+    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
+  }
+
+  private suspend fun tryLoadFromExternalDiskCache(
+    url: HttpUrl,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): FilePath? {
+    val file = threadDownloadManager.findDownloadedFile(url, threadDescriptor)
+    if (file == null) {
+      return null
+    }
+
+    when (file) {
+      is RawFile -> {
+        return FilePath.JavaPath(file.getFullPath())
+      }
+      is ExternalFile -> {
+        return FilePath.UriPath(file.getUri())
+      }
+      else -> error("Unknown file: ${file.javaClass.simpleName}")
+    }
+  }
+
   open fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
     return true
+  }
+
+  sealed class FilePath {
+    data class JavaPath(val path: String) : FilePath()
+    data class UriPath(val uri: Uri) : FilePath()
   }
 
   override fun toString(): String {

@@ -9,32 +9,29 @@ import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.file.FileDescriptorMode
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
 import java.io.File
-import javax.inject.Inject
+import java.io.IOException
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class GifMediaView(
@@ -53,11 +50,6 @@ class GifMediaView(
   mediaViewState = initialMediaViewState
 ) {
 
-  @Inject
-  lateinit var fileCacheV2: FileCacheV2
-  @Inject
-  lateinit var cacheHandler: CacheHandler
-
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualGifView: GifImageView
@@ -65,9 +57,8 @@ class GifMediaView(
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
-  private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
-  private var fullGifDeferred = CompletableDeferred<File>()
+  private var fullGifDeferred = CompletableDeferred<FilePath>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
@@ -107,7 +98,15 @@ class GifMediaView(
         mediaViewContract = mediaViewContract,
         tryPreloadingFunc = {
           if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
-            preloadCancelableDownload = startFullGifPreloading(viewableMedia.mediaLocation)
+            scope.launch {
+              preloadCancelableDownload = startFullMediaPreloading(
+                loadingBar = loadingBar,
+                mediaLocationRemote = viewableMedia.mediaLocation,
+                fullMediaDeferred = fullGifDeferred,
+                onEndFunc = { preloadCancelableDownload = null }
+              )
+            }
+
             return@GestureDetectorListener true
           }
 
@@ -180,9 +179,16 @@ class GifMediaView(
     )
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
-      preloadCancelableDownload = startFullGifPreloading(viewableMedia.mediaLocation)
+      scope.launch {
+        preloadCancelableDownload = startFullMediaPreloading(
+          loadingBar = loadingBar,
+          mediaLocationRemote = viewableMedia.mediaLocation,
+          fullMediaDeferred = fullGifDeferred,
+          onEndFunc = { preloadCancelableDownload = null }
+        )
+      }
     }  else if (viewableMedia.mediaLocation is MediaLocation.Local) {
-      fullGifDeferred.complete(File(viewableMedia.mediaLocation.path))
+      fullGifDeferred.complete(FilePath.JavaPath(viewableMedia.mediaLocation.path))
     }
   }
 
@@ -210,8 +216,8 @@ class GifMediaView(
             actualGifView.setVisibilityFast(View.INVISIBLE)
             thumbnailMediaView.setError(error.errorMessageOrClassName())
           }
-          .onSuccess { file ->
-            setBigGifFromFile(file)
+          .onSuccess { filePath ->
+            setBigGifFromFile(filePath)
           }
 
         loadingBar.setVisibilityFast(GONE)
@@ -260,21 +266,27 @@ class GifMediaView(
     cacheHandler.deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullGifDeferred.cancel()
-    fullGifDeferred = CompletableDeferred<File>()
+    fullGifDeferred = CompletableDeferred<FilePath>()
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualGifView.setVisibilityFast(View.INVISIBLE)
     actualGifView.setImageDrawable(null)
 
-    preloadCancelableDownload = startFullGifPreloading(mediaLocation)
+    preloadCancelableDownload = startFullMediaPreloading(
+      loadingBar = loadingBar,
+      mediaLocationRemote = mediaLocation,
+      fullMediaDeferred = fullGifDeferred,
+      onEndFunc = { preloadCancelableDownload = null }
+    )
+
     show(isLifecycleChange = false)
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
-  private suspend fun setBigGifFromFile(file: File) {
+  private suspend fun setBigGifFromFile(filePath: FilePath) {
     coroutineScope {
       val drawable = try {
-        createGifDrawableSafe(file)
+        createGifDrawableSafe(filePath)
       } catch (e: Throwable) {
         Logger.e(TAG, "Error while trying to set a gif file", e)
 
@@ -311,68 +323,30 @@ class GifMediaView(
     }
   }
 
-  private fun createGifDrawableSafe(file: File): GifDrawable {
-    val gifDrawable = GifDrawable(file.absolutePath)
-
-    if (gifDrawable.allocationByteCount > MAX_GIF_SIZE) {
-      throw GifIsTooBigException(gifDrawable.allocationByteCount)
-    }
-
-    return gifDrawable
-  }
-
-  private fun startFullGifPreloading(mediaLocationRemote: MediaLocation.Remote): CancelableDownload? {
-    val extraInfo = DownloadRequestExtraInfo(
-      viewableMedia.viewableMediaMeta.mediaSize ?: -1,
-      viewableMedia.viewableMediaMeta.mediaHash
-    )
-
-    return fileCacheV2.enqueueChunkedDownloadFileRequest(
-      mediaLocationRemote.url,
-      extraInfo,
-      object : FileCacheListener() {
-        override fun onStart(chunksCount: Int) {
-          super.onStart(chunksCount)
-          BackgroundUtils.ensureMainThread()
-
-          loadingBar.setVisibilityFast(VISIBLE)
-          loadingBar.setChunksCount(chunksCount)
+  @Suppress("BlockingMethodInNonBlockingContext")
+  private suspend fun createGifDrawableSafe(filePath: FilePath): GifDrawable {
+    return withContext(Dispatchers.IO) {
+      val gifDrawable = when (filePath) {
+        is FilePath.JavaPath -> {
+          GifDrawable(File(filePath.path))
         }
-
-        override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
-          super.onProgress(chunkIndex, downloaded, total)
-          BackgroundUtils.ensureMainThread()
-
-          loadingBar.setChunkProgress(chunkIndex, downloaded.toFloat() / total.toFloat())
-        }
-
-        override fun onSuccess(file: File) {
-          BackgroundUtils.ensureMainThread()
-          fullGifDeferred.complete(file)
-        }
-
-        override fun onNotFound() {
-          BackgroundUtils.ensureMainThread()
-          fullGifDeferred.completeExceptionally(ImageNotFoundException(mediaLocationRemote.url))
-        }
-
-        override fun onFail(exception: Exception) {
-          BackgroundUtils.ensureMainThread()
-          fullGifDeferred.completeExceptionally(exception)
-        }
-
-        override fun onEnd() {
-          super.onEnd()
-          BackgroundUtils.ensureMainThread()
-
-          if (!shown) {
-            loadingBar.setVisibilityFast(GONE)
-          }
-
-          preloadCancelableDownload = null
+        is FilePath.UriPath -> {
+          fileManager.fromUri(filePath.uri)
+            ?.let { file ->
+              return@let fileManager.withFileDescriptor(file, FileDescriptorMode.Read) { fd ->
+                return@withFileDescriptor GifDrawable(fd)
+              }
+            }
+            ?: throw IOException("Failed to open get input stream for file ${filePath.uri}")
         }
       }
-    )
+
+      if (gifDrawable.allocationByteCount > MAX_GIF_SIZE) {
+        throw GifIsTooBigException(gifDrawable.allocationByteCount)
+      }
+
+      return@withContext gifDrawable
+    }
   }
 
   private fun canPreload(forced: Boolean): Boolean {
@@ -381,7 +355,7 @@ class GifMediaView(
         && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
     }
 
-    return canAutoLoad
+    return canAutoLoad()
       && !fullGifDeferred.isCompleted
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }

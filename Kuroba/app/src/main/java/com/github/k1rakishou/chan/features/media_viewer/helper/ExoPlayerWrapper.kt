@@ -3,15 +3,20 @@ package com.github.k1rakishou.chan.features.media_viewer.helper
 import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.file.ExternalFile
+import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.decoder.DecoderCounters
+import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CancellationException
@@ -25,8 +30,10 @@ import kotlin.coroutines.resumeWithException
 
 class ExoPlayerWrapper(
   private val context: Context,
+  private val threadDownloadManager: ThreadDownloadManager,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
+  private val contentDataSourceFactory: DataSource.Factory,
   private val mediaViewContract: MediaViewContract,
   private val onAudioDetected: () -> Unit
 ) {
@@ -39,18 +46,14 @@ class ExoPlayerWrapper(
 
   private var firstFrameRendered: CompletableDeferred<Unit>? = null
 
-  suspend fun preload(mediaLocation: MediaLocation, prevPosition: Long, prevWindowIndex: Int) {
+  suspend fun preload(
+    viewableMedia: ViewableMedia,
+    mediaLocation: MediaLocation,
+    prevPosition: Long,
+    prevWindowIndex: Int
+  ) {
     coroutineScope {
-      val mediaSource = when (mediaLocation) {
-        is MediaLocation.Local -> {
-          ProgressiveMediaSource.Factory(fileDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.path)))
-        }
-        is MediaLocation.Remote -> {
-          ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
-            .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
-        }
-      }
+      val mediaSource = createMediaSource(viewableMedia, mediaLocation)
 
       actualExoPlayer.stop()
       actualExoPlayer.playWhenReady = false
@@ -93,6 +96,38 @@ class ExoPlayerWrapper(
 
       _hasContent = awaitForContentOrError()
     }
+  }
+
+  private suspend fun createMediaSource(
+    viewableMedia: ViewableMedia,
+    mediaLocation: MediaLocation
+  ): MediaSource {
+    if (mediaLocation is MediaLocation.Local) {
+      return ProgressiveMediaSource.Factory(fileDataSourceFactory)
+        .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.path)))
+    }
+
+    mediaLocation as MediaLocation.Remote
+
+    val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
+    if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
+      val file = threadDownloadManager.findDownloadedFile(mediaLocation.url, threadDescriptor)
+      if (file != null) {
+        when (file) {
+          is RawFile -> {
+            return ProgressiveMediaSource.Factory(fileDataSourceFactory)
+              .createMediaSource(MediaItem.fromUri(Uri.parse(file.getFullPath())))
+          }
+          is ExternalFile -> {
+            return ProgressiveMediaSource.Factory(contentDataSourceFactory)
+              .createMediaSource(MediaItem.fromUri(file.getUri()))
+          }
+        }
+      }
+    }
+
+    return ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
+      .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
   }
 
   private suspend fun awaitForContentOrError(): Boolean {

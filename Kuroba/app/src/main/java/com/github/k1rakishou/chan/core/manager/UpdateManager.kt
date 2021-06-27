@@ -449,7 +449,7 @@ class UpdateManager(
     cancelableDownload?.cancel()
     cancelableDownload = null
 
-    cancelableDownload = fileCacheV2.enqueueNormalDownloadFileRequest(
+    cancelableDownload = fileCacheV2.enqueueDownloadFileRequest(
       responseRelease.apkURL.toString(),
       object : FileCacheListener() {
         override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {

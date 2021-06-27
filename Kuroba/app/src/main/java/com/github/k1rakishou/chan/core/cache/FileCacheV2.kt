@@ -186,75 +186,28 @@ class FileCacheV2(
     return cancelableDownload
   }
 
-  fun enqueueChunkedDownloadFileRequest(
+  @SuppressLint("CheckResult")
+  fun enqueueDownloadFileRequest(
     url: HttpUrl,
     extraInfo: DownloadRequestExtraInfo,
-    callback: FileCacheListener?
-  ): CancelableDownload? {
-    return enqueueDownloadFileRequest(
-      url = url,
-      extraInfo = extraInfo,
-      isBatchDownload = false,
-      callback = callback
-    )
-  }
-
-  fun enqueueNormalDownloadFileRequest(
-    postImage: ChanPostImage,
-    isBatchDownload: Boolean,
-    callback: FileCacheListener?
-  ): CancelableDownload? {
-    val url = postImage.imageUrl
-      ?: return null
-
-    return enqueueDownloadFileRequest(
-      url = url,
-      // Normal downloads (not chunked) always have default extra info
-      // (no file size, no file hash)
-      extraInfo = DownloadRequestExtraInfo(),
-      isBatchDownload = isBatchDownload,
-      callback = callback
-    )
-  }
-
-  fun enqueueNormalDownloadFileRequest(
-    url: String,
     callback: FileCacheListener?
   ): CancelableDownload {
-    // Normal downloads (not chunked) always have default extra info (no file size, no file hash)
-    return enqueueDownloadFileRequestInternal(
-      url = url,
-      isBatchDownload = false,
-      extraInfo = DownloadRequestExtraInfo(),
-      callback = callback
-    )
-  }
-
-  @SuppressLint("CheckResult")
-  private fun enqueueDownloadFileRequest(
-    url: HttpUrl,
-    extraInfo: DownloadRequestExtraInfo,
-    isBatchDownload: Boolean,
-    callback: FileCacheListener?
-  ): CancelableDownload? {
-    return enqueueDownloadFileRequestInternal(
+    return enqueueDownloadFileRequest(
       url = url.toString(),
-      isBatchDownload = isBatchDownload,
       extraInfo = extraInfo,
       callback = callback
     )
   }
 
-  private fun enqueueDownloadFileRequestInternal(
+  fun enqueueDownloadFileRequest(
     url: String,
-    isBatchDownload: Boolean,
-    extraInfo: DownloadRequestExtraInfo,
-    callback: FileCacheListener?
+    callback: FileCacheListener?,
+    extraInfo: DownloadRequestExtraInfo = DownloadRequestExtraInfo()
   ): CancelableDownload {
     val (alreadyActive, cancelableDownload) = getOrCreateCancelableDownload(
       url = url,
       callback = callback,
-      isGalleryBatchDownload = isBatchDownload,
+      isGalleryBatchDownload = false,
       isPrefetchDownload = false,
       extraInfo = extraInfo
     )

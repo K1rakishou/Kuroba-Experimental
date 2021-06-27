@@ -143,7 +143,7 @@ class RemoteFilePicker(
     }
 
     return suspendCancellableCoroutine { cancellableContinuation ->
-      val cancelableDownload = fileCacheV2.enqueueNormalDownloadFileRequest(
+      val cancelableDownload = fileCacheV2.enqueueDownloadFileRequest(
         urlString,
         object : FileCacheListener() {
           override fun onSuccess(file: File) {

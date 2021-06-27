@@ -14,7 +14,6 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
@@ -39,7 +38,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class VideoMediaView(
@@ -49,6 +47,7 @@ class VideoMediaView(
   private val viewModel: MediaViewerControllerViewModel,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
+  private val contentDataSourceFactory: DataSource.Factory,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   override val viewableMedia: ViewableMedia.Video,
@@ -61,28 +60,28 @@ class VideoMediaView(
   mediaViewState = initialMediaViewState
 ), WindowInsetsListener {
 
-  @Inject
-  lateinit var cacheHandler: CacheHandler
-
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: PlayerView
   private val bufferingProgressView: ColorizableProgressBar
   private val muteUnmuteButton: ImageButton
 
-  private val mainVideoPlayer = ExoPlayerWrapper(
-    context = context,
-    cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-    fileDataSourceFactory = fileDataSourceFactory,
-    mediaViewContract = mediaViewContract,
-    onAudioDetected = {
-      updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted())
-      videoSoundDetected = true
-    }
-  )
+  private val mainVideoPlayer by lazy {
+    ExoPlayerWrapper(
+      context = context,
+      threadDownloadManager = threadDownloadManager,
+      cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+      fileDataSourceFactory = fileDataSourceFactory,
+      contentDataSourceFactory = contentDataSourceFactory,
+      mediaViewContract = mediaViewContract,
+      onAudioDetected = {
+        updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted())
+        videoSoundDetected = true
+      }
+    )
+  }
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
-  private val canAutoLoad by lazy { MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia) }
 
   private var fullVideoDeferred = CompletableDeferred<Unit>()
   private var preloadingJob: Job? = null
@@ -375,7 +374,13 @@ class VideoMediaView(
         updatePlayerControlsInsets()
         updateExoBufferingViewColors()
 
-        mainVideoPlayer.preload(mediaLocation, mediaViewState.prevPosition, mediaViewState.prevWindowIndex)
+        mainVideoPlayer.preload(
+          viewableMedia = viewableMedia,
+          mediaLocation = mediaLocation,
+          prevPosition = mediaViewState.prevPosition,
+          prevWindowIndex = mediaViewState.prevWindowIndex
+        )
+
         fullVideoDeferred.complete(Unit)
       } catch (error: Throwable) {
         fullVideoDeferred.completeExceptionally(error)
@@ -464,7 +469,7 @@ class VideoMediaView(
         && (preloadingJob == null || preloadingJob?.isActive == false)
     }
 
-    return canAutoLoad
+    return canAutoLoad()
       && !fullVideoDeferred.isCompleted
       && (preloadingJob == null || preloadingJob?.isActive == false)
   }

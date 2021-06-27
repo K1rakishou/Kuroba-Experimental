@@ -549,7 +549,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       return canAutoLoad(cacheHandler, url, imageType, viewableMedia.viewableMediaMeta.isSpoiler)
     }
 
-    fun canAutoLoad(
+    private fun canAutoLoad(
       cacheHandler: CacheHandler,
       url: HttpUrl?,
       imageType: ChanPostImageType?,

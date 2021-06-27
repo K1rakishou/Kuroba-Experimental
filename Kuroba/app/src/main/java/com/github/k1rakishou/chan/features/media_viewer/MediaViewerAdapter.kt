@@ -30,6 +30,7 @@ class MediaViewerAdapter(
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
   private val fileDataSourceFactory: DataSource.Factory,
+  private val contentDataSourceFactory: DataSource.Factory,
   private val chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager,
   private val isSystemUiHidden: () -> Boolean,
   private val swipeDirection: () -> OptionalSwipeViewPager.SwipeDirection
@@ -150,6 +151,7 @@ class MediaViewerAdapter(
           mediaViewContract = mediaViewContract,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,
+          contentDataSourceFactory = contentDataSourceFactory,
           onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
