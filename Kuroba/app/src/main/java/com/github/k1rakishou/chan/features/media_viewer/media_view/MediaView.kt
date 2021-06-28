@@ -15,7 +15,6 @@ import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -68,8 +67,6 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var threadDownloadManager: ThreadDownloadManager
-  @Inject
-  lateinit var chanThreadManager: ChanThreadManager
 
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
@@ -271,7 +268,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   ): CancelableDownload? {
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
     if (threadDescriptor != null) {
-      val filePath = tryLoadFromExternalDiskCache(mediaLocationRemote.url, threadDescriptor)
+      val filePath = try {
+        tryLoadFromExternalDiskCache(mediaLocationRemote.url, threadDescriptor)
+      } catch (error: Throwable) {
+        fullMediaDeferred.completeExceptionally(error)
+        onEndFunc()
+        return null
+      }
+
       if (filePath != null) {
         fullMediaDeferred.complete(filePath)
         onEndFunc()
@@ -350,19 +354,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     url: HttpUrl,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): FilePath? {
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-    val file = threadDownloadManager.findDownloadedFile(url, chanThread)
+    val file = threadDownloadManager.findDownloadedFile(url, threadDescriptor)
     if (file == null) {
       return null
     }
 
-    when (file) {
-      is RawFile -> {
-        return FilePath.JavaPath(file.getFullPath())
-      }
-      is ExternalFile -> {
-        return FilePath.UriPath(file.getUri())
-      }
+    return when (file) {
+      is RawFile -> FilePath.JavaPath(file.getFullPath())
+      is ExternalFile -> FilePath.UriPath(file.getUri())
       else -> error("Unknown file: ${file.javaClass.simpleName}")
     }
   }

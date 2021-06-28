@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.id.PostDBId
+import com.github.k1rakishou.model.data.id.ThreadDBId
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.mapper.ChanPostImageMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
@@ -31,6 +32,22 @@ class ChanPostImageLocalSource(
     )
 
     return chanPostImageEntities.mapNotNull { chanPostImageEntity ->
+      val postDescriptor = postDescriptorsMap[PostDBId(chanPostImageEntity.ownerPostId)]
+        ?: return@mapNotNull null
+
+      return@mapNotNull ChanPostImageMapper.fromEntity(
+        chanPostImageEntity,
+        postDescriptor
+      )
+    }
+  }
+
+  suspend fun selectPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): List<ChanPostImage> {
+    ensureInTransaction()
+
+    val postDescriptorsMap = chanDescriptorCache.getManyPostDescriptors(ThreadDBId(threadDatabaseId))
+
+    return chanPostImageDao.selectByOwnerThreadId(threadDatabaseId).mapNotNull { chanPostImageEntity ->
       val postDescriptor = postDescriptorsMap[PostDBId(chanPostImageEntity.ownerPostId)]
         ?: return@mapNotNull null
 

@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RepositoryModule;
 import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule;
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule;
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule;
+import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkBackgroundWatcherWorker;
@@ -92,6 +93,8 @@ public interface ApplicationComponent {
         Builder imageSaverFileManagerWrapper(ImageSaverFileManagerWrapper imageSaverFileManagerWrapper);
         @BindsInstance
         Builder threadDownloaderFileManagerWrapper(ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper);
+        @BindsInstance
+        Builder imageLoaderFileManagerWrapper(ImageLoaderFileManagerWrapper imageLoaderFileManagerWrapper);
         @BindsInstance
         Builder applicationCoroutineScope(CoroutineScope applicationCoroutineScope);
         @BindsInstance

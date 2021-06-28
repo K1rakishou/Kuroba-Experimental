@@ -69,7 +69,6 @@ class VideoMediaView(
     ExoPlayerWrapper(
       context = context,
       threadDownloadManager = threadDownloadManager,
-      chanThreadManager = chanThreadManager,
       cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
       fileDataSourceFactory = fileDataSourceFactory,
       contentDataSourceFactory = contentDataSourceFactory,

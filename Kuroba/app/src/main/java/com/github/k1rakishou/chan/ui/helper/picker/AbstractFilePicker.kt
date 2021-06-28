@@ -12,6 +12,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -89,7 +90,7 @@ abstract class AbstractFilePicker<T>(
   }
 
   protected fun getRemoteFileName(url: HttpUrl): String {
-    val actualFileName = url.pathSegments.lastOrNull()
+    val actualFileName = url.extractFileName()
 
     if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
       return getRandomFileName(actualFileName)

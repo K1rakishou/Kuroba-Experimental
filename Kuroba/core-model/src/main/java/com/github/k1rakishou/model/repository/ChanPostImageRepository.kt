@@ -28,4 +28,12 @@ class ChanPostImageRepository(
     }
   }
 
+  suspend fun selectPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): ModularResult<List<ChanPostImage>> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction chanPostImageLocalSource.selectPostImagesByOwnerThreadDatabaseId(threadDatabaseId)
+      }
+    }
+  }
+
 }

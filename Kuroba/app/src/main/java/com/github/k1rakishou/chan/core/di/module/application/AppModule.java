@@ -27,12 +27,12 @@ import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
+import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
@@ -47,7 +47,6 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -156,13 +155,11 @@ public class AppModule {
             ImageLoader coilImageLoader,
             ReplyManager replyManager,
             ThemeEngine themeEngine,
-            AppConstants appConstants,
             CacheHandler cacheHandler,
-            FileManager fileManager,
+            ImageLoaderFileManagerWrapper imageLoaderFileManagerWrapper,
             SiteResolver siteResolver,
             CoilOkHttpClient coilOkHttpClient,
-            ThreadDownloadManager threadDownloadManager,
-            ChanThreadManager chanThreadManager
+            ThreadDownloadManager threadDownloadManager
     ) {
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
@@ -171,11 +168,10 @@ public class AppModule {
                 replyManager,
                 themeEngine,
                 cacheHandler,
-                fileManager,
+                imageLoaderFileManagerWrapper,
                 siteResolver,
                 coilOkHttpClient,
-                threadDownloadManager,
-                chanThreadManager
+                threadDownloadManager
         );
     }
 

@@ -222,10 +222,6 @@ class ChanThreadLoaderCoordinator(
           }
         }
 
-        if (!chanLoadUrl.isIncremental) {
-          checkNotNull(chanReaderProcessor.getOp()) { "OP is null" }
-        }
-
         val postParser = chanReader.getParser()
           ?: throw NullPointerException("PostParser cannot be null!")
 

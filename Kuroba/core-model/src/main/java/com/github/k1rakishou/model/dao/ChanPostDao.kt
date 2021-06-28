@@ -105,6 +105,27 @@ abstract class ChanPostDao {
     chanPostIds: Set<Long>
   ): List<PostDescriptorDatabaseObject>
 
+  @Query("""
+    SELECT 
+	      post_id,
+        post_no,
+        post_sub_no,
+	      thread_no, 
+	      board_code, 
+	      site_name
+    FROM ${ChanPostIdEntity.TABLE_NAME} post_ids
+    INNER JOIN ${ChanThreadEntity.TABLE_NAME} threads 
+        ON threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = post_ids.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME}
+    INNER JOIN ${ChanBoardIdEntity.TABLE_NAME} boards 
+        ON boards.${ChanBoardIdEntity.BOARD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME}
+    INNER JOIN ${ChanSiteIdEntity.TABLE_NAME} sites 
+        ON sites.${ChanSiteIdEntity.SITE_NAME_COLUMN_NAME} = boards.${ChanBoardIdEntity.OWNER_SITE_NAME_COLUMN_NAME}
+    WHERE post_ids.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :threadId
+  """)
+  abstract suspend fun selectPostDescriptorDatabaseObjectsByThreadIds(
+    threadId: Long
+  ): List<PostDescriptorDatabaseObject>
+
   @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
   @Query("""
         SELECT *

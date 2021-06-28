@@ -5,7 +5,9 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
+import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import okhttp3.HttpUrl
 
 @Dao
@@ -41,6 +43,18 @@ abstract class ChanPostImageDao {
         WHERE ${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} IN (:ownerPostIdList)
     """)
   abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostImageEntity>
+
+  @Query("""
+    SELECT *
+    FROM ${ChanPostImageEntity.TABLE_NAME} images
+    LEFT JOIN ${ChanPostIdEntity.TABLE_NAME} posts
+        ON posts.${ChanPostIdEntity.POST_ID_COLUMN_NAME} = images.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME}
+    LEFT JOIN ${ChanThreadEntity.TABLE_NAME} threads
+        ON threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = posts.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME}
+    WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :ownerThreadId
+    GROUP BY ${ChanPostImageEntity.POST_IMAGE_ID_COLUMN_NAME}
+  """)
+  abstract suspend fun selectByOwnerThreadId(ownerThreadId: Long): List<ChanPostImageEntity>
 
   @Query("""
         SELECT *

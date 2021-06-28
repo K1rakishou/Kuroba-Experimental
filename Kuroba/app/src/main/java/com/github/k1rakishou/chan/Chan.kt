@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.core.di.module.application.RoomDatabaseModule
 import com.github.k1rakishou.chan.core.di.module.application.SiteModule
 import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
+import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
@@ -244,6 +245,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val fileManager = provideApplicationFileManager()
     val imageSaverFileManagerWrapper =  provideImageSaverFileManagerWrapper()
     val threadDownloaderFileManagerWrapper =  provideThreadDownloaderFileManagerWrapper()
+    val imageLoaderFileManagerWrapper =  provideImageLoaderFileManagerWrapper()
 
     val themeEngine = ThemesModuleInjector.build(
       application = this,
@@ -277,6 +279,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .fileManager(fileManager)
       .imageSaverFileManagerWrapper(imageSaverFileManagerWrapper)
       .threadDownloaderFileManagerWrapper(threadDownloaderFileManagerWrapper)
+      .imageLoaderFileManagerWrapper(imageLoaderFileManagerWrapper)
       .applicationCoroutineScope(applicationScope)
       .normalDnsSelectorFactory(normalDnsCreatorFactory)
       .dnsOverHttpsSelectorFactory(dnsOverHttpsCreatorFactory)
@@ -520,6 +523,18 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
 
     return ThreadDownloaderFileManagerWrapper(fileManager)
+  }
+
+  private fun provideImageLoaderFileManagerWrapper(): ImageLoaderFileManagerWrapper {
+    val directoryManager = DirectoryManager(this)
+
+    val fileManager = FileManager(
+      appContext = this,
+      badPathSymbolResolutionStrategy = BadPathSymbolResolutionStrategy.ReplaceBadSymbols,
+      directoryManager = directoryManager
+    )
+
+    return ImageLoaderFileManagerWrapper(fileManager)
   }
 
   private enum class UnhandlerExceptionHandlerType {

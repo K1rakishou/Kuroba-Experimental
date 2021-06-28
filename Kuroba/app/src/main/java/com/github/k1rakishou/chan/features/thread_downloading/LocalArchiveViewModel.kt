@@ -139,16 +139,7 @@ class LocalArchiveViewModel : BaseViewModel() {
   fun stopDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
     mainScope.launch {
       selectedItems.forEach { threadDescriptor ->
-        threadDownloadManager.updateThreadDownload(
-          threadDescriptor = threadDescriptor,
-          updaterFunc = { threadDownload ->
-            if (threadDownload.status != ThreadDownload.Status.Running) {
-              return@updateThreadDownload null
-            }
-
-            return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Stopped)
-          }
-        )
+        threadDownloadManager.stopDownloading(threadDescriptor)
       }
 
       reload()
@@ -158,20 +149,15 @@ class LocalArchiveViewModel : BaseViewModel() {
   fun startDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
     mainScope.launch {
       selectedItems.forEach { threadDescriptor ->
-        threadDownloadManager.updateThreadDownload(
-          threadDescriptor = threadDescriptor,
-          updaterFunc = { threadDownload ->
-            if (threadDownload.status != ThreadDownload.Status.Stopped) {
-              return@updateThreadDownload null
-            }
-
-            return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Running)
-          }
-        )
+        threadDownloadManager.resumeDownloading(threadDescriptor)
       }
 
       reload()
     }
+  }
+
+  suspend fun hasNotCompletedDownloads(): Boolean {
+    return threadDownloadManager.notCompletedThreadsCount() > 0
   }
 
   fun selectedItemsCount(): Int {

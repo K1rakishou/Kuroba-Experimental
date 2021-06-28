@@ -17,6 +17,7 @@ import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.doIoTaskWithAttempts
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.suspendCall
@@ -76,8 +77,7 @@ class ImageSaverV2ServiceDelegate(
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
   private val chanThreadManager: ChanThreadManager,
-  private val threadDownloadManager: ThreadDownloadManager,
-  private val fileManager: FileManager
+  private val threadDownloadManager: ThreadDownloadManager
 ) {
   private val mutex = Mutex()
 
@@ -88,6 +88,9 @@ class ImageSaverV2ServiceDelegate(
   private val cancelNotificationJobMap = ConcurrentHashMap<String, Job>()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+
+  private val fileManager: FileManager
+    get() = imageSaverFileManager.fileManager
 
   private val notificationUpdatesFlow = MutableSharedFlow<ImageSaverDelegateResult>(
     extraBufferCapacity = 16,
@@ -360,7 +363,7 @@ class ImageSaverV2ServiceDelegate(
           return@let "$imageFileName.$extension"
         }
 
-        return@let chanPostImage.imageUrl?.pathSegments?.lastOrNull()
+        return@let chanPostImage.imageUrl?.extractFileName()
       }
 
       val threadDescriptor = chanPostImage.ownerPostDescriptor.threadDescriptor()
@@ -599,7 +602,7 @@ class ImageSaverV2ServiceDelegate(
   ): ResultFile {
     val rootDirectoryUri = Uri.parse(checkNotNull(imageSaverV2Options.rootDirectoryUri))
 
-    val rootDirectory = imageSaverFileManager.fileManager.fromUri(rootDirectoryUri)
+    val rootDirectory = fileManager.fromUri(rootDirectoryUri)
       ?: return ResultFile.FailedToOpenResultDir(rootDirectoryUri.toString())
 
     val segments = mutableListOf<Segment>()
@@ -638,7 +641,7 @@ class ImageSaverV2ServiceDelegate(
       }
     }
 
-    val resultDir = imageSaverFileManager.fileManager.create(rootDirectory, segments)
+    val resultDir = fileManager.create(rootDirectory, segments)
     if (resultDir == null) {
       return ResultFile.FailedToOpenResultDir(rootDirectory.clone(segments).getFullPath())
     }
@@ -650,7 +653,7 @@ class ImageSaverV2ServiceDelegate(
     val resultFileUri = Uri.parse(resultFile.getFullPath())
     val resultDirUri = Uri.parse(resultDir.getFullPath())
 
-    if (imageSaverFileManager.fileManager.exists(resultFile)) {
+    if (fileManager.exists(resultFile)) {
       var duplicatesResolution =
         ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
 
@@ -665,7 +668,7 @@ class ImageSaverV2ServiceDelegate(
           return ResultFile.DuplicateFound(resultFileUri)
         }
         ImageSaverV2Options.DuplicatesResolution.Skip -> {
-          val fileIsNotEmpty = imageSaverFileManager.fileManager.getLength(resultFile) > 0
+          val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
           return ResultFile.Skipped(resultDirUri, resultFileUri, fileIsNotEmpty)
         }
         ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate -> {
@@ -676,7 +679,7 @@ class ImageSaverV2ServiceDelegate(
             val extension = StringUtils.extractFileNameExtension(fileName)
             val newResultFile = resultDir.clone(FileSegment("${fileNameNoExtension}_($duplicateId).$extension"))
 
-            if (!imageSaverFileManager.fileManager.exists(newResultFile)) {
+            if (!fileManager.exists(newResultFile)) {
               return ResultFile.File(
                 resultDirUri,
                 Uri.parse(newResultFile.getFullPath()),
@@ -688,7 +691,7 @@ class ImageSaverV2ServiceDelegate(
           }
         }
         ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
-          if (!imageSaverFileManager.fileManager.delete(resultFile)) {
+          if (!fileManager.delete(resultFile)) {
             return ResultFile.FailedToOpenResultDir(resultFile.getFullPath())
           }
 
@@ -822,7 +825,7 @@ class ImageSaverV2ServiceDelegate(
       val outputFile = outputFileResult.file
       val outputDirUri = outputFileResult.outputDirUri
 
-      val actualOutputFile = imageSaverFileManager.fileManager.create(outputFile)
+      val actualOutputFile = fileManager.create(outputFile)
       if (actualOutputFile == null) {
         return@Try DownloadImageResult.ResultDirectoryError(
           outputFile.getFullPath(),
@@ -846,7 +849,7 @@ class ImageSaverV2ServiceDelegate(
           }
         }
       } catch (error: Throwable) {
-        imageSaverFileManager.fileManager.delete(actualOutputFile)
+        fileManager.delete(actualOutputFile)
 
         return@Try when (error) {
           is OutOfDiskSpaceException -> {
@@ -877,9 +880,7 @@ class ImageSaverV2ServiceDelegate(
 
     try {
       if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
-        val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-
-        localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, chanThread)
+        localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, threadDescriptor)
           ?.let { file -> fileManager.getInputStream(file) }
       }
 
@@ -887,7 +888,7 @@ class ImageSaverV2ServiceDelegate(
         localInputStream = downloadAndGetResponseBody(imageUrl).source().inputStream()
       }
 
-      val outputFileStream = imageSaverFileManager.fileManager.getOutputStream(outputFile)
+      val outputFileStream = fileManager.getOutputStream(outputFile)
         ?: throw ResultFileAccessError(outputFile.getFullPath())
 
       runInterruptible {

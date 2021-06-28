@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
-import android.net.Uri
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -10,9 +9,8 @@ import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isOutOfDiskSpaceError
 import com.github.k1rakishou.common.processDataCollectionConcurrently
@@ -22,16 +20,18 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.fsaf.file.FileSegment
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
-import com.github.k1rakishou.model.data.thread.ChanThread
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ThreadDownload
+import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runInterruptible
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -48,6 +48,7 @@ class ThreadDownloadingDelegate(
   private val threadDownloadManager: ThreadDownloadManager,
   private val chanThreadManager: ChanThreadManager,
   private val chanPostRepository: ChanPostRepository,
+  private val chanPostImageRepository: ChanPostImageRepository,
   private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper
 ) {
   private val fileManager: FileManager
@@ -56,17 +57,31 @@ class ThreadDownloadingDelegate(
     get() = downloaderOkHttpClient.okHttpClient()
   private val batchCount = appConstants.processorsCount
 
+  private val running = AtomicBoolean(false)
+
   @OptIn(ExperimentalTime::class)
-  suspend fun doWork(rootDir: Uri): ModularResult<Unit> {
+  suspend fun doWork(): ModularResult<Unit> {
     return ModularResult.Try {
-      val (result, duration) = measureTimedValue { doWorkInternal(rootDir) }
+      if (!running.compareAndSet(false, true)) {
+        Logger.d(TAG, "doWorkInternal() already running")
+        return@Try
+      }
+
+      val (result, duration) = measureTimedValue {
+        try {
+          doWorkInternal()
+        } finally {
+          running.set(false)
+        }
+      }
+
       Logger.d(TAG, "doWorkInternal() took $duration")
 
       return@Try result
     }
   }
 
-  private suspend fun doWorkInternal(rootDir: Uri) {
+  private suspend fun doWorkInternal() {
     siteManager.awaitUntilInitialized()
     threadDownloadManager.awaitUntilInitialized()
     chanPostRepository.awaitUntilInitialized()
@@ -78,7 +93,7 @@ class ThreadDownloadingDelegate(
 
     val threadDownloads = threadDownloadManager.getAllActiveThreadDownloads()
 
-    Logger.d(TAG, "doWorkInternal() start, batchCount=$batchCount, rootDir='$rootDir'")
+    Logger.d(TAG, "doWorkInternal() start, batchCount=$batchCount")
     threadDownloads.forEach { threadDownload ->
       Logger.d(TAG, "doWorkInternal() threadDownload=$threadDownload")
     }
@@ -94,7 +109,6 @@ class ThreadDownloadingDelegate(
 
         processThread(
           threadDownload = threadDownload,
-          rootDirUri = rootDir,
           index = index + 1,
           total = threadDownloads.size,
           outOfDiskSpaceError = outOfDiskSpaceError,
@@ -111,7 +125,6 @@ class ThreadDownloadingDelegate(
 
   private suspend fun processThread(
     threadDownload: ThreadDownload,
-    rootDirUri: Uri,
     index: Int,
     total: Int,
     outOfDiskSpaceError: AtomicBoolean,
@@ -120,43 +133,33 @@ class ThreadDownloadingDelegate(
     val threadDescriptor = threadDownload.threadDescriptor
     Logger.d(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) start")
 
-    // Preload thread from the database if we have anything there first.
-    // We want to do this so that we don't have to reparse full threads over and over again.
-    // Plus some sites support incremental thread updating so we might as well use it here.
-    // If we fail to preload for some reason then just do everything from scratch.
-    chanPostRepository.preloadForThread(threadDescriptor)
-      .peekError { error -> Logger.e(TAG, "chanPostRepository.preloadForThread($threadDescriptor) error", error) }
-      .ignore()
-
     val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
       threadDescriptor,
       ChanCacheUpdateOptions.UpdateCache,
       ChanLoadOptions.retainAll(),
-      ChanCacheOptions.cacheEverywhere(),
+      ChanCacheOptions.threadDownloaderOption(),
       ChanReadOptions.default()
     )
 
     if (threadLoadResult is ThreadLoadResult.Error) {
       Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) " +
-          "error: ${threadLoadResult.exception.errorMessage}")
+          "error: ${threadLoadResult.exception.message}")
 
       return
     }
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-    if (chanThread == null) {
-      Logger.d(TAG, "processThread($index/$total) getChanThread($threadDescriptor) returned null")
-      return
-    }
+    val ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId
 
-    if (threadDownload.downloadMedia && !outOfDiskSpaceError.get()) {
-      val rootDir = fileManager.fromUri(rootDirUri)
+    val chanPostImages = chanPostImageRepository.selectPostImagesByOwnerThreadDatabaseId(ownerThreadDatabaseId)
+        .peekError { error -> Logger.e(TAG, "Failed to select images by threadId: ${ownerThreadDatabaseId}", error) }
+        .mapErrorToValue { emptyList<ChanPostImage>() }
 
+    if (chanPostImages.isNotEmpty() && threadDownload.downloadMedia && !outOfDiskSpaceError.get()) {
       processThreadMedia(
         index = index,
         total = total,
-        rootDir = rootDir,
-        chanThread = chanThread,
+        chanPostImages = chanPostImages,
+        threadDescriptor = threadDescriptor,
         outOfDiskSpaceError = outOfDiskSpaceError,
         outputDirError = outputDirError
       )
@@ -167,6 +170,13 @@ class ThreadDownloadingDelegate(
       outOfDiskSpaceError = outOfDiskSpaceError.get(),
       outputDirError = outputDirError.get()
     )
+
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    if (chanThread == null) {
+      Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) end, " +
+        "status: error chanThread is null")
+      return
+    }
 
     val originalPost = chanThread.getOriginalPost()
     if (originalPost.archived || originalPost.closed || originalPost.deleted) {
@@ -187,31 +197,41 @@ class ThreadDownloadingDelegate(
   private suspend fun processThreadMedia(
     index: Int,
     total: Int,
-    rootDir: AbstractFile?,
-    chanThread: ChanThread,
+    chanPostImages: List<ChanPostImage>,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
     outOfDiskSpaceError: AtomicBoolean,
     outputDirError: AtomicBoolean,
   ) {
-    if (rootDir == null) {
-      Logger.d(TAG, "processThreadMedia($index/$total) rootDir == null")
-      outputDirError.set(true)
+    if (chanPostImages.isEmpty()) {
       return
     }
 
-    Logger.d(TAG, "processThreadMedia($index/$total) chanThread=${chanThread.threadDescriptor}")
+    val rootDir = fileManager.fromRawFile(appConstants.threadDownloaderCacheDir)
+    Logger.d(TAG, "processThreadMedia($index/$total) threadDescriptor=${threadDescriptor}, " +
+      "chanPostImages=${chanPostImages.size}")
 
-    val directoryName = formatDirectoryName(chanThread)
-    val outputDirectory = fileManager.create(rootDir, DirectorySegment(directoryName))
+    val directoryName = formatDirectoryName(threadDescriptor)
+
+    var outputDirectory = fileManager.findFile(rootDir, directoryName)
+    if (outputDirectory == null) {
+      outputDirectory = fileManager.create(rootDir, listOf(DirectorySegment(directoryName)))
+    }
 
     if (outputDirectory == null) {
       Logger.d(TAG, "processThreadMedia($index/$total) " +
-        "chanThread=${chanThread.threadDescriptor} failure! outputDirectory is null")
+        "chanThread=${threadDescriptor} failure! outputDirectory is null")
       outputDirError.set(true)
       return
     }
 
+    val noMediaFile = outputDirectory.clone(FileSegment(NO_MEDIA_FILE_NAME))
+    if (!fileManager.exists(noMediaFile)) {
+      // Disable media scanner
+      fileManager.create(noMediaFile)
+    }
+
     processDataCollectionConcurrently(
-      dataList = chanThread.getThreadPostImages(),
+      dataList = chanPostImages,
       batchCount = batchCount,
       dispatcher = Dispatchers.IO
     ) { postImage ->
@@ -224,7 +244,7 @@ class ThreadDownloadingDelegate(
       }
 
       val thumbnailUrl = postImage.actualThumbnailUrl
-      val thumbnailName = postImage.actualThumbnailUrl?.pathSegments?.lastOrNull()
+      val thumbnailName = postImage.actualThumbnailUrl?.extractFileName()
 
       if (thumbnailUrl != null && thumbnailName.isNotNullNorEmpty()) {
         downloadImage(
@@ -238,7 +258,7 @@ class ThreadDownloadingDelegate(
       }
 
       val fullImageUrl = postImage.imageUrl
-      val fullImageName = postImage.imageUrl?.pathSegments?.lastOrNull()
+      val fullImageName = postImage.imageUrl?.extractFileName()
 
       if (fullImageUrl != null && fullImageName.isNotNullNorEmpty()) {
         downloadImage(
@@ -252,7 +272,7 @@ class ThreadDownloadingDelegate(
       }
     }
 
-    Logger.d(TAG, "processThreadMedia($index/$total) chanThread=${chanThread.threadDescriptor} success")
+    Logger.d(TAG, "processThreadMedia($index/$total) chanThread=${threadDescriptor} success")
   }
 
   private suspend fun downloadImage(
@@ -263,7 +283,11 @@ class ThreadDownloadingDelegate(
     outOfDiskSpaceError: AtomicBoolean,
     outputDirError: AtomicBoolean,
   ) {
-    val outputFile = fileManager.create(outputDirectory, FileSegment(name))
+    var outputFile = fileManager.findFile(outputDirectory, name)
+    if (outputFile == null) {
+      outputFile = fileManager.create(outputDirectory, listOf(FileSegment(name)))
+    }
+
     if (outputFile == null) {
       outputDirError.set(true)
       return
@@ -312,9 +336,11 @@ class ThreadDownloadingDelegate(
         return
       }
 
-      responseBody.byteStream().use { inputStream ->
-        outputStream.use { os ->
-          inputStream.copyTo(os)
+      runInterruptible {
+        responseBody.byteStream().use { inputStream ->
+          outputStream.use { os ->
+            inputStream.copyTo(os)
+          }
         }
       }
     } catch (error: Throwable) {
@@ -332,23 +358,15 @@ class ThreadDownloadingDelegate(
 
   companion object {
     private const val TAG = "ThreadDownloadingDelegate"
+    private const val NO_MEDIA_FILE_NAME = ".nomedia"
 
-    fun formatDirectoryName(chanThread: ChanThread): String {
-      val threadSubject = StringUtils.dirNameRemoveBadCharacters(
-        ChanPostUtils.getTitle(chanThread.getOriginalPost(), chanThread.threadDescriptor)
-      )
-
+    fun formatDirectoryName(threadDescriptor: ChanDescriptor.ThreadDescriptor): String {
       return buildString {
-        append(chanThread.threadDescriptor.siteName())
+        append(threadDescriptor.siteName())
         append("_")
-        append(chanThread.threadDescriptor.boardCode())
+        append(threadDescriptor.boardCode())
         append("_")
-        append(chanThread.threadDescriptor.threadNo)
-        append("_")
-
-        if (threadSubject.isNotNullNorBlank()) {
-          append(StringUtils.dirNameRemoveBadCharacters(threadSubject))
-        }
+        append(threadDescriptor.threadNo)
       }
     }
   }

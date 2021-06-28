@@ -581,13 +581,14 @@ class ChanPostRepository(
       return 0
     }
 
-    val postsToStoreIntoDatabase = chanThreadsCache.putManyCatalogPostsIntoCache(
+    chanThreadsCache.putManyCatalogPostsIntoCache(
       parsedPosts = parsedPosts,
       cacheOptions = cacheOptions
     )
 
-    if (cacheOptions.canStoreInDatabase() && postsToStoreIntoDatabase.isNotEmpty()) {
-      localSource.insertManyOriginalPosts(postsToStoreIntoDatabase, cacheOptions)
+    if (cacheOptions.canStoreInDatabase() && parsedPosts.isNotEmpty()) {
+      Logger.d(TAG, "insertOrUpdateCatalogOriginalPosts() inserting ${parsedPosts.size} posts into the DB")
+      localSource.insertManyOriginalPosts(parsedPosts, cacheOptions)
     }
 
     return parsedPosts.size
@@ -620,15 +621,16 @@ class ChanPostRepository(
     Logger.d(TAG, "insertOrUpdateThreadPosts() ${postsThatDifferWithCache.size} posts differ from " +
       "the cache (total posts=${parsedPosts.size})")
 
-    val postsToStoreIntoDatabase = chanThreadsCache.putManyThreadPostsIntoCache(
+    chanThreadsCache.putManyThreadPostsIntoCache(
       threadDescriptor = threadDescriptor,
       parsedPosts = postsThatDifferWithCache,
       cacheOptions = cacheOptions,
       cacheUpdateOptions = cacheUpdateOptions
     )
 
-    if (cacheOptions.canStoreInDatabase() && postsToStoreIntoDatabase.isNotEmpty()) {
-      localSource.insertPosts(postsToStoreIntoDatabase, cacheOptions)
+    if (cacheOptions.canStoreInDatabase() && parsedPosts.isNotEmpty()) {
+      Logger.d(TAG, "insertOrUpdateThreadPosts() inserting ${parsedPosts.size} posts into the DB")
+      localSource.insertPosts(parsedPosts, cacheOptions)
     }
 
     return postsThatDifferWithCache.size

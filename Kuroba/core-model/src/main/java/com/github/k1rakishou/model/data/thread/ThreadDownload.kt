@@ -24,6 +24,10 @@ data class ThreadDownload(
       return this == Running
     }
 
+    fun isCompleted(): Boolean {
+      return this == Completed
+    }
+
     companion object {
       fun fromRawValue(rawValue: Int): Status {
         return values().firstOrNull { it.rawValue == rawValue } ?: Running

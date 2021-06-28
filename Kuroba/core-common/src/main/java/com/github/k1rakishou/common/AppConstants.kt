@@ -65,6 +65,16 @@ open class AppConstants(
       return field
     }
 
+  val threadDownloaderCacheDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create ThreadDownloader cache directory! threadDownloaderCacheDir=${field.absolutePath}" }
+      return field
+    }
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
@@ -76,6 +86,7 @@ open class AppConstants(
     attachFilesDir = File(context.filesDir, ATTACH_FILES_DIR_NAME)
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
     mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
+    threadDownloaderCacheDir = File(context.filesDir, THREAD_DOWNLOADER_DIR_NAME)
     exoPlayerCacheDir = File(context.cacheDir, EXO_PLAYER_CACHE_DIR_NAME)
   }
 
@@ -114,6 +125,7 @@ open class AppConstants(
     private const val ATTACH_FILES_DIR_NAME = "attach_files"
     private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
+    private const val THREAD_DOWNLOADER_DIR_NAME = "thread_downloader_storage"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"

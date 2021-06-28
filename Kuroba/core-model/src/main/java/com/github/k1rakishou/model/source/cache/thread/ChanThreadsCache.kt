@@ -79,11 +79,7 @@ class ChanThreadsCache(
   fun putManyCatalogPostsIntoCache(
     parsedPosts: List<ChanOriginalPost>,
     cacheOptions: ChanCacheOptions
-  ): List<ChanOriginalPost> {
-    if (parsedPosts.isEmpty()) {
-      return emptyList()
-    }
-
+  ) {
     runOldPostEvictionRoutineIfNeeded()
 
     val updatedPosts = mutableListWithCap<ChanOriginalPost>(parsedPosts)
@@ -109,8 +105,6 @@ class ChanThreadsCache(
 
       updatedPosts += chanThread.getOriginalPost()
     }
-
-    return updatedPosts
   }
 
   fun putManyThreadPostsIntoCache(
@@ -118,7 +112,7 @@ class ChanThreadsCache(
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions
-  ): List<ChanPost> {
+  ) {
     // We are doing some kinda heavy stuff (reply calculations) so we want this method to always be
     //  called on a background thread.
     ensureBackgroundThread()
@@ -152,8 +146,6 @@ class ChanThreadsCache(
     }
 
     chanThread.updateLastUpdateTime(cacheUpdateOptions)
-
-    return chanThread.getAllPostsForDatabasePersisting()
   }
 
   fun getCachedThreadsCount(): Int {

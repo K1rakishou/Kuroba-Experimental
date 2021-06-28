@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -359,7 +360,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       return null
     }
 
-    val fileName = mediaLocation.url.pathSegments.lastOrNull()
+    val fileName = mediaLocation.url.extractFileName()
       ?.let { fileName -> StringUtils.removeExtensionFromFileName(fileName) }
     val extension = StringUtils.extractFileNameExtension(mediaLocation.urlRaw)
 

@@ -22,10 +22,9 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
       ))
     }
 
-    fun cacheEverywhere(): ChanCacheOptions {
+    fun threadDownloaderOption(): ChanCacheOptions {
       return ChanCacheOptions(listOf(
-        ChanCacheOption.StoreEverywhere,
-        ChanCacheOption.CanAddInFrontOfTheMemoryCache
+        ChanCacheOption.StoreInDatabase
       ))
     }
 

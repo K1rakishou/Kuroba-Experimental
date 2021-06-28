@@ -88,7 +88,6 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -626,8 +625,7 @@ public class ManagerModule {
             ChanPostImageRepository chanPostImageRepository,
             ImageDownloadRequestRepository imageDownloadRequestRepository,
             ChanThreadManager chanThreadManager,
-            ThreadDownloadManager threadDownloadManager,
-            FileManager fileManager
+            ThreadDownloadManager threadDownloadManager
     ) {
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
@@ -640,8 +638,7 @@ public class ManagerModule {
                 chanPostImageRepository,
                 imageDownloadRequestRepository,
                 chanThreadManager,
-                threadDownloadManager,
-                fileManager
+                threadDownloadManager
         );
     }
 
@@ -695,14 +692,16 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ThreadDownloadManager provideThreadDownloadManager(
+            AppConstants appConstants,
             CoroutineScope appScope,
-            FileManager fileManager,
+            ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper,
             ThreadDownloadRepository threadDownloadRepository,
             ChanPostRepository chanPostRepository
     ) {
         return new ThreadDownloadManager(
+                appConstants,
                 appScope,
-                fileManager,
+                threadDownloaderFileManagerWrapper,
                 threadDownloadRepository,
                 chanPostRepository
         );
@@ -734,6 +733,7 @@ public class ManagerModule {
             ThreadDownloadManager threadDownloadManager,
             ChanThreadManager chanThreadManager,
             ChanPostRepository chanPostRepository,
+            ChanPostImageRepository chanPostImageRepository,
             ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper
     ) {
         return new ThreadDownloadingDelegate(
@@ -744,6 +744,7 @@ public class ManagerModule {
                 threadDownloadManager,
                 chanThreadManager,
                 chanPostRepository,
+                chanPostImageRepository,
                 threadDownloaderFileManagerWrapper
         );
     }

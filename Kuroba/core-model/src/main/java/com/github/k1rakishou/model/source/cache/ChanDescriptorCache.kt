@@ -404,4 +404,32 @@ class ChanDescriptorCache(
     return resultMap
   }
 
+  suspend fun getManyPostDescriptors(threadId: ThreadDBId): Map<PostDBId, PostDescriptor> {
+    database.ensureInTransaction()
+
+    val resultMap = mutableMapOf<PostDBId, PostDescriptor>()
+    val postDescriptorDatabaseObjects = chanPostDao.selectPostDescriptorDatabaseObjectsByThreadIds(threadId.id)
+
+    mutex.withLock {
+      postDescriptorDatabaseObjects.forEach { postDescriptorDatabaseObject ->
+        check(postDescriptorDatabaseObject.postDatabaseId >= 0L) {
+          "Bad databaseId ${postDescriptorDatabaseObject.postDatabaseId}"
+        }
+
+        val postDescriptor = PostDescriptor.create(
+          siteName = postDescriptorDatabaseObject.siteName,
+          boardCode = postDescriptorDatabaseObject.boardCode,
+          threadNo = postDescriptorDatabaseObject.threadNo,
+          postNo = postDescriptorDatabaseObject.postNo,
+          postSubNo = postDescriptorDatabaseObject.postSubNo
+        )
+
+        val postDBId = PostDBId(postDescriptorDatabaseObject.postDatabaseId)
+        resultMap[postDBId] = postDescriptor
+      }
+    }
+
+    return resultMap
+  }
+
 }

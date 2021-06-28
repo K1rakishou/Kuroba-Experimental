@@ -36,6 +36,7 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.Call
 import okhttp3.Callback
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -1050,4 +1051,8 @@ fun Request.Builder.appendCookieHeader(value: String): Request.Builder {
     .header(COOKIE_HEADER_NAME)!!
 
   return header(COOKIE_HEADER_NAME, fullCookieValue)
+}
+
+fun HttpUrl.extractFileName(): String? {
+  return this.pathSegments.lastOrNull()?.substringAfterLast("/")
 }

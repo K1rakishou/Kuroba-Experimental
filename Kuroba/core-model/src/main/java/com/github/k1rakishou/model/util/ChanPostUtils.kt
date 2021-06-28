@@ -83,8 +83,13 @@ object ChanPostUtils {
     return StringUtils.dirNameRemoveBadCharacters(title)
   }
 
+  @JvmOverloads
   @JvmStatic
-  fun getTitle(post: ChanPost?, chanDescriptor: ChanDescriptor?): String {
+  fun getTitle(
+    post: ChanPost?,
+    chanDescriptor: ChanDescriptor?,
+    maxCommentLength: Int = 200
+  ): String {
     if (post != null) {
       if (!TextUtils.isEmpty(post.subject)) {
         return "/" + post.boardDescriptor.boardCode + "/ - " + post.subject.toString()
@@ -93,7 +98,7 @@ object ChanPostUtils {
       val comment = post.postComment.originalComment()
 
       if (!TextUtils.isEmpty(comment)) {
-        val length = min(comment.length, 200)
+        val length = min(comment.length, maxCommentLength)
         return "/" + post.boardDescriptor.boardCode + "/ - " + comment.subSequence(0, length)
       }
 
@@ -112,8 +117,14 @@ object ChanPostUtils {
     return ""
   }
 
+  @JvmOverloads
   @JvmStatic
-  fun getTitle(subject: CharSequence?, comment: CharSequence?, threadDescriptor: ThreadDescriptor): String {
+  fun getTitle(
+    subject: CharSequence?,
+    comment: CharSequence?,
+    threadDescriptor: ThreadDescriptor,
+    maxCommentLength: Int = 200
+  ): String {
     val boardDescriptor = threadDescriptor.boardDescriptor()
 
     if (!TextUtils.isEmpty(subject)) {
@@ -121,7 +132,7 @@ object ChanPostUtils {
     }
 
     if (!TextUtils.isEmpty(comment)) {
-      val length = min(comment!!.length, 200)
+      val length = min(comment!!.length, maxCommentLength)
       return "/" + boardDescriptor.boardCode + "/ - " + comment.subSequence(0, length)
     }
 

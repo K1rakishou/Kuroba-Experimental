@@ -115,10 +115,18 @@ class LocalArchiveController(
     navigation.hasBack = false
 
     navigation.buildMenu(context)
-      .withMenuItemClickInterceptor { viewModel.unselectAll() }
-      .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
-      .withItem(R.drawable.ic_refresh_white_24dp) {
+      .withMenuItemClickInterceptor {
+        viewModel.unselectAll()
+        return@withMenuItemClickInterceptor true
+      }
+      .withItem(ACTION_SEARCH, R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
+      .withItem(ACTION_UPDATE_ALL, R.drawable.ic_refresh_white_24dp) {
         mainScope.launch {
+          if (!viewModel.hasNotCompletedDownloads()) {
+            showToast(getString(R.string.controller_local_archive_no_threads_to_update))
+            return@launch
+          }
+
           ThreadDownloadingCoordinator.startOrRestartThreadDownloading(
             appContext = context.applicationContext,
             appConstants = appConstants,
@@ -593,6 +601,11 @@ class LocalArchiveController(
     navigation.title = titleString
 
     toolbar.updateTitle(navigation)
+  }
+
+  companion object {
+    private const val ACTION_SEARCH = 0
+    private const val ACTION_UPDATE_ALL = 1
   }
 
 }

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.os.Parcelable
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
@@ -153,7 +154,7 @@ sealed class ViewableMedia(
             }
           }
           is MediaLocation.Remote -> {
-            location.url.pathSegments.lastOrNull()
+            location.url.extractFileName()
           }
         }
       }
@@ -191,7 +192,7 @@ sealed class ViewableMedia(
           }
         }
         is MediaLocation.Remote -> {
-          location.url.pathSegments.lastOrNull()
+          location.url.extractFileName()
         }
       }
     }
@@ -207,7 +208,7 @@ sealed class ViewableMedia(
           StringUtils.extractFileNameExtension(location.path)
         }
         is MediaLocation.Remote -> {
-          location.url.pathSegments.lastOrNull()?.let { segment ->
+          location.url.extractFileName()?.let { segment ->
             StringUtils.extractFileNameExtension(segment)
           }
         }

@@ -25,7 +25,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
@@ -65,16 +65,18 @@ class ImageLoaderV2(
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
   private val cacheHandler: CacheHandler,
-  private val fileManager: FileManager,
+  private val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper,
   private val siteResolver: SiteResolver,
   private val coilOkHttpClient: CoilOkHttpClient,
-  private val threadDownloadManager: ThreadDownloadManager,
-  private val chanThreadManager: ChanThreadManager
+  private val threadDownloadManager: ThreadDownloadManager
 ) {
   private val mutex = Mutex()
 
   @GuardedBy("mutex")
   private val activeRequests = LruCache<String, ActiveRequest>(1024)
+
+  private val fileManager: FileManager
+    get() = imageLoaderFileManagerWrapper.fileManager
 
   private var imageNotFoundDrawable: CachedTintedErrorDrawable? = null
   private var imageErrorLoadingDrawable: CachedTintedErrorDrawable? = null
@@ -558,11 +560,10 @@ class ImageLoaderV2(
     BackgroundUtils.ensureBackgroundThread()
 
     val httpUrl = url.toHttpUrlOrNull()
-
     if (postDescriptor != null && httpUrl != null) {
       val foundFile = threadDownloadManager.findDownloadedFile(
         httpUrl = httpUrl,
-        chanThread = chanThreadManager.getChanThread(postDescriptor.threadDescriptor())
+        threadDescriptor = postDescriptor.threadDescriptor()
       )
 
       if (foundFile != null && fileManager.getLength(foundFile) > 0L && fileManager.canRead(foundFile)) {

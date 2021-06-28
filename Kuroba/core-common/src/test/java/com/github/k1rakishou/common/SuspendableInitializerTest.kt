@@ -19,12 +19,9 @@ class SuspendableInitializerTest {
 
     repeat(100) { index ->
       launch {
-        println("TTTAAA awaitUntilInitialized() start $index")
         suspendableInitializer.awaitUntilInitialized()
-        println("TTTAAA awaitUntilInitialized() counter=${counter.get()}, end $index")
 
         if (counter.incrementAndGet() >= 100) {
-          println("TTTAAA awaitUntilInitialized() DONE")
           completableDeferred.complete(counter.get())
         }
       }
