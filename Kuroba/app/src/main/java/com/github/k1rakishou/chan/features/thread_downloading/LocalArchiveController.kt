@@ -352,6 +352,14 @@ class LocalArchiveController(
           .fillMaxWidth()
           .wrapContentHeight()
         ) {
+          val contentAlpha = remember(key1 = threadDownloadView.status) {
+            when (threadDownloadView.status) {
+              ThreadDownload.Status.Running,
+              ThreadDownload.Status.Stopped -> DefaultAlpha
+              ThreadDownload.Status.Completed -> 0.7f
+            }
+          }
+
           KurobaComposeText(
             text = threadDownloadView.threadSubject,
             fontSize = 14.sp,
@@ -360,6 +368,7 @@ class LocalArchiveController(
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight()
+              .alpha(contentAlpha)
           )
 
           Spacer(modifier = Modifier.height(2.dp))
@@ -384,6 +393,7 @@ class LocalArchiveController(
                   .fillMaxHeight()
                   .width(60.dp)
                   .align(Alignment.CenterVertically)
+                  .alpha(contentAlpha)
               )
 
               Spacer(modifier = Modifier.width(4.dp))
@@ -397,20 +407,15 @@ class LocalArchiveController(
                 .fillMaxWidth()
                 .weight(1f)
                 .align(Alignment.CenterVertically)
+                .alpha(contentAlpha)
             )
-
-            val iconAlpha = if (threadDownloadView.status == ThreadDownload.Status.Completed) {
-              0.5f
-            } else {
-              DefaultAlpha
-            }
 
             Column(modifier = Modifier
               .wrapContentSize()
               .align(Alignment.CenterVertically)
             ) {
-              BuildThreadDownloadStatusIcon(threadDownloadView, threadDescriptor, iconAlpha)
-              BuildLastThreadUpdateStatusIcon(threadDownloadView, iconAlpha)
+              BuildThreadDownloadStatusIcon(threadDownloadView, threadDescriptor, contentAlpha)
+              BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
             }
           }
         }
@@ -468,7 +473,6 @@ class LocalArchiveController(
     val colorFilter = remember(key1 = isBackColorDark) {
       ColorFilter.tint(Color(themeEngine.resolveDrawableTintColor(isBackColorDark)))
     }
-
 
     val painter = when (threadDownloadView.status) {
       ThreadDownload.Status.Running -> {

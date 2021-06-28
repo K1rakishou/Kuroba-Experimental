@@ -1334,6 +1334,7 @@ Don't have a 4chan Pass?<br>
     <string name="media_viewer_open_album_action">Open album</string>
 
     <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
+    <string name="thread_downloader_settings_controller_location_info">Thread media is stored on the internal storage.\n\nDirectory: %1$s</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
