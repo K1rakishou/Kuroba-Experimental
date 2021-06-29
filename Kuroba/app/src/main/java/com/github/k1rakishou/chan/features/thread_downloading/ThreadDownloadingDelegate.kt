@@ -32,6 +32,8 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
@@ -49,7 +51,8 @@ class ThreadDownloadingDelegate(
   private val chanThreadManager: ChanThreadManager,
   private val chanPostRepository: ChanPostRepository,
   private val chanPostImageRepository: ChanPostImageRepository,
-  private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper
+  private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper,
+  private val threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
 ) {
   private val fileManager: FileManager
     get() = threadDownloaderFileManagerWrapper.fileManager
@@ -107,12 +110,27 @@ class ThreadDownloadingDelegate(
           return@forEachIndexed
         }
 
+        threadDownloadProgressNotifier.notifyProgressEvent(
+          threadDownload.threadDescriptor,
+          ThreadDownloadProgressNotifier.Event.Progress(0.1f)
+        )
+
         processThread(
           threadDownload = threadDownload,
           index = index + 1,
           total = threadDownloads.size,
           outOfDiskSpaceError = outOfDiskSpaceError,
           outputDirError = outputDirError
+        )
+
+        threadDownloadProgressNotifier.notifyProgressEvent(
+          threadDownload.threadDescriptor,
+          ThreadDownloadProgressNotifier.Event.Progress(1f)
+        )
+
+        threadDownloadProgressNotifier.notifyProgressEvent(
+          threadDownload.threadDescriptor,
+          ThreadDownloadProgressNotifier.Event.Empty
         )
       } catch (error: CancellationException) {
         Logger.e(TAG, "doWorkInternal() ${threadDownload.threadDescriptor} canceled")
@@ -139,6 +157,11 @@ class ThreadDownloadingDelegate(
       ChanLoadOptions.retainAll(),
       ChanCacheOptions.threadDownloaderOption(),
       ChanReadOptions.default()
+    )
+
+    threadDownloadProgressNotifier.notifyProgressEvent(
+      threadDownload.threadDescriptor,
+      ThreadDownloadProgressNotifier.Event.Progress(0.2f)
     )
 
     if (threadLoadResult is ThreadLoadResult.Error) {
@@ -186,8 +209,6 @@ class ThreadDownloadingDelegate(
     val status = "archived: ${originalPost.archived}, " +
       "closed: ${originalPost.closed}, " +
       "deleted: ${originalPost.deleted}, " +
-      "postsCount: ${chanThread.postsCount}, " +
-      "imagesCount: ${chanThread.imagesCount}, " +
       "outOfDiskSpace: ${outOfDiskSpaceError.get()}, " +
       "outputDirError: ${outputDirError.get()}, "
 
@@ -230,6 +251,10 @@ class ThreadDownloadingDelegate(
       fileManager.create(noMediaFile)
     }
 
+    val progressIncrement = 0.8f / (chanPostImages.size.toFloat() * 2) // thumbnails and full images
+    val mutex = Mutex()
+    var totalProgress = 0.2f
+
     processDataCollectionConcurrently(
       dataList = chanPostImages,
       batchCount = batchCount,
@@ -257,6 +282,15 @@ class ThreadDownloadingDelegate(
         )
       }
 
+      val newProgress1 = mutex.withLock {
+        totalProgress += progressIncrement
+        totalProgress
+      }
+      threadDownloadProgressNotifier.notifyProgressEvent(
+        threadDescriptor,
+        ThreadDownloadProgressNotifier.Event.Progress(newProgress1)
+      )
+
       val fullImageUrl = postImage.imageUrl
       val fullImageName = postImage.imageUrl?.extractFileName()
 
@@ -270,6 +304,15 @@ class ThreadDownloadingDelegate(
           outputDirError = outputDirError
         )
       }
+
+      val newProgress2 = mutex.withLock {
+        totalProgress += progressIncrement
+        totalProgress
+      }
+      threadDownloadProgressNotifier.notifyProgressEvent(
+        threadDescriptor,
+        ThreadDownloadProgressNotifier.Event.Progress(newProgress2)
+      )
     }
 
     Logger.d(TAG, "processThreadMedia($index/$total) chanThread=${threadDescriptor} success")

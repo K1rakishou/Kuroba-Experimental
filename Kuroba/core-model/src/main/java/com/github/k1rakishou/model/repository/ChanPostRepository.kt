@@ -586,7 +586,7 @@ class ChanPostRepository(
       cacheOptions = cacheOptions
     )
 
-    if (cacheOptions.canStoreInDatabase() && parsedPosts.isNotEmpty()) {
+    if (cacheOptions.canStoreInDatabase()) {
       Logger.d(TAG, "insertOrUpdateCatalogOriginalPosts() inserting ${parsedPosts.size} posts into the DB")
       localSource.insertManyOriginalPosts(parsedPosts, cacheOptions)
     }
@@ -628,15 +628,22 @@ class ChanPostRepository(
       cacheUpdateOptions = cacheUpdateOptions
     )
 
-    if (cacheOptions.canStoreInDatabase() && parsedPosts.isNotEmpty()) {
-      Logger.d(TAG, "insertOrUpdateThreadPosts() inserting ${parsedPosts.size} posts into the DB")
+    if (cacheOptions.canStoreInDatabase()) {
+      val currentPostsInCache = chanThreadsCache.getAllPostsForDatabasePersisting(threadDescriptor)
+
+      Logger.d(TAG, "insertOrUpdateThreadPosts() inserting ${parsedPosts.size} new posts " +
+        "and ${currentPostsInCache.size} cached into the DB")
+
       localSource.insertPosts(parsedPosts, cacheOptions)
+      localSource.insertPosts(currentPostsInCache, cacheOptions)
     }
 
     return postsThatDifferWithCache.size
   }
 
-  suspend fun getThreadOriginalPostsByDatabaseId(threadDatabaseIds: Collection<Long>): ModularResult<List<ChanOriginalPost>> {
+  suspend fun getThreadOriginalPostsByDatabaseId(
+    threadDatabaseIds: Collection<Long>
+  ): ModularResult<List<ChanOriginalPost>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     return applicationScope.dbCall {

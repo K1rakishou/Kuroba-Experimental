@@ -5,6 +5,7 @@ import android.widget.Toast
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.updateTransition
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -20,6 +21,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
@@ -41,6 +43,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.animatedVectorResource
@@ -416,8 +419,42 @@ class LocalArchiveController(
             ) {
               BuildThreadDownloadStatusIcon(threadDownloadView, threadDescriptor, contentAlpha)
               BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
+              BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
             }
           }
+        }
+      }
+    }
+  }
+
+  @Composable
+  private fun BuildThreadDownloadProgressIcon(
+    threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
+    contentAlpha: Float
+  ) {
+    val downloadProgressEvent by viewModel.collectDownloadProgressEventsAsState(
+      threadDescriptor = threadDownloadView.threadDescriptor
+    )
+
+    val isBackColorDark = LocalChanTheme.current.isBackColorDark
+    val color = remember(key1 = isBackColorDark) {
+      Color(themeEngine.resolveDrawableTintColor(isBackColorDark))
+    }
+
+    Box(modifier = Modifier.size(ICON_SIZE).padding(4.dp)) {
+      if (downloadProgressEvent is ThreadDownloadProgressNotifier.Event.Progress) {
+        val percent = (downloadProgressEvent as ThreadDownloadProgressNotifier.Event.Progress).percent
+        val sweepAngle = remember(key1 = percent) { 360f * percent }
+
+        Canvas(modifier = Modifier.fillMaxSize()) {
+          drawArc(
+            color = color,
+            startAngle = 0f,
+            sweepAngle = sweepAngle,
+            useCenter = false,
+            alpha = contentAlpha,
+            style = Stroke(width = 8f)
+          )
         }
       }
     }
@@ -442,7 +479,7 @@ class LocalArchiveController(
         alpha = iconAlpha,
         colorFilter = colorFilter,
         modifier = Modifier
-          .wrapContentSize(align = Alignment.Center)
+          .size(ICON_SIZE)
           .clickable { showToast(R.string.controller_local_archive_thread_last_download_status_ok, Toast.LENGTH_LONG) }
       )
     } else {
@@ -452,7 +489,7 @@ class LocalArchiveController(
         alpha = iconAlpha,
         colorFilter = colorFilter,
         modifier = Modifier
-          .wrapContentSize(align = Alignment.Center)
+          .size(ICON_SIZE)
           .clickable {
             val message = getString(R.string.controller_local_archive_thread_last_download_status_error, downloadResultMsg)
             showToast(message, Toast.LENGTH_LONG)
@@ -504,7 +541,7 @@ class LocalArchiveController(
       contentDescription = null,
       colorFilter = colorFilter,
       modifier = Modifier
-        .wrapContentSize(align = Alignment.Center)
+        .size(ICON_SIZE)
         .clickable { }
     )
   }
@@ -543,6 +580,9 @@ class LocalArchiveController(
       }
       LocalArchiveViewModel.ArchiveMenuItemType.Start -> {
         viewModel.startDownloads(selectedItems)
+      }
+      LocalArchiveViewModel.ArchiveMenuItemType.Export -> {
+        // TODO
       }
     }
   }
@@ -610,6 +650,8 @@ class LocalArchiveController(
   companion object {
     private const val ACTION_SEARCH = 0
     private const val ACTION_UPDATE_ALL = 1
+
+    private val ICON_SIZE = 26.dp
   }
 
 }

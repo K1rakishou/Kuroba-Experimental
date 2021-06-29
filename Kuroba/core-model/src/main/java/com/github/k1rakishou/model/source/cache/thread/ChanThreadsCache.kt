@@ -47,6 +47,10 @@ class ChanThreadsCache(
     chanThreads.values.forEach { chanThread -> chanThread.clearPostHashes() }
   }
 
+  fun getAllPostsForDatabasePersisting(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    return chanThreads[threadDescriptor]?.getAllPostsForDatabasePersisting() ?: emptyList()
+  }
+
   fun cacheNeedsUpdate(
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions

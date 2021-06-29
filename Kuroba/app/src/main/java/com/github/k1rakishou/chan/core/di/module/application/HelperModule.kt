@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
@@ -180,6 +181,12 @@ class HelperModule {
   @Singleton
   fun provideChanLoadProgressNotifier(): ChanLoadProgressNotifier {
     return ChanLoadProgressNotifier()
+  }
+
+  @Provides
+  @Singleton
+  fun provideThreadDownloadProgressNotifier(): ThreadDownloadProgressNotifier {
+    return ThreadDownloadProgressNotifier()
   }
 
 }

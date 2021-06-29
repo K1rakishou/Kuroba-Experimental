@@ -124,6 +124,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="bottom_menu_item_delete">Delete</string>
     <string name="bottom_menu_item_stop">Stop</string>
     <string name="bottom_menu_item_start">Start</string>
+    <string name="bottom_menu_item_export">Export</string>
 
     <string name="permission_app_settings">App settings</string>
     <string name="permission_grant">Grant</string>

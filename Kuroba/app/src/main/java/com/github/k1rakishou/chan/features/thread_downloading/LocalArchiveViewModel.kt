@@ -40,6 +40,8 @@ class LocalArchiveViewModel : BaseViewModel() {
   lateinit var threadDownloadManager: ThreadDownloadManager
   @Inject
   lateinit var chanPostRepository: ChanPostRepository
+  @Inject
+  lateinit var threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
 
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
 
@@ -95,6 +97,14 @@ class LocalArchiveViewModel : BaseViewModel() {
   @Composable
   fun collectSelectionModeAsState(): State<BaseSelectionHelper.SelectionEvent?> {
     return _selectionMode.collectAsState()
+  }
+
+  @Composable
+  fun collectDownloadProgressEventsAsState(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): State<ThreadDownloadProgressNotifier.Event> {
+    return threadDownloadProgressNotifier.listenForProgress(threadDescriptor)
+      .collectAsState()
   }
 
   fun updateQueryAndReload(query: String?) {
@@ -244,6 +254,20 @@ class LocalArchiveViewModel : BaseViewModel() {
         R.string.bottom_menu_item_start,
         {
           val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Start, getCurrentlySelectedItems())
+          _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
+
+          unselectAll()
+        }
+      )
+    }
+
+    if (currentlySelectedItems.size == 1) {
+      itemsList += BottomMenuPanelItem(
+        ArchiveMenuItemId(ArchiveMenuItemType.Export),
+        R.drawable.ic_baseline_share_24,
+        R.string.bottom_menu_item_export,
+        {
+          val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Export, getCurrentlySelectedItems())
           _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
 
           unselectAll()
@@ -403,7 +427,8 @@ class LocalArchiveViewModel : BaseViewModel() {
   enum class ArchiveMenuItemType(val id: Int) {
     Delete(0),
     Stop(1),
-    Start(2)
+    Start(2),
+    Export(3)
   }
 
   class ArchiveMenuItemId(val archiveMenuItemType: ArchiveMenuItemType) :

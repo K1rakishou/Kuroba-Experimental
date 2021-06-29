@@ -82,6 +82,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelega
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
@@ -734,7 +735,8 @@ public class ManagerModule {
             ChanThreadManager chanThreadManager,
             ChanPostRepository chanPostRepository,
             ChanPostImageRepository chanPostImageRepository,
-            ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper
+            ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper,
+            ThreadDownloadProgressNotifier threadDownloadProgressNotifier
     ) {
         return new ThreadDownloadingDelegate(
                 appConstants,
@@ -745,7 +747,8 @@ public class ManagerModule {
                 chanThreadManager,
                 chanPostRepository,
                 chanPostImageRepository,
-                threadDownloaderFileManagerWrapper
+                threadDownloaderFileManagerWrapper,
+                threadDownloadProgressNotifier
         );
     }
 
