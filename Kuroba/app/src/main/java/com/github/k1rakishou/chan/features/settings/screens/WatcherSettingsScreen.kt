@@ -67,16 +67,8 @@ class WatcherSettingsScreen(
           },
           itemNameMapper = { timeout ->
             return@createBuilder kotlin.run {
-              val isTimeoutInMinutes = if (AppModuleAndroidUtils.isDevBuild()) {
-                timeout == THREAD_DOWNLOADER_INTERVALS[0]
-                  || timeout == THREAD_DOWNLOADER_INTERVALS[1]
-                  || timeout == THREAD_DOWNLOADER_INTERVALS[2]
-              } else {
-                timeout == THREAD_DOWNLOADER_INTERVALS[0]
-                  || timeout == THREAD_DOWNLOADER_INTERVALS[1]
-              }
-
-              if (isTimeoutInMinutes) {
+              val timeoutShouldBeInMinutes = TimeUnit.MILLISECONDS.toHours(timeout.toLong()).toInt() <= 0
+              if (timeoutShouldBeInMinutes) {
                 return@run getString(
                   R.string.minutes,
                   TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()

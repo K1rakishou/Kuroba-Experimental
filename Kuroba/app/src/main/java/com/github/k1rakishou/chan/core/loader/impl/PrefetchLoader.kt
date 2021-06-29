@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -16,8 +17,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.data.post.LoaderType
+import com.github.k1rakishou.model.data.thread.ThreadDownload
 import io.reactivex.Scheduler
 import io.reactivex.Single
+import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.math.abs
 
@@ -26,7 +29,8 @@ class PrefetchLoader(
   private val fileCacheV2: FileCacheV2,
   private val cacheHandler: CacheHandler,
   private val chanThreadManager: ChanThreadManager,
-  private val prefetchStateManager: PrefetchStateManager
+  private val prefetchStateManager: PrefetchStateManager,
+  private val threadDownloadManager: ThreadDownloadManager
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
@@ -51,6 +55,14 @@ class PrefetchLoader(
 
   override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
     BackgroundUtils.ensureBackgroundThread()
+
+    val threadDescriptor = postLoaderData.postDescriptor.threadDescriptor()
+    val downloadStatus = runBlocking { threadDownloadManager.getStatus(threadDescriptor) }
+
+    if (downloadStatus != null && downloadStatus != ThreadDownload.Status.Stopped) {
+      // If downloading a thread then don't use the media prefetch
+      return rejected()
+    }
 
     val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
     if (post == null) {

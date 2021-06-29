@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Youtub
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
 import java.util.ArrayList;
@@ -35,6 +36,7 @@ public class LoaderModule {
             CacheHandler cacheHandler,
             PrefetchStateManager prefetchStateManager,
             ChanThreadManager chanThreadManager,
+            ThreadDownloadManager threadDownloadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
         return new PrefetchLoader(
@@ -42,7 +44,8 @@ public class LoaderModule {
                 fileCacheV2,
                 cacheHandler,
                 chanThreadManager,
-                prefetchStateManager
+                prefetchStateManager,
+                threadDownloadManager
         );
     }
 

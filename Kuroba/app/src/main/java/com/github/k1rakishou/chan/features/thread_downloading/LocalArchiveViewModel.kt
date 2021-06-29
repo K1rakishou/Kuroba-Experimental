@@ -25,6 +25,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -104,7 +105,8 @@ class LocalArchiveViewModel : BaseViewModel() {
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): State<ThreadDownloadProgressNotifier.Event> {
     return threadDownloadProgressNotifier.listenForProgress(threadDescriptor)
-      .collectAsState()
+      .sample(64L)
+      .collectAsState(ThreadDownloadProgressNotifier.Event.Empty)
   }
 
   fun updateQueryAndReload(query: String?) {
