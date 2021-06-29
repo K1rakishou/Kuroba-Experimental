@@ -253,6 +253,7 @@ public class ChanSettings {
 
     //region THREAD DOWNLOADER
     public static IntegerSetting threadDownloaderUpdateInterval;
+    public static BooleanSetting threadDownloaderDownloadMediaOnMeteredNetwork;
     //endregion
 
     //region APPEARANCE
@@ -425,6 +426,7 @@ public class ChanSettings {
 
             // region THREAD DOWNLOADER
             threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1), true);
+            threadDownloaderDownloadMediaOnMeteredNetwork = new BooleanSetting(provider, "preference_thread_downloader_download_media_on_metered_network", false);
             //endregion
 
             //region APPEARANCE

@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
+import android.net.ConnectivityManager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -7,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -161,7 +164,7 @@ class ThreadDownloadingDelegate(
 
     threadDownloadProgressNotifier.notifyProgressEvent(
       threadDownload.threadDescriptor,
-      ThreadDownloadProgressNotifier.Event.Progress(0.2f)
+      ThreadDownloadProgressNotifier.Event.Progress(POSTS_PROCESSED_PROGRESS)
     )
 
     if (threadLoadResult is ThreadLoadResult.Error) {
@@ -173,11 +176,21 @@ class ThreadDownloadingDelegate(
 
     val ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId
 
-    val chanPostImages = chanPostImageRepository.selectPostImagesByOwnerThreadDatabaseId(ownerThreadDatabaseId)
+    val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
+      true
+    } else {
+      AppModuleAndroidUtils.isConnected(ConnectivityManager.TYPE_WIFI)
+    }
+
+    val canProcessThreadMedia = threadDownload.downloadMedia
+      && !outOfDiskSpaceError.get()
+      && isNetworkGoodForMediaDownload
+
+    if (canProcessThreadMedia) {
+      val chanPostImages = chanPostImageRepository.selectPostImagesByOwnerThreadDatabaseId(ownerThreadDatabaseId)
         .peekError { error -> Logger.e(TAG, "Failed to select images by threadId: ${ownerThreadDatabaseId}", error) }
         .mapErrorToValue { emptyList<ChanPostImage>() }
 
-    if (chanPostImages.isNotEmpty() && threadDownload.downloadMedia && !outOfDiskSpaceError.get()) {
       processThreadMedia(
         index = index,
         total = total,
@@ -186,6 +199,11 @@ class ThreadDownloadingDelegate(
         outOfDiskSpaceError = outOfDiskSpaceError,
         outputDirError = outputDirError
       )
+    } else {
+      Logger.d(TAG, "processThread($index/$total) " +
+        "isNetworkGoodForMediaDownload=$isNetworkGoodForMediaDownload, " +
+        "downloadMedia=${threadDownload.downloadMedia}, " +
+        "outOfDiskSpaceError=${outOfDiskSpaceError.get()}")
     }
 
     threadDownloadManager.onDownloadProcessed(
@@ -224,6 +242,8 @@ class ThreadDownloadingDelegate(
     outputDirError: AtomicBoolean,
   ) {
     if (chanPostImages.isEmpty()) {
+      Logger.d(TAG, "processThreadMedia($index/$total) threadDescriptor=${threadDescriptor}, " +
+        "chanPostImages=${chanPostImages.size}, nothing to process")
       return
     }
 
@@ -251,15 +271,26 @@ class ThreadDownloadingDelegate(
       fileManager.create(noMediaFile)
     }
 
-    val progressIncrement = 0.8f / (chanPostImages.size.toFloat() * 2) // thumbnails and full images
+    // "* 2" because thumbnails and full images
+    val progressIncrement = (1f - POSTS_PROCESSED_PROGRESS) / (chanPostImages.size.toFloat() * 2)
     val mutex = Mutex()
-    var totalProgress = 0.2f
+    var totalProgress = POSTS_PROCESSED_PROGRESS
 
     processDataCollectionConcurrently(
       dataList = chanPostImages,
       batchCount = batchCount,
       dispatcher = Dispatchers.IO
     ) { postImage ->
+      val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
+        true
+      } else {
+        AppModuleAndroidUtils.isConnected(ConnectivityManager.TYPE_WIFI)
+      }
+
+      if (!isNetworkGoodForMediaDownload) {
+        return@processDataCollectionConcurrently
+      }
+
       if (outOfDiskSpaceError.get()) {
         return@processDataCollectionConcurrently
       }
@@ -402,6 +433,7 @@ class ThreadDownloadingDelegate(
   companion object {
     private const val TAG = "ThreadDownloadingDelegate"
     private const val NO_MEDIA_FILE_NAME = ".nomedia"
+    private const val POSTS_PROCESSED_PROGRESS = 0.2f
 
     fun formatDirectoryName(threadDescriptor: ChanDescriptor.ThreadDescriptor): String {
       return buildString {

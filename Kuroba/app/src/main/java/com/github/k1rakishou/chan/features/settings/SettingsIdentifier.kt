@@ -275,6 +275,7 @@ sealed class WatcherScreen(
     WatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object ThreadDownloaderUpdateInterval : ThreadDownloaderGroup("thread_downloader_update_interval")
+    object ThreadDownloaderDownloadMediaOnMeteredNetwork : ThreadDownloaderGroup("thread_downloader_download_media_on_metered_network")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = WatcherScreen.getScreenIdentifier()

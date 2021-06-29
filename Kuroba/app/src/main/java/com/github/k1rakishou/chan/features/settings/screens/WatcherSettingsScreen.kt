@@ -84,6 +84,14 @@ class WatcherSettingsScreen(
           setting = ChanSettings.threadDownloaderUpdateInterval
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = WatcherScreen.ThreadDownloaderGroup.ThreadDownloaderDownloadMediaOnMeteredNetwork,
+          topDescriptionIdFunc = { R.string.setting_thread_downloader_media_metered_network },
+          bottomDescriptionIdFunc = { R.string.setting_thread_downloader_media_metered_network_description },
+          setting = ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork
+        )
+
         group
       }
     )

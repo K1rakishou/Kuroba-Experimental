@@ -617,6 +617,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_thread_downloader_group">Thread downloader</string>
     <string name="setting_thread_downloader_update_interval">Thread downloader update interval</string>
     <string name="setting_thread_downloader_update_interval_description">The interval between updates</string>
+    <string name="setting_thread_downloader_media_metered_network">Download media on metered network</string>
+    <string name="setting_thread_downloader_media_metered_network_description">Turning this setting off will disable thread media downloading when not connected to WiFi. Thread posts will still be downloaded.</string>
 
     <string name="settings_group_about">About</string>
     <string name="settings_update_check">Tap to check for updates</string>
