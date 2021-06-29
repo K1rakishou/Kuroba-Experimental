@@ -48,6 +48,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.options.PostsToReloadOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
@@ -146,6 +147,8 @@ class ChanThreadLoaderCoordinator(
     chanCacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions,
     chanReadOptions: ChanReadOptions,
+    chanLoadOptions: ChanLoadOptions,
+    chanReaderProcessorOptions: ChanReaderProcessor.Options
   ): ModularResult<ThreadLoadResult> {
     val chanLoadUrl = getChanUrl(site, chanDescriptor)
     val chanReader = site.chanReader()
@@ -217,6 +220,8 @@ class ChanThreadLoaderCoordinator(
               responseBodyStream = inputStream,
               chanDescriptor = chanDescriptor,
               chanReadOptions = chanReadOptions,
+              chanLoadOptions = chanLoadOptions,
+              chanReaderProcessorOptions = chanReaderProcessorOptions,
               chanReader = chanReader
             ).unwrap()
           }
@@ -314,6 +319,8 @@ class ChanThreadLoaderCoordinator(
         val chanReaderProcessor = ChanReaderProcessor(
           chanPostRepository,
           ChanReadOptions.default(),
+          ChanLoadOptions.retainAll(),
+          ChanReaderProcessor.Options(),
           threadDescriptor
         )
 
@@ -376,6 +383,8 @@ class ChanThreadLoaderCoordinator(
     responseBodyStream: InputStream,
     chanDescriptor: ChanDescriptor,
     chanReadOptions: ChanReadOptions,
+    chanLoadOptions: ChanLoadOptions,
+    chanReaderProcessorOptions: ChanReaderProcessor.Options,
     chanReader: ChanReader
   ): ModularResult<ChanReaderProcessor> {
     BackgroundUtils.ensureBackgroundThread()
@@ -384,6 +393,8 @@ class ChanThreadLoaderCoordinator(
       val chanReaderProcessor = ChanReaderProcessor(
         chanPostRepository,
         chanReadOptions,
+        chanLoadOptions,
+        chanReaderProcessorOptions,
         chanDescriptor
       )
 

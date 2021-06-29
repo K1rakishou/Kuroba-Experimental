@@ -13,12 +13,13 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
       || chanLoadOption is ChanLoadOption.DeletePostsFromMemoryCache
   }
 
-  fun canForceUpdate(): Boolean {
-    return chanLoadOption is ChanLoadOption.ForceUpdatePosts
-  }
-
   fun canClearDatabase(): Boolean {
     return chanLoadOption is ChanLoadOption.ClearMemoryAndDatabaseCaches
+  }
+
+  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
+    return chanLoadOption is ChanLoadOption.ForceUpdatePosts
+      && chanLoadOption.postDescriptors.contains(postDescriptor)
   }
 
   companion object {
@@ -42,7 +43,8 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
       return ChanLoadOptions(ChanLoadOption.DeletePostsFromMemoryCache(postDescriptors))
     }
 
-    fun forceUpdatePosts(postDescriptors: Collection<PostDescriptor>): ChanLoadOptions {
+    // postsAreTheSame will always return false for posts in the set
+    fun forceUpdatePosts(postDescriptors: Set<PostDescriptor>): ChanLoadOptions {
       return ChanLoadOptions(ChanLoadOption.ForceUpdatePosts(postDescriptors))
     }
   }
@@ -73,7 +75,7 @@ sealed class ChanLoadOption {
     }
   }
 
-  class ForceUpdatePosts(val postDescriptors: Collection<PostDescriptor>) : ChanLoadOption() {
+  class ForceUpdatePosts(val postDescriptors: Set<PostDescriptor>) : ChanLoadOption() {
     override fun toString(): String {
       return "ForceUpdatePosts{postDescriptorsCount=${postDescriptors.size}}"
     }

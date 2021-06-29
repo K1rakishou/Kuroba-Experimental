@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -155,11 +156,12 @@ class ThreadDownloadingDelegate(
     Logger.d(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) start")
 
     val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
-      threadDescriptor,
-      ChanCacheUpdateOptions.UpdateCache,
-      ChanLoadOptions.retainAll(),
-      ChanCacheOptions.threadDownloaderOption(),
-      ChanReadOptions.default()
+      chanDescriptor = threadDescriptor,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+      chanLoadOptions = ChanLoadOptions.retainAll(),
+      chanCacheOptions = ChanCacheOptions.onlyStoreInDatabase(),
+      chanReadOptions = ChanReadOptions.default(),
+      chanReaderProcessorOptions = ChanReaderProcessor.Options(isDownloadingThread = true)
     )
 
     threadDownloadProgressNotifier.notifyProgressEvent(

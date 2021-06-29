@@ -1,5 +1,9 @@
 package com.github.k1rakishou.chan.ui.controller;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+
 import android.content.Context;
 import android.widget.ProgressBar;
 
@@ -12,10 +16,6 @@ import org.jetbrains.annotations.Nullable;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function0;
-
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class LoadingViewController extends BaseFloatingController {
     private ColorizableTextView loadingControllerTitle;
@@ -60,7 +60,11 @@ public class LoadingViewController extends BaseFloatingController {
     @Override
     public void onDestroy() {
         super.onDestroy();
-        cancellationFunc = null;
+
+        if (cancellationFunc != null) {
+            cancellationFunc.invoke();
+            cancellationFunc = null;
+        }
     }
 
     public void enableBack() {

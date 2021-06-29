@@ -220,12 +220,6 @@ class ChanPostRepository(
     }
   }
 
-  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
-    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
-
-    return chanThreadsCache.isForceUpdating(postDescriptor)
-  }
-
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
@@ -488,6 +482,21 @@ class ChanPostRepository(
         )
 
         return@tryWithTransaction postsFromDatabase
+      }
+    }
+  }
+
+  suspend fun getThreadPostsFromDatabase(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<List<ChanPost>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
+
+    Logger.d(TAG, "getThreadPosts(threadDescriptor=$threadDescriptor)")
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.getThreadPosts(threadDescriptor)
       }
     }
   }

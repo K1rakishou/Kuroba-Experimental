@@ -291,17 +291,6 @@ class ChanThreadsCache(
     chanThreads[threadDescriptor]?.updateLastAccessTime()
   }
 
-  fun forceUpdatePosts(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    postDescriptors: Collection<PostDescriptor>
-  ) {
-    chanThreads[threadDescriptor]?.forceUpdatePosts(postDescriptors)
-  }
-
-  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
-    return chanThreads[postDescriptor.threadDescriptor()]?.isForceUpdating(postDescriptor) ?: false
-  }
-
   fun deletePost(postDescriptor: PostDescriptor) {
     deletePosts(listOf(postDescriptor))
   }

@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUse
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
+import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
@@ -237,6 +238,22 @@ public class UseCaseModule {
                 proxiedOkHttpClient,
                 gson,
                 themeEngine
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ExportDownloadedThreadAsHtmlUseCase provideExportDownloadedThreadAsHtmlUseCase(
+            Context appContext,
+            AppConstants appConstants,
+            FileManager fileManager,
+            ChanPostRepository chanPostRepository
+    ) {
+        return new ExportDownloadedThreadAsHtmlUseCase(
+                appContext,
+                appConstants,
+                fileManager,
+                chanPostRepository
         );
     }
 

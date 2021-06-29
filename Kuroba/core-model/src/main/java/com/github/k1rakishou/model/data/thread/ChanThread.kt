@@ -41,8 +41,6 @@ class ChanThread(
   // Stores hashes of unparsed post comments, the way we got the from the server, without any spans added yet.
   private val rawPostHashesMap = mutableMapOf<PostDescriptor, MurmurHashUtils.Murmur3Hash>()
   @GuardedBy("lock")
-  private val forceUpdateOnNextUpdateIteration = hashSetWithCap<PostDescriptor>(32)
-  @GuardedBy("lock")
   private var lastAccessTime = initialLastAccessTime
   @GuardedBy("lock")
   private var lastUpdateTime = 0L
@@ -134,7 +132,6 @@ class ChanThread(
         if (!postsByPostDescriptors.containsKey(newChanPost.postDescriptor)) {
           threadPosts.add(newChanPost)
           postsByPostDescriptors[newChanPost.postDescriptor] = newChanPost
-          forceUpdateOnNextUpdateIteration.remove(newChanPost.postDescriptor)
 
           addedOrUpdatedPosts = true
           addedPostsCount++
@@ -147,9 +144,6 @@ class ChanThread(
         check(oldChanPostIndex >= 0) { "Bad oldChanPostIndex: $oldChanPostIndex" }
 
         val oldChanPost = threadPosts[oldChanPostIndex]
-        if (oldChanPost == newChanPost && oldChanPost.postDescriptor !in forceUpdateOnNextUpdateIteration) {
-          return@forEach
-        }
 
         // We already have this post, we need to merge old and new posts into one and replace old
         // post with the merged post
@@ -157,7 +151,6 @@ class ChanThread(
 
         threadPosts[oldChanPostIndex] = mergedPost
         postsByPostDescriptors[newChanPost.postDescriptor] = mergedPost
-        forceUpdateOnNextUpdateIteration.remove(newChanPost.postDescriptor)
 
         addedOrUpdatedPosts = true
         ++updatedPostsCount
@@ -242,23 +235,6 @@ class ChanThread(
 
   fun getLastAccessTime(): Long {
     return lock.read { lastAccessTime }
-  }
-
-  fun forceUpdatePosts(postDescriptors: Collection<PostDescriptor>) {
-    lock.write {
-      postDescriptors.forEach { postDescriptor ->
-        if (postDescriptor.isOP()) {
-          // No need since we always update original posts
-          return@forEach
-        }
-
-        forceUpdateOnNextUpdateIteration.add(postDescriptor)
-      }
-    }
-  }
-
-  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
-    return lock.read { forceUpdateOnNextUpdateIteration.contains(postDescriptor) }
   }
 
   fun cacheNeedsUpdate(chanCacheUpdateOption: ChanCacheUpdateOptions): Boolean {
@@ -377,7 +353,6 @@ class ChanThread(
 
         rawPostHashesMap.remove(postDescriptor)
         postsByPostDescriptors.remove(postDescriptor)
-        forceUpdateOnNextUpdateIteration.remove(postDescriptor)
       }
 
       checkPostsConsistency()

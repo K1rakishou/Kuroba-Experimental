@@ -16,6 +16,9 @@ open class ChanLoaderException(
   private val exception: Throwable
 ) : Exception(exception) {
 
+  val actualError: Throwable
+    get() = exception
+
   val isNotFound: Boolean
     get() = exception is ServerException && isServerErrorNotFound(exception)
 

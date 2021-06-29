@@ -21,6 +21,7 @@ import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
@@ -31,6 +32,8 @@ import kotlinx.coroutines.sync.withLock
 class ChanReaderProcessor(
   private val chanPostRepository: ChanPostRepository,
   private val chanReadOptions: ChanReadOptions,
+  private val chanLoadOptions: ChanLoadOptions,
+  private val options: Options,
   override val chanDescriptor: ChanDescriptor
 ) : IChanReaderProcessor {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
@@ -139,7 +142,11 @@ class ChanReaderProcessor(
       return true
     }
 
-    if (chanPostRepository.isForceUpdating(builder.postDescriptor)) {
+    if (options.isDownloadingThread) {
+      return true
+    }
+
+    if (chanLoadOptions.isForceUpdating(builder.postDescriptor)) {
       return true
     }
 
@@ -176,6 +183,8 @@ class ChanReaderProcessor(
   override fun toString(): String {
     return "ChanReaderProcessor{chanDescriptor=$chanDescriptor, toParse=${toParse.size}}"
   }
+
+  data class Options(val isDownloadingThread: Boolean = false)
 
   companion object {
     private const val TAG = "ChanReaderProcessor"

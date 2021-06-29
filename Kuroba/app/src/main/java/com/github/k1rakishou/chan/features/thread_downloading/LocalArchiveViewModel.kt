@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
+import android.net.Uri
 import androidx.compose.runtime.*
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
@@ -8,8 +9,10 @@ import com.github.k1rakishou.chan.core.base.MutableCachedSharedFlow
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -43,6 +46,8 @@ class LocalArchiveViewModel : BaseViewModel() {
   lateinit var chanPostRepository: ChanPostRepository
   @Inject
   lateinit var threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
+  @Inject
+  lateinit var exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase
 
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
 
@@ -424,6 +429,15 @@ class LocalArchiveViewModel : BaseViewModel() {
     _state.updateState {
       copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
     }
+  }
+
+  suspend fun exportThreadAsHtml(
+    outputFileUri: Uri,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<Unit> {
+    val params = ExportDownloadedThreadAsHtmlUseCase.Params(outputFileUri, threadDescriptor)
+    return exportDownloadedThreadAsHtmlUseCase.execute(params)
+      .peekError { error -> Logger.e(TAG, "exportDownloadedThreadAsHtmlUseCase() error", error) }
   }
 
   enum class ArchiveMenuItemType(val id: Int) {

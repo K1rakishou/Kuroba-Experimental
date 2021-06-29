@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
+import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -93,7 +94,8 @@ class ChanThreadManager(
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions
+    chanReadOptions: ChanReadOptions,
+    chanReaderProcessorOptions: ChanReaderProcessor.Options = ChanReaderProcessor.Options()
   ): ThreadLoadResult {
     try {
       Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
@@ -105,7 +107,7 @@ class ChanThreadManager(
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       }
 
-      if (chanLoadOptions.canClearCache() || chanLoadOptions.canForceUpdate()) {
+      if (chanLoadOptions.canClearCache()) {
         Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
@@ -113,12 +115,12 @@ class ChanThreadManager(
             is ChanLoadOption.DeletePostsFromMemoryCache -> {
               chanThreadsCache.deletePosts(chanLoadOption.postDescriptors)
             }
-            is ChanLoadOption.ForceUpdatePosts -> {
-              chanThreadsCache.forceUpdatePosts(chanDescriptor, chanLoadOption.postDescriptors)
-            }
             ChanLoadOption.ClearMemoryAndDatabaseCaches,
             ChanLoadOption.ClearMemoryCache -> {
               chanThreadsCache.deleteThread(chanDescriptor)
+            }
+            is ChanLoadOption.ForceUpdatePosts -> {
+              // no-op
             }
             ChanLoadOption.RetainAll -> error("Can't retain all here")
           }
@@ -139,7 +141,8 @@ class ChanThreadManager(
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
-        chanReadOptions = chanReadOptions
+        chanReadOptions = chanReadOptions,
+        chanReaderProcessorOptions = chanReaderProcessorOptions
       )
 
       when (threadLoaderResult) {
@@ -403,7 +406,8 @@ class ChanThreadManager(
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions
+    chanReadOptions: ChanReadOptions,
+    chanReaderProcessorOptions: ChanReaderProcessor.Options
   ): ModularResult<ThreadLoadResult> {
     awaitUntilDependenciesInitialized()
 
@@ -425,57 +429,12 @@ class ChanThreadManager(
     if (!chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)) {
       Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> false")
 
-      // Do not load new posts from the network, just refresh memory caches with data from the
-      //  database
-      when (chanDescriptor) {
-        is ChanDescriptor.ThreadDescriptor -> {
-          val siteDescriptor = chanDescriptor.siteDescriptor()
-
-          val postParser = siteManager.bySiteDescriptor(siteDescriptor)
-            ?.chanReader()
-            ?.getParser()
-
-          if (postParser == null) {
-            val threadLoadResult = ThreadLoadResult.Error(
-              ChanLoaderException(SiteManager.SiteNotFoundException(siteDescriptor))
-            )
-            return ModularResult.value(threadLoadResult)
-          }
-
-          val postsToReloadOptions = when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
-            is ChanLoadOption.DeletePostsFromMemoryCache -> {
-              PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
-            }
-            is ChanLoadOption.ForceUpdatePosts -> {
-              PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
-            }
-            ChanLoadOption.ClearMemoryAndDatabaseCaches,
-            ChanLoadOption.ClearMemoryCache,
-            ChanLoadOption.RetainAll -> PostsToReloadOptions.ReloadAll
-          }
-
-          val result = chanThreadLoaderCoordinator.reloadAndReparseThread(
-            postParser = postParser,
-            threadDescriptor = chanDescriptor,
-            cacheUpdateOptions = chanCacheUpdateOptions,
-            postsToReloadOptions = postsToReloadOptions
-          )
-
-          if (result is ModularResult.Error) {
-            return result
-          }
-
-          val threadLoadResult = (result as ModularResult.Value).value
-          if (threadLoadResult !is ThreadLoadResult.Error || !threadLoadResult.exception.isCacheEmptyException()) {
-            return result
-          }
-
-          // fallthrough
-        }
-        is ChanDescriptor.CatalogDescriptor -> {
-          return chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
-        }
+      val result = tryRefreshCacheFromTheDatabase(chanDescriptor, chanLoadOptions, chanCacheUpdateOptions)
+      if (result != null) {
+        return result
       }
+
+      // fallthrough
     }
 
     Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> true")
@@ -492,7 +451,69 @@ class ChanThreadManager(
       chanCacheOptions = chanCacheOptions,
       cacheUpdateOptions = chanCacheUpdateOptions,
       chanReadOptions = chanReadOptions,
+      chanLoadOptions = chanLoadOptions,
+      chanReaderProcessorOptions = chanReaderProcessorOptions
     )
+  }
+
+  private suspend fun tryRefreshCacheFromTheDatabase(
+    chanDescriptor: ChanDescriptor,
+    chanLoadOptions: ChanLoadOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions
+  ): ModularResult<ThreadLoadResult>? {
+    // Do not load new posts from the network, just refresh memory caches with data from the
+    //  database
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        val siteDescriptor = chanDescriptor.siteDescriptor()
+
+        val postParser = siteManager.bySiteDescriptor(siteDescriptor)
+          ?.chanReader()
+          ?.getParser()
+
+        if (postParser == null) {
+          val threadLoadResult = ThreadLoadResult.Error(
+            ChanLoaderException(SiteManager.SiteNotFoundException(siteDescriptor))
+          )
+          return ModularResult.value(threadLoadResult)
+        }
+
+        val postsToReloadOptions = when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
+          is ChanLoadOption.DeletePostsFromMemoryCache -> {
+            PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
+          }
+          is ChanLoadOption.ForceUpdatePosts -> {
+            PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
+          }
+          ChanLoadOption.ClearMemoryAndDatabaseCaches,
+          ChanLoadOption.ClearMemoryCache,
+          ChanLoadOption.RetainAll -> PostsToReloadOptions.ReloadAll
+        }
+
+        val result = chanThreadLoaderCoordinator.reloadAndReparseThread(
+          postParser = postParser,
+          threadDescriptor = chanDescriptor,
+          cacheUpdateOptions = chanCacheUpdateOptions,
+          postsToReloadOptions = postsToReloadOptions
+        )
+
+        if (result is ModularResult.Error) {
+          return result
+        }
+
+        val threadLoadResult = (result as ModularResult.Value).value
+        if (threadLoadResult !is ThreadLoadResult.Error || !threadLoadResult.exception.isCacheEmptyException()) {
+          return result
+        }
+
+        // fallthrough
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        return chanThreadLoaderCoordinator.reloadCatalogFromDatabase(chanDescriptor)
+      }
+    }
+
+    return null
   }
 
   companion object {

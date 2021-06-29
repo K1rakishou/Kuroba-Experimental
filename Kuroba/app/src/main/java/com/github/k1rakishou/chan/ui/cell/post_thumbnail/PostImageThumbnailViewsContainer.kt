@@ -172,8 +172,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val prevChanPostImages = cachedThumbnailViewContainerInfoArray[BIND].prevChanPostImages
+    val childCount = (getChildAt(0) as? ViewGroup)?.childCount ?: 0
 
-    if (childCount == 0 || thumbnailViews != null || prevChanPostImages != null) {
+    if (thumbnailViews != null || (prevChanPostImages != null && childCount == prevChanPostImages.size)) {
       // The post was unbound while we were waiting for the layout to happen
       return
     }

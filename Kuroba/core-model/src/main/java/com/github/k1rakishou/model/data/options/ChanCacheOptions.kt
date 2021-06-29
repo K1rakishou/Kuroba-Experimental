@@ -22,7 +22,7 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
       ))
     }
 
-    fun threadDownloaderOption(): ChanCacheOptions {
+    fun onlyStoreInDatabase(): ChanCacheOptions {
       return ChanCacheOptions(listOf(
         ChanCacheOption.StoreInDatabase
       ))

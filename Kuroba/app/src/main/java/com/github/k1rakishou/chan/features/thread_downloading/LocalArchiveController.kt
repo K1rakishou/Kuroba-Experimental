@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.content.Context
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
@@ -66,15 +67,21 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
+import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -98,6 +105,8 @@ class LocalArchiveController(
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var fileChooser: FileChooser
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<LocalArchiveViewModel>() }
 
@@ -357,8 +366,8 @@ class LocalArchiveController(
         ) {
           val contentAlpha = remember(key1 = threadDownloadView.status) {
             when (threadDownloadView.status) {
-              ThreadDownload.Status.Running,
-              ThreadDownload.Status.Stopped -> DefaultAlpha
+              ThreadDownload.Status.Running -> DefaultAlpha
+              ThreadDownload.Status.Stopped,
               ThreadDownload.Status.Completed -> 0.7f
             }
           }
@@ -582,9 +591,50 @@ class LocalArchiveController(
         viewModel.startDownloads(selectedItems)
       }
       LocalArchiveViewModel.ArchiveMenuItemType.Export -> {
-        // TODO
+        val threadDescriptor = selectedItems.firstOrNull()
+        if (threadDescriptor != null) {
+          exportThreadAsHtml(threadDescriptor)
+        }
       }
     }
+  }
+
+  private fun exportThreadAsHtml(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val fileName = "${threadDescriptor.siteName()}_${threadDescriptor.boardCode()}_${threadDescriptor.threadNo}.zip"
+
+    fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
+      override fun onCancel(reason: String) {
+        showToast(R.string.canceled)
+      }
+
+      override fun onResult(uri: Uri) {
+        onFileSelected(uri, threadDescriptor)
+      }
+    })
+  }
+
+  private fun onFileSelected(uri: Uri, threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val loadingViewController = LoadingViewController(context, true)
+
+    val job = mainScope.launch(start = CoroutineStart.LAZY) {
+      try {
+        when (val result = viewModel.exportThreadAsHtml(uri, threadDescriptor)) {
+          is ModularResult.Error -> showToast("Failed to export. Error: ${result.error.errorMessageOrClassName()}")
+          is ModularResult.Value -> showToast("Successfully exported")
+        }
+      } finally {
+        loadingViewController.stopPresenting()
+      }
+    }
+
+    loadingViewController.enableBack {
+      if (job.isActive) {
+        job.cancel()
+      }
+    }
+
+    presentController(loadingViewController)
+    job.start()
   }
 
   private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent?) {

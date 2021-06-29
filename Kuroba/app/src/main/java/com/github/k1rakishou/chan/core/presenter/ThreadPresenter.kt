@@ -1881,7 +1881,9 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val postsToUpdate = chanThread.getPostWithRepliesToThisPost(post.postDescriptor)
+    val postsToUpdate = chanThread
+      .getPostWithRepliesToThisPost(post.postDescriptor)
+      .toSet()
 
     normalLoad(
       showLoading = false,
