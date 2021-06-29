@@ -8,7 +8,6 @@ import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.entity.chan.post.ChanPostFull
@@ -61,10 +60,7 @@ class ChanPostLocalSource(
     )
   }
 
-  suspend fun insertManyOriginalPosts(
-    chanOriginalPostList: List<ChanOriginalPost>,
-    cacheOptions: ChanCacheOptions
-  ): List<Long> {
+  suspend fun insertManyOriginalPosts(chanOriginalPostList: List<ChanOriginalPost>): List<Long> {
     ensureInTransaction()
 
     if (chanOriginalPostList.isEmpty()) {
@@ -95,25 +91,23 @@ class ChanPostLocalSource(
       return@map chanThreadId
     }
 
-    if (cacheOptions.canStoreInDatabase()) {
-      val chanPostIdEntities = chanThreadIds.mapIndexed { index, chanThreadId ->
-        val chanOriginalPost = chanOriginalPostList[index]
+    val chanPostIdEntities = chanThreadIds.mapIndexed { index, chanThreadId ->
+      val chanOriginalPost = chanOriginalPostList[index]
 
-        return@mapIndexed ChanPostIdEntity(
-          postId = 0L,
-          ownerThreadId = chanThreadId,
-          postNo = chanOriginalPost.postDescriptor.postNo,
-          postSubNo = chanOriginalPost.postDescriptor.postSubNo
-        )
-      }
-
-      insertPostsInternal(chanPostIdEntities, chanOriginalPostList)
+      return@mapIndexed ChanPostIdEntity(
+        postId = 0L,
+        ownerThreadId = chanThreadId,
+        postNo = chanOriginalPost.postDescriptor.postNo,
+        postSubNo = chanOriginalPost.postDescriptor.postSubNo
+      )
     }
+
+    insertPostsInternal(chanPostIdEntities, chanOriginalPostList)
 
     return chanThreadIds
   }
 
-  suspend fun insertPosts(chanPostList: List<ChanPost>, cacheOptions: ChanCacheOptions) {
+  suspend fun insertPosts(chanPostList: List<ChanPost>) {
     ensureInTransaction()
 
     if (chanPostList.isEmpty()) {
@@ -141,18 +135,16 @@ class ChanPostLocalSource(
         "originalPost=$originalPost, chanBoardEntity=$chanBoardEntity"
     }
 
-    if (cacheOptions.canStoreInDatabase()) {
-      val chanPostIdEntities = chanPostList.map { chanPost ->
-        ChanPostIdEntity(
-          postId = 0L,
-          ownerThreadId = chanThreadId,
-          postNo = chanPost.postDescriptor.postNo,
-          postSubNo = chanPost.postDescriptor.postSubNo
-        )
-      }
-
-      insertPostsInternal(chanPostIdEntities, chanPostList)
+    val chanPostIdEntities = chanPostList.map { chanPost ->
+      ChanPostIdEntity(
+        postId = 0L,
+        ownerThreadId = chanThreadId,
+        postNo = chanPost.postDescriptor.postNo,
+        postSubNo = chanPost.postDescriptor.postSubNo
+      )
     }
+
+    insertPostsInternal(chanPostIdEntities, chanPostList)
   }
 
   private suspend fun insertPostsInternal(
@@ -382,7 +374,7 @@ class ChanPostLocalSource(
     return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
   }
 
-  private suspend fun loadOriginalPostsInternal(
+  suspend fun loadOriginalPostsInternal(
     chanThreadEntityList: List<ChanThreadEntity>,
     catalogDescriptor: ChanDescriptor.CatalogDescriptor
   ): List<ChanOriginalPost> {
@@ -409,10 +401,9 @@ class ChanPostLocalSource(
 
     val postAdditionalData = getPostsAdditionalData(postIdList)
 
-    return chanThreadEntityList.map { chanThreadEntity ->
-      val chanPostEntity = checkNotNull(chanPostFullMap[chanThreadEntity.threadId]) {
-        "Couldn't find post info for original post with id (${chanThreadEntity.threadId})"
-      }
+    return chanThreadEntityList.mapNotNull { chanThreadEntity ->
+      val chanPostEntity = chanPostFullMap[chanThreadEntity.threadId]
+        ?: return@mapNotNull null
 
       val postTextSnapEntityList = textSpansGroupedByPostId[chanPostEntity.chanPostIdEntity.postId]
 
@@ -421,7 +412,7 @@ class ChanPostLocalSource(
         chanPostEntity.chanPostIdEntity.postNo
       )
 
-      return@map ChanThreadMapper.fromEntity(
+      return@mapNotNull ChanThreadMapper.fromEntity(
         gson,
         threadDescriptor,
         chanThreadEntity,

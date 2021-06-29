@@ -184,8 +184,7 @@ class ChanPostRepository(
 
           val postsCount = insertOrUpdateCatalogOriginalPosts(
             parsedPosts = parsedPosts as List<ChanOriginalPost>,
-            cacheOptions = cacheOptions,
-            cacheUpdateOptions = cacheUpdateOptions
+            cacheOptions = cacheOptions
           )
 
           Logger.d(TAG, "insertOrUpdateMany($chanDescriptor) -> $postsCount")
@@ -572,8 +571,7 @@ class ChanPostRepository(
 
   private suspend fun insertOrUpdateCatalogOriginalPosts(
     parsedPosts: List<ChanOriginalPost>,
-    cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheOptions: ChanCacheOptions
   ): Int {
     ensureBackgroundThread()
 
@@ -586,10 +584,10 @@ class ChanPostRepository(
       cacheOptions = cacheOptions
     )
 
-    if (cacheOptions.canStoreInDatabase()) {
-      Logger.d(TAG, "insertOrUpdateCatalogOriginalPosts() inserting ${parsedPosts.size} posts into the DB")
-      localSource.insertManyOriginalPosts(parsedPosts, cacheOptions)
-    }
+    // Always store catalog original posts so that we always have catalog thread (even when there
+    // is no internet connection).
+    Logger.d(TAG, "insertOrUpdateCatalogOriginalPosts() inserting ${parsedPosts.size} posts into the DB")
+    localSource.insertManyOriginalPosts(parsedPosts)
 
     return parsedPosts.size
   }
@@ -634,8 +632,8 @@ class ChanPostRepository(
       Logger.d(TAG, "insertOrUpdateThreadPosts() inserting ${parsedPosts.size} new posts " +
         "and ${currentPostsInCache.size} cached into the DB")
 
-      localSource.insertPosts(parsedPosts, cacheOptions)
-      localSource.insertPosts(currentPostsInCache, cacheOptions)
+      localSource.insertPosts(parsedPosts)
+      localSource.insertPosts(currentPostsInCache)
     }
 
     return postsThatDifferWithCache.size
