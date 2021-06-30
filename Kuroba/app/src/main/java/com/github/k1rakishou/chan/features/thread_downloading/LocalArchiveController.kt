@@ -389,15 +389,27 @@ class LocalArchiveController(
             .wrapContentHeight()
             .fillMaxWidth()
           ) {
-            if (threadDownloadView.threadThumbnailUrl != null) {
+            val thumbnailLocation = threadDownloadView.thumbnailLocation
+            if (thumbnailLocation != null) {
               val context = LocalContext.current
               val errorDrawable = remember(key1 = chanTheme) {
                 imageLoaderV2.getImageErrorLoadingDrawable(context)
               }
 
+              val request: Any = remember(key1 = thumbnailLocation) {
+                when (thumbnailLocation) {
+                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
+                    thumbnailLocation.file
+                  }
+                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
+                    thumbnailLocation.url
+                  }
+                }
+              }
+
               Image(
                 painter = rememberCoilPainter(
-                  request = threadDownloadView.threadThumbnailUrl,
+                  request = request,
                   requestBuilder = { this.error(errorDrawable) }
                 ),
                 contentDescription = null,
@@ -450,7 +462,9 @@ class LocalArchiveController(
       Color(themeEngine.resolveDrawableTintColor(isBackColorDark))
     }
 
-    Box(modifier = Modifier.size(ICON_SIZE).padding(4.dp)) {
+    Box(modifier = Modifier
+      .size(ICON_SIZE)
+      .padding(4.dp)) {
       if (downloadProgressEvent is ThreadDownloadProgressNotifier.Event.Progress) {
         val percent = (downloadProgressEvent as ThreadDownloadProgressNotifier.Event.Progress).percent
         val sweepAngle = remember(key1 = percent) { 360f * percent }

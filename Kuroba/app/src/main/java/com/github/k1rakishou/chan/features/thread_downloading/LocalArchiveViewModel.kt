@@ -12,7 +12,9 @@ import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -30,9 +32,12 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
+import java.io.File
 import java.util.*
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -40,6 +45,8 @@ import kotlin.time.ExperimentalTime
 
 class LocalArchiveViewModel : BaseViewModel() {
 
+  @Inject
+  lateinit var appConstants: AppConstants
   @Inject
   lateinit var threadDownloadManager: ThreadDownloadManager
   @Inject
@@ -362,42 +369,22 @@ class LocalArchiveViewModel : BaseViewModel() {
       val threadDescriptor = threadDownload.threadDescriptor
       val originalPost = originalPostMap[threadDescriptor]
       val threadSubject = ChanPostUtils.getTitle(originalPost, threadDescriptor)
+      val threadDownloadInfo = formatThreadDownloadInfo(threadDescriptor, threadDownload)
 
-      val threadDownloadInfo = buildString {
-        append(threadDescriptor.siteName())
-        append("/")
-        append(threadDescriptor.boardCode())
-        append("/")
+      val directoryName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
+      val thumbnailUrl = threadDownload.threadThumbnailUrl?.toHttpUrlOrNull()
+      val thumbnailOnDiskName = thumbnailUrl?.extractFileName()
 
-        append(", Thread No. ")
-        append(threadDescriptor.threadNo)
+      val thumbnailOnDiskFile = thumbnailOnDiskName?.let { fileName ->
+        File(File(appConstants.threadDownloaderCacheDir, directoryName), fileName)
+      }
 
-        appendLine()
-
-        val status = when (threadDownload.status) {
-          ThreadDownload.Status.Running -> "Downloading"
-          ThreadDownload.Status.Stopped -> "Stopped"
-          ThreadDownload.Status.Completed -> "Completed"
-        }
-
-        append("Status: ")
-        append(status)
-
-        appendLine()
-
-        append("Downloading media: ")
-        append(threadDownload.downloadMedia)
-
-        appendLine()
-
-        append("Started: ")
-        append(DATE_TIME_PRINTER.print(threadDownload.createdOn))
-
-        if (threadDownload.lastUpdateTime != null) {
-          appendLine()
-          append("Updated: ")
-          append(DATE_TIME_PRINTER.print(threadDownload.lastUpdateTime))
-        }
+      val thumbnailLocation = if (thumbnailOnDiskFile != null && thumbnailOnDiskFile.exists()) {
+        ThreadDownloadThumbnailLocation.Local(thumbnailOnDiskFile)
+      } else if (thumbnailUrl != null) {
+        ThreadDownloadThumbnailLocation.Remote(thumbnailUrl)
+      } else {
+        null
       }
 
       return@map ThreadDownloadView(
@@ -405,7 +392,7 @@ class LocalArchiveViewModel : BaseViewModel() {
         status = threadDownload.status,
         threadSubject = threadSubject,
         threadDownloadInfo = threadDownloadInfo,
-        threadThumbnailUrl = threadDownload.threadThumbnailUrl,
+        thumbnailLocation = thumbnailLocation,
         downloadResultMsg = threadDownload.downloadResultMsg
       )
     }
@@ -428,6 +415,48 @@ class LocalArchiveViewModel : BaseViewModel() {
 
     _state.updateState {
       copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
+    }
+  }
+
+  private fun formatThreadDownloadInfo(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    threadDownload: ThreadDownload
+  ): String {
+    return buildString {
+      append(threadDescriptor.siteName())
+      append("/")
+      append(threadDescriptor.boardCode())
+      append("/")
+
+      append(", Thread No. ")
+      append(threadDescriptor.threadNo)
+
+      appendLine()
+
+      val status = when (threadDownload.status) {
+        ThreadDownload.Status.Running -> "Downloading"
+        ThreadDownload.Status.Stopped -> "Stopped"
+        ThreadDownload.Status.Completed -> "Completed"
+      }
+
+      append("Status: ")
+      append(status)
+
+      appendLine()
+
+      append("Downloading media: ")
+      append(threadDownload.downloadMedia)
+
+      appendLine()
+
+      append("Started: ")
+      append(DATE_TIME_PRINTER.print(threadDownload.createdOn))
+
+      if (threadDownload.lastUpdateTime != null) {
+        appendLine()
+        append("Updated: ")
+        append(DATE_TIME_PRINTER.print(threadDownload.lastUpdateTime))
+      }
     }
   }
 
@@ -478,9 +507,14 @@ class LocalArchiveViewModel : BaseViewModel() {
     val status: ThreadDownload.Status = ThreadDownload.Status.Running,
     val threadSubject: String,
     val threadDownloadInfo: String,
-    val threadThumbnailUrl: String?,
+    val thumbnailLocation: ThreadDownloadThumbnailLocation?,
     val downloadResultMsg: String?
   )
+
+  sealed class ThreadDownloadThumbnailLocation {
+    data class Remote(val url: HttpUrl) : ThreadDownloadThumbnailLocation()
+    data class Local(val file: File) : ThreadDownloadThumbnailLocation()
+  }
 
   companion object {
     private const val TAG = "LocalArchiveViewModel"
