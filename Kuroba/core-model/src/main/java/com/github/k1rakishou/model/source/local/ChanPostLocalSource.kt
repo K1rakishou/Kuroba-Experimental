@@ -435,7 +435,15 @@ class ChanPostLocalSource(
     }
   }
 
+  suspend fun countThreadPosts(threadDatabaseId: Long): Int {
+    ensureInTransaction()
+
+    return chanPostDao.countThreadPosts(threadDatabaseId)
+  }
+
   suspend fun getThreadPosts(descriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
+    ensureInTransaction()
+
     return getThreadPosts(descriptor, emptyList())
   }
 

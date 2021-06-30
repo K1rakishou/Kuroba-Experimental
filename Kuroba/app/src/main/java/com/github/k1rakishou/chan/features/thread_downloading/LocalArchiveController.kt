@@ -79,6 +79,7 @@ import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
+import com.github.k1rakishou.model.util.ChanPostUtils
 import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.CoroutineStart
@@ -312,7 +313,7 @@ class LocalArchiveController(
 
     Box(modifier = Modifier
       .fillMaxWidth()
-      .height(128.dp)
+      .wrapContentHeight()
       .combinedClickable(
         onClick = { onThreadDownloadClicked(threadDownloadView.threadDescriptor) },
         onLongClick = { onThreadDownloadLongClicked(threadDownloadView.threadDescriptor) }
@@ -442,6 +443,25 @@ class LocalArchiveController(
               BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
               BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
             }
+          }
+
+          val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
+          if (stats != null) {
+            val statsText = remember(key1 = stats) {
+              "Posts count: ${stats!!.downloadedPostsCount}, " +
+                "Media count: ${stats!!.downloadedMediaCount}, " +
+                "Total media size: ${ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)}"
+            }
+
+            KurobaComposeText(
+              text = statsText,
+              fontSize = 12.sp,
+              color = chanTheme.textColorHintCompose,
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .alpha(contentAlpha)
+            )
           }
         }
       }

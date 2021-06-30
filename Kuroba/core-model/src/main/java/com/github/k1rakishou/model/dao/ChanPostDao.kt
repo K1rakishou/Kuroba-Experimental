@@ -174,6 +174,13 @@ abstract class ChanPostDao {
   """)
   abstract suspend fun updateOriginalPostDeleted(postId: Long, deleted: Boolean)
 
+  @Query("""
+    SELECT COUNT(*)
+    FROM ${ChanPostIdEntity.TABLE_NAME}
+    WHERE ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :threadDatabaseId
+  """)
+  abstract fun countThreadPosts(threadDatabaseId: Long): Int
+
   @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
   abstract suspend fun deleteAll(): Int
 

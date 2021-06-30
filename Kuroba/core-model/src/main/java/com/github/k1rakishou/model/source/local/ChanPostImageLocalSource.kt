@@ -58,4 +58,10 @@ class ChanPostImageLocalSource(
     }
   }
 
+  suspend fun countPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): Int {
+    ensureInTransaction()
+
+    return chanPostImageDao.countAllByThreadId(threadDatabaseId)
+  }
+
 }

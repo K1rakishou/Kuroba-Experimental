@@ -5,6 +5,7 @@ import androidx.compose.runtime.*
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.MutableCachedSharedFlow
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -19,8 +20,10 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
+import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,6 +35,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.joda.time.DateTimeZone
@@ -52,9 +56,13 @@ class LocalArchiveViewModel : BaseViewModel() {
   @Inject
   lateinit var chanPostRepository: ChanPostRepository
   @Inject
+  lateinit var chanPostImageRepository: ChanPostImageRepository
+  @Inject
   lateinit var threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
   @Inject
   lateinit var exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase
+
+  private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(mainScope)
 
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
 
@@ -85,6 +93,7 @@ class LocalArchiveViewModel : BaseViewModel() {
     get() = _controllerTitleInfoUpdatesFlow.asStateFlow()
 
   private val selectedItems = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<Boolean>>()
+  private val additionalThreadDownloadStats = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<AdditionalThreadDownloadStats?>>()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -117,8 +126,18 @@ class LocalArchiveViewModel : BaseViewModel() {
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): State<ThreadDownloadProgressNotifier.Event> {
     return threadDownloadProgressNotifier.listenForProgress(threadDescriptor)
-      .sample(64L)
+      .sample(16L)
       .collectAsState(ThreadDownloadProgressNotifier.Event.Empty)
+  }
+
+  @Composable
+  fun collectAdditionalThreadDownloadStats(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): State<AdditionalThreadDownloadStats?> {
+    return additionalThreadDownloadStats.getOrPut(
+      threadDescriptor,
+      defaultValue = { mutableStateOf(null) }
+    )
   }
 
   fun updateQueryAndReload(query: String?) {
@@ -388,6 +407,7 @@ class LocalArchiveViewModel : BaseViewModel() {
       }
 
       return@map ThreadDownloadView(
+        ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId,
         threadDescriptor = threadDownload.threadDescriptor,
         status = threadDownload.status,
         threadSubject = threadSubject,
@@ -415,6 +435,40 @@ class LocalArchiveViewModel : BaseViewModel() {
 
     _state.updateState {
       copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
+    }
+
+    recalculateAdditionalInfoExecutor.post(1000L) {
+      withContext(Dispatchers.IO) { recalculateAdditionalInfo(threadDownloadViews) }
+    }
+  }
+
+  private suspend fun recalculateAdditionalInfo(threadDownloadViews: List<ThreadDownloadView>) {
+    threadDownloadViews.forEach { threadDownloadView ->
+      val threadDescriptor = threadDownloadView.threadDescriptor
+
+      val directoryName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
+      val directory = File(appConstants.threadDownloaderCacheDir, directoryName)
+      val ownerThreadDatabaseId = threadDownloadView.ownerThreadDatabaseId
+
+      val files = directory.listFiles()
+      val filesTotalSize = files?.sumOf { file -> file.length() } ?: 0L
+      val mediaCount = files?.size?.div(2) ?: 0
+
+      val postsCount = chanPostRepository.countThreadPosts(ownerThreadDatabaseId)
+        .valueOrNull() ?: 0
+
+      val stats = AdditionalThreadDownloadStats(
+        postsCount,
+        mediaCount,
+        filesTotalSize
+      )
+
+      if (!additionalThreadDownloadStats.containsKey(threadDescriptor)) {
+        additionalThreadDownloadStats[threadDescriptor] = mutableStateOf(stats)
+        return@forEach
+      }
+
+      additionalThreadDownloadStats[threadDescriptor]!!.value = stats
     }
   }
 
@@ -503,12 +557,19 @@ class LocalArchiveViewModel : BaseViewModel() {
   )
 
   data class ThreadDownloadView(
+    val ownerThreadDatabaseId: Long,
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val status: ThreadDownload.Status = ThreadDownload.Status.Running,
     val threadSubject: String,
     val threadDownloadInfo: String,
     val thumbnailLocation: ThreadDownloadThumbnailLocation?,
     val downloadResultMsg: String?
+  )
+
+  data class AdditionalThreadDownloadStats(
+    val downloadedPostsCount: Int,
+    val downloadedMediaCount: Int,
+    val mediaTotalDiskSize: Long
   )
 
   sealed class ThreadDownloadThumbnailLocation {

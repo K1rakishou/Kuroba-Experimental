@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -38,6 +39,7 @@ import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.internal.closeQuietly
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.coroutines.coroutineContext
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -133,6 +135,17 @@ class ThreadDownloadingDelegate(
         )
       } catch (error: CancellationException) {
         Logger.e(TAG, "doWorkInternal() ${threadDownload.threadDescriptor} canceled")
+      }
+    }
+
+    coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+      if (cause is CancellationException) {
+        threadDownloads.forEach { threadDownload ->
+          threadDownloadProgressNotifier.notifyProgressEvent(
+            threadDownload.threadDescriptor,
+            ThreadDownloadProgressNotifier.Event.Empty
+          )
+        }
       }
     }
 

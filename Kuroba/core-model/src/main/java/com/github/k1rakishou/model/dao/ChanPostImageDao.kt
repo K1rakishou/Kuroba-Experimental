@@ -63,6 +63,17 @@ abstract class ChanPostImageDao {
     """)
   abstract suspend fun selectByServerFileName(serverFileName: String): ChanPostImageEntity?
 
+  @Query("""
+    SELECT COUNT(*)
+    FROM ${ChanPostImageEntity.TABLE_NAME} post_images
+    LEFT JOIN ${ChanPostIdEntity.TABLE_NAME} post_ids
+        ON post_images.${ChanPostImageEntity.OWNER_POST_ID_COLUMN_NAME} = post_ids.${ChanPostIdEntity.POST_ID_COLUMN_NAME}
+    LEFT JOIN ${ChanThreadEntity.TABLE_NAME} threads
+        ON post_ids.${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = threads.${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
+    WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+  """)
+  abstract suspend fun countAllByThreadId(threadId: Long): Int
+
   @Delete
   abstract suspend fun delete(chanPostImageEntity: ChanPostImageEntity)
 

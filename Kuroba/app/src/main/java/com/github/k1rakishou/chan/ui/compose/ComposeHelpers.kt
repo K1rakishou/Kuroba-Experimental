@@ -44,7 +44,7 @@ object ComposeHelpers {
     width: Dp = SCROLLBAR_WIDTH
   ): Modifier {
     val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
-    val duration = if (state.isScrollInProgress) 150 else 500
+    val duration = if (state.isScrollInProgress) 10 else 500
 
     val alpha by animateFloatAsState(
       targetValue = targetAlpha,

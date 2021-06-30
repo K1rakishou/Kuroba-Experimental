@@ -36,4 +36,12 @@ class ChanPostImageRepository(
     }
   }
 
+  suspend fun countPostImagesByOwnerThreadDatabaseId(threadDatabaseId: Long): ModularResult<Int> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction chanPostImageLocalSource.countPostImagesByOwnerThreadDatabaseId(threadDatabaseId)
+      }
+    }
+  }
+
 }

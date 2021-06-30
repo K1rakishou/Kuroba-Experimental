@@ -472,6 +472,18 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun countThreadPosts(threadDatabaseId: Long): ModularResult<Int> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+
+    Logger.d(TAG, "countThreadPosts(threadDatabaseId=$threadDatabaseId)")
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.countThreadPosts(threadDatabaseId)
+      }
+    }
+  }
+
   suspend fun deleteAll(): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
