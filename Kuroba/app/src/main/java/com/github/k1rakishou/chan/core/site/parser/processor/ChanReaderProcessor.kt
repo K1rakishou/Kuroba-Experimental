@@ -35,20 +35,10 @@ class ChanReaderProcessor(
   private val chanLoadOptions: ChanLoadOptions,
   private val options: Options,
   override val chanDescriptor: ChanDescriptor
-) : IChanReaderProcessor {
+) : AbstractChanReaderProcessor() {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
   private val postOrderedList = mutableListWithCap<PostDescriptor>(64)
   private var op: ChanPostBuilder? = null
-
-  @get:Synchronized
-  @set:Synchronized
-  var closed: Boolean = false
-  @get:Synchronized
-  @set:Synchronized
-  var deleted: Boolean = false
-  @get:Synchronized
-  @set:Synchronized
-  var archived: Boolean = false
 
   override val canUseEmptyBoardIfBoardDoesNotExist: Boolean
     get() = false
@@ -84,10 +74,6 @@ class ChanReaderProcessor(
   override suspend fun addManyPosts(postBuilders: List<ChanPostBuilder>) {
     lock.withLock {
       postBuilders.forEach { postBuilder ->
-        if (postBuilder.op) {
-          setOp(postBuilder)
-        }
-
         if (differsFromCached(postBuilder)) {
           toParse.add(postBuilder)
         }

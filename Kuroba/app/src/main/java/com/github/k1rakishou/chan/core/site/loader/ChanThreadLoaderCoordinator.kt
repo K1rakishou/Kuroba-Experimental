@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.core.site.SiteSpecificError
 import com.github.k1rakishou.chan.core.site.loader.internal.ChanPostPersister
 import com.github.k1rakishou.chan.core.site.loader.internal.DatabasePostLoader
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
@@ -209,6 +210,29 @@ class ChanThreadLoaderCoordinator(
           }
         }
 
+        if (chanReaderProcessor.error != null) {
+          if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+            chanPostRepository.updateThreadState(
+              threadDescriptor = chanDescriptor,
+              deleted = chanReaderProcessor.deleted,
+              archived = chanReaderProcessor.archived,
+              closed = chanReaderProcessor.closed
+            )
+          }
+
+          when (val error = chanReaderProcessor.error!!) {
+            is SiteSpecificError.ErrorCode -> {
+              throw SiteError(error.errorCode, error.errorMessage)
+            }
+            else -> error("Unknown error: ${error}")
+          }
+        }
+
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
+          chanPostRepository.updateThreadState(chanDescriptor, deleted = false)
+        }
+
         val postParser = chanReader.getParser()
           ?: throw NullPointerException("PostParser cannot be null!")
 
@@ -220,7 +244,13 @@ class ChanThreadLoaderCoordinator(
           postParser = postParser
         )
 
-        loadRequestStatistics(chanLoadUrl.url, chanDescriptor, loadTimeInfo, requestDuration, readPostsDuration)
+        loadRequestStatistics(
+          url = chanLoadUrl.url,
+          chanDescriptor = chanDescriptor,
+          loadTimeInfo = loadTimeInfo,
+          requestDuration = requestDuration,
+          readPostsDuration = readPostsDuration
+        )
         return@Try threadLoadResult
       }.mapError { error -> ChanLoaderException(error) }
     }
@@ -346,15 +376,15 @@ class ChanThreadLoaderCoordinator(
   ): ThreadLoadResult {
     BackgroundUtils.ensureBackgroundThread()
 
-    databasePostLoader.loadPosts(chanDescriptor)
-      ?: throw error
-
     val isThreadDeleted = error is ServerException && error.statusCode == 404
     if (isThreadDeleted && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      chanPostRepository.markThreadAsDeleted(chanDescriptor, true)
+      chanPostRepository.updateThreadState(chanDescriptor, deleted = true)
     }
 
-    // TODO(KurobaEx): update in the database that the thread is deleted
+    val chanLoaderResponse = databasePostLoader.loadPosts(chanDescriptor)
+    if (chanLoaderResponse == null) {
+      throw error
+    }
 
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
     return ThreadLoadResult.Loaded(chanDescriptor)

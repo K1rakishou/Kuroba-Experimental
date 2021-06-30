@@ -19,7 +19,8 @@ open class ChanPost(
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
   val isSavedReply: Boolean = false,
-  repliesFrom: Set<Long>? = null
+  repliesFrom: Set<Long>? = null,
+  deleted: Boolean = false
 ) {
   /**
    * We use this map to avoid infinite loops when binding posts since after all post content
@@ -29,8 +30,8 @@ open class ChanPost(
   private val onDemandContentLoadedMap = HashMap<LoaderType, LoaderContentLoadState>()
 
   @get:Synchronized
-  var deleted: Boolean = false
-    private set
+  @set:Synchronized
+  var deleted: Boolean = deleted
 
   @get:Synchronized
   val repliesFrom = mutableSetOf<Long>()
@@ -41,11 +42,6 @@ open class ChanPost(
   fun postSubNo(): Long = postDescriptor.postSubNo
   @Synchronized
   fun firstImage(): ChanPostImage? = postImages.firstOrNull()
-
-  @Synchronized
-  fun setPostDeleted(isDeleted: Boolean) {
-    deleted = isDeleted
-  }
 
   @Synchronized
   fun isOP(): Boolean = postDescriptor.isOP()
@@ -82,23 +78,23 @@ open class ChanPost(
 
   open fun deepCopy(): ChanPost {
     return ChanPost(
-      chanPostId,
-      postDescriptor,
-      postImages,
-      postIcons,
-      repliesTo,
-      timestamp,
-      postComment.copy(),
-      subject.copy(),
-      tripcode.copy(),
-      name,
-      posterId,
-      moderatorCapcode,
-      isSavedReply,
-      repliesFrom
+      chanPostId = chanPostId,
+      postDescriptor = postDescriptor,
+      postImages = postImages,
+      postIcons = postIcons,
+      repliesTo = repliesTo,
+      timestamp = timestamp,
+      postComment = postComment.copy(),
+      subject = subject.copy(),
+      tripcode = tripcode.copy(),
+      name = name,
+      posterId = posterId,
+      moderatorCapcode = moderatorCapcode,
+      isSavedReply = isSavedReply,
+      repliesFrom = repliesFrom,
+      deleted = deleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
-      newPost.setPostDeleted(this.deleted)
     }
   }
 

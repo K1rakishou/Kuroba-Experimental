@@ -283,8 +283,17 @@ class ChanThreadsCache(
     return chanThreads[threadDescriptor]?.postsCount ?: 0
   }
 
-  fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
-    chanThreads[threadDescriptor]?.setDeleted(deleted)
+  fun updateThreadState(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    deleted: Boolean? = null,
+    archived: Boolean? = null,
+    closed: Boolean? = null
+  ) {
+    if (deleted == null && archived == null && closed == null) {
+      return
+    }
+
+    chanThreads[threadDescriptor]?.updateThreadState(deleted, archived, closed)
   }
 
   fun updateLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {

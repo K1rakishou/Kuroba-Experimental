@@ -22,9 +22,10 @@ class ChanOriginalPost(
   override val uniqueIps: Int = -1,
   val lastModified: Long,
   val sticky: Boolean = false,
-  val closed: Boolean = false,
-  val archived: Boolean = false,
-  repliesFrom: Set<Long>? = null
+  closed: Boolean = false,
+  archived: Boolean = false,
+  repliesFrom: Set<Long>? = null,
+  deleted: Boolean = false
 ) : ChanPost(
   chanPostId,
   postDescriptor,
@@ -39,35 +40,44 @@ class ChanOriginalPost(
   posterId,
   moderatorCapcode,
   isSavedReply,
-  repliesFrom
+  repliesFrom,
+  deleted
 ) {
+
+  @get:Synchronized
+  @set:Synchronized
+  var archived: Boolean = closed
+
+  @get:Synchronized
+  @set:Synchronized
+  var closed: Boolean = archived
 
   override fun deepCopy(): ChanPost {
     return ChanOriginalPost(
-      chanPostId,
-      postDescriptor,
-      postImages,
-      postIcons,
-      repliesTo,
-      timestamp,
-      postComment.copy(),
-      subject.copy(),
-      tripcode.copy(),
-      name,
-      posterId,
-      moderatorCapcode,
-      isSavedReply,
-      catalogRepliesCount,
-      catalogImagesCount,
-      uniqueIps,
-      lastModified,
-      sticky,
-      closed,
-      archived,
-      repliesFrom
+      chanPostId = chanPostId,
+      postDescriptor = postDescriptor,
+      postImages = postImages,
+      postIcons = postIcons,
+      repliesTo = repliesTo,
+      timestamp = timestamp,
+      postComment = postComment.copy(),
+      subject = subject.copy(),
+      tripcode = tripcode.copy(),
+      name = name,
+      posterId = posterId,
+      moderatorCapcode = moderatorCapcode,
+      isSavedReply = isSavedReply,
+      catalogRepliesCount = catalogRepliesCount,
+      catalogImagesCount = catalogImagesCount,
+      uniqueIps = uniqueIps,
+      lastModified = lastModified,
+      sticky = sticky,
+      closed = closed,
+      archived = archived,
+      repliesFrom = repliesFrom,
+      deleted = deleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
-      newPost.setPostDeleted(this.deleted)
     }
   }
 

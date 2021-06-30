@@ -63,11 +63,6 @@ internal class ChanPostPersister(
         postBuildersToParse = chanReaderProcessor.getToParse()
       )
 
-      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
-        chanPostRepository.markThreadAsDeleted(chanDescriptor, false)
-      }
-
       chanLoadProgressNotifier.sendProgressEvent(
         ChanLoadProgressEvent.PersistingPosts(chanDescriptor, parsingResult.parsedPosts.size)
       )

@@ -9,8 +9,8 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.mutableListWithCap
@@ -86,7 +86,7 @@ class FutabaChanReader(
   override suspend fun loadCatalog(
     requestUrl: String,
     responseBodyStream: InputStream,
-    chanReaderProcessor: IChanReaderProcessor
+    chanReaderProcessor: AbstractChanReaderProcessor
   ) {
     readBodyJson(responseBodyStream) { jsonReader ->
       iterateThreadsInCatalog(jsonReader) { reader ->
@@ -96,7 +96,7 @@ class FutabaChanReader(
   }
 
   @Throws(Exception::class)
-  suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: IChanReaderProcessor) {
+  suspend fun readPostObject(reader: JsonReader, chanReaderProcessor: AbstractChanReaderProcessor) {
     val builder = ChanPostBuilder()
     val boardDescriptor = chanReaderProcessor.chanDescriptor.boardDescriptor()
 

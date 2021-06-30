@@ -161,7 +161,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="hours">%d hours</string>
     <string name="card_stats">%1$dR %2$dI</string>
     <string name="action_reload">Reload</string>
-    <string name="action_force_reload">Force reload</string>
     <string name="action_thread_download">Thread download</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>

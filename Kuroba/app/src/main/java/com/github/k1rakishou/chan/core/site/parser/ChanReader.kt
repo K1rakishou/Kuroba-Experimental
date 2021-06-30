@@ -16,8 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
+import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -55,7 +55,7 @@ abstract class ChanReader {
   abstract suspend fun loadCatalog(
     requestUrl: String,
     responseBodyStream: InputStream,
-    chanReaderProcessor: IChanReaderProcessor
+    chanReaderProcessor: AbstractChanReaderProcessor
   )
 
   abstract suspend fun readThreadBookmarkInfoObject(

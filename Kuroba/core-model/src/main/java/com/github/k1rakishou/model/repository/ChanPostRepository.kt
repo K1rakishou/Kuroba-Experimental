@@ -162,6 +162,28 @@ class ChanPostRepository(
     }
   }
 
+  suspend fun updateThreadState(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    deleted: Boolean? = null,
+    archived: Boolean? = null,
+    closed: Boolean? = null
+  ): ModularResult<Unit> {
+    if (deleted == null && archived == null && closed == null) {
+      return value(Unit)
+    }
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        chanThreadsCache.updateThreadState(threadDescriptor, deleted, archived, closed)
+
+        val threadDatabaseId = chanDescriptorCache.getThreadIdByThreadDescriptor(threadDescriptor)?.id
+        if (threadDatabaseId != null && threadDatabaseId >= 0L) {
+          localSource.updateThreadState(threadDatabaseId, deleted, archived, closed)
+        }
+      }
+    }
+  }
+
   /**
    * Returns a list of posts that differ from the cached ones and which we want to parse again and
    * show the user (otherwise show cached posts)
@@ -234,10 +256,6 @@ class ChanPostRepository(
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 
     chanThreadsCache.clearPostHashes()
-  }
-
-  fun markThreadAsDeleted(threadDescriptor: ChanDescriptor.ThreadDescriptor, deleted: Boolean) {
-    chanThreadsCache.markThreadAsDeleted(threadDescriptor, deleted)
   }
 
   suspend fun getCatalogOriginalPosts(
@@ -338,6 +356,7 @@ class ChanPostRepository(
 
         val time = measureTime {
           val postsFromDatabase = localSource.getThreadPosts(threadDescriptor)
+
           Logger.d(TAG, "preloadForThread($threadDescriptor) got ${postsFromDatabase.size} from DB")
 
           if (postsFromDatabase.isNotEmpty()) {

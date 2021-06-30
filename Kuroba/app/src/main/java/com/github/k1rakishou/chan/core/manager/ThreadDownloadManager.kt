@@ -225,19 +225,12 @@ class ThreadDownloadManager(
 
   suspend fun onDownloadProcessed(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    outOfDiskSpaceError: Boolean,
-    outputDirError: Boolean
+    resultMessage: String?
   ) {
     ensureInitialized()
 
     updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
       val updateTime = DateTime.now()
-
-      val resultMessage = when {
-        outOfDiskSpaceError -> "Out of disk space error"
-        outputDirError -> "Output directory access error"
-        else -> null
-      }
 
       return@updateThreadDownload threadDownload.copy(
         lastUpdateTime = updateTime,

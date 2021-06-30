@@ -81,11 +81,11 @@ object ChanPostEntityMapper {
       chanThreadEntity.lastModified
     }
 
-    val post = if (chanPostEntity.isOp) {
+    return if (chanPostEntity.isOp) {
       ChanOriginalPost(
         chanPostId = chanPostEntity.chanPostId,
         postDescriptor = postDescriptor,
-        postImages =  postImages,
+        postImages = postImages,
         postIcons = postIcons,
         repliesTo = repliesTo,
         catalogRepliesCount = chanThreadEntity.catalogRepliesCount,
@@ -95,6 +95,7 @@ object ChanPostEntityMapper {
         sticky = chanThreadEntity.sticky,
         closed = chanThreadEntity.closed,
         archived = chanThreadEntity.archived,
+        deleted = chanPostEntity.deleted,
         timestamp = chanPostEntity.timestamp,
         name = chanPostEntity.name,
         postComment = mapPostComment(gson, chanTextSpanEntityList),
@@ -108,7 +109,7 @@ object ChanPostEntityMapper {
       ChanPost(
         chanPostId = chanPostEntity.chanPostId,
         postDescriptor = postDescriptor,
-        postImages =  postImages,
+        postImages = postImages,
         postIcons = postIcons,
         repliesTo = repliesTo,
         timestamp = chanPostEntity.timestamp,
@@ -118,12 +119,10 @@ object ChanPostEntityMapper {
         tripcode = mapTripcode(gson, chanTextSpanEntityList),
         posterId = chanPostEntity.posterId,
         moderatorCapcode = chanPostEntity.moderatorCapcode,
-        isSavedReply = chanPostEntity.isSavedReply
+        isSavedReply = chanPostEntity.isSavedReply,
+        deleted = chanPostEntity.deleted,
       )
     }
-
-    post.setPostDeleted(chanPostEntity.deleted)
-    return post
   }
 
   fun mapTripcode(

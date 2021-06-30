@@ -55,6 +55,20 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
     if (!response.isSuccessful) {
+      if (response.code == 404) {
+        chanPostRepository.updateThreadState(
+          threadDescriptor = threadDescriptor,
+          deleted = true
+        )
+
+        return DownloadResult(
+          deleted = true,
+          closed = false,
+          archived = false,
+          posts = emptyList()
+        )
+      }
+
       throw ThreadDownloadException("Bad response code for '${chanLoadUrl.url}', code: ${response.code}")
     }
 

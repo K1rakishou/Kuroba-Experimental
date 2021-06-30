@@ -60,7 +60,7 @@ object ChanThreadMapper {
 
     check(chanPostFull.chanPostEntity.isOp) { "Post is not OP! (chanPostFull=${chanPostFull})" }
 
-    val chanOriginalPost = ChanOriginalPost(
+    return ChanOriginalPost(
       chanPostId = chanPostFull.chanPostIdEntity.postId,
       postDescriptor = postDescriptor,
       postImages = postImages,
@@ -73,6 +73,7 @@ object ChanThreadMapper {
       sticky = chanThreadEntity.sticky,
       closed = chanThreadEntity.closed,
       archived = chanThreadEntity.archived,
+      deleted = chanPostFull.chanPostEntity.deleted,
       timestamp = chanPostFull.chanPostEntity.timestamp,
       name = chanPostFull.chanPostEntity.name,
       postComment = ChanPostEntityMapper.mapPostComment(gson, chanTextSpanEntityList),
@@ -82,9 +83,6 @@ object ChanThreadMapper {
       moderatorCapcode = chanPostFull.chanPostEntity.moderatorCapcode,
       isSavedReply = chanPostFull.chanPostEntity.isSavedReply
     )
-
-    chanOriginalPost.setPostDeleted(chanPostFull.chanPostEntity.deleted)
-    return chanOriginalPost
   }
 
 }

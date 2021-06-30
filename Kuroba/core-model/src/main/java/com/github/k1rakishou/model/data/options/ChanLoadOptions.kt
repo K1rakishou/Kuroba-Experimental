@@ -31,10 +31,6 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
       return ChanLoadOptions(ChanLoadOption.ClearMemoryCache)
     }
 
-    fun clearMemoryAndDatabaseCaches(): ChanLoadOptions {
-      return ChanLoadOptions(ChanLoadOption.ClearMemoryAndDatabaseCaches)
-    }
-
     fun deletePostFromMemoryCache(postDescriptor: PostDescriptor): ChanLoadOptions {
       return deletePostsFromMemoryCache(listOf(postDescriptor))
     }

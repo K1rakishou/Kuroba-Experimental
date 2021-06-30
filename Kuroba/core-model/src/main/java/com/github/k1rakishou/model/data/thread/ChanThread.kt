@@ -257,14 +257,30 @@ class ChanThread(
     }
   }
 
-  fun setDeleted(deleted: Boolean) {
+  fun updateThreadState(
+    deleted: Boolean?,
+    archived: Boolean?,
+    closed: Boolean?
+  ) {
     lock.write {
-      require(threadPosts.isNotEmpty()) { "posts are empty!" }
-      require(threadPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${threadPosts.first()}"
+      if (threadPosts.isEmpty()) {
+        return@write
       }
 
-      threadPosts[0].setPostDeleted(deleted)
+      val chanOriginalPost = threadPosts.first() as? ChanOriginalPost
+        ?: return@write
+
+      if (deleted != null) {
+        chanOriginalPost.deleted = deleted
+      }
+
+      if (archived != null) {
+        chanOriginalPost.archived = archived
+      }
+
+      if (closed != null) {
+        chanOriginalPost.closed = closed
+      }
     }
   }
 
@@ -565,11 +581,11 @@ class ChanThread(
       name = newChanPost.name,
       posterId = newChanPost.posterId,
       moderatorCapcode = newChanPost.moderatorCapcode,
-      isSavedReply = newChanPost.isSavedReply
+      isSavedReply = newChanPost.isSavedReply,
+      deleted = oldChanPost.deleted
     )
 
     handlePostContentLoadedMap(mergedPost, oldChanPost, postCommentsDiffer)
-    mergedPost.setPostDeleted(oldChanPost.deleted)
     return mergedPost
   }
 
@@ -610,11 +626,11 @@ class ChanThread(
       lastModified = Math.max(oldChanOriginalPost.lastModified, newChanOriginalPost.lastModified),
       sticky = newChanOriginalPost.sticky,
       closed = newChanOriginalPost.closed,
-      archived = newChanOriginalPost.archived
+      archived = newChanOriginalPost.archived,
+      deleted = oldChanOriginalPost.deleted
     )
 
     handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost, postCommentsDiffer)
-    mergedOriginalPost.setPostDeleted(oldChanOriginalPost.deleted)
     return mergedOriginalPost
   }
 

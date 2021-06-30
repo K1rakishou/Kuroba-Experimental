@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
 import okhttp3.HttpUrl
@@ -22,28 +23,30 @@ open class ChanLoaderException(
   val isNotFound: Boolean
     get() = exception is ServerException && isServerErrorNotFound(exception)
 
-  val errorMessage: Int
+  val errorMessage: String
     get() {
       return when {
         exception is SocketTimeoutException
           || exception is SocketException
           || exception is UnknownHostException
-          || (exception is ServerException && exception.isAuthError()) -> {
-          R.string.thread_load_failed_network
+          || (exception is ServerException && exception.isAuthError()
+          ) -> {
+          getString(R.string.thread_load_failed_network)
         }
         exception is ServerException -> {
           if (isServerErrorNotFound(exception)) {
-            R.string.thread_load_failed_not_found
+            getString(R.string.thread_load_failed_not_found)
           } else {
-            R.string.thread_load_failed_server
+            getString(R.string.thread_load_failed_server)
           }
         }
-        exception is SSLException -> R.string.thread_load_failed_ssl
-        exception is JsonParseException -> R.string.thread_load_failed_json_parsing
+        exception is SSLException -> getString(R.string.thread_load_failed_ssl)
+        exception is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
         exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
-          R.string.thread_load_failed_cloud_flare_detected
+          getString(R.string.thread_load_failed_cloud_flare_detected)
         }
-        else -> R.string.thread_load_failed_parsing
+        exception is SiteError -> exception.shortMessage()
+        else -> getString(R.string.thread_load_failed_parsing)
       }
     }
 
@@ -51,7 +54,8 @@ open class ChanLoaderException(
     return exception.statusCode == 404
   }
 
-  fun isCloudFlareError(): Boolean = exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
+  fun isCloudFlareError(): Boolean =
+    exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
 
   fun getOriginalRequestHost(): String {
     if (!isCloudFlareError()) {
@@ -87,6 +91,21 @@ class ServerException(val statusCode: Int) : Exception("Bad status code: ${statu
   fun isAuthError(): Boolean {
     return statusCode == 401 || statusCode == 403
   }
+}
+
+class SiteError(
+  val errorCode: Int,
+  val errorMessage: String?
+) : Exception("Site error.\nErrorCode: '${errorCode}'.\nErrorMessage: '${errorMessage}'") {
+
+  fun shortMessage(): String {
+    if (errorMessage != null) {
+      return errorMessage
+    }
+
+    return "Error code: '$errorCode'"
+  }
+
 }
 
 class CacheIsEmptyException(chanDescriptor: ChanDescriptor) : Exception("Cache is empty for /$chanDescriptor/")

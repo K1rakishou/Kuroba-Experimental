@@ -91,10 +91,9 @@ object ChanPostMapper {
         sticky = chanPostBuilder.sticky,
         closed = chanPostBuilder.closed,
         archived = chanPostBuilder.archived,
+        deleted = chanPostBuilder.deleted,
         isSavedReply = chanPostBuilder.isSavedReply
-      ).also { chanOriginalPost ->
-        chanOriginalPost.setPostDeleted(chanPostBuilder.deleted)
-      }
+      )
     } else {
       return ChanPost(
         chanPostId = 0L,
@@ -109,10 +108,9 @@ object ChanPostMapper {
         tripcode = chanPostBuilder.tripcode,
         posterId = chanPostBuilder.posterId,
         moderatorCapcode = chanPostBuilder.moderatorCapcode,
-        isSavedReply = chanPostBuilder.isSavedReply
-      ).also { chanOriginalPost ->
-        chanOriginalPost.setPostDeleted(chanPostBuilder.deleted)
-      }
+        isSavedReply = chanPostBuilder.isSavedReply,
+        deleted = chanPostBuilder.deleted,
+      )
     }
   }
 

@@ -177,11 +177,6 @@ open class ViewThreadController(
         action_reload
       ) { item -> reloadClicked(item) }
       .withSubItem(
-        ACTION_FORCE_RELOAD,
-        R.string.action_force_reload,
-        isDevBuild()
-      ) { item -> forceReloadClicked(item) }
-      .withSubItem(
         ACTION_DOWNLOAD_THREAD,
         R.string.action_start_thread_download,
         true,
@@ -354,14 +349,6 @@ open class ViewThreadController(
 
       updateThreadDownloadItem()
     }
-  }
-
-  private fun forceReloadClicked(item: ToolbarMenuSubItem) {
-    threadLayout.presenter.resetTicker()
-    threadLayout.presenter.normalLoad(
-      showLoading = true,
-      chanLoadOptions = ChanLoadOptions.clearMemoryAndDatabaseCaches()
-    )
   }
 
   private fun showRemovedPostsDialog(item: ToolbarMenuSubItem?) {
@@ -741,7 +728,6 @@ open class ViewThreadController(
     private const val ACTION_REPLY = 9000
     private const val ACTION_SEARCH = 9001
     private const val ACTION_RELOAD = 9002
-    private const val ACTION_FORCE_RELOAD = 9003
     private const val ACTION_VIEW_REMOVED_POSTS = 9004
     private const val ACTION_PREVIEW_THREAD_IN_ARCHIVE = 9005
     private const val ACTION_OPEN_BROWSER = 9006

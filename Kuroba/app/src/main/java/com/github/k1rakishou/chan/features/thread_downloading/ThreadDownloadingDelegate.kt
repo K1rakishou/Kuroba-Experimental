@@ -160,6 +160,13 @@ class ThreadDownloadingDelegate(
 
     val downloadResult = if (executionResult is ModularResult.Error) {
       Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor)", executionResult.error)
+
+      threadDownloadManager.onDownloadProcessed(
+        threadDescriptor = threadDescriptor,
+        resultMessage = executionResult.error.message
+          ?: executionResult.error.errorMessageOrClassName()
+      )
+
       return
     } else {
       executionResult as ModularResult.Value
@@ -198,10 +205,15 @@ class ThreadDownloadingDelegate(
         "outOfDiskSpaceError=${outOfDiskSpaceError.get()}")
     }
 
+    val resultMessage = when {
+      outOfDiskSpaceError.get() -> "Out of disk space error"
+      outputDirError.get() -> "Output directory access error"
+      else -> null
+    }
+
     threadDownloadManager.onDownloadProcessed(
       threadDescriptor = threadDescriptor,
-      outOfDiskSpaceError = outOfDiskSpaceError.get(),
-      outputDirError = outputDirError.get()
+      resultMessage = resultMessage
     )
 
     if (downloadResult.archived || downloadResult.closed || downloadResult.deleted) {

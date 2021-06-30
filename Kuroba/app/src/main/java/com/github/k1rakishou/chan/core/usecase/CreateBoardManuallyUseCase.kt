@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.usecase
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
+import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendCall
@@ -67,7 +67,7 @@ class CreateBoardManuallyUseCase(
 
   class SimpleCountingChanReaderProcessor(
     override val chanDescriptor: ChanDescriptor
-  ) : IChanReaderProcessor {
+  ) : AbstractChanReaderProcessor() {
     private var threadsInCatalogCounter = 0
 
     override val canUseEmptyBoardIfBoardDoesNotExist: Boolean

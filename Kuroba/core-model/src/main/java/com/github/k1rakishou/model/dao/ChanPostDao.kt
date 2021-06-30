@@ -166,6 +166,14 @@ abstract class ChanPostDao {
     """)
   protected abstract suspend fun selectManyOriginalPostsByThreadIdListGrouped(ownerThreadIdList: List<Long>): List<ChanPostFull>
 
+  @Query("""
+    UPDATE ${ChanPostEntity.TABLE_NAME}
+    SET ${ChanPostEntity.DELETED_COLUMN_NAME} = :deleted
+    WHERE 
+        ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME} = :postId
+  """)
+  abstract suspend fun updateOriginalPostDeleted(postId: Long, deleted: Boolean)
+
   @Query("DELETE FROM ${ChanPostEntity.TABLE_NAME}")
   abstract suspend fun deleteAll(): Int
 

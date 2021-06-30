@@ -288,6 +288,27 @@ class ChanPostLocalSource(
     }
   }
 
+  suspend fun updateThreadState(threadDatabaseId: Long, deleted: Boolean?, archived: Boolean?, closed: Boolean?) {
+    ensureInTransaction()
+
+    if (deleted == null && archived == null && closed == null) {
+      return
+    }
+
+    chanThreadDao.updateThreadState(
+      threadId = threadDatabaseId,
+      closed = closed,
+      archived = archived
+    )
+
+    if (deleted != null) {
+      val postId = chanPostDao.selectOriginalPost(threadDatabaseId)?.chanPostIdEntity?.postId
+      if (postId != null) {
+        chanPostDao.updateOriginalPostDeleted(postId, deleted)
+      }
+    }
+  }
+
   suspend fun getCatalogOriginalPosts(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
   ): Map<ChanDescriptor.ThreadDescriptor, ChanOriginalPost> {
@@ -365,34 +386,6 @@ class ChanPostLocalSource(
     return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
   }
 
-  suspend fun getCatalogOriginalPosts(
-    descriptor: ChanDescriptor.CatalogDescriptor,
-    originalPostNoList: List<Long>
-  ): List<ChanOriginalPost> {
-    ensureInTransaction()
-
-    if (originalPostNoList.isEmpty()) {
-      return emptyList()
-    }
-
-    // Load catalog descriptor's board
-    val chanBoardEntity = chanBoardDao.selectBoardId(descriptor.siteName(), descriptor.boardCode())
-      ?: return emptyList()
-
-    // Load catalog descriptor's threads
-    val chanThreadEntityList = originalPostNoList
-      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .flatMap { chunk ->
-        chanThreadDao.selectManyByThreadNos(chanBoardEntity.boardId, chunk)
-      }
-
-    if (chanThreadEntityList.isEmpty()) {
-      return emptyList()
-    }
-
-    return loadOriginalPostsInternal(chanThreadEntityList, descriptor)
-  }
-
   suspend fun loadOriginalPostsInternal(
     chanThreadEntityList: List<ChanThreadEntity>,
     catalogDescriptor: ChanDescriptor.CatalogDescriptor
@@ -432,12 +425,12 @@ class ChanPostLocalSource(
       )
 
       return@mapNotNull ChanThreadMapper.fromEntity(
-        gson,
-        threadDescriptor,
-        chanThreadEntity,
-        chanPostEntity,
-        postTextSnapEntityList,
-        postAdditionalData
+        gson = gson,
+        threadDescriptor = threadDescriptor,
+        chanThreadEntity = chanThreadEntity,
+        chanPostFull = chanPostEntity,
+        chanTextSpanEntityList = postTextSnapEntityList,
+        postAdditionalData = postAdditionalData
       )
     }
   }

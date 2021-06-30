@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.chan.utils.extractFileNameExtension
 import com.github.k1rakishou.chan.utils.fixImageUrlIfNecessary
 import com.github.k1rakishou.chan.utils.removeExtensionIfPresent
@@ -224,7 +224,7 @@ class FoolFuukaApi(
   override suspend fun loadCatalog(
     requestUrl: String,
     responseBodyStream: InputStream,
-    chanReaderProcessor: IChanReaderProcessor
+    chanReaderProcessor: AbstractChanReaderProcessor
   ) {
     throw CommonClientException("Catalog is not supported for site ${site.name()}")
   }

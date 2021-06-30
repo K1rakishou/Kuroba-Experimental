@@ -3,9 +3,10 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
+import com.github.k1rakishou.chan.core.site.SiteSpecificError
 import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.site.parser.processor.IChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.useBufferedSource
@@ -54,6 +55,21 @@ class DvachApiV2(
     val dvachThreadsFresh = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachThreadsFreshAdapter.fromJson(bufferedSource) }
 
+    val error = dvachThreadsFresh?.error
+    if (error != null && error.isActuallyError()) {
+      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+
+      if (error.isThreadDeleted()) {
+        chanReaderProcessor.deleted = true
+      }
+
+      if (error.isThreadClosed()) {
+        chanReaderProcessor.closed = true
+      }
+
+      return
+    }
+
     val bumpLimit = dvachThreadsFresh?.bumpLimit
     val posters = dvachThreadsFresh?.posters
     val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
@@ -89,6 +105,21 @@ class DvachApiV2(
     val dvachThreadIncremental = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachThreadIncrementalAdapter.fromJson(bufferedSource) }
 
+    val error = dvachThreadIncremental?.error
+    if (error != null && error.isActuallyError()) {
+      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+
+      if (error.isThreadDeleted()) {
+        chanReaderProcessor.deleted = true
+      }
+
+      if (error.isThreadClosed()) {
+        chanReaderProcessor.closed = true
+      }
+
+      return
+    }
+
     val threadPosts = dvachThreadIncremental?.posts
     val posters = dvachThreadIncremental?.posters
 
@@ -107,7 +138,7 @@ class DvachApiV2(
   override suspend fun loadCatalog(
     requestUrl: String,
     responseBodyStream: InputStream,
-    chanReaderProcessor: IChanReaderProcessor
+    chanReaderProcessor: AbstractChanReaderProcessor
   ) {
     Logger.d(TAG, "loadCatalog($requestUrl)")
 
@@ -119,9 +150,21 @@ class DvachApiV2(
     val endpoints = site.endpoints()
 
     val dvachCatalogAdapter = moshi.adapter(DvachCatalog::class.java)
-    val catalogThreadPosts = responseBodyStream
+    val dvachCatalog = responseBodyStream
       .useBufferedSource { bufferedSource -> dvachCatalogAdapter.fromJson(bufferedSource) }
-      ?.threads
+
+    val error = dvachCatalog?.error
+    if (error != null && error.isActuallyError()) {
+      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+
+      if (error.cantAccessCatalog()) {
+        chanReaderProcessor.closed = true
+      }
+
+      return
+    }
+
+    val catalogThreadPosts = dvachCatalog?.threads
 
     if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {
       throw IllegalStateException("No posts parsed for '$requestUrl'")
@@ -132,7 +175,7 @@ class DvachApiV2(
 
   private suspend fun processPostsInternal(
     posts: List<DvachPost>,
-    chanReaderProcessor: IChanReaderProcessor,
+    chanReaderProcessor: AbstractChanReaderProcessor,
     board: ChanBoard,
     endpoints: SiteEndpoints
   ) {
@@ -170,6 +213,8 @@ class DvachApiV2(
         if (threadPost.filesCount != null && threadPost.filesCount > 0) {
           builder.threadImagesCount(threadPost.filesCount)
         }
+
+        chanReaderProcessor.setOp(builder)
       }
 
       if (threadPost.trip.startsWith("!!%")) {
@@ -313,33 +358,101 @@ class DvachApiV2(
   }
 
   @JsonClass(generateAdapter = true)
+  data class DvachError(
+    @Json(name = "code")
+    val errorCode: Int
+  ) {
+
+    fun message(): String {
+      return when (errorCode) {
+        NO_ERROR -> "No error"
+        BOARD_DOES_NOT_EXIST -> "Board does not exist"
+        THREAD_DOES_NOT_EXIST -> "Thread does not exist"
+        NO_ACCESS -> "No access"
+        THREAD_IS_CLOSED -> "Thread is closed"
+        BOARD_IS_CLOSED -> "Board is closed"
+        BOARD_IS_VIP_ONLY -> "Board is VIP (passcode) only"
+        else -> "Unsupported error code: $errorCode"
+      }
+    }
+
+    fun isActuallyError(): Boolean = errorCode != 0
+
+    fun isThreadDeleted(): Boolean {
+      when (errorCode) {
+        BOARD_IS_CLOSED,
+        BOARD_DOES_NOT_EXIST,
+        BOARD_IS_VIP_ONLY,
+        THREAD_DOES_NOT_EXIST -> return true
+        else -> return false
+      }
+    }
+
+    fun isThreadClosed(): Boolean {
+      when (errorCode) {
+        THREAD_IS_CLOSED -> return true
+        else -> return false
+      }
+    }
+
+    fun cantAccessCatalog(): Boolean {
+      when (errorCode) {
+        BOARD_DOES_NOT_EXIST,
+        BOARD_IS_VIP_ONLY,
+        BOARD_IS_CLOSED,
+        NO_ACCESS -> return true
+        else -> return false
+      }
+    }
+
+    companion object {
+      private const val NO_ERROR = 0
+      private const val BOARD_DOES_NOT_EXIST = -2
+      private const val THREAD_DOES_NOT_EXIST = -3
+      private const val NO_ACCESS = -4
+      private const val THREAD_IS_CLOSED = -7
+      private const val BOARD_IS_CLOSED = -41
+      private const val BOARD_IS_VIP_ONLY = -42
+    }
+
+  }
+
+  @JsonClass(generateAdapter = true)
   data class DvachThreadsFresh(
     @Json(name = "bump_limit")
-    val bumpLimit: Int,
+    val bumpLimit: Int?,
     @Json(name = "threads")
-    val threads: List<DvachThreadFresh>,
+    val threads: List<DvachThreadFresh>?,
     @Json(name = "unique_posters")
-    val posters: Int?
+    val posters: Int?,
+    @Json(name = "error")
+    val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadFresh(
     @Json(name = "posts")
-    val posts: List<DvachPost>
+    val posts: List<DvachPost>?,
+    @Json(name = "error")
+    val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadIncremental(
     @Json(name = "posts")
-    val posts: List<DvachPost>,
+    val posts: List<DvachPost>?,
     @Json(name = "unique_posters")
-    val posters: Int?
+    val posters: Int?,
+    @Json(name = "error")
+    val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)
   data class DvachCatalog(
     @Json(name = "threads")
-    val threads: List<DvachPost>
+    val threads: List<DvachPost>?,
+    @Json(name = "error")
+    val error: DvachError?
   )
 
   @JsonClass(generateAdapter = true)

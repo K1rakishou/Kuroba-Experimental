@@ -60,6 +60,18 @@ abstract class ChanThreadDao {
   )
 
   @Query("""
+        UPDATE ${ChanThreadEntity.TABLE_NAME}
+        SET ${ChanThreadEntity.CLOSED_COLUMN_NAME} = COALESCE(${ChanThreadEntity.CLOSED_COLUMN_NAME}, :closed),
+            ${ChanThreadEntity.ARCHIVED_COLUMN_NAME} = COALESCE(${ChanThreadEntity.ARCHIVED_COLUMN_NAME}, :archived)
+        WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+    """)
+  abstract suspend fun updateThreadState(
+    threadId: Long,
+    closed: Boolean?,
+    archived: Boolean?
+  )
+
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE 
@@ -68,6 +80,14 @@ abstract class ChanThreadDao {
             ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} = :threadNo
     """)
   abstract suspend fun select(ownerBoardId: Long, threadNo: Long): ChanThreadEntity?
+
+  @Query("""
+        SELECT *
+        FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE 
+            ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
+    """)
+  abstract suspend fun select(threadId: Long): ChanThreadEntity?
 
   @Query("""
         SELECT ${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
