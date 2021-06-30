@@ -114,7 +114,11 @@ class ChanPostLocalSource(
       return
     }
 
-    val originalPost = chanPostList.first() as ChanOriginalPost
+    val originalPost = chanPostList
+      .firstOrNull { chanPost -> chanPost is ChanOriginalPost }
+      as? ChanOriginalPost
+      ?: return
+
     val threadNo = originalPost.postDescriptor.getThreadNo()
 
     val chanBoardEntity = chanBoardDao.insertBoardId(
@@ -139,6 +143,21 @@ class ChanPostLocalSource(
       ChanPostIdEntity(
         postId = 0L,
         ownerThreadId = chanThreadId,
+        postNo = chanPost.postDescriptor.postNo,
+        postSubNo = chanPost.postDescriptor.postSubNo
+      )
+    }
+
+    insertPostsInternal(chanPostIdEntities, chanPostList)
+  }
+
+  suspend fun insertThreadPosts(ownerThreadId: Long, chanPostList: List<ChanPost>) {
+    ensureInTransaction()
+
+    val chanPostIdEntities = chanPostList.map { chanPost ->
+      ChanPostIdEntity(
+        postId = 0L,
+        ownerThreadId = ownerThreadId,
         postNo = chanPost.postDescriptor.postNo,
         postSubNo = chanPost.postDescriptor.postSubNo
       )

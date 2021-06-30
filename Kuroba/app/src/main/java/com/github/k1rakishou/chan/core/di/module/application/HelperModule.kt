@@ -1,22 +1,19 @@
 package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
-import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
@@ -44,34 +41,29 @@ class HelperModule {
   @Singleton
   fun provideChanThreadLoaderCoordinator(
     proxiedOkHttpClient: RealProxiedOkHttpClient,
-    savedReplyManager: SavedReplyManager,
-    filterEngine: FilterEngine,
     chanPostRepository: ChanPostRepository,
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     appConstants: AppConstants,
-    postFilterManager: PostFilterManager,
     siteManager: SiteManager,
     boardManager: BoardManager,
     siteResolver: SiteResolver,
     chanLoadProgressNotifier: ChanLoadProgressNotifier,
     chanThreadsCache: ChanThreadsCache,
-    threadDownloadManager: ThreadDownloadManager
+    threadDownloadManager: ThreadDownloadManager,
+    parsePostsV1UseCase: ParsePostsV1UseCase
   ): ChanThreadLoaderCoordinator {
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
-      savedReplyManager,
-      filterEngine,
       chanPostRepository,
       chanCatalogSnapshotRepository,
       appConstants,
-      postFilterManager,
-      ChanSettings.verboseLogs.get(),
       siteManager,
       boardManager,
       siteResolver,
       chanLoadProgressNotifier,
       chanThreadsCache,
-      threadDownloadManager
+      threadDownloadManager,
+      parsePostsV1UseCase
     )
   }
 

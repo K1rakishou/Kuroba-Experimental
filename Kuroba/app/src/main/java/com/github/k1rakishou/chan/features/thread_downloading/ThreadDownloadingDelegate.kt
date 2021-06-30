@@ -4,12 +4,11 @@ import android.net.ConnectivityManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
-import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.usecase.DownloadParams
+import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
@@ -25,10 +24,6 @@ import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.fsaf.file.DirectorySegment
 import com.github.k1rakishou.fsaf.file.FileSegment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.options.ChanCacheOptions
-import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
-import com.github.k1rakishou.model.data.options.ChanLoadOptions
-import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
@@ -52,11 +47,11 @@ class ThreadDownloadingDelegate(
   private val siteManager: SiteManager,
   private val siteResolver: SiteResolver,
   private val threadDownloadManager: ThreadDownloadManager,
-  private val chanThreadManager: ChanThreadManager,
   private val chanPostRepository: ChanPostRepository,
   private val chanPostImageRepository: ChanPostImageRepository,
   private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper,
-  private val threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
+  private val threadDownloadProgressNotifier: ThreadDownloadProgressNotifier,
+  private val threadDownloaderPersistPostsInDatabaseUseCase: ThreadDownloaderPersistPostsInDatabaseUseCase
 ) {
   private val fileManager: FileManager
     get() = threadDownloaderFileManagerWrapper.fileManager
@@ -155,25 +150,20 @@ class ThreadDownloadingDelegate(
     val threadDescriptor = threadDownload.threadDescriptor
     Logger.d(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) start")
 
-    val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
-      chanDescriptor = threadDescriptor,
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
-      chanLoadOptions = ChanLoadOptions.retainAll(),
-      chanCacheOptions = ChanCacheOptions.onlyStoreInDatabase(),
-      chanReadOptions = ChanReadOptions.default(),
-      chanReaderProcessorOptions = ChanReaderProcessor.Options(isDownloadingThread = true)
-    )
+    val params = DownloadParams(threadDownload.ownerThreadDatabaseId, threadDescriptor)
+    val executionResult = threadDownloaderPersistPostsInDatabaseUseCase.execute(params)
 
     threadDownloadProgressNotifier.notifyProgressEvent(
       threadDownload.threadDescriptor,
       ThreadDownloadProgressNotifier.Event.Progress(POSTS_PROCESSED_PROGRESS)
     )
 
-    if (threadLoadResult is ThreadLoadResult.Error) {
-      Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) " +
-          "error: ${threadLoadResult.exception.message}")
-
+    val downloadResult = if (executionResult is ModularResult.Error) {
+      Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor)", executionResult.error)
       return
+    } else {
+      executionResult as ModularResult.Value
+      executionResult.value
     }
 
     val ownerThreadDatabaseId = threadDownload.ownerThreadDatabaseId
@@ -214,21 +204,13 @@ class ThreadDownloadingDelegate(
       outputDirError = outputDirError.get()
     )
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-    if (chanThread == null) {
-      Logger.e(TAG, "processThread($index/$total) loadThreadOrCatalog($threadDescriptor) end, " +
-        "status: error chanThread is null")
-      return
-    }
-
-    val originalPost = chanThread.getOriginalPost()
-    if (originalPost.archived || originalPost.closed || originalPost.deleted) {
+    if (downloadResult.archived || downloadResult.closed || downloadResult.deleted) {
       threadDownloadManager.completeDownloading(threadDescriptor)
     }
 
-    val status = "archived: ${originalPost.archived}, " +
-      "closed: ${originalPost.closed}, " +
-      "deleted: ${originalPost.deleted}, " +
+    val status = "archived: ${downloadResult.archived}, " +
+      "closed: ${downloadResult.closed}, " +
+      "deleted: ${downloadResult.deleted}, " +
       "outOfDiskSpace: ${outOfDiskSpaceError.get()}, " +
       "outputDirError: ${outputDirError.get()}, "
 

@@ -10,6 +10,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.Executors
 
@@ -30,6 +31,13 @@ abstract class AbstractRepository(
     func: suspend () -> T
   ): T {
     return withContext(dbDispatcher + NonCancellable) { func() }
+  }
+
+  @Suppress("RedundantAsync")
+  protected suspend fun CoroutineScope.dbCallAsync(
+    func: suspend () -> Unit
+  ) {
+    launch(dbDispatcher) { func() }
   }
 
   /**

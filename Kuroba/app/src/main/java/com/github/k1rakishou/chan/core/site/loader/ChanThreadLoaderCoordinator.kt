@@ -20,10 +20,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
-import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.Site
@@ -78,19 +75,16 @@ import kotlin.time.measureTimedValue
  * */
 class ChanThreadLoaderCoordinator(
   private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val savedReplyManager: SavedReplyManager,
-  private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
   private val appConstants: AppConstants,
-  private val postFilterManager: PostFilterManager,
-  private val verboseLogsEnabled: Boolean,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val siteResolver: SiteResolver,
   private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
   private val chanThreadsCache: ChanThreadsCache,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val threadDownloadManager: ThreadDownloadManager,
+  private val parsePostsV1UseCase: ParsePostsV1UseCase
 ) : CoroutineScope {
   private val job = SupervisorJob()
 
@@ -101,18 +95,6 @@ class ChanThreadLoaderCoordinator(
     ReloadPostsFromDatabaseUseCase(
       chanPostRepository,
       boardManager
-    )
-  }
-
-  private val parsePostsV1UseCase by lazy {
-    ParsePostsV1UseCase(
-      verboseLogsEnabled,
-      chanPostRepository,
-      filterEngine,
-      postFilterManager,
-      savedReplyManager,
-      boardManager,
-      chanLoadProgressNotifier
     )
   }
 
@@ -378,7 +360,7 @@ class ChanThreadLoaderCoordinator(
     return ThreadLoadResult.Loaded(chanDescriptor)
   }
 
-  private suspend fun readPostsFromResponse(
+  suspend fun readPostsFromResponse(
     chanLoadUrl: ChanLoadUrl,
     responseBodyStream: InputStream,
     chanDescriptor: ChanDescriptor,
@@ -416,14 +398,14 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
-  private fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor): ChanLoadUrl {
+  fun getChanUrl(site: Site, chanDescriptor: ChanDescriptor, forceFullLoad: Boolean = false): ChanLoadUrl {
     val isThreadCached = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       chanThreadsCache.getThreadPostsCount(chanDescriptor) > 1
     } else {
       false
     }
 
-    if (!isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (forceFullLoad || !isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return getChanUrlFullLoad(site, chanDescriptor)
     }
 

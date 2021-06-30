@@ -6,10 +6,6 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
     return options.any { chanCacheOption -> chanCacheOption.canStoreInMemory() }
   }
 
-  fun canStoreInDatabase(): Boolean {
-    return options.any { chanCacheOption -> chanCacheOption.canStoreInDatabase() }
-  }
-
   fun canAddInFrontOfTheMemoryCache(): Boolean {
     return options.any { chanCacheOption -> chanCacheOption.canAddInFrontOfTheMemoryCache() }
   }
@@ -22,12 +18,6 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
       ))
     }
 
-    fun onlyStoreInDatabase(): ChanCacheOptions {
-      return ChanCacheOptions(listOf(
-        ChanCacheOption.StoreInDatabase
-      ))
-    }
-
     fun singleOption(option: ChanCacheOption): ChanCacheOptions {
       return ChanCacheOptions(listOf(option))
     }
@@ -36,17 +26,12 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
 }
 
 enum class ChanCacheOption {
+  DoNotStoreInMemory,
   StoreInMemory,
-  StoreInDatabase,
-  StoreEverywhere,
   CanAddInFrontOfTheMemoryCache;
 
   fun canStoreInMemory(): Boolean {
-    return this == StoreInMemory || this == StoreEverywhere
-  }
-
-  fun canStoreInDatabase(): Boolean {
-    return this == StoreInDatabase || this == StoreEverywhere
+    return this == StoreInMemory
   }
 
   fun canAddInFrontOfTheMemoryCache(): Boolean {

@@ -7,6 +7,7 @@ import android.content.Context;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
@@ -16,6 +17,8 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
+import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
@@ -30,6 +33,7 @@ import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
@@ -254,6 +258,45 @@ public class UseCaseModule {
                 appConstants,
                 fileManager,
                 chanPostRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ThreadDownloaderPersistPostsInDatabaseUseCase provideThreadDownloaderPersistPostsInDatabaseUseCase(
+            SiteManager siteManager,
+            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator,
+            ParsePostsV1UseCase parsePostsV1UseCase,
+            ChanPostRepository chanPostRepository,
+            RealProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        return new ThreadDownloaderPersistPostsInDatabaseUseCase(
+                siteManager,
+                chanThreadLoaderCoordinator,
+                parsePostsV1UseCase,
+                chanPostRepository,
+                proxiedOkHttpClient
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ParsePostsV1UseCase provideParsePostsV1UseCase(
+            ChanPostRepository chanPostRepository,
+            FilterEngine filterEngine,
+            PostFilterManager postFilterManager,
+            SavedReplyManager savedReplyManager,
+            BoardManager boardManager,
+            ChanLoadProgressNotifier chanLoadProgressNotifier
+    ) {
+        return new ParsePostsV1UseCase(
+                ChanSettings.verboseLogs.get(),
+                chanPostRepository,
+                filterEngine,
+                postFilterManager,
+                savedReplyManager,
+                boardManager,
+                chanLoadProgressNotifier
         );
     }
 

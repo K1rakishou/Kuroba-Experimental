@@ -78,6 +78,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
@@ -732,11 +733,11 @@ public class ManagerModule {
             SiteManager siteManager,
             SiteResolver siteResolver,
             ThreadDownloadManager threadDownloadManager,
-            ChanThreadManager chanThreadManager,
             ChanPostRepository chanPostRepository,
             ChanPostImageRepository chanPostImageRepository,
             ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper,
-            ThreadDownloadProgressNotifier threadDownloadProgressNotifier
+            ThreadDownloadProgressNotifier threadDownloadProgressNotifier,
+            ThreadDownloaderPersistPostsInDatabaseUseCase threadDownloaderPersistPostsInDatabaseUseCase
     ) {
         return new ThreadDownloadingDelegate(
                 appConstants,
@@ -744,11 +745,11 @@ public class ManagerModule {
                 siteManager,
                 siteResolver,
                 threadDownloadManager,
-                chanThreadManager,
                 chanPostRepository,
                 chanPostImageRepository,
                 threadDownloaderFileManagerWrapper,
-                threadDownloadProgressNotifier
+                threadDownloadProgressNotifier,
+                threadDownloaderPersistPostsInDatabaseUseCase
         );
     }
 

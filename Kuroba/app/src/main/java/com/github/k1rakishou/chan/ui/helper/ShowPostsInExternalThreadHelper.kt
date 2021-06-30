@@ -60,7 +60,6 @@ class ShowPostsInExternalThreadHelper(
 
       val chanCacheOptions = ChanCacheOptions.singleOption(
         // We don't want to cache the posts we are previewing in the database.
-        ChanCacheOption.StoreInMemory,
         // This is important to not use ChanCacheOption.CanAddInFrontOfTheMemoryCache flag for this
         // feature to work correctly. Basically we may end up in a situation where the user walks
         // down a very long cross-thread link path which may end up in the thread he was
@@ -69,6 +68,7 @@ class ShowPostsInExternalThreadHelper(
         // not want to add threads we are previewing in the beginning of the eviction queue.
         // We want the original thread to always be in the beginning so it cannot be evicted while
         // we are walking the cross-thread link path.
+        ChanCacheOption.StoreInMemory,
       )
 
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(

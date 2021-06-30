@@ -16,7 +16,11 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTimeZone
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.ISODateTimeFormat
 import java.io.File
+import java.util.*
 import java.util.regex.Pattern
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
@@ -56,7 +60,7 @@ class ExportDownloadedThreadAsHtmlUseCase(
       throw postsLoadResult.error
     } else {
       postsLoadResult as ModularResult.Value
-      postsLoadResult.value
+      postsLoadResult.value.sortedBy { post -> post.postNo() }
     }
 
     if (chanPosts.isEmpty()) {
@@ -152,7 +156,7 @@ class ExportDownloadedThreadAsHtmlUseCase(
           chanPost.tripcode ?: ""
         }
         "DATE_TIME_FORMATTED" -> {
-          chanPost.timestamp.toString()
+          DATE_TIME_PRINTER.print(chanPost.timestamp * 1000L)
         }
         "POST_COMMENT" -> {
           chanPost.postComment.originalUnparsedComment ?: ""
@@ -243,6 +247,13 @@ class ExportDownloadedThreadAsHtmlUseCase(
     private const val TAG = "ExportDownloadedThreadAsHtmlUseCase"
 
     private val TEMPLATE_PARAMETER_PATTERN = Pattern.compile("\\{\\{\\w+\\}\\}")
+
+    private val DATE_TIME_PRINTER = DateTimeFormatterBuilder()
+      .append(ISODateTimeFormat.date())
+      .appendLiteral(' ')
+      .append(ISODateTimeFormat.hourMinuteSecond())
+      .toFormatter()
+      .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
 
     private const val HTML_TEMPLATE_START = """
 <!DOCTYPE html>
