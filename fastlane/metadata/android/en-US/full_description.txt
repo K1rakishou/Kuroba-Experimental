@@ -15,6 +15,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan. It's a f
 * New image downloader. Allows downloading images while the app is in background, retrying failed to download images, resolving duplicates, etc. 
 * New posting. Posting code was moved into a foreground service which now allows stuff using like automatic captcha solvers (2captcha API) seamlessly or queueing multiple replies in different threads (only one reply per thread).
 * New Media Viewer. It was rewritten from scratch and now lives in a separate activity. It now also supports stuff like viewing links to media files shared into the app.
+* Thread downloader with ability to export threads as HTML pages with all downloaded media.
 * Lots of other tiny improvements.
 
 AntiFeatures:

@@ -36,6 +36,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - New Media Viewer. It was rewritten from scratch and now lives in a separate activity. It now also supports stuff like viewing links to media files shared into the app.
 
+- Thread downloader with ability to export threads as HTML pages with all downloaded media.
+
 - Lots of other tiny improvements.
 
 ### Screenshots:
