@@ -19,10 +19,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -159,6 +162,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
       Spacer(modifier = Modifier.height(16.dp))
 
+      val focusRequester = FocusRequester()
+
       var currentInputValue by viewModel.currentInputValue
       KurobaComposeTextField(
         value = currentInputValue,
@@ -168,7 +173,13 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           .fillMaxWidth()
           .wrapContentHeight()
           .padding(horizontal = 16.dp)
+          .focusRequester(focusRequester)
       )
+
+      DisposableEffect(Unit) {
+        focusRequester.requestFocus()
+        onDispose { }
+      }
 
       Spacer(modifier = Modifier.height(16.dp))
 
