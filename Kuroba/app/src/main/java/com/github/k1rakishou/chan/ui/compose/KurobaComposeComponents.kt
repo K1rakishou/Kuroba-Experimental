@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.ui.compose
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
@@ -23,7 +22,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
@@ -136,26 +134,12 @@ fun KurobaComposeTextField(
 @Composable
 fun KurobaComposeCheckbox(
   currentlyChecked: Boolean,
-  @StringRes text: Int,
   onCheckChanged: (Boolean) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  text: String? = null
 ) {
-  KurobaComposeCheckbox(
-    currentlyChecked = currentlyChecked,
-    text = stringResource(id = text),
-    onCheckChanged = onCheckChanged,
-    modifier = modifier
-  )
-}
-
-@Composable
-fun KurobaComposeCheckbox(
-  currentlyChecked: Boolean,
-  text: String,
-  onCheckChanged: (Boolean) -> Unit,
-  modifier: Modifier = Modifier
-) {
-  var isChecked by remember { mutableStateOf(currentlyChecked) }
+  val chanTheme = LocalChanTheme.current
+  var isChecked by remember(key1 = currentlyChecked) { mutableStateOf(currentlyChecked) }
 
   Row(modifier = Modifier
     .clickable {
@@ -169,12 +153,15 @@ fun KurobaComposeCheckbox(
       onCheckedChange = { checked ->
         isChecked = checked
         onCheckChanged(isChecked)
-      }
+      },
+      colors = chanTheme.checkBoxColors()
     )
 
-    Spacer(modifier = Modifier.width(8.dp))
+    if (text != null) {
+      Spacer(modifier = Modifier.width(8.dp))
 
-    KurobaComposeText(text = text)
+      KurobaComposeText(text = text)
+    }
   }
 }
 
@@ -185,10 +172,13 @@ fun KurobaComposeButton(
   enabled: Boolean = true,
   buttonContent: @Composable RowScope.() -> Unit
 ) {
+  val chanTheme = LocalChanTheme.current
+
   Button(
     onClick = onClick,
     enabled = enabled,
     modifier = modifier,
-    content = buttonContent
+    content = buttonContent,
+    colors = chanTheme.buttonColors()
   )
 }

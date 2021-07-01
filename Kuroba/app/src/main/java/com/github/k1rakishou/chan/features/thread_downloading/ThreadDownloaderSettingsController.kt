@@ -11,7 +11,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.material.Button
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Surface
 import androidx.compose.material.Text
@@ -25,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -80,7 +80,7 @@ class ThreadDownloaderSettingsController(
         .wrapContentHeight()
         .fillMaxWidth(),
     ) {
-      Button(
+      KurobaComposeButton(
         onClick = { pop() }
       ) {
         Text(text = stringResource(id = R.string.cancel))
@@ -88,7 +88,7 @@ class ThreadDownloaderSettingsController(
 
       Spacer(modifier = Modifier.weight(1f))
 
-      Button(
+      KurobaComposeButton(
         onClick = {
           downloadClicked(viewModel.downloadMedia.value)
           pop() }

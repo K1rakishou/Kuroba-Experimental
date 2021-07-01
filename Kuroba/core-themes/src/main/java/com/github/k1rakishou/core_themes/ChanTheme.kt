@@ -3,6 +3,10 @@ package com.github.k1rakishou.core_themes
 import android.annotation.SuppressLint
 import android.content.res.ColorStateList
 import android.graphics.Typeface
+import androidx.compose.material.ButtonColors
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.CheckboxColors
+import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
@@ -135,6 +139,27 @@ abstract class ChanTheme {
       errorTrailingIconColor = errorColorCompose,
       errorCursorColor = errorColorCompose,
       errorLabelColor = errorColorCompose,
+    )
+  }
+
+  @Composable
+  fun checkBoxColors(): CheckboxColors {
+    return CheckboxDefaults.colors(
+      checkedColor = accentColorCompose,
+      uncheckedColor = accentColorCompose.copy(alpha = 0.6f),
+      checkmarkColor = backColorCompose,
+      disabledColor = accentColorCompose.copy(alpha = ContentAlpha.disabled),
+      disabledIndeterminateColor = accentColorCompose.copy(alpha = ContentAlpha.disabled)
+    )
+  }
+
+  @Composable
+  fun buttonColors(): ButtonColors {
+    return ButtonDefaults.buttonColors(
+      backgroundColor = accentColorCompose,
+      contentColor = backColorCompose,
+      disabledBackgroundColor = accentColorCompose.copy(alpha = 0.12f),
+      disabledContentColor = backColorCompose.copy(alpha = ContentAlpha.disabled)
     )
   }
 

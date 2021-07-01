@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.Checkbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -62,6 +61,7 @@ import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -354,9 +354,9 @@ class LocalArchiveController(
           if (isInSelectionMode) {
             val checked by viewModel.observeSelectionState(threadDescriptor)
 
-            Checkbox(
-              checked = checked,
-              onCheckedChange = { viewModel.toggleSelection(threadDescriptor) }
+            KurobaComposeCheckbox(
+              currentlyChecked = checked,
+              onCheckChanged = { viewModel.toggleSelection(threadDescriptor) }
             )
           }
         }

@@ -151,7 +151,9 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   private fun transitionBetweenViews(items: List<BottomMenuPanelItem>) {
-    require(childCount == 1) { "Bad childCount: ${childCount}" }
+    if (childCount != 1) {
+      return
+    }
 
     val prevLinearLayout = getChildAt(0)
     require(prevLinearLayout is LinearLayout) {
