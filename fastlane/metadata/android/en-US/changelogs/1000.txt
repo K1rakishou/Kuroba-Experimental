@@ -1,0 +1,21 @@
+v0.10.0-beta
+TLDR version:
+- Thread downloader is back.
+- Native 4chan archive viewer is back.
+- 2ch.hk API V2 partial support (+ dvach captcha support, + global search support).
+- Saved posts screen.
+- SPLIT layout mode update. NavigationRailView is used instead of BottomNavigationView.
+- Android Jetpack Compose intergration.
+
+Full version:
+- Thread downloader is back. It's also now possible to export downloaded threads as HTML pages with all the downloaded media. Unfortunately all media in store in the internal storage instead of external because of SAF being slow as hell (in other words you won't be able to store downloaded threads on SD-cards).
+- When using SPLIT layout mode, bottom navigation view is replaced with navigation rail view which is located on the left side of the screen instead of the bottom.
+- 2ch.hk partial support for API V2. For now only incremental thread update endpoint is supported.
+- 2ch.hk global search support added.
+- 2ch.hk dvach captcha support added.
+- Media viewer Close/Download actions won't be shown anymore when zoomed into an image.
+- ReplyLayout's attach media item's height slightly decreased.
+- Enable gzip encoding for all network requests.
+- Themes updated. New color was added "back_color_secondary" which is used for elements drawn on top of elements that use "back_color" (pretty much all background elements).
+- It's now possible to view all replies or posts makred as own in the same place.
+- It's now possible again to access built-in 4chan archive.
