@@ -848,13 +848,13 @@ class MainController(
   private fun BadgeDrawable.adjustBadgeDrawable() {
     when (navigationViewContract.type) {
       NavigationViewContract.Type.BottomNavView -> {
-        verticalOffset = BADGE_DRAWABLE_VERTICAL_OFFSET
-        horizontalOffset = 0
+        verticalOffset = dp(4f)
+        horizontalOffset = dp(2f)
         badgeGravity = BadgeDrawable.TOP_END
       }
       NavigationViewContract.Type.SideNavView -> {
         verticalOffset = 0
-        horizontalOffset = number.countDigits() * BADGE_DRAWABLE_HORIZONTAL_OFFSET
+        horizontalOffset = number.countDigits() * dp(5f)
         badgeGravity = BadgeDrawable.TOP_START
       }
     }
@@ -1088,8 +1088,6 @@ class MainController(
     private const val ACTION_CLEAR_NAV_HISTORY = 3
     private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
-    private val BADGE_DRAWABLE_VERTICAL_OFFSET = dp(4f)
-    private val BADGE_DRAWABLE_HORIZONTAL_OFFSET = dp(5f)
     private val GRID_COLUMN_WIDTH = dp(80f)
   }
 }
