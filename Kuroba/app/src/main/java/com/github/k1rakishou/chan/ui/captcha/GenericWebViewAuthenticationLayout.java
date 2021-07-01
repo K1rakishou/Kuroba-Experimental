@@ -28,15 +28,12 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.inject.Inject;
 
 public class GenericWebViewAuthenticationLayout
         extends WebView
         implements AuthenticationLayoutInterface {
     public static final int CHECK_INTERVAL = 500;
-    private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     private final Handler handler = new Handler();
     private boolean attachedToWindow = false;
@@ -112,7 +109,7 @@ public class GenericWebViewAuthenticationLayout
         }
 
         if (success) {
-            captchaHolder.addNewToken(text, RECAPTCHA_TOKEN_LIVE_TIME);
+            captchaHolder.addNewToken(text);
             callback.onAuthenticationComplete();
         }
     }

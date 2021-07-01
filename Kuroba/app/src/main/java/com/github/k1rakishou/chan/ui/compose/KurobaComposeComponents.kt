@@ -4,11 +4,13 @@ import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Text
@@ -48,15 +50,16 @@ fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier) {
 }
 
 @Composable
-fun KurobaComposeErrorMessage(error: Throwable) {
-  KurobaComposeErrorMessage(error.errorMessageOrClassName())
+fun KurobaComposeErrorMessage(error: Throwable, modifier: Modifier = Modifier) {
+  KurobaComposeErrorMessage(error.errorMessageOrClassName(), modifier)
 }
 
 @Composable
-fun KurobaComposeErrorMessage(errorMessage: String) {
+fun KurobaComposeErrorMessage(errorMessage: String, modifier: Modifier = Modifier) {
   Box(modifier = Modifier
     .fillMaxSize()
     .padding(8.dp)
+    .then(modifier)
   ) {
     KurobaComposeText(errorMessage, modifier = Modifier.align(Alignment.Center))
   }
@@ -173,4 +176,19 @@ fun KurobaComposeCheckbox(
 
     KurobaComposeText(text = text)
   }
+}
+
+@Composable
+fun KurobaComposeButton(
+  onClick: () -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  buttonContent: @Composable RowScope.() -> Unit
+) {
+  Button(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    content = buttonContent
+  )
 }

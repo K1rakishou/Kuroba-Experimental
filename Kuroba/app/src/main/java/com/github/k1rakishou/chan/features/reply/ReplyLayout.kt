@@ -918,10 +918,6 @@ class ReplyLayout @JvmOverloads constructor(
     threadListLayoutCallbacks?.updateRecyclerViewPaddings()
   }
 
-  override fun getTokenOrNull(): String? {
-    return captchaHolder.token
-  }
-
   override fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean) {
     if (isBufferEmpty) {
       commentRevertChangeButton.visibility = GONE

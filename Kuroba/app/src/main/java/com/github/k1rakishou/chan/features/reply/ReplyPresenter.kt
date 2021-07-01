@@ -457,7 +457,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
-    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasToken()) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasSolution()) {
       showCaptcha(
         chanDescriptor = chanDescriptor,
         replyMode = replyMode,
@@ -882,7 +882,6 @@ class ReplyPresenter @Inject constructor(
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     fun focusComment()
-    fun getTokenOrNull(): String?
     fun updateRevertChangeButtonVisibility(isBufferEmpty: Boolean)
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
     suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)

@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
@@ -92,12 +93,13 @@ class Chan4ReplyCall(
 
       formBuilder.addFormDataPart("com", reply.comment)
 
-      if (reply.captchaResponse != null) {
+      if (reply.captchaSolution != null) {
+        val token = (reply.captchaSolution as CaptchaSolution.SimpleTokenSolution).token
         if (reply.captchaChallenge != null) {
           formBuilder.addFormDataPart("recaptcha_challenge_field", reply.captchaChallenge!!)
-          formBuilder.addFormDataPart("recaptcha_response_field", reply.captchaResponse!!)
+          formBuilder.addFormDataPart("recaptcha_response_field", token)
         } else {
-          formBuilder.addFormDataPart("g-recaptcha-response", reply.captchaResponse!!)
+          formBuilder.addFormDataPart("g-recaptcha-response", token)
         }
       }
 

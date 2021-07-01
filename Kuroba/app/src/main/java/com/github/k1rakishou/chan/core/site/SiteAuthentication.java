@@ -16,13 +16,14 @@
  */
 package com.github.k1rakishou.chan.core.site;
 
-import androidx.annotation.Nullable;
-
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.GENERIC_WEBVIEW;
+import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.ID_BASED_CAPTCHA;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.NONE;
+
+import androidx.annotation.Nullable;
 
 public class SiteAuthentication {
     public enum Type {
@@ -30,7 +31,8 @@ public class SiteAuthentication {
         CAPTCHA2,
         CAPTCHA2_NOJS,
         CAPTCHA2_INVISIBLE,
-        GENERIC_WEBVIEW
+        GENERIC_WEBVIEW,
+        ID_BASED_CAPTCHA
     }
 
     public static SiteAuthentication fromNone() {
@@ -64,6 +66,13 @@ public class SiteAuthentication {
         a.retryText = retryText;
         a.successText = successText;
         return a;
+    }
+
+    public static SiteAuthentication idBased(String idGetUrl) {
+        SiteAuthentication siteAuthentication = new SiteAuthentication(ID_BASED_CAPTCHA);
+        siteAuthentication.baseUrl = idGetUrl;
+
+        return siteAuthentication;
     }
 
     public final Type type;

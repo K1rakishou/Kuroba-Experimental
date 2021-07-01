@@ -16,10 +16,12 @@
  */
 package com.github.k1rakishou.chan.ui.captcha;
 
+import androidx.annotation.NonNull;
+
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 
 public interface AuthenticationLayoutInterface {
-    void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback);
+    void initialize(@NonNull SiteAuthentication authentication, @NonNull AuthenticationLayoutCallback callback);
     void reset();
     void hardReset();
     void onDestroy();

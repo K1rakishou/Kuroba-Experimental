@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.helper.PostHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -516,7 +517,7 @@ class PostingServiceDelegate(
 
       when (result) {
         is AntiCaptchaServiceResult.Solution,
-        is AntiCaptchaServiceResult.AlreadyHaveToken -> {
+        is AntiCaptchaServiceResult.AlreadyHaveSolution -> {
           val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
           val retrying = readReplyInfo(chanDescriptor) { retrying.get() }
 
@@ -582,7 +583,7 @@ class PostingServiceDelegate(
     result: AntiCaptchaServiceResult,
     automaticallySolvedCaptchasCount: AtomicInteger
   ): Boolean {
-    val token = when (result) {
+    val captchaSolution = when (result) {
       AntiCaptchaServiceResult.ExitLoop,
       is AntiCaptchaServiceResult.WaitNextIteration -> {
         throw RuntimeException("Shouldn't be called here")
@@ -593,22 +594,22 @@ class PostingServiceDelegate(
         // get into an infinite loop here so we need to check how many was solved and exit if
         // there were too many.
         automaticallySolvedCaptchasCount.incrementAndGet()
-        result.token
+        result.solution
       }
-      is AntiCaptchaServiceResult.AlreadyHaveToken -> {
+      is AntiCaptchaServiceResult.AlreadyHaveSolution -> {
         // We already have a token (Most likely the user pre-solved captcha manually).
-        result.token
+        result.solution
       }
     }
 
     return replyManager.readReply(chanDescriptor) { reply ->
-      var actualToken = token?.trim()
-      if (actualToken?.isBlank() == true) {
-        actualToken = null
+      var actualCaptchaSolution = captchaSolution
+      if (actualCaptchaSolution?.isTokenEmpty() == true) {
+        actualCaptchaSolution = null
       }
 
-      reply.setCaptcha(challenge = null, response = actualToken)
-      return@readReply reply.captchaResponse != null
+      reply.setCaptcha(challenge = null, captchaSolution = actualCaptchaSolution)
+      return@readReply reply.captchaSolution != null
     }
   }
 
@@ -794,24 +795,24 @@ class PostingServiceDelegate(
 
     if (site.actions().isLoggedIn() && replyMode == ReplyMode.ReplyModeUsePasscode) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) logged in and reply mode is ReplyModeUsePasscode")
-      return AntiCaptchaServiceResult.AlreadyHaveToken(null)
+      return AntiCaptchaServiceResult.AlreadyHaveSolution(null)
     }
 
-    val prevCaptchaResponse = replyManager.readReply(chanDescriptor) { reply -> reply.captchaResponse }
-    if (prevCaptchaResponse.isNotNullNorBlank()) {
+    val prevCaptchaSolution = replyManager.readReply(chanDescriptor) { reply -> reply.captchaSolution }
+    if (prevCaptchaSolution != null && !prevCaptchaSolution.isTokenEmpty()) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) reply already contains a token, use it instead")
-      return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
+      return AntiCaptchaServiceResult.AlreadyHaveSolution(prevCaptchaSolution)
     }
 
-    if (captchaHolder.hasToken()) {
+    if (captchaHolder.hasSolution()) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) already has token, use it instead")
-      return AntiCaptchaServiceResult.AlreadyHaveToken(captchaHolder.token)
+      return AntiCaptchaServiceResult.AlreadyHaveSolution(captchaHolder.solution)
     }
 
     if (replyMode != ReplyMode.ReplyModeSolveCaptchaAuto) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) replyMode does not allow using " +
         "captcha solver, replyMode=${replyMode}")
-      return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
+      return AntiCaptchaServiceResult.AlreadyHaveSolution(prevCaptchaSolution)
     }
 
     // Only update the notification after we are sure that we will call the captcha solver service.
@@ -975,7 +976,7 @@ class PostingServiceDelegate(
       is TwoCaptchaResult.NotSupported,
       is TwoCaptchaResult.SolverDisabled -> {
         Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) -> $twoCaptchaResult")
-        return AntiCaptchaServiceResult.AlreadyHaveToken(prevCaptchaResponse)
+        return AntiCaptchaServiceResult.AlreadyHaveSolution(prevCaptchaSolution)
       }
       is TwoCaptchaResult.Solution -> {
         val solutionResponse = twoCaptchaResult.twoCaptchaCheckSolutionResponse
@@ -994,10 +995,10 @@ class PostingServiceDelegate(
           return AntiCaptchaServiceResult.ExitLoop
         }
 
-        val solutionTrimmed = StringUtils.formatToken(solutionResponse.response.requestRaw)
-        Logger.d(TAG, "Got solution: \'${solutionTrimmed}\'")
+        Logger.d(TAG, "Got solution: \'${StringUtils.formatToken(solutionResponse.response.requestRaw)}\'")
+        val solution = CaptchaSolution.SimpleTokenSolution(solutionResponse.response.requestRaw)
 
-        return AntiCaptchaServiceResult.Solution(solutionResponse.response.requestRaw)
+        return AntiCaptchaServiceResult.Solution(solution)
       }
     }
   }

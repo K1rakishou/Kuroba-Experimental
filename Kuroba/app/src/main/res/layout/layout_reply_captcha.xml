@@ -17,7 +17,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/outside_area"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
+    android:layout_height="wrap_content"
     android:background="#88000000"
     android:clickable="true"
     android:focusable="true">
@@ -37,7 +37,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <FrameLayout
                 android:id="@+id/captcha_container"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"/>
+                android:layout_height="wrap_content"/>
 
         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 

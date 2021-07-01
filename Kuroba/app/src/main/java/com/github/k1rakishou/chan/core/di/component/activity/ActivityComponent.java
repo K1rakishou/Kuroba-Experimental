@@ -88,6 +88,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSe
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
+import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1;
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
@@ -381,6 +382,7 @@ public interface ActivityComponent {
     void inject(GifMediaView gifMediaView);
     void inject(VideoMediaView videoMediaView);
     void inject(MediaViewerToolbar mediaViewerToolbar);
+    void inject(DvachCaptchaLayout dvachCaptchaLayout);
 
     @Subcomponent.Builder
     interface Builder {

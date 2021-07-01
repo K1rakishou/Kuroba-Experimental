@@ -24,8 +24,10 @@ import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
+import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -83,27 +85,18 @@ class DvachReplyCall internal constructor(
         formBuilder.addFormDataPart("subject", reply.subject)
       }
 
-      if (reply.captchaResponse != null) {
-        formBuilder.addFormDataPart("captcha_type", "recaptcha")
-
-        val replyMode = site.requireSettingBySettingId<OptionsSetting<ReplyMode>>(
-          SiteSetting.SiteSettingId.LastUsedReplyMode
-        ).get()
-
-        if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
-          formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)
-        } else {
-          formBuilder.addFormDataPart("captcha_key", Dvach.NORMAL_CAPTCHA_KEY)
-        }
-
-        val captchaChallenge = reply.captchaChallenge
-        val captchaResponse = reply.captchaResponse
-
-        if (captchaChallenge != null && captchaResponse != null) {
-          formBuilder.addFormDataPart("recaptcha_challenge_field", captchaChallenge)
-          formBuilder.addFormDataPart("recaptcha_response_field", captchaResponse)
-        } else if (captchaResponse != null) {
-          formBuilder.addFormDataPart("g-recaptcha-response", captchaResponse)
+      if (reply.captchaSolution != null) {
+        when (val captchaSolution = reply.captchaSolution!!) {
+          is CaptchaSolution.SimpleTokenSolution -> {
+            recaptchaAuth(formBuilder, reply, captchaSolution)
+          }
+          is CaptchaSolution.TokenWithIdSolution -> {
+            when (captchaSolution.type) {
+              CaptchaSolution.TokenWithIdSolution.Type.DvachCaptcha -> {
+                dvachCaptchaAuth(formBuilder, captchaSolution)
+              }
+            }
+          }
         }
       }
 
@@ -128,6 +121,43 @@ class DvachReplyCall internal constructor(
           )
         }
       }
+    }
+  }
+
+  private fun dvachCaptchaAuth(
+    formBuilder: MultipartBody.Builder,
+    captchaSolution: CaptchaSolution.TokenWithIdSolution
+  ) {
+    formBuilder.addFormDataPart("captcha_type", "2chcaptcha")
+    formBuilder.addFormDataPart("2chcaptcha_value", captchaSolution.token)
+    formBuilder.addFormDataPart("2chcaptcha_id", captchaSolution.id)
+  }
+
+  private fun recaptchaAuth(
+    formBuilder: MultipartBody.Builder,
+    reply: Reply,
+    captchaSolution: CaptchaSolution.SimpleTokenSolution
+  ) {
+    formBuilder.addFormDataPart("captcha_type", "recaptcha")
+
+    val replyMode = site.requireSettingBySettingId<OptionsSetting<ReplyMode>>(
+      SiteSetting.SiteSettingId.LastUsedReplyMode
+    ).get()
+
+    if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
+      formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)
+    } else {
+      formBuilder.addFormDataPart("captcha_key", Dvach.NORMAL_CAPTCHA_KEY)
+    }
+
+    val captchaChallenge = reply.captchaChallenge
+    val token = captchaSolution.token
+
+    if (captchaChallenge != null) {
+      formBuilder.addFormDataPart("recaptcha_challenge_field", captchaChallenge)
+      formBuilder.addFormDataPart("recaptcha_response_field", token)
+    } else {
+      formBuilder.addFormDataPart("g-recaptcha-response", token)
     }
   }
 
@@ -189,7 +219,7 @@ class DvachReplyCall internal constructor(
     }
 
     if (!response.isSuccessful) {
-      replyResponse.errorMessage = "Failed to post, bad response status code" + response.code
+      replyResponse.errorMessage = "Failed to post, bad response status code: " + response.code
       return
     }
 

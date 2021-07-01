@@ -51,15 +51,12 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.google.gson.Gson;
 
-import java.util.concurrent.TimeUnit;
-
 import javax.inject.Inject;
 
 public class CaptchaLayout
         extends WebView
         implements AuthenticationLayoutInterface {
     private static final String TAG = "CaptchaLayout";
-    private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     private static final String COOKIE_DOMAIN = "google.com";
 
@@ -232,7 +229,7 @@ public class CaptchaLayout
             return;
         }
 
-        captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
+        captchaHolder.addNewToken(response);
         callback.onAuthenticationComplete();
     }
 

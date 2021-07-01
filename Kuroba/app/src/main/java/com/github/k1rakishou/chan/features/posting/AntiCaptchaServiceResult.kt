@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.posting
 
-import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 
 internal sealed class AntiCaptchaServiceResult {
   data class WaitNextIteration(val waitTimeMs: Long) : AntiCaptchaServiceResult()
@@ -11,19 +11,19 @@ internal sealed class AntiCaptchaServiceResult {
     }
   }
 
-  class AlreadyHaveToken(val token: String?) : AntiCaptchaServiceResult() {
+  class AlreadyHaveSolution(val solution: CaptchaSolution?) : AntiCaptchaServiceResult() {
     override fun toString(): String {
-      if (token == null) {
-        return "AlreadyHaveToken(token='null')"
+      if (solution == null) {
+        return "AlreadyHaveSolution(solution='null')"
       }
 
-      return "AlreadyHaveToken(token='${StringUtils.formatToken(token)}')"
+      return "AlreadyHaveSolution(solution='${solution}')"
     }
   }
 
-  class Solution(val token: String) : AntiCaptchaServiceResult() {
+  class Solution(val solution: CaptchaSolution) : AntiCaptchaServiceResult() {
     override fun toString(): String {
-      return "Solution(token='${StringUtils.formatToken(token)}')"
+      return "Solution(solution='${solution}')"
     }
   }
 

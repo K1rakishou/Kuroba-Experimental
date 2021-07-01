@@ -448,9 +448,9 @@ class LocalArchiveController(
           val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
           if (stats != null) {
             val statsText = remember(key1 = stats) {
-              "Posts count: ${stats!!.downloadedPostsCount}, " +
-                "Media count: ${stats!!.downloadedMediaCount}, " +
-                "Total media size: ${ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)}"
+              "Posts: ${stats!!.downloadedPostsCount}, " +
+                "Media: ${stats!!.downloadedMediaCount}, " +
+                "Total disk: ${ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)}"
             }
 
             KurobaComposeText(

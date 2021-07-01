@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
+import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -168,6 +169,16 @@ class CaptchaContainerController(
         val params = FrameLayout.LayoutParams(
           ViewGroup.LayoutParams.MATCH_PARENT,
           WEBVIEW_BASE_CAPTCHA_VIEW_HEIGHT
+        )
+
+        view.layoutParams = params
+        return view
+      }
+      SiteAuthentication.Type.ID_BASED_CAPTCHA -> {
+        val view = DvachCaptchaLayout(context)
+        val params = FrameLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
         )
 
         view.layoutParams = params

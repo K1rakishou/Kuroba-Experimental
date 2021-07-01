@@ -87,6 +87,10 @@ class Dvach : CommonSite() {
     "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
   )
 
+  val dvachCaptcha = SiteAuthentication.idBased(
+    "https://2ch.hk/api/captcha/2chcaptcha/id"
+  )
+
   override fun initialize() {
     super.initialize()
 
@@ -316,6 +320,7 @@ class Dvach : CommonSite() {
           CaptchaType.V2JS -> captchaV2Js
           CaptchaType.V2NOJS -> captchaV2NoJs
           CaptchaType.V2_INVISIBLE -> captchaV2Invisible
+          CaptchaType.DVACH_CAPTCHA -> dvachCaptcha
           else -> throw IllegalArgumentException()
         }
       }
@@ -621,7 +626,8 @@ class Dvach : CommonSite() {
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
     V2NOJS("v2nojs"),
-    V2_INVISIBLE("v2_invisible");
+    V2_INVISIBLE("v2_invisible"),
+    DVACH_CAPTCHA("dvach_captcha");
 
     override fun getKey(): String {
       return value

@@ -42,7 +42,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.IOException;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -60,7 +59,6 @@ public class CaptchaNojsLayoutV1
         extends WebView
         implements AuthenticationLayoutInterface {
     private static final String TAG = "CaptchaNojsLayout";
-    private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     @Inject
     CaptchaHolder captchaHolder;
@@ -187,7 +185,7 @@ public class CaptchaNojsLayoutV1
         if (TextUtils.isEmpty(response)) {
             reset();
         } else {
-            captchaHolder.addNewToken(response, RECAPTCHA_TOKEN_LIVE_TIME);
+            captchaHolder.addNewToken(response);
             callback.onAuthenticationComplete();
         }
     }

@@ -66,7 +66,8 @@ class TwoCaptchaSolver(
 
     when (postAuthenticate) {
       SiteAuthentication.Type.NONE,
-      SiteAuthentication.Type.GENERIC_WEBVIEW -> {
+      SiteAuthentication.Type.GENERIC_WEBVIEW,
+      SiteAuthentication.Type.ID_BASED_CAPTCHA -> {
         return false
       }
       SiteAuthentication.Type.CAPTCHA2,
@@ -116,7 +117,8 @@ class TwoCaptchaSolver(
           Logger.d(TAG, "solve() authentication not needed")
           return@Try TwoCaptchaResult.CaptchaNotNeeded(solverName = name, siteDescriptor = siteDescriptor)
         }
-        SiteAuthentication.Type.GENERIC_WEBVIEW -> {
+        SiteAuthentication.Type.GENERIC_WEBVIEW,
+        SiteAuthentication.Type.ID_BASED_CAPTCHA-> {
           Logger.d(TAG, "solve() selected authentication type is not supported: ${postAuthenticate.type}")
           return@Try TwoCaptchaResult.NotSupported(solverName = name, siteDescriptor = siteDescriptor)
         }

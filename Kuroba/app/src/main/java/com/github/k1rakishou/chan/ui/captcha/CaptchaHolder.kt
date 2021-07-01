@@ -1,0 +1,231 @@
+package com.github.k1rakishou.chan.ui.captcha
+
+import android.os.Handler
+import android.os.Looper
+import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.StringUtils.formatToken
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import java.text.SimpleDateFormat
+import java.util.*
+import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
+
+class CaptchaHolder {
+  private val running = AtomicBoolean(false)
+  private val mainThreadHandler = Handler(Looper.getMainLooper())
+  private var timer: Timer? = null
+  private var catalogCaptchaValidationListener: CaptchaValidationListener? = null
+  private var threadCaptchaValidationListener: CaptchaValidationListener? = null
+
+  @GuardedBy("itself")
+  private val captchaQueue: MutableList<CaptchaInfo> = ArrayList()
+  fun setListener(descriptor: ChanDescriptor, listener: CaptchaValidationListener?) {
+    BackgroundUtils.ensureMainThread()
+
+    if (descriptor.isCatalogDescriptor()) {
+      catalogCaptchaValidationListener = listener
+    } else {
+      threadCaptchaValidationListener = listener
+    }
+
+    notifyListener()
+  }
+
+  fun clearCallbacks() {
+    BackgroundUtils.ensureMainThread()
+    catalogCaptchaValidationListener = null
+    threadCaptchaValidationListener = null
+  }
+
+  @JvmOverloads
+  fun addNewToken(token: String, tokenLifetime: Long = RECAPTCHA_TOKEN_LIVE_TIME) {
+    addNewSolution(CaptchaSolution.SimpleTokenSolution(token), tokenLifetime)
+  }
+
+  @JvmOverloads
+  fun addNewSolution(solution: CaptchaSolution, tokenLifetime: Long = RECAPTCHA_TOKEN_LIVE_TIME) {
+    BackgroundUtils.ensureMainThread()
+    removeNotValidTokens()
+
+    synchronized(captchaQueue) {
+      captchaQueue.add(0, CaptchaInfo(solution, tokenLifetime + System.currentTimeMillis()))
+      Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, solution = $solution")
+    }
+
+    notifyListener()
+    startTimer()
+  }
+
+  fun hasSolution(): Boolean {
+    BackgroundUtils.ensureMainThread()
+    removeNotValidTokens()
+
+    synchronized(captchaQueue) {
+      if (captchaQueue.isEmpty()) {
+        stopTimer()
+        return false
+      }
+    }
+
+    return true
+  }
+
+  val solution: CaptchaSolution?
+    get() {
+      BackgroundUtils.ensureMainThread()
+      removeNotValidTokens()
+
+      synchronized(captchaQueue) {
+        if (captchaQueue.isEmpty()) {
+          stopTimer()
+          return null
+        }
+
+        val lastIndex = captchaQueue.size - 1
+        val solution = captchaQueue[lastIndex].solution
+
+        captchaQueue.removeAt(lastIndex)
+        Logger.d(TAG, "getToken() solution=${solution}")
+
+        notifyListener()
+        return solution
+      }
+    }
+
+  private fun startTimer() {
+    if (running.compareAndSet(false, true)) {
+      timer = Timer()
+      timer!!.scheduleAtFixedRate(CheckCaptchaFreshnessTask(), INTERVAL, INTERVAL)
+
+      Logger.d(TAG, "Timer started")
+    }
+  }
+
+  private fun stopTimer() {
+    if (running.compareAndSet(true, false)) {
+      timer!!.cancel()
+      timer!!.purge()
+
+      Logger.d(TAG, "Timer stopped")
+    }
+  }
+
+  private fun removeNotValidTokens() {
+    val now = System.currentTimeMillis()
+    var captchasCountDecreased = false
+
+    synchronized(captchaQueue) {
+      val it = captchaQueue.listIterator(captchaQueue.size)
+
+      while (it.hasPrevious()) {
+        val captchaInfo = it.previous()
+        if (now > captchaInfo.validUntil) {
+          captchasCountDecreased = true
+          it.remove()
+
+          Logger.d(TAG, "Captcha token got expired, " +
+            "now: ${CaptchaInfo.captchaDateFormat.format(now)}, " +
+            "token validUntil: ${CaptchaInfo.captchaDateFormat.format(captchaInfo.validUntil)}, " +
+            "solution: ${captchaInfo.solution}")
+        }
+      }
+
+      if (captchaQueue.isEmpty()) {
+        stopTimer()
+      }
+    }
+
+    if (captchasCountDecreased) {
+      notifyListener()
+    }
+  }
+
+  private fun notifyListener() {
+    mainThreadHandler.post {
+      var count = 0
+
+      synchronized(captchaQueue) { count = captchaQueue.size }
+      if (catalogCaptchaValidationListener != null) {
+        catalogCaptchaValidationListener!!.onCaptchaCountChanged(count)
+      }
+
+      if (threadCaptchaValidationListener != null) {
+        threadCaptchaValidationListener!!.onCaptchaCountChanged(count)
+      }
+    }
+  }
+
+  private inner class CheckCaptchaFreshnessTask : TimerTask() {
+    override fun run() {
+      removeNotValidTokens()
+    }
+  }
+
+  interface CaptchaValidationListener {
+    fun onCaptchaCountChanged(validCaptchaCount: Int)
+  }
+
+  companion object {
+    private const val TAG = "CaptchaHolder"
+    private const val INTERVAL: Long = 5000
+
+    private val RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
+  }
+}
+
+sealed class CaptchaSolution {
+  fun isTokenEmpty(): Boolean {
+    return when (this) {
+      is SimpleTokenSolution -> token.isBlank()
+      is TokenWithIdSolution -> token.isBlank()
+    }
+  }
+
+  data class SimpleTokenSolution(val token: String) : CaptchaSolution() {
+    override fun toString(): String {
+      return "SimpleTokenSolution{token=${formatToken(token)}}"
+    }
+  }
+
+  data class TokenWithIdSolution(val id: String, val token: String, val type: Type) : CaptchaSolution() {
+    override fun toString(): String {
+      return "TokenWithIdSolution{id=$id, type=$type, token=${formatToken(token)}}"
+    }
+
+    enum class Type {
+      DvachCaptcha
+    }
+  }
+}
+
+class CaptchaInfo(val solution: CaptchaSolution, val validUntil: Long) {
+  override fun hashCode(): Int {
+    return (solution.hashCode()
+      + 31 * (validUntil and 0x00000000FFFFFFFFL).toInt()
+      + 31 * (validUntil shr 32 and 0x00000000FFFFFFFFL).toInt())
+  }
+
+  override fun equals(other: Any?): Boolean {
+    if (other == null) {
+      return false
+    }
+    if (this === other) {
+      return true
+    }
+    if (this.javaClass != other.javaClass) {
+      return false
+    }
+    val otherCaptchaInfo = other as CaptchaInfo
+    return solution == otherCaptchaInfo.solution && validUntil == otherCaptchaInfo.validUntil
+  }
+
+  override fun toString(): String {
+    return "validUntil: ${captchaDateFormat.format(validUntil)}, solution: ${solution}"
+  }
+
+  companion object {
+    val captchaDateFormat = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.ENGLISH)
+  }
+}

@@ -53,7 +53,6 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
 import javax.inject.Inject;
 
@@ -65,7 +64,6 @@ public class CaptchaNoJsLayoutV2
         CaptchaNoJsPresenterV2.AuthenticationCallbacks,
         ThemeEngine.ThemeChangesListener {
     private static final String TAG = "CaptchaNoJsLayoutV2";
-    private static final long RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2);
 
     private ColorizableTextView captchaChallengeTitle;
     private GridView captchaImagesGrid;
@@ -232,7 +230,7 @@ public class CaptchaNoJsLayoutV2
     @Override
     public void onVerificationDone(String verificationToken) {
         BackgroundUtils.runOnMainThread(() -> {
-            captchaHolder.addNewToken(verificationToken, RECAPTCHA_TOKEN_LIVE_TIME);
+            captchaHolder.addNewToken(verificationToken);
 
             captchaVerifyButton.setEnabled(true);
             callback.onAuthenticationComplete();

@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveViewModel;
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveViewModel;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsViewModel;
+import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayoutViewModel;
 
 import dagger.Subcomponent;
 
@@ -18,6 +19,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(SavedPostsViewModel savedPostsViewModel);
     public abstract void inject(ThreadDownloaderSettingsViewModel threadDownloaderSettingsViewModel);
     public abstract void inject(LocalArchiveViewModel localArchiveViewModel);
+    public abstract void inject(DvachCaptchaLayoutViewModel dvachCaptchaLayoutViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

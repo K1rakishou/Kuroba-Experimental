@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.features.reply.data
 
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -94,8 +95,8 @@ class Reply(
     get() = captchaInfo.captchaChallenge
 
   @get:Synchronized
-  val captchaResponse: String?
-    get() = captchaInfo.captchaResponse
+  val captchaSolution: CaptchaSolution?
+    get() = captchaInfo.captchaSolution
 
   @Synchronized
   fun threadNo(): Long {
@@ -158,15 +159,15 @@ class Reply(
   }
 
   @Synchronized
-  fun setCaptcha(challenge: String?, response: String?) {
+  fun setCaptcha(challenge: String?, captchaSolution: CaptchaSolution?) {
     captchaInfo.captchaChallenge = challenge
-    captchaInfo.captchaResponse = response
+    captchaInfo.captchaSolution = captchaSolution
   }
 
   @Synchronized
   fun resetCaptcha() {
     captchaInfo.captchaChallenge = null
-    captchaInfo.captchaResponse = null
+    captchaInfo.captchaSolution = null
   }
 
   @Synchronized
@@ -253,7 +254,7 @@ class Reply(
      * Optional. `null` when a 4pass was used.
      */
     @JvmField
-    var captchaResponse: String? = null
+    var captchaSolution: CaptchaSolution? = null
   )
 
   companion object {
