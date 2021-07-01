@@ -19,7 +19,7 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
 
   fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
     return chanLoadOption is ChanLoadOption.ForceUpdatePosts
-      && chanLoadOption.postDescriptors.contains(postDescriptor)
+      && (chanLoadOption.postDescriptors == null || chanLoadOption.postDescriptors.contains(postDescriptor))
   }
 
   companion object {
@@ -43,6 +43,11 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
     fun forceUpdatePosts(postDescriptors: Set<PostDescriptor>): ChanLoadOptions {
       return ChanLoadOptions(ChanLoadOption.ForceUpdatePosts(postDescriptors))
     }
+
+    fun forceUpdateAllPosts(): ChanLoadOptions {
+      return ChanLoadOptions(ChanLoadOption.ForceUpdatePosts(null))
+    }
+
   }
 }
 
@@ -71,8 +76,12 @@ sealed class ChanLoadOption {
     }
   }
 
-  class ForceUpdatePosts(val postDescriptors: Set<PostDescriptor>) : ChanLoadOption() {
+  class ForceUpdatePosts(val postDescriptors: Set<PostDescriptor>?) : ChanLoadOption() {
     override fun toString(): String {
+      if (postDescriptors == null) {
+        return "ForceUpdatePosts{AllPosts}"
+      }
+
       return "ForceUpdatePosts{postDescriptorsCount=${postDescriptors.size}}"
     }
   }

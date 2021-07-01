@@ -274,8 +274,10 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="thread_load_failed_cloud_flare_detected">Rejected by CloudFlare.</string>
     <string name="thread_load_failed_network">Network error</string>
+    <string name="thread_load_failed_auth_error">Auth error</string>
+    <string name="thread_load_failed_forbidden_error">Forbidden error</string>
     <string name="thread_load_failed_parsing">API parse error</string>
-    <string name="thread_load_failed_server">Server error</string>
+    <string name="thread_load_failed_server">Server error. Status code: %1$d</string>
     <string name="thread_load_failed_not_found">404 not found</string>
     <string name="thread_refresh_error_text_title">Error while trying to update thread:</string>
     <string name="thread_refresh_bar_inactive">Tap to refresh</string>

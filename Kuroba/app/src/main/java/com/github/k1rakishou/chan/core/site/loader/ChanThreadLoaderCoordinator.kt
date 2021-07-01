@@ -311,13 +311,13 @@ class ChanThreadLoaderCoordinator(
     Logger.d(TAG, logString)
   }
 
-  suspend fun reloadAndReparseThread(
+  suspend fun reloadAndReparseThreadPosts(
     postParser: PostParser,
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     cacheUpdateOptions: ChanCacheUpdateOptions,
     postsToReloadOptions: PostsToReloadOptions
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "reloadThreadFromCache($threadDescriptor)")
+    Logger.d(TAG, "reloadAndReparseThread($threadDescriptor, $cacheUpdateOptions, $postsToReloadOptions)")
 
     return withContext(Dispatchers.IO) {
       return@withContext Try {
@@ -328,12 +328,21 @@ class ChanThreadLoaderCoordinator(
           return@Try ThreadLoadResult.Error(ChanLoaderException.cacheIsEmptyException(threadDescriptor))
         }
 
+        val chanLoadOptions = when (postsToReloadOptions) {
+          is PostsToReloadOptions.Reload -> {
+            ChanLoadOptions.forceUpdatePosts(postsToReloadOptions.postDescriptors.toSet())
+          }
+          PostsToReloadOptions.ReloadAll -> {
+            ChanLoadOptions.forceUpdateAllPosts()
+          }
+        }
+
         val chanReaderProcessor = ChanReaderProcessor(
-          chanPostRepository,
-          ChanReadOptions.default(),
-          ChanLoadOptions.retainAll(),
-          ChanReaderProcessor.Options(),
-          threadDescriptor
+          chanPostRepository = chanPostRepository,
+          chanReadOptions = ChanReadOptions.default(),
+          chanLoadOptions = chanLoadOptions,
+          options = ChanReaderProcessor.Options(),
+          chanDescriptor = threadDescriptor
         )
 
         chanPostBuilders.forEach { chanPostBuilder ->

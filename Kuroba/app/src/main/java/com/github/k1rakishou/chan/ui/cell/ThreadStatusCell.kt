@@ -213,6 +213,7 @@ class ThreadStatusCell(
 
     val canUpdate = chanThread.canUpdateThread()
     val builder = SpannableStringBuilder()
+      .apply { appendLine() }
 
     if (appendThreadStatusPart(chanThread, builder)) {
       builder.appendLine()

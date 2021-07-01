@@ -17,42 +17,32 @@ open class ChanLoaderException(
   private val exception: Throwable
 ) : Exception(exception) {
 
-  val actualError: Throwable
-    get() = exception
-
   val isNotFound: Boolean
-    get() = exception is ServerException && isServerErrorNotFound(exception)
+    get() = exception is ServerException && exception.isNotFoundError()
 
   val errorMessage: String
     get() {
-      return when {
-        exception is SocketTimeoutException
-          || exception is SocketException
-          || exception is UnknownHostException
-          || (exception is ServerException && exception.isAuthError()
-          ) -> {
-          getString(R.string.thread_load_failed_network)
-        }
-        exception is ServerException -> {
-          if (isServerErrorNotFound(exception)) {
-            getString(R.string.thread_load_failed_not_found)
-          } else {
-            getString(R.string.thread_load_failed_server)
+      return when (exception) {
+        is SocketTimeoutException,
+        is SocketException,
+        is UnknownHostException -> getString(R.string.thread_load_failed_network)
+        is ServerException -> {
+          when {
+            exception.isAuthError() -> getString(R.string.thread_load_failed_auth_error)
+            exception.isForbiddenError() -> getString(R.string.thread_load_failed_forbidden_error)
+            exception.isNotFoundError() -> getString(R.string.thread_load_failed_not_found)
+            else -> getString(R.string.thread_load_failed_server, exception.statusCode)
           }
         }
-        exception is SSLException -> getString(R.string.thread_load_failed_ssl)
-        exception is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
-        exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
+        is SSLException -> getString(R.string.thread_load_failed_ssl)
+        is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
+        is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
           getString(R.string.thread_load_failed_cloud_flare_detected)
         }
-        exception is SiteError -> exception.shortMessage()
+        is SiteError -> exception.shortMessage()
         else -> getString(R.string.thread_load_failed_parsing)
       }
     }
-
-  private fun isServerErrorNotFound(exception: ServerException): Boolean {
-    return exception.statusCode == 404
-  }
 
   fun isCloudFlareError(): Boolean =
     exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
@@ -89,7 +79,15 @@ class ClientException(message: String) : ChanLoaderException(Exception(message))
 
 class ServerException(val statusCode: Int) : Exception("Bad status code: ${statusCode}") {
   fun isAuthError(): Boolean {
-    return statusCode == 401 || statusCode == 403
+    return statusCode == 401
+  }
+
+  fun isForbiddenError(): Boolean {
+    return statusCode == 403
+  }
+
+  fun isNotFoundError(): Boolean {
+    return statusCode == 404
   }
 }
 

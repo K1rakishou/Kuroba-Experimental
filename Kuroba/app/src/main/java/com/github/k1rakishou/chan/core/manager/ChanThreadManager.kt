@@ -483,14 +483,19 @@ class ChanThreadManager(
             PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
           }
           is ChanLoadOption.ForceUpdatePosts -> {
-            PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
+            val postDescriptors = chanLoadOption.postDescriptors
+            if (postDescriptors == null) {
+              PostsToReloadOptions.ReloadAll
+            } else {
+              PostsToReloadOptions.Reload(postDescriptors.toSet())
+            }
           }
           ChanLoadOption.ClearMemoryAndDatabaseCaches,
-          ChanLoadOption.ClearMemoryCache,
-          ChanLoadOption.RetainAll -> PostsToReloadOptions.ReloadAll
+          ChanLoadOption.ClearMemoryCache -> PostsToReloadOptions.ReloadAll
+          ChanLoadOption.RetainAll -> return null
         }
 
-        val result = chanThreadLoaderCoordinator.reloadAndReparseThread(
+        val result = chanThreadLoaderCoordinator.reloadAndReparseThreadPosts(
           postParser = postParser,
           threadDescriptor = chanDescriptor,
           cacheUpdateOptions = chanCacheUpdateOptions,
