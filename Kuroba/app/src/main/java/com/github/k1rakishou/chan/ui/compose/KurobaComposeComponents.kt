@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -177,8 +178,32 @@ fun KurobaComposeButton(
   Button(
     onClick = onClick,
     enabled = enabled,
-    modifier = modifier,
+    modifier = Modifier
+      .width(112.dp)
+      .height(36.dp)
+      .then(modifier),
     content = buttonContent,
     colors = chanTheme.buttonColors()
+  )
+}
+
+@Composable
+fun KurobaComposeTextButton(
+  onClick: () -> Unit,
+  text: String,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  KurobaComposeButton(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    buttonContent = {
+      Text(
+        text = text,
+        modifier = Modifier.fillMaxSize(),
+        textAlign = TextAlign.Center
+      )
+    }
   )
 }

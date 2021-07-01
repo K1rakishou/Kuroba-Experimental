@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.Surface
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -24,9 +23,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -80,21 +79,22 @@ class ThreadDownloaderSettingsController(
         .wrapContentHeight()
         .fillMaxWidth(),
     ) {
-      KurobaComposeButton(
-        onClick = { pop() }
-      ) {
-        Text(text = stringResource(id = R.string.cancel))
-      }
+      KurobaComposeTextButton(
+        onClick = { pop() },
+        text = stringResource(id = R.string.cancel),
+        modifier = Modifier.width(112.dp)
+      )
 
-      Spacer(modifier = Modifier.weight(1f))
+      Spacer(modifier = Modifier.width(8.dp))
 
-      KurobaComposeButton(
+      KurobaComposeTextButton(
         onClick = {
           downloadClicked(viewModel.downloadMedia.value)
-          pop() }
-      ) {
-        Text(text = stringResource(id = R.string.download))
-      }
+          pop()
+        },
+        text = stringResource(id = R.string.download),
+        modifier = Modifier.width(112.dp)
+      )
     }
   }
 

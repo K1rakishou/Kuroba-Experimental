@@ -158,7 +158,7 @@ abstract class ChanTheme {
     return ButtonDefaults.buttonColors(
       backgroundColor = accentColorCompose,
       contentColor = backColorCompose,
-      disabledBackgroundColor = accentColorCompose.copy(alpha = 0.12f),
+      disabledBackgroundColor = accentColorCompose.copy(alpha = ContentAlpha.disabled),
       disabledContentColor = backColorCompose.copy(alpha = ContentAlpha.disabled)
     )
   }

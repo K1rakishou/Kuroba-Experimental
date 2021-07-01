@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.runtime.Composable
@@ -24,8 +25,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -34,10 +36,9 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
@@ -166,6 +167,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
         modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
+          .padding(horizontal = 16.dp)
       )
 
       Spacer(modifier = Modifier.height(16.dp))
@@ -176,18 +178,12 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           .fillMaxWidth()
           .wrapContentHeight()
       ) {
-        KurobaComposeButton(
+        KurobaComposeTextButton(
           onClick = onReloadClick,
           modifier = Modifier
             .width(112.dp)
             .height(36.dp),
-          buttonContent = {
-            KurobaComposeText(
-              text = "Reload",
-              modifier = Modifier.fillMaxSize(),
-              textAlign = TextAlign.Center
-            )
-          }
+          text = stringResource(id = R.string.captcha_layout_dvach_reload)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -196,7 +192,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
         val captchaId = (captchaIdAsync as? AsyncData.Data)?.data
         val enabled = captchaId.isNotNullNorEmpty() && currentInputValue.isNotEmpty()
 
-        KurobaComposeButton(
+        KurobaComposeTextButton(
           onClick = {
             if (captchaId.isNotNullNorEmpty()) {
               onVerifyClick(captchaId, viewModel.currentInputValue.value)
@@ -206,13 +202,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           modifier = Modifier
             .width(112.dp)
             .height(36.dp),
-          buttonContent = {
-            KurobaComposeText(
-              text = "Verify",
-              modifier = Modifier.fillMaxSize(),
-              textAlign = TextAlign.Center
-            )
-          }
+          text = stringResource(id = R.string.captcha_layout_dvach_verify)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
