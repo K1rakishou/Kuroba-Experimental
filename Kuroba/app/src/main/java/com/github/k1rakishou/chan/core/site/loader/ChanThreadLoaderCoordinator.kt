@@ -146,6 +146,8 @@ class ChanThreadLoaderCoordinator(
       return@withContext Try {
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
           if (threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)) {
+            chanPostRepository.updateThreadState(chanDescriptor, archived = true)
+
             val success = databasePostLoader.loadPosts(chanDescriptor) != null
             if (success) {
               return@Try ThreadLoadResult.Loaded(chanDescriptor)

@@ -61,8 +61,16 @@ abstract class ChanThreadDao {
 
   @Query("""
         UPDATE ${ChanThreadEntity.TABLE_NAME}
-        SET ${ChanThreadEntity.CLOSED_COLUMN_NAME} = COALESCE(${ChanThreadEntity.CLOSED_COLUMN_NAME}, :closed),
-            ${ChanThreadEntity.ARCHIVED_COLUMN_NAME} = COALESCE(${ChanThreadEntity.ARCHIVED_COLUMN_NAME}, :archived)
+        SET 
+            ${ChanThreadEntity.CLOSED_COLUMN_NAME} = CASE 
+            WHEN :closed IS NULL THEN ${ChanThreadEntity.CLOSED_COLUMN_NAME}
+            ELSE :closed
+            END,
+            
+            ${ChanThreadEntity.ARCHIVED_COLUMN_NAME} = CASE 
+            WHEN :archived IS NULL THEN ${ChanThreadEntity.ARCHIVED_COLUMN_NAME}
+            ELSE :archived
+            END
         WHERE ${ChanThreadEntity.THREAD_ID_COLUMN_NAME} = :threadId
     """)
   abstract suspend fun updateThreadState(
