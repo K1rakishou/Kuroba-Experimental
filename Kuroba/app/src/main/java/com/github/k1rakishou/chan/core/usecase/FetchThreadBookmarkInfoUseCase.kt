@@ -70,10 +70,19 @@ class FetchThreadBookmarkInfoUseCase(
       Logger.d(TAG, "fetchThreadBookmarkInfo() threadJsonEndpoint = $threadJsonEndpoint")
     }
 
-    val request = Request.Builder()
+    val requestBuilder = Request.Builder()
       .url(threadJsonEndpoint)
       .get()
-      .build()
+
+    siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())?.let { site ->
+      site.requestModifier().modifyCatalogOrThreadGetRequest(
+        site = site,
+        chanDescriptor = threadDescriptor,
+        requestBuilder = requestBuilder
+      )
+    }
+
+    val request = requestBuilder.build()
 
     val response = try {
       proxiedOkHttpClient.okHttpClient().suspendCall(request)

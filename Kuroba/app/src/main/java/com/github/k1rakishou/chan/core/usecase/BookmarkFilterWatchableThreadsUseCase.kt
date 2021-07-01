@@ -348,10 +348,19 @@ class BookmarkFilterWatchableThreadsUseCase(
       Logger.d(TAG, "fetchBoardCatalog() catalogJsonEndpoint=$catalogJsonEndpoint")
     }
 
-    val request = Request.Builder()
+    val requestBilder = Request.Builder()
       .url(catalogJsonEndpoint)
       .get()
-      .build()
+
+    siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)?.let { site ->
+      site.requestModifier().modifyCatalogOrThreadGetRequest(
+        site = site,
+        chanDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor),
+        requestBuilder = requestBilder
+      )
+    }
+
+    val request = requestBilder.build()
 
     val response = try {
       proxiedOkHttpClient.okHttpClient().suspendCall(request)
