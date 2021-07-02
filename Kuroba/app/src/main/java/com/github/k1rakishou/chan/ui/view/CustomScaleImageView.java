@@ -30,7 +30,7 @@ import com.github.k1rakishou.core_logger.Logger;
 @DoNotStrip
 public class CustomScaleImageView extends SubsamplingScaleImageView {
     private static final String TAG = "CustomScaleImageView";
-    private static final float EPSILON = 0.00001f;
+    private static final float MIN_PAN_OFFSET = 3f;
 
     private Callback callback;
     private final RectF panRectF = new RectF();
@@ -89,16 +89,16 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
         panRectF.set(0f, 0f, 0f, 0f);
         getPanRemaining(panRectF);
 
-        if (Math.abs(panRectF.left) < EPSILON) {
+        if (Math.abs(panRectF.left) < MIN_PAN_OFFSET) {
             side = side | ImageViewportTouchSide.LEFT_SIDE;
         }
-        if (Math.abs(panRectF.right) < EPSILON) {
+        if (Math.abs(panRectF.right) < MIN_PAN_OFFSET) {
             side = side | ImageViewportTouchSide.RIGHT_SIDE;
         }
-        if (Math.abs(panRectF.top) < EPSILON) {
+        if (Math.abs(panRectF.top) < MIN_PAN_OFFSET) {
             side = side | ImageViewportTouchSide.TOP_SIDE;
         }
-        if (Math.abs(panRectF.bottom) < EPSILON) {
+        if (Math.abs(panRectF.bottom) < MIN_PAN_OFFSET) {
             side = side | ImageViewportTouchSide.BOTTOM_SIDE;
         }
 
