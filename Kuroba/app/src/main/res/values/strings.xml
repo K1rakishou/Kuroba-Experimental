@@ -1258,7 +1258,8 @@ Don't have a 4chan Pass?<br>
     <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>
 
     <string name="site_uses_dynamic_boards">"Unable to go to board (site likely has dynamic boards). Add the board using the boards menu first."</string>
-    <string name="archive_is_not_enabled">Archive \"%1$s\" is not enabled or does not exist</string>
+    <string name="archive_is_not_enabled">Archive for boards /%1$s/ is not enabled or does not exist</string>
+    <string name="failed_to_find_board_with_code">Failed to find board with code /%1$s/</string>
 
     <string name="update_manager_copy_apk_title">Copy apk?</string>
     <string name="update_manager_copy_apk_message">Would you like to store this apk?</string>

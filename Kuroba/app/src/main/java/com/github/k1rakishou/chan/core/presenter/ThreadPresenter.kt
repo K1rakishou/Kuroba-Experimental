@@ -1387,7 +1387,7 @@ class ThreadPresenter @Inject constructor(
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board == null) {
-          showToast(context, R.string.archive_is_not_enabled)
+          showToast(context, getString(R.string.failed_to_find_board_with_code, boardDescriptor.boardCode))
           return@post
         }
 

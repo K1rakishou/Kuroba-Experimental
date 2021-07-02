@@ -60,7 +60,6 @@ class DvachCommentParser(
     text: CharSequence
   ): PostLinkable.Link {
     val boardLinkMatcher = BOARD_LINK_PATTERN.matcher(href)
-
     if (boardLinkMatcher.find()) {
       val boardCode = boardLinkMatcher.groupOrNull(1)
       if (!boardCode.isNullOrEmpty()) {
@@ -152,11 +151,14 @@ class DvachCommentParser(
   }
 
   companion object {
-    // board link - https://2ch.hk/mobi
-    // post quote - /po/res/39410052.html#39410422
+    // board links:
+    // https://2ch.hk/mobi/
+    // https://2-ch.hk/mobi
+    // https://2-ch.so/mobi
+    // /mobi/
+    private val BOARD_LINK_PATTERN = Pattern.compile("(?:^|2-?ch\\..*)\\/(\\w+)\\/?\$")
+
     // full quote - https://2ch.hk/po/res/39420150.html#39420150
-    private val POST_ID_PATTERN = Pattern.compile("#(\\d+)$")
-    private val BOARD_LINK_PATTERN = Pattern.compile("/(\\w+)/?\$")
     private val QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+).html(?:#(\\d+))?")
   }
 }
