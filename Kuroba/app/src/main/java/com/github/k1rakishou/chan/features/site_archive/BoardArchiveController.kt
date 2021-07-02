@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -19,6 +18,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -149,6 +149,8 @@ class BoardArchiveController(
         return@BuildListOfArchiveThreads
       }
 
+      viewModel.currentlySelectedThreadNo.value = threadNo
+
       val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadNo)
       onThreadClicked(threadDescriptor)
       requireNavController().popController()
@@ -164,8 +166,7 @@ class BoardArchiveController(
     onThreadClicked: (Long) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-
-    val state = rememberLazyListState()
+    val state = viewModel.lazyListState()
 
     LazyColumn(
       state = state,
@@ -212,10 +213,20 @@ class BoardArchiveController(
     onThreadClicked: (Long) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
+    val currentlySelectedThreadNo by viewModel.currentlySelectedThreadNo
+
+    val backgroundColor = remember(key1 = archiveThread.threadNo) {
+      if (currentlySelectedThreadNo == archiveThread.threadNo) {
+        chanTheme.postHighlightedColorCompose
+      } else {
+        Color.Unspecified
+      }
+    }
 
     Column(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
+      .background(color = backgroundColor)
       .clickable { onThreadClicked(archiveThread.threadNo) }
       .padding(horizontal = 4.dp, vertical = 2.dp)
     ) {

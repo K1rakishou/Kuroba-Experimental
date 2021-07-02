@@ -17,7 +17,6 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -261,7 +259,7 @@ class LocalArchiveController(
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val state = rememberLazyListState()
+    val state = viewModel.lazyListState()
 
     LazyVerticalGrid(
       state = state,
@@ -377,7 +375,7 @@ class LocalArchiveController(
             text = threadDownloadView.threadSubject,
             fontSize = 14.sp,
             color = chanTheme.postSubjectColorCompose,
-            maxLines = 1,
+            maxLines = 2,
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight()
@@ -415,9 +413,8 @@ class LocalArchiveController(
                 ),
                 contentDescription = null,
                 modifier = Modifier
-                  .fillMaxHeight()
+                  .height(100.dp)
                   .width(60.dp)
-                  .align(Alignment.CenterVertically)
                   .alpha(contentAlpha)
               )
 
@@ -427,7 +424,7 @@ class LocalArchiveController(
             KurobaComposeText(
               text = threadDownloadView.threadDownloadInfo,
               fontSize = 12.sp,
-              color = chanTheme.textColorHintCompose,
+              color = chanTheme.textColorPrimaryCompose,
               modifier = Modifier
                 .fillMaxWidth()
                 .weight(1f)

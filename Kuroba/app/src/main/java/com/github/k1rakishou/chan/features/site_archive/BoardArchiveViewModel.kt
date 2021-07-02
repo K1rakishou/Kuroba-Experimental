@@ -1,5 +1,8 @@
 package com.github.k1rakishou.chan.features.site_archive
 
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -31,10 +34,28 @@ class BoardArchiveViewModel(
   private var _searchQuery = mutableStateOf<String?>(null)
   private var _archiveThreadsAsync: AsyncData<List<ArchiveThread>> = AsyncData.NotInitialized
 
+  var currentlySelectedThreadNo = mutableStateOf<Long?>(null)
+
+  private var rememberedFirstVisibleItemIndex: Int = 0
+  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+
   val state: StateFlow<ViewModelState>
     get() = _state.asStateFlow()
   val searchQuery: State<String?>
     get() = _searchQuery
+
+  @Composable
+  fun lazyListState(): LazyListState {
+    val lazyListState = rememberLazyListState(
+      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
+    )
+
+    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
+    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
+
+    return lazyListState
+  }
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
