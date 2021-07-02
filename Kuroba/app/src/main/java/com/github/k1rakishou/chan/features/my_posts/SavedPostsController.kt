@@ -47,17 +47,16 @@ import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.imePadding
 import javax.inject.Inject
 
-class SavedPostsController(context: Context) :
-  TabPageController(context),
+class SavedPostsController(
+  context: Context,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+) : TabPageController(context),
   ToolbarNavigationController.ToolbarSearchCallback {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<SavedPostsViewModel>() }
-
-  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)

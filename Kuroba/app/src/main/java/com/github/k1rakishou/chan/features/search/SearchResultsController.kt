@@ -33,7 +33,8 @@ import javax.inject.Inject
 class SearchResultsController(
   context: Context,
   private val siteDescriptor: SiteDescriptor,
-  private val searchParameters: SearchParameters
+  private val searchParameters: SearchParameters,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : Controller(context), SearchResultsView {
 
   @Inject
@@ -49,9 +50,6 @@ class SearchResultsController(
       themeEngine = themeEngine
     )
   }
-
-  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 

@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -28,6 +29,8 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -39,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
@@ -48,6 +52,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.animatedVectorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
@@ -93,7 +99,8 @@ import kotlin.time.ExperimentalTime
 
 class LocalArchiveController(
   context: Context,
-  private val mainControllerCallbacks: MainControllerCallbacks
+  private val mainControllerCallbacks: MainControllerCallbacks,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : Controller(context),
   ToolbarNavigationController.ToolbarSearchCallback {
 
@@ -109,9 +116,6 @@ class LocalArchiveController(
   lateinit var fileChooser: FileChooser
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<LocalArchiveViewModel>() }
-
-  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -236,6 +240,16 @@ class LocalArchiveController(
     }
 
     BuildThreadDownloadsList(
+      onViewModeChanged = { newViewMode ->
+        viewModel.unselectAll()
+
+        if (newViewMode == viewModel.viewMode.value) {
+          return@BuildThreadDownloadsList
+        }
+
+        viewModel.viewMode.value = newViewMode
+        viewModel.reload()
+      },
       threadDownloadViews = threadDownloadViews,
       onThreadDownloadClicked = { threadDescriptor ->
         if (viewModel.isInSelectionMode()) {
@@ -256,6 +270,7 @@ class LocalArchiveController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildThreadDownloadsList(
+    onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit,
     threadDownloadViews: List<LocalArchiveViewModel.ThreadDownloadView>,
     onThreadDownloadClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
@@ -263,38 +278,154 @@ class LocalArchiveController(
     val chanTheme = LocalChanTheme.current
     val state = viewModel.lazyListState()
 
-    LazyVerticalGrid(
-      state = state,
-      cells = GridCells.Adaptive(260.dp),
-      modifier = Modifier
-        .fillMaxSize()
-        .simpleVerticalScrollbar(state, chanTheme)
-    ) {
-      if (threadDownloadViews.isEmpty()) {
-        val searchQuery = viewModel.searchQuery.value
-        if (searchQuery.isNullOrEmpty()) {
-          item {
-            KurobaComposeErrorMessage(
-              errorMessage = stringResource(id = R.string.search_nothing_found)
-            )
+    var animationAtEnd by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+      while (isActive) {
+        animationAtEnd = !animationAtEnd
+        delay(1500)
+      }
+    }
+
+    Column(modifier = Modifier.fillMaxSize()) {
+      BuildViewModelSelector(onViewModeChanged = onViewModeChanged)
+
+      LazyVerticalGrid(
+        state = state,
+        cells = GridCells.Adaptive(260.dp),
+        modifier = Modifier
+          .fillMaxSize()
+          .simpleVerticalScrollbar(state, chanTheme)
+      ) {
+        if (threadDownloadViews.isEmpty()) {
+          val searchQuery = viewModel.searchQuery.value
+          if (searchQuery.isNullOrEmpty()) {
+            item {
+              KurobaComposeErrorMessage(
+                errorMessage = stringResource(id = R.string.search_nothing_found)
+              )
+            }
+          } else {
+            item {
+              KurobaComposeErrorMessage(
+                errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+              )
+            }
           }
-        } else {
-          item {
-            KurobaComposeErrorMessage(
-              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
-            )
+
+          return@LazyVerticalGrid
+        }
+
+        items(threadDownloadViews.size) { index ->
+          val threadDownloadView = threadDownloadViews[index]
+          BuildThreadDownloadItem(
+            animationAtEnd = animationAtEnd,
+            threadDownloadView = threadDownloadView,
+            onThreadDownloadClicked = onThreadDownloadClicked,
+            onThreadDownloadLongClicked = onThreadDownloadLongClicked
+          )
+        }
+      }
+    }
+  }
+
+  @Composable
+  private fun BuildViewModelSelector(onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit) {
+    val chanTheme = LocalChanTheme.current
+    val highlightColor = chanTheme.postHighlightedColorCompose
+    val viewMode by viewModel.viewMode
+
+    Row(modifier = Modifier
+      .fillMaxWidth()
+      .height(26.dp)
+      .padding(horizontal = 4.dp)
+      .clip(RoundedCornerShape(4.dp))
+    ) {
+      kotlin.run {
+        val backgroundColor = remember(key1 = viewMode) {
+          if (viewMode == LocalArchiveViewModel.ViewMode.ShowAll) {
+            highlightColor
+          } else {
+            Color.Unspecified
           }
         }
 
-        return@LazyVerticalGrid
+        KurobaComposeText(
+          text = stringResource(id = R.string.controller_local_archive_show_all_threads),
+          textAlign = TextAlign.Center,
+          fontSize = 16.sp,
+          fontWeight = FontWeight.SemiBold,
+          modifier = Modifier
+            .fillMaxHeight()
+            .background(color = backgroundColor)
+            .weight(weight = 0.33f)
+            .clickable {
+              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowAll)
+            }
+        )
       }
 
-      items(threadDownloadViews.size) { index ->
-        val threadDownloadView = threadDownloadViews[index]
-        BuildThreadDownloadItem(
-          threadDownloadView = threadDownloadView,
-          onThreadDownloadClicked = onThreadDownloadClicked,
-          onThreadDownloadLongClicked = onThreadDownloadLongClicked
+      Divider(
+        color = chanTheme.dividerColorCompose,
+        modifier = Modifier
+          .width(1.dp)
+          .fillMaxHeight()
+          .padding(vertical = 2.dp)
+      )
+
+      kotlin.run {
+        val backgroundColor = remember(key1 = viewMode) {
+          if (viewMode == LocalArchiveViewModel.ViewMode.ShowDownloading) {
+            highlightColor
+          } else {
+            Color.Unspecified
+          }
+        }
+
+        KurobaComposeText(
+          text = stringResource(id = R.string.controller_local_archive_show_downloading_threads),
+          fontSize = 16.sp,
+          fontWeight = FontWeight.SemiBold,
+          textAlign = TextAlign.Center,
+          modifier = Modifier
+            .fillMaxHeight()
+            .background(color = backgroundColor)
+            .weight(weight = 0.33f)
+            .clickable {
+              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowDownloading)
+            }
+        )
+      }
+
+      Divider(
+        color = chanTheme.dividerColorCompose,
+        modifier = Modifier
+          .width(1.dp)
+          .fillMaxHeight()
+          .padding(vertical = 2.dp)
+      )
+
+      kotlin.run {
+        val backgroundColor = remember(key1 = viewMode) {
+          if (viewMode == LocalArchiveViewModel.ViewMode.ShowCompleted) {
+            highlightColor
+          } else {
+            Color.Unspecified
+          }
+        }
+
+        KurobaComposeText(
+          text = stringResource(id = R.string.controller_local_archive_show_downloaded_threads),
+          fontSize = 16.sp,
+          fontWeight = FontWeight.SemiBold,
+          textAlign = TextAlign.Center,
+          modifier = Modifier
+            .fillMaxHeight()
+            .background(color = backgroundColor)
+            .weight(weight = 0.33f)
+            .clickable {
+              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowCompleted)
+            }
         )
       }
     }
@@ -303,6 +434,7 @@ class LocalArchiveController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildThreadDownloadItem(
+    animationAtEnd: Boolean,
     threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
     onThreadDownloadClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
@@ -313,7 +445,7 @@ class LocalArchiveController(
 
     Box(modifier = Modifier
       .fillMaxWidth()
-      .wrapContentHeight()
+      .height(170.dp)
       .combinedClickable(
         onClick = { onThreadDownloadClicked(threadDownloadView.threadDescriptor) },
         onLongClick = { onThreadDownloadLongClicked(threadDownloadView.threadDescriptor) }
@@ -438,7 +570,7 @@ class LocalArchiveController(
               .wrapContentSize()
               .align(Alignment.CenterVertically)
             ) {
-              BuildThreadDownloadStatusIcon(threadDownloadView, threadDescriptor, contentAlpha)
+              BuildThreadDownloadStatusIcon(animationAtEnd, threadDownloadView, contentAlpha)
               BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
               BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
             }
@@ -446,11 +578,18 @@ class LocalArchiveController(
 
           val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
           if (stats != null) {
-            val statsText = remember(key1 = stats) {
-              "Posts: ${stats!!.downloadedPostsCount}, " +
-                "Media: ${stats!!.downloadedMediaCount}, " +
-                "Total disk: ${ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)}"
+            Spacer(modifier = Modifier.weight(1f))
+
+            val formattedDiskSize = remember(key1 = stats!!.mediaTotalDiskSize) {
+              ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)
             }
+
+            val statsText = stringResource(
+              R.string.controller_local_archive_additional_thread_stats,
+              stats!!.downloadedPostsCount,
+              stats!!.downloadedMediaCount,
+              formattedDiskSize
+            )
 
             KurobaComposeText(
               text = statsText,
@@ -543,8 +682,8 @@ class LocalArchiveController(
   @OptIn(ExperimentalComposeUiApi::class)
   @Composable
   private fun BuildThreadDownloadStatusIcon(
+    animationAtEnd: Boolean,
     threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
     iconAlpha: Float
   ) {
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
@@ -555,19 +694,8 @@ class LocalArchiveController(
 
     val painter = when (threadDownloadView.status) {
       ThreadDownload.Status.Running -> {
-        var atEnd by remember(key1 = threadDescriptor) { mutableStateOf(false) }
-
-        val painter = animatedVectorResource(id = R.drawable.ic_download_anim)
-          .painterFor(atEnd = atEnd)
-
-        LaunchedEffect(key1 = threadDescriptor) {
-          while (isActive) {
-            atEnd = !atEnd
-            delay(1500)
-          }
-        }
-
-        painter
+        animatedVectorResource(id = R.drawable.ic_download_anim)
+          .painterFor(atEnd = animationAtEnd)
       }
       ThreadDownload.Status.Stopped -> {
         painterResource(id = R.drawable.ic_download_anim0)

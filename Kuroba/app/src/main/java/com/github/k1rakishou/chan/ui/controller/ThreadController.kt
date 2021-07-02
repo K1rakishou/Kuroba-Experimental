@@ -244,8 +244,8 @@ abstract class ThreadController(
     return threadSlideController.passMotionEventIntoSlidingPaneLayout(event)
   }
 
-  fun showLoading() {
-    threadLayout.showLoading()
+  fun showLoading(animateTransition: Boolean = false) {
+    threadLayout.showLoading(animateTransition = animateTransition)
   }
 
   open suspend fun showSitesNotSetup() {

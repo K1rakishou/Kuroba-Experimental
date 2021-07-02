@@ -678,6 +678,30 @@ class BrowseController(
     }
   }
 
+  fun getViewThreadController(): ViewThreadController? {
+    var splitNav: SplitNavigationController? = null
+    var slideNav: ThreadSlideController? = null
+
+    if (doubleNavigationController is SplitNavigationController) {
+      splitNav = doubleNavigationController as SplitNavigationController?
+    }
+
+    if (doubleNavigationController is ThreadSlideController) {
+      slideNav = doubleNavigationController as ThreadSlideController?
+    }
+
+    return when {
+      splitNav != null -> {
+        val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
+        navigationController.top as? ViewThreadController
+      }
+      slideNav != null -> {
+        slideNav.getRightController() as? ViewThreadController
+      }
+      else -> null
+    }
+  }
+
   // Creates or updates the target ThreadViewController
   // This controller can be in various places depending on the layout
   // We dynamically search for it

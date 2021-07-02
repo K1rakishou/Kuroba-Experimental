@@ -506,6 +506,7 @@ class Chan4SearchRequest(
         searchEntryPostBuilder.postDescriptor = PostDescriptor.create(
           SITE_DESCRIPTOR.siteName,
           boardCode,
+          threadNo,
           threadNo
         )
       }
@@ -529,7 +530,6 @@ class Chan4SearchRequest(
           Logger.e(TAG, "parsePostDescriptor() failed to parse postNo: \"$hrefAttr\"")
           return
         }
-
 
         searchEntryPostBuilder.postDescriptor = PostDescriptor.create(
           SITE_DESCRIPTOR.siteName,

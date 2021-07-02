@@ -36,6 +36,7 @@ import javax.inject.Inject
 
 class FilterWatchesController(
   context: Context,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context), FilterWatchesControllerView {
 
   @Inject
@@ -47,9 +48,6 @@ class FilterWatchesController(
   private val presenter = FilterWatchesPresenter()
   private val controller = FilterWatchesEpoxyController()
   private val needRestoreScrollPosition = AtomicBoolean(true)
-
-  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private val topAdapterPosition: Int
     get() {

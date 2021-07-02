@@ -24,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
@@ -70,6 +71,7 @@ fun KurobaComposeText(
   modifier: Modifier = Modifier,
   color: Color? = null,
   fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
   maxLines: Int = Int.MAX_VALUE,
   textAlign: TextAlign? = null
 ) {
@@ -78,6 +80,7 @@ fun KurobaComposeText(
     modifier = modifier,
     color = color,
     fontSize = fontSize,
+    fontWeight = fontWeight,
     maxLines = maxLines,
     textAlign = textAlign
   )
@@ -89,6 +92,7 @@ fun KurobaComposeText(
   modifier: Modifier = Modifier,
   color: Color? = null,
   fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
   maxLines: Int = Int.MAX_VALUE,
   textAlign: TextAlign? = null
 ) {
@@ -108,6 +112,7 @@ fun KurobaComposeText(
     fontSize = fontSize,
     maxLines = maxLines,
     textAlign = textAlign,
+    fontWeight = fontWeight,
     modifier = modifier
   )
 }

@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -69,6 +70,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -96,6 +98,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.countDigits
+import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -154,6 +157,9 @@ class MainController(
   private lateinit var navigationViewContract: NavigationViewContract
   private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
+
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private val bottomNavViewGestureDetector by lazy {
     return@lazy BottomNavViewLongTapSwipeUpGestureDetector(
@@ -540,19 +546,28 @@ class MainController(
 
   fun openGlobalSearchController() {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(GlobalSearchController(context))
+
+    val globalSearchController = GlobalSearchController(context, startActivityCallback)
+    openControllerWrappedIntoBottomNavAwareController(globalSearchController)
+
     setGlobalSearchMenuItemSelected()
   }
 
   fun openArchiveController() {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(LocalArchiveController(context, this))
+
+    val localArchiveController = LocalArchiveController(context, this, startActivityCallback)
+    openControllerWrappedIntoBottomNavAwareController(localArchiveController)
+
     setArchiveMenuItemSelected()
   }
 
   fun openBookmarksController(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     closeAllNonMainControllers()
-    openControllerWrappedIntoBottomNavAwareController(TabHostController(context, threadDescriptors, this))
+
+    val tabHostController = TabHostController(context, threadDescriptors, this, startActivityCallback)
+    openControllerWrappedIntoBottomNavAwareController(tabHostController)
+
     setBookmarksMenuItemSelected()
   }
 
@@ -579,6 +594,33 @@ class MainController(
 
     pushChildController(bottomNavBarAwareNavigationController)
     bottomNavBarAwareNavigationController.pushController(controller)
+  }
+
+  fun getViewThreadController(): ViewThreadController? {
+    var topController: Controller? = top
+
+    if (topController is BottomNavBarAwareNavigationController) {
+      topController = childControllers.getOrNull(childControllers.lastIndex - 1)
+    }
+
+    if (topController == null) {
+      return null
+    }
+
+    if (topController is SplitNavigationController) {
+      return topController
+        .findControllerOrNull { controller -> controller is ViewThreadController }
+        as? ViewThreadController
+    }
+
+    if (topController is StyledToolbarNavigationController) {
+      val threadSlideController = topController.top as? ThreadSlideController
+      if (threadSlideController != null) {
+        return threadSlideController.getRightController() as? ViewThreadController
+      }
+    }
+
+    return null
   }
 
   suspend fun loadThread(

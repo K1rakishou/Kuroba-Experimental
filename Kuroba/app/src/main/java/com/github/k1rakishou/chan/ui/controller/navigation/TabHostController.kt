@@ -8,6 +8,7 @@ import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
@@ -24,7 +25,8 @@ import com.google.android.material.tabs.TabLayout
 class TabHostController(
   context: Context,
   private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private val mainControllerCallbacks: MainControllerCallbacks
+  private val mainControllerCallbacks: MainControllerCallbacks,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : Controller(context), ToolbarNavigationController.ToolbarSearchCallback, DisableableLayout {
   private lateinit var tabLayout: ColorizableTabLayout
   private lateinit var viewPager: KurobaViewPager
@@ -168,18 +170,23 @@ class TabHostController(
     private fun createController(pageType: PageType): TabPageController {
       return when (pageType) {
         PageType.SavedPosts -> {
-          SavedPostsController(context)
+          SavedPostsController(
+            context = context,
+            startActivityCallback = startActivityCallback
+          )
         }
         PageType.Bookmarks -> {
           BookmarksController(
             context = context,
             bookmarksToHighlight = bookmarksToHighlight,
-            drawerCallbacks = mainControllerCallbacks
+            drawerCallbacks = mainControllerCallbacks,
+            startActivityCallback = startActivityCallback
           )
         }
         PageType.FilterWatches -> {
           FilterWatchesController(
             context = context,
+            startActivityCallback = startActivityCallback
           )
         }
       }

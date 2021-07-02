@@ -70,7 +70,8 @@ import javax.inject.Inject
 class BookmarksController(
   context: Context,
   bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private var drawerCallbacks: MainControllerCallbacks?
+  private val drawerCallbacks: MainControllerCallbacks,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
@@ -98,9 +99,6 @@ class BookmarksController(
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val bookmarksSelectionHelper = BookmarksSelectionHelper(this)
-
-  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-    get() = (context as StartActivityStartupHandlerHelper.StartActivityCallbacks)
 
   private val bookmarksPresenter by lazy {
     BookmarksPresenter(
@@ -322,8 +320,7 @@ class BookmarksController(
 
     bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
     requireNavController().requireToolbar().exitSelectionMode()
-    drawerCallbacks?.hideBottomPanel()
-    drawerCallbacks = null
+    drawerCallbacks.hideBottomPanel()
 
     epoxyRecyclerView.clear()
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
@@ -338,7 +335,7 @@ class BookmarksController(
       }
     }
 
-    val result = drawerCallbacks?.passOnBackToBottomPanel() ?: false
+    val result = drawerCallbacks.passOnBackToBottomPanel() ?: false
     if (result) {
       bookmarksSelectionHelper.clearSelection()
     }
@@ -471,13 +468,13 @@ class BookmarksController(
       BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
       BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
         if (selectionEvent is BaseSelectionHelper.SelectionEvent.EnteredSelectionMode) {
-          drawerCallbacks?.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+          drawerCallbacks.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
         }
 
         enterSelectionModeOrUpdate()
       }
       BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
-        drawerCallbacks?.hideBottomPanel()
+        drawerCallbacks.hideBottomPanel()
         requireNavController().requireToolbar().exitSelectionMode()
       }
     }

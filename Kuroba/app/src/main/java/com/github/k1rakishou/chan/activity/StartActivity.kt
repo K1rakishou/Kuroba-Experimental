@@ -260,7 +260,7 @@ class StartActivity : ControllerHostActivity(),
       requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_FULL_USER
     }
 
-    browseController?.showLoading()
+    browseController?.showLoading(animateTransition = false)
   }
 
   private suspend fun initializeDependencies(
@@ -335,6 +335,12 @@ class StartActivity : ControllerHostActivity(),
 
   override fun loadThreadAndMarkPost(postDescriptor: PostDescriptor, animated: Boolean) {
     lifecycleScope.launch {
+      browseController?.getViewThreadController()?.let { viewThreadController ->
+        if (viewThreadController.chanDescriptor != postDescriptor.descriptor) {
+          viewThreadController.showLoading(animateTransition = false)
+        }
+      }
+
       mainController.closeAllNonMainControllers()
 
       chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
@@ -347,6 +353,12 @@ class StartActivity : ControllerHostActivity(),
 
   override fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
     lifecycleScope.launch {
+      mainController.getViewThreadController()?.let { viewThreadController ->
+        if (viewThreadController.chanDescriptor != threadDescriptor) {
+          viewThreadController.showLoading(animateTransition = false)
+        }
+      }
+
       mainController.loadThread(
         threadDescriptor,
         closeAllNonMainControllers = true,

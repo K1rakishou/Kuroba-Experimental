@@ -2194,6 +2194,7 @@ class ThreadPresenter @Inject constructor(
     fun postClicked(postDescriptor: PostDescriptor)
     fun showError(error: ChanLoaderException)
     fun showLoading()
+    fun showLoading(animateTransition: Boolean)
     fun showEmpty()
     fun showPostInfo(info: String)
     fun showPostLinkables(post: ChanPost)

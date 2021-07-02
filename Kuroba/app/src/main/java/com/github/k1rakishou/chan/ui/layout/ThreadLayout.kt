@@ -532,7 +532,11 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showLoading() {
-    switchVisible(Visible.LOADING)
+    showLoading(animateTransition = true)
+  }
+
+  override fun showLoading(animateTransition: Boolean) {
+    switchVisible(Visible.LOADING, animateTransition = animateTransition)
   }
 
   override fun showEmpty() {
@@ -1074,7 +1078,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  private fun switchVisible(visible: Visible) {
+  private fun switchVisible(visible: Visible, animateTransition: Boolean = true) {
     if (this.visible == visible) {
       return
     }
@@ -1094,11 +1098,11 @@ class ThreadLayout @JvmOverloads constructor(
 
     when (visible) {
       Visible.EMPTY -> {
-        loadView.setView(inflateEmptyView())
+        loadView.setView(inflateEmptyView(), animateTransition)
         showReplyButton(false)
       }
       Visible.LOADING -> {
-        val view = loadView.setView(progressLayout)
+        val view = loadView.setView(progressLayout, animateTransition)
 
         if (refreshedFromSwipe) {
           refreshedFromSwipe = false
@@ -1112,12 +1116,12 @@ class ThreadLayout @JvmOverloads constructor(
       }
       Visible.THREAD -> {
         callback.hideSwipeRefreshLayout()
-        loadView.setView(threadListLayout)
+        loadView.setView(threadListLayout, animateTransition)
         showReplyButton(true)
       }
       Visible.ERROR -> {
         callback.hideSwipeRefreshLayout()
-        loadView.setView(errorLayout)
+        loadView.setView(errorLayout, animateTransition)
         showReplyButton(false)
       }
     }

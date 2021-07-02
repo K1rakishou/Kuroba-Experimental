@@ -75,6 +75,8 @@ class LocalArchiveViewModel : BaseViewModel() {
   val searchQuery: State<String?>
     get() = _searchQuery
 
+  var viewMode = mutableStateOf<ViewMode>(ViewMode.ShowAll)
+
   private var _selectionMode = MutableCachedSharedFlow<BaseSelectionHelper.SelectionEvent?>(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -108,16 +110,16 @@ class LocalArchiveViewModel : BaseViewModel() {
     mainScope.launch {
       threadDownloadManager.threadDownloadUpdateFlow
         .debounce(Duration.seconds(1))
-        .collect { reload() }
+        .collect { refreshCacheAndReload() }
     }
 
     mainScope.launch {
       threadDownloadManager.threadsProcessedFlow
         .debounce(Duration.seconds(1))
-        .collect { reload() }
+        .collect { refreshCacheAndReload() }
     }
 
-    reload()
+    refreshCacheAndReload()
   }
 
   @Composable
@@ -165,15 +167,43 @@ class LocalArchiveViewModel : BaseViewModel() {
       return
     }
 
-    if (query == null) {
-      _state.updateState { copy(threadDownloadsAsync = AsyncData.Data(cachedThreadDownloadViews.toList())) }
-      return
+    reload()
+  }
+
+  fun reload() {
+    val threadDownloadViews = filterThreadDownloads()
+
+    _state.updateState {
+      copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
     }
 
-    val filteredThreadDownloadViews = if (query.isEmpty()) {
-      cachedThreadDownloadViews.toList()
+    if (additionalThreadDownloadStats.isEmpty()) {
+      mainScope.launch {
+        recalculateAdditionalInfo(threadDownloadViews)
+      }
     } else {
-      cachedThreadDownloadViews.filter { threadDownloadView ->
+      recalculateAdditionalInfoExecutor.post(1000L) {
+        recalculateAdditionalInfo(threadDownloadViews)
+      }
+    }
+  }
+
+  private fun filterThreadDownloads(): List<ThreadDownloadView> {
+   val query = _searchQuery.value
+
+    val filteredThreadDownloadViews = cachedThreadDownloadViews
+      .filter { threadDownloadView ->
+        return@filter when (viewMode.value) {
+          ViewMode.ShowCompleted -> threadDownloadView.status == ThreadDownload.Status.Completed
+          ViewMode.ShowDownloading -> threadDownloadView.status != ThreadDownload.Status.Completed
+          else -> true
+        }
+      }
+
+    return if (query.isNullOrEmpty()) {
+      filteredThreadDownloadViews.toList()
+    } else {
+      filteredThreadDownloadViews.filter { threadDownloadView ->
         if (threadDownloadView.threadSubject.contains(query, ignoreCase = true)) {
           return@filter true
         }
@@ -185,14 +215,12 @@ class LocalArchiveViewModel : BaseViewModel() {
         return@filter false
       }.map { threadDownloadView -> threadDownloadView.copy() }
     }
-
-    _state.updateState { copy(threadDownloadsAsync = AsyncData.Data(filteredThreadDownloadViews)) }
   }
 
   fun deleteDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {
     mainScope.launch {
       threadDownloadManager.cancelDownloads(selectedItems)
-      reload()
+      refreshCacheAndReload()
     }
   }
 
@@ -202,7 +230,7 @@ class LocalArchiveViewModel : BaseViewModel() {
         threadDownloadManager.stopDownloading(threadDescriptor)
       }
 
-      reload()
+      refreshCacheAndReload()
     }
   }
 
@@ -212,7 +240,7 @@ class LocalArchiveViewModel : BaseViewModel() {
         threadDownloadManager.resumeDownloading(threadDescriptor)
       }
 
-      reload()
+      refreshCacheAndReload()
     }
   }
 
@@ -378,7 +406,7 @@ class LocalArchiveViewModel : BaseViewModel() {
     _selectionMode.tryEmit(newValue)
   }
 
-  private suspend fun reload() {
+  private suspend fun refreshCacheAndReload() {
     threadDownloadManager.awaitUntilInitialized()
     chanPostRepository.awaitUntilInitialized()
 
@@ -450,42 +478,38 @@ class LocalArchiveViewModel : BaseViewModel() {
       return
     }
 
-    _state.updateState {
-      copy(threadDownloadsAsync = AsyncData.Data(threadDownloadViews))
-    }
-
-    recalculateAdditionalInfoExecutor.post(1000L) {
-      withContext(Dispatchers.IO) { recalculateAdditionalInfo(threadDownloadViews) }
-    }
+    reload()
   }
 
   private suspend fun recalculateAdditionalInfo(threadDownloadViews: List<ThreadDownloadView>) {
     threadDownloadViews.forEach { threadDownloadView ->
       val threadDescriptor = threadDownloadView.threadDescriptor
 
-      val directoryName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
-      val directory = File(appConstants.threadDownloaderCacheDir, directoryName)
-      val ownerThreadDatabaseId = threadDownloadView.ownerThreadDatabaseId
+      val stats = withContext(Dispatchers.Default) {
+        val directoryName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
+        val directory = File(appConstants.threadDownloaderCacheDir, directoryName)
+        val ownerThreadDatabaseId = threadDownloadView.ownerThreadDatabaseId
 
-      val files = directory.listFiles()
-      val filesTotalSize = files?.sumOf { file -> file.length() } ?: 0L
-      val mediaCount = files?.size?.div(2) ?: 0
+        val files = directory.listFiles()
+        val filesTotalSize = files?.sumOf { file -> file.length() } ?: 0L
+        val mediaCount = files?.size?.div(2) ?: 0
 
-      val postsCount = chanPostRepository.countThreadPosts(ownerThreadDatabaseId)
-        .valueOrNull() ?: 0
+        val postsCount = chanPostRepository.countThreadPosts(ownerThreadDatabaseId)
+          .valueOrNull() ?: 0
 
-      val stats = AdditionalThreadDownloadStats(
-        postsCount,
-        mediaCount,
-        filesTotalSize
-      )
-
-      if (!additionalThreadDownloadStats.containsKey(threadDescriptor)) {
-        additionalThreadDownloadStats[threadDescriptor] = mutableStateOf(stats)
-        return@forEach
+        return@withContext AdditionalThreadDownloadStats(
+          postsCount,
+          mediaCount,
+          filesTotalSize
+        )
       }
 
-      additionalThreadDownloadStats[threadDescriptor]!!.value = stats
+      val state = additionalThreadDownloadStats.getOrPut(
+        key = threadDescriptor,
+        defaultValue = { mutableStateOf(stats) }
+      )
+
+      state.value = stats
     }
   }
 
@@ -545,6 +569,12 @@ class LocalArchiveViewModel : BaseViewModel() {
     Stop(1),
     Start(2),
     Export(3)
+  }
+
+  enum class ViewMode {
+    ShowAll,
+    ShowDownloading,
+    ShowCompleted
   }
 
   class ArchiveMenuItemId(val archiveMenuItemType: ArchiveMenuItemType) :

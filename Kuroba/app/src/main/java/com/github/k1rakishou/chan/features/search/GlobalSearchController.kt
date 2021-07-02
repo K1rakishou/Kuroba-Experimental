@@ -6,6 +6,7 @@ import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -31,9 +32,10 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.lang.ref.WeakReference
 import javax.inject.Inject
 
-class GlobalSearchController(context: Context)
-  : Controller(context),
-  GlobalSearchView {
+class GlobalSearchController(
+  context: Context,
+  private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
+) : Controller(context), GlobalSearchView {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -101,7 +103,7 @@ class GlobalSearchController(context: Context)
     hideKeyboard()
 
     requireNavController().pushController(
-      SearchResultsController(context, siteDescriptor, searchParameters),
+      SearchResultsController(context, siteDescriptor, searchParameters, startActivityCallback),
       false
     )
   }
@@ -114,7 +116,7 @@ class GlobalSearchController(context: Context)
 
     presenter.resetSearchResultsSavedState()
     requireNavController().pushController(
-      SearchResultsController(context, siteDescriptor, searchParameters)
+      SearchResultsController(context, siteDescriptor, searchParameters, startActivityCallback)
     )
   }
 

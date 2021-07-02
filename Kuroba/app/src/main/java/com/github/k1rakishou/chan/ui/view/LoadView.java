@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.view;
 
+import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -30,16 +32,15 @@ import androidx.annotation.NonNull;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
-
 /**
  * Container for a view with an ProgressBar. Toggles between the view and a
  * ProgressBar.
  */
 public class LoadView extends FrameLayout {
-    private int fadeDuration = 200;
-    private Listener listener;
+    public static final int DEFAULT_FADE_DURATION = 200;
 
+    private int fadeDuration = DEFAULT_FADE_DURATION;
+    private Listener listener;
     private AnimatorSet animatorSet = new AnimatorSet();
 
     public LoadView(Context context) {
