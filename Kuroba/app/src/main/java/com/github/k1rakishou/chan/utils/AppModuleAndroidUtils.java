@@ -12,7 +12,6 @@ import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 import android.annotation.SuppressLint;
 import android.app.ActivityManager;
 import android.app.Application;
-import android.content.ActivityNotFoundException;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.ContextWrapper;
@@ -179,7 +178,7 @@ public class AppModuleAndroidUtils {
             try {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                 application.startActivity(intent);
-            } catch (ActivityNotFoundException e) {
+            } catch (Throwable e) {
                 Logger.e(TAG, "openLink() application.startActivity() error, intent = " + intent, e);
 
                 String message = getString(R.string.open_link_failed_url_additional_info, link, e.getMessage());
@@ -251,7 +250,7 @@ public class AppModuleAndroidUtils {
 
         try {
             application.startActivity(intent);
-        } catch (ActivityNotFoundException e) {
+        } catch (Throwable e) {
             Logger.e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e);
 
             String message = getString(R.string.open_intent_failed, intent.toString());
