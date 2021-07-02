@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.content.Context
 import android.net.Uri
+import android.view.HapticFeedbackConstants
 import android.widget.Toast
 import androidx.compose.animation.core.animateDp
 import androidx.compose.animation.core.animateFloat
@@ -246,6 +247,7 @@ class LocalArchiveController(
         startActivityCallback.loadThread(threadDescriptor, animated = true)
       },
       onThreadDownloadLongClicked = { threadDescriptor ->
+        controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         viewModel.toggleSelection(threadDescriptor)
       }
     )
@@ -561,7 +563,7 @@ class LocalArchiveController(
         LaunchedEffect(key1 = threadDescriptor) {
           while (isActive) {
             atEnd = !atEnd
-            delay(3000)
+            delay(1500)
           }
         }
 
@@ -582,7 +584,7 @@ class LocalArchiveController(
       colorFilter = colorFilter,
       modifier = Modifier
         .size(ICON_SIZE)
-        .clickable { }
+        .clickable { showToast(threadDownloadView.status.toString(), Toast.LENGTH_LONG) }
     )
   }
 

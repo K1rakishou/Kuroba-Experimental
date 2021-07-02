@@ -27,10 +27,9 @@
         <aapt:attr name="android:animation">
             <set>
                 <objectAnimator
-                    android:duration="2000"
+                    android:duration="1500"
                     android:propertyName="pathData"
                     android:repeatMode="restart"
-                    android:startOffset="1000"
                     android:valueFrom="M191.667,64l0,0l0,0l61,0l67.333,0l0,0l0,0z"
                     android:valueTo="M191.667,64l0.332,128.083l-85.253,-0.083l149.587,149.667l149,-149.667l-85.375,0l0.042,-128z"
                     android:valueType="pathType" />

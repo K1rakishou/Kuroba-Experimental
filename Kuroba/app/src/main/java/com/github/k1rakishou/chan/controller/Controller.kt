@@ -113,6 +113,14 @@ abstract class Controller(@JvmField var context: Context) {
 
   protected val cancellableToast = CancellableToast()
 
+  fun controllerViewOrNull(): ViewGroup? {
+    if (::view.isInitialized) {
+      return view
+    }
+
+    return null
+  }
+
   fun getCurrentControllerWithNavigation(): ControllerWithNavigation {
     if (doubleNavigationController != null) {
       return doubleNavigationController!!
