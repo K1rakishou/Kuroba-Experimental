@@ -569,7 +569,13 @@ fun View.updatePaddings(
   val newTop = top ?: paddingTop
   val newBottom = bottom ?: paddingBottom
 
-  setPadding(newLeft, newTop, newRight, newBottom)
+  try {
+    setPadding(newLeft, newTop, newRight, newBottom)
+  } catch (ignored: NullPointerException) {
+    // Some weird Xiaomi bug.
+    // java.lang.NullPointerException: Attempt to invoke interface method
+    // 'void android.view.ActionMode$Callback.onDestroyActionMode(android.view.ActionMode)' on a null object reference
+  }
 }
 
 fun View.updatePaddings(
@@ -578,7 +584,13 @@ fun View.updatePaddings(
   top: Int = paddingTop,
   bottom: Int = paddingBottom
 ) {
-  setPadding(left, top, right, bottom)
+  try {
+    setPadding(left, top, right, bottom)
+  } catch (ignored: NullPointerException) {
+    // Some weird Xiaomi bug.
+    // java.lang.NullPointerException: Attempt to invoke interface method
+    // 'void android.view.ActionMode$Callback.onDestroyActionMode(android.view.ActionMode)' on a null object reference
+  }
 }
 
 fun View.findParent(predicate: (ViewParent) -> Boolean): ViewParent? {

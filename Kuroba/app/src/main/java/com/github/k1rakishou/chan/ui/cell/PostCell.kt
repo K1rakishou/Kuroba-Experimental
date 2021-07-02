@@ -57,6 +57,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -309,11 +310,11 @@ class PostCell : LinearLayout,
     divider = findViewById(R.id.divider)
     postAttentionLabel = findViewById(R.id.post_attention_label)
     title.textSize = textSizeSp.toFloat()
-    title.setPadding(horizPaddingPx, vertPaddingPx, endPadding, 0)
+    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPadding, bottom = 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.setSpacing(dp(4f))
     icons.height = sp(textSizeSp.toFloat())
-    icons.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, 0)
+    icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
@@ -355,7 +356,7 @@ class PostCell : LinearLayout,
         imgFilename.gravity = GravityCompat.END
       }
 
-      imgFilename.setPadding(horizPaddingPx, 0, endPadding, 0)
+      imgFilename.updatePaddings(left = horizPaddingPx, top = 0, right = endPadding, bottom = 0)
     }
 
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
@@ -363,7 +364,7 @@ class PostCell : LinearLayout,
     comment.textSize = textSizeSp.toFloat()
 
     replies.textSize = textSizeSp.toFloat()
-    replies.setPadding(horizPaddingPx, 0, horizPaddingPx, vertPaddingPx)
+    replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = vertPaddingPx)
 
     if (postCellData.threadMode) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
@@ -638,7 +639,7 @@ class PostCell : LinearLayout,
     val theme = postCellData.theme
     val fullPostComment = postCellData.fullPostComment
 
-    comment.setPadding(horizPaddingPx, vertPaddingPx, horizPaddingPx, vertPaddingPx)
+    comment.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = vertPaddingPx)
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 
