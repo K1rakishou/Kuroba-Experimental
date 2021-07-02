@@ -4,9 +4,9 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.common.bidirectionalMap
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.hashSetWithCap
-import com.github.k1rakishou.common.highLowMap
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.suspendCall
@@ -246,7 +246,7 @@ class Chan4CloudFlareImagePreloaderManager(
     }
 
     val postDescriptorsBinaryMapped = actualToPreload
-      .highLowMap { pd -> pd }
+      .bidirectionalMap { pd -> pd }
 
     postDescriptorsBinaryMapped.forEach { pd ->
       if (ENABLE_LOGS) {

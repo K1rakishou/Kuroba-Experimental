@@ -371,57 +371,71 @@ inline fun <T> Collection<T>.forEachReverseIndexed(action: (index: Int, T) -> Un
   }
 }
 
-inline fun <T, R> List<T>.highLowMap(mapper: (T) -> R): List<R> {
-  if (isEmpty()) {
-    return emptyList()
-  }
-
-  if (size == 1) {
-    return listOf(mapper(first()))
-  }
-
-  var position = size / 2
-  var index = 0
-  var increment = true
-
-  val resultList = mutableListWithCap<R>(size)
-
-  var reachedLeftSide = false
-  var reachedRightSize = false
-
-  while (true) {
-    val element = getOrNull(position)
-    if (element == null) {
-      if (reachedLeftSide && reachedRightSize) {
-        break
-      }
-
-      if (position <= 0) {
-        reachedLeftSide = true
-      }
-
-      if (position >= lastIndex) {
-        reachedRightSize = true
-      }
-    }
-
-    if (element != null) {
-      resultList += mapper(element)
-    }
-
-    ++index
-
-    if (increment) {
-      position += index
-    } else {
-      position -= index
-    }
-
-    increment = increment.not()
-  }
-
-  return resultList
+public inline fun <T> Sequence<T>.firstOrNullIndexed(predicate: (Int, T) -> Boolean): T? {
+  for ((index, element) in this.withIndex()) if (predicate(index, element)) return element
+  return null
 }
+
+inline fun <T, R> List<T>.bidirectionalMap(
+  startPosition: Int = size / 2,
+  crossinline mapper: (T) -> R
+): List<R> {
+  return this.bidirectionalSequence(startPosition)
+    .map { element -> mapper(element) }
+    .toList()
+}
+
+fun <T> List<T>.bidirectionalSequence(startPosition: Int = size / 2): Sequence<T> {
+  return sequence<T> {
+    if (isEmpty()) {
+      return@sequence
+    }
+
+    if (size == 1) {
+      yield(first())
+      return@sequence
+    }
+
+    var position = startPosition
+    var index = 0
+    var increment = true
+
+    var reachedLeftSide = false
+    var reachedRightSide = false
+
+    while (true) {
+      val element = getOrNull(position)
+      if (element == null) {
+        if (reachedLeftSide && reachedRightSide) {
+          break
+        }
+
+        if (position <= 0) {
+          reachedLeftSide = true
+        }
+
+        if (position >= lastIndex) {
+          reachedRightSide = true
+        }
+      }
+
+      if (element != null) {
+        yield(element)
+      }
+
+      ++index
+
+      if (increment) {
+        position += index
+      } else {
+        position -= index
+      }
+
+      increment = increment.not()
+    }
+  }
+}
+
 
 inline fun <T, R : Any, C : MutableCollection<in R>> Collection<T>.mapReverseIndexedNotNullTo(
   destination: C,

@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.bidirectionalSequence
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
@@ -78,6 +79,7 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
+import com.github.k1rakishou.persist_state.IndexAndTop
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -513,19 +515,17 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val displayPosition = position[0]
-    var initialImageUrl: HttpUrl? = null
+    val foundPostDescriptor = postDescriptors
+      .bidirectionalSequence(startPosition = position.index)
+      .firstOrNull { postDescriptor ->
+        val postImages = chanThreadManager.getPost(postDescriptor)?.postImages
+          ?: return@firstOrNull false
 
-    for (index in postDescriptors.indices) {
-      val postDescriptor = postDescriptors.getOrNull(index)
-        ?: continue
-      val postImages = chanThreadManager.getPost(postDescriptor)?.postImages
-        ?: continue
-
-      if (index == displayPosition) {
-        initialImageUrl = postImages.firstOrNull()?.imageUrl
+        return@firstOrNull postImages.firstOrNull()?.imageUrl != null
       }
-    }
+
+    val initialImageUrl = foundPostDescriptor
+      ?.let { postDescriptor -> chanThreadManager.getPost(postDescriptor)?.firstImage()?.imageUrl }
 
     threadPresenterCallback?.showAlbum(initialImageUrl)
   }
@@ -2188,7 +2188,7 @@ class ThreadPresenter @Inject constructor(
 
   interface ThreadPresenterCallback {
     val displayingPostDescriptors: List<PostDescriptor>
-    val currentPosition: IntArray?
+    val currentPosition: IndexAndTop?
 
     suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)
     fun postClicked(postDescriptor: PostDescriptor)

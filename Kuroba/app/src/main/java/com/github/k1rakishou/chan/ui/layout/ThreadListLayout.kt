@@ -84,6 +84,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.persist_state.IndexAndTop
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -181,7 +182,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   val displayingPostDescriptors: List<PostDescriptor>
     get() = postAdapter.displayList
 
-  val indexAndTop: IntArray?
+  val indexAndTop: IndexAndTop?
     get() {
       var index = 0
       var top = 0
@@ -198,7 +199,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         top = layoutManager.getDecoratedTop(topChild) - params.topMargin - recyclerView.paddingTop
       }
 
-      return intArrayOf(index, top)
+      return IndexAndTop(index = index, top = top)
     }
 
   val currentSpanCount: Int
@@ -438,8 +439,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         ?: return@post
 
       chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
-        chanThreadViewableInfo.listViewIndex = indexTop[0]
-        chanThreadViewableInfo.listViewTop = indexTop[1]
+        chanThreadViewableInfo.listViewIndex = indexTop.index
+        chanThreadViewableInfo.listViewTop = indexTop.top
       }
 
       val currentLastPostNo = postAdapter.lastPostNo

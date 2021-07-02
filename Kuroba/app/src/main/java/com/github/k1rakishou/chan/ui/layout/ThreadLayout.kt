@@ -92,6 +92,7 @@ import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.android.material.snackbar.Snackbar
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -200,7 +201,7 @@ class ThreadLayout @JvmOverloads constructor(
       threadListLayout.displayingPostDescriptors
     }
 
-  override val currentPosition: IntArray?
+  override val currentPosition: IndexAndTop?
     get() = threadListLayout.indexAndTop
 
   val popupHelper: PostPopupHelper
