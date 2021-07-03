@@ -259,7 +259,7 @@ class MediaViewerController(
       AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png",
       ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage),
       emptyList()
-    )
+    ).valueOrNull()
   }
 
   override fun openAlbum(viewableMedia: ViewableMedia) {
@@ -381,7 +381,7 @@ class MediaViewerController(
       context,
       transitionInfo.transitionThumbnailUrl,
       ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
-    )?.bitmap
+    ).valueOrNull()?.bitmap
 
     if (resultBitmap == null) {
       mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)

@@ -36,6 +36,8 @@ import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
 import com.github.k1rakishou.common.*
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.ModularResult.Companion.error
+import com.github.k1rakishou.common.ModularResult.Companion.value
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
@@ -54,6 +56,7 @@ import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -95,21 +98,76 @@ class ImageLoaderV2(
     url: String,
     imageSize: ImageSize,
     transformations: List<Transformation> = emptyList()
-  ): BitmapDrawable? {
+  ): ModularResult<BitmapDrawable> {
     return suspendCancellableCoroutine { continuation ->
-      loadFromNetwork(context, url, imageSize, transformations, object : FailureAwareImageListener {
-        override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-          continuation.resume(drawable)
+      val disposable = loadFromNetwork(
+        context = context,
+        requestUrl = url,
+        imageSize = imageSize,
+        transformations = transformations,
+        listener = object : FailureAwareImageListener {
+          override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+            continuation.resume(value(drawable))
+          }
+
+          override fun onNotFound() {
+            onResponseError(NotFoundException())
+          }
+
+          override fun onResponseError(error: Throwable) {
+            continuation.resumeWithException(error)
+          }
+        })
+
+      continuation.invokeOnCancellation { cause: Throwable? ->
+        if (cause == null) {
+          return@invokeOnCancellation
         }
 
-        override fun onNotFound() {
-          continuation.resume(null)
+        if (!disposable.isDisposed) {
+          disposable.dispose()
+        }
+      }
+    }
+  }
+
+  suspend fun loadFromDiskSuspend(
+    context: Context,
+    inputFile: InputFile,
+    imageSize: ImageSize,
+    transformations: List<Transformation>
+  ): ModularResult<BitmapDrawable> {
+    return suspendCancellableCoroutine { continuation ->
+      val disposable = loadFromDisk(
+        context = context,
+        inputFile = inputFile,
+        imageSize = imageSize,
+        scale = Scale.FIT,
+        transformations = transformations,
+        listener = object : FailureAwareImageListener{
+          override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+            continuation.resume(value(drawable))
+          }
+
+          override fun onNotFound() {
+            continuation.resume(error(NotFoundException()))
+          }
+
+          override fun onResponseError(error: Throwable) {
+            continuation.resume(error(NotFoundException()))
+          }
+        }
+      )
+
+      continuation.invokeOnCancellation { cause: Throwable? ->
+        if (cause == null) {
+          return@invokeOnCancellation
         }
 
-        override fun onResponseError(error: Throwable) {
-          continuation.resume(null)
+        if (!disposable.isDisposed) {
+          disposable.dispose()
         }
-      })
+      }
     }
   }
 
@@ -268,8 +326,10 @@ class ImageLoaderV2(
             val transformationKeys = activeListener.transformations
               .joinToString { transformation -> transformation.key() }
 
-            Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
-              "transformations: ${transformationKeys}, fromCache=$isFromCache")
+            Logger.e(
+              TAG, "Failed to apply transformations '$url' $imageSize, " +
+                "transformations: ${transformationKeys}, fromCache=$isFromCache"
+            )
 
             handleFailure(
               actualListener = activeListener.imageListenerParam,
@@ -346,9 +406,11 @@ class ImageLoaderV2(
         BitmapDrawable(context.resources, bitmap)
       }
       is ErrorResult -> {
-        Logger.e(TAG, "applyTransformationsToDrawable() error, " +
-          "fileLocation=${fileLocation}, " +
-          "error=${result.throwable.errorMessageOrClassName()}")
+        Logger.e(
+          TAG, "applyTransformationsToDrawable() error, " +
+            "fileLocation=${fileLocation}, " +
+            "error=${result.throwable.errorMessageOrClassName()}"
+        )
 
         cacheHandler.deleteCacheFileByUrl(url)
         null
@@ -603,7 +665,7 @@ class ImageLoaderV2(
       try {
         val bitmapDrawable = loadFromResources(context, drawableId, imageSize, scale, transformations)
         if (bitmapDrawable == null) {
-          if (verboseLogs ) {
+          if (verboseLogs) {
             Logger.d(TAG, "loadFromResources() Failed to load '$drawableId', $imageSize")
           }
 
@@ -611,9 +673,11 @@ class ImageLoaderV2(
           return@launch
         }
 
-        if (verboseLogs ) {
-          Logger.d(TAG, "loadFromResources() Loaded '$drawableId', $imageSize, bitmap size = " +
-            "${bitmapDrawable.intrinsicWidth}x${bitmapDrawable.intrinsicHeight}")
+        if (verboseLogs) {
+          Logger.d(
+            TAG, "loadFromResources() Loaded '$drawableId', $imageSize, bitmap size = " +
+              "${bitmapDrawable.intrinsicWidth}x${bitmapDrawable.intrinsicHeight}"
+          )
         }
 
         listener.onResponse(bitmapDrawable)
@@ -636,6 +700,29 @@ class ImageLoaderV2(
     transformations: List<Transformation>,
     listener: SimpleImageListener
   ): Disposable {
+    return loadFromDisk(context, inputFile, imageSize, scale, transformations, object : FailureAwareImageListener {
+      override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+        listener.onResponse(drawable)
+      }
+
+      override fun onNotFound() {
+        listener.onResponse(getImageNotFoundDrawable(context))
+      }
+
+      override fun onResponseError(error: Throwable) {
+        listener.onResponse(getImageErrorLoadingDrawable(context))
+      }
+    })
+  }
+
+  fun loadFromDisk(
+    context: Context,
+    inputFile: InputFile,
+    imageSize: ImageSize,
+    scale: Scale,
+    transformations: List<Transformation>,
+    listener: FailureAwareImageListener
+  ): Disposable {
     require(imageSize !is ImageSize.UnknownImageSize) { "Cannot use UnknownImageSize here!" }
 
     val lifecycle = context.getLifecycleFromContext()
@@ -649,7 +736,7 @@ class ImageLoaderV2(
 
         val fileName = inputFile.fileName()
         if (fileName == null) {
-          listener.onResponse(getImageErrorLoadingDrawable(context))
+          listener.onResponseError(ImageLoaderException("Input file has no name"))
           return@launch
         }
 
@@ -710,20 +797,24 @@ class ImageLoaderV2(
         val bitmapDrawable = withContext(Dispatchers.IO) { getBitmapDrawable() }
         if (bitmapDrawable == null) {
           if (verboseLogs) {
-            Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
-              "imageSize=${imageSize} error or canceled")
+            Logger.d(
+              TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+                "imageSize=${imageSize} error or canceled"
+            )
           }
 
-          listener.onResponse(getImageErrorLoadingDrawable(context))
+          listener.onResponseError(ImageLoaderException("Failed to decode bitmap drawable"))
           return@launch
         }
 
         if (verboseLogs) {
-          Logger.d(TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
-            "imageSize=${imageSize} success")
+          Logger.d(
+            TAG, "loadFromDisk() inputFilePath=${inputFile.path()}, " +
+              "imageSize=${imageSize} success"
+          )
         }
 
-        listener.onResponse(bitmapDrawable)
+        listener.onResponse(bitmapDrawable, isImmediate = true)
       } finally {
         completableDeferred.complete(Unit)
       }
@@ -775,8 +866,10 @@ class ImageLoaderV2(
   ) {
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
-      Logger.e(TAG, "loadRelyFilePreviewFromDisk() getReplyFileByFileUuid($fileUuid) error",
-        replyFileMaybe.error)
+      Logger.e(
+        TAG, "loadRelyFilePreviewFromDisk() getReplyFileByFileUuid($fileUuid) error",
+        replyFileMaybe.error
+      )
       listener.onResponse(getImageErrorLoadingDrawable(context))
       return
     }
@@ -835,8 +928,10 @@ class ImageLoaderV2(
 
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
-        "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error)
+      Logger.e(
+        TAG, "calculateFilePreviewAndStoreOnDisk() " +
+          "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error
+      )
       return
     }
 
@@ -848,8 +943,10 @@ class ImageLoaderV2(
 
     val replyFileMetaMaybe = replyFile.getReplyFileMeta()
     if (replyFileMetaMaybe is ModularResult.Error) {
-      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
-        replyFileMetaMaybe.error)
+      Logger.e(
+        TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
+        replyFileMetaMaybe.error
+      )
       return
     }
 
@@ -1090,6 +1187,8 @@ class ImageLoaderV2(
   private fun Throwable.isNotFoundError(): Boolean {
     return this is HttpException && this.response.code == 404
   }
+
+  class ImageLoaderException(message: String) : Exception()
 
   sealed class ImageListenerParam {
     class SimpleImageListener(

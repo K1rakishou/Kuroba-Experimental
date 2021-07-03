@@ -1,10 +1,8 @@
 package com.github.k1rakishou.chan.ui.captcha.dvach
 
 import android.content.Context
-import android.graphics.drawable.BitmapDrawable
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -18,17 +16,15 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -39,7 +35,10 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
@@ -48,8 +47,9 @@ import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.google.accompanist.coil.rememberCoilPainter
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
 import javax.inject.Inject
 
@@ -64,6 +64,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
   private val viewModel by lazy { (context as ComponentActivity).viewModelByKey<DvachCaptchaLayoutViewModel>() }
   private val scope = KurobaCoroutineScope()
 
+  private var siteDescriptor: SiteDescriptor? = null
   private var siteAuthentication: SiteAuthentication? = null
   private var callback: AuthenticationLayoutCallback? = null
 
@@ -73,9 +74,11 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
   }
 
   override fun initialize(
+    siteDescriptor: SiteDescriptor,
     authentication: SiteAuthentication,
     callback: AuthenticationLayoutCallback
   ) {
+    this.siteDescriptor = siteDescriptor
     this.siteAuthentication = authentication
     this.callback = callback
 
@@ -88,7 +91,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
             Box(
               modifier = Modifier
                 .fillMaxWidth()
-                .height(340.dp)
+                .height(300.dp)
                 .background(chanTheme.backColorCompose)
             ) {
               BuildContent()
@@ -128,6 +131,11 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
   @Composable
   private fun BuildContent() {
     BuildCaptchaInput(
+      onAuthClick = {
+        if (siteDescriptor != null) {
+          callback?.onSiteRequiresAdditionalAuth(siteDescriptor!!)
+        }
+      },
       onReloadClick = { hardReset() },
       onVerifyClick = { captchaId, token ->
         val solution = CaptchaSolution.TokenWithIdSolution(
@@ -144,44 +152,48 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
   @Composable
   private fun BuildCaptchaInput(
+    onAuthClick: () -> Unit,
     onReloadClick: () -> Unit,
     onVerifyClick: (String, String) -> Unit
   ) {
-    val context = LocalContext.current
-    val chanTheme = LocalChanTheme.current
-
-    val errorDrawable = remember(key1 = chanTheme) {
-      imageLoaderV2.getImageErrorLoadingDrawable(context)
-    }
-
     Column(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
     ) {
-      BuildCaptchaImage(errorDrawable, onReloadClick)
+      BuildCaptchaImage(onReloadClick)
 
       Spacer(modifier = Modifier.height(16.dp))
-
-      val focusRequester = FocusRequester()
 
       var currentInputValue by viewModel.currentInputValue
-      KurobaComposeTextField(
-        value = currentInputValue,
-        onValueChange = { newValue -> currentInputValue = newValue },
-        maxLines = 1,
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .padding(horizontal = 16.dp)
-          .focusRequester(focusRequester)
-      )
+      val captchaInfoAsync by viewModel.captchaInfoToShow
+      val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-      DisposableEffect(Unit) {
-        focusRequester.requestFocus()
-        onDispose { }
+      if (captchaInfo != null) {
+        val input = captchaInfo.input
+
+        val keyboardOptions = remember(key1 = input) {
+          when (input) {
+            null -> KeyboardOptions.Default
+            "numeric" -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Number)
+            else -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Text)
+          }
+        }
+
+        KurobaComposeTextField(
+          value = currentInputValue,
+          onValueChange = { newValue -> currentInputValue = newValue },
+          maxLines = 1,
+          keyboardOptions = keyboardOptions,
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(horizontal = 16.dp)
+        )
+
+        Spacer(modifier = Modifier.height(16.dp))
       }
 
-      Spacer(modifier = Modifier.height(16.dp))
+      Spacer(modifier = Modifier.weight(1f))
 
       Row(
         horizontalArrangement = Arrangement.End,
@@ -189,6 +201,16 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           .fillMaxWidth()
           .wrapContentHeight()
       ) {
+        KurobaComposeTextButton(
+          onClick = onAuthClick,
+          modifier = Modifier
+            .width(112.dp)
+            .height(36.dp),
+          text = stringResource(id = R.string.captcha_layout_dvach_auth)
+        )
+
+        Spacer(modifier = Modifier.width(8.dp))
+
         KurobaComposeTextButton(
           onClick = onReloadClick,
           modifier = Modifier
@@ -199,9 +221,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        val captchaIdAsync by viewModel.captchaIdToShow
-        val captchaId = (captchaIdAsync as? AsyncData.Data)?.data
-        val enabled = captchaId.isNotNullNorEmpty() && currentInputValue.isNotEmpty()
+        val captchaId = captchaInfo?.id
+        val buttonEnabled = captchaId.isNotNullNorEmpty() && currentInputValue.isNotEmpty()
 
         KurobaComposeTextButton(
           onClick = {
@@ -209,7 +230,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
               onVerifyClick(captchaId, viewModel.currentInputValue.value)
             }
           },
-          enabled = enabled,
+          enabled = buttonEnabled,
           modifier = Modifier
             .width(112.dp)
             .height(36.dp),
@@ -225,44 +246,50 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
   @Composable
   private fun BuildCaptchaImage(
-    errorDrawable: BitmapDrawable,
     onReloadClick: () -> Unit
   ) {
     Box(modifier = Modifier
-      .height(200.dp)
+      .height(160.dp)
       .fillMaxWidth()
     ) {
-      val captchaId by viewModel.captchaIdToShow
-      when (captchaId) {
+      val captchaInfoAsync by viewModel.captchaInfoToShow
+      when (captchaInfoAsync) {
         AsyncData.NotInitialized,
         AsyncData.Loading -> {
-          KurobaComposeProgressIndicator(
-            modifier = Modifier.fillMaxSize()
-          )
+          // no-op
         }
         is AsyncData.Error -> {
-          val error = (captchaId as AsyncData.Error).throwable
-          KurobaComposeErrorMessage(
-            error = error,
-            modifier = Modifier.fillMaxSize()
-          )
+          val error = (captchaInfoAsync as AsyncData.Error).throwable
+          if (error is BadStatusResponseException && error.status == 401) {
+            KurobaComposeErrorMessage(
+              errorMessage = stringResource(id = R.string.captcha_layout_dvach_auth_required),
+              modifier = Modifier.fillMaxSize()
+            )
+          } else {
+            KurobaComposeErrorMessage(
+              error = error,
+              modifier = Modifier.fillMaxSize()
+            )
+          }
         }
         is AsyncData.Data -> {
-          val id = (captchaId as AsyncData.Data).data
-
-          val requestFullUrl = remember(key1 = id) {
-            "https://2ch.hk/api/captcha/2chcaptcha/show?id=$id"
+          val requestFullUrl = (captchaInfoAsync as AsyncData.Data).data.fullRequestUrl()
+          if (requestFullUrl == null) {
+            return@Box
           }
 
-          Image(
-            painter = rememberCoilPainter(
-              request = requestFullUrl,
-              requestBuilder = { this.error(errorDrawable) }
-            ),
-            contentDescription = null,
+          val request = remember(key1 = requestFullUrl) {
+            ImageLoaderRequest(data = ImageLoaderRequestData.Url(requestFullUrl) )
+          }
+
+          KurobaComposeImage(
+            request = request,
             modifier = Modifier
               .fillMaxSize()
-              .clickable { onReloadClick() }
+              .clickable { onReloadClick() },
+            imageLoaderV2 = imageLoaderV2,
+            loading = { KurobaComposeProgressIndicator() },
+            error = { throwable -> KurobaComposeErrorMessage(error = throwable) }
           )
         }
       }

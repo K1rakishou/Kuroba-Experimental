@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import java.util.List;
 
@@ -169,7 +170,11 @@ public class CaptchaNoJsLayoutV2
     }
 
     @Override
-    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
+    public void initialize(
+            SiteDescriptor siteDescriptor,
+            SiteAuthentication authentication,
+            AuthenticationLayoutCallback callback
+    ) {
         this.callback = callback;
 
         if (authentication.type != CAPTCHA2_NOJS) {

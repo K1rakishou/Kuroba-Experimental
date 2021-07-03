@@ -27,6 +27,7 @@ import android.webkit.WebView;
 import com.github.k1rakishou.chan.core.site.SiteAuthentication;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import javax.inject.Inject;
 
@@ -70,7 +71,11 @@ public class GenericWebViewAuthenticationLayout
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
+    public void initialize(
+            SiteDescriptor siteDescriptor,
+            SiteAuthentication authentication,
+            AuthenticationLayoutCallback callback
+    ) {
         this.callback = callback;
         this.authentication = authentication;
 

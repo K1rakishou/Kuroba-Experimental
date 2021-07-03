@@ -361,6 +361,9 @@ class ReplyPresenter @Inject constructor(
             makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode)
           }
         }
+        is CaptchaContainerController.AuthenticationResult.SiteRequiresAdditionalAuth -> {
+          launch { callback.show2chAntiSpamCheckSolverController() }
+        }
       }
     }
 

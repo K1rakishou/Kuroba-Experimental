@@ -5,8 +5,10 @@ import android.content.Context
 import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebSettings
+import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebViewDatabase
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -93,8 +95,19 @@ class SiteAntiSpamCheckBypassController(
     val closableArea = view.findViewById<View>(R.id.closable_area)
     closableArea.setOnClickListener { pop() }
 
+    webView.stopLoading()
+    webView.clearCache(true)
+    webView.clearFormData()
+    webView.clearHistory()
+    webView.clearMatches()
+
+    val webViewDatabase = WebViewDatabase.getInstance(context.applicationContext)
+    webViewDatabase.clearFormData()
+    webViewDatabase.clearHttpAuthUsernamePassword()
+    WebStorage.getInstance().deleteAllData()
+
     cookieManager.setAcceptCookie(true)
-    cookieManager.removeAllCookies(null)
+    cookieManager.removeAllCookie()
 
     val webSettings: WebSettings = webView.settings
     webSettings.javaScriptEnabled = true

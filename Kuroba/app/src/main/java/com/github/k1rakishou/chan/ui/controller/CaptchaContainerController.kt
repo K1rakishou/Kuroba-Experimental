@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
 
 class CaptchaContainerController(
@@ -110,7 +111,7 @@ class CaptchaContainerController(
     )
 
     captchaContainer.addView(authenticationLayout as View, 0)
-    authenticationLayout.initialize(postAuthentication, this)
+    authenticationLayout.initialize(chanDescriptor.siteDescriptor(), postAuthentication, this)
     authenticationLayout.reset()
   }
 
@@ -132,10 +133,16 @@ class CaptchaContainerController(
     pop()
   }
 
+  override fun onSiteRequiresAdditionalAuth(siteDescriptor: SiteDescriptor) {
+    authenticationCallback(AuthenticationResult.SiteRequiresAdditionalAuth(siteDescriptor))
+    pop()
+  }
+
   override fun onFallbackToV1CaptchaView() {
     initAuthenticationInternal(useV2NoJsCaptcha = false)
   }
 
+  @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun createAuthenticationLayout(
     authentication: SiteAuthentication,
     useV2NoJsCaptcha: Boolean
@@ -190,6 +197,7 @@ class CaptchaContainerController(
   sealed class AuthenticationResult {
     object Success : AuthenticationResult()
     data class Failure(val throwable: Throwable) : AuthenticationResult()
+    data class SiteRequiresAdditionalAuth(val siteDescriptor: SiteDescriptor) : AuthenticationResult()
   }
 
   companion object {

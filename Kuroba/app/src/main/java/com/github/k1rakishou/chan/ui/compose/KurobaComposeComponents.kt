@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
@@ -123,6 +124,7 @@ fun KurobaComposeTextField(
   modifier: Modifier = Modifier,
   onValueChange: (String) -> Unit,
   maxLines: Int = Int.MAX_VALUE,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   label: @Composable (() -> Unit)? = null,
 ) {
   val chanTheme = LocalChanTheme.current
@@ -133,6 +135,7 @@ fun KurobaComposeTextField(
     onValueChange = onValueChange,
     maxLines = maxLines,
     modifier = modifier,
+    keyboardOptions = keyboardOptions,
     colors = chanTheme.textFieldColors()
   )
 }

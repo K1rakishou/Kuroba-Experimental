@@ -655,7 +655,7 @@ class ReplyLayout @JvmOverloads constructor(
       val controller = SiteAntiSpamCheckBypassController(
         context = context,
         bypassMode = BypassMode.Bypass2chAntiSpamCheck,
-        urlToOpen = Dvach.URL_HANDLER.url!!.toString()
+        urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
       ) { cookieResult ->
         continuation.resume(cookieResult is CookieResult.CookieValue)
       }

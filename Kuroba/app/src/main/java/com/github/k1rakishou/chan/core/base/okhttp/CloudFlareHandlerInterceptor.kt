@@ -49,32 +49,30 @@ class CloudFlareHandlerInterceptor(
 
     if (response.code == 503 || response.code == 403) {
       val body = response.body
-      if (body != null) {
-        if (tryDetectCloudFlareNeedle(body)) {
+      if (body != null && tryDetectCloudFlareNeedle(body)) {
+        if (verboseLogs) {
+          Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
+        }
+
+        if (addedCookie && isOkHttpClientForSiteRequests) {
           if (verboseLogs) {
-            Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
+            Logger.d(TAG, "[$okHttpType] Cookie was already added and we still failed, " +
+              "removing the old cookie")
           }
 
-          if (addedCookie && isOkHttpClientForSiteRequests) {
-            if (verboseLogs) {
-              Logger.d(TAG, "[$okHttpType] Cookie was already added and we still failed, " +
-                "removing the old cookie")
-            }
+          // For some reason CloudFlare still rejected our request even though we added the cookie.
+          // This may happen because of many reasons like the cookie expired or it was somehow
+          // damaged so we need to delete it and re-request again.
+          removeSiteClearanceCookie(chain.request())
+        }
 
-            // For some reason CloudFlare still rejected our request even though we added the cookie.
-            // This may happen because of many reasons like the cookie expired or it was somehow
-            // damaged so we need to delete it and re-request again.
-            removeSiteClearanceCookie(chain.request())
-          }
+        synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
 
-          synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
-
-          // We only want to throw this exception when loading a site's thread endpoint. In any other
-          // case (like when opening media files on that site) we only want to add the CloudFlare
-          // CfClearance cookie to the headers.
-          if (isOkHttpClientForSiteRequests) {
-            throw CloudFlareDetectedException(request.url)
-          }
+        // We only want to throw this exception when loading a site's thread endpoint. In any other
+        // case (like when opening media files on that site) we only want to add the CloudFlare
+        // CfClearance cookie to the headers.
+        if (isOkHttpClientForSiteRequests) {
+          throw CloudFlareDetectedException(request.url)
         }
       }
     }

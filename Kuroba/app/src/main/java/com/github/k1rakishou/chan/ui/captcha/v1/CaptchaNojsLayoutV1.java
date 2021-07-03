@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import java.io.IOException;
 
@@ -93,7 +94,11 @@ public class CaptchaNojsLayoutV1
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
+    public void initialize(
+            SiteDescriptor siteDescriptor,
+            SiteAuthentication authentication,
+            AuthenticationLayoutCallback callback
+    ) {
         this.callback = callback;
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;

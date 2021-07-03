@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.chan.utils.IOUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 import com.google.gson.Gson;
 
 import javax.inject.Inject;
@@ -95,7 +96,11 @@ public class CaptchaLayout
 
     @SuppressLint({"SetJavaScriptEnabled", "AddJavascriptInterface"})
     @Override
-    public void initialize(SiteAuthentication authentication, AuthenticationLayoutCallback callback) {
+    public void initialize(
+            SiteDescriptor siteDescriptor,
+            SiteAuthentication authentication,
+            AuthenticationLayoutCallback callback
+    ) {
         this.callback = callback;
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;

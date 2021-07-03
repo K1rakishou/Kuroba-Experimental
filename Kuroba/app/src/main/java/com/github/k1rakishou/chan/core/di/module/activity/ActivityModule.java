@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.di.module.activity;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
@@ -40,6 +41,7 @@ public class ActivityModule {
     public UpdateManager provideUpdateManager(
             AppCompatActivity activity,
             FileCacheV2 fileCacheV2,
+            CacheHandler cacheHandler,
             FileManager fileManager,
             SettingsNotificationManager settingsNotificationManager,
             FileChooser fileChooser,
@@ -48,6 +50,7 @@ public class ActivityModule {
     ) {
         return new UpdateManager(
                 activity,
+                cacheHandler,
                 fileCacheV2,
                 fileManager,
                 settingsNotificationManager,

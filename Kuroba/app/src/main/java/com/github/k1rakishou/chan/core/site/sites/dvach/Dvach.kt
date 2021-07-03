@@ -601,6 +601,13 @@ class Dvach : CommonSite() {
       requestProperties.put("Cookie", fullCookie)
     }
 
+    override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyCaptchaGetRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
     private fun addUserCodeCookie(
       site: Dvach,
       requestBuilder: Request.Builder
@@ -644,6 +651,11 @@ class Dvach : CommonSite() {
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 
     const val USER_CODE_COOKIE_KEY = "usercode_auth"
+
+    // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
+    // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
+    // https://2ch.hk doesn't trigger anti-spam script.
+    const val ANTI_SPAM_CHALLENGE_ENDPOINT = "https://2ch.hk/challenge/"
 
     @JvmField
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
