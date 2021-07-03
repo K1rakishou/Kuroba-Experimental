@@ -126,14 +126,14 @@ abstract class ChanThreadDao {
       chanThreadEntity.threadId = prev.threadId
 
       update(
-        chanThreadEntity.threadId,
-        chanThreadEntity.catalogRepliesCount,
-        chanThreadEntity.catalogImagesCount,
-        chanThreadEntity.uniqueIps,
-        chanThreadEntity.sticky,
-        chanThreadEntity.closed,
-        chanThreadEntity.archived,
-        chanThreadEntity.lastModified
+        threadId = chanThreadEntity.threadId,
+        replies = chanThreadEntity.catalogRepliesCount,
+        threadImagesCount = chanThreadEntity.catalogImagesCount,
+        uniqueIps = chanThreadEntity.uniqueIps,
+        sticky = chanThreadEntity.sticky,
+        closed = chanThreadEntity.closed,
+        archived = chanThreadEntity.archived,
+        lastModified = chanThreadEntity.lastModified
       )
       return prev.threadId
     }

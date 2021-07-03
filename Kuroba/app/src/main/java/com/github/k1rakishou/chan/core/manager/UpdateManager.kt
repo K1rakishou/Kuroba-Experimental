@@ -21,9 +21,9 @@ import android.app.ProgressDialog
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Environment
 import android.os.StrictMode
 import android.os.StrictMode.VmPolicy
-import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.content.FileProvider
 import androidx.core.text.parseAsHtml
@@ -32,14 +32,14 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.net.update.BetaUpdateApiRequest
-import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest
-import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
+import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -49,11 +49,13 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils.runOnMainThread
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.FlavorType
 import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
+import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
-import com.github.k1rakishou.common.readResponseAsString
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -67,12 +69,14 @@ import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.io.File
 import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
+
+
+
 
 /**
  * Calls the update API and downloads and requests installs of APK files.
@@ -82,6 +86,7 @@ import kotlin.coroutines.CoroutineContext
  */ 
 class UpdateManager(
   private val context: Context,
+  private val cacheHandler: CacheHandler,
   private val fileCacheV2: FileCacheV2,
   private val fileManager: FileManager,
   private val settingsNotificationManager: SettingsNotificationManager,
@@ -179,14 +184,25 @@ class UpdateManager(
       PersistableChanState.updateCheckTime.set(now)
     }
 
-    when (getFlavorType()) {
-      FlavorType.Stable -> {
-        Logger.d(TAG, "Calling update API for release")
-        updateRelease(manual)
-      }
+    when (val flavorType = getFlavorType()) {
+      FlavorType.Stable,
       FlavorType.Beta -> {
-        Logger.d(TAG, "Calling update API for beta")
-        updateBeta(manual)
+        val updateUrl = when (flavorType) {
+          FlavorType.Stable -> BuildConfig.RELEASE_UPDATE_API_ENDPOINT
+          FlavorType.Beta -> BuildConfig.BETA_UPDATE_API_ENDPOINT
+          FlavorType.Dev,
+          FlavorType.Fdroid -> {
+            return
+          }
+        }
+
+        if (flavorType == FlavorType.Stable) {
+          Logger.d(TAG, "Calling update API for release ($updateUrl)")
+        } else {
+          Logger.d(TAG, "Calling update API for beta ($updateUrl)")
+        }
+
+        updateApk(manual, flavorType, updateUrl)
       }
       FlavorType.Fdroid,
       FlavorType.Dev -> {
@@ -195,105 +211,18 @@ class UpdateManager(
     }.exhaustive
   }
 
-  @Suppress("ConstantConditionIf")
-  private suspend fun updateBeta(manual: Boolean) {
-    BackgroundUtils.ensureBackgroundThread()
-
-    val getLatestApkUuidRequest = Request.Builder()
-      .url(BuildConfig.DEV_API_ENDPOINT + "/latest_apk_uuid")
-      .get()
-      .build()
-
-    val response = BetaUpdateApiRequest(getLatestApkUuidRequest, proxiedOkHttpClient).execute()
-
-    coroutineScope {
-      withContext(Dispatchers.Main) {
-        when (response) {
-          is JsonReaderRequest.JsonReaderResponse.Success -> {
-            Logger.d(TAG, "BetaUpdateApiRequest success")
-            onSuccessfullyGotLatestApkUuid(response.result, manual)
-          }
-          is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(
-              TAG,
-              "Error while trying to get new beta apk, status code: ${response.statusCode}"
-            )
-            failedUpdate(manual)
-          }
-          is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-            Logger.e(TAG, "Unknown error while trying to get new beta apk", response.error)
-            failedUpdate(manual)
-          }
-          is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-            Logger.e(TAG, "Parsing error while trying to get new beta apk", response.error)
-            failedUpdate(manual)
-          }
-        }
-      }
-    }
-  }
-
-  private suspend fun onSuccessfullyGotLatestApkUuid(
-    response: BetaUpdateApiRequest.DevUpdateApiResponse,
-    manual: Boolean
-  ) {
-    BackgroundUtils.ensureMainThread()
-
-    try {
-      val versionCode = response.versionCode
-      val commitHash = response.commitHash
-
-      if (commitHash == BuildConfig.COMMIT_HASH) {
-        // Same version and commit, no update needed
-        if (manual) {
-          dialogFactory.createSimpleInformationDialog(
-            context = context,
-            titleText = getString(R.string.update_none, getApplicationLabel())
-          )
-        }
-
-        cancelApkUpdateNotification()
-        return
-      }
-
-      val changelogUrl = BuildConfig.GITHUB_CHANGELOGS_ENDPOINT + versionCode + ".txt"
-
-      val request = Request.Builder()
-        .get()
-        .url(changelogUrl)
-        .build()
-
-      val changelog = proxiedOkHttpClient.okHttpClient().readResponseAsString(request)
-        .mapErrorToValue { error ->
-          Logger.e(TAG, "Failed to read changelog for version: $versionCode", error)
-          return@mapErrorToValue "New dev build; see commits!"
-        }
-
-      val fauxResponse = ReleaseUpdateApiResponse()
-      fauxResponse.versionCode = versionCode
-      fauxResponse.versionCodeString = "v$versionCode-${commitHash.take(8)}"
-      fauxResponse.apkURL = (BuildConfig.DEV_API_ENDPOINT + "/apk/" + versionCode + "_" + commitHash + ".apk").toHttpUrl()
-      fauxResponse.body = SpannableStringBuilder.valueOf(changelog)
-
-      processUpdateApiResponse(fauxResponse, manual)
-    } catch (e: Exception) {
-      // any exceptions just fail out
-      Logger.e(TAG, "onSuccessfullyGotLatestApkUuid unknown error", e)
-      failedUpdate(manual)
-    }
-  }
-
-  private suspend fun updateRelease(manual: Boolean) {
+  private suspend fun updateApk(manual: Boolean, flavorType: FlavorType, updateUrl: String) {
     BackgroundUtils.ensureBackgroundThread()
 
     val request = Request.Builder()
-      .url(BuildConfig.UPDATE_API_ENDPOINT)
+      .url(updateUrl)
       .get()
       .build()
 
-    val response = ReleaseUpdateApiRequest(
-      request,
-      proxiedOkHttpClient
+    val response = UpdateApiRequest(
+      request = request,
+      proxiedOkHttpClient = proxiedOkHttpClient,
+      isRelease = flavorType == FlavorType.Stable
     ).execute()
 
     coroutineScope {
@@ -310,19 +239,16 @@ class UpdateManager(
             }
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(
-              TAG,
-              "Error while trying to get new release apk, status code: ${response.statusCode}"
-            )
-            failedUpdate(manual)
+            Logger.e(TAG, "Error while trying to get new release apk, status code: ${response.statusCode}")
+            failedUpdate(manual, BadStatusResponseException(response.statusCode))
           }
           is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
             Logger.e(TAG, "Unknown error while trying to get new release apk", response.error)
-            failedUpdate(manual)
+            failedUpdate(manual, response.error)
           }
           is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
             Logger.e(TAG, "Parsing error while trying to get new release apk", response.error)
-            failedUpdate(manual)
+            failedUpdate(manual, response.error)
           }
         }
       }
@@ -418,8 +344,9 @@ class UpdateManager(
   }
 
   @Suppress("ConstantConditionIf")
-  private fun failedUpdate(manual: Boolean) {
+  private fun failedUpdate(manual: Boolean, error: Throwable) {
     BackgroundUtils.ensureMainThread()
+    Logger.e(TAG, "failedUpdate() manual=$manual", error)
 
     val buildTag = if (getFlavorType() == FlavorType.Beta) {
       "beta"
@@ -433,7 +360,7 @@ class UpdateManager(
       dialogFactory.createSimpleInformationDialog(
         context = context,
         titleText = getString(R.string.update_check_failed),
-        descriptionText = getString(R.string.update_install_download_failed_see_logs)
+        descriptionText = getString(R.string.update_install_download_failed_description, error.errorMessageOrClassName())
       )
     }
   }
@@ -446,11 +373,30 @@ class UpdateManager(
   private fun doUpdate(responseRelease: ReleaseUpdateApiResponse) {
     BackgroundUtils.ensureMainThread()
 
+    updateDownloadDialog = ProgressDialog(context).apply {
+      setCanceledOnTouchOutside(true)
+
+      setOnDismissListener {
+        showToast(context, "Download will continue in background.")
+        updateDownloadDialog = null
+      }
+
+      max = 10000
+      setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
+      setProgressNumberFormat("")
+
+      show()
+      dialogFactory.applyColorsToDialog(this)
+    }
+
     cancelableDownload?.cancel()
     cancelableDownload = null
 
+    val apkUrl = responseRelease.apkURL.toString()
+    cacheHandler.deleteCacheFileByUrl(apkUrl)
+
     cancelableDownload = fileCacheV2.enqueueDownloadFileRequest(
-      responseRelease.apkURL.toString(),
+      apkUrl,
       object : FileCacheListener() {
         override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
           BackgroundUtils.ensureMainThread()
@@ -478,7 +424,7 @@ class UpdateManager(
             runOnMainThread({
               // Install from the filecache rather than downloads, as the
               // Environment.DIRECTORY_DOWNLOADS may not be "Download"
-              installApk(file)
+              installApk(file, responseRelease)
             }, TimeUnit.SECONDS.toMillis(1))
           }
         }
@@ -614,7 +560,7 @@ class UpdateManager(
     showToast(context, R.string.update_manager_apk_copied)
   }
 
-  private fun installApk(apkFile: File) {
+  private fun installApk(apkFile: File, responseRelease: ReleaseUpdateApiResponse) {
     BackgroundUtils.ensureMainThread()
 
     if (!BackgroundUtils.isInForeground()) {
@@ -630,16 +576,38 @@ class UpdateManager(
       descriptionText = getString(R.string.update_retry, getApplicationLabel()),
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.update_retry_button),
-      onPositiveButtonClickListener = { installApk(apkFile) }
+      onPositiveButtonClickListener = { installApk(apkFile, responseRelease) }
     )
 
-    // Then launch the APK install intent.
-    val intent = Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-      flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
-    }
+    val intent = if (AndroidUtils.isAndroidN()) {
+      Logger.d(TAG, "installApk() AndroidN>, apkFile=${apkFile.absolutePath}")
 
-    val apkURI = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
-    intent.setDataAndType(apkURI, "application/vnd.android.package-archive")
+      Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
+        val apkUri = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
+        setDataAndType(apkUri, "application/vnd.android.package-archive")
+      }
+    } else {
+      val externalFileName = "KurobaEx-${responseRelease.versionCode}.apk"
+
+      val externalApkFile = File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+        externalFileName
+      )
+
+      if (externalApkFile.exists()) {
+        externalApkFile.delete()
+      }
+
+      apkFile.copyTo(externalApkFile, overwrite = true)
+      Logger.d(TAG, "installApk() AndroidM<, apkFile=${externalApkFile.absolutePath}")
+
+      Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+        val apkUri = Uri.fromFile(externalApkFile)
+        setDataAndType(apkUri, "application/vnd.android.package-archive")
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+      }
+    }
 
     // The installer wants a content scheme from android N and up,
     // but I don't feel like implementing a content provider just for this feature.
@@ -653,24 +621,13 @@ class UpdateManager(
   private fun updateInstallRequested(responseRelease: ReleaseUpdateApiResponse) {
     val runtimePermissionsHelper = (context as ControllerHostActivity).runtimePermissionsHelper
 
+    if (runtimePermissionsHelper.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+      doUpdate(responseRelease)
+      return
+    }
+
     runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) { granted ->
       if (granted) {
-        updateDownloadDialog = ProgressDialog(context).apply {
-          setCanceledOnTouchOutside(true)
-
-          setOnDismissListener {
-            showToast(context, "Download will continue in background.")
-            updateDownloadDialog = null
-          }
-
-          max = 10000
-          setProgressStyle(ProgressDialog.STYLE_HORIZONTAL)
-          setProgressNumberFormat("")
-
-          show()
-          dialogFactory.applyColorsToDialog(this)
-        }
-
         doUpdate(responseRelease)
         return@requestPermission
       }

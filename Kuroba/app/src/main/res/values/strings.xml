@@ -145,7 +145,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="update_install_download_failed">Download failed</string>
     <string name="update_install_download_failed_description">Reason: %1$s</string>
     <string name="update_install_download_failed_canceled">Reason: canceled</string>
-    <string name="update_install_download_failed_see_logs">See logs for more info</string>
     <string name="update_retry_title">Retry update</string>
     <string name="update_already_updated">Already updated</string>
     <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>

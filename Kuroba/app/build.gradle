@@ -32,7 +32,8 @@ android {
         // the repo endpoint is also used to calculate the issues endpoint
         // the resources endpoint is for any static resources; currently this is mostly used for various images used internally,
         // but using a remote resource works easier with the application architecture than using a local resource/drawable
-        buildConfigField "String", "UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest\""
+        buildConfigField "String", "RELEASE_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental/releases/latest\""
+        buildConfigField "String", "BETA_UPDATE_API_ENDPOINT", "\"https://api.github.com/repos/K1rakishou/Kuroba-Experimental-beta/releases/latest\""
         buildConfigField "String", "GITHUB_ENDPOINT", "\"https://github.com/K1rakishou/Kuroba-Experimental\""
         buildConfigField "String", "GITHUB_CHANGELOGS_ENDPOINT", "\"https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/fastlane/metadata/android/en-US/changelogs/\""
         // this is for your development server endpoint

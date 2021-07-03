@@ -174,11 +174,21 @@ class ChanPostRepository(
 
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        chanThreadsCache.updateThreadState(threadDescriptor, deleted, archived, closed)
+        chanThreadsCache.updateThreadState(
+          threadDescriptor = threadDescriptor,
+          deleted = deleted,
+          archived = archived,
+          closed = closed
+        )
 
         val threadDatabaseId = chanDescriptorCache.getThreadIdByThreadDescriptor(threadDescriptor)?.id
         if (threadDatabaseId != null && threadDatabaseId >= 0L) {
-          localSource.updateThreadState(threadDatabaseId, deleted, archived, closed)
+          localSource.updateThreadState(
+            threadDatabaseId = threadDatabaseId,
+            deleted = deleted,
+            archived = archived,
+            closed = closed
+          )
         }
       }
     }

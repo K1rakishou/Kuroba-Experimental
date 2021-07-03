@@ -20,7 +20,7 @@ import android.text.Spanned
 import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
-import com.github.k1rakishou.chan.core.net.update.ReleaseUpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.google.gson.stream.JsonReader
@@ -30,9 +30,10 @@ import okhttp3.Request
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class ReleaseUpdateApiRequest(
+class UpdateApiRequest(
   request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val isRelease: Boolean
 ) : JsonReaderRequest<ReleaseUpdateApiResponse>(request, proxiedOkHttpClient) {
   
   override suspend fun readJson(reader: JsonReader): ReleaseUpdateApiResponse {
@@ -51,7 +52,7 @@ class ReleaseUpdateApiRequest(
     }
     
     if (response.versionCode == 0 || response.apkURL == null || response.body == null) {
-      throw UpdateRequestError("Update API response is incomplete, issue with github release listing!")
+      throw UpdateRequestError("Update API response is incomplete! response=${response}")
     }
     
     return response
@@ -90,7 +91,12 @@ class ReleaseUpdateApiRequest(
   private fun readVersionCode(responseRelease: ReleaseUpdateApiResponse, reader: JsonReader) {
     try {
       responseRelease.versionCodeString = reader.nextString()
-      val versionPattern = VERSION_CODE_PATTERN
+      val versionPattern = if (isRelease) {
+        RELEASE_VERSION_CODE_PATTERN
+      } else {
+        BETA_VERSION_CODE_PATTERN
+      }
+
       val versionMatcher = versionPattern.matcher(responseRelease.versionCodeString)
       
       if (versionMatcher.find()) {
@@ -106,23 +112,25 @@ class ReleaseUpdateApiRequest(
     versionMatcher.group(3).toInt() +
       versionMatcher.group(2).toInt() * 100 +
       versionMatcher.group(1).toInt() * 10000
-  
-  class ReleaseUpdateApiResponse {
-    @JvmField
-    var versionCode = 0
-    @JvmField
-    var versionCodeString: String? = null
-    @JvmField
-    var updateTitle = ""
-    @JvmField
-    var apkURL: HttpUrl? = null
-    @JvmField
+
+  class ReleaseUpdateApiResponse(
+    var versionCode: Int = 0,
+    var versionCodeString: String? = null,
+    var updateTitle: String = "",
+    var apkURL: HttpUrl? = null,
     var body: Spanned? = null
+  ) {
+
+    override fun toString(): String {
+      return "ReleaseUpdateApiResponse{versionCode=$versionCode, versionCodeString=${versionCodeString}, " +
+        "updateTitle={$updateTitle}, apkURL=${apkURL}, body=${body?.take(60)}"
+    }
   }
 
   companion object {
     private const val TAG = "ReleaseUpdateApiRequest"
 
-    private val VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release$")
+    private val RELEASE_VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release$")
+    private val BETA_VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-beta$")
   }
 }

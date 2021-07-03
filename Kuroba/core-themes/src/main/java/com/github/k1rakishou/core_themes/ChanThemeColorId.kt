@@ -6,8 +6,6 @@ package com.github.k1rakishou.core_themes
  * Do not remove old ids!
  * Only add new ids!
  * This thing is serialized in the DB, changing it may cause unexpected results!
- *
- * When changing this DO NOT FORGET to also change ChanThemeColorId in the kuroba_ex_native library !!!
  * */
 enum class ChanThemeColorId(val id: Int) {
   PostSubjectColor(0),

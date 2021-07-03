@@ -293,7 +293,7 @@ class ChanThreadsCache(
       return
     }
 
-    chanThreads[threadDescriptor]?.updateThreadState(deleted, archived, closed)
+    chanThreads[threadDescriptor]?.updateThreadState(deleted = deleted, archived = archived, closed = closed)
   }
 
   fun updateLastAccessTime(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
