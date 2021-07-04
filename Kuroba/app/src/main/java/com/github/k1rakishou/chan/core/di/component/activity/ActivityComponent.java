@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder;
-import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController;
+import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController;
 import com.github.k1rakishou.chan.features.drawer.MainController;
 import com.github.k1rakishou.chan.features.drawer.MainControllerPresenter;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryView;
@@ -244,7 +244,7 @@ public interface ActivityComponent {
     void inject(PostLinksController postLinksController);
     void inject(SelectSiteForSearchController selectSiteForSearchController);
     void inject(SelectBoardForSearchController selectBoardForSearchController);
-    void inject(SiteAntiSpamCheckBypassController siteAntiSpamCheckBypassController);
+    void inject(SiteFirewallBypassController siteFirewallBypassController);
     void inject(TabHostController tabHostController);
     void inject(FilterWatchesController filterWatchesController);
     void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);

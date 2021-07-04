@@ -139,8 +139,15 @@ internal class SearchResultsPresenter(
 
       val searchResult = executeRequest()
       if (searchResult is SearchResult.Failure) {
-        if (searchResult.searchError is SearchError.CloudFlareDetectedError) {
-          withView { onCloudFlareDetected(searchResult.searchError.requestUrl) }
+        if (searchResult.searchError is SearchError.FirewallDetectedError) {
+          val firewallDetectedError = searchResult.searchError as SearchError.FirewallDetectedError
+
+          withView {
+            onFirewallDetected(
+              firewallType = firewallDetectedError.firewallType,
+              requestUrl = searchResult.searchError.requestUrl
+            )
+          }
         }
 
         logSearchError(searchResult)
@@ -179,7 +186,7 @@ internal class SearchResultsPresenter(
       is SearchError.ServerError -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.ParsingError -> Logger.e(TAG, "${searchResult.searchError}")
       is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchResult.searchError.error)
-      is SearchError.CloudFlareDetectedError -> {
+      is SearchError.FirewallDetectedError -> {
         Logger.e(TAG, "CloudFlare detected error, requestUrl=${searchResult.searchError.requestUrl}")
       }
     }
@@ -361,13 +368,25 @@ internal class SearchResultsPresenter(
   }
 
   private fun searchFailureToErrorText(failure: SearchResult.Failure): String {
-    return when (failure.searchError) {
-      SearchError.NotImplemented -> "Not implemented"
-      is SearchError.SiteNotFound -> "Site \"${siteDescriptor.siteName}\" was not found in the database"
-      is SearchError.ServerError -> "Bad response status: ${failure.searchError.statusCode}"
-      is SearchError.UnknownError -> "Unknown error: ${failure.searchError.error.errorMessageOrClassName()}"
-      is SearchError.ParsingError -> "Html parsing error: ${failure.searchError.message}"
-      is SearchError.CloudFlareDetectedError -> "CloudFlare detected! You need to pass CloudFlare checks to continue"
+    return when (val searchError = failure.searchError) {
+      SearchError.NotImplemented -> {
+        "Not implemented"
+      }
+      is SearchError.SiteNotFound -> {
+        "Site \"${siteDescriptor.siteName}\" was not found in the database"
+      }
+      is SearchError.ServerError -> {
+        "Bad response status: ${searchError.statusCode}"
+      }
+      is SearchError.UnknownError -> {
+        "Unknown error: ${searchError.error.errorMessageOrClassName()}"
+      }
+      is SearchError.ParsingError -> {
+        "Html parsing error: ${searchError.message}"
+      }
+      is SearchError.FirewallDetectedError -> {
+        "${searchError.firewallType} detected! You need to pass ${searchError.firewallType} checks to continue"
+      }
     }
   }
 

@@ -33,9 +33,9 @@ import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.features.bypass.BypassMode
 import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
+import com.github.k1rakishou.chan.features.bypass.FirewallType
+import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
@@ -250,14 +250,14 @@ class LoginController(
     val siteDescriptor = site.siteDescriptor()
 
     if (siteDescriptor.isDvach()) {
-      val controller = SiteAntiSpamCheckBypassController(
+      val controller = SiteFirewallBypassController(
         context = context,
-        bypassMode = BypassMode.Bypass2chAntiSpamCheck,
+        firewallType = FirewallType.DvachAntiSpam,
         urlToOpen = Dvach.URL_HANDLER.url!!.toString(),
         onResult = { cookieResult ->
           if (cookieResult is CookieResult.CookieValue) {
             mainScope.launch { auth(retrying = true) }
-            return@SiteAntiSpamCheckBypassController
+            return@SiteFirewallBypassController
           }
 
           val error = when (cookieResult) {

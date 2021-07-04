@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -63,7 +64,11 @@ class GlobalSearchUseCase(
           val cloudFlareDetectedException =
             result.error as CloudFlareHandlerInterceptor.CloudFlareDetectedException
 
-          val resultError = SearchError.CloudFlareDetectedError(cloudFlareDetectedException.requestUrl)
+          val resultError = SearchError.FirewallDetectedError(
+            FirewallType.Cloudflare,
+            cloudFlareDetectedException.requestUrl
+          )
+
           return SearchResult.Failure(resultError)
         }
 

@@ -8,11 +8,12 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.features.bypass.BypassMode
 import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
+import com.github.k1rakishou.chan.features.bypass.FirewallType
+import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
@@ -89,36 +90,32 @@ class SearchResultsController(
     return super.onBack()
   }
 
-  override fun onCloudFlareDetected(requestUrl: HttpUrl) {
-    val hostUrl = HttpUrl.Builder()
-      .scheme("https")
-      .host(requestUrl.host)
-      .build()
-      .toString()
+  override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {
+    val hostUrl = getUrlToOpen(firewallType, requestUrl)
 
-    val controller = SiteAntiSpamCheckBypassController(
+    val controller = SiteFirewallBypassController(
       context = context,
-      bypassMode = BypassMode.BypassCloudflare,
+      firewallType = firewallType,
       urlToOpen = hostUrl,
       onResult = { cookieResult ->
         when (cookieResult) {
           is CookieResult.CookieValue -> {
-            showToast(context, "Successfully passed CloudFlare checks!")
+            showToast(context, getString(R.string.firewall_check_success, firewallType))
             presenter.reloadCurrentPage()
 
-            return@SiteAntiSpamCheckBypassController
+            return@SiteFirewallBypassController
           }
           is CookieResult.Error -> {
             showToast(
               context,
-              "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
+              getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
             )
           }
           CookieResult.Timeout -> {
-            showToast(context, "Failed to pass CloudFlare checks, reason: Timeout when trying to bypass 2ch antispam system")
+            showToast(context, getString(R.string.firewall_check_timeout, firewallType))
           }
           CookieResult.Canceled -> {
-            showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
+            showToast(context, getString(R.string.firewall_check_canceled, firewallType))
           }
         }
       }
@@ -126,6 +123,20 @@ class SearchResultsController(
 
     presentController(controller, animated = true)
   }
+
+  private fun getUrlToOpen(firewallType: FirewallType, requestUrl: HttpUrl) =
+    when (firewallType) {
+      FirewallType.Cloudflare -> {
+        HttpUrl.Builder()
+          .scheme("https")
+          .host(requestUrl.host)
+          .build()
+          .toString()
+      }
+      FirewallType.DvachAntiSpam -> {
+        Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
+      }
+    }
 
   private fun onStateChanged(state: SearchResultsControllerState) {
     epoxyRecyclerView.withModels {

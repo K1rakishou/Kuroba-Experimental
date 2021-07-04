@@ -23,9 +23,9 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class SiteAntiSpamCheckBypassController(
+class SiteFirewallBypassController(
   context: Context,
-  private val bypassMode: BypassMode,
+  private val firewallType: FirewallType,
   private val urlToOpen: String,
   private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context) {
@@ -42,14 +42,14 @@ class SiteAntiSpamCheckBypassController(
   private val cookieResultCompletableDeferred = CompletableDeferred<CookieResult>()
 
   private val cookieManager by lazy { CookieManager.getInstance() }
-  private val webClient by lazy { createWebClient(bypassMode) }
+  private val webClient by lazy { createWebClient(firewallType) }
 
-  private fun createWebClient(mode: BypassMode): WebViewClient {
+  private fun createWebClient(mode: FirewallType): WebViewClient {
     return when (mode) {
-      BypassMode.BypassCloudflare -> {
+      FirewallType.Cloudflare -> {
         CloudFlareCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
       }
-      BypassMode.Bypass2chAntiSpamCheck -> {
+      FirewallType.DvachAntiSpam -> {
         DvachAntiSpamCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
       }
     }
@@ -59,7 +59,7 @@ class SiteAntiSpamCheckBypassController(
     component.inject(this)
   }
 
-  override fun getLayoutId(): Int = R.layout.controller_cloudflare_bypass
+  override fun getLayoutId(): Int = R.layout.controller_firewall_bypass
 
   override fun onCreate() {
     try {
@@ -157,8 +157,8 @@ class SiteAntiSpamCheckBypassController(
       return false
     }
 
-    when (bypassMode) {
-      BypassMode.BypassCloudflare -> {
+    when (firewallType) {
+      FirewallType.Cloudflare -> {
         val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
           SiteSetting.SiteSettingId.CloudFlareClearanceCookie
         )
@@ -170,7 +170,7 @@ class SiteAntiSpamCheckBypassController(
 
         cloudFlareClearanceCookieSetting.set(cookie)
       }
-      BypassMode.Bypass2chAntiSpamCheck -> {
+      FirewallType.DvachAntiSpam -> {
         val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(
           SiteSetting.SiteSettingId.DvachAntiSpamCookie
         )

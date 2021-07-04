@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.search
 
 import android.text.SpannableStringBuilder
+import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -85,7 +86,7 @@ sealed class SearchError  {
   data class SiteNotFound(val siteDescriptor: SiteDescriptor) : SearchError()
   data class ServerError(val statusCode: Int) : SearchError()
   data class UnknownError(val error: Throwable) : SearchError()
-  data class CloudFlareDetectedError(val requestUrl: HttpUrl) : SearchError()
+  data class FirewallDetectedError(val firewallType: FirewallType, val requestUrl: HttpUrl) : SearchError()
   data class ParsingError(val message: String) : SearchError()
 }
 

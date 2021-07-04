@@ -48,9 +48,9 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.features.bypass.BypassMode
 import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
+import com.github.k1rakishou.chan.features.bypass.FirewallType
+import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
@@ -477,35 +477,37 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {
     val presenting = callback
-      .isAlreadyPresentingController { controller -> controller is SiteAntiSpamCheckBypassController }
+      .isAlreadyPresentingController { controller -> controller is SiteFirewallBypassController }
 
     if (presenting) {
       return
     }
 
-    val controller = SiteAntiSpamCheckBypassController(
+    val firewallType = FirewallType.Cloudflare
+
+    val controller = SiteFirewallBypassController(
       context = context,
-      bypassMode = BypassMode.BypassCloudflare,
+      firewallType = firewallType,
       urlToOpen = error.getOriginalRequestHost(),
       onResult = { cookieResult ->
         when (cookieResult) {
           is CookieResult.CookieValue -> {
-            showToast(context, "Successfully passed CloudFlare checks!")
+            showToast(context, getString(R.string.firewall_check_success, firewallType))
             presenter.normalLoad()
 
-            return@SiteAntiSpamCheckBypassController
+            return@SiteFirewallBypassController
           }
           is CookieResult.Error -> {
             showToast(
               context,
-              "Failed to pass CloudFlare checks, reason: ${cookieResult.exception.errorMessageOrClassName()}"
+              getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
             )
           }
           CookieResult.Timeout -> {
-            showToast(context, "Failed to pass CloudFlare checks, reason: Timeout when trying to bypass 2ch antispam system")
+            showToast(context, getString(R.string.firewall_check_timeout, firewallType))
           }
           CookieResult.Canceled -> {
-            showToast(context, "Failed to pass CloudFlare checks, reason: Canceled")
+            showToast(context, getString(R.string.firewall_check_canceled, firewallType))
           }
         }
       }

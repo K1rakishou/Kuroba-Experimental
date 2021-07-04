@@ -48,7 +48,7 @@ class DvachAntiSpamCheckBypassWebClient(
 
     ++pageLoadsCounter
 
-    if (pageLoadsCounter > SiteAntiSpamCheckBypassController.MAX_PAGE_LOADS_COUNT) {
+    if (pageLoadsCounter > SiteFirewallBypassController.MAX_PAGE_LOADS_COUNT) {
       fail(BypassExceptions("Exceeded max page load limit"))
     }
   }

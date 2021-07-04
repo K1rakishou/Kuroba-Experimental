@@ -65,9 +65,9 @@ import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.features.bypass.BypassMode
 import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.SiteAntiSpamCheckBypassController
+import com.github.k1rakishou.chan.features.bypass.FirewallType
+import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -652,9 +652,9 @@ class ReplyLayout @JvmOverloads constructor(
       ?: return CookieResult.Canceled
 
     return suspendCancellableCoroutine { continuation ->
-      val controller = SiteAntiSpamCheckBypassController(
+      val controller = SiteFirewallBypassController(
         context = context,
-        bypassMode = BypassMode.Bypass2chAntiSpamCheck,
+        firewallType = FirewallType.DvachAntiSpam,
         urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
       ) { cookieResult ->
         continuation.resume(cookieResult)

@@ -10,6 +10,8 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
+import com.github.k1rakishou.chan.features.bypass.FirewallType
+import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -35,7 +37,17 @@ class DvachSearchRequest(
     )
 
     val dvachSearch = if (dvachSearchResult is ModularResult.Error) {
-      return SearchResult.Failure(SearchError.UnknownError(dvachSearchResult.error))
+      val error = dvachSearchResult.error
+      if (error is BadStatusResponseException && error.status == 401) {
+        val searchError = SearchError.FirewallDetectedError(
+          firewallType = FirewallType.DvachAntiSpam,
+          requestUrl = request.url
+        )
+
+        return SearchResult.Failure(searchError)
+      }
+
+      return SearchResult.Failure(SearchError.UnknownError(error))
     } else {
       dvachSearchResult.valueOrNull()!!
     }
