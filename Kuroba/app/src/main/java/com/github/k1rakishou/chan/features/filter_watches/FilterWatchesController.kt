@@ -10,6 +10,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.BaseThreadBookmarkViewHolder
@@ -26,6 +28,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.delay
@@ -37,10 +40,12 @@ import javax.inject.Inject
 class FilterWatchesController(
   context: Context,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-) : TabPageController(context), FilterWatchesControllerView {
+) : TabPageController(context), FilterWatchesControllerView, WindowInsetsListener {
 
   @Inject
   lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
@@ -114,7 +119,10 @@ class FilterWatchesController(
     }
 
     updateLayoutManager()
+    onInsetsChanged()
+
     presenter.onCreate(this)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
@@ -125,7 +133,14 @@ class FilterWatchesController(
       epoxyRecyclerView.clear()
     }
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     presenter.onDestroy()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {

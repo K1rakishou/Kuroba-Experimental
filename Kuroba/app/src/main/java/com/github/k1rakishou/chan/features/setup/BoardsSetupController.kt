@@ -12,6 +12,7 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -19,6 +20,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
@@ -32,6 +34,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
@@ -40,7 +43,7 @@ import javax.inject.Inject
 class BoardsSetupController(
   context: Context,
   private val siteDescriptor: SiteDescriptor
-) : Controller(context), BoardsSetupView {
+) : Controller(context), BoardsSetupView, WindowInsetsListener {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -54,6 +57,8 @@ class BoardsSetupController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val controller = BoardsEpoxyController()
+  private val fabBottomPadding = dp(16f)
+  private val recyclerBottomPadding = dp(64f)
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var fabAddBoards: ColorizableFloatingActionButton
@@ -145,7 +150,6 @@ class BoardsSetupController(
     view = inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
-    epoxyRecyclerView.updatePaddings(bottom = dp(64f))
 
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)
@@ -164,29 +168,27 @@ class BoardsSetupController(
         .subscribe { state -> onStateChanged(state) }
     )
 
+    onInsetsChanged()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
     presenter.onCreate(this)
     presenter.updateBoardsFromServerAndDisplayActive()
   }
 
-  private fun onCreateBoardManuallyClicked() {
-    dialogFactory.createSimpleDialogWithInput(
-      context = context,
-      titleTextId = R.string.controller_enter_board_code,
-      inputType = DialogFactory.DialogInputType.String,
-      onValueEntered = { boardCode ->
-        if (boardCode.isEmpty()) {
-          showToast(R.string.controller_board_code_is_empty)
-          return@createSimpleDialogWithInput
-        }
-
-        presenter.createBoardManually(boardCode)
-      }
-    )
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      fabAddBoards.updateMargins(bottom = globalWindowInsetsManager.bottom() + fabBottomPadding)
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom() + recyclerBottomPadding)
+    } else {
+      fabAddBoards.updateMargins(bottom = fabBottomPadding)
+      epoxyRecyclerView.updatePaddings(bottom = recyclerBottomPadding)
+    }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     epoxyRecyclerView.clear()
     presenter.onDestroy()
   }
@@ -241,6 +243,22 @@ class BoardsSetupController(
 
   override fun showMessageToast(message: String) {
     showToast(message, Toast.LENGTH_LONG)
+  }
+
+  private fun onCreateBoardManuallyClicked() {
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.controller_enter_board_code,
+      inputType = DialogFactory.DialogInputType.String,
+      onValueEntered = { boardCode ->
+        if (boardCode.isEmpty()) {
+          showToast(R.string.controller_board_code_is_empty)
+          return@createSimpleDialogWithInput
+        }
+
+        presenter.createBoardManually(boardCode)
+      }
+    )
   }
 
   private inner class BoardsEpoxyController : EpoxyController() {

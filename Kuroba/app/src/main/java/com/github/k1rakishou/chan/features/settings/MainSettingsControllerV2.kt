@@ -4,10 +4,12 @@ import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
@@ -28,13 +30,14 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.updatePaddings
 import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
 class MainSettingsControllerV2(
   context: Context,
   private val mainControllerCallbacks: MainControllerCallbacks
-) : BaseSettingsController(context), ToolbarSearchCallback {
+) : BaseSettingsController(context), ToolbarSearchCallback, WindowInsetsListener {
 
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
@@ -92,7 +95,10 @@ class MainSettingsControllerV2(
       isFirstRebuild = true
     )
 
+    onInsetsChanged()
+
     epoxyRecyclerView.addOnScrollListener(scrollListener)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
@@ -103,8 +109,15 @@ class MainSettingsControllerV2(
     epoxyRecyclerView.removeOnScrollListener(scrollListener)
     epoxyRecyclerView.clear()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     settingsCoordinator.onDestroy()
     restartAppOrRefreshUiIfNecessary()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {

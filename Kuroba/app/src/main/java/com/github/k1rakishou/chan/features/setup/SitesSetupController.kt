@@ -11,11 +11,14 @@ import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyViewHolder
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.features.setup.data.SitesSetupControllerState
@@ -28,14 +31,17 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
 
-class SitesSetupController(context: Context) : Controller(context), SitesSetupView {
+class SitesSetupController(context: Context) : Controller(context), SitesSetupView, WindowInsetsListener {
 
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val sitesPresenter by lazy {
     SitesSetupPresenter(
@@ -130,13 +136,23 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
         .subscribe { state -> onStateChanged(state) }
     )
 
+    onInsetsChanged()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
     sitesPresenter.onCreate(this)
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     sitesPresenter.onDestroy()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   private fun onStateChanged(state: SitesSetupControllerState) {

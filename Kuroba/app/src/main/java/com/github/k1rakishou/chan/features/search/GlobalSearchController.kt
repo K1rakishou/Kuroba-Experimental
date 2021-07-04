@@ -3,13 +3,16 @@ package com.github.k1rakishou.chan.features.search
 import android.content.Context
 import android.view.View
 import com.airbnb.epoxy.EpoxyController
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerState
@@ -27,6 +30,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.lang.ref.WeakReference
@@ -35,7 +39,7 @@ import javax.inject.Inject
 class GlobalSearchController(
   context: Context,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-) : Controller(context), GlobalSearchView {
+) : Controller(context), GlobalSearchView, WindowInsetsListener {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -45,6 +49,8 @@ class GlobalSearchController(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val presenter by lazy {
     GlobalSearchPresenter(siteManager)
@@ -76,6 +82,9 @@ class GlobalSearchController(
     )
 
     presenter.onCreate(this)
+    onInsetsChanged()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
@@ -84,12 +93,20 @@ class GlobalSearchController(
     epoxyRecyclerView.clear()
     inputViewRefSet.clear()
     presenter.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onBack(): Boolean {
     resetSearchParameters = true
     presenter.resetSavedState()
     return super.onBack()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   override fun updateResetSearchParametersFlag(reset: Boolean) {

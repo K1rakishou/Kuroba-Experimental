@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
@@ -18,15 +19,18 @@ import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
@@ -55,6 +59,8 @@ class SavedPostsController(
 
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<SavedPostsViewModel>() }
 
@@ -154,8 +160,17 @@ class SavedPostsController(
     val chanTheme = LocalChanTheme.current
     val state = viewModel.lazyListState()
 
+    val contentPadding = remember {
+      if (ChanSettings.isSplitLayoutMode()) {
+        PaddingValues(bottom = globalWindowInsetsManager.bottomDp())
+      } else {
+        PaddingValues(all = 0.dp)
+      }
+    }
+
     LazyColumn(
       state = state,
+      contentPadding = contentPadding,
       modifier = Modifier
         .fillMaxSize()
         .simpleVerticalScrollbar(state, chanTheme)

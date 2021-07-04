@@ -16,6 +16,14 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static android.view.View.GONE;
+import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -44,6 +52,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton;
@@ -68,19 +77,12 @@ import javax.inject.Inject;
 
 import kotlin.Unit;
 
-import static android.view.View.GONE;
-import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink;
-
 public class FiltersController
         extends Controller
         implements ToolbarNavigationController.ToolbarSearchCallback,
         View.OnClickListener,
-        ThemeEngine.ThemeChangesListener {
+        ThemeEngine.ThemeChangesListener,
+        WindowInsetsListener {
     private static final int RECYCLER_BOTTOM_PADDING = dp(80f);
 
     @Inject
@@ -183,12 +185,17 @@ public class FiltersController
         enable = view.findViewById(R.id.enable);
         enable.setOnClickListener(this);
 
+        onInsetsChanged();
+
+        globalWindowInsetsManager.addInsetsUpdatesListener(this);
         themeEngine.addListener(this);
     }
 
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        globalWindowInsetsManager.removeInsetsUpdatesListener(this);
         themeEngine.removeListener(this);
     }
 
@@ -196,6 +203,20 @@ public class FiltersController
     public void onThemeChanged() {
         if (adapter != null) {
             adapter.reload();
+        }
+    }
+
+    @Override
+    public void onInsetsChanged() {
+        if (ChanSettings.isSplitLayoutMode()) {
+            KotlinExtensionsKt.updatePaddings(view, null, null, null, globalWindowInsetsManager.bottom());
+
+            recyclerView.setPadding(
+                    recyclerView.getPaddingLeft(),
+                    recyclerView.getPaddingTop(),
+                    recyclerView.getPaddingRight(),
+                    globalWindowInsetsManager.bottom()
+            );
         }
     }
 

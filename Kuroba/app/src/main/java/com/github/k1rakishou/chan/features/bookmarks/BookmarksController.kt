@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
@@ -49,6 +50,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -56,6 +58,7 @@ import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils.getDisplaySize
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -75,7 +78,8 @@ class BookmarksController(
 ) : TabPageController(context),
   BookmarksView,
   ToolbarNavigationController.ToolbarSearchCallback,
-  BookmarksSelectionHelper.OnBookmarkMenuItemClicked {
+  BookmarksSelectionHelper.OnBookmarkMenuItemClicked,
+  WindowInsetsListener {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
@@ -309,8 +313,10 @@ class BookmarksController(
     updateLayoutManager()
 
     bookmarksPresenter.onCreate(this)
-
+    onInsetsChanged()
     setupRecycler()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
@@ -324,6 +330,7 @@ class BookmarksController(
 
     epoxyRecyclerView.clear()
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
 
     bookmarksPresenter.onDestroy()
   }
@@ -341,6 +348,13 @@ class BookmarksController(
     }
 
     return result
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      val navViewSize = getDimen(R.dimen.navigation_view_size)
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom() + navViewSize)
+    }
   }
 
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {

@@ -16,6 +16,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -49,12 +50,14 @@ import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.animatedVectorResource
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
@@ -63,6 +66,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
@@ -115,6 +119,8 @@ class LocalArchiveController(
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var fileChooser: FileChooser
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<LocalArchiveViewModel>() }
 
@@ -296,10 +302,20 @@ class LocalArchiveController(
 
     Column(modifier = Modifier.fillMaxSize()) {
       BuildViewModelSelector(onViewModeChanged = onViewModeChanged)
+      val navViewSize = dimensionResource(id = R.dimen.navigation_view_size)
+
+      val contentPadding = remember {
+        if (ChanSettings.isSplitLayoutMode()) {
+          PaddingValues(bottom = globalWindowInsetsManager.bottomDp() + navViewSize)
+        } else {
+          PaddingValues(all = 0.dp)
+        }
+      }
 
       LazyVerticalGrid(
         state = state,
-        cells = GridCells.Adaptive(260.dp),
+        cells = GridCells.Adaptive(300.dp),
+        contentPadding = contentPadding,
         modifier = Modifier
           .fillMaxSize()
           .simpleVerticalScrollbar(state, chanTheme)

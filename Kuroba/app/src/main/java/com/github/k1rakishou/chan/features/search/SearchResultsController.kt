@@ -4,10 +4,13 @@ import android.content.Context
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
@@ -25,6 +28,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -36,12 +40,14 @@ class SearchResultsController(
   private val siteDescriptor: SiteDescriptor,
   private val searchParameters: SearchParameters,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-) : Controller(context), SearchResultsView {
+) : Controller(context), SearchResultsView, WindowInsetsListener {
 
   @Inject
   lateinit var globalSearchUseCase: GlobalSearchUseCase
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val presenter by lazy {
     SearchResultsPresenter(
@@ -75,6 +81,9 @@ class SearchResultsController(
     )
 
     presenter.onCreate(this)
+    onInsetsChanged()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun onDestroy() {
@@ -82,12 +91,19 @@ class SearchResultsController(
 
     epoxyRecyclerView.clear()
     presenter.onDestroy()
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onBack(): Boolean {
     presenter.resetSavedState()
     presenter.resetLastRecyclerViewScrollState()
     return super.onBack()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {

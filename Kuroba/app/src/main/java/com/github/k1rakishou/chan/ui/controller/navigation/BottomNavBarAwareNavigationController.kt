@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller.navigation
 
 import android.content.Context
 import android.view.View
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -74,7 +75,11 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onInsetsChanged() {
-    var bottom = globalWindowInsetsManager.bottom()
+    var bottom = 0
+
+    if (!ChanSettings.isSplitLayoutMode()) {
+      bottom += globalWindowInsetsManager.bottom()
+    }
 
     if (navigationViewType == NavigationViewContract.Type.BottomNavView) {
       bottom += bottomNavBarHeight

@@ -7,9 +7,12 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.Window
 import androidx.compose.ui.BiasAlignment
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
@@ -187,6 +190,11 @@ class GlobalWindowInsetsManager {
   fun right() = currentInsets.right
   fun top() = currentInsets.top
   fun bottom() = currentInsets.bottom
+
+  fun leftDp(): Dp = pxToDp(currentInsets.left.toFloat()).dp
+  fun rightDp(): Dp = pxToDp(currentInsets.right.toFloat()).dp
+  fun topDp(): Dp = pxToDp(currentInsets.top.toFloat()).dp
+  fun bottomDp(): Dp = pxToDp(currentInsets.bottom.toFloat()).dp
 
   companion object {
     private const val TAG = "GlobalWindowInsetsManager"

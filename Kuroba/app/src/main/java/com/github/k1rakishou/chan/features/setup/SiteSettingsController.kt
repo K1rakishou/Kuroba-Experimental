@@ -2,12 +2,14 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyController
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
@@ -20,6 +22,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -29,7 +32,7 @@ import javax.inject.Inject
 class SiteSettingsController(
   context: Context,
   private val siteDescriptor: SiteDescriptor
-) : BaseSettingsController(context), SiteSettingsView {
+) : BaseSettingsController(context), SiteSettingsView, WindowInsetsListener {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -59,6 +62,9 @@ class SiteSettingsController(
     view = inflate(context, R.layout.controller_site_settings)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
 
+    onInsetsChanged()
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
     presenter.onCreate(this)
   }
 
@@ -71,7 +77,15 @@ class SiteSettingsController(
     super.onDestroy()
 
     epoxyRecyclerView.clear()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     presenter.onDestroy()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   private fun rebuildSettings() {

@@ -1,15 +1,23 @@
 package com.github.k1rakishou.chan.ui.controller.crashlogs
 
 import android.content.Context
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ViewFullReportFileLayout
+import com.github.k1rakishou.common.updatePaddings
+import javax.inject.Inject
 
 class ViewFullCrashLogController(
   context: Context,
   private val reportFile: ReportFile
-) : Controller(context), ViewFullReportFileLayout.ViewFullCrashLogLayoutCallbacks {
+) : Controller(context), ViewFullReportFileLayout.ViewFullCrashLogLayoutCallbacks, WindowInsetsListener {
+
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -22,11 +30,21 @@ class ViewFullCrashLogController(
     view = ViewFullReportFileLayout(context, reportFile).apply {
       onCreate(this@ViewFullCrashLogController)
     }
+
+    onInsetsChanged()
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.isSplitLayoutMode()) {
+      view.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+    }
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     (view as ViewFullReportFileLayout).onDestroy()
   }
 
