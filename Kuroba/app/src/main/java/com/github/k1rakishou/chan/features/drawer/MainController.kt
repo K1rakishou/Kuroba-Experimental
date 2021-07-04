@@ -891,12 +891,12 @@ class MainController(
     when (navigationViewContract.type) {
       NavigationViewContract.Type.BottomNavView -> {
         verticalOffset = dp(4f)
-        horizontalOffset = dp(2f)
+        horizontalOffset = dp(5f)
         badgeGravity = BadgeDrawable.TOP_END
       }
       NavigationViewContract.Type.SideNavView -> {
         verticalOffset = 0
-        horizontalOffset = number.countDigits() * dp(5f)
+        horizontalOffset = number.countDigits().coerceAtMost(5) * dp(5f)
         badgeGravity = BadgeDrawable.TOP_START
       }
     }
