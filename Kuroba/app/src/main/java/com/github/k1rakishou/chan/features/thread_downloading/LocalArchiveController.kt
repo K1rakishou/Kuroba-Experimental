@@ -48,7 +48,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.animatedVectorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -66,8 +65,11 @@ import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -85,7 +87,6 @@ import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.google.accompanist.coil.rememberCoilPainter
 import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
@@ -279,11 +280,17 @@ class LocalArchiveController(
     val state = viewModel.lazyListState()
 
     var animationAtEnd by remember { mutableStateOf(false) }
+    val hasAnyRunningDownloads = remember(key1 = threadDownloadViews) {
+      threadDownloadViews
+        .any { threadDownloadView -> threadDownloadView.status.isRunning() }
+    }
 
-    LaunchedEffect(Unit) {
-      while (isActive) {
-        animationAtEnd = !animationAtEnd
-        delay(1500)
+    if (hasAnyRunningDownloads) {
+      LaunchedEffect(Unit) {
+        while (isActive) {
+          animationAtEnd = !animationAtEnd
+          delay(1500)
+        }
       }
     }
 
@@ -524,32 +531,26 @@ class LocalArchiveController(
           ) {
             val thumbnailLocation = threadDownloadView.thumbnailLocation
             if (thumbnailLocation != null) {
-              val context = LocalContext.current
-              val errorDrawable = remember(key1 = chanTheme) {
-                imageLoaderV2.getImageErrorLoadingDrawable(context)
-              }
-
-              val request: Any = remember(key1 = thumbnailLocation) {
-                when (thumbnailLocation) {
+              val imageLoaderRequest = remember(key1 = thumbnailLocation) {
+                val requestData = when (thumbnailLocation) {
                   is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
-                    thumbnailLocation.file
+                    ImageLoaderRequestData.File(thumbnailLocation.file)
                   }
                   is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
-                    thumbnailLocation.url
+                    ImageLoaderRequestData.Url(thumbnailLocation.url)
                   }
                 }
+
+                return@remember ImageLoaderRequest(data = requestData)
               }
 
-              Image(
-                painter = rememberCoilPainter(
-                  request = request,
-                  requestBuilder = { this.error(errorDrawable) }
-                ),
-                contentDescription = null,
+              KurobaComposeImage(
+                request = imageLoaderRequest,
                 modifier = Modifier
                   .height(100.dp)
                   .width(60.dp)
-                  .alpha(contentAlpha)
+                  .alpha(contentAlpha),
+                imageLoaderV2 = imageLoaderV2
               )
 
               Spacer(modifier = Modifier.width(4.dp))

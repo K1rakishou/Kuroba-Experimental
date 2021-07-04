@@ -162,7 +162,7 @@ class ThreadDownloadManager(
     }
 
     if (alreadyExists) {
-      resumeThreadDownloadInternal(threadDescriptor)
+      resumeThreadDownloadInternal(threadDescriptor, downloadMedia)
     } else {
       startThreadDownloadInternal(threadDescriptor, downloadMedia, threadThumbnailUrl)
     }
@@ -378,13 +378,19 @@ class ThreadDownloadManager(
     }
   }
 
-  private suspend fun resumeThreadDownloadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  private suspend fun resumeThreadDownloadInternal(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    downloadMedia: Boolean
+  ) {
     val updated = updateThreadDownload(threadDescriptor, updaterFunc = { threadDownload ->
       if (threadDownload.status != ThreadDownload.Status.Stopped) {
         return@updateThreadDownload null
       }
 
-      return@updateThreadDownload threadDownload.copy(status = ThreadDownload.Status.Running)
+      return@updateThreadDownload threadDownload.copy(
+        status = ThreadDownload.Status.Running,
+        downloadMedia = downloadMedia
+      )
     })
 
     if (updated) {
