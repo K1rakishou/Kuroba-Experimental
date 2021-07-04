@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -76,6 +77,9 @@ class AddBoardsController(
     cancel = view.findViewById(R.id.cancel_adding_boards)
     addBoards = view.findViewById(R.id.add_boards)
     outsideArea = view.findViewById(R.id.outside_area)
+
+    val resizeableContainer = view.findViewById<ViewContainerWithMaxSize>(R.id.resizable_container)
+    resizeableContainer.takeWholeWidth()
 
     mainScope.launch {
       startListeningForSearchQueries()

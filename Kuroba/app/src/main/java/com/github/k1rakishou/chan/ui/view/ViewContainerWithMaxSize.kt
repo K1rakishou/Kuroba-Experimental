@@ -44,18 +44,16 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
       AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
     }
+
+    calculateDisplaySize()
   }
 
-  override fun onAttachedToWindow() {
-    super.onAttachedToWindow()
-
-    if (!isInEditMode) {
-      calculateSizes()
-    }
+  fun takeWholeWidth() {
+    desiredWidth = 0
   }
 
   override fun onConfigurationChanged(newConfig: Configuration?) {
-    calculateSizes()
+    calculateDisplaySize()
     requestLayout()
   }
 
@@ -67,6 +65,8 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
       newWidth = (newWidth / 1.2f).toInt()
       newHeight = (newHeight / 1.2f).toInt()
     } else {
+      calculateDisplaySize()
+
       val horizontalPaddings = globalWindowInsetsManager.left() +
         globalWindowInsetsManager.right() +
         paddingStart +
@@ -81,8 +81,20 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
         marginTop +
         marginBottom
 
-      newWidth = desiredWidth.coerceIn(0, displayWidth) - horizontalPaddings
-      newHeight = desiredHeight.coerceIn(0, displayHeight) - verticalPaddings
+      val actualWidth = if (this.desiredWidth <= 0 || this.desiredWidth > displayWidth) {
+        displayWidth
+      } else {
+        desiredWidth
+      }
+
+      val actualHeight = if (this.desiredHeight <= 0 || this.desiredHeight > displayHeight) {
+        displayHeight
+      } else {
+        desiredHeight
+      }
+
+      newWidth = (actualWidth - horizontalPaddings).coerceIn(0, displayWidth)
+      newHeight = (actualHeight - verticalPaddings).coerceIn(0, displayHeight)
 
       require(newWidth > 0) { "Bad newWidth: $newWidth" }
       require(newHeight > 0) { "Bad newHeight: $newHeight" }
@@ -94,17 +106,11 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
     )
   }
 
-  private fun calculateSizes() {
-    val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
-    this.displayWidth = dispWidth
-    this.displayHeight = dispHeight
-
-    if (this.desiredWidth <= 0 || this.desiredWidth > dispWidth) {
-      this.desiredWidth = dispWidth
-    }
-
-    if (this.desiredHeight <= 0 || this.desiredHeight > dispHeight) {
-      this.desiredHeight = dispHeight
+  private fun calculateDisplaySize() {
+    if (this.displayWidth == 0 && this.displayHeight == 0) {
+      val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
+      this.displayWidth = dispWidth
+      this.displayHeight = dispHeight
     }
   }
 

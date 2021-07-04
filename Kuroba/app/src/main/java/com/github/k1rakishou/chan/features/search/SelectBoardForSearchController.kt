@@ -10,7 +10,9 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySelectableBoardItemView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
@@ -28,6 +30,7 @@ class SelectBoardForSearchController(
   lateinit var archivesManager: ArchivesManager
 
   private val controller = BoardsEpoxyController()
+  private var searchQuery = ""
 
   private lateinit var clickableArea: ConstraintLayout
   private lateinit var recyclerView: ColorizableEpoxyRecyclerView
@@ -45,6 +48,12 @@ class SelectBoardForSearchController(
 
     clickableArea = view.findViewById(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }
+
+    val boardSearch = view.findViewById<SearchLayout>(R.id.board_search)
+    boardSearch.setCallback { query ->
+      searchQuery = query
+      renderArchiveSiteBoardsSupportingSearch()
+    }
 
     recyclerView.layoutManager = GridLayoutManager(context, SPAN_COUNT).apply {
       spanSizeLookup = controller.spanSizeLookup
@@ -70,10 +79,9 @@ class SelectBoardForSearchController(
       boardsSupportingSearch += SearchBoard.AllBoards
     }
 
-    boardsSupportingSearch.addAll(searchBoardProvider())
+    boardsSupportingSearch.addAll(applySearchQueryAndSortBoards())
 
     if (boardsSupportingSearch.isEmpty()) {
-      pop()
       return
     }
 
@@ -95,6 +103,27 @@ class SelectBoardForSearchController(
         }
       }
     }
+  }
+
+  private fun applySearchQueryAndSortBoards(): List<SearchBoard> {
+    val boards = searchBoardProvider().filter { searchBoard ->
+      if (searchQuery.isEmpty()) {
+        return@filter true
+      }
+
+      return@filter searchBoard.boardCode()
+        .contains(searchQuery, ignoreCase = true)
+    }
+
+    if (searchQuery.isNotEmpty()) {
+      return InputWithQuerySorter.sort(
+        input = boards,
+        query = searchQuery,
+        textSelector = { searchBoard -> searchBoard.boardCode() }
+      )
+    }
+
+    return boards
   }
 
   private fun getBoardItemBackgroundColor(searchBoard: SearchBoard, backColor: Int): Int {

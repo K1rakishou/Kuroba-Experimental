@@ -8,24 +8,32 @@
     android:clickable="true"
     android:focusable="true">
 
-    <FrameLayout
+    <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
+        android:id="@+id/board_list_container"
         android:layout_width="320dp"
         android:layout_height="wrap_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
+        app:layout_constraintTop_toTopOf="parent"
+        android:layout_marginStart="24dp"
+        android:layout_marginTop="16dp"
+        android:layout_marginEnd="24dp"
+        android:layout_marginBottom="16dp"
+        android:orientation="vertical">
+
+        <com.github.k1rakishou.chan.ui.layout.SearchLayout
+            android:id="@+id/board_search"
+            android:padding="4dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
             android:id="@+id/recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:layout_marginStart="24dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginEnd="24dp"
-            android:layout_marginBottom="16dp"
             android:scrollbars="vertical" />
 
-    </FrameLayout>
+    </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

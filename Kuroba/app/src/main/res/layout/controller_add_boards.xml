@@ -10,6 +10,7 @@
     android:focusable="true">
 
     <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
+        android:id="@+id/resizable_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
