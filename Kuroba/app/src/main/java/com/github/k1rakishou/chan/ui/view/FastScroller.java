@@ -16,6 +16,8 @@
 
 package com.github.k1rakishou.chan.ui.view;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ValueAnimator;
@@ -25,6 +27,7 @@ import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.StateListDrawable;
 import android.view.MotionEvent;
+import android.view.View;
 
 import androidx.annotation.IntDef;
 import androidx.annotation.NonNull;
@@ -50,15 +53,15 @@ import java.lang.annotation.RetentionPolicy;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-
 /**
  * Class responsible to animate and provide a fast scroller.
  * <p>
  * Clover changed: the original FastScroller didn't account for the recyclerview top padding we
  * require. A minimum thumb length parameter was also added.
  */
-public class FastScroller extends ItemDecoration implements OnItemTouchListener, ThemeEngine.ThemeChangesListener {
+public class FastScroller
+        extends ItemDecoration
+        implements OnItemTouchListener, ThemeEngine.ThemeChangesListener, View.OnLayoutChangeListener {
     @IntDef({STATE_HIDDEN, STATE_VISIBLE, STATE_DRAGGING})
     @Retention(RetentionPolicy.SOURCE)
     private @interface State {}
@@ -88,8 +91,8 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private static final int ANIMATION_STATE_FADING_OUT = 3;
 
     private static final int SHOW_DURATION_MS = 300;
-    private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
-    private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
+    private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 5500;
+    private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 5200;
     private static final int HIDE_DURATION_MS = 300;
     private static final int SCROLLBAR_THUMB_ALPHA = 150;
     private static final int SCROLLBAR_REAL_THUMB_ALPHA = 200;
@@ -254,6 +257,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.addItemDecoration(this);
         mRecyclerView.addOnItemTouchListener(this);
         mRecyclerView.addOnScrollListener(mOnScrollListener);
+        mRecyclerView.addOnLayoutChangeListener(this);
     }
 
     public void onCleanup() {
@@ -267,6 +271,7 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
         mRecyclerView.removeItemDecoration(this);
         mRecyclerView.removeOnItemTouchListener(this);
         mRecyclerView.removeOnScrollListener(mOnScrollListener);
+        mRecyclerView.removeOnLayoutChangeListener(this);
         cancelHide();
 
         if (postInfoMapItemDecoration != null) {
@@ -391,6 +396,21 @@ public class FastScroller extends ItemDecoration implements OnItemTouchListener,
     private void resetHideDelay(int delay) {
         cancelHide();
         mRecyclerView.postDelayed(mHideRunnable, delay);
+    }
+
+    @Override
+    public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
+        if (mRecyclerView == null) {
+            return;
+        }
+
+        mRecyclerViewWidth = getRecyclerViewWidth();
+        mRecyclerViewHeight = getRecyclerViewHeight();
+        mRecyclerViewLeftPadding = mRecyclerView.getPaddingLeft();
+        mRecyclerViewTopPadding = mRecyclerView.getPaddingTop();
+
+        updateScrollPosition(mRecyclerView.computeVerticalScrollOffset());
+        requestRedraw();
     }
 
     @Override
