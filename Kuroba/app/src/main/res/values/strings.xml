@@ -86,6 +86,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="cancel">Cancel</string>
     <string name="cancel_all">Cancel all</string>
     <string name="canceled">Canceled</string>
+    <string name="timeout">Timeout</string>
     <string name="add">Add</string>
     <string name="close">Close</string>
     <string name="back">Back</string>
@@ -495,7 +496,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_error_message">Error posting: %s</string>
     <string name="reply_error_message_timer_reply">Error posting: You must wait %d seconds before posting a reply.</string>
     <string name="reply_error_message_timer_thread">Error posting: You must wait %d seconds before posting a thread.</string>
-    <string name="reply_error_failed_to_process_dvach_anti_spam_locally">Failed to process dvach anti-spam locally.</string>
+    <string name="reply_error_failed_to_process_dvach_anti_spam_locally">Failed to process dvach anti-spam, reason: %1$s.</string>
     <string name="reply_captcha_text">Type the text</string>
     <string name="reply_comment_button_quote" translatable="false">&gt;</string>
     <string name="reply_comment_button_spoiler">Spoiler</string>
@@ -1348,6 +1349,11 @@ Don't have a 4chan Pass?<br>
 
     <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
     <string name="thread_downloader_settings_controller_location_info">Thread media is stored on the internal storage.\n\nDirectory: %1$s</string>
+
+    <string name="dvach_antispam_result_canceled">Dvach anti-spam result: Canceled</string>
+    <string name="dvach_antispam_result_timeout">Dvach anti-spam result: Timeout</string>
+    <string name="dvach_antispam_result_error">Dvach anti-spam result: Error %1$s</string>
+    <string name="dvach_antispam_result_success">Dvach anti-spam result: Success</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>

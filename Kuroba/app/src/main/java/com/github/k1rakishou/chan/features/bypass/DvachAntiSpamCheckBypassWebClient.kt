@@ -15,7 +15,7 @@ class DvachAntiSpamCheckBypassWebClient(
   override fun onPageFinished(view: WebView?, url: String?) {
     super.onPageFinished(view, url)
 
-    val cookies = cookieManager.getCookie(originalRequestUrlHost)
+    val cookies = cookieManager.getCookie("2ch.hk")
       ?.split(';')
 
     if (cookies != null) {

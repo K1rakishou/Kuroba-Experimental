@@ -645,11 +645,11 @@ class ReplyLayout @JvmOverloads constructor(
     threadListLayoutCallbacks?.presentController(controller)
   }
 
-  override suspend fun show2chAntiSpamCheckSolverController(): Boolean {
+  override suspend fun show2chAntiSpamCheckSolverController(): CookieResult {
     BackgroundUtils.ensureMainThread()
 
     val callbacks = threadListLayoutCallbacks
-      ?: return false
+      ?: return CookieResult.Canceled
 
     return suspendCancellableCoroutine { continuation ->
       val controller = SiteAntiSpamCheckBypassController(
@@ -657,7 +657,7 @@ class ReplyLayout @JvmOverloads constructor(
         bypassMode = BypassMode.Bypass2chAntiSpamCheck,
         urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
       ) { cookieResult ->
-        continuation.resume(cookieResult is CookieResult.CookieValue)
+        continuation.resume(cookieResult)
       }
 
       callbacks.presentController(controller)

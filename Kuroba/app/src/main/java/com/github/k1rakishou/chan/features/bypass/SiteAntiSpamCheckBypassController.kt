@@ -106,15 +106,16 @@ class SiteAntiSpamCheckBypassController(
     webViewDatabase.clearHttpAuthUsernamePassword()
     WebStorage.getInstance().deleteAllData()
 
-    cookieManager.setAcceptCookie(true)
     cookieManager.removeAllCookie()
+    cookieManager.setAcceptCookie(true)
+    cookieManager.setAcceptThirdPartyCookies(webView, true)
 
     val webSettings: WebSettings = webView.settings
     webSettings.javaScriptEnabled = true
     webSettings.useWideViewPort = true
     webSettings.loadWithOverviewMode = true
     webSettings.userAgentString = appConstants.userAgent
-    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+    webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
     webSettings.domStorageEnabled = true
     webSettings.databaseEnabled = true
 

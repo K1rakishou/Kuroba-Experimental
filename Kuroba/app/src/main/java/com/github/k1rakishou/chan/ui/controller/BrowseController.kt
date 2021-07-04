@@ -337,7 +337,7 @@ class BrowseController(
         SORT_MODE_NEWEST,
         R.string.order_newest,
         true,
-        currentOrder == PostsFilter.Order.IMAGE,
+        currentOrder == PostsFilter.Order.NEWEST,
         PostsFilter.Order.NEWEST,
         { subItem -> onSortItemClicked(subItem) }
       )
