@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -42,7 +43,7 @@ open class ColorizableEditText @JvmOverloads constructor(
       return
     }
 
-    highlightColor = themeEngine.chanTheme.accentColor
+    highlightColor = ColorUtils.setAlphaComponent(themeEngine.chanTheme.accentColor, 0x66)
     setLinkTextColor(themeEngine.chanTheme.postLinkColor)
 
     setEditTextCursorColor(themeEngine.chanTheme)
