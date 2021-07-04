@@ -65,6 +65,7 @@ private fun BuildInnerImage(
 
   val imageLoaderResult by produceState<ImageLoaderResult>(
     initialValue = ImageLoaderResult.NotInitialized,
+    key1 = request,
     producer = {
       loadImage(context, request, size, imageLoaderV2)
     })
