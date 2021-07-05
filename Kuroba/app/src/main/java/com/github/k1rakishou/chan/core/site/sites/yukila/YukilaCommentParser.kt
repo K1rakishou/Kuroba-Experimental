@@ -2,12 +2,9 @@ package com.github.k1rakishou.chan.core.site.sites.yukila
 
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import java.util.regex.Pattern
 
-class YukilaCommentParser(
-  mockReplyManager: MockReplyManager
-) : CommentParser(mockReplyManager), ICommentParser {
+class YukilaCommentParser : CommentParser(), ICommentParser {
 
   init {
     addDefaultRules()

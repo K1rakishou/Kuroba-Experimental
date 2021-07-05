@@ -382,7 +382,7 @@ class Dvach : CommonSite() {
     })
     setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
     setApi(DvachApiV2(moshi, siteManager, boardManager, this))
-    setParser(DvachCommentParser(mockReplyManager))
+    setParser(DvachCommentParser())
 
     setPostingLimitationInfo(
       SitePostingLimitationInfo(

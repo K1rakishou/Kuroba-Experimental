@@ -144,7 +144,7 @@ class Kun8 : CommonSite() {
     })
 
     setApi(VichanApi(siteManager, boardManager, this))
-    setParser(VichanCommentParser(mockReplyManager))
+    setParser(VichanCommentParser())
   }
 
   override fun commentParserType(): CommentParserType {

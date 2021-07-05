@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
@@ -63,13 +62,9 @@ public class RepositoryModule {
     @Provides
     @Singleton
     public ParserRepository provideParserRepository(
-            MockReplyManager mockReplyManager,
             ArchivesManager archivesManager
     ) {
-        return new ParserRepository(
-                mockReplyManager,
-                archivesManager
-        );
+        return new ParserRepository(archivesManager);
     }
 
     @Provides

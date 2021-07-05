@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
@@ -41,7 +40,6 @@ import kotlin.math.max
 class FutabaChanReader(
   private val archivesManager: ArchivesManager,
   private val postFilterManager: PostFilterManager,
-  private val mockReplyManager: MockReplyManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
 ) : ChanReader() {
@@ -51,7 +49,7 @@ class FutabaChanReader(
   override suspend fun getParser(): PostParser {
     return mutex.withLock {
       if (parser == null) {
-        val commentParser = CommentParser(mockReplyManager)
+        val commentParser = CommentParser()
           .addDefaultRules()
 
         val defaultPostParser = DefaultPostParser(

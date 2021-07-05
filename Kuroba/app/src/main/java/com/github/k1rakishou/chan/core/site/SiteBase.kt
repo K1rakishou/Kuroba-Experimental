@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -81,8 +80,6 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var boardManager: BoardManager
   @Inject
   protected lateinit var postFilterManager: PostFilterManager
-  @Inject
-  protected lateinit var mockReplyManager: MockReplyManager
   @Inject
   protected lateinit var replyManager: ReplyManager
   @Inject

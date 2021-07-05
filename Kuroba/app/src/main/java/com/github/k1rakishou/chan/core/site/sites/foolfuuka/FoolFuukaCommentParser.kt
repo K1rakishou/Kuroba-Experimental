@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.data.ArchiveType
 import com.github.k1rakishou.core_logger.Logger
@@ -13,9 +12,8 @@ import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
-  mockReplyManager: MockReplyManager,
   private val archivesManager: ArchivesManager
-) : CommentParser(mockReplyManager), ICommentParser {
+) : CommentParser(), ICommentParser {
 
   init {
     addDefaultRules()

@@ -41,7 +41,6 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -101,7 +100,6 @@ class ThreadPresenter @Inject constructor(
   private val postHideManager: PostHideManager,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
-  private val mockReplyManager: MockReplyManager,
   private val archivesManager: ArchivesManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
@@ -1119,13 +1117,6 @@ class ThreadPresenter @Inject constructor(
         )
       )
     }
-
-    if (isDevBuild()) {
-      val threadNo = chanDescriptor.threadNoOrNull() ?: -1L
-      if (threadNo > 0) {
-        menu.add(createMenuItem(POST_OPTION_MOCK_REPLY, R.string.mock_reply))
-      }
-    }
   }
 
   private fun createMenuItem(
@@ -1257,17 +1248,6 @@ class ThreadPresenter @Inject constructor(
               threadNo = threadNo
             )
           }
-        }
-        POST_OPTION_MOCK_REPLY -> if (isBound && currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          val threadDescriptor = currentChanDescriptor!! as ChanDescriptor.ThreadDescriptor
-
-          mockReplyManager.addMockReply(
-            post.postDescriptor.boardDescriptor().siteName(),
-            threadDescriptor.boardCode(),
-            threadDescriptor.threadNo,
-            post.postNo()
-          )
-          showToast(context, "Refresh to add mock replies")
         }
       }
     }
@@ -2293,7 +2273,6 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_OPEN_IN_ARCHIVE = 14
     private const val POST_OPTION_PREVIEW_IN_ARCHIVE = 16
     private const val POST_OPTION_REMOVE = 17
-    private const val POST_OPTION_MOCK_REPLY = 18
     private const val POST_OPTION_APPLY_THEME = 19
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 

@@ -23,7 +23,6 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -61,7 +60,6 @@ import java.util.concurrent.TimeUnit
 
 class ThemeControllerHelper(
   private val themeEngine: ThemeEngine,
-  private val mockReplyManager: MockReplyManager,
   private val postFilterManager: PostFilterManager,
   private val archivesManager: ArchivesManager
 ) {
@@ -125,7 +123,7 @@ class ThemeControllerHelper(
     options: Options,
     postCellDataWidthNoPaddings: Int
   ): CoordinatorLayout {
-    val parser = CommentParser(mockReplyManager)
+    val parser = CommentParser()
       .addDefaultRules()
 
     val postParser = DefaultPostParser(parser, postFilterManager, archivesManager)

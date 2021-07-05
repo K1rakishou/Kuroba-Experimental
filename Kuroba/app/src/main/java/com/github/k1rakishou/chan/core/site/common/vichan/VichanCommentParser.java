@@ -20,7 +20,6 @@ import androidx.annotation.NonNull;
 
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser;
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 
@@ -30,8 +29,7 @@ public class VichanCommentParser extends CommentParser implements ICommentParser
     private static final Pattern QUOTE_PATTERN = Pattern.compile("#(\\d+)");
     private static final Pattern FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)\\.html#(\\d+)");
 
-    public VichanCommentParser(MockReplyManager mockReplyManager) {
-        super(mockReplyManager);
+    public VichanCommentParser() {
         addDefaultRules();
 
         rule(StyleRule.tagRule("p")

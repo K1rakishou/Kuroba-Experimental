@@ -43,7 +43,7 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
     setEndpoints(wakarimasenEndpoints)
     setActions(FoolFuukaActions(this))
     setApi(FoolFuukaApi(this))
-    setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
+    setParser(FoolFuukaCommentParser(archivesManager))
   }
 
   companion object {

@@ -34,9 +34,7 @@ class ReplyParserTest {
 
     siteManager = Mockito.mock(SiteManager::class.java)
     archivesManager = Mockito.mock(ArchivesManager::class.java)
-
-    val mockReplyManager = Mockito.mock(MockReplyManager::class.java)
-    parserRepository = ParserRepository(mockReplyManager, archivesManager)
+    parserRepository = ParserRepository(archivesManager)
 
     replyParser = ReplyParser(siteManager, parserRepository)
   }

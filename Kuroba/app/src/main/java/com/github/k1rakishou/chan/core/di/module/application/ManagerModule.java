@@ -72,7 +72,6 @@ import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteRegistry;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
@@ -195,12 +194,6 @@ public class ManagerModule {
                 appConstants,
                 ChanSettings.verboseLogs.get()
         );
-    }
-
-    @Provides
-    @Singleton
-    public MockReplyManager provideMockReplyManager() {
-        return new MockReplyManager();
     }
 
     @Provides

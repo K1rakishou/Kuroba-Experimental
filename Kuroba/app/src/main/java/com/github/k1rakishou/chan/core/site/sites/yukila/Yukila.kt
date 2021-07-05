@@ -28,7 +28,7 @@ class Yukila : CommonSite() {
     setEndpoints(YukilaEndpoints(this, ROOT_URL))
     setActions(YukilaActions(this))
     setApi(YukilaApi(this))
-    setParser(YukilaCommentParser(mockReplyManager))
+    setParser(YukilaCommentParser())
   }
 
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported

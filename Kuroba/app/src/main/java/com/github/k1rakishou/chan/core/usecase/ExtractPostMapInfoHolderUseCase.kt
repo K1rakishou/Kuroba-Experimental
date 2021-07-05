@@ -150,6 +150,12 @@ data class PostMapInfoHolder(
   val crossThreadQuotePositionRanges: List<IntRange> = emptyList()
 ) {
 
+  fun isEmpty(): Boolean {
+    return myPostsPositionRanges.isEmpty()
+      && replyPositionRanges.isEmpty()
+      && crossThreadQuotePositionRanges.isEmpty()
+  }
+
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
     if (!rangesTheSame(myPostsPositionRanges, otherPostMapInfoHolder.myPostsPositionRanges)) {
       return false

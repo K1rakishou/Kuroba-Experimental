@@ -435,7 +435,10 @@ public class FastScroller
                 postInfoMapItemDecoration.onDrawOver(canvas, mRecyclerView);
             }
 
-            drawVerticalScrollbar(canvas);
+            boolean drawInnerThumb = postInfoMapItemDecoration != null
+                    && !postInfoMapItemDecoration.isEmpty();
+
+            drawVerticalScrollbar(canvas, drawInnerThumb);
         }
     }
 
@@ -447,7 +450,7 @@ public class FastScroller
         return mRecyclerView.getHeight() - mRecyclerView.getPaddingTop() - mRecyclerView.getPaddingBottom();
     }
 
-    private void drawVerticalScrollbar(Canvas canvas) {
+    private void drawVerticalScrollbar(Canvas canvas, boolean drawInnerThumb) {
         int left = mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mVerticalThumbWidth;
         int top = mVerticalThumbCenterY - verticalThumbHeight / 2;
 
@@ -490,7 +493,7 @@ public class FastScroller
             canvas.translate(-left, -top);
         }
 
-        if ((realVerticalThumbHeight * 4) < verticalThumbHeight) {
+        if (drawInnerThumb && (realVerticalThumbHeight * 4) < verticalThumbHeight) {
             // Draw the real thumb (with the real height). This one is useful in huge thread to see
             // where exactly a marked post is relative to it.
             int realTop = mVerticalThumbCenterY - (realVerticalThumbHeight / 2);

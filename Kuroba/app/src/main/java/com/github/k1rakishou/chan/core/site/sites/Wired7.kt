@@ -89,7 +89,7 @@ class Wired7 : CommonSite() {
     setEndpoints(VichanEndpoints(this, "https://wired-7.org", "https://wired-7.org"))
     setActions(Wired7Actions(this, proxiedOkHttpClient, siteManager, replyManager))
     setApi(VichanApi(siteManager, boardManager, this))
-    setParser(VichanCommentParser(mockReplyManager))
+    setParser(VichanCommentParser())
   }
 
   private class Wired7Actions constructor(

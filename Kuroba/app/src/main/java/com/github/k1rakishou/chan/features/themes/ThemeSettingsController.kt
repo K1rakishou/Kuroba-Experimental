@@ -35,7 +35,6 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -68,8 +67,6 @@ class ThemeSettingsController(context: Context) : Controller(context),
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
-  lateinit var mockReplyManager: MockReplyManager
-  @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var fileManager: FileManager
@@ -86,7 +83,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
   private var currentItemIndex = 0
 
   private val themeControllerHelper by lazy {
-    ThemeControllerHelper(themeEngine, mockReplyManager, postFilterManager, archivesManager)
+    ThemeControllerHelper(themeEngine, postFilterManager, archivesManager)
   }
 
   override fun injectDependencies(component: ActivityComponent) {

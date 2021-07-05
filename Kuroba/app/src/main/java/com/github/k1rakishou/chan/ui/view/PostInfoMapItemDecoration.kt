@@ -39,6 +39,8 @@ class PostInfoMapItemDecoration(
 
   private var postsTotal = 0
 
+  fun isEmpty(): Boolean = postInfoHolder.isEmpty()
+
   fun setItems(
     newPostMapInfoHolder: PostMapInfoHolder,
     newPostsTotal: Int

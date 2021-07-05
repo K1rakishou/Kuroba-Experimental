@@ -37,7 +37,7 @@ class Warosu : BaseFuukaSite() {
     setEndpoints(FuukaEndpoints(this, rootUrl()))
     setActions(FuukaActions(this))
     setApi(FuukaApi(this))
-    setParser(FuukaCommentParser(mockReplyManager))
+    setParser(FuukaCommentParser())
   }
 
   companion object {

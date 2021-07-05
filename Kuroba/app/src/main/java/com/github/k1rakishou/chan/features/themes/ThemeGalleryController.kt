@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -41,12 +40,10 @@ class ThemeGalleryController(
   @Inject
   lateinit var postFilterManager: PostFilterManager
   @Inject
-  lateinit var mockReplyManager: MockReplyManager
-  @Inject
   lateinit var archivesManager: ArchivesManager
 
   private val themeControllerHelper by lazy {
-    ThemeControllerHelper(themeEngine, mockReplyManager, postFilterManager, archivesManager)
+    ThemeControllerHelper(themeEngine, postFilterManager, archivesManager)
   }
 
   private lateinit var themesList: RecyclerView

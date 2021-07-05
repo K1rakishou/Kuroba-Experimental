@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
-import com.github.k1rakishou.chan.core.site.parser.MockReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.common.CommentParserConstants
@@ -14,9 +13,7 @@ import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
-class DvachCommentParser(
-  mockReplyManager: MockReplyManager
-) : VichanCommentParser(mockReplyManager), ICommentParser {
+class DvachCommentParser : VichanCommentParser(), ICommentParser {
 
   override fun addDefaultRules(): DvachCommentParser {
     super.addDefaultRules()

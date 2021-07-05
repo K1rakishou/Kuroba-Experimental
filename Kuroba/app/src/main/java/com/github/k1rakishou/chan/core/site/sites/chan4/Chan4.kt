@@ -488,7 +488,6 @@ open class Chan4 : SiteBase() {
     return FutabaChanReader(
       archivesManager,
       postFilterManager,
-      mockReplyManager,
       siteManager,
       boardManager
     )

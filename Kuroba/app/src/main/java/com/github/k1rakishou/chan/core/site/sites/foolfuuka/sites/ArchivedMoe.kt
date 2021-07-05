@@ -29,7 +29,7 @@ class ArchivedMoe : BaseFoolFuukaSite() {
     setEndpoints(FoolFuukaEndpoints(this, rootUrl()))
     setActions(FoolFuukaActions(this))
     setApi(FoolFuukaApi(this))
-    setParser(FoolFuukaCommentParser(mockReplyManager, archivesManager))
+    setParser(FoolFuukaCommentParser(archivesManager))
   }
 
   companion object {

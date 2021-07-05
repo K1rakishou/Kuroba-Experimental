@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site.parser;
 
+import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
+
 import android.graphics.Typeface;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -31,13 +34,11 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.common.CommentParserConstants;
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
 import org.jsoup.nodes.Element;
@@ -52,14 +53,10 @@ import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
-
 @AnyThread
 public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
 
-    private final MockReplyManager mockReplyManager;
     private final Map<String, List<StyleRule>> rules = new HashMap<>();
 
     private final String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
@@ -71,9 +68,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private final Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
     private final Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
 
-    public CommentParser(MockReplyManager mockReplyManager) {
-        this.mockReplyManager = mockReplyManager;
-
+    public CommentParser() {
         // Required tags.
         rule(tagRule("p"));
         rule(tagRule("div"));
@@ -234,19 +229,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         PostLinkable.Link handlerLink = matchAnchor(post, text, anchor, callback);
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
-        BoardDescriptor boardDescriptor = post.boardDescriptor;
-        if (boardDescriptor != null) {
-            long mockReplyPostNo = mockReplyManager.getLastMockReply(
-                    post.boardDescriptor.siteName(),
-                    post.boardDescriptor.getBoardCode(),
-                    post.getOpId()
-            );
-
-            if (mockReplyPostNo >= 0) {
-                addMockReply(post, spannableStringBuilder, mockReplyPostNo);
-            }
-        }
-
         if (handlerLink != null) {
             addReply(callback, post, handlerLink, spannableStringBuilder);
         }
@@ -375,35 +357,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         return false;
-    }
-
-    private void addMockReply(
-            ChanPostBuilder post,
-            SpannableStringBuilder spannableStringBuilder,
-            long mockReplyPostNo
-    ) {
-        Logger.d(TAG, "Adding a new mock reply (replyTo: " + mockReplyPostNo + ", replyFrom: " + post.id + ")");
-        post.addReplyTo(mockReplyPostNo);
-
-        CharSequence replyText = ">>" + mockReplyPostNo + " (MOCK)";
-        SpannableString res = new SpannableString(replyText);
-
-        PostLinkable pl = new PostLinkable(
-                replyText,
-                new PostLinkable.Value.LongValue(mockReplyPostNo),
-                PostLinkable.Type.QUOTE
-        );
-
-        res.setSpan(
-                pl,
-                0,
-                res.length(),
-                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
-        );
-
-        post.addLinkable(pl);
-
-        spannableStringBuilder.append(res).append('\n');
     }
 
     private CharSequence handleFortune(

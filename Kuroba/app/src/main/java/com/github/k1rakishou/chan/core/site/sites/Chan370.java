@@ -119,7 +119,7 @@ public class Chan370
         setEndpoints(new VichanEndpoints(this, "https://370chan.info/", "https://370chan.info/"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
-        setParser(new VichanCommentParser(getMockReplyManager()));
+        setParser(new VichanCommentParser());
     }
 
     @NotNull
