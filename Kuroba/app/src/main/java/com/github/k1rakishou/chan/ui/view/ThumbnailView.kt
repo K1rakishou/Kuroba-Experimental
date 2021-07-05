@@ -215,8 +215,6 @@ open class ThumbnailView : AppCompatImageView {
       drawable?.alpha = alpha
     }
 
-    backgroundPaint.alpha = alpha
-
     invalidate()
     return true
   }
@@ -265,12 +263,12 @@ open class ThumbnailView : AppCompatImageView {
   }
 
   override fun onDraw(canvas: Canvas) {
-    if (alpha == 0f) {
-      return
+    if (_thumbnailViewOptions?.drawBlackBackground == true) {
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
     }
 
-    if (drawable != null && _thumbnailViewOptions?.drawBlackBackground == true) {
-      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
+    if (alpha == 0f) {
+      return
     }
 
     val width = width - paddingLeft - paddingRight

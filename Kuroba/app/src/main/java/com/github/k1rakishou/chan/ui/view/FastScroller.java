@@ -91,8 +91,8 @@ public class FastScroller
     private static final int ANIMATION_STATE_FADING_OUT = 3;
 
     private static final int SHOW_DURATION_MS = 300;
-    private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 5500;
-    private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 5200;
+    private static final int HIDE_DELAY_AFTER_VISIBLE_MS = 1500;
+    private static final int HIDE_DELAY_AFTER_DRAGGING_MS = 1200;
     private static final int HIDE_DURATION_MS = 300;
     private static final int SCROLLBAR_THUMB_ALPHA = 150;
     private static final int SCROLLBAR_REAL_THUMB_ALPHA = 200;
