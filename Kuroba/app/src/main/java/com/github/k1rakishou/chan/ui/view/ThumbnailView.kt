@@ -286,7 +286,7 @@ open class ThumbnailView : AppCompatImageView {
 
     super.onDraw(canvas)
 
-    if (imageForeground != null) {
+    if (_thumbnailViewOptions?.drawRipple == true && imageForeground != null) {
       if (foregroundCalculate) {
         foregroundCalculate = false
         imageForeground!!.setBounds(0, 0, right, bottom)
@@ -441,7 +441,8 @@ open class ThumbnailView : AppCompatImageView {
 
   class ThumbnailViewOptions(
     val postThumbnailScaling: ChanSettings.PostThumbnailScaling = ChanSettings.postThumbnailScaling.get(),
-    val drawBlackBackground: Boolean = ChanSettings.drawPostThumbnailBackground.get()
+    val drawBlackBackground: Boolean = ChanSettings.drawPostThumbnailBackground.get(),
+    val drawRipple: Boolean = true
   )
 
   companion object {

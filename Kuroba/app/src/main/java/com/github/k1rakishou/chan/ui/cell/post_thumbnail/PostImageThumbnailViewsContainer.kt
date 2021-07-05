@@ -208,7 +208,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
-      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
+      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
       thumbnailView.bindPostInfo(postCellData, postImage, postAlignment)
 
       if (postCellData.isSelectionMode) {

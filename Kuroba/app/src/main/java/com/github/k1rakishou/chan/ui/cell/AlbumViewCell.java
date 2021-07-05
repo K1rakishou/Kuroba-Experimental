@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.cell;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -33,9 +36,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
 
 public class AlbumViewCell extends FrameLayout {
     private static final float MAX_RATIO = 2f;
@@ -87,7 +87,7 @@ public class AlbumViewCell extends FrameLayout {
         thumbnailView.bindPostImage(
                 postImage,
                 canUseHighResCells,
-                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false)
+                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false, true)
         );
 
         if (showDetails) {

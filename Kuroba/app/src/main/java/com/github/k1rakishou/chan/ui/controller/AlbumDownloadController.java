@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -61,10 +65,6 @@ import java.util.List;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class AlbumDownloadController
         extends Controller
@@ -335,7 +335,7 @@ public class AlbumDownloadController
             holder.thumbnailView.bindPostImage(
                     item.postImage,
                     ColorizableGridRecyclerView.canUseHighResCells(recyclerView.getCurrentSpanCount()),
-                    new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false)
+                    new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false, true)
             );
 
             setItemChecked(holder, item.checked, false);
