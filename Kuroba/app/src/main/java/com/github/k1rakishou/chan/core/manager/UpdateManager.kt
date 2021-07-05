@@ -261,45 +261,56 @@ class UpdateManager(
   ): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    val canUpdate = responseRelease.versionCode > BuildConfig.VERSION_CODE
-            || getFlavorType() == FlavorType.Beta
+    if (!BackgroundUtils.isInForeground()) {
+      Logger.d(TAG, "processUpdateApiResponse() not in foreground")
+      return false
+    }
 
-    if (canUpdate && BackgroundUtils.isInForeground()) {
-      // Do not spam dialogs if this is not the manual update check, use the notifications
-      // instead
-      if (manual) {
-        val concat = responseRelease.updateTitle.isNotEmpty()
+    val actuallyHasUpdate = responseRelease.versionCode > BuildConfig.VERSION_CODE
 
-        val updateMessage = if (concat) {
-          TextUtils.concat(responseRelease.updateTitle, "; ", responseRelease.body)
-        } else {
-          responseRelease.body!!
-        }
+    Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}, manual=${manual}, " +
+      "actuallyHasUpdate=$actuallyHasUpdate, releaseVersionCode=${responseRelease.versionCode}, " +
+      "appVersionCode=${BuildConfig.VERSION_CODE}")
 
-        val dialogTitle = getApplicationLabel().toString() + " " +
-          responseRelease.versionCodeString + " available"
+    if (!actuallyHasUpdate) {
+      cancelApkUpdateNotification()
+      return false
+    }
 
-        dialogFactory.createSimpleConfirmationDialog(
-          context = context,
-          titleText = dialogTitle,
-          descriptionText = updateMessage,
-          negativeButtonText = getString(R.string.update_later),
-          positiveButtonText = getString(R.string.update_install),
-          onPositiveButtonClickListener = { updateInstallRequested(responseRelease) }
-        )
+    // Do not spam dialogs if this is not the manual update check, use the notifications
+    // instead
+    if (manual) {
+      val concat = responseRelease.updateTitle.isNotEmpty()
+
+      val updateMessage = if (concat) {
+        TextUtils.concat(responseRelease.updateTitle, "; ", responseRelease.body)
+      } else {
+        responseRelease.body!!
       }
 
+      val dialogTitle = getApplicationLabel().toString() + " " +
+        responseRelease.versionCodeString + " available"
+
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleText = dialogTitle,
+        descriptionText = updateMessage,
+        negativeButtonText = getString(R.string.update_later),
+        positiveButtonText = getString(R.string.update_install),
+        onPositiveButtonClickListener = { updateInstallRequested(responseRelease) }
+      )
+    }
+
+    if (actuallyHasUpdate) {
       // There is an update, show the notification.
       //
       // (In case of the dev build we check whether the apk hashes differ or not beforehand,
       // so if they are the same this method won't even get called. In case of the release
       // build this method will be called in both cases so we do the check in this method)
       notifyNewApkUpdate()
-      return true
     }
 
-    cancelApkUpdateNotification()
-    return false
+    return true
   }
 
   private fun onDevAlreadyUpdated() {
