@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
@@ -385,22 +386,13 @@ data class PostCellData(
 
   private fun calculateCatalogRepliesText(): String {
     if (compact) {
-      var status = AppModuleAndroidUtils.getString(
-        R.string.card_stats,
-        catalogRepliesCount,
-        catalogImagesCount
-      )
-
-      if (!neverShowPages) {
-        val boardPage = postCellCallback?.getPage(postDescriptor)
-        if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {
-          status += " Pg " + boardPage.currentPage
-        }
-      }
-
-      return status
+      return calculateCatalogRepliesTextCompact()
+    } else {
+      return calculateCatalogRepliesTextNormal()
     }
+  }
 
+  private fun calculateCatalogRepliesTextNormal(): String {
     val replyCount = if (threadMode) {
       repliesFromCount
     } else {
@@ -440,6 +432,33 @@ data class PostCellData(
     }
 
     return catalogRepliesTextBuilder.toString()
+  }
+
+  private fun calculateCatalogRepliesTextCompact(): String {
+    return buildString {
+      if (catalogRepliesCount > 0) {
+        append(getString(R.string.card_stats_replies_compact, catalogRepliesCount))
+      }
+
+      if (catalogImagesCount > 0) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append(getString(R.string.card_stats_images_compact, catalogImagesCount))
+      }
+
+      if (!neverShowPages) {
+        val boardPage = postCellCallback?.getPage(postDescriptor)
+        if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {
+          if (isNotEmpty()) {
+            append(", ")
+          }
+
+          append(getString(R.string.card_stats_page_compact, boardPage.currentPage))
+        }
+      }
+    }
   }
 
   private fun calculatePostFileInfoHash(

@@ -56,6 +56,7 @@ import java.nio.charset.StandardCharsets
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
+import javax.net.ssl.SSLException
 import kotlin.collections.ArrayList
 import kotlin.collections.HashMap
 import kotlin.collections.LinkedHashMap
@@ -530,6 +531,7 @@ fun Throwable.isExceptionImportant(): Boolean {
   return when (this) {
     is CancellationException -> false
     is InterruptedIOException -> false
+    is SSLException -> false
     else -> true
   }
 }

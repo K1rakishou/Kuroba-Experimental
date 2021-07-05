@@ -90,8 +90,18 @@ internal class GlobalSearchPresenter(
     searchResultsStateStorage.resetSearchResultState()
   }
 
-  fun reloadWithSearchParameters(searchParameters: SearchParameters, sitesWithSearch: SitesWithSearch) {
+  fun reloadWithSearchParameters(searchParameters: SearchParameters?, sitesWithSearch: SitesWithSearch) {
     searchUpdateExecutor.post {
+      if (searchParameters == null) {
+        selectedSiteDescriptor = null
+
+        withView { updateResetSearchParametersFlag(true) }
+        searchResultsStateStorage.resetSearchInputState()
+
+        reloadSearchState(null)
+        return@post
+      }
+
       val dataState = GlobalSearchControllerStateData(
         sitesWithSearch,
         searchParameters
@@ -144,6 +154,12 @@ internal class GlobalSearchPresenter(
       return
     }
 
+    val searchParameters = getDefaultSearchParameters(selectedSiteDescriptor)
+    if (searchParameters == null) {
+      setState(GlobalSearchControllerState.Error("Failed to create search parameters for site: ${selectedSiteDescriptor}"))
+      return
+    }
+
     val siteIcon = site.icon()
     val searchType = site.siteGlobalSearchType()
 
@@ -152,15 +168,15 @@ internal class GlobalSearchPresenter(
         sitesSupportingSearch,
         SelectedSite(selectedSiteDescriptor, siteIcon, searchType)
       ),
-      searchParameters = getDefaultSearchParameters(selectedSiteDescriptor)
+      searchParameters = searchParameters
     )
 
     setState(GlobalSearchControllerState.Data(dataState))
   }
 
-  private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters {
+  private fun getDefaultSearchParameters(siteDescriptor: SiteDescriptor): SearchParameters? {
     val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
-    checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
+      ?: return null
 
     when (searchType) {
       SiteGlobalSearchType.SearchNotSupported -> {

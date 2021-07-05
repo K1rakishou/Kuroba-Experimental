@@ -9,27 +9,32 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT)
-class EpoxySearchButtonView @JvmOverloads constructor(
+class EpoxyButtonView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : FrameLayout(context, attrs, defStyleAttr) {
-  private val searchButton: ColorizableButton
+  private val button: ColorizableButton
 
   init {
-    inflate(context, R.layout.epoxy_search_button_view, this)
+    inflate(context, R.layout.epoxy_button_view, this)
 
-    searchButton = findViewById(R.id.search_button)
+    button = findViewById(R.id.epoxy_button)
+  }
+
+  @ModelProp
+  fun title(buttonTitle: String) {
+    button.text = buttonTitle
   }
 
   @ModelProp(options = [ModelProp.Option.NullOnRecycle, ModelProp.Option.IgnoreRequireHashCode])
   fun setOnButtonClickListener(listener: (() -> Unit)?) {
     if (listener == null) {
-      searchButton.setOnClickListener(null)
+      button.setOnClickListener(null)
       return
     }
 
-    searchButton.setOnClickListener { listener.invoke() }
+    button.setOnClickListener { listener.invoke() }
   }
 
 }

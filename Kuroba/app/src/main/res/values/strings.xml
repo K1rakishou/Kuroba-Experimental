@@ -159,7 +159,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="seconds">%d seconds</string>
     <string name="minutes">%d minutes</string>
     <string name="hours">%d hours</string>
-    <string name="card_stats">%1$dR %2$dI</string>
+    <string name="card_stats_replies_compact">%1$dR</string>
+    <string name="card_stats_images_compact">%1$dI</string>
+    <string name="card_stats_page_compact">Pg %1$d</string>
     <string name="action_reload">Reload</string>
     <string name="action_thread_download">Thread download</string>
     <string name="action_pin">Bookmark</string>

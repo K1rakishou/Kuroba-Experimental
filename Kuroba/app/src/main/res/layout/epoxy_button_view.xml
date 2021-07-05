@@ -2,7 +2,7 @@
 <merge xmlns:android="http://schemas.android.com/apk/res/android">
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-        android:id="@+id/search_button"
+        android:id="@+id/epoxy_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginStart="16dp"

@@ -20,7 +20,7 @@ import com.github.k1rakishou.chan.features.search.data.GlobalSearchControllerSta
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SitesWithSearch
 import com.github.k1rakishou.chan.features.search.epoxy.epoxyBoardSelectionButtonView
-import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchButtonView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxyButtonView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchInputView
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
@@ -221,9 +221,9 @@ class GlobalSearchController(
       query: String,
       subject: String,
       searchBoard: SearchBoard?,
-    ): SearchParameters.AdvancedSearchParameters {
+    ): SearchParameters.AdvancedSearchParameters? {
       val searchType = siteManager.bySiteDescriptor(siteDescriptor)?.siteGlobalSearchType()
-      checkNotNull(searchType) { "searchType is null! siteDescriptor=${siteDescriptor}" }
+        ?: return null
 
       when (searchType) {
         SiteGlobalSearchType.SearchNotSupported,
@@ -326,12 +326,18 @@ class GlobalSearchController(
       onUnbind { _, view -> removeViewFromInputViewRefSet(view) }
     }
 
-    return createFuukaOrFoolFuukaSearchParams(
+    val newSearchParameters = createFuukaOrFoolFuukaSearchParams(
       siteDescriptor = selectedSiteDescriptor,
       query = initialQuery,
       subject = initialSubjectQuery,
       searchBoard = selectedBoard
-    ).isValid()
+    )
+
+    if (newSearchParameters == null) {
+      return false
+    }
+
+    return newSearchParameters.isValid()
   }
 
   private fun EpoxyController.renderSimpleQuerySearch(
@@ -419,8 +425,9 @@ class GlobalSearchController(
     sitesWithSearch: SitesWithSearch,
     searchParameters: SearchParameters
   ) {
-    epoxySearchButtonView {
+    epoxyButtonView {
       id("global_search_button_view")
+      title(getString(R.string.search_hint))
       onButtonClickListener {
         presenter.onSearchButtonClicked(sitesWithSearch.selectedSite, searchParameters)
       }
