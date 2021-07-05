@@ -56,6 +56,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -68,7 +69,8 @@ import javax.inject.Inject
 
 class AlbumViewController(
   context: Context,
-  private val chanDescriptor: ChanDescriptor
+  private val chanDescriptor: ChanDescriptor,
+  private val displayingPostDescriptors: List<PostDescriptor>
 ) : Controller(context), RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
   private lateinit var recyclerView: ColorizableGridRecyclerView
 
@@ -301,15 +303,15 @@ class AlbumViewController(
 
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        val chanCatalog = chanThreadManager.getChanCatalog(chanDescriptor)
-        if (chanCatalog == null) {
-          return emptyList<ChanPostImage>() to imageIndexToScroll
-        }
+        val postImages = mutableListOf<ChanPostImage>()
 
-        val postImages = mutableListWithCap<ChanPostImage>(chanCatalog.postsCount())
+        displayingPostDescriptors.forEach { displayingPostDescriptor ->
+          val chanPost = chanThreadManager.getPost(displayingPostDescriptor)
+          if (chanPost == null) {
+            return@forEach
+          }
 
-        chanCatalog.iteratePostsOrdered { chanOriginalPost ->
-          chanOriginalPost.iteratePostImages { chanPostImage ->
+          chanPost.iteratePostImages { chanPostImage ->
             postImages += chanPostImage
 
             if (initialImageUrl != null && chanPostImage.imageUrl == initialImageUrl) {
@@ -428,6 +430,7 @@ class AlbumViewController(
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,
+          postDescriptorList = postImages.map { it.ownerPostDescriptor },
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),

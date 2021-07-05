@@ -23,9 +23,9 @@ import com.github.k1rakishou.chan.activity.SharingActivity
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
-import kotlin.coroutines.resume
 import kotlin.math.log10
 
 private val TAG = "KotlinExts"
@@ -93,13 +93,13 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
 
 suspend fun View.awaitUntilPreDraw() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    doOnPreDraw { cancellableContinuation.resume(Unit) }
+    doOnPreDraw { cancellableContinuation.resumeValueSafe(Unit) }
   }
 }
 
 suspend fun View.awaitUntilLaidOut() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    doOnLayout { cancellableContinuation.resume(Unit) }
+    doOnLayout { cancellableContinuation.resumeValueSafe(Unit) }
   }
 }
 

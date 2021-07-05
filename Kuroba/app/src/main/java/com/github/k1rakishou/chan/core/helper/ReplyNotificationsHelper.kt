@@ -37,6 +37,7 @@ import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReplyView
@@ -55,7 +56,6 @@ import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.resume
 
 class ReplyNotificationsHelper(
   private val isDevFlavor: Boolean,
@@ -530,11 +530,11 @@ class ReplyNotificationsHelper(
         CIRCLE_CROP,
         object : ImageLoaderV2.FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-            cancellableContinuation.resume(drawable)
+            cancellableContinuation.resumeValueSafe(drawable)
           }
 
           override fun onNotFound() {
-            cancellableContinuation.resume(null)
+            cancellableContinuation.resumeValueSafe(null)
           }
 
           override fun onResponseError(error: Throwable) {
@@ -543,7 +543,7 @@ class ReplyNotificationsHelper(
                 "error: ${error.errorMessageOrClassName()}"
             )
 
-            cancellableContinuation.resume(null)
+            cancellableContinuation.resumeValueSafe(null)
           }
         }
       )

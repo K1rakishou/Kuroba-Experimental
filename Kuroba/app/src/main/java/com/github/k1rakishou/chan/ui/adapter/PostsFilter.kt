@@ -44,7 +44,7 @@ class PostsFilter(
     )
 
     if (order != Order.BUMP && chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      processOrder(posts as MutableList<ChanOriginalPost>)
+      processOrder(order, posts as MutableList<ChanOriginalPost>)
     }
 
     // Process hidden by filter and post/thread hiding
@@ -66,20 +66,6 @@ class PostsFilter(
     }
 
     return indexedPosts
-  }
-
-  private fun processOrder(posts: List<ChanOriginalPost>) {
-    when (order) {
-      Order.IMAGE -> Collections.sort(posts, IMAGE_COMPARATOR)
-      Order.REPLY -> Collections.sort(posts, REPLY_COMPARATOR)
-      Order.NEWEST -> Collections.sort(posts, NEWEST_COMPARATOR)
-      Order.OLDEST -> Collections.sort(posts, OLDEST_COMPARATOR)
-      Order.MODIFIED -> Collections.sort(posts, MODIFIED_COMPARATOR)
-      Order.ACTIVITY -> Collections.sort(posts, THREAD_ACTIVITY_COMPARATOR)
-      Order.BUMP -> {
-        // no-op
-      }
-    }
   }
 
   enum class Order(var orderName: String) {
@@ -108,11 +94,39 @@ class PostsFilter(
   companion object {
     private const val TAG = "PostsFilter"
 
-    private val IMAGE_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs -> rhs.catalogImagesCount - lhs.catalogImagesCount }
-    private val REPLY_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs -> rhs.catalogRepliesCount - lhs.catalogRepliesCount }
-    private val NEWEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs -> (rhs.timestamp - lhs.timestamp).toInt() }
-    private val OLDEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs -> (lhs.timestamp - rhs.timestamp).toInt() }
-    private val MODIFIED_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs -> (rhs.lastModified - lhs.lastModified).toInt() }
+    fun processOrder(order: Order, posts: List<ChanOriginalPost>) {
+      when (order) {
+        Order.IMAGE -> Collections.sort(posts, IMAGE_COMPARATOR)
+        Order.REPLY -> Collections.sort(posts, REPLY_COMPARATOR)
+        Order.NEWEST -> Collections.sort(posts, NEWEST_COMPARATOR)
+        Order.OLDEST -> Collections.sort(posts, OLDEST_COMPARATOR)
+        Order.MODIFIED -> Collections.sort(posts, MODIFIED_COMPARATOR)
+        Order.ACTIVITY -> Collections.sort(posts, THREAD_ACTIVITY_COMPARATOR)
+        Order.BUMP -> {
+          // no-op
+        }
+      }
+    }
+
+    private val IMAGE_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
+      rhs.catalogImagesCount - lhs.catalogImagesCount
+    }
+
+    private val REPLY_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
+      rhs.catalogRepliesCount - lhs.catalogRepliesCount
+    }
+
+    private val NEWEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
+      (rhs.timestamp - lhs.timestamp).toInt()
+    }
+
+    private val OLDEST_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
+      (lhs.timestamp - rhs.timestamp).toInt()
+    }
+
+    private val MODIFIED_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
+      (rhs.lastModified - lhs.lastModified).toInt()
+    }
 
     private val THREAD_ACTIVITY_COMPARATOR = Comparator<ChanOriginalPost> { lhs, rhs ->
       val currentTimeSeconds = System.currentTimeMillis() / 1000

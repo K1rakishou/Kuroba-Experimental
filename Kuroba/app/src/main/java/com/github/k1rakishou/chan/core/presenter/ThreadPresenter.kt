@@ -527,7 +527,7 @@ class ThreadPresenter @Inject constructor(
     val initialImageUrl = foundPostDescriptor
       ?.let { postDescriptor -> chanThreadManager.getPost(postDescriptor)?.firstImage()?.imageUrl }
 
-    threadPresenterCallback?.showAlbum(initialImageUrl)
+    threadPresenterCallback?.showAlbum(initialImageUrl, postDescriptors)
   }
 
   override fun onPostBind(postDescriptor: PostDescriptor) {
@@ -2225,7 +2225,7 @@ class ThreadPresenter @Inject constructor(
     fun hidePostsPopup()
 
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
-    fun showAlbum(initialImageUrl: HttpUrl?)
+    fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
     fun highlightPost(postDescriptor: PostDescriptor)

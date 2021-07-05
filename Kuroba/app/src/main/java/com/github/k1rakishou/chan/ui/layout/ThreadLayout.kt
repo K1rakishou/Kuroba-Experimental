@@ -703,8 +703,8 @@ class ThreadLayout @JvmOverloads constructor(
     callback.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
   }
 
-  override fun showAlbum(initialImageUrl: HttpUrl?) {
-    callback.showAlbum(initialImageUrl)
+  override fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>) {
+    callback.showAlbum(initialImageUrl, displayingPostDescriptors)
   }
 
   override fun scrollTo(displayPosition: Int, smooth: Boolean) {
@@ -1238,7 +1238,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
 
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
-    fun showAlbum(initialImageUrl: HttpUrl?)
+    fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun onShowPosts()
     fun onShowError()
     fun presentController(controller: Controller, animated: Boolean)

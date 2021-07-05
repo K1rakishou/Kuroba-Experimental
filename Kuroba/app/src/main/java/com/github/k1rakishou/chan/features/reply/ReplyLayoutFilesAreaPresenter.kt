@@ -33,6 +33,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
@@ -49,7 +50,6 @@ import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
-import kotlin.coroutines.resume
 
 class ReplyLayoutFilesAreaPresenter(
   private val appConstants: AppConstants,
@@ -538,7 +538,7 @@ class ReplyLayoutFilesAreaPresenter(
 
     return suspendCancellableCoroutine<Boolean> { cancellableContinuation ->
       runtimePermissionsHelper.requestPermission(permission) { granted ->
-        cancellableContinuation.resume(granted)
+        cancellableContinuation.resumeValueSafe(granted)
       }
     }
   }

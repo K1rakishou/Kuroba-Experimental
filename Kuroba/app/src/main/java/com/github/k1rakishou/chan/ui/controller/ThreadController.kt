@@ -181,7 +181,7 @@ abstract class ThreadController(
             return@collect
           }
 
-          showAlbum(openAlbumEvent.chanPostImage.imageUrl)
+          showAlbum(openAlbumEvent.chanPostImage.imageUrl, threadLayout.displayingPostDescriptors)
         }
     }
 
@@ -297,6 +297,7 @@ abstract class ThreadController(
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,
+          postDescriptorList = threadLayout.displayingPostDescriptors,
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
@@ -316,11 +317,11 @@ abstract class ThreadController(
     }
   }
 
-  override fun showAlbum(initialImageUrl: HttpUrl?) {
+  override fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>) {
     val descriptor = chanDescriptor
       ?: return
 
-    val albumViewController = AlbumViewController(context, descriptor)
+    val albumViewController = AlbumViewController(context, descriptor, displayingPostDescriptors)
     if (!albumViewController.tryCollectingImages(initialImageUrl)) {
       return
     }

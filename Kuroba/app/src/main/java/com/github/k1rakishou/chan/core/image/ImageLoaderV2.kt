@@ -55,8 +55,6 @@ import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.coroutines.resume
-import kotlin.coroutines.resumeWithException
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
@@ -107,7 +105,7 @@ class ImageLoaderV2(
         transformations = transformations,
         listener = object : FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-            continuation.resume(value(drawable))
+            continuation.resumeValueSafe(value(drawable))
           }
 
           override fun onNotFound() {
@@ -115,7 +113,7 @@ class ImageLoaderV2(
           }
 
           override fun onResponseError(error: Throwable) {
-            continuation.resumeWithException(error)
+            continuation.resumeErrorSafe(error)
           }
         })
 
@@ -146,15 +144,15 @@ class ImageLoaderV2(
         transformations = transformations,
         listener = object : FailureAwareImageListener{
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-            continuation.resume(value(drawable))
+            continuation.resumeValueSafe(value(drawable))
           }
 
           override fun onNotFound() {
-            continuation.resume(error(NotFoundException()))
+            continuation.resumeValueSafe(error(NotFoundException()))
           }
 
           override fun onResponseError(error: Throwable) {
-            continuation.resume(error(NotFoundException()))
+            continuation.resumeValueSafe(error(NotFoundException()))
           }
         }
       )

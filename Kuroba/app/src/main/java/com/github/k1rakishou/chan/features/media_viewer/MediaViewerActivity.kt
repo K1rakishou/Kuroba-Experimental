@@ -31,6 +31,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
 import java.util.*
@@ -390,6 +391,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     fun catalogMedia(
       context: Context,
       catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+      postDescriptorList: List<PostDescriptor>,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,
       lastTouchCoordinates: Point,
@@ -404,6 +406,7 @@ class MediaViewerActivity : ControllerHostActivity(),
             CATALOG_DESCRIPTOR_PARAM,
             ViewableMediaParcelableHolder.CatalogMediaParcelableHolder.fromCatalogDescriptor(
               catalogDescriptor = catalogDescriptor,
+              postDescriptorList = postDescriptorList,
               initialImageUrl = initialImageUrl,
               transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
                 transitionThumbnailUrl = transitionThumbnailUrl,

@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -24,7 +25,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.coroutines.resume
 
 class BoardsSetupPresenter(
   private val siteDescriptor: SiteDescriptor,
@@ -270,7 +270,7 @@ class BoardsSetupPresenter(
 
     return suspendCancellableCoroutine { cancellableContinuation ->
       site.loadBoardInfo { result ->
-        cancellableContinuation.resume(result.mapValue { Unit })
+        cancellableContinuation.resumeValueSafe(result.mapValue { Unit })
       }
     }
   }

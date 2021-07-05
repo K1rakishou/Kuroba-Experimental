@@ -83,7 +83,6 @@ class BrowseController(
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
-  private var order: PostsFilter.Order = PostsFilter.Order.BUMP
   private var initialized = false
   private var menuBuiltOnce = false
 
@@ -113,7 +112,7 @@ class BrowseController(
 
     serializedCoroutineExecutor.post {
       val boardOrder = ChanSettings.boardOrder.get()
-      order = PostsFilter.Order.find(boardOrder)
+      val order = PostsFilter.Order.find(boardOrder)
 
       threadLayout.presenter.setOrder(order, isManuallyChangedOrder = false)
     }
@@ -376,7 +375,6 @@ class BrowseController(
         ?: return@post
 
       ChanSettings.boardOrder.set(order.orderName)
-      this@BrowseController.order = order
 
       navigation.findSubItem(ACTION_SORT)?.let { sortSubItem ->
         resetSelectedSortOrderItem(sortSubItem)

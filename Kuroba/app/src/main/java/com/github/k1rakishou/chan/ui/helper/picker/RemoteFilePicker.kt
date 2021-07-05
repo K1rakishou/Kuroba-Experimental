@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.CoroutineScope
@@ -21,7 +22,6 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.io.File
 import java.io.IOException
-import kotlin.coroutines.resume
 
 class RemoteFilePicker(
   appConstants: AppConstants,
@@ -149,7 +149,7 @@ class RemoteFilePicker(
           override fun onSuccess(file: File) {
             super.onSuccess(file)
 
-            cancellableContinuation.resume(ModularResult.value(file))
+            cancellableContinuation.resumeValueSafe(ModularResult.value(file))
           }
 
           override fun onNotFound() {
@@ -179,7 +179,7 @@ class RemoteFilePicker(
           }
 
           private fun onError(error: FilePickerError) {
-            cancellableContinuation.resume(ModularResult.error(error))
+            cancellableContinuation.resumeValueSafe(ModularResult.error(error))
           }
         })
 

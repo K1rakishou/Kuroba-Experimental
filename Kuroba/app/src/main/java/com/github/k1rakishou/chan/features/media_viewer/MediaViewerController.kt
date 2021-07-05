@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -46,7 +47,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class MediaViewerController(
   context: Context,
@@ -229,9 +229,9 @@ class MediaViewerController(
         simpleSaveableMediaInfo = simpleImageInfo,
         onSaveClicked = { updatedImageSaverV2Options, newFileName ->
           imageSaverV2.save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
-          continuation.resume(true)
+          continuation.resumeValueSafe(true)
         },
-        onCanceled = { continuation.resume(false) }
+        onCanceled = { continuation.resumeValueSafe(false) }
       )
 
       val controller = ImageSaverV2OptionsController(context, options)
@@ -396,7 +396,7 @@ class MediaViewerController(
         view,
         BACKGROUND_COLOR,
         { currentBackgroundColor -> mediaViewerRootLayout.setBackgroundColor(currentBackgroundColor) },
-        { continuation.resume(Unit) }
+        { continuation.resumeValueSafe(Unit) }
       )
     }
   }

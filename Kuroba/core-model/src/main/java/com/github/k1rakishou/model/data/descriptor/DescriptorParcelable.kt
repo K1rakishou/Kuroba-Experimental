@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.data.descriptor
 
 import android.os.Parcelable
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 
@@ -47,4 +48,34 @@ data class DescriptorParcelable(
       }
     }
   }
+}
+
+@Parcelize
+data class PostDescriptorParcelable(
+  val descriptorParcelable: DescriptorParcelable,
+  val postNo: Long,
+  val postSubNo: Long
+) : Parcelable {
+  @IgnoredOnParcel
+  val postDescriptor by lazy {
+    return@lazy when (val chanDescriptor = descriptorParcelable.toChanDescriptor()) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        PostDescriptor.create(chanDescriptor, postNo, postNo, postSubNo)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        PostDescriptor.create(chanDescriptor, chanDescriptor.threadNo, postNo, postSubNo)
+      }
+    }
+  }
+
+  companion object {
+    fun fromPostDescriptor(postDescriptor: PostDescriptor): PostDescriptorParcelable {
+      return PostDescriptorParcelable(
+        DescriptorParcelable.fromDescriptor(postDescriptor.descriptor),
+        postDescriptor.postNo,
+        postDescriptor.postSubNo
+      )
+    }
+  }
+
 }

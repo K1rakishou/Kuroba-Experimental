@@ -19,6 +19,7 @@ import com.google.gson.Gson
 import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonToken
 import com.squareup.moshi.JsonAdapter
+import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
@@ -75,13 +76,25 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
 
     call.enqueue(object : Callback {
       override fun onFailure(call: Call, e: IOException) {
-        continuation.resumeWithException(e)
+        continuation.resumeErrorSafe(e)
       }
 
       override fun onResponse(call: Call, response: Response) {
-        continuation.resume(response)
+        continuation.resumeValueSafe(response)
       }
     })
+  }
+}
+
+fun <T> CancellableContinuation<T>.resumeValueSafe(value: T) {
+  if (isActive) {
+    resume(value)
+  }
+}
+
+fun CancellableContinuation<*>.resumeErrorSafe(error: Throwable) {
+  if (isActive) {
+    resumeWithException(error)
   }
 }
 

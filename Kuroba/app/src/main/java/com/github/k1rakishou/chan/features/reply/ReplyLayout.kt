@@ -97,6 +97,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isPointInsideView
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -111,7 +112,6 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class ReplyLayout @JvmOverloads constructor(
   context: Context,
@@ -657,7 +657,7 @@ class ReplyLayout @JvmOverloads constructor(
         firewallType = FirewallType.DvachAntiSpam,
         urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
       ) { cookieResult ->
-        continuation.resume(cookieResult)
+        continuation.resumeValueSafe(cookieResult)
       }
 
       callbacks.presentController(controller)

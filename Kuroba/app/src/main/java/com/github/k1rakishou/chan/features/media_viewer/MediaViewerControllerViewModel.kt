@@ -16,6 +16,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.extractFileName
+import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -228,12 +229,12 @@ class MediaViewerControllerViewModel : ViewModel() {
     BackgroundUtils.ensureBackgroundThread()
 
     val initialPagerIndex = AtomicInteger(0)
+    val mediaIndex = AtomicInteger(0)
     val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
     val mediaList = chanThreadManager.getChanThread(viewableMediaParcelableHolder.threadDescriptor)
       ?.let { chanThread ->
         val mediaList = mutableListWithCap<ViewableMedia>(chanThread.postsCount)
-        val mediaIndex = AtomicInteger(0)
 
         chanThread.iteratePostsOrdered { chanPost ->
           chanPost.iteratePostImages { chanPostImage ->
@@ -287,24 +288,28 @@ class MediaViewerControllerViewModel : ViewModel() {
     BackgroundUtils.ensureBackgroundThread()
 
     val initialPagerIndex = AtomicInteger(0)
+    val mediaIndex = AtomicInteger(0)
     val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
 
-    val mediaList = chanThreadManager.getChanCatalog(viewableMediaParcelableHolder.catalogDescriptor)
-      ?.let { chanCatalog ->
-        val mediaList = mutableListWithCap<ViewableMedia>(chanCatalog.postsCount())
-        val mediaIndex = AtomicInteger(0)
+    val mediaList = viewableMediaParcelableHolder.postDescriptorParcelableList.flatMapNotNull { postDescriptorParcelable ->
+      val postDescriptor = postDescriptorParcelable.postDescriptor
 
-        chanCatalog.iteratePostsOrdered { chanOriginalPost ->
-          chanOriginalPost.iteratePostImages { chanPostImage ->
-            val viewableMedia = processChanPostImage(chanPostImage, scrollToImageWithUrl, initialPagerIndex, mediaIndex)
-            if (viewableMedia != null) {
-              mediaList += viewableMedia
-            }
-          }
-        }
-
-        return@let mediaList
+      val chanPost = chanThreadManager.getPost(postDescriptor)
+      if (chanPost == null) {
+        return@flatMapNotNull null
       }
+
+      val mediaList = mutableListOf<ViewableMedia>()
+
+      chanPost.iteratePostImages { chanPostImage ->
+        val viewableMedia = processChanPostImage(chanPostImage, scrollToImageWithUrl, initialPagerIndex, mediaIndex)
+        if (viewableMedia != null) {
+          mediaList += viewableMedia
+        }
+      }
+
+      return@flatMapNotNull mediaList
+    }
 
     if (mediaList.isNullOrEmpty()) {
       return null
