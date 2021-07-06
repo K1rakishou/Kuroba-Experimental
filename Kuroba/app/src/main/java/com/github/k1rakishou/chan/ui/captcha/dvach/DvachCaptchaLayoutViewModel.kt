@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
+import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Job
@@ -57,6 +58,9 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
   }
 
   private suspend fun requestCaptchaIdInternal(captchaIdUrl: String): CaptchaInfo {
+    Logger.d(TAG, "requestCaptchaInternal() requesting $captchaIdUrl")
+
+
     val requestBuilder = Request.Builder()
       .url(captchaIdUrl)
       .get()
@@ -107,6 +111,10 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
 
       return "https://2ch.hk/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
     }
+  }
+
+  companion object {
+    private const val TAG = "DvachCaptchaLayoutViewModel"
   }
 
 }

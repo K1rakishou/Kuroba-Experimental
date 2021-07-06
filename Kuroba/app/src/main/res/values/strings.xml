@@ -1123,9 +1123,10 @@ Don't have a 4chan Pass?<br>
     <string name="captcha_layout_v2_use_old_captcha">Use old\ncaptcha</string>
 
     <string name="captcha_layout_dvach_auth">Auth</string>
-    <string name="captcha_layout_dvach_reload">Reload</string>
-    <string name="captcha_layout_dvach_verify">Verify</string>
     <string name="captcha_layout_dvach_auth_required">Authentication required! Click \'Auth\' button to pass 2ch.hk anti-spam check</string>
+
+    <string name="captcha_layout_reload">Reload</string>
+    <string name="captcha_layout_verify">Verify</string>
 
     <string name="captcha_layout_v2_you_have_to_select_at_least_one_image">You have to select at least one image (if you see a captcha that does not have any matching images, then it is probably a bug; fill an issue and use the old captcha)</string>
     <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>

@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
@@ -183,6 +184,16 @@ class CaptchaContainerController(
       }
       SiteAuthentication.Type.ID_BASED_CAPTCHA -> {
         val view = DvachCaptchaLayout(context)
+        val params = FrameLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        view.layoutParams = params
+        return view
+      }
+      SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA -> {
+        val view = Chan4CaptchaLayout(context, chanDescriptor)
         val params = FrameLayout.LayoutParams(
           ViewGroup.LayoutParams.MATCH_PARENT,
           ViewGroup.LayoutParams.WRAP_CONTENT

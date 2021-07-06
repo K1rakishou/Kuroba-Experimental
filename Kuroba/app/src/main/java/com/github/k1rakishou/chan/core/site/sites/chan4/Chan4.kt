@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -68,6 +69,7 @@ open class Chan4 : SiteBase() {
   private lateinit var passToken: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var lastUsedFlagPerBoard: StringSetting
+  lateinit var chan4CaptchaCookie: StringSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -85,13 +87,19 @@ open class Chan4 : SiteBase() {
       prefs,
       "preference_captcha_type_chan4",
       CaptchaType::class.java,
-      CaptchaType.V2NOJS
+      CaptchaType.CHAN4_CAPTCHA
     )
 
     lastUsedFlagPerBoard = StringSetting(
       prefs,
       "preference_flag_chan4",
       "0"
+    )
+
+    chan4CaptchaCookie = StringSetting(
+      prefs,
+      "preference_chan4_captcha_cookie",
+      ""
     )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
@@ -366,6 +374,7 @@ open class Chan4 : SiteBase() {
       return when (captchaType.get()) {
         CaptchaType.V2JS -> SiteAuthentication.fromCaptcha2(CAPTCHA_KEY, "https://boards.4chan.org")
         CaptchaType.V2NOJS -> SiteAuthentication.fromCaptcha2nojs(CAPTCHA_KEY, "https://boards.4chan.org")
+        CaptchaType.CHAN4_CAPTCHA -> SiteAuthentication.endpointBased()
       }
     }
 
@@ -524,8 +533,9 @@ open class Chan4 : SiteBase() {
   override fun settings(): MutableList<SiteSetting> {
     val settings = ArrayList<SiteSetting>()
 
-    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, listOf("Javascript", "Noscript")))
     settings.addAll(super.settings())
+    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, listOf("Javascript", "Noscript")))
+    settings.add(SiteSetting.SiteStringSetting("4chan captcha cookie", null, chan4CaptchaCookie))
 
     return settings
   }
@@ -545,6 +555,10 @@ open class Chan4 : SiteBase() {
           val passTokenSetting = site.passToken
           requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
         }
+      }
+
+      if (httpCall is Chan4ReplyCall) {
+        addChan4CookieHeader(site, requestBuilder)
       }
     }
 
@@ -569,12 +583,28 @@ open class Chan4 : SiteBase() {
         }
       }
     }
+
+    override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder) {
+      super.modifyCaptchaGetRequest(site, requestBuilder)
+
+      addChan4CookieHeader(site, requestBuilder)
+    }
+
+    private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
+      val chan4CaptchaCookie = site.chan4CaptchaCookie.get()
+      if (chan4CaptchaCookie.isEmpty()) {
+        return
+      }
+
+      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${chan4CaptchaCookie}")
+    }
   }
 
   @DoNotStrip
   enum class CaptchaType(val value: String) : OptionSettingItem {
     V2JS("v2js"),
-    V2NOJS("v2nojs");
+    V2NOJS("v2nojs"),
+    CHAN4_CAPTCHA("4chan_captcha");
 
     override fun getKey(): String {
       return value
@@ -585,6 +615,7 @@ open class Chan4 : SiteBase() {
   companion object {
     const val SITE_NAME = "4chan"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
+    val CAPTCHA_COOKIE_KEY = "4chan_pass"
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {

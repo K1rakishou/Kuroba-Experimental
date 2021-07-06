@@ -189,13 +189,9 @@ sealed class CaptchaSolution {
     }
   }
 
-  data class TokenWithIdSolution(val id: String, val token: String, val type: Type) : CaptchaSolution() {
+  data class TokenWithIdSolution(val id: String, val token: String) : CaptchaSolution() {
     override fun toString(): String {
-      return "TokenWithIdSolution{id=$id, type=$type, token=${formatToken(token)}}"
-    }
-
-    enum class Type {
-      DvachCaptcha
+      return "TokenWithIdSolution{id=$id, token=${formatToken(token)}}"
     }
   }
 }

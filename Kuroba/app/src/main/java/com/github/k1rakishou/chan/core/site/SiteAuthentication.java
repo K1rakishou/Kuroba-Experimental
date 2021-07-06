@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
+import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.GENERIC_WEBVIEW;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.ID_BASED_CAPTCHA;
 import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.NONE;
@@ -32,7 +33,12 @@ public class SiteAuthentication {
         CAPTCHA2_NOJS,
         CAPTCHA2_INVISIBLE,
         GENERIC_WEBVIEW,
-        ID_BASED_CAPTCHA
+        // Captcha that can be loaded by a specific url with an ID parameter
+        // (For now only 2ch.hk has this type of captcha)
+        ID_BASED_CAPTCHA,
+        // Captcha that can be loaded by a specific url with boardCode/threadId parameters
+        // (For now only 4chan.org has this type of captcha).
+        ENDPOINT_BASED_CAPTCHA
     }
 
     public static SiteAuthentication fromNone() {
@@ -72,6 +78,11 @@ public class SiteAuthentication {
         SiteAuthentication siteAuthentication = new SiteAuthentication(ID_BASED_CAPTCHA);
         siteAuthentication.baseUrl = idGetUrl;
 
+        return siteAuthentication;
+    }
+
+    public static SiteAuthentication endpointBased() {
+        SiteAuthentication siteAuthentication = new SiteAuthentication(ENDPOINT_BASED_CAPTCHA);
         return siteAuthentication;
     }
 

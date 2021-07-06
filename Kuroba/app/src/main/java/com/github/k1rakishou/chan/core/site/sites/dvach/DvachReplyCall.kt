@@ -91,11 +91,7 @@ class DvachReplyCall internal constructor(
             recaptchaAuth(formBuilder, reply, captchaSolution)
           }
           is CaptchaSolution.TokenWithIdSolution -> {
-            when (captchaSolution.type) {
-              CaptchaSolution.TokenWithIdSolution.Type.DvachCaptcha -> {
-                dvachCaptchaAuth(formBuilder, captchaSolution)
-              }
-            }
+            dvachCaptchaAuth(formBuilder, captchaSolution)
           }
         }
       }

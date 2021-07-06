@@ -39,6 +39,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescrip
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.StringSetting
+import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
@@ -94,12 +95,19 @@ class Chan4ReplyCall(
       formBuilder.addFormDataPart("com", reply.comment)
 
       if (reply.captchaSolution != null) {
-        val token = (reply.captchaSolution as CaptchaSolution.SimpleTokenSolution).token
-        if (reply.captchaChallenge != null) {
-          formBuilder.addFormDataPart("recaptcha_challenge_field", reply.captchaChallenge!!)
-          formBuilder.addFormDataPart("recaptcha_response_field", token)
-        } else {
-          formBuilder.addFormDataPart("g-recaptcha-response", token)
+        when (val captchaSolution = reply.captchaSolution!!) {
+          is CaptchaSolution.SimpleTokenSolution -> {
+            if (reply.captchaChallenge != null) {
+              formBuilder.addFormDataPart("recaptcha_challenge_field", reply.captchaChallenge!!)
+              formBuilder.addFormDataPart("recaptcha_response_field", captchaSolution.token)
+            } else {
+              formBuilder.addFormDataPart("g-recaptcha-response", captchaSolution.token)
+            }
+          }
+          is CaptchaSolution.TokenWithIdSolution -> {
+            formBuilder.addFormDataPart("t-challenge", captchaSolution.id)
+            formBuilder.addFormDataPart("t-response", captchaSolution.token)
+          }
         }
       }
 
@@ -171,6 +179,8 @@ class Chan4ReplyCall(
       return
     }
 
+    setChan4CaptchaHeader(response.headers)
+
     try {
       replyResponse.threadNo = threadNoMatcher.group(1).toInt().toLong()
       replyResponse.postNo = threadNoMatcher.group(2).toInt().toLong()
@@ -188,6 +198,29 @@ class Chan4ReplyCall(
     }
 
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+  }
+
+  private fun setChan4CaptchaHeader(headers: Headers) {
+    val chan4PassCookie = headers
+      .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
+      .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
+
+    if (chan4PassCookie == null) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to find 4chan_pass cookie")
+      return
+    }
+
+    val cookieValue = chan4PassCookie.second
+      .substringAfter(CAPTCHA_COOKIE_PREFIX)
+      .substringBefore(';')
+
+    if (cookieValue.isEmpty()) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie ($chan4PassCookie)")
+      return
+    }
+
+    val chan4 = site as Chan4
+    chan4.chan4CaptchaCookie.set(cookieValue)
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
@@ -247,6 +280,9 @@ class Chan4ReplyCall(
     private const val PROBABLY_IP_RANGE_BLOCKED = "Posting from your IP range has been blocked due to abuse"
     private const val CAPTCHA_REQUIRED_TEXT1 = "Error: You forgot to solve the CAPTCHA"
     private const val CAPTCHA_REQUIRED_TEXT2 = "Error: You seem to have mistyped the CAPTCHA"
+
+    private const val SET_COOKIE_HEADER = "set-cookie"
+    private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="
 
     // Not used.
     private const val NEW_THREAD_CREATION_RATE_LIMIT_TEXT = "Error: You must wait longer before posting a new thread"
