@@ -283,7 +283,7 @@ class Chan4CaptchaLayout(
           }
           is AsyncData.Data -> {
             val captchaInfo = (captchaInfoAsync as AsyncData.Data).data
-            var scale = (Math.min(size.width, size.height)) / captchaInfo.imgBitmapPainter.intrinsicSize.height
+            var scale = size.width / captchaInfo.imgBitmapPainter.intrinsicSize.width
             if (scale < 1f) {
               scale = 1f
             }
