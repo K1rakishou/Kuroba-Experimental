@@ -46,6 +46,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -70,6 +71,7 @@ open class Chan4 : SiteBase() {
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var lastUsedFlagPerBoard: StringSetting
   lateinit var chan4CaptchaCookie: StringSetting
+  lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -100,6 +102,14 @@ open class Chan4 : SiteBase() {
       prefs,
       "preference_chan4_captcha_cookie",
       ""
+    )
+
+    chan4CaptchaSettings = JsonSetting(
+      gson,
+      Chan4CaptchaSettings::class.java,
+      prefs,
+      "chan4_captcha_settings",
+      Chan4CaptchaSettings()
     )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
@@ -526,6 +536,7 @@ open class Chan4 : SiteBase() {
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
       SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
+      SiteSetting.SiteSettingId.Chan4CaptchaSettings -> chan4CaptchaSettings as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

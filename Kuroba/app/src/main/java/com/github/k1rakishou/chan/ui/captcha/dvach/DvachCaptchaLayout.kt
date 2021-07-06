@@ -138,9 +138,9 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
       },
       onReloadClick = { hardReset() },
       onVerifyClick = { captchaId, token ->
-        val solution = CaptchaSolution.TokenWithIdSolution(
-          id = captchaId,
-          token = token
+        val solution = CaptchaSolution.ChallengeWithSolution(
+          challenge = captchaId,
+          solution = token
         )
 
         captchaHolder.addNewSolution(solution)

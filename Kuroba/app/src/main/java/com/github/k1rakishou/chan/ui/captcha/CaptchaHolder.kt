@@ -179,7 +179,7 @@ sealed class CaptchaSolution {
   fun isTokenEmpty(): Boolean {
     return when (this) {
       is SimpleTokenSolution -> token.isBlank()
-      is TokenWithIdSolution -> token.isBlank()
+      is ChallengeWithSolution -> solution.isBlank()
     }
   }
 
@@ -189,9 +189,9 @@ sealed class CaptchaSolution {
     }
   }
 
-  data class TokenWithIdSolution(val id: String, val token: String) : CaptchaSolution() {
+  data class ChallengeWithSolution(val challenge: String, val solution: String) : CaptchaSolution() {
     override fun toString(): String {
-      return "TokenWithIdSolution{id=$id, token=${formatToken(token)}}"
+      return "ChallengeWithSolution{challenge=$challenge, solution=${formatToken(solution)}}"
     }
   }
 }

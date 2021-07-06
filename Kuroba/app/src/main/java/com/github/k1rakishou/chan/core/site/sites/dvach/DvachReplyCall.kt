@@ -90,7 +90,7 @@ class DvachReplyCall internal constructor(
           is CaptchaSolution.SimpleTokenSolution -> {
             recaptchaAuth(formBuilder, reply, captchaSolution)
           }
-          is CaptchaSolution.TokenWithIdSolution -> {
+          is CaptchaSolution.ChallengeWithSolution -> {
             dvachCaptchaAuth(formBuilder, captchaSolution)
           }
         }
@@ -122,11 +122,11 @@ class DvachReplyCall internal constructor(
 
   private fun dvachCaptchaAuth(
     formBuilder: MultipartBody.Builder,
-    captchaSolution: CaptchaSolution.TokenWithIdSolution
+    captchaSolution: CaptchaSolution.ChallengeWithSolution
   ) {
     formBuilder.addFormDataPart("captcha_type", "2chcaptcha")
-    formBuilder.addFormDataPart("2chcaptcha_value", captchaSolution.token)
-    formBuilder.addFormDataPart("2chcaptcha_id", captchaSolution.id)
+    formBuilder.addFormDataPart("2chcaptcha_value", captchaSolution.solution)
+    formBuilder.addFormDataPart("2chcaptcha_id", captchaSolution.challenge)
   }
 
   private fun recaptchaAuth(

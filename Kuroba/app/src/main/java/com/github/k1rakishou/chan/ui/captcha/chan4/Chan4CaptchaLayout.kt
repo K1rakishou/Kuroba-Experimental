@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -208,7 +209,7 @@ class Chan4CaptchaLayout(
             }
 
             val challenge = captchaInfo.challenge
-            val solution = CaptchaSolution.TokenWithIdSolution(id = challenge, token = currentInputValue)
+            val solution = CaptchaSolution.ChallengeWithSolution(challenge = challenge, solution = currentInputValue)
 
             captchaHolder.addNewSolution(solution, captchaInfo.ttlMillis())
             callback?.onAuthenticationComplete()
@@ -233,6 +234,7 @@ class Chan4CaptchaLayout(
     var size by remember { mutableStateOf(IntSize.Zero) }
 
     Box(modifier = Modifier
+      .heightIn(48.dp, 180.dp)
       .fillMaxWidth()
       .onSizeChanged { newSize -> size = newSize }
     ) {
@@ -251,7 +253,11 @@ class Chan4CaptchaLayout(
           }
           is AsyncData.Data -> {
             val captchaInfo = (captchaInfoAsync as AsyncData.Data).data
-            val scale = (Math.min(size.width, size.height)) / captchaInfo.imgBitmapPainter.intrinsicSize.height
+            var scale = (Math.min(size.width, size.height)) / captchaInfo.imgBitmapPainter.intrinsicSize.height
+            if (scale < 1f) {
+              scale = 1f
+            }
+
             val contentScale = Scale(scale)
             var scrollValue by scrollValueState
 

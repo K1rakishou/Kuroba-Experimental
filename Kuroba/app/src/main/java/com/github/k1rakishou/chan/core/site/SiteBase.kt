@@ -204,6 +204,8 @@ abstract class SiteBase : Site, CoroutineScope {
       SiteSetting.SiteSettingId.DvachUserCodeCookie -> null
       // 2ch.hk only
       SiteSetting.SiteSettingId.DvachAntiSpamCookie -> null
+      // 4chan only
+      SiteSetting.SiteSettingId.Chan4CaptchaSettings -> null
     }
   }
 

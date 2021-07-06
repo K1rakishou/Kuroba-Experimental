@@ -104,9 +104,9 @@ class Chan4ReplyCall(
               formBuilder.addFormDataPart("g-recaptcha-response", captchaSolution.token)
             }
           }
-          is CaptchaSolution.TokenWithIdSolution -> {
-            formBuilder.addFormDataPart("t-challenge", captchaSolution.id)
-            formBuilder.addFormDataPart("t-response", captchaSolution.token)
+          is CaptchaSolution.ChallengeWithSolution -> {
+            formBuilder.addFormDataPart("t-challenge", captchaSolution.challenge)
+            formBuilder.addFormDataPart("t-response", captchaSolution.solution)
           }
         }
       }
@@ -201,6 +201,25 @@ class Chan4ReplyCall(
   }
 
   private fun setChan4CaptchaHeader(headers: Headers) {
+    val chan4 = site as Chan4
+
+    val oldCookie = chan4.chan4CaptchaCookie.get()
+    val chan4CaptchaSettings = chan4.chan4CaptchaSettings.get()
+    val now = System.currentTimeMillis()
+    val cookieReceivedOn = chan4CaptchaSettings.cookieReceivedOn
+    val expired = (now - cookieReceivedOn) > Chan4CaptchaSettings.COOKIE_LIFE_TIME
+
+    if (oldCookie.isNotEmpty() && !expired) {
+      Logger.d(TAG, "setChan4CaptchaHeader() cookie is still ok. " +
+        "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
+        "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
+      return
+    }
+
+    Logger.d(TAG, "setChan4CaptchaHeader() cookie needs to be updated. " +
+      "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
+      "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
+
     val chan4PassCookie = headers
       .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
       .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
@@ -219,8 +238,8 @@ class Chan4ReplyCall(
       return
     }
 
-    val chan4 = site as Chan4
     chan4.chan4CaptchaCookie.set(cookieValue)
+    chan4.chan4CaptchaSettings.set(chan4CaptchaSettings.copy(cookieReceivedOn = now))
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {
