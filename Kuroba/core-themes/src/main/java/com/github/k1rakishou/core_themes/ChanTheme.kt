@@ -8,8 +8,14 @@ import androidx.compose.material.ButtonDefaults
 import androidx.compose.material.CheckboxColors
 import androidx.compose.material.CheckboxDefaults
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.SliderColors
+import androidx.compose.material.SliderDefaults
+import androidx.compose.material.SliderDefaults.DisabledTickAlpha
+import androidx.compose.material.SliderDefaults.InactiveTrackAlpha
+import androidx.compose.material.SliderDefaults.TickAlpha
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
@@ -161,6 +167,27 @@ abstract class ChanTheme {
       contentColor = backColorCompose,
       disabledBackgroundColor = accentColorCompose.copy(alpha = ContentAlpha.disabled),
       disabledContentColor = backColorCompose.copy(alpha = ContentAlpha.disabled)
+    )
+  }
+
+  @Composable
+  fun sliderColors(): SliderColors {
+    val disabledThumbColor = accentColorCompose.copy(alpha = ContentAlpha.disabled)
+    val disabledActiveTrackColor = disabledThumbColor.copy(alpha = SliderDefaults.DisabledActiveTrackAlpha)
+    val disabledInactiveTrackColor = disabledActiveTrackColor.copy(alpha = SliderDefaults.DisabledInactiveTrackAlpha)
+    val activeTickColor = contentColorFor(accentColorCompose).copy(alpha = TickAlpha)
+
+    return SliderDefaults.colors(
+      thumbColor = accentColorCompose,
+      disabledThumbColor = disabledThumbColor,
+      activeTrackColor = accentColorCompose,
+      inactiveTrackColor = accentColorCompose.copy(alpha = InactiveTrackAlpha),
+      disabledActiveTrackColor = disabledActiveTrackColor,
+      disabledInactiveTrackColor = disabledInactiveTrackColor,
+      activeTickColor = activeTickColor,
+      inactiveTickColor = accentColorCompose.copy(alpha = TickAlpha),
+      disabledActiveTickColor = activeTickColor.copy(alpha = DisabledTickAlpha),
+      disabledInactiveTickColor = disabledInactiveTrackColor.copy(alpha = DisabledTickAlpha)
     )
   }
 

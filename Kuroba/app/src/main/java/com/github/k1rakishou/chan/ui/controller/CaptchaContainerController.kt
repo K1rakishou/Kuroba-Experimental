@@ -193,7 +193,11 @@ class CaptchaContainerController(
         return view
       }
       SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA -> {
-        val view = Chan4CaptchaLayout(context, chanDescriptor)
+        val view = Chan4CaptchaLayout(
+          context = context,
+          chanDescriptor = chanDescriptor
+        )
+
         val params = FrameLayout.LayoutParams(
           ViewGroup.LayoutParams.MATCH_PARENT,
           ViewGroup.LayoutParams.WRAP_CONTENT

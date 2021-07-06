@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.runtime.Composable
@@ -213,5 +214,21 @@ fun KurobaComposeTextButton(
         textAlign = TextAlign.Center
       )
     }
+  )
+}
+
+@Composable
+fun KurobaComposeSlider(
+  value: Float,
+  onValueChange: (Float) -> Unit,
+  modifier: Modifier = Modifier
+) {
+  val chanTheme = LocalChanTheme.current
+
+  Slider(
+    value = value,
+    modifier = modifier,
+    onValueChange = onValueChange,
+    colors = chanTheme.sliderColors()
   )
 }

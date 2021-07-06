@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.captcha.chan4
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
-import android.graphics.Color
 import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.asImageBitmap
@@ -12,16 +11,24 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteSetting
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.prefs.JsonSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import okhttp3.Request
 import javax.inject.Inject
@@ -34,17 +41,43 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var moshi: Moshi
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var activeJob: Job? = null
+  private lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
+
+  private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  val showCaptchaHelpFlow: SharedFlow<Unit>
+    get() = _showCaptchaHelpFlow.asSharedFlow()
+
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
   var currentInputValue = mutableStateOf<String>("")
+  var onlyShowBackgroundImage = mutableStateOf(false)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
   override suspend fun onViewModelReady() {
+    chan4CaptchaSettings = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
+      .getSettingBySettingId(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
 
+    val settings = chan4CaptchaSettings.get()
+    onlyShowBackgroundImage.value = settings.onlyShowBackgroundImage
+
+    if (!settings.captchaHelpShown) {
+      _showCaptchaHelpFlow.tryEmit(Unit)
+      chan4CaptchaSettings.set(settings.copy(captchaHelpShown = true))
+    }
+  }
+
+  fun toggleOnlyShowBackgroundImage() {
+    onlyShowBackgroundImage.value = onlyShowBackgroundImage.value.not()
+
+    val updatedSettings = chan4CaptchaSettings.get()
+      .copy(onlyShowBackgroundImage = onlyShowBackgroundImage.value)
+    chan4CaptchaSettings.set(updatedSettings)
   }
 
   fun cleanup() {
@@ -123,7 +156,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val bgBitmapPainter = captchaInfoRaw.bg?.let { bgBase64Img ->
       val bgByteArray = Base64.decode(bgBase64Img, Base64.DEFAULT)
       val bitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
-      val bgImageBitmap = replaceColor(bitmap, 0xFFEEEEEEL.toInt(), Color.MAGENTA).asImageBitmap()
+      val bgImageBitmap = replaceColor(bitmap, 0xFFEEEEEEL.toInt(), themeEngine.chanTheme.accentColor).asImageBitmap()
 
       return@let BitmapPainter(bgImageBitmap)
     }
