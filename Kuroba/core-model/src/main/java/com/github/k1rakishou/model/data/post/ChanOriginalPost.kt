@@ -75,7 +75,7 @@ class ChanOriginalPost(
       closed = closed,
       archived = archived,
       repliesFrom = repliesFrom,
-      deleted = deleted
+      deleted = isDeleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
     }
@@ -95,7 +95,7 @@ class ChanOriginalPost(
     if (sticky != other.sticky) return false
     if (closed != other.closed) return false
     if (archived != other.archived) return false
-    if (deleted != other.deleted) return false
+    if (isDeleted != other.isDeleted) return false
 
     return true
   }
@@ -109,7 +109,7 @@ class ChanOriginalPost(
     result = 31 * result + sticky.hashCode()
     result = 31 * result + closed.hashCode()
     result = 31 * result + archived.hashCode()
-    result = 31 * result + deleted.hashCode()
+    result = 31 * result + isDeleted.hashCode()
     return result
   }
 
@@ -124,7 +124,7 @@ class ChanOriginalPost(
       ", sticky=" + sticky +
       ", closed=" + closed +
       ", archived=" + archived +
-      ", deleted=" + deleted +
+      ", deleted=" + isDeleted +
       ", postImages=" + postImages.size +
       ", subject='" + subject + '\'' +
       ", postComment=" + postComment.originalComment().take(64) +

@@ -63,7 +63,7 @@ class ChanThread(
 
   fun isClosed(): Boolean = lock.read { getOriginalPost().closed }
   fun isArchived(): Boolean = lock.read { getOriginalPost().archived }
-  fun isDeleted(): Boolean = lock.read { getOriginalPost().deleted }
+  fun isDeleted(): Boolean = lock.read { getOriginalPost().isDeleted }
 
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     lock.write { rawPostHashesMap[postDescriptor] = hash }
@@ -271,7 +271,7 @@ class ChanThread(
         ?: return@write
 
       if (deleted != null) {
-        chanOriginalPost.deleted = deleted
+        chanOriginalPost.isDeleted = deleted
       }
 
       if (archived != null) {
@@ -288,7 +288,7 @@ class ChanThread(
     return lock.read {
       val originalPost = getOriginalPost()
 
-      return@read !originalPost.closed && !originalPost.deleted && !originalPost.archived
+      return@read !originalPost.closed && !originalPost.isDeleted && !originalPost.archived
     }
   }
 
@@ -582,7 +582,7 @@ class ChanThread(
       posterId = newChanPost.posterId,
       moderatorCapcode = newChanPost.moderatorCapcode,
       isSavedReply = newChanPost.isSavedReply,
-      deleted = oldChanPost.deleted
+      deleted = oldChanPost.isDeleted
     )
 
     handlePostContentLoadedMap(mergedPost, oldChanPost, postCommentsDiffer)
@@ -627,7 +627,7 @@ class ChanThread(
       sticky = newChanOriginalPost.sticky,
       closed = newChanOriginalPost.closed,
       archived = newChanOriginalPost.archived,
-      deleted = oldChanOriginalPost.deleted
+      deleted = oldChanOriginalPost.isDeleted
     )
 
     handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost, postCommentsDiffer)

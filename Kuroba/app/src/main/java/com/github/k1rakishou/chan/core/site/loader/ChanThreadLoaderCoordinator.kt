@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -143,17 +144,16 @@ class ChanThreadLoaderCoordinator(
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
 
+      val isThreadDownloaded = chanDescriptor is ChanDescriptor.ThreadDescriptor
+        && threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)
+
       return@withContext Try {
-        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          if (threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)) {
-            chanPostRepository.updateThreadState(chanDescriptor, archived = true)
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor && isThreadDownloaded) {
+          chanPostRepository.updateThreadState(chanDescriptor, deleted = false, archived = true)
 
-            val success = databasePostLoader.loadPosts(chanDescriptor) != null
-            if (success) {
-              return@Try ThreadLoadResult.Loaded(chanDescriptor)
-            }
-
-            // fallthrough
+          val success = databasePostLoader.loadPosts(chanDescriptor) != null
+          if (success) {
+            return@Try ThreadLoadResult.Loaded(chanDescriptor)
           }
 
           // fallthrough
@@ -182,14 +182,16 @@ class ChanThreadLoaderCoordinator(
 
           return@Try fallbackPostLoadOnNetworkError(
             chanDescriptor = chanDescriptor,
-            error = error
+            error = error,
+            isThreadDownloaded = isThreadDownloaded
           )
         }
 
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(
             chanDescriptor = chanDescriptor,
-            error = ServerException(response.code)
+            error = BadStatusResponseException(response.code),
+            isThreadDownloaded = isThreadDownloaded
           )
         }
 
@@ -213,15 +215,6 @@ class ChanThreadLoaderCoordinator(
         }
 
         if (chanReaderProcessor.error != null) {
-          if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-            chanPostRepository.updateThreadState(
-              threadDescriptor = chanDescriptor,
-              deleted = chanReaderProcessor.deleted,
-              archived = chanReaderProcessor.archived,
-              closed = chanReaderProcessor.closed
-            )
-          }
-
           when (val error = chanReaderProcessor.error!!) {
             is SiteSpecificError.ErrorCode -> {
               throw SiteError(error.errorCode, error.errorMessage)
@@ -231,8 +224,12 @@ class ChanThreadLoaderCoordinator(
         }
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          // We loaded the thread, mark it as not deleted (in case it somehow was marked as deleted)
-          chanPostRepository.updateThreadState(chanDescriptor, deleted = false)
+          chanPostRepository.updateThreadState(
+            threadDescriptor = chanDescriptor,
+            deleted = chanReaderProcessor.deleted && !isThreadDownloaded,
+            archived = chanReaderProcessor.archived || isThreadDownloaded,
+            closed = chanReaderProcessor.closed
+          )
         }
 
         val postParser = chanReader.getParser()
@@ -383,13 +380,20 @@ class ChanThreadLoaderCoordinator(
 
   private suspend fun fallbackPostLoadOnNetworkError(
     chanDescriptor: ChanDescriptor,
-    error: Throwable
+    error: Throwable,
+    isThreadDownloaded: Boolean
   ): ThreadLoadResult {
     BackgroundUtils.ensureBackgroundThread()
 
-    val isThreadDeleted = error is ServerException && error.statusCode == 404
-    if (isThreadDeleted && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      chanPostRepository.updateThreadState(chanDescriptor, deleted = true)
+    val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
+    val isThreadArchived = !isThreadDeleted
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanPostRepository.updateThreadState(
+        threadDescriptor = chanDescriptor,
+        archived = isThreadArchived,
+        deleted = isThreadDeleted
+      )
     }
 
     val chanLoaderResponse = databasePostLoader.loadPosts(chanDescriptor)

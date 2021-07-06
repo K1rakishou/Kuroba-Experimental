@@ -31,7 +31,7 @@ open class ChanPost(
 
   @get:Synchronized
   @set:Synchronized
-  var deleted: Boolean = deleted
+  var isDeleted: Boolean = deleted
 
   @get:Synchronized
   val repliesFrom = mutableSetOf<Long>()
@@ -92,7 +92,7 @@ open class ChanPost(
       moderatorCapcode = moderatorCapcode,
       isSavedReply = isSavedReply,
       repliesFrom = repliesFrom,
-      deleted = deleted
+      deleted = isDeleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
     }

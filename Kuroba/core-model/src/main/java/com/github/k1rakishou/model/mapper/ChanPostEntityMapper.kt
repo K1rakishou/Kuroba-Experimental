@@ -25,7 +25,7 @@ object ChanPostEntityMapper {
   ): ChanPostEntity {
     return ChanPostEntity(
       chanPostId = chanPostId,
-      deleted = chanPost.deleted,
+      deleted = chanPost.isDeleted,
       timestamp = chanPost.timestamp,
       name = chanPost.name,
       posterId = chanPost.posterId,

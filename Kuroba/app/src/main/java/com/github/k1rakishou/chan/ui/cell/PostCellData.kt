@@ -81,7 +81,7 @@ data class PostCellData(
   val postIcons: List<ChanPostHttpIcon>
     get() = post.postIcons
   val isDeleted: Boolean
-    get() = post.deleted
+    get() = post.isDeleted
   val isSticky: Boolean
     get() = (post as? ChanOriginalPost)?.sticky ?: false
   val isClosed: Boolean

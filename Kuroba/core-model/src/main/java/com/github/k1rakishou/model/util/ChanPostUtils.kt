@@ -186,7 +186,7 @@ object ChanPostUtils {
       if (chanPostBuilder.archived != chanPostFromCache.archived) {
         return true
       }
-      if (chanPostBuilder.deleted != chanPostFromCache.deleted) {
+      if (chanPostBuilder.deleted != chanPostFromCache.isDeleted) {
         return true
       }
       if (chanPostBuilder.totalRepliesCount != chanPostFromCache.catalogRepliesCount) {

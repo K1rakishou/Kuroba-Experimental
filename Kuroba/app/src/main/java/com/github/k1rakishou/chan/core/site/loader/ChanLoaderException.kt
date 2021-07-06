@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.site.loader
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
 import okhttp3.HttpUrl
@@ -18,7 +19,7 @@ open class ChanLoaderException(
 ) : Exception(exception) {
 
   val isNotFound: Boolean
-    get() = exception is ServerException && exception.isNotFoundError()
+    get() = exception is BadStatusResponseException && exception.isNotFoundError()
 
   val errorMessage: String
     get() {
@@ -26,12 +27,12 @@ open class ChanLoaderException(
         is SocketTimeoutException,
         is SocketException,
         is UnknownHostException -> getString(R.string.thread_load_failed_network)
-        is ServerException -> {
+        is BadStatusResponseException -> {
           when {
             exception.isAuthError() -> getString(R.string.thread_load_failed_auth_error)
             exception.isForbiddenError() -> getString(R.string.thread_load_failed_forbidden_error)
             exception.isNotFoundError() -> getString(R.string.thread_load_failed_not_found)
-            else -> getString(R.string.thread_load_failed_server, exception.statusCode)
+            else -> getString(R.string.thread_load_failed_server, exception.status)
           }
         }
         is SSLException -> getString(R.string.thread_load_failed_ssl)
@@ -76,20 +77,6 @@ open class ChanLoaderException(
 }
 
 class ClientException(message: String) : ChanLoaderException(Exception(message))
-
-class ServerException(val statusCode: Int) : Exception("Bad status code: ${statusCode}") {
-  fun isAuthError(): Boolean {
-    return statusCode == 401
-  }
-
-  fun isForbiddenError(): Boolean {
-    return statusCode == 403
-  }
-
-  fun isNotFoundError(): Boolean {
-    return statusCode == 404
-  }
-}
 
 class SiteError(
   val errorCode: Int,

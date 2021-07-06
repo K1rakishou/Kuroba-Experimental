@@ -164,7 +164,6 @@ class PostSearchPopupController(
     initialQuery = null
     searchLayout.text = prevQuery
 
-
     updaterJob?.cancel()
     updaterJob = null
 
