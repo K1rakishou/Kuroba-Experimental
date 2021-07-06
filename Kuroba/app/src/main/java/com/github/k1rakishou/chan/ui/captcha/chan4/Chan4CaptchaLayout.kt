@@ -6,6 +6,9 @@ import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.Orientation
+import androidx.compose.foundation.gestures.rememberScrollableState
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -18,8 +21,11 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Slider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -137,24 +143,26 @@ class Chan4CaptchaLayout(
     Column(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
+      .verticalScroll(rememberScrollState())
     ) {
       val captchaInfoAsync by viewModel.captchaInfoToShow
       var currentInputValue by viewModel.currentInputValue
-      var sliderValue by remember { mutableStateOf(0f) }
+      val scrollValueState = remember { mutableStateOf(0f) }
+      var scrollValue by scrollValueState
 
-      BuildCaptchaImage(captchaInfoAsync = captchaInfoAsync, sliderValue = sliderValue)
+      BuildCaptchaImage(captchaInfoAsync = captchaInfoAsync, scrollValueState = scrollValueState)
 
       Spacer(modifier = Modifier.height(8.dp))
 
       val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
       if (captchaInfo != null && captchaInfo.needSlider()) {
         Slider(
-          value = sliderValue,
+          value = scrollValue,
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-          onValueChange = { newValue -> sliderValue = newValue }
+          onValueChange = { newValue -> scrollValue = newValue }
         )
       }
 
@@ -170,7 +178,7 @@ class Chan4CaptchaLayout(
           .padding(horizontal = 16.dp)
       )
 
-      Spacer(modifier = Modifier.weight(1f))
+      Spacer(modifier = Modifier.height(8.dp))
 
       Row(
         horizontalArrangement = Arrangement.End,
@@ -180,7 +188,7 @@ class Chan4CaptchaLayout(
       ) {
         KurobaComposeTextButton(
           onClick = {
-            sliderValue = 0f
+            scrollValue = 0f
             hardReset()
           },
           modifier = Modifier
@@ -214,20 +222,17 @@ class Chan4CaptchaLayout(
 
         Spacer(modifier = Modifier.width(8.dp))
       }
-
-      Spacer(modifier = Modifier.height(8.dp))
     }
   }
 
   @Composable
   private fun BuildCaptchaImage(
     captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
-    sliderValue: Float
+    scrollValueState: MutableState<Float>
   ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
 
     Box(modifier = Modifier
-      .height(160.dp)
       .fillMaxWidth()
       .onSizeChanged { newSize -> size = newSize }
     ) {
@@ -246,12 +251,14 @@ class Chan4CaptchaLayout(
           }
           is AsyncData.Data -> {
             val captchaInfo = (captchaInfoAsync as AsyncData.Data).data
-            val contentScale = Scale()
+            val scale = (Math.min(size.width, size.height)) / captchaInfo.imgBitmapPainter.intrinsicSize.height
+            val contentScale = Scale(scale)
+            var scrollValue by scrollValueState
 
             if (captchaInfo.bgBitmapPainter != null) {
               val bgBitmapPainter = captchaInfo.bgBitmapPainter
-              val offset = remember(key1 = sliderValue) {
-                IntOffset(x = (START_OFFSET + (sliderValue * MAX_OFFSET * -1f)).toInt(), y = 0)
+              val offset = remember(key1 = scrollValue) {
+                IntOffset(x = (START_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt(), y = 0)
               }
 
               Image(
@@ -264,8 +271,24 @@ class Chan4CaptchaLayout(
               )
             }
 
+            val scrollState = rememberScrollableState { delta ->
+              var newScrollValue = scrollValue + (delta.toFloat() / size.width.toFloat())
+
+              if (newScrollValue < 0f) {
+                newScrollValue = 0f
+              } else if (newScrollValue > 1f) {
+                newScrollValue = 1f
+              }
+
+              scrollValue = newScrollValue
+
+              return@rememberScrollableState delta
+            }
+
             Image(
-              modifier = Modifier.fillMaxSize(),
+              modifier = Modifier
+                .fillMaxSize()
+                .scrollable(state = scrollState, orientation = Orientation.Horizontal),
               painter = captchaInfo.imgBitmapPainter,
               contentScale = contentScale,
               contentDescription = null
@@ -276,15 +299,17 @@ class Chan4CaptchaLayout(
     }
   }
 
-  class Scale : ContentScale {
+  class Scale(
+    private val scale: Float
+  ) : ContentScale {
     override fun computeScaleFactor(srcSize: Size, dstSize: Size): ScaleFactor {
-      return ScaleFactor(4f, 4f)
+      return ScaleFactor(scale, scale)
     }
   }
   
   companion object {
-    private const val START_OFFSET = 100f
-    private const val MAX_OFFSET = 300f
+    private const val START_OFFSET = 75f
+    private const val MAX_OFFSET = 150f
   }
 
 }
