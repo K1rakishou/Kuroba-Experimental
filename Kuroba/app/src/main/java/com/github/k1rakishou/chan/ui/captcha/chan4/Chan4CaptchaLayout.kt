@@ -292,7 +292,7 @@ class Chan4CaptchaLayout(
             var scrollValue by scrollValueState
             val onlyShowBackgroundImage by viewModel.onlyShowBackgroundImage
 
-            if (onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
+            if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
               val bgBitmapPainter = captchaInfo.bgBitmapPainter
               val offset = remember(key1 = scrollValue) {
                 IntOffset(x = (START_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt(), y = 0)
@@ -354,8 +354,8 @@ class Chan4CaptchaLayout(
   }
   
   companion object {
-    private const val START_OFFSET = 75f
-    private const val MAX_OFFSET = 150f
+    private const val START_OFFSET = 150f
+    private const val MAX_OFFSET = 400f
   }
 
 }
