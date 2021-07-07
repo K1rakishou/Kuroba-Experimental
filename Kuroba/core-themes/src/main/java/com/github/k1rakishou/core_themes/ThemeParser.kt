@@ -500,6 +500,7 @@ class ThemeParser(
           accentColor = chanTheme.accentColor.colorIntToHexColorString(),
           primaryColor = chanTheme.primaryColor.colorIntToHexColorString(),
           backColor = chanTheme.backColor.colorIntToHexColorString(),
+          backColorSecondary = chanTheme.backColorSecondary.colorIntToHexColorString(),
           errorColor = chanTheme.errorColor.colorIntToHexColorString(),
           textColorPrimary = chanTheme.textColorPrimary.colorIntToHexColorString(),
           textColorSecondary = chanTheme.textColorSecondary.colorIntToHexColorString(),
