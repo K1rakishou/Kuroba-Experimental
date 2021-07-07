@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,7 +42,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
@@ -55,6 +53,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
@@ -360,9 +359,7 @@ class LocalArchiveController(
 
     Row(modifier = Modifier
       .fillMaxWidth()
-      .height(26.dp)
-      .padding(horizontal = 4.dp)
-      .clip(RoundedCornerShape(4.dp))
+      .height(28.dp)
     ) {
       kotlin.run {
         val backgroundColor = remember(key1 = viewMode) {
@@ -376,15 +373,16 @@ class LocalArchiveController(
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_all_threads),
           textAlign = TextAlign.Center,
-          fontSize = 16.sp,
+          fontSize = 15.sp,
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
           fontWeight = FontWeight.SemiBold,
           modifier = Modifier
             .fillMaxHeight()
             .background(color = backgroundColor)
-            .weight(weight = 0.33f)
-            .clickable {
-              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowAll)
-            }
+            .weight(weight = 0.2f)
+            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowAll) }
+            .padding(top = 4.dp)
         )
       }
 
@@ -407,16 +405,15 @@ class LocalArchiveController(
 
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_downloading_threads),
-          fontSize = 16.sp,
+          fontSize = 15.sp,
           fontWeight = FontWeight.SemiBold,
           textAlign = TextAlign.Center,
           modifier = Modifier
             .fillMaxHeight()
             .background(color = backgroundColor)
-            .weight(weight = 0.33f)
-            .clickable {
-              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowDownloading)
-            }
+            .weight(weight = 0.4f)
+            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowDownloading) }
+            .padding(top = 4.dp)
         )
       }
 
@@ -439,16 +436,15 @@ class LocalArchiveController(
 
         KurobaComposeText(
           text = stringResource(id = R.string.controller_local_archive_show_downloaded_threads),
-          fontSize = 16.sp,
+          fontSize = 15.sp,
           fontWeight = FontWeight.SemiBold,
           textAlign = TextAlign.Center,
           modifier = Modifier
             .fillMaxHeight()
             .background(color = backgroundColor)
-            .weight(weight = 0.33f)
-            .clickable {
-              onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowCompleted)
-            }
+            .weight(weight = 0.4f)
+            .clickable { onViewModeChanged(LocalArchiveViewModel.ViewMode.ShowCompleted) }
+            .padding(top = 4.dp)
         )
       }
     }

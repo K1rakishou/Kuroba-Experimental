@@ -29,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -76,6 +77,8 @@ fun KurobaComposeText(
   fontSize: TextUnit = TextUnit.Unspecified,
   fontWeight: FontWeight? = null,
   maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
   textAlign: TextAlign? = null
 ) {
   KurobaComposeText(
@@ -85,6 +88,8 @@ fun KurobaComposeText(
     fontSize = fontSize,
     fontWeight = fontWeight,
     maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
     textAlign = textAlign
   )
 }
@@ -97,6 +102,8 @@ fun KurobaComposeText(
   fontSize: TextUnit = TextUnit.Unspecified,
   fontWeight: FontWeight? = null,
   maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
   textAlign: TextAlign? = null
 ) {
   val textColorPrimary = if (color == null) {
@@ -114,6 +121,8 @@ fun KurobaComposeText(
     text = text,
     fontSize = fontSize,
     maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
     textAlign = textAlign,
     fontWeight = fontWeight,
     modifier = modifier
