@@ -4,9 +4,6 @@ import android.content.Context
 import android.net.Uri
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
-import androidx.compose.animation.core.animateDp
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -70,13 +67,13 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -138,7 +135,7 @@ class LocalArchiveController(
 
     navigation.buildMenu(context)
       .withMenuItemClickInterceptor {
-        viewModel.unselectAll()
+        viewModel.viewModelSelectionHelper.unselectAll()
         return@withMenuItemClickInterceptor true
       }
       .withItem(ACTION_SEARCH, R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
@@ -161,15 +158,15 @@ class LocalArchiveController(
       .build()
 
     mainScope.launch {
-      viewModel.selectionMode.collect { selectionEvent ->
+      viewModel.viewModelSelectionHelper.selectionMode.collect { selectionEvent ->
         onNewSelectionEvent(selectionEvent)
       }
     }
 
     mainScope.launch {
-      viewModel.bottomPanelMenuItemClickEventFlow
+      viewModel.viewModelSelectionHelper.bottomPanelMenuItemClickEventFlow
         .collect { menuItemClickEvent ->
-          onMenuItemClicked(menuItemClickEvent.archiveMenuItemType, menuItemClickEvent.items)
+          onMenuItemClicked(menuItemClickEvent.menuItemType, menuItemClickEvent.items)
         }
     }
 
@@ -201,7 +198,7 @@ class LocalArchiveController(
   }
 
   override fun onBack(): Boolean {
-    if (viewModel.unselectAll()) {
+    if (viewModel.viewModelSelectionHelper.unselectAll()) {
       return true
     }
 
@@ -215,7 +212,7 @@ class LocalArchiveController(
     mainControllerCallbacks.hideBottomPanel()
 
     viewModel.updateQueryAndReload(null)
-    viewModel.unselectAll()
+    viewModel.viewModelSelectionHelper.unselectAll()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -247,7 +244,7 @@ class LocalArchiveController(
 
     BuildThreadDownloadsList(
       onViewModeChanged = { newViewMode ->
-        viewModel.unselectAll()
+        viewModel.viewModelSelectionHelper.unselectAll()
 
         if (newViewMode == viewModel.viewMode.value) {
           return@BuildThreadDownloadsList
@@ -258,8 +255,8 @@ class LocalArchiveController(
       },
       threadDownloadViews = threadDownloadViews,
       onThreadDownloadClicked = { threadDescriptor ->
-        if (viewModel.isInSelectionMode()) {
-          viewModel.toggleSelection(threadDescriptor)
+        if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+          viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor)
 
           return@BuildThreadDownloadsList
         }
@@ -268,7 +265,7 @@ class LocalArchiveController(
       },
       onThreadDownloadLongClicked = { threadDescriptor ->
         controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-        viewModel.toggleSelection(threadDescriptor)
+        viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor)
       }
     )
   }
@@ -459,7 +456,7 @@ class LocalArchiveController(
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val selectionEvent by viewModel.collectSelectionModeAsState()
+    val selectionEvent by viewModel.viewModelSelectionHelper.collectSelectionModeAsState()
     val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
 
     Box(modifier = Modifier
@@ -475,145 +472,108 @@ class LocalArchiveController(
     ) {
       val threadDescriptor = threadDownloadView.threadDescriptor
 
-      Row(modifier = Modifier.fillMaxSize()) {
-        val transition = updateTransition(
-          targetState = isInSelectionMode,
-          label = "Selection mode transition"
+      SelectableItem(
+        isInSelectionMode = isInSelectionMode,
+        observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(threadDescriptor) },
+        onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor) }
+      ) {
+        val contentAlpha = remember(key1 = threadDownloadView.status) {
+          when (threadDownloadView.status) {
+            ThreadDownload.Status.Running -> DefaultAlpha
+            ThreadDownload.Status.Stopped,
+            ThreadDownload.Status.Completed -> 0.7f
+          }
+        }
+
+        KurobaComposeText(
+          text = threadDownloadView.threadSubject,
+          fontSize = 14.sp,
+          color = chanTheme.postSubjectColorCompose,
+          maxLines = 2,
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .alpha(contentAlpha)
         )
 
-        val alpha by transition.animateFloat(label = "Selection mode alpha animation") { selection ->
-          if (selection) {
-            1f
-          } else {
-            0f
-          }
-        }
+        Spacer(modifier = Modifier.height(2.dp))
 
-        val width by transition.animateDp(label = "Selection mode checkbox size animation") { selection ->
-          if (selection) {
-            32.dp
-          } else {
-            0.dp
-          }
-        }
-
-        Box(
-          modifier = Modifier
-            .width(width)
-            .alpha(alpha)
-        ) {
-          if (isInSelectionMode) {
-            val checked by viewModel.observeSelectionState(threadDescriptor)
-
-            KurobaComposeCheckbox(
-              currentlyChecked = checked,
-              onCheckChanged = { viewModel.toggleSelection(threadDescriptor) }
-            )
-          }
-        }
-        
-        Column(modifier = Modifier
-          .fillMaxWidth()
+        Row(modifier = Modifier
           .wrapContentHeight()
+          .fillMaxWidth()
         ) {
-          val contentAlpha = remember(key1 = threadDownloadView.status) {
-            when (threadDownloadView.status) {
-              ThreadDownload.Status.Running -> DefaultAlpha
-              ThreadDownload.Status.Stopped,
-              ThreadDownload.Status.Completed -> 0.7f
+          val thumbnailLocation = threadDownloadView.thumbnailLocation
+          if (thumbnailLocation != null) {
+            val imageLoaderRequest = remember(key1 = thumbnailLocation) {
+              val requestData = when (thumbnailLocation) {
+                is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
+                  ImageLoaderRequestData.File(thumbnailLocation.file)
+                }
+                is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
+                  ImageLoaderRequestData.Url(thumbnailLocation.url)
+                }
+              }
+
+              return@remember ImageLoaderRequest(data = requestData)
             }
+
+            KurobaComposeImage(
+              request = imageLoaderRequest,
+              modifier = Modifier
+                .height(100.dp)
+                .width(60.dp)
+                .alpha(contentAlpha),
+              imageLoaderV2 = imageLoaderV2
+            )
+
+            Spacer(modifier = Modifier.width(4.dp))
           }
 
           KurobaComposeText(
-            text = threadDownloadView.threadSubject,
-            fontSize = 14.sp,
-            color = chanTheme.postSubjectColorCompose,
-            maxLines = 2,
+            text = threadDownloadView.threadDownloadInfo,
+            fontSize = 12.sp,
+            color = chanTheme.textColorPrimaryCompose,
+            modifier = Modifier
+              .fillMaxWidth()
+              .weight(1f)
+              .align(Alignment.CenterVertically)
+              .alpha(contentAlpha)
+          )
+
+          Column(modifier = Modifier
+            .wrapContentSize()
+            .align(Alignment.CenterVertically)
+          ) {
+            BuildThreadDownloadStatusIcon(animationAtEnd, threadDownloadView, contentAlpha)
+            BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
+            BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
+          }
+        }
+
+        val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
+        if (stats != null) {
+          Spacer(modifier = Modifier.weight(1f))
+
+          val formattedDiskSize = remember(key1 = stats!!.mediaTotalDiskSize) {
+            ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)
+          }
+
+          val statsText = stringResource(
+            R.string.controller_local_archive_additional_thread_stats,
+            stats!!.downloadedPostsCount,
+            stats!!.downloadedMediaCount,
+            formattedDiskSize
+          )
+
+          KurobaComposeText(
+            text = statsText,
+            fontSize = 12.sp,
+            color = chanTheme.textColorHintCompose,
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight()
               .alpha(contentAlpha)
           )
-
-          Spacer(modifier = Modifier.height(2.dp))
-
-          Row(modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-          ) {
-            val thumbnailLocation = threadDownloadView.thumbnailLocation
-            if (thumbnailLocation != null) {
-              val imageLoaderRequest = remember(key1 = thumbnailLocation) {
-                val requestData = when (thumbnailLocation) {
-                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
-                    ImageLoaderRequestData.File(thumbnailLocation.file)
-                  }
-                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
-                    ImageLoaderRequestData.Url(thumbnailLocation.url)
-                  }
-                }
-
-                return@remember ImageLoaderRequest(data = requestData)
-              }
-
-              KurobaComposeImage(
-                request = imageLoaderRequest,
-                modifier = Modifier
-                  .height(100.dp)
-                  .width(60.dp)
-                  .alpha(contentAlpha),
-                imageLoaderV2 = imageLoaderV2
-              )
-
-              Spacer(modifier = Modifier.width(4.dp))
-            }
-
-            KurobaComposeText(
-              text = threadDownloadView.threadDownloadInfo,
-              fontSize = 12.sp,
-              color = chanTheme.textColorPrimaryCompose,
-              modifier = Modifier
-                .fillMaxWidth()
-                .weight(1f)
-                .align(Alignment.CenterVertically)
-                .alpha(contentAlpha)
-            )
-
-            Column(modifier = Modifier
-              .wrapContentSize()
-              .align(Alignment.CenterVertically)
-            ) {
-              BuildThreadDownloadStatusIcon(animationAtEnd, threadDownloadView, contentAlpha)
-              BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
-              BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
-            }
-          }
-
-          val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
-          if (stats != null) {
-            Spacer(modifier = Modifier.weight(1f))
-
-            val formattedDiskSize = remember(key1 = stats!!.mediaTotalDiskSize) {
-              ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)
-            }
-
-            val statsText = stringResource(
-              R.string.controller_local_archive_additional_thread_stats,
-              stats!!.downloadedPostsCount,
-              stats!!.downloadedMediaCount,
-              formattedDiskSize
-            )
-
-            KurobaComposeText(
-              text = statsText,
-              fontSize = 12.sp,
-              color = chanTheme.textColorHintCompose,
-              modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .alpha(contentAlpha)
-            )
-          }
         }
       }
     }
@@ -730,15 +690,15 @@ class LocalArchiveController(
   }
 
   private fun onMenuItemClicked(
-    archiveMenuItemType: LocalArchiveViewModel.ArchiveMenuItemType,
+    menuItemType: LocalArchiveViewModel.MenuItemType,
     selectedItems: List<ChanDescriptor.ThreadDescriptor>
   ) {
     if (selectedItems.isEmpty()) {
       return
     }
 
-    when (archiveMenuItemType) {
-      LocalArchiveViewModel.ArchiveMenuItemType.Delete -> {
+    when (menuItemType) {
+      LocalArchiveViewModel.MenuItemType.Delete -> {
         val title = if (selectedItems.size == 1) {
           getString(R.string.controller_local_archive_delete_one_thread, selectedItems.first().userReadableString())
         } else {
@@ -758,13 +718,13 @@ class LocalArchiveController(
           }
         )
       }
-      LocalArchiveViewModel.ArchiveMenuItemType.Stop -> {
+      LocalArchiveViewModel.MenuItemType.Stop -> {
         viewModel.stopDownloads(selectedItems)
       }
-      LocalArchiveViewModel.ArchiveMenuItemType.Start -> {
+      LocalArchiveViewModel.MenuItemType.Start -> {
         viewModel.startDownloads(selectedItems)
       }
-      LocalArchiveViewModel.ArchiveMenuItemType.Export -> {
+      LocalArchiveViewModel.MenuItemType.Export -> {
         val threadDescriptor = selectedItems.firstOrNull()
         if (threadDescriptor != null) {
           exportThreadAsHtml(threadDescriptor)
@@ -838,11 +798,11 @@ class LocalArchiveController(
   }
 
   private fun formatSelectionText(): String {
-    require(viewModel.isInSelectionMode()) { "Not in selection mode" }
+    require(viewModel.viewModelSelectionHelper.isInSelectionMode()) { "Not in selection mode" }
 
     return getString(
       R.string.controller_local_archive_selection_title,
-      viewModel.selectedItemsCount()
+      viewModel.viewModelSelectionHelper.selectedItemsCount()
     )
   }
 

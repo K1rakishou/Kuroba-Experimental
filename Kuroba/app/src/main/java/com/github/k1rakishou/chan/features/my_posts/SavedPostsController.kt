@@ -1,8 +1,10 @@
 package com.github.k1rakishou.chan.features.my_posts
 
 import android.content.Context
+import android.view.HapticFeedbackConstants
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -15,6 +17,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -27,20 +30,25 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -49,10 +57,13 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.accompanist.insets.imePadding
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class SavedPostsController(
   context: Context,
+  private val mainControllerCallbacks: MainControllerCallbacks,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context),
   ToolbarNavigationController.ToolbarSearchCallback {
@@ -61,6 +72,8 @@ class SavedPostsController(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<SavedPostsViewModel>() }
 
@@ -75,6 +88,10 @@ class SavedPostsController(
     navigationItem.hasBack = false
 
     navigationItem.buildMenu(context)
+      .withMenuItemClickInterceptor {
+        viewModel.viewModelSelectionHelper.unselectAll()
+        return@withMenuItemClickInterceptor true
+      }
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .build()
   }
@@ -83,7 +100,29 @@ class SavedPostsController(
   }
 
   override fun canSwitchTabs(): Boolean {
+    if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+      return false
+    }
+
     return true
+  }
+
+  override fun onBack(): Boolean {
+    if (viewModel.viewModelSelectionHelper.unselectAll()) {
+      return true
+    }
+
+    return super.onBack()
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    requireToolbarNavController().closeSearch()
+    mainControllerCallbacks.hideBottomPanel()
+
+    viewModel.updateQueryAndReload(null)
+    viewModel.viewModelSelectionHelper.unselectAll()
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -98,6 +137,19 @@ class SavedPostsController(
 
   override fun onCreate() {
     super.onCreate()
+
+    mainScope.launch {
+      viewModel.viewModelSelectionHelper.selectionMode.collect { selectionEvent ->
+        onNewSelectionEvent(selectionEvent)
+      }
+    }
+
+    mainScope.launch {
+      viewModel.viewModelSelectionHelper.bottomPanelMenuItemClickEventFlow
+        .collect { menuItemClickEvent ->
+          onMenuItemClicked(menuItemClickEvent.menuItemType, menuItemClickEvent.items)
+        }
+    }
 
     view = ComposeView(context).apply {
       setContent {
@@ -137,17 +189,37 @@ class SavedPostsController(
     BuildSavedRepliesList(
       savedRepliesGrouped = savedRepliesGrouped,
       onHeaderClicked = { threadDescriptor ->
+        if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+          viewModel.toggleGroupSelection(threadDescriptor)
+
+          return@BuildSavedRepliesList
+        }
+
         startActivityCallback.loadThreadAndMarkPost(
           postDescriptor = threadDescriptor.toOriginalPostDescriptor(),
           animated = true
         )
       },
       onReplyClicked = { postDescriptor ->
+        if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+          viewModel.toggleSelection(postDescriptor)
+
+          return@BuildSavedRepliesList
+        }
+
         startActivityCallback.loadThreadAndMarkPost(
           postDescriptor = postDescriptor,
           animated = true
         )
       },
+      onHeaderLongClicked = { threadDescriptor ->
+        controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        viewModel.toggleGroupSelection(threadDescriptor)
+      },
+      onReplyLongClicked = { postDescriptor ->
+        controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+        viewModel.toggleSelection(postDescriptor)
+      }
     )
   }
 
@@ -155,7 +227,9 @@ class SavedPostsController(
   private fun BuildSavedRepliesList(
     savedRepliesGrouped: List<SavedPostsViewModel.GroupedSavedReplies>,
     onHeaderClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
-    onReplyClicked: (PostDescriptor) -> Unit
+    onHeaderLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
+    onReplyClicked: (PostDescriptor) -> Unit,
+    onReplyLongClicked: (PostDescriptor) -> Unit,
   ) {
     val chanTheme = LocalChanTheme.current
     val state = viewModel.lazyListState()
@@ -197,21 +271,27 @@ class SavedPostsController(
 
       savedRepliesGrouped.forEachIndexed { groupIndex, groupedSavedReplies ->
         item(key = "card_${groupIndex}") {
-          Column(modifier = Modifier
+          Card(modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
             .padding(2.dp)
           ) {
-            GroupedSavedReplyHeader(groupedSavedReplies, chanTheme, onHeaderClicked)
+            Column(modifier = Modifier
+              .fillMaxSize()
+              .background(chanTheme.backColorSecondaryCompose)
+              .padding(2.dp)
+            ) {
+              GroupedSavedReplyHeader(groupedSavedReplies, chanTheme, onHeaderClicked, onHeaderLongClicked)
 
-            groupedSavedReplies.savedReplyDataList.forEach { groupedSavedReplyData ->
-              Divider(
-                modifier = Modifier.padding(horizontal = 4.dp),
-                color = chanTheme.dividerColorCompose,
-                thickness = 1.dp
-              )
+              groupedSavedReplies.savedReplyDataList.forEach { groupedSavedReplyData ->
+                Divider(
+                  modifier = Modifier.padding(horizontal = 4.dp),
+                  color = chanTheme.dividerColorCompose,
+                  thickness = 1.dp
+                )
 
-              GroupedSavedReply(groupedSavedReplyData, chanTheme, onReplyClicked)
+                GroupedSavedReply(groupedSavedReplyData, chanTheme, onReplyClicked, onReplyLongClicked)
+              }
             }
           }
         }
@@ -219,17 +299,21 @@ class SavedPostsController(
     }
   }
 
+  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun GroupedSavedReplyHeader(
     groupedSavedReplies: SavedPostsViewModel.GroupedSavedReplies,
     chanTheme: ChanTheme,
-    onHeaderClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
+    onHeaderClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
+    onHeaderLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Box(modifier = Modifier
       .fillMaxWidth()
       .wrapContentHeight()
-      .background(chanTheme.backColorSecondaryCompose)
-      .clickable { onHeaderClicked(groupedSavedReplies.threadDescriptor) }
+      .combinedClickable(
+        onClick = { onHeaderClicked(groupedSavedReplies.threadDescriptor) },
+        onLongClick = { onHeaderLongClicked(groupedSavedReplies.threadDescriptor) }
+      )
       .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
       Column(modifier = Modifier
@@ -263,45 +347,123 @@ class SavedPostsController(
     }
   }
 
+  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun GroupedSavedReply(
     groupedSavedReplyData: SavedPostsViewModel.SavedReplyData,
     chanTheme: ChanTheme,
-    onReplyClicked: (PostDescriptor) -> Unit
+    onReplyClicked: (PostDescriptor) -> Unit,
+    onReplyLongClicked: (PostDescriptor) -> Unit,
   ) {
-    Box(modifier = Modifier
-      .fillMaxSize()
-      .defaultMinSize(minHeight = 42.dp)
-      .clickable { onReplyClicked(groupedSavedReplyData.postDescriptor) }
-      .background(chanTheme.backColorSecondaryCompose)
-      .padding(horizontal = 4.dp, vertical = 2.dp)
+    val selectionEvent by viewModel.viewModelSelectionHelper.collectSelectionModeAsState()
+    val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
+    val postDescriptor = groupedSavedReplyData.postDescriptor
+
+    SelectableItem(
+      isInSelectionMode = isInSelectionMode,
+      observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(postDescriptor) },
+      onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(postDescriptor) }
     ) {
-      Column(modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()
-      ) {
-        KurobaComposeText(
-          text = groupedSavedReplyData.postHeader,
-          fontSize = 12.sp,
-          maxLines = 1,
-          color = chanTheme.textColorHintCompose,
-          modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
+      Box(modifier = Modifier
+        .fillMaxSize()
+        .defaultMinSize(minHeight = 42.dp)
+        .combinedClickable(
+          onClick = { onReplyClicked(postDescriptor) },
+          onLongClick = { onReplyLongClicked(postDescriptor) }
         )
-
-        Spacer(modifier = Modifier.height(2.dp))
-
-        KurobaComposeText(
-          text = groupedSavedReplyData.comment,
-          fontSize = 14.sp,
-          maxLines = 5,
+        .padding(horizontal = 4.dp, vertical = 2.dp)
+      ) {
+        Column(
           modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
+        ) {
+          KurobaComposeText(
+            text = groupedSavedReplyData.postHeader,
+            fontSize = 12.sp,
+            maxLines = 1,
+            color = chanTheme.textColorHintCompose,
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+          )
+
+          Spacer(modifier = Modifier.height(2.dp))
+
+          KurobaComposeText(
+            text = groupedSavedReplyData.comment,
+            fontSize = 14.sp,
+            maxLines = 5,
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+          )
+        }
+      }
+    }
+  }
+
+  private fun onMenuItemClicked(
+    menuItemType: SavedPostsViewModel.MenuItemType,
+    selectedItems: List<PostDescriptor>
+  ) {
+    if (selectedItems.isEmpty()) {
+      return
+    }
+
+    when (menuItemType) {
+      SavedPostsViewModel.MenuItemType.Delete -> {
+        val title = getString(R.string.controller_saved_posts_delete_many_posts, selectedItems.size)
+        val descriptionText = getString(R.string.controller_saved_posts_delete_many_posts_description)
+
+        dialogFactory.createSimpleConfirmationDialog(
+          context,
+          titleText = title,
+          descriptionText = descriptionText,
+          negativeButtonText = getString(R.string.cancel),
+          positiveButtonText = getString(R.string.delete),
+          onPositiveButtonClickListener = {
+            viewModel.deleteSavedPosts(selectedItems)
+          }
         )
       }
     }
   }
+
+  private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent?) {
+    when (selectionEvent) {
+      BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
+      BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
+        mainControllerCallbacks.showBottomPanel(viewModel.getBottomPanelMenus())
+        enterSelectionModeOrUpdate()
+      }
+      BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
+        mainControllerCallbacks.hideBottomPanel()
+        requireNavController().requireToolbar().exitSelectionMode()
+      }
+      null -> return
+    }
+  }
+
+  private fun enterSelectionModeOrUpdate() {
+    val toolbar = requireNavController().requireToolbar()
+    if (!toolbar.isInSelectionMode) {
+      toolbar.enterSelectionMode(formatSelectionText())
+      return
+    }
+
+    navigation.selectionStateText = formatSelectionText()
+    toolbar.updateSelectionTitle(navigation)
+  }
+
+  private fun formatSelectionText(): String {
+    require(viewModel.viewModelSelectionHelper.isInSelectionMode()) { "Not in selection mode" }
+
+    return AppModuleAndroidUtils.getString(
+      R.string.controller_local_archive_selection_title,
+      viewModel.viewModelSelectionHelper.selectedItemsCount()
+    )
+  }
+
 
 }

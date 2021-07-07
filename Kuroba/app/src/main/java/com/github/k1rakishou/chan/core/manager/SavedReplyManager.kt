@@ -109,22 +109,30 @@ class SavedReplyManager(
   }
 
   suspend fun unsavePost(postDescriptor: PostDescriptor) {
-    savedReplyRepository.unsavePost(postDescriptor)
+    unsavePosts(listOf(postDescriptor))
+  }
+
+  suspend fun unsavePosts(postDescriptors: Collection<PostDescriptor>) {
+    savedReplyRepository.unsavePosts(postDescriptors)
       .safeUnwrap { error ->
-        Logger.e(TAG, "unsavePost($postDescriptor) error", error)
+        Logger.e(TAG, "unsavePost(${postDescriptors.size} posts) error", error)
         return
       }
 
     val updated = lock.write {
-      val index = savedReplyMap[postDescriptor.threadDescriptor()]
-        ?.indexOfFirst { chanSavedReply -> chanSavedReply.postDescriptor == postDescriptor } ?: -1
+      var updated = false
 
-      if (index >= 0) {
-        savedReplyMap[postDescriptor.threadDescriptor()]?.removeAt(index)
-        return@write true
+      postDescriptors.forEach { postDescriptor ->
+        val index = savedReplyMap[postDescriptor.threadDescriptor()]
+          ?.indexOfFirst { chanSavedReply -> chanSavedReply.postDescriptor == postDescriptor } ?: -1
+
+        if (index >= 0) {
+          savedReplyMap[postDescriptor.threadDescriptor()]?.removeAt(index)
+          updated = true
+        }
       }
 
-      return@write false
+      return@write updated
     }
 
     if (updated) {

@@ -29,16 +29,18 @@ class ChanSavedReplyLocalSource(
     ).map { chanSavedReplyEntity -> ChanSavedReplyMapper.fromEntity(chanSavedReplyEntity) }
   }
 
-  suspend fun unsavePost(postDescriptor: PostDescriptor) {
+  suspend fun unsavePosts(postDescriptors: Collection<PostDescriptor>) {
     ensureInTransaction()
 
-    chanSavedReplyDao.delete(
-      postDescriptor.threadDescriptor().siteName(),
-      postDescriptor.threadDescriptor().boardDescriptor.boardCode,
-      postDescriptor.threadDescriptor().threadNo,
-      postDescriptor.postNo,
-      postDescriptor.postSubNo
-    )
+    postDescriptors.forEach { postDescriptor ->
+      chanSavedReplyDao.delete(
+        postDescriptor.threadDescriptor().siteName(),
+        postDescriptor.threadDescriptor().boardDescriptor.boardCode,
+        postDescriptor.threadDescriptor().threadNo,
+        postDescriptor.postNo,
+        postDescriptor.postSubNo
+      )
+    }
   }
 
   suspend fun savePost(chanSavedReply: ChanSavedReply) {

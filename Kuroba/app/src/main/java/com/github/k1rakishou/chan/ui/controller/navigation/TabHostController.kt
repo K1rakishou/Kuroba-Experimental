@@ -172,6 +172,7 @@ class TabHostController(
         PageType.SavedPosts -> {
           SavedPostsController(
             context = context,
+            mainControllerCallbacks = mainControllerCallbacks,
             startActivityCallback = startActivityCallback
           )
         }
@@ -179,7 +180,7 @@ class TabHostController(
           BookmarksController(
             context = context,
             bookmarksToHighlight = bookmarksToHighlight,
-            drawerCallbacks = mainControllerCallbacks,
+            mainControllerCallbacks = mainControllerCallbacks,
             startActivityCallback = startActivityCallback
           )
         }

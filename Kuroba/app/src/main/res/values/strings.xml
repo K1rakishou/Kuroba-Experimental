@@ -1327,13 +1327,16 @@ Don't have a 4chan Pass?<br>
     <string name="controller_local_archive_thread_last_download_status_ok">Last thread update: OK</string>
     <string name="controller_local_archive_thread_last_download_status_error">Last thread update error: %1$s</string>
     <string name="controller_local_archive_selection_title">Selected %1$d threads</string>
-    <string name="controller_local_archive_delete_threads_description">"This action will delete thread(s) with all downloaded posts and files. Are you sure you want to do that?</string>
+    <string name="controller_local_archive_delete_threads_description">This action will delete thread(s) with all downloaded posts and files. Are you sure you want to do that?</string>
     <string name="controller_local_archive_delete_one_thread">Delete %1$s archived thread?</string>
     <string name="controller_local_archive_delete_many_threads">Delete %1$d archived threads?</string>
     <string name="controller_local_archive_show_all_threads">ALL</string>
     <string name="controller_local_archive_show_downloading_threads">DOWNLOADING</string>
     <string name="controller_local_archive_show_downloaded_threads">DOWNLOADED</string>
     <string name="controller_local_archive_additional_thread_stats">Posts: %1$d, Media: %2$d, Media on disk: %3$s</string>
+
+    <string name="controller_saved_posts_delete_many_posts">Delete %1$d saved post(s)?</string>
+    <string name="controller_saved_posts_delete_many_posts_description">This action will delete saved posts and unmark replies as yours in threads. Are you sure you want to do that?</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

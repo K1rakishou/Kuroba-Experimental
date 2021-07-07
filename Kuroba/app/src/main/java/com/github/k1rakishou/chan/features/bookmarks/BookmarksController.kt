@@ -73,7 +73,7 @@ import javax.inject.Inject
 class BookmarksController(
   context: Context,
   bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
-  private val drawerCallbacks: MainControllerCallbacks,
+  private val mainControllerCallbacks: MainControllerCallbacks,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context),
   BookmarksView,
@@ -326,7 +326,7 @@ class BookmarksController(
 
     bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
     requireNavController().requireToolbar().exitSelectionMode()
-    drawerCallbacks.hideBottomPanel()
+    mainControllerCallbacks.hideBottomPanel()
 
     epoxyRecyclerView.clear()
     epoxyRecyclerView.removeOnScrollListener(onScrollListener)
@@ -342,7 +342,7 @@ class BookmarksController(
       }
     }
 
-    val result = drawerCallbacks.passOnBackToBottomPanel() ?: false
+    val result = mainControllerCallbacks.passOnBackToBottomPanel() ?: false
     if (result) {
       bookmarksSelectionHelper.clearSelection()
     }
@@ -482,13 +482,13 @@ class BookmarksController(
       BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
       BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
         if (selectionEvent is BaseSelectionHelper.SelectionEvent.EnteredSelectionMode) {
-          drawerCallbacks.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
+          mainControllerCallbacks.showBottomPanel(bookmarksSelectionHelper.getBottomPanelMenus())
         }
 
         enterSelectionModeOrUpdate()
       }
       BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
-        drawerCallbacks.hideBottomPanel()
+        mainControllerCallbacks.hideBottomPanel()
         requireNavController().requireToolbar().exitSelectionMode()
       }
     }

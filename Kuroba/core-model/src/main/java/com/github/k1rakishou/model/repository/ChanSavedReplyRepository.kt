@@ -30,10 +30,10 @@ class ChanSavedReplyRepository(
     }
   }
 
-  suspend fun unsavePost(postDescriptor: PostDescriptor): ModularResult<Unit> {
+  suspend fun unsavePosts(postDescriptors: Collection<PostDescriptor>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        return@tryWithTransaction localSource.unsavePost(postDescriptor)
+        return@tryWithTransaction localSource.unsavePosts(postDescriptors)
       }
     }
   }
@@ -45,8 +45,6 @@ class ChanSavedReplyRepository(
       }
     }
   }
-
-  // TODO(KurobaEx): remove old saved replies after some time
 
   private val TAG = "ChanSavedReplyRepository"
 }

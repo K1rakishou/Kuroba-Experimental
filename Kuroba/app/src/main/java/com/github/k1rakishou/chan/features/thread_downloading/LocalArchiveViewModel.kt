@@ -5,10 +5,9 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.MutableCachedSharedFlow
+import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -26,12 +25,8 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -66,6 +61,7 @@ class LocalArchiveViewModel : BaseViewModel() {
 
   private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(mainScope)
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
+  val viewModelSelectionHelper = ViewModelSelectionHelper<ChanDescriptor.ThreadDescriptor, MenuItemClickEvent>()
 
   private val _state = MutableStateFlow(ViewModelState())
   val state: StateFlow<ViewModelState>
@@ -77,25 +73,10 @@ class LocalArchiveViewModel : BaseViewModel() {
 
   var viewMode = mutableStateOf<ViewMode>(ViewMode.ShowAll)
 
-  private var _selectionMode = MutableCachedSharedFlow<BaseSelectionHelper.SelectionEvent?>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST
-  )
-  val selectionMode: SharedFlow<BaseSelectionHelper.SelectionEvent?>
-    get() = _selectionMode.sharedFlow
-
-  private val _bottomPanelMenuItemClickEventFlow = MutableSharedFlow<MenuItemClickEvent>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.DROP_OLDEST
-  )
-  val bottomPanelMenuItemClickEventFlow: SharedFlow<MenuItemClickEvent>
-    get() = _bottomPanelMenuItemClickEventFlow.asSharedFlow()
-
   private val _controllerTitleInfoUpdatesFlow = MutableStateFlow<ControllerTitleInfo?>(null)
   val controllerTitleInfoUpdatesFlow: StateFlow<ControllerTitleInfo?>
     get() = _controllerTitleInfoUpdatesFlow.asStateFlow()
 
-  private val selectedItems = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<Boolean>>()
   private val additionalThreadDownloadStats = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<AdditionalThreadDownloadStats?>>()
 
   private var rememberedFirstVisibleItemIndex: Int = 0
@@ -133,11 +114,6 @@ class LocalArchiveViewModel : BaseViewModel() {
     rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
 
     return lazyListState
-  }
-
-  @Composable
-  fun collectSelectionModeAsState(): State<BaseSelectionHelper.SelectionEvent?> {
-    return _selectionMode.collectAsState()
   }
 
   @Composable
@@ -248,50 +224,8 @@ class LocalArchiveViewModel : BaseViewModel() {
     return threadDownloadManager.notCompletedThreadsCount() > 0
   }
 
-  fun selectedItemsCount(): Int {
-    return selectedItems.count { (_, selectionState) -> selectionState.value }
-  }
-
-  fun isInSelectionMode(): Boolean {
-    if (selectedItems.isEmpty()) {
-      return false
-    }
-
-    return selectedItems.any { (_, selectionState) -> selectionState.value }
-  }
-
-  fun toggleSelection(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (!selectedItems.containsKey(threadDescriptor)) {
-      selectedItems.put(threadDescriptor, mutableStateOf(false))
-    }
-
-    var selectionState by selectedItems[threadDescriptor]!!
-    selectionState = selectionState.not()
-
-    updateSelectionModeFlag()
-  }
-
-  fun observeSelectionState(threadDescriptor: ChanDescriptor.ThreadDescriptor): State<Boolean> {
-    if (!selectedItems.containsKey(threadDescriptor)) {
-      selectedItems.put(threadDescriptor, mutableStateOf(false))
-      updateSelectionModeFlag()
-    }
-
-    return selectedItems[threadDescriptor]!!
-  }
-
-  fun unselectAll(): Boolean {
-    if (selectedItems.isEmpty()) {
-      return false
-    }
-
-    selectedItems.clear()
-    updateSelectionModeFlag()
-    return true
-  }
-
   fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
-    val currentlySelectedItems = getCurrentlySelectedItems()
+    val currentlySelectedItems = viewModelSelectionHelper.getCurrentlySelectedItems()
     if (currentlySelectedItems.isEmpty()) {
       return emptyList()
     }
@@ -300,55 +234,67 @@ class LocalArchiveViewModel : BaseViewModel() {
     val itemsList = mutableListOf<BottomMenuPanelItem>()
 
     itemsList += BottomMenuPanelItem(
-      ArchiveMenuItemId(ArchiveMenuItemType.Delete),
+      ArchiveMenuItemId(MenuItemType.Delete),
       R.drawable.ic_baseline_delete_outline_24,
       R.string.bottom_menu_item_delete,
       {
-        val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Delete, getCurrentlySelectedItems())
-        _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
+        val clickEvent = MenuItemClickEvent(
+          menuItemType = MenuItemType.Delete,
+          items = viewModelSelectionHelper.getCurrentlySelectedItems()
+        )
 
-        unselectAll()
+        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+        viewModelSelectionHelper.unselectAll()
       }
     )
 
     if (availableActions.canStop) {
       itemsList += BottomMenuPanelItem(
-        ArchiveMenuItemId(ArchiveMenuItemType.Stop),
+        ArchiveMenuItemId(MenuItemType.Stop),
         R.drawable.ic_baseline_stop_24,
         R.string.bottom_menu_item_stop,
         {
-          val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Stop, getCurrentlySelectedItems())
-          _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
+          val clickEvent = MenuItemClickEvent(
+            menuItemType = MenuItemType.Stop,
+            items = viewModelSelectionHelper.getCurrentlySelectedItems()
+          )
 
-          unselectAll()
+          viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+          viewModelSelectionHelper.unselectAll()
         }
       )
     }
 
     if (availableActions.canStart) {
       itemsList += BottomMenuPanelItem(
-        ArchiveMenuItemId(ArchiveMenuItemType.Start),
+        ArchiveMenuItemId(MenuItemType.Start),
         R.drawable.ic_file_download_white_24dp,
         R.string.bottom_menu_item_start,
         {
-          val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Start, getCurrentlySelectedItems())
-          _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
+          val clickEvent = MenuItemClickEvent(
+            menuItemType = MenuItemType.Start,
+            items = viewModelSelectionHelper.getCurrentlySelectedItems()
+          )
 
-          unselectAll()
+          viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+          viewModelSelectionHelper.unselectAll()
         }
       )
     }
 
     if (currentlySelectedItems.size == 1) {
       itemsList += BottomMenuPanelItem(
-        ArchiveMenuItemId(ArchiveMenuItemType.Export),
+        ArchiveMenuItemId(MenuItemType.Export),
         R.drawable.ic_baseline_share_24,
         R.string.bottom_menu_item_export,
         {
-          val clickEvent = MenuItemClickEvent(ArchiveMenuItemType.Export, getCurrentlySelectedItems())
-          _bottomPanelMenuItemClickEventFlow.tryEmit(clickEvent)
+          val clickEvent = MenuItemClickEvent(
+            menuItemType = MenuItemType.Export,
+            items = viewModelSelectionHelper.getCurrentlySelectedItems()
+          )
 
-          unselectAll()
+          viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+          viewModelSelectionHelper.unselectAll()
         }
       )
     }
@@ -385,25 +331,6 @@ class LocalArchiveViewModel : BaseViewModel() {
     }
 
     return AvailableActions(canStop = canStop, canStart = canStart)
-  }
-
-  private fun getCurrentlySelectedItems(): List<ChanDescriptor.ThreadDescriptor> {
-    return selectedItems
-      .filter { (_, selectedItem) -> selectedItem.value }
-      .map { (threadDescriptor, _) -> threadDescriptor }
-  }
-
-  private fun updateSelectionModeFlag() {
-    val wasInSelectionMode = _selectionMode.cachedValue?.isIsSelectionMode() ?: false
-    val nowInSelectionMode = isInSelectionMode()
-
-    val newValue = when {
-      wasInSelectionMode && nowInSelectionMode -> BaseSelectionHelper.SelectionEvent.ItemSelectionToggled
-      nowInSelectionMode -> BaseSelectionHelper.SelectionEvent.EnteredSelectionMode
-      else ->  BaseSelectionHelper.SelectionEvent.ExitedSelectionMode
-    }
-
-    _selectionMode.tryEmit(newValue)
   }
 
   private suspend fun refreshCacheAndReload() {
@@ -564,23 +491,16 @@ class LocalArchiveViewModel : BaseViewModel() {
       .peekError { error -> Logger.e(TAG, "exportDownloadedThreadAsHtmlUseCase() error", error) }
   }
 
-  enum class ArchiveMenuItemType(val id: Int) {
-    Delete(0),
-    Stop(1),
-    Start(2),
-    Export(3)
-  }
-
   enum class ViewMode {
     ShowAll,
     ShowDownloading,
     ShowCompleted
   }
 
-  class ArchiveMenuItemId(val archiveMenuItemType: ArchiveMenuItemType) :
+  class ArchiveMenuItemId(val menuItemType: MenuItemType) :
     BottomMenuPanelItemId {
     override fun id(): Int {
-      return archiveMenuItemType.id
+      return menuItemType.id
     }
   }
 
@@ -595,9 +515,16 @@ class LocalArchiveViewModel : BaseViewModel() {
   )
 
   data class MenuItemClickEvent(
-    val archiveMenuItemType: ArchiveMenuItemType,
+    val menuItemType: MenuItemType,
     val items: List<ChanDescriptor.ThreadDescriptor>
   )
+
+  enum class MenuItemType(val id: Int) {
+    Delete(0),
+    Stop(1),
+    Start(2),
+    Export(3)
+  }
 
   data class ViewModelState(
     val threadDownloadsAsync: AsyncData<List<ThreadDownloadView>> = AsyncData.NotInitialized

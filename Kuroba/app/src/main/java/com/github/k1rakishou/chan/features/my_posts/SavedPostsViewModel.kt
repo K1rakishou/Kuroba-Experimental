@@ -6,11 +6,15 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -35,6 +39,7 @@ class SavedPostsViewModel : BaseViewModel() {
 
   private val _myPostsViewModelState = MutableStateFlow(MyPostsViewModelState())
   private val searchQueryDebouncer = DebouncingCoroutineExecutor(mainScope)
+  val viewModelSelectionHelper = ViewModelSelectionHelper<PostDescriptor, MenuItemClickEvent>()
 
   private var _searchQuery by mutableStateOf<String?>(null)
   val searchQuery: String?
@@ -79,6 +84,42 @@ class SavedPostsViewModel : BaseViewModel() {
     }
 
     reloadSavedReplies()
+  }
+
+  fun deleteSavedPosts(postDescriptors: List<PostDescriptor>) {
+    mainScope.launch {
+      savedReplyManager.unsavePosts(postDescriptors)
+    }
+  }
+
+  fun toggleGroupSelection(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val savedRepliesGrouped = (myPostsViewModelState.value.savedRepliesGroupedAsync as? AsyncData.Data)?.data
+    if (savedRepliesGrouped == null) {
+      return
+    }
+
+    val toggledSavedRepliesGroup = savedRepliesGrouped
+      .firstOrNull { savedRepliesGroup -> savedRepliesGroup.threadDescriptor == threadDescriptor }
+
+    if (toggledSavedRepliesGroup == null) {
+      return
+    }
+
+    val groupPostDescriptors = toggledSavedRepliesGroup.savedReplyDataList.map { it.postDescriptor }
+    val allSelected = groupPostDescriptors
+      .all { postDescriptor -> viewModelSelectionHelper.isSelected(postDescriptor) }
+
+    groupPostDescriptors.forEach { postDescriptor ->
+      if (allSelected) {
+        viewModelSelectionHelper.unselect(postDescriptor)
+      } else {
+        viewModelSelectionHelper.select(postDescriptor)
+      }
+    }
+  }
+
+  fun toggleSelection(postDescriptor: PostDescriptor) {
+    viewModelSelectionHelper.toggleSelection(postDescriptor)
   }
 
   fun updateQueryAndReload(newQuery: String?) {
@@ -182,6 +223,49 @@ class SavedPostsViewModel : BaseViewModel() {
           dateTime = dateTime
         )
       }
+  }
+
+  fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
+    val currentlySelectedItems = viewModelSelectionHelper.getCurrentlySelectedItems()
+    if (currentlySelectedItems.isEmpty()) {
+      return emptyList()
+    }
+
+    val itemsList = mutableListOf<BottomMenuPanelItem>()
+
+    itemsList += BottomMenuPanelItem(
+      PostMenuItemId(MenuItemType.Delete),
+      R.drawable.ic_baseline_delete_outline_24,
+      R.string.bottom_menu_item_delete,
+      {
+        val clickEvent = MenuItemClickEvent(
+          menuItemType = MenuItemType.Delete,
+          items = viewModelSelectionHelper.getCurrentlySelectedItems()
+        )
+
+        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+        viewModelSelectionHelper.unselectAll()
+      }
+    )
+
+    return itemsList
+  }
+
+  class PostMenuItemId(val menuItemType: MenuItemType) :
+    BottomMenuPanelItemId {
+    override fun id(): Int {
+      return menuItemType.id
+    }
+  }
+
+
+  data class MenuItemClickEvent(
+    val menuItemType: MenuItemType,
+    val items: List<PostDescriptor>
+  )
+
+  enum class MenuItemType(val id: Int) {
+    Delete(0)
   }
 
   data class MyPostsViewModelState(
