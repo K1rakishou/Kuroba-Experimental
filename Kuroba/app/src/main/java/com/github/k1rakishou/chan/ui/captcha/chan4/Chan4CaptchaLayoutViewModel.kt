@@ -100,25 +100,25 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
       captchaInfoToShow.value = when (result) {
         is ModularResult.Error -> {
-          AsyncData.Error(result.error)
-        }
-        is ModularResult.Value -> {
-          val captchaInfo = result.value
-          if (captchaInfo == null) {
-            captchaInfoToShow.value = AsyncData.Error(CaptchaRateLimitError())
-            delay(DELAY_TIME_MS)
+          val error = result.error
+          if (error is CaptchaRateLimitError) {
+            captchaInfoToShow.value = AsyncData.Error(error)
+            delay(error.cooldownMs)
 
             requestCaptcha(chanDescriptor)
             return@launch
           }
 
-          AsyncData.Data(captchaInfo)
+          AsyncData.Error(error)
+        }
+        is ModularResult.Value -> {
+          AsyncData.Data(result.value)
         }
       }
     }
   }
 
-  private suspend fun requestCaptchaInternal(chanDescriptor: ChanDescriptor): CaptchaInfo? {
+  private suspend fun requestCaptchaInternal(chanDescriptor: ChanDescriptor): CaptchaInfo {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
 
     val urlRaw = when (chanDescriptor) {
@@ -149,8 +149,11 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     ).unwrap()
 
     if (captchaInfoRaw.error?.contains(ERROR_MSG, ignoreCase = true) == true) {
-      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) rate limited!")
-      return null
+      val cooldownMs = captchaInfoRaw.cooldown?.times(1000L)
+        ?: DEFAULT_COOLDOWN_MS
+
+      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) rate limited! cooldownMs=$cooldownMs")
+      throw CaptchaRateLimitError(cooldownMs)
     }
     
     val bgBitmapPainter = captchaInfoRaw.bg?.let { bgBase64Img ->
@@ -200,6 +203,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   data class CaptchaInfoRaw(
     @Json(name = "error")
     val error: String?,
+    @Json(name = "cd")
+    val cooldown: Int?,
     
     // For Slider captcha
     @Json(name = "bg")
@@ -239,12 +244,13 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
-  class CaptchaRateLimitError : Exception("Captcha rate-limit detected! Please wait a couple of seconds and then try again.")
+  class CaptchaRateLimitError(val cooldownMs: Long) :
+    Exception("4chan captcha rate-limit detected! Captcha will be reloaded automatically in ${cooldownMs / 1000L}s")
 
   companion object {
     private const val TAG = "Chan4CaptchaLayoutViewModel"
     private const val ERROR_MSG = "You have to wait a while before doing this again"
-    private const val DELAY_TIME_MS = 3000L
+    private const val DEFAULT_COOLDOWN_MS = 5000L
   }
 
 }

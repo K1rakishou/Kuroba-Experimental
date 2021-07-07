@@ -18,12 +18,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -165,6 +165,8 @@ class Chan4CaptchaLayout(
       .verticalScroll(rememberScrollState())
     ) {
       val captchaInfoAsync by viewModel.captchaInfoToShow
+      val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+
       var currentInputValue by viewModel.currentInputValue
       val scrollValueState = remember { mutableStateOf(0f) }
       var scrollValue by scrollValueState
@@ -172,8 +174,8 @@ class Chan4CaptchaLayout(
       BuildCaptchaImage(
         captchaInfoAsync = captchaInfoAsync,
         scrollValueState = scrollValueState,
-        onCaptchaImageClick = { captchaInfo ->
-          if (captchaInfo.bgBitmapPainter == null) {
+        onCaptchaImageClick = { info ->
+          if (info.bgBitmapPainter == null) {
             showToast(context, getString(R.string.captcha_layout_not_a_slider_captcha_type_msg))
             return@BuildCaptchaImage
           }
@@ -187,7 +189,9 @@ class Chan4CaptchaLayout(
       KurobaComposeTextField(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
+        keyboardActions = KeyboardActions(onDone = { verifyCaptcha(captchaInfo, currentInputValue) }),
         maxLines = 1,
+        singleLine = true,
         modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
@@ -196,7 +200,6 @@ class Chan4CaptchaLayout(
 
       Spacer(modifier = Modifier.height(8.dp))
 
-      val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
       if (captchaInfo != null && captchaInfo.needSlider()) {
         KurobaComposeSlider(
           value = scrollValue,
@@ -232,17 +235,7 @@ class Chan4CaptchaLayout(
         val buttonEnabled = captchaInfo != null && currentInputValue.isNotEmpty()
 
         KurobaComposeTextButton(
-          onClick = {
-            if (captchaInfo == null) {
-              return@KurobaComposeTextButton
-            }
-
-            val challenge = captchaInfo.challenge
-            val solution = CaptchaSolution.ChallengeWithSolution(challenge = challenge, solution = currentInputValue)
-
-            captchaHolder.addNewSolution(solution, captchaInfo.ttlMillis())
-            callback?.onAuthenticationComplete()
-          },
+          onClick = { verifyCaptcha(captchaInfo, currentInputValue) },
           enabled = buttonEnabled,
           modifier = Modifier
             .width(112.dp)
@@ -252,6 +245,8 @@ class Chan4CaptchaLayout(
 
         Spacer(modifier = Modifier.width(8.dp))
       }
+
+      Spacer(modifier = Modifier.height(8.dp))
     }
   }
 
@@ -264,7 +259,7 @@ class Chan4CaptchaLayout(
     var size by remember { mutableStateOf(IntSize.Zero) }
 
     Box(modifier = Modifier
-      .heightIn(48.dp, 180.dp)
+      .height(160.dp)
       .fillMaxWidth()
       .onSizeChanged { newSize -> size = newSize }
     ) {
@@ -283,10 +278,11 @@ class Chan4CaptchaLayout(
           }
           is AsyncData.Data -> {
             val captchaInfo = (captchaInfoAsync as AsyncData.Data).data
-            var scale = size.width / captchaInfo.imgBitmapPainter.intrinsicSize.width
-            if (scale < 1f) {
-              scale = 1f
-            }
+
+            val scale = Math.min(
+              size.width.toFloat() / captchaInfo.imgBitmapPainter.intrinsicSize.width,
+              size.height.toFloat() / captchaInfo.imgBitmapPainter.intrinsicSize.height
+            )
 
             val contentScale = Scale(scale)
             var scrollValue by scrollValueState
@@ -309,7 +305,7 @@ class Chan4CaptchaLayout(
             }
 
             val scrollState = rememberScrollableState { delta ->
-              var newScrollValue = scrollValue + (delta.toFloat() / size.width.toFloat())
+              var newScrollValue = scrollValue + ((delta * 2f) / size.width.toFloat())
 
               if (newScrollValue < 0f) {
                 newScrollValue = 0f
@@ -335,6 +331,24 @@ class Chan4CaptchaLayout(
         }
       }
     }
+  }
+
+  private fun verifyCaptcha(
+    captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo?,
+    currentInputValue: String
+  ) {
+    if (captchaInfo == null) {
+      return
+    }
+
+    val challenge = captchaInfo.challenge
+    val solution = CaptchaSolution.ChallengeWithSolution(
+      challenge = challenge,
+      solution = currentInputValue
+    )
+
+    captchaHolder.addNewSolution(solution, captchaInfo.ttlMillis())
+    callback?.onAuthenticationComplete()
   }
 
   private fun showCaptchaHelp() {

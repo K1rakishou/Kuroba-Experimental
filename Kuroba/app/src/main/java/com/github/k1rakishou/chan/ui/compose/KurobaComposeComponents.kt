@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
@@ -125,7 +126,9 @@ fun KurobaComposeTextField(
   modifier: Modifier = Modifier,
   onValueChange: (String) -> Unit,
   maxLines: Int = Int.MAX_VALUE,
+  singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions(),
   label: @Composable (() -> Unit)? = null,
 ) {
   val chanTheme = LocalChanTheme.current
@@ -135,8 +138,10 @@ fun KurobaComposeTextField(
     label = label,
     onValueChange = onValueChange,
     maxLines = maxLines,
+    singleLine = singleLine,
     modifier = modifier,
     keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
     colors = chanTheme.textFieldColors()
   )
 }
