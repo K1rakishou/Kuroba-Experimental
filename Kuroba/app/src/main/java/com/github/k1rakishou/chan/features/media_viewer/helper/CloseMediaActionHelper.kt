@@ -207,7 +207,7 @@ class CloseMediaActionHelper(
       val velocityY = velocityTracker!!.yVelocity.toInt()
 
       if (Math.abs(velocityX) > FLING_MIN_VELOCITY || Math.abs(velocityY) > FLING_MIN_VELOCITY) {
-        scroller!!.setFriction(0.2f)
+        scroller!!.setFriction(0.5f)
 
         scroller!!.fling(
           deltaX.toInt(),
@@ -223,7 +223,7 @@ class CloseMediaActionHelper(
         finishingWithAnimation = true
         ViewCompat.postOnAnimation(movableContainer, FlingRunnable(isFinishing = true))
       } else {
-        scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), SCROLL_ANIMATION_DURATION)
+        scroller!!.startScroll(deltaX.toInt(), deltaY.toInt(), -deltaX.toInt(), -deltaY.toInt(), SCROLL_ANIMATION_DURATION_NORMAL)
 
         if (isInsideTopGestureBounds && topGestureInfo != null) {
           finishingWithAnimation = topGestureInfo.isClosingMediaViewerGesture
@@ -502,7 +502,7 @@ class CloseMediaActionHelper(
   inner class FadeAnimation {
     fun animate(onAnimationEnd: () -> Unit) {
       val animator = ValueAnimator.ofFloat(1f, 0f)
-      animator.duration = SCROLL_ANIMATION_DURATION.toLong()
+      animator.duration = SCROLL_ANIMATION_DURATION_NORMAL.toLong()
 
       animator.addUpdateListener { animation ->
         val alpha = animation.animatedValue as Float
@@ -591,7 +591,7 @@ class CloseMediaActionHelper(
     private val DEAD_ZONE_HEIGHT_PORT = dp(52f)
     private val DEAD_ZONE_HEIGHT_LAND = dp(40f)
     private val TEXT_SIZE = sp(60f).toFloat()
-    private const val SCROLL_ANIMATION_DURATION = 250
+    private const val SCROLL_ANIMATION_DURATION_NORMAL = 175
   }
 
 }
