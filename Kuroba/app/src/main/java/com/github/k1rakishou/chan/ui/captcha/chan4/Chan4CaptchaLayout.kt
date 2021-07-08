@@ -319,13 +319,18 @@ class Chan4CaptchaLayout(
 
         if (captchaInfo != null) {
           if (captchaInfo.isNoopChallenge()) {
-            KurobaComposeText(
-              text = stringResource(id = R.string.captcha_layout_verification_not_required),
-              textAlign = TextAlign.Center,
-              modifier = Modifier
-                .fillMaxWidth()
-                .height(128.dp)
-            )
+            Box(modifier = Modifier
+              .fillMaxWidth()
+              .height(128.dp)
+              .align(Alignment.Center)
+            ) {
+              KurobaComposeText(
+                text = stringResource(id = R.string.captcha_layout_verification_not_required),
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                  .fillMaxWidth()
+              )
+            }
           } else {
             BuildCaptchaImage(captchaInfo, size, scrollValueState, onCaptchaImageClick)
           }
