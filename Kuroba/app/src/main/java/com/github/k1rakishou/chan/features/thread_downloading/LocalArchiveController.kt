@@ -27,6 +27,7 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -459,121 +460,128 @@ class LocalArchiveController(
     val selectionEvent by viewModel.viewModelSelectionHelper.collectSelectionModeAsState()
     val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
 
-    Box(modifier = Modifier
+    Card(modifier = Modifier
       .fillMaxWidth()
-      .height(170.dp)
-      .combinedClickable(
-        onClick = { onThreadDownloadClicked(threadDownloadView.threadDescriptor) },
-        onLongClick = { onThreadDownloadLongClicked(threadDownloadView.threadDescriptor) }
-      )
+      .wrapContentHeight()
       .padding(2.dp)
-      .background(chanTheme.backColorSecondaryCompose)
-      .padding(4.dp)
     ) {
-      val threadDescriptor = threadDownloadView.threadDescriptor
-
-      SelectableItem(
-        isInSelectionMode = isInSelectionMode,
-        observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(threadDescriptor) },
-        onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor) }
-      ) {
-        val contentAlpha = remember(key1 = threadDownloadView.status) {
-          when (threadDownloadView.status) {
-            ThreadDownload.Status.Running -> DefaultAlpha
-            ThreadDownload.Status.Stopped,
-            ThreadDownload.Status.Completed -> 0.7f
-          }
-        }
-
-        KurobaComposeText(
-          text = threadDownloadView.threadSubject,
-          fontSize = 14.sp,
-          color = chanTheme.postSubjectColorCompose,
-          maxLines = 2,
-          modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight()
-            .alpha(contentAlpha)
+      Box(modifier = Modifier
+        .fillMaxWidth()
+        .height(170.dp)
+        .combinedClickable(
+          onClick = { onThreadDownloadClicked(threadDownloadView.threadDescriptor) },
+          onLongClick = { onThreadDownloadLongClicked(threadDownloadView.threadDescriptor) }
         )
+        .background(chanTheme.backColorSecondaryCompose)
+        .padding(4.dp)
+      ) {
+        val threadDescriptor = threadDownloadView.threadDescriptor
 
-        Spacer(modifier = Modifier.height(2.dp))
-
-        Row(modifier = Modifier
-          .wrapContentHeight()
-          .fillMaxWidth()
+        SelectableItem(
+          isInSelectionMode = isInSelectionMode,
+          observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(threadDescriptor) },
+          onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor) }
         ) {
-          val thumbnailLocation = threadDownloadView.thumbnailLocation
-          if (thumbnailLocation != null) {
-            val imageLoaderRequest = remember(key1 = thumbnailLocation) {
-              val requestData = when (thumbnailLocation) {
-                is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
-                  ImageLoaderRequestData.File(thumbnailLocation.file)
-                }
-                is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
-                  ImageLoaderRequestData.Url(thumbnailLocation.url)
-                }
-              }
-
-              return@remember ImageLoaderRequest(data = requestData)
+          val contentAlpha = remember(key1 = threadDownloadView.status) {
+            when (threadDownloadView.status) {
+              ThreadDownload.Status.Running -> DefaultAlpha
+              ThreadDownload.Status.Stopped,
+              ThreadDownload.Status.Completed -> 0.7f
             }
-
-            KurobaComposeImage(
-              request = imageLoaderRequest,
-              modifier = Modifier
-                .height(100.dp)
-                .width(60.dp)
-                .alpha(contentAlpha),
-              imageLoaderV2 = imageLoaderV2
-            )
-
-            Spacer(modifier = Modifier.width(4.dp))
           }
 
           KurobaComposeText(
-            text = threadDownloadView.threadDownloadInfo,
-            fontSize = 12.sp,
-            color = chanTheme.textColorPrimaryCompose,
-            modifier = Modifier
-              .fillMaxWidth()
-              .weight(1f)
-              .align(Alignment.CenterVertically)
-              .alpha(contentAlpha)
-          )
-
-          Column(modifier = Modifier
-            .wrapContentSize()
-            .align(Alignment.CenterVertically)
-          ) {
-            BuildThreadDownloadStatusIcon(animationAtEnd, threadDownloadView, contentAlpha)
-            BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
-            BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
-          }
-        }
-
-        val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
-        if (stats != null) {
-          Spacer(modifier = Modifier.weight(1f))
-
-          val formattedDiskSize = remember(key1 = stats!!.mediaTotalDiskSize) {
-            ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)
-          }
-
-          val statsText = stringResource(
-            R.string.controller_local_archive_additional_thread_stats,
-            stats!!.downloadedPostsCount,
-            stats!!.downloadedMediaCount,
-            formattedDiskSize
-          )
-
-          KurobaComposeText(
-            text = statsText,
-            fontSize = 12.sp,
-            color = chanTheme.textColorHintCompose,
+            text = threadDownloadView.threadSubject,
+            fontSize = 14.sp,
+            color = chanTheme.postSubjectColorCompose,
+            maxLines = 2,
             modifier = Modifier
               .fillMaxWidth()
               .wrapContentHeight()
               .alpha(contentAlpha)
           )
+
+          Spacer(modifier = Modifier.height(2.dp))
+
+          Row(
+            modifier = Modifier
+              .wrapContentHeight()
+              .fillMaxWidth()
+          ) {
+            val thumbnailLocation = threadDownloadView.thumbnailLocation
+            if (thumbnailLocation != null) {
+              val imageLoaderRequest = remember(key1 = thumbnailLocation) {
+                val requestData = when (thumbnailLocation) {
+                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Local -> {
+                    ImageLoaderRequestData.File(thumbnailLocation.file)
+                  }
+                  is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
+                    ImageLoaderRequestData.Url(thumbnailLocation.url)
+                  }
+                }
+
+                return@remember ImageLoaderRequest(data = requestData)
+              }
+
+              KurobaComposeImage(
+                request = imageLoaderRequest,
+                modifier = Modifier
+                  .height(100.dp)
+                  .width(60.dp)
+                  .alpha(contentAlpha),
+                imageLoaderV2 = imageLoaderV2
+              )
+
+              Spacer(modifier = Modifier.width(4.dp))
+            }
+
+            KurobaComposeText(
+              text = threadDownloadView.threadDownloadInfo,
+              fontSize = 12.sp,
+              color = chanTheme.textColorPrimaryCompose,
+              modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .align(Alignment.CenterVertically)
+                .alpha(contentAlpha)
+            )
+
+            Column(
+              modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.CenterVertically)
+            ) {
+              BuildThreadDownloadStatusIcon(animationAtEnd, threadDownloadView, contentAlpha)
+              BuildLastThreadUpdateStatusIcon(threadDownloadView, contentAlpha)
+              BuildThreadDownloadProgressIcon(threadDownloadView, contentAlpha)
+            }
+          }
+
+          val stats by viewModel.collectAdditionalThreadDownloadStats(threadDescriptor = threadDescriptor)
+          if (stats != null) {
+            Spacer(modifier = Modifier.weight(1f))
+
+            val formattedDiskSize = remember(key1 = stats!!.mediaTotalDiskSize) {
+              ChanPostUtils.getReadableFileSize(stats!!.mediaTotalDiskSize)
+            }
+
+            val statsText = stringResource(
+              R.string.controller_local_archive_additional_thread_stats,
+              stats!!.downloadedPostsCount,
+              stats!!.downloadedMediaCount,
+              formattedDiskSize
+            )
+
+            KurobaComposeText(
+              text = statsText,
+              fontSize = 12.sp,
+              color = chanTheme.textColorHintCompose,
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .alpha(contentAlpha)
+            )
+          }
         }
       }
     }
