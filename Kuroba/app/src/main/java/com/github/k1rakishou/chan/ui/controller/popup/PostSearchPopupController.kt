@@ -21,7 +21,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
-import com.github.k1rakishou.chan.utils.awaitUntilLaidOut
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
@@ -169,7 +169,7 @@ class PostSearchPopupController(
     updaterJob = null
 
     updaterJob = mainScope.launch {
-      postsView.awaitUntilLaidOut()
+      postsView.awaitUntilGloballyLaidOut()
 
       onQueryUpdated(chanDescriptor, prevQuery)
       updaterJob = null

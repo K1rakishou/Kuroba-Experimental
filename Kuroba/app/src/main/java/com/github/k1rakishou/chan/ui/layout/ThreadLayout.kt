@@ -77,6 +77,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -424,6 +425,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val initial = visible != Visible.THREAD
+    loadView.awaitUntilGloballyLaidOut()
 
     val (showPostsResult, totalDuration) = measureTimedValue {
       threadListLayout.showPosts(loadView.width, descriptor, filter, initial)

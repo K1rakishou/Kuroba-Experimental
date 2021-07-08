@@ -113,7 +113,7 @@ class ImageLoaderV2(
           }
 
           override fun onResponseError(error: Throwable) {
-            continuation.resumeErrorSafe(error)
+            continuation.resumeValueSafe(error(error))
           }
         })
 

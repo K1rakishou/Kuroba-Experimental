@@ -5,12 +5,12 @@ import android.content.ContextWrapper
 import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
+import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.ImageView
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
-import androidx.core.view.doOnLayout
-import androidx.core.view.doOnPreDraw
+import androidx.core.view.ViewCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
@@ -27,6 +27,7 @@ import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.math.log10
+
 
 private val TAG = "KotlinExts"
 
@@ -91,15 +92,19 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
   }
 }
 
-suspend fun View.awaitUntilPreDraw() {
-  suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    doOnPreDraw { cancellableContinuation.resumeValueSafe(Unit) }
+suspend fun View.awaitUntilGloballyLaidOut() {
+  if (ViewCompat.isLaidOut(this) && !isLayoutRequested) {
+    return
   }
-}
 
-suspend fun View.awaitUntilLaidOut() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    doOnLayout { cancellableContinuation.resumeValueSafe(Unit) }
+    viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+      override fun onGlobalLayout() {
+        viewTreeObserver.removeOnGlobalLayoutListener(this)
+
+        cancellableContinuation.resumeValueSafe(Unit)
+      }
+    })
   }
 }
 

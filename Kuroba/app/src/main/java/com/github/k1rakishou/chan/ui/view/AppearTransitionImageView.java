@@ -36,7 +36,7 @@ import kotlin.jvm.functions.Function1;
 
 public class AppearTransitionImageView extends AppCompatImageView {
     private static final String TAG = "TransitionImageView";
-    private static final int ANIMATION_DURATION = 250;
+    private static final int ANIMATION_DURATION = 150;
     private static final AccelerateInterpolator INTERPOLATOR = new AccelerateInterpolator(3f);
 
     private final PointF globalRevealStartPosition = new PointF(0f, 0f);
