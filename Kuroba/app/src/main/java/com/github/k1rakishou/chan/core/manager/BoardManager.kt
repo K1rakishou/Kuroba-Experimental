@@ -43,7 +43,7 @@ class BoardManager(
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val boardsMap = mutableMapOf<SiteDescriptor, MutableMap<BoardDescriptor, ChanBoard>>()
+  private val boardsMap = mutableMapOf<SiteDescriptor, LinkedHashMap<BoardDescriptor, ChanBoard>>()
   @GuardedBy("lock")
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
 
@@ -478,25 +478,6 @@ class BoardManager(
     ensureBoardsAndOrdersConsistency()
 
     return lock.read { boardsMap[siteDescriptor]?.keys ?: emptySet() }
-  }
-
-  fun getAllActiveBoardDescriptors(): Set<BoardDescriptor> {
-    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
-    ensureBoardsAndOrdersConsistency()
-
-    return lock.read {
-      val allBoardDescriptors = mutableSetOf<BoardDescriptor>()
-
-      boardsMap.entries.forEach { (_, boardsMap) ->
-        boardsMap.entries.forEach { (_, chanBoard) ->
-          if (chanBoard.active) {
-            allBoardDescriptors += chanBoard.boardDescriptor
-          }
-        }
-      }
-
-      return@read allBoardDescriptors
-    }
   }
 
   fun isReady() = suspendableInitializer.isInitialized()

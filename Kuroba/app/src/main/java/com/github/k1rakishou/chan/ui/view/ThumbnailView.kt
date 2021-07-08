@@ -54,7 +54,7 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
-open class ThumbnailView : AppCompatImageView {
+open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener {
   private var requestDisposable: Disposable? = null
   private var rounding = 0
   private var errorText: String? = null
@@ -108,6 +108,23 @@ open class ThumbnailView : AppCompatImageView {
     init()
   }
 
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+
+    themeEngine.addListener(this)
+  }
+
+  override fun onDetachedFromWindow() {
+    super.onDetachedFromWindow()
+
+    themeEngine.removeListener(this)
+  }
+
+  override fun onThemeChanged() {
+    backgroundPaint.color = themeEngine.chanTheme.backColorSecondary
+    invalidate()
+  }
+
   @SuppressLint("ClickableViewAccessibility")
   private fun init() {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -115,8 +132,8 @@ open class ThumbnailView : AppCompatImageView {
 
     textPaint.color = themeEngine.chanTheme.textColorPrimary
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
-    backgroundPaint.color = Color.BLACK
     imageForeground = initRippleDrawable()
+    onThemeChanged()
 
     setOnTouchListener { _, event ->
       if (event.actionMasked == MotionEvent.ACTION_DOWN) {
