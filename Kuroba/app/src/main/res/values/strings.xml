@@ -749,7 +749,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
-    <string name="setting_tap_no_rely">Tap the post number to reply</string>
+    <string name="setting_tap_no_reply">Tap the post number to reply</string>
+    <string name="setting_tap_no_reply_description">To avoid accidental taps it now only works when reply layout is opened.</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
     <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
 

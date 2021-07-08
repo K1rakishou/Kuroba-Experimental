@@ -1683,7 +1683,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onPostNoClicked(post: ChanPost) {
-    threadPresenterCallback?.quote(post, false)
+    threadPresenterCallback?.quoteIfReplyLayoutOpened(post)
   }
 
   override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {
@@ -2213,6 +2213,7 @@ class ThreadPresenter @Inject constructor(
     fun highlightPostTripcode(tripcode: CharSequence?)
     fun filterPostTripcode(tripcode: CharSequence?)
     fun selectPost(postDescriptor: PostDescriptor?)
+    fun quoteIfReplyLayoutOpened(post: ChanPost)
     fun quote(post: ChanPost, withText: Boolean)
     fun quote(postDescriptor: PostDescriptor, text: CharSequence)
     fun confirmPostDelete(post: ChanPost)

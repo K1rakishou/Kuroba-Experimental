@@ -741,6 +741,14 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.selectPost(postDescriptor)
   }
 
+  override fun quoteIfReplyLayoutOpened(post: ChanPost) {
+    if (!isReplyLayoutOpen()) {
+      return
+    }
+
+    quote(post, withText = false)
+  }
+
   override fun quote(post: ChanPost, withText: Boolean) {
     if (!canOpenReplyLayout()) {
       showToast(context, R.string.post_posting_is_not_supported)
