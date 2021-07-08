@@ -455,10 +455,7 @@ class ImageLoaderV2(
       notifyListenersFailure(context, url, error)
 
       if (error.isCoroutineCancellationException()) {
-        if (verboseLogs) {
-          Logger.e(TAG, "loadFromNetworkInternal() canceled '$url'")
-        }
-
+        Logger.e(TAG, "loadFromNetworkInternal() canceled '$url'")
         return null
       }
 
@@ -553,6 +550,7 @@ class ImageLoaderV2(
       cacheHandler.deleteCacheFile(cacheFile)
 
       if (error.isCoroutineCancellationException()) {
+        Logger.e(TAG, "loadFromNetworkInternalIntoFile() canceled '$url'")
         return null
       }
 
