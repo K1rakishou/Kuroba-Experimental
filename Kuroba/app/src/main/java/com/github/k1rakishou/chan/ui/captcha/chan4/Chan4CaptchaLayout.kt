@@ -42,6 +42,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
@@ -60,6 +61,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSlider
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -173,27 +175,34 @@ class Chan4CaptchaLayout(
       .wrapContentHeight()
       .verticalScroll(rememberScrollState())
     ) {
-      val captchaInfoAsync by viewModel.captchaInfoToShow
-      val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+      BuildCaptchaWindow()
+    }
+  }
 
-      var currentInputValue by viewModel.currentInputValue
-      val scrollValueState = remember { mutableStateOf(0f) }
-      var scrollValue by scrollValueState
+  @Composable
+  private fun BuildCaptchaWindow() {
+    val captchaInfoAsync by viewModel.captchaInfoToShow
+    val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-      BuildCaptchaImage(
-        captchaInfoAsync = captchaInfoAsync,
-        scrollValueState = scrollValueState,
-        onCaptchaImageClick = { info ->
-          if (info.bgBitmapPainter == null) {
-            return@BuildCaptchaImage
-          }
+    var currentInputValue by viewModel.currentInputValue
+    val scrollValueState = remember { mutableStateOf(0f) }
+    var scrollValue by scrollValueState
 
-          viewModel.toggleOnlyShowBackgroundImage()
+    BuildCaptchaImageOrText(
+      captchaInfoAsync = captchaInfoAsync,
+      scrollValueState = scrollValueState,
+      onCaptchaImageClick = { info ->
+        if (info.bgBitmapPainter == null) {
+          return@BuildCaptchaImageOrText
         }
-      )
 
-      Spacer(modifier = Modifier.height(8.dp))
+        viewModel.toggleOnlyShowBackgroundImage()
+      }
+    )
 
+    Spacer(modifier = Modifier.height(8.dp))
+
+    if (captchaInfo != null && !captchaInfo.isNoopChallenge()) {
       KurobaComposeTextField(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
@@ -208,7 +217,7 @@ class Chan4CaptchaLayout(
 
       Spacer(modifier = Modifier.height(8.dp))
 
-      if (captchaInfo != null && captchaInfo.needSlider()) {
+      if (captchaInfo.needSlider()) {
         KurobaComposeSlider(
           value = scrollValue,
           modifier = Modifier
@@ -217,66 +226,67 @@ class Chan4CaptchaLayout(
             .padding(horizontal = 16.dp),
           onValueChange = { newValue -> scrollValue = newValue }
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
       }
-
-      Spacer(modifier = Modifier.height(8.dp))
-
-      Row(
-        horizontalArrangement = Arrangement.End,
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-      ) {
-        val drawableTintColor = themeEngine.resolveDrawableTintColor()
-        val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
-
-        Image(
-          painter = painterResource(id = R.drawable.ic_settings_white_24dp),
-          contentDescription = null,
-          colorFilter = colorFilter,
-          modifier = Modifier
-            .padding(start = 16.dp)
-            .width(24.dp)
-            .height(24.dp)
-            .align(Alignment.CenterVertically)
-            .clickable { showChan4CaptchaSettings() }
-        )
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        KurobaComposeTextButton(
-          onClick = {
-            scrollValue = 0f
-            hardReset()
-          },
-          modifier = Modifier
-            .width(112.dp)
-            .height(36.dp),
-          text = stringResource(id = R.string.captcha_layout_reload)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-
-        val buttonEnabled = captchaInfo != null && currentInputValue.isNotEmpty()
-
-        KurobaComposeTextButton(
-          onClick = { verifyCaptcha(captchaInfo, currentInputValue) },
-          enabled = buttonEnabled,
-          modifier = Modifier
-            .width(112.dp)
-            .height(36.dp),
-          text = stringResource(id = R.string.captcha_layout_verify)
-        )
-
-        Spacer(modifier = Modifier.width(8.dp))
-      }
-
-      Spacer(modifier = Modifier.height(8.dp))
     }
+
+    Row(
+      horizontalArrangement = Arrangement.End,
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+    ) {
+      val drawableTintColor = themeEngine.resolveDrawableTintColor()
+      val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
+
+      Image(
+        painter = painterResource(id = R.drawable.ic_settings_white_24dp),
+        contentDescription = null,
+        colorFilter = colorFilter,
+        modifier = Modifier
+          .padding(start = 16.dp)
+          .width(24.dp)
+          .height(24.dp)
+          .align(Alignment.CenterVertically)
+          .clickable { showChan4CaptchaSettings() }
+      )
+
+      Spacer(modifier = Modifier.weight(1f))
+
+      KurobaComposeTextButton(
+        onClick = {
+          scrollValue = 0f
+          hardReset()
+        },
+        modifier = Modifier
+          .width(112.dp)
+          .height(36.dp),
+        text = stringResource(id = R.string.captcha_layout_reload)
+      )
+
+      Spacer(modifier = Modifier.width(8.dp))
+
+      val buttonEnabled = captchaInfo != null
+        && (captchaInfo.isNoopChallenge() || currentInputValue.isNotEmpty())
+
+      KurobaComposeTextButton(
+        onClick = { verifyCaptcha(captchaInfo, currentInputValue) },
+        enabled = buttonEnabled,
+        modifier = Modifier
+          .width(112.dp)
+          .height(36.dp),
+        text = stringResource(id = R.string.captcha_layout_verify)
+      )
+
+      Spacer(modifier = Modifier.width(8.dp))
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
   }
 
   @Composable
-  private fun BuildCaptchaImage(
+  private fun BuildCaptchaImageOrText(
     captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
     scrollValueState: MutableState<Float>,
     onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
@@ -289,10 +299,11 @@ class Chan4CaptchaLayout(
       .onSizeChanged { newSize -> size = newSize }
     ) {
       if (size != IntSize.Zero) {
-        when (captchaInfoAsync) {
+        val captchaInfo = when (captchaInfoAsync) {
           AsyncData.NotInitialized,
           AsyncData.Loading -> {
             KurobaComposeProgressIndicator()
+            null
           }
           is AsyncData.Error -> {
             val error = (captchaInfoAsync as AsyncData.Error).throwable
@@ -300,63 +311,87 @@ class Chan4CaptchaLayout(
               error = error,
               modifier = Modifier.fillMaxSize()
             )
+
+            null
           }
-          is AsyncData.Data -> {
-            val captchaInfo = (captchaInfoAsync as AsyncData.Data).data
+          is AsyncData.Data -> (captchaInfoAsync as AsyncData.Data).data
+        }
 
-            val scale = Math.min(
-              size.width.toFloat() / captchaInfo.imgBitmapPainter.intrinsicSize.width,
-              size.height.toFloat() / captchaInfo.imgBitmapPainter.intrinsicSize.height
-            )
-
-            val contentScale = Scale(scale)
-            var scrollValue by scrollValueState
-            val onlyShowBackgroundImage by viewModel.onlyShowBackgroundImage
-
-            if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
-              val bgBitmapPainter = captchaInfo.bgBitmapPainter
-              val offset = remember(key1 = scrollValue) {
-                val xOffset = (captchaInfo.bgInitialOffset + MIN_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt()
-                IntOffset(x = xOffset, y = 0)
-              }
-
-              Image(
-                modifier = Modifier
-                  .fillMaxSize()
-                  .offset { offset },
-                painter = bgBitmapPainter,
-                contentScale = contentScale,
-                contentDescription = null,
-              )
-            }
-
-            val scrollState = rememberScrollableState { delta ->
-              var newScrollValue = scrollValue + ((delta * 2f) / size.width.toFloat())
-
-              if (newScrollValue < 0f) {
-                newScrollValue = 0f
-              } else if (newScrollValue > 1f) {
-                newScrollValue = 1f
-              }
-
-              scrollValue = newScrollValue
-
-              return@rememberScrollableState delta
-            }
-
-            Image(
+        if (captchaInfo != null) {
+          if (captchaInfo.isNoopChallenge()) {
+            KurobaComposeText(
+              text = stringResource(id = R.string.captcha_layout_verification_not_required),
+              textAlign = TextAlign.Center,
               modifier = Modifier
-                .fillMaxSize()
-                .scrollable(state = scrollState, orientation = Orientation.Horizontal)
-                .clickable { onCaptchaImageClick(captchaInfo) },
-              painter = captchaInfo.imgBitmapPainter,
-              contentScale = contentScale,
-              contentDescription = null
+                .fillMaxWidth()
+                .height(128.dp)
             )
+          } else {
+            BuildCaptchaImage(captchaInfo, size, scrollValueState, onCaptchaImageClick)
           }
         }
       }
     }
+  }
+
+  @Composable
+  private fun BuildCaptchaImage(
+    captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo,
+    size: IntSize,
+    scrollValueState: MutableState<Float>,
+    onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
+  ) {
+    val imgBitmapPainter = captchaInfo.imgBitmapPainter!!
+
+    val scale = Math.min(
+      size.width.toFloat() / imgBitmapPainter.intrinsicSize.width,
+      size.height.toFloat() / imgBitmapPainter.intrinsicSize.height
+    )
+
+    val contentScale = Scale(scale)
+    var scrollValue by scrollValueState
+    val onlyShowBackgroundImage by viewModel.onlyShowBackgroundImage
+
+    if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
+      val bgBitmapPainter = captchaInfo.bgBitmapPainter
+      val offset = remember(key1 = scrollValue) {
+        val xOffset = (captchaInfo.bgInitialOffset + MIN_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt()
+        IntOffset(x = xOffset, y = 0)
+      }
+
+      Image(
+        modifier = Modifier
+          .fillMaxSize()
+          .offset { offset },
+        painter = bgBitmapPainter,
+        contentScale = contentScale,
+        contentDescription = null,
+      )
+    }
+
+    val scrollState = rememberScrollableState { delta ->
+      var newScrollValue = scrollValue + ((delta * 2f) / size.width.toFloat())
+
+      if (newScrollValue < 0f) {
+        newScrollValue = 0f
+      } else if (newScrollValue > 1f) {
+        newScrollValue = 1f
+      }
+
+      scrollValue = newScrollValue
+
+      return@rememberScrollableState delta
+    }
+
+    Image(
+      modifier = Modifier
+        .fillMaxSize()
+        .scrollable(state = scrollState, orientation = Orientation.Horizontal)
+        .clickable { onCaptchaImageClick(captchaInfo) },
+      painter = captchaInfo.imgBitmapPainter,
+      contentScale = contentScale,
+      contentDescription = null
+    )
   }
 
   private fun verifyCaptcha(

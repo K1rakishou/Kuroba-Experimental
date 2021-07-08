@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.captcha
 import android.os.Handler
 import android.os.Looper
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.core_logger.Logger
@@ -179,7 +180,7 @@ sealed class CaptchaSolution {
   fun isTokenEmpty(): Boolean {
     return when (this) {
       is SimpleTokenSolution -> token.isBlank()
-      is ChallengeWithSolution -> solution.isBlank()
+      is ChallengeWithSolution -> solution.isBlank() && !is4chanNoopChallenge()
     }
   }
 
@@ -190,6 +191,10 @@ sealed class CaptchaSolution {
   }
 
   data class ChallengeWithSolution(val challenge: String, val solution: String) : CaptchaSolution() {
+    fun is4chanNoopChallenge(): Boolean {
+      return challenge.equals(Chan4CaptchaLayoutViewModel.NOOP_CHALLENGE, ignoreCase = true)
+    }
+
     override fun toString(): String {
       return "ChallengeWithSolution{challenge=$challenge, solution=${formatToken(solution)}}"
     }

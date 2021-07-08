@@ -163,6 +163,19 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) rate limited! cooldownMs=$cooldownMs")
       throw CaptchaRateLimitError(cooldownMs)
     }
+
+    if (captchaInfoRaw.isNoopChallenge()) {
+      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) NOOP challenge detected")
+
+      return CaptchaInfo(
+        bgBitmapPainter = null,
+        imgBitmapPainter = null,
+        challenge = NOOP_CHALLENGE,
+        startedAt = System.currentTimeMillis(),
+        ttlSeconds = captchaInfoRaw.ttlSeconds(),
+        bgInitialOffset = 0f
+      )
+    }
     
     val bgBitmapPainter = captchaInfoRaw.bg?.let { bgBase64Img ->
       val bgByteArray = Base64.decode(bgBase64Img, Base64.DEFAULT)
@@ -250,11 +263,19 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val validUntil: Long?,
     @Json(name = "ttl")
     val ttl: Int?
-  )
+  ) {
+    fun ttlSeconds(): Int {
+      return ttl ?: 120
+    }
+
+    fun isNoopChallenge(): Boolean {
+      return challenge?.equals(NOOP_CHALLENGE, ignoreCase = true) == true
+    }
+  }
 
   class CaptchaInfo(
     val bgBitmapPainter: BitmapPainter?,
-    val imgBitmapPainter: BitmapPainter,
+    val imgBitmapPainter: BitmapPainter?,
     val challenge: String,
     val startedAt: Long,
     val ttlSeconds: Int,
@@ -268,6 +289,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       return ttlMillis - (System.currentTimeMillis() - startedAt)
     }
 
+    fun isNoopChallenge(): Boolean {
+      return challenge.equals(NOOP_CHALLENGE, ignoreCase = true)
+    }
+
   }
 
   class CaptchaRateLimitError(val cooldownMs: Long) :
@@ -277,6 +302,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     private const val TAG = "Chan4CaptchaLayoutViewModel"
     private const val ERROR_MSG = "You have to wait a while before doing this again"
     private const val DEFAULT_COOLDOWN_MS = 5000L
+    const val NOOP_CHALLENGE = "noop"
   }
 
 }
