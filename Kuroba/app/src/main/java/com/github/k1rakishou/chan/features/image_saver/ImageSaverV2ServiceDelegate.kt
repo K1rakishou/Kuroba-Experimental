@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -70,6 +71,7 @@ class ImageSaverV2ServiceDelegate(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
+  private val cacheHandler: CacheHandler,
   private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val imageSaverFileManager: ImageSaverFileManagerWrapper,
@@ -876,10 +878,21 @@ class ImageSaverV2ServiceDelegate(
   ) {
     BackgroundUtils.ensureBackgroundThread()
 
+    val fileUrl = imageUrl.toString()
     var localInputStream: InputStream? = null
 
     try {
-      if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
+      if (cacheHandler.cacheFileExists(fileUrl)) {
+        val cachedFile = cacheHandler.getCacheFileOrNull(fileUrl)
+        if (cachedFile != null && cachedFile.canRead() && cachedFile.length() > 0) {
+          localInputStream = cachedFile.inputStream()
+        }
+      }
+
+      if (localInputStream == null
+        && threadDescriptor != null
+        && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)
+      ) {
         localInputStream = threadDownloadManager.findDownloadedFile(imageUrl, threadDescriptor)
           ?.let { file -> fileManager.getInputStream(file) }
       }

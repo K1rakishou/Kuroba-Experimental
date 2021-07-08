@@ -28,6 +28,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
@@ -614,6 +615,7 @@ public class ManagerModule {
             Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
+            CacheHandler cacheHandler,
             RealDownloaderOkHttpClient downloaderOkHttpClient,
             ImageSaverFileManagerWrapper imageSaverFileManagerWrapper,
             SiteResolver siteResolver,
@@ -626,6 +628,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 appConstants,
+                cacheHandler,
                 downloaderOkHttpClient,
                 NotificationManagerCompat.from(appContext),
                 imageSaverFileManagerWrapper,
