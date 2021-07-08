@@ -24,12 +24,16 @@ import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -262,23 +266,41 @@ class PostSearchPopupController(
     }
 
     if (chanPost.postImages.isNotEmpty()) {
-      if (chanPost.postImages.size == 1) {
-        val postImage = chanPost.postImages.first()
-        val filename = postImage.formatImageInfo()
+      for (postImage in chanPost.postImages) {
+        val filename = formatImageInfoForSearch(postImage)
         if (filename.contains(query, ignoreCase = true)) {
           return true
-        }
-      } else {
-        for (image in chanPost.postImages) {
-          val filename = image.formatFullAvailableFileName()
-          if (filename.contains(query, ignoreCase = true)) {
-            return true
-          }
         }
       }
     }
 
     return false
+  }
+
+  private fun formatImageInfoForSearch(chanPostImage: ChanPostImage): String {
+    return buildString {
+      if (chanPostImage.serverFilename.isNotNullNorBlank()) {
+        append(chanPostImage.serverFilename)
+        append(' ')
+      }
+
+      if (chanPostImage.filename.isNotNullNorBlank()) {
+        append(chanPostImage.filename)
+        append(' ')
+      }
+
+      if (chanPostImage.extension.isNotNullNorBlank()) {
+        append(chanPostImage.extension!!.toUpperCase(Locale.ENGLISH))
+        append(' ')
+      }
+
+      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      append("${chanPostImage.imageWidth}x${chanPostImage.imageHeight}")
+
+      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      append(ChanPostUtils.getReadableFileSize(chanPostImage.size)
+        .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL))
+    }
   }
 
   private fun storeScrollPosition() {
