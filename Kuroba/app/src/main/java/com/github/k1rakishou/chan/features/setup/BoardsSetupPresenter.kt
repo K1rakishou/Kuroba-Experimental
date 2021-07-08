@@ -237,6 +237,21 @@ class BoardsSetupPresenter(
     }
   }
 
+  fun sortBoardsAlphabetically() {
+    val activeBoards = mutableListOf<BoardDescriptor>()
+    boardManager.viewAllBoards(siteDescriptor) { chanBoard ->
+      if (chanBoard.active) {
+        activeBoards += chanBoard.boardDescriptor
+      }
+    }
+
+    activeBoards
+      .sortBy { boardDescriptor -> boardDescriptor.boardCode }
+
+    boardManager.reorder(siteDescriptor, activeBoards)
+    displayActiveBoards(withLoadingState = false, withDebouncing = true)
+  }
+
   private fun displayActiveBoardsInternal() {
     val isSiteActive = siteManager.isSiteActive(siteDescriptor)
     if (!isSiteActive) {

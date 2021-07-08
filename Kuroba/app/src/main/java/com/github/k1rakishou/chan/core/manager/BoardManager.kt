@@ -473,6 +473,26 @@ class BoardManager(
     boardsChanged()
   }
 
+  fun reorder(siteDescriptor: SiteDescriptor, sortedBoards: List<BoardDescriptor>) {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    lock.write {
+      if (!ordersMap.containsKey(siteDescriptor)) {
+        return@write
+      }
+
+      ordersMap[siteDescriptor]!!.clear()
+
+      sortedBoards.forEach { boardDescriptor ->
+        ordersMap[siteDescriptor]!!.add(boardDescriptor)
+      }
+    }
+
+    persistBoardsDebouncer.post(BOARD_MOVED_DEBOUNCE_TIME_MS) { persistBoards() }
+    boardsChanged()
+  }
+
   fun getAllBoardDescriptorsForSite(siteDescriptor: SiteDescriptor): Set<BoardDescriptor> {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()

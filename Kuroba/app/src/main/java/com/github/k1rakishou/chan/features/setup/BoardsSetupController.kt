@@ -144,6 +144,11 @@ class BoardsSetupController(
         .withItem(R.drawable.ic_create_white_24dp) {
           onCreateBoardManuallyClicked()
         }
+        .withOverflow(navigationController)
+        .withSubItem(ACTION_SORT_BOARDS_ALPHABETICALLY, R.string.controller_boards_setup_sort_boards_alphabetically) {
+          presenter.sortBoardsAlphabetically()
+        }
+        .build()
         .build()
     }
 
@@ -248,11 +253,11 @@ class BoardsSetupController(
   private fun onCreateBoardManuallyClicked() {
     dialogFactory.createSimpleDialogWithInput(
       context = context,
-      titleTextId = R.string.controller_enter_board_code,
+      titleTextId = R.string.controller_boards_setup_enter_board_code,
       inputType = DialogFactory.DialogInputType.String,
       onValueEntered = { boardCode ->
         if (boardCode.isEmpty()) {
-          showToast(R.string.controller_board_code_is_empty)
+          showToast(R.string.controller_boards_setup_board_code_is_empty)
           return@createSimpleDialogWithInput
         }
 
@@ -283,6 +288,10 @@ class BoardsSetupController(
       }
     }
 
+  }
+
+  companion object {
+    private const val ACTION_SORT_BOARDS_ALPHABETICALLY = 0
   }
 
 }
