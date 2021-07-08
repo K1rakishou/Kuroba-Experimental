@@ -45,7 +45,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var themeEngine: ThemeEngine
 
   private var activeJob: Job? = null
-  private lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
+  lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
 
   private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   val showCaptchaHelpFlow: SharedFlow<Unit>
@@ -77,6 +77,14 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     val updatedSettings = chan4CaptchaSettings.get()
       .copy(onlyShowBackgroundImage = onlyShowBackgroundImage.value)
+    chan4CaptchaSettings.set(updatedSettings)
+  }
+
+  fun toggleContrastBackground() {
+    val settings = chan4CaptchaSettings.get()
+    val updatedSettings = settings
+      .copy(sliderCaptchaUseContrastBackground = settings.sliderCaptchaUseContrastBackground.not())
+
     chan4CaptchaSettings.set(updatedSettings)
   }
 
@@ -159,7 +167,12 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val bgBitmapPainter = captchaInfoRaw.bg?.let { bgBase64Img ->
       val bgByteArray = Base64.decode(bgBase64Img, Base64.DEFAULT)
       val bitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
-      val bgImageBitmap = replaceColor(bitmap, 0xFFEEEEEEL.toInt(), themeEngine.chanTheme.accentColor).asImageBitmap()
+
+      val bgImageBitmap = if (chan4CaptchaSettings.get().sliderCaptchaUseContrastBackground) {
+        replaceColor(bitmap, 0xFFEEEEEEL.toInt(), themeEngine.chanTheme.accentColor).asImageBitmap()
+      } else {
+        bitmap.asImageBitmap()
+      }
 
       return@let BitmapPainter(bgImageBitmap)
     }
@@ -171,12 +184,23 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       return@let BitmapPainter(imgImageBitmap)
     }
 
+    val bgInitialOffset = if (captchaInfoRaw.bgWidth != null && captchaInfoRaw.imgWidth != null) {
+      if (captchaInfoRaw.bgWidth > captchaInfoRaw.imgWidth) {
+        captchaInfoRaw.bgWidth - captchaInfoRaw.imgWidth
+      } else {
+        captchaInfoRaw.imgWidth - captchaInfoRaw.bgWidth
+      }
+    } else {
+      0
+    }
+
     return CaptchaInfo(
       bgBitmapPainter = bgBitmapPainter,
       imgBitmapPainter = imgBitmapPainter!!,
       challenge = captchaInfoRaw.challenge!!,
       startedAt = System.currentTimeMillis(),
-      ttlSeconds = captchaInfoRaw.ttl!!
+      ttlSeconds = captchaInfoRaw.ttl!!,
+      bgInitialOffset = bgInitialOffset.toFloat()
     )
   }
 
@@ -233,7 +257,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val imgBitmapPainter: BitmapPainter,
     val challenge: String,
     val startedAt: Long,
-    val ttlSeconds: Int
+    val ttlSeconds: Int,
+    val bgInitialOffset: Float
   ) {
     fun needSlider(): Boolean = bgBitmapPainter != null
 
@@ -242,6 +267,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
       return ttlMillis - (System.currentTimeMillis() - startedAt)
     }
+
   }
 
   class CaptchaRateLimitError(val cooldownMs: Long) :

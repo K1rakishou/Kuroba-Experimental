@@ -9,7 +9,9 @@ data class Chan4CaptchaSettings(
   @SerializedName("cookie_received_on")
   val cookieReceivedOn: Long = 0L,
   @SerializedName("captcha_help_shown")
-  val captchaHelpShown: Boolean = false
+  val captchaHelpShown: Boolean = false,
+  @SerializedName("slider_captcha_use_contrast_background")
+  val sliderCaptchaUseContrastBackground: Boolean = true
 ) {
 
   companion object {

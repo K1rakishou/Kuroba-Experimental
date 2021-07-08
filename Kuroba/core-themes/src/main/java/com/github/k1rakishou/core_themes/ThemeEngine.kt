@@ -186,6 +186,14 @@ open class ThemeEngine(
     return drawableMutable
   }
 
+  fun resolveDrawableTintColor(): Int {
+    return if (chanTheme.isBackColorDark) {
+      LIGHT_DRAWABLE_TINT
+    } else {
+      DARK_DRAWABLE_TINT
+    }
+  }
+
   fun resolveDrawableTintColor(isCurrentColorDark: Boolean): Int {
     return if (isCurrentColorDark) {
       LIGHT_DRAWABLE_TINT

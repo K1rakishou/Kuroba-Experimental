@@ -31,17 +31,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -59,7 +64,10 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -75,7 +83,8 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor")
 class Chan4CaptchaLayout(
   context: Context,
-  private val chanDescriptor: ChanDescriptor
+  private val chanDescriptor: ChanDescriptor,
+  private val presentControllerFunc: (Controller) -> Unit
 ) : TouchBlockingFrameLayout(context), AuthenticationLayoutInterface {
 
   @Inject
@@ -123,7 +132,7 @@ class Chan4CaptchaLayout(
             Box(
               modifier = Modifier
                 .fillMaxWidth()
-                .height(360.dp)
+                .wrapContentHeight()
                 .background(chanTheme.backColorCompose)
             ) {
               BuildContent()
@@ -176,7 +185,6 @@ class Chan4CaptchaLayout(
         scrollValueState = scrollValueState,
         onCaptchaImageClick = { info ->
           if (info.bgBitmapPainter == null) {
-            showToast(context, getString(R.string.captcha_layout_not_a_slider_captcha_type_msg))
             return@BuildCaptchaImage
           }
 
@@ -219,6 +227,23 @@ class Chan4CaptchaLayout(
           .fillMaxWidth()
           .wrapContentHeight()
       ) {
+        val drawableTintColor = themeEngine.resolveDrawableTintColor()
+        val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
+
+        Image(
+          painter = painterResource(id = R.drawable.ic_settings_white_24dp),
+          contentDescription = null,
+          colorFilter = colorFilter,
+          modifier = Modifier
+            .padding(start = 16.dp)
+            .width(24.dp)
+            .height(24.dp)
+            .align(Alignment.CenterVertically)
+            .clickable { showChan4CaptchaSettings() }
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
         KurobaComposeTextButton(
           onClick = {
             scrollValue = 0f
@@ -291,7 +316,8 @@ class Chan4CaptchaLayout(
             if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
               val bgBitmapPainter = captchaInfo.bgBitmapPainter
               val offset = remember(key1 = scrollValue) {
-                IntOffset(x = (START_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt(), y = 0)
+                val xOffset = (captchaInfo.bgInitialOffset + MIN_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt()
+                IntOffset(x = xOffset, y = 0)
               }
 
               Image(
@@ -359,6 +385,33 @@ class Chan4CaptchaLayout(
     )
   }
 
+  private fun showChan4CaptchaSettings() {
+    val chan4CaptchaSettings = viewModel.chan4CaptchaSettings.get()
+    val items = mutableListOf<FloatingListMenuItem>()
+
+    items += CheckableFloatingListMenuItem(
+      ACTION_USE_CONTRAST_BACKGROUND,
+      getString(R.string.captcha_layout_contrast_bg_slider_captcha),
+      isCurrentlySelected = chan4CaptchaSettings.sliderCaptchaUseContrastBackground
+    )
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = items,
+      itemClickListener = { clickedMenuItem ->
+        when (val itemId = clickedMenuItem.key as Int) {
+          ACTION_USE_CONTRAST_BACKGROUND -> {
+            viewModel.toggleContrastBackground()
+            showToast(context, R.string.captcha_layout_reload_captcha)
+          }
+        }
+      }
+    )
+
+    presentControllerFunc(floatingListMenuController)
+  }
+
   class Scale(
     private val scale: Float
   ) : ContentScale {
@@ -368,8 +421,9 @@ class Chan4CaptchaLayout(
   }
   
   companion object {
-    private const val START_OFFSET = 150f
+    private const val MIN_OFFSET = 100f
     private const val MAX_OFFSET = 400f
+    private const val ACTION_USE_CONTRAST_BACKGROUND = 0
   }
 
 }
