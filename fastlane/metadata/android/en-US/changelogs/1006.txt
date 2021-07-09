@@ -1,0 +1,68 @@
+v0.10.6-release
+TLDR version:
+- Thread downloader is back.
+- Native 4chan archive viewer is back.
+- 2ch.hk API V2 partial support (+ dvach captcha support, + global search support).
+- Saved posts screen.
+- SPLIT layout mode update. NavigationRailView is used instead of BottomNavigationView.
+- Android Jetpack Compose integration.
+- Beta apks are now stored on GitHub.
+- 4chan new captcha support.
+
+Full version:
+- Fix a crash that happens sometimes when SavedPostsController.onDestroy() is called without calling onCreate() first.
+- Fix a bug that causes catalog/threads to stuck in load state indefinitely.
+- Fix rare crash that may occur when opening the new captcha window.
+- Add a setting to force lowRawDevice flag which enables additional memory optimizations (for now the media viewer offscreen pages count). This setting can be found in developer settings.
+
+v0.10.5-release
+- Fix "back_color_secondary" not being serialized into the SerializableTheme.
+- Increase media viewer slide-fade out animation speed.
+- Fix tab title overflow in LocalArchiveController.
+- Add ability to delete saved posts.
+- Only allow using tapPostNoToReply when reply layout is opened to avoid accidental taps.
+- Use back_color_secondary for ThumbnailView's background.
+- Add a setting to enable/disable colored background of the slider captcha.
+- Add ability to search posts by image server/original file names.
+- When downloading images, attempt to load it from the internal cache first.
+- Add ability to quickly sort all active boards alphabetically.
+- Add support for "noop" captcha challenge.
+
+v0.10.4-release
+- Fix captcha scaling problems in some cases.
+- Add ability to finalize captcha input with keyboard "done/enter" button.
+
+v0.10.3-release
+- More captcha adjustments. Make captcha window scrollable + fix scaling bugs on devices with tiny displays.
+- Reuse captcha cookie, instead of refreshing it every time, possibly making it more simple.
+- Fix a rare crash when opening catalog/thread search and search results list not being laid out in time.
+
+v0.10.2-beta
+- 4chan new captcha initial support.
+
+v0.10.1-beta
+- Migrate beta apk updates to GitHub.
+- Fix album being opened at the beginning when opening it with no post images currently visible.
+- Remember scroll position in LocalArchiveController, SavedPostsController, BoardArchiveController. Mark last opened thread in BoardArchiveController.
+- Fix board code link parsing on 2ch.hk.
+- Attempt to fix weird crash on Xiaomi with Android 8.1 when setting post cell paddings.
+- Fix a bug where media viewer actions (Download/Close/Open Album) would not show up for some media.
+- Fix not being able to load 2ch.hk DvachCaptcha when not authorized by 2ch.hk anti-spam. Can now load up authorization procedure at any time.
+- Add 2ch.hk anti-spam script support for 2ch.hk global search.
+- Update FastScroller position when recycler view changes it's paddings (when keyboard is opened/closed).
+- Fix a bug where starting thread download with "download media" flag being off and stopping and after that starting again with the flag toggled would not actually update the flag and media would not start being downloaded.
+- Make BoardSelectionController and AddBoardsController take the whole available screen width on tablets.
+- Fix a bug where catalog thread sort order would not be applied to images displayed in the media viewer or album. 
+
+v0.10.0-beta
+- Thread downloader is back. It's also now possible to export downloaded threads as HTML pages with all the downloaded media. Unfortunately all media in store in the internal storage instead of external because of SAF being slow as hell (in other words you won't be able to store downloaded threads on SD-cards).
+- When using SPLIT layout mode, bottom navigation view is replaced with navigation rail view which is located on the left side of the screen instead of the bottom.
+- 2ch.hk partial support for API V2. For now only incremental thread update endpoint is supported.
+- 2ch.hk global search support added.
+- 2ch.hk dvach captcha support added.
+- Media viewer Close/Download actions won't be shown anymore when zoomed into an image.
+- ReplyLayout's attach media item's height slightly decreased.
+- Enable gzip encoding for all network requests.
+- Themes updated. New color was added "back_color_secondary" which is used for elements drawn on top of elements that use "back_color" (pretty much all background elements).
+- It's now possible to view all replies or posts marked as own in the same place.
+- It's now possible again to access built-in 4chan archive.
