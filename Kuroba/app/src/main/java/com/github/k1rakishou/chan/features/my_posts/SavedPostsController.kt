@@ -118,7 +118,7 @@ class SavedPostsController(
   override fun onDestroy() {
     super.onDestroy()
 
-    requireToolbarNavController().closeSearch()
+    toolbarNavControllerOrNull()?.closeSearch()
     mainControllerCallbacks.hideBottomPanel()
 
     viewModel.updateQueryAndReload(null)

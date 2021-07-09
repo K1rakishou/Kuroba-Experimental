@@ -138,6 +138,10 @@ abstract class Controller(@JvmField var context: Context) {
     return navController
   }
 
+  fun toolbarNavControllerOrNull(): ToolbarNavigationController? {
+    return navigationController as? ToolbarNavigationController
+  }
+
   fun requireToolbar(): Toolbar = requireNotNull(toolbar) {
     "Toolbar was not set"
   }
