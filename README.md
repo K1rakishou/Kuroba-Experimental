@@ -73,7 +73,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 #### - (2021-07-04) Beta apks are now stored and distributed as updates from this repo: https://github.com/K1rakishou/Kuroba-Experimental-beta The migration process is automatic and you shouldn't notice any difference.
 
-#### - (2021-05-30) Themes were moved into a separate repository: https://github.com/K1rakishou/KurobaEx-themes If you want to request a new theme or if you want to make a theme by yourself, but have no idea what to make, then this issue may help you https://github.com/K1rakishou/KurobaEx-themes/issues/6
+#### - (2021-05-30) Themes were moved into a separate repository: https://github.com/K1rakishou/KurobaEx-themes
 
 #### - (2021-02-24) Beta apks are now built as release apks (not debug) to make them more performant. The downside here is that you won't be able to automatically install v0.6.x-beta and will have to do that manually. You will have to export all your settings, remove the previous beta version, install the new one and then import the settings back. This is pretty inconvenient but as a result you get an apk with the same performance as the release one. The stable release versions are not affected, only beta!
 
@@ -81,7 +81,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 #### - (2020-07-10) Unfortunatelly, built-in updater for release versions was broken in one of the releases so people using Android M and below won't be able to use it to update to a newer version. You will have to install  the update manually (it is fixed in [v0.2.10](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.10-release)). If you are using Android N and above you should be fine. Beta versions are fine too.
 
-#### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/Kuroba-Experimental/wiki/Dynamic-themes) for more info
+#### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/Kuroba-Experimental/wiki/Dynamic-themes) for more info. If you want to request a new theme or if you want to make a theme by yourself, but have no idea what to make, then this issue may help you https://github.com/K1rakishou/KurobaEx-themes/issues/6
 
 [Latest beta version](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest)
 
