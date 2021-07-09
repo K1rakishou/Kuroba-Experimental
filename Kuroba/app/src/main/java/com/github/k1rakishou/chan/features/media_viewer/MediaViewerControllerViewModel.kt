@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
@@ -22,7 +23,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
-import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,7 +48,7 @@ class MediaViewerControllerViewModel : ViewModel() {
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
   private val _mediaViewerOptions = MutableStateFlow<MediaViewerOptions>(MediaViewerOptions())
-  private val mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(PersistableChanState.mediaViewerOffscreenItemsCount.get())
+  private val mediaViewStateCache = LruCache<MediaLocation, MediaViewState>(offscreenPageLimit())
 
   private var lastPagerIndex = -1
 
@@ -531,6 +531,14 @@ class MediaViewerControllerViewModel : ViewModel() {
   companion object {
     private const val TAG = "MediaViewerControllerViewModel"
     private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png")
+
+    fun offscreenPageLimit(): Int {
+      return if (AppModuleAndroidUtils.isLowRamDevice()) {
+        1
+      } else {
+        2
+      }
+    }
 
     @JvmStatic
     fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {

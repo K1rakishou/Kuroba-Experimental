@@ -400,6 +400,7 @@ public class ChanSettings {
     public static BooleanSetting drawerMoveLastAccessedThreadToTop;
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
+    public static BooleanSetting isLowRamDeviceForced;
     //endregion
     //endregion
 
@@ -645,6 +646,11 @@ public class ChanSettings {
                     provider,
                     "drawer_show_navigation_history",
                     true
+            );
+            isLowRamDeviceForced = new BooleanSetting(
+                    provider,
+                    "is_low_ram_device_forced",
+                    false
             );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the

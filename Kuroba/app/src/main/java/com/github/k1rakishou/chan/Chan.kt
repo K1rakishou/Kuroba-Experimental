@@ -383,12 +383,15 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private fun logAppConstantsAndSettings(appConstants: AppConstants) {
-    Logger.d(TAG, "maxPostsCountInPostsCache = " + appConstants.maxPostsCountInPostsCache)
-    Logger.d(TAG, "maxAmountOfPostsInDatabase = " + appConstants.maxAmountOfPostsInDatabase)
-    Logger.d(TAG, "maxAmountOfThreadsInDatabase = " + appConstants.maxAmountOfThreadsInDatabase)
-    Logger.d(TAG, "diskCacheCleanupRemovePercent = " + ChanSettings.diskCacheCleanupRemovePercent.get())
-    Logger.d(TAG, "userAgent = " + appConstants.userAgent)
-    Logger.d(TAG, "kurobaExUserAgent = " + appConstants.kurobaExUserAgent)
+    Logger.d(TAG, "maxPostsCountInPostsCache: ${appConstants.maxPostsCountInPostsCache}")
+    Logger.d(TAG, "maxAmountOfPostsInDatabase: ${appConstants.maxAmountOfPostsInDatabase}")
+    Logger.d(TAG, "maxAmountOfThreadsInDatabase: ${appConstants.maxAmountOfThreadsInDatabase}")
+    Logger.d(TAG, "diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
+    Logger.d(TAG, "userAgent: ${appConstants.userAgent}")
+    Logger.d(TAG, "kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
+
+    Logger.d(TAG, "isLowRamDevice: ${AppModuleAndroidUtils.isLowRamDevice()}, " +
+      "isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
   }
 
   private fun exceptionToString(type: UnhandlerExceptionHandlerType, e: Throwable): String {

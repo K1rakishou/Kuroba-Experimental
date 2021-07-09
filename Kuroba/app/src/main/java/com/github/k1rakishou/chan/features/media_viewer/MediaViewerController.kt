@@ -34,7 +34,6 @@ import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.github.k1rakishou.persist_state.PersistableChanState
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import com.google.android.exoplayer2.upstream.ContentDataSource
 import com.google.android.exoplayer2.upstream.DataSource
@@ -126,8 +125,10 @@ class MediaViewerController(
 
     pager = view.findViewById(R.id.pager)
     pager.addOnPageChangeListener(this)
-    // TODO(KurobaEx): make this setting configurable
-    pager.offscreenPageLimit = PersistableChanState.mediaViewerOffscreenItemsCount.get()
+
+    val offscreenPageLimit = MediaViewerControllerViewModel.offscreenPageLimit()
+    Logger.d(TAG, "offscreenPageLimit=$offscreenPageLimit")
+    pager.offscreenPageLimit = offscreenPageLimit
 
     mainScope.launch(context = Dispatchers.Main.immediate) {
       viewModel.transitionInfoFlow.collect { transitionInfo ->

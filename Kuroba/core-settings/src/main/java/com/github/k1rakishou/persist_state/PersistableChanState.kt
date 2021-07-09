@@ -9,7 +9,6 @@ import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.IntegerSetting
 import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.LongSetting
-import com.github.k1rakishou.prefs.RangeSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
 
@@ -65,8 +64,6 @@ object PersistableChanState {
   lateinit var drawerNavHistoryGridMode: BooleanSetting
   @JvmStatic
   lateinit var boardSelectionGridMode: BooleanSetting
-  @JvmStatic
-  lateinit var mediaViewerOffscreenItemsCount: RangeSetting
   @JvmStatic
   lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
   @JvmStatic
@@ -142,7 +139,6 @@ object PersistableChanState {
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
       drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
-      mediaViewerOffscreenItemsCount = RangeSetting(provider, "media_viewer_offscreen_items_count", 2, 1, 5)
 
       threadDownloaderOptions = JsonSetting(
         gson,

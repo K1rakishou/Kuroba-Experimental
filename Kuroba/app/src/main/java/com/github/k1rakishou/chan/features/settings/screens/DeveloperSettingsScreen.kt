@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -49,6 +50,15 @@ class DeveloperSettingsScreen(
       buildFunction = {
         val group = SettingsGroup(
           groupIdentifier = identifier
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ForceLowRamDevice,
+          topDescriptionIdFunc = { R.string.settings_force_low_ram_device },
+          bottomDescriptionIdFunc = { R.string.settings_force_low_ram_device_description },
+          setting = ChanSettings.isLowRamDeviceForced,
+          requiresRestart = true
         )
 
         group += LinkSettingV2.createBuilder(

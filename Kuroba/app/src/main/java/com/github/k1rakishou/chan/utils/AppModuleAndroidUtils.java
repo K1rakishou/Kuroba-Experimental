@@ -588,6 +588,10 @@ public class AppModuleAndroidUtils {
     }
 
     public static boolean isLowRamDevice() {
+        if (ChanSettings.isLowRamDeviceForced.get()) {
+            return true;
+        }
+
         ActivityManager activityManager = getActivityManager();
         return activityManager != null && activityManager.isLowRamDevice();
     }

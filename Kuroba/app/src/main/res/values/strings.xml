@@ -826,6 +826,8 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_logs_copy">Copy</string>
 
     <!-- Developer settings -->
+    <string name="settings_force_low_ram_device">Force low ram device</string>
+    <string name="settings_force_low_ram_device_description">This setting should only be used by old devices with less than ~2GB of memory (very approximate number because this heavily depends on the device). It will enable some additional optimizations and attempt to reduce the amount of memory that is used by memory caches. Additionally it will force media viewer view pager to only have 1 offscreen page instead of 2 (which should reduce OutOfMemory and other similar crashes).</string>
     <string name="settings_open_logs">View logs</string>
     <string name="settings_enable_verbose_logs">Enable verbose logs</string>
     <string name="settings_disable_verbose_logs">Disable verbose logs</string>
