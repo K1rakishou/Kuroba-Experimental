@@ -81,7 +81,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 #### - (2020-07-10) Unfortunatelly, built-in updater for release versions was broken in one of the releases so people using Android M and below won't be able to use it to update to a newer version. You will have to install  the update manually (it is fixed in [v0.2.10](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v0.2.10-release)). If you are using Android N and above you should be fine. Beta versions are fine too.
 
-#### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/Kuroba-Experimental/wiki/Dynamic-themes) for more info. If you want to request a new theme or if you want to make a theme by yourself, but have no idea what to make, then this issue may help you https://github.com/K1rakishou/KurobaEx-themes/issues/6
+#### - New theme engine has been added which now allows you to create any theme you want, see [this wiki page](https://github.com/K1rakishou/KurobaEx-themes/wiki/Dynamic-themes) for more info. If you want to request a new theme or if you want to make a theme by yourself, but have no idea what to make, then this issue may help you https://github.com/K1rakishou/KurobaEx-themes/issues/6
 
 [Latest beta version](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest)
 
