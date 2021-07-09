@@ -93,7 +93,7 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
 }
 
 suspend fun View.awaitUntilGloballyLaidOut() {
-  if (ViewCompat.isLaidOut(this) && !isLayoutRequested) {
+  if (ViewCompat.isLaidOut(this) && !isLayoutRequested || (width > 0 || height > 0)) {
     return
   }
 
