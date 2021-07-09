@@ -6,10 +6,8 @@ import android.util.AttributeSet
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.graphics.component1
 import androidx.core.graphics.component2
-import androidx.core.view.marginBottom
 import androidx.core.view.marginEnd
 import androidx.core.view.marginStart
-import androidx.core.view.marginTop
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.layout.PostPopupContainer
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -25,15 +23,8 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var displayWidth: Int = 0
-  private var displayHeight: Int = 0
 
   var desiredWidth: Int = PostPopupContainer.MAX_WIDTH
-    set(value) {
-      field = value
-      requestLayout()
-    }
-
-  var desiredHeight: Int = 0
     set(value) {
       field = value
       requestLayout()
@@ -59,45 +50,38 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     var newWidth = MeasureSpec.getSize(widthMeasureSpec)
-    var newHeight = MeasureSpec.getSize(heightMeasureSpec)
 
     if (isInEditMode) {
       newWidth = (newWidth / 1.2f).toInt()
-      newHeight = (newHeight / 1.2f).toInt()
+
+      super.onMeasure(
+        MeasureSpec.makeMeasureSpec(newWidth, MeasureSpec.EXACTLY),
+        heightMeasureSpec
+      )
+
+      return
+    }
+
+    calculateDisplaySize()
+
+    val horizontalPaddings = globalWindowInsetsManager.left() +
+      globalWindowInsetsManager.right() +
+      paddingStart +
+      paddingEnd +
+      marginStart +
+      marginEnd
+
+    val actualWidth = if (this.desiredWidth <= 0 || this.desiredWidth > displayWidth) {
+      displayWidth
     } else {
-      calculateDisplaySize()
+      desiredWidth
+    }
 
-      val horizontalPaddings = globalWindowInsetsManager.left() +
-        globalWindowInsetsManager.right() +
-        paddingStart +
-        paddingEnd +
-        marginStart +
-        marginEnd
+    newWidth = (actualWidth - horizontalPaddings).coerceIn(0, displayWidth)
 
-      val verticalPaddings = globalWindowInsetsManager.top() +
-        globalWindowInsetsManager.bottom() +
-        paddingTop +
-        paddingBottom +
-        marginTop +
-        marginBottom
-
-      val actualWidth = if (this.desiredWidth <= 0 || this.desiredWidth > displayWidth) {
-        displayWidth
-      } else {
-        desiredWidth
-      }
-
-      val actualHeight = if (this.desiredHeight <= 0 || this.desiredHeight > displayHeight) {
-        displayHeight
-      } else {
-        desiredHeight
-      }
-
-      newWidth = (actualWidth - horizontalPaddings).coerceIn(0, displayWidth)
-      newHeight = (actualHeight - verticalPaddings).coerceIn(0, displayHeight)
-
-      require(newWidth > 0) { "Bad newWidth: $newWidth" }
-      require(newHeight > 0) { "Bad newHeight: $newHeight" }
+    require(newWidth > 0) {
+      "Bad newWidth: $newWidth (actualWidth: $actualWidth, " +
+        "desiredWidth: $desiredWidth, displayWidth: $displayWidth)"
     }
 
     super.onMeasure(
@@ -107,10 +91,9 @@ class ViewContainerWithMaxSize @JvmOverloads constructor(
   }
 
   private fun calculateDisplaySize() {
-    if (this.displayWidth == 0 && this.displayHeight == 0) {
-      val (dispWidth, dispHeight) = AndroidUtils.getDisplaySize(context)
+    if (this.displayWidth <= 0) {
+      val (dispWidth, _) = AndroidUtils.getDisplaySize(context)
       this.displayWidth = dispWidth
-      this.displayHeight = dispHeight
     }
   }
 
