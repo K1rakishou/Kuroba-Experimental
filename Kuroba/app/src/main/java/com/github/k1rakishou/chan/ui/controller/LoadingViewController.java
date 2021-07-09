@@ -61,10 +61,7 @@ public class LoadingViewController extends BaseFloatingController {
     public void onDestroy() {
         super.onDestroy();
 
-        if (cancellationFunc != null) {
-            cancellationFunc.invoke();
-            cancellationFunc = null;
-        }
+        cancellationFunc = null;
     }
 
     public void enableBack() {

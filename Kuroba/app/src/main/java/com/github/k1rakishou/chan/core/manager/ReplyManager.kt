@@ -234,6 +234,7 @@ class ReplyManager(
 
       replyFilesStorage.deleteFiles(fileUuids, notifyListeners)
         .peekError { error -> Logger.e(TAG, "replyFilesStorage.deleteFiles($fileUuids) error", error) }
+        .ignore()
     }
   }
 

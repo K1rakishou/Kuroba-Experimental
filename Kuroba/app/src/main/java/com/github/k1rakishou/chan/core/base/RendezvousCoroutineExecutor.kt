@@ -47,7 +47,7 @@ class RendezvousCoroutineExecutor(
     }
 
     val serializedAction = SerializedAction(func)
-    channel.offer(serializedAction)
+    channel.trySend(serializedAction)
   }
 
   fun stop() {

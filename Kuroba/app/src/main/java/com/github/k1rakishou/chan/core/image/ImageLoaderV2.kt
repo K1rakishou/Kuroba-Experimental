@@ -924,10 +924,8 @@ class ImageLoaderV2(
 
     val replyFileMaybe = replyManager.getReplyFileByFileUuid(fileUuid)
     if (replyFileMaybe is ModularResult.Error) {
-      Logger.e(
-        TAG, "calculateFilePreviewAndStoreOnDisk() " +
-          "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error
-      )
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() " +
+          "getReplyFileByFileUuid($fileUuid) error", replyFileMaybe.error)
       return
     }
 
@@ -939,10 +937,8 @@ class ImageLoaderV2(
 
     val replyFileMetaMaybe = replyFile.getReplyFileMeta()
     if (replyFileMetaMaybe is ModularResult.Error) {
-      Logger.e(
-        TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
-        replyFileMetaMaybe.error
-      )
+      Logger.e(TAG, "calculateFilePreviewAndStoreOnDisk() replyFile.getReplyFileMeta() error",
+        replyFileMetaMaybe.error)
       return
     }
 
