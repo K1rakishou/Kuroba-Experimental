@@ -57,7 +57,7 @@ class LoginController(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
-  
+
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView
   private lateinit var authenticated: TextView

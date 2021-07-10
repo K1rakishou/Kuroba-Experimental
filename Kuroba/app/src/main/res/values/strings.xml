@@ -896,6 +896,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_pass_login">Submit</string>
     <string name="setting_pass_logout">Logout</string>
     <string name="setting_pass_error">Connection error</string>
+
     <string name="setting_posting_limits_info_refresh_success">Posting limits info refreshed</string>
     <string name="setting_posting_limits_info_refresh_failure">Failed to refresh posting limits info</string>
 
@@ -906,6 +907,14 @@ Forgot your 4chan Pass login details?<br>
 <br>
 Don't have a 4chan Pass?<br>
 <a href=\"https://www.4chan.org/pass\">Tap here to learn more.</a>
+<br>
+<br>
+Sometimes you may want to post by solving a captcha (or by using a captcha solver) even though you have passcode.<br>
+To make that possible, this app supports different reply modes.<br>
+You can find them all by long-tapping the reply button in reply layout.<br>
+After logging in with a passcode, in order to actually use a passcode when posting, you will have to select reply mode \"Post with passcode\".<br>
+Otherwise you will still have to solve captchas.<br>
+If you ever log out or if the passcode expires you will have to change reply mode too.
 ]]>
     "</string>
 
@@ -916,63 +925,10 @@ Don't have a 4chan Pass?<br>
     <string name="theme_gallery_screen_loading_themes">Loading themes</string>
     <string name="theme_gallery_screen_loading_themes_failed">Failed to load themes</string>
 
-
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
     <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
 
-    <string name="archives_settings_title">Archives settings</string>
-    <string name="archives_settings_repository_error">Repository error: %1$s</string>
-    <string name="archives_settings_archive_is_disabled">Archive is disabled</string>
-    <string name="archives_settings_archive_is_disabled_permanently">Archive is disabled because something doesn\'t work as expected. Maybe it will be enabled some time in the future</string>
-    <string name="archives_settings_archive_is_working">Archive is working normally</string>
-
-    <string name="archives_settings_help_message">
-        <![CDATA[All these archives are used to retrieve deleted posts/images in a thread.<br>
-            All archives are disabled by default, you need to enable them manually.<br>
-            Most of the time you want to enable <b>all</b> of the archives.
-            If one archive is unavailable for some reason, the other one may be used instead
-            (only if they both support the same board).<br><br>
-
-            When fetching posts from an archive, if there was an error (for example an archive was
-            unavailable) the error is stored so that it can be used to calculate a score. The score
-            is used to determine what archive to use when multiple enabled archives support the
-            same board. <br><br>
-
-            Results of the last 5 last fetches are stored and used for the score calculation, which
-            means that if all 5 fetches succeeded then the archive will have the highest score.
-            Such archives are marked with "WORKING" status. If there was at least one error over the
-            last 5 fetches then such archive is marked with "EXPERIENCING PROBLEMS" error. If all
-            5 fetches resulted in an error then such archive will be marked as "NOT WORKING". Most
-            of the scores are used mostly for notifying the user of what\'s going on. Only the
-            "NOT WORKING" score will disable an archive until all the previous fetch results are
-            not valid anymore (this takes like 30 minutes).<br><br>
-
-            When determining what archive to use we go down from an archive with the highest score
-            to the lowest. If an archive with the highest score does not support files for the board
-            and the next archive supports them then the next archive will be used (since archives
-            that supports files have higher priority). The score resets every 30 minutes for all
-            archives.<br><br>
-
-            You can also manually delete fetch results to change the score so that an archive can
-            be used again if you don\'t want to wait until it\'s done automatically.<br><br>
-
-            If one of the archives for some reason does not load at all (blocked by an ISP) you can
-            just disable it so we don\'t use it\'s score to figure out what archive to use (because
-            requests for blocked sites will just end up in failures with huge timeouts).]]>
-    </string>
-
-    <string name="thread_presenter_no_archives_enabled">No archives are enabled for the current thread. You can enable them in the site settings.</string>
-    <string name="thread_presenter_failed_to_delete_thread">Failed to delete thread</string>
-    <string name="thread_presenter_error_while_trying_to_get_archive_descriptor">Error while trying get archive descriptor by thread descriptor</string>
-    <string name="thread_presenter_no_archives_for_thread">No archives were found for the current thread. This means that all archives supporting current board are disabled (In this case you can enable them in site settings) or all archives supporting current board are not working (See archives settings in site settings)</string>
-    <string name="thread_presenter_no_available_archives">No archives are currently available to use. You can only use an archive once in %1$d minutes per thread. Time until any of archives are available again: %2$s</string>
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
-
-    <string name="thread_presenter_started_preloading_images">Started preloading %1$d images</string>
-    <string name="thread_presenter_all_images_already_preloaded">All images have already been preloaded</string>
-    <string name="thread_presenter_already_in_progress">Already in progress</string>
-    <string name="thread_presenter_done_preloading">Done preloading, preloaded: %1$d, errors: %2$d</string>
-
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
