@@ -249,6 +249,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="order_activity">Thread activity</string>
 
     <string name="search_hint">Search</string>
+    <string name="search_query_hint">Search query</string>
     <string name="search_nothing_found">Nothing found</string>
     <string name="search_nothing_found_with_query">Nothing found by query \'%1$s\'</string>
 
@@ -1238,6 +1239,7 @@ Don't have a 4chan Pass?<br>
 
     <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
     <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
+    <string name="layout_reply_files_area_searx_image_search">Use searx image search</string>
 
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
@@ -1372,6 +1374,9 @@ Don't have a 4chan Pass?<br>
     <string name="firewall_check_failure">Failed to pass %1$s checks, reason: %2$s</string>
     <string name="firewall_check_timeout">Failed to pass %1$s checks, reason: Timeout</string>
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
+
+    <string name="searx_image_search_controller_base_url_hint">Searx instance base url, e.g. %1$s</string>
+    <string name="searx_image_search_controller_help_text">Only searx search engines are supported. You can find them all here:\nhttps://searx.space \nNote: Some of them do not support/block the API so they won\'t work.</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>

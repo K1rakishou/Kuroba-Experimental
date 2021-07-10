@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
@@ -43,6 +44,7 @@ import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.google.gson.Gson;
+import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
 
@@ -297,6 +299,18 @@ public class UseCaseModule {
                 savedReplyManager,
                 boardManager,
                 chanLoadProgressNotifier
+        );
+    }
+
+    @Provides
+    @Singleton
+    public SearxImageSearchUseCase provideSearxImageSearchUseCase(
+            RealProxiedOkHttpClient proxiedOkHttpClient,
+            Moshi moshi
+    ) {
+        return new SearxImageSearchUseCase(
+                proxiedOkHttpClient,
+                moshi
         );
     }
 

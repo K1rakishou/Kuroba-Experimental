@@ -1,0 +1,117 @@
+package com.github.k1rakishou.chan.features.reply_image_search.searx
+
+import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.compose.AsyncData
+import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.PersistableChanState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import javax.inject.Inject
+
+class SearxImageSearchControllerViewModel : BaseViewModel() {
+  @Inject
+  lateinit var searxImageSearchUseCase: SearxImageSearchUseCase
+
+  var baseSearchUrl = mutableStateOf(PersistableChanState.searxLastUsedInstanceUrl.get())
+  var searchQuery = mutableStateOf("")
+  var searchResults = mutableStateOf<AsyncData<List<SearxImage>>>(AsyncData.NotInitialized)
+
+  private var rememberedFirstVisibleItemIndex: Int = 0
+  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+
+  val searchErrorToastFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
+
+  private var activeSearchJob: Job? = null
+
+  override fun injectDependencies(component: ViewModelComponent) {
+    component.inject(this)
+  }
+
+  override suspend fun onViewModelReady() {
+
+  }
+
+  override fun onCleared() {
+    super.onCleared()
+
+    cleanup()
+  }
+
+  @Composable
+  fun lazyListState(): LazyListState {
+    val lazyListState = rememberLazyListState(
+      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
+    )
+
+    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
+    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
+
+    return lazyListState
+  }
+
+  fun cleanup() {
+    activeSearchJob?.cancel()
+    activeSearchJob = null
+  }
+
+  fun search() {
+    activeSearchJob?.cancel()
+    activeSearchJob = null
+
+    activeSearchJob = mainScope.launch {
+      val baseUrl = baseSearchUrl.value.toHttpUrlOrNull()
+      if (baseUrl == null) {
+        searchErrorToastFlow.tryEmit("Bad baseUrl: ${baseSearchUrl.value}")
+        return@launch
+      }
+
+      val query = searchQuery.value
+      if (query.length < MIN_SEARCH_QUERY_LEN) {
+        searchErrorToastFlow.tryEmit("Bad query length: query='$query', length=${query.length}, " +
+          "must be $MIN_SEARCH_QUERY_LEN or more characters")
+        return@launch
+      }
+
+      searchResults.value = AsyncData.Loading
+
+      val searchUrl = baseUrl.newBuilder()
+        .addPathSegment("search")
+        .addQueryParameter("q", query)
+        .addQueryParameter("categories", "images")
+        .addQueryParameter("language", "en-US")
+        .addQueryParameter("format", "json")
+        .build()
+
+      Logger.d(TAG, "search() searchUrl=${searchUrl}")
+      val searxImagesResult = searxImageSearchUseCase.execute(searchUrl)
+
+      val searxImages = if (searxImagesResult is ModularResult.Error) {
+        searchResults.value = AsyncData.Error(searxImagesResult.error)
+        return@launch
+      } else {
+        searxImagesResult as ModularResult.Value
+        searxImagesResult.value
+      }
+
+      PersistableChanState.searxLastUsedInstanceUrl.set(baseUrl.toString())
+      searchResults.value = AsyncData.Data(searxImages)
+    }
+  }
+
+  companion object {
+    private const val TAG = "SearxImageSearchControllerViewModel"
+    private const val MIN_SEARCH_QUERY_LEN = 3
+    val HINT_URL = "https://searx.prvcy.eu".toHttpUrl()
+  }
+}

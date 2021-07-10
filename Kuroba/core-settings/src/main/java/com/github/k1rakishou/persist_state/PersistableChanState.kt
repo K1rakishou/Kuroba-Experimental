@@ -68,6 +68,8 @@ object PersistableChanState {
   lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
   @JvmStatic
   lateinit var threadDownloaderArchiveWarningShown: BooleanSetting
+  @JvmStatic
+  lateinit var searxLastUsedInstanceUrl: StringSetting
 
   // TODO(KurobaEx): remove in v0.11.x
   @JvmStatic
@@ -149,6 +151,7 @@ object PersistableChanState {
       )
 
       threadDownloaderArchiveWarningShown = BooleanSetting(provider, "thread_downloader_archive_warning_shown", false)
+      searxLastUsedInstanceUrl = StringSetting(provider, "searx_last_used_instance_url", "")
 
       appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_bookmark_watcher_work_done", false)
       appHack_V08X_deleteAllBlockedFilterWatcherWorkDone = BooleanSetting(provider, "app_hack_v08x_delete_all_blocked_filter_watcher_work_done", false)

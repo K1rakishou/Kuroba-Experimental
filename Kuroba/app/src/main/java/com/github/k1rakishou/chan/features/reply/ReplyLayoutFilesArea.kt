@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
+import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
@@ -360,6 +361,11 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       name = context.getString(R.string.layout_reply_files_area_pick_remote_file)
     )
 
+    floatingListMenuItems += FloatingListMenuItem(
+      key = ACTION_USE_SEARX_IMAGE_SEARCH,
+      name = context.getString(R.string.layout_reply_files_area_searx_image_search)
+    )
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
@@ -382,6 +388,15 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           inputType = DialogFactory.DialogInputType.String,
           onValueEntered = { url -> presenter.pickRemoteFile(url) }
         )
+      }
+      ACTION_USE_SEARX_IMAGE_SEARCH -> {
+        val searxImageSearchController = SearxImageSearchController(
+          context = context,
+          onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
+        )
+
+        replyLayoutCallbacks?.hideKeyboard()
+        threadListLayoutCallbacks?.presentController(searxImageSearchController)
       }
     }
   }
@@ -471,6 +486,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   }
 
   interface ReplyLayoutCallbacks {
+    fun hideKeyboard()
     fun requestWrappingModeUpdate()
     fun disableSendButton()
     fun enableSendButton()
@@ -489,6 +505,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
+    private const val ACTION_USE_SEARX_IMAGE_SEARCH = 102
 
     private const val MIN_FILES_PER_ROW = 2
 

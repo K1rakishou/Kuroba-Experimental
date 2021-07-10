@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
+import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
 import com.github.k1rakishou.chan.features.search.SelectBoardForSearchController;
@@ -259,6 +260,7 @@ public interface ActivityComponent {
     void inject(SavedPostsController savedPostsController);
     void inject(ThreadDownloaderSettingsController threadDownloaderSettingsController);
     void inject(LocalArchiveController localArchiveController);
+    void inject(SearxImageSearchController searxImageSearchController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
