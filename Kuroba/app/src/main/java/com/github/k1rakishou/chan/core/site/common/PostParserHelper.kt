@@ -22,7 +22,7 @@ object PostParserHelper {
   )
 
   private val RAW_COLOR_PATTERN = Pattern.compile("(#[a-fA-F0-9]{1,8})")
-  private val THEME_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"(.+)\"")
+  private val THEME_NAME_PATTERN = Pattern.compile("\"name\"\\s*:\\s*\"(.*?)\"")
   private val THEME_TYPE_PATTERN = Pattern.compile("\"is_light_theme\"\\s*:\\s*(true|false)")
 
   @JvmStatic
@@ -31,7 +31,7 @@ object PostParserHelper {
       return
     }
 
-    val jsonParts = collectAllJsonParts(parsedCommentText);
+    val jsonParts = collectAllJsonParts(parsedCommentText)
     if (jsonParts.isEmpty()) {
       return
     }
@@ -42,7 +42,7 @@ object PostParserHelper {
         continue
       }
 
-      val isLightThemeMaybe = tryFigureOutIsThemeLight(themeJson);
+      val isLightThemeMaybe = tryFigureOutIsThemeLight(themeJson)
       if (isLightThemeMaybe == null) {
         continue
       }
@@ -101,8 +101,14 @@ object PostParserHelper {
       return "Unknown theme name"
     }
 
-    return themeNameMatcher.groupOrNull(1)
-      ?: "Unknown theme name"
+    val themeName = themeNameMatcher.groupOrNull(1)
+      ?: return "Unknown theme name"
+
+    if (themeName.isBlank()) {
+      return "Unknown theme name"
+    }
+
+    return themeName
   }
 
   private fun tryFigureOutIsThemeLight(themeJson: CharSequence): Boolean? {
@@ -125,12 +131,12 @@ object PostParserHelper {
   }
 
   private fun textContainsValidJson(parsedCommentText: CharSequence): Boolean {
-    var jsonOpenBracketIndex = -1;
-    var jsonCloseBracketIndex = -1;
+    var jsonOpenBracketIndex = -1
+    var jsonCloseBracketIndex = -1
 
     for ((index, char) in parsedCommentText.withIndex()) {
       if (char == '{' && jsonOpenBracketIndex == -1) {
-        jsonOpenBracketIndex = index;
+        jsonOpenBracketIndex = index
       }
 
       if (char == '}') {
@@ -148,42 +154,42 @@ object PostParserHelper {
   }
 
   private fun collectAllJsonParts(parsedCommentText: CharSequence): List<Pair<Int, Int>> {
-    var jsonOpenBracketIndex = -1;
-    var openedBracketsCount = 0;
+    var jsonOpenBracketIndex = -1
+    var openedBracketsCount = 0
     val resultList = mutableListOf<Pair<Int, Int>>()
 
     if (parsedCommentText.isEmpty()) {
-      return resultList;
+      return resultList
     }
 
     for ((index, char) in parsedCommentText.withIndex()) {
       if (char == '{') {
-        openedBracketsCount += 1;
+        openedBracketsCount += 1
 
         if (jsonOpenBracketIndex == -1) {
-          jsonOpenBracketIndex = index;
+          jsonOpenBracketIndex = index
         }
 
-        continue;
+        continue
       }
 
       if (char == '}') {
-        openedBracketsCount -= 1;
+        openedBracketsCount -= 1
 
         if (openedBracketsCount < 0) {
-          break;
+          break
         }
 
         if (openedBracketsCount == 0) {
           resultList += Pair(jsonOpenBracketIndex, index + 1)
-          jsonOpenBracketIndex = -1;
+          jsonOpenBracketIndex = -1
         }
 
-        continue;
+        continue
       }
     }
 
-    return resultList;
+    return resultList
   }
 
 
