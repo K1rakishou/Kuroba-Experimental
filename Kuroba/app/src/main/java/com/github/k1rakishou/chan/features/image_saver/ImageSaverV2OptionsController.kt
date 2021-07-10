@@ -11,7 +11,6 @@ import android.widget.Toast
 import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
@@ -67,8 +66,6 @@ class ImageSaverV2OptionsController(
   private var overriddenFileName: String? = null
 
   private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
-  private val fileNameDebouncer = Debouncer(false)
-  private val additionalDirsDebouncer = Debouncer(false)
 
   private val rootDirButtonBackgroundAnimation = RootDirBackgroundAnimationFactory.createRootDirBackgroundAnimation(
     themeEngine = themeEngine,
@@ -201,23 +198,20 @@ class ImageSaverV2OptionsController(
     }
 
     fileNameTextWatcher = customFileName.doAfterTextChanged { editable ->
-      fileNameDebouncer.post({
-        overriddenFileName = editable?.toString()
-        applyOptionsToView()
-      }, 100)
+      overriddenFileName = editable?.toString()
+      applyOptionsToView()
     }
+    
     additionalDirsTextWatcher = additionalDirs.doAfterTextChanged { editable ->
-      additionalDirsDebouncer.post({
-        val input = editable?.toString()
-        if (input.isNullOrEmpty()) {
-          currentSetting.subDirs = null
-          applyOptionsToView()
-          return@post
-        }
-
-        currentSetting.subDirs = editable.toString()
+      val input = editable?.toString()
+      if (input.isNullOrEmpty()) {
+        currentSetting.subDirs = null
         applyOptionsToView()
-      }, 100)
+        return@doAfterTextChanged
+      }
+
+      currentSetting.subDirs = editable.toString()
+      applyOptionsToView()
     }
 
     appendSiteName.setOnCheckedChangeListener { _, isChecked ->
@@ -498,18 +492,11 @@ class ImageSaverV2OptionsController(
       }
     }
 
-    val fixedFileName = StringUtils.fileNameRemoveBadCharacters(fileName)
-    if (fixedFileName.isNullOrEmpty()) {
-      return simpleSaveableMediaInfo.serverFilename
-    }
-
-    return fixedFileName
+    return StringUtils.fileNameRemoveBadCharacters(fileName) ?: ""
   }
 
   private fun enableDisableSaveButton(enable: Boolean) {
     saveButton.isEnabled = enable
-    saveButton.isClickable = enable
-    saveButton.isFocusable = enable
   }
 
   sealed class Options {
