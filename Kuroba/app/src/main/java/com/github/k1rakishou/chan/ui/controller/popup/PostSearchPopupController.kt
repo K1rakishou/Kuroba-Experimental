@@ -173,8 +173,6 @@ class PostSearchPopupController(
     updaterJob = null
 
     updaterJob = mainScope.launch {
-      postsView.awaitUntilGloballyLaidOut()
-
       onQueryUpdated(chanDescriptor, prevQuery)
       updaterJob = null
     }
@@ -197,6 +195,8 @@ class PostSearchPopupController(
       ?: return
     val data = displayingData
       ?: return
+
+    postsView.awaitUntilGloballyLaidOut()
 
     val resultPosts = withContext(Dispatchers.Default) {
       val searchQuery = query.toLowerCase(Locale.ENGLISH)
