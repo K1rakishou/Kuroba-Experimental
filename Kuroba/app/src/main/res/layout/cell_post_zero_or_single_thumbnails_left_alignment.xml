@@ -38,6 +38,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="wrap_content">
 
         <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/root_constraint_layout"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             app:layout_constraintBottom_toBottomOf="parent"
@@ -61,7 +62,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintTop_toBottomOf="@+id/title"
-                tools:text="@string/lorem_ipsum" />
+                tools:text="test 1" />
 
             <com.github.k1rakishou.chan.ui.cell.PostIcons
                 android:id="@+id/icons"
@@ -89,40 +90,38 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 app:barrierDirection="bottom"
                 app:constraint_referenced_ids="title,image_filename,icons,thumbnails_container" />
 
-            <androidx.constraintlayout.widget.ConstraintLayout
-                android:id="@+id/post_single_image_comment_container"
-                android:layout_width="match_parent"
+            <com.github.k1rakishou.chan.ui.view.PostCommentTextView
+                android:id="@+id/comment"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toEndOf="@id/post_attention_label"
-                app:layout_constraintTop_toBottomOf="@+id/title_icons_thumbnail_barrier">
+                app:layout_constraintHorizontal_weight="1"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/title_icons_thumbnail_barrier"
+                tools:text="test 2" />
 
-                <com.github.k1rakishou.chan.ui.view.PostCommentTextView
-                    android:id="@+id/comment"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/icons"
-                    tools:text="@string/lorem_ipsum" />
+            <androidx.constraintlayout.widget.Barrier
+                android:id="@+id/replies_barrier"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:barrierDirection="bottom"
+                app:constraint_referenced_ids="comment,thumbnails_container" />
 
-                <TextView
-                    android:id="@+id/replies"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:gravity="center_vertical"
-                    android:paddingLeft="8dp"
-                    android:paddingTop="4dp"
-                    android:paddingRight="8dp"
-                    android:paddingBottom="4dp"
-                    app:layout_constraintEnd_toEndOf="parent"
-                    app:layout_constraintHorizontal_bias="0"
-                    app:layout_constraintStart_toStartOf="parent"
-                    app:layout_constraintTop_toBottomOf="@+id/comment"
-                    app:singleLine="true"
-                    tools:text="234 replies, 123 image " />
-
-            </androidx.constraintlayout.widget.ConstraintLayout>
+            <TextView
+                android:id="@+id/replies"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:paddingLeft="8dp"
+                android:paddingTop="4dp"
+                android:paddingRight="8dp"
+                android:paddingBottom="4dp"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/replies_barrier"
+                app:singleLine="true"
+                tools:text="234 replies, 123 image " />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 

@@ -101,6 +101,7 @@ class ThreadCellData(
     val neverShowPages = ChanSettings.neverShowPages.get()
     val tapNoReply = ChanSettings.tapNoReply.get()
     val postFullDate = ChanSettings.postFullDate.get()
+    val shiftPostComment = ChanSettings.shiftPostComment.get()
     val themeCopy = theme.fullCopy()
 
     val postAlignmentMode = when (chanDescriptor) {
@@ -131,6 +132,7 @@ class ThreadCellData(
         neverShowPages = neverShowPages,
         tapNoReply = tapNoReply,
         postFullDate = postFullDate,
+        shiftPostComment = shiftPostComment,
         stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),

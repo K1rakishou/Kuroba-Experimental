@@ -165,6 +165,14 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostGroup.ShiftPostComment,
+          topDescriptionIdFunc = { R.string.setting_post_shift_post_comment },
+          setting = ChanSettings.shiftPostComment,
+          requiresUiRefresh = true
+        )
+
         group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.CatalogPostAlignmentMode,

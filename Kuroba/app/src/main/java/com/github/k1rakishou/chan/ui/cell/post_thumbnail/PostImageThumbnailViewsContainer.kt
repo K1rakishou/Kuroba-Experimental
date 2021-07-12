@@ -206,7 +206,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       thumbnailView.setViewId(View.generateViewId())
-      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize,)
+      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
       thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
       thumbnailView.bindPostInfo(postCellData, postImage, postAlignment)
@@ -249,7 +249,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.setRounding(THUMBNAIL_ROUNDING)
 
       val layoutParams = ConstraintLayout.LayoutParams(
-        thumbnailContainerSize - THUMBNAILS_GAP_SIZE,
+        thumbnailContainerSize - (THUMBNAILS_GAP_SIZE * 2),
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
 
@@ -431,13 +431,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     return cachedThumbnailViewContainerInfoArray[index].isTheSame(postCellData)
   }
 
-  private fun calculatePostCellSingleThumbnailSize(): Int {
-    val postCellThumbnailSizePercent = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat() / 100f
-    val newSize = ChanSettings.postCellThumbnailSizePercents.get() * postCellThumbnailSizePercent
-
-    return newSize.toInt()
-  }
-
   private fun calculateFullThumbnailViewWidth(
     actualPostCellWidth: Int,
     cellPostThumbnailSize: Int,
@@ -518,6 +511,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     const val PRE_BIND = 0
     const val BIND = 1
+
+    fun calculatePostCellSingleThumbnailSize(): Int {
+      val postCellThumbnailSizePercent = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat() / 100f
+      val newSize = ChanSettings.postCellThumbnailSizePercents.get() * postCellThumbnailSizePercent
+
+      return newSize.toInt()
+    }
   }
 
 }

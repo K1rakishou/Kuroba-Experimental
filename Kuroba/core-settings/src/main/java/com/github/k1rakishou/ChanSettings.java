@@ -287,6 +287,7 @@ public class ChanSettings {
     public static BooleanSetting markYourPostsOnScrollbar;
     public static BooleanSetting markRepliesToYourPostOnScrollbar;
     public static BooleanSetting markCrossThreadQuotesOnScrollbar;
+    public static BooleanSetting shiftPostComment;
 
     // Post links parsing
     public static OptionsSetting<NetworkContentAutoLoadMode> parseYoutubeTitlesAndDuration;
@@ -451,7 +452,7 @@ public class ChanSettings {
             );
 
             // Post
-            fontSize = new StringSetting(provider, "preference_font", chanSettingsInfo.isTablet() ? "16" : "14");
+            fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
@@ -467,6 +468,7 @@ public class ChanSettings {
             markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
+            shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
 
             // Post links parsing
             parseYoutubeTitlesAndDuration = new OptionsSetting<>(
@@ -657,6 +659,14 @@ public class ChanSettings {
             // stacktrace. Otherwise we won't because of Feather.
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
+        }
+    }
+
+    public static int defaultFontSize() {
+        if (chanSettingsInfo.isTablet()) {
+            return 16;
+        } else {
+            return 14;
         }
     }
 

@@ -34,7 +34,9 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.constraintlayout.widget.Barrier
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.constraintlayout.widget.ConstraintSet
 import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
@@ -57,12 +59,14 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.TextBounds
+import com.github.k1rakishou.common.countLines
+import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -92,7 +96,6 @@ class PostCell : LinearLayout,
   private lateinit var postCellRootContainer: LinearLayout
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
-  private var imageFileName: TextView? = null
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
@@ -101,13 +104,15 @@ class PostCell : LinearLayout,
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
 
+  private var rootConstraintLayout: ConstraintLayout? = null
+  private var imageFileName: TextView? = null
+  private var titleIconsThumbnailBarrier: Barrier? = null
+
   private var postCellData: PostCellData? = null
   private var postCellCallback: PostCellCallback? = null
   private var needAllowParentToInterceptTouchEvents = false
   private var needAllowParentToInterceptTouchEventsDownEventEnded = false
   private var iconSizePx = 0
-  private var horizPaddingPx = 0
-  private var vertPaddingPx = 0
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
@@ -295,12 +300,11 @@ class PostCell : LinearLayout,
 
     postImageThumbnailViewsContainer = findViewById(R.id.thumbnails_container)
     postCellRootContainer = findViewById(R.id.post_cell)
+    rootConstraintLayout = findViewById(R.id.root_constraint_layout)
+    titleIconsThumbnailBarrier = findViewById(R.id.title_icons_thumbnail_barrier)
 
     val textSizeSp = postCellData.textSizeSp
     val endPadding = dp(16f)
-
-    horizPaddingPx = calculateHorizPadding(textSizeSp)
-    vertPaddingPx = dp(textSizeSp - 10.toFloat())
 
     title = findViewById(R.id.title)
     imageFileName = findViewById(R.id.image_filename)
@@ -310,67 +314,38 @@ class PostCell : LinearLayout,
     divider = findViewById(R.id.divider)
     postAttentionLabel = findViewById(R.id.post_attention_label)
     title.textSize = textSizeSp.toFloat()
-    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPadding, bottom = 0)
     iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.setSpacing(dp(4f))
     icons.height = sp(textSizeSp.toFloat())
-    icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
-
-    val postAlignmentMode = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
-    }
-
-    if (postCellData.postImages.size == 1 && postAlignmentMode == ChanSettings.PostAlignmentMode.AlignRight) {
-      title.gravity = GravityCompat.END
-      icons.rtl(true)
-    } else {
-      title.gravity = GravityCompat.START
-      icons.rtl(false)
-    }
-
-    imageFileName?.let { imgFilename ->
-      if (postCellData.postImages.size != 1 || !ChanSettings.postFileInfo.get()) {
-        imgFilename.setVisibilityFast(View.GONE)
-        return@let
-      }
-
-      val image = postCellData.postImages.firstOrNull()
-      if (image == null) {
-        imgFilename.setVisibilityFast(View.GONE)
-        return@let
-      }
-
-      val postFileInfo = postCellData.postFileInfoMap[image]
-      if (postFileInfo == null) {
-        imgFilename.setVisibilityFast(View.GONE)
-        return@let
-      }
-
-      imgFilename.setVisibilityFast(View.VISIBLE)
-      imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
-
-      if (postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
-        imgFilename.gravity = GravityCompat.START
-      } else {
-        imgFilename.gravity = GravityCompat.END
-      }
-
-      imgFilename.updatePaddings(left = horizPaddingPx, top = 0, right = endPadding, bottom = 0)
-    }
+    title.gravity = GravityCompat.START
+    icons.rtl(false)
 
     goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
-
     replies.textSize = textSizeSp.toFloat()
-    replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = vertPaddingPx)
+
+    val shiftCommentToThumbnailSideMode = canShiftPostComment(postCellData)
+
+    updatePostCellFileName(postCellData)
+    updatePostCellLayoutRuntime(postCellData, shiftCommentToThumbnailSideMode)
 
     if (postCellData.threadMode) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
         width = ConstraintLayout.LayoutParams.MATCH_PARENT
       }
     }
+
+    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPadding, bottom = 0)
+    icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
+    comment.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = vertPaddingPx)
+
+    if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
+      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = endPadding, bottom = 0)
+    }
+
+    // replies view always has horizPaddingPx padding since we never shift it.
+    replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = vertPaddingPx)
 
     postCommentLongtapDetector.postCellContainer = postCellRootContainer
     postImageThumbnailViewsContainer.preBind(this, postCellData, horizPaddingPx, vertPaddingPx)
@@ -380,6 +355,61 @@ class PostCell : LinearLayout,
     dividerParams.rightMargin = horizPaddingPx
     divider.layoutParams = dividerParams
 
+    updatePostCellListeners(postCellData)
+  }
+
+  private fun canShiftPostComment(postCellData: PostCellData): Boolean {
+    if (!postCellData.shiftPostComment) {
+      return false
+    }
+
+    if (!postCellData.singleImageMode) {
+      return false
+    }
+
+    val firstImage = postCellData.postImages.firstOrNull()
+      ?: return false
+
+    val postFileInfo = postCellData.postFileInfoMap[firstImage]
+      ?: return false
+
+    if (postCellData.commentText.length < SUPER_SHORT_COMMENT_LENGTH && postCellData.commentText.countLines() <= 1) {
+      // Fast path for very short comments.
+      return true
+    }
+
+    // 1.5x of thumbnail size
+    var thumbnailSize = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize()
+    thumbnailSize += (thumbnailSize.toFloat() * 0.5f).toInt()
+
+    var availableWidth = postCellData.postCellDataWidthNoPaddings
+
+    availableWidth -= getDimen(R.dimen.post_attention_label_width)
+    availableWidth -= (horizPaddingPx * 2)
+    availableWidth -= thumbnailSize
+
+    if (availableWidth <= 0) {
+      return false
+    }
+
+    val titleTextBounds = title.getTextBounds(postCellData.postTitle, availableWidth)
+
+    val imageFileNameTextBounds = if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
+      imageFileName!!.getTextBounds(postFileInfo, availableWidth)
+    } else {
+      TextBounds.EMPTY
+    }
+
+    val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
+    val availableHeight = thumbnailSize - resultTitleTextBounds.textHeight
+
+    val commentTextBounds = comment.getTextBounds(postCellData.commentText, availableWidth)
+    val commentHeight = commentTextBounds.textHeight
+
+    return availableHeight > commentHeight
+  }
+
+  private fun updatePostCellListeners(postCellData: PostCellData) {
     setOnClickListener(null)
     setOnLongClickListener(null)
 
@@ -387,35 +417,118 @@ class PostCell : LinearLayout,
       replies.setOnClickListener(null)
       postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
       postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, null)
-    } else {
-      replies.setOnThrottlingClickListener {
-        if (replies.visibility == View.VISIBLE) {
-          val post = postCellData.post
 
-          if (postCellData.threadMode) {
-            if (post.repliesFromCount > 0) {
-              postCellCallback?.onShowPostReplies(post)
-            }
-          } else {
-            postCellCallback?.onPreviewThreadPostsClicked(post)
+      return
+    }
+
+    replies.setOnThrottlingClickListener {
+      if (replies.visibility == VISIBLE) {
+        val post = postCellData.post
+
+        if (postCellData.threadMode) {
+          if (post.repliesFromCount > 0) {
+            postCellCallback?.onShowPostReplies(post)
           }
+        } else {
+          postCellCallback?.onPreviewThreadPostsClicked(post)
         }
-      }
-
-      if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
-        postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
-      } else {
-        postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN) {
-          requestParentDisallowInterceptTouchEvents(true)
-          showPostFloatingListMenu(postCellData)
-          return@setOnThrottlingLongClickListener true
-        }
-      }
-
-      postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, ) {
-        postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
       }
     }
+
+    if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
+      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
+    } else {
+      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN) {
+        requestParentDisallowInterceptTouchEvents(true)
+        showPostFloatingListMenu(postCellData)
+        return@setOnThrottlingLongClickListener true
+      }
+    }
+
+    postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN) {
+      postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
+    }
+  }
+
+  private fun updatePostCellFileName(postCellData: PostCellData) {
+    val imgFilename = imageFileName
+      ?: return
+
+    if (postCellData.postImages.size != 1 || !ChanSettings.postFileInfo.get()) {
+      imgFilename.setVisibilityFast(GONE)
+      return
+    }
+
+    val image = postCellData.postImages.firstOrNull()
+    if (image == null) {
+      imgFilename.setVisibilityFast(GONE)
+      return
+    }
+
+    val postFileInfo = postCellData.postFileInfoMap[image]
+    if (postFileInfo == null) {
+      imgFilename.setVisibilityFast(GONE)
+      return
+    }
+
+    imgFilename.setVisibilityFast(VISIBLE)
+    imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
+    imgFilename.gravity = GravityCompat.START
+  }
+
+  private fun updatePostCellLayoutRuntime(postCellData: PostCellData, shiftCommentToThumbnailSideMode: Boolean) {
+    if (shiftCommentToThumbnailSideMode) {
+      titleIconsThumbnailBarrier?.let { barrier ->
+        barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
+      }
+
+      rootConstraintLayout?.let { container ->
+        val constraintSet = ConstraintSet()
+        constraintSet.clone(container)
+
+        when (postCellData.postAlignmentMode) {
+          ChanSettings.PostAlignmentMode.AlignLeft -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.END)
+            constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.thumbnails_container, ConstraintSet.START)
+
+            constraintSet.createHorizontalChain(
+              ConstraintSet.PARENT_ID,
+              ConstraintSet.RIGHT,
+              ConstraintSet.PARENT_ID,
+              ConstraintSet.LEFT,
+              intArrayOf(R.id.thumbnails_container, R.id.comment),
+              floatArrayOf(0f, 1f),
+              ConstraintSet.CHAIN_SPREAD
+            )
+          }
+          ChanSettings.PostAlignmentMode.AlignRight -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.START)
+            constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.thumbnails_container, ConstraintSet.END)
+
+            constraintSet.createHorizontalChain(
+              ConstraintSet.PARENT_ID,
+              ConstraintSet.RIGHT,
+              ConstraintSet.PARENT_ID,
+              ConstraintSet.LEFT,
+              intArrayOf(R.id.thumbnails_container, R.id.comment),
+              floatArrayOf(0f, 1f),
+              ConstraintSet.CHAIN_SPREAD
+            )
+          }
+        }
+
+        constraintSet.applyTo(container)
+      }
+    } else {
+      comment.updateLayoutParams<ViewGroup.LayoutParams> {
+        width = ViewGroup.LayoutParams.MATCH_PARENT
+      }
+
+      titleIconsThumbnailBarrier?.let { barrier ->
+        barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons, R.id.thumbnails_container)
+      }
+    }
+
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
@@ -639,7 +752,6 @@ class PostCell : LinearLayout,
     val theme = postCellData.theme
     val fullPostComment = postCellData.fullPostComment
 
-    comment.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = vertPaddingPx)
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 
@@ -1254,6 +1366,10 @@ class PostCell : LinearLayout,
     const val POST_CELL_ROOT_CLICK_TOKEN = "POST_CELL_ROOT_CLICK"
     const val POST_CELL_ROOT_LONG_CLICK_TOKEN = "POST_CELL_ROOT_LONG_CLICK"
 
-    fun calculateHorizPadding(textSizeSp: Int) = dp(textSizeSp - 6.toFloat())
+    val horizPaddingPx = dp(4f)
+    val vertPaddingPx = dp(4f)
+
+    // Empty comment or comment with only a quote or something like that
+    private const val SUPER_SHORT_COMMENT_LENGTH = 16
   }
 }

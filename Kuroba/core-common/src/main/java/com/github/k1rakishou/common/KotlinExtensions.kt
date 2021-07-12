@@ -3,15 +3,18 @@ package com.github.k1rakishou.common
 import android.graphics.Bitmap
 import android.system.ErrnoException
 import android.system.OsConstants
+import android.text.Layout
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.StaticLayout
 import android.text.TextUtils
 import android.text.style.CharacterStyle
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewParent
+import android.widget.TextView
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
@@ -1096,4 +1099,58 @@ fun Request.Builder.appendCookieHeader(value: String): Request.Builder {
 
 fun HttpUrl.extractFileName(): String? {
   return this.pathSegments.lastOrNull()?.substringAfterLast("/")
+}
+
+fun CharSequence.countLines(): Int {
+  var offset = 0
+  var linesCount = 0
+
+  while (offset < length) {
+    val currentCh = getOrNull(offset)
+      ?: break
+
+    val nextCh = getOrNull(offset + 1)
+
+    if (currentCh == '\n') {
+      ++linesCount
+    } else if (currentCh == '\r') {
+      ++linesCount
+
+      if (nextCh != null && nextCh == '\n') {
+        ++offset
+      }
+    }
+
+    ++offset
+  }
+
+  return linesCount
+}
+
+data class TextBounds(val textWidth: Int, val textHeight: Int) {
+
+  fun mergeWith(other: TextBounds): TextBounds {
+    return TextBounds(
+      textWidth = Math.max(this.textWidth, other.textWidth),
+      textHeight = this.textHeight + other.textHeight
+    )
+  }
+
+  companion object {
+    val EMPTY = TextBounds(0, 0)
+  }
+
+}
+
+fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds {
+  if (paint == null) {
+    return TextBounds.EMPTY
+  }
+
+  val staticLayout = StaticLayout(text, paint, availableWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true)
+
+  return TextBounds(
+    staticLayout.width,
+    staticLayout.height
+  )
 }

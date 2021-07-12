@@ -6,7 +6,6 @@ import android.view.ViewGroup
 import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -118,7 +117,7 @@ class PostSearchPopupController(
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_search)
     dataView.id = R.id.post_popup_search_view_id
 
-    val horizPadding = PostCell.calculateHorizPadding(ChanSettings.fontSize.get().toInt())
+    val horizPadding = PostCell.horizPaddingPx
     val searchLayoutContainer = dataView.findViewById<LinearLayout>(R.id.search_layout_container)
     searchLayoutContainer.updatePaddings(left = horizPadding, right = horizPadding)
 
