@@ -134,6 +134,8 @@ class ChanThreadLoaderCoordinator(
     chanLoadOptions: ChanLoadOptions,
     chanReaderProcessorOptions: ChanReaderProcessor.Options
   ): ModularResult<ThreadLoadResult> {
+    threadDownloadManager.awaitUntilInitialized()
+
     val chanLoadUrl = getChanUrl(site, chanDescriptor)
     val chanReader = site.chanReader()
 
@@ -181,6 +183,7 @@ class ChanThreadLoaderCoordinator(
           }
 
           return@Try fallbackPostLoadOnNetworkError(
+            chanLoadUrl = chanLoadUrl,
             chanDescriptor = chanDescriptor,
             error = error,
             isThreadDownloaded = isThreadDownloaded
@@ -189,6 +192,7 @@ class ChanThreadLoaderCoordinator(
 
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(
+            chanLoadUrl = chanLoadUrl,
             chanDescriptor = chanDescriptor,
             error = BadStatusResponseException(response.code),
             isThreadDownloaded = isThreadDownloaded
@@ -214,14 +218,7 @@ class ChanThreadLoaderCoordinator(
           }
         }
 
-        if (chanReaderProcessor.error != null) {
-          when (val error = chanReaderProcessor.error!!) {
-            is SiteSpecificError.ErrorCode -> {
-              throw SiteError(error.errorCode, error.errorMessage)
-            }
-            else -> error("Unknown error: ${error}")
-          }
-        }
+        Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl='${chanLoadUrl}') chanReaderProcessor=${chanReaderProcessor}")
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
           chanPostRepository.updateThreadState(
@@ -230,6 +227,15 @@ class ChanThreadLoaderCoordinator(
             archived = chanReaderProcessor.archived || isThreadDownloaded,
             closed = chanReaderProcessor.closed
           )
+        }
+
+        if (chanReaderProcessor.error != null) {
+          when (val error = chanReaderProcessor.error!!) {
+            is SiteSpecificError.ErrorCode -> {
+              throw SiteError(error.errorCode, error.errorMessage)
+            }
+            else -> error("Unknown error: ${error}")
+          }
         }
 
         val postParser = chanReader.getParser()
@@ -379,6 +385,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   private suspend fun fallbackPostLoadOnNetworkError(
+    chanLoadUrl: ChanLoadUrl,
     chanDescriptor: ChanDescriptor,
     error: Throwable,
     isThreadDownloaded: Boolean
@@ -386,9 +393,13 @@ class ChanThreadLoaderCoordinator(
     BackgroundUtils.ensureBackgroundThread()
 
     val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
-    val isThreadArchived = !isThreadDeleted
+    val isThreadArchived = (error is BadStatusResponseException && error.status == 404) && isThreadDownloaded
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      Logger.d(TAG, "fallbackPostLoadOnNetworkError(chanLoadUrl='${chanLoadUrl}') " +
+        "isThreadDownloaded={$isThreadDownloaded}, isThreadDeleted=${isThreadDeleted}, " +
+        "isThreadArchived=${isThreadArchived}, error=${error.errorMessageOrClassName()}")
+
       chanPostRepository.updateThreadState(
         threadDescriptor = chanDescriptor,
         archived = isThreadArchived,

@@ -147,6 +147,8 @@ class Chan4ReplyCall(
   }
 
   override fun process(response: Response, result: String) {
+    setChan4CaptchaHeader(response.headers)
+
     if (result.contains(CAPTCHA_REQUIRED_TEXT1, ignoreCase = true)
       || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)
     ) {
@@ -179,8 +181,6 @@ class Chan4ReplyCall(
       return
     }
 
-    setChan4CaptchaHeader(response.headers)
-
     try {
       replyResponse.threadNo = threadNoMatcher.group(1).toInt().toLong()
       replyResponse.postNo = threadNoMatcher.group(2).toInt().toLong()
@@ -209,6 +209,15 @@ class Chan4ReplyCall(
     val cookieReceivedOn = chan4CaptchaSettings.cookieReceivedOn
     val expired = (now - cookieReceivedOn) > Chan4CaptchaSettings.COOKIE_LIFE_TIME
 
+    val newCookie = headers
+      .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
+      .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
+      ?.second
+      ?.substringAfter(CAPTCHA_COOKIE_PREFIX)
+      ?.substringBefore(';')
+
+    Logger.d(TAG, "oldCookieHash=${oldCookie.hashCode()}, newCookieHash=${newCookie?.hashCode()}")
+
     if (oldCookie.isNotEmpty() && !expired) {
       Logger.d(TAG, "setChan4CaptchaHeader() cookie is still ok. " +
         "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
@@ -220,25 +229,12 @@ class Chan4ReplyCall(
       "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
       "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
 
-    val chan4PassCookie = headers
-      .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
-      .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
-
-    if (chan4PassCookie == null) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to find 4chan_pass cookie")
+    if (newCookie == null || newCookie.isEmpty()) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie ($newCookie)")
       return
     }
 
-    val cookieValue = chan4PassCookie.second
-      .substringAfter(CAPTCHA_COOKIE_PREFIX)
-      .substringBefore(';')
-
-    if (cookieValue.isEmpty()) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie ($chan4PassCookie)")
-      return
-    }
-
-    chan4.chan4CaptchaCookie.set(cookieValue)
+    chan4.chan4CaptchaCookie.set(newCookie)
     chan4.chan4CaptchaSettings.set(chan4CaptchaSettings.copy(cookieReceivedOn = now))
   }
 

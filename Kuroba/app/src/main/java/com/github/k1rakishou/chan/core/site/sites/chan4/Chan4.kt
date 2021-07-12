@@ -38,6 +38,7 @@ import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -607,6 +608,7 @@ open class Chan4 : SiteBase() {
         return
       }
 
+      Logger.d(TAG, "addChan4CookieHeader(), chan4CaptchaCookieHash=${chan4CaptchaCookie.hashCode()}")
       requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${chan4CaptchaCookie}")
     }
   }
@@ -624,6 +626,8 @@ open class Chan4 : SiteBase() {
   }
 
   companion object {
+    private const val TAG = "Chan4"
+
     const val SITE_NAME = "4chan"
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
     val CAPTCHA_COOKIE_KEY = "4chan_pass"

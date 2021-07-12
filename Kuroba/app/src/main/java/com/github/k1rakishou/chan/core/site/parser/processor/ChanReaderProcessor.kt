@@ -185,7 +185,8 @@ class ChanReaderProcessor(
   }
 
   override fun toString(): String {
-    return "ChanReaderProcessor{chanDescriptor=$chanDescriptor, toParse=${toParse.size}}"
+    return "ChanReaderProcessor{chanDescriptor=$chanDescriptor, toParse=${toParse.size}, " +
+      "closed=${closed}, deleted=${deleted}, archived=${archived}, error=${error}}"
   }
 
   data class Options(val isDownloadingThread: Boolean = false)
