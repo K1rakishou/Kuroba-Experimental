@@ -19,9 +19,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -37,6 +39,7 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
@@ -174,7 +177,7 @@ class SearxImageSearchController(
         Spacer(modifier = Modifier.width(8.dp))
 
         KurobaComposeTextButton(
-          onClick = { viewModel.search() },
+          onClick = { viewModel.search(page = 1) },
           text = stringResource(id = R.string.search_hint)
         )
       }
@@ -207,15 +210,32 @@ class SearxImageSearchController(
   @Composable
   private fun BuildSearxImages(searxImages: List<SearxImage>, onImageClicked: (SearxImage) -> Unit) {
     val listState = viewModel.lazyListState()
+    val chanTheme = LocalChanTheme.current
 
     LazyVerticalGrid(
       state = listState,
       cells = GridCells.Adaptive(minSize = IMAGE_SIZE),
-      modifier = Modifier.fillMaxSize()
+      modifier = Modifier
+        .fillMaxSize()
+        .simpleVerticalScrollbar(state = listState, chanTheme = chanTheme)
     ) {
       items(searxImages.size) { index ->
         val searxImage = searxImages.get(index)
         BuildSearxImage(searxImage, onImageClicked)
+      }
+
+      item {
+        Box(modifier = Modifier
+          .size(IMAGE_SIZE)
+        ) {
+          KurobaComposeProgressIndicator(modifier = Modifier
+            .wrapContentSize()
+            .align(Alignment.Center))
+        }
+
+        LaunchedEffect(key1 = searxImages.lastIndex) {
+          viewModel.search(page = viewModel.currentPage + 1)
+        }
       }
     }
   }

@@ -28,6 +28,9 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
 
   private var rememberedFirstVisibleItemIndex: Int = 0
   private var rememberedFirstVisibleItemScrollOffset: Int = 0
+  private var _currentPage = 0
+  val currentPage: Int
+    get() = _currentPage
 
   val searchErrorToastFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
@@ -65,7 +68,9 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
     activeSearchJob = null
   }
 
-  fun search() {
+  fun search(page: Int) {
+    this._currentPage = page
+
     activeSearchJob?.cancel()
     activeSearchJob = null
 
@@ -76,6 +81,10 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
         return@launch
       }
 
+      if (page == 1 || searchResults.value is AsyncData.NotInitialized) {
+        PersistableChanState.searxLastUsedInstanceUrl.set(baseUrl.toString())
+      }
+
       val query = searchQuery.value
       if (query.length < MIN_SEARCH_QUERY_LEN) {
         searchErrorToastFlow.tryEmit("Bad query length: query='$query', length=${query.length}, " +
@@ -83,7 +92,11 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
         return@launch
       }
 
-      searchResults.value = AsyncData.Loading
+      if (page == 1 || searchResults.value is AsyncData.NotInitialized) {
+        rememberedFirstVisibleItemIndex = 0
+        rememberedFirstVisibleItemScrollOffset = 0
+        searchResults.value = AsyncData.Loading
+      }
 
       val searchUrl = baseUrl.newBuilder()
         .addPathSegment("search")
@@ -91,12 +104,13 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
         .addQueryParameter("categories", "images")
         .addQueryParameter("language", "en-US")
         .addQueryParameter("format", "json")
+        .addQueryParameter("pageno", "$page")
         .build()
 
       Logger.d(TAG, "search() searchUrl=${searchUrl}")
       val searxImagesResult = searxImageSearchUseCase.execute(searchUrl)
 
-      val searxImages = if (searxImagesResult is ModularResult.Error) {
+      val newSearxImages = if (searxImagesResult is ModularResult.Error) {
         searchResults.value = AsyncData.Error(searxImagesResult.error)
         return@launch
       } else {
@@ -104,8 +118,12 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
         searxImagesResult.value
       }
 
-      PersistableChanState.searxLastUsedInstanceUrl.set(baseUrl.toString())
-      searchResults.value = AsyncData.Data(searxImages)
+      val prevSearxImages = (searchResults.value as? AsyncData.Data)?.data?.toList()
+      if (prevSearxImages == null) {
+        searchResults.value = AsyncData.Data(newSearxImages)
+      } else {
+        searchResults.value = AsyncData.Data(prevSearxImages + newSearxImages)
+      }
     }
   }
 
