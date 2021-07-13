@@ -359,11 +359,7 @@ class PostCell : LinearLayout,
   }
 
   private fun canShiftPostComment(postCellData: PostCellData): Boolean {
-    if (!postCellData.shiftPostComment) {
-      return false
-    }
-
-    if (!postCellData.singleImageMode) {
+    if (!postCellData.shiftPostComment || !postCellData.singleImageMode) {
       return false
     }
 
@@ -378,7 +374,8 @@ class PostCell : LinearLayout,
       return true
     }
 
-    // 1.5x of thumbnail size
+    // We allow using comment shift if comment height + post title height + imageFileName height
+    // (if present) is less than 1.5x of thumbnail height
     var thumbnailSize = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize()
     thumbnailSize += (thumbnailSize.toFloat() * 0.5f).toInt()
 
@@ -482,6 +479,11 @@ class PostCell : LinearLayout,
         barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
       }
 
+      comment.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        width = 0
+        horizontalWeight = 1f
+      }
+
       rootConstraintLayout?.let { container ->
         val constraintSet = ConstraintSet()
         constraintSet.clone(container)
@@ -520,15 +522,14 @@ class PostCell : LinearLayout,
         constraintSet.applyTo(container)
       }
     } else {
-      comment.updateLayoutParams<ViewGroup.LayoutParams> {
-        width = ViewGroup.LayoutParams.MATCH_PARENT
-      }
-
       titleIconsThumbnailBarrier?.let { barrier ->
         barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons, R.id.thumbnails_container)
       }
-    }
 
+      comment.updateLayoutParams<ViewGroup.LayoutParams> {
+        width = ViewGroup.LayoutParams.MATCH_PARENT
+      }
+    }
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {

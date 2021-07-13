@@ -687,7 +687,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_post_full_date">Show the full date on posts</string>
     <string name="setting_post_draw_post_thumbnail_background">Draw background behind post thumbnails</string>
     <string name="setting_post_file_info">Show file info on posts</string>
-    <string name="setting_post_shift_post_comment">Shift post comment to thumbnail side when possible</string>
+    <string name="setting_post_shift_post_comment">Shift post comment to be of the left/right side of thumbnail when possible</string>
     <string name="settings_group_images">Images</string>
     <string name="setting_text_only">Text-only mode</string>
     <string name="setting_text_only_description">Remove images when in board and thread view</string>

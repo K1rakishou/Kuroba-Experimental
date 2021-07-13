@@ -52,14 +52,17 @@ class PostIcons @JvmOverloads constructor(
 
   fun setHeight(height: Int) {
     this.iconsHeight = height
+    requestLayout()
   }
 
   fun setSpacing(spacing: Int) {
     this.spacing = spacing
+    requestLayout()
   }
 
   fun rtl(isRtl: Boolean) {
     this.rtl = isRtl
+    requestLayout()
     invalidate()
   }
 
