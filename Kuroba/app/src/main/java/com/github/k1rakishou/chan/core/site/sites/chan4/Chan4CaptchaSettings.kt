@@ -15,6 +15,6 @@ data class Chan4CaptchaSettings(
 ) {
 
   companion object {
-    val COOKIE_LIFE_TIME = TimeUnit.DAYS.toMillis(30)
+    val COOKIE_LIFE_TIME = TimeUnit.DAYS.toMillis(180)
   }
 }
