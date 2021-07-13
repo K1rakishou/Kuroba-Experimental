@@ -91,7 +91,11 @@ object StringUtils {
   }
 
   @JvmStatic
-  fun formatToken(token: String): String {
+  fun formatToken(token: String?): String {
+    if (token == null) {
+      return "<null>"
+    }
+
     if (token.isEmpty()) {
       return "<empty>"
     }

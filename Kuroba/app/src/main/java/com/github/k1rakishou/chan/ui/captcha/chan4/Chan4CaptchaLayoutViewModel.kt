@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
@@ -39,6 +40,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var boardManager: BoardManager
   @Inject
   lateinit var moshi: Moshi
   @Inject
@@ -128,15 +131,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
   private suspend fun requestCaptchaInternal(chanDescriptor: ChanDescriptor): CaptchaInfo {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
-
-    val urlRaw = when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        "https://sys.4channel.org/captcha?board=${boardCode}"
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        "https://sys.4channel.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}"
-      }
-    }
+    val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode)
 
     Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) requesting $urlRaw")
 
@@ -215,6 +210,25 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       ttlSeconds = captchaInfoRaw.ttl!!,
       bgInitialOffset = bgInitialOffset.toFloat()
     )
+  }
+
+  private fun formatCaptchaUrl(chanDescriptor: ChanDescriptor, boardCode: String): String {
+    val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+
+    val host = if (chanBoard == null || chanBoard.workSafe) {
+      "4channel"
+    } else {
+      "4chan"
+    }
+
+    return when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        "https://sys.$host.org/captcha?board=${boardCode}"
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        "https://sys.$host.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}"
+      }
+    }
   }
 
   private fun replaceColor(src: Bitmap, fromColor: Int, targetColor: Int): Bitmap {

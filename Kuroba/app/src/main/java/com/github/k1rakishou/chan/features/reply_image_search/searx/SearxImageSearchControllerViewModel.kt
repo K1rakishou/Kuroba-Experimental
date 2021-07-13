@@ -72,7 +72,7 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
     activeSearchJob = mainScope.launch {
       val baseUrl = baseSearchUrl.value.toHttpUrlOrNull()
       if (baseUrl == null) {
-        searchErrorToastFlow.tryEmit("Bad baseUrl: ${baseSearchUrl.value}")
+        searchErrorToastFlow.tryEmit("Bad baseUrl: '${baseSearchUrl.value}'")
         return@launch
       }
 

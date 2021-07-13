@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -203,38 +204,57 @@ class Chan4ReplyCall(
   private fun setChan4CaptchaHeader(headers: Headers) {
     val chan4 = site as Chan4
 
-    val oldCookie = chan4.chan4CaptchaCookie.get()
     val chan4CaptchaSettings = chan4.chan4CaptchaSettings.get()
     val now = System.currentTimeMillis()
     val cookieReceivedOn = chan4CaptchaSettings.cookieReceivedOn
     val expired = (now - cookieReceivedOn) > Chan4CaptchaSettings.COOKIE_LIFE_TIME
 
-    val newCookie = headers
+    val wholeCookieHeader = headers
       .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
       .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
       ?.second
+
+    val newCookie = wholeCookieHeader
       ?.substringAfter(CAPTCHA_COOKIE_PREFIX)
       ?.substringBefore(';')
 
-    Logger.d(TAG, "oldCookieHash=${oldCookie.hashCode()}, newCookieHash=${newCookie?.hashCode()}")
+    val domain = wholeCookieHeader
+      ?.substringAfter(DOMAIN_PREFIX)
+      ?.substringBefore(';')
 
-    if (oldCookie.isNotEmpty() && !expired) {
+    val oldCookie = when {
+      domain?.contains("4channel") == true -> chan4.channel4CaptchaCookie.get()
+      domain?.contains("4chan") == true -> chan4.chan4CaptchaCookie.get()
+      else -> {
+        Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
+        null
+      }
+    }
+
+    Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}', domain='${domain}'")
+
+    if (oldCookie != null && oldCookie.isNotEmpty() && !expired) {
       Logger.d(TAG, "setChan4CaptchaHeader() cookie is still ok. " +
-        "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
+        "oldCookie='${formatToken(oldCookie)}', now=$now, cookieReceivedOn=$cookieReceivedOn, " +
         "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
       return
     }
 
     Logger.d(TAG, "setChan4CaptchaHeader() cookie needs to be updated. " +
-      "oldCookie=${oldCookie}, now=$now, cookieReceivedOn=$cookieReceivedOn, " +
+      "oldCookie='${formatToken(oldCookie)}', domain='${domain}', now=$now, cookieReceivedOn=$cookieReceivedOn, " +
       "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
 
-    if (newCookie == null || newCookie.isEmpty()) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie ($newCookie)")
+    if (domain.isNullOrEmpty() || newCookie.isNullOrEmpty()) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${formatToken(newCookie)}) or domain (${domain})")
       return
     }
 
-    chan4.chan4CaptchaCookie.set(newCookie)
+    when {
+      domain.contains("4channel") -> chan4.channel4CaptchaCookie.set(newCookie)
+      domain.contains("4chan") -> chan4.chan4CaptchaCookie.set(newCookie)
+      else -> Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
+    }
+
     chan4.chan4CaptchaSettings.set(chan4CaptchaSettings.copy(cookieReceivedOn = now))
   }
 
@@ -298,6 +318,7 @@ class Chan4ReplyCall(
 
     private const val SET_COOKIE_HEADER = "set-cookie"
     private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="
+    private const val DOMAIN_PREFIX = "domain="
 
     // Not used.
     private const val NEW_THREAD_CREATION_RATE_LIMIT_TEXT = "Error: You must wait longer before posting a new thread"

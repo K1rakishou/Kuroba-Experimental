@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -72,6 +73,7 @@ open class Chan4 : SiteBase() {
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var lastUsedFlagPerBoard: StringSetting
   lateinit var chan4CaptchaCookie: StringSetting
+  lateinit var channel4CaptchaCookie: StringSetting
   lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
@@ -101,7 +103,13 @@ open class Chan4 : SiteBase() {
 
     chan4CaptchaCookie = StringSetting(
       prefs,
-      "preference_chan4_captcha_cookie",
+      "preference_4chan_captcha_cookie",
+      ""
+    )
+
+    channel4CaptchaCookie = StringSetting(
+      prefs,
+      "preference_4channel_captcha_cookie",
       ""
     )
 
@@ -548,6 +556,7 @@ open class Chan4 : SiteBase() {
     settings.addAll(super.settings())
     settings.add(SiteOptionsSetting("Captcha type", null, captchaType, listOf("Javascript", "Noscript")))
     settings.add(SiteSetting.SiteStringSetting("4chan captcha cookie", null, chan4CaptchaCookie))
+    settings.add(SiteSetting.SiteStringSetting("4channel captcha cookie", null, channel4CaptchaCookie))
 
     return settings
   }
@@ -603,13 +612,23 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
-      val chan4CaptchaCookie = site.chan4CaptchaCookie.get()
-      if (chan4CaptchaCookie.isEmpty()) {
+      val host = requestBuilder.build().url.host
+
+      val captchaCookie = when {
+        host.contains("4channel") -> site.channel4CaptchaCookie.get()
+        host.contains("4chan") -> site.chan4CaptchaCookie.get()
+        else -> {
+          Logger.e(TAG, "Unexpected host: '$host'")
+          return
+        }
+      }
+
+      if (captchaCookie.isEmpty()) {
         return
       }
 
-      Logger.d(TAG, "addChan4CookieHeader(), chan4CaptchaCookieHash=${chan4CaptchaCookie.hashCode()}")
-      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${chan4CaptchaCookie}")
+      Logger.d(TAG, "addChan4CookieHeader(), host=${host}, captchaCookie=${formatToken(captchaCookie)}")
+      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
     }
   }
 
