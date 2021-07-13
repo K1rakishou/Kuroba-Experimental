@@ -25,6 +25,9 @@ class ColorizableSlider @JvmOverloads constructor(
       AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)
     }
+
+    stepSize = 1f
+    isTickVisible = false
   }
 
   override fun onAttachedToWindow() {
