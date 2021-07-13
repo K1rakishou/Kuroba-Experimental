@@ -99,6 +99,9 @@ class AddBoardsPresenter(
       boardManager.viewBoards(siteDescriptor, BoardManager.BoardViewMode.OnlyNonActiveBoards) { chanBoard ->
         selectedBoards.add(chanBoard.boardDescriptor)
       }
+
+      selectedBoards
+        .sortBy { selectedBoard -> selectedBoard.boardCode }
     } else {
       selectedBoards.clear()
     }
@@ -145,11 +148,16 @@ class AddBoardsPresenter(
       return
     }
 
-    val sortedBoards = InputWithQuerySorter.sort(
-      input = matchedBoards,
-      query = query,
-      textSelector = { selectableBoardCellData -> selectableBoardCellData.boardCellData.boardDescriptor.boardCode }
-    )
+    val sortedBoards = if (query.isEmpty()) {
+      matchedBoards
+        .sortedBy { matchedBoard -> matchedBoard.boardCellData.boardDescriptor.boardCode }
+    } else {
+      InputWithQuerySorter.sort(
+        input = matchedBoards,
+        query = query,
+        textSelector = { selectableBoardCellData -> selectableBoardCellData.boardCellData.boardDescriptor.boardCode }
+      )
+    }
 
     setState(AddBoardsControllerState.Data(sortedBoards))
   }

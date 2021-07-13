@@ -148,6 +148,9 @@ class BoardsSetupController(
         .withSubItem(ACTION_SORT_BOARDS_ALPHABETICALLY, R.string.controller_boards_setup_sort_boards_alphabetically) {
           presenter.sortBoardsAlphabetically()
         }
+        .withSubItem(ACTION_DELETE_ALL_BOARDS, R.string.controller_boards_setup_delete_all_boards) {
+          presenter.deactivateAllBoards()
+        }
         .build()
         .build()
     }
@@ -292,6 +295,7 @@ class BoardsSetupController(
 
   companion object {
     private const val ACTION_SORT_BOARDS_ALPHABETICALLY = 0
+    private const val ACTION_DELETE_ALL_BOARDS = 1
   }
 
 }

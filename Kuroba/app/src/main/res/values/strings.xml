@@ -974,6 +974,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_boards_setup_enter_board_code">Enter board code (just text, without \'/\')</string>
     <string name="controller_boards_setup_board_code_is_empty">Board code is empty</string>
     <string name="controller_boards_setup_sort_boards_alphabetically">Sort boards alphabetically</string>
+    <string name="controller_boards_setup_delete_all_boards">Delete all added boards</string>
 
     <string name="controller_add_boards_no_boards">No boards found</string>
     <string name="controller_add_boards_check_all">Check all</string>

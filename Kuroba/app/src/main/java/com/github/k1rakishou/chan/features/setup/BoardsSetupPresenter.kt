@@ -278,6 +278,28 @@ class BoardsSetupPresenter(
     setState(BoardsSetupControllerState.Data(boardCellDataList))
   }
 
+  fun deactivateAllBoards() {
+    scope.launch {
+      val boardsToDeactivate = mutableSetOf<BoardDescriptor>()
+
+      boardManager.viewBoards(siteDescriptor, BoardManager.BoardViewMode.OnlyActiveBoards) { chanBoard ->
+        boardsToDeactivate += chanBoard.boardDescriptor
+      }
+
+      if (boardsToDeactivate.isEmpty()) {
+        return@launch
+      }
+
+      boardManager.activateDeactivateBoards(
+        siteDescriptor = siteDescriptor,
+        boardDescriptors = boardsToDeactivate,
+        activate = false
+      )
+
+      displayActiveBoardsInternal()
+    }
+  }
+
   private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
     if (boardInfoLoaded.get()) {
       return ModularResult.value(Unit)
