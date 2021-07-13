@@ -102,6 +102,9 @@ class ThreadCellData(
     val tapNoReply = ChanSettings.tapNoReply.get()
     val postFullDate = ChanSettings.postFullDate.get()
     val shiftPostComment = ChanSettings.shiftPostComment.get()
+    val textOnly = ChanSettings.textOnly.get()
+    val postFileInfo = ChanSettings.postFileInfo.get()
+    val markUnseenPosts = ChanSettings.markUnseenPosts.get()
     val themeCopy = theme.fullCopy()
 
     val postAlignmentMode = when (chanDescriptor) {
@@ -133,6 +136,9 @@ class ThreadCellData(
         tapNoReply = tapNoReply,
         postFullDate = postFullDate,
         shiftPostComment = shiftPostComment,
+        textOnly = textOnly,
+        postFileInfo = postFileInfo,
+        markUnseenPosts = markUnseenPosts,
         stub = defaultStubFunc.invoke(postDescriptor),
         filterHash = postFilterManager.getFilterHash(postDescriptor),
         filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),

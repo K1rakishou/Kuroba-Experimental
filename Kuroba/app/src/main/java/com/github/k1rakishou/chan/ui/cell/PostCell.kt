@@ -258,7 +258,7 @@ class PostCell : LinearLayout,
   }
 
   override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
-    if (postCellData == null || ChanSettings.textOnly.get()) {
+    if (postCellData == null || postCellData?.textOnly == true) {
       return null
     }
 
@@ -451,7 +451,7 @@ class PostCell : LinearLayout,
     val imgFilename = imageFileName
       ?: return
 
-    if (postCellData.postImages.size != 1 || !ChanSettings.postFileInfo.get()) {
+    if (postCellData.postImages.size != 1 || !postCellData.postFileInfo) {
       imgFilename.setVisibilityFast(GONE)
       return
     }
@@ -683,7 +683,7 @@ class PostCell : LinearLayout,
       return
     }
 
-    if (!ChanSettings.markUnseenPosts.get()) {
+    if (!postCellData.markUnseenPosts) {
       return
     }
 
@@ -717,7 +717,7 @@ class PostCell : LinearLayout,
       return
     }
 
-    if (ChanSettings.markUnseenPosts.get()) {
+    if (postCellData.markUnseenPosts) {
       if (postCellCallback != null && !postCellCallback!!.hasAlreadySeenPost(postCellData.postDescriptor)) {
         postAttentionLabel.setVisibilityFast(View.VISIBLE)
         postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
@@ -828,9 +828,10 @@ class PostCell : LinearLayout,
       if (postCellData.threadMode || postCellData.searchMode) {
         comment.customMovementMethod(commentMovementMethod)
 
-        if (ChanSettings.tapNoReply.get()
-          && postCellData.postViewMode == PostCellData.PostViewMode.Normal) {
+        if (postCellData.tapNoReply && postCellData.postViewMode == PostCellData.PostViewMode.Normal) {
           title.movementMethod = titleMovementMethod
+        } else {
+          title.movementMethod = null
         }
 
         TextViewCompat.setCustomSelectionActionModeCallback(comment, customSelectionActionModeCallback)
