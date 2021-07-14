@@ -132,7 +132,8 @@ open class Chan4 : SiteBase() {
     private val i = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
     private val t = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
     private val s = HttpUrl.Builder().scheme("https").host("s.4cdn.org").build()
-    private val sys = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
+    private val sys4chan = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
+    private val sys4channel = HttpUrl.Builder().scheme("https").host("sys.4channel.org").build()
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
     private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
@@ -226,7 +227,8 @@ open class Chan4 : SiteBase() {
     }
 
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-      return sys.newBuilder()
+      return getSysEndpoint(chanDescriptor.boardDescriptor())
+        .newBuilder()
         .addPathSegment(chanDescriptor.boardCode())
         .addPathSegment("post")
         .build()
@@ -235,7 +237,8 @@ open class Chan4 : SiteBase() {
     override fun delete(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
-      return sys.newBuilder()
+      return getSysEndpoint(post.boardDescriptor)
+        .newBuilder()
         .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
         .build()
@@ -244,7 +247,8 @@ open class Chan4 : SiteBase() {
     override fun report(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
-      return sys.newBuilder()
+      return getSysEndpoint(post.boardDescriptor)
+        .newBuilder()
         .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
         .addQueryParameter("mode", "report")
@@ -253,7 +257,10 @@ open class Chan4 : SiteBase() {
     }
 
     override fun login(): HttpUrl {
-      return sys.newBuilder().addPathSegment("auth").build()
+      return getSysEndpoint(null)
+        .newBuilder()
+        .addPathSegment("auth")
+        .build()
     }
 
     override fun search(): HttpUrl {
@@ -265,6 +272,21 @@ open class Chan4 : SiteBase() {
         .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment("archive")
         .build()
+    }
+
+    private fun getSysEndpoint(boardDescriptor: BoardDescriptor?): HttpUrl {
+      if (boardDescriptor == null) {
+        return sys4channel
+      }
+
+      val workSafe = boardManager.byBoardDescriptor(boardDescriptor)?.workSafe
+      if (workSafe == null || workSafe == true) {
+        // sys4channel is the default in most cases, we only use sys4chan when we are sure it's
+        // a NSFW board.
+        return sys4channel
+      }
+
+      return sys4chan
     }
   }
 
