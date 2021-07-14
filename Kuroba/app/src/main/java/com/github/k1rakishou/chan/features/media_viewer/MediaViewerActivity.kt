@@ -425,6 +425,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     fun threadMedia(
       context: Context,
       threadDescriptor: ChanDescriptor.ThreadDescriptor,
+      postDescriptorList: List<PostDescriptor>,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,
       lastTouchCoordinates: Point,
@@ -440,6 +441,7 @@ class MediaViewerActivity : ControllerHostActivity(),
             ViewableMediaParcelableHolder.ThreadMediaParcelableHolder.fromThreadDescriptor(
               threadDescriptor = threadDescriptor,
               initialImageUrl = initialImageUrl,
+              postDescriptorList = postDescriptorList,
               transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
                 transitionThumbnailUrl = transitionThumbnailUrl,
                 lastTouchPosX = lastTouchCoordinates.x,

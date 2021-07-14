@@ -56,6 +56,7 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class ThreadMediaParcelableHolder(
     val threadDescriptorParcelable: DescriptorParcelable,
+    val postDescriptorParcelableList: List<PostDescriptorParcelable>,
     val initialImageUrl: String?,
     val transitionInfo: TransitionInfo?,
     val mediaViewerOptions: MediaViewerOptions
@@ -66,12 +67,14 @@ sealed class ViewableMediaParcelableHolder {
     companion object {
       fun fromThreadDescriptor(
         threadDescriptor: ChanDescriptor.ThreadDescriptor,
+        postDescriptorList: List<PostDescriptor>,
         initialImageUrl: String?,
         transitionInfo: TransitionInfo?,
         mediaViewerOptions: MediaViewerOptions
       ) : ThreadMediaParcelableHolder {
         return ThreadMediaParcelableHolder(
           threadDescriptorParcelable = DescriptorParcelable.fromDescriptor(threadDescriptor),
+          postDescriptorParcelableList = postDescriptorList.map { PostDescriptorParcelable.fromPostDescriptor(it) },
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,
           mediaViewerOptions = mediaViewerOptions

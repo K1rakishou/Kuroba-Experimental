@@ -308,6 +308,7 @@ abstract class ThreadController(
         MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = chanDescriptor,
+          postDescriptorList = threadLayout.displayingPostDescriptors,
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),

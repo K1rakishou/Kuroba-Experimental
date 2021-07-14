@@ -441,6 +441,7 @@ class AlbumViewController(
         MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = chanDescriptor,
+          postDescriptorList = postImages.map { it.ownerPostDescriptor },
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
