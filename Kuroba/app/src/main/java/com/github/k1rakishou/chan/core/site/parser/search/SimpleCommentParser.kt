@@ -5,7 +5,6 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.SpannedString
 import android.text.TextUtils
-import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
@@ -18,16 +17,11 @@ import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 import java.util.*
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
+import java.util.concurrent.ConcurrentHashMap
 
 @DoNotStrip
 open class SimpleCommentParser {
-  private val lock = ReentrantReadWriteLock()
-
-  @GuardedBy("lock")
-  private val rules: MutableMap<String, MutableList<StyleRule>> = HashMap()
+  private val rules = ConcurrentHashMap<String, MutableList<StyleRule>>()
 
   init {
     rule(StyleRule.tagRule("p"))
@@ -121,7 +115,7 @@ open class SimpleCommentParser {
     text: CharSequence,
     element: Element
   ): CharSequence? {
-    val rules = lock.read { rules[tag] }
+    val rules = rules[tag]
       ?: return text
 
     for (i in 0..1) {
@@ -144,15 +138,13 @@ open class SimpleCommentParser {
   }
 
   private fun rule(rule: StyleRule) {
-    lock.write {
-      var list = rules[rule.tag()]
-      if (list == null) {
-        list = ArrayList(3)
-        rules[rule.tag()] = list
-      }
-
-      list.add(rule)
+    var list = rules[rule.tag()]
+    if (list == null) {
+      list = ArrayList(3)
+      rules[rule.tag()] = list
     }
+
+    list.add(rule)
   }
 
   companion object {

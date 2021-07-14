@@ -54,11 +54,11 @@ class BookmarkFilterWatchableThreadsUseCase(
    * least one thread and successfully created at least one watch filter group.
    * */
   override suspend fun execute(parameter: Unit): ModularResult<Boolean> {
-    return ModularResult.Try { executeInternal() }
+    return ModularResult.Try { doWorkInternal() }
   }
 
   @Suppress("UnnecessaryVariable")
-  private suspend fun executeInternal(): Boolean {
+  private suspend fun doWorkInternal(): Boolean {
     check(boardManager.isReady()) { "boardManager is not ready" }
     check(bookmarksManager.isReady()) { "bookmarksManager is not ready" }
     check(chanFilterManager.isReady()) { "chanFilterManager is not ready" }
@@ -77,9 +77,12 @@ class BookmarkFilterWatchableThreadsUseCase(
       return true
     }
 
-    if (verboseLogsEnabled) {
-      enabledWatchFilters.forEach { watchFilter ->
-        Logger.d(TAG, "doWorkInternal() watchFilter=$watchFilter")
+    Logger.d(TAG, "doWorkInternal() enabledWatchFilters=${enabledWatchFilters.size}")
+
+    enabledWatchFilters.forEach { chanFilter ->
+      if (chanFilter.allBoards()) {
+        Logger.w(TAG, "doWorkInternal() chanFilter='$chanFilter' matches all added boards! " +
+          "This may cause excessive battery drain and app slow-downs!")
       }
     }
 
@@ -124,9 +127,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       return true
     }
 
-    matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
-      Logger.d(TAG, "filterWatchCatalogThreadInfoObject=$filterWatchCatalogThreadInfoObject")
-    }
+    Logger.d(TAG, "doWorkInternal() matchedCatalogThreads=${matchedCatalogThreads.size}")
 
     val result = createOrUpdateBookmarks(matchedCatalogThreads)
     Logger.d(TAG, "doWorkInternal() Success: $result")
