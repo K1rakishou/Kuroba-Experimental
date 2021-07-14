@@ -430,7 +430,7 @@ class AlbumViewController(
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,
-          postDescriptorList = postImages.map { it.ownerPostDescriptor },
+          postDescriptorList = mapPostImagesToPostDescriptors(),
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
@@ -441,13 +441,25 @@ class AlbumViewController(
         MediaViewerActivity.threadMedia(
           context = context,
           threadDescriptor = chanDescriptor,
-          postDescriptorList = postImages.map { it.ownerPostDescriptor },
+          postDescriptorList = mapPostImagesToPostDescriptors(),
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
           mediaViewerOptions = MediaViewerOptions(mediaViewerOpenedFromAlbum = true)
         )
       }
+    }
+  }
+
+  private fun mapPostImagesToPostDescriptors(): List<PostDescriptor> {
+    val duplicateSet = mutableSetOf<PostDescriptor>()
+
+    return postImages.mapNotNull { postImage ->
+      if (duplicateSet.add(postImage.ownerPostDescriptor)) {
+        return@mapNotNull postImage.ownerPostDescriptor
+      }
+
+      return@mapNotNull null
     }
   }
 
