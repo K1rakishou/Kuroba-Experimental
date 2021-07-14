@@ -28,8 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.Request
 import javax.inject.Inject
@@ -48,14 +52,21 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var themeEngine: ThemeEngine
 
   private var activeJob: Job? = null
+  private var captchaTtlUpdateJob: Job? = null
+
   lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
 
   private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   val showCaptchaHelpFlow: SharedFlow<Unit>
     get() = _showCaptchaHelpFlow.asSharedFlow()
 
+  private val _captchaTtlMillisFlow = MutableStateFlow(-1L)
+  val captchaTtlMillisFlow: StateFlow<Long>
+    get() = _captchaTtlMillisFlow.asStateFlow()
+
+  private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()
+
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
-  var currentInputValue = mutableStateOf<String>("")
   var onlyShowBackgroundImage = mutableStateOf(false)
 
   override fun injectDependencies(component: ViewModelComponent) {
@@ -92,17 +103,58 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   fun cleanup() {
-    captchaInfoToShow.value = AsyncData.NotInitialized
-    currentInputValue.value = ""
-
     activeJob?.cancel()
     activeJob = null
+
+    captchaTtlUpdateJob?.cancel()
+    captchaTtlUpdateJob = null
+
+    _captchaTtlMillisFlow.value = -1L
   }
 
-  fun requestCaptcha(chanDescriptor: ChanDescriptor) {
+  fun resetCaptchaForced(chanDescriptor: ChanDescriptor) {
+    captchaInfoToShow.value = AsyncData.NotInitialized
+    getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
+
+    captchaInfoCache.remove(chanDescriptor)
+  }
+
+  fun resetCaptchaIfCaptchaIsAlmostDead(chanDescriptor: ChanDescriptor) {
+    val captchaTtlMillis = getCachedCaptchaInfoOrNull(chanDescriptor)?.ttlMillis() ?: 0L
+    if (captchaTtlMillis <= MIN_TTL_TO_RESET_CAPTCHA) {
+      resetCaptchaForced(chanDescriptor)
+    }
+  }
+
+  fun requestCaptcha(chanDescriptor: ChanDescriptor, forced: Boolean) {
+    val prevCaptchaInfo = getCachedCaptchaInfoOrNull(chanDescriptor)
+
+    if (!forced
+      && prevCaptchaInfo != null
+      && prevCaptchaInfo.ttlMillis() > MIN_TTL_TO_NOT_REQUEST_NEW_CAPTCHA
+    ) {
+      Logger.d(TAG, "requestCaptcha() old captcha is still fine, " +
+        "ttl: ${prevCaptchaInfo.ttlMillis()}, chanDescriptor=$chanDescriptor")
+
+      captchaInfoToShow.value = AsyncData.Data(prevCaptchaInfo)
+      startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
+
+      return
+    }
+
+    Logger.d(TAG, "requestCaptcha() requesting new captcha " +
+      "(forced: $forced, ttl: ${prevCaptchaInfo?.ttlMillis()}, chanDescriptor=$chanDescriptor)")
+
     activeJob?.cancel()
     activeJob = null
-    currentInputValue.value = ""
+
+    captchaTtlUpdateJob?.cancel()
+    captchaTtlUpdateJob = null
+
+    _captchaTtlMillisFlow.value = -1L
+    getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
+
+    captchaInfoCache.remove(chanDescriptor)
 
     activeJob = mainScope.launch(Dispatchers.Default) {
       captchaInfoToShow.value = AsyncData.Loading
@@ -116,7 +168,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
             captchaInfoToShow.value = AsyncData.Error(error)
             delay(error.cooldownMs)
 
-            requestCaptcha(chanDescriptor)
+            requestCaptcha(chanDescriptor, forced = true)
             return@launch
           }
 
@@ -125,6 +177,38 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         is ModularResult.Value -> {
           AsyncData.Data(result.value)
         }
+      }
+
+      if (result is ModularResult.Value) {
+        captchaInfoCache[chanDescriptor] = result.value
+        startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
+      }
+    }
+  }
+
+  private fun startOrRestartCaptchaTtlUpdateTask(chanDescriptor: ChanDescriptor) {
+    captchaTtlUpdateJob?.cancel()
+    captchaTtlUpdateJob = null
+
+    captchaTtlUpdateJob = mainScope.launch {
+      while (isActive) {
+        val captchaInfoAsyncData = captchaInfoToShow.value
+
+        val captchaInfo = if (captchaInfoAsyncData !is AsyncData.Data) {
+          resetCaptchaForced(chanDescriptor)
+          return@launch
+        } else {
+          captchaInfoAsyncData.data
+        }
+
+        val captchaTtlMillis = captchaInfo.ttlMillis().coerceAtLeast(0L)
+        _captchaTtlMillisFlow.value = captchaTtlMillis
+
+        if (captchaTtlMillis <= 0) {
+          return@launch
+        }
+
+        delay(1000L)
       }
     }
   }
@@ -163,6 +247,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) NOOP challenge detected")
 
       return CaptchaInfo(
+        chanDescriptor = chanDescriptor,
         bgBitmapPainter = null,
         imgBitmapPainter = null,
         challenge = NOOP_CHALLENGE,
@@ -203,6 +288,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
 
     return CaptchaInfo(
+      chanDescriptor = chanDescriptor,
       bgBitmapPainter = bgBitmapPainter,
       imgBitmapPainter = imgBitmapPainter!!,
       challenge = captchaInfoRaw.challenge!!,
@@ -250,6 +336,20 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     return result
   }
 
+  private fun getCachedCaptchaInfoOrNull(chanDescriptor: ChanDescriptor): CaptchaInfo? {
+    val captchaInfo = captchaInfoCache[chanDescriptor]
+    if (captchaInfo == null) {
+      return null
+    }
+
+    if (captchaInfo.ttlMillis() < 0L) {
+      captchaInfoCache.remove(chanDescriptor)
+      return null
+    }
+
+    return captchaInfo
+  }
+
   @JsonClass(generateAdapter = true)
   data class CaptchaInfoRaw(
     @Json(name = "error")
@@ -288,6 +388,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   class CaptchaInfo(
+    val chanDescriptor: ChanDescriptor,
     val bgBitmapPainter: BitmapPainter?,
     val imgBitmapPainter: BitmapPainter?,
     val challenge: String,
@@ -295,6 +396,14 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val ttlSeconds: Int,
     val bgInitialOffset: Float
   ) {
+    var currentInputValue = mutableStateOf<String>("")
+    var sliderValue = mutableStateOf(0f)
+
+    fun reset() {
+      currentInputValue.value = ""
+      sliderValue.value = 0f
+    }
+
     fun needSlider(): Boolean = bgBitmapPainter != null
 
     fun ttlMillis(): Long {
@@ -316,6 +425,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     private const val TAG = "Chan4CaptchaLayoutViewModel"
     private const val ERROR_MSG = "You have to wait a while before doing this again"
     private const val DEFAULT_COOLDOWN_MS = 5000L
+
+    private const val MIN_TTL_TO_NOT_REQUEST_NEW_CAPTCHA = 25_000L // 25 seconds
+    private const val MIN_TTL_TO_RESET_CAPTCHA = 5_000L // 5 seconds
+
     const val NOOP_CHALLENGE = "noop"
   }
 

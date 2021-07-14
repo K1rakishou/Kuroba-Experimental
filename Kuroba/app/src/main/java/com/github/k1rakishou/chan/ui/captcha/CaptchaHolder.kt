@@ -50,9 +50,13 @@ class CaptchaHolder {
     BackgroundUtils.ensureMainThread()
     removeNotValidTokens()
 
+    if (tokenLifetime <= 0) {
+      return
+    }
+
     synchronized(captchaQueue) {
       captchaQueue.add(0, CaptchaInfo(solution, tokenLifetime + System.currentTimeMillis()))
-      Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, solution = $solution")
+      Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, solution=$solution, tokenLifetime=$tokenLifetime")
     }
 
     notifyListener()

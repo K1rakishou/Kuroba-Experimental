@@ -26,7 +26,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -46,6 +46,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -157,7 +158,7 @@ class Chan4CaptchaLayout(
   }
 
   override fun hardReset() {
-    viewModel.requestCaptcha(chanDescriptor)
+    viewModel.requestCaptcha(chanDescriptor, forced = false)
   }
 
   override fun onDestroy() {
@@ -165,6 +166,8 @@ class Chan4CaptchaLayout(
     this.callback = null
 
     scope.cancelChildren()
+
+    viewModel.resetCaptchaIfCaptchaIsAlmostDead(chanDescriptor)
     viewModel.cleanup()
   }
 
@@ -184,13 +187,8 @@ class Chan4CaptchaLayout(
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-    var currentInputValue by viewModel.currentInputValue
-    val scrollValueState = remember { mutableStateOf(0f) }
-    var scrollValue by scrollValueState
-
     BuildCaptchaImageOrText(
       captchaInfoAsync = captchaInfoAsync,
-      scrollValueState = scrollValueState,
       onCaptchaImageClick = { info ->
         if (info.bgBitmapPainter == null) {
           return@BuildCaptchaImageOrText
@@ -203,6 +201,9 @@ class Chan4CaptchaLayout(
     Spacer(modifier = Modifier.height(8.dp))
 
     if (captchaInfo != null && !captchaInfo.isNoopChallenge()) {
+      var currentInputValue by captchaInfo.currentInputValue
+      var scrollValue by captchaInfo.sliderValue
+
       KurobaComposeTextField(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
@@ -252,12 +253,22 @@ class Chan4CaptchaLayout(
           .clickable { showChan4CaptchaSettings() }
       )
 
+      val captchaTtlMillis by viewModel.captchaTtlMillisFlow.collectAsState()
+      if (captchaTtlMillis >= 0L) {
+        Spacer(modifier = Modifier.width(8.dp))
+
+        KurobaComposeText(
+          text = "${captchaTtlMillis / 1000L} sec",
+          fontSize = 13.sp,
+          modifier = Modifier.align(Alignment.CenterVertically)
+        )
+      }
+
       Spacer(modifier = Modifier.weight(1f))
 
       KurobaComposeTextButton(
         onClick = {
-          scrollValue = 0f
-          hardReset()
+          viewModel.requestCaptcha(chanDescriptor, forced = true)
         },
         modifier = Modifier
           .width(112.dp)
@@ -268,10 +279,15 @@ class Chan4CaptchaLayout(
       Spacer(modifier = Modifier.width(8.dp))
 
       val buttonEnabled = captchaInfo != null
-        && (captchaInfo.isNoopChallenge() || currentInputValue.isNotEmpty())
+        && (captchaInfo.isNoopChallenge() || captchaInfo.currentInputValue.value.isNotEmpty())
 
       KurobaComposeTextButton(
-        onClick = { verifyCaptcha(captchaInfo, currentInputValue) },
+        onClick = {
+          val currentInputValue = captchaInfo?.currentInputValue
+            ?: return@KurobaComposeTextButton
+
+          verifyCaptcha(captchaInfo, currentInputValue.value)
+        },
         enabled = buttonEnabled,
         modifier = Modifier
           .width(112.dp)
@@ -288,7 +304,6 @@ class Chan4CaptchaLayout(
   @Composable
   private fun BuildCaptchaImageOrText(
     captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
-    scrollValueState: MutableState<Float>,
     onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
   ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
@@ -332,7 +347,7 @@ class Chan4CaptchaLayout(
               )
             }
           } else {
-            BuildCaptchaImage(captchaInfo, size, scrollValueState, onCaptchaImageClick)
+            BuildCaptchaImage(captchaInfo, size, onCaptchaImageClick)
           }
         }
       }
@@ -343,7 +358,6 @@ class Chan4CaptchaLayout(
   private fun BuildCaptchaImage(
     captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo,
     size: IntSize,
-    scrollValueState: MutableState<Float>,
     onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
   ) {
     val imgBitmapPainter = captchaInfo.imgBitmapPainter!!
@@ -354,7 +368,7 @@ class Chan4CaptchaLayout(
     )
 
     val contentScale = Scale(scale)
-    var scrollValue by scrollValueState
+    var scrollValue by captchaInfo.sliderValue
     val onlyShowBackgroundImage by viewModel.onlyShowBackgroundImage
 
     if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
@@ -413,8 +427,16 @@ class Chan4CaptchaLayout(
       solution = currentInputValue
     )
 
-    captchaHolder.addNewSolution(solution, captchaInfo.ttlMillis())
+    val ttl = captchaInfo.ttlMillis()
+    if (ttl <= 0L) {
+      showToast(context, R.string.captcha_layout_captcha_already_expired)
+      return
+    }
+
+    captchaHolder.addNewSolution(solution, ttl)
     callback?.onAuthenticationComplete()
+
+    viewModel.resetCaptchaForced(chanDescriptor)
   }
 
   private fun showCaptchaHelp() {
@@ -435,6 +457,11 @@ class Chan4CaptchaLayout(
       isCurrentlySelected = chan4CaptchaSettings.sliderCaptchaUseContrastBackground
     )
 
+    items += FloatingListMenuItem(
+      ACTION_SHOW_CAPTCHA_HELP,
+      getString(R.string.captcha_layout_show_captcha_help)
+    )
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
@@ -444,6 +471,9 @@ class Chan4CaptchaLayout(
           ACTION_USE_CONTRAST_BACKGROUND -> {
             viewModel.toggleContrastBackground()
             showToast(context, R.string.captcha_layout_reload_captcha)
+          }
+          ACTION_SHOW_CAPTCHA_HELP -> {
+            showCaptchaHelp()
           }
         }
       }
@@ -464,6 +494,7 @@ class Chan4CaptchaLayout(
     private const val MIN_OFFSET = 100f
     private const val MAX_OFFSET = 400f
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
+    private const val ACTION_SHOW_CAPTCHA_HELP = 1
   }
 
 }
