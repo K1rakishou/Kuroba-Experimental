@@ -313,7 +313,6 @@ public class DefaultPostParser implements PostParser {
         SpannableStringBuilder total = new SpannableStringBuilder("");
 
         try {
-            // TODO(KurobaEx): use nullify for <wbr> instead of this hack
             String comment = commentRaw.toString().replace("<wbr>", "");
 
             HtmlParser htmlParser = htmlParserThreadLocal.get();

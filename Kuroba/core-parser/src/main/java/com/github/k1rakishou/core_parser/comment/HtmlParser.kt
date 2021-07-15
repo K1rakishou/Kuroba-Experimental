@@ -1,6 +1,7 @@
 package com.github.k1rakishou.core_parser.comment
 
 import com.github.k1rakishou.common.mutableListWithCap
+import org.jsoup.parser.Parser
 
 /**
  * Not thread safe!
@@ -25,8 +26,9 @@ class HtmlParser {
       if (currChar == '<') {
         if (currentBuffer.size > 0) {
           val text = String(currentBuffer.toCharArray())
+          val textUnescaped = Parser.unescapeEntities(text, false)
 
-          outNodes.add(HtmlNode.Text(text))
+          outNodes.add(HtmlNode.Text(textUnescaped))
           currentBuffer.clear()
         }
 
@@ -54,7 +56,10 @@ class HtmlParser {
     }
 
     if (currentBuffer.size > 0) {
-      outNodes.add(HtmlNode.Text(String(currentBuffer.toCharArray())))
+      val text = String(currentBuffer.toCharArray())
+      val textUnescaped = Parser.unescapeEntities(text, false)
+
+      outNodes.add(HtmlNode.Text(textUnescaped))
       currentBuffer.clear()
     }
 

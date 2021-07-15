@@ -74,8 +74,12 @@ class DvachApiV2(
     val posters = dvachThreadsFresh?.posters
     val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
-    if (threadPosts == null || threadPosts.isEmpty()) {
+    if (threadPosts == null) {
       throw IllegalStateException("No posts parsed for '$requestUrl'")
+    }
+
+    if (threadPosts.isEmpty()) {
+      return
     }
 
     val threadDescriptor = threadPosts.first().threadDescriptor(board.boardDescriptor)
@@ -123,8 +127,12 @@ class DvachApiV2(
     val threadPosts = dvachThreadIncremental?.posts
     val posters = dvachThreadIncremental?.posters
 
-    if (threadPosts == null || threadPosts.isEmpty()) {
+    if (threadPosts == null) {
       throw IllegalStateException("No posts parsed for '$requestUrl'")
+    }
+
+    if (threadPosts.isEmpty()) {
+      return
     }
 
     val threadDescriptor = threadPosts.first().threadDescriptor(board.boardDescriptor)
@@ -166,8 +174,12 @@ class DvachApiV2(
 
     val catalogThreadPosts = dvachCatalog?.threads
 
-    if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {
+    if (catalogThreadPosts == null) {
       throw IllegalStateException("No posts parsed for '$requestUrl'")
+    }
+
+    if (catalogThreadPosts.isEmpty()) {
+      return
     }
 
     processPostsInternal(catalogThreadPosts, chanReaderProcessor, board, endpoints)
@@ -258,8 +270,12 @@ class DvachApiV2(
       val bumpLimitCount = dvachThreadsFresh?.bumpLimit
       val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
-      if (threadPosts == null || threadPosts.isEmpty()) {
+      if (threadPosts == null) {
         throw IllegalStateException("No posts parsed for '$requestUrl'")
+      }
+
+      if (threadPosts.isEmpty()) {
+        return@Try ThreadBookmarkInfoObject(threadDescriptor, emptyList())
       }
 
       if (bumpLimitCount != null && bumpLimitCount > 0) {
@@ -319,8 +335,12 @@ class DvachApiV2(
         .useBufferedSource { bufferedSource -> dvachFilterWatchCatalogInfoAdapter.fromJson(bufferedSource) }
         ?.threads
 
-      if (catalogThreadPosts == null || catalogThreadPosts.isEmpty()) {
+      if (catalogThreadPosts == null) {
         throw IllegalStateException("No posts parsed for '$requestUrl'")
+      }
+
+      if (catalogThreadPosts.isEmpty()) {
+        return@Try FilterWatchCatalogInfoObject(boardDescriptor, emptyList())
       }
 
       val threadObjects = catalogThreadPosts.mapNotNull { catalogThreadPost ->

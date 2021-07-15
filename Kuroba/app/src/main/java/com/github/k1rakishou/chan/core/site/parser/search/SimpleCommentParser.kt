@@ -28,7 +28,6 @@ open class SimpleCommentParser {
     rule(StyleRule.tagRule("p"))
     rule(StyleRule.tagRule("div"))
     rule(StyleRule.tagRule("br").just("\n"))
-    rule(StyleRule.tagRule("wbr").nullify())
 
     rule(StyleRule.tagRule("s").link(PostLinkable.Type.SPOILER))
     rule(StyleRule.tagRule("b").bold())
@@ -62,7 +61,7 @@ open class SimpleCommentParser {
     try {
       val htmlParser = htmlParserThreadLocal.getOrSet { HtmlParser() }
 
-      val document = htmlParser.parse(commentRaw)
+      val document = htmlParser.parse(commentRaw.replace("<wbr>", ""))
       val nodes = document.nodes
 
       nodes.forEach { node ->
