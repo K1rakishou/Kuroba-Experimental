@@ -10,18 +10,19 @@ import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlNode
+import com.github.k1rakishou.core_parser.comment.HtmlParser
+import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanThemeColorId
-import org.jsoup.Jsoup
-import org.jsoup.nodes.Element
-import org.jsoup.nodes.Node
-import org.jsoup.nodes.TextNode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.concurrent.getOrSet
 
 @DoNotStrip
 open class SimpleCommentParser {
   private val rules = ConcurrentHashMap<String, MutableList<StyleRule>>()
+  private val htmlParserThreadLocal = ThreadLocal<HtmlParser>()
 
   init {
     rule(StyleRule.tagRule("p"))
@@ -54,14 +55,15 @@ open class SimpleCommentParser {
   }
 
   open fun parseComment(
-    commentRaw: CharSequence
+    commentRaw: String
   ): Spanned? {
     val total = SpannableStringBuilder()
 
     try {
-      val comment = commentRaw.toString()
-      val document = Jsoup.parseBodyFragment(comment)
-      val nodes = document.body().childNodes()
+      val htmlParser = htmlParserThreadLocal.getOrSet { HtmlParser() }
+
+      val document = htmlParser.parse(commentRaw)
+      val nodes = document.nodes
 
       nodes.forEach { node ->
         total.append(parseNode(node))
@@ -76,21 +78,22 @@ open class SimpleCommentParser {
   }
 
   private fun parseNode(
-    node: Node
+    node: HtmlNode
   ): Spanned {
-    if (node is TextNode) {
-       return SpannableString(node.text())
+    if (node is HtmlNode.Text) {
+       return SpannableString(node.text)
     }
 
-    if (node is Element) {
-      var nodeName = node.nodeName()
-      val styleAttr = node.attr("style")
+    if (node is HtmlNode.Tag) {
+      val htmlTag = node.htmlTag
+      var nodeName = htmlTag.tagName
+      val styleAttr = htmlTag.attrOrNull("style")
 
-      if (styleAttr.isNotEmpty() && nodeName != "span") {
+      if (styleAttr != null && styleAttr.isNotEmpty() && nodeName != "span") {
         nodeName = nodeName + '-' + styleAttr.split(":".toRegex()).toTypedArray()[1].trim()
       }
 
-      val innerNodes = node.childNodes()
+      val innerNodes = htmlTag.children
       val texts: MutableList<CharSequence> = ArrayList(innerNodes.size + 1)
 
       innerNodes.mapNotNullTo(texts) { parseNode(it) }
@@ -100,7 +103,7 @@ open class SimpleCommentParser {
       val result: CharSequence? = handleTag(
         nodeName,
         allInnerText,
-        node
+        htmlTag
       )
 
       return SpannedString.valueOf(result ?: allInnerText)
@@ -113,7 +116,7 @@ open class SimpleCommentParser {
   private fun handleTag(
     tag: String,
     text: CharSequence,
-    element: Element
+    htmlTag: HtmlTag
   ): CharSequence? {
     val rules = rules[tag]
       ?: return text
@@ -122,10 +125,10 @@ open class SimpleCommentParser {
       val highPriority = i == 0
 
       for (rule in rules) {
-        if (rule.highPriority() == highPriority && rule.applies(element)) {
+        if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
           val params = StyleRulesParamsBuilder()
             .withText(text)
-            .withElement(element)
+            .withHtmlTag(htmlTag)
             .build()
 
           return rule.apply(params)

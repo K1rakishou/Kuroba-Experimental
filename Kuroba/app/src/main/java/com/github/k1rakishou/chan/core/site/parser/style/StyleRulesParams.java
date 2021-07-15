@@ -4,15 +4,14 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
+import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
-
-import org.jsoup.nodes.Element;
 
 public class StyleRulesParams {
     @NonNull
     private CharSequence text;
     @NonNull
-    private Element element;
+    private HtmlTag htmlTag;
     @Nullable
     private PostParser.Callback callback = null;
     @Nullable
@@ -20,12 +19,12 @@ public class StyleRulesParams {
 
     public StyleRulesParams(
             @NonNull CharSequence text,
-            @NonNull Element element,
+            @NonNull HtmlTag htmlTag,
             @Nullable PostParser.Callback callback,
             @Nullable ChanPostBuilder post
     ) {
         this.text = text;
-        this.element = element;
+        this.htmlTag = htmlTag;
         this.callback = callback;
         this.post = post;
     }
@@ -36,8 +35,8 @@ public class StyleRulesParams {
     }
 
     @NonNull
-    public Element getElement() {
-        return element;
+    public HtmlTag getHtmlTag() {
+        return htmlTag;
     }
 
     @Nullable

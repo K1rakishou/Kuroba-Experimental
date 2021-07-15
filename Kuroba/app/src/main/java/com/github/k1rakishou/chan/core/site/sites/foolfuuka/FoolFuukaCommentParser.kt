@@ -6,9 +6,9 @@ import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.data.ArchiveType
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
-import org.jsoup.nodes.Element
 import java.util.regex.Pattern
 
 class FoolFuukaCommentParser(
@@ -24,18 +24,23 @@ class FoolFuukaCommentParser(
     post: ChanPostBuilder,
     tag: String,
     text: CharSequence,
-    element: Element
+    htmlTag: HtmlTag
   ): CharSequence? {
-    var newElement = element
+    var newHtmlTag = htmlTag
     var newTag = tag
 
-    if (element.getElementsByTag("span").hasClass("greentext")
-      && element.getElementsByTag("a").isNotEmpty()) {
-      newElement = element.getElementsByTag("a").first()
-      newTag = "a"
+    val hasGreenTextAttr = newHtmlTag.getTagsByName("span")
+      .any { spanTag -> spanTag.hasClass("greentext") }
+
+    if (hasGreenTextAttr) {
+      val firstAnchorTag = newHtmlTag.getTagsByName("a").firstOrNull()
+      if (firstAnchorTag != null) {
+        newHtmlTag = firstAnchorTag
+        newTag = "a"
+      }
     }
 
-    return super.handleTag(callback, post, newTag, text, newElement)
+    return super.handleTag(callback, post, newTag, text, newHtmlTag)
   }
 
   override fun getQuotePattern(): Pattern {
@@ -46,7 +51,11 @@ class FoolFuukaCommentParser(
     return FULL_QUOTE_PATTERN
   }
 
-  override fun extractQuote(href: String, post: ChanPostBuilder): String {
+  override fun extractQuote(href: String?, post: ChanPostBuilder): String {
+    if (href == null) {
+      return ""
+    }
+
     val matcher = getDefaultQuotePattern(post.postDescriptor)?.matcher(href)
     if (matcher == null) {
       Logger.d(TAG, "getDefaultQuotePattern returned null for postDescriptor=${post.postDescriptor}")

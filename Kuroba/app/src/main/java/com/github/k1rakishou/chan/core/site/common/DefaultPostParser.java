@@ -37,6 +37,10 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentPars
 import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.common.data.ArchiveType;
 import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_parser.comment.HtmlDocument;
+import com.github.k1rakishou.core_parser.comment.HtmlNode;
+import com.github.k1rakishou.core_parser.comment.HtmlParser;
+import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
@@ -46,11 +50,6 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.nodes.Node;
-import org.jsoup.nodes.TextNode;
 import org.jsoup.parser.Parser;
 
 import java.util.ArrayList;
@@ -63,6 +62,7 @@ import kotlin.text.StringsKt;
 public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
+    private final ThreadLocal<HtmlParser> htmlParserThreadLocal = new ThreadLocal<>();
     private final CommentParser commentParser;
     private final PostFilterManager postFilterManager;
     private final ArchivesManager archivesManager;
@@ -313,13 +313,21 @@ public class DefaultPostParser implements PostParser {
         SpannableStringBuilder total = new SpannableStringBuilder("");
 
         try {
+            // TODO(KurobaEx): use nullify for <wbr> instead of this hack
             String comment = commentRaw.toString().replace("<wbr>", "");
-            Document document = Jsoup.parseBodyFragment(comment);
 
-            List<Node> nodes = document.body().childNodes();
+            HtmlParser htmlParser = htmlParserThreadLocal.get();
+            if (htmlParser == null) {
+                htmlParserThreadLocal.set(new HtmlParser());
+                htmlParser = htmlParserThreadLocal.get();
+            }
+
+            HtmlDocument document = htmlParser.parse(comment);
+
+            List<HtmlNode> nodes = document.getNodes();
             List<CharSequence> texts = new ArrayList<>(nodes.size());
 
-            for (Node node : nodes) {
+            for (HtmlNode node : nodes) {
                 CharSequence nodeParsed = parseNode(post, callback, node);
                 if (nodeParsed != null) {
                     texts.add(nodeParsed);
@@ -339,29 +347,31 @@ public class DefaultPostParser implements PostParser {
     private CharSequence parseNode(
             ChanPostBuilder post,
             Callback callback,
-            Node node
+            HtmlNode node
     ) {
-        if (node instanceof TextNode) {
-            String text = ((TextNode) node).getWholeText();
+        if (node instanceof HtmlNode.Text) {
+            String text = ((HtmlNode.Text) node).getText();
 
             return CommentParserHelper.detectLinks(
                     post,
                     text,
                     this::handleLink
             );
-        } else if (node instanceof Element) {
-            String nodeName = node.nodeName();
-            String styleAttr = node.attr("style");
+        } else if (node instanceof HtmlNode.Tag) {
+            HtmlTag tag = ((HtmlNode.Tag) node).getHtmlTag();
 
-            if (!styleAttr.isEmpty() && !nodeName.equals("span")) {
+            String nodeName = tag.getTagName();
+            String styleAttr = tag.attrOrNull("style");
+
+            if (styleAttr != null && !styleAttr.isEmpty() && !nodeName.equals("span")) {
                 nodeName = nodeName + '-' + styleAttr.split(":")[1].trim();
             }
 
             // Recursively call parseNode with the nodes of the paragraph.
-            List<Node> innerNodes = node.childNodes();
+            List<HtmlNode> innerNodes = tag.getChildren();
             List<CharSequence> texts = new ArrayList<>(innerNodes.size() + 1);
 
-            for (Node innerNode : innerNodes) {
+            for (HtmlNode innerNode : innerNodes) {
                 CharSequence nodeParsed = parseNode(post, callback, innerNode);
                 if (nodeParsed != null) {
                     texts.add(nodeParsed);
@@ -375,7 +385,7 @@ public class DefaultPostParser implements PostParser {
                     post,
                     nodeName,
                     allInnerText,
-                    (Element) node
+                    tag
             );
 
             if (result != null) {

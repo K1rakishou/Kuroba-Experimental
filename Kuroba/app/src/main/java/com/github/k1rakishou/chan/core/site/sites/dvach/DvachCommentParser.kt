@@ -7,9 +7,9 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_parser.comment.HtmlTag
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
-import org.jsoup.nodes.Element
 import java.util.regex.Matcher
 import java.util.regex.Pattern
 
@@ -25,10 +25,10 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
   override fun matchAnchor(
     post: ChanPostBuilder,
     text: CharSequence,
-    anchor: Element,
+    anchorTag: HtmlTag,
     callback: PostParser.Callback
   ): PostLinkable.Link {
-    val href = extractQuote(anchor.attr("href"), post)
+    val href = extractQuote(anchorTag.attrOrNull("href"), post)
     val currentThreadNo = post.opId
 
     val quoteMatcher = QUOTE_PATTERN.matcher(href)

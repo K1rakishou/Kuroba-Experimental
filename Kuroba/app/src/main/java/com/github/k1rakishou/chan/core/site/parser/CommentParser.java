@@ -34,15 +34,13 @@ import androidx.annotation.Nullable;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.common.CommentParserConstants;
+import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
-
-import org.jsoup.nodes.Element;
-import org.jsoup.select.Elements;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -136,7 +134,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             ChanPostBuilder post,
             String tag,
             CharSequence text,
-            Element element
+            HtmlTag htmlTag
     ) {
         List<StyleRule> rules = this.rules.get(tag);
 
@@ -145,8 +143,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 boolean highPriority = i == 0;
 
                 for (StyleRule rule : rules) {
-                    if (rule.highPriority() == highPriority && rule.applies(element)) {
-                        return rule.apply(new StyleRulesParams(text, element, callback, post));
+                    if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
+                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post));
                     }
                 }
             }
@@ -160,7 +158,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             PostParser.Callback callback,
             ChanPostBuilder post,
             CharSequence text,
-            Element anchor
+            HtmlTag anchorTag
     ) {
         Matcher matcher = deadQuotePattern.matcher(text);
         if (!matcher.matches()) {
@@ -224,9 +222,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             PostParser.Callback callback,
             ChanPostBuilder post,
             CharSequence text,
-            Element anchor
+            HtmlTag anchorTag
     ) {
-        PostLinkable.Link handlerLink = matchAnchor(post, text, anchor, callback);
+        PostLinkable.Link handlerLink = matchAnchor(post, text, anchorTag, callback);
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
 
         if (handlerLink != null) {
@@ -363,11 +361,11 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             PostParser.Callback callback,
             ChanPostBuilder builder,
             CharSequence text,
-            Element span
+            HtmlTag spanTag
     ) {
         // html looks like <span class="fortune" style="color:#0893e1"><br><br><b>Your fortune:</b>
-        String style = span.attr("style");
-        if (!TextUtils.isEmpty(style)) {
+        String style = spanTag.attrOrNull("style");
+        if (style != null && !TextUtils.isEmpty(style)) {
             style = style.replace(" ", "");
 
             Matcher matcher = colorPattern.matcher(style);
@@ -390,24 +388,24 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             PostParser.Callback callback,
             ChanPostBuilder builder,
             CharSequence text,
-            Element table
+            HtmlTag tableTag
     ) {
         List<CharSequence> parts = new ArrayList<>();
-        Elements tableRows = table.getElementsByTag("tr");
+        List<HtmlTag> tableRows = tableTag.getTagsByName("tr");
 
         for (int i = 0; i < tableRows.size(); i++) {
-            Element tableRow = tableRows.get(i);
+            HtmlTag tableRow = tableRows.get(i);
             if (tableRow.text().length() <= 0) {
                 continue;
             }
 
-            Elements tableDatas = tableRow.getElementsByTag("td");
+            List<HtmlTag> tableDatas = tableRow.getTagsByName("td");
 
             for (int j = 0; j < tableDatas.size(); j++) {
-                Element tableData = tableDatas.get(j);
+                HtmlTag tableData = tableDatas.get(j);
                 SpannableString tableDataPart = new SpannableString(tableData.text());
 
-                if (tableData.getElementsByTag("b").size() > 0) {
+                if (tableData.getTagsByName("b").size() > 0) {
                     tableDataPart.setSpan(
                             new StyleSpan(Typeface.BOLD),
                             0,
@@ -446,13 +444,13 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     public PostLinkable.Link matchAnchor(
             ChanPostBuilder post,
             CharSequence text,
-            Element anchor,
+            HtmlTag anchorTag,
             PostParser.Callback callback
     ) {
         PostLinkable.Type type;
         PostLinkable.Value value;
 
-        String href = extractQuote(anchor.attr("href"), post);
+        String href = extractQuote(anchorTag.attrOrNull("href"), post);
         Matcher externalMatcher = matchExternalQuote(href, post);
 
         if (externalMatcher.find()) {
@@ -545,7 +543,11 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         return getFullQuotePattern().matcher(href);
     }
 
-    protected String extractQuote(@NonNull String href, @NonNull ChanPostBuilder post) {
+    protected String extractQuote(@Nullable String href, @NonNull ChanPostBuilder post) {
+        if (href == null || href.isEmpty()) {
+            return "";
+        }
+
         if (href.matches(defaultQuoteRegex)) {
             // gets us something like /board/ or /thread/postno#quoteno
             // hacky fix for 4chan having two domains but the same API

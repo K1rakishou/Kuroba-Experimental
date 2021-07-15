@@ -30,6 +30,7 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
+import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
@@ -37,8 +38,6 @@ import com.github.k1rakishou.core_spannable.CustomTypefaceSpan;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
-
-import org.jsoup.nodes.Element;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -166,13 +165,13 @@ public class StyleRule {
         return classes != null && !classes.isEmpty();
     }
 
-    public boolean applies(Element element) {
+    public boolean applies(HtmlTag htmlTag) {
         if (classes == null || classes.isEmpty()) {
             return true;
         }
 
         for (String c : classes) {
-            if (element.hasClass(c)) {
+            if (htmlTag.hasClass(c)) {
                 return true;
             }
         }
@@ -190,14 +189,14 @@ public class StyleRule {
         }
 
         @NonNull CharSequence resultText = styleRulesParams.getText();
-        @NonNull Element element = styleRulesParams.getElement();
+        @NonNull HtmlTag htmlTag = styleRulesParams.getHtmlTag();
 
         @Nullable ChanPostBuilder post = styleRulesParams.getPost();
         @Nullable PostParser.Callback callback = styleRulesParams.getCallback();
 
         if (callback != null && post != null) {
             for (Action action : actions) {
-                resultText = action.execute(callback, post, resultText, element);
+                resultText = action.execute(callback, post, resultText, htmlTag);
             }
         }
 
@@ -255,7 +254,7 @@ public class StyleRule {
         }
 
         // Apply break if not the last element.
-        if (blockElement && element.nextSibling() != null) {
+        if (blockElement && htmlTag.hasNextSibling()) {
             resultText = TextUtils.concat(resultText, "\n");
         }
 
@@ -294,7 +293,7 @@ public class StyleRule {
                 PostParser.Callback callback,
                 ChanPostBuilder post,
                 CharSequence text,
-                Element element
+                HtmlTag htmlTag
         );
     }
 }
