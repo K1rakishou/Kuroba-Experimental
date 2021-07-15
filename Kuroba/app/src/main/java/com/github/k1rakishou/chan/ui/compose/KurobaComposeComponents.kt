@@ -35,17 +35,20 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.common.errorMessageOrClassName
 
 @Composable
-fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier) {
+fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier, overrideColor: Color? = null) {
   Box(modifier = Modifier
     .fillMaxSize()
     .then(modifier)) {
-    val chanTheme = LocalChanTheme.current
-    val accentColor = remember(key1 = chanTheme.accentColor) {
-      Color(chanTheme.accentColor)
+
+    val color = if (overrideColor == null) {
+      val chanTheme = LocalChanTheme.current
+      remember(key1 = chanTheme.accentColor) { Color(chanTheme.accentColor) }
+    } else {
+      overrideColor
     }
 
     CircularProgressIndicator(
-      color = accentColor,
+      color = color,
       modifier = Modifier
         .align(Alignment.Center)
         .size(42.dp, 42.dp)

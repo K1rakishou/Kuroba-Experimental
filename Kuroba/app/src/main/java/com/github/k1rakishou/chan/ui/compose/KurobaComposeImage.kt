@@ -13,16 +13,21 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
+import androidx.compose.ui.unit.sp
 import coil.transform.Transformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
+import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import okhttp3.HttpUrl
 
 @Suppress("UnnecessaryVariable")
@@ -32,7 +37,7 @@ fun KurobaComposeImage(
   modifier: Modifier,
   imageLoaderV2: ImageLoaderV2,
   loading: (@Composable BoxScope.() -> Unit)? = null,
-  error: (@Composable BoxScope.(Throwable) -> Unit)? = null,
+  error: (@Composable BoxScope.(Throwable) -> Unit)? = { throwable -> DefaultErrorHandler(throwable) },
   success: (@Composable () -> Unit)? = null
 ) {
   var size by remember { mutableStateOf<IntSize?>(null) }
@@ -46,6 +51,22 @@ fun KurobaComposeImage(
   Box(modifier = modifier.then(measureModifier)) {
     BuildInnerImage(size, request, imageLoaderV2, loading, error, success)
   }
+}
+
+@Composable
+private fun BoxScope.DefaultErrorHandler(throwable: Throwable) {
+  val errorMsg = if (throwable is BadStatusResponseException) {
+    "Bad status: ${throwable.status}"
+  } else {
+    throwable.errorMessageOrClassName()
+  }
+
+  KurobaComposeText(
+    text = errorMsg,
+    fontSize = 13.sp,
+    textAlign = TextAlign.Center,
+    modifier = Modifier.align(Alignment.Center)
+  )
 }
 
 @Composable

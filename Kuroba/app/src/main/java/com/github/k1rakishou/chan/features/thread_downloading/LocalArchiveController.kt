@@ -45,7 +45,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.animatedVectorResource
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -669,14 +668,29 @@ class LocalArchiveController(
   ) {
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
 
+    val color = remember(key1 = isBackColorDark) {
+      Color(themeEngine.resolveDrawableTintColor(isBackColorDark))
+    }
+
     val colorFilter = remember(key1 = isBackColorDark) {
-      ColorFilter.tint(Color(themeEngine.resolveDrawableTintColor(isBackColorDark)))
+      ColorFilter.tint(color)
     }
 
     val painter = when (threadDownloadView.status) {
       ThreadDownload.Status.Running -> {
-        animatedVectorResource(id = R.drawable.ic_download_anim)
-          .painterFor(atEnd = animationAtEnd)
+        // TODO(KurobaEx): animatedVectorResource was removed in compose-rc01.
+        //  I have no idea when they are gonna bring it back. For now I will leave it like this.
+//        animatedVectorResource(id = R.drawable.ic_download_anim)
+//          .painterFor(atEnd = animationAtEnd)
+
+        KurobaComposeProgressIndicator(
+          modifier = Modifier
+            .size(ICON_SIZE)
+            .clickable { showToast(threadDownloadView.status.toString(), Toast.LENGTH_LONG) },
+          overrideColor = color
+        )
+
+        return
       }
       ThreadDownload.Status.Stopped -> {
         painterResource(id = R.drawable.ic_download_anim0)
