@@ -66,7 +66,7 @@ class PostAdapter(
   /**
    * A hack for OnDemandContentLoader see comments in [onViewRecycled]
    */
-  private val updatingPosts: MutableSet<Long> = HashSet(64)
+  private val updatingPosts: MutableSet<PostDescriptor> = HashSet(64)
 
   val isErrorShown: Boolean
     get() = threadCellData.error != null
@@ -238,8 +238,7 @@ class PostAdapter(
       val post = (holder.itemView as GenericPostCell).getPost()
         ?: return
 
-      val postNo = post.postNo()
-      val isActuallyRecycling = !updatingPosts.remove(postNo)
+      val isActuallyRecycling = !updatingPosts.remove(post.postDescriptor)
 
       /**
        * Hack! (kinda)
@@ -348,8 +347,25 @@ class PostAdapter(
       return
     }
 
-    updatingPosts.add(updatedPost.postNo())
+    updatingPosts.add(updatedPost.postDescriptor)
     notifyItemChanged(postIndex)
+  }
+
+  suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+
+    if (isErrorShown) {
+      return
+    }
+
+    if (!threadCellData.refreshAllItems(postCellCallback, chanDescriptor, themeEngine.chanTheme)) {
+      return
+    }
+
+    updatingPosts.addAll(threadCellData.getAllPostDescriptors())
+
+    Logger.d(TAG, "refreshAdapterItems() called")
+    notifyDataSetChanged()
   }
 
   fun getPostNo(itemPosition: Int): Long {

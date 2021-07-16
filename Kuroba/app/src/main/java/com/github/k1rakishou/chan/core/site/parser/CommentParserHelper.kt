@@ -102,7 +102,7 @@ object CommentParserHelper {
   fun splitTextIntoRanges(
     text: String
   ): List<IRange> {
-    val linkSpanList = extractListOfLinks(text)
+    val linkSpanList = extractLinks(text).toList()
     if (linkSpanList.isEmpty()) {
       return listOf(TextRange(0, text.length))
     }
@@ -139,18 +139,13 @@ object CommentParserHelper {
     return ranges
   }
 
-  private fun extractListOfLinks(text: String): List<LinkSpan> {
-    val linkSpans = LINK_EXTRACTOR.extractLinks(text)
-    return linkSpans.toMutableList()
-  }
-
   @JvmStatic
   fun detectLinks(
     post: ChanPostBuilder,
     text: String,
     spannable: SpannableString
   ) {
-    val links = LINK_EXTRACTOR.extractLinks(text)
+    val links = extractLinks(text)
 
     for (link in links) {
       val linkText = text.substring(link.beginIndex, link.endIndex)
@@ -172,6 +167,10 @@ object CommentParserHelper {
 
       post.addLinkable(pl)
     }
+  }
+
+  private fun extractLinks(text: String): Iterable<LinkSpan> {
+    return LINK_EXTRACTOR.extractLinks(text)
   }
 
   interface IRange {

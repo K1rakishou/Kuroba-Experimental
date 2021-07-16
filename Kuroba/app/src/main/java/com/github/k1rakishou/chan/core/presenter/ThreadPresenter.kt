@@ -64,6 +64,7 @@ import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeParser
 import com.github.k1rakishou.model.data.board.pages.BoardPage
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.*
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
@@ -189,6 +190,20 @@ class ThreadPresenter @Inject constructor(
         .debounce(1000L)
         .collect { filterEvent -> onFiltersChanged(filterEvent) }
     }
+
+    launch {
+      pageRequestManager.boardPagesUpdateFlow
+        .collect { boardDescriptor ->
+          val chanDescriptor = currentChanDescriptor
+            ?: return@collect
+
+          if (!chanDescriptor.isCatalogDescriptor() || chanDescriptor.boardDescriptor() != boardDescriptor) {
+            return@collect
+          }
+
+          threadPresenterCallback?.refreshAdapterItems(chanDescriptor)
+        }
+    }
   }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
@@ -219,6 +234,10 @@ class ThreadPresenter @Inject constructor(
 
     if (chanThreadTicker.currentChanDescriptor != null) {
       unbindChanDescriptor(false)
+    }
+
+    if (chanDescriptor.isCatalogDescriptor() && !ChanSettings.neverShowPages.get()) {
+      pageRequestManager.getBoardPages(chanDescriptor.boardDescriptor())
     }
 
     chanThreadManager.bindChanDescriptor(chanDescriptor)
@@ -1790,8 +1809,12 @@ class ThreadPresenter @Inject constructor(
       && !thread.isArchived()
   }
 
-  override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
-    return pageRequestManager.getPage(originalPostDescriptor)
+  override fun getPage(postDescriptor: PostDescriptor): BoardPage? {
+    return pageRequestManager.getPage(postDescriptor)
+  }
+
+  override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
+    return pageRequestManager.getBoardPages(boardDescriptor)
   }
 
   override fun onListStatusClicked() {
@@ -2246,6 +2269,8 @@ class ThreadPresenter @Inject constructor(
     )
 
     suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
+    suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor)
+
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean)

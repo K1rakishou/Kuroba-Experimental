@@ -1212,6 +1212,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     postAdapter.updatePost(updatedPost)
   }
 
+  suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+    postAdapter.refreshAdapterItems(chanDescriptor)
+  }
+
   fun isErrorShown(): Boolean {
     BackgroundUtils.ensureMainThread()
     return postAdapter.isErrorShown

@@ -20,6 +20,8 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.board.pages.BoardPage
+import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -60,7 +62,8 @@ interface PostCellInterface {
     fun onPostNoClicked(post: ChanPost)
     fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence)
     fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence)
-    fun getPage(originalPostDescriptor: PostDescriptor): BoardPage?
+    fun getPage(postDescriptor: PostDescriptor): BoardPage?
+    fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages?
     fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
     fun onUnhidePostClick(post: ChanPost)

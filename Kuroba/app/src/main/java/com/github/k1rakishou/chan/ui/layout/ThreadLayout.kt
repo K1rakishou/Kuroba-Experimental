@@ -950,6 +950,11 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.onPostUpdated(updatedPost)
   }
 
+  override suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+    threadListLayout.refreshAdapterItems(chanDescriptor)
+  }
+
   override fun presentController(
     controller: Controller,
     animate: Boolean

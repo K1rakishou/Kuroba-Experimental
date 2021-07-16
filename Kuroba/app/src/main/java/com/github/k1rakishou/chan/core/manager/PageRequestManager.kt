@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.manager
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.pages.BoardPage
@@ -25,13 +26,13 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
@@ -44,22 +45,21 @@ class PageRequestManager(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
 ) : CoroutineScope {
-  private val requestedBoards = Collections.synchronizedSet(HashSet<String>())
-  private val savedBoards = Collections.synchronizedSet(HashSet<String>())
-  private val boardPagesMap: ConcurrentMap<String, BoardPages> = ConcurrentHashMap()
-  private val boardTimeMap: ConcurrentMap<String, Long> = ConcurrentHashMap()
+  private val requestedBoards = Collections.synchronizedSet(HashSet<BoardDescriptor>())
+  private val savedBoards = Collections.synchronizedSet(HashSet<BoardDescriptor>())
+  private val boardPagesMap: ConcurrentMap<BoardDescriptor, BoardPages> = ConcurrentHashMap()
+  private val boardTimeMap: ConcurrentMap<BoardDescriptor, Long> = ConcurrentHashMap()
   private val notifyIntervals = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>()
 
-  private val boardPagesUpdateSubject = PublishProcessor.create<Unit>()
+  private val _boardPagesUpdateFlow = MutableSharedFlow<BoardDescriptor>(extraBufferCapacity = 32)
+  val boardPagesUpdateFlow: SharedFlow<BoardDescriptor>
+    get() = _boardPagesUpdateFlow.asSharedFlow()
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob() + CoroutineName("PageRequestManager")
 
-  fun listenForPagesUpdates(): Flowable<Unit> {
-    return boardPagesUpdateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .hide()
+  fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
+    return getPages(boardDescriptor)
   }
 
   fun getPage(originalPostDescriptor: PostDescriptor?): BoardPage? {
@@ -93,7 +93,7 @@ class PageRequestManager(
     val threadDescriptorsToFindCopy = HashSet(threadDescriptorsToFind)
 
     for (threadDescriptor in threadDescriptorsToFind) {
-      val catalog = boardPagesMap[threadDescriptor.boardCode()]
+      val catalog = boardPagesMap[threadDescriptor.boardDescriptor]
         ?: continue
 
       loop@ for (boardPage in catalog.boardPages) {
@@ -141,7 +141,7 @@ class PageRequestManager(
     }
 
     Logger.d(TAG, "Requesting existing board pages for /${boardDescriptor.boardCode}/, forced")
-    launch { requestBoard(boardDescriptor) }
+    launch { requestBoardInternal(boardDescriptor) }
   }
 
   private fun findPage(boardDescriptor: BoardDescriptor, opNo: Long): BoardPage? {
@@ -160,15 +160,19 @@ class PageRequestManager(
   }
 
   private fun getPages(boardDescriptor: BoardDescriptor): BoardPages? {
-    if (savedBoards.contains(boardDescriptor.boardCode)) {
+    if (ChanSettings.neverShowPages.get()) {
+      return null
+    }
+
+    if (savedBoards.contains(boardDescriptor)) {
       // If we have it stored already, return the pages for it
       // also issue a new request if 3 minutes have passed
       shouldUpdate(boardDescriptor)
-      return boardPagesMap[boardDescriptor.boardCode]
+      return boardPagesMap[boardDescriptor]
     }
 
     val alreadyRequested = synchronized(this) {
-      requestedBoards.contains(boardDescriptor.boardCode)
+      requestedBoards.contains(boardDescriptor)
     }
 
     if (alreadyRequested) {
@@ -177,13 +181,17 @@ class PageRequestManager(
 
     launch {
       // Otherwise, get the site for the board and request the pages for it
-      requestBoard(boardDescriptor)
+      requestBoardInternal(boardDescriptor)
     }
 
     return null
   }
 
   private fun shouldUpdate(boardDescriptor: BoardDescriptor) {
+    if (ChanSettings.neverShowPages.get()) {
+      return
+    }
+
     launch {
       siteManager.awaitUntilInitialized()
 
@@ -202,19 +210,19 @@ class PageRequestManager(
         return@launch
       }
 
-      val lastUpdate = boardTimeMap[board.boardCode()]
+      val lastUpdate = boardTimeMap[board.boardDescriptor]
       val lastUpdateTime = lastUpdate ?: 0L
 
       if (lastUpdateTime + UPDATE_INTERVAL <= System.currentTimeMillis()) {
-        requestBoard(boardDescriptor)
+        requestBoardInternal(boardDescriptor)
       }
     }
   }
 
-  private suspend fun requestBoard(boardDescriptor: BoardDescriptor) {
+  private suspend fun requestBoardInternal(boardDescriptor: BoardDescriptor) {
     val contains = synchronized(this) {
-      if (!requestedBoards.contains(boardDescriptor.boardCode)) {
-        requestedBoards.add(boardDescriptor.boardCode)
+      if (!requestedBoards.contains(boardDescriptor)) {
+        requestedBoards.add(boardDescriptor)
         false
       } else {
         true
@@ -261,7 +269,7 @@ class PageRequestManager(
         }
       }
     } finally {
-      synchronized(this) { requestedBoards.remove(boardDescriptor.boardCode) }
+      synchronized(this) { requestedBoards.remove(boardDescriptor) }
     }
   }
 
@@ -272,11 +280,11 @@ class PageRequestManager(
   ) {
     Logger.d(TAG, "Got pages for ${boardDescriptor.siteName()}/${boardDescriptor.boardCode}/")
 
-    savedBoards.add(boardDescriptor.boardCode)
-    boardTimeMap[boardDescriptor.boardCode] = System.currentTimeMillis()
-    boardPagesMap[boardDescriptor.boardCode] = pages
+    savedBoards.add(boardDescriptor)
+    boardTimeMap[boardDescriptor] = System.currentTimeMillis()
+    boardPagesMap[boardDescriptor] = pages
 
-    boardPagesUpdateSubject.onNext(Unit)
+    _boardPagesUpdateFlow.tryEmit(boardDescriptor)
   }
 
   private fun pagesRequestsSupported(siteDescriptor: SiteDescriptor): Boolean {

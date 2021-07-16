@@ -44,6 +44,7 @@ import com.github.k1rakishou.core_spannable.ThemeEditorPostLinkable
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.pages.BoardPage
+import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -92,7 +93,11 @@ class ThemeControllerHelper(
     override val currentChanDescriptor: ChanDescriptor?
       get() = dummyThreadDescriptor
 
-    override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+    override fun getPage(postDescriptor: PostDescriptor): BoardPage? {
+      return null
+    }
+
+    override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
       return null
     }
 

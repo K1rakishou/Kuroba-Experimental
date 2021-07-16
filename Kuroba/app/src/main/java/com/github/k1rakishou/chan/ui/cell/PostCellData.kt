@@ -21,6 +21,7 @@ import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
@@ -42,6 +43,7 @@ data class PostCellData(
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.BoardPostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
+  val boardPage: BoardPage?,
   val neverShowPages: Boolean,
   val tapNoReply: Boolean,
   val postFullDate: Boolean,
@@ -180,6 +182,7 @@ data class PostCellData(
       showDivider = showDivider,
       boardPostViewMode = boardPostViewMode,
       boardPostsSortOrder = boardPostsSortOrder,
+      boardPage = boardPage,
       neverShowPages = neverShowPages,
       tapNoReply = tapNoReply,
       postFullDate = postFullDate,
@@ -428,15 +431,14 @@ data class PostCellData(
         .append(imagesCountText)
     }
 
-    if (postCellCallback != null && !neverShowPages) {
-      if (boardPostsSortOrder != PostsFilter.Order.BUMP) {
-        val boardPage = postCellCallback?.getPage(post.postDescriptor)
-        if (boardPage != null) {
-          catalogRepliesTextBuilder
-            .append(", page ")
-            .append(boardPage.currentPage)
-        }
-      }
+    if (!threadMode
+      && !neverShowPages
+      && boardPostsSortOrder != PostsFilter.Order.BUMP
+      && boardPage != null
+    ) {
+      catalogRepliesTextBuilder
+        .append(", page ")
+        .append(boardPage.currentPage)
     }
 
     return catalogRepliesTextBuilder.toString()
@@ -456,15 +458,16 @@ data class PostCellData(
         append(getString(R.string.card_stats_images_compact, catalogImagesCount))
       }
 
-      if (!neverShowPages) {
-        val boardPage = postCellCallback?.getPage(postDescriptor)
-        if (boardPage != null && boardPostsSortOrder != PostsFilter.Order.BUMP) {
-          if (isNotEmpty()) {
-            append(", ")
-          }
-
-          append(getString(R.string.card_stats_page_compact, boardPage.currentPage))
+      if (!threadMode
+        && !neverShowPages
+        && boardPostsSortOrder != PostsFilter.Order.BUMP
+        && boardPage != null
+      ) {
+        if (isNotEmpty()) {
+          append(", ")
         }
+
+        append(getString(R.string.card_stats_page_compact, boardPage.currentPage))
       }
     }
   }
