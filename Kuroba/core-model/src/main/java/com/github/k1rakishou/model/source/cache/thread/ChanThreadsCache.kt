@@ -47,10 +47,6 @@ class ChanThreadsCache(
     chanThreads.values.forEach { chanThread -> chanThread.clearPostHashes() }
   }
 
-  fun getAllPostsForDatabasePersisting(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {
-    return chanThreads[threadDescriptor]?.getAllPostsForDatabasePersisting() ?: emptyList()
-  }
-
   fun cacheNeedsUpdate(
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions
@@ -74,7 +70,6 @@ class ChanThreadsCache(
 
     return chanThread.cacheNeedsUpdate(chanCacheUpdateOptions)
   }
-
 
   /**
    * Inserts [parsedPosts] into the memory cache by either adding them as new or updating old ones.

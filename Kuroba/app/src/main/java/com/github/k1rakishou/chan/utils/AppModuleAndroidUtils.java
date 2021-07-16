@@ -7,6 +7,7 @@ import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Releas
 import static com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType.Unknown;
 import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
 import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidN;
 import static com.github.k1rakishou.common.AndroidUtils.isAndroidP;
 
 import android.annotation.SuppressLint;
@@ -589,6 +590,11 @@ public class AppModuleAndroidUtils {
 
     public static boolean isLowRamDevice() {
         if (ChanSettings.isLowRamDeviceForced.get()) {
+            return true;
+        }
+
+        if (!isAndroidN()) {
+            // Consider all devices lover than N as low ram devices
             return true;
         }
 

@@ -16,12 +16,15 @@ class SeenPostRepository(
   private val TAG = "SeenPostRepository"
   private val alreadyExecuted = AtomicBoolean(false)
 
-  suspend fun insert(seenPost: SeenPost): ModularResult<Unit> {
+  suspend fun insertMany(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    seenPosts: Collection<SeenPost>
+  ): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
         seenPostLocalRepositoryCleanup()
 
-        return@tryWithTransaction seenPostLocalSource.insert(seenPost)
+        return@tryWithTransaction seenPostLocalSource.insertMany(threadDescriptor, seenPosts)
       }
     }
   }

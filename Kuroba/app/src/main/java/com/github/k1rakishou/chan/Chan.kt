@@ -234,6 +234,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val appConstants = AppConstants(
       context = applicationContext,
       flavorType = flavorType,
+      isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice(),
       kurobaExUserAgent = kurobaExUserAgent,
       maxPostsInDatabaseSettingValue = 125000,
       maxThreadsInDatabaseSettingValue = 12500

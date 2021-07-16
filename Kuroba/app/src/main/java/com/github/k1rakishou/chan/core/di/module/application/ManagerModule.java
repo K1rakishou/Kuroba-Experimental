@@ -201,6 +201,7 @@ public class ManagerModule {
     @Singleton
     public ReportManager provideReportManager(
             CoroutineScope appScope,
+            Context appContext,
             ProxiedOkHttpClient okHttpClient,
             Gson gson,
             SettingsNotificationManager settingsNotificationManager
@@ -209,6 +210,7 @@ public class ManagerModule {
 
         return new ReportManager(
                 appScope,
+                appContext,
                 okHttpClient.okHttpClient(),
                 settingsNotificationManager,
                 gson,

@@ -1,12 +1,13 @@
 package com.github.k1rakishou.chan.core.manager
 
+import android.util.LruCache
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
+import com.github.k1rakishou.common.contains
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
-import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -15,6 +16,7 @@ import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
+import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -29,11 +31,11 @@ class SeenPostsManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val seenPostsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(128)
+  private val seenPostsMap = LruCache<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(32)
   @GuardedBy("lock")
-  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
+  private val seenPostsToPersist = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>()
 
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+  private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(appScope)
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
@@ -41,7 +43,7 @@ class SeenPostsManager(
       return
     }
 
-    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    val alreadyPreloaded = lock.read { seenPostsMap.contains(threadDescriptor) }
     if (alreadyPreloaded) {
       return
     }
@@ -67,8 +69,7 @@ class SeenPostsManager(
       }
 
     lock.write {
-      seenPostsMap[threadDescriptor] = seenPosts.toMutableSet()
-      alreadyPreloadedSet.add(threadDescriptor)
+      seenPostsMap.put(threadDescriptor, seenPosts.toMutableSet())
     }
   }
 
@@ -81,24 +82,59 @@ class SeenPostsManager(
       return
     }
 
-    serializedCoroutineExecutor.post {
-      val threadDescriptor = postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
+    lock.write {
+      seenPostsToPersist.putIfNotContains(postDescriptor.threadDescriptor(), mutableSetOf())
 
       val seenPost = SeenPost(
-        threadDescriptor,
-        postDescriptor.postNo,
-        DateTime.now()
+        threadDescriptor = postDescriptor.threadDescriptor(),
+        postNo = postDescriptor.postNo,
+        insertedAt = DateTime.now()
       )
 
-      seenPostsRepository.insert(seenPost)
+      seenPostsToPersist[postDescriptor.threadDescriptor()]!!.add(seenPost)
+    }
+
+    debouncingCoroutineExecutor.post(DEBOUNCE_TIMEOUT_MS) {
+      val threadDescriptor = postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
+
+      val toPersist = lock.write {
+        val toPersist = seenPostsToPersist.remove(postDescriptor.threadDescriptor())
+          ?.toMutableSet()
+
+        if (toPersist == null) {
+          return@write null
+        }
+
+        toPersist.mutableIteration { mutableIterator, seenPost ->
+          if (seenPostsMap[threadDescriptor].contains(seenPost)) {
+            mutableIterator.remove()
+          }
+
+          return@mutableIteration true
+        }
+
+        return@write toPersist
+      }
+
+      if (toPersist == null) {
+        return@post
+      }
+
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "onPostBind() persisting ${toPersist.size} posts")
+      }
+
+      seenPostsRepository.insertMany(threadDescriptor, toPersist)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
             "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
           return@post
         }
 
-      seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
-      seenPostsMap[threadDescriptor]!!.add(seenPost)
+      lock.write {
+        seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
+        seenPostsMap[threadDescriptor]!!.addAll(toPersist)
+      }
     }
   }
 
@@ -139,5 +175,6 @@ class SeenPostsManager(
 
   companion object {
     private const val TAG = "SeenPostsManager"
+    private const val DEBOUNCE_TIMEOUT_MS = 250L
   }
 }

@@ -101,10 +101,6 @@ class ChanThread(
     return lock.read { threadPosts.toList() }
   }
 
-  fun getAllPostsForDatabasePersisting(): List<ChanPost> {
-    return lock.read { threadPosts }
-  }
-
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
     if (newChanPosts.isEmpty()) {
       return true

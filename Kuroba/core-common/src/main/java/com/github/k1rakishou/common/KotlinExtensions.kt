@@ -10,6 +10,7 @@ import android.text.SpannableStringBuilder
 import android.text.StaticLayout
 import android.text.TextUtils
 import android.text.style.CharacterStyle
+import android.util.LruCache
 import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
@@ -347,7 +348,7 @@ inline fun <T> MutableCollection<T>.removeIfKt(filter: (T) -> Boolean): Boolean 
   return removed
 }
 
-inline fun <E> MutableList<E>.mutableIteration(func: (MutableIterator<E>, E) -> Boolean) {
+inline fun <E> MutableCollection<E>.mutableIteration(func: (MutableIterator<E>, E) -> Boolean) {
   val iterator = this.iterator()
 
   while (iterator.hasNext()) {
@@ -1153,4 +1154,14 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
     staticLayout.width,
     staticLayout.height
   )
+}
+
+fun <K, V> LruCache<K, V>.contains(key: K): Boolean {
+  return get(key) != null
+}
+
+fun <K, V> LruCache<K, V>.putIfNotContains(key: K, value: V) {
+  if (!contains(key)) {
+    put(key, value)
+  }
 }

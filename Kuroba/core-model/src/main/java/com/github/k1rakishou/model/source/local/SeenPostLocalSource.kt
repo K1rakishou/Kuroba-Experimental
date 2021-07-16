@@ -13,22 +13,26 @@ open class SeenPostLocalSource(
   private val chanBoardDao = database.chanBoardDao()
   private val chanThreadDao = database.chanThreadDao()
 
-  open suspend fun insert(seenPost: SeenPost) {
+  open suspend fun insertMany(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    seenPosts: Collection<SeenPost>
+  ) {
     ensureInTransaction()
 
     val chanBoardEntity = chanBoardDao.insertBoardId(
-      seenPost.threadDescriptor.siteName(),
-      seenPost.threadDescriptor.boardCode()
+      threadDescriptor.siteName(),
+      threadDescriptor.boardCode()
     )
 
     val chanThreadEntityId = chanThreadDao.insertDefaultOrIgnore(
       chanBoardEntity.boardId,
-      seenPost.threadDescriptor.threadNo
+      threadDescriptor.threadNo
     )
 
-    seenPostDao.insert(
-      SeenPostMapper.toEntity(chanThreadEntityId, seenPost)
-    )
+    val seenPostEntities = seenPosts
+      .map { seenPost -> SeenPostMapper.toEntity(chanThreadEntityId, seenPost) }
+
+    seenPostDao.insertMany(seenPostEntities)
   }
 
   open suspend fun selectAllByThreadDescriptor(

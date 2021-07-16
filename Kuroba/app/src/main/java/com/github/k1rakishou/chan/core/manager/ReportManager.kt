@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.manager
 
+import android.app.ActivityManager
+import android.content.Context
 import android.os.Build
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
@@ -35,12 +37,16 @@ import java.util.regex.Pattern
 
 class ReportManager(
   private val appScope: CoroutineScope,
+  private val appContext: Context,
   private val okHttpClient: OkHttpClient,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val gson: Gson,
   private val crashLogsDirPath: File,
   private val anrsDirPath: File
 ) {
+  private val activityManager: ActivityManager?
+    get() = appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(
     scope = appScope,
     dispatcher = Dispatchers.Default
@@ -374,6 +380,7 @@ class ReportManager(
       appendLine("Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("isLowRamDevice: ${AppModuleAndroidUtils.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
+      appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")

@@ -10,8 +10,8 @@ import org.joda.time.DateTime
 @Dao
 abstract class SeenPostDao {
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
-  abstract suspend fun insert(seenPostEntity: SeenPostEntity)
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertMany(seenPostEntities: Collection<SeenPostEntity>)
 
   @Query("""
         SELECT *
