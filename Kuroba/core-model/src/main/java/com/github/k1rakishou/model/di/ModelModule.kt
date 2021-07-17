@@ -113,6 +113,7 @@ class ModelModule {
   ): ChanThreadsCache {
     return ChanThreadsCache(
       dependencies.isDevFlavor,
+      dependencies.isLowRamDevice,
       dependencies.appConstants.maxPostsCountInPostsCache,
       chanCatalogSnapshotCache
     )

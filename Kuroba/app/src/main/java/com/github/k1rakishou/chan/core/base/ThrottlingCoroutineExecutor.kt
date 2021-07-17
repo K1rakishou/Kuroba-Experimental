@@ -7,6 +7,10 @@ class ThrottlingCoroutineExecutor(
   private val mode: Mode = Mode.ThrottleFirst,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) {
+  private val coroutineExceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    throw RuntimeException(throwable)
+  }
+
   @Volatile
   private var func: (suspend () -> Unit)? = null
   @Volatile
@@ -37,7 +41,7 @@ class ThrottlingCoroutineExecutor(
       return
     }
 
-    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher) {
+    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher + coroutineExceptionHandler) {
       this@ThrottlingCoroutineExecutor.func?.invoke()
       this@ThrottlingCoroutineExecutor.func = null
 
@@ -68,7 +72,7 @@ class ThrottlingCoroutineExecutor(
       return
     }
 
-    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher) {
+    val newJob = scope.launch(start = CoroutineStart.LAZY, context = dispatcher + coroutineExceptionHandler) {
       delay(timeout)
 
       this@ThrottlingCoroutineExecutor.func?.invoke()

@@ -13,15 +13,18 @@ import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
+import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase;
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
@@ -34,12 +37,14 @@ import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
+import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
@@ -311,6 +316,36 @@ public class UseCaseModule {
         return new SearxImageSearchUseCase(
                 proxiedOkHttpClient,
                 moshi
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ThreadDataPreloadUseCase provideThreadDataPreloadUseCase(
+            SeenPostsManager seenPostsManager,
+            ChanThreadViewableInfoManager chanThreadViewableInfoManager,
+            SavedReplyManager savedReplyManager,
+            PostHideManager postHideManager,
+            ChanPostRepository chanPostRepository
+    ) {
+        return new ThreadDataPreloadUseCase(
+                seenPostsManager,
+                chanThreadViewableInfoManager,
+                savedReplyManager,
+                postHideManager,
+                chanPostRepository
+        );
+    }
+
+    @Provides
+    @Singleton
+    public CatalogDataPreloadUseCase provideCatalogDataPreloadUseCase(
+            PostHideManager postHideManager,
+            ChanCatalogSnapshotRepository chanCatalogSnapshotRepository
+    ) {
+        return new CatalogDataPreloadUseCase(
+                postHideManager,
+                chanCatalogSnapshotRepository
         );
     }
 

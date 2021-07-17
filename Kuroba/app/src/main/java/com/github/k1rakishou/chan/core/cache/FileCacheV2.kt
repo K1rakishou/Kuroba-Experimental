@@ -280,8 +280,7 @@ class FileCacheV2(
 
       if (result.isErrorOfAnyKind()) {
         // Only call cancel when not already canceled and not stopped
-        if (result !is FileDownloadResult.Canceled
-          && result !is FileDownloadResult.Stopped) {
+        if (result !is FileDownloadResult.Canceled && result !is FileDownloadResult.Stopped) {
           activeDownloads.get(url)?.cancelableDownload?.cancel()
         }
 
@@ -563,7 +562,7 @@ class FileCacheV2(
       return
     }
 
-    log(TAG, "Purging $url, file = ${output.absolutePath}")
+    log(TAG, "Purging url=${url}, file=${output.absolutePath}")
 
     if (!cacheHandler.deleteCacheFile(output)) {
       logError(TAG, "Could not delete the file in purgeOutput, output = ${output.absolutePath}")

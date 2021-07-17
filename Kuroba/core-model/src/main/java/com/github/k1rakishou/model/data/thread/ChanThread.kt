@@ -673,7 +673,7 @@ class ChanThread(
     oldChanPost: ChanPost,
     postCommentsDiffer: Boolean
   ) {
-    mergedPost.replaceOnDemandContentLoadedMap(oldChanPost.copyOnDemandContentLoadedMap())
+    mergedPost.replaceOnDemandContentLoadedArray(oldChanPost.copyOnDemandContentLoadedArray())
 
     if (postCommentsDiffer) {
       mergedPost.setContentLoadedForLoader(LoaderType.PostExtraContentLoader, false)

@@ -40,6 +40,7 @@ import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.TextView.BufferType
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
@@ -98,6 +99,8 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.common.selectionEndSafe
+import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -340,7 +343,7 @@ class ReplyLayout @JvmOverloads constructor(
     get() = threadListLayoutCallbacks?.getCurrentChanDescriptor()
 
   override val selectionStart: Int
-    get() = comment.selectionStart.coerceAtLeast(0)
+    get() = comment.selectionStartSafe()
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
@@ -868,8 +871,8 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun insertQuote(): Boolean {
-    val selectionStart = comment.selectionStart
-    val selectionEnd = comment.selectionEnd
+    val selectionStart = comment.selectionStartSafe()
+    val selectionEnd = comment.selectionEndSafe()
 
     val textLines = comment.text
       ?.subSequence(selectionStart, selectionEnd)
@@ -891,10 +894,12 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun insertTags(before: String, after: String): Boolean {
-    val hadSelectedText = comment.selectionStart != comment.selectionEnd
+    val selectionStart = comment.selectionStartSafe()
+    val selectionEnd = comment.selectionEndSafe()
 
-    val selectionStart = comment.selectionStart
-    comment.text?.insert(comment.selectionEnd, after)
+    val hadSelectedText = selectionStart != selectionEnd
+
+    comment.text?.insert(selectionEnd, after)
     comment.text?.insert(selectionStart, before)
 
     if (!hadSelectedText) {
@@ -903,7 +908,7 @@ class ReplyLayout @JvmOverloads constructor(
       // [tag]<cursor>[/tag]
       // Otherwise it will remain at the end of the closing tag, e.g.:
       // [tag]some text[/tag]<cursor>
-      val newSelectionCenter = comment.selectionEnd - after.length
+      val newSelectionCenter = selectionEnd - after.length
       if (newSelectionCenter >= 0) {
         comment.setSelection(newSelectionCenter)
       }
@@ -928,7 +933,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun restoreComment(prevCommentInputState: CommentInputState) {
     comment.doIgnoringTextWatcher(this) {
-      setText(prevCommentInputState.text)
+      setText(prevCommentInputState.text, BufferType.EDITABLE)
 
       if (prevCommentInputState.isSelectionValid()) {
         setSelection(
@@ -1305,8 +1310,8 @@ class ReplyLayout @JvmOverloads constructor(
   override fun beforeTextChanged(s: CharSequence, start: Int, count: Int, after: Int) {
     val commentInputState = CommentInputState(
       comment.text.toString(),
-      comment.selectionStart,
-      comment.selectionEnd
+      comment.selectionStartSafe(),
+      comment.selectionEndSafe()
     )
 
     presenter.updateInitialCommentEditingHistory(commentInputState)
@@ -1319,8 +1324,8 @@ class ReplyLayout @JvmOverloads constructor(
 
     val commentInputState = CommentInputState(
       comment.text.toString(),
-      comment.selectionStart,
-      comment.selectionEnd
+      comment.selectionStartSafe(),
+      comment.selectionEndSafe()
     )
 
     presenter.updateCommentEditingHistory(commentInputState)

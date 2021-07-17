@@ -17,15 +17,12 @@ import java.io.File;
 
 import javax.inject.Inject;
 
-import okhttp3.Cache;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
 
 public class CoilOkHttpClient implements CustomOkHttpClient {
     private static final String IMAGE_CACHE_DIR = "coil_image_cache_dir";
-    private static final long ONE_MB = 1024 * 1024;
-    private static final long IMAGE_CACHE_MAX_SIZE = 100 * ONE_MB;
 
     private final Context applicationContext;
     private final NormalDnsSelectorFactory normalDnsSelectorFactory;
@@ -67,8 +64,6 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                         throw new IllegalStateException("mkdirs failed to create " + imageCacheDir.getAbsolutePath());
                     }
 
-                    Cache cache = new Cache(imageCacheDir, IMAGE_CACHE_MAX_SIZE);
-
                     KurobaProxySelector kurobaProxySelector = new KurobaProxySelector(
                             proxyStorage,
                             ProxyStorage.ProxyActionType.SiteMediaPreviews
@@ -84,7 +79,6 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
                     OkHttpClient.Builder builder = new OkHttpClient.Builder()
                             .protocols(okHttpProtocols.getProtocols())
                             .proxySelector(kurobaProxySelector)
-                            .cache(cache)
                             .addNetworkInterceptor(interceptor);
 
                     HttpLoggingInterceptorInstaller.install(builder, httpLoggingInterceptorLazy);

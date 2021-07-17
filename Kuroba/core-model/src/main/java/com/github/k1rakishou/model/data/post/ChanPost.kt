@@ -3,7 +3,6 @@ package com.github.k1rakishou.model.data.post
 import com.github.k1rakishou.common.copy
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import java.util.*
 
 open class ChanPost(
   val chanPostId: Long,
@@ -27,7 +26,7 @@ open class ChanPost(
    * loaders have done their jobs we update the post via notifyItemChange, which triggers
    * onPostBind() again.
    */
-  private val onDemandContentLoadedMap = HashMap<LoaderType, LoaderContentLoadState>()
+  private val onDemandContentLoadedArray = Array<Boolean>(LoaderType.COUNT) { false }
 
   @get:Synchronized
   @set:Synchronized
@@ -67,10 +66,8 @@ open class ChanPost(
     get() = postDescriptor.boardDescriptor()
 
   init {
-    onDemandContentLoadedMap.clear()
-
     for (loaderType in LoaderType.values()) {
-      onDemandContentLoadedMap[loaderType] = LoaderContentLoadState()
+      onDemandContentLoadedArray[loaderType.arrayIndex] = false
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
@@ -94,15 +91,13 @@ open class ChanPost(
       repliesFrom = repliesFrom,
       deleted = isDeleted
     ).also { newPost ->
-      newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
+      newPost.replaceOnDemandContentLoadedArray(this.copyOnDemandContentLoadedArray())
     }
   }
 
   @Synchronized
   open fun isContentLoadedForLoader(loaderType: LoaderType): Boolean {
-    return onDemandContentLoadedMap[loaderType]
-      ?.isContentLoadedFor()
-      ?: false
+    return onDemandContentLoadedArray[loaderType.arrayIndex]
   }
 
   @Synchronized
@@ -110,51 +105,45 @@ open class ChanPost(
     loaderType: LoaderType,
     loaded: Boolean = true
   ) {
-    onDemandContentLoadedMap[loaderType]?.setContentLoadedFor(loaded)
+    onDemandContentLoadedArray[loaderType.arrayIndex] = loaded
   }
 
   @Synchronized
   open fun allLoadersCompletedLoading(): Boolean {
-    return onDemandContentLoadedMap.values.all { loaderContentLoadState ->
-      loaderContentLoadState.everythingLoaded()
-    }
+    return onDemandContentLoadedArray
+      .all { loaderContentLoadState -> loaderContentLoadState }
   }
 
   @Synchronized
-  fun copyOnDemandContentLoadedMap(): Map<LoaderType, LoaderContentLoadState> {
-    val newMap = mutableMapOf<LoaderType, LoaderContentLoadState>()
+  fun copyOnDemandContentLoadedArray(): Array<Boolean> {
+    val newArray = Array<Boolean>(3) { false }
 
-    onDemandContentLoadedMap.forEach { (loaderType, state) ->
-      newMap[loaderType] = state
+    onDemandContentLoadedArray.forEachIndexed { index, loaderContentLoadState ->
+      newArray[index] = loaderContentLoadState
     }
 
-    return newMap
+    return newArray
   }
 
   @Synchronized
-  fun replaceOnDemandContentLoadedMap(newMap: Map<LoaderType, LoaderContentLoadState>) {
-    onDemandContentLoadedMap.clear()
-    onDemandContentLoadedMap.putAll(newMap)
-
-    LoaderType.values().forEach { loaderType ->
-      check(onDemandContentLoadedMap.containsKey(loaderType)) {
-        "No loaderType (${loaderType}) was found in input map!"
-      }
+  fun replaceOnDemandContentLoadedArray(newArray: Array<Boolean>) {
+    for (index in onDemandContentLoadedArray.indices) {
+      onDemandContentLoadedArray[index] = newArray[index]
     }
   }
 
   @Synchronized
   fun onDemandContentLoadedMapsDiffer(
-    thisMap: Map<LoaderType, LoaderContentLoadState>,
-    otherMap: Map<LoaderType, LoaderContentLoadState>
+    thisArray: Array<Boolean>,
+    otherArray: Array<Boolean>
   ): Boolean {
-    if (thisMap.size != otherMap.size) {
+    if (thisArray.size != otherArray.size) {
       return true
     }
 
-    for (loaderType in thisMap.keys) {
-      val thisLoaderState = thisMap[loaderType]
-      val otherLoaderState = otherMap[loaderType]
+    for (index in thisArray.indices) {
+      val thisLoaderState = thisArray[index]
+      val otherLoaderState = otherArray[index]
 
       if (thisLoaderState != otherLoaderState) {
         return true
@@ -231,7 +220,7 @@ open class ChanPost(
       return false
     }
 
-    if (!onDemandContentLoadedMapsDiffer(onDemandContentLoadedMap, other.onDemandContentLoadedMap)) {
+    if (!onDemandContentLoadedMapsDiffer(onDemandContentLoadedArray, other.onDemandContentLoadedArray)) {
       return false
     }
 

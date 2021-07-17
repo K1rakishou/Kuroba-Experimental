@@ -5,6 +5,8 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -25,6 +27,8 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import okhttp3.HttpUrl
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ChanThreadManager(
   private val verboseLogs: Boolean,
@@ -34,7 +38,9 @@ class ChanThreadManager(
   private val savedReplyManager: SavedReplyManager,
   private val chanThreadsCache: ChanThreadsCache,
   private val chanPostRepository: ChanPostRepository,
-  private val chanThreadLoaderCoordinator: ChanThreadLoaderCoordinator
+  private val chanThreadLoaderCoordinator: ChanThreadLoaderCoordinator,
+  private val threadDataPreloadUseCase: ThreadDataPreloadUseCase,
+  private val catalogDataPreloadUseCase: CatalogDataPreloadUseCase
 ) {
   @get:Synchronized
   @set:Synchronized
@@ -111,10 +117,7 @@ class ChanThreadManager(
         Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
-            is ChanLoadOption.DeletePostsFromMemoryCache -> {
-              chanThreadsCache.deletePosts(chanLoadOption.postDescriptors)
-            }
+          when (chanLoadOptions.chanLoadOption) {
             ChanLoadOption.ClearMemoryAndDatabaseCaches,
             ChanLoadOption.ClearMemoryCache -> {
               chanThreadsCache.deleteThread(chanDescriptor)
@@ -401,6 +404,7 @@ class ChanThreadManager(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   private suspend fun loadInternal(
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
@@ -417,6 +421,20 @@ class ChanThreadManager(
       }
       is ChanDescriptor.CatalogDescriptor -> {
         Logger.d(TAG, "loadInternal() Requested catalog /$chanDescriptor/")
+      }
+    }
+
+    when (chanDescriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        val preloadTime = measureTime {
+          val params = ThreadDataPreloadUseCase.Params(chanDescriptor, isCached(chanDescriptor))
+          threadDataPreloadUseCase.execute(params)
+        }
+        Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadThreadInfo took $preloadTime")
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        val preloadTime = measureTime { catalogDataPreloadUseCase.execute(chanDescriptor) }
+        Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadCatalogInfo took $preloadTime")
       }
     }
 
@@ -479,9 +497,6 @@ class ChanThreadManager(
         }
 
         val postsToReloadOptions = when (val chanLoadOption = chanLoadOptions.chanLoadOption) {
-          is ChanLoadOption.DeletePostsFromMemoryCache -> {
-            PostsToReloadOptions.Reload(chanLoadOption.postDescriptors.toSet())
-          }
           is ChanLoadOption.ForceUpdatePosts -> {
             val postDescriptors = chanLoadOption.postDescriptors
             if (postDescriptors == null) {

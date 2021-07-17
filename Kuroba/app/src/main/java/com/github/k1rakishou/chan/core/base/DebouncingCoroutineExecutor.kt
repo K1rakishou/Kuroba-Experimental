@@ -23,8 +23,12 @@ class DebouncingCoroutineExecutor(
   private val isProgress = AtomicBoolean(false)
   private val channelJob: Job
 
+  private val coroutineExceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    throw RuntimeException(throwable)
+  }
+
   init {
-    channelJob = scope.launch {
+    channelJob = scope.launch(coroutineExceptionHandler) {
       var activeJob: Job? = null
 
       channel.consumeEach { payload ->

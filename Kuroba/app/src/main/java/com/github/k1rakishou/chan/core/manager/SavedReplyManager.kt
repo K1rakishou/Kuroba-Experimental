@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
@@ -30,17 +30,26 @@ class SavedReplyManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val savedReplyMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>(128)
-  @GuardedBy("lock")
-  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
+  private val savedReplyMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableList<ChanSavedReply>>(16)
 
   private val _savedRepliesUpdateFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   val savedRepliesUpdateFlow: SharedFlow<Unit>
     get() = _savedRepliesUpdateFlow.asSharedFlow()
 
+  init {
+    chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
+          "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      }
+
+      onThreadDeleteEventReceived(threadDeleteEvent)
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    val alreadyPreloaded = lock.read { savedReplyMap[threadDescriptor]?.isNotEmpty() == true }
     if (alreadyPreloaded) {
       return
     }
@@ -65,7 +74,6 @@ class SavedReplyManager(
 
         groupedSavedReplies.entries.forEach { (threadDescriptor, savedReplies) ->
           savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
-          alreadyPreloadedSet.add(threadDescriptor)
         }
       }
     }
@@ -234,7 +242,46 @@ class SavedReplyManager(
 
     lock.write {
       savedReplyMap[threadDescriptor] = savedReplies.toMutableList()
-      alreadyPreloadedSet.add(threadDescriptor)
+    }
+  }
+
+  private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
+    lock.write {
+      when (threadDeleteEvent) {
+        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
+          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${savedReplyMap.size} threads")
+          savedReplyMap.clear()
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
+          var removedThreads = 0
+
+          threadDeleteEvent.threadDescriptors.forEach { threadDescriptor ->
+            ++removedThreads
+            savedReplyMap.remove(threadDescriptor)
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreads() removed ${removedThreads} threads")
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreadPostsExceptOP -> {
+          var removedPosts = 0
+
+          threadDeleteEvent.entries.forEach { (threadDescriptor, originalPostDescriptor) ->
+            val innerPostHideMap = savedReplyMap[threadDescriptor]
+              ?: return@forEach
+
+            innerPostHideMap.mutableIteration { mutableIterator, mapEntry ->
+              if (mapEntry.postDescriptor != originalPostDescriptor) {
+                ++removedPosts
+                mutableIterator.remove()
+              }
+
+              return@mutableIteration true
+            }
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} saved posts")
+        }
+      }
     }
   }
 

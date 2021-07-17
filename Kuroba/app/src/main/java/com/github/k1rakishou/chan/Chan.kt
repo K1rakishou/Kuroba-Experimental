@@ -265,6 +265,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       protocols = NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
       verboseLogs = ChanSettings.verboseLogs.get(),
       isDevFlavor = isDev,
+      isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice(),
       okHttpUseDnsOverHttps = ChanSettings.okHttpUseDnsOverHttps.get(),
       appConstants = appConstants
     )

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.base
 
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -22,6 +23,10 @@ class RendezvousCoroutineExecutor(
   private val scope: CoroutineScope,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main
 ) {
+  private val coroutineExceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    throw RuntimeException(throwable)
+  }
+
   private val channel = Channel<SerializedAction>(
     capacity = Channel.RENDEZVOUS,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
@@ -30,7 +35,7 @@ class RendezvousCoroutineExecutor(
   private var job: Job? = null
 
   init {
-    job = scope.launch(context = dispatcher) {
+    job = scope.launch(context = dispatcher + coroutineExceptionHandler) {
       channel.consumeEach { serializedAction ->
         try {
           serializedAction.action()

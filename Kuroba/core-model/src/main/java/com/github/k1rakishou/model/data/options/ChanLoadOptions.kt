@@ -10,7 +10,6 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
   fun canClearCache(): Boolean {
     return chanLoadOption is ChanLoadOption.ClearMemoryCache
       || chanLoadOption is ChanLoadOption.ClearMemoryAndDatabaseCaches
-      || chanLoadOption is ChanLoadOption.DeletePostsFromMemoryCache
   }
 
   fun canClearDatabase(): Boolean {
@@ -29,14 +28,6 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
 
     fun clearMemoryCache(): ChanLoadOptions {
       return ChanLoadOptions(ChanLoadOption.ClearMemoryCache)
-    }
-
-    fun deletePostFromMemoryCache(postDescriptor: PostDescriptor): ChanLoadOptions {
-      return deletePostsFromMemoryCache(listOf(postDescriptor))
-    }
-
-    fun deletePostsFromMemoryCache(postDescriptors: Collection<PostDescriptor>): ChanLoadOptions {
-      return ChanLoadOptions(ChanLoadOption.DeletePostsFromMemoryCache(postDescriptors))
     }
 
     // postsAreTheSame will always return false for posts in the set
@@ -67,12 +58,6 @@ sealed class ChanLoadOption {
   object ClearMemoryAndDatabaseCaches : ChanLoadOption() {
     override fun toString(): String {
       return "ClearMemoryAndDatabaseCaches"
-    }
-  }
-
-  class DeletePostsFromMemoryCache(val postDescriptors: Collection<PostDescriptor>) : ChanLoadOption() {
-    override fun toString(): String {
-      return "DeletePostsFromMemoryCache{postDescriptorsCount=${postDescriptors.size}}"
     }
   }
 

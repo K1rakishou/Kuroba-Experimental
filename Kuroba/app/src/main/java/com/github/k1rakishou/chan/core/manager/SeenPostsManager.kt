@@ -5,7 +5,6 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
-import com.github.k1rakishou.common.contains
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.putIfNotContains
@@ -14,6 +13,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import kotlinx.coroutines.CoroutineScope
 import org.joda.time.DateTime
 import java.util.*
@@ -27,6 +27,7 @@ import kotlin.time.measureTime
 class SeenPostsManager(
   private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
+  private val chanThreadsCache: ChanThreadsCache,
   private val seenPostsRepository: SeenPostRepository
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -37,13 +38,25 @@ class SeenPostsManager(
 
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(appScope)
 
+  init {
+    chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
+      Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
+        "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      onThreadDeleteEventReceived(threadDeleteEvent)
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     if (!isEnabled()) {
       return
     }
 
-    val alreadyPreloaded = lock.read { seenPostsMap.contains(threadDescriptor) }
+    val alreadyPreloaded = lock.read {
+      // We consider data preloaded only if it contains more than one entry (for original post) per thread.
+      return@read (seenPostsMap[threadDescriptor]?.size ?: 0) > 1
+    }
+
     if (alreadyPreloaded) {
       return
     }
@@ -82,38 +95,39 @@ class SeenPostsManager(
       return
     }
 
-    lock.write {
-      seenPostsToPersist.putIfNotContains(postDescriptor.threadDescriptor(), mutableSetOf())
+    val needPersist = lock.write {
+      val threadDescriptor = postDescriptor.threadDescriptor()
+
+      seenPostsToPersist.putIfNotContains(threadDescriptor, mutableSetOf())
 
       val seenPost = SeenPost(
-        threadDescriptor = postDescriptor.threadDescriptor(),
+        threadDescriptor = threadDescriptor,
         postNo = postDescriptor.postNo,
         insertedAt = DateTime.now()
       )
 
-      seenPostsToPersist[postDescriptor.threadDescriptor()]!!.add(seenPost)
+      if (seenPostsMap[threadDescriptor]?.contains(seenPost) == true) {
+        return@write false
+      }
+
+      if (seenPostsToPersist[threadDescriptor]?.contains(seenPost) == true) {
+        return@write false
+      }
+
+      seenPostsToPersist[threadDescriptor]!!.add(seenPost)
+      return@write true
+    }
+
+    if (!needPersist) {
+      return
     }
 
     debouncingCoroutineExecutor.post(DEBOUNCE_TIMEOUT_MS) {
       val threadDescriptor = postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
 
       val toPersist = lock.write {
-        val toPersist = seenPostsToPersist.remove(postDescriptor.threadDescriptor())
+        return@write seenPostsToPersist.remove(postDescriptor.threadDescriptor())
           ?.toMutableSet()
-
-        if (toPersist == null) {
-          return@write null
-        }
-
-        toPersist.mutableIteration { mutableIterator, seenPost ->
-          if (seenPostsMap[threadDescriptor].contains(seenPost)) {
-            mutableIterator.remove()
-          }
-
-          return@mutableIteration true
-        }
-
-        return@write toPersist
       }
 
       if (toPersist == null) {
@@ -172,6 +186,46 @@ class SeenPostsManager(
   }
 
   private fun isEnabled() = ChanSettings.markUnseenPosts.get()
+
+  private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
+    lock.write {
+      when (threadDeleteEvent) {
+        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
+          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${seenPostsMap.size()} threads")
+          seenPostsMap.evictAll()
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
+          var removedThreads = 0
+
+          threadDeleteEvent.threadDescriptors.forEach { threadDescriptor ->
+            ++removedThreads
+            seenPostsMap.remove(threadDescriptor)
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreads() removed ${removedThreads} threads")
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreadPostsExceptOP -> {
+          var removedPosts = 0
+
+          threadDeleteEvent.entries.forEach { (threadDescriptor, originalPostDescriptor) ->
+            val seenPostsSet = seenPostsMap[threadDescriptor]
+              ?: return@forEach
+
+            seenPostsSet.mutableIteration { mutableIterator, seenPost ->
+              if (seenPost.postNo != originalPostDescriptor.postNo) {
+                ++removedPosts
+                mutableIterator.remove()
+              }
+
+              return@mutableIteration true
+            }
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} posts")
+        }
+      }
+    }
+  }
 
   companion object {
     private const val TAG = "SeenPostsManager"

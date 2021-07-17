@@ -69,30 +69,37 @@ internal class ChunkMerger(
       }
 
       // Mark file as downloaded
-      markFileAsDownloaded(url)
+      markFileAsDownloaded(output, url)
 
       val requestTime = System.currentTimeMillis() - requestStartTime
       return@fromCallable ChunkDownloadEvent.Success(output, requestTime)
     }
   }
 
-  private fun markFileAsDownloaded(url: String) {
+  private fun markFileAsDownloaded(actualOutput: File, url: String) {
     BackgroundUtils.ensureBackgroundThread()
 
     val request = checkNotNull(activeDownloads.get(url)) {
       "Active downloads does not have url: ${url} even though it was just downloaded"
     }
 
-    val outputFile = requireNotNull(request.getOutputFile()) {
+    val requestOutputFile = checkNotNull(request.getOutputFile()) {
       "Output file is null at the final stage of merging"
     }
 
-    if (!cacheHandler.markFileDownloaded(outputFile)) {
+    check(actualOutput.absolutePath == requestOutputFile.absolutePath) {
+      "Files differ! actualOutput=${actualOutput.absolutePath}, requestOutputFile=${requestOutputFile.absolutePath}"
+    }
+
+    check(actualOutput.exists()) { "actualOutput does not exist! actualOutput=${actualOutput.absolutePath}" }
+    check(requestOutputFile.exists()) { "requestOutputFile does not exist! actualOutput=${requestOutputFile.absolutePath}" }
+
+    if (!cacheHandler.markFileDownloaded(requestOutputFile)) {
       if (!request.cancelableDownload.isRunning()) {
         activeDownloads.throwCancellationException(url)
       }
 
-      throw FileCacheException.CouldNotMarkFileAsDownloaded(fileManager.fromRawFile(outputFile))
+      throw FileCacheException.CouldNotMarkFileAsDownloaded(fileManager.fromRawFile(requestOutputFile))
     }
   }
 

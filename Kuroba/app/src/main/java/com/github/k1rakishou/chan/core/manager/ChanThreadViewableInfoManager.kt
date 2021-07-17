@@ -2,13 +2,13 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfo
 import com.github.k1rakishou.model.data.thread.ChanThreadViewableInfoView
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.CoroutineScope
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -20,19 +20,26 @@ import kotlin.time.measureTime
 class ChanThreadViewableInfoManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository
+  private val chanThreadViewableInfoRepository: ChanThreadViewableInfoRepository,
+  private val chanThreadsCache: ChanThreadsCache
 ) {
   private val suspendDebouncer = DebouncingCoroutineExecutor(appScope)
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(128)
-  @GuardedBy("lock")
-  private val alreadyPreloadedSet = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(128)
+  private val chanThreadViewableMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ChanThreadViewableInfo>(16)
+
+  init {
+    chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
+      Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
+        "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      onThreadDeleteEventReceived(threadDeleteEvent)
+    }
+  }
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val alreadyPreloaded = lock.read { alreadyPreloadedSet.contains(threadDescriptor) }
+    val alreadyPreloaded = lock.read { chanThreadViewableMap.contains(threadDescriptor) }
     if (alreadyPreloaded) {
       return
     }
@@ -57,11 +64,9 @@ class ChanThreadViewableInfoManager(
 
     lock.write {
       chanThreadViewableMap[threadDescriptor] = mergeOldAndNewChanThreadViewableInfos(
-        chanThreadViewableMap[threadDescriptor],
-        chanThreadViewableInfo
+        prev = chanThreadViewableMap[threadDescriptor],
+        current = chanThreadViewableInfo
       )
-
-      alreadyPreloadedSet.add(threadDescriptor)
     }
   }
 
@@ -188,6 +193,37 @@ class ChanThreadViewableInfoManager(
       val chanThreadViewableInfo = lock.read { chanThreadViewableMap[chanDescriptor]?.deepCopy() }
       if (chanThreadViewableInfo != null) {
         chanThreadViewableInfoRepository.persist(chanThreadViewableInfo)
+      }
+    }
+  }
+
+  private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
+    lock.write {
+      when (threadDeleteEvent) {
+        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
+          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${chanThreadViewableMap.size} threads")
+          chanThreadViewableMap.clear()
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
+          var removedThreads = 0
+
+          threadDeleteEvent.threadDescriptors.forEach { threadDescriptor ->
+            ++removedThreads
+            chanThreadViewableMap.remove(threadDescriptor)
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreads() removed ${removedThreads} threads")
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreadPostsExceptOP -> {
+          var removedThreads = 0
+
+          threadDeleteEvent.entries.forEach { (threadDescriptor, _) ->
+            ++removedThreads
+            chanThreadViewableMap.remove(threadDescriptor)
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedThreads} threads")
+        }
       }
     }
   }

@@ -75,9 +75,6 @@ import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
-
-
-
 /**
  * Calls the update API and downloads and requests installs of APK files.
  *

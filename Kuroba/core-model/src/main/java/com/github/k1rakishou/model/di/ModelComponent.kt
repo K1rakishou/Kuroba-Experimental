@@ -72,6 +72,7 @@ interface ModelComponent {
     val coroutineScope: CoroutineScope,
     val verboseLogs: Boolean,
     val isDevFlavor: Boolean,
+    val isLowRamDevice: Boolean,
     val okHttpUseDnsOverHttps: Boolean,
     val normalDnsSelectorFactory: NormalDnsSelectorFactory,
     val dnsOverHttpsSelectorFactory: DnsOverHttpsSelectorFactory,

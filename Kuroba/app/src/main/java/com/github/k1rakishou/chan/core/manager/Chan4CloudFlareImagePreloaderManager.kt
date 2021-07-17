@@ -8,13 +8,16 @@ import com.github.k1rakishou.common.bidirectionalMap
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ChanThread
+import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -32,12 +35,12 @@ class Chan4CloudFlareImagePreloaderManager(
   private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
   private val realProxiedOkHttpClient: RealProxiedOkHttpClient,
-  private val chanThreadManager: ChanThreadManager
+  private val chanThreadsCache: ChanThreadsCache
 ) {
   private val lock = ReentrantReadWriteLock()
 
   @GuardedBy("lock")
-  private val alreadyPreloaded = hashSetWithCap<PostDescriptor>(128)
+  private val alreadyPreloaded = mutableMapWithCap<ChanDescriptor, MutableSet<PostDescriptor>>(16)
   @GuardedBy("lock")
   private val preloading = mutableMapWithCap<PostDescriptor, CancellableImagePreload>(128)
   @GuardedBy("lock")
@@ -93,8 +96,13 @@ class Chan4CloudFlareImagePreloaderManager(
           .map { postDescriptor ->
             val job = async(Dispatchers.IO) {
               try {
+                val chanDescriptor = postDescriptor.descriptor
                 preloadImagesForPost(postDescriptor)
-                lock.write { alreadyPreloaded.add(postDescriptor) }
+
+                lock.write {
+                  alreadyPreloaded.putIfNotContains(chanDescriptor, hashSetWithCap(128))
+                  alreadyPreloaded[chanDescriptor]!!.add(postDescriptor)
+                }
               } catch (error: Throwable) {
                 if (error.isExceptionImportant()) {
                   if (ENABLE_LOGS) {
@@ -130,6 +138,17 @@ class Chan4CloudFlareImagePreloaderManager(
     }
   }
 
+  init {
+    chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
+          "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      }
+
+      onThreadDeleteEventReceived(threadDeleteEvent)
+    }
+  }
+
   fun isCached(postDescriptor: PostDescriptor): Boolean {
     if (!ChanSettings.cloudflareForcePreload.get()) {
       return true
@@ -143,7 +162,7 @@ class Chan4CloudFlareImagePreloaderManager(
       return true
     }
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
       ?: return false
 
     val postDescriptors = chanThread.mapPostsWithImagesAround(
@@ -156,57 +175,11 @@ class Chan4CloudFlareImagePreloaderManager(
       return true
     }
 
-    return lock.read { postDescriptors.all { pd -> alreadyPreloaded.contains(pd) } }
-  }
-
-  fun startLoading(
-    chanDescriptor: ChanDescriptor?,
-    postImage: ChanPostImage,
-    leftCount: Int,
-    rightCount: Int
-  ) {
-    require(leftCount >= 0) { "Bad leftCount: $leftCount" }
-    require(rightCount >= 0) { "Bad rightCount: $rightCount" }
-
-    if (chanDescriptor == null || (leftCount == 0 && rightCount == 0)) {
-      return
-    }
-
-    if (!ChanSettings.cloudflareForcePreload.get()) {
-      return
-    }
-
-    val threadDescriptor = chanDescriptor as? ChanDescriptor.ThreadDescriptor
-      ?: return
-
-    if (!threadDescriptor.siteDescriptor().is4chan()) {
-      return
-    }
-
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
-      ?: return
-
-    val possibleToPreload = chanThread.mapPostsWithImagesAround(
-      postImage.ownerPostDescriptor,
-      leftCount,
-      rightCount
-    )
-
-    if (possibleToPreload.isEmpty()) {
-      return
-    }
-
-    val actualToPreload = retainActualPostDescriptorsToPreload(chanThread, possibleToPreload)
-    if (actualToPreload.isEmpty()) {
-      return
-    }
-
-    actualToPreload.forEach { postDescriptor ->
-      if (ENABLE_LOGS) {
-        Logger.d(TAG, "startLoading(ImageViewer) Pushing post ($postDescriptor) into the actor")
+    return lock.read {
+      postDescriptors.all { pd ->
+        val descriptor = pd.descriptor
+        return@all alreadyPreloaded[descriptor]?.contains(pd) == true
       }
-
-      actor.offer(postDescriptor)
     }
   }
 
@@ -223,7 +196,7 @@ class Chan4CloudFlareImagePreloaderManager(
       return false
     }
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
       ?: return false
 
     val possibleToPreload = chanThread.mapPostsWithImagesAround(
@@ -263,7 +236,7 @@ class Chan4CloudFlareImagePreloaderManager(
     val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
       ?: return
 
     val offset = if (swipedForward) {
@@ -291,7 +264,7 @@ class Chan4CloudFlareImagePreloaderManager(
       return
     }
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
       ?: return
 
     if (!chanThread.postHasImages(postDescriptor)) {
@@ -299,7 +272,9 @@ class Chan4CloudFlareImagePreloaderManager(
     }
 
     lock.write {
-      if (alreadyPreloaded.contains(postDescriptor)) {
+      val descriptor = postDescriptor.descriptor
+
+      if (alreadyPreloaded[descriptor]?.contains(postDescriptor) == true) {
         return@write
       }
 
@@ -316,7 +291,7 @@ class Chan4CloudFlareImagePreloaderManager(
     val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
 
-    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
     if (chanThread == null) {
       Logger.d(TAG, "preloadImagesForPost() No thread found by descriptor: ${threadDescriptor}")
       return
@@ -361,7 +336,9 @@ class Chan4CloudFlareImagePreloaderManager(
           return@filter false
         }
 
-        if (alreadyPreloaded.contains(postDescriptor)) {
+        val descriptor = postDescriptor.descriptor
+
+        if (alreadyPreloaded[descriptor]?.contains(postDescriptor) == true) {
           return@filter false
         }
 
@@ -393,8 +370,7 @@ class Chan4CloudFlareImagePreloaderManager(
     lock.write { preloading[postImage.ownerPostDescriptor]?.completed() }
 
     if (!response.isSuccessful) {
-      Logger.e(
-        TAG, "preloadImage() (imageUrl=$imageUrl, filename=${filename}) FAILURE, " +
+      Logger.e(TAG, "preloadImage() (imageUrl=$imageUrl, filename=${filename}) FAILURE, " +
         "statusCode: ${response.code}")
       return
     }
@@ -403,9 +379,48 @@ class Chan4CloudFlareImagePreloaderManager(
       val cfCacheStatusHeaderValue = response.header("CF-Cache-Status")
         ?: "<null>"
 
-      Logger.d(
-        TAG, "preloadImage() (imageUrl=$imageUrl, filename=${filename}) SUCCESS, " +
+      Logger.d(TAG, "preloadImage() (imageUrl=$imageUrl, filename=${filename}) SUCCESS, " +
         "cfCacheStatusHeaderValue=$cfCacheStatusHeaderValue")
+    }
+  }
+
+  private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
+    lock.write {
+      when (threadDeleteEvent) {
+        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
+          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${alreadyPreloaded.size} threads")
+          alreadyPreloaded.clear()
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
+          var removedThreads = 0
+
+          threadDeleteEvent.threadDescriptors.forEach { threadDescriptor ->
+            ++removedThreads
+            alreadyPreloaded.remove(threadDescriptor)
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreads() removed ${removedThreads} threads")
+        }
+        is ChanThreadsCache.ThreadDeleteEvent.RemoveThreadPostsExceptOP -> {
+          var removedPosts = 0
+
+          threadDeleteEvent.entries.forEach { (threadDescriptor, originalPostDescriptor) ->
+            val seenPostsSet = alreadyPreloaded[threadDescriptor]
+              ?: return@forEach
+
+            seenPostsSet.mutableIteration { mutableIterator, seenPost ->
+              if (seenPost.postNo != originalPostDescriptor.postNo) {
+                ++removedPosts
+                mutableIterator.remove()
+              }
+
+              return@mutableIteration true
+            }
+          }
+
+          Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} posts")
+        }
+      }
     }
   }
 
@@ -446,11 +461,6 @@ class Chan4CloudFlareImagePreloaderManager(
 
     private const val POSTS_AROUND_COUNT = 4
     private const val POSTS_COUNT_PER_BATCH = 9
-
-    // We take the current image's post position and then preload either N to the right or
-    // to the left side of the current post.
-    const val NEXT_N_POSTS_RELATIVE = 4
-    const val PREV_N_POSTS_RELATIVE = 4
 
     private const val ENABLE_LOGS = false
   }

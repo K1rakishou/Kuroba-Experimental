@@ -76,8 +76,10 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
@@ -250,11 +252,13 @@ public class ManagerModule {
     @Singleton
     public SeenPostsManager provideSeenPostsManager(
             CoroutineScope appScope,
+            ChanThreadsCache chanThreadsCache,
             SeenPostRepository seenPostRepository
     ) {
         return new SeenPostsManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
+                chanThreadsCache,
                 seenPostRepository
         );
     }
@@ -287,8 +291,15 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public PostFilterManager providePostFilterManager() {
-        return new PostFilterManager();
+    public PostFilterManager providePostFilterManager(
+            CoroutineScope appScope,
+            ChanThreadsCache chanThreadsCache
+    ) {
+        return new PostFilterManager(
+                ChanSettings.verboseLogs.get(),
+                appScope,
+                chanThreadsCache
+        );
     }
 
     @Provides
@@ -444,12 +455,14 @@ public class ManagerModule {
     @Singleton
     public ChanThreadViewableInfoManager provideChanThreadViewableInfoManager(
             ChanThreadViewableInfoRepository chanThreadViewableInfoRepository,
-            CoroutineScope appScope
+            CoroutineScope appScope,
+            ChanThreadsCache chanThreadsCache
     ) {
         return new ChanThreadViewableInfoManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
-                chanThreadViewableInfoRepository
+                chanThreadViewableInfoRepository,
+                chanThreadsCache
         );
     }
 
@@ -470,12 +483,14 @@ public class ManagerModule {
     @Singleton
     public PostHideManager providePostHideManager(
         ChanPostHideRepository chanPostHideRepository,
-        CoroutineScope appScope
+        CoroutineScope appScope,
+        ChanThreadsCache chanThreadsCache
     ) {
         return new PostHideManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
-                chanPostHideRepository
+                chanPostHideRepository,
+                chanThreadsCache
         );
     }
 
@@ -530,13 +545,13 @@ public class ManagerModule {
     public Chan4CloudFlareImagePreloaderManager provideChan4CloudFlareImagePreloaderManager(
             CoroutineScope appScope,
             RealProxiedOkHttpClient realProxiedOkHttpClient,
-            ChanThreadManager chanThreadManager
+            ChanThreadsCache chanThreadsCache
     ) {
         return new Chan4CloudFlareImagePreloaderManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
                 realProxiedOkHttpClient,
-                chanThreadManager
+                chanThreadsCache
         );
     }
 
@@ -549,7 +564,9 @@ public class ManagerModule {
             SavedReplyManager savedReplyManager,
             ChanThreadsCache chanThreadsCache,
             ChanPostRepository chanPostRepository,
-            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator
+            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator,
+            ThreadDataPreloadUseCase threadDataPreloadUseCase,
+            CatalogDataPreloadUseCase catalogDataPreloadUseCase
     ) {
         return new ChanThreadManager(
                 ChanSettings.verboseLogs.get(),
@@ -559,7 +576,9 @@ public class ManagerModule {
                 savedReplyManager,
                 chanThreadsCache,
                 chanPostRepository,
-                chanThreadLoaderCoordinator
+                chanThreadLoaderCoordinator,
+                threadDataPreloadUseCase,
+                catalogDataPreloadUseCase
         );
     }
 

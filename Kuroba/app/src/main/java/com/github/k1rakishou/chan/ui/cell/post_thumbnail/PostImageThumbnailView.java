@@ -57,6 +57,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     private static final String TAG = "PostImageThumbnailView";
     private static final float prefetchIndicatorMargin = dp(4);
     private static final int prefetchIndicatorSize = dp(16);
+    private static final Drawable playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
 
     @Inject
     PrefetchStateManager prefetchStateManager;
@@ -76,7 +77,6 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     private boolean prefetching = false;
     private final Rect bounds = new Rect();
     private final Rect circularProgressDrawableBounds = new Rect();
-    private Drawable playIcon = null;
     private final CompositeDisposable compositeDisposable = new CompositeDisposable();
 
     @Nullable
@@ -98,7 +98,6 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
 
         setWillNotDraw(false);
 
-        this.playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
         this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
     }
 

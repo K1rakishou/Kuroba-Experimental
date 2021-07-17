@@ -26,6 +26,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
+import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
@@ -173,6 +174,7 @@ public class AppModule {
             ReplyManager replyManager,
             ThemeEngine themeEngine,
             CacheHandler cacheHandler,
+            FileCacheV2 fileCacheV2,
             ImageLoaderFileManagerWrapper imageLoaderFileManagerWrapper,
             SiteResolver siteResolver,
             CoilOkHttpClient coilOkHttpClient,
@@ -185,6 +187,7 @@ public class AppModule {
                 replyManager,
                 themeEngine,
                 cacheHandler,
+                fileCacheV2,
                 imageLoaderFileManagerWrapper,
                 siteResolver,
                 coilOkHttpClient,

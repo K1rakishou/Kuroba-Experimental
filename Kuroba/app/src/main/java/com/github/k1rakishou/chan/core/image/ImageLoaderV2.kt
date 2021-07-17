@@ -25,6 +25,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -66,6 +67,7 @@ class ImageLoaderV2(
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
   private val cacheHandler: CacheHandler,
+  private val fileCacheV2: FileCacheV2,
   private val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper,
   private val siteResolver: SiteResolver,
   private val coilOkHttpClient: CoilOkHttpClient,
@@ -410,7 +412,10 @@ class ImageLoaderV2(
             "error=${result.throwable.errorMessageOrClassName()}"
         )
 
-        cacheHandler.deleteCacheFileByUrl(url)
+        if (!fileCacheV2.isRunning(url)) {
+          cacheHandler.deleteCacheFileByUrl(url)
+        }
+
         null
       }
     }
@@ -547,7 +552,9 @@ class ImageLoaderV2(
     val success = try {
       loadFromNetworkIntoFileInternal(url, cacheFile)
     } catch (error: Throwable) {
-      cacheHandler.deleteCacheFile(cacheFile)
+      if (!fileCacheV2.isRunning(url)) {
+        cacheHandler.deleteCacheFile(cacheFile)
+      }
 
       if (error.isCoroutineCancellationException()) {
         Logger.e(TAG, "loadFromNetworkInternalIntoFile() canceled '$url'")
@@ -558,7 +565,10 @@ class ImageLoaderV2(
     }
 
     if (!success) {
-      cacheHandler.deleteCacheFile(cacheFile)
+      if (!fileCacheV2.isRunning(url)) {
+        cacheHandler.deleteCacheFile(cacheFile)
+      }
+
       return null
     }
 

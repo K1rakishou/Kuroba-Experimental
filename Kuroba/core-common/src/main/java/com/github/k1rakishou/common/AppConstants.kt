@@ -105,8 +105,8 @@ open class AppConstants(
   companion object {
     const val loggingInterceptorEnabled = false
 
-    // 5 percents of the app's available memory (not device's)
-    private const val RAM_PERCENT_FOR_POSTS_CACHE = 5
+    // 10 percents of the app's available memory (not device's)
+    private const val RAM_PERCENT_FOR_POSTS_CACHE = 10
     private const val ONE_MEGABYTE = 1 * 1024 * 1024
     private const val AVERAGE_POST_MEMORY_SIZE = 2048
 

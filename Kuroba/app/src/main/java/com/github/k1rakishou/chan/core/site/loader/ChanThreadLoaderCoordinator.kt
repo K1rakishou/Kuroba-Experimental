@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -305,8 +306,10 @@ class ChanThreadLoaderCoordinator(
         appendLine("Current thread cached posts count: $currentThreadCachedPostsCount")
       }
 
+      val isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice()
+
       appendLine("Threads with more than one post " +
-        "count: ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.IMMUNE_THREADS_COUNT}), " +
+        "count: ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.immuneThreadsCount(isLowRamDevice)}), " +
         "total cached threads count: ${cachedThreadsCount}.")
 
       val fullLocalDuration = readPostsDuration + storeDuration + parsingDuration + filterProcessingDuration

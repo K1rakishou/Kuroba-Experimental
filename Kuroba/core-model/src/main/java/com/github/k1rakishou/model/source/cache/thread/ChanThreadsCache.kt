@@ -18,6 +18,7 @@ import com.github.k1rakishou.model.util.ensureBackgroundThread
 import org.joda.time.Period
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 import kotlin.time.ExperimentalTime
@@ -25,11 +26,18 @@ import kotlin.time.measureTime
 
 class ChanThreadsCache(
   private val isDevBuild: Boolean,
+  private val isLowRamDevice: Boolean,
   private val maxCacheSize: Int,
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) {
   private val chanThreads = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
   private val lastEvictInvokeTime = AtomicLong(0L)
+
+  private val chanThreadDeleteEventListeners = CopyOnWriteArrayList<(ThreadDeleteEvent) -> Unit>()
+
+  fun addChanThreadDeleteEventListener(listener: (ThreadDeleteEvent) -> Unit) {
+    chanThreadDeleteEventListeners += listener
+  }
 
   fun isThreadLockCurrentlyLocked(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
     return chanThreads[threadDescriptor]?.isThreadLockCurrentlyLocked() ?: false
@@ -162,10 +170,6 @@ class ChanThreadsCache(
 
   fun getOriginalPostFromCache(postDescriptor: PostDescriptor): ChanOriginalPost? {
     val threadDescriptor = postDescriptor.threadDescriptor()
-    return chanThreads[threadDescriptor]?.getOriginalPost()
-  }
-
-  fun getOriginalPostFromCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): ChanOriginalPost? {
     return chanThreads[threadDescriptor]?.getOriginalPost()
   }
 
@@ -324,14 +328,30 @@ class ChanThreadsCache(
   }
 
   private fun deleteThreads(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
-    threadDescriptors.forEach { threadDescriptor ->
-      chanThreads.remove(threadDescriptor)
+    if (threadDescriptors.isEmpty()) {
+      return
     }
+
+    val entries = mutableListWithCap<ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry>(threadDescriptors.size)
+
+    threadDescriptors.forEach { threadDescriptor ->
+      val chanThread = chanThreads.remove(threadDescriptor)
+        ?: return@forEach
+
+      entries += ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry(
+        threadDescriptor,
+        chanThread.getOriginalPost().postDescriptor
+      )
+    }
+
+    notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreadPostsExceptOP(entries))
   }
 
   fun deleteAll() {
     lastEvictInvokeTime.set(0)
     chanThreads.clear()
+
+    notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.ClearAll)
   }
 
   private fun getLastThreadAccessTime(cacheOptions: ChanCacheOptions): Long {
@@ -362,28 +382,32 @@ class ChanThreadsCache(
     }
 
     val amountOfThreadsWithMoreThanOnPost = getThreadsWithMoreThanOnePostCount()
-    if (amountOfThreadsWithMoreThanOnPost <= IMMUNE_THREADS_COUNT) {
+    val actualImmuneThreadsCount = immuneThreadsCount(isLowRamDevice)
+
+    if (amountOfThreadsWithMoreThanOnPost <= actualImmuneThreadsCount) {
       return
     }
 
     val amountToEvict = (currentTotalPostsCount - maxCacheSize) + (maxCacheSize / 2)
     if (amountToEvict > 0) {
-      Logger.d(TAG, "evictOld start " +
-        "(currentTotalPostsCount: ${currentTotalPostsCount}/max:${maxCacheSize}, " +
-        "threads with posts: ${amountOfThreadsWithMoreThanOnPost}/total threads: ${getCachedThreadsCount()})")
+      Logger.d(TAG, "evictOld start (immuneThreadsCount=${actualImmuneThreadsCount}, " +
+        "currentTotalPostsCount: ${currentTotalPostsCount} / max:${maxCacheSize}, " +
+        "threads with posts: ${amountOfThreadsWithMoreThanOnPost} / total threads: ${getCachedThreadsCount()})")
 
-      val time = measureTime { evictOld(amountToEvict) }
+      val time = measureTime {
+        evictOld(immuneThreadsCount = actualImmuneThreadsCount, amountToEvictParam = amountToEvict)
+      }
 
-      Logger.d(TAG, "evictOld end " +
-        "(currentTotalPostsCount: ${getTotalCachedPostsCount()}/max:${maxCacheSize}), " +
-        "threads with posts: ${getThreadsWithMoreThanOnePostCount()})/total threads: ${getCachedThreadsCount()}" +
-        " took ${time}")
+      Logger.d(TAG, "evictOld end (immuneThreadsCount=${actualImmuneThreadsCount}, " +
+        "currentTotalPostsCount: ${getTotalCachedPostsCount()} / max:${maxCacheSize}), " +
+        "threads with posts: ${getThreadsWithMoreThanOnePostCount()}) / total threads: ${getCachedThreadsCount()} " +
+        "took ${time}")
     }
 
     lastEvictInvokeTime.set(System.currentTimeMillis())
   }
 
-  private fun evictOld(amountToEvictParam: Int) {
+  private fun evictOld(immuneThreadsCount: Int, amountToEvictParam: Int) {
     require(amountToEvictParam > 0) { "amountToEvictParam is too small: $amountToEvictParam" }
 
     val accessTimes = chanThreads.entries
@@ -393,7 +417,7 @@ class ChanThreadsCache(
     val threadDescriptorsSorted = accessTimes
       // We will get the oldest accessed key in the beginning of the list
       .sortedBy { (_, lastAccessTime) -> lastAccessTime }
-      .dropLast(IMMUNE_THREADS_COUNT)
+      .dropLast(immuneThreadsCount)
       .map { (threadDescriptor, _) -> threadDescriptor }
 
     if (threadDescriptorsSorted.isEmpty()) {
@@ -427,6 +451,9 @@ class ChanThreadsCache(
       return
     }
 
+    val threadsToRemove = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(16)
+    val threadsToClean = mutableListWithCap<ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry>(16)
+
     threadDescriptorsToClean.forEach { threadDescriptor ->
       val chanThread = chanThreads[threadDescriptor]
         ?: return@forEach
@@ -439,8 +466,54 @@ class ChanThreadsCache(
         ?: false
 
       if (!isThreadInCurrentCatalog && chanThread.postsCount <= 1) {
+        threadsToRemove += threadDescriptor
         chanThreads.remove(threadDescriptor)
+      } else {
+        val originalPost = chanThread.getOriginalPost()
+
+        threadsToClean += ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry(
+          threadDescriptor,
+          originalPost.postDescriptor
+        )
       }
+    }
+
+    Logger.d(TAG, "evictOld() threadsToRemove=${threadsToRemove.size}, threadsToClean=${threadsToClean.size}")
+
+    if (threadsToRemove.isNotEmpty()) {
+      notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreads(threadsToRemove))
+    }
+
+    if (threadsToClean.isNotEmpty()) {
+      notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreadPostsExceptOP(threadsToClean))
+    }
+  }
+
+  private fun notifyChanThreadDeleteEventListeners(threadDeleteEvent: ThreadDeleteEvent) {
+    chanThreadDeleteEventListeners.forEach { listener ->
+      listener.invoke(threadDeleteEvent)
+    }
+  }
+
+  sealed class ThreadDeleteEvent {
+    object ClearAll : ThreadDeleteEvent() {
+      override fun toString(): String {
+        return "ClearAll"
+      }
+    }
+
+    data class RemoveThreads(
+      val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+    ) : ThreadDeleteEvent()
+
+    data class RemoveThreadPostsExceptOP(
+      val entries: Collection<Entry>,
+    ) : ThreadDeleteEvent() {
+
+      data class Entry(
+        val threadDescriptor: ChanDescriptor.ThreadDescriptor,
+        val originalPostDescriptor: PostDescriptor
+      )
     }
   }
 
@@ -452,11 +525,20 @@ class ChanThreadsCache(
     // posts from 10 threads. Without considering the immune threads it will evict posts for 10
     // threads and will leave 6 threads in the cache. But with immune threads it will only evict
     // posts for 6 oldest threads, always leaving the freshest 10 untouched.
-    const val IMMUNE_THREADS_COUNT = 8
+    private const val IMMUNE_THREADS_COUNT = 8
+    private const val IMMUNE_THREADS_LOW_RAM_COUNT = 5
 
     // 15 seconds
     private val EVICTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15)
 
     private val ONE_YEAR_PERIOD_MILLIS = Period.years(1).millis
+
+    fun immuneThreadsCount(isLowRamDevice: Boolean): Int {
+      return if (isLowRamDevice) {
+        IMMUNE_THREADS_LOW_RAM_COUNT
+      } else {
+        IMMUNE_THREADS_COUNT
+      }
+    }
   }
 }

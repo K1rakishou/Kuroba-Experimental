@@ -30,7 +30,7 @@ class PostHideHelper(
    */
   suspend fun filterHiddenPosts(posts: List<ChanPost>): ModularResult<List<ChanPost>> {
     return ModularResult.Try {
-      val postDescriptorList = posts.map { post -> post.postDescriptor }.toSet()
+      val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
 
       @SuppressLint("UseSparseArrays")
       val postsFastLookupMap: MutableMap<Long, ChanPost> = LinkedHashMap()
@@ -39,7 +39,7 @@ class PostHideHelper(
       }
 
       applyFiltersToReplies(posts, postsFastLookupMap)
-      val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorList)
+      val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
 
       // find replies to hidden posts and add them to the PostHide table in the database
       // and to the hiddenPostsLookupMap

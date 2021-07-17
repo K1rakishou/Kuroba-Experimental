@@ -1165,3 +1165,21 @@ fun <K, V> LruCache<K, V>.putIfNotContains(key: K, value: V) {
     put(key, value)
   }
 }
+
+fun TextView.selectionStartSafe(): Int {
+  val len = length()
+  if (len == 0) {
+    return 0
+  }
+
+  return selectionStart.coerceIn(0, len - 1)
+}
+
+fun TextView.selectionEndSafe(): Int {
+  val len = length()
+  if (len == 0) {
+    return 0
+  }
+
+  return selectionEnd.coerceIn(0, len - 1)
+}

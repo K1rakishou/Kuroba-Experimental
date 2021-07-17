@@ -1,7 +1,11 @@
 package com.github.k1rakishou.model.data.post
 
-enum class LoaderType {
-  PrefetchLoader,
-  PostExtraContentLoader,
-  Chan4CloudFlareImagePreLoader
+enum class LoaderType(val arrayIndex: Int) {
+  PrefetchLoader(0),
+  PostExtraContentLoader(1),
+  Chan4CloudFlareImagePreLoader(2);
+
+  companion object {
+    const val COUNT = 3
+  }
 }

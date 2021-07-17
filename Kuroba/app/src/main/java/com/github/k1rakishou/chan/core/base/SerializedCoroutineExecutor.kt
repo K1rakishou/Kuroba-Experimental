@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.base
 
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,11 +21,15 @@ class SerializedCoroutineExecutor(
   private val scope: CoroutineScope,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
 ) {
+  private val coroutineExceptionHandler = CoroutineExceptionHandler { coroutineContext, throwable ->
+    throw RuntimeException(throwable)
+  }
+
   private val channel = Channel<SerializedAction>(Channel.UNLIMITED)
   private var job: Job? = null
 
   init {
-    job = scope.launch(dispatcher) {
+    job = scope.launch(dispatcher + coroutineExceptionHandler) {
       channel.consumeEach { serializedAction ->
         try {
           serializedAction.action()

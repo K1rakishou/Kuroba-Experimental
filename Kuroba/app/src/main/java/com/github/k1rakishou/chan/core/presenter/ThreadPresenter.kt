@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
@@ -56,7 +55,6 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuIt
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.bidirectionalSequence
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -75,7 +73,6 @@ import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
@@ -89,18 +86,14 @@ import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
-import kotlin.time.measureTime
 
 class ThreadPresenter @Inject constructor(
-  private val cacheHandler: CacheHandler,
   private val bookmarksManager: BookmarksManager,
   private val pageRequestManager: PageRequestManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val savedReplyManager: SavedReplyManager,
-  private val postHideManager: PostHideManager,
   private val chanPostRepository: ChanPostRepository,
-  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
   private val archivesManager: ArchivesManager,
   private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
   private val seenPostsManager: SeenPostsManager,
@@ -297,69 +290,7 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "onChanTickerTick($chanDescriptor)")
 
     chanPostRepository.awaitUntilInitialized()
-
-    when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> {
-        val preloadTime = measureTime { preloadThreadInfo(chanDescriptor) }
-        Logger.d(TAG, "onChanTickerTick($chanDescriptor), preloadThreadInfo took $preloadTime")
-      }
-      is ChanDescriptor.CatalogDescriptor -> {
-        val preloadTime = measureTime { preloadCatalogInfo(chanDescriptor) }
-        Logger.d(TAG, "onChanTickerTick($chanDescriptor), preloadCatalogInfo took $preloadTime")
-      }
-    }
-
     normalLoad()
-  }
-
-  private suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    Logger.d(TAG, "preloadThreadInfo($threadDescriptor) begin")
-
-    supervisorScope {
-      val jobs = mutableListOf<Deferred<Unit>>()
-
-      jobs += async(Dispatchers.IO) { seenPostsManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
-
-      // Only preload when this thread is not yet in cache
-      if (!chanThreadManager.isCached(threadDescriptor)) {
-        jobs += async(Dispatchers.IO) {
-          chanPostRepository.preloadForThread(threadDescriptor).unwrap()
-        }
-      }
-
-      ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "preloadThreadInfo() error", error) }
-        .ignore()
-    }
-
-    Logger.d(TAG, "preloadThreadInfo($threadDescriptor) end")
-  }
-
-  private suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
-    BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) begin")
-
-    supervisorScope {
-      val jobs = mutableListOf<Deferred<Unit>>()
-
-      jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
-      jobs += async(Dispatchers.IO) {
-        chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor)
-          .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
-          .ignore()
-
-        return@async
-      }
-
-      ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
-        .ignore()
-    }
-
-    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end")
   }
 
   override fun quickReload(showLoading: Boolean, chanCacheUpdateOptions: ChanCacheUpdateOptions) {

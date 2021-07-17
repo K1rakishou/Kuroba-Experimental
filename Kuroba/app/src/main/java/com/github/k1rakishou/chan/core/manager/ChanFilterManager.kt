@@ -48,7 +48,7 @@ class ChanFilterManager(
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val filters = mutableListWithCap<ChanFilter>(128)
+  private val filters = mutableListWithCap<ChanFilter>(32)
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {

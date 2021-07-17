@@ -121,7 +121,7 @@ class CacheHandler(
 
         return@withLocalLock cacheFile
       } catch (error: IOException) {
-        Logger.e(TAG, "Error while trying to get cache file", error)
+        Logger.e(TAG, "Error while trying to get cache file (deleting)", error)
 
         createDirectories(forced = true)
         deleteCacheFile(cacheFile)
@@ -169,7 +169,7 @@ class CacheHandler(
 
         return@withLocalLock cacheFile
       } catch (error: IOException) {
-        Logger.e(TAG, "Error while trying to get or create cache file", error)
+        Logger.e(TAG, "Error while trying to get or create cache file (deleting)", error)
 
         createDirectories(forced = true)
         deleteCacheFile(cacheFile)
@@ -254,32 +254,33 @@ class CacheHandler(
         }
 
         if (!cacheFileName.endsWith(CACHE_EXTENSION)) {
-          Logger.e(TAG, "Not a cache file! file = " + cacheFile.absolutePath)
+          Logger.e(TAG, "Not a cache file (deleting). file: ${cacheFile.absolutePath}")
           deleteCacheFile(cacheFile)
           return@withLocalLock false
         }
 
         val cacheFileMetaFile = getCacheFileMetaByCacheFile(cacheFile)
         if (cacheFileMetaFile == null) {
-          Logger.e(TAG, "Couldn't get cache file meta by cache file, file = ${cacheFile.absolutePath}")
+          Logger.e(TAG, "Couldn't get cache file meta by cache file (deleting). cacheFile: ${cacheFile.absolutePath}")
           deleteCacheFile(cacheFile)
           return@withLocalLock false
         }
 
         if (!cacheFileMetaFile.exists()) {
-          Logger.e(TAG, "Cache file meta does not exist, cacheFileMetaFile = ${cacheFileMetaFile.absolutePath}")
+          Logger.e(TAG, "Cache file meta does not exist (deleting). cacheFileMetaFile: ${cacheFileMetaFile.absolutePath}")
           deleteCacheFile(cacheFile)
           return@withLocalLock false
         }
 
         if (cacheFileMetaFile.length() <= 0) {
-          // File is empty
+          Logger.e(TAG, "Cache file meta is empty (deleting). cacheFileMetaFile: ${cacheFileMetaFile.absolutePath}")
           deleteCacheFile(cacheFile)
           return@withLocalLock false
         }
 
         val cacheFileMeta = readCacheFileMeta(cacheFileMetaFile)
         if (cacheFileMeta == null) {
+          Logger.e(TAG, "Failed to read cache file meta (deleting). cacheFileMetaFile: ${cacheFileMetaFile.absolutePath}")
           deleteCacheFile(cacheFile)
           return@withLocalLock false
         }
@@ -308,13 +309,14 @@ class CacheHandler(
         createDirectories()
 
         if (!output.exists()) {
-          Logger.e(TAG, "File does not exist! file = ${output.absolutePath}")
+          Logger.e(TAG, "File does not exist (deleting). file: ${output.absolutePath}")
           deleteCacheFile(output)
           return@withLocalLock false
         }
 
         val cacheFileMeta = getCacheFileMetaByCacheFile(output)
         if (cacheFileMeta == null) {
+          Logger.e(TAG, "Couldn't get cache file meta by cache file (deleting). output: ${output.absolutePath}")
           deleteCacheFile(output)
           return@withLocalLock false
         }
@@ -327,6 +329,8 @@ class CacheHandler(
         )
 
         if (!updateResult) {
+          Logger.e(TAG, "Failed to update cache file meta (deleting). " +
+            "cacheFileMeta: ${cacheFileMeta.absolutePath}, output: ${output.absolutePath}")
           deleteCacheFile(output)
         } else {
           val outputFileName = output.name
@@ -335,7 +339,7 @@ class CacheHandler(
 
         return@withLocalLock updateResult
       } catch (error: Throwable) {
-        Logger.e(TAG, "Error while trying to mark file as downloaded", error)
+        Logger.e(TAG, "Error while trying to mark file as downloaded (deleting)", error)
         deleteCacheFile(output)
         return@withLocalLock false
       }

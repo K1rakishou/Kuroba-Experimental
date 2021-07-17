@@ -246,10 +246,10 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
 
         @Suppress("UNCHECKED_CAST")
         return@flatMap chunkMerger.mergeChunksIntoCacheFile(
-          url,
-          chunkEvents as List<ChunkDownloadEvent.ChunkSuccess>,
-          output,
-          startTime
+          url = url,
+          chunkSuccessEvents = chunkEvents as List<ChunkDownloadEvent.ChunkSuccess>,
+          output = output,
+          requestStartTime = startTime
         )
       }
 

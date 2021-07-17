@@ -21,19 +21,21 @@ object ModelModuleInjector {
     protocols: NetworkModule.OkHttpProtocolList,
     verboseLogs: Boolean,
     isDevFlavor: Boolean,
+    isLowRamDevice: Boolean,
     okHttpUseDnsOverHttps: Boolean,
     appConstants: AppConstants
   ): ModelComponent {
     val dependencies = ModelComponent.Dependencies(
-      application,
-      scope,
-      verboseLogs,
-      isDevFlavor,
-      okHttpUseDnsOverHttps,
-      normalDnsSelectorFactory,
-      dnsOverHttpsSelectorFactory,
-      protocols,
-      appConstants
+      application = application,
+      coroutineScope = scope,
+      verboseLogs = verboseLogs,
+      isDevFlavor = isDevFlavor,
+      isLowRamDevice = isLowRamDevice,
+      okHttpUseDnsOverHttps = okHttpUseDnsOverHttps,
+      normalDnsSelectorFactory = normalDnsSelectorFactory,
+      dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory,
+      okHttpProtocols = protocols,
+      appConstants = appConstants
     )
 
     val mainComponent = DaggerModelComponent.builder()

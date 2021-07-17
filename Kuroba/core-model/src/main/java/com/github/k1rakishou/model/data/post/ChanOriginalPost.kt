@@ -77,7 +77,7 @@ class ChanOriginalPost(
       repliesFrom = repliesFrom,
       deleted = isDeleted
     ).also { newPost ->
-      newPost.replaceOnDemandContentLoadedMap(this.copyOnDemandContentLoadedMap())
+      newPost.replaceOnDemandContentLoadedArray(this.copyOnDemandContentLoadedArray())
     }
   }
 
