@@ -30,8 +30,6 @@ import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.util.AttributeSet
 import android.view.*
-import android.widget.FrameLayout
-import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.Barrier
@@ -73,7 +71,7 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
-class PostCell : LinearLayout,
+class PostCell : ConstraintLayout,
   PostCellInterface,
   ThemeEngine.ThemeChangesListener,
   PostImageThumbnailViewsContainer.PostCellThumbnailCallbacks {
@@ -93,18 +91,15 @@ class PostCell : LinearLayout,
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private lateinit var postCellRootContainer: LinearLayout
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView
-  private lateinit var goToPostButtonContainer: FrameLayout
   private lateinit var goToPostButton: AppCompatImageView
   private lateinit var divider: View
   private lateinit var postAttentionLabel: View
 
-  private var rootConstraintLayout: ConstraintLayout? = null
   private var imageFileName: TextView? = null
   private var titleIconsThumbnailBarrier: Barrier? = null
 
@@ -183,14 +178,11 @@ class PostCell : LinearLayout,
     }
   }
 
-  constructor(context: Context?)
-    : super(context)
+  constructor(context: Context) : super(context)
 
-  constructor(context: Context?, attrs: AttributeSet?)
-    : super(context, attrs)
+  constructor(context: Context, attrs: AttributeSet?) : super(context, attrs)
 
-  constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int)
-    : super(context, attrs, defStyleAttr)
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr)
 
   init {
     extractActivityComponent(context)
@@ -299,8 +291,6 @@ class PostCell : LinearLayout,
     }
 
     postImageThumbnailViewsContainer = findViewById(R.id.thumbnails_container)
-    postCellRootContainer = findViewById(R.id.post_cell)
-    rootConstraintLayout = findViewById(R.id.root_constraint_layout)
     titleIconsThumbnailBarrier = findViewById(R.id.title_icons_thumbnail_barrier)
 
     val textSizeSp = postCellData.textSizeSp
@@ -320,7 +310,6 @@ class PostCell : LinearLayout,
     title.gravity = GravityCompat.START
     icons.rtl(false)
 
-    goToPostButtonContainer = findViewById(R.id.go_to_post_button_container)
     goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
@@ -332,7 +321,12 @@ class PostCell : LinearLayout,
 
     if (postCellData.threadMode) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
-        width = ConstraintLayout.LayoutParams.MATCH_PARENT
+        width = 0
+        horizontalWeight = 1f
+      }
+    } else {
+      replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        width = ConstraintLayout.LayoutParams.WRAP_CONTENT
       }
     }
 
@@ -347,7 +341,7 @@ class PostCell : LinearLayout,
     // replies view always has horizPaddingPx padding since we never shift it.
     replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = vertPaddingPx)
 
-    postCommentLongtapDetector.postCellContainer = postCellRootContainer
+    postCommentLongtapDetector.postCellContainer = this
     postImageThumbnailViewsContainer.preBind(this, postCellData, horizPaddingPx, vertPaddingPx)
 
     val dividerParams = divider.layoutParams as MarginLayoutParams
@@ -412,8 +406,8 @@ class PostCell : LinearLayout,
 
     if (postCellData.isSelectionMode) {
       replies.setOnClickListener(null)
-      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
-      postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, null)
+      this.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
+      this.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN, null)
 
       return
     }
@@ -433,16 +427,16 @@ class PostCell : LinearLayout,
     }
 
     if (postCellData.isSelectionMode || postCellData.threadPreviewMode) {
-      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
+      this.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN, null)
     } else {
-      postCellRootContainer.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN) {
+      this.setOnThrottlingLongClickListener(POST_CELL_ROOT_LONG_CLICK_TOKEN) {
         requestParentDisallowInterceptTouchEvents(true)
         showPostFloatingListMenu(postCellData)
         return@setOnThrottlingLongClickListener true
       }
     }
 
-    postCellRootContainer.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN) {
+    this.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN) {
       postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
     }
   }
@@ -479,55 +473,34 @@ class PostCell : LinearLayout,
         barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
       }
 
-      comment.updateLayoutParams<ConstraintLayout.LayoutParams> {
-        width = 0
-        horizontalWeight = 1f
-      }
+      val constraintSet = ConstraintSet()
+      constraintSet.clone(this)
 
-      rootConstraintLayout?.let { container ->
-        val constraintSet = ConstraintSet()
-        constraintSet.clone(container)
-
-        when (postCellData.postAlignmentMode) {
-          ChanSettings.PostAlignmentMode.AlignLeft -> {
-            constraintSet.clear(R.id.comment, ConstraintSet.END)
-            constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.thumbnails_container, ConstraintSet.START)
-
-            constraintSet.createHorizontalChain(
-              ConstraintSet.PARENT_ID,
-              ConstraintSet.RIGHT,
-              ConstraintSet.PARENT_ID,
-              ConstraintSet.LEFT,
-              intArrayOf(R.id.thumbnails_container, R.id.comment),
-              floatArrayOf(0f, 1f),
-              ConstraintSet.CHAIN_SPREAD
-            )
-          }
-          ChanSettings.PostAlignmentMode.AlignRight -> {
-            constraintSet.clear(R.id.comment, ConstraintSet.START)
-            constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.thumbnails_container, ConstraintSet.END)
-
-            constraintSet.createHorizontalChain(
-              ConstraintSet.PARENT_ID,
-              ConstraintSet.RIGHT,
-              ConstraintSet.PARENT_ID,
-              ConstraintSet.LEFT,
-              intArrayOf(R.id.thumbnails_container, R.id.comment),
-              floatArrayOf(0f, 1f),
-              ConstraintSet.CHAIN_SPREAD
-            )
-          }
+      when (postCellData.postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> {
+          constraintSet.clear(R.id.comment, ConstraintSet.END)
+          constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.thumbnails_container, ConstraintSet.START)
         }
-
-        constraintSet.applyTo(container)
+        ChanSettings.PostAlignmentMode.AlignRight -> {
+          constraintSet.clear(R.id.comment, ConstraintSet.START)
+          constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.thumbnails_container, ConstraintSet.END)
+        }
       }
+
+      constraintSet.createHorizontalChain(
+        ConstraintSet.PARENT_ID,
+        ConstraintSet.RIGHT,
+        ConstraintSet.PARENT_ID,
+        ConstraintSet.LEFT,
+        intArrayOf(R.id.thumbnails_container, R.id.comment),
+        floatArrayOf(0f, 1f),
+        ConstraintSet.CHAIN_SPREAD
+      )
+
+      constraintSet.applyTo(this)
     } else {
       titleIconsThumbnailBarrier?.let { barrier ->
         barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons, R.id.thumbnails_container)
-      }
-
-      comment.updateLayoutParams<ViewGroup.LayoutParams> {
-        width = ViewGroup.LayoutParams.MATCH_PARENT
       }
     }
   }
@@ -575,8 +548,8 @@ class PostCell : LinearLayout,
   }
 
   private fun bindPost(postCellData: PostCellData) {
-    postCellRootContainer.isClickable = true
-    postCellRootContainer.isLongClickable = true
+    this.isClickable = true
+    this.isLongClickable = true
 
     if (postCellData.isSelectionMode) {
       setPostLinkableListener(postCellData, false)
@@ -629,29 +602,29 @@ class PostCell : LinearLayout,
 
   private fun bindBackgroundResources(postCellData: PostCellData) {
     if (postCellData.isSelectionMode) {
-      postCellRootContainer.setBackgroundResource(0)
+      this.setBackgroundResource(0)
       replies.setBackgroundResource(0)
     } else {
       val selectableItemBackground =
         themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
 
-      postCellRootContainer.setBackgroundResource(selectableItemBackground)
+      this.setBackgroundResource(selectableItemBackground)
       replies.setBackgroundResource(selectableItemBackground)
     }
   }
 
   private fun bindGoToPostButton(postCellData: PostCellData) {
     if (postCellData.postViewMode.canShowGoToPostButton()) {
-      goToPostButtonContainer.setVisibilityFast(VISIBLE)
+      goToPostButton.setVisibilityFast(VISIBLE)
 
-      goToPostButtonContainer.setOnClickListener {
+      goToPostButton.setOnClickListener {
         this.postCellData?.let { pcd ->
           postCellCallback?.onGoToPostButtonClicked(pcd.post, pcd.postViewMode)
         }
       }
     } else {
-      goToPostButtonContainer.setVisibilityFast(GONE)
-      goToPostButtonContainer.setOnClickListener(null)
+      goToPostButton.setVisibilityFast(GONE)
+      goToPostButton.setOnClickListener(null)
     }
   }
 
@@ -905,7 +878,7 @@ class PostCell : LinearLayout,
     private var upOrCancelSent = false
     private var initialTouchEvent: MotionEvent? = null
 
-    var postCellContainer: LinearLayout? = null
+    var postCellContainer: ViewGroup? = null
 
     fun passTouchEvent(event: MotionEvent) {
       if (event.pointerCount != 1) {
@@ -1183,7 +1156,7 @@ class PostCell : LinearLayout,
         comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 
         if (linkable.type == PostLinkable.Type.SPOILER) {
-          postCellRootContainer.performLongClick()
+          this@PostCell.performLongClick()
           return true
         }
 

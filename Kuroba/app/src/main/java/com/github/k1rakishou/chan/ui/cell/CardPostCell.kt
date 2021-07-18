@@ -20,8 +20,8 @@ import android.content.Context
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
-import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
@@ -30,7 +30,6 @@ import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -39,6 +38,7 @@ import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -46,18 +46,20 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
-class CardPostCell : ColorizableCardView,
+class CardPostCell : ConstraintLayout,
   PostCellInterface,
   ThemeChangesListener {
 
   @Inject
   lateinit var postFilterManager: PostFilterManager
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null
 
   private var thumbView: PostImageThumbnailView? = null
-  private var cardPostCellBackgroundView: FrameLayout? = null
+  private var cardContent: FixedRatioLinearLayout? = null
   private var prevPostImage: ChanPostImage? = null
   private var title: TextView? = null
   private var comment: TextView? = null
@@ -158,6 +160,8 @@ class CardPostCell : ColorizableCardView,
     }
 
     val content = findViewById<FixedRatioLinearLayout>(R.id.card_content)
+    cardContent = content
+
     if (canEnableCardPostCellRatio(postCellData)) {
       content.isEnabled = true
       content.setRatio(9f / 18f)
@@ -174,7 +178,6 @@ class CardPostCell : ColorizableCardView,
       }
     }
 
-    cardPostCellBackgroundView = findViewById(R.id.card_post_cell_background_view)
     title = findViewById(R.id.title)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
@@ -290,7 +293,7 @@ class CardPostCell : ColorizableCardView,
   private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
       ?: return
-    val backgroundView = cardPostCellBackgroundView
+    val backgroundView = cardContent
       ?: return
 
     when {

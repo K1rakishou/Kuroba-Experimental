@@ -14,147 +14,127 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    android:id="@+id/post_cell"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="horizontal"
-    tools:ignore="RtlHardcoded,RtlSymmetry,NotSibling">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
     <View
         android:id="@+id/post_attention_label"
         android:layout_width="@dimen/post_attention_label_width"
-        android:layout_height="match_parent"
+        android:layout_height="0dp"
         android:layout_marginTop="2dp"
         android:layout_marginBottom="2dp"
         android:visibility="invisible"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
         tools:background="#800000"
         tools:visibility="visible" />
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <TextView
+        android:id="@+id/title"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/post_attention_label"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Thread Subject" />
+
+    <TextView
+        android:id="@+id/image_filename"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/post_attention_label"
+        app:layout_constraintTop_toBottomOf="@+id/title"
+        tools:text="test 1" />
+
+    <com.github.k1rakishou.chan.ui.cell.PostIcons
+        android:id="@+id/icons"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@+id/post_attention_label"
+        app:layout_constraintTop_toBottomOf="@+id/image_filename"
+        tools:layout_height="32dp" />
+
+    <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
+        android:id="@+id/thumbnails_container"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintEnd_toStartOf="@id/go_to_post_button"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:layout_height="64dp"
+        tools:layout_width="64dp" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/title_icons_thumbnail_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="title,image_filename,icons,thumbnails_container" />
+
+    <com.github.k1rakishou.chan.ui.view.PostCommentTextView
+        android:id="@+id/comment"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintEnd_toStartOf="@id/go_to_post_button"
+        app:layout_constraintHorizontal_weight="1"
+        app:layout_constraintStart_toEndOf="@id/post_attention_label"
+        app:layout_constraintTop_toBottomOf="@+id/title_icons_thumbnail_barrier"
+        tools:text="test 2" />
+
+    <androidx.constraintlayout.widget.Barrier
+        android:id="@+id/replies_barrier"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        app:barrierDirection="bottom"
+        app:constraint_referenced_ids="comment,thumbnails_container" />
+
+    <TextView
+        android:id="@+id/replies"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:paddingLeft="8dp"
+        android:paddingTop="4dp"
+        android:paddingRight="8dp"
+        android:paddingBottom="4dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0"
+        app:layout_constraintStart_toEndOf="@+id/post_attention_label"
+        app:layout_constraintTop_toBottomOf="@+id/replies_barrier"
+        app:singleLine="true"
+        tools:text="234 replies, 123 image " />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/go_to_post_button"
+        android:layout_width="@dimen/go_to_post_button_width"
+        android:layout_height="0dp"
+        android:layout_gravity="center_vertical"
+        android:background="?attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true"
+        android:src="@drawable/ic_baseline_navigate_next_24"
+        android:visibility="gone"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_weight="1"
+        tools:visibility="visible" />
+
+    <View
+        android:id="@+id/divider"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
-
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/root_constraint_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@id/go_to_post_button_container"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="parent">
-
-            <TextView
-                android:id="@+id/title"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:text="Thread Subject" />
-
-            <TextView
-                android:id="@+id/image_filename"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title"
-                tools:text="test 1" />
-
-            <com.github.k1rakishou.chan.ui.cell.PostIcons
-                android:id="@+id/icons"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toStartOf="@+id/thumbnails_container"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/image_filename"
-                tools:layout_height="32dp" />
-
-            <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
-                android:id="@+id/thumbnails_container"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:orientation="vertical"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
-                tools:layout_height="64dp"
-                tools:layout_width="64dp" />
-
-            <androidx.constraintlayout.widget.Barrier
-                android:id="@+id/title_icons_thumbnail_barrier"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:barrierDirection="bottom"
-                app:constraint_referenced_ids="title,image_filename,icons,thumbnails_container" />
-
-            <com.github.k1rakishou.chan.ui.view.PostCommentTextView
-                android:id="@+id/comment"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_weight="1"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/title_icons_thumbnail_barrier"
-                tools:text="test 2" />
-
-            <androidx.constraintlayout.widget.Barrier
-                android:id="@+id/replies_barrier"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                app:barrierDirection="bottom"
-                app:constraint_referenced_ids="comment,thumbnails_container" />
-
-            <TextView
-                android:id="@+id/replies"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:paddingLeft="8dp"
-                android:paddingTop="4dp"
-                android:paddingRight="8dp"
-                android:paddingBottom="4dp"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintHorizontal_bias="0"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/replies_barrier"
-                app:singleLine="true"
-                tools:text="234 replies, 123 image " />
-
-        </androidx.constraintlayout.widget.ConstraintLayout>
-
-        <FrameLayout
-            android:id="@+id/go_to_post_button_container"
-            android:layout_width="@dimen/go_to_post_button_width"
-            android:layout_height="0dp"
-            android:background="?attr/selectableItemBackground"
-            android:clickable="true"
-            android:focusable="true"
-            android:visibility="gone"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            tools:visibility="visible">
-
-            <androidx.appcompat.widget.AppCompatImageView
-                android:id="@+id/go_to_post_button"
-                android:layout_width="match_parent"
-                android:layout_height="40dp"
-                android:layout_gravity="center_vertical"
-                android:src="@drawable/ic_baseline_navigate_next_24" />
-
-        </FrameLayout>
-
-        <View
-            android:id="@+id/divider"
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent" />
-
-    </androidx.constraintlayout.widget.ConstraintLayout>
-
-</LinearLayout>
+        android:layout_height="1dp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toEndOf="@id/post_attention_label" />
+</merge>

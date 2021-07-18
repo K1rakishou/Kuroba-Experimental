@@ -19,8 +19,8 @@ package com.github.k1rakishou.chan.ui.cell
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.RelativeLayout
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -37,7 +37,7 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
-class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
+class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -49,15 +49,15 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
   private lateinit var title: TextView
   private lateinit var divider: ColorizableDivider
 
-  constructor(context: Context?) : super(context) {
+  constructor(context: Context) : super(context) {
     init()
   }
 
-  constructor(context: Context?, attrs: AttributeSet?) : super(context, attrs) {
+  constructor(context: Context, attrs: AttributeSet?) : super(context, attrs) {
     init()
   }
 
-  constructor(context: Context?, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
+  constructor(context: Context, attrs: AttributeSet?, defStyleAttr: Int) : super(context, attrs, defStyleAttr) {
     init()
   }
 
@@ -148,6 +148,7 @@ class PostStubCell : RelativeLayout, PostCellInterface, View.OnClickListener, Th
     dividerParams.rightMargin = paddingPx
     divider.layoutParams = dividerParams
 
+    setBackgroundResource(R.drawable.item_background)
     setOnClickListener(this)
 
     setOnLongClickListener({

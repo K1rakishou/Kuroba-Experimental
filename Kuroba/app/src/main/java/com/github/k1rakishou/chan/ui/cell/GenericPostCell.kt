@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
 import android.view.View
-import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
@@ -12,15 +12,15 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 
-class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterface {
+class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInterface {
   private var layoutId: Int? = null
 
   private val gridModeMargins = context.resources.getDimension(R.dimen.grid_card_margin).toInt()
 
   init {
-    layoutParams = FrameLayout.LayoutParams(
-      FrameLayout.LayoutParams.MATCH_PARENT,
-      FrameLayout.LayoutParams.WRAP_CONTENT
+    layoutParams = ConstraintLayout.LayoutParams(
+      ConstraintLayout.LayoutParams.MATCH_PARENT,
+      ConstraintLayout.LayoutParams.WRAP_CONTENT
     )
   }
 
@@ -68,7 +68,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
         else -> throw IllegalStateException("Unknown layoutId: $newLayoutId")
       }
 
-      addView(postCellView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+      addView(postCellView, ConstraintLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
       AppModuleAndroidUtils.inflate(context, newLayoutId, postCellView, true)
       this.layoutId = newLayoutId
     }

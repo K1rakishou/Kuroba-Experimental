@@ -14,18 +14,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.k1rakishou.chan.ui.cell.CardPostCell xmlns:android="http://schemas.android.com/apk/res/android"
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/card_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
-    card_view:cardElevation="2dp">
+    tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-    <FrameLayout
-        android:id="@+id/card_post_cell_background_view"
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="@dimen/grid_card_corner_radius"
+        card_view:cardElevation="2dp">
 
         <com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout
             android:id="@+id/card_content"
@@ -33,16 +34,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="wrap_content"
             android:orientation="vertical">
 
-            <FrameLayout
+            <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
+                android:id="@+id/thumbnail"
                 android:layout_width="match_parent"
-                android:layout_height="wrap_content">
-
-                <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-                    android:id="@+id/thumbnail"
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content" />
-
-            </FrameLayout>
+                android:layout_height="wrap_content" />
 
             <View
                 android:id="@+id/filter_match_color"
@@ -81,6 +76,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </com.github.k1rakishou.chan.ui.layout.FixedRatioLinearLayout>
 
-    </FrameLayout>
+    </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
-</com.github.k1rakishou.chan.ui.cell.CardPostCell>
+</merge>
