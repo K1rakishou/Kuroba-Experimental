@@ -200,10 +200,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = when (postAlignment) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
-        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
-      }
+      val thumbnailView = PostImageThumbnailViewContainer(context)
 
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
@@ -337,10 +334,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = when (postThumbnailsAlignment) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
-        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
-      }
+      val thumbnailView = PostImageThumbnailViewContainer(context)
 
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
