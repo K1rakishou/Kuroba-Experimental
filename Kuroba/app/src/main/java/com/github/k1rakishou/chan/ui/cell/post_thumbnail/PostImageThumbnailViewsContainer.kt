@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.constraintlayout.helper.widget.Flow
 import androidx.constraintlayout.widget.ConstraintLayout
@@ -17,7 +16,6 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.common.MurmurHashUtils
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
 
@@ -25,7 +23,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
-) : FrameLayout(context, attributeSet, defAttrStyle) {
+) : ConstraintLayout(context, attributeSet, defAttrStyle) {
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
   private var horizPaddingPx = 0
@@ -36,8 +34,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     // BIND
     CachedThumbnailViewContainerInfo()
   )
-
-  private lateinit var thumbnailContainer: ViewGroup
 
   fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
     val thumbnails = thumbnailViews
@@ -58,10 +54,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     horizPaddingPx: Int,
     vertPaddingPx: Int
   ) {
-    if (::thumbnailContainer.isInitialized
-      && thumbnailViews != null
-      && postCellDataIsTheSame(PRE_BIND, postCellData)
-    ) {
+    if (thumbnailViews != null && postCellDataIsTheSame(PRE_BIND, postCellData)) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
     }
@@ -74,49 +67,30 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       removeAllViews()
     }
 
-    if (postCellData.post.postImages.size <= 1) {
-      thumbnailContainer = LinearLayout(context)
-
-      addView(
-        thumbnailContainer,
-        ConstraintLayout.LayoutParams(
-          ConstraintLayout.LayoutParams.WRAP_CONTENT,
-          ConstraintLayout.LayoutParams.WRAP_CONTENT
-        )
-      )
-
-      if (postCellData.post.postImages.isNotEmpty()) {
-        thumbnailContainer.updatePadding(
+    when {
+      postCellData.post.postImages.size == 1 -> {
+        this.updatePadding(
           left = horizPaddingPx,
           right = horizPaddingPx,
-          top = vertPaddingPx
+          top = vertPaddingPx,
+          bottom = vertPaddingPx
         )
       }
-    } else {
-      thumbnailContainer = ConstraintLayout(context)
-
-      addView(
-        thumbnailContainer,
-        ConstraintLayout.LayoutParams(
-          ConstraintLayout.LayoutParams.MATCH_PARENT,
-          ConstraintLayout.LayoutParams.WRAP_CONTENT
+      postCellData.post.postImages.size > 1 -> {
+        this.updatePadding(
+          left = horizPaddingPx,
+          right = horizPaddingPx,
+          top = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN,
+          bottom = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN
         )
-      )
-
-      thumbnailContainer.updatePadding(
-        left = horizPaddingPx,
-        right = horizPaddingPx,
-        top = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN,
-        bottom = MULTIPLE_THUMBNAILS_VERTICAL_MARGIN
-      )
+      }
+      else -> {
+        // no-op
+      }
     }
   }
 
   fun bindPostImages(postCellData: PostCellData) {
-    if (!::thumbnailContainer.isInitialized) {
-      return
-    }
-
     if (thumbnailViews != null && postCellDataIsTheSame(BIND, postCellData)) {
       // Images are already bound and haven't changed since the last bind, do nothing
       return
@@ -141,7 +115,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     // postCellDataWidthNoPaddings is the width of the recyclerview where the posts are displayed.
     // But each post has paddings and we need to account for them, otherwise when displaying multiple
     // thumbnails that may not fit into the container.
-    var actualWidth = postCellDataWidthNoPaddings - thumbnailContainer.paddingLeft - thumbnailContainer.paddingRight
+    var actualWidth = postCellDataWidthNoPaddings - this.paddingLeft - this.paddingRight
 
     // Don't forget to account for the "go to post" button which is shown when opening post replies
     // or search.
@@ -179,12 +153,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    val postAlignment = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
-    }
-
-    val container = thumbnailContainer as ConstraintLayout
     val postCellCallback = postCellData.postCellCallback
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
     val actualPostCellWidth = postCellWidth - (horizPaddingPx * 2)
@@ -206,7 +174,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
       thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
-      thumbnailView.bindPostInfo(postCellData, postImage, postAlignment)
+      thumbnailView.bindPostInfo(postCellData, postImage)
 
       if (postCellData.isSelectionMode) {
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
@@ -250,7 +218,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
 
-      container.addView(thumbnailView, layoutParams)
+      this.addView(thumbnailView, layoutParams)
       resultThumbnailViews += thumbnailView
     }
 
@@ -272,7 +240,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       .map { resultThumbnailView -> resultThumbnailView.getViewId() }
       .toIntArray()
 
-    container.addView(
+    this.addView(
       constraintLayoutFlow,
       ConstraintLayout.LayoutParams(
         ConstraintLayout.LayoutParams.MATCH_PARENT,
@@ -282,7 +250,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     kotlin.run {
       val constraintLayoutFlowConstraintSet = ConstraintSet()
-      constraintLayoutFlowConstraintSet.clone(container)
+      constraintLayoutFlowConstraintSet.clone(this)
 
       constraintLayoutFlowConstraintSet.connect(
         constraintLayoutFlow.id,
@@ -303,7 +271,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         ConstraintSet.TOP
       )
 
-      constraintLayoutFlowConstraintSet.applyTo(container)
+      constraintLayoutFlowConstraintSet.applyTo(this)
     }
 
     thumbnailViews = resultThumbnailViews
@@ -319,12 +287,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    val postThumbnailsAlignment = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
-      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
-    }
-
-    val container = thumbnailContainer as LinearLayout
     val postCellCallback = postCellData.postCellCallback
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
@@ -339,7 +301,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
-      thumbnailView.bindPostInfo(postCellData, postImage, postThumbnailsAlignment)
+      thumbnailView.bindPostInfo(postCellData, postImage)
 
       if (postCellData.isSelectionMode) {
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
@@ -390,13 +352,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         else -> 0
       }
 
-      val layoutParams = LinearLayout.LayoutParams(
+      val layoutParams = ConstraintLayout.LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
 
       layoutParams.setMargins(0, topMargin, 0, bottomMargin)
-      container.addView(thumbnailView, layoutParams)
+      this.addView(thumbnailView, layoutParams)
 
       resultThumbnailViews += thumbnailView
     }
@@ -413,8 +375,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       thumbnailView.unbindPostImage()
     }
 
-    if (thumbnailContainer.childCount != 0) {
-      thumbnailContainer.removeAllViews()
+    if (this.childCount != 0) {
+      this.removeAllViews()
     }
 
     thumbnailViews?.clear()

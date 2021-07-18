@@ -30,7 +30,6 @@ import javax.inject.Inject
 class PostImageThumbnailViewContainer(
   context: Context
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
-  private val rootContainer: ConstraintLayout
   private val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
   private val postFileNameInfoTextView: TextView
@@ -47,7 +46,6 @@ class PostImageThumbnailViewContainer(
 
     inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
 
-    rootContainer = findViewById(R.id.root_container)
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
     fileInfoContainerGroup = findViewById(R.id.file_info_container_group)
     postFileNameInfoTextView = findViewById(R.id.post_file_name_info)
@@ -92,26 +90,26 @@ class PostImageThumbnailViewContainer(
   }
 
   override fun setImageClickable(clickable: Boolean) {
-    rootContainer.isClickable = clickable
+    this.isClickable = clickable
   }
 
   override fun setImageLongClickable(longClickable: Boolean) {
-    rootContainer.isLongClickable = longClickable
+    this.isLongClickable = longClickable
   }
 
   override fun setImageClickListener(token: String, listener: OnClickListener?) {
     if (listener == null) {
-      rootContainer.setOnThrottlingClickListener(token, null)
+      this.setOnThrottlingClickListener(token, null)
       return
     }
 
-    rootContainer.setOnThrottlingClickListener(token) {
+    this.setOnThrottlingClickListener(token) {
       actualThumbnailView.onThumbnailViewClicked(listener)
     }
   }
 
   override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {
-    rootContainer.setOnThrottlingLongClickListener(token, listener)
+    this.setOnThrottlingLongClickListener(token, listener)
   }
 
   override fun bindPostImage(
@@ -143,8 +141,7 @@ class PostImageThumbnailViewContainer(
   @SuppressLint("SetTextI18n")
   fun bindPostInfo(
     postCellData: PostCellData,
-    chanPostImage: ChanPostImage,
-    postAlignmentMode: ChanSettings.PostAlignmentMode
+    chanPostImage: ChanPostImage
   ) {
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
     val imagesCount = postCellData.postImages.size
@@ -155,6 +152,7 @@ class PostImageThumbnailViewContainer(
       val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()
       val thumbnailDimensTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_max).toFloat()
       val thumbnailInfoTextSizePercent = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat() / 100f
+      setBackgroundResource(R.drawable.item_background)
 
       thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
       thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
@@ -177,11 +175,10 @@ class PostImageThumbnailViewContainer(
       thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
 
       postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
-      postFileNameInfoTextView.gravity = when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> GravityCompat.END
-        ChanSettings.PostAlignmentMode.AlignRight -> GravityCompat.START
-      }
+      postFileNameInfoTextView.gravity = GravityCompat.START
     } else {
+      setBackgroundResource(0)
+
       thumbnailFileExtension.setVisibilityFast(View.GONE)
       thumbnailFileDimens.setVisibilityFast(View.GONE)
       thumbnailFileSize.setVisibilityFast(View.GONE)
