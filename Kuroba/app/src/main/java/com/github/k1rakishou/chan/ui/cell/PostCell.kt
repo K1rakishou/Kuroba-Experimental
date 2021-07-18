@@ -732,7 +732,7 @@ class PostCell : LinearLayout,
   private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
     if (postData == null) {
-      setBackgroundColorFast(theme.backColor)
+      setBackgroundColor(0)
       return
     }
 
@@ -744,6 +744,7 @@ class PostCell : LinearLayout,
         setBackgroundColorFast(theme.postSavedReplyColor)
       }
       else -> {
+        setBackgroundColor(0)
         setBackgroundResource(R.drawable.item_background)
       }
     }

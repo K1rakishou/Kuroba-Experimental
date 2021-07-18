@@ -165,6 +165,8 @@ class CardPostCell : ColorizableCardView,
       content.isEnabled = false
     }
 
+    content.setBackgroundResource(R.drawable.item_background)
+
     thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
       setRatio(16f / 13f)
       setOnImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {

@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
+
 import android.content.Context;
 import android.os.Parcelable;
 import android.util.AttributeSet;
@@ -30,9 +33,6 @@ import com.github.k1rakishou.core_themes.IColorizableWidget;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout;
 
 public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
     private static final int SLIDE_PANE_OVERHANG_SIZE = dp(20);
@@ -104,7 +104,6 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
 
     @Override
     public void applyColors() {
-        setBackgroundColor(themeEngine.getChanTheme().getBackColor());
     }
 
     @Override

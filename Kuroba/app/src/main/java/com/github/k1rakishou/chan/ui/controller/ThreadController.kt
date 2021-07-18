@@ -219,7 +219,6 @@ abstract class ThreadController(
   }
 
   override fun onThemeChanged() {
-    swipeRefreshLayout.setBackgroundColor(themeEngine.chanTheme.backColor)
   }
 
   override fun onToolbarHeightKnown(heightChanged: Boolean) {

@@ -24,8 +24,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import android.widget.FrameLayout
-import android.widget.LinearLayout
 import androidx.core.view.GravityCompat
 import androidx.core.view.doOnPreDraw
 import androidx.drawerlayout.widget.DrawerLayout
@@ -83,7 +81,8 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.NavigationViewContract
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
@@ -149,10 +148,10 @@ class MainController(
 
   private val controller = MainEpoxyController()
 
-  private lateinit var rootLayout: TouchBlockingFrameLayout
-  private lateinit var container: FrameLayout
+  private lateinit var rootLayout: TouchBlockingFrameLayoutNoBackground
+  private lateinit var container: TouchBlockingFrameLayoutNoBackground
   private lateinit var drawerLayout: DrawerLayout
-  private lateinit var drawer: LinearLayout
+  private lateinit var drawer: TouchBlockingLinearLayoutNoBackground
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var navigationViewContract: NavigationViewContract
   private lateinit var divider: ColorizableDivider

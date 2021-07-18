@@ -22,7 +22,7 @@ open class ChanPost(
   deleted: Boolean = false
 ) {
   /**
-   * We use this map to avoid infinite loops when binding posts since after all post content
+   * We use this array to avoid infinite loops when binding posts since after all post content
    * loaders have done their jobs we update the post via notifyItemChange, which triggers
    * onPostBind() again.
    */
@@ -116,7 +116,7 @@ open class ChanPost(
 
   @Synchronized
   fun copyOnDemandContentLoadedArray(): Array<Boolean> {
-    val newArray = Array<Boolean>(3) { false }
+    val newArray = Array<Boolean>(LoaderType.COUNT) { false }
 
     onDemandContentLoadedArray.forEachIndexed { index, loaderContentLoadState ->
       newArray[index] = loaderContentLoadState
@@ -151,16 +151,6 @@ open class ChanPost(
     }
 
     return false
-  }
-
-  @Synchronized
-  open fun updatePostImageSize(fileUrl: String, fileSize: Long) {
-    for (postImage in postImages) {
-      if (postImage.imageUrl != null && postImage.imageUrl.toString() == fileUrl) {
-        postImage.setSize(fileSize)
-        return
-      }
-    }
   }
 
   @Synchronized
