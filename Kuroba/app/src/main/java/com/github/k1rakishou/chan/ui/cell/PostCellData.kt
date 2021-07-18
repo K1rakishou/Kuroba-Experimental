@@ -59,7 +59,7 @@ data class PostCellData(
   var postViewMode: PostViewMode,
   var searchQuery: SearchQuery,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
-  val postCellThumbnailSizePercents: Int,
+  val postCellThumbnailSizePercents: Int
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -198,7 +198,7 @@ data class PostCellData(
       postViewMode = postViewMode,
       searchQuery = searchQuery,
       postAlignmentMode = postAlignmentMode,
-      postCellThumbnailSizePercents = postCellThumbnailSizePercents
+      postCellThumbnailSizePercents = postCellThumbnailSizePercents,
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -534,11 +534,35 @@ data class PostCellData(
     fun isEmpty(): Boolean = query.isEmpty()
   }
 
+  enum class PostCellItemViewType(val viewTypeRaw: Int) {
+    TypePostZeroOrSingleThumbnailLeftAlignment(0),
+    TypePostZeroOrSingleThumbnailRightAlignment(1),
+    TypePostMultipleThumbnails(2);
+
+    companion object {
+      fun isAnyPostType(type: Int): Boolean {
+        if (type in 0..2) {
+          return true
+        }
+
+        return false
+      }
+    }
+  }
+
   companion object {
     private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
     private const val COMMENT_MAX_LENGTH_STAGGER = 500
     private const val POST_STUB_TITLE_MAX_LENGTH = 100
+
+    const val TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT = 0
+    const val TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT = 1
+    const val TYPE_POST_MULTIPLE_THUMBNAILS = 2
+
+    const val TYPE_POST_STUB = 10
+    const val TYPE_STATUS = 11
+    const val TYPE_LAST_SEEN = 12
   }
 
 }

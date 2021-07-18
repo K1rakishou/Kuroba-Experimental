@@ -384,12 +384,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     replyLayout.onCreate(this, this)
 
     recyclerView.adapter = postAdapter
-    // Man, fuck the RecycledViewPool. Sometimes when scrolling away from a view and the swiftly
-    // back to it onViewRecycled() will be called TWICE for that view. Setting setMaxRecycledViews
-    // for TYPE_POST to 0 solves this problem. What a buggy piece of shit.
-    recyclerView.recycledViewPool.setMaxRecycledViews(PostAdapter.TYPE_POST, 0)
     recyclerView.addOnScrollListener(scrollListener)
-
     recyclerView.addItemDecoration(gridModeSpaceItemDecoration)
 
     setFastScroll(false)

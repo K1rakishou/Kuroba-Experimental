@@ -19,12 +19,14 @@ package com.github.k1rakishou.chan.ui.adapter
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
+import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadCellData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
@@ -128,17 +130,19 @@ class PostAdapter(
     val inflateContext = parent.context
 
     when (viewType) {
-      TYPE_POST,
-      TYPE_POST_STUB -> {
+      PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT,
+      PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT,
+      PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS,
+      PostCellData.TYPE_POST_STUB -> {
         return PostViewHolder(GenericPostCell(inflateContext))
       }
-      TYPE_LAST_SEEN -> {
+      PostCellData.TYPE_LAST_SEEN -> {
         return LastSeenViewHolder(
           themeEngine,
           AppModuleAndroidUtils.inflate(inflateContext, R.layout.cell_post_last_seen, parent, false)
         )
       }
-      TYPE_STATUS -> {
+      PostCellData.TYPE_STATUS -> {
         val statusCell = AppModuleAndroidUtils.inflate(
           inflateContext,
           R.layout.cell_thread_status,
@@ -157,7 +161,10 @@ class PostAdapter(
 
   override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
     when (getItemViewType(position)) {
-      TYPE_POST, TYPE_POST_STUB -> {
+      PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT,
+      PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT,
+      PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS,
+      PostCellData.TYPE_POST_STUB -> {
         checkNotNull(threadCellData.chanDescriptor) { "chanDescriptor cannot be null" }
 
         val postViewHolder = holder as PostViewHolder
@@ -166,8 +173,8 @@ class PostAdapter(
         postCell.setPost(postCellData)
       }
 
-      TYPE_STATUS -> (holder.itemView as ThreadStatusCell).update()
-      TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
+      PostCellData.TYPE_STATUS -> (holder.itemView as ThreadStatusCell).update()
+      PostCellData.TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
     }
   }
 
@@ -177,25 +184,25 @@ class PostAdapter(
 
   override fun getItemViewType(position: Int): Int {
     if (position == threadCellData.lastSeenIndicatorPosition) {
-      return TYPE_LAST_SEEN
+      return PostCellData.TYPE_LAST_SEEN
     } else if (showStatusView() && position == itemCount - 1) {
-      return TYPE_STATUS
+      return PostCellData.TYPE_STATUS
     } else {
       val postCellData = threadCellData.getPostCellData(position)
       if (postCellData.stub) {
-        return TYPE_POST_STUB
+        return PostCellData.TYPE_POST_STUB
       } else {
-        return TYPE_POST
+        return getPostCellItemViewType(postCellData)
       }
     }
   }
 
   override fun getItemId(position: Int): Long {
     when (getItemViewType(position)) {
-      TYPE_STATUS -> {
+      PostCellData.TYPE_STATUS -> {
         return -1
       }
-      TYPE_LAST_SEEN -> {
+      PostCellData.TYPE_LAST_SEEN -> {
         return -2
       }
       else -> {
@@ -379,7 +386,7 @@ class PostAdapter(
     }
 
     var itemViewType = getItemViewTypeSafe(correctedPosition)
-    if (itemViewType == TYPE_STATUS) {
+    if (itemViewType == PostCellData.TYPE_STATUS) {
       correctedPosition = threadCellData.getPostPosition(correctedPosition - 1)
       itemViewType = getItemViewTypeSafe(correctedPosition)
     }
@@ -388,7 +395,7 @@ class PostAdapter(
       return -1L
     }
 
-    if (itemViewType != TYPE_POST && itemViewType != TYPE_POST_STUB) {
+    if (!PostCellData.PostCellItemViewType.isAnyPostType(itemViewType) && itemViewType != PostCellData.TYPE_POST_STUB) {
       return -1L
     }
 
@@ -402,11 +409,11 @@ class PostAdapter(
 
   private fun getItemViewTypeSafe(position: Int): Int {
     if (position == threadCellData.lastSeenIndicatorPosition) {
-      return TYPE_LAST_SEEN
+      return PostCellData.TYPE_LAST_SEEN
     }
 
     if (showStatusView() && position == itemCount - 1) {
-      return TYPE_STATUS
+      return PostCellData.TYPE_STATUS
     }
 
     val correctedPosition = threadCellData.getPostPosition(position)
@@ -420,9 +427,31 @@ class PostAdapter(
     }
 
     if (postFilterManager.getFilterStub(postCellData.postDescriptor)) {
-      return TYPE_POST_STUB
+      return PostCellData.TYPE_POST_STUB
     } else {
-      return TYPE_POST
+      return getPostCellItemViewType(postCellData)
+    }
+  }
+
+  private fun getPostCellItemViewType(postCellData: PostCellData): Int {
+    val postAlignmentMode = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
+    }
+
+    checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
+
+    if (postCellData.post.postImages.size <= 1) {
+      when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> {
+          return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailLeftAlignment.viewTypeRaw
+        }
+        ChanSettings.PostAlignmentMode.AlignRight -> {
+          return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailRightAlignment.viewTypeRaw
+        }
+      }
+    } else {
+      return PostCellData.PostCellItemViewType.TypePostMultipleThumbnails.viewTypeRaw
     }
   }
 
@@ -451,12 +480,6 @@ class PostAdapter(
 
   companion object {
     private const val TAG = "PostAdapter"
-
-    //we don't recycle POST cells because of layout changes between cell contents
-    const val TYPE_POST = 0
-    private const val TYPE_STATUS = 1
-    private const val TYPE_POST_STUB = 2
-    private const val TYPE_LAST_SEEN = 3
   }
 
 }

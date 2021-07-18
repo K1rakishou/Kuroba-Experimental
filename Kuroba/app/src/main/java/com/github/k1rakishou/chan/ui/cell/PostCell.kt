@@ -468,13 +468,12 @@ class PostCell : ConstraintLayout,
   }
 
   private fun updatePostCellLayoutRuntime(postCellData: PostCellData, shiftCommentToThumbnailSideMode: Boolean) {
-    if (shiftCommentToThumbnailSideMode) {
-      titleIconsThumbnailBarrier?.let { barrier ->
-        barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
-      }
+    val constraintSet = ConstraintSet()
+    constraintSet.clone(this)
 
-      val constraintSet = ConstraintSet()
-      constraintSet.clone(this)
+    if (shiftCommentToThumbnailSideMode) {
+      titleIconsThumbnailBarrier?.referencedIds =
+        intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
 
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
@@ -496,13 +495,23 @@ class PostCell : ConstraintLayout,
         floatArrayOf(0f, 1f),
         ConstraintSet.CHAIN_SPREAD
       )
-
-      constraintSet.applyTo(this)
     } else {
-      titleIconsThumbnailBarrier?.let { barrier ->
-        barrier.referencedIds = intArrayOf(R.id.title, R.id.image_filename, R.id.icons, R.id.thumbnails_container)
+      titleIconsThumbnailBarrier?.referencedIds =
+        intArrayOf(R.id.thumbnails_container, R.id.title, R.id.image_filename, R.id.icons)
+
+      when (postCellData.postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> {
+          constraintSet.clear(R.id.comment, ConstraintSet.END)
+          constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.go_to_post_button, ConstraintSet.START)
+        }
+        ChanSettings.PostAlignmentMode.AlignRight -> {
+          constraintSet.clear(R.id.comment, ConstraintSet.START)
+          constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.post_attention_label, ConstraintSet.END)
+        }
       }
     }
+
+    constraintSet.applyTo(this)
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
