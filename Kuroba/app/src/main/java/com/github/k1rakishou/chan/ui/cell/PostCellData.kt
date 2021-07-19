@@ -39,7 +39,7 @@ data class PostCellData(
   var textSizeSp: Int,
   var highlighted: Boolean,
   var postSelected: Boolean,
-  private var markedPostNo: Long?,
+  private val markedPostNo: Long?,
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.BoardPostViewMode,
   var boardPostsSortOrder: PostsFilter.Order,
@@ -64,6 +64,7 @@ data class PostCellData(
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
   private var detailsSizePxPrecalculated: Int? = null
+  private var postTitleStubPrecalculated: CharSequence? = null
   private var postTitlePrecalculated: CharSequence? = null
   private var postFileInfoPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
   private var postFileInfoHashPrecalculated: MurmurHashUtils.Murmur3Hash? = null
@@ -116,6 +117,7 @@ data class PostCellData(
     get() = markedPostNo ?: -1
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(textSizeSp - 4.toFloat()) }
+  private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
   private val _postFileInfoMapHash = RecalculatableLazy { postFileInfoHashPrecalculated ?: calculatePostFileInfoHash(_postFileInfoMap) }
@@ -126,6 +128,8 @@ data class PostCellData(
     get() = _detailsSizePx.value()
   val postTitle: CharSequence
     get() = _postTitle.value()
+  val postTitleStub: CharSequence
+    get() = _postTitleStub.value()
   val postFileInfoMap: Map<ChanPostImage, SpannableString>
     get() = _postFileInfoMap.value()
   val postFileInfoMapHash: MurmurHashUtils.Murmur3Hash
@@ -135,6 +139,24 @@ data class PostCellData(
   val catalogRepliesText
     get() = _catalogRepliesText.value()
 
+  fun resetEverything() {
+    detailsSizePxPrecalculated = null
+    postTitlePrecalculated = null
+    postTitleStubPrecalculated = null
+    postFileInfoPrecalculated = null
+    postFileInfoHashPrecalculated = null
+    commentTextPrecalculated = null
+    catalogRepliesTextPrecalculated = null
+
+    _detailsSizePx.resetValue()
+    _postTitle.resetValue()
+    _postTitleStub.resetValue()
+    _postFileInfoMap.resetValue()
+    _postFileInfoMapHash.resetValue()
+    _commentText.resetValue()
+    _catalogRepliesText.resetValue()
+  }
+
   fun resetCommentTextCache() {
     commentTextPrecalculated = null
     _commentText.resetValue()
@@ -142,6 +164,9 @@ data class PostCellData(
 
   fun resetPostTitleCache() {
     postTitlePrecalculated = null
+    postTitleStubPrecalculated = null
+
+    _postTitleStub.resetValue()
     _postTitle.resetValue()
   }
 
@@ -163,6 +188,7 @@ data class PostCellData(
     // Force lazily evaluated values to get calculated and cached
     _detailsSizePx.value()
     _postTitle.value()
+    _postTitleStub.value()
     _postFileInfoMap.value()
     _postFileInfoMapHash.value()
     _commentText.value()
@@ -203,6 +229,7 @@ data class PostCellData(
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
       newPostCellData.postTitlePrecalculated = postTitlePrecalculated
+      newPostCellData.postTitleStubPrecalculated = postTitleStubPrecalculated
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
       newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
     }
@@ -212,15 +239,19 @@ data class PostCellData(
     postCellCallback = null
   }
 
-  private fun calculatePostTitle(): CharSequence {
+  private fun calculatePostTitleStub(): CharSequence {
     if (stub) {
-      if (!TextUtils.isEmpty(post.subject)) {
-        return post.subject!!
+      return if (!TextUtils.isEmpty(post.subject)) {
+        post.subject ?: ""
+      } else {
+        getPostStubTitle()
       }
-
-      return getPostStubTitle()
     }
 
+    return ""
+  }
+
+  private fun calculatePostTitle(): CharSequence {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
     var postIndexText = ""
 

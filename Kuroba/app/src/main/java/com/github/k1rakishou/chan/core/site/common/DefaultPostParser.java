@@ -144,15 +144,13 @@ public class DefaultPostParser implements PostParser {
 
         if (!TextUtils.isEmpty(builder.subject)) {
             SpannableString subjectSpan = new SpannableString(builder.subject);
-            // Do not set another color when the post is in stub mode, it sets text_color_secondary
-            if (!postFilterManager.getFilterStub(builder.getPostDescriptor())) {
-                subjectSpan.setSpan(
-                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
-                        0,
-                        subjectSpan.length(),
-                        0
-                );
-            }
+
+            subjectSpan.setSpan(
+                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
+                    0,
+                    subjectSpan.length(),
+                    0
+            );
 
             builder.subject = subjectSpan;
         }

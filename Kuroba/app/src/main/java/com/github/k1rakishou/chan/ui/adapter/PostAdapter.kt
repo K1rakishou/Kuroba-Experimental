@@ -337,6 +337,10 @@ class PostAdapter(
     return threadCellData.getScrollPosition(displayPosition)
   }
 
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    threadCellData.resetCachedPostData(postDescriptor)
+  }
+
   private fun showStatusView(): Boolean {
     val chanDescriptor = postAdapterCallback.currentChanDescriptor
     // the chanDescriptor can be null while this adapter is used between cleanup and the removal
@@ -356,23 +360,6 @@ class PostAdapter(
 
     updatingPosts.add(updatedPost.postDescriptor)
     notifyItemChanged(postIndex)
-  }
-
-  suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor) {
-    BackgroundUtils.ensureMainThread()
-
-    if (isErrorShown) {
-      return
-    }
-
-    if (!threadCellData.refreshAllItems(postCellCallback, chanDescriptor, themeEngine.chanTheme)) {
-      return
-    }
-
-    updatingPosts.addAll(threadCellData.getAllPostDescriptors())
-
-    Logger.d(TAG, "refreshAdapterItems() called")
-    notifyDataSetChanged()
   }
 
   fun getPostNo(itemPosition: Int): Long {

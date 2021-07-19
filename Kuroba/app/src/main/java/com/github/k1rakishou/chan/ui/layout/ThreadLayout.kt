@@ -909,9 +909,9 @@ class ThreadLayout @JvmOverloads constructor(
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
       postFilterManager.remove(post.postDescriptor)
-
       postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
-      presenter.refreshUI()
+      threadListLayout.resetCachedPostData(post.postDescriptor)
+      threadListLayout.onPostUpdated(post)
     }
   }
 
@@ -948,11 +948,6 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     threadListLayout.onPostUpdated(updatedPost)
-  }
-
-  override suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor) {
-    BackgroundUtils.ensureMainThread()
-    threadListLayout.refreshAdapterItems(chanDescriptor)
   }
 
   override fun presentController(

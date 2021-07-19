@@ -184,20 +184,6 @@ class ThreadPresenter @Inject constructor(
         .debounce(1000L)
         .collect { filterEvent -> onFiltersChanged(filterEvent) }
     }
-
-    launch {
-      pageRequestManager.boardPagesUpdateFlow
-        .collect { boardDescriptor ->
-          val chanDescriptor = currentChanDescriptor
-            ?: return@collect
-
-          if (!chanDescriptor.isCatalogDescriptor() || chanDescriptor.boardDescriptor() != boardDescriptor) {
-            return@collect
-          }
-
-          threadPresenterCallback?.refreshAdapterItems(chanDescriptor)
-        }
-    }
   }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
@@ -2241,7 +2227,6 @@ class ThreadPresenter @Inject constructor(
     )
 
     suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
-    suspend fun refreshAdapterItems(chanDescriptor: ChanDescriptor)
 
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()

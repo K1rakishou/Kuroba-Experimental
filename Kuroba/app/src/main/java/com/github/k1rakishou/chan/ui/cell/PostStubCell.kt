@@ -171,7 +171,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
       throw NullPointerException("Callback is null during bindPost()")
     }
 
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitleStub, title)
 
     val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.GRID
       || postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.STAGGER)

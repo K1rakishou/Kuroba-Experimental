@@ -15,7 +15,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 
 class ThreadCellData(
   private val appConstants: AppConstants,
@@ -28,10 +27,6 @@ class ThreadCellData(
   private val highlightedPosts: MutableSet<PostDescriptor> = mutableSetOf()
   private val highlightedPostsByPostId: MutableSet<PostDescriptor> = mutableSetOf()
   private val highlightedPostsByTripcode: MutableSet<PostDescriptor> = mutableSetOf()
-
-  private val _currentlyUpdating = AtomicBoolean(false)
-  val isCurrentlyUpdating: Boolean
-    get() = _currentlyUpdating.get()
 
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
@@ -46,9 +41,6 @@ class ThreadCellData(
   var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int ->
     true
   }
-  var defaultStubFunc = { chanDescriptor: ChanDescriptor, postDescriptors: Collection<PostDescriptor> ->
-    postFilterManager.getManyFilterStubs(chanDescriptor, postDescriptors)
-  }
 
   var error: String? = null
   var selectedPost: PostDescriptor? = null
@@ -59,50 +51,6 @@ class ThreadCellData(
 
   override fun iterator(): Iterator<PostCellData> {
     return postCellDataList.iterator()
-  }
-
-  suspend fun refreshAllItems(
-    postCellCallback: PostCellInterface.PostCellCallback,
-    chanDescriptor: ChanDescriptor,
-    theme: ChanTheme
-  ): Boolean {
-    if (_chanDescriptor == null || _chanDescriptor != chanDescriptor) {
-      return false
-    }
-
-    if (this.postCellDataList.isEmpty() || isCurrentlyUpdating) {
-      return false
-    }
-
-    val postIndexedList = this.postCellDataList
-      .mapIndexed { index, postCellData -> PostIndexed(postCellData.post, index) }
-
-    val postCellDataWidthNoPaddings = this.postCellDataList.first().postCellDataWidthNoPaddings
-
-    val newPostCellDataList = withContext(Dispatchers.Default) {
-      return@withContext postIndexedListToPostCellDataList(
-        postCellCallback = postCellCallback,
-        chanDescriptor = chanDescriptor,
-        theme = theme,
-        postIndexedList = postIndexedList,
-        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings
-      )
-    }
-
-    BackgroundUtils.ensureMainThread()
-
-    if (postViewMode.canShowLastSeenIndicator()) {
-      this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
-    }
-
-    this.postCellDataList.clear()
-    this.postCellDataList.addAll(newPostCellDataList)
-
-    return true
-  }
-
-  fun getAllPostDescriptors(): List<PostDescriptor> {
-    return postCellDataList.map { postCellData -> postCellData.post.postDescriptor }
   }
 
   suspend fun updateThreadData(
@@ -147,7 +95,6 @@ class ThreadCellData(
     postCellDataWidthNoPaddings: Int
   ): List<PostCellData> {
     BackgroundUtils.ensureBackgroundThread()
-    _currentlyUpdating.set(true)
 
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
@@ -171,9 +118,9 @@ class ThreadCellData(
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
-    val filterHashMap = postFilterManager.getManyFilterHashes(chanDescriptor, postDescriptors)
-    val filterHighlightedColorMap = postFilterManager.getManyFilterHighlightedColors(chanDescriptor, postDescriptors)
-    val filterStubMap = defaultStubFunc.invoke(chanDescriptor, postDescriptors)
+    val filterHashMap = postFilterManager.getManyFilterHashes(postDescriptors)
+    val filterHighlightedColorMap = postFilterManager.getManyFilterHighlightedColors(postDescriptors)
+    val filterStubMap = postFilterManager.getManyFilterStubs(postDescriptors)
 
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
@@ -218,7 +165,6 @@ class ThreadCellData(
       resultList += postCellData
     }
 
-    _currentlyUpdating.set(false)
     return resultList
   }
 
@@ -320,6 +266,20 @@ class ThreadCellData(
 
     postCellDataList[postCellDataIndex] = updatedPostCellData.first()
     return true
+  }
+
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    val postCellDataIndex = postCellDataList
+      .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+
+    if (postCellDataIndex < 0) {
+      return
+    }
+
+    val postCellData = postCellDataList.getOrNull(postCellDataIndex)
+      ?: return
+
+    postCellData.resetEverything()
   }
 
   fun selectPosts(postDescriptors: Set<PostDescriptor>) {
