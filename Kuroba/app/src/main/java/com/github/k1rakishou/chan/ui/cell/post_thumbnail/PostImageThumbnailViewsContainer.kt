@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
@@ -63,12 +64,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     this.horizPaddingPx = horizPaddingPx
     cachedThumbnailViewContainerInfoArray[PRE_BIND].updateFrom(postCellData)
 
-    if (childCount != 0) {
+    if (childCount != postCellData.postImages.size) {
       removeAllViews()
     }
 
     when {
       postCellData.post.postImages.size == 1 -> {
+        this.setVisibilityFast(View.VISIBLE)
         this.updatePadding(
           left = horizPaddingPx,
           right = horizPaddingPx,
@@ -77,6 +79,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         )
       }
       postCellData.post.postImages.size > 1 -> {
+        this.setVisibilityFast(View.VISIBLE)
         this.updatePadding(
           left = horizPaddingPx,
           right = horizPaddingPx,
@@ -85,7 +88,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         )
       }
       else -> {
-        // no-op
+        this.setVisibilityFast(View.GONE)
       }
     }
   }
