@@ -139,6 +139,7 @@ class ThreadPresenter @Inject constructor(
 
   private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
+  private lateinit var postBindExecutor: SerializedCoroutineExecutor
   private lateinit var context: Context
 
   override val coroutineContext: CoroutineContext
@@ -224,6 +225,7 @@ class ThreadPresenter @Inject constructor(
 
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+    postBindExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
 
     if (chanThreadTicker.currentChanDescriptor != null) {
       unbindChanDescriptor(false)
@@ -278,6 +280,10 @@ class ThreadPresenter @Inject constructor(
 
       if (::serializedCoroutineExecutor.isInitialized) {
         serializedCoroutineExecutor.stop()
+      }
+
+      if (::postBindExecutor.isInitialized) {
+        postBindExecutor.stop()
       }
     }
 
@@ -478,23 +484,58 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showAlbum(initialImageUrl, postDescriptors)
   }
 
-  override fun onPostBind(postDescriptor: PostDescriptor) {
+  override fun onPostBind(postCellData: PostCellData) {
     BackgroundUtils.ensureMainThread()
 
-    if (currentChanDescriptor == null) {
+    postBindExecutor.post {
+      BackgroundUtils.ensureBackgroundThread()
+
+      if (currentChanDescriptor == null) {
+        return@post
+      }
+
+      val postDescriptor = postCellData.postDescriptor
+
+      onDemandContentLoaderManager.onPostBind(postDescriptor)
+      seenPostsManager.onPostBind(postDescriptor)
+      threadBookmarkViewPost(postCellData)
+    }
+  }
+
+  override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {
+    BackgroundUtils.ensureMainThread()
+
+    postBindExecutor.post {
+      BackgroundUtils.ensureBackgroundThread()
+
+      if (currentChanDescriptor == null) {
+        return@post
+      }
+
+      val postDescriptor = postCellData.postDescriptor
+
+      onDemandContentLoaderManager.onPostUnbind(postDescriptor, isActuallyRecycling)
+      seenPostsManager.onPostUnbind(postDescriptor)
+      threadBookmarkViewPost(postCellData)
+    }
+  }
+
+  private fun threadBookmarkViewPost(postCellData: PostCellData) {
+    if (!postCellData.chanDescriptor.isThreadDescriptor() || postCellData.isInPopup) {
       return
     }
 
-    onDemandContentLoaderManager.onPostBind(postDescriptor)
-    seenPostsManager.onPostBind(postDescriptor)
-  }
+    val threadDescriptor = postCellData.chanDescriptor.threadDescriptorOrNull()
+    val postNo = postCellData.postDescriptor.postNo
 
-  override fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {
-    BackgroundUtils.ensureMainThread()
+    if (threadDescriptor != null && postCellData.postIndex >= 0) {
+      val unseenPostsCount = chanThreadManager.getNewPostsCount(
+        threadDescriptor,
+        postNo
+      )
 
-    currentChanDescriptor?.let { descriptor ->
-      onDemandContentLoaderManager.onPostUnbind(postDescriptor, isActuallyRecycling)
-      seenPostsManager.onPostUnbind(postDescriptor)
+      bookmarksManager.onPostViewed(threadDescriptor, postNo, unseenPostsCount)
+      lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
     }
   }
 

@@ -114,11 +114,27 @@ class PostFilterManager(
     }
   }
 
-  fun getFilterHash(postDescriptor: PostDescriptor): Int {
-    return lock.read {
-      val chanDescriptor = postDescriptor.descriptor
+  fun getManyFilterHashes(
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: Collection<PostDescriptor>
+  ): Map<PostDescriptor, Int> {
+    if (postDescriptors.isEmpty()) {
+      return emptyMap()
+    }
 
-      return@read filterStorage[chanDescriptor]?.get(postDescriptor)?.hashCode() ?: 0
+    return lock.read {
+      val resultMap = mutableMapWithCap<PostDescriptor, Int>(postDescriptors.size)
+
+      for (postDescriptor in postDescriptors) {
+        val filterHash = filterStorage[chanDescriptor]
+          ?.get(postDescriptor)
+          ?.hashCode()
+          ?: 0
+
+        resultMap[postDescriptor] = filterHash
+      }
+
+      return@read resultMap
     }
   }
 
@@ -132,6 +148,33 @@ class PostFilterManager(
       }
 
       return@read filterStorage[chanDescriptor]?.get(postDescriptor)?.filterHighlightedColor ?: 0
+    }
+  }
+
+  fun getManyFilterHighlightedColors(
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: Collection<PostDescriptor>
+  ): Map<PostDescriptor, Int> {
+    if (postDescriptors.isEmpty()) {
+      return emptyMap()
+    }
+
+    return lock.read {
+      val resultMap = mutableMapWithCap<PostDescriptor, Int>(postDescriptors.size)
+
+      for (postDescriptor in postDescriptors) {
+        val enabled = filterStorage[chanDescriptor]?.get(postDescriptor)?.enabled ?: false
+
+        val filterHighlightColor = if (!enabled) {
+          0
+        } else {
+          filterStorage[chanDescriptor]?.get(postDescriptor)?.filterHighlightedColor ?: 0
+        }
+
+        resultMap[postDescriptor] = filterHighlightColor
+      }
+
+      return@read resultMap
     }
   }
 
@@ -166,6 +209,33 @@ class PostFilterManager(
       }
 
       return@read filterStorage[chanDescriptor]?.get(postDescriptor)?.filterStub ?: false
+    }
+  }
+
+  fun getManyFilterStubs(
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: Collection<PostDescriptor>
+  ): Map<PostDescriptor, Boolean> {
+    if (postDescriptors.isEmpty()) {
+      return emptyMap()
+    }
+
+    return lock.read {
+      val resultMap = mutableMapWithCap<PostDescriptor, Boolean>(postDescriptors.size)
+
+      for (postDescriptor in postDescriptors) {
+        val enabled = filterStorage[chanDescriptor]?.get(postDescriptor)?.enabled ?: false
+
+        val filterStub = if (!enabled) {
+          false
+        } else {
+          filterStorage[chanDescriptor]?.get(postDescriptor)?.filterStub ?: false
+        }
+
+        resultMap[postDescriptor] = filterStub
+      }
+
+      return@read resultMap
     }
   }
 

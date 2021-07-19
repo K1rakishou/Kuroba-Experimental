@@ -127,8 +127,6 @@ class PrefetchLoader(
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {
-    BackgroundUtils.ensureMainThread()
-
     return postLoaderData.disposeAll()
   }
 

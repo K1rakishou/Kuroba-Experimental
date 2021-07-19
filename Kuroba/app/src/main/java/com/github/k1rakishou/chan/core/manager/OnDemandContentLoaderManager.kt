@@ -137,26 +137,26 @@ class OnDemandContentLoaderManager(
   }
 
   fun onPostBind(postDescriptor: PostDescriptor) {
-    BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
     val chanDescriptor = postDescriptor.descriptor
-    val postLoaderData = PostLoaderData(postDescriptor)
 
-    val alreadyAdded = rwLock.write {
+    val postLoaderData = rwLock.write {
       if (!activeLoaders.containsKey(chanDescriptor)) {
         activeLoaders[chanDescriptor] = hashMapOf()
       }
 
       if (activeLoaders[chanDescriptor]!!.containsKey(postDescriptor)) {
-        return@write true
+        return@write null
       }
 
+      val postLoaderData = PostLoaderData(postDescriptor)
       activeLoaders[chanDescriptor]!![postDescriptor] = postLoaderData
-      return@write false
+      return@write postLoaderData
     }
 
-    if (alreadyAdded) {
+    if (postLoaderData == null) {
+      // Already added
       return
     }
 
@@ -164,7 +164,6 @@ class OnDemandContentLoaderManager(
   }
 
   fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {
-    BackgroundUtils.ensureMainThread()
     check(loaders.isNotEmpty()) { "No loaders!" }
 
     if (!isActuallyRecycling) {

@@ -192,7 +192,7 @@ data class PostCellData(
       markUnseenPosts = markUnseenPosts,
       compact = compact,
       stub = stub,
-      theme = theme.fullCopy(),
+      theme = theme,
       filterHash = filterHash,
       filterHighlightedColor = filterHighlightedColor,
       postViewMode = postViewMode,

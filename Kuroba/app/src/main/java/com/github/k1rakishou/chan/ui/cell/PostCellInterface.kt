@@ -44,10 +44,10 @@ interface PostCellInterface {
     val currentChanDescriptor: ChanDescriptor?
 
     // Only used in PostCell and CardPostCell
-    fun onPostBind(postDescriptor: PostDescriptor)
+    fun onPostBind(postCellData: PostCellData)
 
     // Only used in PostCell and CardPostCell
-    fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean)
+    fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean)
 
     fun onPostClicked(postDescriptor: PostDescriptor)
     fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode)

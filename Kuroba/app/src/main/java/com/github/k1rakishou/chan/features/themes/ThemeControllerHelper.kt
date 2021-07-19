@@ -71,8 +71,8 @@ class ThemeControllerHelper(
     ChanDescriptor.ThreadDescriptor.create("test_site", "test_board", 1234567890L)
 
   private val dummyPostCallback: PostCellInterface.PostCellCallback = object : PostCellInterface.PostCellCallback {
-    override fun onPostBind(postDescriptor: PostDescriptor) {}
-    override fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {}
+    override fun onPostBind(postCellData: PostCellData) {}
+    override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
     override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
     override fun onThumbnailClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView) {}

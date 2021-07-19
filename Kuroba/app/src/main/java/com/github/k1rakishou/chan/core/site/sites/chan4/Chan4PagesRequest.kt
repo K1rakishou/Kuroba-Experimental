@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.board.pages.ThreadNoTimeModPair
@@ -63,11 +64,24 @@ class Chan4PagesRequest(
         }
       }
     }
+
+    val threads = if (threadNoTimeModPairs.isNullOrEmpty()) {
+      linkedMapOf<ChanDescriptor.ThreadDescriptor, Long>()
+    } else {
+      val threadPairs = threadNoTimeModPairs!!
+      val resultMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadPairs.size)
+
+      for (threadPair in threadPairs) {
+        resultMap[threadPair.threadDescriptor] = threadPair.modified
+      }
+
+      resultMap
+    }
     
     return BoardPage(
       pageIndex,
       boardTotalPagesCount,
-      threadNoTimeModPairs ?: emptyList()
+      threads
     )
   }
   

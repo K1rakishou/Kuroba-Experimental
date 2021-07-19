@@ -11,7 +11,7 @@ data class BoardPages(
 data class BoardPage(
   val currentPage: Int,
   val totalPages: Int,
-  val threads: List<ThreadNoTimeModPair>
+  val threads: LinkedHashMap<ChanDescriptor.ThreadDescriptor, Long>
 ) {
   fun isLastPage(): Boolean = currentPage >= totalPages
 }

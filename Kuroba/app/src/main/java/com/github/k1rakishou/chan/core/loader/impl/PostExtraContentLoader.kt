@@ -122,8 +122,6 @@ internal class PostExtraContentLoader(
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {
-    BackgroundUtils.ensureMainThread()
-
     // I guess there is no real need to cancel these requests since they are lightweight
   }
 

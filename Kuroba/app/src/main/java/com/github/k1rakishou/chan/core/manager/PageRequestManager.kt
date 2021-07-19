@@ -92,15 +92,15 @@ class PageRequestManager(
     val threadNoTimeModPairSet = mutableSetOf<ThreadNoTimeModPair>()
     val threadDescriptorsToFindCopy = HashSet(threadDescriptorsToFind)
 
-    for (threadDescriptor in threadDescriptorsToFind) {
-      val catalog = boardPagesMap[threadDescriptor.boardDescriptor]
+    for (td in threadDescriptorsToFind) {
+      val catalog = boardPagesMap[td.boardDescriptor]
         ?: continue
 
       loop@ for (boardPage in catalog.boardPages) {
-        for (threadNoTimeModPair in boardPage.threads) {
-          if (threadNoTimeModPair.threadDescriptor in threadDescriptorsToFindCopy) {
-            threadNoTimeModPairSet += threadNoTimeModPair
-            threadDescriptorsToFindCopy.remove(threadNoTimeModPair.threadDescriptor)
+        for ((threadDescriptor, lastModified) in boardPage.threads) {
+          if (threadDescriptor in threadDescriptorsToFindCopy) {
+            threadNoTimeModPairSet += ThreadNoTimeModPair(threadDescriptor, lastModified)
+            threadDescriptorsToFindCopy.remove(threadDescriptor)
             break@loop
           }
         }
@@ -149,8 +149,8 @@ class PageRequestManager(
       ?: return null
 
     for (page in pages.boardPages) {
-      for (threadNoTimeModPair in page.threads) {
-        if (opNo == threadNoTimeModPair.threadDescriptor.threadNo) {
+      for ((threadDescriptor, _) in page.threads) {
+        if (opNo == threadDescriptor.threadNo) {
           return page
         }
       }

@@ -90,7 +90,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
 
   private fun unbindPost(isActuallyRecycling: Boolean) {
     if (callback != null) {
-      callback?.onPostUnbind(postCellData!!.postDescriptor, isActuallyRecycling)
+      callback?.onPostUnbind(postCellData!!, isActuallyRecycling)
     }
 
     callback = null
@@ -193,7 +193,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
     }
 
     if (callback != null) {
-      callback!!.onPostBind(postCellData.postDescriptor)
+      callback!!.onPostBind(postCellData)
     }
   }
 

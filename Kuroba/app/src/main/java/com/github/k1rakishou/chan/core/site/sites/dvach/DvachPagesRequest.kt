@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.nextStringOrNull
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -49,10 +50,16 @@ class DvachPagesRequest(
     threadNoTimeModPairs
       .chunked(threadNoTimeModPairs.size / chanBoard.pages)
       .forEachIndexed { pageIndex, threadsOnPage ->
+        val threadsMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, Long>(threadsOnPage.size)
+
+        for (threadNoTimeModPair in threadsOnPage) {
+          threadsMap[threadNoTimeModPair.threadDescriptor] = threadNoTimeModPair.modified
+        }
+
         boardPages += BoardPage(
           currentPage = pageIndex + 1,
           totalPages = chanBoard.pages,
-          threads = threadsOnPage
+          threads = threadsMap
         )
       }
 
@@ -65,14 +72,12 @@ class DvachPagesRequest(
   private fun readThreads(
     reader: JsonReader,
     threadNoTimeModPairs: MutableList<ThreadNoTimeModPair>
-  ): List<ThreadNoTimeModPair> {
+  ) {
     reader.jsonArray {
       while (hasNext()) {
         threadNoTimeModPairs.add(readThreadTime(this))
       }
     }
-
-    return threadNoTimeModPairs
   }
 
   private fun readThreadTime(reader: JsonReader): ThreadNoTimeModPair {

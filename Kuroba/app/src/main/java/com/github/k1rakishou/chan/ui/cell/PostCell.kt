@@ -40,12 +40,7 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -78,16 +73,6 @@ class PostCell : ConstraintLayout,
 
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
-  @Inject
-  lateinit var postFilterManager: PostFilterManager
-  @Inject
-  lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var bookmarksManager: BookmarksManager
-  @Inject
-  lateinit var chanThreadManager: ChanThreadManager
-  @Inject
-  lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
   @Inject
   lateinit var themeEngine: ThemeEngine
 
@@ -273,11 +258,7 @@ class PostCell : ConstraintLayout,
     unseenPostIndicatorFadeOutAnimation.end()
 
     if (postCellCallback != null && postCellData != null) {
-      postCellCallback?.onPostUnbind(postCellData.postDescriptor, isActuallyRecycling)
-    }
-
-    if (postCellData != null && postCellData.chanDescriptor.isThreadDescriptor()) {
-      threadBookmarkViewPost(postCellData)
+      postCellCallback?.onPostUnbind(postCellData, isActuallyRecycling)
     }
 
     this.postCellCallback = null
@@ -601,11 +582,7 @@ class PostCell : ConstraintLayout,
     startAttentionLabelFadeOutAnimation(postCellData)
 
     if (postCellCallback != null) {
-      postCellCallback?.onPostBind(postCellData.postDescriptor)
-    }
-
-    if (postCellData.chanDescriptor.isThreadDescriptor()) {
-      threadBookmarkViewPost(postCellData)
+      postCellCallback?.onPostBind(postCellData)
     }
   }
 
@@ -634,25 +611,6 @@ class PostCell : ConstraintLayout,
     } else {
       goToPostButton.setVisibilityFast(GONE)
       goToPostButton.setOnClickListener(null)
-    }
-  }
-
-  private fun threadBookmarkViewPost(postCellData: PostCellData) {
-    if (postCellData.isInPopup) {
-      return
-    }
-
-    val threadDescriptor = postCellData.chanDescriptor.threadDescriptorOrNull()
-    val postNo = postCellData.postDescriptor.postNo
-
-    if (threadDescriptor != null && postCellData.postIndex >= 0) {
-      val unseenPostsCount = chanThreadManager.getNewPostsCount(
-        threadDescriptor,
-        postNo
-      )
-
-      bookmarksManager.onPostViewed(threadDescriptor, postNo, unseenPostsCount)
-      lastViewedPostNoInfoHolder.setLastViewedPostNo(threadDescriptor, postNo)
     }
   }
 
@@ -691,11 +649,7 @@ class PostCell : ConstraintLayout,
     // Filter label is more important than unseen post label
     if (postCellData.hasColoredFilter) {
       postAttentionLabel.setVisibilityFast(View.VISIBLE)
-
-      postAttentionLabel.setBackgroundColorFast(
-        postFilterManager.getFilterHighlightedColor(postCellData.postDescriptor)
-      )
-
+      postAttentionLabel.setBackgroundColorFast(postCellData.filterHighlightedColor)
       return
     }
 

@@ -43,8 +43,12 @@ class ThreadCellData(
   var defaultMarkedNo: Long? = null
   var defaultSearchQuery = PostCellData.SearchQuery()
 
-  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
-  var defaultStubFunc = { postDescriptor: PostDescriptor -> postFilterManager.getFilterStub(postDescriptor) }
+  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int ->
+    true
+  }
+  var defaultStubFunc = { chanDescriptor: ChanDescriptor, postDescriptors: Collection<PostDescriptor> ->
+    postFilterManager.getManyFilterStubs(chanDescriptor, postDescriptors)
+  }
 
   var error: String? = null
   var selectedPost: PostDescriptor? = null
@@ -147,6 +151,8 @@ class ThreadCellData(
 
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
+    val postDescriptors = postIndexedList.map { postIndexed -> postIndexed.post.postDescriptor }
+
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
     val neverShowPages = ChanSettings.neverShowPages.get()
@@ -156,7 +162,7 @@ class ThreadCellData(
     val textOnly = ChanSettings.textOnly.get()
     val postFileInfo = ChanSettings.postFileInfo.get()
     val markUnseenPosts = ChanSettings.markUnseenPosts.get()
-    val themeCopy = theme.fullCopy()
+    val chanTheme = theme.fullCopy()
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
 
@@ -165,17 +171,15 @@ class ThreadCellData(
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
+    val filterHashMap = postFilterManager.getManyFilterHashes(chanDescriptor, postDescriptors)
+    val filterHighlightedColorMap = postFilterManager.getManyFilterHighlightedColors(chanDescriptor, postDescriptors)
+    val filterStubMap = defaultStubFunc.invoke(chanDescriptor, postDescriptors)
+
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
 
       val boardPage = boardPages?.boardPages
-        ?.firstOrNull { boardPage ->
-          val threadNoTimeModPair = boardPage.threads.firstOrNull { threadNoTimeModPair ->
-            threadNoTimeModPair.threadDescriptor == postDescriptor.threadDescriptor()
-          }
-
-          return@firstOrNull threadNoTimeModPair != null
-        }
+        ?.firstOrNull { boardPage -> boardPage.threads[postDescriptor.threadDescriptor()] != null }
 
       val postCellData = PostCellData(
         chanDescriptor = chanDescriptor,
@@ -183,7 +187,7 @@ class ThreadCellData(
         postIndex = postIndexed.postIndex,
         postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
         textSizeSp = fontSize,
-        theme = themeCopy,
+        theme = chanTheme,
         postViewMode = postViewMode,
         highlighted = isPostHighlighted(postDescriptor),
         postSelected = isPostSelected(postDescriptor),
@@ -200,9 +204,9 @@ class ThreadCellData(
         textOnly = textOnly,
         postFileInfo = postFileInfo,
         markUnseenPosts = markUnseenPosts,
-        stub = defaultStubFunc.invoke(postDescriptor),
-        filterHash = postFilterManager.getFilterHash(postDescriptor),
-        filterHighlightedColor = postFilterManager.getFilterHighlightedColor(postDescriptor),
+        stub = filterStubMap[postDescriptor] ?: false,
+        filterHash = filterHashMap[postDescriptor] ?: 0,
+        filterHighlightedColor = filterHighlightedColorMap[postDescriptor] ?: 0,
         searchQuery = defaultSearchQuery,
         postAlignmentMode = postAlignmentMode,
         postCellThumbnailSizePercents = postCellThumbnailSizePercents

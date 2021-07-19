@@ -145,7 +145,7 @@ class CardPostCell : ConstraintLayout,
     unbindPostImage()
 
     if (callback != null) {
-      callback!!.onPostUnbind(postCellData!!.postDescriptor, isActuallyRecycling)
+      callback!!.onPostUnbind(postCellData!!, isActuallyRecycling)
     }
 
     thumbView = null
@@ -237,7 +237,7 @@ class CardPostCell : ConstraintLayout,
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
 
     if (callback != null) {
-      callback!!.onPostBind(postCellData.postDescriptor)
+      callback!!.onPostBind(postCellData)
     }
   }
 
