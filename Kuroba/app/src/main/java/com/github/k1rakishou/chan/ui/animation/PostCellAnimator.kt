@@ -7,17 +7,30 @@ import android.view.animation.LinearInterpolator
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 
 object PostCellAnimator {
+  const val ANIMATION_DURATION = 4_000L
 
   @JvmStatic
   fun createUnseenPostIndicatorFadeAnimation() = UnseenPostIndicatorFadeAnimation()
 
+  fun calcAlphaFromRemainingTime(remainingTime: Int): Float {
+    return (remainingTime.toFloat() / ANIMATION_DURATION.toFloat()).coerceIn(0f, 1f)
+  }
+
   class UnseenPostIndicatorFadeAnimation : BaseAnimation() {
 
-    fun start(alphaFunc: (Float) -> Unit, onAnimationEndFunc: () -> Unit) {
+    fun start(remainingTime: Int, alphaFunc: (Float) -> Unit, onAnimationEndFunc: () -> Unit) {
       end()
 
+      val startAlpha = calcAlphaFromRemainingTime(remainingTime)
+
+      if (startAlpha <= 0f || remainingTime <= 0) {
+        alphaFunc.invoke(0f)
+        onAnimationEndFunc.invoke()
+        return
+      }
+
       animatorSet = AnimatorSet().apply {
-        val alphaAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
+        val alphaAnimation = ValueAnimator.ofFloat(startAlpha, 0f).apply {
           addUpdateListener { valueAnimator ->
             alphaFunc.invoke(valueAnimator.animatedValue as Float)
           }
@@ -27,21 +40,13 @@ object PostCellAnimator {
             }
           })
 
-          startDelay = ALPHA_ANIMATION_DELAY_MS
-          duration = ALPHA_ANIMATION_DURATION
+          duration = remainingTime.toLong()
           interpolator = LinearInterpolator()
         }
 
         play(alphaAnimation)
         start()
       }
-    }
-
-    companion object {
-      private const val ALPHA_ANIMATION_DELAY_MS = 2_000L
-      private const val ALPHA_ANIMATION_DURATION = 2_000L
-
-      const val ANIMATIONS_TOTAL_TIME = ALPHA_ANIMATION_DELAY_MS + ALPHA_ANIMATION_DURATION
     }
   }
 

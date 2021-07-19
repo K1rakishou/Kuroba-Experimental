@@ -3,9 +3,9 @@ package com.github.k1rakishou.chan.ui.cell
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -13,16 +13,20 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import com.github.k1rakishou.model.data.post.SeenPost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
 
 class ThreadCellData(
-  private val appConstants: AppConstants,
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postFilterManager: PostFilterManager,
+  private val seenPostsManager: SeenPostsManager,
   initialTheme: ChanTheme
-): Iterable<PostCellData> {
+): Iterable<PostCellData>, PostCellData.ThreadCellDataCallback {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
+  private val seenPostsMap: MutableMap<PostDescriptor, SeenPost> = mutableMapOf()
+
   private val selectedPosts: MutableSet<PostDescriptor> = mutableSetOf()
   private val highlightedPosts: MutableSet<PostDescriptor> = mutableSetOf()
   private val highlightedPostsByPostId: MutableSet<PostDescriptor> = mutableSetOf()
@@ -53,6 +57,26 @@ class ThreadCellData(
     return postCellDataList.iterator()
   }
 
+  override fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost? {
+    if (!ChanSettings.markUnseenPosts.get()) {
+      return null
+    }
+
+    return seenPostsMap[postDescriptor]
+  }
+
+  override fun markPostAsSeen(postDescriptor: PostDescriptor) {
+    if (!ChanSettings.markUnseenPosts.get()) {
+      return
+    }
+
+    if (seenPostsMap.containsKey(postDescriptor)) {
+      return
+    }
+
+    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, DateTime.now())
+  }
+
   suspend fun updateThreadData(
     postCellCallback: PostCellInterface.PostCellCallback,
     chanDescriptor: ChanDescriptor,
@@ -67,12 +91,15 @@ class ThreadCellData(
     this.postCellCallback = postCellCallback
     this.currentTheme = theme
 
+    val postDescriptors = postIndexedList.map { postIndexed -> postIndexed.post.postDescriptor }
+
     val newPostCellDataList = withContext(Dispatchers.Default) {
       return@withContext postIndexedListToPostCellDataList(
         postCellCallback = postCellCallback,
         chanDescriptor = chanDescriptor,
         theme = theme,
         postIndexedList = postIndexedList,
+        postDescriptors = postDescriptors,
         postCellDataWidthNoPaddings = postCellDataWidthNoPaddings
       )
     }
@@ -85,6 +112,13 @@ class ThreadCellData(
 
     this.postCellDataList.clear()
     this.postCellDataList.addAll(newPostCellDataList)
+
+    this.seenPostsMap.clear()
+
+    val loadedSeenPosts = seenPostsManager.getSeenPosts(chanDescriptor, postDescriptors)
+    if (loadedSeenPosts != null) {
+      this.seenPostsMap.putAll(loadedSeenPosts)
+    }
   }
 
   private suspend fun postIndexedListToPostCellDataList(
@@ -92,13 +126,13 @@ class ThreadCellData(
     chanDescriptor: ChanDescriptor,
     theme: ChanTheme,
     postIndexedList: List<PostIndexed>,
+    postDescriptors: List<PostDescriptor>,
     postCellDataWidthNoPaddings: Int
   ): List<PostCellData> {
     BackgroundUtils.ensureBackgroundThread()
 
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
-    val postDescriptors = postIndexedList.map { postIndexed -> postIndexed.post.postDescriptor }
 
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
@@ -160,6 +194,7 @@ class ThreadCellData(
       )
 
       postCellData.postCellCallback = postCellCallback
+      postCellData.threadCellDataCallback = this
       postCellData.preload()
 
       resultList += postCellData
@@ -246,11 +281,14 @@ class ThreadCellData(
       ?: return false
 
     val updatedPostCellData = withContext(Dispatchers.Default) {
+      val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
+
       return@withContext postIndexedListToPostCellDataList(
         postCellCallback = postCellCallback!!,
         chanDescriptor = chanDescriptor!!,
         theme = currentTheme,
-        postIndexedList = listOf(PostIndexed(updatedPost, postCellData.postIndex)),
+        postIndexedList = listOf(postIndexed),
+        postDescriptors = listOf(updatedPost.postDescriptor),
         postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
       )
     }

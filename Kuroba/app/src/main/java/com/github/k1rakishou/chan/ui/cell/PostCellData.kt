@@ -28,6 +28,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 
@@ -62,6 +63,7 @@ data class PostCellData(
   val postCellThumbnailSizePercents: Int
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
+  var threadCellDataCallback: ThreadCellDataCallback? = null
 
   private var detailsSizePxPrecalculated: Int? = null
   private var postTitleStubPrecalculated: CharSequence? = null
@@ -232,6 +234,7 @@ data class PostCellData(
       newPostCellData.postTitleStubPrecalculated = postTitleStubPrecalculated
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
       newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
+      newPostCellData.threadCellDataCallback = threadCellDataCallback
     }
   }
 
@@ -579,6 +582,11 @@ data class PostCellData(
         return false
       }
     }
+  }
+
+  interface ThreadCellDataCallback {
+    fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost?
+    fun markPostAsSeen(postDescriptor: PostDescriptor)
   }
 
   companion object {

@@ -93,16 +93,8 @@ class ThemeControllerHelper(
     override val currentChanDescriptor: ChanDescriptor?
       get() = dummyThreadDescriptor
 
-    override fun getPage(postDescriptor: PostDescriptor): BoardPage? {
-      return null
-    }
-
     override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
       return null
-    }
-
-    override fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean {
-      return false
     }
   }
 

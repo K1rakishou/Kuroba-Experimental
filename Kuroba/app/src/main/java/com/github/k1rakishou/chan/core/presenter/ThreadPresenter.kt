@@ -1695,20 +1695,6 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.presentController(floatingListMenuController, true)
   }
 
-  override fun hasAlreadySeenPost(postDescriptor: PostDescriptor): Boolean {
-    if (currentChanDescriptor == null) {
-      // Invalid loadable, hide the label
-      return true
-    }
-
-    return if (currentChanDescriptor!!.isCatalogDescriptor()) {
-      // Not in a thread, hide the label
-      true
-    } else {
-      seenPostsManager.hasAlreadySeenPost(currentChanDescriptor!!, postDescriptor)
-    }
-  }
-
   override fun onShowPostReplies(post: ChanPost) {
     if (!isBound || currentChanDescriptor == null) {
       return
@@ -1767,8 +1753,8 @@ class ThreadPresenter @Inject constructor(
       && !thread.isArchived()
   }
 
-  override fun getPage(postDescriptor: PostDescriptor): BoardPage? {
-    return pageRequestManager.getPage(postDescriptor)
+  override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
+    return pageRequestManager.getPage(originalPostDescriptor)
   }
 
   override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {

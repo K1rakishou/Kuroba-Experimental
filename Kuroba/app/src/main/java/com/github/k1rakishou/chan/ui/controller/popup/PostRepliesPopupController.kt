@@ -16,14 +16,12 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.launch
 import java.util.*
-import javax.inject.Inject
 
 class PostRepliesPopupController(
   context: Context,
@@ -31,9 +29,6 @@ class PostRepliesPopupController(
   postCellCallback: PostCellInterface.PostCellCallback
 ) : BasePostPopupController<PostRepliesPopupController.PostRepliesPopupData>(context, postPopupHelper, postCellCallback) {
   override var displayingData: PostRepliesPopupData? = null
-
-  @Inject
-  lateinit var appConstants: AppConstants
 
   private val scrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -83,13 +78,13 @@ class PostRepliesPopupController(
     dataView.id = R.id.post_popup_replies_view_id
 
     val repliesAdapter = PostRepliesAdapter(
-      appConstants,
       data.postViewMode,
       postCellCallback,
       chanDescriptor,
       data.forPostWithDescriptor,
       chanThreadViewableInfoManager,
       postFilterManager,
+      seenPostsManager,
       themeEngine.chanTheme
     )
 

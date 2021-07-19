@@ -24,6 +24,7 @@ import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -32,7 +33,6 @@ import com.github.k1rakishou.chan.ui.cell.ThreadCellData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -57,7 +57,7 @@ class PostAdapter(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var appConstants: AppConstants
+  lateinit var seenPostsManager: SeenPostsManager
 
   private val postAdapterCallback: PostAdapterCallback
   private val postCellCallback: PostCellCallback
@@ -107,9 +107,9 @@ class PostAdapter(
     this.statusCellCallback = statusCellCallback
 
     threadCellData = ThreadCellData(
-      appConstants,
       chanThreadViewableInfoManager,
       postFilterManager,
+      seenPostsManager,
       themeEngine.chanTheme
     )
 

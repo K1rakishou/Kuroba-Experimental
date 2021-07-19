@@ -41,6 +41,7 @@ import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
 import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -63,6 +64,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import org.joda.time.DateTime
 import java.util.*
 import javax.inject.Inject
 
@@ -541,6 +543,7 @@ class PostCell : ConstraintLayout,
   private fun bindPost(postCellData: PostCellData) {
     this.isClickable = true
     this.isLongClickable = true
+    val seenPostFadeOutAnimRemainingTimeMs = getSeenPostFadeOutAnimRemainingTime(postCellData)
 
     if (postCellData.isSelectionMode) {
       setPostLinkableListener(postCellData, false)
@@ -555,7 +558,7 @@ class PostCell : ConstraintLayout,
     replies.setTextColor(postCellData.theme.textColorSecondary)
     divider.setBackgroundColor(postCellData.theme.dividerColor)
 
-    bindPostAttentionLabel(postCellData)
+    bindPostAttentionLabel(postCellData, seenPostFadeOutAnimRemainingTimeMs)
     postImageThumbnailViewsContainer.bindPostImages(postCellData)
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
     bindIcons(postCellData)
@@ -580,11 +583,35 @@ class PostCell : ConstraintLayout,
     }
 
     divider.setVisibilityFast(dividerVisibility)
-    startAttentionLabelFadeOutAnimation(postCellData)
+    startAttentionLabelFadeOutAnimation(postCellData, seenPostFadeOutAnimRemainingTimeMs)
 
     if (postCellCallback != null) {
       postCellCallback?.onPostBind(postCellData)
     }
+  }
+
+  private fun getSeenPostFadeOutAnimRemainingTime(postCellData: PostCellData): Int {
+    if (!postCellData.markUnseenPosts) {
+      return -1
+    }
+
+    val insertedAtMillis = postCellData.threadCellDataCallback
+      ?.getSeenPostOrNull(postCellData.postDescriptor)
+      ?.insertedAt
+      ?.millis
+
+    postCellData.threadCellDataCallback?.markPostAsSeen(postCellData.postDescriptor)
+
+    if (insertedAtMillis == null) {
+      return PostCellAnimator.ANIMATION_DURATION.toInt()
+    }
+
+    val deltaTime = DateTime.now().minus(insertedAtMillis).millis.toInt()
+    if (deltaTime < PostCellAnimator.ANIMATION_DURATION) {
+      return deltaTime
+    }
+
+    return -1
   }
 
   private fun bindBackgroundResources(postCellData: PostCellData) {
@@ -615,7 +642,10 @@ class PostCell : ConstraintLayout,
     }
   }
 
-  private fun startAttentionLabelFadeOutAnimation(postCellData: PostCellData) {
+  private fun startAttentionLabelFadeOutAnimation(
+    postCellData: PostCellData,
+    seenPostFadeOutAnimRemainingTimeMs: Int
+  ) {
     if (postCellCallback == null || postCellData.isSelectionMode) {
       return
     }
@@ -628,20 +658,20 @@ class PostCell : ConstraintLayout,
       return
     }
 
-    if (!postCellCallback!!.hasAlreadySeenPost(postCellData.postDescriptor)) {
+    if (seenPostFadeOutAnimRemainingTimeMs > 0) {
       unseenPostIndicatorFadeOutAnimation.start(
+        seenPostFadeOutAnimRemainingTimeMs,
         { alpha -> postAttentionLabel.setAlphaFast(alpha) },
         { postAttentionLabel.setVisibilityFast(View.INVISIBLE) }
       )
     }
   }
 
-  private fun bindPostAttentionLabel(postCellData: PostCellData) {
-    if (postCellCallback == null) {
-      return
-    }
-
-    if (postCellData.isSelectionMode) {
+  private fun bindPostAttentionLabel(postCellData: PostCellData, seenPostFadeOutAnimRemainingTimeMs: Int) {
+    if (postCellCallback == null || postCellData.isSelectionMode) {
+      postAttentionLabel.setVisibilityFast(View.INVISIBLE)
+      postAttentionLabel.setAlphaFast(1f)
+      postAttentionLabel.setBackgroundColorFast(0)
       return
     }
 
@@ -650,20 +680,25 @@ class PostCell : ConstraintLayout,
     // Filter label is more important than unseen post label
     if (postCellData.hasColoredFilter) {
       postAttentionLabel.setVisibilityFast(View.VISIBLE)
+      postAttentionLabel.setAlphaFast(1f)
       postAttentionLabel.setBackgroundColorFast(postCellData.filterHighlightedColor)
       return
     }
 
-    if (postCellData.markUnseenPosts) {
-      if (postCellCallback != null && !postCellCallback!!.hasAlreadySeenPost(postCellData.postDescriptor)) {
-        postAttentionLabel.setVisibilityFast(View.VISIBLE)
-        postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
-        return
-      }
+    val startAlpha = PostCellAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
+    val alphaIsOk = startAlpha > 0f && startAlpha <= 1f
+
+    if (alphaIsOk && postCellData.markUnseenPosts && seenPostFadeOutAnimRemainingTimeMs > 0) {
+      postAttentionLabel.setVisibilityFast(View.VISIBLE)
+      postAttentionLabel.setAlphaFast(startAlpha)
+      postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
+      return
     }
 
     // No filters for this post and the user has already seen it
     postAttentionLabel.setVisibilityFast(View.INVISIBLE)
+    postAttentionLabel.setAlphaFast(1f)
+    postAttentionLabel.setBackgroundColorFast(0)
   }
 
   private fun bindBackgroundColor(theme: ChanTheme) {

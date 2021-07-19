@@ -1,11 +1,10 @@
 package com.github.k1rakishou.model.data.post
 
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import org.joda.time.DateTime
 
 data class SeenPost(
-  val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-  val postNo: Long,
+  val postDescriptor: PostDescriptor,
   val insertedAt: DateTime
 ) {
 
@@ -15,16 +14,12 @@ data class SeenPost(
 
     other as SeenPost
 
-    if (threadDescriptor != other.threadDescriptor) return false
-    if (postNo != other.postNo) return false
+    if (postDescriptor != other.postDescriptor) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    var result = threadDescriptor.hashCode()
-    result = 31 * result + postNo.hashCode()
-    return result
+    return postDescriptor.hashCode()
   }
-
 }

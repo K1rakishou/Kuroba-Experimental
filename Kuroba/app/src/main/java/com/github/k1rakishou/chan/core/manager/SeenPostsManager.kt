@@ -1,13 +1,13 @@
 package com.github.k1rakishou.chan.core.manager
 
-import android.util.LruCache
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.mutableIteration
+import com.github.k1rakishou.common.linkedMapWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -32,9 +32,9 @@ class SeenPostsManager(
 ) {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val seenPostsMap = LruCache<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>(32)
+  private val seenPostsMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, SeenPost>>(256)
   @GuardedBy("lock")
-  private val seenPostsToPersist = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableSet<SeenPost>>()
+  private val seenPostsToPersist = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, SeenPost>>()
 
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(appScope)
 
@@ -82,7 +82,13 @@ class SeenPostsManager(
       }
 
     lock.write {
-      seenPostsMap.put(threadDescriptor, seenPosts.toMutableSet())
+      val resultMap = mutableMapWithCap<PostDescriptor, SeenPost>(seenPosts.size)
+
+      for (seenPost in seenPosts) {
+        resultMap[seenPost.postDescriptor] = seenPost
+      }
+
+      seenPostsMap.put(threadDescriptor, resultMap)
     }
   }
 
@@ -95,27 +101,41 @@ class SeenPostsManager(
       return
     }
 
+    val seenPost = SeenPost(
+      postDescriptor = postDescriptor,
+      insertedAt = DateTime.now()
+    )
+
+    createNewSeenPosts(listOf(seenPost))
+  }
+
+  private fun createNewSeenPosts(seenPosts: Collection<SeenPost>) {
+    if (seenPosts.isEmpty()) {
+      return
+    }
+
     val needPersist = lock.write {
-      val threadDescriptor = postDescriptor.threadDescriptor()
+      var needPersist = false
 
-      seenPostsToPersist.putIfNotContains(threadDescriptor, mutableSetOf())
+      for (seenPost in seenPosts) {
+        val postDescriptor = seenPost.postDescriptor
+        val threadDescriptor = postDescriptor.threadDescriptor()
 
-      val seenPost = SeenPost(
-        threadDescriptor = threadDescriptor,
-        postNo = postDescriptor.postNo,
-        insertedAt = DateTime.now()
-      )
+        seenPostsToPersist.putIfNotContains(threadDescriptor, mutableMapWithCap(32))
 
-      if (seenPostsMap[threadDescriptor]?.contains(seenPost) == true) {
-        return@write false
+        if (seenPostsMap[threadDescriptor]?.contains(postDescriptor) == true) {
+          continue
+        }
+
+        if (seenPostsToPersist[threadDescriptor]?.contains(postDescriptor) == true) {
+          continue
+        }
+
+        seenPostsToPersist[threadDescriptor]!!.put(postDescriptor, seenPost)
+        needPersist = true
       }
 
-      if (seenPostsToPersist[threadDescriptor]?.contains(seenPost) == true) {
-        return@write false
-      }
-
-      seenPostsToPersist[threadDescriptor]!!.add(seenPost)
-      return@write true
+      return@write needPersist
     }
 
     if (!needPersist) {
@@ -123,31 +143,47 @@ class SeenPostsManager(
     }
 
     debouncingCoroutineExecutor.post(DEBOUNCE_TIMEOUT_MS) {
-      val threadDescriptor = postDescriptor.descriptor as ChanDescriptor.ThreadDescriptor
+      val threadDescriptors = seenPosts.toHashSetBy { seenPost -> seenPost.postDescriptor.threadDescriptor() }
 
-      val toPersist = lock.write {
-        return@write seenPostsToPersist.remove(postDescriptor.threadDescriptor())
-          ?.toMutableSet()
+      val toPersistMap = lock.write {
+        val toPersistMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Set<SeenPost>>()
+
+        for (threadDescriptor in threadDescriptors) {
+          val seenPostsMap = seenPostsToPersist.remove(threadDescriptor)
+            ?.toMutableMap()
+
+          if (seenPostsMap == null || seenPostsMap.values.isEmpty()) {
+            continue
+          }
+
+          toPersistMap[threadDescriptor] = seenPostsMap.values.toSet()
+        }
+
+        return@write toPersistMap
       }
 
-      if (toPersist == null) {
+      if (toPersistMap.isEmpty()) {
         return@post
       }
 
-      if (verboseLogsEnabled) {
-        Logger.d(TAG, "onPostBind() persisting ${toPersist.size} posts")
-      }
-
-      seenPostsRepository.insertMany(threadDescriptor, toPersist)
-        .safeUnwrap { error ->
-          Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
-            "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
-          return@post
+      toPersistMap.forEach { (threadDescriptor, seenPostSet) ->
+        if (verboseLogsEnabled) {
+          Logger.d(TAG, "onPostBind() persisting ${seenPostSet.size} posts")
         }
 
-      lock.write {
-        seenPostsMap.putIfNotContains(threadDescriptor, mutableSetOf())
-        seenPostsMap[threadDescriptor]!!.addAll(toPersist)
+        seenPostsRepository.insertMany(threadDescriptor, seenPostSet)
+          .safeUnwrap { error ->
+            Logger.e(TAG, "Error while trying to store new seen post with threadDescriptor " +
+                "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
+            return@post
+          }
+
+        lock.write {
+          seenPostsMap.putIfNotContains(threadDescriptor, mutableMapWithCap(32))
+
+          val innerMap = seenPostsMap[threadDescriptor]!!
+          seenPostSet.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
+        }
       }
     }
   }
@@ -156,33 +192,37 @@ class SeenPostsManager(
     // No-op (maybe something will be added here in the future)
   }
 
-  fun hasAlreadySeenPost(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor): Boolean {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      return true
-    }
-
-    if (!isEnabled()) {
-      return true
+  /**
+   * When null is returned that means that we are supposed think that all posts were seen (usually
+   * this is used in catalogs or when this feature is disabled to not show the post label).
+   * When empty map is returned that means that all posts for this thread are unseen.
+   * */
+  fun getSeenPosts(
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: Collection<PostDescriptor>
+  ): Map<PostDescriptor, SeenPost>? {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor || !isEnabled()) {
+      // When in catalog return empty set which is supposed to mean that all posts have already been
+      // seen (to hide the unseen post label)
+      return null
     }
 
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
 
-    val seenPost = lock.read {
-      // TODO(KurobaEx / @GhostPosts):
-      seenPostsMap[threadDescriptor]
-        ?.firstOrNull { seenPost -> seenPost.postNo == postDescriptor.postNo }
+    return lock.read {
+      val resultMap = mutableMapWithCap<PostDescriptor, SeenPost>(postDescriptors.size)
+
+      for (postDescriptor in postDescriptors) {
+        val seenPost = seenPostsMap[threadDescriptor]?.get(postDescriptor)
+        if (seenPost == null) {
+          continue
+        }
+
+        resultMap[postDescriptor] = seenPost
+      }
+
+      return@read resultMap
     }
-
-    var hasSeenPost = false
-
-    if (seenPost != null) {
-      // We need this time check so that we don't remove the unseen post label right after
-      // all loaders have completed loading and updated the post.
-      val deltaTime = System.currentTimeMillis() - seenPost.insertedAt.millis
-      hasSeenPost = deltaTime > PostCellAnimator.UnseenPostIndicatorFadeAnimation.ANIMATIONS_TOTAL_TIME
-    }
-
-    return hasSeenPost
   }
 
   private fun isEnabled() = ChanSettings.markUnseenPosts.get()
@@ -191,8 +231,8 @@ class SeenPostsManager(
     lock.write {
       when (threadDeleteEvent) {
         ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${seenPostsMap.size()} threads")
-          seenPostsMap.evictAll()
+          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${seenPostsMap.size} threads")
+          seenPostsMap.clear()
         }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedThreads = 0
@@ -208,17 +248,8 @@ class SeenPostsManager(
           var removedPosts = 0
 
           threadDeleteEvent.entries.forEach { (threadDescriptor, originalPostDescriptor) ->
-            val seenPostsSet = seenPostsMap[threadDescriptor]
-              ?: return@forEach
-
-            seenPostsSet.mutableIteration { mutableIterator, seenPost ->
-              if (seenPost.postNo != originalPostDescriptor.postNo) {
-                ++removedPosts
-                mutableIterator.remove()
-              }
-
-              return@mutableIteration true
-            }
+            ++removedPosts
+            seenPostsMap[threadDescriptor]?.remove(originalPostDescriptor)
           }
 
           Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} posts")

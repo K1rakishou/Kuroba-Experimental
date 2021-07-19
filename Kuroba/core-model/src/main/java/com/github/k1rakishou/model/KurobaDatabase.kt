@@ -83,6 +83,7 @@ import com.github.k1rakishou.model.migrations.Migration_v18_to_v19
 import com.github.k1rakishou.model.migrations.Migration_v19_to_v20
 import com.github.k1rakishou.model.migrations.Migration_v1_to_v2
 import com.github.k1rakishou.model.migrations.Migration_v20_to_v21
+import com.github.k1rakishou.model.migrations.Migration_v21_to_v22
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
 import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
@@ -132,7 +133,7 @@ import java.util.concurrent.atomic.AtomicInteger
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 21,
+  version = 22,
   exportSchema = true
 )
 @TypeConverters(
@@ -245,6 +246,7 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v18_to_v19(),
           Migration_v19_to_v20(),
           Migration_v20_to_v21(),
+          Migration_v21_to_v22(),
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()
