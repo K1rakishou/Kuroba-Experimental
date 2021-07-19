@@ -276,7 +276,6 @@ class PostCell : ConstraintLayout,
     titleIconsThumbnailBarrier = findViewById(R.id.title_icons_thumbnail_barrier)
 
     val textSizeSp = postCellData.textSizeSp
-    val endPadding = dp(16f)
 
     title = findViewById(R.id.title)
     imageFileName = findViewById(R.id.image_filename)
@@ -285,14 +284,15 @@ class PostCell : ConstraintLayout,
     replies = findViewById(R.id.replies)
     divider = findViewById(R.id.divider)
     postAttentionLabel = findViewById(R.id.post_attention_label)
+    goToPostButton = findViewById(R.id.go_to_post_button)
+
     title.textSize = textSizeSp.toFloat()
     iconSizePx = sp(textSizeSp - 3.toFloat())
-    icons.setSpacing(dp(4f))
+    icons.setSpacing(iconsSpacing)
     icons.height = sp(textSizeSp.toFloat())
     title.gravity = GravityCompat.START
     icons.rtl(false)
 
-    goToPostButton = findViewById(R.id.go_to_post_button)
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
 
@@ -312,12 +312,12 @@ class PostCell : ConstraintLayout,
       }
     }
 
-    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPadding, bottom = 0)
+    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPaddingPx, bottom = 0)
     icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
     comment.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = vertPaddingPx)
 
     if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = endPadding, bottom = 0)
+      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = endPaddingPx, bottom = 0)
     }
 
     // replies view always has horizPaddingPx padding since we never shift it.
@@ -1308,6 +1308,8 @@ class PostCell : ConstraintLayout,
 
     val horizPaddingPx = dp(4f)
     val vertPaddingPx = dp(4f)
+    val endPaddingPx = dp(16f)
+    val iconsSpacing = dp(4f)
 
     // Empty comment or comment with only a quote or something like that
     private const val SUPER_SHORT_COMMENT_LENGTH = 16
