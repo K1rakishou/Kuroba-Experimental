@@ -188,6 +188,9 @@ open class ChanPost(
     if (!arePostImagesTheSame(other)) {
       return false
     }
+    if (!arePostIconsTheSame(other)) {
+      return false
+    }
     if (postComment != other.postComment) {
       return false
     }
@@ -215,6 +218,14 @@ open class ChanPost(
     }
 
     return true
+  }
+
+  private fun arePostIconsTheSame(other: ChanPost): Boolean {
+    if (postIcons.size != other.postIcons.size) {
+      return false
+    }
+
+    return postIcons.indices.none { postIcons[it] != other.postIcons[it] }
   }
 
   private fun arePostImagesTheSame(other: ChanPost): Boolean {

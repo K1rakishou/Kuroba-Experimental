@@ -66,6 +66,12 @@ class PostIcons @JvmOverloads constructor(
     invalidate()
   }
 
+  fun clear() {
+    previousIcons = 0
+    icons = 0
+    httpIcons.clear()
+  }
+
   fun edit() {
     previousIcons = icons
     httpIcons.clear()

@@ -247,6 +247,7 @@ class PostCell : ConstraintLayout,
   }
 
   private fun unbindPost(postCellData: PostCellData?, isActuallyRecycling: Boolean) {
+    icons.clear()
     icons.cancelRequests()
 
     postImageThumbnailViewsContainer.unbindContainer()
