@@ -104,6 +104,10 @@ class PostRepliesAdapter(
     notifyDataSetChanged()
   }
 
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    threadCellData.resetCachedPostData(postDescriptor)
+  }
+
   suspend fun onPostUpdated(updatedPost: ChanPost) {
     val postDescriptor = updatedPost.postDescriptor
 

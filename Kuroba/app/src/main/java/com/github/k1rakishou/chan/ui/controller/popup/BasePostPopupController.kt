@@ -133,6 +133,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     }
   }
 
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    (postsView.adapter as? PostRepliesAdapter)?.resetCachedPostData(postDescriptor)
+  }
+
   fun getThumbnail(postImage: ChanPostImage): ThumbnailView? {
     if (!::postsView.isInitialized) {
       return null

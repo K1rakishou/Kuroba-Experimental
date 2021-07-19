@@ -910,6 +910,12 @@ class ThreadLayout @JvmOverloads constructor(
     serializedCoroutineExecutor.post {
       postFilterManager.remove(post.postDescriptor)
       postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
+
+      if (postPopupHelper.isOpen) {
+        postPopupHelper.resetCachedPostData(post.postDescriptor)
+        postPopupHelper.onPostUpdated(post)
+      }
+
       threadListLayout.resetCachedPostData(post.postDescriptor)
       threadListLayout.onPostUpdated(post)
     }

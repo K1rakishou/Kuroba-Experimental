@@ -456,8 +456,7 @@ class PostCell : ConstraintLayout,
     constraintSet.clone(this)
 
     if (shiftCommentToThumbnailSideMode) {
-      titleIconsThumbnailBarrier?.referencedIds =
-        intArrayOf(R.id.title, R.id.image_filename, R.id.icons)
+      constraintSet.createBarrier(R.id.title_icons_thumbnail_barrier, Barrier.BOTTOM, 0, R.id.title, R.id.image_filename, R.id.icons)
 
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
@@ -480,8 +479,7 @@ class PostCell : ConstraintLayout,
         ConstraintSet.CHAIN_SPREAD
       )
     } else {
-      titleIconsThumbnailBarrier?.referencedIds =
-        intArrayOf(R.id.thumbnails_container, R.id.title, R.id.image_filename, R.id.icons)
+      constraintSet.createBarrier(R.id.title_icons_thumbnail_barrier, Barrier.BOTTOM, 0, R.id.thumbnails_container, R.id.title, R.id.image_filename, R.id.icons)
 
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {

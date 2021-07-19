@@ -123,6 +123,10 @@ class PostPopupHelper(
     return dataQueue[dataQueue.size - 1]
   }
 
+  fun resetCachedPostData(postDescriptor: PostDescriptor) {
+    presentingPostRepliesController?.resetCachedPostData(postDescriptor)
+  }
+
   suspend fun onPostUpdated(updatedPost: ChanPost) {
     BackgroundUtils.ensureMainThread()
     presentingPostRepliesController?.onPostUpdated(updatedPost)

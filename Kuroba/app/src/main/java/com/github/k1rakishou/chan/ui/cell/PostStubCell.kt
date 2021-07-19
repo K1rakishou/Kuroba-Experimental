@@ -141,11 +141,13 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
     title.textSize = textSizeSp.toFloat()
 
     val paddingPx = dp((textSizeSp - 6).toFloat())
-    title.setPadding(paddingPx, VERTICAL_PADDING, 0, VERTICAL_PADDING)
+    title.setPadding(paddingPx, VERTICAL_PADDING, paddingPx, VERTICAL_PADDING)
+
+    title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
 
     val dividerParams = divider.layoutParams as LayoutParams
-    dividerParams.leftMargin = paddingPx
-    dividerParams.rightMargin = paddingPx
+    dividerParams.leftMargin = PostCell.horizPaddingPx
+    dividerParams.rightMargin = PostCell.horizPaddingPx
     divider.layoutParams = dividerParams
 
     setBackgroundResource(R.drawable.item_background)

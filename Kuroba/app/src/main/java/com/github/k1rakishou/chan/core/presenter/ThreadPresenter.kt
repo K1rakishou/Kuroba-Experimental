@@ -1900,7 +1900,6 @@ class ThreadPresenter @Inject constructor(
 
   private fun showPostInfo(post: ChanPost) {
     val text = StringBuilder(128)
-
     val descriptor = post.postDescriptor.descriptor
 
     text
@@ -1909,10 +1908,27 @@ class ThreadPresenter @Inject constructor(
       .append("Board code: ")
       .appendLine(descriptor.boardCode())
 
-    if (descriptor is ChanDescriptor.ThreadDescriptor) {
-      text
-        .append("Thread id: ")
-        .appendLine(descriptor.threadNo)
+    when (descriptor) {
+      is ChanDescriptor.ThreadDescriptor -> {
+        text
+          .append("Thread id: ")
+          .appendLine(descriptor.threadNo)
+
+        text
+          .append("Post id: ")
+          .appendLine(post.postNo())
+
+        if (post.postSubNo() > 0) {
+          text
+            .append("Post sub id: ")
+            .appendLine(post.postSubNo())
+        }
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        text
+          .append("Thread id: ")
+          .appendLine(post.postNo())
+      }
     }
 
     siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())?.let { site ->
@@ -1934,18 +1950,18 @@ class ThreadPresenter @Inject constructor(
         .append(image.serverFilename)
         .append(".")
         .appendLine(image.extension)
-
-      if (image.isInlined) {
-        text.append("\nLinked file")
-      } else {
-        text
-          .append(" \nDimensions: ")
-          .append(image.imageWidth)
-          .append("x")
-          .append(image.imageHeight)
-          .append("\nSize: ")
-          .append(getReadableFileSize(image.size))
-      }
+        .appendLine()
+        .append("Thumbnail url: ")
+        .appendLine(image.actualThumbnailUrl)
+        .append("Full image url: ")
+        .appendLine(image.imageUrl)
+        .appendLine()
+        .append("Dimensions: ")
+        .append(image.imageWidth)
+        .append("x")
+        .appendLine(image.imageHeight)
+        .append("Size: ")
+        .append(getReadableFileSize(image.size))
 
       if (image.spoiler && image.isInlined) {
         // all linked files are spoilered, don't say that
@@ -1979,7 +1995,7 @@ class ThreadPresenter @Inject constructor(
           }
 
           text
-            .append("\nCount: ")
+            .append("\nPosts in this thread: ")
             .append(count)
         }
       }
