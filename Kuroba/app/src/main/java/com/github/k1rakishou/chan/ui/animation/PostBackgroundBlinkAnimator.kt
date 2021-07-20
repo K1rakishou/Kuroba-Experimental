@@ -4,7 +4,7 @@ import android.animation.Animator
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.animation.ValueAnimator.REVERSE
-import android.view.animation.LinearInterpolator
+import androidx.interpolator.view.animation.FastOutSlowInInterpolator
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 
 object PostBackgroundBlinkAnimator {
@@ -28,10 +28,10 @@ object PostBackgroundBlinkAnimator {
             }
           })
 
-          duration = 250L
-          repeatCount = 4
+          duration = 200L
+          repeatCount = 8
           repeatMode = REVERSE
-          interpolator = LinearInterpolator()
+          interpolator = FastOutSlowInInterpolator()
         }
 
         play(colorAnimation)
