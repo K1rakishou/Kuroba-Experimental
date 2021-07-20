@@ -569,14 +569,17 @@ data class PostCellData(
     fun isEmpty(): Boolean = query.isEmpty()
   }
 
+  // vvv When updating any of these don't forget to update the flags !!! vvv
   enum class PostCellItemViewType(val viewTypeRaw: Int) {
-    TypePostZeroOrSingleThumbnailLeftAlignment(0),
-    TypePostZeroOrSingleThumbnailRightAlignment(1),
-    TypePostMultipleThumbnails(2);
+    TypePostZeroOrSingleThumbnailLeftAlignment(TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT),
+    TypePostZeroOrSingleThumbnailRightAlignment(TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT),
+    TypePostMultipleThumbnails(TYPE_POST_MULTIPLE_THUMBNAILS),
+    TypePostStub(TYPE_POST_STUB),
+    TypePostCard(TYPE_POST_CARD);
 
     companion object {
       fun isAnyPostType(type: Int): Boolean {
-        if (type in 0..2) {
+        if (type in TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT..TYPE_POST_CARD) {
           return true
         }
 
@@ -584,6 +587,7 @@ data class PostCellData(
       }
     }
   }
+  // ^^^ When updating any of these don't forget to update the flags !!! ^^^
 
   interface ThreadCellDataCallback {
     fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost?
@@ -593,16 +597,19 @@ data class PostCellData(
   companion object {
     private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
-    private const val COMMENT_MAX_LENGTH_STAGGER = 500
+    private const val COMMENT_MAX_LENGTH_STAGGER = 400
     private const val POST_STUB_TITLE_MAX_LENGTH = 100
 
+    // vvv When updating any of these don't forget to update PostCellItemViewType !!! vvv
     const val TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT = 0
     const val TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT = 1
     const val TYPE_POST_MULTIPLE_THUMBNAILS = 2
+    const val TYPE_POST_STUB = 3
+    const val TYPE_POST_CARD = 4
+    // ^^^ When updating any of these don't forget to update PostCellItemViewType !!! ^^^
 
-    const val TYPE_POST_STUB = 10
-    const val TYPE_STATUS = 11
-    const val TYPE_LAST_SEEN = 12
+    const val TYPE_STATUS = 10
+    const val TYPE_LAST_SEEN = 11
   }
 
 }

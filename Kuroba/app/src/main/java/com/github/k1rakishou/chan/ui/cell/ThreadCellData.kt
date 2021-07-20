@@ -245,6 +245,7 @@ class ThreadCellData(
     highlightedPostsByPostId.clear()
     highlightedPostsByTripcode.clear()
     selectedPosts.clear()
+    seenPostsMap.clear()
 
     postCellDataList.forEach { postCellData -> postCellData.cleanup() }
     postCellDataList.clear()

@@ -99,11 +99,6 @@ class PostRepliesAdapter(
     notifyDataSetChanged()
   }
 
-  fun clear() {
-    threadCellData.cleanup()
-    notifyDataSetChanged()
-  }
-
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
     threadCellData.resetCachedPostData(postDescriptor)
   }

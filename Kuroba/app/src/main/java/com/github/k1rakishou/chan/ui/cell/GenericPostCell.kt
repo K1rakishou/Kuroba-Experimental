@@ -48,7 +48,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
     val time = measureTime { setPostCellInternal(postCellData) }
 
     if (isDevBuild()) {
-      PostCellStatistics.onPostBound(getChildAt(0) as? PostCellInterface, time)
+      PostCellStatistics.onPostBound(getChildPostCell(), time)
     }
   }
 
@@ -139,7 +139,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
     val time = measureTime { super.onMeasure(widthMeasureSpec, heightMeasureSpec) }
 
     if (isDevBuild()) {
-      PostCellStatistics.onPostMeasured(getChildAt(0) as? PostCellInterface, time)
+      PostCellStatistics.onPostMeasured(getChildPostCell(), time)
     }
   }
 

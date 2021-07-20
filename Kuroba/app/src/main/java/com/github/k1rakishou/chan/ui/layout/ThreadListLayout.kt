@@ -384,9 +384,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     replyLayout.onCreate(this, this)
 
-    recyclerView.recycledViewPool.setMaxRecycledViews(PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT, 10)
-    recyclerView.recycledViewPool.setMaxRecycledViews(PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT, 10)
-    recyclerView.recycledViewPool.setMaxRecycledViews(PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS, 10)
+    val pool = recyclerView.recycledViewPool
+    pool.setMaxRecycledViews(PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT, 10)
+    pool.setMaxRecycledViews(PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT, 10)
+    pool.setMaxRecycledViews(PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS, 10)
+    pool.setMaxRecycledViews(PostCellData.TYPE_POST_STUB, 10)
+    pool.setMaxRecycledViews(PostCellData.TYPE_POST_CARD, 10)
 
     recyclerView.adapter = postAdapter
     recyclerView.addOnScrollListener(scrollListener)

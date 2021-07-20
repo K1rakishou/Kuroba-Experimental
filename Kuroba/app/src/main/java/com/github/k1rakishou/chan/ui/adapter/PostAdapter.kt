@@ -133,7 +133,8 @@ class PostAdapter(
       PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT,
       PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT,
       PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS,
-      PostCellData.TYPE_POST_STUB -> {
+      PostCellData.TYPE_POST_STUB,
+      PostCellData.TYPE_POST_CARD -> {
         return PostViewHolder(GenericPostCell(inflateContext))
       }
       PostCellData.TYPE_LAST_SEEN -> {
@@ -164,7 +165,8 @@ class PostAdapter(
       PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_LEFT_ALIGNMENT,
       PostCellData.TYPE_POST_ZERO_OR_SINGLE_THUMBNAIL_RIGHT_ALIGNMENT,
       PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS,
-      PostCellData.TYPE_POST_STUB -> {
+      PostCellData.TYPE_POST_STUB,
+      PostCellData.TYPE_POST_CARD -> {
         checkNotNull(threadCellData.chanDescriptor) { "chanDescriptor cannot be null" }
 
         val postViewHolder = holder as PostViewHolder
@@ -425,6 +427,12 @@ class PostAdapter(
   }
 
   private fun getPostCellItemViewType(postCellData: PostCellData): Int {
+    if (postCellData.stub) {
+      return PostCellData.PostCellItemViewType.TypePostStub.viewTypeRaw
+    }
+
+    val postViewMode = postCellData.boardPostViewMode
+
     val postAlignmentMode = when (postCellData.chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
@@ -432,17 +440,25 @@ class PostAdapter(
 
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
 
-    if (postCellData.post.postImages.size <= 1) {
-      when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> {
-          return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailLeftAlignment.viewTypeRaw
-        }
-        ChanSettings.PostAlignmentMode.AlignRight -> {
-          return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailRightAlignment.viewTypeRaw
+    when (postViewMode) {
+      BoardPostViewMode.LIST -> {
+        if (postCellData.post.postImages.size <= 1) {
+          when (postAlignmentMode) {
+            ChanSettings.PostAlignmentMode.AlignLeft -> {
+              return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailLeftAlignment.viewTypeRaw
+            }
+            ChanSettings.PostAlignmentMode.AlignRight -> {
+              return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailRightAlignment.viewTypeRaw
+            }
+          }
+        } else {
+          return PostCellData.PostCellItemViewType.TypePostMultipleThumbnails.viewTypeRaw
         }
       }
-    } else {
-      return PostCellData.PostCellItemViewType.TypePostMultipleThumbnails.viewTypeRaw
+      BoardPostViewMode.GRID,
+      BoardPostViewMode.STAGGER -> {
+        return PostCellData.PostCellItemViewType.TypePostCard.viewTypeRaw
+      }
     }
   }
 
