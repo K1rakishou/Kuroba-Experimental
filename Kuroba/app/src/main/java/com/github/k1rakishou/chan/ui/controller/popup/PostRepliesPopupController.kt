@@ -78,14 +78,15 @@ class PostRepliesPopupController(
     dataView.id = R.id.post_popup_replies_view_id
 
     val repliesAdapter = PostRepliesAdapter(
-      data.postViewMode,
-      postCellCallback,
-      chanDescriptor,
-      data.forPostWithDescriptor,
-      chanThreadViewableInfoManager,
-      postFilterManager,
-      seenPostsManager,
-      themeEngine.chanTheme
+      postViewMode = data.postViewMode,
+      postCellCallback = postCellCallback,
+      chanDescriptor = chanDescriptor,
+      clickedPostDescriptor = data.forPostWithDescriptor,
+      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      postFilterManager = postFilterManager,
+      seenPostsManager = seenPostsManager,
+      postHighlightManager = postHighlightManager,
+      initialTheme = themeEngine.chanTheme
     )
 
     repliesAdapter.setHasStableIds(true)

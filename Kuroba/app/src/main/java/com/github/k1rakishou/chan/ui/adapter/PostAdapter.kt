@@ -24,6 +24,7 @@ import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
@@ -58,12 +59,14 @@ class PostAdapter(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var seenPostsManager: SeenPostsManager
+  @Inject
+  lateinit var postHighlightManager: PostHighlightManager
 
   private val postAdapterCallback: PostAdapterCallback
   private val postCellCallback: PostCellCallback
   private val recyclerView: RecyclerView
   private val statusCellCallback: ThreadStatusCell.Callback
-  private val threadCellData: ThreadCellData
+  val threadCellData: ThreadCellData
 
   /**
    * A hack for OnDemandContentLoader see comments in [onViewRecycled]
@@ -107,10 +110,11 @@ class PostAdapter(
     this.statusCellCallback = statusCellCallback
 
     threadCellData = ThreadCellData(
-      chanThreadViewableInfoManager,
-      postFilterManager,
-      seenPostsManager,
-      themeEngine.chanTheme
+      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      postFilterManager = postFilterManager,
+      seenPostsManager = seenPostsManager,
+      postHighlightManager = postHighlightManager,
+      initialTheme = themeEngine.chanTheme
     )
 
     themeEngine.preloadAttributeResource(
@@ -312,26 +316,6 @@ class PostAdapter(
         }
       }
     }
-  }
-
-  fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
-    threadCellData.highlightPosts(postDescriptors)
-    notifyDataSetChanged()
-  }
-
-  fun highlightPostId(postId: String?) {
-    threadCellData.highlightPostsByPostId(postId)
-    notifyDataSetChanged()
-  }
-
-  fun highlightPostTripcode(tripcode: CharSequence?) {
-    threadCellData.highlightPostsByTripcode(tripcode)
-    notifyDataSetChanged()
-  }
-
-  fun selectPosts(postDescriptors: Set<PostDescriptor>) {
-    threadCellData.selectPosts(postDescriptors)
-    notifyDataSetChanged()
   }
 
   fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {

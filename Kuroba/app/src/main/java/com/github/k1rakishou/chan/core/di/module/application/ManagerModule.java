@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderMana
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
@@ -308,7 +309,8 @@ public class ManagerModule {
             CoroutineScope appScope,
             ApplicationVisibilityManager applicationVisibilityManager,
             ArchivesManager archivesManager,
-            BookmarksRepository bookmarksRepository
+            BookmarksRepository bookmarksRepository,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         return new BookmarksManager(
                 AppModuleAndroidUtils.isDevBuild(),
@@ -317,7 +319,8 @@ public class ManagerModule {
                 applicationVisibilityManager,
                 archivesManager,
                 bookmarksRepository,
-                SiteRegistry.INSTANCE
+                SiteRegistry.INSTANCE,
+                currentOpenedDescriptorStateManager
         );
     }
 
@@ -343,7 +346,8 @@ public class ManagerModule {
             FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
             ParsePostRepliesUseCase parsePostRepliesUseCase,
             ReplyNotificationsHelper replyNotificationsHelper,
-            LastPageNotificationsHelper lastPageNotificationsHelper
+            LastPageNotificationsHelper lastPageNotificationsHelper,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         return new BookmarkWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
@@ -355,7 +359,8 @@ public class ManagerModule {
                 fetchThreadBookmarkInfoUseCase,
                 parsePostRepliesUseCase,
                 replyNotificationsHelper,
-                lastPageNotificationsHelper
+                lastPageNotificationsHelper,
+                currentOpenedDescriptorStateManager
         );
     }
 
@@ -368,7 +373,8 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             ArchivesManager archivesManager,
             BookmarkWatcherDelegate bookmarkWatcherDelegate,
-            ApplicationVisibilityManager applicationVisibilityManager
+            ApplicationVisibilityManager applicationVisibilityManager,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         return new BookmarkForegroundWatcher(
                 ChanSettings.verboseLogs.get(),
@@ -378,7 +384,8 @@ public class ManagerModule {
                 bookmarksManager,
                 archivesManager,
                 bookmarkWatcherDelegate,
-                applicationVisibilityManager
+                applicationVisibilityManager,
+                currentOpenedDescriptorStateManager
         );
     }
 
@@ -439,7 +446,8 @@ public class ManagerModule {
             Context appContext,
             PageRequestManager pageRequestManager,
             BookmarksManager bookmarksManager,
-            ThemeEngine themeEngine
+            ThemeEngine themeEngine,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         return new LastPageNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
@@ -447,7 +455,8 @@ public class ManagerModule {
                 getNotificationManagerCompat(),
                 pageRequestManager,
                 bookmarksManager,
-                themeEngine
+                themeEngine,
+                currentOpenedDescriptorStateManager
         );
     }
 
@@ -768,6 +777,12 @@ public class ManagerModule {
                 threadDownloadProgressNotifier,
                 threadDownloaderPersistPostsInDatabaseUseCase
         );
+    }
+
+    @Singleton
+    @Provides
+    public CurrentOpenedDescriptorStateManager provideCurrentOpenedDescriptorStateManager() {
+        return new CurrentOpenedDescriptorStateManager();
     }
 
 }

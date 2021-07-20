@@ -655,9 +655,9 @@ open class ViewThreadController(
     }
 
     if (chanDescriptor is ThreadDescriptor) {
-      threadController.selectPost(chanDescriptor.toOriginalPostDescriptor())
+      threadController.highlightPost(postDescriptor = chanDescriptor.toOriginalPostDescriptor(), blink = false)
     } else {
-      threadController.selectPost(null)
+      threadController.highlightPost(postDescriptor = null, blink = false)
     }
   }
 

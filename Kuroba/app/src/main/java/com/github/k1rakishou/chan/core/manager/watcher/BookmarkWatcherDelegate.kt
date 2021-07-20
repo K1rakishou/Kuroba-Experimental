@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.ReplyNotificationsHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase
@@ -38,7 +39,8 @@ class BookmarkWatcherDelegate(
   private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
   private val parsePostRepliesUseCase: ParsePostRepliesUseCase,
   private val replyNotificationsHelper: ReplyNotificationsHelper,
-  private val lastPageNotificationsHelper: LastPageNotificationsHelper
+  private val lastPageNotificationsHelper: LastPageNotificationsHelper,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
 
   suspend fun doWork(
@@ -64,7 +66,7 @@ class BookmarkWatcherDelegate(
       return@Try doWorkInternal(
         isCalledFromForeground = isCalledFromForeground,
         updateCurrentlyOpenedThread = updateCurrentlyOpenedThread,
-        currentThreadDescriptor = bookmarksManager.currentlyOpenedThread()
+        currentThreadDescriptor = currentOpenedDescriptorStateManager.currentThreadDescriptor
       )
     }
 

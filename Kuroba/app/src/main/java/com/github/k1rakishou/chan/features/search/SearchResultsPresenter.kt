@@ -411,5 +411,7 @@ internal class SearchResultsPresenter(
       .append(ISODateTimeFormat.hourMinuteSecond())
       .toFormatter()
       .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
+
+    const val CHAN4_SEARCH_ENDPOINT = "find.4chan"
   }
 }

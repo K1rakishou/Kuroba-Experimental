@@ -5,6 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
@@ -33,7 +34,8 @@ class BookmarkForegroundWatcher(
   private val bookmarksManager: BookmarksManager,
   private val archivesManager: ArchivesManager,
   private val bookmarkWatcherDelegate: BookmarkWatcherDelegate,
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val applicationVisibilityManager: ApplicationVisibilityManager,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private val channel = Channel<Unit>(Channel.RENDEZVOUS)
 
@@ -107,7 +109,7 @@ class BookmarkForegroundWatcher(
 
     bookmarksManager.awaitUntilInitialized()
 
-    if (bookmarksManager.currentlyOpenedThread() != threadDescriptor) {
+    if (currentOpenedDescriptorStateManager.currentThreadDescriptor != threadDescriptor) {
       return
     }
 

@@ -27,7 +27,8 @@ class SiteFirewallBypassController(
   context: Context,
   private val firewallType: FirewallType,
   private val urlToOpen: String,
-  private val onResult: (CookieResult) -> Unit
+  private val onResult: (CookieResult) -> Unit,
+  private val timeoutMs: Long = DEFAULT_TIMEOUT_MS
 ) : BaseFloatingController(context) {
 
   @Inject
@@ -47,10 +48,20 @@ class SiteFirewallBypassController(
   private fun createWebClient(mode: FirewallType): WebViewClient {
     return when (mode) {
       FirewallType.Cloudflare -> {
-        CloudFlareCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
+        CloudFlareCheckBypassWebClient(
+          originalRequestUrlHost = urlToOpen,
+          cookieManager = cookieManager,
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred,
+          timeoutMs = timeoutMs
+        )
       }
       FirewallType.DvachAntiSpam -> {
-        DvachAntiSpamCheckBypassWebClient(urlToOpen, cookieManager, cookieResultCompletableDeferred)
+        DvachAntiSpamCheckBypassWebClient(
+          originalRequestUrlHost = urlToOpen,
+          cookieManager = cookieManager,
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred,
+          timeoutMs = timeoutMs
+        )
       }
     }
   }
@@ -139,7 +150,7 @@ class SiteFirewallBypassController(
       is CookieResult.Error -> {
         Logger.e(TAG, "Error: ${cookieResult.exception.errorMessageOrClassName()}")
       }
-      CookieResult.Timeout -> {
+      is CookieResult.Timeout -> {
         Logger.e(TAG, "Timeout")
       }
       CookieResult.Canceled -> {
@@ -199,5 +210,7 @@ class SiteFirewallBypassController(
   companion object {
     private const val TAG = "CloudFlareBypassController"
     const val MAX_PAGE_LOADS_COUNT = 5
+    const val DEFAULT_TIMEOUT_MS = 15_000L
+    const val CHAN4_SEARCH_TIMEOUT_MS = 30_000L
   }
 }

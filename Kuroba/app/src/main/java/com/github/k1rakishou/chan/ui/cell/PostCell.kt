@@ -40,9 +40,12 @@ import androidx.core.view.updateLayoutParams
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.ui.animation.PostCellAnimator
-import com.github.k1rakishou.chan.ui.animation.PostCellAnimator.createUnseenPostIndicatorFadeAnimation
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.ui.animation.PostBackgroundBlinkAnimator.createPostBackgroundBlinkAnimation
+import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator
+import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
@@ -57,6 +60,7 @@ import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -64,6 +68,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import java.util.*
 import javax.inject.Inject
@@ -77,6 +83,8 @@ class PostCell : ConstraintLayout,
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var postHighlightManager: PostHighlightManager
 
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
   private lateinit var title: TextView
@@ -95,16 +103,25 @@ class PostCell : ConstraintLayout,
   private var needAllowParentToInterceptTouchEvents = false
   private var needAllowParentToInterceptTouchEventsDownEventEnded = false
   private var iconSizePx = 0
+  private var postCellHighlight: PostHighlightManager.PostHighlight? = null
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
   private val spoilerClickSpan: BackgroundColorSpan
 
+  private val scope = KurobaCoroutineScope()
   private val commentMovementMethod = PostViewMovementMethod()
   private val titleMovementMethod = PostViewFastMovementMethod()
   private val postCommentLongtapDetector = PostCommentLongtapDetector(context)
-  private val unseenPostIndicatorFadeOutAnimation = createUnseenPostIndicatorFadeAnimation()
   private val doubleTapGestureDetector = GestureDetector(context, PostCellDoubleTapDetector())
+
+  private val unseenPostIndicatorFadeOutAnimation = lazy(LazyThreadSafetyMode.NONE) {
+    createUnseenPostIndicatorFadeAnimation()
+  }
+
+  private val postBackgroundBlinkAnimation = lazy(LazyThreadSafetyMode.NONE) {
+    createPostBackgroundBlinkAnimation()
+  }
 
   private val customSelectionActionModeCallback = object : ActionMode.Callback {
     private var quoteMenuItem: MenuItem? = null
@@ -227,9 +244,60 @@ class PostCell : ConstraintLayout,
     this.postCellData = postCellData.fullCopy()
     this.postCellCallback = postCellData.postCellCallback
 
-    bindPost(postCellData)
+    this.postCellHighlight = postHighlightManager.getPostHighlight(
+      chanDescriptor = postCellData.chanDescriptor,
+      postDescriptor = postCellData.postDescriptor
+    )?.fullCopy()
 
+    scope.launch {
+      postHighlightManager.highlightedPostsUpdateFlow
+        .collect { postHighlight ->
+          if (postHighlight.postDescriptor != this@PostCell.postCellData?.postDescriptor) {
+            return@collect
+          }
+
+          if (postCellHighlight == postHighlight) {
+            return@collect
+          }
+
+          postCellHighlight = postHighlight.fullCopy()
+          bindBackgroundColor(themeEngine.chanTheme)
+        }
+    }
+
+    bindPost(postCellData)
     onThemeChanged()
+  }
+
+  private fun unbindPost(postCellData: PostCellData?, isActuallyRecycling: Boolean) {
+    icons.clear()
+    icons.cancelRequests()
+    scope.cancelChildren()
+
+    postImageThumbnailViewsContainer.unbindContainer()
+
+    if (postCellData != null) {
+      setPostLinkableListener(postCellData, false)
+    }
+
+    if (unseenPostIndicatorFadeOutAnimation.isInitialized()) {
+      unseenPostIndicatorFadeOutAnimation.value.end()
+    }
+
+    Logger.d("PostBackgroundBlinkAnimator", "postNo=${postCellData?.postNo}, " +
+      "isPopup=${postCellData?.isInPopup}, unbind called isActuallyRecycling=$isActuallyRecycling")
+
+    if (postBackgroundBlinkAnimation.isInitialized()) {
+      postBackgroundBlinkAnimation.value.end()
+    }
+
+    if (postCellCallback != null && postCellData != null) {
+      postCellCallback?.onPostUnbind(postCellData, isActuallyRecycling)
+    }
+
+    this.postCellCallback = null
+    this.postCellData = null
+    this.postCellHighlight = null
   }
 
   override fun getPost(): ChanPost? {
@@ -246,26 +314,6 @@ class PostCell : ConstraintLayout,
 
   override fun hasOverlappingRendering(): Boolean {
     return false
-  }
-
-  private fun unbindPost(postCellData: PostCellData?, isActuallyRecycling: Boolean) {
-    icons.clear()
-    icons.cancelRequests()
-
-    postImageThumbnailViewsContainer.unbindContainer()
-
-    if (postCellData != null) {
-      setPostLinkableListener(postCellData, false)
-    }
-
-    unseenPostIndicatorFadeOutAnimation.end()
-
-    if (postCellCallback != null && postCellData != null) {
-      postCellCallback?.onPostUnbind(postCellData, isActuallyRecycling)
-    }
-
-    this.postCellCallback = null
-    this.postCellData = null
   }
 
   @SuppressLint("ClickableViewAccessibility")
@@ -618,11 +666,11 @@ class PostCell : ConstraintLayout,
     postCellData.threadCellDataCallback?.markPostAsSeen(postCellData.postDescriptor, now)
 
     if (insertedAtMillis == null) {
-      return PostCellAnimator.ANIMATION_DURATION.toInt()
+      return PostUnseenIndicatorFadeAnimator.ANIMATION_DURATION.toInt()
     }
 
     val deltaTime = now.minus(insertedAtMillis).millis.toInt()
-    if (deltaTime >= PostCellAnimator.ANIMATION_DURATION) {
+    if (deltaTime >= PostUnseenIndicatorFadeAnimator.ANIMATION_DURATION) {
       return -1
     }
 
@@ -674,7 +722,7 @@ class PostCell : ConstraintLayout,
     }
 
     if (seenPostFadeOutAnimRemainingTimeMs > 0) {
-      unseenPostIndicatorFadeOutAnimation.start(
+      unseenPostIndicatorFadeOutAnimation.value.start(
         seenPostFadeOutAnimRemainingTimeMs,
         { alpha -> postAttentionLabel.setAlphaFast(alpha) },
         { postAttentionLabel.setVisibilityFast(View.INVISIBLE) }
@@ -688,7 +736,7 @@ class PostCell : ConstraintLayout,
       && (postCellData.hasColoredFilter || postCellData.markUnseenPosts)
 
     val hasColoredFilter = postCellData.hasColoredFilter
-    val startAlpha = PostCellAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
+    val startAlpha = PostUnseenIndicatorFadeAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
     val alphaIsOk = startAlpha > 0f && startAlpha <= 1f
     val hasUnseenPostLabel = alphaIsOk && postCellData.markUnseenPosts && seenPostFadeOutAnimRemainingTimeMs > 0
 
@@ -713,23 +761,49 @@ class PostCell : ConstraintLayout,
 
   private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
-    if (postData == null) {
+    val postHighlight = postCellHighlight
+
+    if (postData == null && postHighlight == null) {
       setBackgroundColor(0)
-      return
+    } else {
+      when {
+        postHighlight != null && postHighlight.isHighlighted() -> {
+          // Do not run this animation when in popup
+          if (postData?.isInPopup == false && postHighlight.isBlinking()) {
+            runBackgroundBlinkAnimation(theme)
+          } else {
+            setBackgroundColorFast(theme.postHighlightedColor)
+          }
+        }
+        postData != null && postData.post.isSavedReply -> {
+          setBackgroundColorFast(theme.postSavedReplyColor)
+        }
+        else -> {
+          setBackgroundColor(0)
+          setBackgroundResource(R.drawable.item_background)
+        }
+      }
     }
 
-    when {
-      postData.postSelected || postData.highlighted -> {
-        setBackgroundColorFast(theme.postHighlightedColor)
-      }
-      postData.post.isSavedReply -> {
-        setBackgroundColorFast(theme.postSavedReplyColor)
-      }
-      else -> {
-        setBackgroundColor(0)
-        setBackgroundResource(R.drawable.item_background)
-      }
+    // Do not consume the flag when in popup
+    if (postData != null && !postData.isInPopup) {
+      this.postCellHighlight = postHighlightManager.onPostBound(
+        chanDescriptor = postData.chanDescriptor,
+        postDescriptor = postData.postDescriptor
+      )?.fullCopy()
     }
+  }
+
+  private fun runBackgroundBlinkAnimation(theme: ChanTheme) {
+    Logger.d("PostBackgroundBlinkAnimator", "start() called " +
+      "postNo=${postCellData?.postNo}, isPopup=${postCellData?.isInPopup},")
+
+    postBackgroundBlinkAnimation.value.start(
+      startColor = 0,
+      endColor = theme.postHighlightedColor,
+      colorUpdateFunc = { bgColor -> setBackgroundColor(bgColor) },
+      onAnimationEndFunc = { bindBackgroundColor(theme) }
+    )
   }
 
   private fun bindPostComment(postCellData: PostCellData) {

@@ -25,7 +25,9 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -43,6 +45,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 
@@ -54,6 +58,8 @@ class CardPostCell : ConstraintLayout,
   lateinit var postFilterManager: PostFilterManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var postHighlightManager: PostHighlightManager
 
   private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null
@@ -65,6 +71,9 @@ class CardPostCell : ConstraintLayout,
   private var comment: TextView? = null
   private var replies: TextView? = null
   private var filterMatchColor: View? = null
+  private var postCellHighlight: PostHighlightManager.PostHighlight? = null
+
+  private val scope = KurobaCoroutineScope()
 
   constructor(context: Context) : super(context) {
     init()
@@ -116,9 +125,45 @@ class CardPostCell : ConstraintLayout,
 
     this.postCellData = postCellData.fullCopy()
     this.callback = postCellData.postCellCallback
-    bindPost(postCellData)
 
+    this.postCellHighlight = postHighlightManager.getPostHighlight(
+      chanDescriptor = postCellData.chanDescriptor,
+      postDescriptor = postCellData.postDescriptor
+    )?.fullCopy()
+
+    scope.launch {
+      postHighlightManager.highlightedPostsUpdateFlow
+        .collect { postHighlight ->
+          if (postHighlight.postDescriptor != this@CardPostCell.postCellData?.postDescriptor) {
+            return@collect
+          }
+
+          if (postCellHighlight == postHighlight) {
+            return@collect
+          }
+
+          postCellHighlight = postHighlight.fullCopy()
+          bindBackgroundColor(themeEngine.chanTheme)
+        }
+    }
+
+    bindPost(postCellData)
     onThemeChanged()
+  }
+
+  private fun unbindPost(isActuallyRecycling: Boolean) {
+    scope.cancelChildren()
+    unbindPostImage()
+
+    if (postCellData != null && callback != null) {
+      callback!!.onPostUnbind(postCellData!!, isActuallyRecycling)
+    }
+
+    thumbView = null
+
+    this.callback = null
+    this.postCellData = null
+    this.postCellHighlight = null
   }
 
   override fun getPost(): ChanPost? {
@@ -135,23 +180,6 @@ class CardPostCell : ConstraintLayout,
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
     unbindPost(isActuallyRecycling)
-  }
-
-  private fun unbindPost(isActuallyRecycling: Boolean) {
-    if (postCellData == null) {
-      return
-    }
-
-    unbindPostImage()
-
-    if (callback != null) {
-      callback!!.onPostUnbind(postCellData!!, isActuallyRecycling)
-    }
-
-    thumbView = null
-
-    this.callback = null
-    this.postCellData = null
   }
 
   private fun preBindPost(postCellData: PostCellData) {
@@ -293,21 +321,29 @@ class CardPostCell : ConstraintLayout,
   }
 
   private fun bindBackgroundColor(theme: ChanTheme) {
-    val postData = postCellData
-      ?: return
     val backgroundView = cardContent
       ?: return
 
+    val postData = postCellData
+    val postHighlight = postCellHighlight
+
     when {
-      postData.postSelected || postData.highlighted -> {
+      postHighlight != null && postHighlight.isHighlighted() -> {
         backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
       }
-      postData.post.isSavedReply -> {
+      postData != null && postData.post.isSavedReply -> {
         backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
       }
       else -> {
         backgroundView.setBackgroundColorFast(theme.backColorSecondary)
       }
+    }
+
+    if (postData != null) {
+      this.postCellHighlight = postHighlightManager.onPostBound(
+        chanDescriptor = postData.chanDescriptor,
+        postDescriptor = postData.postDescriptor
+      )?.fullCopy()
     }
   }
 

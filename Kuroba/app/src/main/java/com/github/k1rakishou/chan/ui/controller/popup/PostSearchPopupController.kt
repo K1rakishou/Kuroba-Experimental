@@ -144,14 +144,15 @@ class PostSearchPopupController(
     postsView = dataView.findViewById(R.id.post_list)
 
     val repliesAdapter = PostRepliesAdapter(
-      data.postViewMode,
-      postCellCallback,
-      chanDescriptor,
-      null,
-      chanThreadViewableInfoManager,
-      postFilterManager,
-      seenPostsManager,
-      themeEngine.chanTheme
+      postViewMode = data.postViewMode,
+      postCellCallback = postCellCallback,
+      chanDescriptor = chanDescriptor,
+      clickedPostDescriptor = null,
+      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      postFilterManager = postFilterManager,
+      seenPostsManager = seenPostsManager,
+      postHighlightManager = postHighlightManager,
+      initialTheme = themeEngine.chanTheme
     )
 
     repliesAdapter.setHasStableIds(true)

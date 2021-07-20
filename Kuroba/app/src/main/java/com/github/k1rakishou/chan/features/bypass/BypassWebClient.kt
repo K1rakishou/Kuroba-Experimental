@@ -8,20 +8,21 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 abstract class BypassWebClient(
-  protected val cookieResultCompletableDeferred: CompletableDeferred<CookieResult>
+  protected val cookieResultCompletableDeferred: CompletableDeferred<CookieResult>,
+  private val timeoutMs: Long
 ) : WebViewClient() {
   private val scope = KurobaCoroutineScope()
   private var timeoutJob: Job? = null
 
   init {
     timeoutJob = scope.launch {
-      delay(15_000L)
+      delay(timeoutMs)
 
       if (cookieResultCompletableDeferred.isCompleted) {
         return@launch
       }
 
-      cookieResultCompletableDeferred.complete(CookieResult.Timeout)
+      cookieResultCompletableDeferred.complete(CookieResult.Timeout(timeoutMs))
     }
   }
 

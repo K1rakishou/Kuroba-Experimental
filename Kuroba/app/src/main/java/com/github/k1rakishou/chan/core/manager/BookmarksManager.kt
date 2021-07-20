@@ -26,7 +26,6 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import org.joda.time.DateTime
 import java.util.*
-import java.util.concurrent.atomic.AtomicReference
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
@@ -40,7 +39,8 @@ class BookmarksManager(
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val archivesManager: ArchivesManager,
   private val bookmarksRepository: BookmarksRepository,
-  private val siteRegistry: SiteRegistry
+  private val siteRegistry: SiteRegistry,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private val lock = ReentrantReadWriteLock()
   private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = 128)
@@ -48,9 +48,7 @@ class BookmarksManager(
 
   private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
   private val delayedBookmarksChangedExecutor = DebouncingCoroutineExecutor(appScope)
-
   private val suspendableInitializer = SuspendableInitializer<Unit>("BookmarksManager")
-  private val currentOpenThread = AtomicReference<ChanDescriptor.ThreadDescriptor>(null)
 
   @GuardedBy("lock")
   private val bookmarks = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(256)
@@ -137,18 +135,12 @@ class BookmarksManager(
     return lock.read { bookmarks.containsKey(threadDescriptor) }
   }
 
-  fun setCurrentOpenThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor?) {
-    currentOpenThread.set(threadDescriptor)
-  }
-
-  fun currentlyOpenedThread(): ChanDescriptor.ThreadDescriptor? = currentOpenThread.get()
-
   /**
    * Called by [ChanThreadManager] when we are about to start loading thread posts from the server.
    * We use this to update a bookmark associated with this thread (if it exists and is active).
    * */
   fun onThreadIsFetchingData(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    if (threadDescriptor == currentlyOpenedThread()) {
+    if (threadDescriptor == currentOpenedDescriptorStateManager.currentThreadDescriptor) {
       val isActive = lock.read { bookmarks[threadDescriptor]?.isActive() ?: false }
       if (isActive) {
         synchronized(this) {

@@ -203,7 +203,7 @@ class PostPopupHelper(
 
   fun postClicked(postDescriptor: PostDescriptor) {
     popAll()
-    presenter.highlightPost(postDescriptor)
+    presenter.highlightPost(postDescriptor, blink = true)
     presenter.scrollToPost(postDescriptor, true)
   }
 

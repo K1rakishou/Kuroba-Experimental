@@ -16,6 +16,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.chan.utils.RequestCodes
@@ -31,7 +32,8 @@ class LastPageNotificationsHelper(
   private val notificationManagerCompat: NotificationManagerCompat,
   private val pageRequestManager: PageRequestManager,
   private val bookmarksManager: BookmarksManager,
-  private val themeEngine: ThemeEngine
+  private val themeEngine: ThemeEngine,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
 
   fun showOrUpdateNotifications(watchingBookmarkDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
@@ -48,7 +50,7 @@ class LastPageNotificationsHelper(
     }
 
     val threadsOnLastPage = mutableSetOf<ChanDescriptor.ThreadDescriptor>()
-    val currentlyOpenedThread = bookmarksManager.currentlyOpenedThread()
+    val currentlyOpenedThread = currentOpenedDescriptorStateManager.currentThreadDescriptor
 
     watchingBookmarkDescriptors.forEach { threadDescriptor ->
       if (threadDescriptor == currentlyOpenedThread) {

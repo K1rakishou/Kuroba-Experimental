@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.cell
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -22,15 +23,11 @@ class ThreadCellData(
   private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   private val postFilterManager: PostFilterManager,
   private val seenPostsManager: SeenPostsManager,
+  private val postHighlightManager: PostHighlightManager,
   initialTheme: ChanTheme
 ): Iterable<PostCellData>, PostCellData.ThreadCellDataCallback {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
   private val seenPostsMap: MutableMap<PostDescriptor, SeenPost> = mutableMapOf()
-
-  private val selectedPosts: MutableSet<PostDescriptor> = mutableSetOf()
-  private val highlightedPosts: MutableSet<PostDescriptor> = mutableSetOf()
-  private val highlightedPostsByPostId: MutableSet<PostDescriptor> = mutableSetOf()
-  private val highlightedPostsByTripcode: MutableSet<PostDescriptor> = mutableSetOf()
 
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
@@ -47,7 +44,6 @@ class ThreadCellData(
   }
 
   var error: String? = null
-  var selectedPost: PostDescriptor? = null
   var lastSeenIndicatorPosition: Int = -1
 
   val chanDescriptor: ChanDescriptor?
@@ -189,8 +185,6 @@ class ThreadCellData(
         textSizeSp = fontSize,
         theme = chanTheme,
         postViewMode = postViewMode,
-        highlighted = isPostHighlighted(postDescriptor),
-        postSelected = isPostSelected(postDescriptor),
         markedPostNo = defaultMarkedNo,
         showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
         compact = defaultIsCompact,
@@ -241,15 +235,11 @@ class ThreadCellData(
   fun isEmpty(): Boolean = postCellDataList.isEmpty()
 
   fun cleanup() {
-    highlightedPosts.clear()
-    highlightedPostsByPostId.clear()
-    highlightedPostsByTripcode.clear()
-    selectedPosts.clear()
     seenPostsMap.clear()
 
     postCellDataList.forEach { postCellData -> postCellData.cleanup() }
     postCellDataList.clear()
-    selectedPost = null
+
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
     error = null
@@ -352,61 +342,12 @@ class ThreadCellData(
     postCellData.resetEverything()
   }
 
-  fun selectPosts(postDescriptors: Set<PostDescriptor>) {
-    selectedPosts.clear()
-    selectedPosts.addAll(postDescriptors)
-
-    updatePostSelection()
-  }
-
-  fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
-    highlightedPosts.clear()
-    highlightedPosts.addAll(postDescriptors)
-
-    highlightedPostsByPostId.clear()
-    highlightedPostsByTripcode.clear()
-
-    updatePostHighlighting()
-  }
-
-  fun highlightPostsByPostId(postId: String?) {
-    val postDescriptors = postCellDataList
-      .filter { postCellData -> postCellData.post.posterId == postId }
-      .map { postCellData -> postCellData.postDescriptor }
-
-    highlightedPostsByPostId.clear()
-    highlightedPostsByPostId.addAll(postDescriptors)
-
-    highlightedPosts.clear()
-    highlightedPostsByTripcode.clear()
-
-    updatePostHighlighting()
-  }
-
-  fun highlightPostsByTripcode(tripcode: CharSequence?) {
-    val postDescriptors = postCellDataList
-      .filter { postCellData -> postCellData.post.tripcode == tripcode }
-      .map { postCellData -> postCellData.postDescriptor }
-
-    highlightedPostsByTripcode.clear()
-    highlightedPostsByTripcode.addAll(postDescriptors)
-
-    highlightedPostsByPostId.clear()
-    highlightedPosts.clear()
-
-    updatePostHighlighting()
-  }
-
   fun getPostCellDataSafe(index: Int): PostCellData? {
     return postCellDataList.getOrNull(getPostPosition(index))
   }
 
   fun getPostCellData(index: Int): PostCellData {
     return postCellDataList.get(getPostPosition(index))
-  }
-
-  fun iteratePostCellDataList(iterator: (PostCellData) -> Unit) {
-    postCellDataList.forEach(iterator)
   }
 
   fun getPostCellDataIndex(postDescriptor: PostDescriptor): Int? {
@@ -453,28 +394,6 @@ class ThreadCellData(
     }
 
     return size
-  }
-
-  private fun isPostHighlighted(postDescriptor: PostDescriptor): Boolean {
-    return highlightedPosts.contains(postDescriptor)
-      || highlightedPostsByPostId.contains(postDescriptor)
-      || highlightedPostsByTripcode.contains(postDescriptor)
-  }
-
-  private fun isPostSelected(postDescriptor: PostDescriptor): Boolean {
-    return selectedPosts.contains(postDescriptor)
-  }
-
-  private fun updatePostHighlighting() {
-    postCellDataList.forEach { postCellData ->
-      postCellData.highlighted = isPostHighlighted(postCellData.postDescriptor)
-    }
-  }
-
-  private fun updatePostSelection() {
-    postCellDataList.forEach { postCellData ->
-      postCellData.postSelected = isPostSelected(postCellData.postDescriptor)
-    }
   }
 
   private fun showStatusView(): Boolean {

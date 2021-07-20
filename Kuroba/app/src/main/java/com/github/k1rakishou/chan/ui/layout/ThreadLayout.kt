@@ -505,8 +505,8 @@ class ThreadLayout @JvmOverloads constructor(
               getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
             )
           }
-          CookieResult.Timeout -> {
-            showToast(context, getString(R.string.firewall_check_timeout, firewallType))
+          is CookieResult.Timeout -> {
+            showToast(context, getString(R.string.firewall_check_timeout, firewallType, cookieResult.timeoutMs))
           }
           CookieResult.Canceled -> {
             showToast(context, getString(R.string.firewall_check_canceled, firewallType))
@@ -721,24 +721,28 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.smoothScrollNewPosts(displayPosition)
   }
 
-  override fun highlightPost(postDescriptor: PostDescriptor) {
-    threadListLayout.highlightPost(postDescriptor)
+  override fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
+    threadListLayout.highlightPost(postDescriptor, blink)
   }
 
-  override fun highlightPostId(id: String) {
+  override fun isPostIdHighlighted(id: String): Boolean {
+    return threadListLayout.isPostIdHighlighted(id)
+  }
+
+  override fun isTripcodeHighlighted(tripcode: CharSequence): Boolean {
+    return threadListLayout.isTripcodeHighlighted(tripcode)
+  }
+
+  override fun highlightUnhighlightPostId(id: String) {
     threadListLayout.highlightPostId(id)
   }
 
-  override fun highlightPostTripcode(tripcode: CharSequence?) {
+  override fun highlightUnhighlightPostTripcode(tripcode: CharSequence) {
     threadListLayout.highlightPostTripcode(tripcode)
   }
 
-  override fun filterPostTripcode(tripcode: CharSequence?) {
+  override fun filterPostTripcode(tripcode: CharSequence) {
     callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString())
-  }
-
-  override fun selectPost(postDescriptor: PostDescriptor?) {
-    threadListLayout.selectPost(postDescriptor)
   }
 
   override fun quote(post: ChanPost, withText: Boolean) {
@@ -1258,7 +1262,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
-    fun openFilterForType(type: FilterType, filterText: String?)
+    fun openFilterForType(type: FilterType, filterText: String)
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()

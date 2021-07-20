@@ -365,8 +365,8 @@ class ReplyPresenter @Inject constructor(
               CookieResult.Canceled -> {
                 showToast(context, R.string.dvach_antispam_result_canceled)
               }
-              CookieResult.Timeout -> {
-                showToast(context, R.string.dvach_antispam_result_timeout)
+              is CookieResult.Timeout -> {
+                showToast(context, getString(R.string.dvach_antispam_result_timeout, cookieResult.timeoutMs))
               }
               is CookieResult.Error -> {
                 val errorMsg = cookieResult.exception.errorMessageOrClassName()
@@ -700,7 +700,7 @@ class ReplyPresenter @Inject constructor(
     } else {
       val reason = when (cookieResult) {
         CookieResult.Canceled -> getString(R.string.dvach_antispam_result_canceled)
-        CookieResult.Timeout -> getString(R.string.dvach_antispam_result_timeout)
+        is CookieResult.Timeout -> getString(R.string.dvach_antispam_result_timeout, cookieResult.timeoutMs)
         is CookieResult.Error -> {
           val errorMsg = cookieResult.exception.errorMessageOrClassName()
           getString(R.string.dvach_antispam_result_error, errorMsg)

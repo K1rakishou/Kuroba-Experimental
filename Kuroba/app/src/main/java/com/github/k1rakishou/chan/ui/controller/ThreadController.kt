@@ -251,8 +251,8 @@ abstract class ThreadController(
     threadLayout.presenter.showNoContent()
   }
 
-  fun selectPost(postDescriptor: PostDescriptor?) {
-    threadLayout.presenter.selectPost(postDescriptor)
+  fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
+    threadLayout.presenter.highlightPost(postDescriptor, blink)
   }
 
   override fun onBack(): Boolean {
@@ -364,10 +364,10 @@ abstract class ThreadController(
     swipeRefreshLayout.isRefreshing = false
   }
 
-  override fun openFilterForType(type: FilterType, filterText: String?) {
+  override fun openFilterForType(type: FilterType, filterText: String) {
     val filter = ChanFilterMutable()
     filter.type = type.flag
-    filter.pattern = '/'.toString() + (filterText ?: "") + '/'
+    filter.pattern = "/$filterText/"
     openFiltersController(filter)
   }
 

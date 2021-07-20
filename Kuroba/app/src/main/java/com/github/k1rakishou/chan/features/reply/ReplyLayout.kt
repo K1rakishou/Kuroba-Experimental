@@ -658,10 +658,9 @@ class ReplyLayout @JvmOverloads constructor(
       val controller = SiteFirewallBypassController(
         context = context,
         firewallType = FirewallType.DvachAntiSpam,
-        urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
-      ) { cookieResult ->
-        continuation.resumeValueSafe(cookieResult)
-      }
+        urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT,
+        onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
+      )
 
       callbacks.presentController(controller)
       continuation.invokeOnCancellation { controller.stopPresenting() }
@@ -1231,7 +1230,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
-    threadListLayoutCallbacks?.highlightPosts(postDescriptors)
+    threadListLayoutCallbacks?.highlightPosts(postDescriptors, blink = false)
   }
 
   override fun onSelectionChanged() {
@@ -1357,7 +1356,7 @@ class ReplyLayout @JvmOverloads constructor(
     fun isReplyLayoutOpened(): Boolean
 
     fun currentFocusedController(): ThreadPresenter.CurrentFocusedController
-    fun highlightPosts(postDescriptors: Set<PostDescriptor>)
+    fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean)
     fun openReply(open: Boolean)
     fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()

@@ -16,9 +16,11 @@ import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManage
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager;
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager;
@@ -152,6 +154,14 @@ public class ActivityModule {
     @Provides
     public FileChooser provideFileChooser(AppCompatActivity activity) {
         return new FileChooser(activity);
+    }
+
+    @PerActivity
+    @Provides
+    public PostHighlightManager providePostHighlightManager(
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
+    ) {
+        return new PostHighlightManager(currentOpenedDescriptorStateManager);
     }
 
 }

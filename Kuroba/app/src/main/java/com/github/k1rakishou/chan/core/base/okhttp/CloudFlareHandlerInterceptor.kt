@@ -49,7 +49,7 @@ class CloudFlareHandlerInterceptor(
 
     if (response.code == 503 || response.code == 403) {
       val body = response.body
-      if (body != null && tryDetectCloudFlareNeedle(body)) {
+      if (body != null && tryDetectCloudFlareNeedle(host, body)) {
         if (verboseLogs) {
           Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
         }
@@ -165,7 +165,7 @@ class CloudFlareHandlerInterceptor(
       .build()
   }
 
-  private fun tryDetectCloudFlareNeedle(responseBody: ResponseBody): Boolean {
+  private fun tryDetectCloudFlareNeedle(host: String, responseBody: ResponseBody): Boolean {
     return responseBody.use { body ->
       return@use body.byteStream().use { inputStream ->
         val bytes = ByteArray(READ_BYTES_COUNT) { 0x00 }
@@ -174,8 +174,14 @@ class CloudFlareHandlerInterceptor(
           return@use false
         }
 
-        if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) && !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2)) {
-          return@use false
+        if (host.contains(CHAN4_SEARCH_URL, ignoreCase = true) || host.contains(CHANNEL4_SEARCH_URL, ignoreCase = true)) {
+          if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE_4CHAN_SEARCH)) {
+            return@use false
+          }
+        } else {
+          if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) && !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2)) {
+            return@use false
+          }
         }
 
         return@use true
@@ -193,7 +199,11 @@ class CloudFlareHandlerInterceptor(
 
     const val CF_CLEARANCE = "cf_clearance"
 
+    private const val CHAN4_SEARCH_URL = "find.4chan.org"
+    private const val CHANNEL4_SEARCH_URL = "find.4channel.org"
+
     private val CLOUD_FLARE_NEEDLE1 = "<title>Please Wait... | Cloudflare</title>".toByteArray(StandardCharsets.UTF_8)
     private val CLOUD_FLARE_NEEDLE2 = "Checking your browser before accessing".toByteArray(StandardCharsets.UTF_8)
+    private val CLOUD_FLARE_NEEDLE_4CHAN_SEARCH = "Browser Integrity Check".toByteArray(StandardCharsets.UTF_8)
   }
 }

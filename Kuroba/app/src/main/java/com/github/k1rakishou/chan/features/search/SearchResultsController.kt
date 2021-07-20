@@ -108,11 +108,13 @@ class SearchResultsController(
 
   override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {
     val hostUrl = getUrlToOpen(firewallType, requestUrl)
+    val timeoutMs = getBypassTimeout(firewallType, requestUrl)
 
     val controller = SiteFirewallBypassController(
       context = context,
       firewallType = firewallType,
       urlToOpen = hostUrl,
+      timeoutMs = timeoutMs,
       onResult = { cookieResult ->
         when (cookieResult) {
           is CookieResult.CookieValue -> {
@@ -127,8 +129,8 @@ class SearchResultsController(
               getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
             )
           }
-          CookieResult.Timeout -> {
-            showToast(context, getString(R.string.firewall_check_timeout, firewallType))
+          is CookieResult.Timeout -> {
+            showToast(context, getString(R.string.firewall_check_timeout, firewallType, cookieResult.timeoutMs))
           }
           CookieResult.Canceled -> {
             showToast(context, getString(R.string.firewall_check_canceled, firewallType))
@@ -138,6 +140,21 @@ class SearchResultsController(
     )
 
     presentController(controller, animated = true)
+  }
+
+  private fun getBypassTimeout(firewallType: FirewallType, requestUrl: HttpUrl): Long {
+    return when (firewallType) {
+      FirewallType.Cloudflare -> {
+        if (requestUrl.toString().contains(SearchResultsPresenter.CHAN4_SEARCH_ENDPOINT)) {
+          SiteFirewallBypassController.CHAN4_SEARCH_TIMEOUT_MS
+        } else {
+          SiteFirewallBypassController.DEFAULT_TIMEOUT_MS
+        }
+      }
+      FirewallType.DvachAntiSpam -> {
+        SiteFirewallBypassController.DEFAULT_TIMEOUT_MS
+      }
+    }
   }
 
   private fun getUrlToOpen(firewallType: FirewallType, requestUrl: HttpUrl) =

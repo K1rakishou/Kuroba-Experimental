@@ -6,7 +6,7 @@ import android.animation.ValueAnimator
 import android.view.animation.LinearInterpolator
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 
-object PostCellAnimator {
+object PostUnseenIndicatorFadeAnimator {
   const val ANIMATION_DURATION = 4_000L
 
   @JvmStatic

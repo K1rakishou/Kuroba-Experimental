@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
 import com.github.k1rakishou.chan.features.reply.ReplyLayout
@@ -132,6 +133,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
   lateinit var chanLoadProgressNotifier: ChanLoadProgressNotifier
+  @Inject
+  lateinit var postHighlightManager: PostHighlightManager
 
   private val PARTY: ItemDecoration = object : ItemDecoration() {
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -632,6 +635,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ChanLoadProgressEvent.End(descriptor)
     )
 
+    if (descriptor is ChanDescriptor.CatalogDescriptor) {
+      postHighlightManager.onCatalogLoaded(postAdapter.threadCellData)
+    }
+
     return ShowPostsResult(
       result = true,
       applyFilterDuration = applyFilterDuration,
@@ -957,28 +964,32 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.scrollToPosition(scrollPosition)
   }
 
-  fun highlightPostId(id: String) {
-    postAdapter.highlightPostId(id)
+  fun isPostIdHighlighted(id: String): Boolean {
+    return postHighlightManager.isPostIdHighlighted(postAdapter.threadCellData, id)
   }
 
-  fun highlightPostTripcode(tripcode: CharSequence?) {
-    postAdapter.highlightPostTripcode(tripcode)
+  fun isTripcodeHighlighted(tripcode: CharSequence): Boolean {
+    return postHighlightManager.isTripcodeHighlighted(postAdapter.threadCellData, tripcode)
   }
 
-  fun selectPost(postDescriptor: PostDescriptor?) {
+  fun highlightPostId(postId: String) {
+    postHighlightManager.highlightPostId(postAdapter.threadCellData, postId)
+  }
+
+  fun highlightPostTripcode(tripcode: CharSequence) {
+    postHighlightManager.highlightPostTripcode(postAdapter.threadCellData, tripcode)
+  }
+
+  fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
     if (postDescriptor == null) {
-      postAdapter.selectPosts(emptySet())
+      highlightPosts(null, blink)
     } else {
-      postAdapter.selectPosts(setOf(postDescriptor))
+      highlightPosts(setOf(postDescriptor), blink)
     }
   }
 
-  fun highlightPost(postDescriptor: PostDescriptor) {
-    highlightPosts(setOf(postDescriptor))
-  }
-
-  override fun highlightPosts(postDescriptors: Set<PostDescriptor>) {
-    postAdapter.highlightPosts(postDescriptors)
+  override fun highlightPosts(postDescriptors: Set<PostDescriptor>?, blink: Boolean) {
+    postHighlightManager.highlightPosts(postAdapter.threadCellData, postDescriptors, blink)
   }
 
   override fun showThread(threadDescriptor: ThreadDescriptor) {

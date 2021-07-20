@@ -107,7 +107,9 @@ class ThreadPresenter @Inject constructor(
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper,
   private val themeEngine: ThemeEngine,
-  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
+  private val postHighlightManager: PostHighlightManager,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -222,8 +224,13 @@ class ThreadPresenter @Inject constructor(
 
     chanThreadManager.bindChanDescriptor(chanDescriptor)
 
-    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      bookmarksManager.setCurrentOpenThreadDescriptor(chanDescriptor)
+    when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        currentOpenedDescriptorStateManager.updateCatalogDescriptor(chanDescriptor)
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        currentOpenedDescriptorStateManager.updateThreadDescriptor(chanDescriptor)
+      }
     }
 
     compositeDisposable.add(
@@ -245,15 +252,21 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
 
     if (currentChanDescriptor != null) {
-      chanThreadManager.unbindChanDescriptor(currentChanDescriptor)
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
 
-      if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        bookmarksManager.setCurrentOpenThreadDescriptor(null)
+      when (currentChanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          currentOpenedDescriptorStateManager.updateThreadDescriptor(null)
+        }
       }
 
       Logger.d(TAG, "chanThreadTicker.stopTicker($currentChanDescriptor)")
       chanThreadTicker.stopTicker(resetCurrentChanDescriptor = true)
+
+      postHighlightManager.cleanup(currentChanDescriptor)
     }
 
     if (isDestroying) {
@@ -534,7 +547,7 @@ class ThreadPresenter @Inject constructor(
 
     var shouldShowLoadingIndicator = false
 
-    val catalogDescriptor = chanThreadManager.currentCatalogDescriptor
+    val catalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
     if (catalogDescriptor != null) {
       if (catalogDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
@@ -543,7 +556,7 @@ class ThreadPresenter @Inject constructor(
       normalLoad(showLoading = false)
     }
 
-    val threadDescriptor = chanThreadManager.currentThreadDescriptor
+    val threadDescriptor = currentOpenedDescriptorStateManager.currentThreadDescriptor
     if (threadDescriptor != null) {
       if (threadDescriptor == currentChanDescriptor) {
         shouldShowLoadingIndicator = true
@@ -685,10 +698,13 @@ class ThreadPresenter @Inject constructor(
         return@getAndConsumeMarkedPostNo
       }
 
-      highlightPost(markedPost.postDescriptor)
+      highlightPost(markedPost.postDescriptor, blink = true)
 
       if (BackgroundUtils.isInForeground()) {
-        BackgroundUtils.runOnMainThread({ scrollToPost(markedPost.postDescriptor, false) }, 250)
+        BackgroundUtils.runOnMainThread(
+          { scrollToPost(markedPost.postDescriptor, false) },
+          SCROLL_TO_POST_DELAY_MS
+        )
       }
     }
   }
@@ -894,12 +910,8 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun highlightPost(postDescriptor: PostDescriptor) {
-    threadPresenterCallback?.highlightPost(postDescriptor)
-  }
-
-  fun selectPost(postDescriptor: PostDescriptor?) {
-    threadPresenterCallback?.selectPost(postDescriptor)
+  fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
+    threadPresenterCallback?.highlightPost(postDescriptor, blink)
   }
 
   fun selectPostImage(postImage: ChanPostImage) {
@@ -913,7 +925,7 @@ class ThreadPresenter @Inject constructor(
       for (image in post.postImages) {
         if (image.equalUrl(postImage)) {
           scrollToPost(post.postDescriptor, false)
-          highlightPost(post.postDescriptor)
+          highlightPost(post.postDescriptor, blink = true)
           return
         }
       }
@@ -934,7 +946,7 @@ class ThreadPresenter @Inject constructor(
 
     serializedCoroutineExecutor.post {
       val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(postDescriptor.postNo)
-      highlightPost(postDescriptor)
+      highlightPost(postDescriptor, blink = false)
 
       threadPresenterCallback?.showThread(newThreadDescriptor)
     }
@@ -1026,12 +1038,23 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
-      if (!TextUtils.isEmpty(post.posterId)) {
-        menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id))
+      if (!TextUtils.isEmpty(post.posterId) && threadPresenterCallback != null) {
+        if (threadPresenterCallback!!.isPostIdHighlighted(post.posterId!!)) {
+          menu.add(createMenuItem(POST_OPTION_UNHIGHLIGHT_ID, R.string.post_unhighlight_id))
+        } else {
+          menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id))
+        }
       }
 
       if (!TextUtils.isEmpty(post.tripcode)) {
-        menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
+        if (threadPresenterCallback != null) {
+          if (threadPresenterCallback!!.isTripcodeHighlighted(post.tripcode!!)) {
+            menu.add(createMenuItem(POST_OPTION_UNHIGHLIGHT_TRIPCODE, R.string.post_unhighlight_tripcode))
+          } else {
+            menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
+          }
+        }
+
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
       }
     }
@@ -1136,13 +1159,26 @@ class ThreadPresenter @Inject constructor(
           }
           threadPresenterCallback?.openReportView(post)
         }
-        POST_OPTION_HIGHLIGHT_ID -> {
+        POST_OPTION_HIGHLIGHT_ID,
+        POST_OPTION_UNHIGHLIGHT_ID -> {
           val posterId = post.posterId
             ?: return@post
-          threadPresenterCallback?.highlightPostId(posterId)
+
+          threadPresenterCallback?.highlightUnhighlightPostId(posterId)
         }
-        POST_OPTION_HIGHLIGHT_TRIPCODE -> threadPresenterCallback?.highlightPostTripcode(post.tripcode)
-        POST_OPTION_FILTER_TRIPCODE -> threadPresenterCallback?.filterPostTripcode(post.tripcode)
+        POST_OPTION_HIGHLIGHT_TRIPCODE,
+        POST_OPTION_UNHIGHLIGHT_TRIPCODE -> {
+          val tripcode = post.tripcode
+            ?: return@post
+
+          threadPresenterCallback?.highlightUnhighlightPostTripcode(tripcode)
+        }
+        POST_OPTION_FILTER_TRIPCODE -> {
+          val tripcode = post.tripcode
+            ?: return@post
+
+          threadPresenterCallback?.filterPostTripcode(tripcode)
+        }
         POST_OPTION_DELETE -> requestDeletePost(post)
         POST_OPTION_SAVE -> saveUnsavePost(post)
         POST_OPTION_BOOKMARK -> {
@@ -2192,11 +2228,12 @@ class ThreadPresenter @Inject constructor(
     fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
-    fun highlightPost(postDescriptor: PostDescriptor)
-    fun highlightPostId(id: String)
-    fun highlightPostTripcode(tripcode: CharSequence?)
-    fun filterPostTripcode(tripcode: CharSequence?)
-    fun selectPost(postDescriptor: PostDescriptor?)
+    fun isPostIdHighlighted(id: String): Boolean
+    fun highlightUnhighlightPostId(id: String)
+    fun highlightUnhighlightPostTripcode(tripcode: CharSequence)
+    fun isTripcodeHighlighted(tripcode: CharSequence): Boolean
+    fun filterPostTripcode(tripcode: CharSequence)
+    fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean)
     fun quote(post: ChanPost, withText: Boolean)
     fun quote(postDescriptor: PostDescriptor, text: CharSequence)
     fun confirmPostDelete(post: ChanPost)
@@ -2259,7 +2296,10 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_OPEN_IN_ARCHIVE = 14
     private const val POST_OPTION_PREVIEW_IN_ARCHIVE = 16
     private const val POST_OPTION_REMOVE = 17
-    private const val POST_OPTION_APPLY_THEME = 19
+    private const val POST_OPTION_APPLY_THEME = 18
+    private const val POST_OPTION_UNHIGHLIGHT_ID = 19
+    private const val POST_OPTION_UNHIGHLIGHT_TRIPCODE = 20
+
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 
     private const val POST_OPTION_APPLY_THEME_IDX = 1000
@@ -2271,6 +2311,8 @@ class ThreadPresenter @Inject constructor(
     private const val SHOW_POST_MENU_OPTIONS = 2002
 
     private const val POST_LINKABLE_LONG_CLICK_MENU_HEADER = "post_linkable_long_click_menu_header"
+
+    const val SCROLL_TO_POST_DELAY_MS = 250L
   }
 
 }

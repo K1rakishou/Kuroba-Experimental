@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -57,6 +58,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
   @Inject
   lateinit var seenPostsManager: SeenPostsManager
+  @Inject
+  lateinit var postHighlightManager: PostHighlightManager
 
   abstract var displayingData: T?
   abstract val postPopupType: PostPopupType

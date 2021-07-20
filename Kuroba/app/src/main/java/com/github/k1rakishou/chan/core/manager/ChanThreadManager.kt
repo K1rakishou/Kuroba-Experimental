@@ -42,15 +42,6 @@ class ChanThreadManager(
   private val threadDataPreloadUseCase: ThreadDataPreloadUseCase,
   private val catalogDataPreloadUseCase: CatalogDataPreloadUseCase
 ) {
-  @get:Synchronized
-  @set:Synchronized
-  var currentCatalogDescriptor: ChanDescriptor.CatalogDescriptor? = null
-    private set
-
-  @get:Synchronized
-  @set:Synchronized
-  var currentThreadDescriptor: ChanDescriptor.ThreadDescriptor? = null
-    private set
 
   // Only accessed on the main thread
   private val requestedChanDescriptors = hashSetOf<ChanDescriptor>()
@@ -68,17 +59,11 @@ class ChanThreadManager(
   fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        currentThreadDescriptor = chanDescriptor
         chanPostRepository.updateThreadLastAccessTime(chanDescriptor)
       }
-      is ChanDescriptor.CatalogDescriptor -> currentCatalogDescriptor = chanDescriptor
-    }
-  }
-
-  fun unbindChanDescriptor(chanDescriptor: ChanDescriptor) {
-    when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> currentThreadDescriptor = null
-      is ChanDescriptor.CatalogDescriptor -> currentCatalogDescriptor = null
+      is ChanDescriptor.CatalogDescriptor -> {
+        // no-op
+      }
     }
   }
 

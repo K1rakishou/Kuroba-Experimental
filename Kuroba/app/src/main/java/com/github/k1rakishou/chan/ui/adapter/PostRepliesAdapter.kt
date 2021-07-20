@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -24,14 +25,16 @@ class PostRepliesAdapter(
   chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
   postFilterManager: PostFilterManager,
   seenPostsManager: SeenPostsManager,
+  postHighlightManager: PostHighlightManager,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
   private val threadCellData = ThreadCellData(
-    chanThreadViewableInfoManager,
-    postFilterManager,
-    seenPostsManager,
-    initialTheme
+    chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+    postFilterManager = postFilterManager,
+    seenPostsManager = seenPostsManager,
+    postHighlightManager = postHighlightManager,
+    initialTheme = initialTheme
   )
 
   init {
