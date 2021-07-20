@@ -153,7 +153,9 @@ class PostHighlightManager(
         if (postDescriptors != null && postDescriptors.contains(postDescriptor)) {
           if (blink) {
             postHighlight.currentHighlightTypes.set(HighlightType.Blink.bit)
-          } else {
+          }
+
+          if (!blink || threadCellData.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
             postHighlight.currentHighlightTypes.set(HighlightType.Regular.bit)
           }
         } else {

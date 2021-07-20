@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.ui.animation.PostBackgroundBlinkAnimator.createPostBackgroundBlinkAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -74,6 +75,10 @@ class CardPostCell : ConstraintLayout,
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
 
   private val scope = KurobaCoroutineScope()
+
+  private val postBackgroundBlinkAnimation = lazy(LazyThreadSafetyMode.NONE) {
+    createPostBackgroundBlinkAnimation()
+  }
 
   constructor(context: Context) : super(context) {
     init()
@@ -154,6 +159,10 @@ class CardPostCell : ConstraintLayout,
   private fun unbindPost(isActuallyRecycling: Boolean) {
     scope.cancelChildren()
     unbindPostImage()
+
+    if (postBackgroundBlinkAnimation.isInitialized()) {
+      postBackgroundBlinkAnimation.value.end()
+    }
 
     if (postCellData != null && callback != null) {
       callback!!.onPostUnbind(postCellData!!, isActuallyRecycling)
@@ -327,24 +336,43 @@ class CardPostCell : ConstraintLayout,
     val postData = postCellData
     val postHighlight = postCellHighlight
 
-    when {
-      postHighlight != null && postHighlight.isHighlighted() -> {
-        backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
-      }
-      postData != null && postData.post.isSavedReply -> {
-        backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
-      }
-      else -> {
-        backgroundView.setBackgroundColorFast(theme.backColorSecondary)
+    if (postData == null && postHighlight == null) {
+      setBackgroundColor(0)
+    } else {
+      when {
+        postHighlight != null && postHighlight.isHighlighted() -> {
+          // Do not run this animation when in popup
+          if (postData?.isInPopup == false && postHighlight.isBlinking()) {
+            runBackgroundBlinkAnimation(backgroundView, theme)
+          } else {
+            backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
+          }
+        }
+        postData != null && postData.post.isSavedReply -> {
+          backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
+        }
+        else -> {
+          backgroundView.setBackgroundColorFast(theme.backColorSecondary)
+        }
       }
     }
 
-    if (postData != null) {
+    // Do not consume the flag when in popup
+    if (postData != null && !postData.isInPopup) {
       this.postCellHighlight = postHighlightManager.onPostBound(
         chanDescriptor = postData.chanDescriptor,
         postDescriptor = postData.postDescriptor
       )?.fullCopy()
     }
+  }
+
+  private fun runBackgroundBlinkAnimation(backgroundView: View, theme: ChanTheme) {
+    postBackgroundBlinkAnimation.value.start(
+      startColor = 0,
+      endColor = theme.postHighlightedColor,
+      colorUpdateFunc = { bgColor -> backgroundView.setBackgroundColor(bgColor) },
+      onAnimationEndFunc = { bindBackgroundColor(theme) }
+    )
   }
 
   private fun setCompact(postCellData: PostCellData) {

@@ -60,7 +60,6 @@ import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -283,9 +282,6 @@ class PostCell : ConstraintLayout,
     if (unseenPostIndicatorFadeOutAnimation.isInitialized()) {
       unseenPostIndicatorFadeOutAnimation.value.end()
     }
-
-    Logger.d("PostBackgroundBlinkAnimator", "postNo=${postCellData?.postNo}, " +
-      "isPopup=${postCellData?.isInPopup}, unbind called isActuallyRecycling=$isActuallyRecycling")
 
     if (postBackgroundBlinkAnimation.isInitialized()) {
       postBackgroundBlinkAnimation.value.end()
@@ -795,9 +791,6 @@ class PostCell : ConstraintLayout,
   }
 
   private fun runBackgroundBlinkAnimation(theme: ChanTheme) {
-    Logger.d("PostBackgroundBlinkAnimator", "start() called " +
-      "postNo=${postCellData?.postNo}, isPopup=${postCellData?.isInPopup},")
-
     postBackgroundBlinkAnimation.value.start(
       startColor = 0,
       endColor = theme.postHighlightedColor,
