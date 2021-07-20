@@ -108,7 +108,7 @@ class SearchResultsController(
 
   override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {
     val hostUrl = getUrlToOpen(firewallType, requestUrl)
-    val timeoutMs = getBypassTimeout(firewallType, requestUrl)
+    val timeoutMs = getBypassTimeout(firewallType, requestUrl.toString())
 
     val controller = SiteFirewallBypassController(
       context = context,
@@ -142,13 +142,19 @@ class SearchResultsController(
     presentController(controller, animated = true)
   }
 
-  private fun getBypassTimeout(firewallType: FirewallType, requestUrl: HttpUrl): Long {
+  private fun getBypassTimeout(firewallType: FirewallType, requestUrl: String): Long {
     return when (firewallType) {
       FirewallType.Cloudflare -> {
-        if (requestUrl.toString().contains(SearchResultsPresenter.CHAN4_SEARCH_ENDPOINT)) {
-          SiteFirewallBypassController.CHAN4_SEARCH_TIMEOUT_MS
-        } else {
-          SiteFirewallBypassController.DEFAULT_TIMEOUT_MS
+        when {
+          requestUrl.contains(SearchResultsPresenter.CHAN4_SEARCH_ENDPOINT) -> {
+            SiteFirewallBypassController.CHAN4_SEARCH_TIMEOUT_MS
+          }
+          requestUrl.contentEquals(SearchResultsPresenter.WAROSU_SEARCH_ENDPOINT) -> {
+            SiteFirewallBypassController.WAROSU_SEARCH_TIMEOUT_MS
+          }
+          else -> {
+            SiteFirewallBypassController.DEFAULT_TIMEOUT_MS
+          }
         }
       }
       FirewallType.DvachAntiSpam -> {

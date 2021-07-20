@@ -180,14 +180,14 @@ internal class SearchResultsPresenter(
   }
 
   private fun logSearchError(searchResult: SearchResult.Failure) {
-    when (searchResult.searchError) {
+    when (val searchError = searchResult.searchError) {
       SearchError.NotImplemented -> Logger.e(TAG, "NotImplemented")
-      is SearchError.SiteNotFound -> Logger.e(TAG, "${searchResult.searchError}")
-      is SearchError.ServerError -> Logger.e(TAG, "${searchResult.searchError}")
-      is SearchError.ParsingError -> Logger.e(TAG, "${searchResult.searchError}")
-      is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchResult.searchError.error)
+      is SearchError.SiteNotFound -> Logger.e(TAG, "$searchError")
+      is SearchError.ServerError -> Logger.e(TAG, "$searchError")
+      is SearchError.ParsingError -> Logger.e(TAG, "$searchError")
+      is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchError.error)
       is SearchError.FirewallDetectedError -> {
-        Logger.e(TAG, "CloudFlare detected error, requestUrl=${searchResult.searchError.requestUrl}")
+        Logger.e(TAG, "Firewall (${searchError.firewallType}) detected error, requestUrl=${searchError.requestUrl}")
       }
     }
   }
@@ -413,5 +413,6 @@ internal class SearchResultsPresenter(
       .withZone(DateTimeZone.forTimeZone(TimeZone.getDefault()))
 
     const val CHAN4_SEARCH_ENDPOINT = "find.4chan"
+    const val WAROSU_SEARCH_ENDPOINT = "warosu.org"
   }
 }

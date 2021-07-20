@@ -209,8 +209,9 @@ class SiteFirewallBypassController(
 
   companion object {
     private const val TAG = "CloudFlareBypassController"
-    const val MAX_PAGE_LOADS_COUNT = 5
+    const val MAX_PAGE_LOADS_COUNT = 10
     const val DEFAULT_TIMEOUT_MS = 15_000L
     const val CHAN4_SEARCH_TIMEOUT_MS = 30_000L
+    const val WAROSU_SEARCH_TIMEOUT_MS = 30_000L
   }
 }
