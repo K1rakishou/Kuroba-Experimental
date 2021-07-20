@@ -234,6 +234,8 @@ class CardPostCell : ConstraintLayout,
     }
 
     comment!!.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+    comment!!.requestLayout()
+
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
 
     if (callback != null) {
