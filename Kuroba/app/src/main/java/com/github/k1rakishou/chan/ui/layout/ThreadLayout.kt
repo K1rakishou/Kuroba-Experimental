@@ -992,6 +992,10 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openFiltersController(chanFilterMutable)
   }
 
+  override fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor) {
+    threadListLayout.onPostSeenInPopup(chanDescriptor, postDescriptor)
+  }
+
   override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {
     if (!show) {
       dismissSnackbar()

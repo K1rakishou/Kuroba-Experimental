@@ -111,8 +111,7 @@ class BrowseController(
     threadLayout.setBoardPostViewMode(ChanSettings.boardPostViewMode.get())
 
     serializedCoroutineExecutor.post {
-      val boardOrder = ChanSettings.boardOrder.get()
-      val order = PostsFilter.Order.find(boardOrder)
+      val order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
 
       threadLayout.presenter.setOrder(order, isManuallyChangedOrder = false)
     }

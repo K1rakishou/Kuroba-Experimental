@@ -456,7 +456,14 @@ class PostCell : ConstraintLayout,
     constraintSet.clone(this)
 
     if (shiftCommentToThumbnailSideMode) {
-      constraintSet.createBarrier(R.id.title_icons_thumbnail_barrier, Barrier.BOTTOM, 0, R.id.title, R.id.image_filename, R.id.icons)
+      constraintSet.createBarrier(
+        R.id.title_icons_thumbnail_barrier,
+        Barrier.BOTTOM,
+        0,
+        R.id.title,
+        R.id.image_filename,
+        R.id.icons
+      )
 
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
@@ -479,7 +486,15 @@ class PostCell : ConstraintLayout,
         ConstraintSet.CHAIN_SPREAD
       )
     } else {
-      constraintSet.createBarrier(R.id.title_icons_thumbnail_barrier, Barrier.BOTTOM, 0, R.id.thumbnails_container, R.id.title, R.id.image_filename, R.id.icons)
+      constraintSet.createBarrier(
+        R.id.title_icons_thumbnail_barrier,
+        Barrier.BOTTOM,
+        0,
+        R.id.thumbnails_container,
+        R.id.title,
+        R.id.image_filename,
+        R.id.icons
+      )
 
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
@@ -593,23 +608,25 @@ class PostCell : ConstraintLayout,
       return -1
     }
 
+    val now = DateTime.now()
+
     val insertedAtMillis = postCellData.threadCellDataCallback
       ?.getSeenPostOrNull(postCellData.postDescriptor)
       ?.insertedAt
       ?.millis
 
-    postCellData.threadCellDataCallback?.markPostAsSeen(postCellData.postDescriptor)
+    postCellData.threadCellDataCallback?.markPostAsSeen(postCellData.postDescriptor, now)
 
     if (insertedAtMillis == null) {
       return PostCellAnimator.ANIMATION_DURATION.toInt()
     }
 
-    val deltaTime = DateTime.now().minus(insertedAtMillis).millis.toInt()
-    if (deltaTime < PostCellAnimator.ANIMATION_DURATION) {
-      return deltaTime
+    val deltaTime = now.minus(insertedAtMillis).millis.toInt()
+    if (deltaTime >= PostCellAnimator.ANIMATION_DURATION) {
+      return -1
     }
 
-    return -1
+    return deltaTime
   }
 
   private fun bindBackgroundResources(postCellData: PostCellData) {
@@ -666,37 +683,32 @@ class PostCell : ConstraintLayout,
   }
 
   private fun bindPostAttentionLabel(postCellData: PostCellData, seenPostFadeOutAnimRemainingTimeMs: Int) {
-    if (postCellCallback == null || postCellData.isSelectionMode) {
+    val canShowLabel = postCellCallback != null
+      && !postCellData.isSelectionMode
+      && (postCellData.hasColoredFilter || postCellData.markUnseenPosts)
+
+    val hasColoredFilter = postCellData.hasColoredFilter
+    val startAlpha = PostCellAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
+    val alphaIsOk = startAlpha > 0f && startAlpha <= 1f
+    val hasUnseenPostLabel = alphaIsOk && postCellData.markUnseenPosts && seenPostFadeOutAnimRemainingTimeMs > 0
+
+    if (canShowLabel && (hasColoredFilter || hasUnseenPostLabel)) {
+      postAttentionLabel.setVisibilityFast(View.VISIBLE)
+
+      // Filter label is more important than unseen post label
+      if (hasColoredFilter) {
+        postAttentionLabel.setAlphaFast(1f)
+        postAttentionLabel.setBackgroundColorFast(postCellData.filterHighlightedColor)
+      } else {
+        postAttentionLabel.setAlphaFast(startAlpha)
+        postAttentionLabel.setBackgroundColorFast(postCellData.theme.postUnseenLabelColor)
+      }
+    } else {
+      // No filters for this post and the user has already seen it
       postAttentionLabel.setVisibilityFast(View.INVISIBLE)
       postAttentionLabel.setAlphaFast(1f)
       postAttentionLabel.setBackgroundColorFast(0)
-      return
     }
-
-    val theme = postCellData.theme
-
-    // Filter label is more important than unseen post label
-    if (postCellData.hasColoredFilter) {
-      postAttentionLabel.setVisibilityFast(View.VISIBLE)
-      postAttentionLabel.setAlphaFast(1f)
-      postAttentionLabel.setBackgroundColorFast(postCellData.filterHighlightedColor)
-      return
-    }
-
-    val startAlpha = PostCellAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
-    val alphaIsOk = startAlpha > 0f && startAlpha <= 1f
-
-    if (alphaIsOk && postCellData.markUnseenPosts && seenPostFadeOutAnimRemainingTimeMs > 0) {
-      postAttentionLabel.setVisibilityFast(View.VISIBLE)
-      postAttentionLabel.setAlphaFast(startAlpha)
-      postAttentionLabel.setBackgroundColorFast(theme.postUnseenLabelColor)
-      return
-    }
-
-    // No filters for this post and the user has already seen it
-    postAttentionLabel.setVisibilityFast(View.INVISIBLE)
-    postAttentionLabel.setAlphaFast(1f)
-    postAttentionLabel.setBackgroundColorFast(0)
   }
 
   private fun bindBackgroundColor(theme: ChanTheme) {

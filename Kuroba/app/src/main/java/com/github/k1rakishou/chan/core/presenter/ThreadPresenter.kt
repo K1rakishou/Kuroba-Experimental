@@ -126,7 +126,6 @@ class ThreadPresenter @Inject constructor(
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
-  private var order = PostsFilter.Order.BUMP
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
@@ -430,16 +429,12 @@ class ThreadPresenter @Inject constructor(
   }
 
   suspend fun setOrder(order: PostsFilter.Order, isManuallyChangedOrder: Boolean) {
-    if (this.order != order) {
-      this.order = order
-
-      if (isBound) {
-        if (isManuallyChangedOrder) {
-          scrollTo(0, false)
-        }
-
-        showPosts()
+    if (isBound) {
+      if (isManuallyChangedOrder) {
+        scrollTo(0, false)
       }
+
+      showPosts()
     }
   }
 
@@ -472,6 +467,10 @@ class ThreadPresenter @Inject constructor(
 
   override fun onPostBind(postCellData: PostCellData) {
     BackgroundUtils.ensureMainThread()
+
+    if (postCellData.isInPopup) {
+      threadPresenterCallback?.onPostSeenInPopup(postCellData.chanDescriptor, postCellData.postDescriptor)
+    }
 
     postBindExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
@@ -2044,6 +2043,8 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
+
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
       PostsFilter(chanLoadProgressNotifier, postHideHelper, order)
@@ -2236,6 +2237,7 @@ class ThreadPresenter @Inject constructor(
     fun currentSpanCount(): Int
     fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
+    fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor)
   }
 
   companion object {

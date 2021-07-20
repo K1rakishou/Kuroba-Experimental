@@ -65,7 +65,7 @@ class ThreadCellData(
     return seenPostsMap[postDescriptor]
   }
 
-  override fun markPostAsSeen(postDescriptor: PostDescriptor) {
+  override fun markPostAsSeen(postDescriptor: PostDescriptor, time: DateTime) {
     if (!ChanSettings.markUnseenPosts.get()) {
       return
     }
@@ -74,7 +74,7 @@ class ThreadCellData(
       return
     }
 
-    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, DateTime.now())
+    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, time)
   }
 
   suspend fun updateThreadData(
@@ -86,6 +86,8 @@ class ThreadCellData(
   ) {
     require(postCellDataWidthNoPaddings > 0) { "Bad postCellDataWidthNoPaddings: ${postCellDataWidthNoPaddings}" }
     BackgroundUtils.ensureMainThread()
+
+    val isTheSameChanDescriptor = this._chanDescriptor == chanDescriptor
 
     this._chanDescriptor = chanDescriptor
     this.postCellCallback = postCellCallback
@@ -113,11 +115,28 @@ class ThreadCellData(
     this.postCellDataList.clear()
     this.postCellDataList.addAll(newPostCellDataList)
 
-    this.seenPostsMap.clear()
+    mergeSeenPosts(isTheSameChanDescriptor, chanDescriptor, postDescriptors)
+  }
+
+  @Suppress("IfThenToSafeAccess")
+  private fun mergeSeenPosts(
+    isTheSameChanDescriptor: Boolean,
+    chanDescriptor: ChanDescriptor,
+    postDescriptors: List<PostDescriptor>
+  ) {
+    if (!isTheSameChanDescriptor) {
+      this.seenPostsMap.clear()
+    }
 
     val loadedSeenPosts = seenPostsManager.getSeenPosts(chanDescriptor, postDescriptors)
     if (loadedSeenPosts != null) {
-      this.seenPostsMap.putAll(loadedSeenPosts)
+      loadedSeenPosts.entries.forEach { (postDescriptor, seenPost) ->
+        if (this.seenPostsMap.containsKey(postDescriptor)) {
+          return@forEach
+        }
+
+        this.seenPostsMap[postDescriptor] = seenPost
+      }
     }
   }
 
@@ -142,7 +161,7 @@ class ThreadCellData(
     val shiftPostComment = ChanSettings.shiftPostComment.get()
     val textOnly = ChanSettings.textOnly.get()
     val postFileInfo = ChanSettings.postFileInfo.get()
-    val markUnseenPosts = ChanSettings.markUnseenPosts.get()
+    val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor is ChanDescriptor.ThreadDescriptor
     val chanTheme = theme.fullCopy()
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
@@ -233,6 +252,18 @@ class ThreadCellData(
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
     error = null
+  }
+
+  fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor) {
+    if (chanDescriptor != _chanDescriptor) {
+      return
+    }
+
+    if (seenPostsMap.containsKey(postDescriptor)) {
+      return
+    }
+
+    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, DateTime.now())
   }
 
   fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {

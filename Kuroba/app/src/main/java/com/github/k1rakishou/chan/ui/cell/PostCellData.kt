@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.util.ChanPostUtils
+import org.joda.time.DateTime
 import java.util.*
 
 data class PostCellData(
@@ -586,7 +587,7 @@ data class PostCellData(
 
   interface ThreadCellDataCallback {
     fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost?
-    fun markPostAsSeen(postDescriptor: PostDescriptor)
+    fun markPostAsSeen(postDescriptor: PostDescriptor, time: DateTime)
   }
 
   companion object {
