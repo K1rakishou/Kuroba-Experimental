@@ -156,6 +156,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
+    val postAlignmentMode = postCellData.postAlignmentMode
     val postCellCallback = postCellData.postCellCallback
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
     val actualPostCellWidth = postCellWidth - (horizPaddingPx * 2)
@@ -171,7 +172,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = PostImageThumbnailViewContainer(context)
+      val thumbnailView = when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
+        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
+      }
 
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
@@ -232,6 +236,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val constraintLayoutFlow = Flow(context)
     constraintLayoutFlow.id = View.generateViewId()
 
+    constraintLayoutFlow.setOrientation(Flow.HORIZONTAL)
     constraintLayoutFlow.setWrapMode(Flow.WRAP_ALIGNED)
     constraintLayoutFlow.setHorizontalGap(THUMBNAILS_GAP_SIZE)
     constraintLayoutFlow.setVerticalGap(THUMBNAILS_GAP_SIZE)
@@ -290,6 +295,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
+    val postAlignmentMode = postCellData.postAlignmentMode
     val postCellCallback = postCellData.postCellCallback
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
@@ -299,7 +305,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = PostImageThumbnailViewContainer(context)
+      val thumbnailView = when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
+        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
+      }
 
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
@@ -422,6 +431,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     var prevChanPostImages: MutableList<ChanPostImage>? = null,
     var prevBoardPostViewMode: ChanSettings.BoardPostViewMode? = null,
     var postFileInfosHash: MurmurHashUtils.Murmur3Hash? = null,
+    var postAlignmentMode: ChanSettings.PostAlignmentMode? = null,
     var postCellDataWidthNoPaddings: Int = 0,
     var postCellThumbnailSizePercents: Int = 0,
   ) {
@@ -429,6 +439,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     fun updateFrom(postCellData: PostCellData) {
       this.prevChanPostImages = postCellData.postImages.toMutableList()
       this.prevBoardPostViewMode = postCellData.boardPostViewMode
+      this.postAlignmentMode = postCellData.postAlignmentMode
       this.postFileInfosHash = postCellData.postFileInfoMapHash.copy()
       this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
       this.postCellThumbnailSizePercents = postCellData.postCellThumbnailSizePercents
@@ -438,6 +449,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return this.prevChanPostImages != null
         && this.prevChanPostImages == postCellData.postImages
         && this.prevBoardPostViewMode == postCellData.boardPostViewMode
+        && this.postAlignmentMode == postCellData.postAlignmentMode
         && this.postFileInfosHash == postCellData.postFileInfoMapHash
         && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
         && this.postCellThumbnailSizePercents == postCellData.postCellThumbnailSizePercents
@@ -446,6 +458,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     fun unbindEverything() {
       prevChanPostImages = null
       prevBoardPostViewMode = null
+      postAlignmentMode = null
       postFileInfosHash = null
       postCellDataWidthNoPaddings = 0
       postCellThumbnailSizePercents = 0

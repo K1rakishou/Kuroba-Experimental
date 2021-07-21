@@ -28,7 +28,8 @@ import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
 class PostImageThumbnailViewContainer(
-  context: Context
+  context: Context,
+  private val reversed: Boolean
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
   private val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
@@ -44,7 +45,11 @@ class PostImageThumbnailViewContainer(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
+    if (reversed) {
+      inflate(context, R.layout.layout_post_multiple_image_thumbnail_view_reversed, this)
+    } else {
+      inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
+    }
 
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
     fileInfoContainerGroup = findViewById(R.id.file_info_container_group)
@@ -145,6 +150,7 @@ class PostImageThumbnailViewContainer(
   ) {
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
     val imagesCount = postCellData.postImages.size
+    val postAlignmentMode = postCellData.postAlignmentMode
 
     if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileInfo.get()) && postFileInfo.isNotNullNorBlank()) {
       val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
@@ -175,7 +181,11 @@ class PostImageThumbnailViewContainer(
       thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
 
       postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
-      postFileNameInfoTextView.gravity = GravityCompat.START
+
+      postFileNameInfoTextView.gravity = when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> GravityCompat.END
+        ChanSettings.PostAlignmentMode.AlignRight -> GravityCompat.START
+      }
     } else {
       setBackgroundResource(0)
 
