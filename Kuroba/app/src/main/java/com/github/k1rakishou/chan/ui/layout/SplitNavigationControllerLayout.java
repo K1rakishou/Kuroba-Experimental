@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -26,9 +29,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class SplitNavigationControllerLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
@@ -99,6 +99,8 @@ public class SplitNavigationControllerLayout extends LinearLayout implements The
         addView(leftView, new LinearLayout.LayoutParams(0, MATCH_PARENT));
         addView(divider, new LinearLayout.LayoutParams(dividerWidth, MATCH_PARENT));
         addView(rightView, new LinearLayout.LayoutParams(0, MATCH_PARENT));
+
+        onThemeChanged();
     }
 
     @Override

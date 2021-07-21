@@ -215,6 +215,11 @@ class PostCell : ConstraintLayout,
   override fun onThemeChanged() {
     bindBackgroundColor(themeEngine.chanTheme)
 
+    postCellData?.let { pcd ->
+      replies.setTextColor(pcd.theme.textColorSecondary)
+      divider.setBackgroundColor(pcd.theme.dividerColor)
+    }
+
     title.invalidate()
     comment.invalidate()
     replies.invalidate()
@@ -619,9 +624,6 @@ class PostCell : ConstraintLayout,
     }
 
     bindBackgroundResources(postCellData)
-
-    replies.setTextColor(postCellData.theme.textColorSecondary)
-    divider.setBackgroundColor(postCellData.theme.dividerColor)
 
     bindPostAttentionLabel(postCellData, seenPostFadeOutAnimRemainingTimeMs)
     postImageThumbnailViewsContainer.bindPostImages(postCellData)
