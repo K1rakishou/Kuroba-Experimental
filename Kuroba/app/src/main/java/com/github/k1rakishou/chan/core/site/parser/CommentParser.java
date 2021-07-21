@@ -31,6 +31,7 @@ import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.common.CommentParserConstants;
@@ -137,6 +138,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             HtmlTag htmlTag
     ) {
         List<StyleRule> rules = this.rules.get(tag);
+        boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
 
         if (rules != null) {
             for (int i = 0; i < 2; i++) {
@@ -144,7 +146,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
                 for (StyleRule rule : rules) {
                     if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
-                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post));
+                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
                     }
                 }
             }
@@ -450,7 +452,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         PostLinkable.Type type;
         PostLinkable.Value value;
 
-        String href = extractQuote(anchorTag.attrOrNull("href"), post);
+        String href = extractQuote(anchorTag.attrUnescapedOrNull("href"), post);
         Matcher externalMatcher = matchExternalQuote(href, post);
 
         if (externalMatcher.find()) {

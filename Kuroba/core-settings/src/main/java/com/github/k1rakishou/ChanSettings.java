@@ -349,6 +349,10 @@ public class ChanSettings {
     public static BooleanSetting alwaysRandomizePickedFilesNames;
     //endregion
 
+    //region SECURITY
+    public static BooleanSetting forceHttpsUrlScheme;
+    //endregion
+
     //region CACHING
     public static RangeSetting diskCacheSizeMegabytes;
     public static RangeSetting prefetchDiskCacheSizeMegabytes;
@@ -553,6 +557,8 @@ public class ChanSettings {
             // Misc
             alwaysRandomizePickedFilesNames = new BooleanSetting(provider, "always_randomized_picked_files_names", false);
             //endregion
+
+            forceHttpsUrlScheme = new BooleanSetting(provider, "force_https_url_scheme", true);
 
             //region CACHING
             diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);

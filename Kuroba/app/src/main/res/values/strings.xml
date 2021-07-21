@@ -850,9 +850,11 @@ Re-enable this permission in the app settings if you permanently disabled it."
 
     <!-- Security settings -->
     <string name="settings_screen_security">Security</string>
-    <string name="settings_screen_security_proxy_group">Proxy</string>
+    <string name="settings_screen_security_main_group">Main</string>
     <string name="settings_screen_security_proxy">Proxy settings</string>
     <string name="settings_screen_security_proxy_description">%1$d proxies enabled</string>
+    <string name="settings_screen_security_force_https_urls">Force HTTPS urls</string>
+    <string name="settings_screen_security_force_https_urls_description">Turning this setting on will forcibly convert all HTTP urls into HTTPS. Android starting with API 28 (Pie) doesn\'t allow cleartype communication by default so you won\'t be able to open HTTP urls and may want to covert them into HTTPS urls.</string>
 
     <!-- Captcha solvers settings -->
     <string name="two_captcha_solver_group">2captcha solver</string>

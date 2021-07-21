@@ -16,8 +16,8 @@ class PostHighlightManager(
   private val catalogHighlightedPosts = mutableMapWithCap<PostDescriptor, PostHighlight>(256)
   private val threadHighlightedPosts = mutableMapWithCap<PostDescriptor, PostHighlight>(256)
 
-  private val _highlightedPostsUpdateFlow = MutableSharedFlow<PostHighlight>(extraBufferCapacity = 512)
-  val highlightedPostsUpdateFlow: SharedFlow<PostHighlight>
+  private val _highlightedPostsUpdateFlow = MutableSharedFlow<PostHighlightEvent>(extraBufferCapacity = 512)
+  val highlightedPostsUpdateFlow: SharedFlow<PostHighlightEvent>
     get() = _highlightedPostsUpdateFlow.asSharedFlow()
 
   fun onCatalogLoaded(threadCellData: ThreadCellData) {
@@ -191,7 +191,12 @@ class PostHighlightManager(
     }
 
     highlightedPosts[postDescriptor] = updatedPostHighlight
-    _highlightedPostsUpdateFlow.tryEmit(updatedPostHighlight)
+
+    val postHighlightEvent = PostHighlightEvent(
+      isCatalogDescriptor = chanDescriptor.isCatalogDescriptor(),
+      postHighlight = updatedPostHighlight
+    )
+    _highlightedPostsUpdateFlow.tryEmit(postHighlightEvent)
   }
 
   private fun getHighlightedPostsMap(chanDescriptor: ChanDescriptor): MutableMap<PostDescriptor, PostHighlight> {
@@ -200,6 +205,11 @@ class PostHighlightManager(
       is ChanDescriptor.ThreadDescriptor -> threadHighlightedPosts
     }
   }
+
+  data class PostHighlightEvent(
+    val isCatalogDescriptor: Boolean,
+    val postHighlight: PostHighlight
+  )
 
   class PostHighlight(
     val postDescriptor: PostDescriptor,

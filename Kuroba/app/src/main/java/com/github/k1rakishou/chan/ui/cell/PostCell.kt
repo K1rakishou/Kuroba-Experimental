@@ -250,8 +250,16 @@ class PostCell : ConstraintLayout,
 
     scope.launch {
       postHighlightManager.highlightedPostsUpdateFlow
-        .collect { postHighlight ->
-          if (postHighlight.postDescriptor != this@PostCell.postCellData?.postDescriptor) {
+        .collect { postHighlightEvent ->
+          val pcd = this@PostCell.postCellData
+            ?: return@collect
+
+          if (pcd.chanDescriptor.isCatalogDescriptor() != postHighlightEvent.isCatalogDescriptor) {
+            return@collect
+          }
+
+          val postHighlight = postHighlightEvent.postHighlight
+          if (postHighlight.postDescriptor != pcd.postDescriptor) {
             return@collect
           }
 

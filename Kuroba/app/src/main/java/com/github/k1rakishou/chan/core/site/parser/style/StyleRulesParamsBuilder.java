@@ -18,6 +18,7 @@ public class StyleRulesParamsBuilder {
     private PostParser.Callback callback = null;
     @Nullable
     private ChanPostBuilder post = null;
+    private boolean forceHttpsScheme = true;
 
     public StyleRulesParamsBuilder withCallback(PostParser.Callback callback) {
         this.callback = callback;
@@ -39,10 +40,15 @@ public class StyleRulesParamsBuilder {
         return this;
     }
 
+    public StyleRulesParamsBuilder forceHttpsScheme(boolean forceHttpsScheme) {
+        this.forceHttpsScheme = forceHttpsScheme;
+        return this;
+    }
+
     public StyleRulesParams build() {
         Objects.requireNonNull(text, "text must not bel null");
         Objects.requireNonNull(htmlTag, "htmlTag must not bel null");
 
-        return new StyleRulesParams(text, htmlTag, callback, post);
+        return new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme);
     }
 }

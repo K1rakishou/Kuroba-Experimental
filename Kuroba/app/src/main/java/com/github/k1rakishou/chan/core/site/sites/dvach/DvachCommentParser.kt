@@ -28,7 +28,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     anchorTag: HtmlTag,
     callback: PostParser.Callback
   ): PostLinkable.Link {
-    val href = extractQuote(anchorTag.attrOrNull("href"), post)
+    val href = extractQuote(anchorTag.attrUnescapedOrNull("href"), post)
     val currentThreadNo = post.opId
 
     val quoteMatcher = QUOTE_PATTERN.matcher(href)

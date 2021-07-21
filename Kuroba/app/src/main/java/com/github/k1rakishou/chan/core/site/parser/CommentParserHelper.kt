@@ -28,16 +28,16 @@ import java.util.*
 
 object CommentParserHelper {
   private const val TAG = "CommentParserHelper"
+  private const val HTTP_SCHEME = "http://"
+  private const val HTTPS_SCHEME = "https://"
+
   val LINK_EXTRACTOR = LinkExtractor.builder().linkTypes(EnumSet.of(LinkType.URL)).build()
 
-  /**
-   * Similar to other [detectLinks] but this one allow links modification (changing link's text to
-   * something other)
-   * */
   @JvmStatic
   fun detectLinks(
     post: ChanPostBuilder,
     text: String,
+    forceHttpsScheme: Boolean,
     linkHandler: Function1<String, PostLinkable?>?
   ): SpannableString {
     val ranges = splitTextIntoRanges(text)
@@ -52,7 +52,7 @@ object CommentParserHelper {
           continue
         }
 
-        val linkText = text.substring(range.start, range.end)
+        var linkText = text.substring(range.start, range.end)
         if (linkHandler != null) {
           val postLinkable = linkHandler.invoke(linkText)
           if (postLinkable != null) {
@@ -71,6 +71,10 @@ object CommentParserHelper {
           }
 
           // fallthrough (linkHandler failed to parse link)
+        }
+
+        if (forceHttpsScheme && linkText.startsWith(HTTP_SCHEME)) {
+          linkText = linkText.replace(HTTP_SCHEME, HTTPS_SCHEME)
         }
 
         val postLinkable = PostLinkable(
@@ -137,36 +141,6 @@ object CommentParserHelper {
     }
 
     return ranges
-  }
-
-  @JvmStatic
-  fun detectLinks(
-    post: ChanPostBuilder,
-    text: String,
-    spannable: SpannableString
-  ) {
-    val links = extractLinks(text)
-
-    for (link in links) {
-      val linkText = text.substring(link.beginIndex, link.endIndex)
-      val pl = PostLinkable(
-        linkText,
-        PostLinkable.Value.StringValue(linkText),
-        PostLinkable.Type.LINK
-      )
-
-      // priority is 0 by default which is maximum above all else; higher priority is like
-      // higher layers, i.e. 2 is above 1, 3 is above 2, etc.
-      // we use 500 here for to go below post linkables, but above everything else basically
-      spannable.setSpan(
-        pl,
-        link.beginIndex,
-        link.endIndex,
-        (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
-      )
-
-      post.addLinkable(pl)
-    }
   }
 
   private fun extractLinks(text: String): Iterable<LinkSpan> {

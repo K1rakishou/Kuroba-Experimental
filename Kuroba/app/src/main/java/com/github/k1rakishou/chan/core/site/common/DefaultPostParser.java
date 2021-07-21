@@ -348,10 +348,12 @@ public class DefaultPostParser implements PostParser {
     ) {
         if (node instanceof HtmlNode.Text) {
             String text = ((HtmlNode.Text) node).getText();
+            boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
 
             return CommentParserHelper.detectLinks(
                     post,
                     text,
+                    forceHttpsScheme,
                     this::handleLink
             );
         } else if (node instanceof HtmlNode.Tag) {

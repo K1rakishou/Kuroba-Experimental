@@ -615,6 +615,7 @@ sealed class SecurityScreen(
     SecurityScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object Proxy : MainSettingsGroup("proxy")
+    object ForceHttpsScheme : MainSettingsGroup("force_https_scheme")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = SecurityScreen.getScreenIdentifier()

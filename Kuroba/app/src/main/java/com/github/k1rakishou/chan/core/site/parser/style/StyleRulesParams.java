@@ -16,17 +16,20 @@ public class StyleRulesParams {
     private PostParser.Callback callback = null;
     @Nullable
     private ChanPostBuilder post = null;
+    private boolean forceHttpsScheme = true;
 
     public StyleRulesParams(
             @NonNull CharSequence text,
             @NonNull HtmlTag htmlTag,
             @Nullable PostParser.Callback callback,
-            @Nullable ChanPostBuilder post
+            @Nullable ChanPostBuilder post,
+            boolean forceHttpsScheme
     ) {
         this.text = text;
         this.htmlTag = htmlTag;
         this.callback = callback;
         this.post = post;
+        this.forceHttpsScheme = forceHttpsScheme;
     }
 
     @NonNull
@@ -49,4 +52,7 @@ public class StyleRulesParams {
         return post;
     }
 
+    public boolean isForceHttpsScheme() {
+        return forceHttpsScheme;
+    }
 }

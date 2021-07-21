@@ -2,6 +2,7 @@ package com.github.k1rakishou.core_parser.comment
 
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import org.jsoup.parser.Parser
 
 data class HtmlDocument(
   val nodes: List<HtmlNode>
@@ -62,6 +63,10 @@ data class HtmlTag(
 
   fun attrOrNull(name: String): String? {
     return attributesAsMap[name]
+  }
+
+  fun attrUnescapedOrNull(name: String): String? {
+    return attributesAsMap[name]?.let { attrValue -> Parser.unescapeEntities(attrValue, false) }
   }
 
   fun classAttrOrNull(): String? = attrOrNull(CLASS_ATTR)

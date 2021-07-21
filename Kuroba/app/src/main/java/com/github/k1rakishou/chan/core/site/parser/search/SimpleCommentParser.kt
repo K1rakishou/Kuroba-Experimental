@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import android.text.Spanned
 import android.text.SpannedString
 import android.text.TextUtils
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParamsBuilder
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
@@ -119,6 +120,7 @@ open class SimpleCommentParser {
   ): CharSequence? {
     val rules = rules[tag]
       ?: return text
+    val forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get()
 
     for (i in 0..1) {
       val highPriority = i == 0
@@ -128,6 +130,7 @@ open class SimpleCommentParser {
           val params = StyleRulesParamsBuilder()
             .withText(text)
             .withHtmlTag(htmlTag)
+            .forceHttpsScheme(forceHttpsScheme)
             .build()
 
           return rule.apply(params)
