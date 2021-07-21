@@ -73,12 +73,7 @@ class BoardsSetupController(
     )
   }
 
-  private val loadingViewController by lazy {
-    LoadingViewController(
-      context,
-      true,
-    )
-  }
+  private var currentLoadingViewController: LoadingViewController? = null
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyBoardViewModel_>(
     controller,
@@ -139,21 +134,27 @@ class BoardsSetupController(
     val canCreateBoardsManually = siteManager.bySiteDescriptor(siteDescriptor)
       ?.canCreateBoardsManually ?: false
 
+    val builder = navigation
+      .buildMenu(context)
+      .withItem(R.drawable.ic_refresh_white_24dp) {
+        presenter.updateBoardsFromServerAndDisplayActive()
+      }
+
     if (canCreateBoardsManually) {
-      navigation.buildMenu(context)
-        .withItem(R.drawable.ic_create_white_24dp) {
-          onCreateBoardManuallyClicked()
-        }
-        .withOverflow(navigationController)
-        .withSubItem(ACTION_SORT_BOARDS_ALPHABETICALLY, R.string.controller_boards_setup_sort_boards_alphabetically) {
-          presenter.sortBoardsAlphabetically()
-        }
-        .withSubItem(ACTION_DELETE_ALL_BOARDS, R.string.controller_boards_setup_delete_all_boards) {
-          presenter.deactivateAllBoards()
-        }
-        .build()
-        .build()
+      builder
+        .withItem(R.drawable.ic_create_white_24dp) { onCreateBoardManuallyClicked() }
     }
+
+    builder
+      .withOverflow(navigationController)
+      .withSubItem(ACTION_SORT_BOARDS_ALPHABETICALLY, R.string.controller_boards_setup_sort_boards_alphabetically) {
+        presenter.sortBoardsAlphabetically()
+      }
+      .withSubItem(ACTION_DELETE_ALL_BOARDS, R.string.controller_boards_setup_delete_all_boards) {
+        presenter.deactivateAllBoards()
+      }
+      .build()
+      .build()
 
     view = inflate(context, R.layout.controller_boards_setup)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
@@ -180,7 +181,6 @@ class BoardsSetupController(
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
     presenter.onCreate(this)
-    presenter.updateBoardsFromServerAndDisplayActive()
   }
 
   override fun onInsetsChanged() {
@@ -241,12 +241,20 @@ class BoardsSetupController(
     controller.requestModelBuild()
   }
 
-  override fun showLoadingView() {
+  override fun showLoadingView(titleMessage: String?) {
+    val loadingViewController = if (titleMessage.isNullOrEmpty()) {
+      LoadingViewController(context, true)
+    } else {
+      LoadingViewController(context, true, titleMessage)
+    }
+
     presentController(loadingViewController, animated = false)
+    currentLoadingViewController = loadingViewController
   }
 
   override fun hideLoadingView() {
-    loadingViewController.stopPresenting()
+    currentLoadingViewController?.stopPresenting()
+    currentLoadingViewController = null
   }
 
   override fun showMessageToast(message: String) {

@@ -24,7 +24,6 @@ import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
-import java.util.concurrent.atomic.AtomicBoolean
 
 class BoardsSetupPresenter(
   private val siteDescriptor: SiteDescriptor,
@@ -36,7 +35,20 @@ class BoardsSetupPresenter(
   private val stateSubject = PublishProcessor.create<BoardsSetupControllerState>()
     .toSerialized()
 
-  private val boardInfoLoaded = AtomicBoolean(false)
+  override fun onCreate(view: BoardsSetupView) {
+    super.onCreate(view)
+
+    scope.launch {
+      siteManager.awaitUntilInitialized()
+      boardManager.awaitUntilInitialized()
+
+      if (boardManager.boardsCount(siteDescriptor) > 0) {
+        displayActiveBoardsInternal()
+      } else {
+        updateBoardsFromServerAndDisplayActive()
+      }
+    }
+  }
 
   fun listenForStateChanges(): Flowable<BoardsSetupControllerState> {
     return stateSubject
@@ -161,29 +173,30 @@ class BoardsSetupPresenter(
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site == null) {
         setState(BoardsSetupControllerState.Error("No site found by descriptor: ${siteDescriptor}"))
-        boardInfoLoaded.set(true)
         return@launch
       }
 
       val isSiteActive = siteManager.isSiteActive(siteDescriptor)
       if (!isSiteActive) {
         setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} is not active!"))
-        boardInfoLoaded.set(true)
         return@launch
       }
+
+      withView { showLoadingView("Updating ${siteDescriptor.siteName} boards, please wait") }
 
       loadBoardInfoSuspend(site)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
+          withView { hideLoadingView() }
+
           setState(BoardsSetupControllerState.Error(error.errorMessageOrClassName()))
-          boardInfoLoaded.set(true)
           return@launch
         }
 
-      withViewNormal { onBoardsLoaded() }
+      withView { hideLoadingView() }
+      withView { onBoardsLoaded() }
 
       displayActiveBoardsInternal()
-      boardInfoLoaded.set(true)
     }
   }
 
@@ -212,10 +225,6 @@ class BoardsSetupPresenter(
   }
 
   fun displayActiveBoards(withLoadingState: Boolean = true, withDebouncing: Boolean = true) {
-    if (!boardInfoLoaded.get()) {
-      return
-    }
-
     if (withLoadingState) {
       setState(BoardsSetupControllerState.Loading)
     }
@@ -301,10 +310,6 @@ class BoardsSetupPresenter(
   }
 
   private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
-    if (boardInfoLoaded.get()) {
-      return ModularResult.value(Unit)
-    }
-
     return suspendCancellableCoroutine { cancellableContinuation ->
       site.loadBoardInfo { result ->
         cancellableContinuation.resumeValueSafe(result.mapValue { Unit })

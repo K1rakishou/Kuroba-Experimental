@@ -29,7 +29,7 @@ object PostBackgroundBlinkAnimator {
           })
 
           duration = 200L
-          repeatCount = 8
+          repeatCount = 6
           repeatMode = REVERSE
           interpolator = FastOutSlowInInterpolator()
         }

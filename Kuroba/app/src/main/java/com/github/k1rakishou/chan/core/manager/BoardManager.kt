@@ -411,6 +411,17 @@ class BoardManager(
     }
   }
 
+  fun boardsCount(siteDescriptor: SiteDescriptor): Int {
+    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureBoardsAndOrdersConsistency()
+
+    return lock.read {
+      return@read boardsMap[siteDescriptor]?.entries?.count { (boardDescriptor, _) ->
+        boardDescriptor.siteDescriptor == siteDescriptor
+      } ?: 0
+    }
+  }
+
   fun activeBoardsCountForAllSites(): Int {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
