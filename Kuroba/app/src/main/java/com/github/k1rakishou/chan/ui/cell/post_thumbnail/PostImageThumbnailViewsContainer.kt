@@ -161,10 +161,20 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
     val actualPostCellWidth = postCellWidth - (horizPaddingPx * 2)
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
+    val calculateContainerFileInfoSize = calculateContainerFileInfoSize()
+
+    val actualWidthPerImage = actualPostCellWidth / postCellData.postImages.size
+    val neededWidthPerImage = cellPostThumbnailSize + calculateContainerFileInfoSize
+
+    // wideMode means that the container has too much free space so we don't want to stretch the
+    // thumbnails over that free space (because it looks ugly) and instead should pack them together.
+    val wideMode = actualWidthPerImage > neededWidthPerImage + (neededWidthPerImage * 0.5f)
+
     val (thumbnailContainerSize, spanCount) = calculateFullThumbnailViewWidth(
-      actualPostCellWidth,
-      cellPostThumbnailSize,
-      postCellData
+      actualPostCellWidth = actualPostCellWidth,
+      cellPostThumbnailSize = cellPostThumbnailSize,
+      containerFileInfoSize = calculateContainerFileInfoSize,
+      postCellData = postCellData
     )
 
     for (postImage in postCellData.postImages) {
@@ -179,7 +189,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
-      thumbnailView.bindFileInfoContainerSizes(thumbnailContainerSize, cellPostThumbnailSize)
+
+      if (wideMode) {
+        thumbnailView.bindFileInfoContainerSizes(ViewGroup.LayoutParams.WRAP_CONTENT, cellPostThumbnailSize)
+      } else {
+        thumbnailView.bindFileInfoContainerSizes((thumbnailContainerSize - cellPostThumbnailSize), cellPostThumbnailSize)
+      }
+
       thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
       thumbnailView.bindPostInfo(postCellData, postImage)
 
@@ -220,10 +236,19 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       thumbnailView.setRounding(THUMBNAIL_ROUNDING)
 
-      val layoutParams = ConstraintLayout.LayoutParams(
-        thumbnailContainerSize - (THUMBNAILS_GAP_SIZE * 2),
-        LinearLayout.LayoutParams.WRAP_CONTENT
-      )
+      val layoutParams = if (wideMode) {
+        ConstraintLayout.LayoutParams(
+          ConstraintLayout.LayoutParams.WRAP_CONTENT,
+          ConstraintLayout.LayoutParams.WRAP_CONTENT
+        )
+      } else {
+        ConstraintLayout.LayoutParams(
+          thumbnailContainerSize - (THUMBNAILS_GAP_SIZE * 2),
+          ConstraintLayout.LayoutParams.WRAP_CONTENT
+        )
+      }
+
+      layoutParams.verticalBias = 0f
 
       this.addView(thumbnailView, layoutParams)
       resultThumbnailViews += thumbnailView
@@ -240,9 +265,20 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     constraintLayoutFlow.setWrapMode(Flow.WRAP_ALIGNED)
     constraintLayoutFlow.setHorizontalGap(THUMBNAILS_GAP_SIZE)
     constraintLayoutFlow.setVerticalGap(THUMBNAILS_GAP_SIZE)
-    constraintLayoutFlow.setHorizontalStyle(Flow.CHAIN_SPREAD)
-    constraintLayoutFlow.setVerticalStyle(Flow.CHAIN_SPREAD)
-    constraintLayoutFlow.setMaxElementsWrap(spanCount)
+    constraintLayoutFlow.setVerticalStyle(Flow.CHAIN_PACKED)
+
+    if (wideMode) {
+      constraintLayoutFlow.setHorizontalStyle(Flow.CHAIN_PACKED)
+      constraintLayoutFlow.setMaxElementsWrap(-1)
+    } else {
+      constraintLayoutFlow.setMaxElementsWrap(spanCount)
+      constraintLayoutFlow.setHorizontalStyle(Flow.CHAIN_SPREAD)
+    }
+
+    when (postAlignmentMode) {
+      ChanSettings.PostAlignmentMode.AlignLeft -> constraintLayoutFlow.setHorizontalBias(1f)
+      ChanSettings.PostAlignmentMode.AlignRight -> constraintLayoutFlow.setHorizontalBias(0f)
+    }
 
     constraintLayoutFlow.referencedIds = resultThumbnailViews
       .map { resultThumbnailView -> resultThumbnailView.getViewId() }
@@ -250,10 +286,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     this.addView(
       constraintLayoutFlow,
-      ConstraintLayout.LayoutParams(
-        ConstraintLayout.LayoutParams.MATCH_PARENT,
-        ConstraintLayout.LayoutParams.WRAP_CONTENT
-      )
+      LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
     )
 
     kotlin.run {
@@ -364,7 +397,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         else -> 0
       }
 
-      val layoutParams = ConstraintLayout.LayoutParams(
+      val layoutParams = LayoutParams(
         LinearLayout.LayoutParams.WRAP_CONTENT,
         LinearLayout.LayoutParams.WRAP_CONTENT
       )
@@ -402,11 +435,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   private fun calculateFullThumbnailViewWidth(
     actualPostCellWidth: Int,
     cellPostThumbnailSize: Int,
+    containerFileInfoSize: Int,
     postCellData: PostCellData
   ): ThumbnailContainerSizeAndSpanCount {
-    val containerFileInfoSizePercent = getDimen(R.dimen.cell_post_thumbnail_container_file_info_size).toFloat() / 100f
-    val containerFileInfoSize = ChanSettings.postCellThumbnailSizePercents.get() * containerFileInfoSizePercent
-
     // Calculate minimum needed width to display this post image with the current cell thumbnail size
     val minNeededWidth = (containerFileInfoSize + cellPostThumbnailSize).toInt()
 
@@ -489,6 +520,13 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       val newSize = ChanSettings.postCellThumbnailSizePercents.get() * postCellThumbnailSizePercent
 
       return newSize.toInt()
+    }
+
+    fun calculateContainerFileInfoSize(): Int {
+      val containerFileInfoSizePercent = getDimen(R.dimen.cell_post_thumbnail_container_file_info_size).toFloat() / 100f
+      val containerFileInfoSize = ChanSettings.postCellThumbnailSizePercents.get() * containerFileInfoSizePercent
+
+      return containerFileInfoSize.toInt()
     }
   }
 

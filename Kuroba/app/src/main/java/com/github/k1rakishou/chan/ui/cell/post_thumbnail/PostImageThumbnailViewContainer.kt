@@ -136,9 +136,9 @@ class PostImageThumbnailViewContainer(
     }
   }
 
-  fun bindFileInfoContainerSizes(thumbnailContainerSize: Int, cellPostThumbnailSize: Int) {
+  fun bindFileInfoContainerSizes(thumbnailContainerWidth: Int, cellPostThumbnailSize: Int) {
     fileInfoContainerGroup.updateLayoutParams<ViewGroup.LayoutParams> {
-      width = (thumbnailContainerSize - cellPostThumbnailSize)
+      width = thumbnailContainerWidth
       height = cellPostThumbnailSize
     }
   }
