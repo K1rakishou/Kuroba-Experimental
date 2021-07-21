@@ -9,8 +9,12 @@ import org.jsoup.parser.Parser
 class HtmlParser {
 
   fun parse(html: String): HtmlDocument {
-    val nodes = parseInternal(html = html, start = 0).nodes
-    return HtmlDocument(nodes)
+    try {
+      val nodes = parseInternal(html = html, start = 0).nodes
+      return HtmlDocument(nodes)
+    } catch (error: Throwable) {
+      throw ParsingException("Failed to parse '$html'", error)
+    }
   }
 
   private fun parseInternal(parentNode: HtmlNode? = null, html: String, start: Int): ParseResult {
@@ -122,11 +126,21 @@ class HtmlParser {
       val attrName = attributeSplitList[0]
       var attrValue = attributeSplitList[1]
 
-      if (attrValue[0] == '\"') {
+      if (attrName.isEmpty() || attrValue.isEmpty()) {
+        continue
+      }
+
+      val firstCh = attrValue.firstOrNull()
+        ?: continue
+
+      if (firstCh == '\"') {
         attrValue = attrValue.copyOfRange(1, attrValue.lastIndex)
       }
 
-      if (attrValue[attrValue.lastIndex] == '\"') {
+      val lastCh = attrValue.lastOrNull()
+        ?: continue
+
+      if (lastCh == '\"') {
         attrValue = attrValue.copyOfRange(0, attrValue.lastIndex - 1)
       }
 
@@ -251,9 +265,11 @@ class HtmlParser {
     val offset: Int
   )
 
-  class ParsingException(message: String) : Exception(message)
+  class ParsingException(message: String, cause: Throwable? = null) : Exception(message, cause)
 
   companion object {
+    private const val TAG = "HtmlParser"
+
     private val VOID_TAGS = mutableSetOf(
       "area",
       "base",

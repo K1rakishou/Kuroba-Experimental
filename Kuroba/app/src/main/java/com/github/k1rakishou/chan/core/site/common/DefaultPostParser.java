@@ -334,7 +334,7 @@ public class DefaultPostParser implements PostParser {
             for (CharSequence text : texts) {
                 total.append(text);
             }
-        } catch (Exception e) {
+        } catch (Throwable e) {
             Logger.e(TAG, "Error parsing comment html", e);
         }
 

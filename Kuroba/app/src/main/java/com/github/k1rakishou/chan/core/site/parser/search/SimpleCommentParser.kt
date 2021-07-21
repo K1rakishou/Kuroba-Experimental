@@ -69,7 +69,7 @@ open class SimpleCommentParser {
         total.append(parseNode(node))
       }
 
-    } catch (e: Exception) {
+    } catch (e: Throwable) {
       Logger.e(TAG, "Error parsing comment html", e)
       return null
     }
