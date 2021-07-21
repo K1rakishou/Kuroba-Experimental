@@ -29,12 +29,11 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.widget.SlidingPaneLayoutEx;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.core_themes.IColorizableWidget;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
 
-public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements IColorizableWidget {
+public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx {
     private static final int SLIDE_PANE_OVERHANG_SIZE = dp(20);
 
     @Inject
@@ -94,16 +93,10 @@ public class ThreadSlidingPaneLayout extends SlidingPaneLayoutEx implements ICol
             requestLayout();
             return false;
         });
-
-        applyColors();
     }
 
     public void setThreadSlideController(ThreadSlideController threadSlideController) {
         this.threadSlideController = threadSlideController;
-    }
-
-    @Override
-    public void applyColors() {
     }
 
     @Override

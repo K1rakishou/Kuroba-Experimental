@@ -42,8 +42,6 @@ class InlinedFileInfoRepositoryTest {
 
     repository = InlinedFileInfoRepository(
       testDatabaseModuleComponent.provideInMemoryKurobaDatabase(),
-      "",
-      testDatabaseModuleComponent.provideLogger(),
       coroutineScope,
       cache,
       localSource,

@@ -22,6 +22,7 @@ import android.content.res.Configuration
 import android.os.Bundle
 import android.view.KeyEvent
 import android.view.MotionEvent
+import android.view.View
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.lifecycle.lifecycleScope
@@ -57,7 +58,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
-import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -126,7 +126,7 @@ class StartActivity : ControllerHostActivity(),
   private var browseController: BrowseController? = null
 
   private lateinit var activityComponent: ActivityComponent
-  private lateinit var mainRootLayoutMargins: TouchBlockingFrameLayoutNoBackground
+  private lateinit var mainRootLayoutMargins: View
   private lateinit var mainNavigationController: NavigationController
   private lateinit var mainController: MainController
 
@@ -237,7 +237,7 @@ class StartActivity : ControllerHostActivity(),
       onShow()
     }
 
-    mainRootLayoutMargins = mainController.view.findViewById(R.id.main_root_layout_margins)
+    mainRootLayoutMargins = mainController.view.findViewById(R.id.drawer_layout)
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, mainRootLayoutMargins)
 
     mainNavigationController = StyledToolbarNavigationController(this)

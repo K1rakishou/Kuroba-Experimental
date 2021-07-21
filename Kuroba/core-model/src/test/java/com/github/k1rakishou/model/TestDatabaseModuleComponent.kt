@@ -2,7 +2,7 @@ package com.github.k1rakishou.model
 
 import android.app.Application
 import androidx.room.Room
-import com.github.k1rakishou.model.common.Logger
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
@@ -16,7 +16,7 @@ import java.util.concurrent.TimeUnit
 class TestDatabaseModuleComponent(
   private val application: Application = RuntimeEnvironment.application
 ) {
-  private val logger = Logger(true)
+  private val logger = Logger()
   private var inMemoryDatabase: KurobaDatabase? = null
   private var onDiskDatabase: KurobaDatabase? = null
   private var okHttpClient: OkHttpClient? = null
@@ -79,26 +79,20 @@ class TestDatabaseModuleComponent(
 
   fun provideInlinedFileInfoLocalSource(): InlinedFileInfoLocalSource {
     return InlinedFileInfoLocalSource(
-      provideInMemoryKurobaDatabase(),
-      "InlinedFileInfoLocalSource",
-      provideLogger()
+      provideInMemoryKurobaDatabase()
     )
   }
 
   fun provideChanPostLocalSource(database: KurobaDatabase = provideInMemoryKurobaDatabase()): ChanPostLocalSource {
     return ChanPostLocalSource(
       database,
-      "ChanPostLocalSource",
-      provideLogger(),
       provideGson()
     )
   }
 
   fun provideMediaServiceLinkExtraContentLocalSource(): MediaServiceLinkExtraContentLocalSource {
     return MediaServiceLinkExtraContentLocalSource(
-      provideInMemoryKurobaDatabase(),
-      "MediaServiceLinkExtraContentLocalSource",
-      provideLogger()
+      provideInMemoryKurobaDatabase()
     )
   }
 
@@ -108,17 +102,13 @@ class TestDatabaseModuleComponent(
 
   fun provideInlinedFileInfoRemoteSource(): InlinedFileInfoRemoteSource {
     return InlinedFileInfoRemoteSource(
-      provideOkHttpClient(),
-      "InlinedFileInfoRemoteSource",
-      provideLogger()
+      provideOkHttpClient()
     )
   }
 
   fun provideMediaServiceLinkExtraContentRemoteSource(): MediaServiceLinkExtraContentRemoteSource {
     return MediaServiceLinkExtraContentRemoteSource(
-      provideOkHttpClient(),
-      "MediaServiceLinkExtraContentRemoteSource",
-      provideLogger()
+      provideOkHttpClient()
     )
   }
 }

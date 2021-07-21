@@ -45,8 +45,6 @@ class MediaServiceLinkExtraContentRepositoryTest {
 
     repository = MediaServiceLinkExtraContentRepository(
       testDatabaseModuleComponent.provideInMemoryKurobaDatabase(),
-      "",
-      testDatabaseModuleComponent.provideLogger(),
       coroutineScope,
       cache,
       localSource,

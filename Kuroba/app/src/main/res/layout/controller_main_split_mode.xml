@@ -22,72 +22,60 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:layout_height="match_parent"
     android:fitsSystemWindows="true">
 
-    <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
-        android:id="@+id/main_root_layout_margins"
+    <com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
+        android:id="@+id/drawer_layout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
-            android:id="@+id/drawer_layout"
+        <RelativeLayout
+            android:id="@+id/drawer_content_part"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
 
-            <RelativeLayout
-                android:id="@+id/drawer_content_part"
+            <LinearLayout
                 android:layout_width="match_parent"
-                android:layout_height="match_parent">
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:orientation="horizontal">
-
-                    <com.github.k1rakishou.chan.ui.view.KurobaNavigationRailView
-                        android:id="@+id/navigation_view"
-                        android:layout_width="@dimen/navigation_view_size"
-                        android:layout_height="match_parent"
-                        android:paddingTop="@dimen/toolbar_height"
-                        app:menuGravity="top"
-                        tools:menu="@menu/bottom_navigation_menu" />
-
-                    <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
-                        android:id="@+id/main_controller_container"
-                        android:layout_width="match_parent"
-                        android:layout_height="match_parent" />
-
-                </LinearLayout>
-
-                <com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
-                    android:id="@+id/bottom_menu_panel"
-                    android:layout_width="match_parent"
-                    android:layout_height="@dimen/navigation_view_size"
-                    android:layout_alignParentBottom="true" />
-
-            </RelativeLayout>
-
-            <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
-                android:id="@+id/drawer_part"
-                android:layout_width="0dp"
                 android:layout_height="match_parent"
-                android:layout_gravity="start"
-                android:clipToPadding="false"
-                android:orientation="vertical">
+                android:orientation="horizontal">
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-                    android:id="@+id/drawer_recycler_view"
-                    android:layout_width="match_parent"
+                <com.github.k1rakishou.chan.ui.view.KurobaNavigationRailView
+                    android:id="@+id/navigation_view"
+                    android:layout_width="@dimen/navigation_view_size"
                     android:layout_height="match_parent"
-                    android:scrollbars="vertical" />
+                    android:paddingTop="@dimen/toolbar_height"
+                    app:menuGravity="top"
+                    tools:menu="@menu/bottom_navigation_menu" />
 
-                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
-                    android:id="@+id/divider"
+                <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
+                    android:id="@+id/main_controller_container"
                     android:layout_width="match_parent"
-                    android:layout_height="1dp" />
+                    android:layout_height="match_parent" />
 
-            </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground>
+            </LinearLayout>
 
-        </com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout>
+            <com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
+                android:id="@+id/bottom_menu_panel"
+                android:layout_width="match_parent"
+                android:layout_height="@dimen/navigation_view_size"
+                android:layout_alignParentBottom="true" />
 
-    </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>
+        </RelativeLayout>
+
+        <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
+            android:id="@+id/drawer_part"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_gravity="start"
+            android:clipToPadding="false"
+            android:orientation="vertical">
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+                android:id="@+id/drawer_recycler_view"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:scrollbars="vertical" />
+
+        </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground>
+
+    </com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout>
 
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>

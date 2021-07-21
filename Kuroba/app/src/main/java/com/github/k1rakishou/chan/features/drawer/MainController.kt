@@ -79,7 +79,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableDivider
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
@@ -154,7 +153,6 @@ class MainController(
   private lateinit var drawer: TouchBlockingLinearLayoutNoBackground
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var navigationViewContract: NavigationViewContract
-  private lateinit var divider: ColorizableDivider
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
@@ -257,7 +255,6 @@ class MainController(
     drawerLayout = view.findViewById(R.id.drawer_layout)
     drawerLayout.setDrawerShadow(R.drawable.panel_shadow, GravityCompat.START)
     drawer = view.findViewById(R.id.drawer_part)
-    divider = view.findViewById(R.id.divider)
     navigationViewContract = view.findViewById(R.id.navigation_view) as NavigationViewContract
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
@@ -426,7 +423,6 @@ class MainController(
     drawerPresenter.onThemeChanged()
     settingsNotificationManager.onThemeChanged()
 
-    divider.setBackgroundColor(themeEngine.chanTheme.dividerColor)
     navigationViewContract.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
     val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(themeEngine.chanTheme.primaryColor)) {

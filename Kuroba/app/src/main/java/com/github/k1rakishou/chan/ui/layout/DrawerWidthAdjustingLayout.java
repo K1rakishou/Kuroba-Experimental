@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
@@ -24,9 +26,12 @@ import androidx.drawerlayout.widget.DrawerLayout;
 
 import com.github.k1rakishou.chan.R;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-
 public class DrawerWidthAdjustingLayout extends DrawerLayout {
+    private static final int RIGHT_PADDING = dp(56);
+    private static final int DEFAULT_SIZE = RIGHT_PADDING * 8;
+    private static final int EDIT_MODE_WIDTH = 300;
+    private View drawer;
+
     public DrawerWidthAdjustingLayout(Context context) {
         super(context);
     }
@@ -43,11 +48,15 @@ public class DrawerWidthAdjustingLayout extends DrawerLayout {
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
         int widthSize = MeasureSpec.getSize(widthMeasureSpec);
 
-        View drawer = findViewById(R.id.drawer_part);
+        if (drawer == null) {
+            drawer = findViewById(R.id.drawer_part);
+        }
 
-        int width = 300;
+        int width;
         if (!isInEditMode()) {
-            width = Math.min(widthSize - dp(56), dp(56) * 6);
+            width = Math.min(widthSize - RIGHT_PADDING, DEFAULT_SIZE);
+        } else {
+            width = EDIT_MODE_WIDTH;
         }
 
         if (drawer.getLayoutParams().width != width) {
