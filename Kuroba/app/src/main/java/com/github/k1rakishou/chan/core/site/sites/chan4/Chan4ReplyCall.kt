@@ -203,8 +203,13 @@ class Chan4ReplyCall(
 
   private fun setChan4CaptchaHeader(headers: Headers) {
     val chan4 = site as Chan4
-
     val chan4CaptchaSettings = chan4.chan4CaptchaSettings.get()
+
+    if (!chan4CaptchaSettings.rememberCaptchaCookies) {
+      Logger.d(TAG, "setChan4CaptchaHeader() rememberCaptchaCookies is false")
+      return
+    }
+
     val now = System.currentTimeMillis()
     val cookieReceivedOn = chan4CaptchaSettings.cookieReceivedOn
     val expired = (now - cookieReceivedOn) > Chan4CaptchaSettings.COOKIE_LIFE_TIME
@@ -222,9 +227,14 @@ class Chan4ReplyCall(
       ?.substringAfter(DOMAIN_PREFIX)
       ?.substringBefore(';')
 
+    if (domain == null) {
+      Logger.d(TAG, "setChan4CaptchaHeader() domain is null")
+      return
+    }
+
     val oldCookie = when {
-      domain?.contains("4channel") == true -> chan4.channel4CaptchaCookie.get()
-      domain?.contains("4chan") == true -> chan4.chan4CaptchaCookie.get()
+      domain.contains("4channel") -> chan4.channel4CaptchaCookie.get()
+      domain.contains("4chain") -> chan4.chan4CaptchaCookie.get()
       else -> {
         Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
         null

@@ -457,6 +457,12 @@ class Chan4CaptchaLayout(
       isCurrentlySelected = chan4CaptchaSettings.sliderCaptchaUseContrastBackground
     )
 
+    items += CheckableFloatingListMenuItem(
+      ACTION_REMEMBER_CAPTCHA_COOKIES,
+      getString(R.string.captcha_layout_remember_captcha_cookies),
+      isCurrentlySelected = chan4CaptchaSettings.rememberCaptchaCookies
+    )
+
     items += FloatingListMenuItem(
       ACTION_SHOW_CAPTCHA_HELP,
       getString(R.string.captcha_layout_show_captcha_help)
@@ -474,6 +480,12 @@ class Chan4CaptchaLayout(
           }
           ACTION_SHOW_CAPTCHA_HELP -> {
             showCaptchaHelp()
+          }
+          ACTION_REMEMBER_CAPTCHA_COOKIES -> {
+            val setting = viewModel.chan4CaptchaSettings.get()
+            val updatedSetting = setting.copy(rememberCaptchaCookies = setting.rememberCaptchaCookies.not())
+
+            viewModel.chan4CaptchaSettings.set(updatedSetting)
           }
         }
       }
@@ -495,6 +507,7 @@ class Chan4CaptchaLayout(
     private const val MAX_OFFSET = 400f
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1
+    private const val ACTION_REMEMBER_CAPTCHA_COOKIES = 2
   }
 
 }

@@ -634,6 +634,16 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
+      val rememberCaptchaCookies = site.getSettingBySettingId<JsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+        ?.get()
+        ?.rememberCaptchaCookies
+        ?: false
+
+      if (!rememberCaptchaCookies) {
+        Logger.d(TAG, "addChan4CookieHeader(), rememberCaptchaCookies is false")
+        return
+      }
+
       val host = requestBuilder.build().url.host
 
       val captchaCookie = when {
