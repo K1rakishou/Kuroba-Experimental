@@ -261,7 +261,7 @@ public class StyleRule {
         if (linkify && post != null) {
             resultText = CommentParserHelper.detectLinks(
                     post,
-                    resultText.toString(),
+                    resultText,
                     styleRulesParams.isForceHttpsScheme(),
                     null
             );

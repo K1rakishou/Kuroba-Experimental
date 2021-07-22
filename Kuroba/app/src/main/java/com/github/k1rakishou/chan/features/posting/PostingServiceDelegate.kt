@@ -1187,7 +1187,7 @@ class PostingServiceDelegate(
       val createBookmarkResult = if (thread != null) {
         val originalPost = thread.getOriginalPost()
         val title = ChanPostUtils.getTitle(originalPost, newThreadDescriptor)
-        val thumbnail = originalPost.firstImage()?.actualThumbnailUrl
+        val thumbnail = originalPost?.firstImage()?.actualThumbnailUrl
 
         bookmarksManager.createBookmark(bookmarkThreadDescriptor, title, thumbnail)
       } else {

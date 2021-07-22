@@ -61,9 +61,9 @@ class ChanThread(
   val imagesCount: Int
     get() = lock.read { threadPosts.sumBy { post -> post.postImages.size } }
 
-  fun isClosed(): Boolean = lock.read { getOriginalPost().closed }
-  fun isArchived(): Boolean = lock.read { getOriginalPost().archived }
-  fun isDeleted(): Boolean = lock.read { getOriginalPost().isDeleted }
+  fun isClosed(): Boolean = lock.read { getOriginalPost()?.closed ?: false }
+  fun isArchived(): Boolean = lock.read { getOriginalPost()?.archived ?: false }
+  fun isDeleted(): Boolean = lock.read { getOriginalPost()?.isDeleted ?: false }
 
   fun putPostHash(postDescriptor: PostDescriptor, hash: MurmurHashUtils.Murmur3Hash) {
     lock.write { rawPostHashesMap[postDescriptor] = hash }
@@ -208,14 +208,17 @@ class ChanThread(
     }
   }
 
-  fun getOriginalPost(): ChanOriginalPost {
-    lock.read {
-      require(threadPosts.isNotEmpty()) { "posts are empty!" }
+  fun getOriginalPost(): ChanOriginalPost? {
+    return lock.read {
+      if (threadPosts.isEmpty()) {
+        return@read null
+      }
+
       require(threadPosts.first() is ChanOriginalPost) {
         "First post is not an original post! post=${threadPosts.first()}"
       }
 
-      return threadPosts.first() as ChanOriginalPost
+      return@read threadPosts.first() as ChanOriginalPost
     }
   }
 
@@ -283,6 +286,10 @@ class ChanThread(
   fun canUpdateThread(): Boolean {
     return lock.read {
       val originalPost = getOriginalPost()
+      if (originalPost == null) {
+        // I guess we should update the thread if we have no posts?
+        return@read true
+      }
 
       return@read !originalPost.closed && !originalPost.isDeleted && !originalPost.archived
     }

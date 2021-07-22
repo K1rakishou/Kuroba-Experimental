@@ -19,7 +19,7 @@ data class ColorizableBackgroundColorSpan @JvmOverloads constructor(
       color = manipulateColor(color, colorModificationFactor)
     }
 
-    textPaint.color = color
+    textPaint.bgColor = color
   }
 
   override fun equals(other: Any?): Boolean {

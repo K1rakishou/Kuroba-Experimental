@@ -40,6 +40,7 @@ open class SimpleCommentParser {
       .monospace()
       .size(sp(12f))
       .backgroundColorId(ChanThemeColorId.BackColorSecondary)
+      .foregroundColorId(ChanThemeColorId.TextColorPrimary)
     )
 
     rule(StyleRule.tagRule("span")

@@ -224,8 +224,10 @@ class ThreadStatusCell(
     }
 
     val op = chanThread.getOriginalPost()
-    val board = boardManager.byBoardDescriptor(op.postDescriptor.boardDescriptor())
-    appendThreadStatisticsPart(chanThread, builder, op, board)
+    if (op != null) {
+      val board = boardManager.byBoardDescriptor(op.postDescriptor.boardDescriptor())
+      appendThreadStatisticsPart(chanThread, builder, op, board)
+    }
 
     if (archivesManager.isSiteArchive(chanDescriptor.siteDescriptor())) {
       builder

@@ -89,8 +89,6 @@ class ChanThreadsCache(
   ) {
     runOldPostEvictionRoutineIfNeeded()
 
-    val updatedPosts = mutableListWithCap<ChanOriginalPost>(parsedPosts)
-
     parsedPosts.forEach { chanOriginalPost ->
       check(chanOriginalPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
         "Only thread descriptors are allowed in the cache!" +
@@ -109,8 +107,6 @@ class ChanThreadsCache(
 
       chanThread.setOrUpdateOriginalPost(chanOriginalPost)
       // Do not update "lastUpdateTime" here because it will break catalog thread previewing
-
-      updatedPosts += chanThread.getOriginalPost()
     }
   }
 
@@ -338,9 +334,12 @@ class ChanThreadsCache(
       val chanThread = chanThreads.remove(threadDescriptor)
         ?: return@forEach
 
+      val originalPostDescriptor = chanThread.getOriginalPost()?.postDescriptor
+        ?: return@forEach
+
       entries += ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry(
-        threadDescriptor,
-        chanThread.getOriginalPost().postDescriptor
+        threadDescriptor = threadDescriptor,
+        originalPostDescriptor = originalPostDescriptor
       )
     }
 
@@ -469,12 +468,14 @@ class ChanThreadsCache(
         threadsToRemove += threadDescriptor
         chanThreads.remove(threadDescriptor)
       } else {
-        val originalPost = chanThread.getOriginalPost()
+        val originalPostDescriptor = chanThread.getOriginalPost()?.postDescriptor
 
-        threadsToClean += ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry(
-          threadDescriptor,
-          originalPost.postDescriptor
-        )
+        if (originalPostDescriptor != null) {
+          threadsToClean += ThreadDeleteEvent.RemoveThreadPostsExceptOP.Entry(
+            threadDescriptor,
+            originalPostDescriptor
+          )
+        }
       }
     }
 

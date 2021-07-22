@@ -399,7 +399,7 @@ public class DefaultPostParser implements PostParser {
     }
 
     @Nullable
-    private PostLinkable handleLink(String link) {
+    private PostLinkable handleLink(CharSequence link) {
         ArchiveType archiveType = archivesManager.extractArchiveTypeFromLinkOrNull(link);
         if (archiveType == null) {
             return null;

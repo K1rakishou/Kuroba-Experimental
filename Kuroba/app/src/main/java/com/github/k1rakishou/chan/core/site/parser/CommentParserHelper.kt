@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.site.parser
 
 import android.text.SpannableString
 import android.text.Spanned
+import android.text.TextUtils
 import androidx.core.text.buildSpannedString
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -36,9 +37,9 @@ object CommentParserHelper {
   @JvmStatic
   fun detectLinks(
     post: ChanPostBuilder,
-    text: String,
+    text: CharSequence,
     forceHttpsScheme: Boolean,
-    linkHandler: Function1<String, PostLinkable?>?
+    linkHandler: Function1<CharSequence, PostLinkable?>?
   ): SpannableString {
     val ranges = splitTextIntoRanges(text)
     if (ranges.isEmpty()) {
@@ -48,11 +49,11 @@ object CommentParserHelper {
     val spannedString = buildSpannedString {
       for (range in ranges) {
         if (range is TextRange) {
-          append(text.substring(range.start, range.end))
+          append(text.subSequence(range.start, range.end))
           continue
         }
 
-        var linkText = text.substring(range.start, range.end)
+        var linkText = text.subSequence(range.start, range.end)
         if (linkHandler != null) {
           val postLinkable = linkHandler.invoke(linkText)
           if (postLinkable != null) {
@@ -74,7 +75,7 @@ object CommentParserHelper {
         }
 
         if (forceHttpsScheme && linkText.startsWith(HTTP_SCHEME)) {
-          linkText = linkText.replace(HTTP_SCHEME, HTTPS_SCHEME)
+          linkText = TextUtils.replace(linkText, arrayOf(HTTP_SCHEME), arrayOf(HTTPS_SCHEME))
         }
 
         val postLinkable = PostLinkable(
@@ -104,7 +105,7 @@ object CommentParserHelper {
   }
 
   fun splitTextIntoRanges(
-    text: String
+    text: CharSequence
   ): List<IRange> {
     val linkSpanList = extractLinks(text).toList()
     if (linkSpanList.isEmpty()) {
@@ -143,7 +144,7 @@ object CommentParserHelper {
     return ranges
   }
 
-  private fun extractLinks(text: String): Iterable<LinkSpan> {
+  private fun extractLinks(text: CharSequence): Iterable<LinkSpan> {
     return LINK_EXTRACTOR.extractLinks(text)
   }
 
