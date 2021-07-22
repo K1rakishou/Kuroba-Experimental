@@ -16,7 +16,7 @@ data class ChildNotificationInfo(
         is Status.Uploading,
         is Status.WaitingForSiteRateLimitToPass,
         is Status.WaitingForAdditionalService,
-        is Status.Preparing,-> true
+        is Status.Preparing -> true
         is Status.Error,
         is Status.Posted,
         Status.Canceled -> false

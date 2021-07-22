@@ -119,9 +119,7 @@ class PostingServiceDelegate(
       replyInfo?.cancelReplyUpload()
       twoCaptchaSolver.cancel(chanDescriptor)
 
-      if (replyInfo == null) {
-        _closeChildNotificationFlow.emit(chanDescriptor)
-      }
+      _closeChildNotificationFlow.emit(chanDescriptor)
     }
   }
 
@@ -681,18 +679,16 @@ class PostingServiceDelegate(
           actualPostResult = actualPostResult,
           chanDescriptor = chanDescriptor
         )
-
-        return
-      }
-
-      emitTerminalEvent(
-        chanDescriptor = chanDescriptor,
-        postResult = PostResult.Success(
-          replyResponse = postResult.replyResponse,
-          replyMode = replyMode,
-          retrying = retrying
+      } else {
+        emitTerminalEvent(
+          chanDescriptor = chanDescriptor,
+          postResult = PostResult.Success(
+            replyResponse = postResult.replyResponse,
+            replyMode = replyMode,
+            retrying = retrying
+          )
         )
-      )
+      }
 
       return
     }
@@ -742,12 +738,13 @@ class PostingServiceDelegate(
       newCooldownInfo = rateLimitInfo.cooldownInfo
     )
 
-    ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
-      remainingWaitTimeMs = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
-      boardDescriptor = chanDescriptor.boardDescriptor()
+    updateChildNotification(
+      chanDescriptor = chanDescriptor,
+      status = ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass(
+        remainingWaitTimeMs = rateLimitInfo.cooldownInfo.currentPostingCooldownMs,
+        boardDescriptor = chanDescriptor.boardDescriptor()
+      )
     )
-
-    return
   }
 
   /**

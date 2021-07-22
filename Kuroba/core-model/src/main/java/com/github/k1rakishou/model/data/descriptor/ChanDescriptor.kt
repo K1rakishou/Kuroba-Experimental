@@ -15,6 +15,27 @@ sealed class ChanDescriptor {
   abstract fun serializeToString(): String
   abstract fun userReadableString(): String
 
+  @Suppress("ReplaceCallWithBinaryOperator")
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (other !is ChanDescriptor) return false
+    if (this.javaClass != other.javaClass) return false
+
+    return when (this) {
+      // Do not remove the casts
+      is ThreadDescriptor -> (this as ThreadDescriptor).equals(other as ThreadDescriptor)
+      is CatalogDescriptor -> (this as CatalogDescriptor).equals(other as CatalogDescriptor)
+    }
+  }
+
+  override fun hashCode(): Int {
+    return when (this) {
+      // Do not remove the casts
+      is ThreadDescriptor -> (this as ThreadDescriptor).hashCode()
+      is CatalogDescriptor -> (this as CatalogDescriptor).hashCode()
+    }
+  }
+
   @JvmOverloads
   fun toThreadDescriptor(threadNo: Long? = null): ThreadDescriptor {
     return when (this) {
