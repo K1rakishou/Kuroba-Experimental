@@ -13,6 +13,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -28,6 +29,7 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.Card
+import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -661,7 +663,7 @@ class LocalArchiveController(
 
   @OptIn(ExperimentalComposeUiApi::class)
   @Composable
-  private fun BuildThreadDownloadStatusIcon(
+  private fun ColumnScope.BuildThreadDownloadStatusIcon(
     animationAtEnd: Boolean,
     threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
     iconAlpha: Float
@@ -683,11 +685,12 @@ class LocalArchiveController(
 //        animatedVectorResource(id = R.drawable.ic_download_anim)
 //          .painterFor(atEnd = animationAtEnd)
 
-        KurobaComposeProgressIndicator(
+        CircularProgressIndicator(
+          color = color,
           modifier = Modifier
-            .size(ICON_SIZE)
+            .size(PROGRESS_SIZE)
+            .align(Alignment.CenterHorizontally)
             .clickable { showToast(threadDownloadView.status.toString(), Toast.LENGTH_LONG) },
-          overrideColor = color
         )
 
         return
@@ -858,6 +861,7 @@ class LocalArchiveController(
     private const val ACTION_UPDATE_ALL = 1
 
     private val ICON_SIZE = 26.dp
+    private val PROGRESS_SIZE = 20.dp
   }
 
 }

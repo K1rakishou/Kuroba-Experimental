@@ -18,6 +18,8 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.widget.DisableableLayout
 import com.github.k1rakishou.chan.ui.widget.KurobaViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
+import com.github.k1rakishou.chan.utils.ViewUtils.updateTabLayoutFontSize
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.material.tabs.TabLayout
@@ -49,7 +51,9 @@ class TabHostController(
 
     tabLayout = view.findViewById(R.id.tab_layout)
     viewPager = view.findViewById(R.id.view_pager)
+    
     viewPager.adapter = viewPagerAdapter
+    tabLayout.updateTabLayoutFontSize(sp(12f))
 
     val pageType = getLastOpenedTabPageIndex(bookmarksToHighlight)
 
@@ -74,6 +78,7 @@ class TabHostController(
 
     tabLayout.addOnTabSelectedListener(simpleOnTabSelectedListener)
     tabLayout.setDisableableLayoutHandler(this)
+
     viewPager.addOnPageChangeListener(simpleOnPageChangeListener)
     viewPager.setDisableableLayoutHandler(this)
 

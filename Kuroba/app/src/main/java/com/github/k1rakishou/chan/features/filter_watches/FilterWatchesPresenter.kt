@@ -80,7 +80,7 @@ class FilterWatchesPresenter : BasePresenter<FilterWatchesControllerView>() {
 
     scope.launch {
       val job = scope.launch {
-        delay(150L)
+        delay(50L)
         updateState(FilterWatchesControllerState.Loading)
       }
 

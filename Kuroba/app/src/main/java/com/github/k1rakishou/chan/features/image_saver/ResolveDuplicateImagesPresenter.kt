@@ -51,7 +51,7 @@ internal class ResolveDuplicateImagesPresenter(
     super.onCreate(view)
 
     scope.launch(Dispatchers.IO) {
-      delay(100)
+      delay(50)
       updateState(ResolveDuplicateImagesState.Loading)
 
       loadDuplicateImagesInitial()

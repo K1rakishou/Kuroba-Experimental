@@ -43,7 +43,7 @@ internal class GlobalSearchPresenter(
       }
 
       val loadingStateCancellationJob = launch {
-        delay(150)
+        delay(50)
         setState(GlobalSearchControllerState.Loading)
       }
 

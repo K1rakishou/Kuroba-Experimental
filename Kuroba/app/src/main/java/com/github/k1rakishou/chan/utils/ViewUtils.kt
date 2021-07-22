@@ -17,6 +17,7 @@ import androidx.core.graphics.drawable.DrawableCompat
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.google.android.material.tabs.TabLayout
 import java.lang.reflect.Field
 
 
@@ -219,6 +220,15 @@ object ViewUtils {
       val f2: Field = ProgressDialog::class.java.getDeclaredField("mProgressPercent")
       f2.isAccessible = true
       (f2.get(this) as? TextView)?.let { progressPercent -> progressPercent.setTextColor(theme.textColorSecondary) }
+    } catch (ignored: Exception) {
+    }
+  }
+
+  fun TabLayout.updateTabLayoutFontSize(textSizeInPixel: Int) {
+    try {
+      val tabTextSizeField = TabLayout::class.java.getDeclaredField("tabTextSize")
+      tabTextSizeField.isAccessible = true
+      tabTextSizeField.set(this, textSizeInPixel)
     } catch (ignored: Exception) {
     }
   }
