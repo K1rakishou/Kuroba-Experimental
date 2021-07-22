@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -49,4 +49,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintTop_toBottomOf="@+id/progress_view"
         tools:text="Loading thread json"/>
 
-</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayoutNoBackground>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout>

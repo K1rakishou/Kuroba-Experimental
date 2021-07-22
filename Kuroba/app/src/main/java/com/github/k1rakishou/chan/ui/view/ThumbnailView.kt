@@ -280,7 +280,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   override fun onDraw(canvas: Canvas) {
-    if (_thumbnailViewOptions?.drawBlackBackground == true) {
+    if (_thumbnailViewOptions?.drawThumbnailBackground == true) {
       canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), backgroundPaint)
     }
 
@@ -458,7 +458,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   class ThumbnailViewOptions(
     val postThumbnailScaling: ChanSettings.PostThumbnailScaling = ChanSettings.postThumbnailScaling.get(),
-    val drawBlackBackground: Boolean = ChanSettings.drawPostThumbnailBackground.get(),
+    val drawThumbnailBackground: Boolean = ChanSettings.drawPostThumbnailBackground.get(),
     val drawRipple: Boolean = true
   )
 

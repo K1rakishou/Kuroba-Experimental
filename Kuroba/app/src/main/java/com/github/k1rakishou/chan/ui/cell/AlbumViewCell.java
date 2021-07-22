@@ -87,7 +87,7 @@ public class AlbumViewCell extends FrameLayout {
         thumbnailView.bindPostImage(
                 postImage,
                 canUseHighResCells,
-                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, false, true)
+                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, true, true)
         );
 
         if (showDetails) {

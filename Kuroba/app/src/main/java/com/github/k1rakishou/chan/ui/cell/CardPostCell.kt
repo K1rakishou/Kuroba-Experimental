@@ -308,7 +308,7 @@ class CardPostCell : ConstraintLayout,
       canUseHighResCells = ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount()),
       thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
         postThumbnailScaling = ChanSettings.PostThumbnailScaling.CenterCrop,
-        drawBlackBackground = false,
+        drawThumbnailBackground = false,
         drawRipple = true
       )
     )
