@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.activity.SharingActivity
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -87,6 +88,7 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
   return when (this) {
     is StartActivity -> this.lifecycle
     is SharingActivity -> this.lifecycle
+    is MediaViewerActivity -> this.lifecycle
     is ContextWrapper -> (this.baseContext as? AppCompatActivity)?.getLifecycleFromContext()
     else -> null
   }
@@ -100,8 +102,11 @@ suspend fun View.awaitUntilGloballyLaidOut() {
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
     viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        viewTreeObserver.removeOnGlobalLayoutListener(this)
+        cancellableContinuation.invokeOnCancellation {
+          viewTreeObserver.removeOnGlobalLayoutListener(this)
+        }
 
+        viewTreeObserver.removeOnGlobalLayoutListener(this)
         cancellableContinuation.resumeValueSafe(Unit)
       }
     })
