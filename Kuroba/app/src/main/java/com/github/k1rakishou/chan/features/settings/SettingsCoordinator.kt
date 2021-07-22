@@ -346,7 +346,7 @@ class SettingsCoordinator(
     scope.launch(Dispatchers.Main.immediate) {
       val loadingJob = if (isFirstRebuild) {
         val job = scope.launch {
-          delay(100)
+          delay(50)
           emitRenderAction(RenderAction.Loading)
         }
 
@@ -436,22 +436,24 @@ class SettingsCoordinator(
   }
 
   private suspend fun buildSettingsGraph(): SettingsGraph {
-    val graph = SettingsGraph()
+    return withContext(Dispatchers.Default) {
+      val graph = SettingsGraph()
 
-    graph += mainSettingsScreen.build()
-    graph += developerSettingsScreen.build()
-    graph += databaseSummaryScreen.build()
-    graph += threadWatcherSettingsScreen.build()
-    graph += appearanceSettingsScreen.build()
-    graph += behaviorSettingsScreen.build()
-    graph += experimentalSettingsScreen.build()
-    graph += captchaSolversSettingsScreen.build()
-    graph += importExportSettingsScreen.build()
-    graph += mediaSettingsScreen.build()
-    graph += securitySettingsScreen.build()
-    graph += cachingSettingsScreen.build()
+      graph += mainSettingsScreen.build()
+      graph += developerSettingsScreen.build()
+      graph += databaseSummaryScreen.build()
+      graph += threadWatcherSettingsScreen.build()
+      graph += appearanceSettingsScreen.build()
+      graph += behaviorSettingsScreen.build()
+      graph += experimentalSettingsScreen.build()
+      graph += captchaSolversSettingsScreen.build()
+      graph += importExportSettingsScreen.build()
+      graph += mediaSettingsScreen.build()
+      graph += securitySettingsScreen.build()
+      graph += cachingSettingsScreen.build()
 
-    return graph
+      return@withContext graph
+    }
   }
 
   sealed class RenderAction {

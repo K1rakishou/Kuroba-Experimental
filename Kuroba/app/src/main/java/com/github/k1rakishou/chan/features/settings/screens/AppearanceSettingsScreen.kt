@@ -75,14 +75,6 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.ImagesGroup.TransparencyOn,
-          topDescriptionIdFunc = { R.string.setting_fetch_image_opacity },
-          bottomDescriptionIdFunc = { R.string.setting_fetch_image_opacity_description },
-          setting = ChanSettings.transparencyOn
-        )
-
         group
       }
     )

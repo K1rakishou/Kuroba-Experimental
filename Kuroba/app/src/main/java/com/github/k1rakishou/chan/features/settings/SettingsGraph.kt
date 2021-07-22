@@ -1,9 +1,13 @@
 package com.github.k1rakishou.chan.features.settings
 
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.util.concurrent.ConcurrentHashMap
+
 class SettingsGraph(
-  private val screenMap: MutableMap<IScreenIdentifier, SettingsScreen> = mutableMapOf()
+  private val screenMap: ConcurrentHashMap<IScreenIdentifier, SettingsScreen> = ConcurrentHashMap()
 ) {
-  private val screensBuilderMap = mutableMapOf<IScreenIdentifier, suspend () -> SettingsScreen>()
+  private val screensBuilderMap = ConcurrentHashMap<IScreenIdentifier, suspend () -> SettingsScreen>()
 
   operator fun plusAssign(screenBuilder: SettingsScreen.SettingsScreenBuilder) {
     val screenIdentifier = screenBuilder.screenIdentifier
@@ -37,21 +41,25 @@ class SettingsGraph(
   }
 
   suspend fun rebuildScreens(buildOptions: BuildOptions) {
-    screenMap.clear()
+    withContext(Dispatchers.Default) {
+      screenMap.clear()
 
-    screensBuilderMap.forEach { (screenIdentifier, buildFunction) ->
-      screenMap[screenIdentifier] = buildFunction.invoke()
-        .apply { rebuildGroups(buildOptions) }
+      screensBuilderMap.forEach { (screenIdentifier, buildFunction) ->
+        screenMap[screenIdentifier] = buildFunction.invoke()
+          .apply { rebuildGroups(buildOptions) }
+      }
     }
   }
 
   suspend fun rebuildScreen(screenIdentifier: IScreenIdentifier, buildOptions: BuildOptions) {
-    requireNotNull(screensBuilderMap[screenIdentifier]) {
-      "Screen builder does not exist, identifier: ${screenIdentifier}"
-    }
+    withContext(Dispatchers.Default) {
+      requireNotNull(screensBuilderMap[screenIdentifier]) {
+        "Screen builder does not exist, identifier: ${screenIdentifier}"
+      }
 
-    screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke()
-      .apply { rebuildGroups(buildOptions) }
+      screenMap[screenIdentifier] = screensBuilderMap[screenIdentifier]!!.invoke()
+        .apply { rebuildGroups(buildOptions) }
+    }
   }
 
   fun clear() {

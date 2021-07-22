@@ -121,6 +121,8 @@ class ParsePostRepliesUseCase(
       return emptyMap()
     }
 
+    // TODO(KurobaEx): maybe instead of preloading saved replies for bookmarked threads
+    //  (there might be a lot of them) it would be better to just load stuff from the database?
     // Preload the saved replies (we need to do this manually every time).
     savedReplyManager.preloadForThread(threadDescriptor)
 

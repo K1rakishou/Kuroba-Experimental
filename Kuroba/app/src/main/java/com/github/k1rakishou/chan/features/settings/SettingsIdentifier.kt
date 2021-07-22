@@ -390,7 +390,6 @@ sealed class AppearanceScreen(
     object HideImages : ImagesGroup("hide_images")
     object RemoveImageSpoilers : ImagesGroup("remove_image_spoilers")
     object HighResCells : ImagesGroup("high_res_cells")
-    object TransparencyOn : ImagesGroup("transparency_on")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()

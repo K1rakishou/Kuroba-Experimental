@@ -17,6 +17,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class AddBoardsPresenter(
@@ -49,24 +50,30 @@ class AddBoardsPresenter(
 
   private fun showInactiveBoards() {
     scope.launch(Dispatchers.Default) {
-      setState(AddBoardsControllerState.Loading)
+      val loadingJob = scope.launch {
+        delay(50)
+        setState(AddBoardsControllerState.Loading)
+      }
 
       boardManager.awaitUntilInitialized()
       siteManager.awaitUntilInitialized()
 
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site == null) {
+        loadingJob.cancel()
         setState(AddBoardsControllerState.Error("No site found by descriptor: ${siteDescriptor}"))
         return@launch
       }
 
       val isSiteActive = siteManager.isSiteActive(siteDescriptor)
       if (!isSiteActive) {
+        loadingJob.cancel()
         setState(AddBoardsControllerState.Error("Site with descriptor ${siteDescriptor} is not active!"))
         return@launch
       }
 
       showBoardsWithSearchQuery()
+      loadingJob.cancel()
     }
   }
 

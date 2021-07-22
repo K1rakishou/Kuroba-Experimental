@@ -717,16 +717,14 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_show_link_along_with_title_and_duration_description">When disabled only the video title and duration will be shown</string>
 
     <!-- Appearance gallery group -->
-    <string name="setting_hide_images">Hide images</string>
-    <string name="setting_hide_images_description">Hides images with a special spoiler image. If you want to save on data, turn this on.</string>
+    <string name="setting_hide_images">Hide post thumbnails</string>
+    <string name="setting_hide_images_description">Replaces all post thumbnails with a special spoiler image. If you want to save on data, turn this on. An alternative to text-only mode.</string>
     <string name="settings_remove_image_spoilers">Remove image spoilers</string>
     <string name="settings_remove_image_spoilers_description">Always reveal spoiler thumbnails and images</string>
     <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
     <string name="setting_media_viewer_gesture_settings">Media viewer gesture settings</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
-    <string name="setting_fetch_image_opacity">Image opacity</string>
-    <string name="setting_fetch_image_opacity_description">Default state for image transparency in the viewer</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

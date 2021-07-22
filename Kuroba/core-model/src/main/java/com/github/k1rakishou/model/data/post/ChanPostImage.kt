@@ -136,15 +136,15 @@ class ChanPostImage(
   }
 
   fun getThumbnailUrl(): HttpUrl? {
-    if (!spoiler) {
-      return actualThumbnailUrl
+    if (hidden) {
+      return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
     }
 
-    if (!hidden) {
+    if (spoiler) {
       return spoilerThumbnailUrl
     }
 
-    return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
+    return actualThumbnailUrl
   }
 
   fun formatFullAvailableFileName(appendExtension: Boolean = true): String {

@@ -16,6 +16,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class SitesSetupPresenter(
@@ -28,12 +29,17 @@ class SitesSetupPresenter(
 
   override fun onCreate(view: SitesSetupView) {
     super.onCreate(view)
-    setState(SitesSetupControllerState.Loading)
 
     scope.launch(Dispatchers.Default) {
+      val loadingJob = scope.launch {
+        delay(50)
+        setState(SitesSetupControllerState.Loading)
+      }
+
       siteManager.awaitUntilInitialized()
 
       showSites()
+      loadingJob.cancel()
     }
   }
 

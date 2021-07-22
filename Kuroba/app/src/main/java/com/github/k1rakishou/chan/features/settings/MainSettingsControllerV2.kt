@@ -72,6 +72,7 @@ class MainSettingsControllerV2(
 
     view = inflate(context, R.layout.controller_settings_main)
     epoxyRecyclerView = view.findViewById(R.id.settings_recycler_view)
+    epoxyRecyclerView.itemAnimator = null
 
     navigation.buildMenu(context)
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
