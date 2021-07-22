@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
@@ -26,7 +27,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
@@ -44,7 +44,7 @@ class MainSettingsControllerV2(
   @Inject
   lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
 
-  lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  lateinit var epoxyRecyclerView: EpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
 
   private val defaultScreen = MainScreen

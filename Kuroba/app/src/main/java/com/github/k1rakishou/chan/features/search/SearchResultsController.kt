@@ -4,6 +4,7 @@ import android.content.Context
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -23,7 +24,6 @@ import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerSt
 import com.github.k1rakishou.chan.features.search.epoxy.*
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
@@ -58,7 +58,7 @@ class SearchResultsController(
     )
   }
 
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)

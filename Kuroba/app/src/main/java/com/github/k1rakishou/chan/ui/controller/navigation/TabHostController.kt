@@ -51,7 +51,7 @@ class TabHostController(
 
     tabLayout = view.findViewById(R.id.tab_layout)
     viewPager = view.findViewById(R.id.view_pager)
-    
+
     viewPager.adapter = viewPagerAdapter
     tabLayout.updateTabLayoutFontSize(sp(12f))
 

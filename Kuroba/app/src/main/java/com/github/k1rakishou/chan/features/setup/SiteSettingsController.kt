@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyController
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -20,7 +21,6 @@ import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -49,7 +49,7 @@ class SiteSettingsController(
     )
   }
 
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)

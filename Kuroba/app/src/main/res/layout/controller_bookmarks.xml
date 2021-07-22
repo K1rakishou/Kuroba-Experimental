@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/bookmarks_controller_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+        <com.airbnb.epoxy.EpoxyRecyclerView
             android:id="@+id/epoxy_recycler_view"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -17,4 +17,4 @@
 
     </com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout>
 
-</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayoutNoBackground>

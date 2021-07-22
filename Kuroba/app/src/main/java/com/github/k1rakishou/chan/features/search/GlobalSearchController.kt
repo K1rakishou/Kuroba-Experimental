@@ -39,7 +39,7 @@ import javax.inject.Inject
 class GlobalSearchController(
   context: Context,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
-) : Controller(context), GlobalSearchView, WindowInsetsListener {
+) : Controller(context), GlobalSearchView, WindowInsetsListener, ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var siteManager: SiteManager
@@ -52,9 +52,7 @@ class GlobalSearchController(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-  private val presenter by lazy {
-    GlobalSearchPresenter(siteManager)
-  }
+  private val presenter by lazy { GlobalSearchPresenter(siteManager, themeEngine) }
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
 
@@ -85,6 +83,7 @@ class GlobalSearchController(
     onInsetsChanged()
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    themeEngine.addListener(this)
   }
 
   override fun onDestroy() {
@@ -94,6 +93,7 @@ class GlobalSearchController(
     inputViewRefSet.clear()
     presenter.onDestroy()
 
+    themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
@@ -101,6 +101,10 @@ class GlobalSearchController(
     resetSearchParameters = true
     presenter.resetSavedState()
     return super.onBack()
+  }
+
+  override fun onThemeChanged() {
+    presenter.reloadCurrentState()
   }
 
   override fun onInsetsChanged() {

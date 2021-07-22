@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
+import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyViewHolder
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -29,7 +30,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyExpandableGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
@@ -51,7 +51,7 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
   }
 
   private val controller = SitesEpoxyController()
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
+  private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var itemTouchHelper: ItemTouchHelper
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxySiteViewModel_>(

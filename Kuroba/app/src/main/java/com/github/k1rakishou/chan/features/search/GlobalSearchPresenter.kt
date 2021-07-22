@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.features.search.data.SelectedSite
 import com.github.k1rakishou.chan.features.search.data.SitesWithSearch
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -21,14 +22,15 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 internal class GlobalSearchPresenter(
-  private val siteManager: SiteManager
+  private val siteManager: SiteManager,
+  private val themeEngine: ThemeEngine
 ) : BasePresenter<GlobalSearchView>() {
 
   private val globalSearchControllerStateSubject =
     BehaviorProcessor.createDefault<GlobalSearchControllerState>(GlobalSearchControllerState.Uninitialized)
   private val searchResultsStateStorage = SearchResultsStateStorage
 
-  private val searchUpdateExecutor = RendezvousCoroutineExecutor(scope = scope,)
+  private val searchUpdateExecutor = RendezvousCoroutineExecutor(scope = scope)
 
   override fun onCreate(view: GlobalSearchView) {
     super.onCreate(view)
@@ -82,6 +84,17 @@ internal class GlobalSearchPresenter(
       .hide()
   }
 
+  fun reloadCurrentState() {
+    val currentStateData = (globalSearchControllerStateSubject.value as? GlobalSearchControllerState.Data)?.data
+      ?: return
+
+    val newDataState = GlobalSearchControllerState.Data(
+      currentStateData.copy(currentTheme = themeEngine.chanTheme)
+    )
+
+    setState(newDataState)
+  }
+
   fun resetSavedState() {
     searchResultsStateStorage.resetSearchInputState()
   }
@@ -103,8 +116,9 @@ internal class GlobalSearchPresenter(
       }
 
       val dataState = GlobalSearchControllerStateData(
-        sitesWithSearch,
-        searchParameters
+        currentTheme = themeEngine.chanTheme.fullCopy(),
+        sitesWithSearch = sitesWithSearch,
+        searchParameters = searchParameters
       )
 
       setState(GlobalSearchControllerState.Data(dataState))
@@ -164,6 +178,7 @@ internal class GlobalSearchPresenter(
     val searchType = site.siteGlobalSearchType()
 
     val dataState = GlobalSearchControllerStateData(
+      currentTheme = themeEngine.chanTheme.fullCopy(),
       sitesWithSearch = SitesWithSearch(
         sitesSupportingSearch,
         SelectedSite(selectedSiteDescriptor, siteIcon, searchType)

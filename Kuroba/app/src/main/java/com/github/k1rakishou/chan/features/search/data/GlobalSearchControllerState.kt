@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.search.data
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 internal sealed class GlobalSearchControllerState {
@@ -25,6 +26,7 @@ internal data class SitesWithSearch(
 )
 
 internal data class GlobalSearchControllerStateData(
+  val currentTheme: ChanTheme,
   val sitesWithSearch: SitesWithSearch,
   val searchParameters: SearchParameters
 )

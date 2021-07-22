@@ -14,7 +14,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
-<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground xmlns:android="http://schemas.android.com/apk/res/android"
+<com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/main_root_layout"
     android:layout_width="match_parent"
@@ -69,4 +69,4 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     </com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout>
 
-</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground>
+</com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout>

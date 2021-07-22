@@ -155,12 +155,7 @@ class SavedPostsController(
       setContent {
         ProvideChanTheme(themeEngine) {
           ProvideWindowInsets {
-            val chanTheme = LocalChanTheme.current
-
-            Box(modifier = Modifier
-              .fillMaxSize()
-              .background(chanTheme.backColorCompose)
-            ) {
+            Box(modifier = Modifier.fillMaxSize()) {
               BuildContent()
             }
           }
