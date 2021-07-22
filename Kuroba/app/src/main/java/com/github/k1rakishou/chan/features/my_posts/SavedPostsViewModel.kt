@@ -251,13 +251,16 @@ class SavedPostsViewModel : BaseViewModel() {
     return itemsList
   }
 
+  fun deleteAllSavedPosts() {
+    mainScope.launch { savedReplyManager.deleteAll() }
+  }
+
   class PostMenuItemId(val menuItemType: MenuItemType) :
     BottomMenuPanelItemId {
     override fun id(): Int {
       return menuItemType.id
     }
   }
-
 
   data class MenuItemClickEvent(
     val menuItemType: MenuItemType,

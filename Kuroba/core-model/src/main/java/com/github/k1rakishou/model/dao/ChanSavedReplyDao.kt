@@ -43,4 +43,7 @@ abstract class ChanSavedReplyDao {
   """)
   abstract suspend fun delete(siteName: String, boardCode: String, threadNo: Long, postNo: Long, postSubNo: Long)
 
+  @Query("DELETE FROM ${ChanSavedReplyEntity.TABLE_NAME}")
+  abstract suspend fun deleteAll()
+
 }

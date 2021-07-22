@@ -966,6 +966,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_filter_watches">Filter watches</string>
 
     <string name="controller_saved_posts">Saved posts</string>
+    <string name="controller_saved_posts_delete_all">Delete all saved posts</string>
+    <string name="controller_saved_posts_delete_all_dialog_title">Delete all saved posts?</string>
+    <string name="controller_saved_posts_delete_all_dialog_description">This action will delete ALL saved posts. You won\'t receive notifications for those posts anymore and they won\'t be marked as yours. Are you sure you want to continue?</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
     <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>

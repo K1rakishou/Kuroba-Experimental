@@ -148,6 +148,15 @@ class SavedReplyManager(
     }
   }
 
+  suspend fun deleteAll() {
+    savedReplyRepository.unsaveAll()
+      .peekError { error -> Logger.e(TAG, "unsaveAll() error", error) }
+      .ignore()
+
+    lock.write { savedReplyMap.clear() }
+    _savedRepliesUpdateFlow.tryEmit(Unit)
+  }
+
   suspend fun savePost(postDescriptor: PostDescriptor) {
     val post = chanThreadsCache.getPostFromCache(postDescriptor)
 

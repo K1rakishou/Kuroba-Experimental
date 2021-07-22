@@ -51,5 +51,11 @@ class ChanSavedReplyLocalSource(
     )
   }
 
+  suspend fun unsaveAll() {
+    ensureInTransaction()
+
+    chanSavedReplyDao.deleteAll()
+  }
+
   private val TAG = "ChanSavedReplyLocalSource"
 }

@@ -38,6 +38,14 @@ class ChanSavedReplyRepository(
     }
   }
 
+  suspend fun unsaveAll(): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.unsaveAll()
+      }
+    }
+  }
+
   suspend fun savePost(chanSavedReply: ChanSavedReply): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {

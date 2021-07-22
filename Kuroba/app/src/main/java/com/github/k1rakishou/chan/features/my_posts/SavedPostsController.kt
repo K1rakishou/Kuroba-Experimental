@@ -93,6 +93,9 @@ class SavedPostsController(
         return@withMenuItemClickInterceptor true
       }
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
+      .withOverflow(requireNavController())
+      .withSubItem(ACTION_DELETE_ALL_SAVED_POSTS, R.string.controller_saved_posts_delete_all, { onDeleteAllSavedPostsClicked() })
+      .build()
       .build()
   }
 
@@ -460,5 +463,19 @@ class SavedPostsController(
     )
   }
 
+  private fun onDeleteAllSavedPostsClicked() {
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleText = getString(R.string.controller_saved_posts_delete_all_dialog_title),
+      descriptionText = getString(R.string.controller_saved_posts_delete_all_dialog_description),
+      negativeButtonText = getString(R.string.cancel),
+      positiveButtonText = getString(R.string.delete),
+      onPositiveButtonClickListener = { viewModel.deleteAllSavedPosts() }
+    )
+  }
+
+  companion object {
+    private const val ACTION_DELETE_ALL_SAVED_POSTS = 0
+  }
 
 }
