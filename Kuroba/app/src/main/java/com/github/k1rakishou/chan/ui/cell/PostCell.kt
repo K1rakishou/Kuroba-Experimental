@@ -346,10 +346,11 @@ class PostCell : ConstraintLayout,
     goToPostButton = findViewById(R.id.go_to_post_button)
 
     title.textSize = textSizeSp.toFloat()
+    title.gravity = GravityCompat.START
+
     iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.setSpacing(iconsSpacing)
     icons.height = sp(textSizeSp.toFloat())
-    title.gravity = GravityCompat.START
     icons.rtl(false)
 
     comment.textSize = textSizeSp.toFloat()

@@ -239,6 +239,29 @@ data class PostCellData(
     postCellCallback = null
   }
 
+  fun totalPostIconsCount(): Int {
+    var count = 0
+
+    if (isDeleted) {
+      ++count
+    }
+
+    if (isSticky) {
+      ++count
+    }
+
+    if (isClosed) {
+      ++count
+    }
+
+    if (isArchived) {
+      ++count
+    }
+
+    count += postIcons.size
+    return count
+  }
+
   private fun calculatePostTitleStub(): CharSequence {
     if (stub) {
       return if (!TextUtils.isEmpty(post.subject)) {

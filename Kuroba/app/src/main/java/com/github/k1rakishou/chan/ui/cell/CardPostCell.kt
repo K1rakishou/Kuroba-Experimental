@@ -26,6 +26,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.ui.animation.PostBackgroundBlinkAnimator.createPostBackgroundBlinkAnimation
@@ -61,18 +62,23 @@ class CardPostCell : ConstraintLayout,
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
 
   private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null
-
-  private var thumbView: PostImageThumbnailView? = null
-  private var cardContent: FixedRatioLinearLayout? = null
-  private var prevPostImage: ChanPostImage? = null
-  private var title: TextView? = null
-  private var comment: TextView? = null
-  private var replies: TextView? = null
-  private var filterMatchColor: View? = null
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
+  private var thumbView: PostImageThumbnailView? = null
+  private var prevPostImage: ChanPostImage? = null
+
+  private lateinit var cardContent: FixedRatioLinearLayout
+  private lateinit var title: TextView
+  private lateinit var comment: TextView
+  private lateinit var replies: TextView
+  private lateinit var icons: PostIcons
+  private lateinit var filterMatchColor: View
+
+  private var iconSizePx = 0
 
   private val scope = KurobaCoroutineScope()
 
@@ -165,6 +171,9 @@ class CardPostCell : ConstraintLayout,
   }
 
   private fun unbindPost(isActuallyRecycling: Boolean) {
+    icons.clear()
+    icons.cancelRequests()
+
     scope.cancelChildren()
     unbindPostImage()
 
@@ -224,14 +233,21 @@ class CardPostCell : ConstraintLayout,
     }
 
     title = findViewById(R.id.title)
+    icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
     filterMatchColor = findViewById(R.id.filter_match_color)
 
+    val textSizeSp = postCellData.textSizeSp
+    iconSizePx = AppModuleAndroidUtils.sp(textSizeSp - 3.toFloat())
+    icons.setSpacing(PostCell.iconsSpacing)
+    icons.height = AppModuleAndroidUtils.sp(textSizeSp.toFloat())
+    icons.rtl(false)
+
     val selectableItemBackground =
       themeEngine.getAttributeResource(android.R.attr.selectableItemBackground)
 
-    replies!!.setBackgroundResource(selectableItemBackground)
+    replies.setBackgroundResource(selectableItemBackground)
 
     setCompact(postCellData)
 
@@ -254,7 +270,7 @@ class CardPostCell : ConstraintLayout,
       return@setOnThrottlingLongClickListener false
     }
 
-    replies!!.setOnThrottlingClickListener {
+    replies.setOnThrottlingClickListener {
       callback?.onPreviewThreadPostsClicked(postCellData.post)
     }
   }
@@ -264,24 +280,26 @@ class CardPostCell : ConstraintLayout,
 
     val filterHighlightedColor = postCellData.filterHighlightedColor
     if (filterHighlightedColor != 0) {
-      filterMatchColor!!.visibility = VISIBLE
-      filterMatchColor!!.setBackgroundColor(filterHighlightedColor)
+      filterMatchColor.visibility = VISIBLE
+      filterMatchColor.setBackgroundColor(filterHighlightedColor)
     } else {
-      filterMatchColor!!.visibility = GONE
+      filterMatchColor.visibility = GONE
     }
 
     if (!TextUtils.isEmpty(postCellData.post.subject)) {
-      title!!.visibility = VISIBLE
+      title.visibility = VISIBLE
       ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.post.subject, title!!)
     } else {
-      title!!.visibility = GONE
-      title!!.text = null
+      title.visibility = GONE
+      title.text = null
     }
 
-    comment!!.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
-    comment!!.requestLayout()
+    comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
+    comment.requestLayout()
 
     ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
+
+    bindIcons(postCellData)
 
     if (callback != null) {
       callback!!.onPostBind(postCellData)
@@ -289,11 +307,15 @@ class CardPostCell : ConstraintLayout,
   }
 
   private fun bindPostThumbnails(postCellData: PostCellData) {
+    if (thumbView == null) {
+      return
+    }
+
     val firstPostImage = postCellData.post.firstImage()
 
     if (firstPostImage == null || ChanSettings.textOnly.get()) {
-      thumbView!!.visibility = GONE
-      thumbView!!.unbindPostImage()
+      thumbView?.visibility = GONE
+      thumbView?.unbindPostImage()
       return
     }
 
@@ -301,9 +323,9 @@ class CardPostCell : ConstraintLayout,
       return
     }
 
-    thumbView!!.visibility = VISIBLE
+    thumbView?.visibility = VISIBLE
 
-    thumbView!!.bindPostImage(
+    thumbView?.bindPostImage(
       postImage = firstPostImage,
       canUseHighResCells = ColorizableGridRecyclerView.canUseHighResCells(callback!!.currentSpanCount()),
       thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(
@@ -313,12 +335,16 @@ class CardPostCell : ConstraintLayout,
       )
     )
 
-    thumbView!!.setOnImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {
+    thumbView?.setOnImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {
       if (this.postCellData == null) {
         return@setOnImageLongClickListener false
       }
 
-      callback?.onThumbnailLongClicked(this.postCellData!!.chanDescriptor, this.postCellData!!.post.firstImage()!!, thumbView!!)
+      callback?.onThumbnailLongClicked(
+        this.postCellData!!.chanDescriptor,
+        this.postCellData!!.post.firstImage()!!,
+        thumbView!!
+      )
       return@setOnImageLongClickListener true
     }
 
@@ -331,8 +357,8 @@ class CardPostCell : ConstraintLayout,
   }
 
   override fun onThemeChanged() {
-    comment?.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    replies?.setTextColor(themeEngine.chanTheme.textColorSecondary)
+    comment.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    replies.setTextColor(themeEngine.chanTheme.textColorSecondary)
 
     bindBackgroundColor(themeEngine.chanTheme)
   }
@@ -385,19 +411,29 @@ class CardPostCell : ConstraintLayout,
 
   private fun setCompact(postCellData: PostCellData) {
     val compact = postCellData.compact
-    val moreThanThreeSpans =
-      (postCellData.postCellCallback?.currentSpanCount() ?: 1) >= SMALL_FONT_SIZE_SPAN_COUNT
+    val currentSpanCount = postCellData.postCellCallback?.currentSpanCount() ?: 1
+
+    val isSmallFontSizeSpanCount = currentSpanCount >= SMALL_FONT_SIZE_SPAN_COUNT
+    val isPostIconCompactModeSpanCount = currentSpanCount >= POST_ICONS_COMPACT_MODE_SPAN_COUNT
 
     var textReduction = 0
-    if (compact && moreThanThreeSpans) {
+    if (compact && isSmallFontSizeSpanCount) {
       textReduction = COMPACT_MODE_TEXT_REDUCTION_SP
     }
 
     val textSizeSp = postCellData.textSizeSp - textReduction
 
-    title!!.textSize = textSizeSp.toFloat()
-    comment!!.textSize = textSizeSp.toFloat()
-    replies!!.textSize = textSizeSp.toFloat()
+    title.textSize = textSizeSp.toFloat()
+    comment.textSize = textSizeSp.toFloat()
+    replies.textSize = textSizeSp.toFloat()
+
+    val hasIconWithName = postCellData.post.postIcons
+      .any { chanPostHttpIcon -> chanPostHttpIcon.iconName.isNotEmpty() }
+
+    val postIconsCompactMode = isPostIconCompactModeSpanCount
+      || (compact && hasIconWithName && postCellData.totalPostIconsCount() > 1)
+
+    icons.compactMode(postIconsCompactMode)
 
     val padding = if (compact) {
       AppModuleAndroidUtils.dp(3f)
@@ -405,13 +441,42 @@ class CardPostCell : ConstraintLayout,
       AppModuleAndroidUtils.dp(8f)
     }
 
-    title!!.setPadding(padding, padding, padding, 0)
-    comment!!.setPadding(padding, padding, padding, 0)
-    replies!!.setPadding(padding, padding / 2, padding, padding)
+    icons.setPadding(padding, padding, padding, 0)
+    title.setPadding(padding, padding, padding, 0)
+    comment.setPadding(padding, padding, padding, 0)
+    replies.setPadding(padding, padding / 2, padding, padding)
+  }
+
+  @Suppress("ReplaceGetOrSet")
+  private fun bindIcons(postCellData: PostCellData) {
+    val theme = postCellData.theme
+    val postIcons = postCellData.postIcons
+
+    icons.edit()
+    icons.set(PostIcons.DELETED, postCellData.isDeleted)
+
+    if (postCellData.isSticky) {
+      icons.set(PostIcons.STICKY, true)
+    }
+    if (postCellData.isClosed) {
+      icons.set(PostIcons.CLOSED, true)
+    }
+    if (postCellData.isArchived) {
+      icons.set(PostIcons.ARCHIVED, true)
+    }
+
+    icons.set(PostIcons.HTTP_ICONS, postIcons.isNotEmpty())
+
+    if (postIcons.isNotEmpty()) {
+      icons.setHttpIcons(imageLoaderV2, postIcons, theme, iconSizePx)
+    }
+
+    icons.apply()
   }
 
   companion object {
     private const val SMALL_FONT_SIZE_SPAN_COUNT = 4
+    private const val POST_ICONS_COMPACT_MODE_SPAN_COUNT = 4
     private const val COMPACT_MODE_TEXT_REDUCTION_SP = 2
   }
 }

@@ -34,6 +34,7 @@ class PostIcons @JvmOverloads constructor(
   private var httpIconTextColor = 0
   private var httpIconTextSize = 0
   private var rtl = false
+  private var compactMode = false
   private var httpIcons = mutableListOf<PostIconsHttpIcon>()
 
   init {
@@ -62,6 +63,12 @@ class PostIcons @JvmOverloads constructor(
 
   fun rtl(isRtl: Boolean) {
     this.rtl = isRtl
+    requestLayout()
+    invalidate()
+  }
+
+  fun compactMode(compact: Boolean) {
+    this.compactMode = compact
     requestLayout()
     invalidate()
   }
@@ -203,13 +210,15 @@ class PostIcons @JvmOverloads constructor(
 
         offset += drawDrawable(canvas, httpIcon.drawable!!, offset)
 
-        textPaint.color = httpIconTextColor
-        textPaint.textSize = httpIconTextSize.toFloat()
-        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+        if (!compactMode) {
+          textPaint.color = httpIconTextColor
+          textPaint.textSize = httpIconTextSize.toFloat()
+          textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
 
-        val y = iconsHeight / 2f - textRect.exactCenterY()
-        canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
-        offset += textRect.width() + spacing
+          val y = iconsHeight / 2f - textRect.exactCenterY()
+          canvas.drawText(httpIcon.name, offset.toFloat(), y, textPaint)
+          offset += textRect.width() + spacing
+        }
       }
     }
 
@@ -242,11 +251,13 @@ class PostIcons @JvmOverloads constructor(
 
         totalWidth += getDrawableWidth(httpIcon.drawable!!)
 
-        textPaint.color = httpIconTextColor
-        textPaint.textSize = httpIconTextSize.toFloat()
-        textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
+        if (!compactMode) {
+          textPaint.color = httpIconTextColor
+          textPaint.textSize = httpIconTextSize.toFloat()
+          textPaint.getTextBounds(httpIcon.name, 0, httpIcon.name.length, textRect)
 
-        totalWidth += textRect.width() + spacing
+          totalWidth += textRect.width() + spacing
+        }
       }
     }
 

@@ -45,6 +45,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_height="4dp"
                 android:visibility="gone" />
 
+            <com.github.k1rakishou.chan.ui.cell.PostIcons
+                android:id="@+id/icons"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                tools:layout_height="32dp"
+                android:paddingLeft="8dp"
+                android:paddingTop="8dp"
+                android:paddingRight="8dp" />
+
             <TextView
                 android:id="@+id/title"
                 android:layout_width="match_parent"
