@@ -603,6 +603,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       )
     }
 
+    onThemeChanged()
+
     if (initial) {
       replyLayout.bindLoadable(descriptor)
 
