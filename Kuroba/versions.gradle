@@ -1,6 +1,6 @@
 def versions = [:]
 versions.kotlin_version = '1.5.10'
-versions.kotlin_coroutines_version = '1.5.0'
+versions.kotlin_coroutines_version = '1.5.1'
 versions.compose_version = "1.0.0-rc02"
 versions.accompanist = "0.12.0"
 versions.room_version = '2.3.0'
@@ -19,7 +19,7 @@ versions.robolectric = '4.5.1'
 versions.mockito_core = "3.4.6"
 versions.mockito_kotlin = "2.2.0"
 versions.powermock = "2.0.9"
-versions.epoxy = '4.4.4'
+versions.epoxy = '4.6.2'
 versions.jsoup = "1.13.1"
 versions.rxjava = "2.2.21"
 versions.rxandroid = "2.1.1"
