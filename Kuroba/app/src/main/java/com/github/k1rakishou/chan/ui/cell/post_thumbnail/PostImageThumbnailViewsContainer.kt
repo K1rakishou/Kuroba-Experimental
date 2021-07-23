@@ -385,11 +385,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    var curWidth = 0
-    var curHeight = 0
-    var curLeft = 0
-    var curTop = 0
-    var maxHeight = 0
+    val isMirrored = cachedThumbnailViewContainerInfoArray.get(BIND)
+      .postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val neededWidthPerImage = if (imagesCount == 1) {
@@ -400,7 +397,17 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val columnsPerRow = this.measuredWidth / neededWidthPerImage
     val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
     val actualImageWidth = this.measuredWidth / columnsPerRow
-    var totalHeight = 0
+
+    var curWidth = 0
+    var curHeight = 0
+    var curTop = 0
+    var maxHeight = 0
+
+    var curLeft = if (isMirrored) {
+      this.measuredWidth + paddingLeft
+    } else {
+      0
+    }
 
     for (rowIndex in 0 until rowsCount) {
       var highestChildOfRow = 0
@@ -442,27 +449,46 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         curWidth = child.measuredWidth
         curHeight = highestChildOfRow
 
-        if (curLeft + curWidth > this.measuredWidth) {
-          curLeft = 0
-          curTop += maxHeight
-          maxHeight = 0
+        if (isMirrored) {
+          if (curLeft - curWidth < 0) {
+            curLeft = (this.measuredWidth + paddingLeft)
+            curTop += maxHeight
+            maxHeight = 0
+          }
+
+          child.layout(
+            curLeft - curWidth - paddingLeft,
+            curTop + paddingTop,
+            curLeft - paddingLeft,
+            curTop + curHeight + paddingTop
+          )
+
+          if (curHeight > maxHeight) {
+            maxHeight = curHeight
+          }
+
+          curLeft -= curWidth
+        } else {
+          if (curLeft + curWidth > this.measuredWidth) {
+            curLeft = 0
+            curTop += maxHeight
+            maxHeight = 0
+          }
+
+          child.layout(
+            curLeft + paddingLeft,
+            curTop + paddingTop,
+            curLeft + curWidth + paddingLeft,
+            curTop + curHeight + paddingTop
+          )
+
+          if (curHeight > maxHeight) {
+            maxHeight = curHeight
+          }
+
+          curLeft += curWidth
         }
-
-        child.layout(
-          curLeft + paddingLeft,
-          curTop + paddingTop,
-          curLeft + curWidth + paddingLeft,
-          curTop + curHeight + paddingTop
-        )
-
-        if (curHeight > maxHeight) {
-          maxHeight = curHeight
-        }
-
-        curLeft += curWidth
       }
-
-      totalHeight += highestChildOfRow
     }
   }
 
