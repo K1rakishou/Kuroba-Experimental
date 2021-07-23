@@ -9,7 +9,6 @@ interface PostImageThumbnailViewContract {
   fun setViewId(id: Int)
   fun getThumbnailView(): ThumbnailView
   fun equalUrls(chanPostImage: ChanPostImage): Boolean
-  fun setRounding(rounding: Int)
 
   fun setImageClickable(clickable: Boolean)
   fun setImageLongClickable(longClickable: Boolean)

@@ -26,7 +26,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="grid_card_corner_radius">2dp</dimen>
 
     <dimen name="cell_post_thumbnail_size_max">100dp</dimen>
-    <dimen name="cell_post_thumbnail_container_file_info_size">130dp</dimen>
+    <dimen name="cell_post_thumbnail_container_file_info_size">75dp</dimen>
     <dimen name="post_attention_label_width">5dp</dimen>
     <dimen name="history_entry_thread_image_size">48dp</dimen>
     <dimen name="history_entry_site_image_size">20dp</dimen>
@@ -40,11 +40,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="attach_new_file_button_height">80dp</dimen>
     <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
     <dimen name="attach_new_file_button_wide_height">32dp</dimen>
-
-    <dimen name="post_multiple_image_thumbnail_view_info_text_size_min">10sp</dimen>
-    <dimen name="post_multiple_image_thumbnail_view_info_text_size_max">13sp</dimen>
-
-    <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_min">9sp</dimen>
-    <dimen name="post_multiple_image_thumbnail_view_dimens_text_size_max">12sp</dimen>
     <dimen name="go_to_post_button_width">32dp</dimen>
 </resources>

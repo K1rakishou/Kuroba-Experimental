@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.cell
 
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
@@ -26,6 +27,10 @@ object PostCellStatistics {
 
   @OptIn(ExperimentalTime::class)
   fun onPostBound(postCellInterface: PostCellInterface?, time: Duration) {
+    if (!AppModuleAndroidUtils.isDevBuild()) {
+      return
+    }
+
     val post = postCellInterface?.getPost()
       ?: return
 
@@ -56,13 +61,23 @@ object PostCellStatistics {
     val postNo = post.postNo()
     val imagesCount = post.postImages.size
 
+    val timeFormatted = if (timeMs < 1.0) {
+      "< 1ms"
+    } else {
+      "${timeMs}ms"
+    }
+
     Logger.d(TAG, "onPostBound() postNo: ${postNo}, " +
-      "imgs: $imagesCount, took ${time} (medianBindTime: ${medianBindTimeFormatted}ms, " +
+      "imgs: $imagesCount, took ${timeFormatted} (medianBindTime: ${medianBindTimeFormatted}ms, " +
       "maxBindTime=${maxBindTime}ms, minBindTime=${minBindTime}ms, longBoundPostsCount=${longBoundPostsCount})")
   }
 
   @OptIn(ExperimentalTime::class)
   fun onPostMeasured(postCellInterface: PostCellInterface?, time: Duration) {
+    if (!AppModuleAndroidUtils.isDevBuild()) {
+      return
+    }
+
     val post = postCellInterface?.getPost()
       ?: return
 
@@ -93,8 +108,14 @@ object PostCellStatistics {
     val postNo = post.postNo()
     val imagesCount = post.postImages.size
 
+    val timeFormatted = if (timeMs < 1.0) {
+      "< 1ms"
+    } else {
+      "${timeMs}ms"
+    }
+
     Logger.d(TAG, "onPostMeasured() postNo: $postNo, " +
-      "imgs: $imagesCount, took ${time} (medianMeasureTime: ${medianMeasureTimeFormatted}ms, " +
+      "imgs: $imagesCount, took ${timeFormatted} (medianMeasureTime: ${medianMeasureTimeFormatted}ms, " +
       "maxMeasureTime=${maxMeasureTime}ms, minMeasureTime=${minMeasureTime}ms, " +
       "longMeasuredPostsCount=${longMeasuredPostsCount})")
   }

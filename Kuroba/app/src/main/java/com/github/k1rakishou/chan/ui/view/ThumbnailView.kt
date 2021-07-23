@@ -56,7 +56,6 @@ import javax.inject.Inject
 
 open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener {
   private var requestDisposable: Disposable? = null
-  private var rounding = 0
   private var errorText: String? = null
   private var foregroundCalculate = false
   private var imageForeground: Drawable? = null
@@ -219,10 +218,6 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
     setImageBitmap(null)
     invalidate()
-  }
-
-  fun setRounding(rounding: Int) {
-    this.rounding = rounding
   }
 
   override fun onSetAlpha(alpha: Int): Boolean {

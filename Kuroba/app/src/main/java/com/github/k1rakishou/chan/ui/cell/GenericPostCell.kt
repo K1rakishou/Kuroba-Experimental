@@ -8,7 +8,6 @@ import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -46,10 +45,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
   @OptIn(ExperimentalTime::class)
   override fun setPost(postCellData: PostCellData) {
     val time = measureTime { setPostCellInternal(postCellData) }
-
-    if (isDevBuild()) {
-      PostCellStatistics.onPostBound(getChildPostCell(), time)
-    }
+    PostCellStatistics.onPostBound(getChildPostCell(), time)
   }
 
   private fun setPostCellInternal(postCellData: PostCellData) {
@@ -137,10 +133,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
   @OptIn(ExperimentalTime::class)
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     val time = measureTime { super.onMeasure(widthMeasureSpec, heightMeasureSpec) }
-
-    if (isDevBuild()) {
-      PostCellStatistics.onPostMeasured(getChildPostCell(), time)
-    }
+    PostCellStatistics.onPostMeasured(getChildPostCell(), time)
   }
 
   private fun getChildPostCell(): PostCellInterface? {

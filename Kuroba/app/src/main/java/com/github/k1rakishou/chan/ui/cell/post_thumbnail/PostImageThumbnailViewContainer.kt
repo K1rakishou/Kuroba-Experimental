@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.cell.post_thumbnail
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.TypedValue
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
@@ -15,7 +14,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.chan.utils.setVisibilityFast
@@ -90,10 +88,6 @@ class PostImageThumbnailViewContainer(
     return actualThumbnailView.equalUrls(chanPostImage)
   }
 
-  override fun setRounding(rounding: Int) {
-    actualThumbnailView.setRounding(rounding)
-  }
-
   override fun setImageClickable(clickable: Boolean) {
     this.isClickable = clickable
   }
@@ -136,13 +130,6 @@ class PostImageThumbnailViewContainer(
     }
   }
 
-  fun bindFileInfoContainerSizes(thumbnailContainerWidth: Int, cellPostThumbnailSize: Int) {
-    fileInfoContainerGroup.updateLayoutParams<ViewGroup.LayoutParams> {
-      width = thumbnailContainerWidth
-      height = cellPostThumbnailSize
-    }
-  }
-
   @SuppressLint("SetTextI18n")
   fun bindPostInfo(
     postCellData: PostCellData,
@@ -152,12 +139,10 @@ class PostImageThumbnailViewContainer(
     val imagesCount = postCellData.postImages.size
     val postAlignmentMode = postCellData.postAlignmentMode
 
-    if (imagesCount > 1 && (postCellData.searchMode || ChanSettings.postFileInfo.get()) && postFileInfo.isNotNullNorBlank()) {
-      val thumbnailInfoTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_min).toFloat()
-      val thumbnailInfoTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat()
-      val thumbnailDimensTextSizeMin = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_min).toFloat()
-      val thumbnailDimensTextSizeMax = getDimen(R.dimen.post_multiple_image_thumbnail_view_dimens_text_size_max).toFloat()
-      val thumbnailInfoTextSizePercent = getDimen(R.dimen.post_multiple_image_thumbnail_view_info_text_size_max).toFloat() / 100f
+    if (imagesCount > 1
+      && (postCellData.searchMode || postCellData.postFileInfo)
+      && postFileInfo.isNotNullNorBlank()
+    ) {
       setBackgroundResource(R.drawable.item_background)
 
       thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
@@ -166,20 +151,9 @@ class PostImageThumbnailViewContainer(
       postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
       fileInfoContainerGroup.setVisibilityFast(View.VISIBLE)
 
-      val newInfoTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
-        .coerceIn(thumbnailInfoTextSizeMin, thumbnailInfoTextSizeMax)
-
       thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
       thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
       thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
-
-      thumbnailFileExtension.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
-      thumbnailFileSize.setTextSize(TypedValue.COMPLEX_UNIT_PX, newInfoTextSize)
-
-      val newDimensTextSize = (ChanSettings.postCellThumbnailSizePercents.get() * thumbnailInfoTextSizePercent)
-        .coerceIn(thumbnailDimensTextSizeMin, thumbnailDimensTextSizeMax)
-      thumbnailFileDimens.setTextSize(TypedValue.COMPLEX_UNIT_PX, newDimensTextSize)
-
       postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
 
       postFileNameInfoTextView.gravity = when (postAlignmentMode) {
@@ -202,4 +176,5 @@ class PostImageThumbnailViewContainer(
     thumbnailFileDimens.setTextColor(themeEngine.chanTheme.postDetailsColor)
     thumbnailFileSize.setTextColor(themeEngine.chanTheme.postDetailsColor)
   }
+
 }
