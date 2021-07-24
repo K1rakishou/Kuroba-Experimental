@@ -336,6 +336,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
+    val isMirrored = cachedThumbnailViewContainerInfoArray.get(BIND)
+      .postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
+
     val viewWidth = MeasureSpec.getSize(widthMeasureSpec)
     val neededWidthPerImage = cellPostThumbnailSize + POST_THUMBNAIL_FILE_INFO_SIZE
     val columnsPerRow = viewWidth / neededWidthPerImage
@@ -352,6 +355,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
         if (child == null) {
           break
+        }
+
+        if (isMirrored) {
+          child.updatePadding(left = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
+        } else {
+          child.updatePadding(right = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
         }
 
         child.measure(
@@ -410,13 +419,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
           continue
         }
 
-        val additionalHorizPadding = MULTIPLE_THUMBNAILS_INTERNAL_PADDING
-        val additionalVertPadding = MULTIPLE_THUMBNAILS_INTERNAL_PADDING
-
         if (isMirrored) {
-          child.updatePadding(left = additionalHorizPadding, bottom = additionalVertPadding)
+          child.updatePadding(left = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
         } else {
-          child.updatePadding(right = additionalHorizPadding, bottom = additionalVertPadding)
+          child.updatePadding(right = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
         }
 
         child.measure(
