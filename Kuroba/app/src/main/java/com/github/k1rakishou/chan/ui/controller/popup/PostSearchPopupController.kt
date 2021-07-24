@@ -151,7 +151,6 @@ class PostSearchPopupController(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       postFilterManager = postFilterManager,
       seenPostsManager = seenPostsManager,
-      postHighlightManager = postHighlightManager,
       initialTheme = themeEngine.chanTheme
     )
 

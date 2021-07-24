@@ -37,6 +37,7 @@ import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,11 +54,11 @@ import java.util.*
 
 class ReplyLayoutFilesAreaPresenter(
   private val appConstants: AppConstants,
-  private val replyManager: ReplyManager,
-  private val boardManager: BoardManager,
-  private val imageLoaderV2: ImageLoaderV2,
-  private val postingLimitationsInfoManager: PostingLimitationsInfoManager,
-  private val imagePickHelper: ImagePickHelper,
+  private val replyManager: Lazy<ReplyManager>,
+  private val boardManager: Lazy<BoardManager>,
+  private val imageLoaderV2: Lazy<ImageLoaderV2>,
+  private val postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>,
+  private val imagePickHelper: Lazy<ImagePickHelper>,
   private val runtimePermissionsHelper: RuntimePermissionsHelper
 ) : BasePresenter<ReplyLayoutFilesAreaView>() {
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
@@ -72,12 +73,12 @@ class ReplyLayoutFilesAreaPresenter(
     this.boundChanDescriptor = chanDescriptor
 
     scope.launch {
-      imagePickHelper.listenForNewPickedFiles()
+      imagePickHelper.get().listenForNewPickedFiles()
         .collect { refreshAttachedFiles() }
     }
 
     scope.launch {
-      replyManager.listenForReplyFilesUpdates()
+      replyManager.get().listenForReplyFilesUpdates()
         .collect { refreshAttachedFiles() }
     }
 
@@ -118,7 +119,7 @@ class ReplyLayoutFilesAreaPresenter(
           hideLoadingView = { withView { hideLoadingView() } }
         )
 
-        val pickedFileResult = withContext(job) { imagePickHelper.pickLocalFile(input) }
+        val pickedFileResult = withContext(job) { imagePickHelper.get().pickLocalFile(input) }
           .finally { withView { hideLoadingView() } }
           .safeUnwrap { error ->
             Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) error", error)
@@ -143,7 +144,7 @@ class ReplyLayoutFilesAreaPresenter(
 
         val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
         if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
-          replyManager.updateFileSelection(
+          replyManager.get().updateFileSelection(
             fileUuid = replyFileMeta.fileUuid,
             selected = true,
             notifyListeners = false
@@ -173,7 +174,7 @@ class ReplyLayoutFilesAreaPresenter(
           hideLoadingView = { withView { hideLoadingView() } }
         )
 
-        val pickedFileResult = withContext(job) { imagePickHelper.pickRemoteFile(input) }
+        val pickedFileResult = withContext(job) { imagePickHelper.get().pickRemoteFile(input) }
           .finally { withView { hideLoadingView() } }
           .safeUnwrap { error ->
             Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) error", error)
@@ -204,7 +205,7 @@ class ReplyLayoutFilesAreaPresenter(
 
         val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
         if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
-          replyManager.updateFileSelection(
+          replyManager.get().updateFileSelection(
             fileUuid = replyFileMeta.fileUuid,
             selected = true,
             notifyListeners = false
@@ -217,24 +218,24 @@ class ReplyLayoutFilesAreaPresenter(
     }
   }
 
-  fun hasSelectedFiles(): Boolean = replyManager.hasSelectedFiles().unwrap()
+  fun hasSelectedFiles(): Boolean = replyManager.get().hasSelectedFiles().unwrap()
 
   fun allFilesSelected(): Boolean {
-    val totalFilesCount = Math.min(MAX_VISIBLE_ATTACHABLES_COUNT, replyManager.totalFilesCount().unwrap())
-    val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
+    val totalFilesCount = Math.min(MAX_VISIBLE_ATTACHABLES_COUNT, replyManager.get().totalFilesCount().unwrap())
+    val selectedFilesCount = replyManager.get().selectedFilesCount().unwrap()
 
     return totalFilesCount == selectedFilesCount
   }
 
-  fun totalFilesCount(): Int = replyManager.totalFilesCount().unwrap()
+  fun totalFilesCount(): Int = replyManager.get().totalFilesCount().unwrap()
 
-  fun selectedFilesCount(): Int = replyManager.selectedFilesCount().unwrap()
+  fun selectedFilesCount(): Int = replyManager.get().selectedFilesCount().unwrap()
 
   private fun boardSupportsSpoilers(): Boolean {
     val chanDescriptor = boundChanDescriptor
       ?: return false
 
-    return boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    return boardManager.get().byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?.spoilers
       ?: return false
   }
@@ -242,9 +243,9 @@ class ReplyLayoutFilesAreaPresenter(
   fun updateFileSelection(fileUuid: UUID) {
     fileChangeExecutor.post {
       handleStateUpdate {
-        val nowSelected = replyManager.isSelected(fileUuid).unwrap().not()
+        val nowSelected = replyManager.get().isSelected(fileUuid).unwrap().not()
 
-        replyManager.updateFileSelection(
+        replyManager.get().updateFileSelection(
           fileUuid = fileUuid,
           selected = nowSelected,
           notifyListeners = false
@@ -264,9 +265,9 @@ class ReplyLayoutFilesAreaPresenter(
   fun updateFileSpoilerFlag(fileUuid: UUID) {
     fileChangeExecutor.post {
       handleStateUpdate {
-        val nowMarkedAsSpoiler = replyManager.isMarkedAsSpoiler(fileUuid).unwrap().not()
+        val nowMarkedAsSpoiler = replyManager.get().isMarkedAsSpoiler(fileUuid).unwrap().not()
 
-        replyManager.updateFileSpoilerFlag(
+        replyManager.get().updateFileSpoilerFlag(
           fileUuid = fileUuid,
           spoiler = nowMarkedAsSpoiler,
           notifyListeners = false
@@ -284,7 +285,7 @@ class ReplyLayoutFilesAreaPresenter(
   fun deleteFile(fileUuid: UUID) {
     fileChangeExecutor.post {
       handleStateUpdate {
-        replyManager.deleteFile(fileUuid = fileUuid, notifyListeners = false)
+        replyManager.get().deleteFile(fileUuid = fileUuid, notifyListeners = false)
           .safeUnwrap { error ->
             Logger.e(TAG, "deleteFile($fileUuid) error", error)
             return@handleStateUpdate
@@ -298,7 +299,7 @@ class ReplyLayoutFilesAreaPresenter(
   fun deleteSelectedFiles() {
     fileChangeExecutor.post {
       handleStateUpdate {
-        replyManager.deleteSelectedFiles(notifyListeners = false)
+        replyManager.get().deleteSelectedFiles(notifyListeners = false)
           .safeUnwrap { error ->
             Logger.e(TAG, "deleteSelectedFiles() error", error)
             return@handleStateUpdate
@@ -313,8 +314,8 @@ class ReplyLayoutFilesAreaPresenter(
     fileChangeExecutor.post {
       handleStateUpdate {
         withContext(Dispatchers.Default) {
-          replyManager.iterateSelectedFilesOrdered { _, replyFile, replyFileMeta ->
-            val newFileName = replyManager.getNewImageName(replyFileMeta.fileName)
+          replyManager.get().iterateSelectedFilesOrdered { _, replyFile, replyFileMeta ->
+            val newFileName = replyManager.get().getNewImageName(replyFileMeta.fileName)
 
             replyFile.updateFileName(newFileName)
               .peekError { error -> Logger.e(TAG, "Failed to update file name", error) }
@@ -338,7 +339,7 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         withContext(Dispatchers.Default) {
-          val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+          val selectedReplyFiles = replyManager.get().getSelectedFilesOrdered()
 
           selectedReplyFiles.forEach { replyFile ->
             val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
@@ -370,7 +371,7 @@ class ReplyLayoutFilesAreaPresenter(
               return@forEach
             }
 
-            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+            imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
               context,
               replyFileMeta.fileUuid
             )
@@ -395,7 +396,7 @@ class ReplyLayoutFilesAreaPresenter(
         }
 
         withContext(Dispatchers.Default) {
-          val selectedReplyFiles = replyManager.getSelectedFilesOrdered()
+          val selectedReplyFiles = replyManager.get().getSelectedFilesOrdered()
 
           selectedReplyFiles.forEach { replyFile ->
             val replyFileMeta = replyFile.getReplyFileMeta().valueOrNull()
@@ -427,7 +428,7 @@ class ReplyLayoutFilesAreaPresenter(
               return@forEach
             }
 
-            imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+            imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
               context,
               replyFileMeta.fileUuid
             )
@@ -454,7 +455,7 @@ class ReplyLayoutFilesAreaPresenter(
         val needRefresh = withContext(Dispatchers.Default) {
           val toUpdate = mutableListOf<UUID>()
 
-          replyManager.iterateFilesOrdered { _, _, replyFileMeta ->
+          replyManager.get().iterateFilesOrdered { _, _, replyFileMeta ->
             if (replyFileMeta.selected != selectAll) {
               toUpdate += replyFileMeta.fileUuid
             }
@@ -465,7 +466,7 @@ class ReplyLayoutFilesAreaPresenter(
           }
 
           toUpdate.forEach { fileUuid ->
-            replyManager.updateFileSelection(
+            replyManager.get().updateFileSelection(
               fileUuid = fileUuid,
               selected = selectAll,
               notifyListeners = false
@@ -570,12 +571,12 @@ class ReplyLayoutFilesAreaPresenter(
 
   private suspend fun reloadFilesFromDiskAndInitState(chanDescriptor: ChanDescriptor) {
     handleStateUpdate {
-      withContext(Dispatchers.IO) { replyManager.reloadFilesFromDisk(appConstants) }
+      withContext(Dispatchers.IO) { replyManager.get().reloadFilesFromDisk(appConstants) }
         .unwrap()
 
-      replyManager.iterateFilesOrdered { _, _, replyFileMeta ->
+      replyManager.get().iterateFilesOrdered { _, _, replyFileMeta ->
         if (replyFileMeta.selected) {
-          replyManager.updateFileSelection(
+          replyManager.get().updateFileSelection(
             fileUuid = replyFileMeta.fileUuid,
             selected = true,
             notifyListeners = false
@@ -599,7 +600,7 @@ class ReplyLayoutFilesAreaPresenter(
 
         var attachableCounter = 0
 
-        val replyFiles = replyManager.mapOrderedNotNull { _, replyFile ->
+        val replyFiles = replyManager.get().mapOrderedNotNull { _, replyFile ->
           val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
             Logger.e(TAG, "getReplyFileMeta() error", error)
             return@mapOrderedNotNull null
@@ -628,8 +629,8 @@ class ReplyLayoutFilesAreaPresenter(
           val replyFileAttachables = replyFiles.map { replyFile ->
             val replyFileMeta = replyFile.getReplyFileMeta().unwrap()
 
-            val isSelected = replyManager.isSelected(replyFileMeta.fileUuid).unwrap()
-            val selectedFilesCount = replyManager.selectedFilesCount().unwrap()
+            val isSelected = replyManager.get().isSelected(replyFileMeta.fileUuid).unwrap()
+            val selectedFilesCount = replyManager.get().selectedFilesCount().unwrap()
             val fileExifStatus = getFileExifInfoStatus(replyFile.fileOnDisk)
             val exceedsMaxFileSize =
               fileExceedsMaxFileSize(replyFile, replyFileMeta, chanDescriptor)
@@ -694,10 +695,10 @@ class ReplyLayoutFilesAreaPresenter(
     replyFileMeta: ReplyFileMeta,
     chanDescriptor: ChanDescriptor
   ): Boolean {
-    val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    val chanBoard = boardManager.get().byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return false
 
-    val isProbablyVideo = imageLoaderV2.fileIsProbablyVideoInterruptible(
+    val isProbablyVideo = imageLoaderV2.get().fileIsProbablyVideoInterruptible(
       replyFileMeta.originalFileName,
       InputFile.JavaFile(replyFile.fileOnDisk)
     )
@@ -756,17 +757,17 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {
-    return Try { replyManager.selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
+    return Try { replyManager.get().selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
   }
 
   private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
-    return postingLimitationsInfoManager.getMaxAllowedFilesPerPost(
+    return postingLimitationsInfoManager.get().getMaxAllowedFilesPerPost(
       chanDescriptor.boardDescriptor()
     )
   }
 
   private suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
-    return postingLimitationsInfoManager.getMaxAllowedTotalFilesSizePerPost(
+    return postingLimitationsInfoManager.get().getMaxAllowedTotalFilesSizePerPost(
       chanDescriptor.boardDescriptor()
     )
   }
@@ -797,7 +798,7 @@ class ReplyLayoutFilesAreaPresenter(
         return@launch
       }
 
-      val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+      val chanBoard = boardManager.get().byBoardDescriptor(chanDescriptor.boardDescriptor())
 
       val maxBoardFileSizeRaw = chanBoard?.maxFileSize ?: -1
       val maxBoardFileSize = chanBoard?.maxFileSize
@@ -815,7 +816,7 @@ class ReplyLayoutFilesAreaPresenter(
       val attachAdditionalInfo = clickedFile.attachAdditionalInfo
 
       val fileMd5Hash = withContext(Dispatchers.Default) {
-        val replyFile = replyManager.getReplyFileByFileUuid(fileUuid).valueOrNull()
+        val replyFile = replyManager.get().getReplyFileByFileUuid(fileUuid).valueOrNull()
           ?: return@withContext null
 
         return@withContext HashingUtil.fileHash(replyFile.fileOnDisk)
@@ -872,7 +873,7 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun isFileSupportedForReencoding(clickedFileUuid: UUID): Boolean {
-    val replyFile = replyManager.getReplyFileByFileUuid(clickedFileUuid).valueOrNull()
+    val replyFile = replyManager.get().getReplyFileByFileUuid(clickedFileUuid).valueOrNull()
       ?: return false
 
     return MediaUtils.isFileSupportedForReencoding(replyFile.fileOnDisk)

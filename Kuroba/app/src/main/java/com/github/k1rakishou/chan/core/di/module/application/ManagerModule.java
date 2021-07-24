@@ -92,6 +92,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingD
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
@@ -118,9 +119,11 @@ import java.util.concurrent.Executor;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
+import kotlin.LazyThreadSafetyMode;
 import kotlinx.coroutines.CoroutineScope;
 
 @Module
@@ -134,6 +137,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             SiteRepository siteRepository
     ) {
+        Logger.deps("SiteManager");
         return new SiteManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
@@ -149,6 +153,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             BoardRepository boardRepository
     ) {
+        Logger.deps("BoardManager");
         return new BoardManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
@@ -158,7 +163,10 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public FilterEngine provideFilterEngine(ChanFilterManager chanFilterManager) {
+    public FilterEngine provideFilterEngine(
+            ChanFilterManager chanFilterManager
+    ) {
+        Logger.deps("FilterEngine");
         return new FilterEngine(chanFilterManager);
     }
 
@@ -168,6 +176,7 @@ public class ManagerModule {
             AppConstants appConstants,
             Gson gson
     ) {
+        Logger.deps("ReplyManager");
         return new ReplyManager(appConstants, gson);
     }
 
@@ -177,6 +186,7 @@ public class ManagerModule {
             SiteManager siteManager,
             BoardManager boardManager
     ) {
+        Logger.deps("PageRequestManager");
         return new PageRequestManager(
                 siteManager,
                 boardManager
@@ -191,6 +201,7 @@ public class ManagerModule {
             AppConstants appConstants,
             CoroutineScope appScope
     ) {
+        Logger.deps("ArchivesManager");
         return new ArchivesManager(
                 gson,
                 appContext,
@@ -205,16 +216,17 @@ public class ManagerModule {
     public ReportManager provideReportManager(
             CoroutineScope appScope,
             Context appContext,
-            ProxiedOkHttpClient okHttpClient,
-            Gson gson,
-            SettingsNotificationManager settingsNotificationManager
+            Lazy<ProxiedOkHttpClient> okHttpClient,
+            Lazy<Gson> gson,
+            Lazy<SettingsNotificationManager> settingsNotificationManager
     ) {
+        Logger.deps("ReportManager");
         File cacheDir = getCacheDir().getValue();
 
         return new ReportManager(
                 appScope,
                 appContext,
-                okHttpClient.okHttpClient(),
+                okHttpClient,
                 settingsNotificationManager,
                 gson,
                 new File(cacheDir, CRASH_LOGS_DIR_NAME),
@@ -225,26 +237,32 @@ public class ManagerModule {
     @Provides
     @Singleton
     public SettingsNotificationManager provideSettingsNotificationManager() {
+        Logger.deps("SettingsNotificationManager");
         return new SettingsNotificationManager();
     }
 
     @Provides
     @Singleton
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
-            PrefetchLoader prefetchLoader,
-            PostExtraContentLoader postExtraContentLoader,
-            Chan4CloudFlareImagePreloader chan4CloudFlareImagePreloader,
+            Lazy<PrefetchLoader> prefetchLoader,
+            Lazy<PostExtraContentLoader> postExtraContentLoader,
+            Lazy<Chan4CloudFlareImagePreloader> chan4CloudFlareImagePreloader,
             ChanThreadManager chanThreadManager,
             @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
     ) {
-        HashSet<OnDemandContentLoader> loaders = new HashSet<>();
-        loaders.add(chan4CloudFlareImagePreloader);
-        loaders.add(prefetchLoader);
-        loaders.add(postExtraContentLoader);
+        Logger.deps("OnDemandContentLoaderManager");
+        kotlin.Lazy<HashSet<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(LazyThreadSafetyMode.SYNCHRONIZED, () -> {
+            HashSet<OnDemandContentLoader> loaders = new HashSet<>();
+            loaders.add(chan4CloudFlareImagePreloader.get());
+            loaders.add(prefetchLoader.get());
+            loaders.add(postExtraContentLoader.get());
+
+            return loaders;
+        });
 
         return new OnDemandContentLoaderManager(
                 Schedulers.from(onDemandContentLoaderExecutor),
-                loaders,
+                loadersLazy,
                 chanThreadManager
         );
     }
@@ -256,6 +274,7 @@ public class ManagerModule {
             ChanThreadsCache chanThreadsCache,
             SeenPostRepository seenPostRepository
     ) {
+        Logger.deps("SeenPostsManager");
         return new SeenPostsManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -266,13 +285,15 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public PrefetchStateManager providePrefetchIndicatorAnimationManager() {
+    public PrefetchStateManager providePrefetchStateManager() {
+        Logger.deps("PrefetchStateManager");
         return new PrefetchStateManager();
     }
 
     @Provides
     @Singleton
     public ApplicationVisibilityManager provideApplicationVisibilityManager() {
+        Logger.deps("ApplicationVisibilityManager");
         return new ApplicationVisibilityManager();
     }
 
@@ -283,6 +304,7 @@ public class ManagerModule {
             HistoryNavigationRepository historyNavigationRepository,
             ApplicationVisibilityManager applicationVisibilityManager
     ) {
+        Logger.deps("HistoryNavigationManager");
         return new HistoryNavigationManager(
                 appScope,
                 historyNavigationRepository,
@@ -296,6 +318,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             ChanThreadsCache chanThreadsCache
     ) {
+        Logger.deps("PostFilterManager");
         return new PostFilterManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -312,6 +335,7 @@ public class ManagerModule {
             BookmarksRepository bookmarksRepository,
             CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
+        Logger.deps("BookmarksManager");
         return new BookmarksManager(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -330,6 +354,7 @@ public class ManagerModule {
             SiteManager siteManager,
             ParserRepository parserRepository
     ) {
+        Logger.deps("ReplyParser");
         return new ReplyParser(
                 siteManager,
                 parserRepository
@@ -338,17 +363,18 @@ public class ManagerModule {
 
     @Provides
     @Singleton
-    public BookmarkWatcherDelegate provideBookmarkWatcherDelegate(
+    public BookmarkWatcherDelegate provideFetchThreadBookmarkInfoUseCase(
             BookmarksManager bookmarksManager,
             ArchivesManager archivesManager,
             SiteManager siteManager,
             LastViewedPostNoInfoHolder lastViewedPostNoInfoHolder,
-            FetchThreadBookmarkInfoUseCase fetchThreadBookmarkInfoUseCase,
-            ParsePostRepliesUseCase parsePostRepliesUseCase,
-            ReplyNotificationsHelper replyNotificationsHelper,
-            LastPageNotificationsHelper lastPageNotificationsHelper,
+            Lazy<FetchThreadBookmarkInfoUseCase> fetchThreadBookmarkInfoUseCase,
+            Lazy<ParsePostRepliesUseCase> parsePostRepliesUseCase,
+            Lazy<ReplyNotificationsHelper> replyNotificationsHelper,
+            Lazy<LastPageNotificationsHelper> lastPageNotificationsHelper,
             CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
+        Logger.deps("BookmarkWatcherDelegate");
         return new BookmarkWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -372,10 +398,11 @@ public class ManagerModule {
             AppConstants appConstants,
             BookmarksManager bookmarksManager,
             ArchivesManager archivesManager,
-            BookmarkWatcherDelegate bookmarkWatcherDelegate,
+            Lazy<BookmarkWatcherDelegate> bookmarkWatcherDelegate,
             ApplicationVisibilityManager applicationVisibilityManager,
             CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
+        Logger.deps("BookmarkForegroundWatcher");
         return new BookmarkForegroundWatcher(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -398,6 +425,7 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             BookmarkForegroundWatcher bookmarkForegroundWatcher
     ) {
+        Logger.deps("BookmarkWatcherCoordinator");
         return new BookmarkWatcherCoordinator(
                 ChanSettings.verboseLogs.get(),
                 appContext,
@@ -411,6 +439,7 @@ public class ManagerModule {
     @Provides
     @Singleton
     public LastViewedPostNoInfoHolder provideLastViewedPostNoInfoHolder() {
+        Logger.deps("LastViewedPostNoInfoHolder");
         return new LastViewedPostNoInfoHolder();
     }
 
@@ -423,8 +452,9 @@ public class ManagerModule {
             ChanPostRepository chanPostRepository,
             ImageLoaderV2 imageLoaderV2,
             ThemeEngine themeEngine,
-            SimpleCommentParser simpleCommentParser
+            Lazy<SimpleCommentParser> simpleCommentParser
     ) {
+        Logger.deps("ReplyNotificationsHelper");
         return new ReplyNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -444,11 +474,12 @@ public class ManagerModule {
     @Singleton
     public LastPageNotificationsHelper provideLastPageNotificationsHelper(
             Context appContext,
-            PageRequestManager pageRequestManager,
+            Lazy<PageRequestManager> pageRequestManager,
             BookmarksManager bookmarksManager,
             ThemeEngine themeEngine,
             CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
+        Logger.deps("LastPageNotificationsHelper");
         return new LastPageNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
                 appContext,
@@ -467,6 +498,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             ChanThreadsCache chanThreadsCache
     ) {
+        Logger.deps("ChanThreadViewableInfoManager");
         return new ChanThreadViewableInfoManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -481,6 +513,7 @@ public class ManagerModule {
             ChanThreadsCache chanThreadsCache,
             ChanSavedReplyRepository chanSavedReplyRepository
     ) {
+        Logger.deps("SavedReplyManager");
         return new SavedReplyManager(
                 ChanSettings.verboseLogs.get(),
                 chanThreadsCache,
@@ -495,6 +528,7 @@ public class ManagerModule {
         CoroutineScope appScope,
         ChanThreadsCache chanThreadsCache
     ) {
+        Logger.deps("PostHideManager");
         return new PostHideManager(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -512,6 +546,7 @@ public class ManagerModule {
             CoroutineScope appScope,
             PostFilterManager postFilterManager
     ) {
+        Logger.deps("ChanFilterManager");
         return new ChanFilterManager(
                 AppModuleAndroidUtils.isDevBuild(),
                 appScope,
@@ -528,6 +563,7 @@ public class ManagerModule {
             PostHideManager postHideManager,
             PostFilterManager postFilterManager
     ) {
+        Logger.deps("PostHideHelper");
         return new PostHideHelper(
                 postHideManager,
                 postFilterManager
@@ -541,6 +577,7 @@ public class ManagerModule {
             ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
             BookmarksManager bookmarksManager
     ) {
+        Logger.deps("ThreadBookmarkGroupManager");
         return new ThreadBookmarkGroupManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -556,6 +593,7 @@ public class ManagerModule {
             RealProxiedOkHttpClient realProxiedOkHttpClient,
             ChanThreadsCache chanThreadsCache
     ) {
+        Logger.deps("Chan4CloudFlareImagePreloaderManager");
         return new Chan4CloudFlareImagePreloaderManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
@@ -573,10 +611,11 @@ public class ManagerModule {
             SavedReplyManager savedReplyManager,
             ChanThreadsCache chanThreadsCache,
             ChanPostRepository chanPostRepository,
-            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator,
-            ThreadDataPreloadUseCase threadDataPreloadUseCase,
-            CatalogDataPreloadUseCase catalogDataPreloadUseCase
+            Lazy<ChanThreadLoaderCoordinator> chanThreadLoaderCoordinator,
+            Lazy<ThreadDataPreloadUseCase> threadDataPreloadUseCase,
+            Lazy<CatalogDataPreloadUseCase> catalogDataPreloadUseCase
     ) {
+        Logger.deps("ChanThreadManager");
         return new ChanThreadManager(
                 ChanSettings.verboseLogs.get(),
                 siteManager,
@@ -596,6 +635,7 @@ public class ManagerModule {
     public PostingLimitationsInfoManager providePostingLimitationsInfoManager(
             SiteManager siteManager
     ) {
+        Logger.deps("PostingLimitationsInfoManager");
         return new PostingLimitationsInfoManager(siteManager);
     }
 
@@ -607,6 +647,7 @@ public class ManagerModule {
             AppConstants appConstants,
             ChanFilterManager chanFilterManager
     ) {
+        Logger.deps("FilterWatcherCoordinator");
         return new FilterWatcherCoordinator(
                 ChanSettings.verboseLogs.get(),
                 appContext,
@@ -627,6 +668,7 @@ public class ManagerModule {
             SiteManager siteManager,
             BookmarkFilterWatchableThreadsUseCase bookmarkFilterWatchableThreadsUseCase
     ) {
+        Logger.deps("FilterWatcherDelegate");
         return new FilterWatcherDelegate(
                 AppModuleAndroidUtils.isDevBuild(),
                 appScope,
@@ -645,8 +687,8 @@ public class ManagerModule {
             Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
-            CacheHandler cacheHandler,
-            RealDownloaderOkHttpClient downloaderOkHttpClient,
+            Lazy<CacheHandler> cacheHandler,
+            Lazy<RealDownloaderOkHttpClient> downloaderOkHttpClient,
             ImageSaverFileManagerWrapper imageSaverFileManagerWrapper,
             SiteResolver siteResolver,
             ChanPostImageRepository chanPostImageRepository,
@@ -654,6 +696,7 @@ public class ManagerModule {
             ChanThreadManager chanThreadManager,
             ThreadDownloadManager threadDownloadManager
     ) {
+        Logger.deps("ImageSaverV2ServiceDelegate");
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -675,8 +718,9 @@ public class ManagerModule {
     public TwoCaptchaSolver provideTwoCaptchaSolver(
             Gson gson,
             SiteManager siteManager,
-            ProxiedOkHttpClient proxiedOkHttpClient
+            Lazy<ProxiedOkHttpClient> proxiedOkHttpClient
     ) {
+        Logger.deps("TwoCaptchaSolver");
         return new TwoCaptchaSolver(
                 AppModuleAndroidUtils.isDevBuild(),
                 gson,
@@ -696,11 +740,12 @@ public class ManagerModule {
             BookmarksManager bookmarksManager,
             SavedReplyManager savedReplyManager,
             ChanThreadManager chanThreadManager,
-            LastReplyRepository lastReplyRepository,
+            Lazy<LastReplyRepository> lastReplyRepository,
             ChanPostRepository chanPostRepository,
-            TwoCaptchaSolver twoCaptchaSolver,
-            CaptchaHolder captchaHolder
+            Lazy<TwoCaptchaSolver> twoCaptchaSolver,
+            Lazy<CaptchaHolder> captchaHolder
     ) {
+        Logger.deps("PostingServiceDelegate");
         return new PostingServiceDelegate(
                 appScope,
                 appConstants,
@@ -726,6 +771,7 @@ public class ManagerModule {
             ThreadDownloadRepository threadDownloadRepository,
             ChanPostRepository chanPostRepository
     ) {
+        Logger.deps("ThreadDownloadManager");
         return new ThreadDownloadManager(
                 appConstants,
                 appScope,
@@ -743,6 +789,7 @@ public class ManagerModule {
             AppConstants appConstants,
             ThreadDownloadManager threadDownloadManager
     ) {
+        Logger.deps("ThreadDownloadingCoordinator");
         return new ThreadDownloadingCoordinator(
                 appContext,
                 appScope,
@@ -755,7 +802,7 @@ public class ManagerModule {
     @Provides
     public ThreadDownloadingDelegate provideThreadDownloadingDelegate(
             AppConstants appConstants,
-            RealDownloaderOkHttpClient realDownloaderOkHttpClient,
+            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient,
             SiteManager siteManager,
             SiteResolver siteResolver,
             ThreadDownloadManager threadDownloadManager,
@@ -765,6 +812,7 @@ public class ManagerModule {
             ThreadDownloadProgressNotifier threadDownloadProgressNotifier,
             ThreadDownloaderPersistPostsInDatabaseUseCase threadDownloaderPersistPostsInDatabaseUseCase
     ) {
+        Logger.deps("ThreadDownloadingDelegate");
         return new ThreadDownloadingDelegate(
                 appConstants,
                 realDownloaderOkHttpClient,
@@ -782,6 +830,7 @@ public class ManagerModule {
     @Singleton
     @Provides
     public CurrentOpenedDescriptorStateManager provideCurrentOpenedDescriptorStateManager() {
+        Logger.deps("CurrentOpenedDescriptorStateManager");
         return new CurrentOpenedDescriptorStateManager();
     }
 

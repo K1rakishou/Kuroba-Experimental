@@ -111,6 +111,7 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -134,7 +135,7 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var presenter: ReplyPresenter
   @Inject
-  lateinit var captchaHolder: CaptchaHolder
+  lateinit var captchaHolder: Lazy<CaptchaHolder>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -144,15 +145,15 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
-  lateinit var proxyStorage: ProxyStorage
+  lateinit var proxyStorage: Lazy<ProxyStorage>
   @Inject
-  lateinit var replyManager: ReplyManager
+  lateinit var replyManager: Lazy<ReplyManager>
   @Inject
-  lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+  lateinit var _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
   @Inject
-  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+  lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -160,6 +161,9 @@ class ReplyLayout @JvmOverloads constructor(
   private var blockSelectionChange = false
   private var replyLayoutEnabled = true
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
+
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+    get() = _staticBoardFlagInfoRepository.get()
 
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
@@ -551,7 +555,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     coroutineScope.launch {
-      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
+      appSettingsUpdateAppRefreshHelper.get().settingsUpdatedEvent.collect {
         Logger.d(TAG, "Updating ReplyLayout wrapping mode because app settings were updated")
         setWrappingMode(presenter.isExpanded)
       }
@@ -566,7 +570,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     comment.cleanup()
     presenter.unbindReplyImages()
-    captchaHolder.clearCallbacks()
+    captchaHolder.get().clearCallbacks()
     cleanup()
 
     coroutineScope.cancelChildren()
@@ -586,7 +590,7 @@ class ReplyLayout @JvmOverloads constructor(
       replyLayoutFilesArea.updateLayoutManager(presenter.isExpanded)
       updateCommentButtonsHolderVisibility()
 
-      if (proxyStorage.isDirty()) {
+      if (proxyStorage.get().isDirty()) {
         openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
       }
 
@@ -630,7 +634,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
-    captchaHolder.setListener(chanDescriptor, this)
+    captchaHolder.get().setListener(chanDescriptor, this)
   }
 
   override suspend fun bindReplyImages(chanDescriptor: ChanDescriptor) {
@@ -952,7 +956,7 @@ class ReplyLayout @JvmOverloads constructor(
   override fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
-    replyManager.readReply(chanDescriptor) { reply: Reply ->
+    replyManager.get().readReply(chanDescriptor) { reply: Reply ->
       name.setText(reply.postName)
       subject.setText(reply.subject)
 
@@ -1023,7 +1027,7 @@ class ReplyLayout @JvmOverloads constructor(
   override fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor) {
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
-    replyManager.readReply(chanDescriptor) { reply: Reply ->
+    replyManager.get().readReply(chanDescriptor) { reply: Reply ->
       reply.postName = name.text.toString()
       reply.subject = subject.text.toString()
       reply.options = options.text.toString()

@@ -18,6 +18,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ThreadDownload
+import dagger.Lazy
 import io.reactivex.Scheduler
 import io.reactivex.Single
 import kotlinx.coroutines.runBlocking
@@ -26,16 +27,16 @@ import kotlin.math.abs
 
 class PrefetchLoader(
   private val scheduler: Scheduler,
-  private val fileCacheV2: FileCacheV2,
-  private val cacheHandler: CacheHandler,
-  private val chanThreadManager: ChanThreadManager,
+  private val fileCacheV2: Lazy<FileCacheV2>,
+  private val cacheHandler: Lazy<CacheHandler>,
+  private val chanThreadManager: Lazy<ChanThreadManager>,
   private val prefetchStateManager: PrefetchStateManager,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val threadDownloadManager: Lazy<ThreadDownloadManager>
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
   override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
     return Single.fromCallable {
-      val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+      val post = chanThreadManager.get().getPost(postLoaderData.postDescriptor)
       if (post == null) {
         return@fromCallable false
       }
@@ -46,7 +47,7 @@ class PrefetchLoader(
           val fileUrl = postImage.imageUrl?.toString()
             ?: return@all true
 
-          return@all cacheHandler.isAlreadyDownloaded(fileUrl)
+          return@all cacheHandler.get().isAlreadyDownloaded(fileUrl)
         }
     }
       .subscribeOn(scheduler)
@@ -57,14 +58,14 @@ class PrefetchLoader(
     BackgroundUtils.ensureBackgroundThread()
 
     val threadDescriptor = postLoaderData.postDescriptor.threadDescriptor()
-    val downloadStatus = runBlocking { threadDownloadManager.getStatus(threadDescriptor) }
+    val downloadStatus = runBlocking { threadDownloadManager.get().getStatus(threadDescriptor) }
 
     if (downloadStatus != null && downloadStatus != ThreadDownload.Status.Stopped) {
       // If downloading a thread then don't use the media prefetch
       return rejected()
     }
 
-    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+    val post = chanThreadManager.get().getPost(postLoaderData.postDescriptor)
     if (post == null) {
       return rejected()
     }
@@ -78,7 +79,7 @@ class PrefetchLoader(
     }
 
     prefetchList.forEach { prefetch ->
-      val cancelableDownload = fileCacheV2.enqueueMediaPrefetchRequest(prefetch.postImage)
+      val cancelableDownload = fileCacheV2.get().enqueueMediaPrefetchRequest(prefetch.postImage)
       if (cancelableDownload == null) {
         // Already cached or something like that
         onPrefetchCompleted(prefetch.postImage)
@@ -108,7 +109,7 @@ class PrefetchLoader(
         }
 
         override fun onSuccess(file: File) {
-          chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
+          chanThreadManager.get().setContentLoadedForLoader(post.postDescriptor, loaderType)
           onPrefetchCompleted(prefetch.postImage)
         }
 
@@ -134,7 +135,7 @@ class PrefetchLoader(
     chanDescriptor: ChanDescriptor,
     post: ChanPost
   ): List<Prefetch> {
-    if (chanThreadManager.isContentLoadedForLoader(post.postDescriptor, loaderType)) {
+    if (chanThreadManager.get().isContentLoadedForLoader(post.postDescriptor, loaderType)) {
       return emptyList()
     }
 
@@ -167,7 +168,7 @@ class PrefetchLoader(
 
   private fun onPrefetchCompleted(postImage: ChanPostImage, success: Boolean = true) {
     if (success) {
-      val post = chanThreadManager.getPost(postImage.ownerPostDescriptor)
+      val post = chanThreadManager.get().getPost(postImage.ownerPostDescriptor)
       if (post != null) {
         val chanPostImage = post.postImages
           .firstOrNull { chanPostImage -> chanPostImage.equalUrl(postImage) }

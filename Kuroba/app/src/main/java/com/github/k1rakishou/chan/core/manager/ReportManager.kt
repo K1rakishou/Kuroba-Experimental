@@ -6,6 +6,7 @@ import android.os.Build
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
@@ -19,6 +20,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.gson.Gson
 import com.google.gson.annotations.SerializedName
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -38,14 +40,16 @@ import java.util.regex.Pattern
 class ReportManager(
   private val appScope: CoroutineScope,
   private val appContext: Context,
-  private val okHttpClient: OkHttpClient,
-  private val settingsNotificationManager: SettingsNotificationManager,
-  private val gson: Gson,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
+  private val settingsNotificationManager: Lazy<SettingsNotificationManager>,
+  private val gson: Lazy<Gson>,
   private val crashLogsDirPath: File,
   private val anrsDirPath: File
 ) {
   private val activityManager: ActivityManager?
     get() = appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
+  private val okHttpClient: OkHttpClient
+    get() = proxiedOkHttpClient.get().okHttpClient()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(
     scope = appScope,
@@ -82,7 +86,7 @@ class ReportManager(
     deleteOldAnrReports()
 
     Logger.d(TAG, "Stored new ANR, path = ${newAnr.absolutePath}")
-    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+    settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
   }
 
   fun storeCrashLog(exceptionMessage: String?, error: String) {
@@ -130,7 +134,7 @@ class ReportManager(
     }
 
     Logger.d(TAG, "Stored new crash log, path = ${newCrashLog.absolutePath}")
-    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+    settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
   }
 
   fun hasReportFiles(): Boolean {
@@ -177,7 +181,7 @@ class ReportManager(
 
   fun deleteReportFiles(reportFiles: List<ReportFile>) {
     if (!createDirectoriesIfNotExists()) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
@@ -187,12 +191,12 @@ class ReportManager(
     val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
 
     if (remainingCrashLogs == 0 && remainingAnrs == 0) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
     // There are still crash logs/ANRs left, so show the notifications if they are not shown yet
-    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+    settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
   }
 
   fun deleteAllCrashLogs() {
@@ -209,7 +213,7 @@ class ReportManager(
     }
 
     if (!createDirectoriesIfNotExists()) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
@@ -230,7 +234,7 @@ class ReportManager(
 
     if (potentialReports.isNullOrEmpty()) {
       Logger.d(TAG, "No new crash logs/ANRs")
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
@@ -241,12 +245,12 @@ class ReportManager(
     val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
 
     if (remainingCrashLogs == 0 && remainingAnrs == 0) {
-      settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+      settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       return
     }
 
     // There are still crash logs left, so show the notifications if they are not shown yet
-    settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+    settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
   }
 
   fun sendCrashLogs(
@@ -277,7 +281,7 @@ class ReportManager(
 
       // If no more crash logs left, remove the notification
       if (!hasReportFiles()) {
-        settingsNotificationManager.cancel(SettingNotificationType.CrashLogOrAnr)
+        settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
       }
 
       val errorResult = results
@@ -480,7 +484,7 @@ class ReportManager(
 
     return ModularResult.Try {
       val json = try {
-        gson.toJson(reportRequest)
+        gson.get().toJson(reportRequest)
       } catch (error: Throwable) {
         Logger.e(TAG, "Couldn't convert $reportRequest to json", error)
         throw error

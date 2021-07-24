@@ -40,6 +40,7 @@ import com.google.android.exoplayer2.upstream.DataSource
 import com.google.android.exoplayer2.upstream.DefaultHttpDataSource
 import com.google.android.exoplayer2.upstream.FileDataSource
 import com.google.android.exoplayer2.upstream.cache.CacheDataSource
+import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -61,7 +62,7 @@ class MediaViewerController(
   @Inject
   lateinit var exoPlayerCache: ExoPlayerCache
   @Inject
-  lateinit var imageSaverV2: ImageSaverV2
+  lateinit var imageSaverV2: Lazy<ImageSaverV2>
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
@@ -97,7 +98,7 @@ class MediaViewerController(
     MediaLongClickMenuHelper(
       scope = mainScope,
       globalWindowInsetsManager = globalWindowInsetsManager,
-      imageSaverV2 = imageSaverV2,
+      imageSaverV2 = imageSaverV2.get(),
       getMediaViewerAdapterFunc = { mediaViewerAdapter },
       presentControllerFunc = { controller -> presentController(controller, true) }
     )
@@ -221,7 +222,7 @@ class MediaViewerController(
     val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
     if (!longClick && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      imageSaverV2.save(imageSaverV2Options, simpleImageInfo, null)
+      imageSaverV2.get().save(imageSaverV2Options, simpleImageInfo, null)
       return true
     }
 
@@ -229,7 +230,7 @@ class MediaViewerController(
       val options = ImageSaverV2OptionsController.Options.SingleImage(
         simpleSaveableMediaInfo = simpleImageInfo,
         onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-          imageSaverV2.save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
+          imageSaverV2.get().save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
           continuation.resumeValueSafe(true)
         },
         onCanceled = { continuation.resumeValueSafe(false) }

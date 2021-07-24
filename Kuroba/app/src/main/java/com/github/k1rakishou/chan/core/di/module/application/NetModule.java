@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
+
 import android.content.Context;
 import android.net.ConnectivityManager;
 
@@ -35,6 +37,7 @@ import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.common.dns.DnsOverHttpsSelectorFactory;
 import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -42,11 +45,10 @@ import java.io.File;
 
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
-
-import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
 
 @Module
 public class NetModule {
@@ -68,6 +70,7 @@ public class NetModule {
             SiteResolver siteResolver,
             Gson gson
     ) {
+        Logger.deps("ProxyStorage");
         return new ProxyStorage(
                 appScope,
                 appContext,
@@ -81,6 +84,8 @@ public class NetModule {
     @Provides
     @Singleton
     public CacheHandler provideCacheHandler() {
+        Logger.deps("CacheHandler");
+
         File cacheDir = getCacheDir().getValue();
         CacheHandlerSynchronizer cacheHandlerSynchronizer = new CacheHandlerSynchronizer();
 
@@ -98,11 +103,13 @@ public class NetModule {
     public FileCacheV2 provideFileCacheV2(
             ConnectivityManager connectivityManager,
             FileManager fileManager,
-            CacheHandler cacheHandler,
+            Lazy<CacheHandler> cacheHandler,
             SiteResolver siteResolver,
-            RealDownloaderOkHttpClient realDownloaderOkHttpClient,
+            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient,
             AppConstants appConstants
     ) {
+        Logger.deps("FileCacheV2");
+
         return new FileCacheV2(
                 fileManager,
                 cacheHandler,
@@ -116,9 +123,11 @@ public class NetModule {
     @Provides
     @Singleton
     public HttpCallManager provideHttpCallManager(
-            ProxiedOkHttpClient okHttpClient,
+            Lazy<ProxiedOkHttpClient> okHttpClient,
             AppConstants appConstants
     ) {
+        Logger.deps("HttpCallManager");
+
         return new HttpCallManager(okHttpClient, appConstants);
     }
 
@@ -135,6 +144,8 @@ public class NetModule {
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
+        Logger.deps("RealProxiedOkHttpClient");
+
         return new RealProxiedOkHttpClient(
                 normalDnsSelectorFactory,
                 dnsOverHttpsSelectorFactory,
@@ -159,6 +170,8 @@ public class NetModule {
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
+        Logger.deps("CoilOkHttpClient");
+
         return new CoilOkHttpClient(
                 applicationContext,
                 normalDnsSelectorFactory,
@@ -183,6 +196,8 @@ public class NetModule {
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
             SiteResolver siteResolver
     ) {
+        Logger.deps("RealDownloaderOkHttpClient");
+
         return new RealDownloaderOkHttpClient(
                 normalDnsSelectorFactory,
                 dnsOverHttpsSelectorFactory,

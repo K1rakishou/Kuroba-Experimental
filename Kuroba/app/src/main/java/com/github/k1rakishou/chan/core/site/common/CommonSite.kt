@@ -176,7 +176,7 @@ abstract class CommonSite : SiteBase() {
   }
 
   open fun setParser(commentParser: CommentParser) {
-    postParser = DefaultPostParser(commentParser, postFilterManager, archivesManager)
+    postParser = DefaultPostParser(commentParser, archivesManager)
   }
 
   override fun enabled(): Boolean {
@@ -419,7 +419,7 @@ abstract class CommonSite : SiteBase() {
     override suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<SiteActions.PostResult> {
       val replyResponse = ReplyResponse()
 
-      site.replyManager.readReply(replyChanDescriptor) { reply ->
+      site.replyManager.get().readReply(replyChanDescriptor) { reply ->
         reply.password = toHexString(secureRandom.nextLong())
         replyResponse.password = reply.password
       }
@@ -468,7 +468,7 @@ abstract class CommonSite : SiteBase() {
     }
     
     private suspend fun makePostCall(call: HttpCall, replyResponse: ReplyResponse): SiteActions.PostResult {
-      return when (val result = site.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.get().makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.PostResult.PostComplete(replyResponse)
         }
@@ -502,7 +502,7 @@ abstract class CommonSite : SiteBase() {
       call.url(site.endpoints().delete(deleteRequest.post))
       setupDelete(deleteRequest, call)
       
-      return when (val result = site.httpCallManager.makeHttpCall(call)) {
+      return when (val result = site.httpCallManager.get().makeHttpCall(call)) {
         is HttpCall.HttpCallResult.Success -> {
           SiteActions.DeleteResult.DeleteComplete(deleteResponse)
         }

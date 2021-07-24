@@ -8,6 +8,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import dagger.Lazy
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -15,11 +16,11 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 
 class ThreadDataPreloadUseCase(
-  private val seenPostsManager: SeenPostsManager,
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val savedReplyManager: SavedReplyManager,
-  private val postHideManager: PostHideManager,
-  private val chanPostRepository: ChanPostRepository,
+  private val seenPostsManager: Lazy<SeenPostsManager>,
+  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val savedReplyManager: Lazy<SavedReplyManager>,
+  private val postHideManager: Lazy<PostHideManager>,
+  private val chanPostRepository: Lazy<ChanPostRepository>,
 ) : ISuspendUseCase<ThreadDataPreloadUseCase.Params, Unit> {
 
   override suspend fun execute(parameter: Params) {
@@ -32,15 +33,15 @@ class ThreadDataPreloadUseCase(
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
 
-      jobs += async(Dispatchers.IO) { seenPostsManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { savedReplyManager.preloadForThread(threadDescriptor) }
-      jobs += async(Dispatchers.IO) { postHideManager.preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { seenPostsManager.get().preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { chanThreadViewableInfoManager.get().preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { savedReplyManager.get().preloadForThread(threadDescriptor) }
+      jobs += async(Dispatchers.IO) { postHideManager.get().preloadForThread(threadDescriptor) }
 
       // Only preload when this thread is not yet in cache
       if (!isThreadCached) {
         jobs += async(Dispatchers.IO) {
-          chanPostRepository.preloadForThread(threadDescriptor).unwrap()
+          chanPostRepository.get().preloadForThread(threadDescriptor).unwrap()
         }
       }
 

@@ -37,13 +37,15 @@ import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
+
 public class AlbumViewCell extends FrameLayout {
     private static final float MAX_RATIO = 2f;
     private static final float MIN_RATIO = .4f;
     private static final int ADDITIONAL_HEIGHT = dp(32);
 
     @Inject
-    OnDemandContentLoaderManager onDemandContentLoaderManager;
+    Lazy<OnDemandContentLoaderManager> onDemandContentLoaderManager;
 
     private ChanPostImage postImage;
     private PostImageThumbnailView thumbnailView;
@@ -111,12 +113,12 @@ public class AlbumViewCell extends FrameLayout {
             ratio = 0f;
         }
 
-        onDemandContentLoaderManager.onPostBind(postImage.getOwnerPostDescriptor());
+        onDemandContentLoaderManager.get().onPostBind(postImage.getOwnerPostDescriptor());
     }
 
     public void unbindPostImage() {
         thumbnailView.unbindPostImage();
-        onDemandContentLoaderManager.onPostUnbind(postImage.getOwnerPostDescriptor(), true);
+        onDemandContentLoaderManager.get().onPostUnbind(postImage.getOwnerPostDescriptor(), true);
     }
 
     public void setRatioFromImageDimensions() {

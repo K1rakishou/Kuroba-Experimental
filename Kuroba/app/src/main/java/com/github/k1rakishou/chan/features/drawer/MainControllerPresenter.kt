@@ -20,6 +20,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -37,7 +38,7 @@ class MainControllerPresenter(
   private val historyNavigationManager: HistoryNavigationManager,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
-  private val pageRequestManager: PageRequestManager,
+  private val pageRequestManager: Lazy<PageRequestManager>,
   private val archivesManager: ArchivesManager,
   private val chanThreadManager: ChanThreadManager
 ) : BasePresenter<MainControllerView>() {
@@ -243,7 +244,7 @@ class MainControllerPresenter(
       val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
 
       bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+        val boardPage = pageRequestManager.get().getPage(threadBookmarkView.threadDescriptor)
 
         return@mapBookmark NavHistoryBookmarkAdditionalInfo(
           watching = threadBookmarkView.isWatching(),

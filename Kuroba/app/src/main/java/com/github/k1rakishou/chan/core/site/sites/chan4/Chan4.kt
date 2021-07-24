@@ -327,12 +327,10 @@ open class Chan4 : SiteBase() {
         replyChanDescriptor = replyChanDescriptor,
         replyMode = replyMode,
         replyManager = replyManager,
-        boardManager = boardManager,
-        appConstants = appConstants,
         staticBoardFlagInfoRepository = staticBoardFlagInfoRepository
       )
 
-      return httpCallManager.makePostHttpCallWithProgress(replyCall)
+      return httpCallManager.get().makePostHttpCallWithProgress(replyCall)
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {
@@ -357,7 +355,7 @@ open class Chan4 : SiteBase() {
     }
 
     override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-      val deleteResult = httpCallManager.makeHttpCall(
+      val deleteResult = httpCallManager.get().makeHttpCall(
         Chan4DeleteHttpCall(this@Chan4, deleteRequest)
       )
 
@@ -382,7 +380,7 @@ open class Chan4 : SiteBase() {
       passUser.set(chan4LoginRequest.user)
       passPass.set(chan4LoginRequest.pass)
 
-      val loginResult = httpCallManager.makeHttpCall(
+      val loginResult = httpCallManager.get().makeHttpCall(
         Chan4PassHttpCall(this@Chan4, chan4LoginRequest)
       )
 
@@ -537,7 +535,6 @@ open class Chan4 : SiteBase() {
   override fun chanReader(): ChanReader {
     return FutabaChanReader(
       archivesManager,
-      postFilterManager,
       siteManager,
       boardManager
     )

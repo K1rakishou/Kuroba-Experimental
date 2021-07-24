@@ -35,6 +35,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -66,10 +67,10 @@ class PostingServiceDelegate(
   private val bookmarksManager: BookmarksManager,
   private val savedReplyManager: SavedReplyManager,
   private val chanThreadManager: ChanThreadManager,
-  private val lastReplyRepository: LastReplyRepository,
+  private val _lastReplyRepository: Lazy<LastReplyRepository>,
   private val chanPostRepository: ChanPostRepository,
-  private val twoCaptchaSolver: TwoCaptchaSolver,
-  private val captchaHolder: CaptchaHolder
+  private val twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
+  private val captchaHolder: Lazy<CaptchaHolder>
 ) {
   private val mutex = Mutex()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
@@ -106,7 +107,7 @@ class PostingServiceDelegate(
         replyInfo.cancelReplyUpload()
       }
 
-      twoCaptchaSolver.cancelAll()
+      twoCaptchaSolver.get().cancelAll()
     }
   }
 
@@ -117,7 +118,7 @@ class PostingServiceDelegate(
       val replyInfo = activeReplyDescriptors[chanDescriptor]
 
       replyInfo?.cancelReplyUpload()
-      twoCaptchaSolver.cancel(chanDescriptor)
+      twoCaptchaSolver.get().cancel(chanDescriptor)
 
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
@@ -224,7 +225,7 @@ class PostingServiceDelegate(
 
       // All replies for the same board as the current reply have been processed. We need to reset
       // the cooldowns and update last reply attempt time just to be sure everything is up to date.
-      lastReplyRepository.onPostAttemptFinished(chanDescriptor)
+      _lastReplyRepository.get().onPostAttemptFinished(chanDescriptor)
     }
 
     updateMainNotification()
@@ -389,6 +390,7 @@ class PostingServiceDelegate(
     val automaticallySolvedCaptchasCount = AtomicInteger()
 
     Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) started at $startTime")
+    val lastReplyRepository = _lastReplyRepository.get()
 
     while (true) {
       ensureNotCanceled(chanDescriptor)
@@ -496,7 +498,7 @@ class PostingServiceDelegate(
     automaticallySolvedCaptchasCount: AtomicInteger,
     actualPostResult: AtomicReference<ActualPostResult>
   ) {
-    val serviceName = twoCaptchaSolver.name
+    val serviceName = twoCaptchaSolver.get().name
     Logger.d(TAG, "runPostWaitForCaptchaLoop(${site.siteDescriptor()}, $chanDescriptor)")
 
     readReplyInfo(chanDescriptor) {
@@ -733,7 +735,7 @@ class PostingServiceDelegate(
       reply.resetCaptcha()
     }
 
-    lastReplyRepository.onPostAttemptFinished(
+    _lastReplyRepository.get().onPostAttemptFinished(
       chanDescriptor = chanDescriptor,
       newCooldownInfo = rateLimitInfo.cooldownInfo
     )
@@ -801,9 +803,9 @@ class PostingServiceDelegate(
       return AntiCaptchaServiceResult.AlreadyHaveSolution(prevCaptchaSolution)
     }
 
-    if (captchaHolder.hasSolution()) {
+    if (captchaHolder.get().hasSolution()) {
       Logger.d(TAG, "processAntiCaptchaService($chanDescriptor) already has token, use it instead")
-      return AntiCaptchaServiceResult.AlreadyHaveSolution(captchaHolder.solution)
+      return AntiCaptchaServiceResult.AlreadyHaveSolution(captchaHolder.get().solution)
     }
 
     if (replyMode != ReplyMode.ReplyModeSolveCaptchaAuto) {
@@ -818,12 +820,12 @@ class PostingServiceDelegate(
         chanDescriptor = chanDescriptor,
         status = ChildNotificationInfo.Status.WaitingForAdditionalService(
           availableAttempts = availableAttempts,
-          serviceName = twoCaptchaSolver.name
+          serviceName = twoCaptchaSolver.get().name
         )
       )
     }
 
-    val twoCaptchaResult = twoCaptchaSolver.solve(chanDescriptor, updateChildNotificationFunc)
+    val twoCaptchaResult = twoCaptchaSolver.get().solve(chanDescriptor, updateChildNotificationFunc)
       .safeUnwrap { error ->
         if (error is IOException) {
           Logger.e(TAG, "processAntiCaptchaService() twoCaptchaSolver.solve($chanDescriptor) " +
@@ -1018,6 +1020,8 @@ class PostingServiceDelegate(
     replyManager.readReply(chanDescriptor) { reply ->
       reply.resetCaptcha()
     }
+
+    val lastReplyRepository = _lastReplyRepository.get()
 
     when (postResult) {
       PostResult.Canceled -> {

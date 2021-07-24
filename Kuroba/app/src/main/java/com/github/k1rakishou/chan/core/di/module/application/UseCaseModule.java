@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDat
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
@@ -53,6 +54,7 @@ import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
@@ -67,6 +69,7 @@ public class UseCaseModule {
             SiteManager siteManager,
             ChanThreadManager chanThreadManager
     ) {
+        Logger.deps("ExtractPostMapInfoHolderUseCase");
         return new ExtractPostMapInfoHolderUseCase(
                 savedReplyManager,
                 siteManager,
@@ -78,12 +81,13 @@ public class UseCaseModule {
     @Singleton
     public FetchThreadBookmarkInfoUseCase provideFetchThreadBookmarkInfoUseCase(
             CoroutineScope appScope,
-            ProxiedOkHttpClient okHttpClient,
+            Lazy<ProxiedOkHttpClient> okHttpClient,
             SiteManager siteManager,
             BookmarksManager bookmarksManager,
             AppConstants appConstants
 
     ) {
+        Logger.deps("FetchThreadBookmarkInfoUseCase");
         return new FetchThreadBookmarkInfoUseCase(
                 isDevBuild(),
                 ChanSettings.verboseLogs.get(),
@@ -99,10 +103,11 @@ public class UseCaseModule {
     @Singleton
     public ParsePostRepliesUseCase provideParsePostRepliesUseCase(
             CoroutineScope appScope,
-            ReplyParser replyParser,
+            Lazy<ReplyParser> replyParser,
             SiteManager siteManager,
-            SavedReplyManager savedReplyManager
+            Lazy<SavedReplyManager> savedReplyManager
     ) {
+        Logger.deps("ParsePostRepliesUseCase");
         return new ParsePostRepliesUseCase(
                 appScope,
                 replyParser,
@@ -123,6 +128,7 @@ public class UseCaseModule {
             BookmarksManager bookmarksManager,
             ChanPostRepository chanPostRepository
     ) {
+        Logger.deps("KurobaSettingsImportUseCase");
         return new KurobaSettingsImportUseCase(
                 gson,
                 fileManager,
@@ -140,8 +146,9 @@ public class UseCaseModule {
     public GlobalSearchUseCase provideGlobalSearchUseCase(
             SiteManager siteManager,
             ThemeEngine themeEngine,
-            SimpleCommentParser simpleCommentParser
+            Lazy<SimpleCommentParser> simpleCommentParser
     ) {
+        Logger.deps("GlobalSearchUseCase");
         return new GlobalSearchUseCase(
                 siteManager,
                 themeEngine,
@@ -155,6 +162,7 @@ public class UseCaseModule {
             PostHideManager postHideManager,
             PostFilterManager postFilterManager
     ) {
+        Logger.deps("FilterOutHiddenImagesUseCase");
         return new FilterOutHiddenImagesUseCase(
                 postHideManager,
                 postFilterManager
@@ -170,12 +178,13 @@ public class UseCaseModule {
             BookmarksManager bookmarksManager,
             ChanFilterManager chanFilterManager,
             SiteManager siteManager,
-            ProxiedOkHttpClient proxiedOkHttpClient,
-            SimpleCommentParser simpleCommentParser,
+            Lazy<ProxiedOkHttpClient> proxiedOkHttpClient,
+            Lazy<SimpleCommentParser> simpleCommentParser,
             FilterEngine filterEngine,
             ChanPostRepository chanPostRepository,
             ChanFilterWatchRepository chanFilterWatchRepository
     ) {
+        Logger.deps("BookmarkFilterWatchableThreadsUseCase");
         return new BookmarkFilterWatchableThreadsUseCase(
                 ChanSettings.verboseLogs.get(),
                 appConstants,
@@ -199,6 +208,7 @@ public class UseCaseModule {
             DatabaseMetaRepository databaseMetaRepository,
             FileManager fileManager
     ) {
+        Logger.deps("ExportBackupFileUseCase");
         return new ExportBackupFileUseCase(
                 appContext,
                 databaseMetaRepository,
@@ -212,6 +222,7 @@ public class UseCaseModule {
             Context appContext,
             FileManager fileManager
     ) {
+        Logger.deps("ImportBackupFileUseCase");
         return new ImportBackupFileUseCase(
                 appContext,
                 fileManager
@@ -224,6 +235,7 @@ public class UseCaseModule {
             SiteManager siteManager,
             RealProxiedOkHttpClient proxiedOkHttpClient
     ) {
+        Logger.deps("CreateBoardManuallyUseCase");
         return new CreateBoardManuallyUseCase(
                 siteManager,
                 proxiedOkHttpClient
@@ -233,8 +245,9 @@ public class UseCaseModule {
     @Provides
     @Singleton
     public TwoCaptchaCheckBalanceUseCase provideTwoCaptchaCheckBalanceUseCase(
-            TwoCaptchaSolver twoCaptchaSolver
+            Lazy<TwoCaptchaSolver> twoCaptchaSolver
     ) {
+        Logger.deps("TwoCaptchaCheckBalanceUseCase");
         return new TwoCaptchaCheckBalanceUseCase(twoCaptchaSolver);
     }
 
@@ -245,6 +258,7 @@ public class UseCaseModule {
             Gson gson,
             ThemeEngine themeEngine
     ) {
+        Logger.deps("DownloadThemeJsonFilesUseCase");
         return new DownloadThemeJsonFilesUseCase(
                 proxiedOkHttpClient,
                 gson,
@@ -260,6 +274,7 @@ public class UseCaseModule {
             FileManager fileManager,
             ChanPostRepository chanPostRepository
     ) {
+        Logger.deps("ExportDownloadedThreadAsHtmlUseCase");
         return new ExportDownloadedThreadAsHtmlUseCase(
                 appContext,
                 appConstants,
@@ -272,11 +287,12 @@ public class UseCaseModule {
     @Singleton
     public ThreadDownloaderPersistPostsInDatabaseUseCase provideThreadDownloaderPersistPostsInDatabaseUseCase(
             SiteManager siteManager,
-            ChanThreadLoaderCoordinator chanThreadLoaderCoordinator,
+            Lazy<ChanThreadLoaderCoordinator> chanThreadLoaderCoordinator,
             ParsePostsV1UseCase parsePostsV1UseCase,
             ChanPostRepository chanPostRepository,
             RealProxiedOkHttpClient proxiedOkHttpClient
     ) {
+        Logger.deps("ThreadDownloaderPersistPostsInDatabaseUseCase");
         return new ThreadDownloaderPersistPostsInDatabaseUseCase(
                 siteManager,
                 chanThreadLoaderCoordinator,
@@ -296,6 +312,7 @@ public class UseCaseModule {
             BoardManager boardManager,
             ChanLoadProgressNotifier chanLoadProgressNotifier
     ) {
+        Logger.deps("ParsePostsV1UseCase");
         return new ParsePostsV1UseCase(
                 ChanSettings.verboseLogs.get(),
                 chanPostRepository,
@@ -313,6 +330,7 @@ public class UseCaseModule {
             RealProxiedOkHttpClient proxiedOkHttpClient,
             Moshi moshi
     ) {
+        Logger.deps("SearxImageSearchUseCase");
         return new SearxImageSearchUseCase(
                 proxiedOkHttpClient,
                 moshi
@@ -322,12 +340,13 @@ public class UseCaseModule {
     @Provides
     @Singleton
     public ThreadDataPreloadUseCase provideThreadDataPreloadUseCase(
-            SeenPostsManager seenPostsManager,
-            ChanThreadViewableInfoManager chanThreadViewableInfoManager,
-            SavedReplyManager savedReplyManager,
-            PostHideManager postHideManager,
-            ChanPostRepository chanPostRepository
+            Lazy<SeenPostsManager> seenPostsManager,
+            Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
+            Lazy<SavedReplyManager> savedReplyManager,
+            Lazy<PostHideManager> postHideManager,
+            Lazy<ChanPostRepository> chanPostRepository
     ) {
+        Logger.deps("ThreadDataPreloadUseCase");
         return new ThreadDataPreloadUseCase(
                 seenPostsManager,
                 chanThreadViewableInfoManager,
@@ -343,6 +362,7 @@ public class UseCaseModule {
             PostHideManager postHideManager,
             ChanCatalogSnapshotRepository chanCatalogSnapshotRepository
     ) {
+        Logger.deps("CatalogDataPreloadUseCase");
         return new CatalogDataPreloadUseCase(
                 postHideManager,
                 chanCatalogSnapshotRepository

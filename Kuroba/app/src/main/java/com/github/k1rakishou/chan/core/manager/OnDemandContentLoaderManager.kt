@@ -15,17 +15,22 @@ import io.reactivex.Scheduler
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.functions.BiFunction
 import io.reactivex.processors.PublishProcessor
+import java.util.*
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
+import kotlin.collections.HashMap
+import kotlin.collections.set
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class OnDemandContentLoaderManager(
   private val workerScheduler: Scheduler,
-  private val loaders: Set<OnDemandContentLoader>,
+  private val loadersLazy: Lazy<HashSet<OnDemandContentLoader>>,
   private val chanThreadManager: ChanThreadManager
 ) {
   private val rwLock = ReentrantReadWriteLock()
+  private val loaders: HashSet<OnDemandContentLoader>
+    get() = loadersLazy.value
 
   @GuardedBy("rwLock")
   private val activeLoaders = HashMap<ChanDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
@@ -34,7 +39,6 @@ class OnDemandContentLoaderManager(
   private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
 
   init {
-    Logger.d(TAG, "Loaders count = ${loaders.size}")
     initPostLoaderRxQueue()
   }
 

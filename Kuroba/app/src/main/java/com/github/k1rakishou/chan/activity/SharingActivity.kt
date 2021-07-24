@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -29,7 +30,7 @@ class SharingActivity : AppCompatActivity() {
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
   @Inject
-  lateinit var replyManager: ReplyManager
+  lateinit var replyManager: Lazy<ReplyManager>
   @Inject
   lateinit var appConstants: AppConstants
 
@@ -99,7 +100,7 @@ class SharingActivity : AppCompatActivity() {
     showToast(this, getString(R.string.share_success_start), Toast.LENGTH_SHORT)
 
     val reloadResult = withContext(Dispatchers.IO) {
-      replyManager.reloadFilesFromDisk(appConstants)
+      replyManager.get().reloadFilesFromDisk(appConstants)
         .safeUnwrap { error ->
           Logger.e(TAG, "replyManager.reloadFilesFromDisk() -> MR.Error", error)
           return@withContext false

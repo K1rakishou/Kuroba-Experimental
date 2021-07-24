@@ -341,7 +341,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     val viewWidth = MeasureSpec.getSize(widthMeasureSpec)
     val neededWidthPerImage = cellPostThumbnailSize + POST_THUMBNAIL_FILE_INFO_SIZE
-    val columnsPerRow = viewWidth / neededWidthPerImage
+    val columnsPerRow = (viewWidth / neededWidthPerImage).coerceAtLeast(1)
     val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
     val actualImageWidth = viewWidth / columnsPerRow
     var totalHeight = paddingTop + paddingBottom
@@ -395,7 +395,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     } else {
       cellPostThumbnailSize + POST_THUMBNAIL_FILE_INFO_SIZE
     }
-    val columnsPerRow = this.measuredWidth / neededWidthPerImage
+    val columnsPerRow = (this.measuredWidth / neededWidthPerImage).coerceAtLeast(1)
     val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
     val actualImageWidth = this.measuredWidth / columnsPerRow
 

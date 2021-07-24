@@ -5,10 +5,11 @@ import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 
 class OpenExternalThreadHelper(
   private val postPopupHelper: PostPopupHelper,
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
+  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val threadFollowHistoryManager: ThreadFollowHistoryManager
 ) {
 
@@ -38,7 +39,7 @@ class OpenExternalThreadHelper(
   ) {
     Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
 
-    chanThreadViewableInfoManager.update(
+    chanThreadViewableInfoManager.get().update(
       chanDescriptor = threadToOpenDescriptor,
       createEmptyWhenNull = true
     ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }

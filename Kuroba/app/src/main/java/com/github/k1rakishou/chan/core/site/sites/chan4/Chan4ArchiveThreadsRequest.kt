@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -8,6 +8,7 @@ import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.suspendCall
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -18,14 +19,14 @@ import java.nio.charset.StandardCharsets
 
 class Chan4ArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val simpleCommentParser: SimpleCommentParser
+  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+  private val simpleCommentParser: Lazy<SimpleCommentParser>
 ) {
 
   suspend fun execute(): ModularResult<List<NativeArchivePost>> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
-        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+        val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
           throw BadStatusResponseException(response.code)
@@ -63,7 +64,7 @@ class Chan4ArchiveThreadsRequest(
       val comment = dataElements.getOrNull(1)?.text()
         ?: continue
 
-      val postComment = simpleCommentParser.parseComment(comment)
+      val postComment = simpleCommentParser.get().parseComment(comment)
       if (postComment == null) {
         continue
       }

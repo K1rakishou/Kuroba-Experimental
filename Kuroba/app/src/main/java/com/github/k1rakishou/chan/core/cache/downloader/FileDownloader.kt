@@ -2,11 +2,12 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import dagger.Lazy
 import io.reactivex.Flowable
 
 internal abstract class FileDownloader(
   protected val activeDownloads: ActiveDownloads,
-  protected val cacheHandler: CacheHandler
+  protected val cacheHandler: Lazy<CacheHandler>
 ) {
   abstract fun download(
     partialContentCheckResult: PartialContentCheckResult,

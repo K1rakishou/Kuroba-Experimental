@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.exhaustive
-import com.github.k1rakishou.fsaf.FileManager
+import dagger.Lazy
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import io.reactivex.FlowableEmitter
@@ -20,8 +20,7 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 
 internal class ChunkPersister(
-  private val fileManager: FileManager,
-  private val cacheHandler: CacheHandler,
+  private val cacheHandler: Lazy<CacheHandler>,
   private val activeDownloads: ActiveDownloads,
   private val verboseLogs: Boolean
 ) {
@@ -56,7 +55,7 @@ internal class ChunkPersister(
           throw FileCacheException.HttpCodeException(chunkResponse.response.code)
         }
 
-        val chunkCacheFile = cacheHandler.getOrCreateChunkCacheFile(
+        val chunkCacheFile = cacheHandler.get().getOrCreateChunkCacheFile(
           chunk.start,
           chunk.end,
           url

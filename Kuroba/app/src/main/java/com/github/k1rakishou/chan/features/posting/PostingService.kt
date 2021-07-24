@@ -23,6 +23,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.persist_state.ReplyMode
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -30,7 +31,7 @@ import javax.inject.Inject
 class PostingService : Service() {
 
   @Inject
-  lateinit var postingServiceDelegate: PostingServiceDelegate
+  lateinit var postingServiceDelegate: Lazy<PostingServiceDelegate>
 
   private val notificationManagerCompat by lazy { NotificationManagerCompat.from(applicationContext) }
   private val kurobaScope = KurobaCoroutineScope()
@@ -46,7 +47,7 @@ class PostingService : Service() {
     Chan.getComponent().inject(this)
 
     kurobaScope.launch {
-      postingServiceDelegate.listenForStopServiceEvents()
+      postingServiceDelegate.get().listenForStopServiceEvents()
         .collect {
           Logger.d(TAG, "Got StopService command, stopping the service")
 
@@ -56,7 +57,7 @@ class PostingService : Service() {
     }
 
     kurobaScope.launch {
-      postingServiceDelegate.listenForMainNotificationUpdates()
+      postingServiceDelegate.get().listenForMainNotificationUpdates()
         .collect { mainNotificationInfo ->
           notificationManagerCompat.notify(
             NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
@@ -66,7 +67,7 @@ class PostingService : Service() {
     }
 
     kurobaScope.launch {
-      postingServiceDelegate.listenForChildNotificationUpdates()
+      postingServiceDelegate.get().listenForChildNotificationUpdates()
         .collect { childNotificationInfo ->
           val chanDescriptor = childNotificationInfo.chanDescriptor
           val notificationId = chanDescriptor.hashCode()
@@ -80,7 +81,7 @@ class PostingService : Service() {
     }
 
     kurobaScope.launch {
-      postingServiceDelegate.listenForChildNotificationsToClose()
+      postingServiceDelegate.get().listenForChildNotificationsToClose()
         .collect { chanDescriptor ->
           val notificationId = chanDescriptor.hashCode()
 
@@ -120,7 +121,7 @@ class PostingService : Service() {
       return START_NOT_STICKY
     }
 
-    postingServiceDelegate.onNewReply(chanDescriptor, replyMode, retrying)
+    postingServiceDelegate.get().onNewReply(chanDescriptor, replyMode, retrying)
     Logger.d(TAG, "onStartCommand() onNewReply($chanDescriptor, $retrying)")
 
     return START_REDELIVER_INTENT

@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.di.module.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
@@ -32,6 +31,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
 
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 
@@ -42,13 +42,13 @@ public class ActivityModule {
     @Provides
     public UpdateManager provideUpdateManager(
             AppCompatActivity activity,
-            FileCacheV2 fileCacheV2,
-            CacheHandler cacheHandler,
-            FileManager fileManager,
+            Lazy<FileCacheV2> fileCacheV2,
+            Lazy<CacheHandler> cacheHandler,
+            Lazy<FileManager> fileManager,
             SettingsNotificationManager settingsNotificationManager,
-            FileChooser fileChooser,
-            ProxiedOkHttpClient proxiedOkHttpClient,
-            DialogFactory dialogFactory
+            Lazy<FileChooser> fileChooser,
+            Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient,
+            Lazy<DialogFactory> dialogFactory
     ) {
         return new UpdateManager(
                 activity,
@@ -80,17 +80,15 @@ public class ActivityModule {
             HistoryNavigationManager historyNavigationManager,
             SiteManager siteManager,
             BoardManager boardManager,
-            BookmarksManager bookmarksManager,
-            ChanFilterManager chanFilterManager,
-            ChanThreadViewableInfoManager chanThreadViewableInfoManager,
-            SiteResolver siteResolver
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
+            Lazy<SiteResolver> siteResolver
     ) {
         return new StartActivityStartupHandlerHelper(
                 historyNavigationManager,
                 siteManager,
                 boardManager,
                 bookmarksManager,
-                chanFilterManager,
                 chanThreadViewableInfoManager,
                 siteResolver
         );
@@ -142,7 +140,7 @@ public class ActivityModule {
     @Provides
     public ThumbnailLongtapOptionsHelper provideThumbnailLongtapOptionsHelper(
             GlobalWindowInsetsManager globalWindowInsetsManager,
-            ImageSaverV2 imageSaverV2
+            Lazy<ImageSaverV2> imageSaverV2
     ) {
         return new ThumbnailLongtapOptionsHelper(
                 globalWindowInsetsManager,

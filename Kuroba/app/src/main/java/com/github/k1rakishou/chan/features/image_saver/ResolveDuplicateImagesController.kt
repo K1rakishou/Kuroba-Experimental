@@ -29,6 +29,7 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.gson.Gson
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -48,7 +49,7 @@ class ResolveDuplicateImagesController(
   @Inject
   lateinit var imageDownloadRequestRepository: ImageDownloadRequestRepository
   @Inject
-  lateinit var imageSaverV2: ImageSaverV2
+  lateinit var imageSaverV2: Lazy<ImageSaverV2>
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var resolveButton: ColorizableButton
@@ -66,7 +67,7 @@ class ResolveDuplicateImagesController(
       fileManager,
       chanThreadManager,
       imageDownloadRequestRepository,
-      imageSaverV2
+      imageSaverV2.get()
     )
   }
 

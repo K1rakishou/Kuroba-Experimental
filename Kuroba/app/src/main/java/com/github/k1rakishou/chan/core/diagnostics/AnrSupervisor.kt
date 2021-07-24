@@ -1,11 +1,12 @@
 package com.github.k1rakishou.chan.core.diagnostics
 
 import com.github.k1rakishou.chan.core.manager.ReportManager
+import dagger.Lazy
 import java.util.concurrent.Executors
 
 // Taken from https://medium.com/@cwurthner/detecting-anrs-e6139f475acb
 class AnrSupervisor(
-  private val reportManager: ReportManager
+  private val reportManager: Lazy<ReportManager>
 ) {
   private val executor = Executors.newSingleThreadExecutor({ runnable ->
     return@newSingleThreadExecutor Thread(runnable)

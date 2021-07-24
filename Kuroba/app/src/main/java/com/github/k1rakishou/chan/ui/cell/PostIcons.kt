@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
+import dagger.Lazy
 import java.util.*
 
 class PostIcons @JvmOverloads constructor(
@@ -104,7 +105,7 @@ class PostIcons @JvmOverloads constructor(
   }
 
   fun setHttpIcons(
-    imageLoaderV2: ImageLoaderV2,
+    imageLoaderV2: Lazy<ImageLoaderV2>,
     icons: List<ChanPostHttpIcon>,
     theme: ChanTheme,
     size: Int

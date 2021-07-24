@@ -41,6 +41,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import dagger.Lazy
 import java.util.*
 import javax.inject.Inject
 
@@ -52,13 +53,13 @@ class PostAdapter(
 ) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
   @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var postFilterManager: PostFilterManager
+  lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var seenPostsManager: SeenPostsManager
+  lateinit var seenPostsManager: Lazy<SeenPostsManager>
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 
@@ -111,9 +112,8 @@ class PostAdapter(
 
     threadCellData = ThreadCellData(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      postFilterManager = postFilterManager,
+      _postFilterManager = postFilterManager,
       seenPostsManager = seenPostsManager,
-      postHighlightManager = postHighlightManager,
       initialTheme = themeEngine.chanTheme
     )
 
@@ -403,7 +403,7 @@ class PostAdapter(
       return -1
     }
 
-    if (postFilterManager.getFilterStub(postCellData.postDescriptor)) {
+    if (postFilterManager.get().getFilterStub(postCellData.postDescriptor)) {
       return PostCellData.TYPE_POST_STUB
     } else {
       return getPostCellItemViewType(postCellData)

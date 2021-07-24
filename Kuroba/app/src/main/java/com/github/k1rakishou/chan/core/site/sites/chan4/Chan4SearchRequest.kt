@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.SpannableStringBuilder
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
@@ -20,6 +20,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
@@ -37,14 +38,14 @@ import java.util.regex.Pattern
 
 class Chan4SearchRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
   private val searchParams: Chan4SearchParams
 ) {
 
   suspend fun execute(): SearchResult {
     return withContext(Dispatchers.IO) {
       try {
-        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+        val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
 
         if (!response.isSuccessful) {
           throw BadStatusResponseException(response.code)

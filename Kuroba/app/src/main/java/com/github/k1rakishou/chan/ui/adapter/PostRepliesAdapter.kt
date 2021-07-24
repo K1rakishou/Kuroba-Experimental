@@ -5,7 +5,6 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -16,24 +15,23 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
+import dagger.Lazy
 
 class PostRepliesAdapter(
   private val postViewMode: PostCellData.PostViewMode,
   private val postCellCallback: PostCellInterface.PostCellCallback,
   private val chanDescriptor: ChanDescriptor,
   private val clickedPostDescriptor: PostDescriptor?,
-  chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  postFilterManager: PostFilterManager,
-  seenPostsManager: SeenPostsManager,
-  postHighlightManager: PostHighlightManager,
+  chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  postFilterManager: Lazy<PostFilterManager>,
+  seenPostsManager: Lazy<SeenPostsManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
   private val threadCellData = ThreadCellData(
     chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-    postFilterManager = postFilterManager,
+    _postFilterManager = postFilterManager,
     seenPostsManager = seenPostsManager,
-    postHighlightManager = postHighlightManager,
     initialTheme = initialTheme
   )
 

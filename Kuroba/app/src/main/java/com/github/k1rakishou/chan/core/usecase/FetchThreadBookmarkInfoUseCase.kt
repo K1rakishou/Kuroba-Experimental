@@ -14,6 +14,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import okhttp3.HttpUrl
@@ -26,7 +27,7 @@ class FetchThreadBookmarkInfoUseCase(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val siteManager: SiteManager,
   private val bookmarksManager: BookmarksManager,
   private val appConstants: AppConstants
@@ -85,7 +86,7 @@ class FetchThreadBookmarkInfoUseCase(
     val request = requestBuilder.build()
 
     val response = try {
-      proxiedOkHttpClient.okHttpClient().suspendCall(request)
+      proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
     } catch (error: IOException) {
       return ThreadBookmarkFetchResult.Error(error, threadDescriptor)
     }

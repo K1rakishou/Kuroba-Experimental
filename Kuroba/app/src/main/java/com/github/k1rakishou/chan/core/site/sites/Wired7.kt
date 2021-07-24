@@ -17,7 +17,7 @@
 package com.github.k1rakishou.chan.core.site.sites
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
@@ -42,6 +42,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor.Companion.cre
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import dagger.Lazy
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Response
@@ -94,9 +95,9 @@ class Wired7 : CommonSite() {
 
   private class Wired7Actions constructor(
     commonSite: CommonSite,
-    proxiedOkHttpClient: ProxiedOkHttpClient,
+    proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
     siteManager: SiteManager,
-    replyManager: ReplyManager
+    replyManager: Lazy<ReplyManager>
   ) : VichanActions(commonSite, proxiedOkHttpClient, siteManager, replyManager) {
 
     override fun setupPost(
@@ -109,11 +110,11 @@ class Wired7 : CommonSite() {
           "replyChanDescriptor is null"
         )
 
-        if (!replyManager.containsReply(chanDescriptor)) {
+        if (!replyManager.get().containsReply(chanDescriptor)) {
           throw IOException("No reply found for chanDescriptor=$chanDescriptor")
         }
 
-        replyManager.readReply(chanDescriptor) { reply: Reply ->
+        replyManager.get().readReply(chanDescriptor) { reply: Reply ->
           call.parameter("board", chanDescriptor.boardCode())
           if (chanDescriptor is ThreadDescriptor) {
             val threadNo = chanDescriptor.threadNo

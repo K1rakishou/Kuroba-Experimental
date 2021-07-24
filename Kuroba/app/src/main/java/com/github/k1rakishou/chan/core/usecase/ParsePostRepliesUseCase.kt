@@ -10,6 +10,7 @@ import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
@@ -21,9 +22,9 @@ typealias YousPerThreadMap = Map<ChanDescriptor.ThreadDescriptor, Map<Long, List
 
 class ParsePostRepliesUseCase(
   private val appScope: CoroutineScope,
-  private val replyParser: ReplyParser,
+  private val replyParser: Lazy<ReplyParser>,
   private val siteManager: SiteManager,
-  private val savedReplyManager: SavedReplyManager
+  private val savedReplyManager: Lazy<SavedReplyManager>
 ) : ISuspendUseCase<List<ThreadBookmarkFetchResult.Success>, YousPerThreadMap> {
 
   override suspend fun execute(parameter: List<ThreadBookmarkFetchResult.Success>): YousPerThreadMap {
@@ -72,7 +73,7 @@ class ParsePostRepliesUseCase(
     val quoteOwnerPostsMap = mutableMapWithCap<Long, MutableSet<TempReplyToMyPost>>(32)
 
     successFetchResult.threadBookmarkInfoObject.simplePostObjects.forEach { simplePostObject ->
-      val extractedQuotes = replyParser.extractCommentReplies(
+      val extractedQuotes = replyParser.get().extractCommentReplies(
         threadDescriptor.siteDescriptor(),
         simplePostObject.comment()
       )
@@ -124,9 +125,9 @@ class ParsePostRepliesUseCase(
     // TODO(KurobaEx): maybe instead of preloading saved replies for bookmarked threads
     //  (there might be a lot of them) it would be better to just load stuff from the database?
     // Preload the saved replies (we need to do this manually every time).
-    savedReplyManager.preloadForThread(threadDescriptor)
+    savedReplyManager.get().preloadForThread(threadDescriptor)
 
-    val quotesToMeInThreadMap = savedReplyManager.retainSavedPostNoMap(
+    val quotesToMeInThreadMap = savedReplyManager.get().retainSavedPostNoMap(
       quoteOwnerPostsMap,
       threadDescriptor
     )

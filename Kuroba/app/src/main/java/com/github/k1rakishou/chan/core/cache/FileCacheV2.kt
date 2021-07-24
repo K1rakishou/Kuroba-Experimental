@@ -29,6 +29,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.processors.PublishProcessor
 import io.reactivex.schedulers.Schedulers
@@ -42,9 +43,9 @@ import java.util.concurrent.atomic.AtomicLong
 
 class FileCacheV2(
   private val fileManager: FileManager,
-  private val cacheHandler: CacheHandler,
+  private val cacheHandler: Lazy<CacheHandler>,
   private val siteResolver: SiteResolver,
-  private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
+  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val connectivityManager: ConnectivityManager,
   private val appConstants: AppConstants
 ) {
@@ -86,7 +87,6 @@ class FileCacheV2(
   )
 
   private val chunkReader = ChunkPersister(
-    fileManager,
     cacheHandler,
     activeDownloads,
     verboseLogs
@@ -95,14 +95,12 @@ class FileCacheV2(
   private val chunkPersister = ChunkMerger(
     fileManager,
     cacheHandler,
-    siteResolver,
     activeDownloads,
     verboseLogs
   )
 
   private val concurrentChunkedFileDownloader = ConcurrentChunkedFileDownloader(
     siteResolver,
-    fileManager,
     chunkDownloader,
     chunkReader,
     chunkPersister,
@@ -150,7 +148,7 @@ class FileCacheV2(
   // For now it is only used in the developer settings so it's okay to block the UI
   fun clearCache() {
     activeDownloads.clear()
-    cacheHandler.clearCache()
+    cacheHandler.get().clearCache()
   }
 
   fun isRunning(url: String): Boolean {
@@ -332,7 +330,7 @@ class FileCacheV2(
           )
 
           // Trigger cache trimmer after a file has been successfully downloaded
-          cacheHandler.fileWasAdded(total)
+          cacheHandler.get().fileWasAdded(total)
 
           resultHandler(url, request, true) {
             onSuccess(result.file)
@@ -510,10 +508,10 @@ class FileCacheV2(
       return Flowable.error(FileCacheException.CancellationException(state, url))
     }
 
-    val outputFile = cacheHandler.getOrCreateCacheFile(url)
+    val outputFile = cacheHandler.get().getOrCreateCacheFile(url)
       ?: return Flowable.error(FileCacheException.CouldNotCreateOutputCacheFile(url))
 
-    if (cacheHandler.isAlreadyDownloaded(outputFile)) {
+    if (cacheHandler.get().isAlreadyDownloaded(outputFile)) {
       return Flowable.just(FileDownloadResult.Success(outputFile, 0L))
     }
 
@@ -564,7 +562,7 @@ class FileCacheV2(
 
     log(TAG, "Purging url=${url}, file=${output.absolutePath}")
 
-    if (!cacheHandler.deleteCacheFile(output)) {
+    if (!cacheHandler.get().deleteCacheFile(output)) {
       logError(TAG, "Could not delete the file in purgeOutput, output = ${output.absolutePath}")
     }
   }

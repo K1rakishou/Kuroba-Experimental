@@ -25,6 +25,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReply
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 import org.joda.time.DateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -36,10 +37,10 @@ class BookmarkWatcherDelegate(
   private val archivesManager: ArchivesManager,
   private val siteManager: SiteManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
-  private val fetchThreadBookmarkInfoUseCase: FetchThreadBookmarkInfoUseCase,
-  private val parsePostRepliesUseCase: ParsePostRepliesUseCase,
-  private val replyNotificationsHelper: ReplyNotificationsHelper,
-  private val lastPageNotificationsHelper: LastPageNotificationsHelper,
+  private val fetchThreadBookmarkInfoUseCase: Lazy<FetchThreadBookmarkInfoUseCase>,
+  private val parsePostRepliesUseCase: Lazy<ParsePostRepliesUseCase>,
+  private val replyNotificationsHelper: Lazy<ReplyNotificationsHelper>,
+  private val lastPageNotificationsHelper: Lazy<LastPageNotificationsHelper>,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
 
@@ -99,7 +100,7 @@ class BookmarkWatcherDelegate(
     }
 
     try {
-      lastPageNotificationsHelper.showOrUpdateNotifications(watchingBookmarkDescriptors)
+      lastPageNotificationsHelper.get().showOrUpdateNotifications(watchingBookmarkDescriptors)
     } catch (error: Throwable) {
       Logger.e(TAG, "lastPageNotificationsHelper.showOrUpdateNotifications() crashed!", error)
     }
@@ -110,7 +111,7 @@ class BookmarkWatcherDelegate(
     ) {
       Logger.d(TAG, "BookmarkWatcherDelegate.doWorkInternal() no bookmarks left after filtering, " +
         "updating notifications")
-      replyNotificationsHelper.showOrUpdateNotifications()
+      replyNotificationsHelper.get().showOrUpdateNotifications()
       return
     }
 
@@ -124,7 +125,7 @@ class BookmarkWatcherDelegate(
       "currentThreadDescriptor=$currentThreadDescriptor")
 
     val duration = measureTime {
-      val fetchResults = fetchThreadBookmarkInfoUseCase.execute(watchingBookmarkDescriptors)
+      val fetchResults = fetchThreadBookmarkInfoUseCase.get().execute(watchingBookmarkDescriptors)
         .safeUnwrap { error ->
           if (error.isExceptionImportant()) {
             Logger.e(TAG, "fetchThreadBookmarkInfoUseCase.execute() error", error)
@@ -139,7 +140,7 @@ class BookmarkWatcherDelegate(
 
       if (fetchResults.isEmpty()) {
         Logger.d(TAG, "fetchThreadBookmarkInfoUseCase.execute() returned no fetch results")
-        replyNotificationsHelper.showOrUpdateNotifications()
+        replyNotificationsHelper.get().showOrUpdateNotifications()
         return@measureTime
       }
 
@@ -163,7 +164,7 @@ class BookmarkWatcherDelegate(
       }
 
       try {
-        replyNotificationsHelper.showOrUpdateNotifications()
+        replyNotificationsHelper.get().showOrUpdateNotifications()
       } catch (error: Throwable) {
         Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
       }
@@ -238,7 +239,7 @@ class BookmarkWatcherDelegate(
   }
 
   private suspend fun processSuccessFetchResults(successFetchResults: List<ThreadBookmarkFetchResult.Success>) {
-    val postsQuotingMe = parsePostRepliesUseCase.execute(successFetchResults)
+    val postsQuotingMe = parsePostRepliesUseCase.get().execute(successFetchResults)
 
     val fetchResultPairsList = successFetchResults.map { fetchResult ->
       fetchResult.threadDescriptor to fetchResult.threadBookmarkInfoObject

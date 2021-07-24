@@ -62,6 +62,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -90,7 +91,7 @@ abstract class ThreadController(
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
   @Inject
@@ -98,11 +99,11 @@ abstract class ThreadController(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
-  lateinit var mediaViewerScrollerHelper: MediaViewerScrollerHelper
+  lateinit var mediaViewerScrollerHelper: Lazy<MediaViewerScrollerHelper>
   @Inject
-  lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
+  lateinit var mediaViewerOpenAlbumHelper: Lazy<MediaViewerOpenAlbumHelper>
   @Inject
-  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+  lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -162,7 +163,7 @@ abstract class ThreadController(
     )
 
     mainScope.launch {
-      mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
+      mediaViewerScrollerHelper.get().mediaViewerScrollEventsFlow
         .collect { scrollToImageEvent ->
           val descriptor = scrollToImageEvent.chanDescriptor
           if (descriptor != chanDescriptor) {
@@ -174,7 +175,7 @@ abstract class ThreadController(
     }
 
     mainScope.launch {
-      mediaViewerOpenAlbumHelper.mediaViewerOpenAlbumEventsFlow
+      mediaViewerOpenAlbumHelper.get().mediaViewerOpenAlbumEventsFlow
         .collect { openAlbumEvent ->
           val descriptor = openAlbumEvent.chanDescriptor
           if (descriptor != chanDescriptor) {
@@ -186,7 +187,7 @@ abstract class ThreadController(
     }
 
     mainScope.launch {
-      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
+      appSettingsUpdateAppRefreshHelper.get().settingsUpdatedEvent.collect {
         Logger.d(TAG, "Reloading thread because app settings were updated")
         threadLayout.presenter.normalLoad()
       }

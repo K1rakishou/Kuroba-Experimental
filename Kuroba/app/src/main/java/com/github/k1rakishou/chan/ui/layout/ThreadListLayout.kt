@@ -87,6 +87,7 @@ import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.IndexAndTop
+import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -122,17 +123,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   @Inject
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
-  lateinit var extractPostMapInfoHolderUseCase: ExtractPostMapInfoHolderUseCase
+  lateinit var extractPostMapInfoHolderUseCase: Lazy<ExtractPostMapInfoHolderUseCase>
   @Inject
   lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
   @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
   @Inject
-  lateinit var chanLoadProgressNotifier: ChanLoadProgressNotifier
+  lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 
@@ -444,7 +445,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       val indexTop = indexAndTop
         ?: return@post
 
-      chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
+      chanThreadViewableInfoManager.get().update(chanDescriptor) { chanThreadViewableInfo ->
         chanThreadViewableInfo.listViewIndex = indexTop.index
         chanThreadViewableInfo.listViewTop = indexTop.top
       }
@@ -621,7 +622,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       filter.applyFilter(descriptor, posts)
     }
 
-    chanLoadProgressNotifier.sendProgressEvent(
+    chanLoadProgressNotifier.get().sendProgressEvent(
       ChanLoadProgressEvent.RefreshingPosts(descriptor)
     )
     val setThreadPostsDuration = measureTime {
@@ -633,7 +634,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       restorePrevScrollPosition(chanDescriptor, initial)
     }
 
-    chanLoadProgressNotifier.sendProgressEvent(
+    chanLoadProgressNotifier.get().sendProgressEvent(
       ChanLoadProgressEvent.End(descriptor)
     )
 
@@ -652,7 +653,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     chanDescriptor: ChanDescriptor,
     initial: Boolean
   ) {
-    val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
+    val markedPostNo = chanThreadViewableInfoManager.get().getMarkedPostNo(chanDescriptor)
     val markedPost = if (markedPostNo != null) {
       chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
     } else {
@@ -660,7 +661,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     if (markedPost == null && initial) {
-      chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
+      chanThreadViewableInfoManager.get().view(chanDescriptor) { (_, index, top) ->
         when (boardPostViewMode) {
           BoardPostViewMode.LIST -> {
             (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
@@ -1081,7 +1082,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         }
 
         postInfoMapItemDecoration!!.setItems(
-          extractPostMapInfoHolderUseCase.execute(chanThread.getPostDescriptors()),
+          extractPostMapInfoHolderUseCase.get().execute(chanThread.getPostDescriptors()),
           chanThread.postsCount
         )
       }

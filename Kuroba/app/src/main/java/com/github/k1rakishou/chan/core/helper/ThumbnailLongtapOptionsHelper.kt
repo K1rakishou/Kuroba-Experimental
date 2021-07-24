@@ -20,10 +20,11 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 
 class ThumbnailLongtapOptionsHelper(
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val imageSaverV2: ImageSaverV2
+  private val imageSaverV2: Lazy<ImageSaverV2>
 ) {
 
   fun onThumbnailLongTapped(
@@ -129,7 +130,7 @@ class ThumbnailLongtapOptionsHelper(
         showFiltersControllerFunc(filter)
       }
       SHARE_MEDIA_FILE_CONTENT -> {
-        imageSaverV2.downloadMediaAndShare(postImage) { result ->
+        imageSaverV2.get().downloadMediaAndShare(postImage) { result ->
           if (result is ModularResult.Error) {
             AppModuleAndroidUtils.showToast(
               context,
@@ -164,14 +165,14 @@ class ThumbnailLongtapOptionsHelper(
     val imageSaverV2Options = PersistableChanState.imageSaverV2PersistedOptions.get()
 
     if (!showOptions && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      imageSaverV2.save(imageSaverV2Options, simpleSaveableMediaInfo, null)
+      imageSaverV2.get().save(imageSaverV2Options, simpleSaveableMediaInfo, null)
       return
     }
 
     val options = ImageSaverV2OptionsController.Options.SingleImage(
       simpleSaveableMediaInfo = simpleSaveableMediaInfo,
       onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-        imageSaverV2.save(updatedImageSaverV2Options, simpleSaveableMediaInfo, newFileName)
+        imageSaverV2.get().save(updatedImageSaverV2Options, simpleSaveableMediaInfo, newFileName)
       },
       onCanceled = {}
     )

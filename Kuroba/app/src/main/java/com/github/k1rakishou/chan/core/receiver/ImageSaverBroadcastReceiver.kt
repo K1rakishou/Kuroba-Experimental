@@ -10,14 +10,15 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import javax.inject.Inject
 
 class ImageSaverBroadcastReceiver : BroadcastReceiver() {
 
   @Inject
-  lateinit var imageSaverV2ServiceDelegate: ImageSaverV2ServiceDelegate
+  lateinit var imageSaverV2ServiceDelegate: Lazy<ImageSaverV2ServiceDelegate>
   @Inject
-  lateinit var imageSaverV2: ImageSaverV2
+  lateinit var imageSaverV2: Lazy<ImageSaverV2>
 
   private val scope = KurobaCoroutineScope()
   private val serializedExecutor = SerializedCoroutineExecutor(scope)
@@ -48,7 +49,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
 
         serializedExecutor.post {
           try {
-            imageSaverV2ServiceDelegate.cancelDownload(uniqueId)
+            imageSaverV2ServiceDelegate.get().cancelDownload(uniqueId)
           } finally {
             pendingResult.finish()
           }
@@ -62,7 +63,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
           return
         }
 
-        imageSaverV2.restartUncompleted(uniqueId, null)
+        imageSaverV2.get().restartUncompleted(uniqueId, null)
       }
       ImageSaverV2Service.ACTION_TYPE_DELETE -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
@@ -84,7 +85,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
         //    |
         //    v
         //   ...
-        imageSaverV2.deleteDownload(uniqueId)
+        imageSaverV2.get().deleteDownload(uniqueId)
       }
     }
 

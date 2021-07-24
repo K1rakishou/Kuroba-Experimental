@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.cell
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -15,15 +14,15 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.model.data.post.SeenPost
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
 
 class ThreadCellData(
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val postFilterManager: PostFilterManager,
-  private val seenPostsManager: SeenPostsManager,
-  private val postHighlightManager: PostHighlightManager,
+  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val _postFilterManager: Lazy<PostFilterManager>,
+  private val seenPostsManager: Lazy<SeenPostsManager>,
   initialTheme: ChanTheme
 ): Iterable<PostCellData>, PostCellData.ThreadCellDataCallback {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
@@ -124,7 +123,7 @@ class ThreadCellData(
       this.seenPostsMap.clear()
     }
 
-    val loadedSeenPosts = seenPostsManager.getSeenPosts(chanDescriptor, postDescriptors)
+    val loadedSeenPosts = seenPostsManager.get().getSeenPosts(chanDescriptor, postDescriptors)
     if (loadedSeenPosts != null) {
       loadedSeenPosts.entries.forEach { (postDescriptor, seenPost) ->
         if (this.seenPostsMap.containsKey(postDescriptor)) {
@@ -167,6 +166,7 @@ class ThreadCellData(
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
+    val postFilterManager = _postFilterManager.get()
     val filterHashMap = postFilterManager.getManyFilterHashes(postDescriptors)
     val filterHighlightedColorMap = postFilterManager.getManyFilterHighlightedColors(postDescriptors)
     val filterStubMap = postFilterManager.getManyFilterStubs(postDescriptors)
@@ -430,7 +430,7 @@ class ThreadCellData(
       return null
     }
 
-    return chanThreadViewableInfoManager.view(chanDescriptor) { chanThreadViewableInfoView ->
+    return chanThreadViewableInfoManager.get().view(chanDescriptor) { chanThreadViewableInfoView ->
       if (chanThreadViewableInfoView.lastViewedPostNo >= 0) {
         // Do not process the last post, the indicator does not have to appear at the bottom
         var postIndex = 0

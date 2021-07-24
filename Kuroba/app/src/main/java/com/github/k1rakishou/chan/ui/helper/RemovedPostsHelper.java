@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.ui.helper;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 
@@ -25,13 +27,13 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import dagger.Lazy;
 
 public class RemovedPostsHelper {
     private final String TAG = "RemovedPostsHelper";
 
     @Inject
-    PostHideManager postHideManager;
+    Lazy<PostHideManager> postHideManager;
     @Inject
     ChanThreadManager chanThreadManager;
 
@@ -80,7 +82,7 @@ public class RemovedPostsHelper {
             List<PostDescriptor> threadPosts,
             ChanDescriptor.ThreadDescriptor threadDescriptor
     ) {
-        List<ChanPostHide> hiddenPosts = postHideManager.getHiddenPostsForThread(threadDescriptor);
+        List<ChanPostHide> hiddenPosts = postHideManager.get().getHiddenPostsForThread(threadDescriptor);
         List<PostDescriptor> removedPosts = new ArrayList<>();
 
         @SuppressLint("UseSparseArrays")

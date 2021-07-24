@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.net.ConnectivityManager
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -28,6 +28,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -45,7 +46,7 @@ import kotlin.time.measureTimedValue
 
 class ThreadDownloadingDelegate(
   private val appConstants: AppConstants,
-  private val downloaderOkHttpClient: DownloaderOkHttpClient,
+  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val siteManager: SiteManager,
   private val siteResolver: SiteResolver,
   private val threadDownloadManager: ThreadDownloadManager,
@@ -58,7 +59,7 @@ class ThreadDownloadingDelegate(
   private val fileManager: FileManager
     get() = threadDownloaderFileManagerWrapper.fileManager
   private val okHttpClient: OkHttpClient
-    get() = downloaderOkHttpClient.okHttpClient()
+    get() = downloaderOkHttpClient.get().okHttpClient()
   private val batchCount = appConstants.processorsCount
 
   private val running = AtomicBoolean(false)

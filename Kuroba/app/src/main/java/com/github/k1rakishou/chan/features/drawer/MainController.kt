@@ -105,6 +105,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.material.badge.BadgeDrawable
+import dagger.Lazy
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -134,7 +135,7 @@ class MainController(
   @Inject
   lateinit var bookmarksManager: BookmarksManager
   @Inject
-  lateinit var pageRequestManager: PageRequestManager
+  lateinit var pageRequestManager: Lazy<PageRequestManager>
   @Inject
   lateinit var archivesManager: ArchivesManager
   @Inject
@@ -142,7 +143,7 @@ class MainController(
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
-  lateinit var imageSaverV2: ImageSaverV2
+  lateinit var imageSaverV2: Lazy<ImageSaverV2>
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
 
@@ -819,8 +820,8 @@ class MainController(
 
     val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
       uniqueId,
-      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
-      onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.get().restartUncompleted(uniqueId, imageSaverV2Options) },
+      onCancelClicked = { imageSaverV2.get().deleteDownload(uniqueId) }
     )
 
     val imageSaverV2OptionsController = ImageSaverV2OptionsController(context, options)

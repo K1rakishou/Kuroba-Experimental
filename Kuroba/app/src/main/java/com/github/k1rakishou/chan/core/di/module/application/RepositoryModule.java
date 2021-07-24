@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
@@ -50,6 +51,7 @@ public class RepositoryModule {
             ExportBackupFileUseCase exportBackupFileUseCase,
             ImportBackupFileUseCase importBackupFileUseCase
     ) {
+        Logger.deps("ImportExportRepository");
         return new ImportExportRepository(
                 gson,
                 fileManager,
@@ -64,6 +66,7 @@ public class RepositoryModule {
     public ParserRepository provideParserRepository(
             ArchivesManager archivesManager
     ) {
+        Logger.deps("ParserRepository");
         return new ParserRepository(archivesManager);
     }
 
@@ -73,6 +76,7 @@ public class RepositoryModule {
             SiteManager siteManager,
             BoardManager boardManager
     ) {
+        Logger.deps("LastReplyRepository");
         return new LastReplyRepository(siteManager, boardManager);
     }
 
@@ -81,6 +85,7 @@ public class RepositoryModule {
     public StaticBoardFlagInfoRepository provideStaticBoardFlagInfoRepository(
             SiteManager siteManager
     ) {
+        Logger.deps("StaticBoardFlagInfoRepository");
         return new StaticBoardFlagInfoRepository(
                 siteManager
         );
@@ -91,6 +96,7 @@ public class RepositoryModule {
     public DownloadThemeJsonFilesRepository provideDownloadThemeJsonFilesRepository(
             DownloadThemeJsonFilesUseCase downloadThemeJsonFilesUseCase
     ) {
+        Logger.deps("DownloadThemeJsonFilesRepository");
         return new DownloadThemeJsonFilesRepository(downloadThemeJsonFilesUseCase);
     }
 
@@ -100,6 +106,7 @@ public class RepositoryModule {
             BoardManager boardManager,
             SiteResolver siteResolver
     ) {
+        Logger.deps("ChanPostBackgroundColorStorage");
         return new ChanPostBackgroundColorStorage(boardManager, siteResolver);
     }
 

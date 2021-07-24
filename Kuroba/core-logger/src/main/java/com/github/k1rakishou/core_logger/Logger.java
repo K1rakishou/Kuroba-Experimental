@@ -26,6 +26,7 @@ import org.joda.time.format.ISODateTimeFormat;
 public class Logger {
     private static String tagPrefix;
     private static boolean isCurrentBuildDev;
+    public static final String DI_TAG = "Dependency Injection";
 
     private static final DateTimeFormatter LOG_TIME_FORMATTER = new DateTimeFormatterBuilder()
             .append(ISODateTimeFormat.hourMinuteSecondMillis())
@@ -127,6 +128,14 @@ public class Logger {
         }
     }
     //endregion TEST
+
+    public static void deps(String message) {
+        if (!isCurrentBuildDev) {
+            return;
+        }
+
+        Logger.d(DI_TAG, message);
+    }
 
     private static boolean canLog() {
         return true;

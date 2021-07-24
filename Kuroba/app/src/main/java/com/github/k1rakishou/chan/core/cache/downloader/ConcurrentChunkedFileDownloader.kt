@@ -5,7 +5,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.fsaf.FileManager
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.Scheduler
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -17,14 +17,13 @@ import javax.inject.Inject
 
 internal class ConcurrentChunkedFileDownloader @Inject constructor(
   private val siteResolver: SiteResolver,
-  private val fileManager: FileManager,
   private val chunkDownloader: ChunkDownloader,
   private val chunkPersister: ChunkPersister,
   private val chunkMerger: ChunkMerger,
   private val workerScheduler: Scheduler,
   private val verboseLogs: Boolean,
   activeDownloads: ActiveDownloads,
-  cacheHandler: CacheHandler
+  cacheHandler: Lazy<CacheHandler>
 ) : FileDownloader(activeDownloads, cacheHandler) {
 
   override fun download(
@@ -131,7 +130,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     }
 
     for (chunk in chunks) {
-      val chunkFile = cacheHandler.getChunkCacheFileOrNull(chunk.start, chunk.end, url)
+      val chunkFile = cacheHandler.get().getChunkCacheFileOrNull(chunk.start, chunk.end, url)
         ?: continue
 
       if (chunkFile.delete()) {

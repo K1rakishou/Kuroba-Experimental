@@ -14,6 +14,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -28,8 +29,8 @@ class RemoteFilePicker(
   fileManager: FileManager,
   replyManager: ReplyManager,
   private val appScope: CoroutineScope,
-  private val fileCacheV2: FileCacheV2,
-  private val cacheHandler: CacheHandler
+  private val fileCacheV2: Lazy<FileCacheV2>,
+  private val cacheHandler: Lazy<CacheHandler>
 ) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(appConstants, replyManager, fileManager) {
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
@@ -107,7 +108,7 @@ class RemoteFilePicker(
       }
 
       copyDownloadedFileIntoReplyFile(downloadedFile, replyFile)
-      cacheHandler.deleteCacheFile(downloadedFile)
+      cacheHandler.get().deleteCacheFile(downloadedFile)
 
       return@Try PickedFile.Result(listOf(replyFile))
     }
@@ -143,7 +144,7 @@ class RemoteFilePicker(
     }
 
     return suspendCancellableCoroutine { cancellableContinuation ->
-      val cancelableDownload = fileCacheV2.enqueueDownloadFileRequest(
+      val cancelableDownload = fileCacheV2.get().enqueueDownloadFileRequest(
         urlString,
         object : FileCacheListener() {
           override fun onSuccess(file: File) {

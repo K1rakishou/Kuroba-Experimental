@@ -11,6 +11,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +34,7 @@ class BookmarkForegroundWatcher(
   private val appConstants: AppConstants,
   private val bookmarksManager: BookmarksManager,
   private val archivesManager: ArchivesManager,
-  private val bookmarkWatcherDelegate: BookmarkWatcherDelegate,
+  private val bookmarkWatcherDelegate: Lazy<BookmarkWatcherDelegate>,
   private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
@@ -135,7 +136,7 @@ class BookmarkForegroundWatcher(
     try {
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
 
-      bookmarkWatcherDelegate.doWork(
+      bookmarkWatcherDelegate.get().doWork(
         isCalledFromForeground = true,
         updateCurrentlyOpenedThread = true
       )
@@ -168,7 +169,7 @@ class BookmarkForegroundWatcher(
       try {
         BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, appContext)
 
-        bookmarkWatcherDelegate.doWork(
+        bookmarkWatcherDelegate.get().doWork(
           isCalledFromForeground = true,
           updateCurrentlyOpenedThread = false
         )

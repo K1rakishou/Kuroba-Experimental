@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.TextUtils
-import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
@@ -30,7 +29,6 @@ import com.github.k1rakishou.chan.features.posting.LastReplyRepository
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.groupOrNull
@@ -40,6 +38,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescrip
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.StringSetting
+import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -56,10 +55,8 @@ class Chan4ReplyCall(
   site: Site,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
-  private val replyManager: ReplyManager,
-  private val boardManager: BoardManager,
-  private val appConstants: AppConstants,
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+  private val replyManager: Lazy<ReplyManager>,
+  private val staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   @Throws(IOException::class)
@@ -72,11 +69,11 @@ class Chan4ReplyCall(
       "replyChanDescriptor == null"
     )
 
-    if (!replyManager.containsReply(chanDescriptor)) {
+    if (!replyManager.get().containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
-    replyManager.readReply(chanDescriptor) { reply ->
+    replyManager.get().readReply(chanDescriptor) { reply ->
       formBuilder.addFormDataPart("mode", "regist")
       formBuilder.addFormDataPart("pwd", replyResponse.password)
 
@@ -120,7 +117,7 @@ class Chan4ReplyCall(
             site.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)?.get()
 
           if (lastUsedCountryFlagPerBoardString != null) {
-            val lastUsedFlag = staticBoardFlagInfoRepository.extractFlagCodeOrDefault(
+            val lastUsedFlag = staticBoardFlagInfoRepository.get().extractFlagCodeOrDefault(
               lastUsedCountryFlagPerBoardString,
               replyChanDescriptor.boardCode()
             )

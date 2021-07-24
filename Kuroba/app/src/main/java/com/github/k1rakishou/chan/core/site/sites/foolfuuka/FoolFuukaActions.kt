@@ -108,7 +108,7 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return FoolFuukaSearchRequest(
       searchParams,
       requestBuilder.build(),
-      site.proxiedOkHttpClient
+      site.proxiedOkHttpClient.get()
     ).execute()
   }
 

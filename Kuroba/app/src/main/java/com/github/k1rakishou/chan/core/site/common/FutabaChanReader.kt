@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.common
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteEndpoints
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
@@ -39,7 +38,6 @@ import kotlin.math.max
 @Suppress("BlockingMethodInNonBlockingContext")
 class FutabaChanReader(
   private val archivesManager: ArchivesManager,
-  private val postFilterManager: PostFilterManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager
 ) : ChanReader() {
@@ -54,7 +52,6 @@ class FutabaChanReader(
 
         val defaultPostParser = DefaultPostParser(
           commentParser,
-          postFilterManager,
           archivesManager
         )
 

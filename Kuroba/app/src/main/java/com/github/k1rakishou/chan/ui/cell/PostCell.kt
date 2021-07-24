@@ -67,6 +67,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
@@ -79,7 +80,7 @@ class PostCell : ConstraintLayout,
   PostImageThumbnailViewsContainer.PostCellThumbnailCallbacks {
 
   @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject

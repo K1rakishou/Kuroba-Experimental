@@ -116,21 +116,21 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   private val normalDnsCreatorFactory: NormalDnsSelectorFactory = object : NormalDnsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
-      Logger.d(AppModule.DI_TAG, "NormalDnsSelectorFactory created")
+      Logger.deps("NormalDnsSelectorFactory")
 
       if (ChanSettings.okHttpAllowIpv6.get()) {
-        Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.SYSTEM")
+        Logger.d(Logger.DI_TAG, "Using DnsSelector.Mode.SYSTEM")
         return NormalDnsSelector(NormalDnsSelector.Mode.SYSTEM)
       }
 
-      Logger.d(AppModule.DI_TAG, "Using DnsSelector.Mode.IPV4_ONLY")
+      Logger.d(Logger.DI_TAG, "Using DnsSelector.Mode.IPV4_ONLY")
       return NormalDnsSelector(NormalDnsSelector.Mode.IPV4_ONLY)
     }
   }
 
   private val dnsOverHttpsCreatorFactory: DnsOverHttpsSelectorFactory = object : DnsOverHttpsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): DnsOverHttpsSelector {
-      Logger.d(AppModule.DI_TAG, "DnsOverHttpsSelectorFactory created")
+      Logger.deps("DnsOverHttpsSelectorFactory")
 
       val selector = DnsOverHttps.Builder()
         .includeIPv6(ChanSettings.okHttpAllowIpv6.get())
@@ -157,12 +157,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   private val okHttpProtocols: OkHttpProtocols
     get() {
+      Logger.deps("OkHttpProtocols")
+
       if (ChanSettings.okHttpAllowHttp2.get()) {
-        Logger.d(AppModule.DI_TAG, "Using HTTP_2 and HTTP_1_1")
+        Logger.d(Logger.DI_TAG, "Using HTTP_2 and HTTP_1_1")
         return OkHttpProtocols(listOf(Protocol.HTTP_2, Protocol.HTTP_1_1))
       }
 
-      Logger.d(AppModule.DI_TAG, "Using HTTP_1_1")
+      Logger.d(Logger.DI_TAG, "Using HTTP_1_1")
       return OkHttpProtocols(listOf(Protocol.HTTP_1_1))
     }
 

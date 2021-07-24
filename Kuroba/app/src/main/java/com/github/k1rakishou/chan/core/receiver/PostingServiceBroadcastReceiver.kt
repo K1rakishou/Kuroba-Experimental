@@ -10,12 +10,13 @@ import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import dagger.Lazy
 import javax.inject.Inject
 
 class PostingServiceBroadcastReceiver : BroadcastReceiver() {
 
   @Inject
-  lateinit var postingServiceDelegate: PostingServiceDelegate
+  lateinit var postingServiceDelegate: Lazy<PostingServiceDelegate>
 
   private val scope = KurobaCoroutineScope()
   private val serializedExecutor = SerializedCoroutineExecutor(scope)
@@ -45,7 +46,7 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
 
         serializedExecutor.post {
           try {
-            postingServiceDelegate.cancel(chanDescriptor)
+            postingServiceDelegate.get().cancel(chanDescriptor)
           } finally {
             pendingResult.finish()
           }
@@ -57,7 +58,7 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
 
         serializedExecutor.post {
           try {
-            postingServiceDelegate.cancelAll()
+            postingServiceDelegate.get().cancelAll()
           } finally {
             pendingResult.finish()
           }

@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.activity.ChanState
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -30,16 +29,16 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 
 
 class StartActivityStartupHandlerHelper(
   private val historyNavigationManager: HistoryNavigationManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val bookmarksManager: BookmarksManager,
-  private val chanFilterManager: ChanFilterManager,
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val siteResolver: SiteResolver
+  private val bookmarksManager: Lazy<BookmarksManager>,
+  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val siteResolver: Lazy<SiteResolver>
 ) {
   // We only want to load a board upon the application start when nothing is loaded yet. Afterward
   // we don't want to do that anymore so that we won't override the currently opened board when
@@ -74,8 +73,6 @@ class StartActivityStartupHandlerHelper(
     historyNavigationManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
-    bookmarksManager.awaitUntilInitialized()
-    chanFilterManager.awaitUntilInitialized()
 
     Logger.d(TAG, "setupFromStateOrFreshLaunch(intent==null: ${intent == null}, " +
         "savedInstanceState==null: ${savedInstanceState == null})")
@@ -219,7 +216,7 @@ class StartActivityStartupHandlerHelper(
 
     siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
-    bookmarksManager.awaitUntilInitialized()
+    bookmarksManager.get().awaitUntilInitialized()
 
     when {
       intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
@@ -291,7 +288,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "restoreFromUrl(), url = $data")
 
     val url = data.toString()
-    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(url)
+    val chanDescriptorResult = siteResolver.get().resolveChanDescriptorForUrl(url)
 
     if (chanDescriptorResult == null) {
       Toast.makeText(
@@ -312,7 +309,7 @@ class StartActivityStartupHandlerHelper(
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.update(chanDescriptor, true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.get().update(chanDescriptor, true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
         }
       }
@@ -450,10 +447,10 @@ class StartActivityStartupHandlerHelper(
 
     openThreadFromNotificationOrBookmarksController(threadDescriptors)
 
-    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
+    val updatedBookmarkDescriptors = bookmarksManager.get().updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
     }
-    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
+    bookmarksManager.get().persistBookmarksManually(updatedBookmarkDescriptors)
 
     return true
   }

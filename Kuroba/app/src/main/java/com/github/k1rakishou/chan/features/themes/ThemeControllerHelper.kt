@@ -123,7 +123,7 @@ class ThemeControllerHelper(
     val parser = CommentParser()
       .addDefaultRules()
 
-    val postParser = DefaultPostParser(parser, postFilterManager, archivesManager)
+    val postParser = DefaultPostParser(parser, archivesManager)
     val builder1 = ChanPostBuilder()
       .boardDescriptor(dummyBoardDescriptor)
       .id(123456789)

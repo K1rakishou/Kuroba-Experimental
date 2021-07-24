@@ -2,13 +2,14 @@ package com.github.k1rakishou.chan.core.cache.downloader
 
 import android.util.LruCache
 import androidx.annotation.GuardedBy
-import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import io.reactivex.Single
 import io.reactivex.SingleEmitter
 import okhttp3.Call
@@ -28,7 +29,7 @@ import java.util.concurrent.TimeoutException
  * is viewing them. Everything else should be downloaded in a singe chunk.
  * */
 internal class PartialContentSupportChecker(
-  private val downloaderOkHttpClient: DownloaderOkHttpClient,
+  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val activeDownloads: ActiveDownloads,
   private val siteResolver: SiteResolver,
   private val maxTimeoutMs: Long,
@@ -130,7 +131,7 @@ internal class PartialContentSupportChecker(
     val startTime = System.currentTimeMillis()
 
     return Single.create<PartialContentCheckResult> { emitter ->
-      val call = downloaderOkHttpClient.okHttpClient().newCall(headRequest)
+      val call = downloaderOkHttpClient.get().okHttpClient().newCall(headRequest)
 
       val disposeFunc = {
         if (!call.isCanceled()) {

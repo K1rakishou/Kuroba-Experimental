@@ -22,6 +22,7 @@ import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -38,7 +39,7 @@ import kotlin.time.measureTimedValue
  */
 @DoNotStrip
 class HttpCallManager @Inject constructor(
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val appConstants: AppConstants
 ) {
   
@@ -96,7 +97,7 @@ class HttpCallManager @Inject constructor(
         .build()
 
       val (response, duration) = Try {
-        return@Try measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(request) }
+        return@Try measureTimedValue { proxiedOkHttpClient.get().okHttpClient().suspendCall(request) }
       }.safeUnwrap { error ->
         Logger.e(TAG, "Error while trying to execute request (${httpCall.javaClass.simpleName})", error)
         return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)

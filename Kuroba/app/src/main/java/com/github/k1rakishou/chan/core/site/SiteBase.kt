@@ -45,6 +45,7 @@ import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,34 +61,34 @@ abstract class SiteBase : Site, CoroutineScope {
   private val job = SupervisorJob()
 
   @Inject
-  lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
+  lateinit var proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
     protected set
   @Inject
   lateinit var appConstants: AppConstants
     protected set
 
   @Inject
-  protected lateinit var httpCallManager: HttpCallManager
+  protected lateinit var httpCallManager: Lazy<HttpCallManager>
   @Inject
-  protected lateinit var moshi: Moshi
+  protected lateinit var moshi: Lazy<Moshi>
   @Inject
   protected lateinit var siteManager: SiteManager
   @Inject
-  protected lateinit var imageLoaderV2: ImageLoaderV2
+  protected lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   protected lateinit var archivesManager: ArchivesManager
   @Inject
   protected lateinit var boardManager: BoardManager
   @Inject
-  protected lateinit var postFilterManager: PostFilterManager
+  protected lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
-  protected lateinit var replyManager: ReplyManager
+  protected lateinit var replyManager: Lazy<ReplyManager>
   @Inject
   protected lateinit var gson: Gson
   @Inject
-  protected lateinit var staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+  protected lateinit var staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
   @Inject
-  protected lateinit var simpleCommentParser: SimpleCommentParser
+  protected lateinit var simpleCommentParser: Lazy<SimpleCommentParser>
 
   override val coroutineContext: CoroutineContext
     get() = job + Dispatchers.Main + CoroutineName("SiteBase")

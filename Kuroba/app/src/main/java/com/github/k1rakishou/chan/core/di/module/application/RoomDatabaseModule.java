@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.di.ModelComponent;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
@@ -35,6 +36,7 @@ public class RoomDatabaseModule {
     public DatabaseMetaRepository provideDatabaseMetaRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("DatabaseMetaRepository");
         return modelComponent.getDatabaseMetaRepository();
     }
 
@@ -43,6 +45,7 @@ public class RoomDatabaseModule {
     public MediaServiceLinkExtraContentRepository provideMediaServiceLinkExtraContentRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("MediaServiceLinkExtraContentRepository");
         return modelComponent.getMediaServiceLinkExtraContentRepository();
     }
 
@@ -51,6 +54,7 @@ public class RoomDatabaseModule {
     public SeenPostRepository provideSeenPostRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("SeenPostRepository");
         return modelComponent.getSeenPostRepository();
     }
 
@@ -59,6 +63,7 @@ public class RoomDatabaseModule {
     public InlinedFileInfoRepository provideInlinedFileInfoRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("InlinedFileInfoRepository");
         return modelComponent.getInlinedFileInfoRepository();
     }
 
@@ -67,6 +72,7 @@ public class RoomDatabaseModule {
     public ChanPostRepository provideChanPostRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanPostRepository");
         return modelComponent.getChanPostRepository();
     }
 
@@ -75,6 +81,7 @@ public class RoomDatabaseModule {
     public HistoryNavigationRepository provideHistoryNavigationRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("HistoryNavigationRepository");
         return modelComponent.getHistoryNavigationRepository();
     }
 
@@ -83,6 +90,7 @@ public class RoomDatabaseModule {
     public BookmarksRepository provideBookmarksRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("BookmarksRepository");
         return modelComponent.getBookmarksRepository();
     }
 
@@ -91,6 +99,7 @@ public class RoomDatabaseModule {
     public ChanThreadViewableInfoRepository provideChanThreadViewableInfoRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanThreadViewableInfoRepository");
         return modelComponent.getChanThreadViewableInfoRepository();
     }
 
@@ -99,6 +108,7 @@ public class RoomDatabaseModule {
     public SiteRepository provideSiteRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("SiteRepository");
         return modelComponent.getSiteRepository();
     }
 
@@ -107,6 +117,7 @@ public class RoomDatabaseModule {
     public BoardRepository provideBoardRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("BoardRepository");
         return modelComponent.getBoardRepository();
     }
 
@@ -115,6 +126,7 @@ public class RoomDatabaseModule {
     public ChanSavedReplyRepository provideChanSavedReplyRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanSavedReplyRepository");
         return modelComponent.getChanSavedReplyRepository();
     }
 
@@ -123,6 +135,7 @@ public class RoomDatabaseModule {
     public ChanPostHideRepository provideChanPostHideRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanPostHideRepository");
         return modelComponent.getChanPostHideRepository();
     }
 
@@ -131,6 +144,7 @@ public class RoomDatabaseModule {
     public ChanFilterRepository provideChanFilterRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanFilterRepository");
         return modelComponent.getChanFilterRepository();
     }
 
@@ -139,6 +153,7 @@ public class RoomDatabaseModule {
     public ThreadBookmarkGroupRepository provideThreadBookmarkGroupRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ThreadBookmarkGroupRepository");
         return modelComponent.getThreadBookmarkGroupRepository();
     }
 
@@ -147,6 +162,7 @@ public class RoomDatabaseModule {
     public ChanCatalogSnapshotRepository provideChanCatalogSnapshotRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanCatalogSnapshotRepository");
         return modelComponent.getChanCatalogSnapshotRepository();
     }
 
@@ -155,6 +171,7 @@ public class RoomDatabaseModule {
     public ChanThreadsCache provideChanThreadsCache(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanThreadsCache");
         return modelComponent.getChanThreadsCache();
     }
 
@@ -163,6 +180,7 @@ public class RoomDatabaseModule {
     public ChanFilterWatchRepository provideChanFilterWatchRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanFilterWatchRepository");
         return modelComponent.getChanFilterWatchRepository();
     }
 
@@ -171,6 +189,7 @@ public class RoomDatabaseModule {
     public ChanPostImageRepository provideChanPostImageRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ChanPostImageRepository");
         return modelComponent.getChanPostImageRepository();
     }
 
@@ -179,6 +198,7 @@ public class RoomDatabaseModule {
     public ImageDownloadRequestRepository provideImageDownloadRequestRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ImageDownloadRequestRepository");
         return modelComponent.getImageDownloadRequestRepository();
     }
 
@@ -187,6 +207,7 @@ public class RoomDatabaseModule {
     public ThreadDownloadRepository provideThreadDownloadRepository(
             ModelComponent modelComponent
     ) {
+        Logger.deps("ThreadDownloadRepository");
         return modelComponent.getThreadDownloadRepository();
     }
 

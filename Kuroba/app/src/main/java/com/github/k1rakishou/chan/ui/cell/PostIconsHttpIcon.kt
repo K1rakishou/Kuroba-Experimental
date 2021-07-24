@@ -10,13 +10,14 @@ import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
+import dagger.Lazy
 import okhttp3.HttpUrl
 import java.io.IOException
 
 class PostIconsHttpIcon(
   context: Context,
   postIcons: PostIcons,
-  imageLoaderV2: ImageLoaderV2,
+  imageLoaderV2: Lazy<ImageLoaderV2>,
   name: String,
   url: HttpUrl
 ) : ImageLoaderV2.FailureAwareImageListener {
@@ -30,7 +31,7 @@ class PostIconsHttpIcon(
 
   val name: String
 
-  private val imageLoaderV2: ImageLoaderV2
+  private val imageLoaderV2: Lazy<ImageLoaderV2>
 
   init {
     require(context is StartActivity) {
@@ -47,7 +48,7 @@ class PostIconsHttpIcon(
   fun request() {
     cancel()
 
-    requestDisposable = imageLoaderV2.loadFromNetwork(
+    requestDisposable = imageLoaderV2.get().loadFromNetwork(
       context,
       url.toString(),
       ImageLoaderV2.ImageSize.UnknownImageSize,

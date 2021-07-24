@@ -64,6 +64,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import kotlin.Unit;
 
 public class AlbumDownloadController
@@ -84,7 +85,7 @@ public class AlbumDownloadController
     private FastScroller fastScroller;
 
     @Inject
-    ImageSaverV2 imageSaverV2;
+    Lazy<ImageSaverV2> imageSaverV2;
     @Inject
     GlobalWindowInsetsManager globalWindowInsetsManager;
     @Inject
@@ -228,7 +229,7 @@ public class AlbumDownloadController
 
         ImageSaverV2OptionsController.Options options = new ImageSaverV2OptionsController.Options.MultipleImages(
                 (updatedImageSaverV2Options) -> {
-                    imageSaverV2.saveMany(updatedImageSaverV2Options, simpleSaveableMediaInfoList);
+                    imageSaverV2.get().saveMany(updatedImageSaverV2Options, simpleSaveableMediaInfoList);
 
                     // Close this controller
                     navigationController.popController();

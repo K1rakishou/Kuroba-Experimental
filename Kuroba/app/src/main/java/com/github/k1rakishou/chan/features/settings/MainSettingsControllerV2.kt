@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.updatePaddings
+import dagger.Lazy
 import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
@@ -42,7 +43,7 @@ class MainSettingsControllerV2(
   @Inject
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
-  lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+  lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
 
   lateinit var epoxyRecyclerView: EpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
@@ -191,7 +192,7 @@ class MainSettingsControllerV2(
       hasPendingUiRefresh = false
       cancellableToast.showToast(context, "UI refreshed")
 
-      appSettingsUpdateAppRefreshHelper.settingsUpdated()
+      appSettingsUpdateAppRefreshHelper.get().settingsUpdated()
     }
   }
 

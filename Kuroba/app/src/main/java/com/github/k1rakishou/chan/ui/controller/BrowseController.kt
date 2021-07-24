@@ -523,7 +523,7 @@ class BrowseController(
       }
 
       if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.get().update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
         }
       }

@@ -139,7 +139,7 @@ class Dvach : CommonSite() {
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SimpleQueryBoardSearch
 
   override fun setParser(commentParser: CommentParser) {
-    postParser = DvachPostParser(commentParser, postFilterManager, archivesManager)
+    postParser = DvachPostParser(commentParser, archivesManager)
   }
 
   override fun setup() {
@@ -190,7 +190,7 @@ class Dvach : CommonSite() {
           replyManager = replyManager
         )
 
-        return httpCallManager.makePostHttpCallWithProgress(replyCall)
+        return httpCallManager.get().makePostHttpCallWithProgress(replyCall)
           .map { replyCallResult ->
             when (replyCallResult) {
               is HttpCall.HttpCallWithProgressResult.Success -> {
@@ -233,7 +233,7 @@ class Dvach : CommonSite() {
         val dvachLoginRequest = loginRequest as DvachLoginRequest
         passCode.set(dvachLoginRequest.passcode)
 
-        val loginResult = httpCallManager.makeHttpCall(
+        val loginResult = httpCallManager.get().makeHttpCall(
           DvachGetPassCookieHttpCall(this@Dvach, loginRequest)
         )
 
@@ -286,7 +286,7 @@ class Dvach : CommonSite() {
 
         val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)
 
-        val passcodeInfoCallResult = httpCallManager.makeHttpCall(passcodeInfoCall)
+        val passcodeInfoCallResult = httpCallManager.get().makeHttpCall(passcodeInfoCall)
         if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {
           return SiteActions.GetPasscodeInfoResult.Failure(passcodeInfoCallResult.error)
         }

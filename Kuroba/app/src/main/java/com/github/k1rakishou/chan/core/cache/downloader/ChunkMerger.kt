@@ -1,17 +1,16 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.fsaf.FileManager
+import dagger.Lazy
 import io.reactivex.Flowable
 import java.io.File
 
 
 internal class ChunkMerger(
   private val fileManager: FileManager,
-  private val cacheHandler: CacheHandler,
-  private val siteResolver: SiteResolver,
+  private val cacheHandler: Lazy<CacheHandler>,
   private val activeDownloads: ActiveDownloads,
   private val verboseLogs: Boolean
 ) {
@@ -94,7 +93,7 @@ internal class ChunkMerger(
     check(actualOutput.exists()) { "actualOutput does not exist! actualOutput=${actualOutput.absolutePath}" }
     check(requestOutputFile.exists()) { "requestOutputFile does not exist! actualOutput=${requestOutputFile.absolutePath}" }
 
-    if (!cacheHandler.markFileDownloaded(requestOutputFile)) {
+    if (!cacheHandler.get().markFileDownloaded(requestOutputFile)) {
       if (!request.cancelableDownload.isRunning()) {
         activeDownloads.throwCancellationException(url)
       }

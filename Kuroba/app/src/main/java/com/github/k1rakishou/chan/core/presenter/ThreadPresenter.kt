@@ -77,6 +77,7 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
+import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
@@ -89,25 +90,25 @@ import kotlin.time.ExperimentalTime
 
 class ThreadPresenter @Inject constructor(
   private val bookmarksManager: BookmarksManager,
-  private val pageRequestManager: PageRequestManager,
+  private val pageRequestManager: Lazy<PageRequestManager>,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val savedReplyManager: SavedReplyManager,
+  private val savedReplyManager: Lazy<SavedReplyManager>,
   private val chanPostRepository: ChanPostRepository,
   private val archivesManager: ArchivesManager,
-  private val onDemandContentLoaderManager: OnDemandContentLoaderManager,
-  private val seenPostsManager: SeenPostsManager,
+  private val onDemandContentLoaderManager: Lazy<OnDemandContentLoaderManager>,
+  private val seenPostsManager: Lazy<SeenPostsManager>,
   private val historyNavigationManager: HistoryNavigationManager,
   private val postFilterManager: PostFilterManager,
   private val chanFilterManager: ChanFilterManager,
   private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder,
-  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager,
-  private val postHideHelper: PostHideHelper,
+  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val postHideHelper: Lazy<PostHideHelper>,
   private val chanThreadManager: ChanThreadManager,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private val thumbnailLongtapOptionsHelper: ThumbnailLongtapOptionsHelper,
   private val themeEngine: ThemeEngine,
-  private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
+  private val chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>,
   private val postHighlightManager: PostHighlightManager,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) : PostAdapterCallback,
@@ -219,7 +220,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (chanDescriptor.isCatalogDescriptor() && !ChanSettings.neverShowPages.get()) {
-      pageRequestManager.getBoardPages(chanDescriptor.boardDescriptor())
+      pageRequestManager.get().getBoardPages(chanDescriptor.boardDescriptor())
     }
 
     chanThreadManager.bindChanDescriptor(chanDescriptor)
@@ -234,7 +235,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     compositeDisposable.add(
-      onDemandContentLoaderManager.listenPostContentUpdates()
+      onDemandContentLoaderManager.get().listenPostContentUpdates()
         .subscribe(
           { batchResult -> onPostUpdatedWithNewContent(batchResult) },
           { error -> Logger.e(TAG, "Post content updates error", error) }
@@ -252,7 +253,7 @@ class ThreadPresenter @Inject constructor(
     Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
 
     if (currentChanDescriptor != null) {
-      onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
+      onDemandContentLoaderManager.get().cancelAllForDescriptor(currentChanDescriptor)
 
       when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
@@ -360,7 +361,7 @@ class ThreadPresenter @Inject constructor(
         return@launch
       }
 
-      chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
+      chanLoadProgressNotifier.get().sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         chanDescriptor = currentChanDescriptor,
@@ -494,8 +495,8 @@ class ThreadPresenter @Inject constructor(
 
       val postDescriptor = postCellData.postDescriptor
 
-      onDemandContentLoaderManager.onPostBind(postDescriptor)
-      seenPostsManager.onPostBind(postDescriptor)
+      onDemandContentLoaderManager.get().onPostBind(postDescriptor)
+      seenPostsManager.get().onPostBind(postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }
@@ -512,8 +513,8 @@ class ThreadPresenter @Inject constructor(
 
       val postDescriptor = postCellData.postDescriptor
 
-      onDemandContentLoaderManager.onPostUnbind(postDescriptor, isActuallyRecycling)
-      seenPostsManager.onPostUnbind(postDescriptor)
+      onDemandContentLoaderManager.get().onPostUnbind(postDescriptor, isActuallyRecycling)
+      seenPostsManager.get().onPostUnbind(postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }
@@ -646,7 +647,7 @@ class ThreadPresenter @Inject constructor(
 
       if (localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
         if (forcePageUpdate) {
-          pageRequestManager.forceUpdateForBoard(localChanDescriptor.boardDescriptor)
+          pageRequestManager.get().forceUpdateForBoard(localChanDescriptor.boardDescriptor)
           forcePageUpdate = false
         }
       }
@@ -669,7 +670,7 @@ class ThreadPresenter @Inject constructor(
       return newPostsCount
     }
 
-    chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
+    chanThreadViewableInfoManager.get().update(chanDescriptor) { chanThreadViewableInfo ->
       val lastLoadedPostNo = chanThreadViewableInfo.lastLoadedPostNo
       if (lastLoadedPostNo > 0) {
         newPostsCount = chanThreadManager.getNewPostsCount(chanDescriptor, lastLoadedPostNo)
@@ -691,7 +692,7 @@ class ThreadPresenter @Inject constructor(
     val localChanDescriptor = currentChanDescriptor
       ?: return
 
-    chanThreadViewableInfoManager.getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
+    chanThreadViewableInfoManager.get().getAndConsumeMarkedPostNo(localChanDescriptor) { markedPostNo ->
       val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
       if (markedPost == null) {
         Logger.e(TAG, "handleMarkedPost() Failed to find post ($currentChanDescriptor, $markedPostNo)")
@@ -803,7 +804,7 @@ class ThreadPresenter @Inject constructor(
       if (chanThreadManager.getThreadPostsCount(descriptor) > 0) {
         val lastPostNo = chanThreadManager.getLastPost(descriptor)?.postNo()
         if (lastPostNo != null) {
-          chanThreadViewableInfoManager.update(descriptor) { chanThreadViewableInfo ->
+          chanThreadViewableInfoManager.get().update(descriptor) { chanThreadViewableInfo ->
             chanThreadViewableInfo.lastViewedPostNo = lastPostNo
           }
 
@@ -830,7 +831,7 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return
 
-    chanThreadViewableInfoManager.view(currentChanDescriptor!!) { chanThreadViewableInfoView ->
+    chanThreadViewableInfoManager.get().view(currentChanDescriptor!!) { chanThreadViewableInfoView ->
       val post = chanThreadManager.findPostByPostNo(
         chanDescriptor,
         chanThreadViewableInfoView.lastViewedPostNo
@@ -1064,7 +1065,7 @@ class ThreadPresenter @Inject constructor(
 
     if (site.siteFeature(Site.SiteFeature.POST_DELETE)) {
       if (containsSite) {
-        val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+        val savedReply = savedReplyManager.get().getSavedReply(post.postDescriptor)
         if (savedReply?.password != null) {
           menu.add(createMenuItem(POST_OPTION_DELETE, R.string.post_delete))
         }
@@ -1087,7 +1088,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
     if (containsSite && chanDescriptor.isThreadDescriptor()) {
-      val isSaved = savedReplyManager.isSaved(post.postDescriptor)
+      val isSaved = savedReplyManager.get().isSaved(post.postDescriptor)
       val stringId = if (isSaved) {
         R.string.unmark_as_my_post
       } else {
@@ -1789,11 +1790,11 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun getPage(originalPostDescriptor: PostDescriptor): BoardPage? {
-    return pageRequestManager.getPage(originalPostDescriptor)
+    return pageRequestManager.get().getPage(originalPostDescriptor)
   }
 
   override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
-    return pageRequestManager.getBoardPages(boardDescriptor)
+    return pageRequestManager.get().getBoardPages(boardDescriptor)
   }
 
   override fun onListStatusClicked() {
@@ -1844,14 +1845,16 @@ class ThreadPresenter @Inject constructor(
   }
 
   private suspend fun saveUnsavePost(post: ChanPost) {
-    if (savedReplyManager.isSaved(post.postDescriptor)) {
-      savedReplyManager.unsavePost(post.postDescriptor)
+    val srm = savedReplyManager.get()
+
+    if (srm.isSaved(post.postDescriptor)) {
+      srm.unsavePost(post.postDescriptor)
     } else {
-      savedReplyManager.savePost(post.postDescriptor)
+      srm.savePost(post.postDescriptor)
     }
 
     // Trigger onDemandContentLoaderManager for this post again
-    onDemandContentLoaderManager.onPostUnbind(post.postDescriptor, isActuallyRecycling = true)
+    onDemandContentLoaderManager.get().onPostUnbind(post.postDescriptor, isActuallyRecycling = true)
 
     val chanThread = chanThreadManager.getChanThread(post.postDescriptor.threadDescriptor())
     if (chanThread == null) {
@@ -1879,7 +1882,7 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+    val savedReply = savedReplyManager.get().getSavedReply(post.postDescriptor)
     if (savedReply?.password != null) {
       threadPresenterCallback?.confirmPostDelete(post)
     }
@@ -1893,7 +1896,7 @@ class ThreadPresenter @Inject constructor(
 
       threadPresenterCallback?.showDeleting()
 
-      val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
+      val savedReply = savedReplyManager.get().getSavedReply(post.postDescriptor)
       if (savedReply?.password == null) {
         threadPresenterCallback?.hideDeleting(
           getString(R.string.delete_error_post_is_not_saved)
@@ -2083,7 +2086,7 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor,
-      PostsFilter(chanLoadProgressNotifier, postHideHelper, order)
+      PostsFilter(chanLoadProgressNotifier.get(), postHideHelper.get(), order)
     )
   }
 

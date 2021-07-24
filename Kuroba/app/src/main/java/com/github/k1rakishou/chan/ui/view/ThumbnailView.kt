@@ -48,6 +48,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import java.io.IOException
@@ -84,13 +85,13 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   private var imageSize: ImageLoaderV2.ImageSize? = null
 
   @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
   @Inject
-  lateinit var cacheHandler: CacheHandler
+  lateinit var cacheHandler: Lazy<CacheHandler>
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
@@ -249,7 +250,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
     if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.deleteCacheFileByUrl(imageUrl!!)
+      cacheHandler.get().deleteCacheFileByUrl(imageUrl!!)
       bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
       return
     }
@@ -265,7 +266,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
     setOnThrottlingLongClickListener(token) { view ->
       if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-        cacheHandler.deleteCacheFileByUrl(imageUrl!!)
+        cacheHandler.get().deleteCacheFileByUrl(imageUrl!!)
         bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
         return@setOnThrottlingLongClickListener true
       }
@@ -405,7 +406,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         requestDisposable = null
       }
 
-      requestDisposable = imageLoaderV2.loadFromNetwork(
+      requestDisposable = imageLoaderV2.get().loadFromNetwork(
         context = context,
         requestUrl = url,
         imageSize = imageSize,
@@ -415,7 +416,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       )
     }
 
-    val isCached = imageLoaderV2.isImageCachedLocally(url)
+    val isCached = imageLoaderV2.get().isImageCachedLocally(url)
 
     val isDraggingCatalogScroller =
       globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)

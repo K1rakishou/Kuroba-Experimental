@@ -12,6 +12,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
+import dagger.Lazy
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import okhttp3.HttpUrl
@@ -24,7 +25,7 @@ class TwoCaptchaSolver(
   private val isDevBuild: Boolean,
   private val gson: Gson,
   private val siteManager: SiteManager,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
 ) {
   private val mutex = Mutex()
 
@@ -348,7 +349,7 @@ class TwoCaptchaSolver(
       .url(fullUrl)
       .build()
 
-    val result = proxiedOkHttpClient.okHttpClient()
+    val result = proxiedOkHttpClient.get().okHttpClient()
       .suspendConvertIntoJsonObject<BaseSolverApiResponse>(request, gson)
 
     val solveCaptchaResponse = when (result) {
@@ -401,7 +402,7 @@ class TwoCaptchaSolver(
       .url(fullUrl)
       .build()
 
-    val result = proxiedOkHttpClient.okHttpClient()
+    val result = proxiedOkHttpClient.get().okHttpClient()
       .suspendConvertIntoJsonObject<BaseSolverApiResponse>(request, gson)
 
     val solveCaptchaResponse = when (result) {
@@ -441,7 +442,7 @@ class TwoCaptchaSolver(
       .url(fullUrl)
       .build()
 
-    val result = proxiedOkHttpClient.okHttpClient()
+    val result = proxiedOkHttpClient.get().okHttpClient()
       .suspendConvertIntoJsonObject<BaseSolverApiResponse>(request, gson)
 
     val balanceResponse = when (result) {

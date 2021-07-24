@@ -58,6 +58,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -78,12 +79,12 @@ class ReplyPresenter @Inject constructor(
   private val replyManager: ReplyManager,
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository,
-  private val postingServiceDelegate: PostingServiceDelegate,
-  private val twoCaptchaSolver: TwoCaptchaSolver,
+  private val _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>,
+  private val postingServiceDelegate: Lazy<PostingServiceDelegate>,
+  private val twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
   private val dialogFactory: DialogFactory,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val captchaHolder: CaptchaHolder,
+  private val captchaHolder: Lazy<CaptchaHolder>,
   private val themeEngine: ThemeEngine
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
@@ -95,6 +96,8 @@ class ReplyPresenter @Inject constructor(
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+    get() = _staticBoardFlagInfoRepository.get()
 
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var chanBoard: ChanBoard
@@ -159,7 +162,7 @@ class ReplyPresenter @Inject constructor(
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
     postingStatusUpdatesJob = launch {
-      postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
+      postingServiceDelegate.get().listenForPostingStatusUpdates(chanDescriptor)
         .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
     }
 
@@ -221,7 +224,7 @@ class ReplyPresenter @Inject constructor(
           }
 
           Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
-          postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
+          postingServiceDelegate.get().consumeTerminalEvent(status.chanDescriptor)
         }
       }
     }
@@ -396,7 +399,7 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     if (!isReplyLayoutEnabled()) {
-      postingServiceDelegate.cancel(chanDescriptor)
+      postingServiceDelegate.get().cancel(chanDescriptor)
       return
     }
 
@@ -438,7 +441,9 @@ class ReplyPresenter @Inject constructor(
       isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
     )
 
-    if (twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor()) && twoCaptchaSolver.isLoggedIn) {
+    if (twoCaptchaSolver.get().isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor())
+      && twoCaptchaSolver.get().isLoggedIn
+    ) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaAuto,
         name = getString(R.string.reply_mode_post_with_captcha_solver),
@@ -474,7 +479,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
-    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasSolution()) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.get().hasSolution()) {
       showCaptcha(
         chanDescriptor = chanDescriptor,
         replyMode = replyMode,
@@ -829,7 +834,7 @@ class ReplyPresenter @Inject constructor(
     val descriptor = currentChanDescriptor
       ?: return true
 
-    return postingServiceDelegate.isReplyCurrentlyInProgress(descriptor)
+    return postingServiceDelegate.get().isReplyCurrentlyInProgress(descriptor)
   }
 
   fun updateSpans(commentText: Editable) {

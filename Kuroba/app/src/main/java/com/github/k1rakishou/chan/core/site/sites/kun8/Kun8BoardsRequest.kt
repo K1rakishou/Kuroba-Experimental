@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.kun8
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
@@ -10,6 +10,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.google.gson.stream.JsonReader
+import dagger.Lazy
 import okhttp3.Request
 import java.util.*
 
@@ -17,7 +18,7 @@ class Kun8BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
 ) : JsonReaderRequest<SiteBoards>(request, proxiedOkHttpClient) {
 
   override suspend fun readJson(reader: JsonReader): SiteBoards {

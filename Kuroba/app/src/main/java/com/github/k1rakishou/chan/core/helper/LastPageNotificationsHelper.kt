@@ -24,13 +24,14 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import dagger.Lazy
 import java.util.*
 
 class LastPageNotificationsHelper(
   private val isDevFlavor: Boolean,
   private val appContext: Context,
   private val notificationManagerCompat: NotificationManagerCompat,
-  private val pageRequestManager: PageRequestManager,
+  private val pageRequestManager: Lazy<PageRequestManager>,
   private val bookmarksManager: BookmarksManager,
   private val themeEngine: ThemeEngine,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
@@ -58,7 +59,7 @@ class LastPageNotificationsHelper(
         return@forEach
       }
 
-      if (pageRequestManager.canAlertAboutThreadBeingOnLastPage(threadDescriptor)) {
+      if (pageRequestManager.get().canAlertAboutThreadBeingOnLastPage(threadDescriptor)) {
         threadsOnLastPage += threadDescriptor
       }
     }
@@ -188,7 +189,7 @@ class LastPageNotificationsHelper(
     notificationTitle: String,
     threadsWithTitles: List<Pair<ChanDescriptor.ThreadDescriptor, String>>
   ): NotificationCompat.Builder {
-    val threadsThatHitLastPageRecently = pageRequestManager.getThreadNoTimeModPairList(
+    val threadsThatHitLastPageRecently = pageRequestManager.get().getThreadNoTimeModPairList(
       threadsWithTitles.map { it.first }.toSet()
     )
 

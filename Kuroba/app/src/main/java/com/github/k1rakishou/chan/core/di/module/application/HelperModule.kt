@@ -25,10 +25,12 @@ import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.ShareFilePicker
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import dagger.Lazy
 import dagger.Module
 import dagger.Provides
 import kotlinx.coroutines.CoroutineScope
@@ -52,6 +54,7 @@ class HelperModule {
     threadDownloadManager: ThreadDownloadManager,
     parsePostsV1UseCase: ParsePostsV1UseCase
   ): ChanThreadLoaderCoordinator {
+    Logger.deps("ChanThreadLoaderCoordinator")
     return ChanThreadLoaderCoordinator(
       proxiedOkHttpClient,
       chanPostRepository,
@@ -75,6 +78,7 @@ class HelperModule {
     fileManager: FileManager,
     replyManager: ReplyManager
   ): ShareFilePicker {
+    Logger.deps("ShareFilePicker");
     return ShareFilePicker(
       appConstants,
       fileManager,
@@ -91,6 +95,7 @@ class HelperModule {
     replyManager: ReplyManager,
     applicationScope: CoroutineScope
   ): LocalFilePicker {
+    Logger.deps("LocalFilePicker");
     return LocalFilePicker(
       appConstants,
       fileManager,
@@ -104,11 +109,12 @@ class HelperModule {
   fun provideRemoteFilePicker(
     applicationScope: CoroutineScope,
     appConstants: AppConstants,
-    fileCacheV2: FileCacheV2,
+    fileCacheV2: Lazy<FileCacheV2>,
     fileManager: FileManager,
     replyManager: ReplyManager,
-    cacheHandler: CacheHandler
+    cacheHandler: Lazy<CacheHandler>
   ): RemoteFilePicker {
+    Logger.deps("RemoteFilePicker");
     return RemoteFilePicker(
       appConstants,
       fileManager,
@@ -123,12 +129,13 @@ class HelperModule {
   @Singleton
   fun provideImagePickHelper(
     appContext: Context,
-    replyManager: ReplyManager,
-    imageLoaderV2: ImageLoaderV2,
-    shareFilePicker: ShareFilePicker,
-    localFilePicker: LocalFilePicker,
-    remoteFilePicker: RemoteFilePicker
+    replyManager: Lazy<ReplyManager>,
+    imageLoaderV2: Lazy<ImageLoaderV2>,
+    shareFilePicker: Lazy<ShareFilePicker>,
+    localFilePicker: Lazy<LocalFilePicker>,
+    remoteFilePicker: Lazy<RemoteFilePicker>,
   ): ImagePickHelper {
+    Logger.deps("ImagePickHelper");
     return ImagePickHelper(
       appContext,
       replyManager,
@@ -142,42 +149,49 @@ class HelperModule {
   @Provides
   @Singleton
   fun provideMediaViewerScrollerHelper(chanThreadManager: ChanThreadManager): MediaViewerScrollerHelper {
+    Logger.deps("MediaViewerScrollerHelper");
     return MediaViewerScrollerHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideMediaViewerGoToImagePostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToImagePostHelper {
+    Logger.deps("MediaViewerGoToImagePostHelper");
     return MediaViewerGoToImagePostHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideMediaViewerOpenAlbumHelper(chanThreadManager: ChanThreadManager): MediaViewerOpenAlbumHelper {
+    Logger.deps("MediaViewerOpenAlbumHelper");
     return MediaViewerOpenAlbumHelper(chanThreadManager)
   }
 
   @Provides
   @Singleton
   fun provideExoPlayerDiskCache(context: Context, appConstants: AppConstants): ExoPlayerCache {
+    Logger.deps("ExoPlayerCache");
     return ExoPlayerCache(context, appConstants)
   }
 
   @Provides
   @Singleton
   fun provideAppSettingsUpdateAppRefreshHelper(): AppSettingsUpdateAppRefreshHelper {
+    Logger.deps("AppSettingsUpdateAppRefreshHelper");
     return AppSettingsUpdateAppRefreshHelper()
   }
 
   @Provides
   @Singleton
   fun provideChanLoadProgressNotifier(): ChanLoadProgressNotifier {
+    Logger.deps("ChanLoadProgressNotifier");
     return ChanLoadProgressNotifier()
   }
 
   @Provides
   @Singleton
   fun provideThreadDownloadProgressNotifier(): ThreadDownloadProgressNotifier {
+    Logger.deps("ThreadDownloadProgressNotifier");
     return ThreadDownloadProgressNotifier()
   }
 

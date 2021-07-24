@@ -95,6 +95,7 @@ import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.android.material.snackbar.Snackbar
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -144,7 +145,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var siteManager: SiteManager
   @Inject
-  lateinit var postHideManager: PostHideManager
+  lateinit var postHideManager: Lazy<PostHideManager>
   @Inject
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
@@ -156,7 +157,7 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
-  lateinit var chanLoadProgressNotifier: ChanLoadProgressNotifier
+  lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -278,7 +279,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     launch {
-      chanLoadProgressNotifier.progressEventsFlow.collect { chanLoadProgressEvent ->
+      chanLoadProgressNotifier.get().progressEventsFlow.collect { chanLoadProgressEvent ->
         if (chanDescriptor != chanLoadProgressEvent.chanDescriptor) {
           return@collect
         }
@@ -829,7 +830,7 @@ class ThreadLayout @JvmOverloads constructor(
         applyToReplies = false
       )
 
-      postHideManager.create(postHide)
+      postHideManager.get().create(postHide)
       presenter.refreshUI()
 
       val snackbarStringId = if (hide) {
@@ -848,7 +849,7 @@ class ThreadLayout @JvmOverloads constructor(
         setAction(R.string.undo, {
           serializedCoroutineExecutor.post {
             postFilterManager.remove(post.postDescriptor)
-            postHideManager.remove(postHide.postDescriptor)
+            postHideManager.get().remove(postHide.postDescriptor)
             presenter.refreshUI()
           }
         })
@@ -880,7 +881,7 @@ class ThreadLayout @JvmOverloads constructor(
         }
       }
 
-      postHideManager.createMany(hideList)
+      postHideManager.get().createMany(hideList)
       presenter.refreshUI()
 
       val formattedString = if (hide) {
@@ -900,7 +901,7 @@ class ThreadLayout @JvmOverloads constructor(
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(postDescriptors)
 
-            postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
+            postHideManager.get().removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
             presenter.refreshUI()
           }
         }
@@ -913,7 +914,7 @@ class ThreadLayout @JvmOverloads constructor(
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
       postFilterManager.remove(post.postDescriptor)
-      postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
+      postHideManager.get().removeManyChanPostHides(listOf(post.postDescriptor))
 
       if (postPopupHelper.isOpen) {
         postPopupHelper.resetCachedPostData(post.postDescriptor)
@@ -937,7 +938,7 @@ class ThreadLayout @JvmOverloads constructor(
     selectedPosts: List<PostDescriptor>
   ) {
     serializedCoroutineExecutor.post {
-      postHideManager.removeManyChanPostHides(selectedPosts)
+      postHideManager.get().removeManyChanPostHides(selectedPosts)
       presenter.refreshUI()
 
       SnackbarWrapper.create(

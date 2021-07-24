@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.common.vichan;
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.common.ModularResult;
 import com.github.k1rakishou.core_logger.Logger;
 
@@ -32,6 +32,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import dagger.Lazy;
 import okhttp3.HttpUrl;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -46,12 +47,12 @@ import okhttp3.ResponseBody;
 public class VichanAntispam {
     private static final String TAG = "Antispam";
 
-    private ProxiedOkHttpClient proxiedOkHttpClient;
+    private Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
 
     private HttpUrl url;
     private List<String> fieldsToIgnore = new ArrayList<>();
 
-    public VichanAntispam(ProxiedOkHttpClient proxiedOkHttpClient, HttpUrl url) {
+    public VichanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
         this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.url = url;
     }
@@ -79,7 +80,7 @@ public class VichanAntispam {
 
         try {
             Request request = new Request.Builder().url(url).build();
-            Response response = proxiedOkHttpClient.okHttpClient().newCall(request).execute();
+            Response response = proxiedOkHttpClient.get().okHttpClient().newCall(request).execute();
             if (!response.isSuccessful()) {
                 return ModularResult.error(new IOException("(Antispam) Bad response status code: " + response.code()));
             }

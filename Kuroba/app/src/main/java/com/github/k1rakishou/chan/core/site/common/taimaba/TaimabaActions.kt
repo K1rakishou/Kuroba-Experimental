@@ -28,6 +28,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import dagger.Lazy
 import okhttp3.Response
 import org.jsoup.Jsoup
 import java.io.IOException
@@ -35,7 +36,7 @@ import java.util.regex.Pattern
 
 open class TaimabaActions(
   commonSite: CommonSite,
-  private val replyManager: ReplyManager
+  private val replyManager: Lazy<ReplyManager>
 ) : CommonActions(commonSite) {
   @Volatile
   var threadNo = 0L
@@ -47,11 +48,11 @@ open class TaimabaActions(
     call: MultipartHttpCall
   ): ModularResult<Unit> {
     return Try {
-      if (!replyManager.containsReply(replyChanDescriptor)) {
+      if (!replyManager.get().containsReply(replyChanDescriptor)) {
         throw IOException("No reply found for chanDescriptor=$replyChanDescriptor")
       }
 
-      replyManager.readReply(replyChanDescriptor) { reply ->
+      replyManager.get().readReply(replyChanDescriptor) { reply ->
         // pass threadNo & password with correct variables
         threadNo = reply.threadNo()
         password = reply.password

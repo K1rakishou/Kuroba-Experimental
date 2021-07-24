@@ -4,9 +4,10 @@ import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptch
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 
 class TwoCaptchaCheckBalanceUseCase(
-  private val twoCaptchaSolver: TwoCaptchaSolver
+  private val twoCaptchaSolver: Lazy<TwoCaptchaSolver>
 ) : ISuspendUseCase<Unit, String> {
 
   override suspend fun execute(parameter: Unit): String {
@@ -16,7 +17,7 @@ class TwoCaptchaCheckBalanceUseCase(
   }
 
   private suspend fun checkBalance(): String {
-    val balanceResponse = twoCaptchaSolver.getAccountBalance(forced = true).unwrap()
+    val balanceResponse = twoCaptchaSolver.get().getAccountBalance(forced = true).unwrap()
 
     if (balanceResponse == null) {
       Logger.d(TAG, "enqueueSolution() getAccountBalance() -> null")

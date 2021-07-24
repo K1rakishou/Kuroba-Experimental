@@ -41,6 +41,7 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
@@ -58,17 +59,17 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
-  lateinit var replyManager: ReplyManager
+  lateinit var replyManager: Lazy<ReplyManager>
   @Inject
-  lateinit var imagePickHelper: ImagePickHelper
+  lateinit var imagePickHelper: Lazy<ImagePickHelper>
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
-  lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
+  lateinit var postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>
   @Inject
-  lateinit var boardManager: BoardManager
+  lateinit var boardManager: Lazy<BoardManager>
   @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
   @Inject

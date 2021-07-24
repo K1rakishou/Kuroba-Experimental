@@ -14,12 +14,13 @@ import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import dagger.Lazy
 import okhttp3.Request
 import kotlin.time.ExperimentalTime
 
 class ThreadDownloaderPersistPostsInDatabaseUseCase(
   private val siteManager: SiteManager,
-  private val chanThreadLoaderCoordinator: ChanThreadLoaderCoordinator,
+  private val chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
   private val parsePostsV1UseCase: ParsePostsV1UseCase,
   private val chanPostRepository: ChanPostRepository,
   private val proxiedOkHttpClient: RealProxiedOkHttpClient
@@ -37,7 +38,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
       ?: throw ThreadDownloadException("No site found by siteDescriptor ${threadDescriptor.siteDescriptor()}")
 
-    val chanLoadUrl = chanThreadLoaderCoordinator.getChanUrl(
+    val chanLoadUrl = chanThreadLoaderCoordinator.get().getChanUrl(
       site = site,
       chanDescriptor = threadDescriptor,
       forceFullLoad = true
@@ -78,7 +79,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val chanReader = site.chanReader()
 
     val chanReaderProcessor = body.byteStream().use { inputStream ->
-      return@use chanThreadLoaderCoordinator.readPostsFromResponse(
+      return@use chanThreadLoaderCoordinator.get().readPostsFromResponse(
         chanLoadUrl = chanLoadUrl,
         responseBodyStream = inputStream,
         chanDescriptor = threadDescriptor,

@@ -16,12 +16,13 @@
  */
 package com.github.k1rakishou.chan.core.net
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.stream.JsonReader
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.Request
@@ -32,7 +33,7 @@ import kotlin.time.measureTimedValue
 
 abstract class JsonReaderRequest<T>(
   protected val request: Request,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient
+  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
 ) {
 
   @OptIn(ExperimentalTime::class)
@@ -40,7 +41,7 @@ abstract class JsonReaderRequest<T>(
     return withContext(Dispatchers.IO) {
       val response = Try {
         val timedValue = measureTimedValue {
-          proxiedOkHttpClient.okHttpClient().suspendCall(request)
+          proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
         }
 
         Logger.d(TAG, "Request \"${this@JsonReaderRequest.javaClass.simpleName}\" to \"${request.url}\" " +

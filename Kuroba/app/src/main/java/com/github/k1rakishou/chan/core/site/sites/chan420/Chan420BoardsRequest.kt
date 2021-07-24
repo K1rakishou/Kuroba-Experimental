@@ -16,7 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.sites.chan420
 
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.jsonArray
@@ -25,6 +25,7 @@ import com.github.k1rakishou.model.data.board.BoardBuilder
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.stream.JsonReader
+import dagger.Lazy
 import okhttp3.Request
 import java.io.IOException
 import java.util.*
@@ -33,7 +34,7 @@ class Chan420BoardsRequest(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient
+  proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
 ) : JsonReaderRequest<List<ChanBoard>>(request, proxiedOkHttpClient) {
 
   override suspend fun readJson(reader: JsonReader): List<ChanBoard> {

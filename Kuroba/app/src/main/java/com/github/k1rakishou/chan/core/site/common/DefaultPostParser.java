@@ -29,7 +29,6 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
-import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper;
 import com.github.k1rakishou.chan.core.site.parser.PostParser;
@@ -64,16 +63,13 @@ public class DefaultPostParser implements PostParser {
 
     private final ThreadLocal<HtmlParser> htmlParserThreadLocal = new ThreadLocal<>();
     private final CommentParser commentParser;
-    private final PostFilterManager postFilterManager;
     private final ArchivesManager archivesManager;
 
     public DefaultPostParser(
             CommentParser commentParser,
-            PostFilterManager postFilterManager,
             ArchivesManager archivesManager
     ) {
         this.commentParser = commentParser;
-        this.postFilterManager = postFilterManager;
         this.archivesManager = archivesManager;
     }
 

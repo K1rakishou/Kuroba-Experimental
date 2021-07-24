@@ -36,19 +36,12 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
-import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
-import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
-import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -72,6 +65,7 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
@@ -87,31 +81,17 @@ class StartActivity : ControllerHostActivity(),
   ThemeEngine.ThemeChangesListener {
 
   @Inject
-  lateinit var siteResolver: SiteResolver
-  @Inject
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var themeEngine: ThemeEngine
-  @Inject
-  lateinit var siteManager: SiteManager
-  @Inject
-  lateinit var boardManager: BoardManager
-  @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
   @Inject
   lateinit var controllerNavigationManager: ControllerNavigationManager
   @Inject
   lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
   @Inject
-  lateinit var bookmarksManager: BookmarksManager
-  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
-  lateinit var archivesManager: ArchivesManager
-  @Inject
-  lateinit var chanFilterManager: ChanFilterManager
-  @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
@@ -343,7 +323,7 @@ class StartActivity : ControllerHostActivity(),
 
       mainController.closeAllNonMainControllers()
 
-      chanThreadViewableInfoManager.update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
+      chanThreadViewableInfoManager.get().update(postDescriptor.threadDescriptor(), true) { chanThreadViewableInfo ->
         chanThreadViewableInfo.markedPostNo = postDescriptor.postNo
       }
 

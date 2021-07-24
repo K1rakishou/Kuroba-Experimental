@@ -42,6 +42,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import dagger.Lazy
 import javax.inject.Inject
 
 abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
@@ -53,11 +54,11 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var postFilterManager: PostFilterManager
+  lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
-  lateinit var chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var seenPostsManager: SeenPostsManager
+  lateinit var seenPostsManager: Lazy<SeenPostsManager>
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 

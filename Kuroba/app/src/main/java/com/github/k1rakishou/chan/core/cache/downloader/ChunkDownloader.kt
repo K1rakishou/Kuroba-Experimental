@@ -1,10 +1,11 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.core.base.okhttp.DownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
+import dagger.Lazy
 import io.reactivex.BackpressureStrategy
 import io.reactivex.Flowable
 import okhttp3.Call
@@ -14,7 +15,7 @@ import okhttp3.Response
 import java.io.IOException
 
 internal class ChunkDownloader(
-  private val downloaderOkHttpClient: DownloaderOkHttpClient,
+  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val siteResolver: SiteResolver,
   private val activeDownloads: ActiveDownloads,
   private val verboseLogs: Boolean,
@@ -62,7 +63,7 @@ internal class ChunkDownloader(
       BackgroundUtils.ensureBackgroundThread()
 
       val serializedEmitter = emitter.serialize()
-      val call = downloaderOkHttpClient.okHttpClient().newCall(httpRequest)
+      val call = downloaderOkHttpClient.get().okHttpClient().newCall(httpRequest)
 
       // This function will be used to cancel a CHUNK (not the whole file) download upon
       // cancellation

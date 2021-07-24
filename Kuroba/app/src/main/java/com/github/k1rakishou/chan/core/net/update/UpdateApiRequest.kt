@@ -18,12 +18,13 @@ package com.github.k1rakishou.chan.core.net.update
 
 import android.text.Spanned
 import androidx.core.text.toSpanned
-import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.google.gson.stream.JsonReader
+import dagger.Lazy
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
@@ -32,7 +33,7 @@ import java.util.regex.Pattern
 
 class UpdateApiRequest(
   request: Request,
-  proxiedOkHttpClient: ProxiedOkHttpClient,
+  proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
   private val isRelease: Boolean
 ) : JsonReaderRequest<ReleaseUpdateApiResponse>(request, proxiedOkHttpClient) {
   

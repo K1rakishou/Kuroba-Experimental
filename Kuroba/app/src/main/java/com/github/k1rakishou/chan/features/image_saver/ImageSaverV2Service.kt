@@ -26,6 +26,7 @@ import com.github.k1rakishou.model.data.download.ImageDownloadRequest
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.google.gson.Gson
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -36,7 +37,7 @@ class ImageSaverV2Service : Service() {
   @Inject
   lateinit var imageDownloadRequestRepository: ImageDownloadRequestRepository
   @Inject
-  lateinit var imageSaverV2ServiceDelegate: ImageSaverV2ServiceDelegate
+  lateinit var imageSaverV2ServiceDelegate: Lazy<ImageSaverV2ServiceDelegate>
   @Inject
   lateinit var gson: Gson
 
@@ -55,7 +56,7 @@ class ImageSaverV2Service : Service() {
     Chan.getComponent().inject(this)
 
     kurobaScope.launch {
-      imageSaverV2ServiceDelegate.listenForNotificationUpdates()
+      imageSaverV2ServiceDelegate.get().listenForNotificationUpdates()
         .collect { imageSaverDelegateResult ->
           withContext(Dispatchers.Main) {
             showDownloadNotification(imageSaverDelegateResult)
@@ -64,7 +65,7 @@ class ImageSaverV2Service : Service() {
     }
 
     kurobaScope.launch {
-      imageSaverV2ServiceDelegate.listenForStopServiceEvent()
+      imageSaverV2ServiceDelegate.get().listenForStopServiceEvent()
         .collect {
           Logger.d(TAG, "Got StopService command, stopping the service")
 
@@ -98,7 +99,7 @@ class ImageSaverV2Service : Service() {
         return@launch
       }
 
-      val activeDownloadsCountBefore = imageSaverV2ServiceDelegate.createDownloadContext(
+      val activeDownloadsCountBefore = imageSaverV2ServiceDelegate.get().createDownloadContext(
         imageSaverInputData.uniqueId
       )
 
@@ -106,7 +107,7 @@ class ImageSaverV2Service : Service() {
         Logger.d(TAG, "onStartCommand() start, activeDownloadsCount=$activeDownloadsCountBefore")
       }
 
-      imageSaverV2ServiceDelegate.downloadImages(imageSaverInputData)
+      imageSaverV2ServiceDelegate.get().downloadImages(imageSaverInputData)
     }
 
     return START_STICKY
@@ -521,7 +522,7 @@ class ImageSaverV2Service : Service() {
       if (AndroidUtils.isAndroidO()) {
         setTimeoutAfter(NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS)
       } else {
-        imageSaverV2ServiceDelegate.enqueueDeleteNotification(
+        imageSaverV2ServiceDelegate.get().enqueueDeleteNotification(
           imageSaverDelegateResult.uniqueId,
           NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS
         )

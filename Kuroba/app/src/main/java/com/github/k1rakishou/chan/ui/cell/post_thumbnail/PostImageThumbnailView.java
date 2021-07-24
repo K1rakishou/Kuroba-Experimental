@@ -31,7 +31,6 @@ import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
@@ -41,7 +40,6 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.ThrottlingClicksKt;
 import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
@@ -49,6 +47,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import okhttp3.HttpUrl;
@@ -60,11 +59,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     private static final Drawable playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
 
     @Inject
-    PrefetchStateManager prefetchStateManager;
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    CacheHandler cacheHandler;
+    Lazy<PrefetchStateManager> prefetchStateManager;
 
     @Nullable
     private ChanPostImage postImage;
@@ -185,7 +180,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         }
 
         if (prefetchingEnabled) {
-            Disposable disposable = prefetchStateManager.listenForPrefetchStateUpdates()
+            Disposable disposable = prefetchStateManager.get().listenForPrefetchStateUpdates()
                     .filter((prefetchState) -> postImage != null)
                     .filter((prefetchState) -> prefetchState.getPostImage().equalUrl(postImage))
                     .subscribe(this::onPrefetchStateChanged);
@@ -270,7 +265,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         boolean highRes = canUseHighResCells
                 && ChanSettings.highResCells.get()
                 && postImage.canBeUsedAsHighResolutionThumbnail()
-                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage);
+                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler.get(), postImage);
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();

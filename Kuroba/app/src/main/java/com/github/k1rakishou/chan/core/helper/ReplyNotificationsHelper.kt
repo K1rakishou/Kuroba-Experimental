@@ -45,6 +45,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -68,7 +69,7 @@ class ReplyNotificationsHelper(
   private val chanPostRepository: ChanPostRepository,
   private val imageLoaderV2: ImageLoaderV2,
   private val themeEngine: ThemeEngine,
-  private val simpleCommentParser: SimpleCommentParser
+  private val simpleCommentParser: Lazy<SimpleCommentParser>
 ) {
   private val debouncer = DebouncingCoroutineExecutor(appScope)
   private val working = AtomicBoolean(false)
@@ -691,7 +692,7 @@ class ReplyNotificationsHelper(
         val commentRaw = threadBookmarkReplyView.commentRaw
         if (commentRaw != null) {
           // Convert to string to get rid of spans
-          val parsedComment = simpleCommentParser.parseComment(commentRaw)
+          val parsedComment = simpleCommentParser.get().parseComment(commentRaw)
             ?.toString()
 
           if (!parsedComment.isNullOrEmpty()) {

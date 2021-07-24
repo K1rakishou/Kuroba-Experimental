@@ -35,6 +35,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -71,8 +72,8 @@ class ImageSaverV2ServiceDelegate(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
-  private val cacheHandler: CacheHandler,
-  private val downloaderOkHttpClient: RealDownloaderOkHttpClient,
+  private val cacheHandler: Lazy<CacheHandler>,
+  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val imageSaverFileManager: ImageSaverFileManagerWrapper,
   private val siteResolver: SiteResolver,
@@ -882,8 +883,8 @@ class ImageSaverV2ServiceDelegate(
     var localInputStream: InputStream? = null
 
     try {
-      if (cacheHandler.cacheFileExists(fileUrl)) {
-        val cachedFile = cacheHandler.getCacheFileOrNull(fileUrl)
+      if (cacheHandler.get().cacheFileExists(fileUrl)) {
+        val cachedFile = cacheHandler.get().getCacheFileOrNull(fileUrl)
         if (cachedFile != null && cachedFile.canRead() && cachedFile.length() > 0) {
           localInputStream = cachedFile.inputStream()
         }
@@ -925,7 +926,7 @@ class ImageSaverV2ServiceDelegate(
       site.requestModifier().modifyMediaDownloadRequest(site, requestBuilder)
     }
 
-    val response = downloaderOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
+    val response = downloaderOkHttpClient.get().okHttpClient().suspendCall(requestBuilder.build())
 
     if (!response.isSuccessful) {
       if (response.code == 404) {

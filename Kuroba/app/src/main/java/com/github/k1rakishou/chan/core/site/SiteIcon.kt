@@ -26,9 +26,10 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageList
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import okhttp3.HttpUrl
 
-class SiteIcon private constructor(private val imageLoaderV2: ImageLoaderV2) {
+class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2>) {
   var url: HttpUrl? = null
   private var drawable: BitmapDrawable? = null
   private var requestDisposable: Disposable? = null
@@ -51,7 +52,7 @@ class SiteIcon private constructor(private val imageLoaderV2: ImageLoaderV2) {
     requestDisposable?.dispose()
     requestDisposable = null
 
-    requestDisposable = imageLoaderV2.loadFromNetwork(
+    requestDisposable = imageLoaderV2.get().loadFromNetwork(
       context,
       url.toString(),
       ImageLoaderV2.ImageSize.FixedImageSize(
@@ -120,13 +121,13 @@ class SiteIcon private constructor(private val imageLoaderV2: ImageLoaderV2) {
     private const val FAVICON_SIZE = 64
 
     @JvmStatic
-    fun fromFavicon(imageLoaderV2: ImageLoaderV2, url: HttpUrl): SiteIcon {
+    fun fromFavicon(imageLoaderV2: Lazy<ImageLoaderV2>, url: HttpUrl): SiteIcon {
       val siteIcon = SiteIcon(imageLoaderV2)
       siteIcon.url = url
       return siteIcon
     }
 
-    fun fromDrawable(imageLoaderV2: ImageLoaderV2, @DrawableRes drawableId: Int): SiteIcon {
+    fun fromDrawable(imageLoaderV2: Lazy<ImageLoaderV2>, @DrawableRes drawableId: Int): SiteIcon {
       val siteIcon = SiteIcon(imageLoaderV2)
       val drawable = AppModuleAndroidUtils.getDrawable(drawableId)
 

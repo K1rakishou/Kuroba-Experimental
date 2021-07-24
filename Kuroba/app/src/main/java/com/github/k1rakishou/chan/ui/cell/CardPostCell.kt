@@ -47,6 +47,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
@@ -63,7 +64,7 @@ class CardPostCell : ConstraintLayout,
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
   @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
 
   private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null

@@ -47,6 +47,7 @@ import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.exoplayer2.util.MimeTypes
+import dagger.Lazy
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -66,7 +67,7 @@ class ImageLoaderV2(
   private val imageLoader: ImageLoader,
   private val replyManager: ReplyManager,
   private val themeEngine: ThemeEngine,
-  private val cacheHandler: CacheHandler,
+  private val cacheHandler: Lazy<CacheHandler>,
   private val fileCacheV2: FileCacheV2,
   private val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper,
   private val siteResolver: SiteResolver,
@@ -86,8 +87,8 @@ class ImageLoaderV2(
 
   suspend fun isImageCachedLocally(url: String): Boolean {
     return withContext(Dispatchers.Default) {
-      val exists = cacheHandler.cacheFileExists(url)
-      val downloaded = cacheHandler.isAlreadyDownloaded(url)
+      val exists = cacheHandler.get().cacheFileExists(url)
+      val downloaded = cacheHandler.get().isAlreadyDownloaded(url)
 
       return@withContext exists && downloaded
     }
@@ -413,7 +414,7 @@ class ImageLoaderV2(
         )
 
         if (!fileCacheV2.isRunning(url)) {
-          cacheHandler.deleteCacheFileByUrl(url)
+          cacheHandler.get().deleteCacheFileByUrl(url)
         }
 
         null
@@ -543,7 +544,7 @@ class ImageLoaderV2(
   private suspend fun loadFromNetworkIntoFile(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val cacheFile = cacheHandler.getOrCreateCacheFile(url)
+    val cacheFile = cacheHandler.get().getOrCreateCacheFile(url)
     if (cacheFile == null) {
       Logger.e(TAG, "loadFromNetworkInternalIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
       return null
@@ -553,7 +554,7 @@ class ImageLoaderV2(
       loadFromNetworkIntoFileInternal(url, cacheFile)
     } catch (error: Throwable) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.deleteCacheFile(cacheFile)
+        cacheHandler.get().deleteCacheFile(cacheFile)
       }
 
       if (error.isCoroutineCancellationException()) {
@@ -566,7 +567,7 @@ class ImageLoaderV2(
 
     if (!success) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.deleteCacheFile(cacheFile)
+        cacheHandler.get().deleteCacheFile(cacheFile)
       }
 
       return null
@@ -610,7 +611,7 @@ class ImageLoaderV2(
       }
     }
 
-    if (!cacheHandler.markFileDownloaded(cacheFile)) {
+    if (!cacheHandler.get().markFileDownloaded(cacheFile)) {
       throw IOException("Failed to mark file '${cacheFile.absolutePath}' as downloaded")
     }
 
@@ -619,7 +620,7 @@ class ImageLoaderV2(
       return false
     }
 
-    cacheHandler.fileWasAdded(fileLength)
+    cacheHandler.get().fileWasAdded(fileLength)
 
     return true
   }
@@ -641,12 +642,12 @@ class ImageLoaderV2(
       // fallthrough
     }
 
-    val cacheFile = cacheHandler.getCacheFileOrNull(url)
+    val cacheFile = cacheHandler.get().getCacheFileOrNull(url)
     if (cacheFile == null) {
       return null
     }
 
-    if (!cacheHandler.isAlreadyDownloaded(cacheFile)) {
+    if (!cacheHandler.get().isAlreadyDownloaded(cacheFile)) {
       return null
     }
 

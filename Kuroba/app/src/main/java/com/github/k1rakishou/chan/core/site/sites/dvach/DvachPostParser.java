@@ -4,7 +4,6 @@ import android.graphics.Color;
 import android.text.TextUtils;
 
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
-import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
 import com.github.k1rakishou.chan.core.site.parser.CommentParser;
 import com.github.k1rakishou.core_logger.Logger;
@@ -26,10 +25,9 @@ public class DvachPostParser extends DefaultPostParser {
 
     public DvachPostParser(
             CommentParser commentParser,
-            PostFilterManager postFilterManager,
             ArchivesManager archivesManager
     ) {
-        super(commentParser, postFilterManager, archivesManager);
+        super(commentParser, archivesManager);
     }
 
     @Override

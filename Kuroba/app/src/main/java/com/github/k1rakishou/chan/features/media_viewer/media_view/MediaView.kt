@@ -36,6 +36,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
@@ -60,7 +61,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   @Inject
   lateinit var fileManager: FileManager
   @Inject
-  lateinit var cacheHandler: CacheHandler
+  lateinit var cacheHandler: Lazy<CacheHandler>
   @Inject
   lateinit var chanPostBackgroundColorStorage: ChanPostBackgroundColorStorage
   @Inject
@@ -347,7 +348,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       // fallthrough
     }
 
-    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler, viewableMedia)
+    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler.get(), viewableMedia)
   }
 
   private suspend fun tryLoadFromExternalDiskCache(

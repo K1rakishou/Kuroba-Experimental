@@ -25,6 +25,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import dagger.Lazy
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
@@ -45,9 +46,9 @@ class ThumbnailMediaView @JvmOverloads constructor(
   private var requestDisposable: Disposable? = null
 
   @Inject
-  lateinit var imageLoaderV2: ImageLoaderV2
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
-  lateinit var cacheHandler: CacheHandler
+  lateinit var cacheHandler: Lazy<CacheHandler>
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -145,7 +146,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
       }
     }
 
-    return imageLoaderV2.loadFromNetwork(
+    return imageLoaderV2.get().loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
       imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
@@ -187,7 +188,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
       val remoteLocation = parameters.viewableMedia.mediaLocation as MediaLocation.Remote
 
-      if (cacheHandler.cacheFileExists(remoteLocation.url.toString())) {
+      if (cacheHandler.get().cacheFileExists(remoteLocation.url.toString())) {
         return parameters.viewableMedia.previewLocation
       }
 

@@ -31,6 +31,7 @@ import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.persist_state.IndexAndTop
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -54,7 +55,7 @@ class SettingsCoordinator(
   @Inject
   lateinit var fileCacheV2: FileCacheV2
   @Inject
-  lateinit var cacheHandler: CacheHandler
+  lateinit var cacheHandler: Lazy<CacheHandler>
   @Inject
   lateinit var seenPostRepository: SeenPostRepository
   @Inject

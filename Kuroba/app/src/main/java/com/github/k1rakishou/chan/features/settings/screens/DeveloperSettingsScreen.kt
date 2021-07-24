@@ -22,11 +22,12 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
+import dagger.Lazy
 
 class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val cacheHandler: CacheHandler,
+  private val cacheHandler: Lazy<CacheHandler>,
   private val fileCacheV2: FileCacheV2,
   private val themeEngine: ThemeEngine,
   private val appConstants: AppConstants
@@ -100,7 +101,7 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.ClearFileCache,
           topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache) },
           bottomDescriptionStringFunc = {
-            val cacheSize = cacheHandler.getSize() / 1024 / 1024
+            val cacheSize = cacheHandler.get().getSize() / 1024 / 1024
             context.getString(R.string.settings_clear_file_cache_bottom_description, cacheSize)
           },
           callback = {

@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import javax.inject.Inject
 
 
@@ -22,9 +23,9 @@ class BookmarkBackgroundWatcherWorker(
   @Inject
   lateinit var bookmarksManager: BookmarksManager
   @Inject
-  lateinit var bookmarkWatcherDelegate: BookmarkWatcherDelegate
+  lateinit var bookmarkWatcherDelegate: Lazy<BookmarkWatcherDelegate>
   @Inject
-  lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
+  lateinit var bookmarkForegroundWatcher: Lazy<BookmarkForegroundWatcher>
   @Inject
   lateinit var applicationVisibilityManager: ApplicationVisibilityManager
 
@@ -54,7 +55,7 @@ class BookmarkBackgroundWatcherWorker(
     if (applicationVisibilityManager.isAppInForeground()) {
       Logger.d(TAG, "BookmarkBackgroundWatcherWorker.doWork() Cannot start BookmarkWatcherDelegate, " +
         "app is in foreground")
-      bookmarkForegroundWatcher.startWatchingIfNotWatchingYet()
+      bookmarkForegroundWatcher.get().startWatchingIfNotWatchingYet()
       BookmarkWatcherCoordinator.restartBackgroundWork(appConstants, applicationContext)
 
       return Result.success()
@@ -68,7 +69,7 @@ class BookmarkBackgroundWatcherWorker(
       return Result.success()
     }
 
-    bookmarkWatcherDelegate.doWork(
+    bookmarkWatcherDelegate.get().doWork(
       isCalledFromForeground = false,
       updateCurrentlyOpenedThread = false
     )

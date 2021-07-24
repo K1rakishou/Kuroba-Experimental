@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -19,11 +20,11 @@ import java.util.*
 
 class ImagePickHelper(
   private val appContext: Context,
-  private val replyManager: ReplyManager,
-  private val imageLoaderV2: ImageLoaderV2,
-  private val shareFilePicker: ShareFilePicker,
-  private val localFilePicker: LocalFilePicker,
-  private val remoteFilePicker: RemoteFilePicker
+  private val replyManager: Lazy<ReplyManager>,
+  private val imageLoaderV2: Lazy<ImageLoaderV2>,
+  private val shareFilePicker: Lazy<ShareFilePicker>,
+  private val localFilePicker: Lazy<LocalFilePicker>,
+  private val remoteFilePicker: Lazy<RemoteFilePicker>,
 ) {
   private val pickedFilesUpdatesState = MutableSharedFlow<UUID>()
 
@@ -34,7 +35,7 @@ class ImagePickHelper(
   suspend fun pickFilesFromIncomingShare(
     filePickerInput: ShareFilePicker.ShareFilePickerInput
   ): ModularResult<PickedFile> {
-    val result = shareFilePicker.pickFile(filePickerInput)
+    val result = shareFilePicker.get().pickFile(filePickerInput)
     if (result is ModularResult.Error) {
       Logger.e(TAG, "pickFilesFromIntent() error", result.error)
       return result
@@ -69,14 +70,14 @@ class ImagePickHelper(
           return@forEach
         }
 
-        if (!replyManager.addNewReplyFileIntoStorage(sharedFile)) {
+        if (!replyManager.get().addNewReplyFileIntoStorage(sharedFile)) {
           Logger.e(TAG, "pickFilesFromIntent() addNewReplyFileIntoStorage() failure")
           sharedFile.deleteFromDisk()
           return@forEach
         }
 
         withContext(Dispatchers.IO) {
-          imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+          imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
             appContext,
             replyFileMeta.fileUuid,
             Scale.FIT
@@ -102,7 +103,7 @@ class ImagePickHelper(
     filePickerInput: LocalFilePicker.LocalFilePickerInput
   ): ModularResult<PickedFile> {
     // We can only pick one local file at a time (for now)
-    val result = localFilePicker.pickFile(filePickerInput)
+    val result = localFilePicker.get().pickFile(filePickerInput)
     if (result is ModularResult.Error) {
       Logger.e(TAG, "pickLocalFile() error", result.error)
       return result
@@ -133,7 +134,7 @@ class ImagePickHelper(
       return ModularResult.value(pickedFileFailure)
     }
 
-    if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
+    if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
       Logger.e(TAG, "pickLocalFile() addNewReplyFileIntoStorage() failure")
 
       replyFile.deleteFromDisk()
@@ -150,7 +151,7 @@ class ImagePickHelper(
 
     try {
       withContext(Dispatchers.IO) {
-        imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+        imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
           Scale.FIT
@@ -174,7 +175,7 @@ class ImagePickHelper(
   suspend fun pickRemoteFile(
     filePickerInput: RemoteFilePicker.RemoteFilePickerInput
   ): ModularResult<PickedFile> {
-    val result = remoteFilePicker.pickFile(filePickerInput)
+    val result = remoteFilePicker.get().pickFile(filePickerInput)
     if (result is ModularResult.Error) {
       Logger.e(TAG, "pickRemoteFile() error", result.error)
       return result
@@ -205,7 +206,7 @@ class ImagePickHelper(
       return ModularResult.value(pickedFileFailure)
     }
 
-    if (!replyManager.addNewReplyFileIntoStorage(replyFile)) {
+    if (!replyManager.get().addNewReplyFileIntoStorage(replyFile)) {
       Logger.e(TAG, "pickRemoteFile() addNewReplyFileIntoStorage() failure")
 
       replyFile.deleteFromDisk()
@@ -222,7 +223,7 @@ class ImagePickHelper(
 
     try {
       withContext(Dispatchers.IO) {
-        imageLoaderV2.calculateFilePreviewAndStoreOnDisk(
+        imageLoaderV2.get().calculateFilePreviewAndStoreOnDisk(
           appContext,
           replyFileMeta.fileUuid,
           Scale.FIT
@@ -244,15 +245,15 @@ class ImagePickHelper(
   }
 
   fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-    localFilePicker.onActivityResult(requestCode, resultCode, data)
+    localFilePicker.get().onActivityResult(requestCode, resultCode, data)
   }
 
   fun onActivityCreated(activity: AppCompatActivity) {
-    localFilePicker.onActivityCreated(activity)
+    localFilePicker.get().onActivityCreated(activity)
   }
 
   fun onActivityDestroyed(activity: AppCompatActivity) {
-    localFilePicker.onActivityDestroyed(activity)
+    localFilePicker.get().onActivityDestroyed(activity)
   }
 
   companion object {

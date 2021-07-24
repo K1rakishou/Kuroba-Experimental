@@ -69,7 +69,6 @@ import kotlinx.coroutines.CoroutineScope;
 
 @Module
 public class AppModule {
-    public static final String DI_TAG = "Dependency Injection";
 
     private static final Lazy<File> GET_CACHE_DIR_FUNC = LazyKt.lazy(
             LazyThreadSafetyMode.SYNCHRONIZED,
@@ -77,7 +76,7 @@ public class AppModule {
                 File cacheDir = getAppContext().getCacheDir();
                 long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
 
-                Logger.d(DI_TAG, "Available space for cache dir: " + spaceInBytes +
+                Logger.deps("Available space for cache dir: " + spaceInBytes +
                         " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
 
                 return cacheDir;
@@ -102,6 +101,8 @@ public class AppModule {
             ThreadDownloadManager threadDownloadManager,
             ThreadDownloadingCoordinator threadDownloadingCoordinator
     ) {
+        Logger.deps("AppDependenciesInitializer");
+
         return new AppDependenciesInitializer(
                 siteManager,
                 boardManager,
@@ -139,7 +140,8 @@ public class AppModule {
     ) {
         boolean isLowRamDevice = ChanSettings.isLowRamDevice();
         double availableMemoryPercentage = getDefaultAvailableMemoryPercentage();
-        Logger.d(DI_TAG, "availableMemoryPercentage=" + availableMemoryPercentage);
+        Logger.d(Logger.DI_TAG, "availableMemoryPercentage=" + availableMemoryPercentage);
+        Logger.deps("ImageLoader");
 
         return new ImageLoader.Builder(applicationContext)
                 .allowHardware(true)
@@ -172,13 +174,15 @@ public class AppModule {
             ImageLoader coilImageLoader,
             ReplyManager replyManager,
             ThemeEngine themeEngine,
-            CacheHandler cacheHandler,
+            dagger.Lazy<CacheHandler> cacheHandler,
             FileCacheV2 fileCacheV2,
             ImageLoaderFileManagerWrapper imageLoaderFileManagerWrapper,
             SiteResolver siteResolver,
             CoilOkHttpClient coilOkHttpClient,
             ThreadDownloadManager threadDownloadManager
     ) {
+        Logger.deps("ImageLoaderV2");
+
         return new ImageLoaderV2(
                 ChanSettings.verboseLogs.get(),
                 appScope,
@@ -204,6 +208,8 @@ public class AppModule {
             ImageDownloadRequestRepository imageDownloadRequestRepository,
             ImageSaverV2ServiceDelegate imageSaverV2ServiceDelegate
     ) {
+        Logger.deps("ImageSaverV2");
+
         return new ImageSaverV2(
                 ChanSettings.verboseLogs.get(),
                 appContext,
@@ -218,6 +224,8 @@ public class AppModule {
     @Provides
     @Singleton
     public CaptchaHolder provideCaptchaHolder() {
+        Logger.deps("CaptchaHolder");
+
         return new CaptchaHolder();
     }
 
@@ -226,12 +234,16 @@ public class AppModule {
     public Android10GesturesExclusionZonesHolder provideAndroid10GesturesHolder(
             Gson gson
     ) {
+        Logger.deps("Android10GesturesExclusionZonesHolder");
+
         return new Android10GesturesExclusionZonesHolder(gson);
     }
 
     @Provides
     @Singleton
-    public AnrSupervisor provideAnrSupervisor(ReportManager reportManager) {
+    public AnrSupervisor provideAnrSupervisor(dagger.Lazy<ReportManager> reportManager) {
+        Logger.deps("AnrSupervisor");
+
         return new AnrSupervisor(reportManager);
     }
 }

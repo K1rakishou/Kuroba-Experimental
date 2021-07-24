@@ -36,6 +36,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
+import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
@@ -51,7 +52,7 @@ class DvachReplyCall internal constructor(
   site: Dvach,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
-  private val replyManager: ReplyManager
+  private val replyManager: Lazy<ReplyManager>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   override fun addParameters(
@@ -63,11 +64,11 @@ class DvachReplyCall internal constructor(
       "reply.chanDescriptor == null"
     )
 
-    if (!replyManager.containsReply(chanDescriptor)) {
+    if (!replyManager.get().containsReply(chanDescriptor)) {
       throw IOException("No reply found for chanDescriptor=$chanDescriptor")
     }
 
-    replyManager.readReply(chanDescriptor) { reply ->
+    replyManager.get().readReply(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ThreadDescriptor) {
         chanDescriptor.threadNo
       } else {

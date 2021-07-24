@@ -26,6 +26,7 @@ import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObjec
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import okhttp3.HttpUrl
@@ -42,8 +43,8 @@ class BookmarkFilterWatchableThreadsUseCase(
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val appScope: CoroutineScope,
-  private val proxiedOkHttpClient: ProxiedOkHttpClient,
-  private val simpleCommentParser: SimpleCommentParser,
+  private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
+  private val simpleCommentParser: Lazy<SimpleCommentParser>,
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val chanFilterWatchRepository: ChanFilterWatchRepository
@@ -102,7 +103,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       val rawComment = catalogThread.comment()
       val subject = catalogThread.subject
       val catalogBoardDescriptor = catalogThread.threadDescriptor.boardDescriptor
-      val parsedComment = simpleCommentParser.parseComment(rawComment) ?: ""
+      val parsedComment = simpleCommentParser.get().parseComment(rawComment) ?: ""
 
       // Update the old unparsed comment with the parsed one
       catalogThread.replaceRawCommentWithParsed(parsedComment.toString())
@@ -364,7 +365,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     val request = requestBilder.build()
 
     val response = try {
-      proxiedOkHttpClient.okHttpClient().suspendCall(request)
+      proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
     } catch (exception: IOException) {
       val error = IOException("Failed to execute network request " +
         "error=${exception.errorMessageOrClassName()}, catalogJsonEndpoint=$catalogJsonEndpoint")
