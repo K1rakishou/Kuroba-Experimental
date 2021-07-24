@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.usecase
 
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser
 import com.github.k1rakishou.common.ModularResult
@@ -10,6 +9,8 @@ import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanSavedReply
+import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -24,7 +25,7 @@ class ParsePostRepliesUseCase(
   private val appScope: CoroutineScope,
   private val replyParser: Lazy<ReplyParser>,
   private val siteManager: SiteManager,
-  private val savedReplyManager: Lazy<SavedReplyManager>
+  private val savedReplyRepository: Lazy<ChanSavedReplyRepository>
 ) : ISuspendUseCase<List<ThreadBookmarkFetchResult.Success>, YousPerThreadMap> {
 
   override suspend fun execute(parameter: List<ThreadBookmarkFetchResult.Success>): YousPerThreadMap {
@@ -122,14 +123,17 @@ class ParsePostRepliesUseCase(
       return emptyMap()
     }
 
-    // TODO(KurobaEx): maybe instead of preloading saved replies for bookmarked threads
-    //  (there might be a lot of them) it would be better to just load stuff from the database?
-    // Preload the saved replies (we need to do this manually every time).
-    savedReplyManager.get().preloadForThread(threadDescriptor)
+    val threadSavedReplies = savedReplyRepository.get().preloadForThread(threadDescriptor)
+      .peekError { error -> Logger.e(TAG, "savedReplyRepository.preloadForThread($threadDescriptor) error", error) }
+      .valueOrNull() ?: emptyList()
 
-    val quotesToMeInThreadMap = savedReplyManager.get().retainSavedPostNoMap(
-      quoteOwnerPostsMap,
-      threadDescriptor
+    if (threadSavedReplies.isEmpty()) {
+      return emptyMap()
+    }
+
+    val quotesToMeInThreadMap = retainSavedPostNoMap(
+      threadSavedReplies,
+      quoteOwnerPostsMap
     )
 
     if (quotesToMeInThreadMap.isEmpty()) {
@@ -152,6 +156,30 @@ class ParsePostRepliesUseCase(
     }
 
     return quotePostDescriptorsMap
+  }
+
+  private fun retainSavedPostNoMap(
+    threadSavedReplies: List<ChanSavedReply>,
+    quoteOwnerPostsMap: Map<Long, Set<TempReplyToMyPost>>
+  ): Map<Long, MutableSet<TempReplyToMyPost>> {
+    val resultMap: MutableMap<Long, MutableSet<TempReplyToMyPost>> = mutableMapWithCap(16)
+
+    val savedRepliesNoSet = threadSavedReplies
+      .map { chanSavedReply -> chanSavedReply.postDescriptor.postNo }
+      .toSet()
+
+    for ((quotePostNo, tempReplies) in quoteOwnerPostsMap) {
+      for (tempReply in tempReplies) {
+        if (!savedRepliesNoSet.contains(quotePostNo)) {
+          continue
+        }
+
+        resultMap.putIfNotContains(quotePostNo, mutableSetOf())
+        resultMap[quotePostNo]!!.add(tempReply)
+      }
+    }
+
+    return resultMap
   }
 
   class TempReplyToMyPost(

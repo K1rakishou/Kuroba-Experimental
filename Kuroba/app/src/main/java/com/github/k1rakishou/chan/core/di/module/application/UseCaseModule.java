@@ -48,6 +48,7 @@ import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository;
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
+import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.google.gson.Gson;
 import com.squareup.moshi.Moshi;
@@ -105,14 +106,14 @@ public class UseCaseModule {
             CoroutineScope appScope,
             Lazy<ReplyParser> replyParser,
             SiteManager siteManager,
-            Lazy<SavedReplyManager> savedReplyManager
+            Lazy<ChanSavedReplyRepository> chanSavedReplyRepository
     ) {
         Logger.deps("ParsePostRepliesUseCase");
         return new ParsePostRepliesUseCase(
                 appScope,
                 replyParser,
                 siteManager,
-                savedReplyManager
+                chanSavedReplyRepository
         );
     }
 
