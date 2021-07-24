@@ -359,7 +359,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
           MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
 
-        highestChildOfRow = Math.max(highestChildOfRow, child.measuredHeight)
+        highestChildOfRow = Math.max(highestChildOfRow, (child.measuredHeight + MULTIPLE_THUMBNAILS_INTERNAL_PADDING))
       }
 
       totalHeight += highestChildOfRow
@@ -390,15 +390,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
     val actualImageWidth = this.measuredWidth / columnsPerRow
 
+    var curTop = 0
     var curWidth = 0
     var curHeight = 0
-    var curTop = 0
-
-    var curLeft = if (isMirrored) {
-      this.measuredWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING
-    } else {
-      0
-    }
 
     for (rowIndex in 0 until rowsCount) {
       var highestChildOfRow = 0
@@ -416,12 +410,27 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
           continue
         }
 
+        val additionalHorizPadding = MULTIPLE_THUMBNAILS_INTERNAL_PADDING
+        val additionalVertPadding = MULTIPLE_THUMBNAILS_INTERNAL_PADDING
+
+        if (isMirrored) {
+          child.updatePadding(left = additionalHorizPadding, bottom = additionalVertPadding)
+        } else {
+          child.updatePadding(right = additionalHorizPadding, bottom = additionalVertPadding)
+        }
+
         child.measure(
           MeasureSpec.makeMeasureSpec(actualImageWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING, MeasureSpec.EXACTLY),
           MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
 
         highestChildOfRow = Math.max(highestChildOfRow, child.measuredHeight)
+      }
+
+      var curLeft = if (isMirrored) {
+        this.measuredWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING
+      } else {
+        0
       }
 
       // Layout the children
@@ -441,46 +450,30 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         curHeight = highestChildOfRow
 
         if (isMirrored) {
-          if (curLeft - curWidth < 0) {
-            curLeft = (this.measuredWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
-            curTop += highestChildOfRow
-          }
-
-          val additionalHorizPadding = if (columnIndex != 0) {
-            MULTIPLE_THUMBNAILS_INTERNAL_PADDING / 2
-          } else {
-            0
-          }
-
           child.layout(
-            curLeft - curWidth - paddingLeft - additionalHorizPadding,
+            curLeft - curWidth - paddingLeft,
             curTop + paddingTop,
-            curLeft - paddingLeft - additionalHorizPadding,
+            curLeft - paddingLeft,
             curTop + curHeight + paddingTop
           )
 
           curLeft -= curWidth
         } else {
-          if (curLeft + curWidth > this.measuredWidth) {
-            curLeft = 0
-            curTop += highestChildOfRow
-          }
-
-          val additionalHorizPadding = if (columnIndex != 0) {
-            MULTIPLE_THUMBNAILS_INTERNAL_PADDING / 2
-          } else {
-            0
-          }
-
           child.layout(
-            curLeft + paddingLeft + additionalHorizPadding,
+            curLeft + paddingLeft,
             curTop + paddingTop,
-            curLeft + curWidth + paddingLeft + additionalHorizPadding,
+            curLeft + curWidth + paddingLeft,
             curTop + curHeight + paddingTop
           )
 
           curLeft += curWidth
         }
+      }
+
+      if (isMirrored) {
+        curTop += highestChildOfRow
+      } else {
+        curTop += highestChildOfRow
       }
     }
   }
@@ -533,7 +526,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   companion object {
     private val MULTIPLE_THUMBNAILS_VERTICAL_PADDING = dp(4f)
-    private val MULTIPLE_THUMBNAILS_INTERNAL_PADDING = dp(8f)
+    private val MULTIPLE_THUMBNAILS_INTERNAL_PADDING = dp(6f)
     private val GO_TO_POST_BUTTON_WIDTH = getDimen(R.dimen.go_to_post_button_width)
     private val POST_THUMBNAIL_FILE_INFO_SIZE = getDimen(R.dimen.cell_post_thumbnail_container_file_info_size)
     private val CELL_POST_THUMBNAIL_SIZE_MAX = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat()
