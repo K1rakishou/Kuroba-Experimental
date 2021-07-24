@@ -16,10 +16,14 @@
  */
 package com.github.k1rakishou;
 
+import static com.github.k1rakishou.common.AndroidUtils.getActivityManager;
 import static com.github.k1rakishou.common.AndroidUtils.getAppDir;
 import static com.github.k1rakishou.common.AndroidUtils.getAppMainPreferences;
+import static com.github.k1rakishou.common.AndroidUtils.isAndroidN;
 import static java.util.concurrent.TimeUnit.HOURS;
 import static java.util.concurrent.TimeUnit.MINUTES;
+
+import android.app.ActivityManager;
 
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
@@ -338,6 +342,7 @@ public class ChanSettings {
     public static BooleanSetting videoDefaultMuted;
     public static BooleanSetting headsetDefaultMuted;
     public static BooleanSetting videoAlwaysResetToStart;
+    public static IntegerSetting mediaViewerMaxOffscreenPages;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -412,6 +417,13 @@ public class ChanSettings {
     private static void initInternal() {
         try {
             SettingProvider provider = new SharedPreferencesSettingProvider(getAppMainPreferences());
+
+            // Must be initialized first to avoid NPEs
+            isLowRamDeviceForced = new BooleanSetting(
+                    provider,
+                    "is_low_ram_device_forced",
+                    false
+            );
 
             //region THREAD WATCHER
             watchEnabled = new BooleanSetting(provider, "preference_watch_enabled", false);
@@ -538,6 +550,7 @@ public class ChanSettings {
             videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
             headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
             videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
+            mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", getMediaViewerOffscreenPagesDefault());
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,
@@ -655,17 +668,51 @@ public class ChanSettings {
                     "drawer_show_navigation_history",
                     true
             );
-            isLowRamDeviceForced = new BooleanSetting(
-                    provider,
-                    "is_low_ram_device_forced",
-                    false
-            );
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the
             // stacktrace. Otherwise we won't because of Feather.
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
         }
+    }
+
+    private static Integer getMediaViewerOffscreenPagesDefault() {
+        if (isLowRamDevice()) {
+            return 1;
+        }
+
+        return 2;
+    }
+
+    public static int mediaViewerOffscreenPagesCount() {
+        if (isLowRamDevice()) {
+            return 1;
+        }
+
+        int count = ChanSettings.mediaViewerMaxOffscreenPages.get();
+        if (count < 1) {
+            count = 1;
+        }
+
+        if (count > 2) {
+            count = 2;
+        }
+
+        return count;
+    }
+
+    public static boolean isLowRamDevice() {
+        if (isLowRamDeviceForced.get()) {
+            return true;
+        }
+
+        if (!isAndroidN()) {
+            // Consider all devices lover than N as low ram devices
+            return true;
+        }
+
+        ActivityManager activityManager = getActivityManager();
+        return activityManager != null && activityManager.isLowRamDevice();
     }
 
     public static int defaultFontSize() {

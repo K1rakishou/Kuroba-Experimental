@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.loader
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
@@ -34,7 +35,6 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -306,7 +306,7 @@ class ChanThreadLoaderCoordinator(
         appendLine("Current thread cached posts count: $currentThreadCachedPostsCount")
       }
 
-      val isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice()
+      val isLowRamDevice = ChanSettings.isLowRamDevice()
 
       appendLine("Threads with more than one post " +
         "count: ($threadsWithMoreThanOnePostCount/${ChanThreadsCache.immuneThreadsCount(isLowRamDevice)}), " +

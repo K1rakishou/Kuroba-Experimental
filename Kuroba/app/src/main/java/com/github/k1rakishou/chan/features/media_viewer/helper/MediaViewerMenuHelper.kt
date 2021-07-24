@@ -80,6 +80,15 @@ class MediaViewerMenuHelper(
       name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
     )
 
+    options += FloatingListMenuItem(
+      key = ACTION_MAX_OFFSCREEN_PAGES_SETTING,
+      name = AppModuleAndroidUtils.getString(
+        R.string.setting_media_viewer_offscreen_pages_count,
+        ChanSettings.mediaViewerOffscreenPagesCount()
+      ),
+      enabled = !ChanSettings.isLowRamDevice()
+    )
+
     return options
   }
 
@@ -112,7 +121,52 @@ class MediaViewerMenuHelper(
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
         presentControllerFunc(mediaViewerGesturesSettingsController)
       }
+      ACTION_MAX_OFFSCREEN_PAGES_SETTING -> {
+        showMediaViewerOffscreenPagesSelector(context)
+      }
     }
+  }
+
+  private fun showMediaViewerOffscreenPagesSelector(context: Context) {
+    val options = mutableListOf<FloatingListMenuItem>()
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE,
+      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_one_offscreen_page),
+      isCurrentlySelected = ChanSettings.mediaViewerOffscreenPagesCount() == 1
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES,
+      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_two_offscreen_page),
+      isCurrentlySelected = ChanSettings.mediaViewerOffscreenPagesCount() == 2
+    )
+
+    val floatingListMenuController = FloatingListMenuController(
+      context,
+      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      options,
+      itemClickListener = { clickedItem ->
+        var selectedPagesCount = when (clickedItem.key as Int) {
+          ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE -> 1
+          ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES -> 2
+          else -> 1
+        }
+
+        if (selectedPagesCount < 1) {
+          selectedPagesCount = 1
+        }
+
+        if (selectedPagesCount > 2) {
+          selectedPagesCount = 2
+        }
+
+        ChanSettings.mediaViewerMaxOffscreenPages.set(selectedPagesCount)
+        showToastFunc(R.string.restart_the_media_viewer)
+      }
+    )
+
+    presentControllerFunc(floatingListMenuController)
   }
 
   companion object {
@@ -123,6 +177,10 @@ class MediaViewerMenuHelper(
     const val ACTION_VIDEO_START_MUTED_WITH_HEADSET = 104
     const val ACTION_VIDEO_ALWAYS_RESET_TO_START = 105
     const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 106
+    const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 107
+
+    const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
+    const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201
   }
 
 }

@@ -22,6 +22,7 @@ import coil.network.HttpException
 import coil.request.*
 import coil.size.*
 import coil.transform.Transformation
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
@@ -31,7 +32,6 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
@@ -391,7 +391,7 @@ class ImageLoaderV2(
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
       allowHardware(true)
-      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+      allowRgb565(ChanSettings.isLowRamDevice())
       data(fileLocation)
       scale(Scale.FIT)
       transformations(activeListener.transformations + RESIZE_TRANSFORMATION)
@@ -784,7 +784,7 @@ class ImageLoaderV2(
             lifecycle(lifecycle)
             transformations(transformations)
             allowHardware(true)
-            allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+            allowRgb565(ChanSettings.isLowRamDevice())
             scale(scale)
             applyImageSize(imageSize)
 
@@ -846,7 +846,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(true)
-      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+      allowRgb565(ChanSettings.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -895,7 +895,7 @@ class ImageLoaderV2(
       lifecycle(lifecycle)
       transformations(transformations)
       allowHardware(true)
-      allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+      allowRgb565(ChanSettings.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -1097,7 +1097,7 @@ class ImageLoaderV2(
         lifecycle(lifecycle)
         transformations(transformations)
         allowHardware(true)
-        allowRgb565(AppModuleAndroidUtils.isLowRamDevice())
+        allowRgb565(ChanSettings.isLowRamDevice())
         scale(scale)
         size(width, height)
 

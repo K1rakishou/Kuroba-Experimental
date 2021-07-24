@@ -48,7 +48,6 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -138,7 +137,7 @@ public class AppModule {
             Context applicationContext,
             CoilOkHttpClient coilOkHttpClient
     ) {
-        boolean isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice();
+        boolean isLowRamDevice = ChanSettings.isLowRamDevice();
         double availableMemoryPercentage = getDefaultAvailableMemoryPercentage();
         Logger.d(DI_TAG, "availableMemoryPercentage=" + availableMemoryPercentage);
 
@@ -159,7 +158,7 @@ public class AppModule {
     private double getDefaultAvailableMemoryPercentage() {
         double defaultMemoryPercentage = 0.15;
 
-        if (AppModuleAndroidUtils.isLowRamDevice()) {
+        if (ChanSettings.isLowRamDevice()) {
             defaultMemoryPercentage = defaultMemoryPercentage / 2.0;
         }
 

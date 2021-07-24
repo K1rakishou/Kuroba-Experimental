@@ -723,6 +723,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_remove_image_spoilers_description">Always reveal spoiler thumbnails and images</string>
     <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
     <string name="setting_media_viewer_gesture_settings">Media viewer gesture settings</string>
+    <string name="setting_media_viewer_offscreen_pages_count">Media viewer offscreen pages count (%1$d)</string>
+    <string name="setting_media_viewer_one_offscreen_page">One offscreen page</string>
+    <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
 

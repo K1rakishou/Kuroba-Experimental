@@ -379,7 +379,7 @@ class ReportManager(
       appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
       appendLine("Development Build: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
-      appendLine("isLowRamDevice: ${AppModuleAndroidUtils.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
+      appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")

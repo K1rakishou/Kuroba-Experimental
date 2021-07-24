@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
@@ -471,7 +470,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     val previewLocation = chanPostImage.actualThumbnailUrl
       ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl.toString()) }
-      ?: MediaLocation.Remote(DEFAULT_THUMBNAIL)
+      ?: MediaLocation.Remote(AppConstants.DEFAULT_THUMBNAIL)
 
     val spoilerLocation = if (chanPostImage.spoiler) {
       chanPostImage.spoilerThumbnailUrl
@@ -527,14 +526,9 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   companion object {
     private const val TAG = "MediaViewerControllerViewModel"
-    private val DEFAULT_THUMBNAIL = (AppConstants.RESOURCES_ENDPOINT + "internal_spoiler.png")
 
     fun offscreenPageLimit(): Int {
-      return if (AppModuleAndroidUtils.isLowRamDevice()) {
-        1
-      } else {
-        2
-      }
+      return ChanSettings.mediaViewerOffscreenPagesCount()
     }
 
     @JvmStatic

@@ -234,7 +234,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     val appConstants = AppConstants(
       context = applicationContext,
       flavorType = flavorType,
-      isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice(),
+      isLowRamDevice = ChanSettings.isLowRamDevice(),
       kurobaExUserAgent = kurobaExUserAgent,
       maxPostsInDatabaseSettingValue = 125000,
       maxThreadsInDatabaseSettingValue = 12500
@@ -265,7 +265,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       protocols = NetworkModule.OkHttpProtocolList(okHttpProtocols.protocols),
       verboseLogs = ChanSettings.verboseLogs.get(),
       isDevFlavor = isDev,
-      isLowRamDevice = AppModuleAndroidUtils.isLowRamDevice(),
+      isLowRamDevice = ChanSettings.isLowRamDevice(),
       okHttpUseDnsOverHttps = ChanSettings.okHttpUseDnsOverHttps.get(),
       appConstants = appConstants
     )
@@ -392,7 +392,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "userAgent: ${appConstants.userAgent}")
     Logger.d(TAG, "kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
 
-    Logger.d(TAG, "isLowRamDevice: ${AppModuleAndroidUtils.isLowRamDevice()}, " +
+    Logger.d(TAG, "isLowRamDevice: ${ChanSettings.isLowRamDevice()}, " +
       "isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
   }
 

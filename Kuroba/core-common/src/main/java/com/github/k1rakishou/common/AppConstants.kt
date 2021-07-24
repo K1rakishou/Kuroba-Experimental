@@ -124,5 +124,6 @@ open class AppConstants(
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
+    const val DEFAULT_THUMBNAIL = (RESOURCES_ENDPOINT + "internal_spoiler.png")
   }
 }
