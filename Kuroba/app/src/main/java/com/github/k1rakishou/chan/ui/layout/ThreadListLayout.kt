@@ -76,6 +76,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.ViewUtils.hackMaxFlingVelocity
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -353,6 +354,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     // View binding
     replyLayout = findViewById(R.id.reply)
     recyclerView = findViewById(R.id.recycler_view)
+    recyclerView.hackMaxFlingVelocity()
 
     val params = replyLayout.layoutParams as LayoutParams
     params.gravity = Gravity.BOTTOM

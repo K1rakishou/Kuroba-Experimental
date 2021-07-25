@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.SystemClock
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewConfiguration
 import android.widget.AbsListView
 import android.widget.EdgeEffect
 import android.widget.ScrollView
@@ -14,6 +15,7 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
+import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -230,6 +232,16 @@ object ViewUtils {
       tabTextSizeField.isAccessible = true
       tabTextSizeField.set(this, textSizeInPixel)
     } catch (ignored: Exception) {
+    }
+  }
+
+  fun RecyclerView.hackMaxFlingVelocity() {
+    try {
+      val field: Field = this.javaClass.getDeclaredField("mMaxFlingVelocity")
+      field.isAccessible = true
+      field[this] = ViewConfiguration.getMaximumFlingVelocity() * 4
+    } catch (e: Exception) {
+      e.printStackTrace()
     }
   }
 
