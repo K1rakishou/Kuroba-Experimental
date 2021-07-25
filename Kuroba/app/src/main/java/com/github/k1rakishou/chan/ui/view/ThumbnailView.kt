@@ -80,7 +80,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   private val ioErrorAttempts = AtomicInteger(0)
   private val verboseLogs = ChanSettings.verboseLogs.get()
 
-  private var imageUrl: String? = null
+  private var _imageUrl: String? = null
+  val imageUrl: String?
+    get() = _imageUrl
+
   private var postDescriptor: PostDescriptor? = null
   private var imageSize: ImageLoaderV2.ImageSize? = null
 
@@ -178,8 +181,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       ChanSettings.PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
     }
 
-    if (url != this.imageUrl) {
-      if (this.imageUrl != null) {
+    if (url != this._imageUrl) {
+      if (this._imageUrl != null) {
         unbindImageUrl()
       }
 
@@ -187,7 +190,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       kurobaScope = KurobaCoroutineScope()
     }
 
-    this.imageUrl = url
+    this._imageUrl = url
     this.postDescriptor = postDescriptor
     this.imageSize = imageSize
     this._thumbnailViewOptions = thumbnailViewOptions
@@ -213,7 +216,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     error = false
     alphaAnimator.end()
 
-    imageUrl = null
+    _imageUrl = null
     postDescriptor = null
     imageSize = null
 
@@ -249,9 +252,9 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
-    if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.get().deleteCacheFileByUrl(imageUrl!!)
-      bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
+    if (error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
+      cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
+      bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
       return
     }
 
@@ -265,9 +268,9 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     }
 
     setOnThrottlingLongClickListener(token) { view ->
-      if (error && imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-        cacheHandler.get().deleteCacheFileByUrl(imageUrl!!)
-        bindImageUrl(imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
+      if (error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
+        cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
+        bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
         return@setOnThrottlingLongClickListener true
       }
 
@@ -340,7 +343,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   ) {
     val listener = object : ImageLoaderV2.FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
-        if (url != this@ThumbnailView.imageUrl) {
+        if (url != this@ThumbnailView._imageUrl) {
           // Request was canceled (probably because the parent view was unbound) so we don't
           // want to do anything here
           return
@@ -355,7 +358,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       }
 
       override fun onNotFound() {
-        if (url != this@ThumbnailView.imageUrl) {
+        if (url != this@ThumbnailView._imageUrl) {
           // Request was canceled (probably because the parent view was unbound) so we don't
           // want to do anything here
           return
@@ -369,7 +372,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       }
 
       override fun onResponseError(error: Throwable) {
-        if (url != this@ThumbnailView.imageUrl) {
+        if (url != this@ThumbnailView._imageUrl) {
           // Request was canceled (probably because the parent view was unbound) so we don't
           // want to do anything here
           return
@@ -401,7 +404,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     }
 
     fun loadImage() {
-      if (url != this.imageUrl) {
+      if (url != this._imageUrl) {
         requestDisposable?.dispose()
         requestDisposable = null
       }

@@ -60,10 +60,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     this.horizPaddingPx = horizPaddingPx
     cachedThumbnailViewContainerInfoArray[PRE_BIND].updateFrom(postCellData)
 
-    if (childCount != postCellData.postImages.size) {
-      removeAllViews()
-    }
-
     when {
       postCellData.post.postImages.size == 1 -> {
         this.setVisibilityFast(View.VISIBLE)
@@ -128,10 +124,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   fun unbindContainer() {
     unbindPostImages()
 
-    if (childCount != 0) {
-      removeAllViews()
-    }
-
     cachedThumbnailViewContainerInfoArray[PRE_BIND].unbindEverything()
     cachedThumbnailViewContainerInfoArray[BIND].unbindEverything()
   }
@@ -145,9 +137,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val prevChanPostImages = cachedThumbnailViewContainerInfoArray[BIND].prevChanPostImages
-    val childCount = (getChildAt(0) as? ViewGroup)?.childCount ?: 0
 
-    if (thumbnailViews != null || (prevChanPostImages != null && childCount == prevChanPostImages.size)) {
+    if (thumbnailViews != null || (prevChanPostImages != null && imagesAreTheSame(childCount, prevChanPostImages))) {
       // The post was unbound while we were waiting for the layout to happen
       return
     }
@@ -157,15 +148,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
 
-    for (postImage in postCellData.postImages) {
+    for ((index, postImage) in postCellData.postImages.withIndex()) {
       if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
         continue
       }
 
-      val thumbnailView = when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
-        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
-      }
+      val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(index, postAlignmentMode)
 
       thumbnailView.setViewId(View.generateViewId())
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
@@ -208,13 +196,38 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         }
       }
 
-      val layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
-      this.addView(thumbnailView, layoutParams)
+      if (needAddToParent) {
+        val layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        this.addView(thumbnailView, layoutParams)
+      }
 
       resultThumbnailViews += thumbnailView
     }
 
+    removeExtraViewsIfNeeded(resultThumbnailViews.size)
     thumbnailViews = resultThumbnailViews
+  }
+
+  private fun imagesAreTheSame(childCount: Int, prevChanPostImages: MutableList<ChanPostImage>): Boolean {
+    if (childCount != prevChanPostImages.size) {
+      return false
+    }
+
+    for (index in 0 until childCount) {
+      val postImageThumbnailViewContainer = getChildAt(index) as? PostImageThumbnailViewContainer
+        ?: return false
+
+      val imageUrl = prevChanPostImages[index].imageUrl?.toString()
+      val actualThumbnailUrl = prevChanPostImages[index].actualThumbnailUrl?.toString()
+      val spoilerThumbnailUrl = prevChanPostImages[index].spoilerThumbnailUrl?.toString()
+      val cachedImageUrl = postImageThumbnailViewContainer.actualThumbnailView.imageUrl
+
+      if (cachedImageUrl != imageUrl && cachedImageUrl != actualThumbnailUrl && cachedImageUrl != spoilerThumbnailUrl) {
+        return false
+      }
+    }
+
+    return true
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
@@ -237,10 +250,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         continue
       }
 
-      val thumbnailView = when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> PostImageThumbnailViewContainer(context, true)
-        ChanSettings.PostAlignmentMode.AlignRight -> PostImageThumbnailViewContainer(context, false)
-      }
+      val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(0, postAlignmentMode)
 
       thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
       thumbnailView.setViewId(View.generateViewId())
@@ -282,29 +292,59 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         }
       }
 
-      val layoutParams = ViewGroup.LayoutParams(
-        ViewGroup.LayoutParams.WRAP_CONTENT,
-        ViewGroup.LayoutParams.WRAP_CONTENT
-      )
-      this.addView(thumbnailView, layoutParams)
+      if (needAddToParent) {
+        val layoutParams = ViewGroup.LayoutParams(
+          ViewGroup.LayoutParams.WRAP_CONTENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+        this.addView(thumbnailView, layoutParams)
+      }
 
       resultThumbnailViews += thumbnailView
     }
 
-    if (resultThumbnailViews.isEmpty()) {
+    removeExtraViewsIfNeeded(resultThumbnailViews.size)
+    thumbnailViews = resultThumbnailViews
+  }
+
+  private fun removeExtraViewsIfNeeded(newViewsCount: Int) {
+    if (newViewsCount >= childCount) {
       return
     }
 
-    thumbnailViews = resultThumbnailViews
+    var toDelete = childCount - newViewsCount
+    var childIndexToDelete = childCount - 1
+
+    while (toDelete > 0) {
+      removeViewAt(childIndexToDelete)
+
+      --childIndexToDelete
+      --toDelete
+    }
+  }
+
+  private fun getOrCreateThumbnailView(
+    index: Int,
+    postAlignmentMode: ChanSettings.PostAlignmentMode
+  ): Pair<PostImageThumbnailViewContainer, Boolean> {
+    val reversed = postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
+
+    var view = getChildAt(index)
+    if (view != null && view is PostImageThumbnailViewContainer && view.reversed == reversed) {
+      return view to false
+    }
+
+    if (view != null) {
+      removeViewAt(index)
+    }
+
+    view = PostImageThumbnailViewContainer(context, reversed)
+    return view to true
   }
 
   private fun unbindPostImages() {
     thumbnailViews?.forEach { thumbnailView ->
       thumbnailView.unbindPostImage()
-    }
-
-    if (this.childCount != 0) {
-      this.removeAllViews()
     }
 
     thumbnailViews?.clear()

@@ -27,9 +27,9 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor")
 class PostImageThumbnailViewContainer(
   context: Context,
-  private val reversed: Boolean
+  val reversed: Boolean
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
-  private val actualThumbnailView: PostImageThumbnailView
+  val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
   private val postFileNameInfoTextView: TextView
   private val thumbnailFileExtension: TextView
