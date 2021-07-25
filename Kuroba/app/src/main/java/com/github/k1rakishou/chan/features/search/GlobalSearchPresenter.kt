@@ -60,11 +60,14 @@ internal class GlobalSearchPresenter(
     if (searchInputState.searchParameters.isValid()) {
       setState(GlobalSearchControllerState.Data(searchInputState))
 
-      withViewNormal {
-        restoreSearchResultsController(
-          searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
-          searchInputState.searchParameters
-        )
+      val searchResultsState = searchResultsStateStorage.searchResultsState
+      if (searchResultsState != null) {
+        withViewNormal {
+          restoreSearchResultsController(
+            searchInputState.sitesWithSearch.selectedSite.siteDescriptor,
+            searchInputState.searchParameters
+          )
+        }
       }
 
       return true
