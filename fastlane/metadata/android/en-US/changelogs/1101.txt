@@ -1,0 +1,33 @@
+v0.11.1-beta
+TLDR version:
+The long awaited performance update.
+
+Full version:
+- New icons (including adaptive).
+- Fix thumbnails being cut off slightly horizontally when a post has only one thumbnail.
+- Reuse PostImageThumbnailViewContainer instead of doing removeAllViews() on every bind/unbind().
+
+v0.11.0-beta
+- New post comment HTML parser. ~1.5-2x times faster than the old one. The old one was Jsoup which was doing lots of unnecessary stuff which made it slower. The new one was written from scratch for only one purpose: to parse post comment HTML (which only uses a handful of HTML tags).
+- Consider Android M and below low RAM devices. Low RAM devices use more aggressive optimizations.
+- Reduce the amount of memory used by Coil's internal bitmap caches.
+- Reduce the amount of memory used by ChanPost caches.
+- Move some processing that was previously called on the main thread on each PostCell bind()/unbind() onto a background thread.
+- Do not use OkHttp Cache for Coil's OkHttp since we already use our own CacheHandler inside ImageLoaderV2 (should reduce memory and disk usage).
+- Fix some Manager classes never removing cached data that is used by ChanThreads when those threads are removed from the ChanThreadsCache. This was a pretty serious oversight which could easily lead to increased GC runs and even OOMs. Now, once a ChanThread is removed from ChanThreadsCache listeners that listen for this to happen are notified and invoked immediately.
+- Separate IMMUNE_THREADS_COUNT for low/normal ram devices.
+- Reduce the overdraw issues on most of the screens.
+- Reduce the overall view tree nestedness.
+- Use recycledViewPool for catalog/thread recycler again.
+- Rework PageRequestManager internal data structure a little bit. Make the result thread list a map for faster thread page look up.
+- Add batched versions of some PostFilterManager methods.
+- Move some potentially heavy (due to synchronization) stuff out of PostCell to ThreadPresenter (manager classes that are called on every PostCell.onPostBind() / PostCell.onPostUnbind()). Also move that stuff onto a background thread so that the main thread won't hang in cases where the internal locks are being held for quite some time by other threads.
+- Rework post highlighting.
+- Fix 4chan global search.
+- Fix warosu search.
+- Add option to force HTTPS scheme for url comment links.
+- Add ability to delete all saved posts at once.
+- Show post icons on CardPostCell.
+- Add a setting to never remember and never use 4chan captcha cookie.
+- Add "Media viewer offscreen pages count" setting.
+- Make some of the dagger dependencies lazy to postpone their initialization utils they are actually needed.
