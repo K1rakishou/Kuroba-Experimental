@@ -403,6 +403,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     var curWidth = 0
     var curHeight = 0
 
+    val horizPadding = if (imagesCount > 1) {
+      MULTIPLE_THUMBNAILS_INTERNAL_PADDING
+    } else {
+      0
+    }
+
     for (rowIndex in 0 until rowsCount) {
       var highestChildOfRow = 0
 
@@ -419,14 +425,16 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
           continue
         }
 
-        if (isMirrored) {
-          child.updatePadding(left = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
-        } else {
-          child.updatePadding(right = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
+        if (imagesCount > 1) {
+          if (isMirrored) {
+            child.updatePadding(left = horizPadding, bottom = horizPadding)
+          } else {
+            child.updatePadding(right = horizPadding, bottom = horizPadding)
+          }
         }
 
         child.measure(
-          MeasureSpec.makeMeasureSpec(actualImageWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING, MeasureSpec.EXACTLY),
+          MeasureSpec.makeMeasureSpec(actualImageWidth - horizPadding, MeasureSpec.EXACTLY),
           MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
         )
 
@@ -434,7 +442,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       var curLeft = if (isMirrored) {
-        this.measuredWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING
+        this.measuredWidth - horizPadding
       } else {
         0
       }
