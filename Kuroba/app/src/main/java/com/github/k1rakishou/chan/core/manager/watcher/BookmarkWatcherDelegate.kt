@@ -95,9 +95,7 @@ class BookmarkWatcherDelegate(
       currentThreadDescriptor
     )
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "doWorkInternal() updating ${watchingBookmarkDescriptors.joinToString()}")
-    }
+    Logger.d(TAG, "doWorkInternal() updating ${watchingBookmarkDescriptors.size} bookmarks")
 
     try {
       lastPageNotificationsHelper.get().showOrUpdateNotifications(watchingBookmarkDescriptors)
