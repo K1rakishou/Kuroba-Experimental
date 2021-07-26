@@ -689,8 +689,8 @@ class BrowseController(
 
     return when {
       splitNav != null -> {
-        val navigationController = splitNav.getRightController() as StyledToolbarNavigationController
-        navigationController.top as? ViewThreadController
+        val navigationController = splitNav.getRightController() as StyledToolbarNavigationController?
+        navigationController?.top as? ViewThreadController
       }
       slideNav != null -> {
         slideNav.getRightController() as? ViewThreadController
