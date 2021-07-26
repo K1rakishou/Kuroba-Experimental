@@ -213,7 +213,7 @@ class BookmarkForegroundWatcher(
       val foregroundInterval = foregroundWatchIntervalMs()
 
       Logger.d(TAG, "updateBookmarksWorkerLoop() doWork() completed, waiting for " +
-        "${foregroundInterval}ms + (${(activeBookmarksCount / 10)} bookmarks * ${foregroundWatchAdditionalIntervalMs}ms) " +
+        "${foregroundInterval}ms + (${(activeBookmarksCount / 10)} * ${foregroundWatchAdditionalIntervalMs}ms) " +
         "(total wait time: ${foregroundInterval + additionalInterval}ms)")
     }
 

@@ -60,21 +60,21 @@ class BookmarkFilterWatchableThreadsUseCase(
 
   @Suppress("UnnecessaryVariable")
   private suspend fun doWorkInternal(): Boolean {
-    check(boardManager.isReady()) { "boardManager is not ready" }
-    check(bookmarksManager.isReady()) { "bookmarksManager is not ready" }
-    check(chanFilterManager.isReady()) { "chanFilterManager is not ready" }
-    check(siteManager.isReady()) { "siteManager is not ready" }
-    check(chanPostRepository.isReady()) { "chanPostRepository is not ready" }
-
-    val boardDescriptorsToCheck = collectBoardDescriptorsToCheck()
-    if (boardDescriptorsToCheck.isEmpty()) {
-      Logger.d(TAG, "doWorkInternal() boardDescriptorsToCheck is empty")
-      return true
-    }
+    boardManager.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
+    chanFilterManager.awaitUntilInitialized()
+    siteManager.awaitUntilInitialized()
+    chanPostRepository.awaitUntilInitialized()
 
     val enabledWatchFilters = chanFilterManager.getEnabledWatchFilters()
     if (enabledWatchFilters.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() enabledWatchFilters is empty")
+      return true
+    }
+
+    val boardDescriptorsToCheck = collectBoardDescriptorsToCheck()
+    if (boardDescriptorsToCheck.isEmpty()) {
+      Logger.d(TAG, "doWorkInternal() boardDescriptorsToCheck is empty")
       return true
     }
 
@@ -87,9 +87,7 @@ class BookmarkFilterWatchableThreadsUseCase(
       }
     }
 
-    val catalogFetchResults = fetchFilterWatcherCatalogs(
-      boardDescriptorsToCheck,
-    )
+    val catalogFetchResults = fetchFilterWatcherCatalogs(boardDescriptorsToCheck)
 
     val filterWatchCatalogInfoObjects = filterOutNonSuccessResults(catalogFetchResults)
     if (filterWatchCatalogInfoObjects.isEmpty()) {

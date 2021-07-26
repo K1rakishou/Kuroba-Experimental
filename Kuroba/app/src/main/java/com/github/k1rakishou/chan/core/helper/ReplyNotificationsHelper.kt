@@ -84,12 +84,7 @@ class ReplyNotificationsHelper(
             || bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized
             || bookmarkChange is BookmarksManager.BookmarkChange.BookmarksDeleted
         }
-        .collect { bookmarkChange ->
-          Logger.d(TAG, "bookmarksManager.listenForBookmarksChanges(), " +
-            "bookmarkChange=${bookmarkChange.javaClass.simpleName}")
-
-          showOrUpdateNotifications()
-        }
+        .collect { showOrUpdateNotifications() }
     }
   }
 

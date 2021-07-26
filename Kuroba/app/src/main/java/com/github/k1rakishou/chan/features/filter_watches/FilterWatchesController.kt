@@ -99,7 +99,7 @@ class FilterWatchesController(
     }
 
     swipeRefreshLayout.setOnRefreshListener {
-      filterWatcherCoordinator.restartFilterWatcherWithTinyDelay(null)
+      filterWatcherCoordinator.restartFilterWatcherWithTinyDelay(isCalledBySwipeToRefresh = true)
 
       // The process of reloading filter watches may not notify us about the results when none of the
       // bookmarks were changed during the update so we need to have this timeout mechanism in

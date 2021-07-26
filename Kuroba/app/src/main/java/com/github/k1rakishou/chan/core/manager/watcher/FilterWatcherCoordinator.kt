@@ -35,7 +35,7 @@ class FilterWatcherCoordinator(
 
     appScope.launch {
       chanFilterManager.listenForFiltersChanges()
-        .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent) }
+        .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent = filterEvent) }
     }
 
     appScope.launch {
@@ -43,7 +43,7 @@ class FilterWatcherCoordinator(
         .asFlow()
         .collect { enabled ->
           if (enabled) {
-            restartFilterWatcherWithTinyDelay(null)
+            restartFilterWatcherWithTinyDelay()
           } else {
             stopFilterWatcherWork()
           }
@@ -53,9 +53,7 @@ class FilterWatcherCoordinator(
     appScope.launch {
       ChanSettings.filterWatchInterval.listenForChanges()
         .asFlow()
-        .collect {
-          restartFilterWatcherWithTinyDelay(null)
-        }
+        .collect { restartFilterWatcherWithTinyDelay() }
     }
   }
 
@@ -70,7 +68,10 @@ class FilterWatcherCoordinator(
     cancelFilterWatching(appConstants, appContext)
   }
 
-  fun restartFilterWatcherWithTinyDelay(filterEvent: ChanFilterManager.FilterEvent?) {
+  fun restartFilterWatcherWithTinyDelay(
+    filterEvent: ChanFilterManager.FilterEvent? = null,
+    isCalledBySwipeToRefresh: Boolean = false
+  ) {
     restartFilterWatcherDebouncer.post(1000L, {
       if (filterEvent?.hasWatchFilter() == false) {
         return@post
@@ -94,7 +95,7 @@ class FilterWatcherCoordinator(
       // watches screen he will see nothing until the next filter watch update cycle. Since the regular
       // update cycle is pretty big (4 hours minimum) we need to use another one that will update
       // filter watches right away.
-      startFilterWatchingRightAway(appConstants, appContext)
+      startFilterWatchingRightAway(appConstants, appContext, isCalledBySwipeToRefresh)
     })
   }
 
@@ -124,7 +125,8 @@ class FilterWatcherCoordinator(
 
     suspend fun startFilterWatchingRightAway(
       appConstants: AppConstants,
-      appContext: Context
+      appContext: Context,
+      isCalledBySwipeToRefresh: Boolean
     ) {
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatchingRightAway() called tag=$tag")
@@ -146,10 +148,15 @@ class FilterWatcherCoordinator(
         .setRequiredNetworkType(NetworkType.CONNECTED)
         .build()
 
+      val delaySeconds = if (isCalledBySwipeToRefresh) {
+        1L
+      } else {
+        5L
+      }
+
       val workRequest = OneTimeWorkRequestBuilder<FilterWatcherWorker>()
         .addTag(tag)
-        // Well not exactly right away, but in 5 seconds
-        .setInitialDelay(5, TimeUnit.SECONDS)
+        .setInitialDelay(delaySeconds, TimeUnit.SECONDS)
         .setConstraints(constraints)
         .build()
 

@@ -18,7 +18,6 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
@@ -39,7 +38,6 @@ class BookmarkWatcherCoordinator(
 
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .onEach { Logger.d(TAG, "listenForBookmarksChanges bookmarkChange=${it}") }
         // Pass the filter if we have at least one bookmark change that we actually want
         .filter { bookmarkChange -> isWantedBookmarkChange(bookmarkChange) }
         .collect { bookmarkChange ->

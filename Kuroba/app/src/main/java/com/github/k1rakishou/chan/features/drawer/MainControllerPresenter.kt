@@ -191,6 +191,7 @@ class MainControllerPresenter(
 
     historyNavigationManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
 

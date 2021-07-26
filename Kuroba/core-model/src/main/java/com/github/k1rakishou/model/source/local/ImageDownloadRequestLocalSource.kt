@@ -12,6 +12,7 @@ class ImageDownloadRequestLocalSource(
   database: KurobaDatabase,
 ) : AbstractLocalSource(database) {
   private val imageDownloadRequestDao = database.imageDownloadRequestDao()
+  private val dayAgo by lazy { DateTime.now().minus(Period.days(1)) }
 
   suspend fun createMany(imageDownloadRequests: List<ImageDownloadRequest>): List<ImageDownloadRequest> {
     ensureInTransaction()
@@ -182,11 +183,8 @@ class ImageDownloadRequestLocalSource(
   suspend fun deleteOldAndHangedInQueueStatus() {
     ensureInTransaction()
 
-    imageDownloadRequestDao.deleteOlderThan(DAY_AGO)
+    imageDownloadRequestDao.deleteOlderThan(dayAgo)
     imageDownloadRequestDao.deleteWithStatus(ImageDownloadRequest.Status.Queued.rawValue)
   }
 
-  companion object {
-    private val DAY_AGO = DateTime.now().minus(Period.days(1))
-  }
 }

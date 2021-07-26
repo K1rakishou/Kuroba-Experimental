@@ -4,7 +4,6 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.containsPattern
-import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.HttpUrl
@@ -31,16 +30,8 @@ class CloudFlareHandlerInterceptor(
     val host = request.url.host
 
     if (requireCloudFlareCookie(request)) {
-      if (verboseLogs) {
-        Logger.d(TAG, "[$okHttpType] requireCloudFlareCookie() returned true for $host")
-      }
-
       val updatedRequest = addCloudFlareCookie(chain.request())
       if (updatedRequest != null) {
-        if (verboseLogs) {
-          Logger.d(TAG, "[$okHttpType] Updated request to host: '$host' with cfClearance cookie")
-        }
-
         request = updatedRequest
         addedCookie = true
       }
@@ -155,10 +146,6 @@ class CloudFlareHandlerInterceptor(
     if (cookieValue.isEmpty()) {
       Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is empty")
       return null
-    }
-
-    if (verboseLogs) {
-      Logger.d(TAG, "[$okHttpType] cookieValue=${formatToken(cookieValue)}")
     }
 
     return prevRequest.newBuilder()

@@ -340,10 +340,6 @@ class BookmarkWatcherDelegate(
       stickyNoCap = originalPost.stickyThread is StickyThread.StickyUnlimited
     )
 
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "updateBookmark() threadBookmark=${threadBookmark}")
-    }
-
     threadBookmark.clearFirstFetchFlag()
   }
 
@@ -453,10 +449,6 @@ class BookmarkWatcherDelegate(
             } as? ThreadBookmarkInfoPostObject.OriginalPost
 
             requireNotNull(originalPost) { "No OP!" }
-            val postsCount = fetchResult.threadBookmarkInfoObject.simplePostObjects.size
-
-            Logger.d(TAG, "FetchResult.Success: descriptor=${fetchResult.threadDescriptor}, " +
-              "postsCount=$postsCount, originalPost=${originalPost}")
           }
 
           ++successCount

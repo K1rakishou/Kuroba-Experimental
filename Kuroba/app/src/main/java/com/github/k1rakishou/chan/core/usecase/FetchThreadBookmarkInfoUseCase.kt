@@ -67,10 +67,6 @@ class FetchThreadBookmarkInfoUseCase(
     threadJsonEndpoint: HttpUrl,
     chanReader: ChanReader
   ): ThreadBookmarkFetchResult {
-    if (verboseLogsEnabled) {
-      Logger.d(TAG, "fetchThreadBookmarkInfo() threadJsonEndpoint = $threadJsonEndpoint")
-    }
-
     val requestBuilder = Request.Builder()
       .url(threadJsonEndpoint)
       .get()

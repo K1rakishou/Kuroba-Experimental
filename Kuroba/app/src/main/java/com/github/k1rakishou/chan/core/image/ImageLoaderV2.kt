@@ -257,11 +257,6 @@ class ImageLoaderV2(
         if (alreadyHasActiveRequest) {
           // Another request with the same url is already running, wait until the other request is
           // completed, it will invoke all callbacks.
-
-          if (verboseLogs) {
-            Logger.d(TAG, "Request '$url' is already active, waiting for it's completion")
-          }
-
           return@launch
         }
 

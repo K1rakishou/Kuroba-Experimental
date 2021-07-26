@@ -32,7 +32,7 @@ class ChanThreadsCache(
 ) {
   private val chanThreads = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, ChanThread>(128)
   private val lastEvictInvokeTime = AtomicLong(0L)
-
+  private val oneYearPeriodMillis by lazy { Period.years(1).millis }
   private val chanThreadDeleteEventListeners = CopyOnWriteArrayList<(ThreadDeleteEvent) -> Unit>()
 
   fun addChanThreadDeleteEventListener(listener: (ThreadDeleteEvent) -> Unit) {
@@ -365,7 +365,7 @@ class ChanThreadsCache(
     // execution. This is needed for thread previewing to work correctly. If the user then opens this
     // thread normally the lastAccessedTime will be set to the current time so the thread will be
     // moved to top of the eviction queue.
-    return now - ONE_YEAR_PERIOD_MILLIS
+    return now - oneYearPeriodMillis
   }
 
   @OptIn(ExperimentalTime::class)
@@ -531,8 +531,6 @@ class ChanThreadsCache(
 
     // 15 seconds
     private val EVICTION_TIMEOUT_MS = TimeUnit.SECONDS.toMillis(15)
-
-    private val ONE_YEAR_PERIOD_MILLIS = Period.years(1).millis
 
     fun immuneThreadsCount(isLowRamDevice: Boolean): Int {
       return if (isLowRamDevice) {

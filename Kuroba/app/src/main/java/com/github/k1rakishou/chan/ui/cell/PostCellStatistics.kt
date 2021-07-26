@@ -9,6 +9,8 @@ import kotlin.time.ExperimentalTime
 
 object PostCellStatistics {
   private const val TAG = "PostCellStatistics"
+  private const val LOG_ENABLED = false
+
   private val ONE_MINUTE = TimeUnit.MINUTES.toMillis(1)
 
   private var lastMeasureResetTime = 0L
@@ -27,7 +29,7 @@ object PostCellStatistics {
 
   @OptIn(ExperimentalTime::class)
   fun onPostBound(postCellInterface: PostCellInterface?, time: Duration) {
-    if (!AppModuleAndroidUtils.isDevBuild()) {
+    if (!AppModuleAndroidUtils.isDevBuild() || !LOG_ENABLED) {
       return
     }
 
@@ -74,7 +76,7 @@ object PostCellStatistics {
 
   @OptIn(ExperimentalTime::class)
   fun onPostMeasured(postCellInterface: PostCellInterface?, time: Duration) {
-    if (!AppModuleAndroidUtils.isDevBuild()) {
+    if (!AppModuleAndroidUtils.isDevBuild() || !LOG_ENABLED) {
       return
     }
 

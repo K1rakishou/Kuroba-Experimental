@@ -274,8 +274,8 @@ class ChanFilterManager(
 
   fun getEnabledWatchFilters(): List<ChanFilter> {
     return lock.read {
-      return@read filters.filter { chanFilter -> chanFilter.isEnabledWatchFilter() }
-        .map { chanFilter -> chanFilter.copy() }
+      return@read filters
+        .filter { chanFilter -> chanFilter.isEnabledWatchFilter() }
     }
   }
 
