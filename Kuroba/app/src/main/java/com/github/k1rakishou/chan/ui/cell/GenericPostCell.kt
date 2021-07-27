@@ -61,7 +61,9 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
     val newLayoutId = getLayoutId(postCellData)
 
     if (childCount != 1 || newLayoutId != layoutId) {
-      removeAllViews()
+      if (childCount > 0) {
+        removeAllViews()
+      }
 
       val postCellView = when (newLayoutId) {
         R.layout.cell_post_stub -> PostStubCell(context)

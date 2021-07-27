@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -291,11 +292,7 @@ class StartActivityStartupHandlerHelper(
     val chanDescriptorResult = siteResolver.get().resolveChanDescriptorForUrl(url)
 
     if (chanDescriptorResult == null) {
-      Toast.makeText(
-        context,
-        getString(R.string.open_link_not_matched, url),
-        Toast.LENGTH_LONG
-      ).show()
+      showToast(context, getString(R.string.open_link_not_matched, url), Toast.LENGTH_LONG)
 
       Logger.d(TAG, "restoreFromUrl() failure")
       return false

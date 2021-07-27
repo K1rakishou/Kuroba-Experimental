@@ -187,7 +187,7 @@ class SharingActivity : AppCompatActivity() {
 
   private suspend fun showToast(context: Context, message: String, duration: Int) {
     withContext(Dispatchers.Main) {
-      Toast.makeText(context, message, duration).show()
+      Toast.makeText(context.applicationContext, message, duration).show()
     }
   }
 

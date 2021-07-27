@@ -534,12 +534,12 @@ public class AppModuleAndroidUtils {
 
     public static void showToast(Context context, String message, int duration) {
         if (BackgroundUtils.isMainThread()) {
-            cancellableToast.showToast(context, message, duration);
+            cancellableToast.showToast(context.getApplicationContext(), message, duration);
             return;
         }
 
         BackgroundUtils.runOnMainThread(() -> {
-            cancellableToast.showToast(context, message, duration);
+            cancellableToast.showToast(context.getApplicationContext(), message, duration);
         });
     }
 

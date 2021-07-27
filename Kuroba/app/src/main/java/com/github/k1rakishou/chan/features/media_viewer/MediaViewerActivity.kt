@@ -236,7 +236,7 @@ class MediaViewerActivity : ControllerHostActivity(),
       val errorMessage = "Failed to extract viewableMedia from intent '$intent'"
 
       Logger.e(TAG, "handleNewIntent() $errorMessage")
-      Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+      Toast.makeText(applicationContext, errorMessage, Toast.LENGTH_LONG).show()
 
       return false
     }
@@ -250,7 +250,7 @@ class MediaViewerActivity : ControllerHostActivity(),
 
     if (!success) {
       val errorMessage = "Failed to display viewableMedia from intent '$intent'"
-      Toast.makeText(this, errorMessage, Toast.LENGTH_LONG).show()
+      Toast.makeText(applicationContext, errorMessage, Toast.LENGTH_LONG).show()
     }
 
     return success

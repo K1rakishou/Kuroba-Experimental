@@ -27,7 +27,7 @@ class CancellableToast {
     toastRef.get()?.cancel()
     toastRef.clear()
 
-    val newToast = Toast.makeText(context, message, duration)
+    val newToast = Toast.makeText(context.applicationContext, message, duration)
       .apply { show() }
 
     toastRef = WeakReference(newToast)

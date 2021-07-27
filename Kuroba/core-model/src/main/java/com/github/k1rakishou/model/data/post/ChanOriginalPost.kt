@@ -22,8 +22,12 @@ class ChanOriginalPost(
   override val uniqueIps: Int = -1,
   val lastModified: Long,
   val sticky: Boolean = false,
-  closed: Boolean = false,
-  archived: Boolean = false,
+  @get:Synchronized
+  @set:Synchronized
+  var closed: Boolean = false,
+  @get:Synchronized
+  @set:Synchronized
+  var archived: Boolean = false,
   repliesFrom: Set<Long>? = null,
   deleted: Boolean = false
 ) : ChanPost(
@@ -43,14 +47,6 @@ class ChanOriginalPost(
   repliesFrom,
   deleted
 ) {
-
-  @get:Synchronized
-  @set:Synchronized
-  var archived: Boolean = closed
-
-  @get:Synchronized
-  @set:Synchronized
-  var closed: Boolean = archived
 
   override fun deepCopy(): ChanPost {
     return ChanOriginalPost(
