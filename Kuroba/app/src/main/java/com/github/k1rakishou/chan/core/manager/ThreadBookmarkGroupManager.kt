@@ -444,10 +444,7 @@ class ThreadBookmarkGroupManager(
         val threadDescriptors = bookmarkChange.threadDescriptors.toList()
 
         if (verboseLogs) {
-          Logger.d(
-            TAG,
-            "New BookmarksCreated event, threadDescriptors count: ${threadDescriptors.size}"
-          )
+          Logger.d(TAG, "New BookmarksCreated event, threadDescriptors count: ${threadDescriptors.size}")
         }
 
         createGroupEntries(threadDescriptors)
@@ -456,10 +453,7 @@ class ThreadBookmarkGroupManager(
         val threadDescriptors = bookmarkChange.threadDescriptors.toList()
 
         if (verboseLogs) {
-          Logger.d(
-            TAG,
-            "New BookmarksDeleted event, threadDescriptors count: ${threadDescriptors.size}"
-          )
+          Logger.d(TAG, "New BookmarksDeleted event, threadDescriptors count: ${threadDescriptors.size}")
         }
 
         deleteGroupEntries(threadDescriptors)
