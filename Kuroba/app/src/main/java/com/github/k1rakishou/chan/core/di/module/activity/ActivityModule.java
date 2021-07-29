@@ -132,7 +132,7 @@ public class ActivityModule {
 
     @PerActivity
     @Provides
-    public GlobalViewStateManager provideViewFlagsStorage() {
+    public GlobalViewStateManager provideGlobalViewStateManager() {
         return new GlobalViewStateManager();
     }
 

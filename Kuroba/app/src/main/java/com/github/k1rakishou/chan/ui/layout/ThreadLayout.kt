@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
@@ -158,6 +159,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
+  @Inject
+  lateinit var globalViewStateManager: GlobalViewStateManager
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -821,6 +824,8 @@ class ThreadLayout @JvmOverloads constructor(
   @Suppress("MoveLambdaOutsideParentheses")
   override fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean) {
     serializedCoroutineExecutor.post {
+      val type = threadControllerType ?: return@post
+
       // hideRepliesToThisPost is false here because we don't have posts in the catalog mode so there
       // is no point in hiding replies to a thread
       val postHide = ChanPostHide(
@@ -840,6 +845,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       SnackbarWrapper.create(
+        globalViewStateManager,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -853,7 +859,7 @@ class ThreadLayout @JvmOverloads constructor(
             presenter.refreshUI()
           }
         })
-        show()
+        show(type)
       }
     }
   }
@@ -865,6 +871,8 @@ class ThreadLayout @JvmOverloads constructor(
     threadNo: Long
   ) {
     serializedCoroutineExecutor.post {
+      val type = threadControllerType ?: return@post
+
       val hideList: MutableList<ChanPostHide> = ArrayList()
       for (postDescriptor in postDescriptors) {
         // Do not add the OP post to the hideList since we don't want to hide an OP post
@@ -891,6 +899,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       SnackbarWrapper.create(
+        globalViewStateManager,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -906,7 +915,7 @@ class ThreadLayout @JvmOverloads constructor(
           }
         }
 
-        show()
+        show(type)
       }
     }
   }
@@ -938,16 +947,19 @@ class ThreadLayout @JvmOverloads constructor(
     selectedPosts: List<PostDescriptor>
   ) {
     serializedCoroutineExecutor.post {
+      val type = threadControllerType ?: return@post
+
       postHideManager.get().removeManyChanPostHides(selectedPosts)
       presenter.refreshUI()
 
       SnackbarWrapper.create(
+        globalViewStateManager,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
         getString(R.string.restored_n_posts, selectedPosts.size),
         Snackbar.LENGTH_LONG
-      ).apply { show() }
+      ).apply { show(type) }
     }
   }
 
@@ -1010,6 +1022,9 @@ class ThreadLayout @JvmOverloads constructor(
     val descriptor = presenter.currentChanDescriptor
       ?: return
 
+    val type = threadControllerType
+      ?: return
+
     if (threadListLayout.scrolledToBottom() || !BackgroundUtils.isInForeground()) {
       dismissSnackbar()
       return
@@ -1029,6 +1044,7 @@ class ThreadLayout @JvmOverloads constructor(
       dismissSnackbar()
 
       newPostsNotification = SnackbarWrapper.create(
+        globalViewStateManager,
         globalWindowInsetsManager,
         themeEngine.chanTheme,
         this,
@@ -1040,7 +1056,7 @@ class ThreadLayout @JvmOverloads constructor(
           dismissSnackbar()
         }
 
-        show()
+        show(type)
       }
     }
   }

@@ -2,8 +2,11 @@ package com.github.k1rakishou.chan.ui.widget
 
 import android.graphics.Color
 import android.view.View
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
@@ -19,6 +22,7 @@ import com.google.android.material.snackbar.Snackbar
 import javax.inject.Inject
 
 class SnackbarWrapper private constructor(
+  private val globalViewStateManager: GlobalViewStateManager,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
   private var snackbar: Snackbar? = null
 ) {
@@ -45,14 +49,26 @@ class SnackbarWrapper private constructor(
     snackbar?.setAction(actionTextId) { onClickListener.invoke() }
   }
 
-  fun show() {
+  fun show(threadControllerType: ThreadSlideController.ThreadControllerType) {
+    val isReplyLayoutOpened = globalViewStateManager.isReplyLayoutOpened(threadControllerType)
+    if (isReplyLayoutOpened) {
+      // Do not show the snackbar when the reply layout is opened
+      return
+    }
+
+    snackbar?.view?.let { snackbarView ->
+      if (ChanSettings.isSplitLayoutMode()) {
+        snackbarView.translationY = -(globalWindowInsetsManager.bottom() + MARGIN).toFloat()
+      } else {
+        snackbarView.translationY = -(SNACKBAR_HEIGHT + globalWindowInsetsManager.bottom() + MARGIN).toFloat()
+      }
+    }
+
     snackbar?.addCallback(object : BaseTransientBottomBar.BaseCallback<Snackbar>() {
       override fun onShown(transientBottomBar: Snackbar) {
         super.onShown(transientBottomBar)
 
         val view = transientBottomBar.view
-        updateSnackbarBottomPaddingSuperHacky(view)
-
         findFab(view)?.hide()
       }
 
@@ -63,9 +79,8 @@ class SnackbarWrapper private constructor(
         snackbar?.removeCallback(this)
 
         val bottomNavigationView = findBottomNavigationView(view)
-          ?: return
 
-        if (bottomNavigationView.isFullyVisible()) {
+        if (bottomNavigationView?.isFullyVisible() == true || ChanSettings.isSplitLayoutMode()) {
           val fab = findFab(view)
             ?: return
 
@@ -104,22 +119,11 @@ class SnackbarWrapper private constructor(
     return fab
   }
 
-  private fun updateSnackbarBottomPaddingSuperHacky(snackbarView: View) {
-    val bottomNavView = findBottomNavigationView(snackbarView)
-    if (bottomNavView == null) {
-      snackbarView.translationY = 0f
-      return
-    }
-
-    if (snackbarView.y + snackbarView.height > bottomNavView.y) {
-      val newTranslationY = (snackbarView.y + snackbarView.height) - bottomNavView.y
-      snackbarView.translationY = -(newTranslationY + MARGIN)
-    } else {
-      snackbarView.translationY = -(globalWindowInsetsManager.bottom()).toFloat()
-    }
-  }
-
   private fun findBottomNavigationView(snackbarView: View): KurobaBottomNavigationView? {
+    if (ChanSettings.isSplitLayoutMode()) {
+      return null
+    }
+
     var parent = snackbarView.parent
 
     while (parent != null && parent !is DrawerWidthAdjustingLayout) {
@@ -146,6 +150,7 @@ class SnackbarWrapper private constructor(
 
   companion object {
     private val MARGIN = dp(8f)
+    private val SNACKBAR_HEIGHT = dp(32f)
 
     private val allowedDurations = setOf(
       Snackbar.LENGTH_INDEFINITE,
@@ -155,6 +160,7 @@ class SnackbarWrapper private constructor(
 
     @JvmStatic
     fun create(
+      globalViewStateManager: GlobalViewStateManager,
       globalWindowInsetsManager: GlobalWindowInsetsManager,
       theme: ChanTheme,
       view: View,
@@ -168,11 +174,12 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(globalWindowInsetsManager, snackbar)
+      return SnackbarWrapper(globalViewStateManager, globalWindowInsetsManager, snackbar)
     }
 
     @JvmStatic
     fun create(
+      globalViewStateManager: GlobalViewStateManager,
       globalWindowInsetsManager: GlobalWindowInsetsManager,
       theme: ChanTheme,
       view: View,
@@ -186,7 +193,7 @@ class SnackbarWrapper private constructor(
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
-      return SnackbarWrapper(globalWindowInsetsManager, snackbar)
+      return SnackbarWrapper(globalViewStateManager, globalWindowInsetsManager, snackbar)
     }
 
     private fun fixSnackbarColors(theme: ChanTheme, snackbar: Snackbar) {

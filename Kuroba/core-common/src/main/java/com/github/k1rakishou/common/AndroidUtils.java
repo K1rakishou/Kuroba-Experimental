@@ -16,6 +16,14 @@
  */
 package com.github.k1rakishou.common;
 
+import static android.content.Context.AUDIO_SERVICE;
+import static android.content.Context.CLIPBOARD_SERVICE;
+import static android.content.Context.INPUT_METHOD_SERVICE;
+import static android.content.Context.JOB_SCHEDULER_SERVICE;
+import static android.content.Context.MODE_PRIVATE;
+import static android.content.Context.NOTIFICATION_SERVICE;
+import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
+
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.ActivityManager;
@@ -31,6 +39,7 @@ import android.graphics.Point;
 import android.media.AudioManager;
 import android.os.Build;
 import android.text.TextUtils;
+import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.View;
 import android.view.ViewGroup;
@@ -44,14 +53,6 @@ import androidx.preference.PreferenceManager;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
-
-import static android.content.Context.AUDIO_SERVICE;
-import static android.content.Context.CLIPBOARD_SERVICE;
-import static android.content.Context.INPUT_METHOD_SERVICE;
-import static android.content.Context.JOB_SCHEDULER_SERVICE;
-import static android.content.Context.MODE_PRIVATE;
-import static android.content.Context.NOTIFICATION_SERVICE;
-import static android.view.inputmethod.InputMethodManager.SHOW_IMPLICIT;
 
 public class AndroidUtils {
     private static final String TAG = "AndroidUtils";
@@ -190,10 +191,11 @@ public class AndroidUtils {
     }
 
     public static Point getDisplaySize(Context context) {
-        Point displaySize = new Point();
-        WindowManager windowManager = (WindowManager) context.getSystemService(Activity.WINDOW_SERVICE);
-        windowManager.getDefaultDisplay().getRealSize(displaySize);
-        return displaySize;
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        WindowManager windowManager = ((Activity) context).getWindowManager();
+        windowManager.getDefaultDisplay().getMetrics(displayMetrics);
+
+        return new Point(displayMetrics.widthPixels, displayMetrics.heightPixels);
     }
 
     /**
