@@ -98,7 +98,7 @@ class PostInfoMapItemDecoration(
 
     val onePostHeightRaw = recyclerView.computeVerticalScrollRange() / (postsTotal + THREAD_STATUS_CELL)
     val recyclerHeight = (recyclerViewHeight.toFloat() - (recyclerTopPadding + recyclerBottomPadding))
-    val unit = ((recyclerHeight / recyclerView.computeVerticalScrollRange()) * onePostHeightRaw).coerceAtLeast(MIN_LABEL_HEIGHT)
+    val unit = ((recyclerHeight / recyclerView.computeVerticalScrollRange()) * onePostHeightRaw)
     val halfUnit = unit / 2f
 
     canvas.withTranslation(y = recyclerTopPadding + halfUnit) {
@@ -106,8 +106,13 @@ class PostInfoMapItemDecoration(
         val startPosition = positionRange.first
         val endPosition = positionRange.last
 
-        val top = startPosition * unit - halfUnit
-        val bottom = (endPosition * unit) + halfUnit
+        var top = startPosition * unit - halfUnit
+        var bottom = (endPosition * unit) + halfUnit
+
+        if (bottom - top < MIN_LABEL_HEIGHT) {
+          top -= MIN_LABEL_HEIGHT / 2f
+          bottom += MIN_LABEL_HEIGHT / 2f
+        }
 
         canvas.drawRect(
           recyclerViewWidth.toFloat() - DEFAULT_LABEL_WIDTH,
