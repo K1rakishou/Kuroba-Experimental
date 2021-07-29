@@ -103,12 +103,12 @@ class ThreadCellData(
 
     BackgroundUtils.ensureMainThread()
 
+    this.postCellDataList.clear()
+    this.postCellDataList.addAll(newPostCellDataList)
+
     if (postViewMode.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
-
-    this.postCellDataList.clear()
-    this.postCellDataList.addAll(newPostCellDataList)
 
     mergeSeenPosts(isTheSameChanDescriptor, chanDescriptor, postDescriptors)
   }
