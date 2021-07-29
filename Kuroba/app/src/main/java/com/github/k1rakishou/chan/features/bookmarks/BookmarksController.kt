@@ -23,9 +23,11 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
@@ -38,6 +40,8 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.UnifiedBookmarkInfoAc
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyGridThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.epoxyListThreadBookmarkViewHolder
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.TabPageController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -63,6 +67,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -97,6 +103,10 @@ class BookmarksController(
   lateinit var bookmarkForegroundWatcher: BookmarkForegroundWatcher
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var threadDownloadManager: ThreadDownloadManager
+  @Inject
+  lateinit var chanThreadManager: ChanThreadManager
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
@@ -111,7 +121,8 @@ class BookmarksController(
       threadBookmarkGroupManager,
       pageRequestManager,
       archivesManager,
-      bookmarksSelectionHelper
+      bookmarksSelectionHelper,
+      threadDownloadManager
     )
   }
 
@@ -426,17 +437,64 @@ class BookmarksController(
           positiveButtonText = getString(R.string.delete),
           onPositiveButtonClickListener = {
             bookmarksPresenter.deleteBookmarks(selectedItems)
-            bookmarksSelectionHelper.clearSelection()
           }
         )
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.Reorder -> {
-        bookmarksSelectionHelper.clearSelection()
-
         if (bookmarksPresenter.isInReorderingMode()) {
           bookmarksPresenter.updateReorderingMode(enterReorderingMode = false)
         } else {
           bookmarksPresenter.updateReorderingMode(enterReorderingMode = true)
+        }
+      }
+      BookmarksSelectionHelper.BookmarksMenuItemType.Download -> {
+        val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
+          context = context,
+          downloadClicked = { downloadMedia ->
+            onDownloadThreadsClicked(downloadMedia, selectedItems)
+          }
+        )
+
+        presentController(threadDownloaderSettingsController, animated = true)
+      }
+    }
+
+    bookmarksSelectionHelper.clearSelection()
+  }
+
+  private fun onDownloadThreadsClicked(
+    downloadMedia: Boolean,
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
+
+    mainScope.launch {
+      coroutineScope {
+        if (threadDescriptors.size > 32) {
+          // So it doesn't appear "stuck"
+          val loadingController = LoadingViewController(context, true)
+          presentController(loadingController)
+
+          coroutineContext[Job.Key]?.invokeOnCompletion { loadingController.stopPresenting() }
+        }
+
+        threadDescriptors.forEach { threadDescriptor ->
+          var threadThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
+            ?.getOriginalPost()
+            ?.firstImage()
+            ?.actualThumbnailUrl
+
+          if (threadThumbnailUrl == null) {
+            threadThumbnailUrl = bookmarksManager.getBookmarkThumbnailByThreadId(threadDescriptor)
+          }
+
+          threadDownloadManager.startDownloading(
+            threadDescriptor = threadDescriptor,
+            threadThumbnailUrl = threadThumbnailUrl?.toString(),
+            downloadMedia = downloadMedia
+          )
         }
       }
     }

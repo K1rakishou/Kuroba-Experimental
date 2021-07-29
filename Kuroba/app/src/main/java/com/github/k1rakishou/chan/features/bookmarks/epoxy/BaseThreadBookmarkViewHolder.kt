@@ -200,6 +200,14 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
 
         append("FW")
       }
+
+      if (threadBookmarkStats.isDownloading) {
+        if (isNotEmpty()) {
+          append(", ")
+        }
+
+        append("DL")
+      }
     }
 
     if (additionalStats.isBlank()) {
@@ -243,12 +251,22 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         append(")")
       }
 
-      if (!isGridMode && threadBookmarkStats.isFilterWatchBookmark) {
-        if (isNotEmpty()) {
-          append(" ")
+      if (!isGridMode) {
+        if (threadBookmarkStats.isFilterWatchBookmark) {
+          if (isNotEmpty()) {
+            append(" ")
+          }
+
+          append("FW")
         }
 
-        append("FW")
+        if (threadBookmarkStats.isDownloading) {
+          if (isNotEmpty()) {
+            append(", ")
+          }
+
+          append("DL")
+        }
       }
     }
 
@@ -377,9 +395,9 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
       bookmarkTitle.textSize = 16f
       bookmarkTitle.maxLines = 4
     } else {
-      bookmarkStats.textSize = 14f
-      bookmarkAdditionalStats?.textSize = 14f
-      bookmarkTitle.textSize = 13f
+      bookmarkStats.textSize = 12f
+      bookmarkAdditionalStats?.textSize = 12f
+      bookmarkTitle.textSize = 12f
       bookmarkTitle.maxLines = 2
     }
   }
@@ -403,8 +421,8 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
         BOOKMARK_HOLDER_NON_TABLET_PADDING
       )
 
-      bookmarkTitle.textSize = 13f
-      bookmarkStats.textSize = 14f
+      bookmarkTitle.textSize = 12f
+      bookmarkStats.textSize = 12f
     }
   }
 

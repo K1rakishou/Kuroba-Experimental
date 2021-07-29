@@ -86,6 +86,17 @@ class ThreadDownloadManager(
     }
   }
 
+  suspend fun getDownloadingThreadDescriptors(): Set<ChanDescriptor.ThreadDescriptor> {
+    ensureInitialized()
+
+    return mutex.withLock {
+      threadDownloadsMap.values
+        .filter { threadDownload -> threadDownload.status == ThreadDownload.Status.Running }
+        .map { threadDownload -> threadDownload.threadDescriptor }
+        .toSet()
+    }
+  }
+
   suspend fun getStatus(threadDescriptor: ChanDescriptor.ThreadDescriptor): ThreadDownload.Status? {
     ensureInitialized()
 

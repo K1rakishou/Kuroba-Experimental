@@ -274,6 +274,10 @@ class BookmarksManager(
     return true
   }
 
+  fun getBookmarkThumbnailByThreadId(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl? {
+    return lock.read { bookmarks[threadDescriptor]?.thumbnailUrl }
+  }
+
   /**
    * @return either a [ChanDescriptor.ThreadDescriptor] of this bookmark if this bookmark
    * was actually updated (something was changed) or null if [mutator] returned the same bookmark.

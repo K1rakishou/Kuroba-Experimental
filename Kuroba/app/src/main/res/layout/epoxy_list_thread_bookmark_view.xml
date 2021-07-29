@@ -45,7 +45,7 @@
             android:ellipsize="end"
             android:gravity="center_vertical"
             android:maxLines="1"
-            android:textSize="16sp"
+            android:textSize="12sp"
             tools:text="@string/lorem_ipsum" />
 
         <androidx.appcompat.widget.AppCompatTextView
@@ -57,9 +57,9 @@
             android:clickable="true"
             android:focusable="true"
             android:gravity="center_vertical"
-            android:paddingStart="12dp"
-            android:paddingEnd="12dp"
-            android:textSize="16sp"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:textSize="12sp"
             tools:text="123 (15) / 6666" />
 
         <androidx.appcompat.widget.AppCompatImageView

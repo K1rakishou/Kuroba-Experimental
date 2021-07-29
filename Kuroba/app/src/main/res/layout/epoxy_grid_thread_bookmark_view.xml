@@ -77,7 +77,7 @@
                 android:focusable="false"
                 android:gravity="center_horizontal"
                 android:maxLines="2"
-                android:textSize="14sp"
+                android:textSize="12sp"
                 tools:text="1231 (15) / 6666" />
 
             <androidx.appcompat.widget.AppCompatTextView
@@ -90,7 +90,7 @@
                 android:focusable="false"
                 android:gravity="center_horizontal"
                 android:maxLines="2"
-                android:textSize="14sp"
+                android:textSize="12sp"
                 android:visibility="gone"
                 tools:text="Pg: 5/10, BL, IL, ERR"
                 tools:visibility="visible" />
@@ -105,7 +105,7 @@
             android:ellipsize="end"
             android:gravity="center_horizontal"
             android:maxLines="3"
-            android:textSize="14sp"
+            android:textSize="12sp"
             tools:text="@string/lorem_ipsum" />
 
     </LinearLayout>

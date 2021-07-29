@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -40,7 +41,8 @@ class BookmarksPresenter(
   private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val pageRequestManager: PageRequestManager,
   private val archivesManager: ArchivesManager,
-  private val bookmarksSelectionHelper: BookmarksSelectionHelper
+  private val bookmarksSelectionHelper: BookmarksSelectionHelper,
+  private val threadDownloadManager: ThreadDownloadManager
 ) : BasePresenter<BookmarksView>() {
 
   private val bookmarksRefreshed = AtomicBoolean(false)
@@ -289,13 +291,19 @@ class BookmarksPresenter(
 
     Logger.d(TAG, "showBookmarks($query)")
 
+    val downloadingThreadDescriptors = threadDownloadManager.getDownloadingThreadDescriptors()
+
     val threadBookmarkItemViewList = bookmarksManager
       .mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
         val title = threadBookmarkView.title
           ?: "No title"
 
         if (query == null || title.contains(query, ignoreCase = true)) {
-          val threadBookmarkStats = getThreadBookmarkStats(isWatcherEnabled, threadBookmarkView)
+          val threadBookmarkStats = getThreadBookmarkStats(
+            isWatcherEnabled = isWatcherEnabled,
+            threadBookmarkView = threadBookmarkView,
+            downloadingThreadDescriptors = downloadingThreadDescriptors
+          )
 
           val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
             val isSelected = bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor)
@@ -429,13 +437,15 @@ class BookmarksPresenter(
 
   private fun getThreadBookmarkStats(
     isWatcherEnabled: Boolean,
-    threadBookmarkView: ThreadBookmarkView
+    threadBookmarkView: ThreadBookmarkView,
+    downloadingThreadDescriptors: Set<ChanDescriptor.ThreadDescriptor>
   ): ThreadBookmarkStats {
     if (archivesManager.isSiteArchive(threadBookmarkView.threadDescriptor.siteDescriptor())) {
       return ThreadBookmarkStats(
         watching = threadBookmarkView.isWatching(),
         isArchive = true,
-        isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark()
+        isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark(),
+        isDownloading = threadBookmarkView.threadDescriptor in downloadingThreadDescriptors
       )
     }
 
@@ -456,6 +466,7 @@ class BookmarksPresenter(
       isImageLimit = threadBookmarkView.isImageLimit(),
       isFirstFetch = threadBookmarkView.isFirstFetch(),
       isFilterWatchBookmark = threadBookmarkView.isFilterWatchBookmark(),
+      isDownloading = threadBookmarkView.threadDescriptor in downloadingThreadDescriptors,
       isDeleted = threadBookmarkView.isThreadDeleted(),
       isError = threadBookmarkView.isError()
     )
