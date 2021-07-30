@@ -41,6 +41,7 @@ import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -261,6 +262,7 @@ abstract class CommonSite : SiteBase() {
     
     override fun respondsTo(url: HttpUrl): Boolean {
       return this.url!!.host == url.host
+        || "www.${this.url!!.host}" == url.host
     }
     
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
@@ -284,19 +286,24 @@ abstract class CommonSite : SiteBase() {
       try {
         val threadPattern = threadPattern().matcher(url.encodedPath)
         if (threadPattern.find()) {
-          val board = site.board(threadPattern.group(1))
-            ?: return null
+          val boardCode = threadPattern.groupOrNull(1)
+          if (boardCode.isNullOrEmpty()) {
+            return null
+          }
 
-          val threadNo = threadPattern.group(3).toInt().toLong()
+          val threadNo = threadPattern.groupOrNull(3)?.toIntOrNull()?.toLong()
+          if (threadNo == null) {
+            return null
+          }
 
           val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
             site.name(),
-            board.boardCode(),
+            boardCode,
             threadNo
           )
           
           val markedNo = if (!TextUtils.isEmpty(url.fragment)) {
-            url.fragment?.toLong()
+            tryExtractPostNoFromUrl(url)
           } else {
             null
           }
@@ -305,25 +312,39 @@ abstract class CommonSite : SiteBase() {
             threadDescriptor,
             markedNo
           )
+        } else {
+          val boardPattern = boardPattern().matcher(url.encodedPath)
+          val boardCode = boardPattern.groupOrNull(1)
+
+          if (boardCode.isNullOrEmpty()) {
+            return null
+          }
+
+          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+            site.name(),
+            boardCode
+          )
+
+          return ResolvedChanDescriptor(catalogDescriptor)
         }
-
-        val boardPattern = boardPattern().matcher(url.encodedPath)
-        val board = site.board(boardPattern.group(1))
-          ?: return null
-
-        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-          site.name(),
-          board.boardCode()
-        )
-
-        return ResolvedChanDescriptor(catalogDescriptor)
       } catch (error: Throwable) {
         Logger.e(TAG, "Error while trying to resolve chan descriptor", error)
       }
       
       return null
     }
-    
+
+    private fun tryExtractPostNoFromUrl(url: HttpUrl): Long? {
+      return url.fragment?.let { fragment ->
+        val matcher = POST_NO_PATTERN.matcher(fragment)
+        if (!matcher.find()) {
+          return@let null
+        }
+
+        return@let matcher.groupOrNull(1)?.toLong()
+      }
+    }
+
     private fun boardPattern(): Pattern {
       return BOARD_PATTERN
     }
@@ -602,5 +623,6 @@ abstract class CommonSite : SiteBase() {
 
     private val BOARD_PATTERN = Pattern.compile("/(\\w+)")
     private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")
+    private val POST_NO_PATTERN = Pattern.compile("(\\d+)")
   }
 }

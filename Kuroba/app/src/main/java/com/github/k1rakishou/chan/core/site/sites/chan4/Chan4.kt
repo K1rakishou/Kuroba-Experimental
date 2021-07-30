@@ -746,9 +746,6 @@ open class Chan4 : SiteBase() {
         }
 
         val boardCode = parts[0]
-        if (site.board(boardCode) == null) {
-          return null
-        }
 
         if (parts.size < 3) {
           // Board mode

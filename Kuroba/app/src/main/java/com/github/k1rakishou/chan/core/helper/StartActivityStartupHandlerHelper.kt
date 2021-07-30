@@ -204,8 +204,6 @@ class StartActivityStartupHandlerHelper(
       return false
     }
 
-    val extras = intent.extras
-      ?: return false
     val action = intent.action
       ?: return false
 
@@ -221,60 +219,81 @@ class StartActivityStartupHandlerHelper(
 
     when {
       intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-        return replyNotificationClicked(extras)
+        return replyNotificationClicked(intent)
       }
       intent.hasExtra(NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
-        return lastPageNotificationClicked(extras)
+        return lastPageNotificationClicked(intent)
       }
       intent.hasExtra(NotificationConstants.PostingServiceNotifications.NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY) -> {
-        return postingNotificationClicked(extras)
+        return postingNotificationClicked(intent)
       }
       action == Intent.ACTION_VIEW -> {
         return restoreFromUrl(intent)
       }
       action == ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> {
-        val outputDirUri = extras.getString(ImageSaverV2Service.OUTPUT_DIR_URI)
-          ?.let { uriRaw -> Uri.parse(uriRaw) }
-
-        extras.getString(ImageSaverV2Service.UNIQUE_ID)?.let { uniqueId ->
-          hideImageSaverNotification(context!!, uniqueId)
-        }
-
-        if (outputDirUri != null) {
-          val newIntent = Intent(Intent.ACTION_VIEW)
-          newIntent.setDataAndType(outputDirUri, DocumentsContract.Document.MIME_TYPE_DIR)
-
-          AppModuleAndroidUtils.openIntent(newIntent)
-        }
-
-        // Always return false here since we don't want to override the default "restore app"
-        // mechanism here
-        return false
+        return onImageSaverNotificationNavigateClicked(intent)
       }
       action == ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> {
-        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
-        val imageSaverOptionsJson = extras.getString(ImageSaverV2Service.IMAGE_SAVER_OPTIONS)
-
-        if (uniqueId != null && imageSaverOptionsJson != null) {
-          mainController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
-        }
-
-        // Always return false here since we don't want to override the default "restore app"
-        // mechanism here
-        return false
+        return onImageSaverNotificationResolveDuplicatesClicked(intent)
       }
       action == ImageSaverV2Service.ACTION_TYPE_SHOW_IMAGE_SAVER_SETTINGS -> {
-        val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
-        if (uniqueId != null) {
-          mainController?.showImageSaverV2OptionsController(uniqueId)
-        }
-
-        // Always return false here since we don't want to override the default "restore app"
-        // mechanism here
-        return false
+        return onImageSaverNotificationSettingsClicked(intent)
       }
       else -> return false
     }
+  }
+
+  private fun onImageSaverNotificationSettingsClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
+    val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+    if (uniqueId != null) {
+      mainController?.showImageSaverV2OptionsController(uniqueId)
+    }
+
+    // Always return false here since we don't want to override the default "restore app"
+    // mechanism here
+    return false
+  }
+
+  private fun onImageSaverNotificationResolveDuplicatesClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
+    val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
+    val imageSaverOptionsJson = extras.getString(ImageSaverV2Service.IMAGE_SAVER_OPTIONS)
+
+    if (uniqueId != null && imageSaverOptionsJson != null) {
+      mainController?.showResolveDuplicateImagesController(uniqueId, imageSaverOptionsJson)
+    }
+
+    // Always return false here since we don't want to override the default "restore app"
+    // mechanism here
+    return false
+  }
+
+  private fun onImageSaverNotificationNavigateClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
+    val outputDirUri = extras.getString(ImageSaverV2Service.OUTPUT_DIR_URI)
+      ?.let { uriRaw -> Uri.parse(uriRaw) }
+
+    extras.getString(ImageSaverV2Service.UNIQUE_ID)?.let { uniqueId ->
+      hideImageSaverNotification(context!!, uniqueId)
+    }
+
+    if (outputDirUri != null) {
+      val newIntent = Intent(Intent.ACTION_VIEW)
+      newIntent.setDataAndType(outputDirUri, DocumentsContract.Document.MIME_TYPE_DIR)
+
+      AppModuleAndroidUtils.openIntent(newIntent)
+    }
+
+    // Always return false here since we don't want to override the default "restore app"
+    // mechanism here
+    return false
   }
 
   private fun hideImageSaverNotification(context: Context, uniqueId: String) {
@@ -381,7 +400,10 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
-  private suspend fun postingNotificationClicked(extras: Bundle): Boolean {
+  private suspend fun postingNotificationClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
     val descriptorParcelable = extras.getParcelable<DescriptorParcelable>(
       NotificationConstants.PostingServiceNotifications.NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY
     )
@@ -414,7 +436,10 @@ class StartActivityStartupHandlerHelper(
     return true
   }
 
-  private suspend fun lastPageNotificationClicked(extras: Bundle): Boolean {
+  private suspend fun lastPageNotificationClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.LastPageNotifications.LP_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
@@ -430,7 +455,10 @@ class StartActivityStartupHandlerHelper(
     return true
   }
 
-  private suspend fun replyNotificationClicked(extras: Bundle): Boolean {
+  private suspend fun replyNotificationClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
