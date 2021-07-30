@@ -17,12 +17,15 @@ import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 class DeveloperSettingsScreen(
   context: Context,
@@ -101,8 +104,13 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.ClearFileCache,
           topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache) },
           bottomDescriptionStringFunc = {
-            val cacheSize = cacheHandler.get().getSize() / 1024 / 1024
-            context.getString(R.string.settings_clear_file_cache_bottom_description, cacheSize)
+            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
+              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir)
+            }
+            val internalCacheSizeBytes = cacheHandler.get().getSize()
+            val totalCacheSizeMegabytes = (exoPlayerCacheSizeBytes + internalCacheSizeBytes) / (1024L * 1024L)
+
+            context.getString(R.string.settings_clear_file_cache_bottom_description, totalCacheSizeMegabytes)
           },
           callback = {
             fileCacheV2.clearCache()

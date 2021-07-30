@@ -124,4 +124,23 @@ public class IOUtils {
             IOUtils.closeQuietly(os);
         }
     }
+
+    public static long calculateDirectoryFilesFullSize(File file) {
+        if (file.isFile()) {
+            return file.length();
+        }
+
+        File[] files = file.listFiles();
+        if (files == null) {
+            return 0L;
+        }
+
+        long length = 0L;
+
+        for (File dirFile : files) {
+            length += calculateDirectoryFilesFullSize(dirFile);
+        }
+
+        return length;
+    }
 }
