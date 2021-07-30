@@ -91,11 +91,7 @@ class FilterWatchesController(
     swipeRefreshLayout = view.findViewById(R.id.filter_watches_swipe_refresh_layout)
 
     swipeRefreshLayout.setOnChildScrollUpCallback { parent, child ->
-      if (topAdapterPosition != 0) {
-        return@setOnChildScrollUpCallback true
-      }
-
-      return@setOnChildScrollUpCallback false
+      return@setOnChildScrollUpCallback epoxyRecyclerView.canScrollVertically(-1)
     }
 
     swipeRefreshLayout.setOnRefreshListener {

@@ -165,6 +165,7 @@ sealed class DeveloperScreen(
     object EnableDisableVerboseLogs : MainGroup("enable_disable_verbose_logs")
     object CrashApp : MainGroup("crash_the_app")
     object ClearFileCache : MainGroup("clear_file_cache")
+    object ThreadDownloadCacheSize : MainGroup("thread_download_cache_size")
     object ShowDatabaseSummary : MainGroup("show_database_summary")
     object DumpThreadStack : MainGroup("dump_thread_stack")
     object ResetThreadOpenCounter : MainGroup("reset_thread_open_counter")

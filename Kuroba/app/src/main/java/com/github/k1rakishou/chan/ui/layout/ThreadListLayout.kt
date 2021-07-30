@@ -61,7 +61,6 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
-import com.github.k1rakishou.chan.ui.cell.PostStubCell
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -866,27 +865,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return true
     }
 
-    val genericPostCellView = layoutManager?.findViewByPosition(0) as? GenericPostCell
-      ?: return true
-    val genericPostCellChildView = genericPostCellView.getChildPostCellView()
-      ?: return true
-
-    when (boardPostViewMode) {
-      BoardPostViewMode.LIST -> {
-        return genericPostCellView.top != toolbarHeight()
-      }
-      BoardPostViewMode.STAGGER,
-      BoardPostViewMode.GRID -> {
-        if (genericPostCellChildView is PostStubCell) {
-          // PostStubCell does not have grid_card_margin
-          return genericPostCellView.top != toolbarHeight() + dp(1f)
-        } else {
-          return genericPostCellView.top != getDimen(R.dimen.grid_card_margin) + dp(1f) + toolbarHeight()
-        }
-      }
-    }
-    
-    return true
+    return recyclerView.canScrollVertically(-1)
   }
 
   fun scrolledToBottom(): Boolean {

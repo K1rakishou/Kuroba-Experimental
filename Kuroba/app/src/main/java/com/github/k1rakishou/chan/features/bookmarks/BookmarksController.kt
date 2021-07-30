@@ -279,17 +279,13 @@ class BookmarksController(
     swipeRefreshLayout = view.findViewById(R.id.boomarks_swipe_refresh_layout)
 
     swipeRefreshLayout.setOnChildScrollUpCallback { parent, child ->
-      if (topAdapterPosition != 0) {
-        return@setOnChildScrollUpCallback true
-      }
-
       val isDragging = fastScroller?.isDragging ?: false
       if (isDragging) {
         // Disable SwipeRefresh layout when dragging the fast scroller
         return@setOnChildScrollUpCallback true
       }
 
-      return@setOnChildScrollUpCallback false
+      return@setOnChildScrollUpCallback epoxyRecyclerView.canScrollVertically(-1)
     }
 
     swipeRefreshLayout.setOnRefreshListener {

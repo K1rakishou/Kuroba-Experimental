@@ -33,7 +33,7 @@ class DeveloperSettingsScreen(
   private val cacheHandler: Lazy<CacheHandler>,
   private val fileCacheV2: FileCacheV2,
   private val themeEngine: ThemeEngine,
-  private val appConstants: AppConstants
+  private val appConstants: AppConstants,
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -104,19 +104,46 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.ClearFileCache,
           topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache) },
           bottomDescriptionStringFunc = {
-            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
-              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir)
-            }
-            val internalCacheSizeBytes = cacheHandler.get().getSize()
-            val totalCacheSizeMegabytes = (exoPlayerCacheSizeBytes + internalCacheSizeBytes) / (1024L * 1024L)
+            val oneMb = 1024L * 1024L
 
-            context.getString(R.string.settings_clear_file_cache_bottom_description, totalCacheSizeMegabytes)
+            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
+              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir) / oneMb
+            }
+            val internalCacheSizeBytes = cacheHandler.get().getSize() / oneMb
+
+            context.getString(
+              R.string.settings_clear_file_cache_bottom_description,
+              internalCacheSizeBytes,
+              exoPlayerCacheSizeBytes
+            )
           },
           callback = {
             fileCacheV2.clearCache()
             SimpleCache.delete(appConstants.exoPlayerCacheDir, null)
 
             showToast(context, "Cleared media/exoplayer caches")
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ThreadDownloadCacheSize,
+          topDescriptionStringFunc = { context.getString(R.string.settings_thread_download_cache_size) },
+          bottomDescriptionStringFunc = {
+            val oneMb = 1024L * 1024L
+
+            val threadDownloadCacheSize = withContext(Dispatchers.Default) {
+              IOUtils.calculateDirectoryFilesFullSize(appConstants.threadDownloaderCacheDir) / oneMb
+            }
+
+            context.getString(
+              R.string.settings_thread_download_cache_bottom_description,
+              threadDownloadCacheSize
+            )
+          },
+          callback = {
+            showToast(context, "Cannot clear thread download cache. You have to delete thread downloads " +
+              "in the local archive screen.")
           }
         )
 
