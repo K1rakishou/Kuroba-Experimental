@@ -4,6 +4,7 @@ import android.graphics.Color
 import android.view.View
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -11,6 +12,7 @@ import com.github.k1rakishou.chan.ui.layout.DrawerWidthAdjustingLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton
 import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.core_logger.Logger
@@ -60,7 +62,8 @@ class SnackbarWrapper private constructor(
       if (ChanSettings.isSplitLayoutMode()) {
         snackbarView.translationY = -(globalWindowInsetsManager.bottom() + MARGIN).toFloat()
       } else {
-        snackbarView.translationY = -(SNACKBAR_HEIGHT + globalWindowInsetsManager.bottom() + MARGIN).toFloat()
+        val bottomNavViewSize = AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
+        snackbarView.translationY = -(bottomNavViewSize + MARGIN).toFloat()
       }
     }
 
@@ -150,7 +153,6 @@ class SnackbarWrapper private constructor(
 
   companion object {
     private val MARGIN = dp(8f)
-    private val SNACKBAR_HEIGHT = dp(32f)
 
     private val allowedDurations = setOf(
       Snackbar.LENGTH_INDEFINITE,

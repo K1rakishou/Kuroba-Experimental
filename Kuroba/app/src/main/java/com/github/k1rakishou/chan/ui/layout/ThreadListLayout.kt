@@ -29,7 +29,6 @@ import android.view.KeyEvent
 import android.view.View
 import android.widget.FrameLayout
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import androidx.recyclerview.widget.RecyclerView.ItemDecoration
 import androidx.recyclerview.widget.StaggeredGridLayoutManager
@@ -215,7 +214,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       return when (boardPostViewMode) {
         BoardPostViewMode.LIST -> 1
-        BoardPostViewMode.GRID -> (layoutManager as GridLayoutManager).spanCount
+        BoardPostViewMode.GRID,
         BoardPostViewMode.STAGGER -> (layoutManager as StaggeredGridLayoutManager).spanCount
         null -> 1
       }
@@ -229,7 +228,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       when (boardPostViewMode) {
         BoardPostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findFirstVisibleItemPosition()
-        BoardPostViewMode.GRID -> return (layoutManager as GridLayoutManager).findFirstVisibleItemPosition()
+        BoardPostViewMode.GRID,
         BoardPostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
           if (positions.isEmpty()) {
@@ -256,7 +255,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       when (boardPostViewMode) {
         BoardPostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findLastCompletelyVisibleItemPosition()
-        BoardPostViewMode.GRID -> return (layoutManager as GridLayoutManager).findLastCompletelyVisibleItemPosition()
+        BoardPostViewMode.GRID,
         BoardPostViewMode.STAGGER -> {
           val positions = (layoutManager as StaggeredGridLayoutManager).findLastCompletelyVisibleItemPositions(null)
           if (positions.isEmpty()) {
@@ -501,9 +500,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       spanCount = max(1, (measuredWidth.toFloat() / cardWidth).roundToInt())
     }
 
-    if (boardPostViewMode == BoardPostViewMode.GRID) {
-      (layoutManager as GridLayoutManager).spanCount = spanCount
-    } else if (boardPostViewMode == BoardPostViewMode.STAGGER) {
+    if (boardPostViewMode == BoardPostViewMode.GRID
+      || boardPostViewMode == BoardPostViewMode.STAGGER) {
       (layoutManager as StaggeredGridLayoutManager).spanCount = spanCount
     }
   }
@@ -535,29 +533,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         recyclerView.layoutManager = linearLayoutManager
         layoutManager = linearLayoutManager
       }
-      BoardPostViewMode.GRID -> {
-        val gridLayoutManager = object : GridLayoutManager(
-          context,
-          spanCount,
-          GridLayoutManager.VERTICAL,
-          false
-        ) {
-          override fun requestChildRectangleOnScreen(
-            parent: RecyclerView,
-            child: View,
-            rect: Rect,
-            immediate: Boolean,
-            focusedChildVisible: Boolean
-          ): Boolean {
-            return false
-          }
-        }
-
-        setRecyclerViewPadding()
-
-        recyclerView.layoutManager = gridLayoutManager
-        layoutManager = gridLayoutManager
-      }
+      BoardPostViewMode.GRID,
       BoardPostViewMode.STAGGER -> {
         val staggerLayoutManager = object : StaggeredGridLayoutManager(
           spanCount,
@@ -670,12 +646,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
               top
             )
           }
-          BoardPostViewMode.GRID -> {
-            (layoutManager as GridLayoutManager).scrollToPositionWithOffset(
-              index,
-              top
-            )
-          }
+          BoardPostViewMode.GRID,
           BoardPostViewMode.STAGGER -> {
             (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
               index,
@@ -930,11 +901,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   private fun scrollToInternal(scrollPosition: Int) {
-    if (layoutManager is GridLayoutManager) {
-      (layoutManager as GridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
-      return
-    }
-
     if (layoutManager is StaggeredGridLayoutManager) {
       (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(scrollPosition, 0)
       return
