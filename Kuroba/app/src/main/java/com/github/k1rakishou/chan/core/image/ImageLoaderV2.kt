@@ -725,8 +725,6 @@ class ImageLoaderV2(
     transformations: List<Transformation>,
     listener: FailureAwareImageListener
   ): Disposable {
-    require(imageSize !is ImageSize.UnknownImageSize) { "Cannot use UnknownImageSize here!" }
-
     val lifecycle = context.getLifecycleFromContext()
     val completableDeferred = CompletableDeferred<Unit>()
 
@@ -1176,9 +1174,6 @@ class ImageLoaderV2(
       is ImageSize.MeasurableImageSize -> {
         size(imageSize.sizeResolver)
       }
-      is ImageSize.UnknownImageSize -> {
-        // no-op
-      }
     }
   }
 
@@ -1215,12 +1210,7 @@ class ImageLoaderV2(
       return when (this) {
         is FixedImageSize -> PixelSize(width, height)
         is MeasurableImageSize -> sizeResolver.size() as PixelSize
-        UnknownImageSize -> null
       }
-    }
-
-    object UnknownImageSize : ImageSize() {
-      override fun toString(): String = "UnknownImageSize"
     }
 
     data class FixedImageSize(val width: Int, val height: Int) : ImageSize() {

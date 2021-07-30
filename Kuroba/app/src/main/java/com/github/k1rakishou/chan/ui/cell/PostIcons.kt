@@ -128,7 +128,7 @@ class PostIcons @JvmOverloads constructor(
       )
 
       httpIcons.add(postIconsHttpIcon)
-      postIconsHttpIcon.request()
+      postIconsHttpIcon.request(size)
     }
   }
 

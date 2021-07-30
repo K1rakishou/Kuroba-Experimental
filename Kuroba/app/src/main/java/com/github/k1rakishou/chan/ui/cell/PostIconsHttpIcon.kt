@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.MediaUtils
 import dagger.Lazy
 import okhttp3.HttpUrl
@@ -45,15 +46,17 @@ class PostIconsHttpIcon(
     this.imageLoaderV2 = imageLoaderV2
   }
 
-  fun request() {
+  fun request(size: Int) {
     cancel()
 
+    val actualSize = size.coerceIn(MIN_SIZE_PX, MIN_SIZE_PX * 2)
+
     requestDisposable = imageLoaderV2.get().loadFromNetwork(
-      context,
-      url.toString(),
-      ImageLoaderV2.ImageSize.UnknownImageSize,
-      emptyList(),
-      this
+      context = context,
+      requestUrl = url.toString(),
+      imageSize = ImageLoaderV2.ImageSize.FixedImageSize(actualSize, actualSize),
+      transformations = emptyList(),
+      listener = this
     )
   }
 
@@ -77,6 +80,8 @@ class PostIconsHttpIcon(
   }
 
   companion object {
+    private val MIN_SIZE_PX = dp(16f)
+
     private val errorIcon = MediaUtils.bitmapToDrawable(
       BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.error_icon)
     )
