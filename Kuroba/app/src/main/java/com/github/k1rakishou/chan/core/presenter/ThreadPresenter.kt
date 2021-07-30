@@ -1142,11 +1142,9 @@ class ThreadPresenter @Inject constructor(
 
       when (index) {
         POST_OPTION_QUOTE -> {
-          threadPresenterCallback?.hidePostsPopup()
           threadPresenterCallback?.quote(post, false)
         }
         POST_OPTION_QUOTE_TEXT -> {
-          threadPresenterCallback?.hidePostsPopup()
           threadPresenterCallback?.quote(post, true)
         }
         POST_OPTION_INFO -> showPostInfo(post)
