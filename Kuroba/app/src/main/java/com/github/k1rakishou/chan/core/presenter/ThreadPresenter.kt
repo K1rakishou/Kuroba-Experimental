@@ -734,7 +734,10 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun createNewNavHistoryElement(localChanDescriptor: ChanDescriptor) {
+  private fun createNewNavHistoryElement(
+    localChanDescriptor: ChanDescriptor,
+    canInsertAtTheBeginning: Boolean = true
+  ) {
     val canCreateNavElement = historyNavigationManager.canCreateNavElement(
       bookmarksManager,
       localChanDescriptor
@@ -756,7 +759,7 @@ class ThreadPresenter @Inject constructor(
           descriptor = localChanDescriptor,
           thumbnailImageUrl = siteIconUrl,
           title = title,
-          createdByBookmarkCreation = false
+          canInsertAtTheBeginning = canInsertAtTheBeginning
         )
       }
 
@@ -787,7 +790,7 @@ class ThreadPresenter @Inject constructor(
             descriptor = localChanDescriptor,
             thumbnailImageUrl = opThumbnailUrl,
             title = title,
-            createdByBookmarkCreation = false
+            canInsertAtTheBeginning = canInsertAtTheBeginning
           )
         }
       }
@@ -1031,6 +1034,12 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
     }
 
+    if (chanDescriptor.isCatalogDescriptor()
+      && historyNavigationManager.canCreateNavElement(bookmarksManager, chanDescriptor)
+    ) {
+      menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
+    }
+
     if (chanDescriptor.isCatalogDescriptor() || chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP()) {
       if (!postFilterManager.getFilterStub(post.postDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
@@ -1079,7 +1088,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_OPEN_BROWSER, R.string.action_open_browser))
 
     if (archivesManager.supports(post.postDescriptor.boardDescriptor())) {
-      menu.add(createMenuItem(POST_OPTION_OPEN_IN_ARCHIVE, R.string.action_open_archive))
+      menu.add(createMenuItem(POST_OPTION_OPEN_IN_ARCHIVE, R.string.action_open_in_archive))
       menu.add(createMenuItem(POST_OPTION_PREVIEW_IN_ARCHIVE, R.string.action_preview_thread_in_archive))
     }
 
@@ -1157,6 +1166,21 @@ class ThreadPresenter @Inject constructor(
             threadPresenterCallback?.hidePostsPopup()
           }
           threadPresenterCallback?.openReportView(post)
+        }
+        POST_OPTION_ADD_TO_NAV_HISTORY -> {
+          val descriptor = post.postDescriptor.descriptor
+
+          if (historyNavigationManager.contains(descriptor)) {
+            historyNavigationManager.moveNavElementToTop(
+              descriptor = descriptor,
+              canMoveAtTheBeginning = false
+            )
+          } else {
+            createNewNavHistoryElement(
+              localChanDescriptor = post.postDescriptor.descriptor,
+              canInsertAtTheBeginning = false
+            )
+          }
         }
         POST_OPTION_HIGHLIGHT_ID,
         POST_OPTION_UNHIGHLIGHT_ID -> {
@@ -2300,6 +2324,7 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_APPLY_THEME = 18
     private const val POST_OPTION_UNHIGHLIGHT_ID = 19
     private const val POST_OPTION_UNHIGHLIGHT_TRIPCODE = 20
+    private const val POST_OPTION_ADD_TO_NAV_HISTORY = 21
 
     private const val POST_OPTION_FILTER_TRIPCODE = 100
 

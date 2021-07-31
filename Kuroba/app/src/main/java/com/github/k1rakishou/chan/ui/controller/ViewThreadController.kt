@@ -192,6 +192,11 @@ open class ViewThreadController(
         archivesManager.supports(threadDescriptor)
       ) { showAvailableArchivesList(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = true) }
       .withSubItem(
+        ACTION_OPEN_THREAD_IN_ARCHIVE,
+        R.string.action_open_in_archive,
+        archivesManager.supports(threadDescriptor)
+      ) { showAvailableArchivesList(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = false) }
+      .withSubItem(
         ACTION_OPEN_BROWSER,
         R.string.action_open_browser
       ) { item -> openBrowserClicked(item) }
@@ -587,6 +592,9 @@ open class ViewThreadController(
     navigation.findSubItem(ACTION_PREVIEW_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
       retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
     }
+    navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
+      retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+    }
 
     updateThreadDownloadItem()
   }
@@ -730,13 +738,14 @@ open class ViewThreadController(
     private const val ACTION_RELOAD = 9002
     private const val ACTION_VIEW_REMOVED_POSTS = 9004
     private const val ACTION_PREVIEW_THREAD_IN_ARCHIVE = 9005
-    private const val ACTION_OPEN_BROWSER = 9006
-    private const val ACTION_SHARE = 9007
-    private const val ACTION_GO_TO_POST = 9008
-    private const val ACTION_THREAD_OPTIONS = 9009
-    private const val ACTION_SCROLL_TO_TOP = 9010
-    private const val ACTION_SCROLL_TO_BOTTOM = 9011
-    private const val ACTION_DOWNLOAD_THREAD = 9012
+    private const val ACTION_OPEN_THREAD_IN_ARCHIVE = 9006
+    private const val ACTION_OPEN_BROWSER = 9007
+    private const val ACTION_SHARE = 9008
+    private const val ACTION_GO_TO_POST = 9009
+    private const val ACTION_THREAD_OPTIONS = 9010
+    private const val ACTION_SCROLL_TO_TOP = 9011
+    private const val ACTION_SCROLL_TO_BOTTOM = 9012
+    private const val ACTION_DOWNLOAD_THREAD = 9013
 
     private const val ACTION_USE_SCROLLING_TEXT_FOR_THREAD_TITLE = 9100
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101

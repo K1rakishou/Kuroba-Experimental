@@ -87,8 +87,8 @@ class MainControllerPresenter(
         .mapNotNull { threadDescriptor -> createNewNavigationElement(threadDescriptor) }
 
       historyNavigationManager.createNewNavElements(
-        newNavigationElements,
-        createdByBookmarkCreation = true
+        newNavigationElements = newNavigationElements,
+        canInsertAtTheBeginning = false
       )
 
       return

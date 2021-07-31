@@ -43,7 +43,7 @@ class HistoryNavigationManager(
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
-  private val navigationStack = mutableListWithCap<NavHistoryElement>(64)
+  private val navigationStack = mutableListWithCap<NavHistoryElement>(MAX_NAV_HISTORY_ENTRIES)
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
@@ -101,6 +101,12 @@ class HistoryNavigationManager(
       }
 
       persisNavigationStack(eager = true)
+    }
+  }
+
+  fun contains(descriptor: ChanDescriptor): Boolean {
+    return lock.read {
+      navigationStack.any { navHistoryElement -> navHistoryElement.descriptor() == descriptor }
     }
   }
 
@@ -174,17 +180,27 @@ class HistoryNavigationManager(
     descriptor: ChanDescriptor,
     thumbnailImageUrl: HttpUrl,
     title: String,
-    createdByBookmarkCreation: Boolean
+    canInsertAtTheBeginning: Boolean
   ) {
     BackgroundUtils.ensureMainThread()
 
     val newNavigationElement = NewNavigationElement(descriptor, thumbnailImageUrl, title)
-    createNewNavElements(listOf(newNavigationElement), createdByBookmarkCreation)
+    createNewNavElements(listOf(newNavigationElement), canInsertAtTheBeginning)
   }
 
+  /**
+   * When [canInsertAtTheBeginning] is true (mostly the default state) that means we can insert this
+   * NavHistoryElement at the very beginning of the navigationStack (navigationStack[0]).
+   * Otherwise we will insert it at the next position after the beginning (navigationStack[1]).
+   * We set [canInsertAtTheBeginning] to false when this NavHistoryElement was created automatically
+   * after a bookmark was created or when the user creates a new nav element by using
+   * "Add to nav history" catalog thread option. This is necessary because otherwise after the app
+   * restart we will attempt to open last bookmarked thread/thread added to nav history instead of
+   * the catalog navigation element.
+   * */
   fun createNewNavElements(
     newNavigationElements: Collection<NewNavigationElement>,
-    createdByBookmarkCreation: Boolean
+    canInsertAtTheBeginning: Boolean
   ) {
     BackgroundUtils.ensureMainThread()
 
@@ -205,7 +221,7 @@ class HistoryNavigationManager(
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
       }
 
-      if (addNewOrIgnore(navElement, createdByBookmarkCreation)) {
+      if (addNewOrIgnore(navElement, canInsertAtTheBeginning)) {
         created = true
       }
     }
@@ -217,7 +233,7 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  fun moveNavElementToTop(descriptor: ChanDescriptor) {
+  fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
     BackgroundUtils.ensureMainThread()
 
     if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
@@ -236,8 +252,12 @@ class HistoryNavigationManager(
         return@write
       }
 
-      // Move the existing navigation element at the top of the list
-      navigationStack.add(0, navigationStack.removeAt(indexOfElem))
+      if (navigationStack.isEmpty() || canMoveAtTheBeginning) {
+        // Move the existing navigation element at the top of the list
+        navigationStack.add(0, navigationStack.removeAt(indexOfElem))
+      } else {
+        navigationStack.add(1, navigationStack.removeAt(indexOfElem))
+      }
     }
 
     navStackChanged()
@@ -351,7 +371,7 @@ class HistoryNavigationManager(
     }
   }
 
-  private fun addNewOrIgnore(navElement: NavHistoryElement, createdByBookmarkCreation: Boolean): Boolean {
+  private fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
     BackgroundUtils.ensureMainThread()
 
     return lock.write {
@@ -360,7 +380,7 @@ class HistoryNavigationManager(
         return@write false
       }
 
-      if (navigationStack.isEmpty() || !createdByBookmarkCreation) {
+      if (navigationStack.isEmpty() || canInsertAtTheBeginning) {
         navigationStack.add(0, navElement)
       } else {
         // Do not overwrite the top of nav stack that we use to restore previously opened thread.
@@ -387,6 +407,6 @@ class HistoryNavigationManager(
 
   companion object {
     private const val TAG = "HistoryNavigationManager"
-    private const val MAX_NAV_HISTORY_ENTRIES = 128
+    private const val MAX_NAV_HISTORY_ENTRIES = 256
   }
 }

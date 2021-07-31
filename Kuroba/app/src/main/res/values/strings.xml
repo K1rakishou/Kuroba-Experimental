@@ -168,7 +168,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_preview_thread_in_archive">Preview in archive</string>
-    <string name="action_open_archive">Open in archive</string>
+    <string name="action_open_in_archive">Open in archive</string>
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_catalog_album">Catalog album</string>
     <string name="action_change_gestures">Change image viewer gestures</string>
@@ -471,6 +471,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_share">Share</string>
     <string name="post_copy_text">Copy text</string>
     <string name="post_report">Report</string>
+    <string name="post_add_to_nav_history">Add to navigation history</string>
     <string name="post_hide">Hide</string>
     <string name="post_remove">Remove</string>
     <string name="post_web_search">Web search</string>
