@@ -582,6 +582,16 @@ data class PostCellData(
       return false
     }
 
+    fun canUseTapPostTitleToReply(): Boolean {
+      return when (this) {
+        Normal,
+        RepliesPopup,
+        Search -> true
+        ExternalPostsPopup,
+        PostSelection -> false
+      }
+    }
+
   }
 
   data class SearchQuery(val query: String = "", val queryMinValidLength: Int = 0) {

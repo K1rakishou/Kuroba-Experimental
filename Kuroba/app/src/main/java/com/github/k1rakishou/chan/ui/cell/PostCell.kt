@@ -890,7 +890,7 @@ class PostCell : ConstraintLayout,
       if (postCellData.threadMode || postCellData.searchMode) {
         comment.customMovementMethod(commentMovementMethod)
 
-        if (postCellData.tapNoReply && postCellData.postViewMode == PostCellData.PostViewMode.Normal) {
+        if (postCellData.tapNoReply && postCellData.postViewMode.canUseTapPostTitleToReply()) {
           title.movementMethod = titleMovementMethod
         } else {
           title.movementMethod = null
