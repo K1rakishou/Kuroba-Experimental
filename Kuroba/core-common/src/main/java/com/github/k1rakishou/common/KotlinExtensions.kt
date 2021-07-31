@@ -1182,7 +1182,7 @@ fun TextView.selectionStartSafe(): Int {
     return 0
   }
 
-  return selectionStart.coerceIn(0, len - 1)
+  return selectionStart.coerceIn(0, len)
 }
 
 fun TextView.selectionEndSafe(): Int {
@@ -1191,5 +1191,5 @@ fun TextView.selectionEndSafe(): Int {
     return 0
   }
 
-  return selectionEnd.coerceIn(0, len - 1)
+  return selectionEnd.coerceIn(0, len)
 }
