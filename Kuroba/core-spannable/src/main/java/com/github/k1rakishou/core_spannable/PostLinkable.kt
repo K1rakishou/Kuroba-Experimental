@@ -126,7 +126,7 @@ open class PostLinkable(
   open fun getTheme(): ChanTheme = themeEngine.chanTheme
 
   override fun hashCode(): Int {
-    var result = key.toString().toCharArray().sumBy(Char::toInt)
+    var result = key.toString().toCharArray().sumOf(Char::code)
 
     result *= 31
     result = 31 * result + linkableValue.hashCode()
@@ -168,6 +168,9 @@ open class PostLinkable(
 
   sealed class Value {
 
+    abstract override fun equals(other: Any?): Boolean
+    abstract override fun hashCode(): Int
+
     fun extractLongOrNull(): Long? {
       return when (this) {
         is LongValue -> value
@@ -179,10 +182,33 @@ open class PostLinkable(
       }
     }
 
-    object NoValue : Value()
+    object NoValue : Value() {
+      override fun equals(other: Any?): Boolean {
+        return other is NoValue
+      }
+
+      override fun hashCode(): Int {
+        return 0
+      }
+    }
+
     data class LongValue(val value: Long) : Value()
-    data class StringValue(val value: CharSequence) : Value()
     data class SearchLink(val board: String, val query: String) : Value()
+
+    data class StringValue(val value: CharSequence) : Value() {
+
+      override fun equals(other: Any?): Boolean {
+        if (other == null) return false
+        if (other !is StringValue) return false
+
+        // We need to ignore the spans here when comparing
+        return other.value.toString() == value.toString()
+      }
+
+      override fun hashCode(): Int {
+        return value.toString().toCharArray().sumOf(Char::code)
+      }
+    }
 
     data class ThreadOrPostLink(val board: String, val threadId: Long, val postId: Long) : Value() {
       fun isThreadLink(): Boolean = threadId == postId

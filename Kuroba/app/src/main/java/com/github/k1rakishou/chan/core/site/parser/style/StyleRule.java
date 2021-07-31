@@ -38,13 +38,14 @@ import com.github.k1rakishou.core_spannable.CustomTypefaceSpan;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 public class StyleRule {
-    private final List<String> blockElements = Arrays.asList("p", "div");
+    private final Set<String> blockElements = Sets.newHashSet("p", "div");
 
     private String tag;
     private List<String> classes;
