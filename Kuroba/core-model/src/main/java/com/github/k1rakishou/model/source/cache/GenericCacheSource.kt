@@ -24,6 +24,20 @@ open class GenericCacheSource<Key, Value>(
     return lock.read { actualCache[key] }
   }
 
+  override fun getOrPut(key: Key, valueFunc: () -> Value): Value {
+    return lock.write {
+      val prevValue = actualCache[key]
+      if (prevValue != null) {
+        return@write prevValue
+      }
+
+      val newValue = valueFunc()
+      actualCache[key] = newValue
+
+      return@write newValue
+    }
+  }
+
   override fun getMany(keys: List<Key>): Map<Key, Value> {
     return lock.read {
       val result = mutableMapWithCap<Key, Value>(keys)

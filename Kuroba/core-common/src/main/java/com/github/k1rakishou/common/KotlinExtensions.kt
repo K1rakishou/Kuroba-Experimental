@@ -127,6 +127,12 @@ inline fun <T : Any?> ResponseBody.useJsonReader(useFunc: (JsonReader) -> T): T 
   }
 }
 
+inline fun <T : Any?> ResponseBody.useHtmlReader(requestUrl: String, useFunc: (Document) -> T): T {
+  return byteStream().use { inputStream ->
+    val document = Jsoup.parse(inputStream, StandardCharsets.UTF_8.name(), requestUrl)
+    return@use useFunc(document)
+  }
+}
 
 suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObject(
   request: Request,

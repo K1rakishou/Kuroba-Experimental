@@ -29,7 +29,8 @@ data class ChanBoard(
   val countryFlags: Boolean = false,
   val mathTags: Boolean = false,
   @Deprecated("delete me")
-  val archive: Boolean = false
+  val archive: Boolean = false,
+  val isUnlimitedCatalog: Boolean = false
 ) {
 
   fun boardName(): String = name ?: ""

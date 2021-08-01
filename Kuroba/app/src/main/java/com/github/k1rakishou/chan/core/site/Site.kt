@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
@@ -116,7 +115,7 @@ interface Site {
   fun enabled(): Boolean
   fun initialize()
   fun postInitialize()
-  fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)? = null)
+  fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)? = null)
 
   /**
    * Name of the site. Must be unique. This will be used to find a site among other sites. Usually

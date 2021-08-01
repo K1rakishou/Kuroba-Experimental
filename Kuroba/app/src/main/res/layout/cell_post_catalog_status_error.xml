@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/cell_post_catalog_status_height"
+    android:padding="4dp"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical">
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+        android:id="@+id/error_text"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:textSize="14sp"
+        android:maxLines="4"
+        android:gravity="center_horizontal"
+        tools:text="@string/lorem_ipsum"/>
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+        android:id="@+id/reload_button"
+        android:layout_width="128dp"
+        android:layout_height="42dp"
+        android:textSize="12sp"
+        android:layout_marginTop="8dp"
+        android:layout_gravity="center_horizontal"
+        android:text="@string/action_reload" />
+
+</LinearLayout>

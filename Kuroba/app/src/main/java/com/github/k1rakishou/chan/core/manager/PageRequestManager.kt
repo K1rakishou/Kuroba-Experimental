@@ -267,6 +267,9 @@ class PageRequestManager(
         is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
           Logger.e(TAG, "Parsing error while trying to get board (${board}) pages", response.error)
         }
+        null -> {
+          // no-op
+        }
       }
     } finally {
       synchronized(this) { requestedBoards.remove(boardDescriptor) }

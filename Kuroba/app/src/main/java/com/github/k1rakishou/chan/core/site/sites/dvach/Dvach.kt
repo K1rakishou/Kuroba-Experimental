@@ -216,7 +216,7 @@ class Dvach : CommonSite() {
         return super.delete(deleteRequest)
       }
 
-      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
+      override suspend fun boards(): ModularResult<SiteBoards> {
         val dvachEndpoints = endpoints() as DvachEndpoints
 
         return DvachBoardsRequest(

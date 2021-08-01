@@ -12,7 +12,7 @@ class YukilaEndpoints(
   private val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+  override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
     throw IllegalStateException("Catalog is not supported by ${site.name()}")
   }
 
@@ -43,10 +43,6 @@ class YukilaEndpoints(
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("icon")
-  }
-
-  override fun boards(): HttpUrl {
-    throw NotImplementedError("boards")
   }
 
   override fun pages(board: ChanBoard): HttpUrl {

@@ -35,7 +35,7 @@ import okhttp3.HttpUrl;
  */
 public interface SiteEndpoints {
 
-    HttpUrl catalog(BoardDescriptor boardDescriptor);
+    HttpUrl catalog(BoardDescriptor boardDescriptor, @Nullable Integer page);
     HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
     @Nullable
@@ -46,7 +46,12 @@ public interface SiteEndpoints {
     HttpUrl imageUrl(BoardDescriptor boardDescriptor, Map<String, String> arg);
     HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg);
     HttpUrl icon(String icon, Map<String, String> arg);
-    HttpUrl boards();
+
+    @Nullable
+    default HttpUrl boards() {
+        return null;
+    }
+
     HttpUrl pages(ChanBoard board);
     HttpUrl reply(ChanDescriptor chanDescriptor);
     HttpUrl delete(ChanPost post);

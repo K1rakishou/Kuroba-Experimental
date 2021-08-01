@@ -74,6 +74,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -110,7 +111,8 @@ class ThreadPresenter @Inject constructor(
   private val themeEngine: ThemeEngine,
   private val chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>,
   private val postHighlightManager: PostHighlightManager,
-  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
+  private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -131,6 +133,22 @@ class ThreadPresenter @Inject constructor(
   private var forcePageUpdate = false
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
+
+  override val isUnlimitedCatalog: Boolean
+    get() {
+      val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+        ?: return false
+
+      return chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
+    }
+
+  override val unlimitedCatalogEndReached: Boolean
+    get() {
+      val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+        ?: return false
+
+      return chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isEndReached ?: false
+    }
 
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
@@ -258,6 +276,7 @@ class ThreadPresenter @Inject constructor(
       when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
           currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
+          chanCatalogSnapshotCache.delete(currentChanDescriptor.boardDescriptor)
         }
         is ChanDescriptor.ThreadDescriptor -> {
           currentOpenedDescriptorStateManager.updateThreadDescriptor(null)
@@ -320,6 +339,45 @@ class ThreadPresenter @Inject constructor(
     chanThreadTicker.resetTicker()
   }
 
+  override fun infiniteCatalogLoadPage() {
+    val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+      ?: return
+
+    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)
+      ?: return
+
+    if (!catalogSnapshot.isUnlimitedCatalog) {
+      return
+    }
+
+    val catalogPage = catalogSnapshot.catalogPage
+    val isEndReached = catalogSnapshot.isEndReached
+    val nextCatalogPage = catalogSnapshot.getNextCatalogPage()
+
+    Logger.d(TAG, "infiniteCatalogLoadNextPage() catalogPage=${catalogPage}, " +
+      "nextCatalogPage=${nextCatalogPage}, isEndReached=$isEndReached")
+
+    if (isEndReached) {
+      return
+    }
+
+    normalLoad()
+  }
+
+  override fun getNextPage(): Int? {
+    val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+      ?: return null
+
+    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)
+      ?: return null
+
+    if (!catalogSnapshot.isUnlimitedCatalog) {
+      return null
+    }
+
+    return catalogSnapshot.getNextCatalogPage()
+  }
+
   /**
    * A very flexible method to load new posts or reload posts from database.
    * [chanLoadOptions] allows you to delete previous posts from in-memory cache or from database
@@ -355,6 +413,10 @@ class ThreadPresenter @Inject constructor(
     currentLoadThreadJob = launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
+
+        if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+          chanCatalogSnapshotCache.delete(currentChanDescriptor.boardDescriptor)
+        }
       }
 
       if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
@@ -363,7 +425,14 @@ class ThreadPresenter @Inject constructor(
 
       chanLoadProgressNotifier.get().sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
+      val catalogPageToLoad = if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+        chanCatalogSnapshotCache.get(currentChanDescriptor.boardDescriptor)?.getNextCatalogPage()
+      } else {
+        null
+      }
+
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
+        page = catalogPageToLoad,
         chanDescriptor = currentChanDescriptor,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
@@ -375,14 +444,18 @@ class ThreadPresenter @Inject constructor(
 
       when (threadLoadResult) {
         is ThreadLoadResult.Error -> {
-          onChanLoaderError(threadLoadResult.exception)
+          onChanLoaderError(threadLoadResult.chanDescriptor, threadLoadResult.exception)
         }
         is ThreadLoadResult.Loaded -> {
           val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
 
           if (!successfullyProcessedNewPosts) {
             val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
-            onChanLoaderError(error)
+            onChanLoaderError(threadLoadResult.chanDescriptor, error)
+          } else {
+            if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+              chanCatalogSnapshotCache.get(currentChanDescriptor.boardDescriptor)?.onCatalogLoaded(catalogPageToLoad)
+            }
           }
         }
       }
@@ -588,7 +661,7 @@ class ThreadPresenter @Inject constructor(
     return batchResult.results.any { it is Succeeded && it.needUpdateView }
   }
 
-  private suspend fun onChanLoaderError(error: ChanLoaderException) {
+  private suspend fun onChanLoaderError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
 
     if (error is CancellationException) {
@@ -607,7 +680,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    threadPresenterCallback?.showError(error)
+    threadPresenterCallback?.showError(chanDescriptor, error)
   }
 
   private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor): Boolean {
@@ -2217,7 +2290,7 @@ class ThreadPresenter @Inject constructor(
 
     suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)
     fun postClicked(postDescriptor: PostDescriptor)
-    fun showError(error: ChanLoaderException)
+    fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException)
     fun showLoading()
     fun showLoading(animateTransition: Boolean)
     fun showEmpty()

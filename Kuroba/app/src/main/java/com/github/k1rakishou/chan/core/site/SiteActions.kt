@@ -37,8 +37,8 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
 
 interface SiteActions {
-  suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards>
-  suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>
+  suspend fun boards(): ModularResult<SiteBoards>
+  suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>?
   suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult

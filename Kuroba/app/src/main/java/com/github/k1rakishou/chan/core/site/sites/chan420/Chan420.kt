@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.site.sites.chan420
 
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteIcon
@@ -30,6 +29,7 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -63,7 +63,7 @@ class Chan420 : CommonSite() {
     
     setEndpoints(TaimabaEndpoints(this, "https://api.420chan.org", "https://boards.420chan.org"))
     setActions(object : TaimabaActions(this@Chan420, replyManager) {
-      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
+      override suspend fun boards(): ModularResult<SiteBoards> {
         return genericBoardsRequestResponseHandler(
           requestProvider = {
             val request = Request.Builder()
@@ -71,7 +71,7 @@ class Chan420 : CommonSite() {
               .get()
               .build()
 
-            Chan420BoardsRequest(
+            return@genericBoardsRequestResponseHandler Chan420BoardsRequest(
               siteDescriptor(),
               boardManager,
               request,

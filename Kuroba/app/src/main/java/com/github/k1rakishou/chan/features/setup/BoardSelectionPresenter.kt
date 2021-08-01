@@ -62,11 +62,6 @@ class BoardSelectionPresenter(
     val activeSiteCount = siteManager.activeSiteCount()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      if (archivesManager.isSiteArchive(site.siteDescriptor())) {
-        // Skip archives since they have no boards (at least for now)
-        return@viewActiveSitesOrderedWhile true
-      }
-
       val siteCellData = SiteCellData(
         chanSiteData.siteDescriptor,
         site.icon().url.toString(),

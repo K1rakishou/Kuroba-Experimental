@@ -30,6 +30,7 @@ class BoardBuilder(
   var countryFlags: Boolean = false
   var mathTags: Boolean = false
   var archive: Boolean = false
+  var isUnlimitedCatalog: Boolean = false
 
   fun hasMissingInfo(): Boolean {
     return name.isNullOrEmpty() || code.isNullOrEmpty() || perPage < 0 || pages < 0
@@ -65,7 +66,8 @@ class BoardBuilder(
       preuploadCaptcha = preuploadCaptcha,
       countryFlags = countryFlags,
       mathTags = mathTags,
-      archive = archive
+      archive = archive,
+      isUnlimitedCatalog = isUnlimitedCatalog,
     )
   }
 

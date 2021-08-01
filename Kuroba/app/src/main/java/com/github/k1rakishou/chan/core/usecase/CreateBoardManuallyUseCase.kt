@@ -31,7 +31,7 @@ class CreateBoardManuallyUseCase(
     val site = siteManager.bySiteDescriptor(siteDescriptor)
       ?: return Result.FailedToFindSite(siteDescriptor)
 
-    val catalogUrl = site.endpoints().catalog(catalogDescriptor.boardDescriptor)
+    val catalogUrl = site.endpoints().catalog(catalogDescriptor.boardDescriptor, null)
 
     val request = Request.Builder()
       .url(catalogUrl)
@@ -75,10 +75,6 @@ class CreateBoardManuallyUseCase(
 
     override suspend fun setOp(op: ChanPostBuilder?) {
       // no-op
-    }
-
-    override suspend fun getOp(): ChanPostBuilder? {
-      return null
     }
 
     override suspend fun addPost(postBuilder: ChanPostBuilder) {

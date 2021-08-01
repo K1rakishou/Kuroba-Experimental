@@ -82,6 +82,7 @@ class ChanThreadManager(
   }
 
   suspend fun loadThreadOrCatalog(
+    page: Int?,
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
@@ -90,8 +91,7 @@ class ChanThreadManager(
     chanReaderProcessorOptions: ChanReaderProcessor.Options = ChanReaderProcessor.Options()
   ): ThreadLoadResult {
     try {
-      Logger.d(TAG, "loadThreadOrCatalog(chanDescriptor=$chanDescriptor, " +
-        "chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
+      Logger.d(TAG, "loadThreadOrCatalog($page, $chanDescriptor, $chanCacheUpdateOptions, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
       if (chanLoadOptions.isNotDefault()) {
@@ -126,6 +126,7 @@ class ChanThreadManager(
       }
 
       val threadLoaderResult = loadInternal(
+        page = page,
         chanDescriptor = chanDescriptor,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
@@ -141,9 +142,9 @@ class ChanThreadManager(
         is ModularResult.Error -> {
           val error = threadLoaderResult.error
           if (error is ChanLoaderException) {
-            return ThreadLoadResult.Error(error)
+            return ThreadLoadResult.Error(chanDescriptor, error)
           } else {
-            return ThreadLoadResult.Error(ChanLoaderException(error))
+            return ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error))
           }
         }
       }
@@ -392,6 +393,7 @@ class ChanThreadManager(
 
   @OptIn(ExperimentalTime::class)
   private suspend fun loadInternal(
+    page: Int?,
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
@@ -427,7 +429,7 @@ class ChanThreadManager(
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
-      return ModularResult.value(ThreadLoadResult.Error(ChanLoaderException(error)))
+      return ModularResult.value(ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error)))
     }
 
     if (!chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)) {
@@ -450,6 +452,7 @@ class ChanThreadManager(
     }
 
     return chanThreadLoaderCoordinator.get().loadThreadOrCatalog(
+      page = page,
       site = site,
       chanDescriptor = chanDescriptor,
       chanCacheOptions = chanCacheOptions,
@@ -477,8 +480,10 @@ class ChanThreadManager(
 
         if (postParser == null) {
           val threadLoadResult = ThreadLoadResult.Error(
+            chanDescriptor,
             ChanLoaderException(SiteManager.SiteNotFoundException(siteDescriptor))
           )
+
           return ModularResult.value(threadLoadResult)
         }
 

@@ -66,16 +66,27 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return SiteActions.DeleteResult.DeleteError(error)
   }
 
-  override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
-    val error = CommonClientException("Catalog is not supported for site ${site.name()}")
+  override suspend fun boards(): ModularResult<SiteBoards> {
+    val boardsEndpoint = site.endpoints().boards()
+    if (boardsEndpoint == null) {
+      return ModularResult.error(CommonClientException("Site ${site.name()} does not have support for boards request"))
+    }
 
-    return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
+    val request = Request.Builder()
+      .url(boardsEndpoint)
+      .get()
+      .build()
+
+    return FoolFuukaBoardsRequest(
+      siteDescriptor = site.siteDescriptor(),
+      boardManager = site.boardManager,
+      request = request,
+      proxiedOkHttpClient = site.proxiedOkHttpClient
+    ).execute()
   }
 
-  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {
-    val error = CommonClientException("Pages are not supported for site ${site.name()}")
-
-    return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
+  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {
+    return null
   }
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {

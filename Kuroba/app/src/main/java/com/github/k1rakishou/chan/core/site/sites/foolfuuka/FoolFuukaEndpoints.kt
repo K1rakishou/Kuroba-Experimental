@@ -13,8 +13,19 @@ open class FoolFuukaEndpoints(
   protected val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
-    throw IllegalStateException("Catalog is not supported by ${site.name()}")
+  // https://archived.moe/a/
+  // https://archived.moe/a/page/2/
+  override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+    val builder = rootUrl.newBuilder()
+      .addPathSegment(boardDescriptor.boardCode)
+
+    if (page != null && page >= 0) {
+      builder
+        .addPathSegment("page")
+        .addPathSegment((page + 1).toString())
+    }
+
+    return builder.build()
   }
 
   // https://archived.moe/_/api/chan/thread/?board=a&num=208364509
@@ -42,16 +53,16 @@ open class FoolFuukaEndpoints(
       .build()
   }
 
+  override fun boards(): HttpUrl {
+    return rootUrl
+  }
+
   override fun search(): HttpUrl {
     return rootUrl
   }
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
     throw NotImplementedError("icon")
-  }
-
-  override fun boards(): HttpUrl {
-    throw NotImplementedError("boards")
   }
 
   override fun pages(board: ChanBoard): HttpUrl {

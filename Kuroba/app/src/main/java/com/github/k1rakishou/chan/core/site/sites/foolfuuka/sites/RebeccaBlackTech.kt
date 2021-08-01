@@ -20,7 +20,7 @@ class RebeccaBlackTech : BaseFoolFuukaSite() {
     setEnabled(false)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))
-    setBoardsType(Site.BoardsType.INFINITE)
+    setBoardsType(Site.BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
     setConfig(object : CommonConfig() {})
     setEndpoints(FoolFuukaEndpoints(this, rootUrl()))

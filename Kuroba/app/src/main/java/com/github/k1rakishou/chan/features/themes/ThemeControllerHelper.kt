@@ -210,6 +210,19 @@ class ThemeControllerHelper(
       object : PostAdapter.PostAdapterCallback {
         override val currentChanDescriptor: ChanDescriptor?
           get() = dummyThreadDescriptor
+        override val unlimitedCatalogEndReached: Boolean
+          get() = true
+
+        override fun infiniteCatalogLoadPage() {
+
+        }
+
+        override val isUnlimitedCatalog: Boolean
+          get() = false
+
+        override fun getNextPage(): Int? {
+          return null
+        }
       },
       dummyPostCallback,
       object : ThreadStatusCell.Callback {

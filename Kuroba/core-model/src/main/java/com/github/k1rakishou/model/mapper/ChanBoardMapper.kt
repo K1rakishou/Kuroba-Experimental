@@ -42,6 +42,7 @@ object ChanBoardMapper {
       countryFlags = chanBoardFull.chanBoardEntity.countryFlags,
       mathTags = chanBoardFull.chanBoardEntity.mathTags,
       archive = chanBoardFull.chanBoardEntity.archive,
+      isUnlimitedCatalog = chanBoardFull.chanBoardEntity.isUnlimitedCatalog,
     )
   }
 
@@ -71,6 +72,7 @@ object ChanBoardMapper {
       countryFlags = board.countryFlags,
       mathTags = board.mathTags,
       archive = board.archive,
+      isUnlimitedCatalog = board.isUnlimitedCatalog,
     )
   }
 
@@ -103,6 +105,7 @@ object ChanBoardMapper {
       countryFlags = board.countryFlags,
       mathTags = board.mathTags,
       archive = board.archive,
+      isUnlimitedCatalog = board.isUnlimitedCatalog,
     )
   }
 

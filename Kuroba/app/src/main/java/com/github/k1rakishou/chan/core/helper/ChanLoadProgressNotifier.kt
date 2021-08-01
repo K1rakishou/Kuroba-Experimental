@@ -26,8 +26,8 @@ sealed class ChanLoadProgressEvent {
   abstract val chanDescriptor: ChanDescriptor
 
   data class Begin(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
-  data class LoadingJson(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
-  data class ReadingJson(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
+  data class Loading(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
+  data class Reading(override val chanDescriptor: ChanDescriptor) : ChanLoadProgressEvent()
   data class ProcessingFilters(override val chanDescriptor: ChanDescriptor, val filtersCount: Int) : ChanLoadProgressEvent()
   data class ParsingPosts(override val chanDescriptor: ChanDescriptor, val postsToParseCount: Int) : ChanLoadProgressEvent()
   data class PersistingPosts(override val chanDescriptor: ChanDescriptor, val postsCount: Int) : ChanLoadProgressEvent()

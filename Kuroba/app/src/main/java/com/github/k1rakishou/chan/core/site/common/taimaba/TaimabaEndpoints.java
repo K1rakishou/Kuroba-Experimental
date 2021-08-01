@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site.common.taimaba;
 
+import androidx.annotation.Nullable;
+
 import com.github.k1rakishou.chan.core.site.common.CommonSite;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.model.data.board.ChanBoard;
@@ -41,7 +43,7 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl catalog(BoardDescriptor boardDescriptor) {
+    public HttpUrl catalog(BoardDescriptor boardDescriptor, @Nullable Integer page) {
         return root.builder()
                 .s(boardDescriptor.getBoardCode())
                 .s("catalog.json")

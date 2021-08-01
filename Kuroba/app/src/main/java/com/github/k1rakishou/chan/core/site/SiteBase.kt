@@ -28,7 +28,6 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
@@ -66,6 +65,9 @@ abstract class SiteBase : Site, CoroutineScope {
   @Inject
   lateinit var appConstants: AppConstants
     protected set
+  @Inject
+  lateinit var boardManager: BoardManager
+    protected set
 
   @Inject
   protected lateinit var httpCallManager: Lazy<HttpCallManager>
@@ -77,8 +79,7 @@ abstract class SiteBase : Site, CoroutineScope {
   protected lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   protected lateinit var archivesManager: ArchivesManager
-  @Inject
-  protected lateinit var boardManager: BoardManager
+
   @Inject
   protected lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
@@ -137,16 +138,14 @@ abstract class SiteBase : Site, CoroutineScope {
     )
   }
 
-  override fun loadBoardInfo(callback: ((ModularResult<JsonReaderRequest.JsonReaderResponse<SiteBoards>>) -> Unit)?) {
+  override fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)?) {
     if (!enabled()) {
-      val response = JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))
-      callback?.invoke(ModularResult.value(response))
+      callback?.invoke(ModularResult.value(SiteBoards(siteDescriptor(), emptyList())))
       return
     }
 
     if (!boardsType().canList) {
-      val response = JsonReaderRequest.JsonReaderResponse.Success(SiteBoards(siteDescriptor(), emptyList()))
-      callback?.invoke(ModularResult.value(response))
+      callback?.invoke(ModularResult.value(SiteBoards(siteDescriptor(), emptyList())))
       return
     }
 
@@ -158,24 +157,20 @@ abstract class SiteBase : Site, CoroutineScope {
         val readerResponse = actions().boards()
 
         when (readerResponse) {
-          is JsonReaderRequest.JsonReaderResponse.Success -> {
-            boardManager.createOrUpdateBoards(readerResponse.result.boards)
+          is ModularResult.Error -> {
+            Logger.e(TAG, "Couldn't get site boards", readerResponse.error)
+          }
+          is ModularResult.Value -> {
+            val siteBoards = readerResponse.value
 
-            Logger.d(TAG, "Got the boards for site ${readerResponse.result.siteDescriptor.siteName}, " +
-              "boards count = ${readerResponse.result.boards.size}")
-          }
-          is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-            Logger.e(TAG, "Couldn't get site boards, bad status code: ${readerResponse.statusCode}")
-          }
-          is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> {
-            Logger.e(TAG, "Couldn't get site boards, unknown server error", readerResponse.error)
-          }
-          is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-            Logger.e(TAG, "Couldn't get site boards, parsing error", readerResponse.error)
+            boardManager.createOrUpdateBoards(siteBoards.boards)
+
+            Logger.d(TAG, "Got the boards for site ${siteBoards.siteDescriptor.siteName}, " +
+              "boards count = ${siteBoards.boards.size}")
           }
         }
 
-        return@Try readerResponse
+        return@Try readerResponse.unwrap()
       }
 
       if (callback != null) {

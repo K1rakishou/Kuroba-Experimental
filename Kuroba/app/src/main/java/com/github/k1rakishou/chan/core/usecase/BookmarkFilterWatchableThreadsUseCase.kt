@@ -329,7 +329,7 @@ class BookmarkFilterWatchableThreadsUseCase(
         return@processDataCollectionConcurrently null
       }
 
-      val catalogJsonEndpoint = site.endpoints().catalog(boardDescriptor)
+      val catalogJsonEndpoint = site.endpoints().catalog(boardDescriptor, null)
 
       return@processDataCollectionConcurrently fetchBoardCatalog(
         boardDescriptor,

@@ -41,4 +41,5 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <dimen name="attach_new_file_button_vertical_margin">4dp</dimen>
     <dimen name="attach_new_file_button_wide_height">32dp</dimen>
     <dimen name="go_to_post_button_width">32dp</dimen>
+    <dimen name="cell_post_catalog_status_height">128dp</dimen>
 </resources>

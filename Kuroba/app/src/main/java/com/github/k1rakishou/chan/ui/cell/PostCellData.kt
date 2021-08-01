@@ -639,6 +639,7 @@ data class PostCellData(
 
     const val TYPE_STATUS = 10
     const val TYPE_LAST_SEEN = 11
+    const val TYPE_LOADING_MORE = 12
   }
 
 }

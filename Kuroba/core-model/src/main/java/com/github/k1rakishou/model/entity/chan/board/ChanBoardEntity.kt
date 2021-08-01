@@ -66,7 +66,9 @@ data class ChanBoardEntity(
   @ColumnInfo(name = MATH_TAGS_COLUMN_NAME)
   val mathTags: Boolean = false,
   @ColumnInfo(name = ARCHIVE_COLUMN_NAME)
-  val archive: Boolean = false
+  val archive: Boolean = false,
+  @ColumnInfo(name = IS_UNLIMITED_CATALOG_COLUMN_NAME)
+  val isUnlimitedCatalog: Boolean = false
 ) {
 
   companion object {
@@ -96,6 +98,7 @@ data class ChanBoardEntity(
     const val COUNTRY_FLAGS_COLUMN_NAME = "country_flags"
     const val MATH_TAGS_COLUMN_NAME = "math_tags"
     const val ARCHIVE_COLUMN_NAME = "archive"
+    const val IS_UNLIMITED_CATALOG_COLUMN_NAME = "is_unlimited_catalog"
   }
 
 }

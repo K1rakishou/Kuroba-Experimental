@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
@@ -13,6 +14,7 @@ import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 
 class CatalogDataPreloadUseCase(
+  private val boardManager: BoardManager,
   private val postHideManager: PostHideManager,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
 ) : ISuspendUseCase<ChanDescriptor.CatalogDescriptor, Unit> {
@@ -30,7 +32,11 @@ class CatalogDataPreloadUseCase(
 
       jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
       jobs += async(Dispatchers.IO) {
-        chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor)
+        val isUnlimitedCatalog = boardManager.byBoardDescriptor(catalogDescriptor.boardDescriptor)
+          ?.isUnlimitedCatalog
+          ?: false
+
+        chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
           .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
           .ignore()
 

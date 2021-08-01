@@ -4,6 +4,7 @@ import com.github.k1rakishou.common.ModularResult
 
 interface CacheSource<Key, Value> {
   fun get(key: Key): Value?
+  fun getOrPut(key: Key, valueFunc: () -> Value): Value
   fun getMany(keys: List<Key>): Map<Key, Value>
   fun getAll(): Map<Key, Value>
   fun filterValues(filterFunc: (Value) -> Boolean): List<Value>

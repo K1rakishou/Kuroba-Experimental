@@ -72,12 +72,10 @@ class SiteSettingsPresenter(
   private fun collectGroupBuilders(context: Context, site: Site): List<SettingsGroup.SettingsGroupBuilder> {
     val groups = mutableListOf<SettingsGroup.SettingsGroupBuilder>()
 
-    if (!archivesManager.isSiteArchive(site.siteDescriptor())) {
-      groups += buildGeneralGroup(context, site.siteDescriptor())
+    groups += buildGeneralGroup(context, site.siteDescriptor())
 
-      if (site.siteFeature(Site.SiteFeature.LOGIN)) {
-        groups += buildAuthenticationGroup(context, site)
-      }
+    if (site.siteFeature(Site.SiteFeature.LOGIN)) {
+      groups += buildAuthenticationGroup(context, site)
     }
 
     if (site.settings().isNotEmpty()) {

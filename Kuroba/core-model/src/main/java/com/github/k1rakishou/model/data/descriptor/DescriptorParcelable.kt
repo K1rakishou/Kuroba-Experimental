@@ -31,18 +31,18 @@ data class DescriptorParcelable(
       when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> {
           return DescriptorParcelable(
-            THREAD,
-            chanDescriptor.siteName(),
-            chanDescriptor.boardCode(),
-            chanDescriptor.threadNo
+            type = THREAD,
+            siteName = chanDescriptor.siteName(),
+            boardCode = chanDescriptor.boardCode(),
+            threadNo = chanDescriptor.threadNo
           )
         }
         is ChanDescriptor.CatalogDescriptor -> {
           return DescriptorParcelable(
-            CATALOG,
-            chanDescriptor.siteName(),
-            chanDescriptor.boardCode(),
-            null
+            type = CATALOG,
+            siteName = chanDescriptor.siteName(),
+            boardCode = chanDescriptor.boardCode(),
+            threadNo = null
           )
         }
       }

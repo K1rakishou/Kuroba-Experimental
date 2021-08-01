@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.site.sites.kun8
 
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.BoardsType
@@ -99,7 +98,7 @@ class Kun8 : CommonSite() {
     })
 
     setActions(object : VichanActions(this@Kun8, proxiedOkHttpClient, siteManager, replyManager) {
-      override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
+      override suspend fun boards(): ModularResult<SiteBoards> {
         val request = Request.Builder()
           .url(endpoints().boards().toString())
           .get()

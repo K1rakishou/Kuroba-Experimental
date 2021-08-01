@@ -642,6 +642,7 @@ class BoardManager(
       countryFlags = newBoard.countryFlags,
       mathTags = newBoard.mathTags,
       archive = newBoard.archive,
+      isUnlimitedCatalog = newBoard.isUnlimitedCatalog,
     )
   }
 

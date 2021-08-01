@@ -64,16 +64,14 @@ class YukilaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return SiteActions.DeleteResult.DeleteError(error)
   }
 
-  override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
+  override suspend fun boards(): ModularResult<SiteBoards> {
     val error = CommonClientException("Catalog is not supported for site ${site.name()}")
 
-    return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
+    return ModularResult.error(error)
   }
 
-  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages> {
-    val error = CommonClientException("Pages are not supported for site ${site.name()}")
-
-    return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
+  override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {
+    return null
   }
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {

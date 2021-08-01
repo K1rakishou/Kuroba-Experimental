@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.site.loader.internal
 
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
-import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
@@ -18,17 +18,19 @@ import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 internal class ChanPostPersister(
-  private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   private val parsePostsV1UseCase: ParsePostsV1UseCase,
   private val storePostsInRepositoryUseCase: StorePostsInRepositoryUseCase,
   private val chanPostRepository: ChanPostRepository,
   private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
-  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier,
+  private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 ) : AbstractPostLoader() {
 
   @OptIn(ExperimentalTime::class)
@@ -46,15 +48,25 @@ internal class ChanPostPersister(
       Logger.d(TAG, "persistPosts($chanDescriptor, $chanReaderProcessor, $cacheOptions, " +
         "${postParser.javaClass.simpleName})")
 
-      if (chanReaderProcessor.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-        val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
-          boardDescriptor = chanReaderProcessor.chanDescriptor.boardDescriptor,
-          threadDescriptors = chanReaderProcessor.getThreadDescriptors()
-        )
+      if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+        val isUnlimitedCatalog = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
+          ?.isUnlimitedCatalog
+          ?: false
 
-        chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
-          .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
-          .ignore()
+        if (isUnlimitedCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {
+          chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+            ?.let { chanCatalogSnapshot -> chanCatalogSnapshot.onEndOfUnlimitedCatalogReached() }
+        } else {
+          val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
+            boardDescriptor = chanDescriptor.boardDescriptor,
+            threadDescriptors = chanReaderProcessor.getThreadDescriptors(),
+            isUnlimitedCatalog = isUnlimitedCatalog
+          )
+
+          chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
+            .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
+            .ignore()
+        }
       }
 
       val parsingResult = parsePostsV1UseCase.parseNewPostsPosts(
@@ -92,7 +104,7 @@ internal class ChanPostPersister(
       )
     }.mapErrorToValue { error ->
       return@mapErrorToValue ThreadResultWithTimeInfo(
-        threadLoadResult = ThreadLoadResult.Error(ChanLoaderException(error)),
+        threadLoadResult = ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error)),
         timeInfo = null
       )
     }

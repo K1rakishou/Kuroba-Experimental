@@ -21,6 +21,7 @@ import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 
 import javax.inject.Singleton;
@@ -209,6 +210,15 @@ public class RoomDatabaseModule {
     ) {
         Logger.deps("ThreadDownloadRepository");
         return modelComponent.getThreadDownloadRepository();
+    }
+
+    @Provides
+    @Singleton
+    public ChanCatalogSnapshotCache provideChanCatalogSnapshotCache(
+            ModelComponent modelComponent
+    ) {
+        Logger.deps("ChanCatalogSnapshotCache");
+        return modelComponent.getChanCatalogSnapshotCache();
     }
 
 }

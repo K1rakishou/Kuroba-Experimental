@@ -189,6 +189,7 @@ class BrowsePresenter @Inject constructor(
         activeThreads += threadDescriptor
 
         chanThreadManager.loadThreadOrCatalog(
+          page = null,
           chanDescriptor = threadDescriptor,
           chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
           chanLoadOptions = ChanLoadOptions.retainAll(),

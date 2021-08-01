@@ -360,11 +360,13 @@ public class UseCaseModule {
     @Provides
     @Singleton
     public CatalogDataPreloadUseCase provideCatalogDataPreloadUseCase(
+            BoardManager boardManager,
             PostHideManager postHideManager,
             ChanCatalogSnapshotRepository chanCatalogSnapshotRepository
     ) {
         Logger.deps("CatalogDataPreloadUseCase");
         return new CatalogDataPreloadUseCase(
+                boardManager,
                 postHideManager,
                 chanCatalogSnapshotRepository
         );

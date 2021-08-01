@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.site.common
 
 import android.text.TextUtils
 import androidx.annotation.CallSuper
+import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
@@ -58,7 +59,6 @@ import kotlinx.coroutines.flow.flowOn
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Response
-import java.io.IOException
 import java.lang.Long.toHexString
 import java.util.*
 import java.util.regex.Pattern
@@ -362,7 +362,7 @@ abstract class CommonSite : SiteBase() {
       return SimpleHttpUrl(url)
     }
     
-    override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+    override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
     
@@ -379,10 +379,6 @@ abstract class CommonSite : SiteBase() {
     }
     
     override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
-    }
-    
-    override fun boards(): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
 
@@ -541,51 +537,23 @@ abstract class CommonSite : SiteBase() {
     
     }
     
-    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
-      return JsonReaderRequest.JsonReaderResponse.Success(
-        SiteBoards(site.siteDescriptor(), site.staticBoards)
-      )
+    override suspend fun boards(): ModularResult<SiteBoards> {
+      return ModularResult.Try { SiteBoards(site.siteDescriptor(), site.staticBoards) }
     }
     
     protected suspend fun genericBoardsRequestResponseHandler(
-      requestProvider: () -> JsonReaderRequest<List<ChanBoard>>,
+      requestProvider: () -> AbstractRequest<List<ChanBoard>>,
       defaultBoardsProvider: () -> List<ChanBoard>
-    ): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
-      when (val result = requestProvider().execute()) {
-        is JsonReaderRequest.JsonReaderResponse.Success -> {
-          return JsonReaderRequest.JsonReaderResponse.Success(
-            SiteBoards(site.siteDescriptor(), result.result)
-          )
-        }
-        is JsonReaderRequest.JsonReaderResponse.ServerError,
-        is JsonReaderRequest.JsonReaderResponse.UnknownServerError,
-        is JsonReaderRequest.JsonReaderResponse.ParsingError -> {
-          val error = when (result) {
-            is JsonReaderRequest.JsonReaderResponse.Success -> {
-              throw RuntimeException("Must not be called here")
-            }
-            is JsonReaderRequest.JsonReaderResponse.ServerError -> {
-              IOException("Bad status code error: ${result.statusCode}")
-            }
-            is JsonReaderRequest.JsonReaderResponse.UnknownServerError -> result.error
-            is JsonReaderRequest.JsonReaderResponse.ParsingError -> result.error
-          }
-
-          Logger.e(TAG, "Error while trying to get board for site ${site.name}", error)
-
-          return JsonReaderRequest.JsonReaderResponse.Success(
-            SiteBoards(site.siteDescriptor(), defaultBoardsProvider())
-          )
-        }
-      }
+    ): ModularResult<SiteBoards> {
+      return requestProvider().execute()
+        .mapValue { boardsList -> SiteBoards(site.siteDescriptor(), boardsList) }
+        .mapErrorToValue { ModularResult.value(SiteBoards(site.siteDescriptor(), defaultBoardsProvider())) }
     }
     
     override suspend fun pages(
       board: ChanBoard
-    ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
-      return JsonReaderRequest.JsonReaderResponse.Success(
-        BoardPages(board.boardDescriptor, listOf())
-      )
+    ): JsonReaderRequest.JsonReaderResponse<BoardPages>? {
+      return null
     }
 
     override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {

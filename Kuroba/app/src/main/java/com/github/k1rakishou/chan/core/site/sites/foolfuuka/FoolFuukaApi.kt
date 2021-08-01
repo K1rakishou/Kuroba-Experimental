@@ -25,6 +25,7 @@ import java.io.InputStream
 class FoolFuukaApi(
   site: CommonSite
 ) : CommonSite.CommonApi(site) {
+  private val foolFuukaReadCatalogThreadsHelper by lazy { FoolFuukaReadCatalogThreadsHelper() }
 
   override suspend fun loadThreadFresh(
     requestUrl: String,
@@ -226,7 +227,11 @@ class FoolFuukaApi(
     responseBodyStream: InputStream,
     chanReaderProcessor: AbstractChanReaderProcessor
   ) {
-    throw CommonClientException("Catalog is not supported for site ${site.name()}")
+    foolFuukaReadCatalogThreadsHelper.readCatalogThreads(
+      requestUrl = requestUrl,
+      responseBodyStream = responseBodyStream,
+      chanReaderProcessor = chanReaderProcessor
+    )
   }
 
   override suspend fun readThreadBookmarkInfoObject(

@@ -1071,8 +1071,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
 
     <string name="thread_layout_load_progress_preparing">Preparing</string>
-    <string name="thread_layout_load_progress_requesting_json">Requesting JSON</string>
-    <string name="thread_layout_load_progress_reading_json_response">Reading JSON response</string>
+    <string name="thread_layout_load_progress_requesting_server_data">Requesting data from the server</string>
+    <string name="thread_layout_load_progress_reading_data_response">Reading server response</string>
     <string name="thread_layout_load_progress_processing_filters">Processing %1$d filters</string>
     <string name="thread_layout_load_progress_parsing_posts">Parsing %1$d posts</string>
     <string name="thread_layout_load_progress_persisting_posts">Persisting %1$d posts</string>

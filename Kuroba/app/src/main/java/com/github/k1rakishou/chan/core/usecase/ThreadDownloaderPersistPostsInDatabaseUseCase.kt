@@ -41,6 +41,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val chanLoadUrl = chanThreadLoaderCoordinator.get().getChanUrl(
       site = site,
       chanDescriptor = threadDescriptor,
+      page = null,
       forceFullLoad = true
     )
 

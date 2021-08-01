@@ -137,7 +137,7 @@ open class Chan4 : SiteBase() {
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
     private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
-    override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+    override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
       return a.newBuilder()
         .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment("catalog.json")
@@ -293,7 +293,7 @@ open class Chan4 : SiteBase() {
   @OptIn(InternalCoroutinesApi::class)
   private val actions: SiteActions = object : SiteActions {
 
-    override suspend fun boards(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
+    override suspend fun boards(): ModularResult<SiteBoards> {
       val request = Request.Builder()
         .url(endpoints().boards().toString())
         .get()

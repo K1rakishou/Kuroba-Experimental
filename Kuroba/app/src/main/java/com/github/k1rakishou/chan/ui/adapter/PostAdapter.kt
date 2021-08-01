@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
+import com.github.k1rakishou.chan.ui.cell.CatalogStatusCell
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -147,6 +148,19 @@ class PostAdapter(
           AppModuleAndroidUtils.inflate(inflateContext, R.layout.cell_post_last_seen, parent, false)
         )
       }
+      PostCellData.TYPE_LOADING_MORE -> {
+        val catalogStatusCell = CatalogStatusCell(inflateContext)
+
+        val loadingMoreViewHolder = LoadingMoreViewHolder(
+          postAdapterCallback,
+          catalogStatusCell
+        )
+
+        catalogStatusCell.setPostAdapterCallback(postAdapterCallback)
+        catalogStatusCell.setError(threadCellData.error)
+
+        return loadingMoreViewHolder
+      }
       PostCellData.TYPE_STATUS -> {
         val statusCell = AppModuleAndroidUtils.inflate(
           inflateContext,
@@ -178,9 +192,9 @@ class PostAdapter(
         val postCell = postViewHolder.itemView as GenericPostCell
         postCell.setPost(postCellData)
       }
-
       PostCellData.TYPE_STATUS -> (holder.itemView as ThreadStatusCell).update()
       PostCellData.TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
+      PostCellData.TYPE_LOADING_MORE -> (holder as LoadingMoreViewHolder).bind()
     }
   }
 
@@ -191,6 +205,8 @@ class PostAdapter(
   override fun getItemViewType(position: Int): Int {
     if (position == threadCellData.lastSeenIndicatorPosition) {
       return PostCellData.TYPE_LAST_SEEN
+    } else if (showLoadingMoreView() && position == itemCount - 1) {
+      return PostCellData.TYPE_LOADING_MORE
     } else if (showStatusView() && position == itemCount - 1) {
       return PostCellData.TYPE_STATUS
     } else {
@@ -210,6 +226,9 @@ class PostAdapter(
       }
       PostCellData.TYPE_LAST_SEEN -> {
         return -2
+      }
+      PostCellData.TYPE_LOADING_MORE -> {
+        return -3
       }
       else -> {
         val postCellData = threadCellData.getPostCellData(position)
@@ -316,6 +335,16 @@ class PostAdapter(
         }
       }
     }
+
+    if (showLoadingMoreView()) {
+      val childCount = recyclerView.childCount
+      for (i in 0 until childCount) {
+        val child = recyclerView.getChildAt(i)
+        if (child is CatalogStatusCell) {
+          child.setError(error)
+        }
+      }
+    }
   }
 
   fun setBoardPostViewMode(boardPostViewMode: BoardPostViewMode) {
@@ -336,6 +365,15 @@ class PostAdapter(
     // the chanDescriptor can be null while this adapter is used between cleanup and the removal
     // of the recyclerview from the view hierarchy, although it's rare.
     return chanDescriptor != null
+  }
+
+  private fun showLoadingMoreView(): Boolean {
+    val chanDescriptor = postAdapterCallback.currentChanDescriptor
+    if (chanDescriptor !is ChanDescriptor.CatalogDescriptor) {
+      return false
+    }
+
+    return postAdapterCallback.isUnlimitedCatalog && !postAdapterCallback.unlimitedCatalogEndReached
   }
 
   suspend fun updatePost(updatedPost: ChanPost) {
@@ -391,6 +429,10 @@ class PostAdapter(
 
     if (showStatusView() && position == itemCount - 1) {
       return PostCellData.TYPE_STATUS
+    }
+
+    if (showLoadingMoreView() && position == itemCount - 1) {
+      return PostCellData.TYPE_LOADING_MORE
     }
 
     val correctedPosition = threadCellData.getPostPosition(position)
@@ -450,6 +492,37 @@ class PostAdapter(
 
   class StatusViewHolder(threadStatusCell: ThreadStatusCell) : RecyclerView.ViewHolder(threadStatusCell)
 
+  class LoadingMoreViewHolder(
+    private val postAdapterCallback: PostAdapterCallback,
+    private val catalogStatusCell: CatalogStatusCell
+  ) : RecyclerView.ViewHolder(catalogStatusCell) {
+    private var prevCatalogPage: Int? = null
+
+    fun bind() {
+      val nextPage = postAdapterCallback.getNextPage()
+        ?: return
+      val prevPage = prevCatalogPage
+
+      if (prevPage != null && nextPage <= prevPage) {
+        return
+      }
+
+      if (postAdapterCallback.unlimitedCatalogEndReached) {
+        return
+      }
+
+      if (catalogStatusCell.isError) {
+        return
+      }
+
+      prevCatalogPage = nextPage
+
+      postAdapterCallback.infiniteCatalogLoadPage()
+      catalogStatusCell.setProgress()
+    }
+
+  }
+
   class LastSeenViewHolder(
     private val themeEngine: ThemeEngine,
     itemView: View
@@ -467,6 +540,11 @@ class PostAdapter(
 
   interface PostAdapterCallback {
     val currentChanDescriptor: ChanDescriptor?
+    val isUnlimitedCatalog: Boolean
+    val unlimitedCatalogEndReached: Boolean
+
+    fun infiniteCatalogLoadPage()
+    fun getNextPage(): Int?
   }
 
   companion object {

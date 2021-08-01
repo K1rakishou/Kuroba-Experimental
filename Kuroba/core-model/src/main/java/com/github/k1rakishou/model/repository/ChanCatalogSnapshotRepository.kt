@@ -28,7 +28,8 @@ class ChanCatalogSnapshotRepository(
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadChanCatalogSnapshot(
-    catalogDescriptor: ChanDescriptor.CatalogDescriptor
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    isUnlimitedCatalog: Boolean
   ): ModularResult<Unit> {
     val alreadyPreloaded = mutex.withLock { alreadyPreloadedSet.contains(catalogDescriptor) }
     if (alreadyPreloaded) {
@@ -42,7 +43,9 @@ class ChanCatalogSnapshotRepository(
           Logger.d(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) begin")
         }
 
-        val (preloaded, time) = measureTimedValue { localSource.preloadChanCatalogSnapshot(catalogDescriptor) }
+        val (preloaded, time) = measureTimedValue {
+          localSource.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
+        }
         if (preloaded) {
           mutex.withLock { alreadyPreloadedSet.add(catalogDescriptor) }
         }

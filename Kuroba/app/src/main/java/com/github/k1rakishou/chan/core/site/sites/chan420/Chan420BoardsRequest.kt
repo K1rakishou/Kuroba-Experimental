@@ -18,15 +18,17 @@ package com.github.k1rakishou.chan.core.site.sites.chan420
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
+import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
+import com.github.k1rakishou.common.useJsonReader
 import com.github.k1rakishou.model.data.board.BoardBuilder
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.stream.JsonReader
 import dagger.Lazy
 import okhttp3.Request
+import okhttp3.ResponseBody
 import java.io.IOException
 import java.util.*
 
@@ -35,9 +37,13 @@ class Chan420BoardsRequest(
   private val boardManager: BoardManager,
   request: Request,
   proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
-) : JsonReaderRequest<List<ChanBoard>>(request, proxiedOkHttpClient) {
+) : AbstractRequest<List<ChanBoard>>(request, proxiedOkHttpClient) {
 
-  override suspend fun readJson(reader: JsonReader): List<ChanBoard> {
+  override suspend fun processBody(responseBody: ResponseBody): List<ChanBoard> {
+    return responseBody.useJsonReader { jsonReader -> readJson(jsonReader) }
+  }
+
+  private fun readJson(reader: JsonReader): List<ChanBoard> {
     val list: MutableList<ChanBoard> = ArrayList()
 
     reader.jsonObject {

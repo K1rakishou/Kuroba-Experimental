@@ -9,7 +9,6 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
@@ -29,6 +28,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import dagger.Lazy
 import dagger.Module
@@ -46,11 +46,11 @@ class HelperModule {
     chanPostRepository: ChanPostRepository,
     chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository,
     appConstants: AppConstants,
-    siteManager: SiteManager,
     boardManager: BoardManager,
     siteResolver: SiteResolver,
     chanLoadProgressNotifier: ChanLoadProgressNotifier,
     chanThreadsCache: ChanThreadsCache,
+    chanCatalogSnapshotCache: ChanCatalogSnapshotCache,
     threadDownloadManager: ThreadDownloadManager,
     parsePostsV1UseCase: ParsePostsV1UseCase
   ): ChanThreadLoaderCoordinator {
@@ -60,11 +60,11 @@ class HelperModule {
       chanPostRepository,
       chanCatalogSnapshotRepository,
       appConstants,
-      siteManager,
       boardManager,
       siteResolver,
       chanLoadProgressNotifier,
       chanThreadsCache,
+      chanCatalogSnapshotCache,
       threadDownloadManager,
       parsePostsV1UseCase
     )

@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.BoardManager
-import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -47,8 +46,8 @@ class DvachBoardsRequest internal constructor(
   private val additionalGetBoardsRequestUrl: HttpUrl
 ) {
 
-  suspend fun execute(): JsonReaderRequest.JsonReaderResponse<SiteBoards> {
-    val siteBoardsResult = Try {
+  suspend fun execute(): ModularResult<SiteBoards> {
+     return Try {
       val dvachBoardAdditionalInfoMap = getBoardsAdditionalInfo(additionalGetBoardsRequestUrl)
       if (dvachBoardAdditionalInfoMap.isEmpty()) {
         throw DvachBoardsRequestException.ParsingError(
@@ -58,29 +57,6 @@ class DvachBoardsRequest internal constructor(
 
       return@Try getSiteBoards(dvachBoardAdditionalInfoMap)
     }
-
-    if (siteBoardsResult is ModularResult.Error) {
-      val error = siteBoardsResult.error
-
-      if (error !is DvachBoardsRequestException) {
-        return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error)
-      }
-
-      when (error) {
-        is DvachBoardsRequestException.ServerErrorException -> {
-          return JsonReaderRequest.JsonReaderResponse.ServerError(error.code)
-        }
-        is DvachBoardsRequestException.UnknownServerError -> {
-          return JsonReaderRequest.JsonReaderResponse.UnknownServerError(error.throwable)
-        }
-        is DvachBoardsRequestException.ParsingError -> {
-          return JsonReaderRequest.JsonReaderResponse.ParsingError(error.throwable)
-        }
-      }
-    }
-
-    val siteBoards = (siteBoardsResult as ModularResult.Value).value
-    return JsonReaderRequest.JsonReaderResponse.Success(siteBoards)
   }
 
   private suspend fun getSiteBoards(

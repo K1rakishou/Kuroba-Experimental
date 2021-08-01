@@ -38,7 +38,6 @@ class ChanReaderProcessor(
 ) : AbstractChanReaderProcessor() {
   private val toParse = mutableListWithCap<ChanPostBuilder>(64)
   private val postOrderedList = mutableListWithCap<PostDescriptor>(64)
-  private var op: ChanPostBuilder? = null
 
   override val canUseEmptyBoardIfBoardDoesNotExist: Boolean
     get() = false
@@ -46,19 +45,17 @@ class ChanReaderProcessor(
   private val lock = Mutex()
 
   override suspend fun setOp(op: ChanPostBuilder?) {
-    lock.withLock {
-      this.op = op
+    if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+      return
+    }
 
+    lock.withLock {
       if (op != null) {
         closed = op.closed
         archived = op.archived
         deleted = op.deleted
       }
     }
-  }
-
-  override suspend fun getOp(): ChanPostBuilder? {
-    return lock.withLock { this.op }
   }
 
   override suspend fun addPost(postBuilder: ChanPostBuilder) {

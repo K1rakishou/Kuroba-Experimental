@@ -94,6 +94,7 @@ import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.android.material.snackbar.Snackbar
 import dagger.Lazy
@@ -161,6 +162,8 @@ class ThreadLayout @JvmOverloads constructor(
   lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
+  @Inject
+  lateinit var chanCatalogSnapshotCache: ChanCatalogSnapshotCache
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -456,7 +459,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun showError(error: ChanLoaderException) {
+  override fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
     if (hasSupportedActiveArchives() && !error.isCloudFlareError()) {
       openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
     } else {
@@ -464,8 +467,9 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val errorMessage = error.errorMessage
+    val isUnlimitedCatalog = isUnlimitedCatalog(chanDescriptor)
 
-    if (visible == Visible.THREAD) {
+    if (visible == Visible.THREAD || isUnlimitedCatalog) {
       // Hide the button so the user can see the full error message
       replyButton.hide()
       threadListLayout.showError(errorMessage)
@@ -479,6 +483,14 @@ class ThreadLayout @JvmOverloads constructor(
     if (error.isCloudFlareError()) {
       openCloudFlareBypassControllerAndHandleResult(error)
     }
+  }
+
+  private fun isUnlimitedCatalog(chanDescriptor: ChanDescriptor): Boolean {
+    if (chanDescriptor !is ChanDescriptor.CatalogDescriptor) {
+      return false
+    }
+
+    return chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
   }
 
   private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {
@@ -1230,11 +1242,11 @@ class ThreadLayout @JvmOverloads constructor(
       is ChanLoadProgressEvent.Begin -> {
         getString(R.string.thread_layout_load_progress_preparing)
       }
-      is ChanLoadProgressEvent.LoadingJson -> {
-        getString(R.string.thread_layout_load_progress_requesting_json)
+      is ChanLoadProgressEvent.Loading -> {
+        getString(R.string.thread_layout_load_progress_requesting_server_data)
       }
-      is ChanLoadProgressEvent.ReadingJson -> {
-        getString(R.string.thread_layout_load_progress_reading_json_response)
+      is ChanLoadProgressEvent.Reading -> {
+        getString(R.string.thread_layout_load_progress_reading_data_response)
       }
       is ChanLoadProgressEvent.ProcessingFilters -> {
         getString(R.string.thread_layout_load_progress_processing_filters, chanLoadProgressEvent.filtersCount)
