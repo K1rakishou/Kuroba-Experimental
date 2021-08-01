@@ -33,6 +33,7 @@ abstract class ThreadBookmarkGroupDao {
     INNER JOIN ${ThreadBookmarkGroupEntryEntity.TABLE_NAME} entries
         ON groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = entries.${ThreadBookmarkGroupEntryEntity.OWNER_GROUP_ID_COLUMN_NAME}
     WHERE entries.${ThreadBookmarkGroupEntryEntity.OWNER_BOOKMARK_ID_COLUMN_NAME}
+    GROUP BY groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}
     ORDER BY groups.${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
   """)
   abstract suspend fun selectAll(): List<ThreadBookmarkGroupWithEntries>
