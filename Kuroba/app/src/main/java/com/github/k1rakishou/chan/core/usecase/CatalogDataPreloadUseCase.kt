@@ -36,9 +36,11 @@ class CatalogDataPreloadUseCase(
           ?.isUnlimitedCatalog
           ?: false
 
-        chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
-          .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
-          .ignore()
+        if (!isUnlimitedCatalog) {
+          chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
+            .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
+            .ignore()
+        }
 
         return@async
       }

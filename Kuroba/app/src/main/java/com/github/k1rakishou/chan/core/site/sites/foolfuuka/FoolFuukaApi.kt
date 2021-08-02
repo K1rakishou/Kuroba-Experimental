@@ -145,6 +145,7 @@ class FoolFuukaApi(
         "locked" -> archivePost.closed = nextInt() == 1
         "deleted" -> archivePost.archived = nextInt() == 1
         "trip_processed" -> archivePost.tripcode = nextStringOrNull() ?: ""
+        "poster_hash" -> archivePost.posterId = nextStringOrNull() ?: ""
         "media" -> {
           if (hasNext()) {
             if (peek() == JsonToken.NULL) {

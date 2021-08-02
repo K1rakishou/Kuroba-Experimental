@@ -17,6 +17,7 @@ class ArchivePost(
   var closed: Boolean = false,
   var archived: Boolean = false,
   var tripcode: String = "",
+  var posterId: String = "",
   val archivePostMediaList: MutableList<ArchivePostMedia> = mutableListOf()
 ) {
 
@@ -49,7 +50,7 @@ class ArchivePost(
     return "ArchivePost(postNo=$postNo, postSubNo=$postSubNo, threadNo=$threadNo, isOP=$isOP, " +
       "unixTimestampSeconds=$unixTimestampSeconds, moderatorCapcode='$moderatorCapcode'," +
       " name='$name', subject='$subject', comment='$comment', sticky=$sticky, " +
-      "closed=$closed, archived=$archived, tripcode='$tripcode', " +
+      "closed=$closed, archived=$archived, tripcode='$tripcode', posterId='$posterId'" +
       "archivePostMediaListCount=${archivePostMediaList.size})"
   }
 

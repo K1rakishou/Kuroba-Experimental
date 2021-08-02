@@ -32,7 +32,7 @@ class HtmlParser {
           val text = String(currentBuffer.toCharArray())
           val textUnescaped = Parser.unescapeEntities(text, false)
 
-          outNodes.add(HtmlNode.Text(textUnescaped))
+          addNewTextNode(outNodes, textUnescaped)
           currentBuffer.clear()
         }
 
@@ -52,6 +52,15 @@ class HtmlParser {
         localOffset = parseNodeResult.offset
         ++tagIndex
 
+        val htmlNode = parseNodeResult.htmlNode
+
+        // Skip any '\n' symbols after <br> tag
+        if (htmlNode is HtmlNode.Tag && htmlNode.htmlTag.tagName == "br") {
+          while (html.getOrNull(localOffset) == '\n') {
+            ++localOffset
+          }
+        }
+
         continue
       }
 
@@ -63,11 +72,21 @@ class HtmlParser {
       val text = String(currentBuffer.toCharArray())
       val textUnescaped = Parser.unescapeEntities(text, false)
 
-      outNodes.add(HtmlNode.Text(textUnescaped))
+      addNewTextNode(outNodes, textUnescaped)
       currentBuffer.clear()
     }
 
     return ParseResult(outNodes, localOffset)
+  }
+
+  private fun addNewTextNode(outNodes: MutableList<HtmlNode>, textUnescaped: String) {
+    val lastNode = outNodes.lastOrNull()
+    val isLastNodeVoid = (lastNode as? HtmlNode.Tag)?.htmlTag?.isVoidElement == true
+    val emptyOrNewLineCharacter = textUnescaped.trim().let { text -> text.isEmpty() || (text.length == 1 && text[0] == '\n') }
+
+    if (lastNode == null || !isLastNodeVoid || !emptyOrNewLineCharacter) {
+      outNodes.add(HtmlNode.Text(textUnescaped))
+    }
   }
 
   private fun parseNode(parentNode: HtmlNode?, html: String, start: Int, tagIndex: Int): ParseNodeResult {
@@ -173,13 +192,14 @@ class HtmlParser {
     val currentTagPart = mutableListWithCap<Char>(32)
 
     while (offset < tagRaw.size) {
-      val ch = tagRaw[offset]
+      val currentCh = tagRaw[offset]
+      val nextCh = tagRaw.getOrNull(offset + 1)
 
-      if (ch == '\"') {
+      if (currentCh == '\"') {
         isInsideString = isInsideString.not()
       }
 
-      if (ch == separator && !isInsideString) {
+      if (currentCh == separator && !isInsideString && nextCh != '/') {
         tagParts.add(currentTagPart.toCharArray())
         currentTagPart.clear()
 
@@ -187,7 +207,12 @@ class HtmlParser {
         continue
       }
 
-      currentTagPart.add(ch)
+      if (!isInsideString && (currentCh == '/' || nextCh == '/')) {
+        ++offset
+        continue
+      }
+
+      currentTagPart.add(currentCh)
       ++offset
     }
 

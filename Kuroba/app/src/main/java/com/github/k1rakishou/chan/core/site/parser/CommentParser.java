@@ -35,6 +35,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.common.CommentParserConstants;
+import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
@@ -127,6 +128,10 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     @Override
     public Pattern getFullQuotePattern() {
         return fullQuotePattern;
+    }
+
+    public HtmlTag preprocessTag(@NonNull HtmlNode.Tag node) {
+        return node.getHtmlTag();
     }
 
     @Nullable

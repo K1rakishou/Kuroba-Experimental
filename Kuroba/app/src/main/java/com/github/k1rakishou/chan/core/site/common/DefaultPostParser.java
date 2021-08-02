@@ -353,7 +353,7 @@ public class DefaultPostParser implements PostParser {
                     this::handleLink
             );
         } else if (node instanceof HtmlNode.Tag) {
-            HtmlTag tag = ((HtmlNode.Tag) node).getHtmlTag();
+            HtmlTag tag = commentParser.preprocessTag((HtmlNode.Tag) node);
 
             String nodeName = tag.getTagName();
             String styleAttr = tag.attrOrNull("style");

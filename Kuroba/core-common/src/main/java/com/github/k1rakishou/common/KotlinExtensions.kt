@@ -51,6 +51,7 @@ import okio.buffer
 import okio.source
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
+import org.jsoup.nodes.Element
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -1198,4 +1199,19 @@ fun TextView.selectionEndSafe(): Int {
   }
 
   return selectionEnd.coerceIn(0, len)
+}
+
+fun Element.getFirstElementByClassWithAnyValue(vararg values: String): Element? {
+  for (value in values) {
+    val element = getElementsByAttributeValue("class", value).firstOrNull()
+    if (element != null) {
+      return element
+    }
+  }
+
+  return null
+}
+
+fun Element.getElementsByClassWithValue(value: String): Element? {
+  return getElementsByAttributeValue("class", value).firstOrNull()
 }

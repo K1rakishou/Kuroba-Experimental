@@ -40,6 +40,7 @@ object ArchiveThreadMapper {
       .name(archivePost.name)
       .subject(archivePost.subject)
       .tripcode(archivePost.tripcode)
+      .posterId(archivePost.posterId)
       .setUnixTimestampSeconds(archivePost.unixTimestampSeconds)
       .postImages(images, archivePost.postDescriptor)
       .moderatorCapcode(archivePost.moderatorCapcode)

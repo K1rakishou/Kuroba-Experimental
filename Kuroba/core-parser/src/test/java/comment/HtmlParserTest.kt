@@ -125,7 +125,7 @@ embed)
   }
 
   @Test
-  fun htmp_parser_test_dvach_empty_span_value_should_not_crash() {
+  fun html_parser_test_dvach_empty_span_value_should_not_crash() {
     val html = "Тред обсуждения Oneplus, дочерней компании BBK.<br style=\"\"><br style=\"\">Особенности бренда:&nbsp;<br style=\"\"><br style=\"\">1) " +
       "смартфоны имеют одну из лучших оболочек на рынке — OxygenOS, тем не менее есть все возможности для её замены, " +
       "очень много кастомов обычно;<br style=\"\">2) Разницы между \"китайскими\" и \"некитайскими\" версиями смартфонов нет, " +
@@ -145,6 +145,140 @@ embed)
 1) смартфоны имеют одну из лучших оболочек на рынке — OxygenOS, тем не менее есть все возможности для её замены, очень много кастомов обычно;
 <br>
 2) Разницы между "китайскими" и "некитайскими" версиями смартфонов нет, можно спокойно покупать смартфон на али. Китайские версии из коробки имеют прошивку HydrogenOS, но она очень легко меняется, нужно просто скачать OxygenOS с официального сайта и установить его через меню телефона.
+
+    """.trimIndent().lines()
+
+    val actual = htmlParser.debugConcatIntoString(nodes).lines()
+    assertEquals(expected.size, actual.size)
+
+    actual.forEachIndexed { index, actualLine ->
+      val expectedLine = expected[index]
+      assertEquals(expectedLine, actualLine)
+    }
+  }
+
+  @Test
+  fun html_parser_foolfuuka_tags_with_whitespaces() {
+    val html = "What are you working on, /g/?<br />\n" +
+      "<br />\n" +
+      "Previous thread: <a href=\"https://archive.wakarimasen.moe/g/post/82765615/\" class=\"backlink\" " +
+      "data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"82765615\">&gt;&gt;82765615</a>"
+
+    val htmlParser = HtmlParser()
+    val nodes = htmlParser.parse(html).nodes
+
+    val expected = """
+What are you working on, /g/?
+<br>
+<br>
+Previous thread: 
+<a, href=https://archive.wakarimasen.moe/g/post/82765615/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=82765615>
+>>82765615
+
+    """.trimIndent().lines()
+
+    val actual = htmlParser.debugConcatIntoString(nodes).lines()
+    assertEquals(expected.size, actual.size)
+
+    actual.forEachIndexed { index, actualLine ->
+      val expectedLine = expected[index]
+      assertEquals(expectedLine, actualLine)
+    }
+
+  }
+
+  @Test
+  fun html_parser_foolfuuka_newlines_between_tags() {
+    val html = "<span class=\"greentext\">&gt;Read the sticky: <a href=\"https://archive.wakarimasen.moe/g/post/76759434/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"76759434\">&gt;&gt;76759434</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;GNU/Linux questions <a href=\"https://archive.wakarimasen.moe/g/post/fglt/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"fglt\">&gt;&gt;&gt;/g/fglt</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Windows questions <a href=\"https://archive.wakarimasen.moe/g/post/fwt/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"fwt\">&gt;&gt;&gt;/g/fwt</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;PC building? <a href=\"https://archive.wakarimasen.moe/g/post/pcbg/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"pcbg\">&gt;&gt;&gt;/g/pcbg</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Programming questions <a href=\"https://archive.wakarimasen.moe/g/post/dpt/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"dpt\">&gt;&gt;&gt;/g/dpt</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Good, cheap, laptops <a href=\"https://archive.wakarimasen.moe/g/post/tpg/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"tpg\">&gt;&gt;&gt;/g/tpg</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Cheap electronics <a href=\"https://archive.wakarimasen.moe/g/post/csg/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"csg\">&gt;&gt;&gt;/g/csg</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Server questions <a href=\"https://archive.wakarimasen.moe/g/post/hsg/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"hsg\">&gt;&gt;&gt;/g/hsg</a></span><br />\n" +
+      " <br />\n" +
+      "<span class=\"greentext\">&gt;Buying headphones <a href=\"https://archive.wakarimasen.moe/g/post/hpg/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"hpg\">&gt;&gt;&gt;/g/hpg</a></span><br />\n" +
+      " <br />\n" +
+      "How to find/activate any version of Windows?<br />\n" +
+      "<a href=\"https://rentry.org/installwindows\" target=\"_blank\" rel=\"nofollow\">https://rentry.org/installwindows</a><br />\n" +
+      " <br />\n" +
+      "Previous Thread <a href=\"https://archive.wakarimasen.moe/g/post/82766675/\" class=\"backlink\" data-function=\"highlight\" data-backlink=\"true\" data-board=\"g\" data-post=\"82766675\">&gt;&gt;82766675</a>"
+
+    val htmlParser = HtmlParser()
+    val nodes = htmlParser.parse(html).nodes
+
+    val expected = """
+<span, class=greentext>
+>Read the sticky: 
+<a, href=https://archive.wakarimasen.moe/g/post/76759434/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=76759434>
+>>76759434
+<br>
+<br>
+<span, class=greentext>
+>GNU/Linux questions 
+<a, href=https://archive.wakarimasen.moe/g/post/fglt/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=fglt>
+>>>/g/fglt
+<br>
+<br>
+<span, class=greentext>
+>Windows questions 
+<a, href=https://archive.wakarimasen.moe/g/post/fwt/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=fwt>
+>>>/g/fwt
+<br>
+<br>
+<span, class=greentext>
+>PC building? 
+<a, href=https://archive.wakarimasen.moe/g/post/pcbg/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=pcbg>
+>>>/g/pcbg
+<br>
+<br>
+<span, class=greentext>
+>Programming questions 
+<a, href=https://archive.wakarimasen.moe/g/post/dpt/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=dpt>
+>>>/g/dpt
+<br>
+<br>
+<span, class=greentext>
+>Good, cheap, laptops 
+<a, href=https://archive.wakarimasen.moe/g/post/tpg/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=tpg>
+>>>/g/tpg
+<br>
+<br>
+<span, class=greentext>
+>Cheap electronics 
+<a, href=https://archive.wakarimasen.moe/g/post/csg/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=csg>
+>>>/g/csg
+<br>
+<br>
+<span, class=greentext>
+>Server questions 
+<a, href=https://archive.wakarimasen.moe/g/post/hsg/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=hsg>
+>>>/g/hsg
+<br>
+<br>
+<span, class=greentext>
+>Buying headphones 
+<a, href=https://archive.wakarimasen.moe/g/post/hpg/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=hpg>
+>>>/g/hpg
+<br>
+<br>
+How to find/activate any version of Windows?
+<br>
+<a, href=https://rentry.org/installwindows, target=_blank, rel=nofollow>
+https://rentry.org/installwindows
+<br>
+<br>
+Previous Thread 
+<a, href=https://archive.wakarimasen.moe/g/post/82766675/, class=backlink, data-function=highlight, data-backlink=true, data-board=g, data-post=82766675>
+>>82766675
 
     """.trimIndent().lines()
 

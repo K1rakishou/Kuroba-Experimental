@@ -4,9 +4,15 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.data.ArchiveType
-import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_parser.comment.HtmlNode
 import com.github.k1rakishou.core_parser.comment.HtmlTag
+import com.github.k1rakishou.core_spannable.PostLinkable
+import com.github.k1rakishou.core_spannable.PostLinkable.Value.ThreadOrPostLink
+import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.regex.Pattern
@@ -17,57 +23,146 @@ class FoolFuukaCommentParser(
 
   init {
     addDefaultRules()
+
+    rule(
+      StyleRule.tagRule("pre")
+        .monospace()
+        .size(AppModuleAndroidUtils.sp(12f))
+        .backgroundColorId(ChanThemeColorId.BackColorSecondary)
+        .foregroundColorId(ChanThemeColorId.TextColorPrimary)
+    )
+
   }
 
-  override fun handleTag(
-    callback: PostParser.Callback,
-    post: ChanPostBuilder,
-    tag: String,
-    text: CharSequence,
-    htmlTag: HtmlTag
-  ): CharSequence? {
-    var newHtmlTag = htmlTag
-    var newTag = tag
+  override fun preprocessTag(node: HtmlNode.Tag): HtmlTag {
+    val htmlTag = node.htmlTag
+    if (htmlTag.tagName != "span") {
+      return super.preprocessTag(node)
+    }
 
-    val hasGreenTextAttr = newHtmlTag.getTagsByName("span")
-      .any { spanTag -> spanTag.hasClass("greentext") }
-
+    val hasGreenTextAttr = htmlTag.classAttrOrNull() == "greentext"
     if (hasGreenTextAttr) {
-      val firstAnchorTag = newHtmlTag.getTagsByName("a").firstOrNull()
+      val firstAnchorTag = htmlTag.getTagsByName("a").firstOrNull()
       if (firstAnchorTag != null) {
-        newHtmlTag = firstAnchorTag
-        newTag = "a"
+        return firstAnchorTag
       }
     }
 
-    return super.handleTag(callback, post, newTag, text, newHtmlTag)
+    return super.preprocessTag(node)
   }
 
-  override fun getQuotePattern(): Pattern {
-    return FULL_QUOTE_PATTERN
-  }
-
-  override fun getFullQuotePattern(): Pattern {
-    return FULL_QUOTE_PATTERN
-  }
-
-  override fun extractQuote(href: String?, post: ChanPostBuilder): String {
+  override fun matchAnchor(
+    post: ChanPostBuilder,
+    text: CharSequence,
+    anchorTag: HtmlTag,
+    callback: PostParser.Callback
+  ): PostLinkable.Link {
+    val href = anchorTag.attrUnescapedOrNull("href")
     if (href == null) {
-      return ""
+      return PostLinkable.Link(PostLinkable.Type.LINK, text, PostLinkable.Value.StringValue(anchorTag.text()))
     }
 
+    // Must be a valid archive link to avoid matching other site's links
     val matcher = getDefaultQuotePattern(post.postDescriptor)?.matcher(href)
-    if (matcher == null) {
-      Logger.d(TAG, "getDefaultQuotePattern returned null for postDescriptor=${post.postDescriptor}")
-      return href
+    if (matcher != null && matcher.matches()) {
+      val externalMatcher = getFoolFuukaFullQuotePattern(post.postDescriptor)?.matcher(href)
+      if (externalMatcher != null && externalMatcher.find()) {
+        val board = externalMatcher.groupOrNull(1)
+        val threadId = externalMatcher.groupOrNull(2)?.toLong()
+
+        if (board != null && threadId != null) {
+          val postId = externalMatcher.groupOrNull(3)?.toLongOrNull() ?: threadId
+
+          val isInternalQuote = board == post.boardDescriptor!!.boardCode
+            && !callback.isParsingCatalogPosts
+            && callback.isInternal(postId)
+
+          if (isInternalQuote) {
+            // link to post in same thread with post number (>>post)
+            return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postId))
+          }
+
+          // link to post not in same thread with post number (>>post or >>>/board/post)
+          return PostLinkable.Link(PostLinkable.Type.THREAD, text, ThreadOrPostLink(board, threadId, postId))
+        }
+
+        // fallthrough
+      }
+
+      val quoteMatcher = getFoolFuukaInternalQuotePattern(post.postDescriptor)?.matcher(href)
+      if (quoteMatcher != null && quoteMatcher.find()) {
+        val postId = quoteMatcher.groupOrNull(3)?.toLongOrNull()
+        if (postId != null) {
+          val type = if (callback.isInternal(postId)) {
+            // Normal post quote
+            PostLinkable.Type.QUOTE
+          } else {
+            // Most likely a quote to a deleted post (Or any other post that we don't have
+            // in the cache).
+            PostLinkable.Type.DEAD
+          }
+
+          return PostLinkable.Link(type, text, PostLinkable.Value.LongValue(postId))
+        }
+
+        // fallthrough
+      }
+
+      // fallthrough
     }
 
-    if (!matcher.matches()) {
-      return href
+    // normal link
+    return PostLinkable.Link(PostLinkable.Type.LINK, text, PostLinkable.Value.StringValue(href))
+  }
+
+  private fun getFoolFuukaFullQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
+    if (postDescriptor == null) {
+      return null
     }
 
-    val hrefWithoutScheme = removeSchemeIfPresent(href)
-    return hrefWithoutScheme.substring(hrefWithoutScheme.indexOf('/'))
+    return when (getArchiveType(postDescriptor)) {
+      ArchiveType.WakarimasenMoe -> WAKARIMASEN_FULL_QUOTE_PATTERN
+
+      ArchiveType.ForPlebs,
+      ArchiveType.Nyafuu,
+      ArchiveType.RebeccaBlackTech,
+      ArchiveType.Warosu,
+      ArchiveType.DesuArchive,
+      ArchiveType.Fireden,
+      ArchiveType.B4k,
+      ArchiveType.Bstats,
+      ArchiveType.ArchivedMoe,
+      ArchiveType.TheBarchive,
+      ArchiveType.ArchiveOfSins,
+      ArchiveType.TokyoChronos,
+      ArchiveType.Yukila -> FULL_QUOTE_PATTERN
+      null -> null
+    }
+  }
+
+  private fun getFoolFuukaInternalQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
+    if (postDescriptor == null) {
+      return null
+    }
+
+    return when (getArchiveType(postDescriptor)) {
+      ArchiveType.WakarimasenMoe -> WAKARIMASEN_INTERNAL_QUOTE_PATTERN
+
+      ArchiveType.ForPlebs,
+      ArchiveType.Nyafuu,
+      ArchiveType.RebeccaBlackTech,
+      ArchiveType.Warosu,
+      ArchiveType.DesuArchive,
+      ArchiveType.Fireden,
+      ArchiveType.B4k,
+      ArchiveType.Bstats,
+      ArchiveType.ArchivedMoe,
+      ArchiveType.TheBarchive,
+      ArchiveType.ArchiveOfSins,
+      ArchiveType.TokyoChronos,
+      ArchiveType.Yukila -> INTERNAL_QUOTE_PATTERN
+      null -> null
+    }
   }
 
   private fun getDefaultQuotePattern(postDescriptor: PostDescriptor?): Pattern? {
@@ -75,10 +170,7 @@ class FoolFuukaCommentParser(
       return null
     }
 
-    val archiveDescriptor = archivesManager.byBoardDescriptor(postDescriptor.boardDescriptor())
-      ?: return null
-
-    return when (archiveDescriptor.archiveType) {
+    return when (getArchiveType(postDescriptor)) {
       ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
       ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
       ArchiveType.RebeccaBlackTech -> REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN
@@ -96,8 +188,16 @@ class FoolFuukaCommentParser(
 
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,
-      ArchiveType.Bstats -> null
+      ArchiveType.Bstats,
+      null -> null
     }
+  }
+
+  private fun getArchiveType(postDescriptor: PostDescriptor): ArchiveType? {
+    val archiveDescriptor = archivesManager.byBoardDescriptor(postDescriptor.boardDescriptor())
+      ?: return null
+
+    return archiveDescriptor.archiveType
   }
 
   private fun removeSchemeIfPresent(href: String): String {
@@ -129,7 +229,7 @@ class FoolFuukaCommentParser(
     private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archived\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/thread\\/(\\d+)(?:#)?(\\d+)?\\/?")
-    private val WAKARIMASEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.wakarimasen\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val WAKARIMASEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.wakarimasen\\.moe\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
 
     @JvmField
     val ALL_ARCHIVE_LINKS_PATTERNS_MAP = mapOf<ArchiveType, Pattern>(
@@ -145,6 +245,10 @@ class FoolFuukaCommentParser(
       ArchiveType.WakarimasenMoe to WAKARIMASEN_DEFAULT_QUOTE_PATTERN,
     )
 
-    private val FULL_QUOTE_PATTERN = Pattern.compile("/(\\w+)/\\w+/(\\d+)/?#p?(\\d+)")
+    private val FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#p?(\\d+))?")
+    private val INTERNAL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#p?(\\d+))?")
+
+    private val WAKARIMASEN_FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/post\\/(\\d+)\\/?")
+    private val WAKARIMASEN_INTERNAL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/thread\\/(\\d+)\\/?(?:#p?(\\d+))?")
   }
 }
