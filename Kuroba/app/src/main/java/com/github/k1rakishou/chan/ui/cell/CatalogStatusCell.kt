@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 class CatalogStatusCell @JvmOverloads constructor(
   context: Context,
@@ -18,11 +19,12 @@ class CatalogStatusCell @JvmOverloads constructor(
 ) : FrameLayout(context, attrs) {
   private val loadView: LoadView
 
-  private val progressView: FrameLayout
+  private val progressView: LinearLayout
   private val errorView: LinearLayout
 
   private var _error: String? = null
   private var postAdapterCallback: PostAdapter.PostAdapterCallback? = null
+  private var catalogPage: Int = 1
 
   val isError: Boolean
     get() = _error != null
@@ -47,7 +49,7 @@ class CatalogStatusCell @JvmOverloads constructor(
       R.layout.cell_post_catalog_status_progress,
       this,
       false
-    ) as FrameLayout
+    ) as LinearLayout
 
     errorView = AppModuleAndroidUtils.inflate(
       context,
@@ -56,7 +58,7 @@ class CatalogStatusCell @JvmOverloads constructor(
       false
     ) as LinearLayout
 
-    setProgress()
+    setProgress(catalogPage)
   }
 
   fun setError(error: String?) {
@@ -75,14 +77,18 @@ class CatalogStatusCell @JvmOverloads constructor(
     reloadButton.setOnClickListener {
       postAdapterCallback?.infiniteCatalogLoadPage()
 
-      setProgress()
+      setProgress(catalogPage)
     }
   }
 
-  fun setProgress() {
+  fun setProgress(nextPage: Int) {
     _error = null
+    catalogPage = nextPage
 
     loadView.setView(progressView)
+
+    val indicator = progressView.findViewById<ColorizableTextView>(R.id.next_page_indicator)
+    indicator.text = getString(R.string.catalog_load_page, nextPage)
   }
 
   fun setPostAdapterCallback(postAdapterCallback: PostAdapter.PostAdapterCallback) {

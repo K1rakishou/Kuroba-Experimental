@@ -2,8 +2,8 @@ package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
 import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.getElementsByClassWithValue
 import com.github.k1rakishou.common.getFirstElementByClassWithAnyValue
+import com.github.k1rakishou.common.getFirstElementByClassWithValue
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
@@ -63,24 +63,24 @@ class FoolFuukaReadCatalogThreadsHelper {
     chanPostBuilder.opId(threadNo)
     chanPostBuilder.op(true)
 
-    val sticky = originalPostElement.getElementsByClassWithValue("icon-pushpin") != null
-    val closed = originalPostElement.getElementsByClassWithValue("icon-lock") != null
-    val deleted = originalPostElement.getElementsByClassWithValue("icon-trash") != null
+    val sticky = originalPostElement.getFirstElementByClassWithValue("icon-pushpin") != null
+    val closed = originalPostElement.getFirstElementByClassWithValue("icon-lock") != null
+    val deleted = originalPostElement.getFirstElementByClassWithValue("icon-trash") != null
 
     chanPostBuilder.sticky(sticky)
     chanPostBuilder.closed(closed)
     chanPostBuilder.deleted(deleted)
 
-    val postSubject = originalPostElement.getElementsByClassWithValue("post_title")
+    val postSubject = originalPostElement.getFirstElementByClassWithValue("post_title")
       ?.textNodes()
       ?.joinToString(separator = " ")
       ?: ""
 
     chanPostBuilder.subject(postSubject)
 
-    val posterDataNode = originalPostElement.getElementsByClassWithValue("post_poster_data")
+    val posterDataNode = originalPostElement.getFirstElementByClassWithValue("post_poster_data")
     if (posterDataNode != null) {
-      val posterName = posterDataNode.getElementsByClassWithValue("post_author")
+      val posterName = posterDataNode.getFirstElementByClassWithValue("post_author")
         ?.textNodes()
         ?.joinToString(separator = " ")
 
@@ -88,7 +88,7 @@ class FoolFuukaReadCatalogThreadsHelper {
         chanPostBuilder.name(posterName)
       }
 
-      val posterTripcode = posterDataNode.getElementsByClassWithValue("post_tripcode")
+      val posterTripcode = posterDataNode.getFirstElementByClassWithValue("post_tripcode")
         ?.textNodes()
         ?.joinToString(separator = " ")
 
@@ -96,7 +96,7 @@ class FoolFuukaReadCatalogThreadsHelper {
         chanPostBuilder.tripcode(posterTripcode)
       }
 
-      val postedId = posterDataNode.getElementsByClassWithValue("poster_hash")
+      val postedId = posterDataNode.getFirstElementByClassWithValue("poster_hash")
         ?.textNodes()
         ?.joinToString(separator = " ")
         ?.removePrefix("ID:")
@@ -115,22 +115,22 @@ class FoolFuukaReadCatalogThreadsHelper {
       chanPostBuilder.setUnixTimestampSeconds(dateTime.millis / 1000L)
     }
 
-    val chanPostImages = originalPostElement.getElementsByClassWithValue("thread_image_box")
+    val chanPostImages = originalPostElement.getFirstElementByClassWithValue("thread_image_box")
       ?.let { threadImageBoxElement -> convertToChanPostImages(threadImageBoxElement) }
 
     if (chanPostImages != null && chanPostImages.isNotEmpty()) {
       chanPostBuilder.postImages(chanPostImages, chanPostBuilder.postDescriptor)
     }
 
-    val postComment = originalPostElement.getElementsByClassWithValue("text")
+    val postComment = originalPostElement.getFirstElementByClassWithValue("text")
       ?.html()
       ?: ""
 
     chanPostBuilder.comment(postComment)
 
-    originalPostElement.getElementsByClassWithValue("omitted_text")
+    originalPostElement.getFirstElementByClassWithValue("omitted_text")
       ?.let { omittedTextNode ->
-        val omittedPosts = omittedTextNode.getElementsByClassWithValue("omitted_posts")
+        val omittedPosts = omittedTextNode.getFirstElementByClassWithValue("omitted_posts")
           ?.textNodes()
           ?.firstOrNull()
           ?.text()
@@ -140,7 +140,7 @@ class FoolFuukaReadCatalogThreadsHelper {
           chanPostBuilder.replies(omittedPosts)
         }
 
-        val omittedImages = omittedTextNode.getElementsByClassWithValue("omitted_images")
+        val omittedImages = omittedTextNode.getFirstElementByClassWithValue("omitted_images")
           ?.textNodes()
           ?.firstOrNull()
           ?.text()
@@ -159,7 +159,7 @@ class FoolFuukaReadCatalogThreadsHelper {
   }
 
   private fun convertToChanPostImages(threadImageBoxElement: Element): List<ChanPostImage> {
-    val fullImageLink = threadImageBoxElement.getElementsByClassWithValue("thread_image_link")
+    val fullImageLink = threadImageBoxElement.getFirstElementByClassWithValue("thread_image_link")
       ?.attr("href")
       ?.toHttpUrlOrNull()
       ?: return emptyList()
@@ -170,7 +170,7 @@ class FoolFuukaReadCatalogThreadsHelper {
     val thumbnailImageLink = postImageElement.attr("src")?.toHttpUrlOrNull()
     val md5Base64 = postImageElement.attr("data-md5")
 
-    val postFileInfo = threadImageBoxElement.getElementsByClassWithValue("post_file")
+    val postFileInfo = threadImageBoxElement.getFirstElementByClassWithValue("post_file")
       ?.textNodes()
       ?.firstOrNull()
 
@@ -178,7 +178,7 @@ class FoolFuukaReadCatalogThreadsHelper {
       return emptyList()
     }
 
-    val actualFileName = threadImageBoxElement.getElementsByClassWithValue("post_file_filename")
+    val actualFileName = threadImageBoxElement.getFirstElementByClassWithValue("post_file_filename")
       ?.textNodes()
       ?.firstOrNull()
       ?.text()

@@ -1350,6 +1350,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="searx_image_search_controller_base_url_hint">Searx instance base url, e.g. %1$s</string>
     <string name="searx_image_search_controller_help_text">Only searx search engines are supported. You can find them all here:\nhttps://searx.space \nNote: Some of them do not support/block the API so they won\'t work.</string>
 
+    <string name="catalog_load_page">Loading page %1$d</string>
+
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive">(From archive)</string>

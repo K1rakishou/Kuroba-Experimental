@@ -18,7 +18,9 @@ package com.github.k1rakishou.chan.ui.adapter
 
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.RecyclerView
+import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
@@ -194,7 +196,17 @@ class PostAdapter(
       }
       PostCellData.TYPE_STATUS -> (holder.itemView as ThreadStatusCell).update()
       PostCellData.TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
-      PostCellData.TYPE_LOADING_MORE -> (holder as LoadingMoreViewHolder).bind()
+      PostCellData.TYPE_LOADING_MORE -> {
+        val loadingMoreViewHolder = (holder as LoadingMoreViewHolder)
+
+        if (loadingMoreViewHolder.itemView.layoutParams is StaggeredGridLayoutManager.LayoutParams) {
+          loadingMoreViewHolder.itemView.updateLayoutParams<StaggeredGridLayoutManager.LayoutParams> {
+            isFullSpan = true
+          }
+        }
+
+        loadingMoreViewHolder.bind()
+      }
     }
   }
 
@@ -518,7 +530,7 @@ class PostAdapter(
       prevCatalogPage = nextPage
 
       postAdapterCallback.infiniteCatalogLoadPage()
-      catalogStatusCell.setProgress()
+      catalogStatusCell.setProgress(nextPage)
     }
 
   }

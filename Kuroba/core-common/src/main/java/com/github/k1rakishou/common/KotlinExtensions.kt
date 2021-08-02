@@ -1203,7 +1203,7 @@ fun TextView.selectionEndSafe(): Int {
 
 fun Element.getFirstElementByClassWithAnyValue(vararg values: String): Element? {
   for (value in values) {
-    val element = getElementsByAttributeValue("class", value).firstOrNull()
+    val element = getFirstElementByClassWithValue(value)
     if (element != null) {
       return element
     }
@@ -1212,6 +1212,6 @@ fun Element.getFirstElementByClassWithAnyValue(vararg values: String): Element? 
   return null
 }
 
-fun Element.getElementsByClassWithValue(value: String): Element? {
+fun Element.getFirstElementByClassWithValue(value: String): Element? {
   return getElementsByAttributeValue("class", value).firstOrNull()
 }

@@ -1,11 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="@dimen/cell_post_catalog_status_height">
+    android:layout_height="@dimen/cell_post_catalog_status_height"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:orientation="vertical">
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp"/>
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
-        android:layout_gravity="center"
+        android:layout_gravity="center_horizontal"
         android:layout_width="42dp"
         android:layout_height="42dp"/>
 
-</FrameLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="16dp"/>
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+        android:id="@+id/next_page_indicator"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:padding="4dp"
+        tools:text="Loading page 999"/>
+
+</LinearLayout>

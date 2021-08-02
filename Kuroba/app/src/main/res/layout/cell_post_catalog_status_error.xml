@@ -6,6 +6,10 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:orientation="vertical">
 
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="8dp"/>
+
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
         android:id="@+id/error_text"
         android:layout_width="match_parent"
@@ -13,7 +17,7 @@
         android:layout_weight="1"
         android:ellipsize="end"
         android:textSize="14sp"
-        android:maxLines="4"
+        android:maxLines="3"
         android:gravity="center_horizontal"
         tools:text="@string/lorem_ipsum"/>
 
