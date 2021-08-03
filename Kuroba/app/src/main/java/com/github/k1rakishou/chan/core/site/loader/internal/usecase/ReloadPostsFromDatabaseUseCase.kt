@@ -32,6 +32,10 @@ class ReloadPostsFromDatabaseUseCase(
         boardManager.awaitUntilInitialized()
 
         val board = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
+        if (board?.isUnlimitedCatalog == true) {
+          return emptyList()
+        }
+
         val postsToLoadCount = if (board != null) {
           board.pages * board.perPage
         } else {
