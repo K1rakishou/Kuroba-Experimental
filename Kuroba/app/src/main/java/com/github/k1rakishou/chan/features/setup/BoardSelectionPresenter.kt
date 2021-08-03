@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -63,11 +64,10 @@ class BoardSelectionPresenter(
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
       val siteCellData = SiteCellData(
-        chanSiteData.siteDescriptor,
-        site.icon().url.toString(),
-        site.name(),
-        SiteEnableState.Active,
-        null
+        siteDescriptor = chanSiteData.siteDescriptor,
+        siteIcon = site.icon().url.toString(),
+        siteName = site.name(),
+        siteEnableState = SiteEnableState.Active
       )
 
       val collectedBoards = collectBoards(query, chanSiteData, activeSiteCount)
@@ -135,7 +135,13 @@ class BoardSelectionPresenter(
       return sortedBoards
     }
 
-    return sortedBoards.take(MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE)
+    val maxBoardsToShow = if (isTablet()) {
+      MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET
+    } else {
+      MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE
+    }
+
+    return sortedBoards.take(maxBoardsToShow)
   }
 
   private fun setState(state: BoardSelectionControllerState) {
@@ -144,6 +150,7 @@ class BoardSelectionPresenter(
 
   companion object {
     private const val TAG = "BoardSelectionPresenter"
-    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE = 8
+    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
+    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
   }
 }

@@ -63,11 +63,14 @@ open class ArchivesManager(
     val result = Try {
       val allArchives = loadArchives()
 
-      val archiveDescriptors = allArchives.map { archive ->
-        return@map ArchiveDescriptor(
-          archive.name,
-          archive.domain,
-          ArchiveType.byDomain(archive.domain)
+      val archiveDescriptors = allArchives.mapNotNull { archive ->
+        val archiveType = ArchiveType.byDomain(archive.domain)
+          ?: return@mapNotNull null
+
+        return@mapNotNull ArchiveDescriptor(
+          name = archive.name,
+          domain = archive.domain,
+          archiveType = archiveType
         )
       }
 
@@ -81,18 +84,26 @@ open class ArchivesManager(
         }
       }
 
+      val allValidArchives = allArchives
+        .filter { archiveData -> archiveData.isValid() }
+
       lock.write {
         allArchivesData.clear()
-        allArchivesData.addAll(allArchives)
+        allArchivesData.addAll(allValidArchives)
 
         allArchiveDescriptors.clear()
         allArchiveDescriptors.addAll(archiveDescriptors)
+
+        check(allArchivesData.size == allArchiveDescriptors.size) {
+          "Inconsistency detected: allArchivesData.size=${allArchivesData.size}, " +
+            "allArchiveDescriptors.size=${allArchiveDescriptors.size}"
+        }
       }
 
       return@Try allArchives.size
     }
 
-    suspendableInitializer.initWithModularResult(result.mapValue { Unit })
+    suspendableInitializer.initWithModularResult(result.mapValueToUnit())
 
     when (result) {
       is ModularResult.Value -> {
@@ -113,18 +124,6 @@ open class ArchivesManager(
     Logger.d(TAG, "ArchivesManager is not ready yet, waiting...")
     val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
     Logger.d(TAG, "ArchivesManager initialization completed, took $duration")
-  }
-
-  suspend fun getAllArchiveData(): List<ArchiveData> {
-    suspendableInitializer.awaitUntilInitialized()
-
-    return lock.read { allArchivesData.toList() }
-  }
-
-  suspend fun getAllArchivesDescriptors(): List<ArchiveDescriptor> {
-    suspendableInitializer.awaitUntilInitialized()
-
-    return lock.read { allArchiveDescriptors.toList() }
   }
 
   fun extractArchiveTypeFromLinkOrNull(link: CharSequence): ArchiveType? {
@@ -288,9 +287,7 @@ open class ArchivesManager(
 
     val domain: String
       get() = getSanitizedDomain()
-
-    fun isEnabled(): Boolean = domain !in disabledArchives
-
+    
     fun setSupportedSites(sites: Set<SiteDescriptor>) {
       require(this.supportedSites == null) { "Double initialization!" }
 
@@ -321,6 +318,10 @@ open class ArchivesManager(
       return (isTheSameArchive || supportsThisSite) && boardDescriptor.boardCode in boards
     }
 
+    fun isValid(): Boolean {
+      return archiveDescriptor != null && supportedSites != null
+    }
+
     private fun getSanitizedDomain(): String {
       if (realDomain.startsWith(WWW_PREFIX)) {
         return realDomain.removePrefix(WWW_PREFIX)
@@ -331,16 +332,6 @@ open class ArchivesManager(
   }
 
   companion object {
-    // These archives are disabled for now
-    private val disabledArchives = setOf(
-      // Disabled because it's weird as hell. I can't even say whether it's working or not.
-      "archive.b-stats.org",
-      // Disable because it always returns 403 when sending requests via the OkHttpClient,
-      // but works normally when opening in the browser. Apparently some kind of
-      // authentication is required.
-      "thebarchive.com"
-    )
-
     private const val TAG = "ArchivesManager"
     private const val ARCHIVES_JSON_FILE_NAME = "archives.json"
     private const val FOOLFUUKA_THREAD_ENDPOINT_FORMAT = "https://%s/_/api/chan/thread/?board=%s&num=%d"

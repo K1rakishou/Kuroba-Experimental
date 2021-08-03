@@ -184,7 +184,6 @@ class ThreadLayout @JvmOverloads constructor(
     private set
   private var drawerCallbacks: MainControllerCallbacks? = null
   private var newPostsNotification: SnackbarWrapper? = null
-  private var replyButtonEnabled = false
   private var refreshedFromSwipe = false
   private var deletingDialog: ProgressDialog? = null
   private var visible: Visible? = null
@@ -275,9 +274,7 @@ class ThreadLayout @JvmOverloads constructor(
     openThreadInArchiveButton.setOnClickListener(this)
 
     // Setup
-    replyButtonEnabled = ChanSettings.enableReplyFab.get()
-
-    if (!replyButtonEnabled) {
+    if (!ChanSettings.enableReplyFab.get()) {
       AndroidUtils.removeFromParentView(replyButton)
     } else {
       replyButton.setOnClickListener(this)
@@ -1114,7 +1111,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showReplyButton(show: Boolean) {
-    if (replyButton.isFabVisible() == show || !replyButtonEnabled) {
+    if (replyButton.isFabVisible() == show || !ChanSettings.enableReplyFab.get()) {
       return
     }
 

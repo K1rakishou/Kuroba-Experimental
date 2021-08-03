@@ -79,6 +79,14 @@ sealed class ModularResult<V : Any?> {
   }
 
   @CheckReturnValue
+  inline fun mapValueToUnit(): ModularResult<Unit> {
+    return when (this) {
+      is Error -> error(error)
+      is Value -> value(Unit)
+    }
+  }
+
+  @CheckReturnValue
   @Suppress("UNCHECKED_CAST")
   inline fun mapError(mapper: (error: Throwable) -> Throwable): ModularResult<V> {
     return when (this) {

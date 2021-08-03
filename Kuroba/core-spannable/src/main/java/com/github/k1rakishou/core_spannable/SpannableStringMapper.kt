@@ -624,8 +624,11 @@ object SpannableStringMapper {
           return null
         }
 
+        val archiveType = ArchiveType.byDomain(postLinkableArchiveLinkValue.archiveDomain)
+          ?: return null
+
         val archiveThreadLink = PostLinkable.Value.ArchiveThreadLink(
-          ArchiveType.byDomain(postLinkableArchiveLinkValue.archiveDomain),
+          archiveType,
           postLinkableArchiveLinkValue.boardCode,
           postLinkableArchiveLinkValue.threadNo,
           postLinkableArchiveLinkValue.postNo

@@ -16,10 +16,10 @@
  */
 package com.github.k1rakishou.chan.core.site
 
+import com.github.k1rakishou.chan.core.site.sites.Chan370
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.Wired7
-import com.github.k1rakishou.chan.core.site.sites.Chan370
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -30,12 +30,10 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.DesuArchive
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Fireden
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.ForPlebs
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.Nyafuu
-import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.RebeccaBlackTech
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.WakarimasenMoe
 import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
-import com.github.k1rakishou.chan.core.site.sites.yukila.Yukila
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.*
 
@@ -59,7 +57,6 @@ object SiteRegistry {
     URL_HANDLERS.add(ArchivedMoe.URL_HANDLER)
     URL_HANDLERS.add(ForPlebs.URL_HANDLER)
     URL_HANDLERS.add(Nyafuu.URL_HANDLER)
-    URL_HANDLERS.add(RebeccaBlackTech.URL_HANDLER)
     URL_HANDLERS.add(DesuArchive.URL_HANDLER)
     URL_HANDLERS.add(Fireden.URL_HANDLER)
     URL_HANDLERS.add(B4k.URL_HANDLER)
@@ -67,7 +64,6 @@ object SiteRegistry {
     URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
     URL_HANDLERS.add(Warosu.URL_HANDLER)
     URL_HANDLERS.add(WakarimasenMoe.URL_HANDLER)
-    URL_HANDLERS.add(Yukila.URL_HANDLER)
     URL_HANDLERS.add(Chan370.URL_HANDLER)
 
     addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
@@ -80,7 +76,6 @@ object SiteRegistry {
     addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
     addSiteToSiteClassesMap(ForPlebs.SITE_NAME, ForPlebs::class.java)
     addSiteToSiteClassesMap(Nyafuu.SITE_NAME, Nyafuu::class.java)
-    addSiteToSiteClassesMap(RebeccaBlackTech.SITE_NAME, RebeccaBlackTech::class.java)
     addSiteToSiteClassesMap(DesuArchive.SITE_NAME, DesuArchive::class.java)
     addSiteToSiteClassesMap(Fireden.SITE_NAME, Fireden::class.java)
     addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
@@ -88,7 +83,6 @@ object SiteRegistry {
     addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
     addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
     addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
-    addSiteToSiteClassesMap(Yukila.SITE_NAME, Yukila::class.java)
     addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
   }
 

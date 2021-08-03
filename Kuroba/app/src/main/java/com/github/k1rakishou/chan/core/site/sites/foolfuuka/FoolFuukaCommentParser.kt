@@ -125,7 +125,6 @@ class FoolFuukaCommentParser(
 
       ArchiveType.ForPlebs,
       ArchiveType.Nyafuu,
-      ArchiveType.RebeccaBlackTech,
       ArchiveType.Warosu,
       ArchiveType.DesuArchive,
       ArchiveType.Fireden,
@@ -134,8 +133,7 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe,
       ArchiveType.TheBarchive,
       ArchiveType.ArchiveOfSins,
-      ArchiveType.TokyoChronos,
-      ArchiveType.Yukila -> FULL_QUOTE_PATTERN
+      ArchiveType.TokyoChronos -> FULL_QUOTE_PATTERN
       null -> null
     }
   }
@@ -150,7 +148,6 @@ class FoolFuukaCommentParser(
 
       ArchiveType.ForPlebs,
       ArchiveType.Nyafuu,
-      ArchiveType.RebeccaBlackTech,
       ArchiveType.Warosu,
       ArchiveType.DesuArchive,
       ArchiveType.Fireden,
@@ -159,8 +156,7 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe,
       ArchiveType.TheBarchive,
       ArchiveType.ArchiveOfSins,
-      ArchiveType.TokyoChronos,
-      ArchiveType.Yukila -> INTERNAL_QUOTE_PATTERN
+      ArchiveType.TokyoChronos -> INTERNAL_QUOTE_PATTERN
       null -> null
     }
   }
@@ -173,7 +169,6 @@ class FoolFuukaCommentParser(
     return when (getArchiveType(postDescriptor)) {
       ArchiveType.ForPlebs -> FOR_PLEBS_DEFAULT_QUOTE_PATTERN
       ArchiveType.Nyafuu -> NYAFUU_DEFAULT_QUOTE_PATTERN
-      ArchiveType.RebeccaBlackTech -> REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN
       ArchiveType.DesuArchive -> DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN
       ArchiveType.Fireden -> FIREDEN_DEFAULT_QUOTE_PATTERN
       ArchiveType.B4k -> B4K_DEFAULT_QUOTE_PATTERN
@@ -184,7 +179,6 @@ class FoolFuukaCommentParser(
 
       // Not a FoolFuuka archive
       ArchiveType.Warosu,
-      ArchiveType.Yukila,
 
       // See ArchivesManager.disabledArchives
       ArchiveType.TheBarchive,
@@ -224,7 +218,6 @@ class FoolFuukaCommentParser(
     private val B4K_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?arch.b4k\\.co\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val FOR_PLEBS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.4plebs\\.org\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val NYAFUU_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.nyafuu\\.org\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
-    private val REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.rebeccablacktech\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val FIREDEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?boards.fireden\\.net\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val ARCHIVED_MOE_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archived\\.moe\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/thread\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
@@ -235,7 +228,6 @@ class FoolFuukaCommentParser(
     val ALL_ARCHIVE_LINKS_PATTERNS_MAP = mapOf<ArchiveType, Pattern>(
       ArchiveType.ForPlebs to FOR_PLEBS_DEFAULT_QUOTE_PATTERN,
       ArchiveType.Nyafuu to NYAFUU_DEFAULT_QUOTE_PATTERN,
-      ArchiveType.RebeccaBlackTech to REBECCA_BLACK_TECH_DEFAULT_QUOTE_PATTERN,
       ArchiveType.DesuArchive to DESU_ARCHIVE_DEFAULT_QUOTE_PATTERN,
       ArchiveType.Fireden to FIREDEN_DEFAULT_QUOTE_PATTERN,
       ArchiveType.B4k to B4K_DEFAULT_QUOTE_PATTERN,

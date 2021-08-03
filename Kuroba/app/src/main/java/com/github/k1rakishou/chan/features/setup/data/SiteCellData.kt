@@ -6,8 +6,7 @@ data class SiteCellData(
   val siteDescriptor: SiteDescriptor,
   val siteIcon: String,
   val siteName: String,
-  val siteEnableState: SiteEnableState,
-  val siteCellArchiveGroupInfo: SiteCellArchiveGroupInfo?
+  val siteEnableState: SiteEnableState
 )
 
 data class SiteCellArchiveGroupInfo(
