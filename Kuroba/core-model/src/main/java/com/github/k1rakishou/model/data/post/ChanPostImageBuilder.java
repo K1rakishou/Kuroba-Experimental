@@ -128,7 +128,11 @@ public class ChanPostImageBuilder {
         );
     }
 
-    public static ChanPostImageType getImageType(String extension) {
+    public static ChanPostImageType getImageType(@Nullable String extension) {
+        if (extension == null) {
+            return ChanPostImageType.STATIC;
+        }
+
         if (extension.equals("gif")) {
             return ChanPostImageType.GIF;
         }
