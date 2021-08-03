@@ -35,7 +35,11 @@ class FoolFuukaReadCatalogThreadsHelper {
       }
 
     originalPostElements.forEach { originalPostElement ->
-      processOriginalPostElement(originalPostElement, chanReaderProcessor)
+      try {
+        processOriginalPostElement(originalPostElement, chanReaderProcessor)
+      } catch (error: Throwable) {
+        Logger.e(TAG, "processOriginalPostElement() error", error)
+      }
     }
 
     if (originalPostElements.isEmpty()) {
