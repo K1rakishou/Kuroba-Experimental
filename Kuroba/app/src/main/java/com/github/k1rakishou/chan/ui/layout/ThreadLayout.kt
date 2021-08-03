@@ -464,9 +464,8 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val errorMessage = error.errorMessage
-    val isUnlimitedCatalog = isUnlimitedCatalog(chanDescriptor)
 
-    if (visible == Visible.THREAD || isUnlimitedCatalog) {
+    if (visible == Visible.THREAD) {
       // Hide the button so the user can see the full error message
       replyButton.hide()
       threadListLayout.showError(errorMessage)
@@ -480,14 +479,6 @@ class ThreadLayout @JvmOverloads constructor(
     if (error.isCloudFlareError()) {
       openCloudFlareBypassControllerAndHandleResult(error)
     }
-  }
-
-  private fun isUnlimitedCatalog(chanDescriptor: ChanDescriptor): Boolean {
-    if (chanDescriptor !is ChanDescriptor.CatalogDescriptor) {
-      return false
-    }
-
-    return chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
   }
 
   private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {

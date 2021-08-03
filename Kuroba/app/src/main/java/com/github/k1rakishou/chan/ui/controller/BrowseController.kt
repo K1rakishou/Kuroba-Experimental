@@ -252,6 +252,7 @@ class BrowseController(
     }
 
     val is4chan = threadLayout.presenter.currentChanDescriptor?.siteDescriptor()?.is4chan() ?: false
+    val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
 
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
@@ -261,6 +262,7 @@ class BrowseController(
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
+      .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
       .withSubItem(ACTION_CHAN4_ARCHIVE, R.string.action_chan4_archive, is4chan, { chan4ArchiveClicked() })
       .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, { item -> upClicked(item) })
@@ -562,6 +564,24 @@ class BrowseController(
     getCurrentControllerWithNavigation().pushController(boardArchiveController)
   }
 
+  private fun openCatalogPageClicked() {
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      inputType = DialogFactory.DialogInputType.Integer,
+      titleText = getString(R.string.browse_controller_enter_page_number),
+      onValueEntered = { pageString ->
+        val page = pageString.toIntOrNull()
+        if (page == null) {
+          showToast(getString(R.string.browse_controller_failed_to_parse_page_number, pageString))
+          return@createSimpleDialogWithInput
+        }
+
+        threadLayout.showLoading()
+        threadLayout.presenter.loadCatalogPage(overridePage = page)
+      }
+    )
+  }
+
   private fun upClicked(item: ToolbarMenuSubItem) {
     threadLayout.presenter.scrollTo(0, false)
   }
@@ -818,6 +838,11 @@ class BrowseController(
       val is4chan = chanDescriptor?.siteDescriptor()?.is4chan() ?: false
       chan4ArchiveMenuItem.visible = is4chan
     }
+
+    navigation.findSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE)?.let { openUnlimitedCatalogPageMenuItem ->
+      val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
+      openUnlimitedCatalogPageMenuItem.visible = isUnlimitedCatalog
+    }
   }
 
   override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
@@ -849,6 +874,7 @@ class BrowseController(
     private const val ACTION_OPEN_THREAD_BY_URL = 910
     private const val ACTION_CATALOG_ALBUM = 911
     private const val ACTION_CHAN4_ARCHIVE = 912
+    private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 913
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

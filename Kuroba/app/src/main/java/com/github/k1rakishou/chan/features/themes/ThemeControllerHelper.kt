@@ -213,7 +213,7 @@ class ThemeControllerHelper(
         override val unlimitedCatalogEndReached: Boolean
           get() = true
 
-        override fun infiniteCatalogLoadPage() {
+        override fun loadCatalogPage(overridePage: Int?) {
 
         }
 

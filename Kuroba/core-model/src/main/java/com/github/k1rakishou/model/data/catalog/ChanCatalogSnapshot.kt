@@ -16,7 +16,7 @@ data class ChanCatalogSnapshot(
   private val lock = ReentrantReadWriteLock()
 
   @GuardedBy("lock")
-  private var currentCatalogPage: Int? = null
+  private var currentCatalogPage: Int = START_PAGE
   @GuardedBy("lock")
   private var endReached: Boolean = false
 
@@ -49,7 +49,7 @@ data class ChanCatalogSnapshot(
   fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
       if (!isUnlimitedCatalog) {
-        currentCatalogPage = null
+        currentCatalogPage = START_PAGE
         duplicateChecker.clear()
         chanCatalogSnapshotEntryList.clear()
       }
@@ -64,32 +64,22 @@ data class ChanCatalogSnapshot(
     }
   }
 
-  fun getCurrentCatalogPage(): Int? {
-    return lock.read {
-      if (!isUnlimitedCatalog) {
-        return@read null
-      }
-
-      return@read currentCatalogPage ?: 1
-    }
-  }
-
   fun getNextCatalogPage(): Int? {
     return lock.read {
       if (!isUnlimitedCatalog) {
         return@read null
       }
 
-      return@read currentCatalogPage?.plus(1) ?: 1
+      return@read currentCatalogPage.plus(1)
     }
   }
 
   fun onCatalogLoaded(catalogPageToLoad: Int?) {
     lock.write {
       if (isUnlimitedCatalog) {
-        currentCatalogPage = catalogPageToLoad ?: 1
+        currentCatalogPage = catalogPageToLoad ?: START_PAGE
       } else {
-        currentCatalogPage = null
+        currentCatalogPage = START_PAGE
       }
     }
   }
@@ -102,13 +92,26 @@ data class ChanCatalogSnapshot(
     }
   }
 
+  fun updateCatalogPage(overridePage: Int) {
+    lock.write {
+      if (isUnlimitedCatalog) {
+        endReached = false
+        currentCatalogPage = (overridePage - 1).coerceAtLeast(0)
+        duplicateChecker.clear()
+        chanCatalogSnapshotEntryList.clear()
+      }
+    }
+  }
+
   override fun toString(): String {
     return "ChanCatalogSnapshot{boardDescriptor=$boardDescriptor, " +
       "chanCatalogSnapshotEntryList=${chanCatalogSnapshotEntryList.size}, " +
-      "currentCatalogPage=${currentCatalogPage}}"
+      "currentCatalogPage=${currentCatalogPage}, endReached=${endReached}}"
   }
 
   companion object {
+    private const val START_PAGE = 1
+
     fun fromSortedThreadDescriptorList(
       boardDescriptor: BoardDescriptor,
       threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,

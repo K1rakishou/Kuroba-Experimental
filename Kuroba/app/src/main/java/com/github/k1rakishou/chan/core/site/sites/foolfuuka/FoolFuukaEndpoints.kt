@@ -22,7 +22,7 @@ open class FoolFuukaEndpoints(
     if (page != null && page >= 0) {
       builder
         .addPathSegment("page")
-        .addPathSegment((page + 1).toString())
+        .addPathSegment(page.toString())
     }
 
     return builder.build()

@@ -75,7 +75,7 @@ class CatalogStatusCell @JvmOverloads constructor(
 
     errorText.setText(error)
     reloadButton.setOnClickListener {
-      postAdapterCallback?.infiniteCatalogLoadPage()
+      postAdapterCallback?.loadCatalogPage()
 
       setProgress(catalogPage)
     }

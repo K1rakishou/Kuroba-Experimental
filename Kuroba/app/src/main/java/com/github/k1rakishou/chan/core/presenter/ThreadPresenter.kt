@@ -139,7 +139,16 @@ class ThreadPresenter @Inject constructor(
       val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
         ?: return false
 
-      return chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
+      val isUnlimitedCatalog = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isUnlimitedCatalog
+      if (isUnlimitedCatalog != null) {
+        return isUnlimitedCatalog
+      }
+
+      if (!boardManager.isReady()) {
+        return false
+      }
+
+      return boardManager.byBoardDescriptor(descriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
     }
 
   override val unlimitedCatalogEndReached: Boolean
@@ -339,7 +348,7 @@ class ThreadPresenter @Inject constructor(
     chanThreadTicker.resetTicker()
   }
 
-  override fun infiniteCatalogLoadPage() {
+  override fun loadCatalogPage(overridePage: Int?) {
     val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
       ?: return
 
@@ -350,18 +359,27 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    if (overridePage != null) {
+      Logger.d(TAG, "loadCatalogPage() overriding catalog page: overridePage=$overridePage")
+      catalogSnapshot.updateCatalogPage(overridePage)
+    }
+
     val catalogPage = catalogSnapshot.catalogPage
     val isEndReached = catalogSnapshot.isEndReached
     val nextCatalogPage = catalogSnapshot.getNextCatalogPage()
 
-    Logger.d(TAG, "infiniteCatalogLoadNextPage() catalogPage=${catalogPage}, " +
+    Logger.d(TAG, "loadCatalogPage() catalogPage=${catalogPage} (overridePage=$overridePage), " +
       "nextCatalogPage=${nextCatalogPage}, isEndReached=$isEndReached")
 
     if (isEndReached) {
       return
     }
 
-    normalLoad()
+    if (overridePage != null) {
+      normalLoad(showLoading = true, deleteChanCatalogSnapshot = false)
+    } else {
+      normalLoad(showLoading = false)
+    }
   }
 
   override fun getNextPage(): Int? {
@@ -394,7 +412,8 @@ class ThreadPresenter @Inject constructor(
     chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.retainAll(),
     chanCacheOptions: ChanCacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-    chanReadOptions: ChanReadOptions = ChanReadOptions.default()
+    chanReadOptions: ChanReadOptions = ChanReadOptions.default(),
+    deleteChanCatalogSnapshot: Boolean = showLoading
   ) {
     BackgroundUtils.ensureMainThread()
 
@@ -413,7 +432,9 @@ class ThreadPresenter @Inject constructor(
     currentLoadThreadJob = launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
+      }
 
+      if (deleteChanCatalogSnapshot) {
         if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
           chanCatalogSnapshotCache.delete(currentChanDescriptor.boardDescriptor)
         }
@@ -450,7 +471,7 @@ class ThreadPresenter @Inject constructor(
           val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
 
           if (!successfullyProcessedNewPosts) {
-            val error = ClientException("Failed to load thread because of unknown error. See logs for more info.")
+            val error = getPossibleChanLoadError(currentChanDescriptor)
             onChanLoaderError(threadLoadResult.chanDescriptor, error)
           } else {
             if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
@@ -463,6 +484,19 @@ class ThreadPresenter @Inject constructor(
       chanThreadLoadingState = ChanThreadLoadingState.Loaded
       currentLoadThreadJob = null
     }
+  }
+
+  private fun getPossibleChanLoadError(currentChanDescriptor: ChanDescriptor?): ClientException {
+    if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      val catalogPostsCount = chanThreadManager.getChanCatalog(currentChanDescriptor)?.postsCount() ?: 0
+      if (catalogPostsCount <= 0) {
+        return ClientException("Catalog is empty")
+      }
+
+      // fallthrough
+    }
+
+    return ClientException("Failed to load catalog/thread because of unknown error. See logs for more info.")
   }
 
   fun onForegroundChanged(foreground: Boolean) {

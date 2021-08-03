@@ -529,7 +529,7 @@ class PostAdapter(
 
       prevCatalogPage = nextPage
 
-      postAdapterCallback.infiniteCatalogLoadPage()
+      postAdapterCallback.loadCatalogPage()
       catalogStatusCell.setProgress(nextPage)
     }
 
@@ -555,7 +555,7 @@ class PostAdapter(
     val isUnlimitedCatalog: Boolean
     val unlimitedCatalogEndReached: Boolean
 
-    fun infiniteCatalogLoadPage()
+    fun loadCatalogPage(overridePage: Int? = null)
     fun getNextPage(): Int?
   }
 

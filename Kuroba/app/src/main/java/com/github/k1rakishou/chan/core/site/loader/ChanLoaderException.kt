@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
 import okhttp3.HttpUrl
@@ -41,7 +42,8 @@ open class ChanLoaderException(
           getString(R.string.thread_load_failed_cloud_flare_detected)
         }
         is SiteError -> exception.shortMessage()
-        else -> getString(R.string.thread_load_failed_parsing)
+        is ClientException -> exception.errorMessageOrClassName()
+        else -> exception.message ?: getString(R.string.thread_load_failed_parsing)
       }
     }
 
