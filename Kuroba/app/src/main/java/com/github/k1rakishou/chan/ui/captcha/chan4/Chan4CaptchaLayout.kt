@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -208,6 +209,7 @@ class Chan4CaptchaLayout(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
         keyboardActions = KeyboardActions(onDone = { verifyCaptcha(captchaInfo, currentInputValue) }),
+        keyboardOptions = KeyboardOptions(autoCorrect = false),
         maxLines = 1,
         singleLine = true,
         modifier = Modifier
