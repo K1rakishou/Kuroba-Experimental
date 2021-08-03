@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/cell_post_catalog_status_height"
+    android:orientation="vertical">
+
+    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center"
+        android:padding="4dp"
+        android:text="@string/catalog_end_reached"/>
+
+</LinearLayout>

@@ -194,7 +194,6 @@ class PostAdapter(
         val postCell = postViewHolder.itemView as GenericPostCell
         postCell.setPost(postCellData)
       }
-      PostCellData.TYPE_STATUS -> (holder.itemView as ThreadStatusCell).update()
       PostCellData.TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
       PostCellData.TYPE_LOADING_MORE -> {
         val loadingMoreViewHolder = (holder as LoadingMoreViewHolder)
@@ -205,6 +204,7 @@ class PostAdapter(
           }
         }
 
+        loadingMoreViewHolder.catalogStatusCell.setError(threadCellData.error)
         loadingMoreViewHolder.bind()
       }
     }
@@ -318,7 +318,6 @@ class PostAdapter(
       chanTheme
     )
 
-    showError(null)
     notifyDataSetChanged()
 
     Logger.d(TAG, "setThread() notifyDataSetChanged called, postIndexedList.size=" + postIndexedList.size)
@@ -385,7 +384,7 @@ class PostAdapter(
       return false
     }
 
-    return postAdapterCallback.isUnlimitedCatalog && !postAdapterCallback.unlimitedCatalogEndReached
+    return postAdapterCallback.isUnlimitedCatalog
   }
 
   suspend fun updatePost(updatedPost: ChanPost) {
@@ -502,11 +501,11 @@ class PostAdapter(
 
   class PostViewHolder(genericPostCell: GenericPostCell) : RecyclerView.ViewHolder(genericPostCell)
 
-  class StatusViewHolder(threadStatusCell: ThreadStatusCell) : RecyclerView.ViewHolder(threadStatusCell)
+  class StatusViewHolder(val threadStatusCell: ThreadStatusCell) : RecyclerView.ViewHolder(threadStatusCell)
 
   class LoadingMoreViewHolder(
     private val postAdapterCallback: PostAdapterCallback,
-    private val catalogStatusCell: CatalogStatusCell
+    val catalogStatusCell: CatalogStatusCell
   ) : RecyclerView.ViewHolder(catalogStatusCell) {
     private var prevCatalogPage: Int? = null
 
@@ -520,6 +519,7 @@ class PostAdapter(
       }
 
       if (postAdapterCallback.unlimitedCatalogEndReached) {
+        catalogStatusCell.onCatalogEndReached()
         return
       }
 

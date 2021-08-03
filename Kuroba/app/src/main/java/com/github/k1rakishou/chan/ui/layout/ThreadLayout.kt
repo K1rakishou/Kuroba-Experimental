@@ -456,6 +456,10 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
+  override fun hideError(chanDescriptor: ChanDescriptor) {
+    threadListLayout.showError(null)
+  }
+
   override fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
     if (hasSupportedActiveArchives() && !error.isCloudFlareError()) {
       openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)

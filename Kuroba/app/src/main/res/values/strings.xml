@@ -1383,5 +1383,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
+    <string name="catalog_end_reached">Catalog end reached</string>
 
 </resources>

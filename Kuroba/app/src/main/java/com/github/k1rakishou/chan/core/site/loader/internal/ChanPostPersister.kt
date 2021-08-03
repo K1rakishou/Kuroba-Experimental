@@ -54,8 +54,7 @@ internal class ChanPostPersister(
           ?: false
 
         if (isUnlimitedCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {
-          chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
-            ?.let { chanCatalogSnapshot -> chanCatalogSnapshot.onEndOfUnlimitedCatalogReached() }
+          chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)?.onEndOfUnlimitedCatalogReached()
         } else {
           val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
             boardDescriptor = chanDescriptor.boardDescriptor,

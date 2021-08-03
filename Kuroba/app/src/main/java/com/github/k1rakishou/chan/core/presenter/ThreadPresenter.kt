@@ -745,6 +745,7 @@ class ThreadPresenter @Inject constructor(
       chanThreadTicker.kickTicker(resetTimer = shouldResetTimer)
     }
 
+    threadPresenterCallback?.hideError(loadedChanDescriptor)
     showPosts()
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
@@ -2324,6 +2325,7 @@ class ThreadPresenter @Inject constructor(
 
     suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)
     fun postClicked(postDescriptor: PostDescriptor)
+    fun hideError(chanDescriptor: ChanDescriptor)
     fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException)
     fun showLoading()
     fun showLoading(animateTransition: Boolean)

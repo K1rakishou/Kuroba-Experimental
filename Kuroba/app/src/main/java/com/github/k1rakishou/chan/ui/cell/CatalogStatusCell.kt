@@ -21,10 +21,12 @@ class CatalogStatusCell @JvmOverloads constructor(
 
   private val progressView: LinearLayout
   private val errorView: LinearLayout
+  private val catalogEndReachedView: LinearLayout
 
   private var _error: String? = null
   private var postAdapterCallback: PostAdapter.PostAdapterCallback? = null
   private var catalogPage: Int = 1
+  private var endReached = false
 
   val isError: Boolean
     get() = _error != null
@@ -58,11 +60,27 @@ class CatalogStatusCell @JvmOverloads constructor(
       false
     ) as LinearLayout
 
+    catalogEndReachedView = AppModuleAndroidUtils.inflate(
+      context,
+      R.layout.cell_post_catalog_status_end_reached,
+      this,
+      false
+    ) as LinearLayout
+
     setProgress(catalogPage)
   }
 
+  fun setPostAdapterCallback(postAdapterCallback: PostAdapter.PostAdapterCallback) {
+    this.postAdapterCallback = postAdapterCallback
+  }
+
   fun setError(error: String?) {
+    if (this._error == error) {
+      return
+    }
+
     this._error = error
+    endReached = false
 
     if (error == null) {
       return
@@ -82,7 +100,12 @@ class CatalogStatusCell @JvmOverloads constructor(
   }
 
   fun setProgress(nextPage: Int) {
+    if (catalogPage == nextPage) {
+      return
+    }
+
     _error = null
+    endReached = false
     catalogPage = nextPage
 
     loadView.setView(progressView)
@@ -91,8 +114,13 @@ class CatalogStatusCell @JvmOverloads constructor(
     indicator.text = getString(R.string.catalog_load_page, nextPage)
   }
 
-  fun setPostAdapterCallback(postAdapterCallback: PostAdapter.PostAdapterCallback) {
-    this.postAdapterCallback = postAdapterCallback
+  fun onCatalogEndReached() {
+    if (endReached) {
+      return
+    }
+
+    endReached = true
+    loadView.setView(catalogEndReachedView)
   }
 
 }

@@ -20,7 +20,6 @@ import java.util.*
 import java.util.regex.Pattern
 
 class FoolFuukaReadCatalogThreadsHelper {
-
   suspend fun readCatalogThreads(
     requestUrl: String,
     responseBodyStream: InputStream,
