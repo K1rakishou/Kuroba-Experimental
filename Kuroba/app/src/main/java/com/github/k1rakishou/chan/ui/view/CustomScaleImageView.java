@@ -25,7 +25,6 @@ import androidx.annotation.Nullable;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.github.k1rakishou.common.DoNotStrip;
-import com.github.k1rakishou.core_logger.Logger;
 
 @DoNotStrip
 public class CustomScaleImageView extends SubsamplingScaleImageView {
@@ -67,7 +66,6 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
 
             @Override
             public void onImageLoadError(Exception e) {
-                Logger.w(TAG, "onImageLoadError", e);
                 if (callback != null) {
                     callback.onError(e, true);
                 }
@@ -75,7 +73,6 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
 
             @Override
             public void onTileLoadError(Exception e) {
-                Logger.w(TAG, "onTileLoadError", e);
                 if (callback != null) {
                     callback.onError(e, false);
                 }
