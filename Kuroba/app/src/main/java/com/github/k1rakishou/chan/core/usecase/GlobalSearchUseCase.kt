@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.usecase
 import android.text.SpannableString
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
@@ -96,6 +97,7 @@ class GlobalSearchUseCase(
           )
 
           findAllQuotesAndMarkThem(spannedComment, theme)
+          findAllLinksAndMarkThem(spannedComment, theme)
 
           commentRaw.clear()
           commentRaw.append(spannedComment)
@@ -125,8 +127,22 @@ class GlobalSearchUseCase(
     var found = false
 
     while (matcher.find()) {
-      val span = ForegroundColorSpanHashed(theme.postLinkColor)
+      val span = ForegroundColorSpanHashed(theme.postQuoteColor)
       spannedComment.setSpan(span, matcher.start(), matcher.end(), 0)
+
+      found = true
+    }
+
+    return found
+  }
+
+  private fun findAllLinksAndMarkThem(spannedComment: SpannableString, theme: ChanTheme): Boolean {
+    val links = CommentParserHelper.LINK_EXTRACTOR.extractLinks(spannedComment)
+    var found = false
+
+    for (link in links) {
+      val span = ForegroundColorSpanHashed(theme.postLinkColor)
+      spannedComment.setSpan(span, link.beginIndex, link.endIndex, 0)
 
       found = true
     }

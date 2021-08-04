@@ -330,12 +330,14 @@ class CloseMediaActionHelper(
       DEAD_ZONE_HEIGHT_LAND
     }
 
-    val centerPointY = initialTouchPositionForActions?.y
-      ?.coerceIn(
-        textToTouchPositionOffset + (TEXT_SIZE / 2f) + topPaddingFunc(),
-        height - (TEXT_SIZE / 2f) - textToTouchPositionOffset - bottomPaddingFunc()
-      )
+    val maxTop = textToTouchPositionOffset + (TEXT_SIZE / 2f) + topPaddingFunc()
+    val maxBottom = height - (TEXT_SIZE / 2f) - textToTouchPositionOffset - bottomPaddingFunc()
 
+    if (maxTop >= maxBottom) {
+      return
+    }
+
+    val centerPointY = initialTouchPositionForActions?.y?.coerceIn(maxTop, maxBottom)
     if (centerPointY == null) {
       return
     }
