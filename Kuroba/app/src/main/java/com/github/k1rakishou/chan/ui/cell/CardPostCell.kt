@@ -398,6 +398,8 @@ class CardPostCell : ConstraintLayout,
         chanDescriptor = postData.chanDescriptor,
         postDescriptor = postData.postDescriptor
       )?.fullCopy()
+    } else if (postData == null) {
+      this.postCellHighlight = null
     }
   }
 
