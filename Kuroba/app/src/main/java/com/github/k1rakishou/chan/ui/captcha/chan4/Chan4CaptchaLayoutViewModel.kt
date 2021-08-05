@@ -54,7 +54,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
 
-  lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
+  val chan4CaptchaSettingsJson by lazy {
+    siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
+      .getSettingBySettingId<JsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
+  }
 
   private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   val showCaptchaHelpFlow: SharedFlow<Unit>
@@ -74,32 +77,29 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    chan4CaptchaSettings = siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
-      .getSettingBySettingId(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
+    val captchaSettings = chan4CaptchaSettingsJson.get()
+    onlyShowBackgroundImage.value = captchaSettings.onlyShowBackgroundImage
 
-    val settings = chan4CaptchaSettings.get()
-    onlyShowBackgroundImage.value = settings.onlyShowBackgroundImage
-
-    if (!settings.captchaHelpShown) {
+    if (!captchaSettings.captchaHelpShown) {
       _showCaptchaHelpFlow.tryEmit(Unit)
-      chan4CaptchaSettings.set(settings.copy(captchaHelpShown = true))
+      chan4CaptchaSettingsJson.set(captchaSettings.copy(captchaHelpShown = true))
     }
   }
 
   fun toggleOnlyShowBackgroundImage() {
     onlyShowBackgroundImage.value = onlyShowBackgroundImage.value.not()
 
-    val updatedSettings = chan4CaptchaSettings.get()
+    val updatedSettings = chan4CaptchaSettingsJson.get()
       .copy(onlyShowBackgroundImage = onlyShowBackgroundImage.value)
-    chan4CaptchaSettings.set(updatedSettings)
+    chan4CaptchaSettingsJson.set(updatedSettings)
   }
 
   fun toggleContrastBackground() {
-    val settings = chan4CaptchaSettings.get()
+    val settings = chan4CaptchaSettingsJson.get()
     val updatedSettings = settings
       .copy(sliderCaptchaUseContrastBackground = settings.sliderCaptchaUseContrastBackground.not())
 
-    chan4CaptchaSettings.set(updatedSettings)
+    chan4CaptchaSettingsJson.set(updatedSettings)
   }
 
   fun cleanup() {
@@ -158,6 +158,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     activeJob = mainScope.launch(Dispatchers.Default) {
       captchaInfoToShow.value = AsyncData.Loading
+      viewModelInitialized.awaitUntilInitialized()
 
       val result = ModularResult.Try { requestCaptchaInternal(chanDescriptor) }
 
@@ -261,7 +262,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       val bgByteArray = Base64.decode(bgBase64Img, Base64.DEFAULT)
       val bitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
 
-      val bgImageBitmap = if (chan4CaptchaSettings.get().sliderCaptchaUseContrastBackground) {
+      val bgImageBitmap = if (chan4CaptchaSettingsJson.get().sliderCaptchaUseContrastBackground) {
         replaceColor(bitmap, 0xFFEEEEEEL.toInt(), themeEngine.chanTheme.accentColor).asImageBitmap()
       } else {
         bitmap.asImageBitmap()

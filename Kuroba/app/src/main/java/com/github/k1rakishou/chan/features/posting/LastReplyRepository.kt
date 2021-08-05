@@ -79,6 +79,7 @@ class LastReplyRepository(
 
   suspend fun onPostAttemptFinished(
     chanDescriptor: ChanDescriptor,
+    postedSuccessfully: Boolean = false,
     newCooldownInfo: CooldownInfo? = null
   ) {
     Logger.d(TAG, "onPostAttemptFinished($chanDescriptor, newCooldownInfo=$newCooldownInfo)")
@@ -86,14 +87,16 @@ class LastReplyRepository(
     mutex.withLockNonCancellable {
       val boardDescriptor = chanDescriptor.boardDescriptor()
 
-      when (chanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> {
-          lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
-          lastThreadMap[boardDescriptor]!!.updateLastReplyAttemptTime()
-        }
-        is ChanDescriptor.ThreadDescriptor -> {
-          lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
-          lastReplyMap[boardDescriptor]!!.updateLastReplyAttemptTime()
+      if (postedSuccessfully) {
+        when (chanDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
+            lastThreadMap[boardDescriptor]!!.updateLastReplyAttemptTime()
+          }
+          is ChanDescriptor.ThreadDescriptor -> {
+            lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
+            lastReplyMap[boardDescriptor]!!.updateLastReplyAttemptTime()
+          }
         }
       }
 
@@ -112,7 +115,8 @@ class LastReplyRepository(
 
   suspend fun getTimeUntilNextThreadCreationOrReply(
     chanDescriptor: ChanDescriptor,
-    replyMode: ReplyMode
+    replyMode: ReplyMode,
+    hasAttachedImages: Boolean = false
   ): Long {
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
 
@@ -121,12 +125,16 @@ class LastReplyRepository(
         getTimeUntilNewThread(chanDescriptor.boardDescriptor, replyMode)
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        getTimeUntilReply(chanDescriptor.boardDescriptor, replyMode)
+        getTimeUntilReply(chanDescriptor.boardDescriptor, replyMode, hasAttachedImages)
       }
     }
   }
 
-  suspend fun getTimeUntilReply(boardDescriptor: BoardDescriptor, replyMode: ReplyMode): Long {
+  private suspend fun getTimeUntilReply(
+    boardDescriptor: BoardDescriptor,
+    replyMode: ReplyMode,
+    hasAttachedImages: Boolean
+  ): Long {
     val lastReply = mutex.withLock {
       lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
       lastReplyMap[boardDescriptor]!!
@@ -135,6 +143,29 @@ class LastReplyRepository(
     if (lastReply.lastReplyTimeMs <= 0) {
       Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) lastReplyTimeMs <= 0")
       return 0L
+    }
+
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    if (site == null) {
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
+      return 0L
+    }
+
+    val postingWithPasscode = replyMode == ReplyMode.ReplyModeUsePasscode
+      && site.actions().isLoggedIn()
+
+    val lastReplyCooldown = checkLastReplyCooldown(
+      creatingNewThread = false,
+      boardDescriptor = boardDescriptor,
+      hasAttachedImages = hasAttachedImages,
+      lastReply = lastReply,
+      postingWithPasscode = postingWithPasscode
+    )
+
+    if (lastReplyCooldown != null && lastReplyCooldown > 0) {
+      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) lastReplyCooldown > 0 " +
+        "(lastReplyCooldown=$lastReplyCooldown)")
+      return lastReplyCooldown
     }
 
     val cooldowns = mutex.withLock {
@@ -148,13 +179,7 @@ class LastReplyRepository(
       return 0L
     }
 
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-    if (site == null) {
-      Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
-      return currentPostingCooldownMs
-    }
-
-    if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()) {
+    if (postingWithPasscode) {
       Logger.d(TAG, "getTimeUntilReply($boardDescriptor, $replyMode) halving " +
         "currentPostingCooldownMs because of passcode")
 
@@ -174,7 +199,7 @@ class LastReplyRepository(
     return actualWaitTime
   }
 
-  suspend fun getTimeUntilNewThread(boardDescriptor: BoardDescriptor, replyMode: ReplyMode): Long {
+  private suspend fun getTimeUntilNewThread(boardDescriptor: BoardDescriptor, replyMode: ReplyMode): Long {
     val lastReply = mutex.withLock {
       lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
       lastThreadMap[boardDescriptor]!!
@@ -183,6 +208,29 @@ class LastReplyRepository(
     if (lastReply.lastReplyTimeMs <= 0) {
       Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) lastReplyTimeMs <= 0")
       return 0L
+    }
+
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    if (site == null) {
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) " +
+        "site (${boardDescriptor.siteDescriptor}) == null")
+      return 0L
+    }
+
+    val postingWithPasscode = replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()
+
+    val lastReplyCooldown = checkLastReplyCooldown(
+      creatingNewThread = true,
+      boardDescriptor = boardDescriptor,
+      hasAttachedImages = false,
+      lastReply = lastReply,
+      postingWithPasscode = postingWithPasscode
+    )
+
+    if (lastReplyCooldown != null && lastReplyCooldown > 0) {
+      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) " +
+        "lastReplyCooldown > 0 (lastReplyCooldown=$lastReplyCooldown)")
+      return lastReplyCooldown
     }
 
     val cooldowns = mutex.withLock {
@@ -194,12 +242,6 @@ class LastReplyRepository(
     if (currentPostingCooldownMs <= 0L) {
       Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) currentPostingCooldownMs <= 0")
       return 0L
-    }
-
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
-    if (site == null) {
-      Logger.d(TAG, "getTimeUntilNewThread($boardDescriptor, $replyMode) site (${boardDescriptor.siteDescriptor}) == null")
-      return currentPostingCooldownMs
     }
 
     if (replyMode == ReplyMode.ReplyModeUsePasscode && site.actions().isLoggedIn()) {
@@ -220,6 +262,49 @@ class LastReplyRepository(
     }
 
     return actualWaitTime
+  }
+
+  private fun checkLastReplyCooldown(
+    creatingNewThread: Boolean,
+    boardDescriptor: BoardDescriptor,
+    hasAttachedImages: Boolean,
+    lastReply: LastReply,
+    postingWithPasscode: Boolean
+  ): Long? {
+    val chanBoard = boardManager.byBoardDescriptor(boardDescriptor)
+    if (chanBoard == null) {
+      return null
+    }
+
+    val replyCooldownSeconds = when {
+      creatingNewThread -> chanBoard.cooldownThreads
+      hasAttachedImages -> chanBoard.cooldownImages
+      else -> chanBoard.cooldownReplies
+    }
+
+    if (replyCooldownSeconds <= 0) {
+      return null
+    }
+
+    val willBeAbleToPostAt = lastReply.lastReplyTimeMs + (replyCooldownSeconds * 1000L) + ADDITIONAL_TIME_MS
+    val currentTime = System.currentTimeMillis()
+
+    if (willBeAbleToPostAt > currentTime) {
+      // We can't post yet because lastReplyTime + boardCooldown is greater than current time
+      var resultCooldownMs = willBeAbleToPostAt - currentTime
+
+      if (postingWithPasscode) {
+        resultCooldownMs /= 2
+      }
+
+      Logger.d(TAG, "checkLastReplyCooldown($boardDescriptor, $hasAttachedImages) " +
+        "currentTime ($currentTime) > willBeAbleToPostAt ($willBeAbleToPostAt), " +
+        "postingWithPasscode=${postingWithPasscode}, resultCooldownMs=${resultCooldownMs}")
+
+      return resultCooldownMs
+    }
+
+    return null
   }
 
   class LastReply(
@@ -293,6 +378,8 @@ class LastReplyRepository(
 
   companion object {
     private const val TAG = "LastReplyRepository"
+
+    private const val ADDITIONAL_TIME_MS = 5000L
   }
 
 }

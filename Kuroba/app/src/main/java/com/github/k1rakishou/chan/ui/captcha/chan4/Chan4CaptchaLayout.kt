@@ -450,7 +450,7 @@ class Chan4CaptchaLayout(
   }
 
   private fun showChan4CaptchaSettings() {
-    val chan4CaptchaSettings = viewModel.chan4CaptchaSettings.get()
+    val chan4CaptchaSettings = viewModel.chan4CaptchaSettingsJson.get()
     val items = mutableListOf<FloatingListMenuItem>()
 
     items += CheckableFloatingListMenuItem(
@@ -484,10 +484,10 @@ class Chan4CaptchaLayout(
             showCaptchaHelp()
           }
           ACTION_REMEMBER_CAPTCHA_COOKIES -> {
-            val setting = viewModel.chan4CaptchaSettings.get()
+            val setting = viewModel.chan4CaptchaSettingsJson.get()
             val updatedSetting = setting.copy(rememberCaptchaCookies = setting.rememberCaptchaCookies.not())
 
-            viewModel.chan4CaptchaSettings.set(updatedSetting)
+            viewModel.chan4CaptchaSettingsJson.set(updatedSetting)
           }
         }
       }

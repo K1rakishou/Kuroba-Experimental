@@ -210,13 +210,8 @@ class PostingServiceDelegate(
       }
 
       return@withLock activeReplyDescriptors.values
-        .filter { replyInfo ->
-          return@filter replyInfo.chanDescriptor.boardDescriptor() == chanDescriptor.boardDescriptor()
-        }
-        .all { replyInfo ->
-          return@all replyInfo.currentStatus is PostingStatus.Attached
-            || replyInfo.currentStatus.isTerminalEvent()
-        }
+        .filter { info -> info.chanDescriptor.boardDescriptor() == chanDescriptor.boardDescriptor() }
+        .all { info -> info.currentStatus is PostingStatus.Attached || info.currentStatus.isTerminalEvent() }
     }
 
     if (allRepliesPerBoardProcessed) {
@@ -417,12 +412,15 @@ class PostingServiceDelegate(
       // First we need to take the oldest post from all posts in the activeReplyDescriptors
       if (isOldestEnqueuedReply(chanDescriptor)) {
         val replyMode = readReplyInfo(chanDescriptor) { replyModeRef.get() }
+        val hasFiles = replyManager.readReply(chanDescriptor) { reply -> reply.hasFiles() }
+
         Logger.d(TAG, "runPostWaitQueueLoop($chanDescriptor) oldest enqueued reply descriptor: $chanDescriptor")
 
         // Then we need to check whether we can post or need to wait a timeout before posting
         val remainingWaitTime = lastReplyRepository.getTimeUntilNextThreadCreationOrReply(
           chanDescriptor = chanDescriptor,
-          replyMode = replyMode
+          replyMode = replyMode,
+          hasAttachedImages = hasFiles
         )
 
         check(remainingWaitTime >= 0) { "Bad remainingWaitTime: $remainingWaitTime" }
@@ -737,6 +735,7 @@ class PostingServiceDelegate(
 
     _lastReplyRepository.get().onPostAttemptFinished(
       chanDescriptor = chanDescriptor,
+      postedSuccessfully = false,
       newCooldownInfo = rateLimitInfo.cooldownInfo
     )
 
@@ -1026,19 +1025,28 @@ class PostingServiceDelegate(
     when (postResult) {
       PostResult.Canceled -> {
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Canceled)
-        lastReplyRepository.onPostAttemptFinished(chanDescriptor = chanDescriptor)
+        lastReplyRepository.onPostAttemptFinished(
+          chanDescriptor = chanDescriptor,
+          postedSuccessfully = false
+        )
       }
       is PostResult.Error -> {
         val errorMessage = postResult.throwable.errorMessageOrClassName()
 
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
-        lastReplyRepository.onPostAttemptFinished(chanDescriptor = chanDescriptor)
+        lastReplyRepository.onPostAttemptFinished(
+          chanDescriptor = chanDescriptor,
+          postedSuccessfully = false
+        )
       }
       is PostResult.Success -> {
         val replyResponse = postResult.replyResponse
         if (replyResponse.posted) {
           updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Posted(chanDescriptor))
-          lastReplyRepository.onPostAttemptFinished(chanDescriptor)
+          lastReplyRepository.onPostAttemptFinished(
+            chanDescriptor = chanDescriptor,
+            postedSuccessfully = true
+          )
           return
         }
 
@@ -1055,6 +1063,7 @@ class PostingServiceDelegate(
 
           lastReplyRepository.onPostAttemptFinished(
             chanDescriptor = chanDescriptor,
+            postedSuccessfully = false,
             newCooldownInfo = cooldownInfo
           )
 
@@ -1076,7 +1085,10 @@ class PostingServiceDelegate(
         }
 
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
-        lastReplyRepository.onPostAttemptFinished(chanDescriptor)
+        lastReplyRepository.onPostAttemptFinished(
+          chanDescriptor = chanDescriptor,
+          postedSuccessfully = false
+        )
       }
     }
   }
