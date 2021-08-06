@@ -4,6 +4,8 @@ import android.content.Context
 import android.net.Uri
 import android.view.HapticFeedbackConstants
 import android.widget.Toast
+import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
+import androidx.compose.animation.graphics.res.animatedVectorResource
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -29,7 +31,6 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.material.Card
-import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -138,7 +139,7 @@ class LocalArchiveController(
     navigation.buildMenu(context)
       .withMenuItemClickInterceptor {
         viewModel.viewModelSelectionHelper.unselectAll()
-        return@withMenuItemClickInterceptor true
+        return@withMenuItemClickInterceptor false
       }
       .withItem(ACTION_SEARCH, R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .withItem(ACTION_UPDATE_ALL, R.drawable.ic_refresh_white_24dp) {
@@ -655,7 +656,7 @@ class LocalArchiveController(
     }
   }
 
-  @OptIn(ExperimentalComposeUiApi::class)
+  @OptIn(ExperimentalComposeUiApi::class, ExperimentalAnimationGraphicsApi::class)
   @Composable
   private fun ColumnScope.BuildThreadDownloadStatusIcon(
     animationAtEnd: Boolean,
@@ -674,20 +675,8 @@ class LocalArchiveController(
 
     val painter = when (threadDownloadView.status) {
       ThreadDownload.Status.Running -> {
-        // TODO(KurobaEx): animatedVectorResource was removed in compose-rc01.
-        //  I have no idea when they are gonna bring it back. For now I will leave it like this.
-//        animatedVectorResource(id = R.drawable.ic_download_anim)
-//          .painterFor(atEnd = animationAtEnd)
-
-        CircularProgressIndicator(
-          color = color,
-          modifier = Modifier
-            .size(PROGRESS_SIZE)
-            .align(Alignment.CenterHorizontally)
-            .clickable { showToast(threadDownloadView.status.toString(), Toast.LENGTH_LONG) },
-        )
-
-        return
+        animatedVectorResource(id = R.drawable.ic_download_anim)
+          .painterFor(atEnd = animationAtEnd)
       }
       ThreadDownload.Status.Stopped -> {
         painterResource(id = R.drawable.ic_download_anim0)

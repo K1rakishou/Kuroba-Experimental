@@ -373,7 +373,7 @@ class BookmarksController(
     navigationItem.buildMenu(context)
       .withMenuItemClickInterceptor {
         exitReorderingModeIfActive()
-        return@withMenuItemClickInterceptor true
+        return@withMenuItemClickInterceptor false
       }
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .withItem(ACTION_CHANGE_VIEW_BOOKMARK_MODE, getBookmarksModeChangeToolbarButtonDrawableId()) {

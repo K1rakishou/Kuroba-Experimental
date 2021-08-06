@@ -274,7 +274,7 @@ dependencies {
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation "androidx.preference:preference-ktx:${versions.androidx_preferences_ktx}"
-    implementation 'androidx.constraintlayout:constraintlayout:2.0.4'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.0'
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
@@ -285,8 +285,9 @@ dependencies {
     implementation("androidx.compose.ui:ui:${versions.compose_version}")
     implementation("androidx.compose.material:material:${versions.compose_version}")
     implementation("androidx.compose.ui:ui-tooling:${versions.compose_version}")
+    implementation("androidx.compose.animation:animation-graphics:${versions.compose_version}")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
-    implementation("androidx.activity:activity-compose:1.3.0-beta02")
+    implementation("androidx.activity:activity-compose:1.3.0")
     implementation("com.google.accompanist:accompanist-insets-ui:${versions.accompanist}")
 
     implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"

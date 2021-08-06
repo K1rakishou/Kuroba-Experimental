@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.view.View;
@@ -30,9 +33,6 @@ import java.util.List;
 
 import kotlin.Unit;
 import kotlin.jvm.functions.Function1;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 /**
  * The navigation properties for a Controller. Controls common properties that parent controllers
@@ -156,7 +156,7 @@ public class NavigationItem {
 
         /**
          * Intercepts menu item clicks (except for the Middle menu). Can filter out clicks by
-         * returning false;
+         * returning true;
          * */
         public MenuBuilder withMenuItemClickInterceptor(
                 @NonNull ToolbarMenuView.MenuItemClickInterceptor itemClickInterceptor

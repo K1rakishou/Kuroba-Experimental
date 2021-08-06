@@ -90,7 +90,7 @@ class SavedPostsController(
     navigationItem.buildMenu(context)
       .withMenuItemClickInterceptor {
         viewModel.viewModelSelectionHelper.unselectAll()
-        return@withMenuItemClickInterceptor true
+        return@withMenuItemClickInterceptor false
       }
       .withItem(R.drawable.ic_search_white_24dp) { requireToolbarNavController().showSearch() }
       .withOverflow(requireNavController())

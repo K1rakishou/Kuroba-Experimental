@@ -16,6 +16,10 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.Gravity;
@@ -23,10 +27,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 
 import com.github.k1rakishou.common.AndroidUtils;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 /**
  * The container view for the list of ToolbarMenuItems, a list of ImageViews.
@@ -73,7 +73,7 @@ public class ToolbarMenuView extends LinearLayout {
             imageView.setOnClickListener(v -> {
                 MenuItemClickInterceptor menuItemClickInterceptor = menu.getInterceptor();
 
-                if (menuItemClickInterceptor != null && !menuItemClickInterceptor.intercept(item)) {
+                if (menuItemClickInterceptor != null && menuItemClickInterceptor.intercept(item)) {
                     return;
                 }
 
@@ -100,6 +100,10 @@ public class ToolbarMenuView extends LinearLayout {
     }
 
     public interface MenuItemClickInterceptor {
+        /**
+         * Return true to consume the click and to not call the original toolbar menu item click
+         * handler. Return false to continue with the original click handler.
+         * */
         boolean intercept(ToolbarMenuItem toolbarMenuItem);
     }
 }
