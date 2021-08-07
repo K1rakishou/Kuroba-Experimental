@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionGridView
@@ -57,12 +58,15 @@ class BoardSelectionController(
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var archivesManager: ArchivesManager
+  @Inject
+  lateinit var currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 
   private val presenter by lazy {
     BoardSelectionPresenter(
       siteManager = siteManager,
       boardManager = boardManager,
       archivesManager = archivesManager,
+      currentOpenedDescriptorStateManager = currentOpenedDescriptorStateManager
     )
   }
 
@@ -221,6 +225,7 @@ class BoardSelectionController(
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
                   bindQuery(boardCellData.searchQuery)
+                  bindCurrentlySelected(state.currentlySelected == boardCellData.boardDescriptor)
                   bindRowClickCallback {
                     callback.onBoardSelected(boardCellData.boardDescriptor)
                     pop()
@@ -232,6 +237,7 @@ class BoardSelectionController(
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
                   bindQuery(boardCellData.searchQuery)
+                  bindCurrentlySelected(state.currentlySelected == boardCellData.boardDescriptor)
                   bindRowClickCallback {
                     callback.onBoardSelected(boardCellData.boardDescriptor)
                     pop()

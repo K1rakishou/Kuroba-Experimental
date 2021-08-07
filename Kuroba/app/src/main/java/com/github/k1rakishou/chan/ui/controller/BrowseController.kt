@@ -401,7 +401,7 @@ class BrowseController(
 
   private fun searchClicked(item: ToolbarMenuItem) {
     val presenter = threadLayout.presenter
-    if (!presenter.isBound || chanDescriptor == null) {
+    if (!presenter.isBoundAndHasPosts || chanDescriptor == null) {
       return
     }
 
@@ -576,7 +576,6 @@ class BrowseController(
           return@createSimpleDialogWithInput
         }
 
-        threadLayout.showLoading()
         threadLayout.presenter.loadCatalogPage(overridePage = page)
       }
     )

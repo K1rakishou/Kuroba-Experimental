@@ -36,7 +36,14 @@ open class ChanLoaderException(
             else -> getString(R.string.thread_load_failed_server, exception.status)
           }
         }
-        is SSLException -> getString(R.string.thread_load_failed_ssl)
+        is SSLException -> {
+          if (exception.message != null) {
+            val message = exception.message!!
+            getString(R.string.thread_load_failed_ssl_with_reason, message)
+          } else {
+            getString(R.string.thread_load_failed_ssl)
+          }
+        }
         is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
         is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
           getString(R.string.thread_load_failed_cloud_flare_detected)

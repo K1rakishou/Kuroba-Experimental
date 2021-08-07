@@ -185,6 +185,16 @@ class ThreadPresenter @Inject constructor(
         return false
       }
 
+      return true
+    }
+
+  val isBoundAndHasPosts: Boolean
+    get() {
+      if (!isBound) {
+        return false
+      }
+
+      val currentDescriptor = chanThreadTicker.currentChanDescriptor
       if (!chanThreadManager.isCached(currentDescriptor)) {
         if (verboseLogs) {
           Logger.e(TAG, "isBound() currentChanDescriptor (${currentDescriptor}) is not cached")

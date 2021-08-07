@@ -13,6 +13,7 @@ import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
 import javax.inject.Inject
@@ -30,7 +31,7 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
   private val boardCode: MaterialTextView
   private val boardSeparator: MaterialTextView
   private val boardName: MaterialTextView
-
+  private var isCurrentlySelected: Boolean = false
   private var searchQuery: String? = null
 
   init {
@@ -55,7 +56,7 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    updateBoardNameColor()
+    updateColors()
   }
 
   @AfterPropsSet
@@ -91,18 +92,24 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
   @ModelProp
   fun bindBoardCode(boardCode: String) {
     this.boardCode.setText(SpannableString.valueOf(boardCode), TextView.BufferType.SPANNABLE)
-    updateBoardNameColor()
+    updateColors()
   }
 
   @ModelProp
   fun bindBoardName(boardName: String) {
     this.boardName.setText(SpannableString.valueOf(boardName), TextView.BufferType.SPANNABLE)
-    updateBoardNameColor()
+    updateColors()
   }
 
   @ModelProp
   fun bindQuery(query: String?) {
     this.searchQuery = query
+  }
+
+  @ModelProp
+  fun bindCurrentlySelected(selected: Boolean) {
+    this.isCurrentlySelected = selected
+    updateColors()
   }
 
   @CallbackProp
@@ -117,10 +124,16 @@ class EpoxyBoardSelectionListView @JvmOverloads constructor(
     }
   }
 
-  private fun updateBoardNameColor() {
+  private fun updateColors() {
     boardCode.setTextColor(themeEngine.chanTheme.textColorPrimary)
     boardSeparator.setTextColor(themeEngine.chanTheme.textColorPrimary)
     boardName.setTextColor(themeEngine.chanTheme.textColorPrimary)
+
+    if (isCurrentlySelected) {
+      setBackgroundColorFast(themeEngine.chanTheme.postHighlightedColor)
+    } else {
+      setBackgroundColorFast(0)
+    }
   }
 
 }

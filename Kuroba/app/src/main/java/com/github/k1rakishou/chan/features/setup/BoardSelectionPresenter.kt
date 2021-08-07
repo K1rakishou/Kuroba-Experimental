@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.setup
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
@@ -24,6 +25,7 @@ class BoardSelectionPresenter(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val archivesManager: ArchivesManager,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) : BasePresenter<BoardSelectionView>() {
   private val stateSubject = PublishProcessor.create<BoardSelectionControllerState>()
     .toSerialized()
@@ -85,7 +87,8 @@ class BoardSelectionPresenter(
 
     val newState = BoardSelectionControllerState.Data(
       isGridMode = PersistableChanState.boardSelectionGridMode.get(),
-      sortedSiteWithBoardsData = resultMap
+      sortedSiteWithBoardsData = resultMap,
+      currentlySelected = currentOpenedDescriptorStateManager.currentCatalogDescriptor?.boardDescriptor
     )
 
     setState(newState)

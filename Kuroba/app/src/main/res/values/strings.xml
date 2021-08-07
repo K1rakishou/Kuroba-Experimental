@@ -276,6 +276,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_hidden_filename">Hidden file</string>
     <string name="thread_boards_search_hint">Search</string>
     <string name="thread_load_failed_ssl">HTTPS error</string>
+    <string name="thread_load_failed_ssl_with_reason">HTTPS error (reason: %1$s)</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
     <string name="thread_load_failed_cloud_flare_detected">Rejected by CloudFlare.</string>
     <string name="thread_load_failed_network">Network error</string>
