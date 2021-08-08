@@ -38,6 +38,16 @@
             app:layout_constraintTop_toBottomOf="@+id/warning_icon"
             tools:text="@string/media_viewer_media_is_not_supported_downloadable"/>
 
+        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+            android:id="@+id/open_in_browser_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
+            android:text="@string/action_open_in_browser"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toBottomOf="@+id/media_not_supported_message" />
+
     </androidx.constraintlayout.widget.ConstraintLayout>
 
 </FrameLayout>

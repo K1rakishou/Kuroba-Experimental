@@ -12,8 +12,11 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
@@ -32,6 +35,7 @@ class UnsupportedMediaView(
   mediaViewState = initialMediaViewState
 ) {
   private val mediaViewNotSupportedMessage: TextView
+  private val openInBrowserButton: ColorizableBarButton
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
@@ -47,6 +51,8 @@ class UnsupportedMediaView(
     setWillNotDraw(false)
 
     mediaViewNotSupportedMessage = findViewById(R.id.media_not_supported_message)
+    openInBrowserButton = findViewById(R.id.open_in_browser_button)
+
     val movableContainer = findViewById<ConstraintLayout>(R.id.movable_container)
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote) {
@@ -68,6 +74,18 @@ class UnsupportedMediaView(
       topGestureInfo = createGestureAction(isTopGesture = true),
       bottomGestureInfo = createGestureAction(isTopGesture = false)
     )
+
+    val mediaLocation = viewableMedia.mediaLocation
+
+    if (mediaLocation is MediaLocation.Remote) {
+      openInBrowserButton.setVisibilityFast(View.VISIBLE)
+
+      openInBrowserButton.setOnClickListener {
+        openLink(mediaLocation.urlRaw)
+      }
+    } else {
+      openInBrowserButton.setVisibilityFast(View.GONE)
+    }
 
     gestureDetector = GestureDetector(context, GestureDetectorListener(mediaViewContract))
 
