@@ -94,7 +94,9 @@ class FullImageMediaView(
       actualImageView = actualImageView,
       mediaViewContract = mediaViewContract,
       tryPreloadingFunc = {
-        if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
+        val canForcePreload = canPreload(forced = true)
+
+        if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
           scope.launch {
             preloadCancelableDownload = startFullMediaPreloading(
               loadingBar = loadingBar,
@@ -104,6 +106,9 @@ class FullImageMediaView(
             )
           }
 
+          return@GestureDetectorListener true
+        } else if (!canForcePreload) {
+          mediaViewContract.onTapped()
           return@GestureDetectorListener true
         }
 
@@ -215,7 +220,7 @@ class FullImageMediaView(
           .onFailure { error ->
             Logger.e(TAG, "onFullImageLoadingError()", error)
 
-            if (error.isExceptionImportant()) {
+            if (error.isExceptionImportant() && shown) {
               cancellableToast.showToast(
                 context,
                 getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
@@ -223,7 +228,6 @@ class FullImageMediaView(
             }
 
             actualImageView.setVisibilityFast(View.INVISIBLE)
-            thumbnailMediaView.setError(error.errorMessageOrClassName())
           }
           .onSuccess { filePath ->
             setBigImageFromFile(filePath)
@@ -319,14 +323,13 @@ class FullImageMediaView(
             return
           }
 
-          if (e.cause is OutOfMemoryError) {
+          if (e.cause is OutOfMemoryError && shown) {
             cancellableToast.showToast(context, R.string.image_preview_failed_oom)
           } else {
             cancellableToast.showToast(context, R.string.image_failed_big_image)
           }
 
           actualImageView.setVisibilityFast(View.INVISIBLE)
-          thumbnailMediaView.setError(e.errorMessageOrClassName())
         }
       })
 

@@ -97,7 +97,9 @@ class GifMediaView(
         actualGifView = actualGifView,
         mediaViewContract = mediaViewContract,
         tryPreloadingFunc = {
-          if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
+          val canForcePreload = canPreload(forced = true)
+
+          if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
             scope.launch {
               preloadCancelableDownload = startFullMediaPreloading(
                 loadingBar = loadingBar,
@@ -107,6 +109,9 @@ class GifMediaView(
               )
             }
 
+            return@GestureDetectorListener true
+          } else if (!canForcePreload) {
+            mediaViewContract.onTapped()
             return@GestureDetectorListener true
           }
 
@@ -206,7 +211,7 @@ class GifMediaView(
           .onFailure { error ->
             Logger.e(TAG, "onFullGifLoadingError()", error)
 
-            if (error.isExceptionImportant()) {
+            if (error.isExceptionImportant() && shown) {
               cancellableToast.showToast(
                 context,
                 AppModuleAndroidUtils.getString(R.string.image_failed_gif_error, error.errorMessageOrClassName())
@@ -214,7 +219,6 @@ class GifMediaView(
             }
 
             actualGifView.setVisibilityFast(View.INVISIBLE)
-            thumbnailMediaView.setError(error.errorMessageOrClassName())
           }
           .onSuccess { filePath ->
             setBigGifFromFile(filePath)
@@ -290,12 +294,10 @@ class GifMediaView(
       } catch (e: Throwable) {
         Logger.e(TAG, "Error while trying to set a gif file", e)
 
-        if (e is GifIsTooBigException) {
+        if (shown) {
           cancellableToast.showToast(context, "Failed to draw Gif. Error: ${e.message}")
-          return@coroutineScope
         }
 
-        thumbnailMediaView.setError(e.errorMessageOrClassName())
         return@coroutineScope
       }
 

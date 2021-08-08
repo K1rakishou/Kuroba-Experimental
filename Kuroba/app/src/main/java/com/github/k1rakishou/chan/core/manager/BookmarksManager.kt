@@ -246,7 +246,10 @@ class BookmarksManager(
   }
 
   fun deleteBookmarks(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
-    require(threadDescriptors.isNotEmpty()) { "threadDescriptors is empty!" }
+    if (threadDescriptors.isEmpty()) {
+      return true
+    }
+
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     val updated = lock.write {

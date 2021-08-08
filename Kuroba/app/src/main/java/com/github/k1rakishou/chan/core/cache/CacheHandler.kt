@@ -183,11 +183,19 @@ class CacheHandler(
     val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
 
     return cacheHandlerSynchronizer.withLocalLock(chunkCacheFile.name) {
-      if (chunkCacheFile.exists()) {
-        return@withLocalLock chunkCacheFile
-      }
+      try {
+        if (chunkCacheFile.exists()) {
+          return@withLocalLock chunkCacheFile
+        }
 
-      return@withLocalLock null
+        return@withLocalLock null
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to get chunk cache file (deleting)", error)
+
+        createDirectories(forced = true)
+        deleteCacheFile(chunkCacheFile)
+        return@withLocalLock null
+      }
     }
   }
 
@@ -196,17 +204,25 @@ class CacheHandler(
     val chunkCacheFile = getChunkCacheFileInternal(chunkStart, chunkEnd, url)
 
     return cacheHandlerSynchronizer.withLocalLock(chunkCacheFile.name) {
-      if (chunkCacheFile.exists()) {
-        if (!chunkCacheFile.delete()) {
-          throw IOException("Couldn't delete old chunk cache file")
+      try {
+        if (chunkCacheFile.exists()) {
+          if (!chunkCacheFile.delete()) {
+            throw IOException("Couldn't delete old chunk cache file")
+          }
         }
-      }
 
-      if (!chunkCacheFile.createNewFile()) {
-        throw IOException("Couldn't create new chunk cache file")
-      }
+        if (!chunkCacheFile.createNewFile()) {
+          throw IOException("Couldn't create new chunk cache file")
+        }
 
-      return@withLocalLock chunkCacheFile
+        return@withLocalLock chunkCacheFile
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Error while trying to get or create chunk cache file (deleting)", error)
+
+        createDirectories(forced = true)
+        deleteCacheFile(chunkCacheFile)
+        return@withLocalLock null
+      }
     }
   }
 
@@ -747,16 +763,16 @@ class CacheHandler(
   }
 
   private fun clearChunksCacheDirInternal() {
-    if (trimChunksRunning.get()) {
-      return
-    }
-
     try {
+      Logger.d(TAG, "clearChunksCacheDirInternal() start")
+
       cacheHandlerSynchronizer.withGlobalLock {
         if (chunksCacheDirFile.exists()) {
           chunksCacheDirFile.listFiles()?.forEach { file -> file.delete() }
         }
       }
+
+      Logger.d(TAG, "clearChunksCacheDirInternal() end")
     } finally {
       trimChunksRunning.set(false)
     }
@@ -779,6 +795,8 @@ class CacheHandler(
     if (!recalculationRunning.compareAndSet(false, true)) {
       return
     }
+
+    Logger.d(TAG, "recalculateSize() start")
 
     val time = measureTime {
       synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
@@ -804,7 +822,7 @@ class CacheHandler(
       }
     }
 
-    Logger.d(TAG, "recalculateSize() took $time, " +
+    Logger.d(TAG, "recalculateSize() end took $time, " +
       "filesOnDiskCount=${filesOnDiskCache.size}, " +
       "fullyDownloadedFilesCount=${fullyDownloadedFiles.size}")
   }

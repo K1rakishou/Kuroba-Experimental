@@ -135,8 +135,13 @@ class VideoMediaView(
         actualVideoView = actualVideoPlayerView,
         mediaViewContract = mediaViewContract,
         tryPreloadingFunc = {
-          if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = true)) {
+          val canForcePreload = canPreload(forced = true)
+
+          if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
             preloadingJob = startFullVideoPreloading(viewableMedia.mediaLocation)
+            return@GestureDetectorListener true
+          } else if (!canForcePreload) {
+            mediaViewContract.onTapped()
             return@GestureDetectorListener true
           }
 
@@ -234,7 +239,7 @@ class VideoMediaView(
             .onFailure { error ->
               Logger.e(TAG, "onFullVideoLoadingError()", error)
 
-              if (error.isExceptionImportant()) {
+              if (error.isExceptionImportant() && shown) {
                 cancellableToast.showToast(
                   context,
                   getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
@@ -242,7 +247,6 @@ class VideoMediaView(
               }
 
               actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
-              thumbnailMediaView.setError(error.errorMessageOrClassName())
             }
             .onSuccess {
               if (hasContent) {
@@ -263,7 +267,17 @@ class VideoMediaView(
     mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
     mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
     mediaViewState.videoSoundDetected = videoSoundDetected
-    mediaViewState.playing = mainVideoPlayer.isPlaying()
+
+    if (mediaViewState.prevPosition <= 0 && mediaViewState.prevWindowIndex <= 0) {
+      // Reset the flag because (most likely) the user swiped through the pages so fast that the
+      // player hasn't been able to start playing so it's still in some kind of BUFFERING state or
+      // something like that so mainVideoPlayer.isPlaying() will return false which will cause the
+      // player to appear paused if the user switches back to this page. We don't want that that's
+      // why we are resetting the "playing" to null here.
+      mediaViewState.playing = null
+    } else {
+      mediaViewState.playing = mainVideoPlayer.isPlaying()
+    }
 
     mainVideoPlayer.pause()
   }

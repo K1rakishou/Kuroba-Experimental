@@ -46,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 
 class MediaViewerController(
@@ -324,15 +325,13 @@ class MediaViewerController(
     pager.adapter = adapter
     pager.setCurrentItem(mediaViewerState.initialPagerIndex, false)
 
-    adapter.awaitUntilPreviewThumbnailFullyLoaded()
+    withTimeoutOrNull(MAX_WAIT_TIME_MS) { adapter.awaitUntilPreviewThumbnailFullyLoaded() }
 
     pager.setVisibilityFast(View.VISIBLE)
     appearPreviewImage.setVisibilityFast(View.INVISIBLE)
 
-    Logger.d(
-      TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
-        "initialPagerIndex=${mediaViewerState.initialPagerIndex}"
-    )
+    Logger.d(TAG, "Loaded ${mediaViewerState.loadedMedia.size} media items, " +
+        "initialPagerIndex=${mediaViewerState.initialPagerIndex}")
   }
 
   private fun createCacheDataSourceFactory(viewableMedia: List<ViewableMedia>): DataSource.Factory {
@@ -379,11 +378,13 @@ class MediaViewerController(
       return
     }
 
-    val resultBitmap = imageLoaderV2.loadFromNetworkSuspend(
-      context,
-      transitionInfo.transitionThumbnailUrl,
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
-    ).valueOrNull()?.bitmap
+    val resultBitmap = withTimeoutOrNull(MAX_WAIT_TIME_MS) {
+      imageLoaderV2.loadFromNetworkSuspend(
+        context,
+        transitionInfo.transitionThumbnailUrl,
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
+      ).valueOrNull()?.bitmap
+    }
 
     if (resultBitmap == null) {
       mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)
@@ -413,5 +414,6 @@ class MediaViewerController(
   companion object {
     private const val TAG = "MediaViewerController"
     private const val BACKGROUND_COLOR = 0xDD000000L.toInt()
+    private const val MAX_WAIT_TIME_MS = 1000L
   }
 }
