@@ -134,15 +134,15 @@ open class PostDescriptor protected constructor(
     fun create(chanDescriptor: ChanDescriptor, postNo: Long): PostDescriptor {
       return when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> create(
-          chanDescriptor.siteName(),
-          chanDescriptor.boardCode(),
-          chanDescriptor.threadNo,
-          postNo
+          siteName = chanDescriptor.siteName(),
+          boardCode = chanDescriptor.boardCode(),
+          threadNo = chanDescriptor.threadNo,
+          postNo = postNo
         )
         is ChanDescriptor.CatalogDescriptor -> create(
-          chanDescriptor.siteName(),
-          chanDescriptor.boardCode(),
-          postNo
+          siteName = chanDescriptor.siteName(),
+          boardCode = chanDescriptor.boardCode(),
+          threadNo = postNo
         )
       }
     }
@@ -152,8 +152,8 @@ open class PostDescriptor protected constructor(
       require(threadNo > 0) { "Bad threadNo: $threadNo" }
 
       return PostDescriptor(
-        ChanDescriptor.CatalogDescriptor.create(siteName, boardCode),
-        threadNo
+        descriptor = ChanDescriptor.CatalogDescriptor.create(siteName, boardCode),
+        postNo = threadNo
       )
     }
 
@@ -165,6 +165,11 @@ open class PostDescriptor protected constructor(
     @JvmStatic
     fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
       return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo, postSubNo)
+    }
+
+    @JvmStatic
+    fun create(threadDescriptor: ChanDescriptor.ThreadDescriptor, postNo: Long): PostDescriptor {
+      return create(threadDescriptor.siteName(), threadDescriptor.boardCode(), threadDescriptor.threadNo, postNo, 0)
     }
 
     @JvmOverloads

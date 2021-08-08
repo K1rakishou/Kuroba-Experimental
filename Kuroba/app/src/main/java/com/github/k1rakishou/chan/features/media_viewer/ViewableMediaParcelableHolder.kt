@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -26,7 +25,7 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class CatalogMediaParcelableHolder(
     val catalogDescriptorParcelable: DescriptorParcelable,
-    val postDescriptorParcelableList: List<PostDescriptorParcelable>,
+    val threadNoList: List<Long>,
     val initialImageUrl: String?,
     val transitionInfo: TransitionInfo?,
     val mediaViewerOptions: MediaViewerOptions
@@ -44,7 +43,7 @@ sealed class ViewableMediaParcelableHolder {
       ) : CatalogMediaParcelableHolder {
         return CatalogMediaParcelableHolder(
           catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor),
-          postDescriptorParcelableList = postDescriptorList.map { PostDescriptorParcelable.fromPostDescriptor(it) },
+          threadNoList = postDescriptorList.map { postDescriptor -> postDescriptor.postNo },
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,
           mediaViewerOptions = mediaViewerOptions
@@ -56,7 +55,7 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class ThreadMediaParcelableHolder(
     val threadDescriptorParcelable: DescriptorParcelable,
-    val postDescriptorParcelableList: List<PostDescriptorParcelable>,
+    val postNoSubNoList: List<PostNoSubNo>?,
     val initialImageUrl: String?,
     val transitionInfo: TransitionInfo?,
     val mediaViewerOptions: MediaViewerOptions
@@ -65,6 +64,8 @@ sealed class ViewableMediaParcelableHolder {
     val threadDescriptor by lazy { threadDescriptorParcelable.toChanDescriptor() as ChanDescriptor.ThreadDescriptor }
 
     companion object {
+      private const val MAX_POST_DESCRIPTORS = 500
+
       fun fromThreadDescriptor(
         threadDescriptor: ChanDescriptor.ThreadDescriptor,
         postDescriptorList: List<PostDescriptor>,
@@ -72,9 +73,16 @@ sealed class ViewableMediaParcelableHolder {
         transitionInfo: TransitionInfo?,
         mediaViewerOptions: MediaViewerOptions
       ) : ThreadMediaParcelableHolder {
+        // To avoid TransactionTooLargeException
+        val postNoSubNoList = if (postDescriptorList.size > MAX_POST_DESCRIPTORS) {
+          null
+        } else {
+          postDescriptorList.map { postDescriptor -> PostNoSubNo(postDescriptor.postNo, postDescriptor.postSubNo) }
+        }
+
         return ThreadMediaParcelableHolder(
           threadDescriptorParcelable = DescriptorParcelable.fromDescriptor(threadDescriptor),
-          postDescriptorParcelableList = postDescriptorList.map { PostDescriptorParcelable.fromPostDescriptor(it) },
+          postNoSubNoList = postNoSubNoList,
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,
           mediaViewerOptions = mediaViewerOptions
@@ -94,6 +102,9 @@ sealed class ViewableMediaParcelableHolder {
   ) : ViewableMediaParcelableHolder(), Parcelable
 
 }
+
+@Parcelize
+data class PostNoSubNo(val postNo: Long, val postSubNo: Long) : Parcelable
 
 @Parcelize
 data class MediaViewerOptions(val mediaViewerOpenedFromAlbum: Boolean = false) : Parcelable

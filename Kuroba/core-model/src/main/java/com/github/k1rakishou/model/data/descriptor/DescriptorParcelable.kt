@@ -76,6 +76,14 @@ data class PostDescriptorParcelable(
         postDescriptor.postSubNo
       )
     }
+
+    fun fromDescriptor(descriptor: ChanDescriptor, postNo: Long, postSubNo: Long): PostDescriptorParcelable {
+      return PostDescriptorParcelable(
+        DescriptorParcelable.fromDescriptor(descriptor),
+        postNo,
+        postSubNo
+      )
+    }
   }
 
 }
