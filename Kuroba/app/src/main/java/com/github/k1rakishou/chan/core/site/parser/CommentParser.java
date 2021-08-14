@@ -56,6 +56,7 @@ import java.util.regex.Pattern;
 @AnyThread
 public class CommentParser implements ICommentParser, HasQuotePatterns {
     private static final String TAG = "CommentParser";
+    private static final String IFRAME_CONTENT_PREFIX = "[Iframe content]";
 
     private final Map<String, List<StyleRule>> rules = new HashMap<>();
 
@@ -77,6 +78,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
     public CommentParser addDefaultRules() {
         rule(tagRule("a").action(this::handleAnchor));
+        rule(tagRule("iframe").action(this::handleIframe));
         rule(tagRule("span").cssClass("fortune").action(this::handleFortune));
         rule(tagRule("table").action(this::handleTable));
         rule(tagRule("span").cssClass("deadlink").action(this::handleDeadlink));
@@ -223,6 +225,41 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         post.addLinkable(pl);
 
         return res;
+    }
+
+    private CharSequence handleIframe(
+            PostParser.Callback callback,
+            ChanPostBuilder post,
+            CharSequence text,
+            HtmlTag anchorTag
+    ) {
+        String srcValue = anchorTag.attrUnescapedOrNull("src");
+        if (srcValue == null || srcValue.isEmpty()) {
+            return "";
+        }
+
+
+        SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
+        spannableStringBuilder.append(IFRAME_CONTENT_PREFIX);
+        spannableStringBuilder.append("\n");
+        spannableStringBuilder.append(srcValue);
+
+        PostLinkable postLinkable = new PostLinkable(
+                srcValue,
+                new PostLinkable.Value.StringValue(srcValue),
+                PostLinkable.Type.LINK
+        );
+
+        spannableStringBuilder.setSpan(
+                postLinkable,
+                0,
+                spannableStringBuilder.length(),
+                (250 << Spanned.SPAN_PRIORITY_SHIFT) & Spanned.SPAN_PRIORITY
+        );
+
+        post.addLinkable(postLinkable);
+
+        return spannableStringBuilder;
     }
 
     private CharSequence handleAnchor(

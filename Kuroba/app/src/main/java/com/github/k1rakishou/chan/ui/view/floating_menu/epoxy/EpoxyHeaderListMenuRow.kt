@@ -34,6 +34,7 @@ class EpoxyHeaderListMenuRow @JvmOverloads constructor(
 
     title = findViewById(R.id.title)
     title.movementMethod = ScrollingMovementMethod()
+    title.setTextIsSelectable(true)
   }
 
   override fun onAttachedToWindow() {
@@ -52,7 +53,7 @@ class EpoxyHeaderListMenuRow @JvmOverloads constructor(
 
   @ModelProp
   fun setTitle(text: String) {
-    title.text = text
+    title.setText(text, TextView.BufferType.EDITABLE)
     updateTitleColor()
   }
 

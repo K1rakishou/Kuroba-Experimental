@@ -354,13 +354,7 @@ public class DefaultPostParser implements PostParser {
             );
         } else if (node instanceof HtmlNode.Tag) {
             HtmlTag tag = commentParser.preprocessTag((HtmlNode.Tag) node);
-
             String nodeName = tag.getTagName();
-            String styleAttr = tag.attrOrNull("style");
-
-            if (styleAttr != null && !styleAttr.isEmpty() && !nodeName.equals("span")) {
-                nodeName = nodeName + '-' + styleAttr.split(":")[1].trim();
-            }
 
             // Recursively call parseNode with the nodes of the paragraph.
             List<HtmlNode> innerNodes = tag.getChildren();
