@@ -25,7 +25,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -79,21 +79,19 @@ class ThreadDownloaderSettingsController(
         .wrapContentHeight()
         .fillMaxWidth(),
     ) {
-      KurobaComposeTextButton(
+      KurobaComposeTextBarButton(
         onClick = { pop() },
-        text = stringResource(id = R.string.cancel),
-        modifier = Modifier.width(112.dp)
+        text = stringResource(id = R.string.cancel)
       )
 
       Spacer(modifier = Modifier.width(8.dp))
 
-      KurobaComposeTextButton(
+      KurobaComposeTextBarButton(
         onClick = {
           downloadClicked(viewModel.downloadMedia.value)
           pop()
         },
-        text = stringResource(id = R.string.download),
-        modifier = Modifier.width(112.dp)
+        text = stringResource(id = R.string.download)
       )
     }
   }

@@ -5,16 +5,19 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
+import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -33,6 +36,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.common.errorMessageOrClassName
+import java.util.*
 
 @Composable
 fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier, overrideColor: Color? = null) {
@@ -193,6 +197,27 @@ fun KurobaComposeCheckbox(
 }
 
 @Composable
+fun KurobaComposeTextButton(
+  onClick: () -> Unit,
+  text: String,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+) {
+  KurobaComposeButton(
+    onClick = onClick,
+    enabled = enabled,
+    modifier = modifier,
+    buttonContent = {
+      Text(
+        text = text,
+        modifier = Modifier.fillMaxSize(),
+        textAlign = TextAlign.Center
+      )
+    }
+  )
+}
+
+@Composable
 fun KurobaComposeButton(
   onClick: () -> Unit,
   modifier: Modifier = Modifier,
@@ -214,23 +239,37 @@ fun KurobaComposeButton(
 }
 
 @Composable
-fun KurobaComposeTextButton(
+fun KurobaComposeTextBarButton(
   onClick: () -> Unit,
   text: String,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
 ) {
-  KurobaComposeButton(
+  val chanTheme = LocalChanTheme.current
+
+  Button(
     onClick = onClick,
     enabled = enabled,
-    modifier = modifier,
-    buttonContent = {
+    modifier = Modifier
+      .wrapContentWidth()
+      .height(36.dp)
+      .then(modifier),
+    content = {
+      val textColor = if (enabled) {
+        chanTheme.textColorPrimaryCompose
+      } else {
+        chanTheme.textColorPrimaryCompose.copy(alpha = ContentAlpha.disabled)
+      }
+
       Text(
-        text = text,
-        modifier = Modifier.fillMaxSize(),
+        text = text.uppercase(Locale.ENGLISH),
+        color = textColor,
+        modifier = Modifier.wrapContentWidth().fillMaxHeight(),
         textAlign = TextAlign.Center
       )
-    }
+    },
+    elevation = null,
+    colors = chanTheme.barButtonColors()
   )
 }
 

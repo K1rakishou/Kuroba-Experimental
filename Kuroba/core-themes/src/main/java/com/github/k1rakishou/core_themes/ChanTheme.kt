@@ -171,6 +171,16 @@ abstract class ChanTheme {
   }
 
   @Composable
+  fun barButtonColors(): ButtonColors {
+    return ButtonDefaults.buttonColors(
+      backgroundColor = Color.Unspecified,
+      contentColor = accentColorCompose,
+      disabledBackgroundColor = Color.Unspecified,
+      disabledContentColor = accentColorCompose.copy(alpha = ContentAlpha.disabled)
+    )
+  }
+
+  @Composable
   fun sliderColors(): SliderColors {
     val disabledThumbColor = accentColorCompose.copy(alpha = ContentAlpha.disabled)
     val disabledActiveTrackColor = disabledThumbColor.copy(alpha = SliderDefaults.DisabledActiveTrackAlpha)

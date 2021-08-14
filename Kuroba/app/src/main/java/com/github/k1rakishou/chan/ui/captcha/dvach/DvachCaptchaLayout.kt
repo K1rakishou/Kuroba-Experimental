@@ -40,7 +40,7 @@ import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
@@ -200,21 +200,15 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           .fillMaxWidth()
           .wrapContentHeight()
       ) {
-        KurobaComposeTextButton(
+        KurobaComposeTextBarButton(
           onClick = onAuthClick,
-          modifier = Modifier
-            .width(112.dp)
-            .height(36.dp),
           text = stringResource(id = R.string.captcha_layout_dvach_auth)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        KurobaComposeTextButton(
+        KurobaComposeTextBarButton(
           onClick = onReloadClick,
-          modifier = Modifier
-            .width(112.dp)
-            .height(36.dp),
           text = stringResource(id = R.string.captcha_layout_reload)
         )
 
@@ -223,16 +217,13 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
         val captchaId = captchaInfo?.id
         val buttonEnabled = captchaId.isNotNullNorEmpty() && currentInputValue.isNotEmpty()
 
-        KurobaComposeTextButton(
+        KurobaComposeTextBarButton(
           onClick = {
             if (captchaId.isNotNullNorEmpty()) {
               onVerifyClick(captchaId, viewModel.currentInputValue.value)
             }
           },
           enabled = buttonEnabled,
-          modifier = Modifier
-            .width(112.dp)
-            .height(36.dp),
           text = stringResource(id = R.string.captcha_layout_verify)
         )
 

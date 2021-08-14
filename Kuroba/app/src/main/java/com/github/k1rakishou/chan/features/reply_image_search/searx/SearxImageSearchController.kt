@@ -46,7 +46,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
@@ -169,14 +169,14 @@ class SearxImageSearchController(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        KurobaComposeTextButton(
+        KurobaComposeTextBarButton(
           onClick = { pop() },
           text = stringResource(id = R.string.close)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        KurobaComposeTextButton(
+        KurobaComposeTextBarButton(
           onClick = { viewModel.search(page = 1) },
           text = stringResource(id = R.string.search_hint)
         )

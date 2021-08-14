@@ -64,7 +64,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSlider
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
@@ -268,13 +268,10 @@ class Chan4CaptchaLayout(
 
       Spacer(modifier = Modifier.weight(1f))
 
-      KurobaComposeTextButton(
+      KurobaComposeTextBarButton(
         onClick = {
           viewModel.requestCaptcha(chanDescriptor, forced = true)
         },
-        modifier = Modifier
-          .width(112.dp)
-          .height(36.dp),
         text = stringResource(id = R.string.captcha_layout_reload)
       )
 
@@ -283,17 +280,14 @@ class Chan4CaptchaLayout(
       val buttonEnabled = captchaInfo != null
         && (captchaInfo.isNoopChallenge() || captchaInfo.currentInputValue.value.isNotEmpty())
 
-      KurobaComposeTextButton(
+      KurobaComposeTextBarButton(
         onClick = {
           val currentInputValue = captchaInfo?.currentInputValue
-            ?: return@KurobaComposeTextButton
+            ?: return@KurobaComposeTextBarButton
 
           verifyCaptcha(captchaInfo, currentInputValue.value)
         },
         enabled = buttonEnabled,
-        modifier = Modifier
-          .width(112.dp)
-          .height(36.dp),
         text = stringResource(id = R.string.captcha_layout_verify)
       )
 
