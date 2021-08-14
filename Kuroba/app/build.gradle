@@ -5,7 +5,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'de.undercouch.download'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 31
 
     def getCommitHash = { ->
         def stdout = new ByteArrayOutputStream()
@@ -22,7 +22,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 30
+        targetSdkVersion 31
 
         // if you change this, also change the AndroidManifest package
         applicationId "com.github.k1rakishou.chan"
@@ -278,7 +278,7 @@ dependencies {
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
-    implementation 'androidx.work:work-runtime-ktx:2.5.0'
+    implementation 'androidx.work:work-runtime-ktx:2.7.0-alpha05'
     implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.3.1'
     implementation "com.google.android.material:material:${versions.material}"
 
@@ -287,7 +287,7 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling:${versions.compose_version}")
     implementation("androidx.compose.animation:animation-graphics:${versions.compose_version}")
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:1.0.0-alpha07")
-    implementation("androidx.activity:activity-compose:1.3.0")
+    implementation("androidx.activity:activity-compose:1.3.1")
     implementation("com.google.accompanist:accompanist-insets-ui:${versions.accompanist}")
 
     implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
@@ -333,7 +333,7 @@ dependencies {
     testImplementation "org.powermock:powermock-api-mockito2:${versions.powermock}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 
-    devImplementation 'com.squareup.leakcanary:leakcanary-android:2.5'
+    devImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
 }
 
 // Increase the build number task

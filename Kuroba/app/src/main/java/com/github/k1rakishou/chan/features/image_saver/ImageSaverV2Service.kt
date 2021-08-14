@@ -369,7 +369,7 @@ class ImageSaverV2Service : Service() {
         applicationContext,
         RequestCodes.nextRequestCode(),
         intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
 
       addAction(0, getString(R.string.image_saver_resolve_duplicates), navigate)
@@ -399,7 +399,7 @@ class ImageSaverV2Service : Service() {
         applicationContext,
         RequestCodes.nextRequestCode(),
         intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
 
       addAction(0, getString(R.string.image_saver_show_images_saver_settings), navigate)
@@ -423,7 +423,7 @@ class ImageSaverV2Service : Service() {
         applicationContext,
         RequestCodes.nextRequestCode(),
         intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
 
       addAction(0, getString(R.string.image_saver_navigate), navigate)
@@ -443,7 +443,7 @@ class ImageSaverV2Service : Service() {
       applicationContext,
       RequestCodes.nextRequestCode(),
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     addAction(0, getString(R.string.cancel), cancelIntent)
@@ -470,7 +470,7 @@ class ImageSaverV2Service : Service() {
         applicationContext,
         RequestCodes.nextRequestCode(),
         intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
 
       addAction(0, getString(R.string.retry), navigate)
@@ -501,7 +501,7 @@ class ImageSaverV2Service : Service() {
         applicationContext,
         RequestCodes.nextRequestCode(),
         intent,
-        PendingIntent.FLAG_UPDATE_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
       )
 
       setDeleteIntent(deleteDownloadIntent)

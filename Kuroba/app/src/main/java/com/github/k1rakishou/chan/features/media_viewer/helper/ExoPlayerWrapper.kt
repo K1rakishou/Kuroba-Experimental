@@ -10,8 +10,8 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewCont
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
-import com.google.android.exoplayer2.ExoPlaybackException
 import com.google.android.exoplayer2.MediaItem
+import com.google.android.exoplayer2.PlaybackException
 import com.google.android.exoplayer2.Player
 import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.analytics.AnalyticsListener
@@ -133,7 +133,8 @@ class ExoPlayerWrapper(
   private suspend fun awaitForContentOrError(): Boolean {
     return suspendCancellableCoroutine { continuation ->
       val listener = object : Player.Listener {
-        override fun onPlayerError(error: ExoPlaybackException) {
+
+        override fun onPlayerErrorChanged(error: PlaybackException?) {
           Logger.e(TAG, "preload() error", error)
           actualExoPlayer.removeListener(this)
 
@@ -141,7 +142,7 @@ class ExoPlayerWrapper(
             actualExoPlayer.removeListener(this)
           }
 
-          if (continuation.isActive) {
+          if (error != null && continuation.isActive) {
             continuation.resumeWithException(error)
           }
         }
@@ -160,6 +161,7 @@ class ExoPlayerWrapper(
             }
           }
         }
+
       }
 
       actualExoPlayer.addListener(listener)

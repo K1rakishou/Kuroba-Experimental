@@ -240,7 +240,7 @@ class PostingService : Service() {
       applicationContext,
       RequestCodes.nextRequestCode(),
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     return addAction(0, getString(R.string.cancel_all), cancelIntent)
@@ -263,7 +263,7 @@ class PostingService : Service() {
       applicationContext,
       RequestCodes.nextRequestCode(),
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     return addAction(0, getString(R.string.cancel), cancelIntent)
@@ -293,7 +293,7 @@ class PostingService : Service() {
       applicationContext,
       RequestCodes.nextRequestCode(),
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     setContentIntent(pendingIntent)

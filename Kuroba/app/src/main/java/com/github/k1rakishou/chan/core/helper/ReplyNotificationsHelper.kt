@@ -600,7 +600,7 @@ class ReplyNotificationsHelper(
       appContext,
       requestCode,
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     setContentIntent(pendingIntent)
@@ -626,7 +626,7 @@ class ReplyNotificationsHelper(
       appContext,
       RequestCodes.nextRequestCode(),
       intent,
-      PendingIntent.FLAG_UPDATE_CURRENT
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
 
     setDeleteIntent(pendingIntent)

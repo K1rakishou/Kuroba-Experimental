@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
+import com.github.k1rakishou.core_themes.ThemeEngine.Companion.updateAlphaForColor
 import com.google.android.material.button.MaterialButton
 import javax.inject.Inject
 
@@ -52,7 +53,7 @@ class ColorizableBarButton @JvmOverloads constructor(
           intArrayOf()
         ),
         intArrayOf(
-          manipulateColor(themeEngine.chanTheme.accentColor, 1.2f),
+          updateAlphaForColor(manipulateColor(themeEngine.chanTheme.accentColor, 1.2f), 0.3f),
           Color.TRANSPARENT,
           Color.TRANSPARENT
         )
