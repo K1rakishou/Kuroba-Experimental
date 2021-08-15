@@ -19,19 +19,50 @@ package com.github.k1rakishou.chan.features.drawer
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.Color
 import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.*
 import androidx.core.view.GravityCompat
-import androidx.core.view.doOnPreDraw
 import androidx.drawerlayout.widget.DrawerLayout
-import androidx.recyclerview.widget.GridLayoutManager
-import androidx.recyclerview.widget.LinearLayoutManager
-import com.airbnb.epoxy.EpoxyController
-import com.airbnb.epoxy.EpoxyModel
-import com.airbnb.epoxy.EpoxyTouchHelper
 import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -39,6 +70,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -52,19 +84,24 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
-import com.github.k1rakishou.chan.features.drawer.data.ImagesLoaderRequestData
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryViewModel_
-import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryViewModel_
-import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryGridEntryView
-import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryHeaderView
-import com.github.k1rakishou.chan.features.drawer.epoxy.epoxyHistoryListEntryView
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.kurobaClickable
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -76,10 +113,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.TabHostController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
-import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
-import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
-import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground
@@ -88,22 +121,20 @@ import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.ui.widget.SimpleEpoxySwipeCallbacks
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.chan.utils.countDigits
 import com.github.k1rakishou.chan.utils.findControllerOrNull
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
+import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.material.badge.BadgeDrawable
 import dagger.Lazy
 import kotlinx.coroutines.launch
@@ -145,15 +176,14 @@ class MainController(
   @Inject
   lateinit var imageSaverV2: Lazy<ImageSaverV2>
   @Inject
+  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  @Inject
   lateinit var globalViewStateManager: GlobalViewStateManager
-
-  private val controller = MainEpoxyController()
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: TouchBlockingFrameLayoutNoBackground
   private lateinit var drawerLayout: DrawerLayout
   private lateinit var drawer: TouchBlockingLinearLayoutNoBackground
-  private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var navigationViewContract: NavigationViewContract
   private lateinit var bottomMenuPanel: BottomMenuPanel
 
@@ -260,9 +290,6 @@ class MainController(
     navigationViewContract = view.findViewById(R.id.navigation_view) as NavigationViewContract
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
-    epoxyRecyclerView = view.findViewById(R.id.drawer_recycler_view)
-    epoxyRecyclerView.setController(controller)
-
     setBottomNavViewButtons()
     navigationViewContract.selectedMenuItemId = R.id.action_browse
     navigationViewContract.viewElevation = dp(4f).toFloat()
@@ -304,57 +331,21 @@ class MainController(
       return@setOnOuterTouchEventListener false
     }
 
-    EpoxyTouchHelper
-      .initSwiping(epoxyRecyclerView)
-      .right()
-      .withTargets(EpoxyHistoryListEntryViewModel_::class.java, EpoxyHistoryGridEntryViewModel_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyModel<*>>() {
-        override fun onSwipeCompleted(
-          model: EpoxyModel<*>,
-          itemView: View?,
-          position: Int,
-          direction: Int
-        ) {
-          super.onSwipeCompleted(model, itemView, position, direction)
+    val drawerComposeView = view.findViewById<ComposeView>(R.id.drawer_compose_view)
+    drawerComposeView.setContent {
+      ProvideChanTheme(themeEngine) {
+        ProvideWindowInsets {
+          val chanTheme = LocalChanTheme.current
 
-          val descriptor = when (model) {
-            is EpoxyHistoryListEntryViewModel_ -> model.descriptor()
-            is EpoxyHistoryGridEntryViewModel_ -> model.descriptor()
-            else -> throw IllegalArgumentException("Unknown model: ${model.javaClass.simpleName}")
+          Column(modifier = Modifier
+            .fillMaxSize()
+            .background(chanTheme.backColorCompose)
+          ) {
+            BuildContent()
           }
-
-          drawerPresenter.onNavElementSwipedAway(descriptor)
         }
-      })
-
-    EpoxyTouchHelper
-      .initSwiping(epoxyRecyclerView)
-      .right()
-      .withTarget(EpoxyHistoryGridEntryViewModel_::class.java)
-      .andCallbacks(object : SimpleEpoxySwipeCallbacks<EpoxyHistoryGridEntryViewModel_>() {
-        override fun onSwipeCompleted(
-          model: EpoxyHistoryGridEntryViewModel_,
-          itemView: View?,
-          position: Int,
-          direction: Int
-        ) {
-          super.onSwipeCompleted(model, itemView, position, direction)
-
-          drawerPresenter.onNavElementSwipedAway(model.descriptor())
-        }
-      })
-
-    updateRecyclerLayoutMode()
-
-    compositeDisposable.add(
-      drawerPresenter.listenForStateChanges()
-        .subscribe(
-          { state -> onDrawerStateChanged(state) },
-          { error ->
-            Logger.e(TAG, "Unknown error subscribed to drawerPresenter.listenForStateChanges()", error)
-          }
-        )
-    )
+      }
+    }
 
     compositeDisposable.add(
       drawerPresenter.listenForBookmarksBadgeStateChanges()
@@ -428,26 +419,25 @@ class MainController(
     navigationViewContract.setBackgroundColor(themeEngine.chanTheme.primaryColor)
 
     val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(themeEngine.chanTheme.primaryColor)) {
-      Color.DKGRAY
+      android.graphics.Color.DKGRAY
     } else {
       ThemeEngine.manipulateColor(themeEngine.chanTheme.primaryColor, .7f)
     }
 
     navigationViewContract.viewItemIconTintList = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColor)
+      intArrayOf(android.graphics.Color.WHITE, uncheckedColor)
     )
 
     navigationViewContract.viewItemTextColor = ColorStateList(
       arrayOf(intArrayOf(android.R.attr.state_checked), intArrayOf(-android.R.attr.state_checked)),
-      intArrayOf(Color.WHITE, uncheckedColor)
+      intArrayOf(android.graphics.Color.WHITE, uncheckedColor)
     )
   }
 
   override fun onDestroy() {
     super.onDestroy()
 
-    epoxyRecyclerView.clear()
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     drawerPresenter.onDestroy()
@@ -458,9 +448,9 @@ class MainController(
   override fun onInsetsChanged() {
     val navigationViewSize = getDimen(R.dimen.navigation_view_size)
 
-    epoxyRecyclerView.updatePaddings(
-      top = globalWindowInsetsManager.top(),
-      bottom = globalWindowInsetsManager.bottom()
+    drawerPresenter.paddings = PaddingValues(
+      top = globalWindowInsetsManager.topDp(),
+      bottom = globalWindowInsetsManager.bottomDp()
     )
 
     when (navigationViewContract.type) {
@@ -846,17 +836,17 @@ class MainController(
       themeEngine.chanTheme.accentColor
     } else {
       if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
-        Color.LTGRAY
+        android.graphics.Color.LTGRAY
       } else {
-        Color.DKGRAY
+        android.graphics.Color.DKGRAY
       }
     }
 
     badgeDrawable.backgroundColor = backgroundColor
     badgeDrawable.badgeTextColor = if (isDarkColor(backgroundColor)) {
-      Color.WHITE
+      android.graphics.Color.WHITE
     } else {
-      Color.BLACK
+      android.graphics.Color.BLACK
     }
   }
 
@@ -878,9 +868,9 @@ class MainController(
 
     badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
     badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {
-      Color.WHITE
+      android.graphics.Color.WHITE
     } else {
-      Color.BLACK
+      android.graphics.Color.BLACK
     }
   }
 
@@ -899,80 +889,213 @@ class MainController(
     }
   }
 
-  private fun onDrawerStateChanged(state: HistoryControllerState) {
-    val gridMode = PersistableChanState.drawerNavHistoryGridMode.get()
+  @Composable
+  private fun ColumnScope.BuildContent() {
+    val historyControllerState by drawerPresenter.historyControllerStateFlow.collectAsState()
 
-    controller.callback = buildFunc@ {
-      addOneshotModelBuildListener {
-        val llm = (epoxyRecyclerView.layoutManager as LinearLayoutManager)
+    Spacer(modifier = Modifier.height(drawerPresenter.paddings.calculateTopPadding()))
+    BuildNavigationHistoryListHeader()
 
-        if (llm.findFirstCompletelyVisibleItemPosition() <= 1) {
-          // Scroll to the top of the nav history list if the previous fully visible item's position
-          // was either 0 or 1
-          llm.scrollToPosition(0)
-        }
+    val navHistoryEntryList = when (historyControllerState) {
+      HistoryControllerState.Empty -> {
+        KurobaComposeText(
+          modifier = Modifier.fillMaxSize(),
+          text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty)
+        )
+        return
       }
-
-      if (state is HistoryControllerState.Loading) {
-        epoxyLoadingView {
-          id("history_loading_view")
-        }
-
-        return@buildFunc
+      HistoryControllerState.Loading -> {
+        KurobaComposeProgressIndicator()
+        return
       }
-
-      epoxyHistoryHeaderView {
-        id("navigation_history_header")
-        onThemeSwitcherClicked { epoxyRecyclerView.postDelayed({ themeEngine.toggleTheme() }, 125L) }
-        onDrawerSettingsClicked { showDrawerOptions() }
+      is HistoryControllerState.Error -> {
+        KurobaComposeErrorMessage(errorMessage = (historyControllerState as HistoryControllerState.Error).errorText)
+        return
       }
-
-      when (state) {
-        HistoryControllerState.Empty -> {
-          epoxyTextView {
-            id("history_is_empty_text_view")
-            message(context.getString(R.string.drawer_controller_navigation_history_is_empty))
-          }
-        }
-        is HistoryControllerState.Error -> {
-          epoxyErrorView {
-            id("history_error_view")
-            errorMessage(state.errorText)
-          }
-        }
-        is HistoryControllerState.Data -> {
-          state.navHistoryEntryList.forEach { navHistoryEntry ->
-            val requestData = ImagesLoaderRequestData(
-              navHistoryEntry.threadThumbnailUrl,
-              navHistoryEntry.siteThumbnailUrl
-            )
-
-            if (gridMode) {
-              epoxyHistoryGridEntryView {
-                id("navigation_history_grid_entry_${navHistoryEntry.hashCode()}")
-                descriptor(navHistoryEntry.descriptor)
-                imageLoaderRequestData(requestData)
-                title(navHistoryEntry.title)
-                bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
-                clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
-              }
-            } else {
-              epoxyHistoryListEntryView {
-                id("navigation_history_list_entry_${navHistoryEntry.hashCode()}")
-                descriptor(navHistoryEntry.descriptor)
-                imageLoaderRequestData(requestData)
-                title(navHistoryEntry.title)
-                bindNavHistoryBookmarkAdditionalInfo(navHistoryEntry.additionalInfo)
-                clickListener { onHistoryEntryViewClicked(navHistoryEntry) }
-              }
-            }
-          }
-        }
-        HistoryControllerState.Loading -> throw IllegalStateException("Must be handled separately")
+      is HistoryControllerState.Data -> {
+        (historyControllerState as HistoryControllerState.Data).navHistoryEntryList
       }
     }
 
-    controller.requestModelBuild()
+    BuildNavigationHistoryList(navHistoryEntryList)
+  }
+
+  @OptIn(ExperimentalFoundationApi::class)
+  @Composable
+  private fun BuildNavigationHistoryList(navHistoryEntryList: List<NavigationHistoryEntry>) {
+    val state = rememberLazyListState()
+
+    Column(modifier = Modifier.fillMaxSize()) {
+      BoxWithConstraints(modifier = Modifier
+        .fillMaxWidth()
+        .weight(1f)) {
+        val spanCount = with(LocalDensity.current) {
+          (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+        }
+
+        val bottomPadding = remember(key1 = drawerPresenter.paddings) {
+          PaddingValues(bottom = drawerPresenter.paddings.calculateBottomPadding())
+        }
+
+        val chanTheme = LocalChanTheme.current
+
+        LazyVerticalGrid(
+          state = state,
+          modifier = Modifier
+            .fillMaxSize()
+            .simpleVerticalScrollbar(state, chanTheme),
+          contentPadding = bottomPadding,
+          cells = GridCells.Fixed(count = spanCount),
+          content = {
+            items(count = navHistoryEntryList.size) { index ->
+              val navHistoryEntry = navHistoryEntryList.get(index)
+              BuildNavigationHistoryListEntry(navHistoryEntry)
+            }
+          })
+      }
+    }
+  }
+
+  @Composable
+  private fun BuildNavigationHistoryListHeader() {
+    Row(modifier = Modifier
+      .fillMaxWidth()
+      .height(32.dp)
+      .padding(2.dp),
+      horizontalArrangement = Arrangement.End
+    ) {
+      KurobaComposeIcon(
+        drawableId = R.drawable.ic_baseline_wb_sunny_24,
+        themeEngine = themeEngine,
+        modifier = Modifier.kurobaClickable(onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) })
+      )
+
+      Spacer(modifier = Modifier.width(16.dp))
+
+      KurobaComposeIcon(
+        drawableId = R.drawable.ic_more_vert_white_24dp,
+        themeEngine = themeEngine,
+        modifier = Modifier.kurobaClickable(onClick = { showDrawerOptions() })
+      )
+
+      Spacer(modifier = Modifier.width(16.dp))
+    }
+  }
+
+  @Composable
+  private fun BuildNavigationHistoryListEntry(navHistoryEntry: NavigationHistoryEntry) {
+    val chanDescriptor = navHistoryEntry.descriptor
+
+    val siteIconRequest = remember(key1 = chanDescriptor) {
+      if (navHistoryEntry.siteThumbnailUrl != null) {
+        ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.siteThumbnailUrl))
+      } else {
+        null
+      }
+    }
+
+    val thumbnailRequest = remember(key1 = chanDescriptor) {
+      ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl))
+    }
+
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .padding(all = 2.dp)
+        .kurobaClickable(
+          onClick = { onHistoryEntryViewClicked(navHistoryEntry) },
+          onLongClick = { onHistoryEntryViewLongClicked(navHistoryEntry) }
+        ),
+    ) {
+      Box {
+        val contentScale = if (navHistoryEntry.descriptor is ChanDescriptor.CatalogDescriptor) {
+          ContentScale.Fit
+        } else {
+          ContentScale.Crop
+        }
+
+        KurobaComposeImage(
+          request = thumbnailRequest,
+          contentScale = contentScale,
+          modifier = Modifier
+            .fillMaxWidth()
+            .height(48.dp),
+          imageLoaderV2 = imageLoaderV2.get()
+        )
+
+        val circleColor = remember {
+          Color(0x80000000L)
+        }
+
+        Image(
+          modifier = Modifier
+            .align(Alignment.TopStart)
+            .size(20.dp)
+            .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry.descriptor) })
+            .background(color = circleColor, shape = CircleShape),
+          painter = painterResource(id = R.drawable.ic_clear_white_24dp),
+          contentDescription = null
+        )
+
+        Row(modifier = Modifier
+          .wrapContentHeight()
+          .wrapContentWidth()
+          .align(Alignment.TopEnd)
+        ) {
+
+          if (navHistoryEntry.pinned) {
+            Image(
+              modifier = Modifier
+                .size(20.dp),
+              painter = painterResource(id = R.drawable.sticky_icon),
+              contentDescription = null
+            )
+          }
+
+          if (siteIconRequest != null) {
+            KurobaComposeImage(
+              request = siteIconRequest,
+              contentScale = ContentScale.Crop,
+              modifier = Modifier
+                .size(20.dp),
+              imageLoaderV2 = imageLoaderV2.get()
+            )
+          }
+
+        }
+
+      }
+
+      if (navHistoryEntry.additionalInfo != null) {
+        val additionalInfo = navHistoryEntry.additionalInfo
+        val additionalInfoString = remember(key1 = additionalInfo) {
+          additionalInfo.toAnnotatedString(themeEngine)
+        }
+
+        KurobaComposeText(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          maxLines = 1,
+          textAlign = TextAlign.Center,
+          overflow = TextOverflow.Ellipsis,
+          fontSize = 14.sp,
+          text = additionalInfoString
+        )
+      }
+
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = navHistoryEntry.title,
+        maxLines = 4,
+        overflow = TextOverflow.Ellipsis,
+        fontSize = 12.sp,
+        textAlign = TextAlign.Center
+      )
+    }
   }
 
   private fun showDrawerOptions() {
@@ -1001,12 +1124,6 @@ class MainController(
       name = getString(R.string.drawer_controller_clear_nav_history)
     )
 
-    drawerOptions += CheckableFloatingListMenuItem(
-      key = ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE,
-      name = getString(R.string.drawer_controller_history_grid_layout_mode),
-      isCurrentlySelected = PersistableChanState.drawerNavHistoryGridMode.get()
-    )
-
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
@@ -1025,12 +1142,7 @@ class MainController(
       ACTION_SHOW_BOOKMARKS -> {
         ChanSettings.drawerShowBookmarkedThreads.toggle()
 
-        if (ChanSettings.drawerShowBookmarkedThreads.get()) {
-          historyNavigationManager.createNewNavElements(
-            newNavigationElements = drawerPresenter.mapBookmarksIntoNewNavigationElements(),
-            canInsertAtTheBeginning = true
-          )
-        } else {
+        if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
           val bookmarkDescriptors = bookmarksManager
             .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
 
@@ -1041,7 +1153,14 @@ class MainController(
       }
       ACTION_SHOW_NAV_HISTORY -> {
         ChanSettings.drawerShowNavigationHistory.toggle()
-        drawerPresenter.reloadNavigationHistory()
+
+        if (!ChanSettings.drawerShowNavigationHistory.get()) {
+          val bookmarkDescriptors = bookmarksManager
+            .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
+            .toSet()
+
+          historyNavigationManager.removeNonBookmarkNavElements(bookmarkDescriptors)
+        }
       }
       ACTION_CLEAR_NAV_HISTORY -> {
         dialogFactory.createSimpleConfirmationDialog(
@@ -1052,33 +1171,31 @@ class MainController(
           onPositiveButtonClickListener = { historyNavigationManager.clear() }
         )
       }
-      ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE -> {
-        PersistableChanState.drawerNavHistoryGridMode.toggle()
-        updateRecyclerLayoutMode()
+    }
+  }
+
+  private fun onHistoryEntryViewLongClicked(navHistoryEntry: NavigationHistoryEntry) {
+    val chanDescriptorString = navHistoryEntry.descriptor.userReadableString()
+
+    when (drawerPresenter.pinOrUnpin(navHistoryEntry.descriptor)) {
+      HistoryNavigationManager.PinResult.Pinned -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_pinned, chanDescriptorString))
+      }
+      HistoryNavigationManager.PinResult.Unpinned -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_unpinned, chanDescriptorString))
+      }
+      HistoryNavigationManager.PinResult.Failure -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin, chanDescriptorString))
+      }
+      HistoryNavigationManager.PinResult.NoSpaceToPin -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_no_slots_for_pin, chanDescriptorString))
       }
     }
   }
 
-  private fun updateRecyclerLayoutMode() {
-    val isGridMode = PersistableChanState.drawerNavHistoryGridMode.get()
-    if (isGridMode) {
-      if (drawer.width <= 0) {
-        drawer.doOnPreDraw { updateRecyclerLayoutMode() }
-        return
-      }
-
-      val spanCount = (drawer.width / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
-
-      epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
-        spanSizeLookup = controller.spanSizeLookup
-      }
-
-      drawerPresenter.reloadNavigationHistory()
-      return
-    }
-
-    epoxyRecyclerView.layoutManager = LinearLayoutManager(context)
-    drawerPresenter.reloadNavigationHistory()
+  private fun onNavHistoryDeleteClicked(descriptor: ChanDescriptor) {
+    drawerPresenter.deleteNavElement(descriptor)
+    showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
   }
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {
@@ -1105,14 +1222,6 @@ class MainController(
     }
   }
 
-  private class MainEpoxyController : EpoxyController() {
-    var callback: EpoxyController.() -> Unit = {}
-
-    override fun buildModels() {
-      callback(this)
-    }
-  }
-
   companion object {
     private const val TAG = "MainController"
     private const val BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS = 5
@@ -1125,7 +1234,6 @@ class MainController(
     private const val ACTION_SHOW_BOOKMARKS = 1
     private const val ACTION_SHOW_NAV_HISTORY = 2
     private const val ACTION_CLEAR_NAV_HISTORY = 3
-    private const val ACTION_TOGGLE_NAV_HISTORY_LAYOUT_MODE = 4
 
     private val GRID_COLUMN_WIDTH = dp(80f)
   }

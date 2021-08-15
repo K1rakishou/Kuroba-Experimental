@@ -61,8 +61,6 @@ object PersistableChanState {
   @JvmStatic
   lateinit var showAlbumViewsImageDetails: BooleanSetting
   @JvmStatic
-  lateinit var drawerNavHistoryGridMode: BooleanSetting
-  @JvmStatic
   lateinit var boardSelectionGridMode: BooleanSetting
   @JvmStatic
   lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
@@ -139,7 +137,6 @@ object PersistableChanState {
       )
 
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
-      drawerNavHistoryGridMode = BooleanSetting(provider, "drawer_nav_history_grid_mode", false)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
 
       threadDownloaderOptions = JsonSetting(

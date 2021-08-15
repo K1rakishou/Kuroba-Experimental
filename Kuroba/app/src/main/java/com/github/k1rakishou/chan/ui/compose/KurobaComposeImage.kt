@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +37,7 @@ fun KurobaComposeImage(
   request: ImageLoaderRequest,
   modifier: Modifier,
   imageLoaderV2: ImageLoaderV2,
+  contentScale: ContentScale = ContentScale.Fit,
   loading: (@Composable BoxScope.() -> Unit)? = null,
   error: (@Composable BoxScope.(Throwable) -> Unit)? = { throwable -> DefaultErrorHandler(throwable) },
   success: (@Composable () -> Unit)? = null
@@ -49,7 +51,7 @@ fun KurobaComposeImage(
   }
 
   Box(modifier = modifier.then(measureModifier)) {
-    BuildInnerImage(size, request, imageLoaderV2, loading, error, success)
+    BuildInnerImage(size, request, imageLoaderV2, contentScale, loading, error, success)
   }
 }
 
@@ -74,6 +76,7 @@ private fun BuildInnerImage(
   size: IntSize?,
   request: ImageLoaderRequest,
   imageLoaderV2: ImageLoaderV2,
+  contentScale: ContentScale,
   loading: (@Composable BoxScope.() -> Unit)? = null,
   error: (@Composable BoxScope.(Throwable) -> Unit)? = null,
   success: (@Composable () -> Unit)? = null
@@ -120,6 +123,7 @@ private fun BuildInnerImage(
       Image(
         painter = result.painter,
         contentDescription = null,
+        contentScale = contentScale,
         modifier = Modifier.fillMaxSize()
       )
     }

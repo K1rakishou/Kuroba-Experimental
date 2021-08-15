@@ -4,5 +4,6 @@ import okhttp3.HttpUrl
 
 data class NavHistoryElementInfo(
   val thumbnailUrl: HttpUrl,
-  val title: String
+  val title: String,
+  var pinned: Boolean
 )

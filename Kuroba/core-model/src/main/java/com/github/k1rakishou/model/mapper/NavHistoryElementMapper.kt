@@ -39,32 +39,35 @@ object NavHistoryElementMapper {
       ownerNavHistoryId = navHistoryId,
       thumbnailUrl = navHistoryElement.navHistoryElementInfo.thumbnailUrl,
       title = navHistoryElement.navHistoryElementInfo.title,
-      order = order
+      order = order,
+      pinned = navHistoryElement.navHistoryElementInfo.pinned
     )
   }
 
   fun fromNavHistoryEntity(navHistoryEntity: NavHistoryFullDto): NavHistoryElement {
     if (navHistoryEntity.navHistoryElementIdEntity.threadNo == ChanThreadEntity.NO_THREAD_ID) {
       return NavHistoryElement.Catalog(
-        ChanDescriptor.CatalogDescriptor.create(
-          navHistoryEntity.navHistoryElementIdEntity.siteName,
-          navHistoryEntity.navHistoryElementIdEntity.boardCode
+        descriptor = ChanDescriptor.CatalogDescriptor.create(
+          siteNameInput = navHistoryEntity.navHistoryElementIdEntity.siteName,
+          boardCodeInput = navHistoryEntity.navHistoryElementIdEntity.boardCode
         ),
-        NavHistoryElementInfo(
-          navHistoryEntity.navHistoryElementInfoEntity.thumbnailUrl,
-          navHistoryEntity.navHistoryElementInfoEntity.title
+        navHistoryElementInfo = NavHistoryElementInfo(
+          thumbnailUrl = navHistoryEntity.navHistoryElementInfoEntity.thumbnailUrl,
+          title = navHistoryEntity.navHistoryElementInfoEntity.title,
+          pinned = navHistoryEntity.navHistoryElementInfoEntity.pinned
         )
       )
     } else {
       return NavHistoryElement.Thread(
-        ChanDescriptor.ThreadDescriptor.create(
-          navHistoryEntity.navHistoryElementIdEntity.siteName,
-          navHistoryEntity.navHistoryElementIdEntity.boardCode,
-          navHistoryEntity.navHistoryElementIdEntity.threadNo
+        descriptor = ChanDescriptor.ThreadDescriptor.create(
+          siteName = navHistoryEntity.navHistoryElementIdEntity.siteName,
+          boardCode = navHistoryEntity.navHistoryElementIdEntity.boardCode,
+          threadNo = navHistoryEntity.navHistoryElementIdEntity.threadNo
         ),
-        NavHistoryElementInfo(
-          navHistoryEntity.navHistoryElementInfoEntity.thumbnailUrl,
-          navHistoryEntity.navHistoryElementInfoEntity.title
+        navHistoryElementInfo = NavHistoryElementInfo(
+          thumbnailUrl = navHistoryEntity.navHistoryElementInfoEntity.thumbnailUrl,
+          title = navHistoryEntity.navHistoryElementInfoEntity.title,
+          pinned = navHistoryEntity.navHistoryElementInfoEntity.pinned
         )
       )
     }

@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -215,7 +216,12 @@ class HistoryNavigationManager(
       val thumbnailImageUrl = newNavigationElement.thumbnailImageUrl
       val title = newNavigationElement.title
 
-      val navElementInfo = NavHistoryElementInfo(thumbnailImageUrl, title)
+      val navElementInfo = NavHistoryElementInfo(
+        thumbnailUrl = thumbnailImageUrl,
+        title = title,
+        pinned = false
+      )
+
       val navElement = when (descriptor) {
         is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
@@ -252,18 +258,115 @@ class HistoryNavigationManager(
         return@write
       }
 
-      if (navigationStack.isEmpty() || canMoveAtTheBeginning) {
-        // Move the existing navigation element at the top of the list
-        navigationStack.add(0, navigationStack.removeAt(indexOfElem))
-      } else {
-        navigationStack.add(1, navigationStack.removeAt(indexOfElem))
+      if (navigationStack.getOrNull(indexOfElem)?.navHistoryElementInfo?.pinned == true) {
+        return@write
       }
+
+      val lastPinnedElementPosition = navigationStack
+        .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
+
+      val newIndex = when {
+        navigationStack.isEmpty() -> 0
+        canMoveAtTheBeginning -> lastPinnedElementPosition + 1
+        else -> lastPinnedElementPosition + 2
+      }
+
+      if (newIndex == indexOfElem) {
+        return@write
+      }
+
+      navigationStack.addSafe(newIndex, navigationStack.removeAt(indexOfElem))
     }
 
     navStackChanged()
   }
 
-  fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
+  private fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
+    BackgroundUtils.ensureMainThread()
+
+    return lock.write {
+      val indexOfElem = navigationStack.indexOf(navElement)
+      if (indexOfElem >= 0) {
+        return@write false
+      }
+
+      if (navigationStack.getOrNull(indexOfElem)?.navHistoryElementInfo?.pinned == true) {
+        return@write false
+      }
+
+      val lastPinnedElementPosition = navigationStack
+        .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
+
+      val newIndex = when {
+        navigationStack.isEmpty() -> 0
+        canInsertAtTheBeginning -> lastPinnedElementPosition + 1
+        else -> {
+          // Do not overwrite the top of nav stack that we use to restore previously opened thread.
+          // Otherwise this may lead to unexpected behaviors, for example, a situation when starting
+          // the app after a bookmark was created when the app was in background (filter watching)
+          // the user will see the last bookmarked thread instead of last opened thread.
+          lastPinnedElementPosition + 2
+        }
+      }
+
+      if (newIndex == indexOfElem) {
+        return@write false
+      }
+
+      navigationStack.addSafe(newIndex, navElement)
+      return@write true
+    }
+  }
+
+  fun pinOrUnpin(chanDescriptor: ChanDescriptor): PinResult {
+    BackgroundUtils.ensureMainThread()
+
+    val pinResult = lock.write {
+      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+        return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
+          is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
+        }
+      }
+
+      if (indexOfElem < 0) {
+        return@write PinResult.Failure
+      }
+
+      val lastPinnedElementIndex = navigationStack
+        .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
+
+      if (lastPinnedElementIndex >= navigationStack.lastIndex) {
+        return@write PinResult.NoSpaceToPin
+      }
+
+      val nextPinnedElementIndex = if (lastPinnedElementIndex < 0) {
+        0
+      } else {
+        lastPinnedElementIndex + 1
+      }
+
+      val navHistoryElementInfo = navigationStack.get(indexOfElem).navHistoryElementInfo
+      navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
+
+      navigationStack.add(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
+
+      return@write if (navHistoryElementInfo.pinned) {
+        PinResult.Pinned
+      } else {
+        PinResult.Unpinned
+      }
+    }
+
+    if (!pinResult.success) {
+      return pinResult
+    }
+
+    navStackChanged()
+    return pinResult
+  }
+
+  fun deleteNavElement(descriptor: ChanDescriptor) {
     BackgroundUtils.ensureMainThread()
     removeNavElements(listOf(descriptor))
   }
@@ -292,6 +395,43 @@ class HistoryNavigationManager(
 
         navigationStack.removeAt(indexOfElem)
         removed = true
+      }
+
+      return@write removed
+    }
+
+    if (!removed) {
+      return
+    }
+
+    navStackChanged()
+  }
+
+  fun removeNonBookmarkNavElements(bookmarkDescriptors: Set<ChanDescriptor.ThreadDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+
+    if (bookmarkDescriptors.isEmpty()) {
+      return
+    }
+
+    val removed = lock.write {
+      var removed = false
+
+      navigationStack.mutableIteration { mutableIterator, navHistoryElement ->
+        val descriptor = navHistoryElement.descriptor()
+        if (descriptor !is ChanDescriptor.ThreadDescriptor) {
+          removed = true
+          mutableIterator.remove()
+          return@mutableIteration true
+        }
+
+        val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
+        if (threadDescriptor !in bookmarkDescriptors) {
+          removed = true
+          mutableIterator.remove()
+        }
+
+        return@mutableIteration true
       }
 
       return@write removed
@@ -371,32 +511,32 @@ class HistoryNavigationManager(
     }
   }
 
-  private fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
-    BackgroundUtils.ensureMainThread()
-
-    return lock.write {
-      val indexOfElem = navigationStack.indexOf(navElement)
-      if (indexOfElem >= 0) {
-        return@write false
-      }
-
-      if (navigationStack.isEmpty() || canInsertAtTheBeginning) {
-        navigationStack.add(0, navElement)
-      } else {
-        // Do not overwrite the top of nav stack that we use to restore previously opened thread.
-        // Otherwise this may lead to unexpected behaviors, for example, a situation when starting
-        // the app after a bookmark was created when the app was in background (filter watching)
-        // the user will see the last bookmarked thread instead of last opened thread.
-        navigationStack.add(1, navElement)
-      }
-
-      return@write true
-    }
-  }
-
   private fun navStackChanged() {
     navigationStackChangesSubject.onNext(Unit)
     persistTaskSubject.onNext(Unit)
+  }
+
+  private fun <T> MutableList<T>.addSafe(index: Int, element: T) {
+    require(index >= 0) { "Bad index: ${index}" }
+
+    if (isEmpty()) {
+      add(element)
+      return
+    }
+
+    if (index <= lastIndex) {
+      add(index, element)
+      return
+    }
+
+    add(element)
+  }
+
+  enum class PinResult(val success: Boolean) {
+    Pinned(true),
+    Unpinned(true),
+    NoSpaceToPin(false),
+    Failure(false),
   }
 
   data class NewNavigationElement(

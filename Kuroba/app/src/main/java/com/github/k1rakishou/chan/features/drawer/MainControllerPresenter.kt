@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.drawer
 
+import androidx.compose.foundation.layout.PaddingValues
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -19,12 +20,13 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.github.k1rakishou.persist_state.PersistableChanState
 import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
-import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -43,8 +45,12 @@ class MainControllerPresenter(
   private val chanThreadManager: ChanThreadManager
 ) : BasePresenter<MainControllerView>() {
 
-  private val historyControllerStateSubject = PublishProcessor.create<HistoryControllerState>()
-    .toSerialized()
+  private val _historyControllerStateFlow = MutableStateFlow<HistoryControllerState>(HistoryControllerState.Empty)
+  val historyControllerStateFlow: StateFlow<HistoryControllerState>
+    get() = _historyControllerStateFlow.asStateFlow()
+
+  var paddings = PaddingValues()
+
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
 
   private val reloadNavHistoryDebouncer = DebouncingCoroutineExecutor(scope)
@@ -150,14 +156,6 @@ class MainControllerPresenter(
     updateBadge()
   }
 
-  fun listenForStateChanges(): Flowable<HistoryControllerState> {
-    return historyControllerStateSubject
-      .onBackpressureLatest()
-      .observeOn(AndroidSchedulers.mainThread())
-      .distinctUntilChanged()
-      .hide()
-  }
-
   fun listenForBookmarksBadgeStateChanges(): Flowable<BookmarksBadgeState> {
     return bookmarksBadgeStateSubject
       .onBackpressureLatest()
@@ -165,14 +163,18 @@ class MainControllerPresenter(
       .hide()
   }
 
-  fun onNavElementSwipedAway(descriptor: ChanDescriptor) {
+  fun deleteNavElement(descriptor: ChanDescriptor) {
     if (descriptor is ChanDescriptor.ThreadDescriptor) {
       if (bookmarksManager.exists(descriptor)) {
         bookmarksManager.deleteBookmark(descriptor)
       }
     }
 
-    historyNavigationManager.onNavElementSwipedAway(descriptor)
+    historyNavigationManager.deleteNavElement(descriptor)
+  }
+
+  fun pinOrUnpin(descriptor: ChanDescriptor): HistoryNavigationManager.PinResult {
+    return historyNavigationManager.pinOrUnpin(descriptor)
   }
 
   fun reloadNavigationHistory() {
@@ -203,10 +205,7 @@ class MainControllerPresenter(
       return
     }
 
-    val newState = HistoryControllerState.Data(
-      isGridLayoutMode = PersistableChanState.drawerNavHistoryGridMode.get(),
-      navHistoryEntryList = navHistoryList
-    )
+    val newState = HistoryControllerState.Data(navHistoryList)
 
     setState(newState)
   }
@@ -267,11 +266,12 @@ class MainControllerPresenter(
     }
 
     return NavigationHistoryEntry(
-      descriptor,
-      navigationElement.navHistoryElementInfo.thumbnailUrl,
-      siteThumbnailUrl,
-      navigationElement.navHistoryElementInfo.title,
-      additionalInfo
+      descriptor = descriptor,
+      threadThumbnailUrl = navigationElement.navHistoryElementInfo.thumbnailUrl,
+      siteThumbnailUrl = siteThumbnailUrl,
+      title = navigationElement.navHistoryElementInfo.title,
+      pinned = navigationElement.navHistoryElementInfo.pinned,
+      additionalInfo = additionalInfo
     )
   }
 
@@ -297,7 +297,7 @@ class MainControllerPresenter(
   }
 
   private fun setState(state: HistoryControllerState) {
-    historyControllerStateSubject.onNext(state)
+    _historyControllerStateFlow.value = state
   }
 
   data class BookmarksBadgeState(

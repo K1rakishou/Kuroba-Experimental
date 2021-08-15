@@ -1,6 +1,11 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import androidx.annotation.DrawableRes
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
@@ -21,6 +26,7 @@ import androidx.compose.material.ContentAlpha
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
+import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -28,7 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -36,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_themes.ThemeEngine
 import java.util.*
 
 @Composable
@@ -230,7 +240,7 @@ fun KurobaComposeButton(
     onClick = onClick,
     enabled = enabled,
     modifier = Modifier
-      .width(112.dp)
+      .wrapContentWidth()
       .height(36.dp)
       .then(modifier),
     content = buttonContent,
@@ -264,7 +274,9 @@ fun KurobaComposeTextBarButton(
       Text(
         text = text.uppercase(Locale.ENGLISH),
         color = textColor,
-        modifier = Modifier.wrapContentWidth().fillMaxHeight(),
+        modifier = Modifier
+          .wrapContentWidth()
+          .fillMaxHeight(),
         textAlign = TextAlign.Center
       )
     },
@@ -287,4 +299,57 @@ fun KurobaComposeSlider(
     onValueChange = onValueChange,
     colors = chanTheme.sliderColors()
   )
+}
+
+@Composable
+fun KurobaComposeIcon(
+  @DrawableRes drawableId: Int,
+  themeEngine: ThemeEngine,
+  modifier: Modifier = Modifier
+) {
+  val chanTheme = LocalChanTheme.current
+  val tintColor = remember(key1 = chanTheme) {
+    Color(themeEngine.resolveDrawableTintColor())
+  }
+
+  Image(
+    modifier = modifier,
+    painter = painterResource(id = drawableId),
+    colorFilter = ColorFilter.tint(tintColor),
+    contentDescription = null
+  )
+}
+
+private val defaultNoopClickCallback = { }
+
+@OptIn(ExperimentalFoundationApi::class)
+fun Modifier.kurobaClickable(
+  bounded: Boolean = false,
+  onLongClick: (() -> Unit)? = null,
+  onClick: (() -> Unit)? = null
+): Modifier {
+  if (onLongClick == null && onClick == null) {
+    error("At least on of callbacks must be non-null")
+  }
+
+  return composed {
+    val chanTheme = LocalChanTheme.current
+
+    val color = remember(key1 = chanTheme) {
+      if (chanTheme.isLightTheme) {
+        Color(0x40000000)
+      } else {
+        Color(0x40ffffff)
+      }
+    }
+
+    then(
+      Modifier.combinedClickable(
+        indication = rememberRipple(bounded = bounded, color = color),
+        interactionSource = remember { MutableInteractionSource() },
+        onLongClick = onLongClick,
+        onClick = onClick ?: defaultNoopClickCallback
+      )
+    )
+  }
 }

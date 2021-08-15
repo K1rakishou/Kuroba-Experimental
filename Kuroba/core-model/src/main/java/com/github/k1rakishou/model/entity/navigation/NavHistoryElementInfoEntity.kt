@@ -26,6 +26,8 @@ data class NavHistoryElementInfoEntity(
   val thumbnailUrl: HttpUrl,
   @ColumnInfo(name = TITLE_COLUMN_NAME)
   val title: String,
+  @ColumnInfo(name = PINNED_COLUMN_NAME)
+  val pinned: Boolean,
   @ColumnInfo(name = ELEMENT_ORDER_COLUMN_NAME)
   val order: Int
 ) {
@@ -37,5 +39,6 @@ data class NavHistoryElementInfoEntity(
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val TITLE_COLUMN_NAME = "title"
     const val ELEMENT_ORDER_COLUMN_NAME = "element_order"
+    const val PINNED_COLUMN_NAME = "pinned"
   }
 }

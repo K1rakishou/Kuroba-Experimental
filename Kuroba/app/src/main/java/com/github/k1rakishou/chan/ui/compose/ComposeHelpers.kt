@@ -41,7 +41,7 @@ object ComposeHelpers {
   private const val TAG = "ComposeHelpers"
   const val enableDebugCompositionLogs = true
 
-  val SCROLLBAR_WIDTH = 8.dp
+  val SCROLLBAR_WIDTH = 4.dp
   class DebugRef(var value: Int)
 
   @Composable

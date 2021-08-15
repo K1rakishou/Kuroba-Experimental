@@ -59,11 +59,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:clipToPadding="false"
             android:orientation="vertical">
 
-            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-                android:id="@+id/drawer_recycler_view"
+            <androidx.compose.ui.platform.ComposeView
+                android:id="@+id/drawer_compose_view"
                 android:layout_width="match_parent"
-                android:layout_height="match_parent"
-                android:scrollbars="vertical" />
+                android:layout_height="match_parent" />
 
         </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayoutNoBackground>
 

@@ -1147,8 +1147,12 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
     <string name="drawer_controller_show_navigation_history">Show navigation history</string>
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
-    <string name="drawer_controller_history_grid_layout_mode">Navigation history grid mode</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
+    <string name="drawer_controller_navigation_entry_pinned">Pinned \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_unpinned">Pinned \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_no_slots_for_pin">No slots left to pin \'%1$s\'. Remove something.</string>
+    <string name="drawer_controller_navigation_entry_deleted">Deleted \'%1$s\'</string>
 
     <string name="board_selection_controller_grid_layout_mode">Board selection grid mode</string>
 
