@@ -22,7 +22,9 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -209,15 +211,25 @@ class SearxImageSearchController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildSearxImages(searxImages: List<SearxImage>, onImageClicked: (SearxImage) -> Unit) {
-    val listState = viewModel.lazyListState()
     val chanTheme = LocalChanTheme.current
 
+    val state = rememberLazyListState(
+      initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
+    )
+
+    DisposableEffect(key1 = Unit, effect = {
+      onDispose {
+        viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+      }
+    })
+
     LazyVerticalGrid(
-      state = listState,
+      state = state,
       cells = GridCells.Adaptive(minSize = IMAGE_SIZE),
       modifier = Modifier
         .fillMaxSize()
-        .simpleVerticalScrollbar(state = listState, chanTheme = chanTheme)
+        .simpleVerticalScrollbar(state = state, chanTheme = chanTheme)
     ) {
       items(searxImages.size) { index ->
         val searxImage = searxImages.get(index)

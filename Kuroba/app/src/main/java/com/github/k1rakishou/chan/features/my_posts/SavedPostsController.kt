@@ -17,9 +17,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -56,7 +58,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.imePadding
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -230,7 +231,16 @@ class SavedPostsController(
     onReplyLongClicked: (PostDescriptor) -> Unit,
   ) {
     val chanTheme = LocalChanTheme.current
-    val state = viewModel.lazyListState()
+    val state = rememberLazyListState(
+      initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
+    )
+
+    DisposableEffect(key1 = Unit, effect = {
+      onDispose {
+        viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+      }
+    })
 
     val contentPadding = remember {
       if (ChanSettings.isSplitLayoutMode()) {
@@ -246,7 +256,6 @@ class SavedPostsController(
       modifier = Modifier
         .fillMaxSize()
         .simpleVerticalScrollbar(state, chanTheme)
-        .imePadding()
     ) {
       if (savedRepliesGrouped.isEmpty()) {
         val searchQuery = viewModel.searchQuery

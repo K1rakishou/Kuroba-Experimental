@@ -1,8 +1,5 @@
 package com.github.k1rakishou.chan.features.my_posts
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
@@ -48,24 +45,21 @@ class SavedPostsViewModel : BaseViewModel() {
   val myPostsViewModelState: StateFlow<MyPostsViewModelState>
     get() = _myPostsViewModelState.asStateFlow()
 
-  private var rememberedFirstVisibleItemIndex: Int = 0
-  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+  private var _rememberedFirstVisibleItemIndex: Int = 0
+  val rememberedFirstVisibleItemIndex: Int
+    get() = _rememberedFirstVisibleItemIndex
+
+  private var _rememberedFirstVisibleItemScrollOffset: Int = 0
+  val rememberedFirstVisibleItemScrollOffset: Int
+    get() = _rememberedFirstVisibleItemScrollOffset
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
-  @Composable
-  fun lazyListState(): LazyListState {
-    val lazyListState = rememberLazyListState(
-      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
-      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
-    )
-
-    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
-    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
-
-    return lazyListState
+  fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+    _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
+    _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
 
   override suspend fun onViewModelReady() {

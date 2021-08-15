@@ -30,9 +30,11 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -276,7 +278,16 @@ class LocalArchiveController(
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val state = viewModel.lazyListState()
+    val state = rememberLazyListState(
+      initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
+    )
+
+    DisposableEffect(key1 = Unit, effect = {
+      onDispose {
+        viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+      }
+    })
 
     var animationAtEnd by remember { mutableStateOf(false) }
     val hasAnyRunningDownloads = remember(key1 = threadDownloadViews) {

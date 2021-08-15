@@ -1,8 +1,5 @@
 package com.github.k1rakishou.chan.features.reply_image_search.searx
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -26,8 +23,14 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
   var searchQuery = mutableStateOf("")
   var searchResults = mutableStateOf<AsyncData<List<SearxImage>>>(AsyncData.NotInitialized)
 
-  private var rememberedFirstVisibleItemIndex: Int = 0
-  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+  private var _rememberedFirstVisibleItemIndex: Int = 0
+  val rememberedFirstVisibleItemIndex: Int
+    get() = _rememberedFirstVisibleItemIndex
+
+  private var _rememberedFirstVisibleItemScrollOffset: Int = 0
+  val rememberedFirstVisibleItemScrollOffset: Int
+    get() = _rememberedFirstVisibleItemScrollOffset
+
   private var _currentPage = 0
   val currentPage: Int
     get() = _currentPage
@@ -50,17 +53,9 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
     cleanup()
   }
 
-  @Composable
-  fun lazyListState(): LazyListState {
-    val lazyListState = rememberLazyListState(
-      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
-      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
-    )
-
-    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
-    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
-
-    return lazyListState
+  fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+    _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
+    _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
 
   fun cleanup() {
@@ -93,8 +88,8 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
       }
 
       if (page == 1 || searchResults.value is AsyncData.NotInitialized) {
-        rememberedFirstVisibleItemIndex = 0
-        rememberedFirstVisibleItemScrollOffset = 0
+        _rememberedFirstVisibleItemIndex = 0
+        _rememberedFirstVisibleItemScrollOffset = 0
         searchResults.value = AsyncData.Loading
       }
 

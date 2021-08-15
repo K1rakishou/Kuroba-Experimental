@@ -224,7 +224,7 @@ class BoardArchiveController(
     onThreadClicked: (Long) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val currentlySelectedThreadNo by viewModel.currentlySelectedThreadNo
+    val currentlySelectedThreadNo by remember { viewModel.currentlySelectedThreadNo }
 
     val backgroundColor = remember(key1 = archiveThread.threadNo) {
       if (currentlySelectedThreadNo == archiveThread.threadNo) {

@@ -1,8 +1,6 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.net.Uri
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -79,8 +77,13 @@ class LocalArchiveViewModel : BaseViewModel() {
 
   private val additionalThreadDownloadStats = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableState<AdditionalThreadDownloadStats?>>()
 
-  private var rememberedFirstVisibleItemIndex: Int = 0
-  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+  private var _rememberedFirstVisibleItemIndex: Int = 0
+  val rememberedFirstVisibleItemIndex: Int
+    get() = _rememberedFirstVisibleItemIndex
+
+  private var _rememberedFirstVisibleItemScrollOffset: Int = 0
+  val rememberedFirstVisibleItemScrollOffset: Int
+    get() = _rememberedFirstVisibleItemScrollOffset
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -103,17 +106,9 @@ class LocalArchiveViewModel : BaseViewModel() {
     refreshCacheAndReload()
   }
 
-  @Composable
-  fun lazyListState(): LazyListState {
-    val lazyListState = rememberLazyListState(
-      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
-      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
-    )
-
-    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
-    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
-
-    return lazyListState
+  fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+    _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
+    _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
 
   @Composable
