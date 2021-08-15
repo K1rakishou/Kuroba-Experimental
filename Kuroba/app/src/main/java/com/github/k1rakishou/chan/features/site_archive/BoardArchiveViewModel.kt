@@ -1,8 +1,5 @@
 package com.github.k1rakishou.chan.features.site_archive
 
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -36,26 +33,18 @@ class BoardArchiveViewModel(
 
   var currentlySelectedThreadNo = mutableStateOf<Long?>(null)
 
-  private var rememberedFirstVisibleItemIndex: Int = 0
-  private var rememberedFirstVisibleItemScrollOffset: Int = 0
+  private var _rememberedFirstVisibleItemIndex: Int = 0
+  val rememberedFirstVisibleItemIndex: Int
+    get() = _rememberedFirstVisibleItemIndex
+
+  private var _rememberedFirstVisibleItemScrollOffset: Int = 0
+  val rememberedFirstVisibleItemScrollOffset: Int
+    get() = _rememberedFirstVisibleItemScrollOffset
 
   val state: StateFlow<ViewModelState>
     get() = _state.asStateFlow()
   val searchQuery: State<String?>
     get() = _searchQuery
-
-  @Composable
-  fun lazyListState(): LazyListState {
-    val lazyListState = rememberLazyListState(
-      initialFirstVisibleItemIndex = rememberedFirstVisibleItemIndex,
-      initialFirstVisibleItemScrollOffset = rememberedFirstVisibleItemScrollOffset
-    )
-
-    rememberedFirstVisibleItemIndex = lazyListState.firstVisibleItemIndex
-    rememberedFirstVisibleItemScrollOffset = lazyListState.firstVisibleItemScrollOffset
-
-    return lazyListState
-  }
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -102,6 +91,11 @@ class BoardArchiveViewModel(
 
     _archiveThreadsAsync = AsyncData.Data(archiveThreads)
     _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(archiveThreads)) }
+  }
+
+  fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
+    _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
+    _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
 
   fun updateQueryAndReload(query: String?) {

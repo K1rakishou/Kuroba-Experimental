@@ -10,8 +10,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -166,7 +168,16 @@ class BoardArchiveController(
     onThreadClicked: (Long) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val state = viewModel.lazyListState()
+    val state = rememberLazyListState(
+      initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
+      initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
+    )
+
+    DisposableEffect(key1 = Unit, effect = {
+      onDispose {
+        viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+      }
+    })
 
     LazyColumn(
       state = state,

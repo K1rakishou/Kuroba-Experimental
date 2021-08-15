@@ -385,6 +385,7 @@ class PostCell : ConstraintLayout,
     replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = vertPaddingPx)
 
     postCommentLongtapDetector.postCellContainer = this
+    postCommentLongtapDetector.commentView = comment
     postImageThumbnailViewsContainer.preBind(this, postCellData, horizPaddingPx, vertPaddingPx)
 
     val dividerParams = divider.layoutParams as MarginLayoutParams
@@ -969,6 +970,7 @@ class PostCell : ConstraintLayout,
     private var initialTouchEvent: MotionEvent? = null
 
     var postCellContainer: ViewGroup? = null
+    var commentView: View? = null
 
     fun passTouchEvent(event: MotionEvent) {
       if (event.pointerCount != 1) {
@@ -994,7 +996,10 @@ class PostCell : ConstraintLayout,
           }
 
           initialTouchEvent = MotionEvent.obtain(event)
-          postCellContainer?.onTouchEvent(event)
+
+          modifyEventPosition(event) { updatedEvent ->
+            postCellContainer?.onTouchEvent(updatedEvent)
+          }
         }
         MotionEvent.ACTION_MOVE -> {
           if (initialTouchEvent == null) {
@@ -1047,8 +1052,28 @@ class PostCell : ConstraintLayout,
         event.metaState
       )
 
-      postCellContainer?.onTouchEvent(motionEvent)
+      modifyEventPosition(motionEvent) { updatedEvent ->
+        postCellContainer?.onTouchEvent(updatedEvent)
+      }
+
       motionEvent.recycle()
+    }
+
+    private fun modifyEventPosition(inputEvent: MotionEvent, applier: (MotionEvent) -> Unit) {
+      val deltaX = (commentView!!.left - postCellContainer!!.left).coerceAtLeast(0)
+      val deltaY = (commentView!!.top - postCellContainer!!.top).coerceAtLeast(0)
+
+      val event = MotionEvent.obtain(
+        inputEvent.downTime,
+        inputEvent.eventTime,
+        inputEvent.action,
+        inputEvent.x + deltaX,
+        inputEvent.y + deltaY,
+        inputEvent.metaState
+      )
+
+      applier(event)
+      event.recycle()
     }
 
   }

@@ -9,8 +9,11 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
@@ -25,6 +28,7 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.core.text.getSpans
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
@@ -35,41 +39,57 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 
 object ComposeHelpers {
   private const val TAG = "ComposeHelpers"
+  const val enableDebugCompositionLogs = true
+
   val SCROLLBAR_WIDTH = 8.dp
+  class DebugRef(var value: Int)
 
   @Composable
+  inline fun LogCompositions(tag: String) {
+    if (enableDebugCompositionLogs && isDevBuild()) {
+      val ref = remember { DebugRef(0) }
+      SideEffect { ref.value++ }
+
+      Logger.d("Compositions_$tag", "Count: ${ref.value}, ref=${ref.hashCode()}")
+    }
+  }
+
   fun Modifier.simpleVerticalScrollbar(
     state: LazyListState,
     chanTheme: ChanTheme,
     width: Dp = SCROLLBAR_WIDTH
   ): Modifier {
-    val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
-    val duration = if (state.isScrollInProgress) 10 else 500
+    return composed {
+      val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
+      val duration = if (state.isScrollInProgress) 10 else 500
 
-    val alpha by animateFloatAsState(
-      targetValue = targetAlpha,
-      animationSpec = tween(durationMillis = duration)
-    )
+      val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = duration)
+      )
 
-    return drawWithContent {
-      drawContent()
+      this.then(
+        Modifier.drawWithContent {
+          drawContent()
 
-      val firstVisibleElementIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index
-      val needDrawScrollbar = state.isScrollInProgress || alpha > 0.0f
+          val firstVisibleElementIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index
+          val needDrawScrollbar = state.isScrollInProgress || alpha > 0.0f
 
-      // Draw scrollbar if scrolling or if the animation is still running and lazy column has content
-      if (needDrawScrollbar && firstVisibleElementIndex != null) {
-        val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
-        val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
-        val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
+          // Draw scrollbar if scrolling or if the animation is still running and lazy column has content
+          if (needDrawScrollbar && firstVisibleElementIndex != null) {
+            val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
+            val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
+            val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
 
-        drawRect(
-          color = chanTheme.textColorHintCompose,
-          topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
-          size = Size(width.toPx(), scrollbarHeight),
-          alpha = alpha
-        )
-      }
+            drawRect(
+              color = chanTheme.textColorHintCompose,
+              topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
+              size = Size(width.toPx(), scrollbarHeight),
+              alpha = alpha
+            )
+          }
+        }
+      )
     }
   }
 
