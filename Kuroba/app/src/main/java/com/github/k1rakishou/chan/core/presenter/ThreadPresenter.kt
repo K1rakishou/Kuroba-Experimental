@@ -131,6 +131,7 @@ class ThreadPresenter @Inject constructor(
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
+  private var alreadyCreatedNavElement = false
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
@@ -289,6 +290,8 @@ class ThreadPresenter @Inject constructor(
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
 
+    alreadyCreatedNavElement = false
+
     if (currentChanDescriptor != null) {
       onDemandContentLoaderManager.get().cancelAllForDescriptor(currentChanDescriptor)
 
@@ -406,17 +409,6 @@ class ThreadPresenter @Inject constructor(
     return catalogSnapshot.getNextCatalogPage()
   }
 
-  /**
-   * A very flexible method to load new posts or reload posts from database.
-   * [chanLoadOptions] allows you to delete previous posts from in-memory cache or from database
-   * (for example when something goes wrong and some post data gets corrupted).
-   * [chanCacheOptions] allows you to select where posts will be stored (in in-memory cache or/and
-   * in the database).
-   * [chanReadOptions] allows you to configure how many posts to extract out of the posts list that
-   * we get from the server. This is very useful when you want to set a thread max posts capacity
-   * or if you want to store in the cache only a part of a thread (for example you want to show a
-   * thread preview).
-   * */
   fun normalLoad(
     showLoading: Boolean = false,
     chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
@@ -442,6 +434,7 @@ class ThreadPresenter @Inject constructor(
     currentLoadThreadJob = launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
+        alreadyCreatedNavElement = false
       }
 
       if (deleteChanCatalogSnapshot) {
@@ -772,7 +765,11 @@ class ThreadPresenter @Inject constructor(
     }
 
     handleMarkedPost()
-    createNewNavHistoryElement(localChanDescriptor)
+
+    if (!alreadyCreatedNavElement) {
+      alreadyCreatedNavElement = true
+      createNewNavHistoryElement(localChanDescriptor)
+    }
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       updateBookmarkInfoIfNecessary(localChanDescriptor)

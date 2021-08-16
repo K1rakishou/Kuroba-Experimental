@@ -1149,7 +1149,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
     <string name="drawer_controller_navigation_entry_pinned">Pinned \'%1$s\'</string>
-    <string name="drawer_controller_navigation_entry_unpinned">Pinned \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_unpinned">Unpinned \'%1$s\'</string>
     <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin \'%1$s\'</string>
     <string name="drawer_controller_navigation_entry_no_slots_for_pin">No slots left to pin \'%1$s\'. Remove something.</string>
     <string name="drawer_controller_navigation_entry_deleted">Deleted \'%1$s\'</string>

@@ -349,7 +349,7 @@ class HistoryNavigationManager(
       val navHistoryElementInfo = navigationStack.get(indexOfElem).navHistoryElementInfo
       navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
 
-      navigationStack.add(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
+      navigationStack.addSafe(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
 
       return@write if (navHistoryElementInfo.pinned) {
         PinResult.Pinned
