@@ -760,7 +760,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
     <string name="setting_tap_no_reply">Tap the post number to reply</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>
-    <string name="setting_mark_unseen_posts_duration">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
+    <string name="setting_mark_unseen_posts_description">Adds a left-side label for every yet unseen post. Only shows unseen posts in threads.</string>
+    <string name="setting_mark_seen_threads_title">Mark already seen threads in the catalog</string>
+    <string name="setting_mark_seen_threads_description">Already seen (visited) threads will be marked with additional transparency</string>
 
     <!-- Other settings group -->
     <string name="setting_other_settings_group">Other Options</string>

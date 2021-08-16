@@ -409,7 +409,7 @@ class Chan4CloudFlareImagePreloaderManager(
               ?: return@forEach
 
             seenPostsSet.mutableIteration { mutableIterator, seenPost ->
-              if (seenPost.postNo != originalPostDescriptor.postNo) {
+              if (seenPost != originalPostDescriptor) {
                 ++removedPosts
                 mutableIterator.remove()
               }

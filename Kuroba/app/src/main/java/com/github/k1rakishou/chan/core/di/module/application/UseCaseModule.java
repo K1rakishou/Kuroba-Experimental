@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
-import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase;
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
@@ -37,7 +37,7 @@ import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
-import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
@@ -340,7 +340,7 @@ public class UseCaseModule {
 
     @Provides
     @Singleton
-    public ThreadDataPreloadUseCase provideThreadDataPreloadUseCase(
+    public ThreadDataPreloader provideThreadDataPreloadUseCase(
             Lazy<SeenPostsManager> seenPostsManager,
             Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
             Lazy<SavedReplyManager> savedReplyManager,
@@ -348,7 +348,7 @@ public class UseCaseModule {
             Lazy<ChanPostRepository> chanPostRepository
     ) {
         Logger.deps("ThreadDataPreloadUseCase");
-        return new ThreadDataPreloadUseCase(
+        return new ThreadDataPreloader(
                 seenPostsManager,
                 chanThreadViewableInfoManager,
                 savedReplyManager,
@@ -359,16 +359,18 @@ public class UseCaseModule {
 
     @Provides
     @Singleton
-    public CatalogDataPreloadUseCase provideCatalogDataPreloadUseCase(
+    public CatalogDataPreloader provideCatalogDataPreloadUseCase(
             BoardManager boardManager,
             PostHideManager postHideManager,
-            ChanCatalogSnapshotRepository chanCatalogSnapshotRepository
+            ChanCatalogSnapshotRepository chanCatalogSnapshotRepository,
+            Lazy<SeenPostsManager> seenPostsManager
     ) {
         Logger.deps("CatalogDataPreloadUseCase");
-        return new CatalogDataPreloadUseCase(
+        return new CatalogDataPreloader(
                 boardManager,
                 postHideManager,
-                chanCatalogSnapshotRepository
+                chanCatalogSnapshotRepository,
+                seenPostsManager
         );
     }
 

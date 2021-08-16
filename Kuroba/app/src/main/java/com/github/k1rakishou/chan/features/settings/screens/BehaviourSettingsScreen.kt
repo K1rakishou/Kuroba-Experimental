@@ -99,8 +99,17 @@ class BehaviourSettingsScreen(
           context = context,
           identifier = BehaviorScreen.PostGroup.MarkUnseenPosts,
           topDescriptionIdFunc = { R.string.setting_mark_unseen_posts_title },
-          bottomDescriptionIdFunc = { R.string.setting_mark_unseen_posts_duration },
+          bottomDescriptionIdFunc = { R.string.setting_mark_unseen_posts_description },
           setting = ChanSettings.markUnseenPosts,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = BehaviorScreen.PostGroup.MarkSeenThreads,
+          topDescriptionIdFunc = { R.string.setting_mark_seen_threads_title },
+          bottomDescriptionIdFunc = { R.string.setting_mark_seen_threads_description },
+          setting = ChanSettings.markSeenThreads,
           requiresUiRefresh = true
         )
 

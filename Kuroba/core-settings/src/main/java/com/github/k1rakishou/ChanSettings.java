@@ -329,6 +329,7 @@ public class ChanSettings {
     public static BooleanSetting volumeKeysScrolling;
     public static BooleanSetting tapNoReply;
     public static BooleanSetting markUnseenPosts;
+    public static BooleanSetting markSeenThreads;
 
     // Other options
     public static BooleanSetting fullUserRotationEnable;
@@ -537,6 +538,7 @@ public class ChanSettings {
             volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
             tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", false);
             markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
+            markSeenThreads = new BooleanSetting(provider, "preference_mark_seen_threads", true);
 
             // Other options
             fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);

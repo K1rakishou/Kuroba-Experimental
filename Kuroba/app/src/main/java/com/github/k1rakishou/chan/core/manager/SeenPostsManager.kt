@@ -4,17 +4,24 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.repository.SeenPostRepository
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import org.joda.time.DateTime
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -28,6 +35,7 @@ class SeenPostsManager(
   private val appScope: CoroutineScope,
   private val verboseLogsEnabled: Boolean,
   private val chanThreadsCache: ChanThreadsCache,
+  private val catalogSnapshotCache: ChanCatalogSnapshotCache,
   private val seenPostsRepository: SeenPostRepository
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -35,6 +43,14 @@ class SeenPostsManager(
   private val seenPostsMap = linkedMapWithCap<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, SeenPost>>(256)
   @GuardedBy("lock")
   private val seenPostsToPersist = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, SeenPost>>()
+  @GuardedBy("lock")
+  private var lastLoadedBoardDescriptor: BoardDescriptor? = null
+  @GuardedBy("lock")
+  private val alreadyLoadedDescriptorsForUnlimitedCatalog = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
+
+  private val _seenPostUpdatesFlow = MutableSharedFlow<Set<SeenPost>>(extraBufferCapacity = 64)
+  val seenPostUpdatesFlow: SharedFlow<Set<SeenPost>>
+    get() = _seenPostUpdatesFlow.asSharedFlow()
 
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(appScope)
 
@@ -65,39 +81,94 @@ class SeenPostsManager(
       Logger.d(TAG, "preloadForThread($threadDescriptor) begin")
     }
 
-    val time = measureTime { preloadForThreadInternal(threadDescriptor) }
+    val time = measureTime {
+      val seenPosts = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
+            "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
+
+          return@measureTime
+        }
+
+      lock.write {
+        val resultMap = mutableMapWithCap<PostDescriptor, SeenPost>(seenPosts.size)
+
+        for (seenPost in seenPosts) {
+          resultMap[seenPost.postDescriptor] = seenPost
+        }
+
+        seenPostsMap.put(threadDescriptor, resultMap)
+      }
+    }
 
     if (verboseLogsEnabled) {
       Logger.d(TAG, "preloadForThread($threadDescriptor) end, took $time")
     }
   }
 
-  private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val seenPosts = seenPostsRepository.selectAllByThreadDescriptor(threadDescriptor)
-      .safeUnwrap { error ->
-        Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptor " +
-          "($threadDescriptor), error = ${error.errorMessageOrClassName()}")
-
-        return
-      }
-
-    lock.write {
-      val resultMap = mutableMapWithCap<PostDescriptor, SeenPost>(seenPosts.size)
-
-      for (seenPost in seenPosts) {
-        resultMap[seenPost.postDescriptor] = seenPost
-      }
-
-      seenPostsMap.put(threadDescriptor, resultMap)
-    }
-  }
-
-  fun onPostBind(postDescriptor: PostDescriptor) {
-    if (postDescriptor.descriptor is ChanDescriptor.CatalogDescriptor) {
+  @OptIn(ExperimentalTime::class)
+  suspend fun postloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+    if (!isEnabled()) {
       return
     }
 
-    if (!isEnabled()) {
+    val boardDescriptor = catalogDescriptor.boardDescriptor
+
+    val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
+      ?: return
+
+    val threadDescriptorsToLoad = lock.read {
+      if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+        alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
+        lastLoadedBoardDescriptor = boardDescriptor
+      }
+
+      val toLoad = catalogSnapshot.catalogThreadDescriptorSet
+        .filter { threadDescriptor ->
+          threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
+        }
+
+      if (catalogSnapshot.isUnlimitedCatalog) {
+        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
+      }
+
+      return@read toLoad
+    }
+
+    if (threadDescriptorsToLoad.isEmpty()) {
+      return
+    }
+
+    measureTime {
+      val seenPostsGrouped = seenPostsRepository.selectAllByThreadDescriptors(
+        boardDescriptor = boardDescriptor,
+        threadDescriptors = threadDescriptorsToLoad
+      ).safeUnwrap { error ->
+        Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptors " +
+          "(${boardDescriptor}, ${threadDescriptorsToLoad.size}), " +
+          "error = ${error.errorMessageOrClassName()}")
+
+        return@measureTime
+      }.groupBy { seenPost -> seenPost.postDescriptor.threadDescriptor() }
+
+      lock.write {
+        Logger.d(TAG, "postloadForCatalog($catalogDescriptor) " +
+          "threadDescriptorsToLoad=${threadDescriptorsToLoad.size}, " +
+          "seenPostsGrouped=${seenPostsGrouped.size}, " +
+          "alreadyLoadedDescriptorsForUnlimitedCatalog=${alreadyLoadedDescriptorsForUnlimitedCatalog.size}")
+
+        seenPostsGrouped.entries.forEach { (threadDescriptor, seenPosts) ->
+          seenPostsMap.putIfNotContains(threadDescriptor, mutableMapWithCap(seenPosts.size))
+
+          val innerMap = seenPostsMap[threadDescriptor]!!
+          seenPosts.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
+        }
+      }
+    }
+  }
+
+  fun onPostBind(threadMode: Boolean, postDescriptor: PostDescriptor) {
+    if (!threadMode || !isEnabled()) {
       return
     }
 
@@ -107,6 +178,18 @@ class SeenPostsManager(
     )
 
     createNewSeenPosts(listOf(seenPost))
+  }
+
+  fun onPostUnbind(threadMode: Boolean, postDescriptor: PostDescriptor) {
+    // No-op (maybe something will be added here in the future)
+  }
+
+  fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost? {
+    return lock.read { seenPostsMap[postDescriptor.threadDescriptor()]?.get(postDescriptor) }
+  }
+
+  fun isThreadAlreadySeen(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    return lock.read { (seenPostsMap[threadDescriptor]?.size ?: 0) > 0 }
   }
 
   private fun createNewSeenPosts(seenPosts: Collection<SeenPost>) {
@@ -184,44 +267,9 @@ class SeenPostsManager(
           val innerMap = seenPostsMap[threadDescriptor]!!
           seenPostSet.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
         }
+
+        _seenPostUpdatesFlow.emit(seenPostSet)
       }
-    }
-  }
-
-  fun onPostUnbind(postDescriptor: PostDescriptor) {
-    // No-op (maybe something will be added here in the future)
-  }
-
-  /**
-   * When null is returned that means that we are supposed think that all posts were seen (usually
-   * this is used in catalogs or when this feature is disabled to not show the post label).
-   * When empty map is returned that means that all posts for this thread are unseen.
-   * */
-  fun getSeenPosts(
-    chanDescriptor: ChanDescriptor,
-    postDescriptors: Collection<PostDescriptor>
-  ): Map<PostDescriptor, SeenPost>? {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor || !isEnabled()) {
-      // When in catalog return empty set which is supposed to mean that all posts have already been
-      // seen (to hide the unseen post label)
-      return null
-    }
-
-    val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-
-    return lock.read {
-      val resultMap = mutableMapWithCap<PostDescriptor, SeenPost>(postDescriptors.size)
-
-      for (postDescriptor in postDescriptors) {
-        val seenPost = seenPostsMap[threadDescriptor]?.get(postDescriptor)
-        if (seenPost == null) {
-          continue
-        }
-
-        resultMap[postDescriptor] = seenPost
-      }
-
-      return@read resultMap
     }
   }
 
@@ -248,8 +296,14 @@ class SeenPostsManager(
           var removedPosts = 0
 
           threadDeleteEvent.entries.forEach { (threadDescriptor, originalPostDescriptor) ->
-            ++removedPosts
-            seenPostsMap[threadDescriptor]?.remove(originalPostDescriptor)
+            seenPostsMap[threadDescriptor]?.keys?.mutableIteration { mutableIterator, postDescriptor ->
+              if (postDescriptor != originalPostDescriptor) {
+                ++removedPosts
+                mutableIterator.remove()
+              }
+
+              return@mutableIteration true
+            }
           }
 
           Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} posts")

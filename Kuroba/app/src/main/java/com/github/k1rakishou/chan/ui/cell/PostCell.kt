@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.animation.PostBackgroundBlinkAnimator.createPostBackgroundBlinkAnimation
 import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator
 import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator.createUnseenPostIndicatorFadeAnimation
@@ -81,6 +82,8 @@ class PostCell : ConstraintLayout,
 
   @Inject
   lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  @Inject
+  lateinit var seenPostsManager: Lazy<SeenPostsManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -276,6 +279,21 @@ class PostCell : ConstraintLayout,
           postCellHighlight = postHighlight.fullCopy()
           bindBackgroundColor(themeEngine.chanTheme)
         }
+    }
+
+    if (postCellData.markSeenThreads && !postCellData.threadMode) {
+      scope.launch {
+        seenPostsManager.get().seenPostUpdatesFlow.collect { seenPostsSet ->
+          val thisPostBecameSeen = seenPostsSet
+            .any { seenPost -> seenPost.postDescriptor == postCellData.postDescriptor }
+
+          if (!thisPostBecameSeen) {
+            return@collect
+          }
+
+          bindBackgroundColor(themeEngine.chanTheme)
+        }
+      }
     }
 
     bindPost(postCellData)
@@ -667,12 +685,9 @@ class PostCell : ConstraintLayout,
 
     val now = DateTime.now()
 
-    val insertedAtMillis = postCellData.threadCellDataCallback
-      ?.getSeenPostOrNull(postCellData.postDescriptor)
+    val insertedAtMillis = seenPostsManager.get().getSeenPostOrNull(postCellData.postDescriptor)
       ?.insertedAt
       ?.millis
-
-    postCellData.threadCellDataCallback?.markPostAsSeen(postCellData.postDescriptor, now)
 
     if (insertedAtMillis == null) {
       return PostUnseenIndicatorFadeAnimator.ANIMATION_DURATION.toInt()
@@ -803,6 +818,25 @@ class PostCell : ConstraintLayout,
     } else if (postData == null) {
       this.postCellHighlight = null
     }
+
+    var alpha = 1f
+
+    if (postData != null && postData.markSeenThreads && !postData.threadMode) {
+      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
+      if (alreadySeen) {
+        alpha = 0.65f
+      }
+    }
+
+    postImageThumbnailViewsContainer.setAlphaFast(alpha)
+    title.setAlphaFast(alpha)
+    icons.setAlphaFast(alpha)
+    comment.setAlphaFast(alpha)
+    replies.setAlphaFast(alpha)
+    goToPostButton.setAlphaFast(alpha)
+    divider.setAlphaFast(alpha)
+    postAttentionLabel.setAlphaFast(alpha)
+    imageFileName?.setAlphaFast(alpha)
   }
 
   private fun runBackgroundBlinkAnimation(theme: ChanTheme) {

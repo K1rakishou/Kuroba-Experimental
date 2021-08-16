@@ -155,6 +155,19 @@ abstract class ChanThreadDao {
   ): List<ChanThreadEntity>
 
   @Query("""
+        SELECT ${ChanThreadEntity.THREAD_ID_COLUMN_NAME}
+        FROM ${ChanThreadEntity.TABLE_NAME}
+        WHERE 
+            ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId
+        AND
+            ${ChanThreadEntity.THREAD_NO_COLUMN_NAME} IN (:threadNos)
+    """)
+  abstract suspend fun selectManyThreadIdsByThreadNos(
+    ownerBoardId: Long,
+    threadNos: Collection<Long>
+  ): List<Long>
+
+  @Query("""
         SELECT *
         FROM ${ChanThreadEntity.TABLE_NAME}
         WHERE ${ChanThreadEntity.OWNER_BOARD_ID_COLUMN_NAME} = :ownerBoardId

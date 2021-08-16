@@ -67,7 +67,7 @@ class CatalogStatusCell @JvmOverloads constructor(
       false
     ) as LinearLayout
 
-    setProgress(catalogPage)
+    setProgress(catalogPage, forced = true)
   }
 
   fun setPostAdapterCallback(postAdapterCallback: PostAdapter.PostAdapterCallback) {
@@ -95,12 +95,12 @@ class CatalogStatusCell @JvmOverloads constructor(
     reloadButton.setOnClickListener {
       postAdapterCallback?.loadCatalogPage()
 
-      setProgress(catalogPage)
+      setProgress(catalogPage, forced = true)
     }
   }
 
-  fun setProgress(nextPage: Int) {
-    if (catalogPage == nextPage) {
+  fun setProgress(nextPage: Int, forced: Boolean = false) {
+    if (catalogPage == nextPage && !forced) {
       return
     }
 

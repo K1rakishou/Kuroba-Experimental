@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.mapper.SeenPostMapper
@@ -53,6 +54,38 @@ open class SeenPostLocalSource(
     return seenPostDao.selectAllByThreadId(chanThreadEntity.threadId)
       .mapNotNull { seenPostEntity ->
         return@mapNotNull SeenPostMapper.fromEntity(threadDescriptor, seenPostEntity)
+      }
+  }
+
+  suspend fun selectAllByThreadDescriptors(
+    boardDescriptor: BoardDescriptor,
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+  ): List<SeenPost> {
+    ensureInTransaction()
+
+    val chanBoardEntity = chanBoardDao.selectBoardId(
+      boardDescriptor.siteName(),
+      boardDescriptor.boardCode
+    ) ?: return emptyList()
+
+    return threadDescriptors
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { threadDescriptorBatch ->
+        val threadNos = threadDescriptorBatch.map { threadDescriptor -> threadDescriptor.threadNo }
+
+        val threadIds = chanThreadDao.selectManyThreadIdsByThreadNos(
+          chanBoardEntity.boardId,
+          threadNos
+        )
+
+        return@flatMap seenPostDao.selectManyOriginalPostsByThreadId(threadIds)
+          .mapNotNull { seenPostEntity ->
+            val threadDescriptor = threadDescriptorBatch
+              .firstOrNull { threadDescriptor -> threadDescriptor.threadNo == seenPostEntity.postNo }
+              ?: return@mapNotNull null
+
+            return@mapNotNull SeenPostMapper.fromEntity(threadDescriptor, seenPostEntity)
+          }
       }
   }
 

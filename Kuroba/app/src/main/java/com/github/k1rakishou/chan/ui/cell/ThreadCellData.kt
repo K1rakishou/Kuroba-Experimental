@@ -13,20 +13,17 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
-import com.github.k1rakishou.model.data.post.SeenPost
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.joda.time.DateTime
 
 class ThreadCellData(
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _postFilterManager: Lazy<PostFilterManager>,
   private val seenPostsManager: Lazy<SeenPostsManager>,
   initialTheme: ChanTheme
-): Iterable<PostCellData>, PostCellData.ThreadCellDataCallback {
+): Iterable<PostCellData> {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
-  private val seenPostsMap: MutableMap<PostDescriptor, SeenPost> = mutableMapOf()
 
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
@@ -50,26 +47,6 @@ class ThreadCellData(
 
   override fun iterator(): Iterator<PostCellData> {
     return postCellDataList.iterator()
-  }
-
-  override fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost? {
-    if (!ChanSettings.markUnseenPosts.get()) {
-      return null
-    }
-
-    return seenPostsMap[postDescriptor]
-  }
-
-  override fun markPostAsSeen(postDescriptor: PostDescriptor, time: DateTime) {
-    if (!ChanSettings.markUnseenPosts.get()) {
-      return
-    }
-
-    if (seenPostsMap.containsKey(postDescriptor)) {
-      return
-    }
-
-    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, time)
   }
 
   suspend fun updateThreadData(
@@ -109,30 +86,6 @@ class ThreadCellData(
     if (postViewMode.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
-
-    mergeSeenPosts(isTheSameChanDescriptor, chanDescriptor, postDescriptors)
-  }
-
-  @Suppress("IfThenToSafeAccess")
-  private fun mergeSeenPosts(
-    isTheSameChanDescriptor: Boolean,
-    chanDescriptor: ChanDescriptor,
-    postDescriptors: List<PostDescriptor>
-  ) {
-    if (!isTheSameChanDescriptor) {
-      this.seenPostsMap.clear()
-    }
-
-    val loadedSeenPosts = seenPostsManager.get().getSeenPosts(chanDescriptor, postDescriptors)
-    if (loadedSeenPosts != null) {
-      loadedSeenPosts.entries.forEach { (postDescriptor, seenPost) ->
-        if (this.seenPostsMap.containsKey(postDescriptor)) {
-          return@forEach
-        }
-
-        this.seenPostsMap[postDescriptor] = seenPost
-      }
-    }
   }
 
   private suspend fun postIndexedListToPostCellDataList(
@@ -157,6 +110,7 @@ class ThreadCellData(
     val textOnly = ChanSettings.textOnly.get()
     val postFileInfo = ChanSettings.postFileInfo.get()
     val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor is ChanDescriptor.ThreadDescriptor
+    val markSeenThreads = ChanSettings.markSeenThreads.get() && chanDescriptor is ChanDescriptor.CatalogDescriptor
     val chanTheme = theme.fullCopy()
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
@@ -198,6 +152,7 @@ class ThreadCellData(
         textOnly = textOnly,
         postFileInfo = postFileInfo,
         markUnseenPosts = markUnseenPosts,
+        markSeenThreads = markSeenThreads,
         stub = filterStubMap[postDescriptor] ?: false,
         filterHash = filterHashMap[postDescriptor] ?: 0,
         filterHighlightedColor = filterHighlightedColorMap[postDescriptor] ?: 0,
@@ -207,7 +162,6 @@ class ThreadCellData(
       )
 
       postCellData.postCellCallback = postCellCallback
-      postCellData.threadCellDataCallback = this
       postCellData.preload()
 
       resultList += postCellData
@@ -235,26 +189,12 @@ class ThreadCellData(
   fun isEmpty(): Boolean = postCellDataList.isEmpty()
 
   fun cleanup() {
-    seenPostsMap.clear()
-
     postCellDataList.forEach { postCellData -> postCellData.cleanup() }
     postCellDataList.clear()
 
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
     error = null
-  }
-
-  fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor) {
-    if (chanDescriptor != _chanDescriptor) {
-      return
-    }
-
-    if (seenPostsMap.containsKey(postDescriptor)) {
-      return
-    }
-
-    seenPostsMap[postDescriptor] = SeenPost(postDescriptor, DateTime.now())
   }
 
   fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {

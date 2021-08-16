@@ -5,8 +5,8 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
-import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase
-import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -40,8 +40,8 @@ class ChanThreadManager(
   private val chanThreadsCache: ChanThreadsCache,
   private val chanPostRepository: ChanPostRepository,
   private val chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
-  private val threadDataPreloadUseCase: Lazy<ThreadDataPreloadUseCase>,
-  private val catalogDataPreloadUseCase: Lazy<CatalogDataPreloadUseCase>
+  private val threadDataPreloader: Lazy<ThreadDataPreloader>,
+  private val catalogDataPreloader: Lazy<CatalogDataPreloader>
 ) {
 
   // Only accessed on the main thread
@@ -81,6 +81,7 @@ class ChanThreadManager(
     return false
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun loadThreadOrCatalog(
     page: Int?,
     chanDescriptor: ChanDescriptor,
@@ -137,6 +138,17 @@ class ChanThreadManager(
 
       when (threadLoaderResult) {
         is ModularResult.Value -> {
+          when (chanDescriptor) {
+            is ChanDescriptor.ThreadDescriptor -> {
+              val preloadTime = measureTime { threadDataPreloader.get().postloadThreadInfo(chanDescriptor) }
+              Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadThreadInfo took $preloadTime")
+            }
+            is ChanDescriptor.CatalogDescriptor -> {
+              val preloadTime = measureTime { catalogDataPreloader.get().postloadCatalogInfo(chanDescriptor) }
+              Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadCatalogInfo took $preloadTime")
+            }
+          }
+
           return threadLoaderResult.value
         }
         is ModularResult.Error -> {
@@ -415,13 +427,12 @@ class ChanThreadManager(
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         val preloadTime = measureTime {
-          val params = ThreadDataPreloadUseCase.Params(chanDescriptor, isCached(chanDescriptor))
-          threadDataPreloadUseCase.get().execute(params)
+          threadDataPreloader.get().preloadThreadInfo(chanDescriptor, isCached(chanDescriptor))
         }
         Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadThreadInfo took $preloadTime")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        val preloadTime = measureTime { catalogDataPreloadUseCase.get().execute(chanDescriptor) }
+        val preloadTime = measureTime { catalogDataPreloader.get().preloadCatalogInfo(chanDescriptor) }
         Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadCatalogInfo took $preloadTime")
       }
     }

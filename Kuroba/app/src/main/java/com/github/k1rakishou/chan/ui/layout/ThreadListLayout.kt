@@ -1189,10 +1189,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     replyLayout.onImageOptionsComplete()
   }
 
-  fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor) {
-    postAdapter.onPostSeenInPopup(chanDescriptor, postDescriptor)
-  }
-
   data class ShowPostsResult @OptIn(ExperimentalTime::class) constructor(
     val result: Boolean,
     val applyFilterDuration: Duration,

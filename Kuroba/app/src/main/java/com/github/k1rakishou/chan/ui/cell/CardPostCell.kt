@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.animation.PostBackgroundBlinkAnimator.createPostBackgroundBlinkAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
@@ -38,6 +39,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
@@ -65,6 +67,8 @@ class CardPostCell : ConstraintLayout,
   lateinit var postHighlightManager: PostHighlightManager
   @Inject
   lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  @Inject
+  lateinit var seenPostsManager: Lazy<SeenPostsManager>
 
   private var postCellData: PostCellData? = null
   private var callback: PostCellCallback? = null
@@ -165,6 +169,21 @@ class CardPostCell : ConstraintLayout,
           postCellHighlight = postHighlight.fullCopy()
           bindBackgroundColor(themeEngine.chanTheme)
         }
+    }
+
+    if (postCellData.markSeenThreads && !postCellData.threadMode) {
+      scope.launch {
+        seenPostsManager.get().seenPostUpdatesFlow.collect { seenPostsSet ->
+          val thisPostBecameSeen = seenPostsSet
+            .any { seenPost -> seenPost.postDescriptor == postCellData.postDescriptor }
+
+          if (!thisPostBecameSeen) {
+            return@collect
+          }
+
+          bindBackgroundColor(themeEngine.chanTheme)
+        }
+      }
     }
 
     bindPost(postCellData)
@@ -401,6 +420,23 @@ class CardPostCell : ConstraintLayout,
     } else if (postData == null) {
       this.postCellHighlight = null
     }
+
+
+    var alpha = 1f
+
+    if (postData != null && postData.markSeenThreads && !postData.threadMode) {
+      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
+      if (alreadySeen) {
+        alpha = 0.65f
+      }
+    }
+
+    title.setAlphaFast(alpha)
+    icons.setAlphaFast(alpha)
+    comment.setAlphaFast(alpha)
+    replies.setAlphaFast(alpha)
+    filterMatchColor.setAlphaFast(alpha)
+    thumbView?.setAlphaFast(alpha)
   }
 
   private fun runBackgroundBlinkAnimation(backgroundView: View, theme: ChanTheme) {

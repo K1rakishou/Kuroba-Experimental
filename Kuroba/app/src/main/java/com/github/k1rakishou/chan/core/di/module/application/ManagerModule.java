@@ -77,10 +77,10 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
-import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloadUseCase;
+import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
-import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloadUseCase;
+import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
@@ -109,6 +109,7 @@ import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository;
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 
@@ -272,6 +273,7 @@ public class ManagerModule {
     public SeenPostsManager provideSeenPostsManager(
             CoroutineScope appScope,
             ChanThreadsCache chanThreadsCache,
+            ChanCatalogSnapshotCache chanCatalogSnapshotCache,
             SeenPostRepository seenPostRepository
     ) {
         Logger.deps("SeenPostsManager");
@@ -279,6 +281,7 @@ public class ManagerModule {
                 appScope,
                 ChanSettings.verboseLogs.get(),
                 chanThreadsCache,
+                chanCatalogSnapshotCache,
                 seenPostRepository
         );
     }
@@ -612,8 +615,8 @@ public class ManagerModule {
             ChanThreadsCache chanThreadsCache,
             ChanPostRepository chanPostRepository,
             Lazy<ChanThreadLoaderCoordinator> chanThreadLoaderCoordinator,
-            Lazy<ThreadDataPreloadUseCase> threadDataPreloadUseCase,
-            Lazy<CatalogDataPreloadUseCase> catalogDataPreloadUseCase
+            Lazy<ThreadDataPreloader> threadDataPreloadUseCase,
+            Lazy<CatalogDataPreloader> catalogDataPreloadUseCase
     ) {
         Logger.deps("ChanThreadManager");
         return new ChanThreadManager(

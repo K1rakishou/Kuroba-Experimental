@@ -592,10 +592,6 @@ class ThreadPresenter @Inject constructor(
   override fun onPostBind(postCellData: PostCellData) {
     BackgroundUtils.ensureMainThread()
 
-    if (postCellData.isInPopup) {
-      threadPresenterCallback?.onPostSeenInPopup(postCellData.chanDescriptor, postCellData.postDescriptor)
-    }
-
     postBindExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
 
@@ -606,7 +602,7 @@ class ThreadPresenter @Inject constructor(
       val postDescriptor = postCellData.postDescriptor
 
       onDemandContentLoaderManager.get().onPostBind(postDescriptor)
-      seenPostsManager.get().onPostBind(postDescriptor)
+      seenPostsManager.get().onPostBind(postCellData.threadMode, postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }
@@ -624,7 +620,7 @@ class ThreadPresenter @Inject constructor(
       val postDescriptor = postCellData.postDescriptor
 
       onDemandContentLoaderManager.get().onPostUnbind(postDescriptor, isActuallyRecycling)
-      seenPostsManager.get().onPostUnbind(postDescriptor)
+      seenPostsManager.get().onPostUnbind(postCellData.threadMode, postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }
@@ -2415,7 +2411,6 @@ class ThreadPresenter @Inject constructor(
     fun currentSpanCount(): Int
     fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
-    fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor)
   }
 
   companion object {

@@ -28,9 +28,7 @@ import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.data.post.SeenPost
 import com.github.k1rakishou.model.util.ChanPostUtils
-import org.joda.time.DateTime
 import java.util.*
 
 data class PostCellData(
@@ -51,6 +49,7 @@ data class PostCellData(
   val textOnly: Boolean,
   val postFileInfo: Boolean,
   val markUnseenPosts: Boolean,
+  val markSeenThreads: Boolean,
   var compact: Boolean,
   var stub: Boolean,
   val theme: ChanTheme,
@@ -62,7 +61,6 @@ data class PostCellData(
   val postCellThumbnailSizePercents: Int
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
-  var threadCellDataCallback: ThreadCellDataCallback? = null
 
   private var detailsSizePxPrecalculated: Int? = null
   private var postTitleStubPrecalculated: CharSequence? = null
@@ -215,6 +213,7 @@ data class PostCellData(
       textOnly = textOnly,
       postFileInfo = postFileInfo,
       markUnseenPosts = markUnseenPosts,
+      markSeenThreads = markSeenThreads,
       compact = compact,
       stub = stub,
       theme = theme,
@@ -231,7 +230,6 @@ data class PostCellData(
       newPostCellData.postTitleStubPrecalculated = postTitleStubPrecalculated
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
       newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
-      newPostCellData.threadCellDataCallback = threadCellDataCallback
     }
   }
 
@@ -617,11 +615,6 @@ data class PostCellData(
     }
   }
   // ^^^ When updating any of these don't forget to update the flags !!! ^^^
-
-  interface ThreadCellDataCallback {
-    fun getSeenPostOrNull(postDescriptor: PostDescriptor): SeenPost?
-    fun markPostAsSeen(postDescriptor: PostDescriptor, time: DateTime)
-  }
 
   companion object {
     private const val COMMENT_MAX_LENGTH_LIST = 350

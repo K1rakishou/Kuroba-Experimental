@@ -323,10 +323,6 @@ class PostAdapter(
     Logger.d(TAG, "setThread() notifyDataSetChanged called, postIndexedList.size=" + postIndexedList.size)
   }
 
-  fun onPostSeenInPopup(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor) {
-    threadCellData.onPostSeenInPopup(chanDescriptor, postDescriptor)
-  }
-
   fun cleanup() {
     updatingPosts.clear()
     threadCellData.cleanup()

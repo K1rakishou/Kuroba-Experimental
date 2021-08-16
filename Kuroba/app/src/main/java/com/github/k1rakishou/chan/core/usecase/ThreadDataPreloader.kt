@@ -15,19 +15,15 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
 
-class ThreadDataPreloadUseCase(
+class ThreadDataPreloader(
   private val seenPostsManager: Lazy<SeenPostsManager>,
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val savedReplyManager: Lazy<SavedReplyManager>,
   private val postHideManager: Lazy<PostHideManager>,
   private val chanPostRepository: Lazy<ChanPostRepository>,
-) : ISuspendUseCase<ThreadDataPreloadUseCase.Params, Unit> {
+) {
 
-  override suspend fun execute(parameter: Params) {
-    return preloadThreadInfo(parameter.threadDescriptor, parameter.isThreadCached)
-  }
-
-  private suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor, isThreadCached: Boolean) {
+  suspend fun preloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor, isThreadCached: Boolean) {
     Logger.d(TAG, "preloadThreadInfo($threadDescriptor) begin")
 
     supervisorScope {
@@ -53,10 +49,11 @@ class ThreadDataPreloadUseCase(
     Logger.d(TAG, "preloadThreadInfo($threadDescriptor) end")
   }
 
-  data class Params(
-    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    val isThreadCached: Boolean
-  )
+  suspend fun postloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    Logger.d(TAG, "postloadThreadInfo($threadDescriptor) begin")
+
+    Logger.d(TAG, "postloadThreadInfo($threadDescriptor) end")
+  }
 
   companion object {
     private const val TAG = "ThreadDataPreloadUseCase"
