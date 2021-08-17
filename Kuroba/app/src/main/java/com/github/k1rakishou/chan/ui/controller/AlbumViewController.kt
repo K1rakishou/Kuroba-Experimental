@@ -41,7 +41,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToIm
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
-import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
@@ -527,22 +526,22 @@ class AlbumViewController(
     private val ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN = "ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK"
 
     val cell = itemView as AlbumViewCell
-    val thumbnailView = cell.thumbnailView as PostImageThumbnailView
+    val thumbnailView = cell.postImageThumbnailView
 
     init {
-      thumbnailView.setOnImageClickListener(ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this)
-      thumbnailView.setOnImageLongClickListener(ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN, this)
+      thumbnailView.setImageClickListener(ALBUM_VIEW_CELL_THUMBNAIL_CLICK_TOKEN, this)
+      thumbnailView.setImageLongClickListener(ALBUM_VIEW_CELL_THUMBNAIL_LONG_CLICK_TOKEN, this)
     }
 
     override fun onClick(v: View) {
-      val postImage = postImages?.get(adapterPosition)
+      val postImage = postImages.getOrNull(adapterPosition)
         ?: return
 
       openImage(postImage)
     }
 
     override fun onLongClick(v: View): Boolean {
-      val postImage = postImages?.get(adapterPosition)
+      val postImage = postImages.getOrNull(adapterPosition)
         ?: return false
 
       showImageLongClickOptions(postImage)

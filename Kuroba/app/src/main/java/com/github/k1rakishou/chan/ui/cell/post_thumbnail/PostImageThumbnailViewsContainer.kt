@@ -100,7 +100,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     unbindPostImages()
 
-    if (postCellData.post.postImages.size <= 1) {
+    if (postCellData.postImages.size <= 1 || postCellData.postMultipleImagesCompactMode) {
       bindZeroOrOneImage(postCellData)
       return
     }
@@ -180,17 +180,15 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         // twice and more importantly inside RecyclerView bind call
         thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
           postCellCallback?.onThumbnailClicked(
-            chanDescriptor = postCellData.chanDescriptor,
-            postImage = postImage,
-            thumbnail = thumbnailView.getThumbnailView()
+            postCellData = postCellData,
+            postImage = postImage
           )
         }
         thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
           postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
           postCellCallback?.onThumbnailLongClicked(
             chanDescriptor = postCellData.chanDescriptor,
-            postImage = postImage,
-            thumbnail = thumbnailView.getThumbnailView()
+            postImage = postImage
           )
           return@setImageLongClickListener true
         }
@@ -220,7 +218,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       val imageUrl = prevChanPostImages[index].imageUrl?.toString()
       val actualThumbnailUrl = prevChanPostImages[index].actualThumbnailUrl?.toString()
       val spoilerThumbnailUrl = prevChanPostImages[index].spoilerThumbnailUrl?.toString()
-      val cachedImageUrl = postImageThumbnailViewContainer.actualThumbnailView.imageUrl
+      val cachedImageUrl = postImageThumbnailViewContainer.actualThumbnailView.imageUrl()
 
       if (cachedImageUrl != imageUrl && cachedImageUrl != actualThumbnailUrl && cachedImageUrl != spoilerThumbnailUrl) {
         return false
@@ -232,76 +230,77 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun bindZeroOrOneImage(postCellData: PostCellData) {
-    check(postCellData.post.postImages.size <= 1) {
-      "Bad post images count: ${postCellData.post.postImages.size}"
-    }
-
     if (postCellData.postImages.isEmpty()) {
       return
     }
+
+    val postImage = postCellData.firstImage
+      ?: return
 
     val postAlignmentMode = postCellData.postAlignmentMode
     val postCellCallback = postCellData.postCellCallback
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val resultThumbnailViews = mutableListOf<PostImageThumbnailViewContract>()
 
-    for (postImage in postCellData.postImages) {
-      if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
-        continue
-      }
-
-      val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(0, postAlignmentMode)
-
-      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
-      thumbnailView.setViewId(View.generateViewId())
-      thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
-      thumbnailView.bindPostInfo(postCellData, postImage)
-
-      if (postCellData.isSelectionMode) {
-        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
-        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN, null)
-
-        // We need to explicitly set clickable/long clickable to false here because calling
-        // setOnClickListener/setOnLongClickListener will automatically set them to true even if
-        // the listeners are null.
-        thumbnailView.setImageClickable(false)
-        thumbnailView.setImageLongClickable(false)
-      } else {
-        thumbnailView.setImageClickable(true)
-        thumbnailView.setImageLongClickable(true)
-
-        // Always set the click listener to avoid check the file cache (which will touch the
-        // disk and if you are not lucky enough it may freeze for quite a while). We do all
-        // the necessary checks when clicking an image anyway, so no point in doing them
-        // twice and more importantly inside RecyclerView bind call
-        thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
-          postCellCallback?.onThumbnailClicked(
-            chanDescriptor = postCellData.chanDescriptor,
-            postImage = postImage,
-            thumbnail = thumbnailView.getThumbnailView()
-          )
-        }
-        thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
-          postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
-          postCellCallback?.onThumbnailLongClicked(
-            chanDescriptor = postCellData.chanDescriptor,
-            postImage = postImage,
-            thumbnail = thumbnailView.getThumbnailView()
-          )
-          return@setImageLongClickListener true
-        }
-      }
-
-      if (needAddToParent) {
-        val layoutParams = ViewGroup.LayoutParams(
-          ViewGroup.LayoutParams.WRAP_CONTENT,
-          ViewGroup.LayoutParams.WRAP_CONTENT
-        )
-        this.addView(thumbnailView, layoutParams)
-      }
-
-      resultThumbnailViews += thumbnailView
+    if (postImage.imageUrl == null && postImage.actualThumbnailUrl == null) {
+      return
     }
+
+    val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(0, postAlignmentMode)
+
+    thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
+    thumbnailView.setViewId(View.generateViewId())
+    thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
+    thumbnailView.bindPostInfo(postCellData, postImage)
+
+    if (postCellData.isSelectionMode) {
+      thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN, null)
+      thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN, null)
+
+      // We need to explicitly set clickable/long clickable to false here because calling
+      // setOnClickListener/setOnLongClickListener will automatically set them to true even if
+      // the listeners are null.
+      thumbnailView.setImageClickable(false)
+      thumbnailView.setImageLongClickable(false)
+    } else {
+      thumbnailView.setImageClickable(true)
+      thumbnailView.setImageLongClickable(true)
+
+      // Always set the click listener to avoid check the file cache (which will touch the
+      // disk and if you are not lucky enough it may freeze for quite a while). We do all
+      // the necessary checks when clicking an image anyway, so no point in doing them
+      // twice and more importantly inside RecyclerView bind call
+      thumbnailView.setImageClickListener(THUMBNAIL_CLICK_TOKEN) {
+        postCellCallback?.onThumbnailClicked(
+          postCellData = postCellData,
+          postImage = postImage
+        )
+      }
+      thumbnailView.setImageLongClickListener(THUMBNAIL_LONG_CLICK_TOKEN) {
+        postCellThumbnailCallbacks?.requestParentDisallowInterceptTouchEvents(true)
+        postCellCallback?.onThumbnailLongClicked(
+          chanDescriptor = postCellData.chanDescriptor,
+          postImage = postImage
+        )
+        return@setImageLongClickListener true
+      }
+      thumbnailView.setImageOmittedFilesClickListener(THUMBNAIL_OMITTED_FILES_CLICK_TOKEN) {
+        postCellCallback?.onThumbnailOmittedFilesClicked(
+          postCellData = postCellData,
+          postImage = postImage
+        )
+      }
+    }
+
+    if (needAddToParent) {
+      val layoutParams = ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.WRAP_CONTENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      )
+      this.addView(thumbnailView, layoutParams)
+    }
+
+    resultThumbnailViews += thumbnailView
 
     removeExtraViewsIfNeeded(resultThumbnailViews.size)
     thumbnailViews = resultThumbnailViews
@@ -587,6 +586,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"
     const val THUMBNAIL_LONG_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_LONG_CLICK"
+    const val THUMBNAIL_OMITTED_FILES_CLICK_TOKEN = "THUMBNAIL_OMITTED_FILES_CLICK_TOKEN"
 
     const val PRE_BIND = 0
     const val BIND = 1

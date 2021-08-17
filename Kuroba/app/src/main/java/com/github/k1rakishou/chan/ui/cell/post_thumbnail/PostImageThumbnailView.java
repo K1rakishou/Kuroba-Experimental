@@ -25,21 +25,26 @@ import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 import android.util.AttributeSet;
 import android.view.View;
+import android.widget.FrameLayout;
+import android.widget.TextView;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.PrefetchState;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
+import com.github.k1rakishou.chan.ui.cell.PostCellData;
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.ThrottlingClicksKt;
 import com.github.k1rakishou.core_logger.Logger;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 import com.github.k1rakishou.model.data.post.ChanPostImageType;
 
@@ -52,7 +57,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import okhttp3.HttpUrl;
 
-public class PostImageThumbnailView extends ThumbnailView implements PostImageThumbnailViewContract {
+public class PostImageThumbnailView extends FrameLayout implements PostImageThumbnailViewContract {
     private static final String TAG = "PostImageThumbnailView";
     private static final float prefetchIndicatorMargin = dp(4);
     private static final int prefetchIndicatorSize = dp(16);
@@ -60,11 +65,19 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
 
     @Inject
     Lazy<PrefetchStateManager> prefetchStateManager;
+    @Inject
+    ThemeEngine themeEngine;
+    @Inject
+    CacheHandler cacheHandler;
 
     @Nullable
     private ChanPostImage postImage;
     @Nullable
     private Boolean canUseHighResCells;
+
+    private ThumbnailView thumbnail;
+    private FrameLayout thumbnailOmittedFilesCountContainer;
+    private TextView thumbnailOmittedFilesCount;
 
     private float ratio = 0f;
     private boolean prefetchingEnabled = false;
@@ -88,19 +101,31 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
         super(context, attrs, defStyle);
 
-        AppModuleAndroidUtils.extractActivityComponent(getContext())
-                .inject(this);
+        if (!isInEditMode()) {
+            AppModuleAndroidUtils.extractActivityComponent(getContext())
+                    .inject(this);
 
-        setWillNotDraw(false);
+            setWillNotDraw(false);
 
-        this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
+            this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
+        }
+
+        inflate(context, R.layout.post_image_thumbnail_view, this);
+
+        thumbnail = findViewById(R.id.thumbnail_view);
+        thumbnailOmittedFilesCountContainer = findViewById(R.id.thumbnail_omitted_files_count_container);
+        thumbnailOmittedFilesCount = findViewById(R.id.thumbnail_omitted_files_count);
+    }
+
+    public String imageUrl() {
+        return thumbnail.getImageUrl();
     }
 
     @Override
     public void bindPostImage(
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
-            @NonNull ThumbnailViewOptions thumbnailViewOptions
+            @NonNull ThumbnailView.ThumbnailViewOptions thumbnailViewOptions
     ) {
         bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions);
     }
@@ -118,7 +143,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     @NonNull
     @Override
     public ThumbnailView getThumbnailView() {
-        return this;
+        return thumbnail;
     }
 
     @Override
@@ -151,11 +176,20 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     }
 
     @Override
+    public void setImageOmittedFilesClickListener(@NonNull String token, @Nullable OnClickListener listener) {
+        ThrottlingClicksKt.setOnThrottlingClickListener(thumbnailOmittedFilesCount, token, listener);
+    }
+
+    public void onThumbnailViewClicked(@NotNull OnClickListener listener) {
+        thumbnail.onThumbnailViewClicked(listener);
+    }
+
+    @Override
     public void unbindPostImage() {
         this.postImage = null;
         this.canUseHighResCells = null;
 
-        unbindImageUrl();
+        thumbnail.unbindImageUrl();
         compositeDisposable.clear();
     }
 
@@ -163,7 +197,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             @NonNull ChanPostImage postImage,
             boolean canUseHighResCells,
             boolean forcedAfterPrefetchFinished,
-            @NonNull ThumbnailViewOptions thumbnailViewOptions
+            @NonNull ThumbnailView.ThumbnailViewOptions thumbnailViewOptions
     ) {
         if (postImage.equals(this.postImage) && !forcedAfterPrefetchFinished) {
             return;
@@ -197,12 +231,23 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             return;
         }
 
-        bindImageUrl(
+        thumbnail.bindImageUrl(
                 url,
                 postImage.getOwnerPostDescriptor(),
                 ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
                 thumbnailViewOptions
         );
+    }
+
+    public void bindPostInfo(@NotNull PostCellData postCellData) {
+        if (postCellData.getPostMultipleImagesCompactMode() && postCellData.getPostImages().size() > 1) {
+            int imagesCount = postCellData.getPostImages().size() - 1;
+
+            thumbnailOmittedFilesCountContainer.setVisibility(View.VISIBLE);
+            thumbnailOmittedFilesCount.setText("+" + imagesCount);
+        } else {
+            thumbnailOmittedFilesCountContainer.setVisibility(View.GONE);
+        }
     }
 
     private void onPrefetchStateChanged(PrefetchState prefetchState) {
@@ -244,7 +289,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             }
 
             if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {
-                ThumbnailViewOptions thumbnailViewOptions = getThumbnailViewOptions();
+                ThumbnailView.ThumbnailViewOptions thumbnailViewOptions = thumbnail.getThumbnailViewOptions();
                 if (thumbnailViewOptions != null) {
                     bindPostImage(postImage, canUseHighResCells, true, thumbnailViewOptions);
                 }
@@ -265,7 +310,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
         boolean highRes = canUseHighResCells
                 && ChanSettings.highResCells.get()
                 && postImage.canBeUsedAsHighResolutionThumbnail()
-                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler.get(), postImage);
+                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage);
 
         boolean hasImageUrl = postImage.getImageUrl() != null;
         boolean prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
@@ -287,7 +332,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
     public void draw(Canvas canvas) {
         super.draw(canvas);
 
-        if (postImage != null && postImage.isPlayableType() && !error) {
+        if (postImage != null && postImage.isPlayableType() && !thumbnail.getError()) {
             int iconScale = 1;
             double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
             int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);
@@ -304,7 +349,7 @@ public class PostImageThumbnailView extends ThumbnailView implements PostImageTh
             playIcon.draw(canvas);
         }
 
-        if (segmentedCircleDrawable != null && showPrefetchLoadingIndicator && !error && prefetching) {
+        if (segmentedCircleDrawable != null && showPrefetchLoadingIndicator && !thumbnail.getError() && prefetching) {
             canvas.save();
             canvas.translate(prefetchIndicatorMargin, prefetchIndicatorMargin);
 

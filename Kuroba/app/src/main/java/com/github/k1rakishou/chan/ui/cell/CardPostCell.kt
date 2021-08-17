@@ -217,7 +217,7 @@ class CardPostCell : ConstraintLayout,
   }
 
   override fun getThumbnailView(postImage: ChanPostImage): ThumbnailView? {
-    return thumbView
+    return thumbView?.getThumbnailView()
   }
 
   override fun hasOverlappingRendering(): Boolean {
@@ -245,11 +245,18 @@ class CardPostCell : ConstraintLayout,
 
     content.setBackgroundResource(R.drawable.item_background)
 
-    thumbView = findViewById<PostImageThumbnailView>(R.id.thumbnail).apply {
+    thumbView = findViewById<PostImageThumbnailView>(R.id.card_post_cell_thumbnail).apply {
       setRatio(16f / 13f)
-      setOnImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {
-        callback?.onThumbnailClicked(postCellData.chanDescriptor, postCellData.post.firstImage()!!, thumbView!!)
+
+      val firstImage = postCellData.firstImage!!
+
+      setImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {
+        callback?.onThumbnailClicked(postCellData, firstImage)
       }
+      setImageOmittedFilesClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_OMITTED_FILES_CLICK_TOKEN) {
+        callback?.onThumbnailOmittedFilesClicked(postCellData, firstImage)
+      }
+      bindPostInfo(postCellData)
     }
 
     title = findViewById(R.id.title)
@@ -355,17 +362,16 @@ class CardPostCell : ConstraintLayout,
       )
     )
 
-    thumbView?.setOnImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {
+    thumbView?.setImageLongClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_LONG_CLICK_TOKEN) {
       if (this.postCellData == null) {
-        return@setOnImageLongClickListener false
+        return@setImageLongClickListener false
       }
 
       callback?.onThumbnailLongClicked(
         this.postCellData!!.chanDescriptor,
-        this.postCellData!!.post.firstImage()!!,
-        thumbView!!
+        this.postCellData!!.post.firstImage()!!
       )
-      return@setOnImageLongClickListener true
+      return@setImageLongClickListener true
     }
 
     this.prevPostImage = firstPostImage.copy()

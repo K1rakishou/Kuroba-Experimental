@@ -165,6 +165,15 @@ class AppearanceSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.PostGroup.PostMultipleImagesCompactMode,
+          topDescriptionIdFunc = { R.string.setting_post_multiple_images_compact_mode },
+          bottomDescriptionIdFunc = { R.string.setting_post_multiple_images_compact_mode_description },
+          setting = ChanSettings.postMultipleImagesCompactMode,
+          requiresUiRefresh = true
+        )
+
         group += ListSettingV2.createBuilder<ChanSettings.PostAlignmentMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.CatalogPostAlignmentMode,

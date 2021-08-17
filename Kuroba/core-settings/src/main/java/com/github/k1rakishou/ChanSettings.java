@@ -292,6 +292,7 @@ public class ChanSettings {
     public static BooleanSetting markRepliesToYourPostOnScrollbar;
     public static BooleanSetting markCrossThreadQuotesOnScrollbar;
     public static BooleanSetting shiftPostComment;
+    public static BooleanSetting postMultipleImagesCompactMode;
 
     // Post links parsing
     public static OptionsSetting<NetworkContentAutoLoadMode> parseYoutubeTitlesAndDuration;
@@ -486,6 +487,7 @@ public class ChanSettings {
             markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
             shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
+            postMultipleImagesCompactMode = new BooleanSetting(provider, "post_multiple_images_compact_mode", true);
 
             // Post links parsing
             parseYoutubeTitlesAndDuration = new OptionsSetting<>(

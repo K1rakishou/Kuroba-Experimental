@@ -20,9 +20,11 @@ import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
+import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Slider
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
@@ -37,6 +39,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -351,5 +354,22 @@ fun Modifier.kurobaClickable(
         onClick = onClick ?: defaultNoopClickCallback
       )
     )
+  }
+}
+
+@Composable
+fun KurobaComposeCardView(
+  modifier: Modifier = Modifier,
+  shape: Shape = MaterialTheme.shapes.medium,
+  content: @Composable () -> Unit
+) {
+  val chanTheme = LocalChanTheme.current
+
+  Card(
+    modifier = modifier,
+    shape = shape,
+    backgroundColor = chanTheme.backColorCompose
+  ) {
+    content()
   }
 }

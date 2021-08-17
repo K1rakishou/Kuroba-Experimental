@@ -401,7 +401,7 @@ class BrowseController(
 
   private fun searchClicked(item: ToolbarMenuItem) {
     val presenter = threadLayout.presenter
-    if (!presenter.isBoundAndHasPosts || chanDescriptor == null) {
+    if (!presenter.isBoundAndCached || chanDescriptor == null) {
       return
     }
 

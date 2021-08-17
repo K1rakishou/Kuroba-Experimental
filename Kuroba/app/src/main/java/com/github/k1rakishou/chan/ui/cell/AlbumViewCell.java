@@ -144,7 +144,7 @@ public class AlbumViewCell extends FrameLayout {
         return postImage;
     }
 
-    public ThumbnailView getThumbnailView() {
+    public PostImageThumbnailView getPostImageThumbnailView() {
         return thumbnailView;
     }
 

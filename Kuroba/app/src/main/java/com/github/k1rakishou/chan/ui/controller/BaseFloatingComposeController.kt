@@ -14,7 +14,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -61,19 +60,17 @@ abstract class BaseFloatingComposeController(
               color = backgroundColor,
               modifier = Modifier.fillMaxSize()
             ) {
-              Box(modifier = Modifier.fillMaxSize()) {
-                Box(
-                  modifier = Modifier
-                    .padding(
-                      start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr),
-                      end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr),
-                      top = currentPaddings.calculateTopPadding(),
-                      bottom = currentPaddings.calculateBottomPadding()
-                    )
-                    .align(Alignment.TopEnd)
-                ) {
-                  BuildContent()
-                }
+              Box(
+                modifier = Modifier
+                  .fillMaxSize()
+                  .padding(
+                    start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr),
+                    end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr),
+                    top = currentPaddings.calculateTopPadding(),
+                    bottom = currentPaddings.calculateBottomPadding()
+                  )
+              ) {
+                BuildContent()
               }
             }
           }

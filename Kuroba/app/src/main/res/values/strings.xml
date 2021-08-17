@@ -163,6 +163,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="card_stats_replies_compact">%1$dR</string>
     <string name="card_stats_images_compact">%1$dI</string>
     <string name="card_stats_page_compact">Pg %1$d</string>
+    <string name="post_multiple_images_compact_mode_file_info">%1$d files, %2$s</string>
+
     <string name="action_reload">Reload</string>
     <string name="action_thread_download">Thread download</string>
     <string name="action_pin">Bookmark</string>
@@ -694,6 +696,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_post_draw_post_thumbnail_background">Draw background behind post thumbnails</string>
     <string name="setting_post_file_info">Show file info on posts</string>
     <string name="setting_post_shift_post_comment">Shift post comment to be of the left/right side of thumbnail when possible</string>
+    <string name="setting_post_multiple_images_compact_mode">Post multiple images compact mode</string>
+    <string name="setting_post_multiple_images_compact_mode_description">When enabled, all posts with multiple images will only show the first image. Clicking it will show the rest.</string>
     <string name="settings_group_images">Images</string>
     <string name="setting_text_only">Text-only mode</string>
     <string name="setting_text_only_description">Remove images when in board and thread view</string>

@@ -81,7 +81,7 @@ class PostImageThumbnailViewContainer(
   }
 
   override fun getThumbnailView(): ThumbnailView {
-    return actualThumbnailView
+    return actualThumbnailView.getThumbnailView()
   }
 
   override fun equalUrls(chanPostImage: ChanPostImage): Boolean {
@@ -109,6 +109,10 @@ class PostImageThumbnailViewContainer(
 
   override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {
     this.setOnThrottlingLongClickListener(token, listener)
+  }
+
+  override fun setImageOmittedFilesClickListener(token: String, listener: OnClickListener?) {
+    actualThumbnailView.setImageOmittedFilesClickListener(token, listener)
   }
 
   override fun bindPostImage(
@@ -139,7 +143,9 @@ class PostImageThumbnailViewContainer(
     val imagesCount = postCellData.postImages.size
     val postAlignmentMode = postCellData.postAlignmentMode
 
-    if (imagesCount > 1
+    if (
+      imagesCount > 1
+      && !postCellData.postMultipleImagesCompactMode
       && (postCellData.searchMode || postCellData.postFileInfo)
       && postFileInfo.isNotNullNorBlank()
     ) {
@@ -169,6 +175,8 @@ class PostImageThumbnailViewContainer(
       postFileNameInfoTextView.setVisibilityFast(View.GONE)
       fileInfoContainerGroup.setVisibilityFast(View.GONE)
     }
+
+    actualThumbnailView.bindPostInfo(postCellData)
   }
 
   override fun onThemeChanged() {

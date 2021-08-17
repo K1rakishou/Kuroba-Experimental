@@ -419,7 +419,7 @@ class PostCell : ConstraintLayout,
       return false
     }
 
-    val firstImage = postCellData.postImages.firstOrNull()
+    val firstImage = postCellData.firstImage
       ?: return false
 
     val postFileInfo = postCellData.postFileInfoMap[firstImage]
@@ -507,12 +507,12 @@ class PostCell : ConstraintLayout,
     val imgFilename = imageFileName
       ?: return
 
-    if (postCellData.postImages.size != 1 || !postCellData.postFileInfo) {
+    if (!postCellData.showImageFileNameForSingleImage) {
       imgFilename.setVisibilityFast(GONE)
       return
     }
 
-    val image = postCellData.postImages.firstOrNull()
+    val image = postCellData.firstImage
     if (image == null) {
       imgFilename.setVisibilityFast(GONE)
       return
@@ -855,17 +855,11 @@ class PostCell : ConstraintLayout,
     comment.typeface = Typeface.DEFAULT
     comment.setTextColor(theme.textColorPrimary)
 
-    val newVisibility = when {
-      fullPostComment.isEmpty() -> {
-        if (postCellData.singleImageMode || postCellData.postImages.isEmpty()) {
-          View.GONE
-        } else {
-          View.VISIBLE
-        }
-      }
-      else -> {
-        View.VISIBLE
-      }
+    val newVisibility = if (fullPostComment.isEmpty()
+      && (postCellData.singleImageMode || postCellData.postImages.isEmpty())) {
+      View.GONE
+    } else {
+      View.VISIBLE
     }
 
     comment.setVisibilityFast(newVisibility)

@@ -46,10 +46,10 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
-import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
@@ -189,7 +189,7 @@ class ThreadPresenter @Inject constructor(
       return true
     }
 
-  val isBoundAndHasPosts: Boolean
+  val isBoundAndCached: Boolean
     get() {
       if (!isBound) {
         return false
@@ -1083,7 +1083,37 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onThumbnailClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailClicked(
+    postCellData: PostCellData,
+    postImage: ChanPostImage
+  ) {
+    if (!isBound) {
+      return
+    }
+
+    onThumbnailClickedInternal(postCellData, postImage)
+  }
+
+  override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {
+    if (!isBound) {
+      return
+    }
+
+    if (!postCellData.postMultipleImagesCompactMode) {
+      return
+    }
+
+    val postOmittedImagesController = PostOmittedImagesController(
+      postImages = postCellData.postImages,
+      onImageClicked = { clickedPostImage -> onThumbnailClickedInternal(postCellData, clickedPostImage) },
+      onImageLongClicked = { clickedPostImage -> onThumbnailLongClicked(postCellData.chanDescriptor, clickedPostImage) },
+      context = context
+    )
+
+    threadPresenterCallback?.presentController(postOmittedImagesController, animate = true)
+  }
+
+  private fun onThumbnailClickedInternal(postCellData: PostCellData, postImage: ChanPostImage) {
     if (!isBound) {
       return
     }
@@ -1093,10 +1123,14 @@ class ThreadPresenter @Inject constructor(
     val transitionThumbnailUrl = postImage.getThumbnailUrl()?.toString()
       ?: return
 
-    threadPresenterCallback?.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
+    threadPresenterCallback?.showImages(
+      postCellData.chanDescriptor,
+      initialImageUrl,
+      transitionThumbnailUrl
+    )
   }
 
-  override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage, thumbnail: ThumbnailView) {
+  override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {
     if (!isBound) {
       return
     }

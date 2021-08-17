@@ -353,6 +353,7 @@ sealed class AppearanceScreen(
     object DrawPostThumbnailBackground : PostGroup("draw_post_thumbnail_background")
     object PostFileInfo : PostGroup("post_file_info")
     object ShiftPostComment : PostGroup("shift_post_comment")
+    object PostMultipleImagesCompactMode : PostGroup("post_multiple_images_compact_mode")
     object TextOnly : PostGroup("text_only")
     object RevealTextSpoilers : PostGroup("reveal_text_spoilers")
     object Anonymize : PostGroup("anonymize")

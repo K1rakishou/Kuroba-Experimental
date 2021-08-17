@@ -62,7 +62,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   private var imageForeground: Drawable? = null
 
   @JvmField
-  protected var error = false
+  protected var _error = false
+
+  val error: Boolean
+    get() = _error
 
   private val textPaint = Paint(Paint.ANTI_ALIAS_FLAG)
   private val backgroundPaint = Paint(Paint.ANTI_ALIAS_FLAG)
@@ -213,7 +216,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   private fun cleanupImage() {
-    error = false
+    _error = false
     alphaAnimator.end()
 
     _imageUrl = null
@@ -225,7 +228,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   override fun onSetAlpha(alpha: Int): Boolean {
-    if (error) {
+    if (_error) {
       textPaint.alpha = alpha
     } else {
       drawable?.alpha = alpha
@@ -252,7 +255,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
-    if (error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
+    if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
       cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
       bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
       return
@@ -268,7 +271,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     }
 
     setOnThrottlingLongClickListener(token) { view ->
-      if (error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
+      if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
         cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
         bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
         return@setOnThrottlingLongClickListener true
@@ -290,7 +293,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     val width = width - paddingLeft - paddingRight
     val height = height - paddingTop - paddingBottom
 
-    if (error) {
+    if (_error) {
       canvas.save()
       textPaint.getTextBounds(errorText, 0, errorText!!.length, tmpTextRect)
       val x = width / 2f - tmpTextRect.exactCenterX()
@@ -349,7 +352,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
           return
         }
 
-        this@ThumbnailView.error = false
+        this@ThumbnailView._error = false
         this@ThumbnailView.errorText = null
 
         setImageBitmap(drawable.bitmap)
@@ -364,7 +367,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
           return
         }
 
-        this@ThumbnailView.error = true
+        this@ThumbnailView._error = true
         this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_404)
 
         onImageSet(false)
@@ -395,7 +398,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
         Logger.e(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}")
 
-        this@ThumbnailView.error = true
+        this@ThumbnailView._error = true
         this@ThumbnailView.errorText = AppModuleAndroidUtils.getString(R.string.thumbnail_load_failed_network)
 
         onImageSet(false)

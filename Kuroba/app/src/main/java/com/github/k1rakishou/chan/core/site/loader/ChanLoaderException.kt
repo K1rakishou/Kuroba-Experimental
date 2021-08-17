@@ -7,6 +7,8 @@ import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
+import com.squareup.moshi.JsonDataException
+import com.squareup.moshi.JsonEncodingException
 import okhttp3.HttpUrl
 import java.net.SocketException
 import java.net.SocketTimeoutException
@@ -44,6 +46,8 @@ open class ChanLoaderException(
             getString(R.string.thread_load_failed_ssl)
           }
         }
+        is JsonDataException,
+        is JsonEncodingException,
         is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
         is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
           getString(R.string.thread_load_failed_cloud_flare_detected)

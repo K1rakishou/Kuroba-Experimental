@@ -35,7 +35,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:orientation="vertical">
 
             <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
-                android:id="@+id/thumbnail"
+                android:id="@+id/card_post_cell_thumbnail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 

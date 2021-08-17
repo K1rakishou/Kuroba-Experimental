@@ -111,6 +111,7 @@ import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
 import com.github.k1rakishou.chan.ui.controller.LogsController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.controller.PostLinksController;
+import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController;
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController;
 import com.github.k1rakishou.chan.ui.controller.ReportController;
 import com.github.k1rakishou.chan.ui.controller.ReportProblemController;
@@ -261,6 +262,7 @@ public interface ActivityComponent {
     void inject(ThreadDownloaderSettingsController threadDownloaderSettingsController);
     void inject(LocalArchiveController localArchiveController);
     void inject(SearxImageSearchController searxImageSearchController);
+    void inject(PostOmittedImagesController postOmittedImagesController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.cell
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.mutableListWithCap
@@ -20,7 +19,6 @@ import kotlinx.coroutines.withContext
 class ThreadCellData(
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _postFilterManager: Lazy<PostFilterManager>,
-  private val seenPostsManager: Lazy<SeenPostsManager>,
   initialTheme: ChanTheme
 ): Iterable<PostCellData> {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
@@ -128,6 +126,10 @@ class ThreadCellData(
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
 
+      val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
+        && postViewMode != PostCellData.PostViewMode.Search
+        && postIndexed.post.postImages.size > 1
+
       val boardPage = boardPages?.boardPages
         ?.firstOrNull { boardPage -> boardPage.threads[postDescriptor.threadDescriptor()] != null }
 
@@ -149,6 +151,7 @@ class ThreadCellData(
         tapNoReply = tapNoReply,
         postFullDate = postFullDate,
         shiftPostComment = shiftPostComment,
+        postMultipleImagesCompactMode = postMultipleImagesCompactMode,
         textOnly = textOnly,
         postFileInfo = postFileInfo,
         markUnseenPosts = markUnseenPosts,

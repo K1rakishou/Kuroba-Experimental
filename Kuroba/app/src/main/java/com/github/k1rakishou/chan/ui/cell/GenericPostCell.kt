@@ -86,6 +86,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
     val stub = postCellData.stub
     val postViewMode = postCellData.boardPostViewMode
     val post = postCellData.post
+    val postMultipleImagesCompactMode = postCellData.postMultipleImagesCompactMode
 
     if (stub) {
       return R.layout.cell_post_stub
@@ -100,7 +101,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
 
     when (postViewMode) {
       BoardPostViewMode.LIST -> {
-        if (post.postImages.size <= 1) {
+        if (post.postImages.size <= 1 || postMultipleImagesCompactMode) {
           when (postAlignmentMode) {
             ChanSettings.PostAlignmentMode.AlignLeft -> {
               return R.layout.cell_post_zero_or_single_thumbnails_left_alignment

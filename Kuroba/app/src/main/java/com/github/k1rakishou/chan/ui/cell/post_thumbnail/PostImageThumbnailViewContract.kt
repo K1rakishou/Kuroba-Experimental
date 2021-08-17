@@ -14,6 +14,7 @@ interface PostImageThumbnailViewContract {
   fun setImageLongClickable(longClickable: Boolean)
   fun setImageClickListener(token: String, listener: View.OnClickListener?)
   fun setImageLongClickListener(token: String, listener: View.OnLongClickListener?)
+  fun setImageOmittedFilesClickListener(token: String, listener: View.OnClickListener?)
 
   fun bindPostImage(postImage: ChanPostImage, canUseHighResCells: Boolean, thumbnailViewOptions: ThumbnailView.ThumbnailViewOptions)
   fun unbindPostImage()

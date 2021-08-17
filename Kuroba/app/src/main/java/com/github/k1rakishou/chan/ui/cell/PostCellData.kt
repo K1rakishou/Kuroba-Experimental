@@ -46,6 +46,7 @@ data class PostCellData(
   val tapNoReply: Boolean,
   val postFullDate: Boolean,
   val shiftPostComment: Boolean,
+  val postMultipleImagesCompactMode: Boolean,
   val textOnly: Boolean,
   val postFileInfo: Boolean,
   val markUnseenPosts: Boolean,
@@ -84,6 +85,8 @@ data class PostCellData(
     get() = post.postComment.comment()
   val postImages: List<ChanPostImage>
     get() = post.postImages
+  val firstImage: ChanPostImage?
+    get() = postImages.firstOrNull()
   val postIcons: List<ChanPostHttpIcon>
     get() = post.postIcons
   val isDeleted: Boolean
@@ -101,7 +104,7 @@ data class PostCellData(
   val repliesFromCount: Int
     get() = post.repliesFromCount
   val singleImageMode: Boolean
-    get() = post.postImages.size == 1
+    get() = postImages.size == 1 || (postImages.isNotEmpty() && postMultipleImagesCompactMode)
   val isInPopup: Boolean
     get() = postViewMode == PostViewMode.RepliesPopup
       || postViewMode == PostViewMode.ExternalPostsPopup
@@ -114,6 +117,9 @@ data class PostCellData(
     get() = postViewMode == PostViewMode.Search
   val markedNo: Long
     get() = markedPostNo ?: -1
+
+  val showImageFileNameForSingleImage: Boolean
+    get() = singleImageMode && postFileInfo
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(textSizeSp - 4.toFloat()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
@@ -210,6 +216,7 @@ data class PostCellData(
       tapNoReply = tapNoReply,
       postFullDate = postFullDate,
       shiftPostComment = shiftPostComment,
+      postMultipleImagesCompactMode = postMultipleImagesCompactMode,
       textOnly = textOnly,
       postFileInfo = postFileInfo,
       markUnseenPosts = markUnseenPosts,
@@ -401,19 +408,32 @@ data class PostCellData(
     val resultMap = mutableMapOf<ChanPostImage, SpannableString>()
     val detailsSizePx = sp(textSizeSp - 4.toFloat())
 
-    postImages.forEach { postImage ->
-      val fileInfoText = SpannableStringBuilder()
-      fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
-      fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
+    if (postImages.size > 1 && postMultipleImagesCompactMode) {
+      val postImage = postImages.first()
+      val totalFileSizeString = ChanPostUtils.getReadableFileSize(postImages.sumOf { image -> image.size })
 
-      if (postImages.size == 1) {
-        fileInfoText.append(postImage.formatImageInfo())
-      }
-
+      val fileInfoText = SpannableString.valueOf(
+        getString(R.string.post_multiple_images_compact_mode_file_info, postImages.size, totalFileSizeString)
+      )
       fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
       fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
 
-      resultMap[postImage] = SpannableString.valueOf(fileInfoText)
+      resultMap[postImage] = fileInfoText
+    } else {
+      postImages.forEach { postImage ->
+        val fileInfoText = SpannableStringBuilder()
+        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
+        fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
+
+        if (postImages.size == 1) {
+          fileInfoText.append(postImage.formatImageInfo())
+        }
+
+        fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
+        fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
+
+        resultMap[postImage] = SpannableString.valueOf(fileInfoText)
+      }
     }
 
     return resultMap

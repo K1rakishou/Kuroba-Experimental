@@ -84,7 +84,6 @@ class PostRepliesPopupController(
       clickedPostDescriptor = data.forPostWithDescriptor,
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       postFilterManager = postFilterManager,
-      seenPostsManager = seenPostsManager,
       initialTheme = themeEngine.chanTheme
     )
 
