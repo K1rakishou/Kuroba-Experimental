@@ -19,12 +19,12 @@ fun ProvideChanTheme(
   themeEngine: ThemeEngine,
   content: @Composable () -> Unit
 ) {
-  var chanTheme by remember(key1 = themeEngine.chanTheme) { mutableStateOf(themeEngine.chanTheme) }
+  var chanTheme by remember { mutableStateOf(themeEngine.chanTheme) }
 
   DisposableEffect(themeEngine.chanTheme) {
     val themeUpdateObserver = object : ThemeEngine.ThemeChangesListener {
       override fun onThemeChanged() {
-        chanTheme = themeEngine.chanTheme
+        chanTheme = themeEngine.chanTheme.fullCopy()
       }
     }
 

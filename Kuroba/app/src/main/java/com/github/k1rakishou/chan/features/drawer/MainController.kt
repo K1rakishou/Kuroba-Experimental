@@ -1142,7 +1142,12 @@ class MainController(
       ACTION_SHOW_BOOKMARKS -> {
         ChanSettings.drawerShowBookmarkedThreads.toggle()
 
-        if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
+        if (ChanSettings.drawerShowBookmarkedThreads.get()) {
+          historyNavigationManager.createNewNavElements(
+            newNavigationElements = drawerPresenter.mapBookmarksIntoNewNavigationElements(),
+            canInsertAtTheBeginning = true
+          )
+        } else {
           val bookmarkDescriptors = bookmarksManager
             .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
 
@@ -1153,14 +1158,7 @@ class MainController(
       }
       ACTION_SHOW_NAV_HISTORY -> {
         ChanSettings.drawerShowNavigationHistory.toggle()
-
-        if (!ChanSettings.drawerShowNavigationHistory.get()) {
-          val bookmarkDescriptors = bookmarksManager
-            .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
-            .toSet()
-
-          historyNavigationManager.removeNonBookmarkNavElements(bookmarkDescriptors)
-        }
+        drawerPresenter.reloadNavigationHistory()
       }
       ACTION_CLEAR_NAV_HISTORY -> {
         dialogFactory.createSimpleConfirmationDialog(
