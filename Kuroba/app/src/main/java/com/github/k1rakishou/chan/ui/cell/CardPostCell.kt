@@ -173,11 +173,9 @@ class CardPostCell : ConstraintLayout,
 
     if (postCellData.markSeenThreads && !postCellData.threadMode) {
       scope.launch {
-        seenPostsManager.get().seenPostUpdatesFlow.collect { seenPostsSet ->
-          val thisPostBecameSeen = seenPostsSet
-            .any { seenPost -> seenPost.postDescriptor == postCellData.postDescriptor }
-
-          if (!thisPostBecameSeen) {
+        seenPostsManager.get().seenThreadUpdatesFlow.collect { seenThread ->
+          val threadOriginalPostBecameSeen = seenThread == postCellData.postDescriptor.threadDescriptor()
+          if (!threadOriginalPostBecameSeen) {
             return@collect
           }
 

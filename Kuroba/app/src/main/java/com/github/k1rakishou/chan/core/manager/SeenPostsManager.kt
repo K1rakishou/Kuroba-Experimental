@@ -48,9 +48,9 @@ class SeenPostsManager(
   @GuardedBy("lock")
   private val alreadyLoadedDescriptorsForUnlimitedCatalog = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
-  private val _seenPostUpdatesFlow = MutableSharedFlow<Set<SeenPost>>(extraBufferCapacity = 64)
-  val seenPostUpdatesFlow: SharedFlow<Set<SeenPost>>
-    get() = _seenPostUpdatesFlow.asSharedFlow()
+  private val _seenThreadUpdatesFlow = MutableSharedFlow<ChanDescriptor.ThreadDescriptor>(extraBufferCapacity = 64)
+  val seenThreadUpdatesFlow: SharedFlow<ChanDescriptor.ThreadDescriptor>
+    get() = _seenThreadUpdatesFlow.asSharedFlow()
 
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(appScope)
 
@@ -268,7 +268,7 @@ class SeenPostsManager(
           seenPostSet.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
         }
 
-        _seenPostUpdatesFlow.emit(seenPostSet)
+        _seenThreadUpdatesFlow.emit(threadDescriptor)
       }
     }
   }
