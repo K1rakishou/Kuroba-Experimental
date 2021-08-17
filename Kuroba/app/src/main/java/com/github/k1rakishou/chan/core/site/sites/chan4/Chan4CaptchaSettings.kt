@@ -4,8 +4,6 @@ import com.google.gson.annotations.SerializedName
 import java.util.concurrent.TimeUnit
 
 data class Chan4CaptchaSettings(
-  @SerializedName("only_draw_background_image")
-  val onlyShowBackgroundImage: Boolean = false,
   @SerializedName("cookie_received_on")
   val cookieReceivedOn: Long = 0L,
   @SerializedName("captcha_help_shown_v2")

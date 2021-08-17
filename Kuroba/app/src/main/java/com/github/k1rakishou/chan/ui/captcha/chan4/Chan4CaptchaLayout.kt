@@ -188,16 +188,7 @@ class Chan4CaptchaLayout(
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-    BuildCaptchaImageOrText(
-      captchaInfoAsync = captchaInfoAsync,
-      onCaptchaImageClick = { info ->
-        if (info.bgBitmapPainter == null) {
-          return@BuildCaptchaImageOrText
-        }
-
-        viewModel.toggleOnlyShowBackgroundImage()
-      }
-    )
+    BuildCaptchaImageOrText(captchaInfoAsync)
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -299,8 +290,7 @@ class Chan4CaptchaLayout(
 
   @Composable
   private fun BuildCaptchaImageOrText(
-    captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
-    onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
+    captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
   ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
 
@@ -343,7 +333,7 @@ class Chan4CaptchaLayout(
               )
             }
           } else {
-            BuildCaptchaImage(captchaInfo, size, onCaptchaImageClick)
+            BuildCaptchaImage(captchaInfo, size)
           }
         }
       }
@@ -353,8 +343,7 @@ class Chan4CaptchaLayout(
   @Composable
   private fun BuildCaptchaImage(
     captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo,
-    size: IntSize,
-    onCaptchaImageClick: (Chan4CaptchaLayoutViewModel.CaptchaInfo) -> Unit
+    size: IntSize
   ) {
     val imgBitmapPainter = captchaInfo.imgBitmapPainter!!
 
@@ -365,9 +354,8 @@ class Chan4CaptchaLayout(
 
     val contentScale = Scale(scale)
     var scrollValue by captchaInfo.sliderValue
-    val onlyShowBackgroundImage by viewModel.onlyShowBackgroundImage
 
-    if (!onlyShowBackgroundImage && captchaInfo.bgBitmapPainter != null) {
+    if (captchaInfo.bgBitmapPainter != null) {
       val bgBitmapPainter = captchaInfo.bgBitmapPainter
       val offset = remember(key1 = scrollValue) {
         val xOffset = (captchaInfo.bgInitialOffset + MIN_OFFSET + (scrollValue * MAX_OFFSET * -1f)).toInt()
@@ -401,8 +389,7 @@ class Chan4CaptchaLayout(
     Image(
       modifier = Modifier
         .fillMaxSize()
-        .scrollable(state = scrollState, orientation = Orientation.Horizontal)
-        .clickable { onCaptchaImageClick(captchaInfo) },
+        .scrollable(state = scrollState, orientation = Orientation.Horizontal),
       painter = captchaInfo.imgBitmapPainter,
       contentScale = contentScale,
       contentDescription = null

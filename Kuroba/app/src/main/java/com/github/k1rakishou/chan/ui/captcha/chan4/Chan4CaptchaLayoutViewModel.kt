@@ -70,7 +70,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()
 
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
-  var onlyShowBackgroundImage = mutableStateOf(false)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -78,20 +77,11 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
   override suspend fun onViewModelReady() {
     val captchaSettings = chan4CaptchaSettingsJson.get()
-    onlyShowBackgroundImage.value = captchaSettings.onlyShowBackgroundImage
 
     if (!captchaSettings.captchaHelpShown) {
       _showCaptchaHelpFlow.tryEmit(Unit)
       chan4CaptchaSettingsJson.set(captchaSettings.copy(captchaHelpShown = true))
     }
-  }
-
-  fun toggleOnlyShowBackgroundImage() {
-    onlyShowBackgroundImage.value = onlyShowBackgroundImage.value.not()
-
-    val updatedSettings = chan4CaptchaSettingsJson.get()
-      .copy(onlyShowBackgroundImage = onlyShowBackgroundImage.value)
-    chan4CaptchaSettingsJson.set(updatedSettings)
   }
 
   fun toggleContrastBackground() {
