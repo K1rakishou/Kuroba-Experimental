@@ -28,8 +28,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <color name="new_crash_log_icon_color">#E54545</color>
 
     <style name="Chan.DefaultTheme" parent="Theme.MaterialComponents.NoActionBar">
-<!-- These colors define how the window will look like before the main activity is created. -->
-<!-- Unfortunately we can\'t change these colors in runtime so it will always be like this.-->
+        <!-- These colors define how the window will look like before the main activity is created. -->
+        <!-- Unfortunately we can\'t change these colors in runtime so it will always be like this.-->
         <item name="android:statusBarColor">#090909</item>
         <item name="android:navigationBarColor">#090909</item>
         <item name="android:windowBackground">#171616</item>
@@ -47,14 +47,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="colorControlActivated">#151515</item>
     </style>
 
-<!-- Use this theme for color debugging. It will use magenta colors for UI elements that were not colored explicitly -->
+    <!-- Use this theme for color debugging. It will use magenta colors for UI elements that were not colored explicitly -->
     <style name="Chan.DebugTheme" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:statusBarColor">#090909</item>
         <item name="android:navigationBarColor">#090909</item>
         <item name="android:windowBackground">#171616</item>
         <item name="windowActionModeOverlay">true</item>
 
-<!-- These must use the Magenta color so it's easy for us to see what UI elements we forgot to apply colors to-->
+        <!-- These must use the Magenta color so it's easy for us to see what UI elements we forgot to apply colors to-->
         <item name="colorPrimary">#FF00FF</item>
         <item name="colorPrimaryDark">#FF00FF</item>
         <item name="colorAccent">#FF00FF</item>
@@ -64,6 +64,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item name="android:textColorHighlight">#FF00FF</item>
     </style>
 
+    <!-- This theme is used for activities with no UI (SharingActivity) -->
     <style name="Chan.TranslucentActivityTheme" parent="Theme.MaterialComponents.NoActionBar">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

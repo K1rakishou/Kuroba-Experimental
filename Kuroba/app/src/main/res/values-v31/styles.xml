@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Chan.DefaultTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <!-- These colors define how the window will look like before the main activity is created. -->
+        <!-- Unfortunately we can\'t change these colors in runtime so it will always be like this.-->
+        <item name="android:statusBarColor">#090909</item>
+        <item name="android:navigationBarColor">#090909</item>
+        <item name="android:windowBackground">#171616</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:windowSplashScreenBackground">#171616</item>
+
+        <item name="colorPrimary">#212121</item>
+        <item name="colorPrimaryDark">#090909</item>
+        <item name="colorAccent">#707070</item>
+        <item name="colorSecondary">#212121</item>
+        <item name="colorError">#ff4444</item>
+        <item name="android:textColor">#aeaed6</item>
+        <item name="android:textColorHighlight">#707070</item>
+        <item name="colorControlHighlight">#707070</item>
+        <item name="android:colorControlHighlight">#707070</item>
+        <item name="colorControlActivated">#151515</item>
+    </style>
+
+    <style name="Chan.DebugTheme" parent="Theme.MaterialComponents.NoActionBar">
+        <item name="android:statusBarColor">#090909</item>
+        <item name="android:navigationBarColor">#090909</item>
+        <item name="android:windowBackground">#171616</item>
+        <item name="windowActionModeOverlay">true</item>
+        <item name="android:windowSplashScreenBackground">#171616</item>
+
+        <!-- These must use the Magenta color so it's easy for us to see what UI elements we forgot to apply colors to-->
+        <item name="colorPrimary">#FF00FF</item>
+        <item name="colorPrimaryDark">#FF00FF</item>
+        <item name="colorAccent">#FF00FF</item>
+        <item name="colorSecondary">#FF00FF</item>
+        <item name="colorError">#FF00FF</item>
+        <item name="android:textColor">#FF00FF</item>
+        <item name="android:textColorHighlight">#FF00FF</item>
+    </style>
+
+</resources>

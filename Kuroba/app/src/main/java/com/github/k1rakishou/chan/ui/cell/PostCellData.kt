@@ -75,8 +75,10 @@ data class PostCellData(
     get() = post.postNo()
   val postSubNo: Long
     get() = post.postSubNo()
-  val threadMode: Boolean
+  val isViewingThread: Boolean
     get() = chanDescriptor.isThreadDescriptor()
+  val isViewingCatalog: Boolean
+    get() = chanDescriptor.isCatalogDescriptor()
   val hasColoredFilter: Boolean
     get() = filterHighlightedColor != 0
   val postDescriptor: PostDescriptor
@@ -441,7 +443,7 @@ data class PostCellData(
 
   private fun calculateCommentTextInternal(): CharSequence {
     if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
-      if (threadMode || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
+      if (isViewingThread || post.postComment.comment().length <= COMMENT_MAX_LENGTH_LIST) {
         return post.postComment.comment()
       }
 
@@ -476,7 +478,7 @@ data class PostCellData(
   }
 
   private fun calculateCatalogRepliesTextNormal(): String {
-    val replyCount = if (threadMode) {
+    val replyCount = if (isViewingThread) {
       repliesFromCount
     } else {
       catalogRepliesCount
@@ -491,7 +493,7 @@ data class PostCellData(
     val catalogRepliesTextBuilder = StringBuilder(64)
     catalogRepliesTextBuilder.append(repliesCountText)
 
-    if (!threadMode && catalogImagesCount > 0) {
+    if (!isViewingThread && catalogImagesCount > 0) {
       val imagesCountText = AppModuleAndroidUtils.getQuantityString(
         R.plurals.image,
         catalogImagesCount,
@@ -503,7 +505,7 @@ data class PostCellData(
         .append(imagesCountText)
     }
 
-    if (!threadMode
+    if (!isViewingThread
       && !neverShowPages
       && boardPostsSortOrder != PostsFilter.Order.BUMP
       && boardPage != null
@@ -530,7 +532,7 @@ data class PostCellData(
         append(getString(R.string.card_stats_images_compact, catalogImagesCount))
       }
 
-      if (!threadMode
+      if (isViewingCatalog
         && !neverShowPages
         && boardPostsSortOrder != PostsFilter.Order.BUMP
         && boardPage != null

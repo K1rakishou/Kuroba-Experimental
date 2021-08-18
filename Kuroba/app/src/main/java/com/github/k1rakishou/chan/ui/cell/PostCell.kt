@@ -281,7 +281,7 @@ class PostCell : ConstraintLayout,
         }
     }
 
-    if (postCellData.markSeenThreads && !postCellData.threadMode) {
+    if (postCellData.markSeenThreads && postCellData.isViewingCatalog) {
       scope.launch {
         seenPostsManager.get().seenThreadUpdatesFlow.collect { seenThread ->
           val threadOriginalPostBecameSeen = seenThread == postCellData.postDescriptor.threadDescriptor()
@@ -378,7 +378,7 @@ class PostCell : ConstraintLayout,
     updatePostCellFileName(postCellData)
     updatePostCellLayoutRuntime(postCellData, shiftCommentToThumbnailSideMode)
 
-    if (postCellData.threadMode) {
+    if (postCellData.isViewingThread) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
         width = 0
         horizontalWeight = 1f
@@ -476,7 +476,7 @@ class PostCell : ConstraintLayout,
       if (replies.visibility == VISIBLE) {
         val post = postCellData.post
 
-        if (postCellData.threadMode) {
+        if (postCellData.isViewingThread) {
           if (post.repliesFromCount > 0) {
             postCellCallback?.onShowPostReplies(post)
           }
@@ -651,7 +651,7 @@ class PostCell : ConstraintLayout,
     bindPostComment(postCellData)
     bindPostContent(postCellData)
 
-    val canBindReplies = (!postCellData.threadMode && postCellData.catalogRepliesCount > 0)
+    val canBindReplies = (postCellData.isViewingCatalog && postCellData.catalogRepliesCount > 0)
       || postCellData.repliesFromCount > 0
 
     if (!postCellData.isSelectionMode && canBindReplies) {
@@ -819,10 +819,10 @@ class PostCell : ConstraintLayout,
 
     var alpha = 1f
 
-    if (postData != null && postData.markSeenThreads && !postData.threadMode) {
+    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
       val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
       if (alreadySeen) {
-        alpha = 0.65f
+        alpha = 0.7f
       }
     }
 
@@ -916,7 +916,7 @@ class PostCell : ConstraintLayout,
       comment.customMovementMethod(null)
       title.movementMethod = null
     } else {
-      if (postCellData.threadMode || postCellData.searchMode) {
+      if (postCellData.isViewingThread || postCellData.searchMode) {
         comment.customMovementMethod(commentMovementMethod)
 
         if (postCellData.tapNoReply && postCellData.postViewMode.canUseTapPostTitleToReply()) {

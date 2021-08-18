@@ -602,7 +602,7 @@ class ThreadPresenter @Inject constructor(
       val postDescriptor = postCellData.postDescriptor
 
       onDemandContentLoaderManager.get().onPostBind(postDescriptor)
-      seenPostsManager.get().onPostBind(postCellData.threadMode, postDescriptor)
+      seenPostsManager.get().onPostBind(postCellData.isViewingThread, postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }
@@ -620,7 +620,7 @@ class ThreadPresenter @Inject constructor(
       val postDescriptor = postCellData.postDescriptor
 
       onDemandContentLoaderManager.get().onPostUnbind(postDescriptor, isActuallyRecycling)
-      seenPostsManager.get().onPostUnbind(postCellData.threadMode, postDescriptor)
+      seenPostsManager.get().onPostUnbind(postCellData.isViewingThread, postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
   }

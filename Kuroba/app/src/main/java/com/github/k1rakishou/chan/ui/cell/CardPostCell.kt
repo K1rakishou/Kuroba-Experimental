@@ -171,7 +171,7 @@ class CardPostCell : ConstraintLayout,
         }
     }
 
-    if (postCellData.markSeenThreads && !postCellData.threadMode) {
+    if (postCellData.markSeenThreads && postCellData.isViewingCatalog) {
       scope.launch {
         seenPostsManager.get().seenThreadUpdatesFlow.collect { seenThread ->
           val threadOriginalPostBecameSeen = seenThread == postCellData.postDescriptor.threadDescriptor()
@@ -428,10 +428,10 @@ class CardPostCell : ConstraintLayout,
 
     var alpha = 1f
 
-    if (postData != null && postData.markSeenThreads && !postData.threadMode) {
+    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
       val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
       if (alreadySeen) {
-        alpha = 0.65f
+        alpha = 0.7f
       }
     }
 
