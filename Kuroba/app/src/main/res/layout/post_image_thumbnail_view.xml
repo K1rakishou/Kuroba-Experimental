@@ -24,7 +24,6 @@
             android:background="?attr/selectableItemBackgroundBorderless"
             android:clickable="true"
             android:focusable="true"
-            android:padding="4dp"
             android:textColor="#fff"
             android:textSize="14sp"
             tools:text="+4" />

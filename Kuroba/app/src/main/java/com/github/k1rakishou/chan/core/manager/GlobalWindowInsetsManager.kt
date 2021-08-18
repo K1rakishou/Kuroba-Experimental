@@ -18,8 +18,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 
 class GlobalWindowInsetsManager {
-  private var initialized = false
-
   var isKeyboardOpened = false
     private set
   var keyboardHeight = 0
@@ -122,7 +120,7 @@ class GlobalWindowInsetsManager {
     )
   }
 
-  fun lastTouchCoordinatesBiasAlignment(): BiasAlignment {
+  fun lastTouchCoordinatesAsBiasAlignment(): BiasAlignment {
     val dispWidth = displaySize.x.coerceAtLeast(1).toFloat()
     val dispHeight = displaySize.y.coerceAtLeast(1).toFloat()
 
@@ -157,7 +155,6 @@ class GlobalWindowInsetsManager {
       insets.systemWindowInsetBottom
     )
 
-    initialized = true
     return true
   }
 

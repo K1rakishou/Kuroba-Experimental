@@ -14,372 +14,341 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.cell.post_thumbnail;
+package com.github.k1rakishou.chan.ui.cell.post_thumbnail
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import android.content.Context
+import android.graphics.Canvas
+import android.graphics.Rect
+import android.text.TextUtils
+import android.util.AttributeSet
+import android.widget.FrameLayout
+import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageSize.MeasurableImageSize.Companion.create
+import com.github.k1rakishou.chan.core.manager.PrefetchState
+import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchCompleted
+import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchProgress
+import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchStarted
+import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel.Companion.canAutoLoad
+import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
+import com.github.k1rakishou.chan.ui.view.ThumbnailView.ThumbnailViewOptions
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
+import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostImageType
+import dagger.Lazy
+import io.reactivex.disposables.CompositeDisposable
+import javax.inject.Inject
 
-import android.content.Context;
-import android.graphics.Canvas;
-import android.graphics.Rect;
-import android.graphics.drawable.Drawable;
-import android.text.TextUtils;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.TextView;
+class PostImageThumbnailView @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyle: Int = 0
+) : FrameLayout(context, attrs, defStyle), PostImageThumbnailViewContract {
 
-import androidx.annotation.NonNull;
-import androidx.annotation.Nullable;
+  @Inject
+  lateinit var prefetchStateManager: Lazy<PrefetchStateManager>
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var cacheHandler: CacheHandler
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
-import com.github.k1rakishou.chan.core.manager.PrefetchState;
-import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
-import com.github.k1rakishou.chan.ui.cell.PostCellData;
-import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.chan.utils.ThrottlingClicksKt;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_themes.ThemeEngine;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
-import com.github.k1rakishou.model.data.post.ChanPostImageType;
+  private var postImage: ChanPostImage? = null
+  private var canUseHighResCells: Boolean = false
+  private val thumbnail: ThumbnailView
+  private val thumbnailOmittedFilesCountContainer: FrameLayout
+  private val thumbnailOmittedFilesCount: TextView
+  private var ratio = 0f
+  private var prefetchingEnabled = false
+  private var showPrefetchLoadingIndicator = false
+  private var prefetching = false
+  private val bounds = Rect()
+  private val circularProgressDrawableBounds = Rect()
+  private val compositeDisposable = CompositeDisposable()
+  private var segmentedCircleDrawable: SegmentedCircleDrawable? = null
 
-import org.jetbrains.annotations.NotNull;
-
-import javax.inject.Inject;
-
-import dagger.Lazy;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
-import okhttp3.HttpUrl;
-
-public class PostImageThumbnailView extends FrameLayout implements PostImageThumbnailViewContract {
-    private static final String TAG = "PostImageThumbnailView";
-    private static final float prefetchIndicatorMargin = dp(4);
-    private static final int prefetchIndicatorSize = dp(16);
-    private static final Drawable playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp);
-
-    @Inject
-    Lazy<PrefetchStateManager> prefetchStateManager;
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    CacheHandler cacheHandler;
-
-    @Nullable
-    private ChanPostImage postImage;
-    @Nullable
-    private Boolean canUseHighResCells;
-
-    private ThumbnailView thumbnail;
-    private FrameLayout thumbnailOmittedFilesCountContainer;
-    private TextView thumbnailOmittedFilesCount;
-
-    private float ratio = 0f;
-    private boolean prefetchingEnabled = false;
-    private boolean showPrefetchLoadingIndicator = false;
-    private boolean prefetching = false;
-    private final Rect bounds = new Rect();
-    private final Rect circularProgressDrawableBounds = new Rect();
-    private final CompositeDisposable compositeDisposable = new CompositeDisposable();
-
-    @Nullable
-    private SegmentedCircleDrawable segmentedCircleDrawable = null;
-
-    public PostImageThumbnailView(Context context) {
-        this(context, null);
+  init {
+    if (!isInEditMode) {
+      AppModuleAndroidUtils.extractActivityComponent(getContext())
+        .inject(this)
+      setWillNotDraw(false)
+      prefetchingEnabled = ChanSettings.prefetchMedia.get()
     }
 
-    public PostImageThumbnailView(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
+    inflate(context, R.layout.post_image_thumbnail_view, this)
+    thumbnail = findViewById(R.id.thumbnail_view)
+    thumbnailOmittedFilesCountContainer = findViewById(R.id.thumbnail_omitted_files_count_container)
+    thumbnailOmittedFilesCount = findViewById(R.id.thumbnail_omitted_files_count)
+  }
+
+  fun imageUrl(): String? {
+    return thumbnail.imageUrl
+  }
+
+  override fun bindPostImage(
+    postImage: ChanPostImage,
+    canUseHighResCells: Boolean,
+    thumbnailViewOptions: ThumbnailViewOptions
+  ) {
+    bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions)
+  }
+
+  override fun getViewId(): Int {
+    return this.id
+  }
+
+  override fun setViewId(id: Int) {
+    this.id = id
+  }
+
+  override fun getThumbnailView(): ThumbnailView {
+    return thumbnail
+  }
+
+  override fun equalUrls(chanPostImage: ChanPostImage): Boolean {
+    return postImage?.equalUrl(chanPostImage) == true
+  }
+
+  override fun setImageClickable(clickable: Boolean) {
+    isClickable = clickable
+  }
+
+  override fun setImageLongClickable(longClickable: Boolean) {
+    isLongClickable = longClickable
+  }
+
+  override fun setImageClickListener(token: String, listener: OnClickListener?) {
+    this.setOnThrottlingClickListener(token, listener)
+  }
+
+  override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {
+    this.setOnThrottlingLongClickListener(token, listener)
+  }
+
+  override fun setImageOmittedFilesClickListener(token: String, listener: OnClickListener?) {
+    thumbnailOmittedFilesCount.setOnThrottlingClickListener(token, listener)
+  }
+
+  fun onThumbnailViewClicked(listener: OnClickListener) {
+    thumbnail.onThumbnailViewClicked(listener)
+  }
+
+  override fun unbindPostImage() {
+    postImage = null
+    canUseHighResCells = false
+    thumbnail.unbindImageUrl()
+    compositeDisposable.clear()
+  }
+
+  private fun bindPostImage(
+    postImage: ChanPostImage,
+    canUseHighResCells: Boolean,
+    forcedAfterPrefetchFinished: Boolean,
+    thumbnailViewOptions: ThumbnailViewOptions
+  ) {
+    if (postImage == this.postImage && !forcedAfterPrefetchFinished) {
+      return
     }
 
-    public PostImageThumbnailView(Context context, AttributeSet attrs, int defStyle) {
-        super(context, attrs, defStyle);
+    showPrefetchLoadingIndicator = ChanSettings.prefetchMedia.get()
+      && ChanSettings.showPrefetchLoadingIndicator.get()
 
-        if (!isInEditMode()) {
-            AppModuleAndroidUtils.extractActivityComponent(getContext())
-                    .inject(this);
+    if (showPrefetchLoadingIndicator) {
+      segmentedCircleDrawable = SegmentedCircleDrawable().apply {
+        setColor(themeEngine.chanTheme.accentColor)
+        alpha = 192
+        percentage(0f)
+      }
+    }
 
-            setWillNotDraw(false);
+    if (prefetchingEnabled) {
+      val disposable = prefetchStateManager.get().listenForPrefetchStateUpdates()
+        .filter { prefetchState -> prefetchState.postImage.equalUrl(postImage) }
+        .subscribe { prefetchState: PrefetchState -> onPrefetchStateChanged(prefetchState) }
 
-            this.prefetchingEnabled = ChanSettings.prefetchMedia.get();
+      compositeDisposable.add(disposable)
+    }
+
+    this.postImage = postImage
+    this.canUseHighResCells = canUseHighResCells
+
+    val url = getUrl(postImage, canUseHighResCells)
+    if (url == null || TextUtils.isEmpty(url)) {
+      unbindPostImage()
+      return
+    }
+
+    thumbnail.bindImageUrl(
+      url,
+      postImage.ownerPostDescriptor,
+      create(this),
+      thumbnailViewOptions
+    )
+  }
+
+  fun bindPostInfo(postCellData: PostCellData) {
+    val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents
+    val multiplier = postCellThumbnailSizePercents.get().toFloat() / postCellThumbnailSizePercents.max.toFloat()
+    val totalPadding = ((OMITTED_FILES_INDICATOR_PADDING / 2f) + (OMITTED_FILES_INDICATOR_PADDING * multiplier)).toInt()
+
+    thumbnailOmittedFilesCount.updatePaddings(
+      left = totalPadding,
+      right = totalPadding,
+      top = totalPadding,
+      bottom = totalPadding
+    )
+
+    if (postCellData.postMultipleImagesCompactMode && postCellData.postImages.size > 1) {
+      val imagesCount = postCellData.postImages.size - 1
+      thumbnailOmittedFilesCountContainer.visibility = VISIBLE
+      thumbnailOmittedFilesCount.text = getString(R.string.thumbnail_omitted_files_indicator_text, imagesCount)
+    } else {
+      thumbnailOmittedFilesCountContainer.visibility = GONE
+    }
+  }
+
+  private fun onPrefetchStateChanged(prefetchState: PrefetchState) {
+    if (!prefetchingEnabled) {
+      return
+    }
+
+    val canShowProgress = showPrefetchLoadingIndicator && segmentedCircleDrawable != null
+    if (canShowProgress && prefetchState is PrefetchStarted) {
+      prefetching = true
+      segmentedCircleDrawable!!.percentage(1f)
+      invalidate()
+      return
+    }
+
+    if (canShowProgress && prefetchState is PrefetchProgress) {
+      if (!prefetching) {
+        return
+      }
+
+      val progress = prefetchState.progress
+      segmentedCircleDrawable!!.percentage(progress)
+      invalidate()
+      return
+    }
+
+    if (prefetchState is PrefetchCompleted) {
+      if (canShowProgress) {
+        prefetching = false
+        segmentedCircleDrawable!!.percentage(0f)
+        invalidate()
+      }
+
+      if (!prefetchState.success) {
+        return
+      }
+
+      if (postImage != null && canUseHighResCells) {
+        val thumbnailViewOptions = thumbnail.thumbnailViewOptions
+        if (thumbnailViewOptions != null) {
+          bindPostImage(
+            postImage = postImage!!,
+            canUseHighResCells = canUseHighResCells,
+            forcedAfterPrefetchFinished = true,
+            thumbnailViewOptions = thumbnailViewOptions
+          )
         }
+      }
+    }
+  }
 
-        inflate(context, R.layout.post_image_thumbnail_view, this);
-
-        thumbnail = findViewById(R.id.thumbnail_view);
-        thumbnailOmittedFilesCountContainer = findViewById(R.id.thumbnail_omitted_files_count_container);
-        thumbnailOmittedFilesCount = findViewById(R.id.thumbnail_omitted_files_count);
+  private fun getUrl(postImage: ChanPostImage, canUseHighResCells: Boolean): String? {
+    val thumbnailUrl = postImage.getThumbnailUrl()
+    if (thumbnailUrl == null) {
+      Logger.e(TAG, "getUrl() postImage: $postImage, has no thumbnail url")
+      return null
     }
 
-    public String imageUrl() {
-        return thumbnail.getImageUrl();
-    }
+    var url: String? = postImage.getThumbnailUrl()?.toString()
 
-    @Override
-    public void bindPostImage(
-            @NonNull ChanPostImage postImage,
-            boolean canUseHighResCells,
-            @NonNull ThumbnailView.ThumbnailViewOptions thumbnailViewOptions
+    val highRes = canUseHighResCells
+      && ChanSettings.highResCells.get()
+      && postImage.canBeUsedAsHighResolutionThumbnail()
+      && canAutoLoad(cacheHandler, postImage)
+
+    val hasImageUrl = postImage.imageUrl != null
+    val prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched
+
+    if (highRes
+      && hasImageUrl
+      && prefetchingDisabledOrAlreadyPrefetched
+      && postImage.type == ChanPostImageType.STATIC
     ) {
-        bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions);
+      url = postImage.imageUrl?.toString()
     }
 
-    @Override
-    public int getViewId() {
-        return this.getId();
+    return url
+  }
+
+  fun setRatio(ratio: Float) {
+    this.ratio = ratio
+  }
+
+  override fun draw(canvas: Canvas) {
+    super.draw(canvas)
+
+    if (postImage != null && postImage!!.isPlayableType() && !thumbnail.error) {
+      val iconScale = 1
+      val scalar = (Math.pow(2.0, iconScale.toDouble()) - 1) / Math.pow(2.0, iconScale.toDouble())
+      val x = (width / 2.0 - playIcon.intrinsicWidth * scalar).toInt()
+      val y = (height / 2.0 - playIcon.intrinsicHeight * scalar).toInt()
+
+      bounds[x, y, x + playIcon.intrinsicWidth * iconScale] = y + playIcon.intrinsicHeight * iconScale
+      playIcon.bounds = bounds
+      playIcon.draw(canvas)
     }
 
-    @Override
-    public void setViewId(int id) {
-        this.setId(id);
+    if (segmentedCircleDrawable != null && showPrefetchLoadingIndicator && !thumbnail.error && prefetching) {
+      canvas.save()
+      canvas.translate(prefetchIndicatorMargin, prefetchIndicatorMargin)
+      circularProgressDrawableBounds[0, 0, prefetchIndicatorSize] = prefetchIndicatorSize
+      segmentedCircleDrawable!!.bounds = circularProgressDrawableBounds
+      segmentedCircleDrawable!!.draw(canvas)
+      canvas.restore()
+    }
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    if (ratio == 0f) {
+      super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+      return
     }
 
-    @NonNull
-    @Override
-    public ThumbnailView getThumbnailView() {
-        return thumbnail;
-    }
-
-    @Override
-    public boolean equalUrls(@NotNull ChanPostImage chanPostImage) {
-        if (this.postImage == null) {
-            return false;
-        }
-
-        return this.postImage.equalUrl(chanPostImage);
-    }
-
-    @Override
-    public void setImageClickable(boolean clickable) {
-        setClickable(clickable);
-    }
-
-    @Override
-    public void setImageLongClickable(boolean longClickable) {
-        setLongClickable(longClickable);
-    }
-
-    @Override
-    public void setImageClickListener(@NotNull String token, @Nullable View.OnClickListener listener) {
-        ThrottlingClicksKt.setOnThrottlingClickListener(this, token, listener);
-    }
-
-    @Override
-    public void setImageLongClickListener(@NonNull String token, @Nullable View.OnLongClickListener listener) {
-        ThrottlingClicksKt.setOnThrottlingLongClickListener(this, token, listener);
-    }
-
-    @Override
-    public void setImageOmittedFilesClickListener(@NonNull String token, @Nullable OnClickListener listener) {
-        ThrottlingClicksKt.setOnThrottlingClickListener(thumbnailOmittedFilesCount, token, listener);
-    }
-
-    public void onThumbnailViewClicked(@NotNull OnClickListener listener) {
-        thumbnail.onThumbnailViewClicked(listener);
-    }
-
-    @Override
-    public void unbindPostImage() {
-        this.postImage = null;
-        this.canUseHighResCells = null;
-
-        thumbnail.unbindImageUrl();
-        compositeDisposable.clear();
-    }
-
-    private void bindPostImage(
-            @NonNull ChanPostImage postImage,
-            boolean canUseHighResCells,
-            boolean forcedAfterPrefetchFinished,
-            @NonNull ThumbnailView.ThumbnailViewOptions thumbnailViewOptions
+    val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+    if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+      && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)
     ) {
-        if (postImage.equals(this.postImage) && !forcedAfterPrefetchFinished) {
-            return;
-        }
-
-        this.showPrefetchLoadingIndicator = ChanSettings.prefetchMedia.get()
-                && ChanSettings.showPrefetchLoadingIndicator.get();
-
-        if (showPrefetchLoadingIndicator) {
-            segmentedCircleDrawable = new SegmentedCircleDrawable();
-            segmentedCircleDrawable.setColor(themeEngine.getChanTheme().getAccentColor());
-            segmentedCircleDrawable.setAlpha(192);
-            segmentedCircleDrawable.percentage(0f);
-        }
-
-        if (prefetchingEnabled) {
-            Disposable disposable = prefetchStateManager.get().listenForPrefetchStateUpdates()
-                    .filter((prefetchState) -> postImage != null)
-                    .filter((prefetchState) -> prefetchState.getPostImage().equalUrl(postImage))
-                    .subscribe(this::onPrefetchStateChanged);
-
-            compositeDisposable.add(disposable);
-        }
-
-        this.postImage = postImage;
-        this.canUseHighResCells = canUseHighResCells;
-
-        String url = getUrl(postImage, canUseHighResCells);
-        if (url == null || TextUtils.isEmpty(url)) {
-            unbindPostImage();
-            return;
-        }
-
-        thumbnail.bindImageUrl(
-                url,
-                postImage.getOwnerPostDescriptor(),
-                ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
-                thumbnailViewOptions
-        );
+      val width = MeasureSpec.getSize(widthMeasureSpec)
+      super.onMeasure(
+        widthMeasureSpec,
+        MeasureSpec.makeMeasureSpec((width / ratio).toInt(), MeasureSpec.EXACTLY)
+      )
+    } else {
+      super.onMeasure(widthMeasureSpec, heightMeasureSpec)
     }
+  }
 
-    public void bindPostInfo(@NotNull PostCellData postCellData) {
-        if (postCellData.getPostMultipleImagesCompactMode() && postCellData.getPostImages().size() > 1) {
-            int imagesCount = postCellData.getPostImages().size() - 1;
-
-            thumbnailOmittedFilesCountContainer.setVisibility(View.VISIBLE);
-            thumbnailOmittedFilesCount.setText("+" + imagesCount);
-        } else {
-            thumbnailOmittedFilesCountContainer.setVisibility(View.GONE);
-        }
-    }
-
-    private void onPrefetchStateChanged(PrefetchState prefetchState) {
-        if (!prefetchingEnabled) {
-            return;
-        }
-
-        boolean canShowProgress = showPrefetchLoadingIndicator && segmentedCircleDrawable != null;
-
-        if (canShowProgress && prefetchState instanceof PrefetchState.PrefetchStarted) {
-            prefetching = true;
-
-            segmentedCircleDrawable.percentage(1f);
-            invalidate();
-            return;
-        }
-
-        if (canShowProgress && prefetchState instanceof PrefetchState.PrefetchProgress) {
-            if (!prefetching) {
-                return;
-            }
-
-            float progress = ((PrefetchState.PrefetchProgress) prefetchState).getProgress();
-
-            segmentedCircleDrawable.percentage(progress);
-            invalidate();
-            return;
-        }
-
-        if (prefetchState instanceof PrefetchState.PrefetchCompleted) {
-            if (canShowProgress) {
-                prefetching = false;
-                segmentedCircleDrawable.percentage(0f);
-                invalidate();
-            }
-
-            if (!((PrefetchState.PrefetchCompleted) prefetchState).getSuccess()) {
-                return;
-            }
-
-            if (postImage != null && (canUseHighResCells != null && canUseHighResCells)) {
-                ThumbnailView.ThumbnailViewOptions thumbnailViewOptions = thumbnail.getThumbnailViewOptions();
-                if (thumbnailViewOptions != null) {
-                    bindPostImage(postImage, canUseHighResCells, true, thumbnailViewOptions);
-                }
-            }
-        }
-    }
-
-    @Nullable
-    private String getUrl(ChanPostImage postImage, boolean canUseHighResCells) {
-        HttpUrl thumbnailUrl = postImage.getThumbnailUrl();
-        if (thumbnailUrl == null) {
-            Logger.e(TAG, "getUrl() postImage: " + postImage.toString() + ", has no thumbnail url");
-            return null;
-        }
-
-        String url = postImage.getThumbnailUrl().toString();
-
-        boolean highRes = canUseHighResCells
-                && ChanSettings.highResCells.get()
-                && postImage.canBeUsedAsHighResolutionThumbnail()
-                && MediaViewerControllerViewModel.canAutoLoad(cacheHandler, postImage);
-
-        boolean hasImageUrl = postImage.getImageUrl() != null;
-        boolean prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched();
-
-        if (highRes && hasImageUrl && prefetchingDisabledOrAlreadyPrefetched) {
-            url = (postImage.getType() == ChanPostImageType.STATIC
-                    ? postImage.getImageUrl()
-                    : postImage.getThumbnailUrl()).toString();
-        }
-
-        return url;
-    }
-
-    public void setRatio(float ratio) {
-        this.ratio = ratio;
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        super.draw(canvas);
-
-        if (postImage != null && postImage.isPlayableType() && !thumbnail.getError()) {
-            int iconScale = 1;
-            double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
-            int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);
-            int y = (int) (getHeight() / 2.0 - playIcon.getIntrinsicHeight() * scalar);
-
-            bounds.set(
-                    x,
-                    y,
-                    x + playIcon.getIntrinsicWidth() * iconScale,
-                    y + playIcon.getIntrinsicHeight() * iconScale
-            );
-
-            playIcon.setBounds(bounds);
-            playIcon.draw(canvas);
-        }
-
-        if (segmentedCircleDrawable != null && showPrefetchLoadingIndicator && !thumbnail.getError() && prefetching) {
-            canvas.save();
-            canvas.translate(prefetchIndicatorMargin, prefetchIndicatorMargin);
-
-            circularProgressDrawableBounds.set(0, 0, prefetchIndicatorSize, prefetchIndicatorSize);
-
-            segmentedCircleDrawable.setBounds(circularProgressDrawableBounds);
-            segmentedCircleDrawable.draw(canvas);
-
-            canvas.restore();
-        }
-    }
-
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (ratio == 0f) {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            return;
-        }
-
-        int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-        if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
-                && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)) {
-            int width = MeasureSpec.getSize(widthMeasureSpec);
-
-            super.onMeasure(widthMeasureSpec,
-                    MeasureSpec.makeMeasureSpec((int) (width / ratio), MeasureSpec.EXACTLY)
-            );
-        } else {
-            super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-        }
-    }
+  companion object {
+    private const val TAG = "PostImageThumbnailView"
+    private val prefetchIndicatorMargin = dp(4f).toFloat()
+    private val prefetchIndicatorSize = dp(16f)
+    private val OMITTED_FILES_INDICATOR_PADDING = dp(4f)
+    private val playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp)
+  }
 
 }
