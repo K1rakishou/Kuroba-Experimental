@@ -184,7 +184,7 @@ class MainControllerPresenter(
     drawerOpened.set(true)
 
     if (navHistoryReloadPending.compareAndSet(true, false)) {
-      reloadNavigationHistory()
+      reloadNavigationHistory(useDebouncer = false)
     }
   }
 
@@ -202,19 +202,25 @@ class MainControllerPresenter(
     navHistoryReloadPending.set(true)
   }
 
-  fun reloadNavigationHistory() {
-    reloadNavHistoryDebouncer.post(HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS) {
-      ModularResult.Try {
-        withContext(Dispatchers.Default) {
-          showNavigationHistoryInternal()
-        }
-      }.safeUnwrap { error ->
-        Logger.e(TAG, "showNavigationHistoryInternal() error", error)
-        setState(HistoryControllerState.Error(error.errorMessageOrClassName()))
-
-        return@post
+  fun reloadNavigationHistory(useDebouncer: Boolean = true) {
+    if (useDebouncer) {
+      reloadNavHistoryDebouncer.post(HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS) {
+        reloadInternal()
+      }
+    } else {
+      scope.launch {
+        reloadInternal()
       }
     }
+  }
+
+  private suspend fun reloadInternal() {
+    ModularResult.Try { withContext(Dispatchers.Default) { showNavigationHistoryInternal() } }
+      .peekError { error ->
+        Logger.e(TAG, "showNavigationHistoryInternal() error", error)
+        setState(HistoryControllerState.Error(error.errorMessageOrClassName()))
+      }
+      .ignore()
   }
 
   private suspend fun showNavigationHistoryInternal() {

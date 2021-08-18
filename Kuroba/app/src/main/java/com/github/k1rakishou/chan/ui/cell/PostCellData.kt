@@ -55,11 +55,12 @@ data class PostCellData(
   var stub: Boolean,
   val theme: ChanTheme,
   var filterHash: Int,
-  var filterHighlightedColor: Int,
   var postViewMode: PostViewMode,
   var searchQuery: SearchQuery,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
-  val postCellThumbnailSizePercents: Int
+  val postCellThumbnailSizePercents: Int,
+  val isSavedReply: Boolean,
+  val isReplyToSavedReply: Boolean
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -79,8 +80,6 @@ data class PostCellData(
     get() = chanDescriptor.isThreadDescriptor()
   val isViewingCatalog: Boolean
     get() = chanDescriptor.isCatalogDescriptor()
-  val hasColoredFilter: Boolean
-    get() = filterHighlightedColor != 0
   val postDescriptor: PostDescriptor
     get() = post.postDescriptor
   val fullPostComment: CharSequence
@@ -227,11 +226,12 @@ data class PostCellData(
       stub = stub,
       theme = theme,
       filterHash = filterHash,
-      filterHighlightedColor = filterHighlightedColor,
       postViewMode = postViewMode,
       searchQuery = searchQuery,
       postAlignmentMode = postAlignmentMode,
       postCellThumbnailSizePercents = postCellThumbnailSizePercents,
+      isSavedReply = isSavedReply,
+      isReplyToSavedReply = isReplyToSavedReply,
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated

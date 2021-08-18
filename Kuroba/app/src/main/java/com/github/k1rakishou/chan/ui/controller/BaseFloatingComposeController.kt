@@ -44,9 +44,7 @@ abstract class BaseFloatingComposeController(
         ProvideChanTheme(themeEngine) {
           ProvideWindowInsets {
             val currentPaddings by globalWindowInsetsManager.currentInsetsCompose
-            val backgroundColor = remember {
-              Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f)
-            }
+            val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 
             Surface(
               onClick = { pop() },

@@ -22,7 +22,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     tools:ignore="RtlHardcoded,RtlSymmetry,NotSibling"
     tools:parentTag="androidx.constraintlayout.widget.ConstraintLayout">
 
-    <View
+    <com.github.k1rakishou.chan.ui.view.DashedLineView
         android:id="@+id/post_attention_label"
         android:layout_width="@dimen/post_attention_label_width"
         android:layout_height="0dp"

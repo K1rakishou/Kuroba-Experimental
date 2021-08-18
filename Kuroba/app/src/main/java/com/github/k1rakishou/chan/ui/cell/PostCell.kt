@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator
 import com.github.k1rakishou.chan.ui.animation.PostUnseenIndicatorFadeAnimator.createUnseenPostIndicatorFadeAnimation
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
+import com.github.k1rakishou.chan.ui.view.DashedLineView
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -96,7 +97,7 @@ class PostCell : ConstraintLayout,
   private lateinit var replies: TextView
   private lateinit var goToPostButton: AppCompatImageView
   private lateinit var divider: View
-  private lateinit var postAttentionLabel: View
+  private lateinit var postAttentionLabel: DashedLineView
 
   private var imageFileName: TextView? = null
   private var titleIconsThumbnailBarrier: Barrier? = null
@@ -222,6 +223,12 @@ class PostCell : ConstraintLayout,
     postCellData?.let { pcd ->
       replies.setTextColor(pcd.theme.textColorSecondary)
       divider.setBackgroundColor(pcd.theme.dividerColor)
+
+      if (pcd.isSavedReply || pcd.isReplyToSavedReply) {
+        postAttentionLabel.updateColor(pcd.theme.postSavedReplyColor)
+      } else {
+        postAttentionLabel.updateColor(pcd.theme.postUnseenLabelColor)
+      }
     }
 
     title.invalidate()
@@ -735,7 +742,7 @@ class PostCell : ConstraintLayout,
       return
     }
 
-    if (postCellData.hasColoredFilter || postAttentionLabel.visibility != View.VISIBLE) {
+    if (postCellData.isSavedReply || postCellData.isReplyToSavedReply || postAttentionLabel.visibility != View.VISIBLE) {
       return
     }
 
@@ -755,29 +762,39 @@ class PostCell : ConstraintLayout,
   private fun bindPostAttentionLabel(postCellData: PostCellData, seenPostFadeOutAnimRemainingTimeMs: Int) {
     val canShowLabel = postCellCallback != null
       && !postCellData.isSelectionMode
-      && (postCellData.hasColoredFilter || postCellData.markUnseenPosts)
+      && (postCellData.markUnseenPosts || postCellData.isSavedReply || postCellData.isReplyToSavedReply)
 
-    val hasColoredFilter = postCellData.hasColoredFilter
+    val isSavedReply = postCellData.isSavedReply
+    val isReplyToSavedReply = postCellData.isReplyToSavedReply
+
     val startAlpha = PostUnseenIndicatorFadeAnimator.calcAlphaFromRemainingTime(seenPostFadeOutAnimRemainingTimeMs)
     val alphaIsOk = startAlpha > 0f && startAlpha <= 1f
-    val hasUnseenPostLabel = alphaIsOk && postCellData.markUnseenPosts && seenPostFadeOutAnimRemainingTimeMs > 0
+    val hasUnseenPostLabel = alphaIsOk
+      && postCellData.markUnseenPosts
+      && seenPostFadeOutAnimRemainingTimeMs > 0
 
-    if (canShowLabel && (hasColoredFilter || hasUnseenPostLabel)) {
-      postAttentionLabel.setVisibilityFast(View.VISIBLE)
-
-      // Filter label is more important than unseen post label
-      if (hasColoredFilter) {
-        postAttentionLabel.setAlphaFast(1f)
-        postAttentionLabel.setBackgroundColorFast(postCellData.filterHighlightedColor)
-      } else {
-        postAttentionLabel.setAlphaFast(startAlpha)
-        postAttentionLabel.setBackgroundColorFast(postCellData.theme.postUnseenLabelColor)
-      }
-    } else {
-      // No filters for this post and the user has already seen it
+    if (!canShowLabel || !(hasUnseenPostLabel || isSavedReply || isReplyToSavedReply)) {
       postAttentionLabel.setVisibilityFast(View.INVISIBLE)
       postAttentionLabel.setAlphaFast(1f)
-      postAttentionLabel.setBackgroundColorFast(0)
+      postAttentionLabel.updateColor(0)
+      return
+    }
+
+    unseenPostIndicatorFadeOutAnimation.value.end()
+    postAttentionLabel.setVisibilityFast(View.VISIBLE)
+
+    if (isReplyToSavedReply) {
+      postAttentionLabel.drawNormalLine(false)
+    } else {
+      postAttentionLabel.drawNormalLine(true)
+    }
+
+    if (isSavedReply || isReplyToSavedReply) {
+      postAttentionLabel.setAlphaFast(1f)
+      postAttentionLabel.updateColor(postCellData.theme.postSavedReplyColor)
+    } else {
+      postAttentionLabel.setAlphaFast(startAlpha)
+      postAttentionLabel.updateColor(postCellData.theme.postUnseenLabelColor)
     }
   }
 
@@ -796,9 +813,6 @@ class PostCell : ConstraintLayout,
           } else {
             setBackgroundColorFast(theme.postHighlightedColor)
           }
-        }
-        postData != null && postData.post.isSavedReply -> {
-          setBackgroundColorFast(theme.postSavedReplyColor)
         }
         else -> {
           setBackgroundColor(0)

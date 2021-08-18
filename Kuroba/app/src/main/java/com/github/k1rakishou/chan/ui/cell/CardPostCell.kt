@@ -81,7 +81,6 @@ class CardPostCell : ConstraintLayout,
   private lateinit var comment: TextView
   private lateinit var replies: TextView
   private lateinit var icons: PostIcons
-  private lateinit var filterMatchColor: View
 
   private var iconSizePx = 0
 
@@ -261,7 +260,6 @@ class CardPostCell : ConstraintLayout,
     icons = findViewById(R.id.icons)
     comment = findViewById(R.id.comment)
     replies = findViewById(R.id.replies)
-    filterMatchColor = findViewById(R.id.filter_match_color)
 
     val textSizeSp = postCellData.textSizeSp
     iconSizePx = AppModuleAndroidUtils.sp(textSizeSp - 3.toFloat())
@@ -303,17 +301,9 @@ class CardPostCell : ConstraintLayout,
   private fun bindPost(postCellData: PostCellData) {
     bindPostThumbnails(postCellData)
 
-    val filterHighlightedColor = postCellData.filterHighlightedColor
-    if (filterHighlightedColor != 0) {
-      filterMatchColor.visibility = VISIBLE
-      filterMatchColor.setBackgroundColor(filterHighlightedColor)
-    } else {
-      filterMatchColor.visibility = GONE
-    }
-
     if (!TextUtils.isEmpty(postCellData.post.subject)) {
       title.visibility = VISIBLE
-      ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.post.subject, title!!)
+      ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.post.subject, title)
     } else {
       title.visibility = GONE
       title.text = null
@@ -322,7 +312,7 @@ class CardPostCell : ConstraintLayout,
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
     comment.requestLayout()
 
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies!!)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies)
 
     bindIcons(postCellData)
 
@@ -406,9 +396,6 @@ class CardPostCell : ConstraintLayout,
             backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
           }
         }
-        postData != null && postData.post.isSavedReply -> {
-          backgroundView.setBackgroundColorFast(theme.postSavedReplyColor)
-        }
         else -> {
           backgroundView.setBackgroundColorFast(theme.backColorSecondary)
         }
@@ -425,7 +412,6 @@ class CardPostCell : ConstraintLayout,
       this.postCellHighlight = null
     }
 
-
     var alpha = 1f
 
     if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
@@ -439,7 +425,6 @@ class CardPostCell : ConstraintLayout,
     icons.setAlphaFast(alpha)
     comment.setAlphaFast(alpha)
     replies.setAlphaFast(alpha)
-    filterMatchColor.setAlphaFast(alpha)
     thumbView?.setAlphaFast(alpha)
   }
 

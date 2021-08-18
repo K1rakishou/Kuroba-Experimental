@@ -5,6 +5,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
@@ -23,12 +24,14 @@ class PostRepliesAdapter(
   private val clickedPostDescriptor: PostDescriptor?,
   chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   postFilterManager: Lazy<PostFilterManager>,
+  savedReplyManager: Lazy<SavedReplyManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
   private val threadCellData = ThreadCellData(
     chanThreadViewableInfoManager = chanThreadViewableInfoManager,
     _postFilterManager = postFilterManager,
+    _savedReplyManager = savedReplyManager,
     initialTheme = initialTheme
   )
 

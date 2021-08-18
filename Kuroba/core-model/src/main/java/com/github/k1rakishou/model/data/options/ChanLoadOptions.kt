@@ -3,9 +3,6 @@ package com.github.k1rakishou.model.data.options
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 
 data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
-  fun isNotDefault(): Boolean {
-    return chanLoadOption !is ChanLoadOption.RetainAll
-  }
 
   fun canClearCache(): Boolean {
     return chanLoadOption is ChanLoadOption.ClearMemoryCache
@@ -16,7 +13,11 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
     return chanLoadOption is ChanLoadOption.ClearMemoryAndDatabaseCaches
   }
 
-  fun isForceUpdating(postDescriptor: PostDescriptor): Boolean {
+  fun isForceUpdating(postDescriptor: PostDescriptor?): Boolean {
+    if (postDescriptor == null) {
+      return chanLoadOption is ChanLoadOption.ForceUpdatePosts
+    }
+
     return chanLoadOption is ChanLoadOption.ForceUpdatePosts
       && (chanLoadOption.postDescriptors == null || chanLoadOption.postDescriptors.contains(postDescriptor))
   }
@@ -61,6 +62,9 @@ sealed class ChanLoadOption {
     }
   }
 
+  /**
+   * If [postDescriptors] is null then remove all posts
+   * */
   class ForceUpdatePosts(val postDescriptors: Set<PostDescriptor>?) : ChanLoadOption() {
     override fun toString(): String {
       if (postDescriptors == null) {

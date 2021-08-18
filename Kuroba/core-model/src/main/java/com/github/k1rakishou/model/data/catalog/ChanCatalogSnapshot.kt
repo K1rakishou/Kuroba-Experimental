@@ -40,6 +40,9 @@ data class ChanCatalogSnapshot(
   val isEndReached: Boolean
     get() = lock.read { endReached }
 
+  val postsCount: Int
+    get() = lock.read { chanCatalogSnapshotEntryList.size }
+
   fun isEmpty(): Boolean = lock.read { chanCatalogSnapshotEntryList.isEmpty() }
 
   fun mergeWith(chanCatalogSnapshot: ChanCatalogSnapshot) {

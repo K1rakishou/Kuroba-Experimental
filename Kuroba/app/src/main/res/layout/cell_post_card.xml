@@ -39,12 +39,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
 
-            <View
-                android:id="@+id/filter_match_color"
-                android:layout_width="match_parent"
-                android:layout_height="4dp"
-                android:visibility="gone" />
-
             <com.github.k1rakishou.chan.ui.cell.PostIcons
                 android:id="@+id/icons"
                 android:layout_width="match_parent"

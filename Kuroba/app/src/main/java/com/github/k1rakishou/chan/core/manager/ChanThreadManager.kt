@@ -95,9 +95,18 @@ class ChanThreadManager(
       Logger.d(TAG, "loadThreadOrCatalog($page, $chanDescriptor, $chanCacheUpdateOptions, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-      if (chanLoadOptions.isNotDefault()) {
+      if (chanLoadOptions.canClearCache() || chanLoadOptions.canClearDatabase()) {
         Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
+      } else if (chanLoadOptions.isForceUpdating(postDescriptor = null)) {
+        val postDescriptors = (chanLoadOptions.chanLoadOption as ChanLoadOption.ForceUpdatePosts).postDescriptors
+        if (postDescriptors == null) {
+          Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
+          postFilterManager.removeAllForDescriptor(chanDescriptor)
+        } else {
+          Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeMany()")
+          postFilterManager.removeMany(postDescriptors)
+        }
       }
 
       if (chanLoadOptions.canClearCache()) {

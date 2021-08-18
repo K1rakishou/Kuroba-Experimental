@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.usecase
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.core_spannable.PostLinkable
@@ -11,23 +12,52 @@ import java.util.*
 class ExtractPostMapInfoHolderUseCase(
   private val savedReplyManager: SavedReplyManager,
   private val siteManager: SiteManager,
-  private val chanThreadManager: ChanThreadManager
-) : IUseCase<List<PostDescriptor>, PostMapInfoHolder> {
+  private val chanThreadManager: ChanThreadManager,
+  private val postFilterManager: PostFilterManager
+) : IUseCase<ExtractPostMapInfoHolderUseCase.Params, PostMapInfoHolder> {
 
-  override fun execute(parameter: List<PostDescriptor>): PostMapInfoHolder {
+  override fun execute(parameter: Params): PostMapInfoHolder {
     return PostMapInfoHolder(
-      extractMyPostsPositionsFromPostList(parameter),
-      extractReplyPositionsFromPostList(parameter),
-      extractCrossThreadReplyPositionsFromPostList(parameter)
+      myPostsPositionRanges = extractMyPostsPositionsFromPostList(parameter),
+      replyPositionRanges = extractReplyPositionsFromPostList(parameter),
+      crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter),
+      postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter)
     )
   }
 
-  private fun extractMyPostsPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
+  private fun extractPostFilterHighlightsFromPostList(params: Params): List<PostMapInfoEntry> {
+    val postDescriptors = params.postDescriptors
+    if (postDescriptors.isEmpty()) {
+      return emptyList()
+    }
+
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
+    val duplicateChecker: MutableSet<Int> = HashSet()
+    val filterHighlightedColorsMap = postFilterManager.getManyFilterHighlightedColors(postDescriptors)
+    var prevIndex = 0
+
+    for ((index, post) in postDescriptors.withIndex()) {
+      val filterColor = filterHighlightedColorsMap[post]
+      if (filterColor == null || !duplicateChecker.add(index)) {
+        continue
+      }
+
+      connectRangesIfContiguousWithColor(prevIndex, index, filterColor, replyRanges)
+      prevIndex = index
+    }
+
+    return replyRanges
+  }
+
+  private fun extractMyPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
     if (!ChanSettings.markYourPostsOnScrollbar.get()) {
       return emptyList()
     }
 
-    if (postDescriptors.isEmpty()) {
+    val postDescriptors = params.postDescriptors
+    val isViewingThread = params.isViewingThread
+
+    if (postDescriptors.isEmpty() || !isViewingThread) {
       return emptyList()
     }
 
@@ -45,7 +75,7 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    val replyRanges: MutableList<IntRange> = ArrayList(savedPostNoSet.size)
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList(savedPostNoSet.size)
     val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
     var prevIndex = 0
 
@@ -61,12 +91,15 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractReplyPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
+  private fun extractReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
     if (!ChanSettings.markRepliesToYourPostOnScrollbar.get()) {
       return emptyList()
     }
 
-    if (postDescriptors.isEmpty()) {
+    val postDescriptors = params.postDescriptors
+    val isViewingThread = params.isViewingThread
+
+    if (postDescriptors.isEmpty() || !isViewingThread) {
       return emptyList()
     }
 
@@ -84,7 +117,7 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    val replyRanges: MutableList<IntRange> = ArrayList(savedPostNoSet.size)
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList(savedPostNoSet.size)
     val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
     var prevIndex = 0
 
@@ -106,12 +139,19 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractCrossThreadReplyPositionsFromPostList(postDescriptors: List<PostDescriptor>): List<IntRange> {
+  private fun extractCrossThreadReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
     if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
       return emptyList()
     }
 
-    val crossThreadReplyRanges: MutableList<IntRange> = ArrayList(16)
+    val postDescriptors = params.postDescriptors
+    val isViewingThread = params.isViewingThread
+
+    if (postDescriptors.isEmpty() || !isViewingThread) {
+      return emptyList()
+    }
+
+    val crossThreadReplyRanges: MutableList<PostMapInfoEntry> = ArrayList(16)
     val duplicateChecker: MutableSet<Int> = HashSet(16)
     var prevIndex = 0
 
@@ -133,27 +173,55 @@ class ExtractPostMapInfoHolderUseCase(
     return crossThreadReplyRanges
   }
 
-  private fun connectRangesIfContiguous(prevIndex: Int, index: Int, ranges: MutableList<IntRange>) {
+  private fun connectRangesIfContiguous(prevIndex: Int, index: Int, ranges: MutableList<PostMapInfoEntry>) {
     if (prevIndex == index - 1 && ranges.size > 0) {
-      val prevRange = ranges[ranges.lastIndex]
-      ranges[ranges.lastIndex] = IntRange(prevRange.first, index)
+      val prevRange = ranges[ranges.lastIndex].range
+
+      ranges[ranges.lastIndex] = PostMapInfoEntry(IntRange(prevRange.first, index), 0)
     } else {
-      ranges.add(IntRange(index, index))
+      ranges.add(PostMapInfoEntry(IntRange(index, index), 0))
     }
   }
+
+  private fun connectRangesIfContiguousWithColor(
+    prevIndex: Int,
+    index: Int,
+    newColor: Int,
+    ranges: MutableList<PostMapInfoEntry>
+  ) {
+    if (prevIndex == index - 1 && ranges.size > 0) {
+      val prevColor = ranges[ranges.lastIndex].color
+      if (prevColor == newColor) {
+        val prevRange = ranges[ranges.lastIndex].range
+        ranges[ranges.lastIndex] = PostMapInfoEntry(IntRange(prevRange.first, index), newColor)
+        return
+      }
+
+      // fallthrough
+    }
+
+    ranges.add(PostMapInfoEntry(IntRange(index, index), newColor))
+  }
+
+  data class Params(
+    val postDescriptors: List<PostDescriptor>,
+    val isViewingThread: Boolean
+  )
 
 }
 
 data class PostMapInfoHolder(
-  val myPostsPositionRanges: List<IntRange> = emptyList(),
-  val replyPositionRanges: List<IntRange> = emptyList(),
-  val crossThreadQuotePositionRanges: List<IntRange> = emptyList()
+  val myPostsPositionRanges: List<PostMapInfoEntry> = emptyList(),
+  val replyPositionRanges: List<PostMapInfoEntry> = emptyList(),
+  val crossThreadQuotePositionRanges: List<PostMapInfoEntry> = emptyList(),
+  val postFilterHighlightRanges: List<PostMapInfoEntry> = emptyList()
 ) {
 
   fun isEmpty(): Boolean {
     return myPostsPositionRanges.isEmpty()
       && replyPositionRanges.isEmpty()
       && crossThreadQuotePositionRanges.isEmpty()
+      && postFilterHighlightRanges.isEmpty()
   }
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
@@ -169,10 +237,14 @@ data class PostMapInfoHolder(
       return false
     }
 
+    if (!rangesTheSame(postFilterHighlightRanges, otherPostMapInfoHolder.postFilterHighlightRanges)) {
+      return false
+    }
+
     return true
   }
 
-  private fun rangesTheSame(ranges1: List<IntRange>, ranges2: List<IntRange>): Boolean {
+  private fun rangesTheSame(ranges1: List<PostMapInfoEntry>, ranges2: List<PostMapInfoEntry>): Boolean {
     if (ranges1.size != ranges2.size) {
       return false
     }
@@ -192,3 +264,8 @@ data class PostMapInfoHolder(
   }
 
 }
+
+data class PostMapInfoEntry(
+  val range: IntRange,
+  val color: Int
+)

@@ -213,6 +213,10 @@ class SavedReplyManager(
     }
   }
 
+  fun getThreadSavedReplies(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanSavedReply> {
+    return lock.read { savedReplyMap[threadDescriptor] ?: emptyList() }
+  }
+
   private suspend fun preloadForThreadInternal(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     val savedReplies = savedReplyRepository.preloadForThread(threadDescriptor)
       .safeUnwrap { error ->

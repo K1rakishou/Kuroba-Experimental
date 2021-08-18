@@ -85,6 +85,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.persist_state.IndexAndTop
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
@@ -131,6 +132,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var chanCatalogSnapshotCache: ChanCatalogSnapshotCache
   @Inject
   lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
@@ -1021,17 +1024,45 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (chanDescriptor is ThreadDescriptor) {
-      val chanThread = chanThreadManager.getChanThread(chanDescriptor)
-      if (chanThread != null) {
-        if (postInfoMapItemDecoration == null) {
-          postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
-        }
+    when (chanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        val catalogSnapshot = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+        if (catalogSnapshot != null) {
+          val postDescriptors = catalogSnapshot.catalogThreadDescriptorList
+            .map { threadDescriptor -> threadDescriptor.toOriginalPostDescriptor() }
 
-        postInfoMapItemDecoration!!.setItems(
-          extractPostMapInfoHolderUseCase.get().execute(chanThread.getPostDescriptors()),
-          chanThread.postsCount
-        )
+          if (postInfoMapItemDecoration == null) {
+            postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
+          }
+
+          val params = ExtractPostMapInfoHolderUseCase.Params(
+            postDescriptors = postDescriptors,
+            isViewingThread = false
+          )
+
+          postInfoMapItemDecoration!!.setItems(
+            extractPostMapInfoHolderUseCase.get().execute(params),
+            catalogSnapshot.postsCount
+          )
+        }
+      }
+      is ThreadDescriptor -> {
+        val chanThread = chanThreadManager.getChanThread(chanDescriptor)
+        if (chanThread != null) {
+          if (postInfoMapItemDecoration == null) {
+            postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
+          }
+
+          val params = ExtractPostMapInfoHolderUseCase.Params(
+            postDescriptors = chanThread.getPostDescriptors(),
+            isViewingThread = true
+          )
+
+          postInfoMapItemDecoration!!.setItems(
+            extractPostMapInfoHolderUseCase.get().execute(params),
+            chanThread.postsCount
+          )
+        }
       }
     }
 

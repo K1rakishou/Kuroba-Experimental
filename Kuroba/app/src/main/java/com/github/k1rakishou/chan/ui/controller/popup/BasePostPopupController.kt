@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
@@ -54,6 +55,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postFilterManager: Lazy<PostFilterManager>
+  @Inject
+  lateinit var savedReplyManager: Lazy<SavedReplyManager>
   @Inject
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject

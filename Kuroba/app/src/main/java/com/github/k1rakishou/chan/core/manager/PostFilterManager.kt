@@ -158,9 +158,13 @@ class PostFilterManager(
         val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
 
         val filterHighlightColor = if (!enabled) {
-          0
+          null
         } else {
-          filterStorage[threadDescriptor]?.get(postDescriptor)?.filterHighlightedColor ?: 0
+          filterStorage[threadDescriptor]?.get(postDescriptor)?.filterHighlightedColor
+        }
+
+        if (filterHighlightColor == null) {
+          continue
         }
 
         resultMap[postDescriptor] = filterHighlightColor

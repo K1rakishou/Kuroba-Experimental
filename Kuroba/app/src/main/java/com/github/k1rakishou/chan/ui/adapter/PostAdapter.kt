@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.CatalogStatusCell
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
@@ -58,6 +59,8 @@ class PostAdapter(
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var postFilterManager: Lazy<PostFilterManager>
+  @Inject
+  lateinit var savedReplyManager: Lazy<SavedReplyManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -113,6 +116,7 @@ class PostAdapter(
     threadCellData = ThreadCellData(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       _postFilterManager = postFilterManager,
+      _savedReplyManager = savedReplyManager,
       initialTheme = themeEngine.chanTheme
     )
 

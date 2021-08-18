@@ -3,9 +3,11 @@ package com.github.k1rakishou.chan.ui.cell
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -19,6 +21,7 @@ import kotlinx.coroutines.withContext
 class ThreadCellData(
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _postFilterManager: Lazy<PostFilterManager>,
+  private val _savedReplyManager: Lazy<SavedReplyManager>,
   initialTheme: ChanTheme
 ): Iterable<PostCellData> {
   private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
@@ -56,8 +59,6 @@ class ThreadCellData(
   ) {
     require(postCellDataWidthNoPaddings > 0) { "Bad postCellDataWidthNoPaddings: ${postCellDataWidthNoPaddings}" }
     BackgroundUtils.ensureMainThread()
-
-    val isTheSameChanDescriptor = this._chanDescriptor == chanDescriptor
 
     this._chanDescriptor = chanDescriptor
     this.postCellCallback = postCellCallback
@@ -120,8 +121,16 @@ class ThreadCellData(
 
     val postFilterManager = _postFilterManager.get()
     val filterHashMap = postFilterManager.getManyFilterHashes(postDescriptors)
-    val filterHighlightedColorMap = postFilterManager.getManyFilterHighlightedColors(postDescriptors)
     val filterStubMap = postFilterManager.getManyFilterStubs(postDescriptors)
+    val threadPostReplyMap = mutableMapWithCap<Long, Boolean>(postIndexedList.size)
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      val savedReplies = _savedReplyManager.get().getThreadSavedReplies(chanDescriptor)
+
+      savedReplies.forEach { savedReply ->
+        threadPostReplyMap[savedReply.postDescriptor.postNo] = true
+      }
+    }
 
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
@@ -158,10 +167,11 @@ class ThreadCellData(
         markSeenThreads = markSeenThreads,
         stub = filterStubMap[postDescriptor] ?: false,
         filterHash = filterHashMap[postDescriptor] ?: 0,
-        filterHighlightedColor = filterHighlightedColorMap[postDescriptor] ?: 0,
         searchQuery = defaultSearchQuery,
         postAlignmentMode = postAlignmentMode,
-        postCellThumbnailSizePercents = postCellThumbnailSizePercents
+        postCellThumbnailSizePercents = postCellThumbnailSizePercents,
+        isSavedReply = postIndexed.post.isSavedReply,
+        isReplyToSavedReply = postIndexed.post.repliesTo.any { replyTo -> threadPostReplyMap[replyTo] == true }
       )
 
       postCellData.postCellCallback = postCellCallback
