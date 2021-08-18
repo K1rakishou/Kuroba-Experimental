@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.drawer
 
-import androidx.compose.foundation.layout.PaddingValues
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -50,8 +49,6 @@ class MainControllerPresenter(
   private val _historyControllerStateFlow = MutableStateFlow<HistoryControllerState>(HistoryControllerState.Empty)
   val historyControllerStateFlow: StateFlow<HistoryControllerState>
     get() = _historyControllerStateFlow.asStateFlow()
-
-  var paddings = PaddingValues()
 
   private val navHistoryReloadPending = AtomicBoolean(false)
   private val drawerOpened = AtomicBoolean(false)

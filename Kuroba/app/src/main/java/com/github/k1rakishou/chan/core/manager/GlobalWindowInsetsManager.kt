@@ -6,6 +6,8 @@ import android.graphics.Rect
 import android.view.MotionEvent
 import android.view.View
 import android.view.Window
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -25,7 +27,10 @@ class GlobalWindowInsetsManager {
 
   private val displaySize = Point(0, 0)
   private val lastTouchCoordinates = Point(0, 0)
+
   private val currentInsets = Rect()
+  var currentInsetsCompose = mutableStateOf(PaddingValues())
+    private set
 
   private val callbacksAwaitingInsetsDispatch = ArrayList<Runnable>()
   private val callbacksAwaitingKeyboardHidden = ArrayList<Runnable>()
@@ -153,6 +158,13 @@ class GlobalWindowInsetsManager {
       insets.systemWindowInsetTop,
       insets.systemWindowInsetRight,
       insets.systemWindowInsetBottom
+    )
+
+    currentInsetsCompose.value = PaddingValues(
+      start = pxToDp(insets.systemWindowInsetLeft.toFloat()).dp,
+      end = pxToDp(insets.systemWindowInsetRight.toFloat()).dp,
+      top = pxToDp(insets.systemWindowInsetTop.toFloat()).dp,
+      bottom = pxToDp(insets.systemWindowInsetBottom.toFloat()).dp,
     )
 
     return true

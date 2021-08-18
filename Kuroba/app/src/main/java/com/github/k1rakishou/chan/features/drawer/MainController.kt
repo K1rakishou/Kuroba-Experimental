@@ -462,11 +462,6 @@ class MainController(
   override fun onInsetsChanged() {
     val navigationViewSize = getDimen(R.dimen.navigation_view_size)
 
-    drawerPresenter.paddings = PaddingValues(
-      top = globalWindowInsetsManager.topDp(),
-      bottom = globalWindowInsetsManager.bottomDp()
-    )
-
     when (navigationViewContract.type) {
       NavigationViewContract.Type.BottomNavView -> {
         navigationViewContract.actualView.layoutParams.height =
@@ -906,15 +901,17 @@ class MainController(
   @Composable
   private fun ColumnScope.BuildContent() {
     val historyControllerState by drawerPresenter.historyControllerStateFlow.collectAsState()
+    val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
 
-    Spacer(modifier = Modifier.height(drawerPresenter.paddings.calculateTopPadding()))
+    Spacer(modifier = Modifier.height(currentInsetsCompose.calculateTopPadding()))
     BuildNavigationHistoryListHeader()
 
     val navHistoryEntryList = when (historyControllerState) {
       HistoryControllerState.Empty -> {
         KurobaComposeText(
           modifier = Modifier.fillMaxSize(),
-          text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty)
+          text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty),
+          textAlign = TextAlign.Center,
         )
         return
       }
@@ -947,8 +944,10 @@ class MainController(
           (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
         }
 
-        val bottomPadding = remember(key1 = drawerPresenter.paddings) {
-          PaddingValues(bottom = drawerPresenter.paddings.calculateBottomPadding())
+        val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
+
+        val bottomPadding = remember(key1 = currentInsetsCompose) {
+          PaddingValues(bottom = currentInsetsCompose.calculateBottomPadding())
         }
 
         val chanTheme = LocalChanTheme.current
