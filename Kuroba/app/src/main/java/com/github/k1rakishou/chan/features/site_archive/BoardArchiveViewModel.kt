@@ -1,11 +1,13 @@
 package com.github.k1rakishou.chan.features.site_archive
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
+import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -15,6 +17,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 class BoardArchiveViewModel(
@@ -25,6 +29,8 @@ class BoardArchiveViewModel(
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var seenPostsManager: SeenPostsManager
 
   private val _state = MutableStateFlow(ViewModelState())
   private val searchDebouncer = Debouncer(false)
@@ -41,6 +47,8 @@ class BoardArchiveViewModel(
   val rememberedFirstVisibleItemScrollOffset: Int
     get() = _rememberedFirstVisibleItemScrollOffset
 
+  val alreadyVisitedThreads = mutableStateMapOf<ChanDescriptor.ThreadDescriptor, Unit>()
+
   val state: StateFlow<ViewModelState>
     get() = _state.asStateFlow()
   val searchQuery: State<String?>
@@ -52,6 +60,12 @@ class BoardArchiveViewModel(
 
   override suspend fun onViewModelReady() {
     _state.updateState { copy(archiveThreadsAsync = AsyncData.Loading) }
+
+    mainScope.launch {
+      seenPostsManager.seenThreadUpdatesFlow.collect { seenThread ->
+        alreadyVisitedThreads.put(seenThread, Unit)
+      }
+    }
 
     val nativeArchivePostListResult = siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
       ?.actions()
@@ -78,11 +92,33 @@ class BoardArchiveViewModel(
       nativeArchivePostListResult.valueOrNull()!!
     }
 
-    val archiveThreads = nativeArchivePostList.map { nativeArchivePost ->
+    val threadDescriptors = nativeArchivePostList.map { nativeArchivePost ->
       when (nativeArchivePost) {
         is NativeArchivePost.Chan4NativeArchivePost -> {
-          return@map ArchiveThread(
-            threadNo = nativeArchivePost.threadNo,
+          return@map ChanDescriptor.ThreadDescriptor.Companion.create(
+            chanDescriptor = catalogDescriptor,
+            threadNo = nativeArchivePost.threadNo
+          )
+        }
+      }
+    }
+
+    seenPostsManager.loadForCatalog(catalogDescriptor, threadDescriptors)
+    alreadyVisitedThreads.clear()
+
+    threadDescriptors.forEach { threadDescriptor ->
+      if (seenPostsManager.isThreadAlreadySeen(threadDescriptor)) {
+        alreadyVisitedThreads[threadDescriptor] = Unit
+      }
+    }
+
+    val archiveThreads = nativeArchivePostList.mapIndexed { index, nativeArchivePost ->
+      when (nativeArchivePost) {
+        is NativeArchivePost.Chan4NativeArchivePost -> {
+          val threadDescriptor = threadDescriptors[index]
+
+          return@mapIndexed ArchiveThread(
+            threadDescriptor = threadDescriptor,
             comment = nativeArchivePost.comment.toString()
           )
         }
@@ -123,7 +159,7 @@ class BoardArchiveViewModel(
     }
 
     val filteredArchiveThreads = archiveThreadsAsync.data.filter { archiveThread ->
-      val threadNoStr = archiveThread.threadNo.toString()
+      val threadNoStr = archiveThread.threadDescriptor.threadNo.toString()
       if (threadNoStr.contains(query, ignoreCase = true)) {
         return@filter true
       }
@@ -144,9 +180,11 @@ class BoardArchiveViewModel(
   )
 
   data class ArchiveThread(
-    val threadNo: Long,
+    val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val comment: String
-  )
+  ) {
+    val threadNo: Long = threadDescriptor.threadNo
+  }
 
   class ArchiveNotSupportedException(boardCode: String) : Exception("Board '/$boardCode/' has no archive")
 }

@@ -290,6 +290,20 @@ class MainController(
     navigationViewContract = view.findViewById(R.id.navigation_view) as NavigationViewContract
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
+    drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
+      override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
+
+      override fun onDrawerStateChanged(newState: Int) {}
+
+      override fun onDrawerOpened(drawerView: View) {
+        drawerPresenter.onDrawerOpened()
+      }
+
+      override fun onDrawerClosed(drawerView: View) {
+        drawerPresenter.onDrawerClosed()
+      }
+    })
+
     setBottomNavViewButtons()
     navigationViewContract.selectedMenuItemId = R.id.action_browse
     navigationViewContract.viewElevation = dp(4f).toFloat()

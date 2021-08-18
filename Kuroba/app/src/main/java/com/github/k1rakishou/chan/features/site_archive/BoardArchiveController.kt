@@ -20,6 +20,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
@@ -245,8 +246,26 @@ class BoardArchiveController(
         "#${position + 1} No. ${archiveThread.threadNo}"
       }
 
-      KurobaComposeText(text = threadNo, color = chanTheme.textColorHintCompose, fontSize = 12.sp)
-      KurobaComposeText(text = archiveThread.comment, fontSize = 14.sp)
+      val alreadyVisited = viewModel.alreadyVisitedThreads.containsKey(archiveThread.threadDescriptor)
+
+      val alpha = if (alreadyVisited) {
+        0.7f
+      } else {
+        1f
+      }
+
+      KurobaComposeText(
+        modifier = Modifier.alpha(alpha),
+        text = threadNo,
+        color = chanTheme.textColorHintCompose,
+        fontSize = 12.sp
+      )
+
+      KurobaComposeText(
+        modifier = Modifier.alpha(alpha),
+        text = archiveThread.comment,
+        fontSize = 14.sp
+      )
     }
   }
 

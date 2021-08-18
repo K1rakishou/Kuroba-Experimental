@@ -59,7 +59,7 @@ class CatalogDataPreloader(
     supervisorScope {
       val jobs = mutableListOf<Deferred<Unit>>()
 
-      jobs += async(Dispatchers.IO) { seenPostsManager.get().postloadForCatalog(catalogDescriptor) }
+      jobs += async(Dispatchers.IO) { seenPostsManager.get().loadForCatalog(catalogDescriptor) }
 
       ModularResult.Try { jobs.awaitAll() }
         .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }

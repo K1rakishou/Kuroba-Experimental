@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -24,6 +23,7 @@ import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -31,7 +31,9 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.seconds
 
@@ -51,8 +53,9 @@ class MainControllerPresenter(
 
   var paddings = PaddingValues()
 
+  private val navHistoryReloadPending = AtomicBoolean(false)
+  private val drawerOpened = AtomicBoolean(false)
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
-
   private val reloadNavHistoryDebouncer = DebouncingCoroutineExecutor(scope)
 
   @OptIn(ExperimentalTime::class)
@@ -62,7 +65,7 @@ class MainControllerPresenter(
     scope.launch {
       setState(HistoryControllerState.Loading)
 
-      // If we somehow managed to get here twice (dur to some Android weirdness) we need to manually
+      // If we somehow managed to get here twice (due to some Android weirdness) we need to manually
       // reload navigation history, otherwise we will be stuck in Loading state until something
       // updates the nav history.
       if (historyNavigationManager.isReady()) {
@@ -71,7 +74,9 @@ class MainControllerPresenter(
 
       historyNavigationManager.listenForNavigationStackChanges()
         .asFlow()
-        .collect { reloadNavigationHistory() }
+        .collect {
+          onShouldReloadNavigationHistory()
+        }
     }
 
     scope.launch {
@@ -82,7 +87,8 @@ class MainControllerPresenter(
 
           updateBadge()
           handleEvents(bookmarkChange)
-          reloadNavigationHistory()
+
+          onShouldReloadNavigationHistory()
         }
     }
   }
@@ -177,9 +183,35 @@ class MainControllerPresenter(
     return historyNavigationManager.pinOrUnpin(descriptor)
   }
 
+  fun onDrawerOpened() {
+    drawerOpened.set(true)
+
+    if (navHistoryReloadPending.compareAndSet(true, false)) {
+      reloadNavigationHistory()
+    }
+  }
+
+  fun onDrawerClosed() {
+    drawerOpened.set(false)
+  }
+
+  private fun onShouldReloadNavigationHistory() {
+    if (drawerOpened.get()) {
+      navHistoryReloadPending.set(false)
+      reloadNavigationHistory()
+      return
+    }
+
+    navHistoryReloadPending.set(true)
+  }
+
   fun reloadNavigationHistory() {
     reloadNavHistoryDebouncer.post(HISTORY_NAV_ELEMENTS_DEBOUNCE_TIMEOUT_MS) {
-      ModularResult.Try { showNavigationHistoryInternal() }.safeUnwrap { error ->
+      ModularResult.Try {
+        withContext(Dispatchers.Default) {
+          showNavigationHistoryInternal()
+        }
+      }.safeUnwrap { error ->
         Logger.e(TAG, "showNavigationHistoryInternal() error", error)
         setState(HistoryControllerState.Error(error.errorMessageOrClassName()))
 
@@ -189,8 +221,6 @@ class MainControllerPresenter(
   }
 
   private suspend fun showNavigationHistoryInternal() {
-    BackgroundUtils.ensureMainThread()
-
     historyNavigationManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()

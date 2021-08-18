@@ -107,32 +107,42 @@ class SeenPostsManager(
   }
 
   @OptIn(ExperimentalTime::class)
-  suspend fun postloadForCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
+  suspend fun loadForCatalog(
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>? = null
+  ) {
     if (!isEnabled()) {
       return
     }
 
     val boardDescriptor = catalogDescriptor.boardDescriptor
 
-    val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
-      ?: return
-
     val threadDescriptorsToLoad = lock.read {
-      if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+      if (threadDescriptors != null) {
         alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
-        lastLoadedBoardDescriptor = boardDescriptor
-      }
+        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(threadDescriptors)
 
-      val toLoad = catalogSnapshot.catalogThreadDescriptorSet
-        .filter { threadDescriptor ->
-          threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
+        return@read threadDescriptors
+      } else {
+        val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
+          ?: return@read emptyList()
+
+        if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+          alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
+          lastLoadedBoardDescriptor = boardDescriptor
         }
 
-      if (catalogSnapshot.isUnlimitedCatalog) {
-        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
-      }
+        val toLoad = catalogSnapshot.catalogThreadDescriptorSet
+          .filter { threadDescriptor ->
+            threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
+          }
 
-      return@read toLoad
+        if (catalogSnapshot.isUnlimitedCatalog) {
+          alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
+        }
+
+        return@read toLoad
+      }
     }
 
     if (threadDescriptorsToLoad.isEmpty()) {
@@ -152,7 +162,7 @@ class SeenPostsManager(
       }.groupBy { seenPost -> seenPost.postDescriptor.threadDescriptor() }
 
       lock.write {
-        Logger.d(TAG, "postloadForCatalog($catalogDescriptor) " +
+        Logger.d(TAG, "loadForCatalog($catalogDescriptor) " +
           "threadDescriptorsToLoad=${threadDescriptorsToLoad.size}, " +
           "seenPostsGrouped=${seenPostsGrouped.size}, " +
           "alreadyLoadedDescriptorsForUnlimitedCatalog=${alreadyLoadedDescriptorsForUnlimitedCatalog.size}")

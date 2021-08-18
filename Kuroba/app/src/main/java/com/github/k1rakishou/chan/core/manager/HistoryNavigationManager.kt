@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableIteration
@@ -112,8 +111,6 @@ class HistoryNavigationManager(
   }
 
   fun getAll(reversed: Boolean = false): List<NavHistoryElement> {
-    BackgroundUtils.ensureMainThread()
-
     return lock.read {
       if (reversed) {
         return@read navigationStack.toList().reversed()
@@ -124,14 +121,10 @@ class HistoryNavigationManager(
   }
 
   fun getNavElementAtTop(): NavHistoryElement? {
-    BackgroundUtils.ensureMainThread()
-
     return lock.read { navigationStack.firstOrNull() }
   }
 
   fun getFirstCatalogNavElement(): NavHistoryElement? {
-    BackgroundUtils.ensureMainThread()
-
     return lock.read {
       return@read navigationStack.firstOrNull { navHistoryElement ->
         navHistoryElement is NavHistoryElement.Catalog
@@ -140,8 +133,6 @@ class HistoryNavigationManager(
   }
 
   fun listenForNavigationStackChanges(): Flowable<Unit> {
-    BackgroundUtils.ensureMainThread()
-
     return navigationStackChangesSubject
       .observeOn(AndroidSchedulers.mainThread())
       .doOnError { error -> Logger.e(TAG, "listenForNavigationStackChanges error", error) }
@@ -183,8 +174,6 @@ class HistoryNavigationManager(
     title: String,
     canInsertAtTheBeginning: Boolean
   ) {
-    BackgroundUtils.ensureMainThread()
-
     val newNavigationElement = NewNavigationElement(descriptor, thumbnailImageUrl, title)
     createNewNavElements(listOf(newNavigationElement), canInsertAtTheBeginning)
   }
@@ -203,8 +192,6 @@ class HistoryNavigationManager(
     newNavigationElements: Collection<NewNavigationElement>,
     canInsertAtTheBeginning: Boolean
   ) {
-    BackgroundUtils.ensureMainThread()
-
     if (newNavigationElements.isEmpty()) {
       return
     }
@@ -240,8 +227,6 @@ class HistoryNavigationManager(
   }
 
   fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
-    BackgroundUtils.ensureMainThread()
-
     if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
       return
     }
@@ -282,8 +267,6 @@ class HistoryNavigationManager(
   }
 
   private fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
-    BackgroundUtils.ensureMainThread()
-
     return lock.write {
       val indexOfElem = navigationStack.indexOf(navElement)
       if (indexOfElem >= 0) {
@@ -319,8 +302,6 @@ class HistoryNavigationManager(
   }
 
   fun pinOrUnpin(chanDescriptor: ChanDescriptor): PinResult {
-    BackgroundUtils.ensureMainThread()
-
     val pinResult = lock.write {
       val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
         return@indexOfFirst when (navHistoryElement) {
@@ -367,13 +348,10 @@ class HistoryNavigationManager(
   }
 
   fun deleteNavElement(descriptor: ChanDescriptor) {
-    BackgroundUtils.ensureMainThread()
     removeNavElements(listOf(descriptor))
   }
 
   fun removeNavElements(descriptors: Collection<ChanDescriptor>) {
-    BackgroundUtils.ensureMainThread()
-
     if (descriptors.isEmpty()) {
       return
     }
@@ -408,8 +386,6 @@ class HistoryNavigationManager(
   }
 
   fun removeNonBookmarkNavElements(bookmarkDescriptors: Set<ChanDescriptor.ThreadDescriptor>) {
-    BackgroundUtils.ensureMainThread()
-
     if (bookmarkDescriptors.isEmpty()) {
       return
     }
@@ -445,8 +421,6 @@ class HistoryNavigationManager(
   }
 
   fun clear() {
-    BackgroundUtils.ensureMainThread()
-
     val cleared = lock.write {
       if (navigationStack.isEmpty()) {
         return@write false
@@ -464,8 +438,6 @@ class HistoryNavigationManager(
   }
 
   private fun persisNavigationStack(eager: Boolean = false) {
-    BackgroundUtils.ensureMainThread()
-
     if (!suspendableInitializer.isInitialized()) {
       return
     }
