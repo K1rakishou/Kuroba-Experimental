@@ -28,7 +28,7 @@ class DashedLineView @JvmOverloads constructor(
     setColor(Color.GREEN)
     flags = Paint.ANTI_ALIAS_FLAG
     style = Paint.Style.STROKE
-    pathEffect = DashPathEffect(floatArrayOf(15f, 10f), 0f)
+    pathEffect = DashPathEffect(floatArrayOf(15f, 15f), 0f)
   }
 
   init {

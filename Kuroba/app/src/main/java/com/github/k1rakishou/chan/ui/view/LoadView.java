@@ -25,9 +25,10 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.View;
-import android.widget.FrameLayout;
 
 import androidx.annotation.NonNull;
+
+import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +37,7 @@ import java.util.List;
  * Container for a view with an ProgressBar. Toggles between the view and a
  * ProgressBar.
  */
-public class LoadView extends FrameLayout {
+public class LoadView extends TouchBlockingFrameLayout {
     public static final int DEFAULT_FADE_DURATION = 200;
 
     private int fadeDuration = DEFAULT_FADE_DURATION;

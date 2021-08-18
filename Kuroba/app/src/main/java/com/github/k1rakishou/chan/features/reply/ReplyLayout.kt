@@ -137,8 +137,6 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var captchaHolder: Lazy<CaptchaHolder>
   @Inject
-  lateinit var themeEngine: ThemeEngine
-  @Inject
   lateinit var siteManager: SiteManager
   @Inject
   lateinit var boardManager: BoardManager
