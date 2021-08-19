@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
-import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 
@@ -41,8 +39,6 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.fsaf.FileManager;
 import com.google.gson.Gson;
 
-import java.io.File;
-
 import javax.inject.Singleton;
 
 import dagger.Lazy;
@@ -52,8 +48,6 @@ import kotlinx.coroutines.CoroutineScope;
 
 @Module
 public class NetModule {
-    private static final String FILE_CACHE_DIR = "filecache";
-    private static final String FILE_CHUNKS_CACHE_DIR = "file_chunks_cache";
 
     @Provides
     @Singleton
@@ -83,18 +77,16 @@ public class NetModule {
 
     @Provides
     @Singleton
-    public CacheHandler provideCacheHandler() {
+    public CacheHandler provideCacheHandler(AppConstants appConstants) {
         Logger.deps("CacheHandler");
 
-        File cacheDir = getCacheDir().getValue();
         CacheHandlerSynchronizer cacheHandlerSynchronizer = new CacheHandlerSynchronizer();
 
         return new CacheHandler(
                 cacheHandlerSynchronizer,
                 ChanSettings.verboseLogs.get(),
-                new File(cacheDir, FILE_CACHE_DIR),
-                new File(cacheDir, FILE_CHUNKS_CACHE_DIR),
-                ChanSettings.prefetchMedia.get()
+                ChanSettings.prefetchMedia.get(),
+                appConstants
         );
     }
 

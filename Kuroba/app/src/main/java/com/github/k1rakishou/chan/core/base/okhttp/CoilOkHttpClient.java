@@ -13,8 +13,6 @@ import com.github.k1rakishou.common.dns.NormalDnsSelectorFactory;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
-
 import javax.inject.Inject;
 
 import okhttp3.Interceptor;
@@ -22,8 +20,6 @@ import okhttp3.OkHttpClient;
 
 
 public class CoilOkHttpClient implements CustomOkHttpClient {
-    private static final String IMAGE_CACHE_DIR = "coil_image_cache_dir";
-
     private final Context applicationContext;
     private final NormalDnsSelectorFactory normalDnsSelectorFactory;
     private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
@@ -59,11 +55,6 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
         if (coilClient == null) {
             synchronized (this) {
                 if (coilClient == null) {
-                    File imageCacheDir = new File(applicationContext.getCacheDir(), IMAGE_CACHE_DIR);
-                    if (!imageCacheDir.exists() && !imageCacheDir.mkdirs()) {
-                        throw new IllegalStateException("mkdirs failed to create " + imageCacheDir.getAbsolutePath());
-                    }
-
                     KurobaProxySelector kurobaProxySelector = new KurobaProxySelector(
                             proxyStorage,
                             ProxyStorage.ProxyActionType.SiteMediaPreviews

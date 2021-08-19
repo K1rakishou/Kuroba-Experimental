@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.ConversionUtils.charArrayToInt
 import com.github.k1rakishou.chan.utils.ConversionUtils.intToCharArray
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mbytesToBytes
@@ -64,9 +65,8 @@ import kotlin.time.measureTime
 class CacheHandler(
   private val cacheHandlerSynchronizer: CacheHandlerSynchronizer,
   private val verboseLogs: Boolean,
-  private val cacheDirFile: File,
-  private val chunksCacheDirFile: File,
-  private val autoLoadThreadImages: Boolean
+  private val autoLoadThreadImages: Boolean,
+  private val appConstants: AppConstants
 ) {
   private val trimExecutor = Executors.newSingleThreadExecutor()
   private val cacheHandlerDisposable = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
@@ -89,6 +89,29 @@ class CacheHandler(
   private val filesOnDiskCache = hashSetWithCap<String>(128)
   @GuardedBy("itself")
   private val fullyDownloadedFiles = hashSetWithCap<String>(128)
+
+  private val _cacheDirFile: File = appConstants.fileCacheDir
+  private val cacheDirFile: File
+    get() {
+      if (!_cacheDirFile.exists()) {
+        _cacheDirFile.mkdirs()
+
+        synchronized(filesOnDiskCache) { filesOnDiskCache.clear() }
+        synchronized(fullyDownloadedFiles) { fullyDownloadedFiles.clear() }
+      }
+
+      return _cacheDirFile
+    }
+
+  private val _chunksCacheDirFile: File = appConstants.fileCacheChunksDir
+  private val chunksCacheDirFile: File
+    get() {
+      if (!_chunksCacheDirFile.exists()) {
+        _chunksCacheDirFile.mkdirs()
+      }
+
+      return _chunksCacheDirFile
+    }
 
   init {
     fileCacheDiskSizeBytes = if (autoLoadThreadImages) {

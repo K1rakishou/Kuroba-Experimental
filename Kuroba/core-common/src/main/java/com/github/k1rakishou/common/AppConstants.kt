@@ -76,6 +76,46 @@ open class AppConstants(
       return field
     }
 
+  val crashLogsDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create Crash Log directory! crashLogsDir=${field.absolutePath}" }
+      return field
+    }
+
+  val anrsDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create ANR directory! anrsDir=${field.absolutePath}" }
+      return field
+    }
+
+  val fileCacheDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create File Cache directory! fileCacheDir=${field.absolutePath}" }
+      return field
+    }
+
+  val fileCacheChunksDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create File Cache Chunks directory! fileCacheChunksDir=${field.absolutePath}" }
+      return field
+    }
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
@@ -88,6 +128,13 @@ open class AppConstants(
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
     mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
     threadDownloaderCacheDir = File(context.filesDir, THREAD_DOWNLOADER_DIR_NAME)
+
+    crashLogsDir = File(context.filesDir, CRASH_LOGS_DIR_NAME)
+    anrsDir = File(context.filesDir, ANRS_DIR_NAME)
+
+    fileCacheDir = File(context.filesDir, FILE_CACHE_DIR)
+    fileCacheChunksDir = File(context.filesDir, FILE_CHUNKS_CACHE_DIR)
+
     exoPlayerCacheDir = File(context.cacheDir, EXO_PLAYER_CACHE_DIR_NAME)
   }
 
@@ -122,6 +169,10 @@ open class AppConstants(
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
     private const val THREAD_DOWNLOADER_DIR_NAME = "thread_downloader_storage"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
+    private const val CRASH_LOGS_DIR_NAME = "crashlogs"
+    private const val ANRS_DIR_NAME = "anrs"
+    private const val FILE_CACHE_DIR = "filecache"
+    private const val FILE_CHUNKS_CACHE_DIR = "file_chunks_cache"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
     const val DEFAULT_THUMBNAIL = (RESOURCES_ENDPOINT + "internal_spoiler.png")

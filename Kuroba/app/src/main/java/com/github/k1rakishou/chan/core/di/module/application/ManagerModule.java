@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
-import static com.github.k1rakishou.chan.core.di.module.application.AppModule.getCacheDir;
 import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
 import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCompat;
 
@@ -113,7 +112,6 @@ import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 
-import java.io.File;
 import java.util.HashSet;
 import java.util.concurrent.Executor;
 
@@ -129,8 +127,6 @@ import kotlinx.coroutines.CoroutineScope;
 
 @Module
 public class ManagerModule {
-    private static final String CRASH_LOGS_DIR_NAME = "crashlogs";
-    private static final String ANRS_DIR_NAME = "anrs";
 
     @Provides
     @Singleton
@@ -217,12 +213,12 @@ public class ManagerModule {
     public ReportManager provideReportManager(
             CoroutineScope appScope,
             Context appContext,
+            AppConstants appConstants,
             Lazy<ProxiedOkHttpClient> okHttpClient,
             Lazy<Gson> gson,
             Lazy<SettingsNotificationManager> settingsNotificationManager
     ) {
         Logger.deps("ReportManager");
-        File cacheDir = getCacheDir().getValue();
 
         return new ReportManager(
                 appScope,
@@ -230,8 +226,7 @@ public class ManagerModule {
                 okHttpClient,
                 settingsNotificationManager,
                 gson,
-                new File(cacheDir, CRASH_LOGS_DIR_NAME),
-                new File(cacheDir, ANRS_DIR_NAME)
+                appConstants
         );
     }
 

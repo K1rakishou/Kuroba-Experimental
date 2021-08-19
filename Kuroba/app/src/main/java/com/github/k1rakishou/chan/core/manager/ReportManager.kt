@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendCall
@@ -43,8 +44,7 @@ class ReportManager(
   private val proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
   private val settingsNotificationManager: Lazy<SettingsNotificationManager>,
   private val gson: Lazy<Gson>,
-  private val crashLogsDirPath: File,
-  private val anrsDirPath: File
+  private val appConstants: AppConstants
 ) {
   private val activityManager: ActivityManager?
     get() = appContext.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
@@ -55,6 +55,11 @@ class ReportManager(
     scope = appScope,
     dispatcher = Dispatchers.Default
   )
+
+  private val anrsDir: File
+    get() = appConstants.anrsDir
+  private val crashLogsDir: File
+    get() = appConstants.crashLogsDir
 
   init {
     createDirectoriesIfNotExists()
@@ -67,7 +72,7 @@ class ReportManager(
 
     val currentTime = System.currentTimeMillis()
 
-    val newAnr = File(anrsDirPath, "${ANR_FILE_NAME_PREFIX}_${currentTime}.txt")
+    val newAnr = File(anrsDir, "${ANR_FILE_NAME_PREFIX}_${currentTime}.txt")
     if (newAnr.exists()) {
       return
     }
@@ -96,7 +101,7 @@ class ReportManager(
 
     val currentTime = System.currentTimeMillis()
 
-    val newCrashLog = File(crashLogsDirPath, "${CRASH_LOG_FILE_NAME_PREFIX}_${currentTime}.txt")
+    val newCrashLog = File(crashLogsDir, "${CRASH_LOG_FILE_NAME_PREFIX}_${currentTime}.txt")
     if (newCrashLog.exists()) {
       return
     }
@@ -142,12 +147,12 @@ class ReportManager(
       return false
     }
 
-    val crashLogs = crashLogsDirPath.listFiles()
+    val crashLogs = crashLogsDir.listFiles()
     if (crashLogs != null && crashLogs.isNotEmpty()) {
       return true
     }
 
-    val anrs = anrsDirPath.listFiles()
+    val anrs = anrsDir.listFiles()
     if (anrs != null && anrs.isNotEmpty()) {
       return true
     }
@@ -160,8 +165,8 @@ class ReportManager(
       return 0
     }
 
-    val crashlogs = crashLogsDirPath.listFiles()?.size ?: 0
-    val anrs = anrsDirPath.listFiles()?.size ?: 0
+    val crashlogs = crashLogsDir.listFiles()?.size ?: 0
+    val anrs = anrsDir.listFiles()?.size ?: 0
 
     return crashlogs + anrs
   }
@@ -171,8 +176,8 @@ class ReportManager(
       return emptyList()
     }
 
-    val crashLogs = crashLogsDirPath.listFiles() ?: emptyArray()
-    val anrs = anrsDirPath.listFiles() ?: emptyArray()
+    val crashLogs = crashLogsDir.listFiles() ?: emptyArray()
+    val anrs = anrsDir.listFiles() ?: emptyArray()
 
     return (crashLogs + anrs)
       .sortedByDescending { file -> file.lastModified() }
@@ -187,8 +192,8 @@ class ReportManager(
 
     reportFiles.forEach { crashLog -> crashLog.file.delete() }
 
-    val remainingCrashLogs = crashLogsDirPath.listFiles()?.size ?: 0
-    val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
+    val remainingCrashLogs = crashLogsDir.listFiles()?.size ?: 0
+    val remainingAnrs = anrsDir.listFiles()?.size ?: 0
 
     if (remainingCrashLogs == 0 && remainingAnrs == 0) {
       settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
@@ -219,13 +224,13 @@ class ReportManager(
 
     val potentialReports = when {
       deleteCrashLogs && deleteAnrs -> {
-        (crashLogsDirPath.listFiles() ?: emptyArray()) + (anrsDirPath.listFiles() ?: emptyArray())
+        (crashLogsDir.listFiles() ?: emptyArray()) + (anrsDir.listFiles() ?: emptyArray())
       }
       deleteCrashLogs -> {
-        crashLogsDirPath.listFiles() ?: emptyArray()
+        crashLogsDir.listFiles() ?: emptyArray()
       }
       deleteAnrs -> {
-        anrsDirPath.listFiles() ?: emptyArray()
+        anrsDir.listFiles() ?: emptyArray()
       }
       else -> {
         throw IllegalArgumentException("Invalid parameters! deleteCrashLogs=$deleteCrashLogs, deleteAnrs=$deleteAnrs")
@@ -241,8 +246,8 @@ class ReportManager(
     potentialReports.asSequence()
       .forEach { crashLogFile -> crashLogFile.delete() }
 
-    val remainingCrashLogs = crashLogsDirPath.listFiles()?.size ?: 0
-    val remainingAnrs = anrsDirPath.listFiles()?.size ?: 0
+    val remainingCrashLogs = crashLogsDir.listFiles()?.size ?: 0
+    val remainingAnrs = anrsDir.listFiles()?.size ?: 0
 
     if (remainingCrashLogs == 0 && remainingAnrs == 0) {
       settingsNotificationManager.get().cancel(SettingNotificationType.CrashLogOrAnr)
@@ -320,7 +325,7 @@ class ReportManager(
   }
 
   private fun deleteOldAnrReports() {
-    val prevAnrs = anrsDirPath.listFiles() ?: arrayOf<File>()
+    val prevAnrs = anrsDir.listFiles() ?: arrayOf<File>()
     if (prevAnrs.size > MAX_ANR_FILES) {
       val toDelete = prevAnrs.size - MAX_ANR_FILES
       if (toDelete > 0) {
@@ -462,16 +467,16 @@ class ReportManager(
   private fun createDirectoriesIfNotExists(): Boolean {
     var success = true
 
-    if (!crashLogsDirPath.exists()) {
-      if (!crashLogsDirPath.mkdir()) {
-        Logger.e(TAG, "Couldn't create crash logs directory! path = ${crashLogsDirPath.absolutePath}")
+    if (!crashLogsDir.exists()) {
+      if (!crashLogsDir.mkdir()) {
+        Logger.e(TAG, "Couldn't create crash logs directory! path = ${crashLogsDir.absolutePath}")
         success = false
       }
     }
 
-    if (!anrsDirPath.exists()) {
-      if (!anrsDirPath.mkdir()) {
-        Logger.e(TAG, "Couldn't create ANRs directory! path = ${anrsDirPath.absolutePath}")
+    if (!anrsDir.exists()) {
+      if (!anrsDir.mkdir()) {
+        Logger.e(TAG, "Couldn't create ANRs directory! path = ${anrsDir.absolutePath}")
         success = false
       }
     }

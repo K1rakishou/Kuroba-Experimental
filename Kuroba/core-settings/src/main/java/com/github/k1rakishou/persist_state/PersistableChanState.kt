@@ -25,6 +25,8 @@ object PersistableChanState {
     .create()
 
   @JvmStatic
+  lateinit var applicationMigrationVersion: IntegerSetting
+  @JvmStatic
   lateinit var watchLastCount: IntegerSetting
   @JvmStatic
   lateinit var hasNewApkUpdate: BooleanSetting
@@ -87,9 +89,10 @@ object PersistableChanState {
   private fun initInternal() {
     try {
       val provider = SharedPreferencesSettingProvider(AndroidUtils.getAppState())
+
+      applicationMigrationVersion = IntegerSetting(provider, "application_migration_version", 0)
       watchLastCount = IntegerSetting(provider, "watch_last_count", 0)
-      hasNewApkUpdate = BooleanSetting(provider, "has_new_apk_update", false
-      )
+      hasNewApkUpdate = BooleanSetting(provider, "has_new_apk_update", false)
       previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)
       updateCheckTime = LongSetting(provider, "update_check_time", 0L)
       previousDevHash = StringSetting(provider, "previous_dev_hash", persistableChanStateInfo.commitHash)

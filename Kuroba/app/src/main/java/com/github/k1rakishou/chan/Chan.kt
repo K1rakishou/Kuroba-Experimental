@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
+import com.github.k1rakishou.chan.core.manager.ApplicationMigrationManager
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
@@ -102,6 +103,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private val tagPrefix by lazy { getApplicationLabel().toString() + " | " }
+
+  private val applicationMigrationManager = ApplicationMigrationManager()
 
   @Inject
   lateinit var appDependenciesInitializer: AppDependenciesInitializer
@@ -243,6 +246,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     )
 
     logAppConstantsAndSettings(appConstants)
+
+    applicationMigrationManager.performMigration(this)
 
     val okHttpProtocols = okHttpProtocols
     val fileManager = provideApplicationFileManager()
