@@ -152,6 +152,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var globalViewStateManager: GlobalViewStateManager
   @Inject
   lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null

@@ -79,6 +79,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -307,6 +308,8 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
+    setBackgroundColorFast(themeEngine.chanTheme.backColor)
+
     if (!presenter.isBound) {
       return
     }
