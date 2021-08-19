@@ -144,6 +144,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
     thumbnail.onThumbnailViewClicked(listener)
   }
 
+  fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
+    return thumbnail.onThumbnailViewLongClicked(listener)
+  }
+
   override fun unbindPostImage() {
     postImage = null
     canUseHighResCells = false

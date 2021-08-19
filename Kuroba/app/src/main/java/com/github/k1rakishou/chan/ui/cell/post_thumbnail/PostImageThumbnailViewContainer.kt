@@ -108,7 +108,14 @@ class PostImageThumbnailViewContainer(
   }
 
   override fun setImageLongClickListener(token: String, listener: OnLongClickListener?) {
-    this.setOnThrottlingLongClickListener(token, listener)
+    if (listener == null) {
+      this.setOnThrottlingLongClickListener(token, null)
+      return
+    }
+
+    this.setOnThrottlingLongClickListener(token) {
+      return@setOnThrottlingLongClickListener actualThumbnailView.onThumbnailViewLongClicked(listener)
+    }
   }
 
   override fun setImageOmittedFilesClickListener(token: String, listener: OnClickListener?) {

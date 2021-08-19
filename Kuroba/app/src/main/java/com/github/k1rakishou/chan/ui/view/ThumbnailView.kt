@@ -42,8 +42,6 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
-import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -139,7 +137,6 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     textPaint.color = themeEngine.chanTheme.textColorPrimary
     textPaint.textSize = AppModuleAndroidUtils.sp(14f).toFloat()
     imageForeground = initRippleDrawable()
-    onThemeChanged()
 
     setOnTouchListener { _, event ->
       if (event.actionMasked == MotionEvent.ACTION_DOWN) {
@@ -183,6 +180,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       ChanSettings.PostThumbnailScaling.FitCenter -> ScaleType.FIT_CENTER
       ChanSettings.PostThumbnailScaling.CenterCrop -> ScaleType.CENTER_CROP
     }
+
+    onThemeChanged()
 
     if (url != this._imageUrl) {
       if (this._imageUrl != null) {
@@ -243,17 +242,6 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     foregroundCalculate = true
   }
 
-  fun setOnImageClickListener(token: String, listener: OnClickListener?) {
-    if (listener == null) {
-      setOnThrottlingClickListener(token, listener)
-      return
-    }
-
-    setOnThrottlingClickListener(token) {
-      onThumbnailViewClicked(listener)
-    }
-  }
-
   fun onThumbnailViewClicked(listener: OnClickListener) {
     if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
       cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
@@ -264,21 +252,14 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     listener.onClick(this)
   }
 
-  fun setOnImageLongClickListener(token: String, listener: OnLongClickListener?) {
-    if (listener == null) {
-      setOnThrottlingLongClickListener(token, listener)
-      return
+  fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
+    if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
+      cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
+      bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
+      return true
     }
 
-    setOnThrottlingLongClickListener(token) { view ->
-      if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-        cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
-        bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
-        return@setOnThrottlingLongClickListener true
-      }
-
-      return@setOnThrottlingLongClickListener listener.onLongClick(view)
-    }
+    return listener.onLongClick(this)
   }
 
   override fun onDraw(canvas: Canvas) {

@@ -783,7 +783,7 @@ class PostCell : ConstraintLayout,
     unseenPostIndicatorFadeOutAnimation.value.end()
     postAttentionLabel.setVisibilityFast(View.VISIBLE)
 
-    if (isReplyToSavedReply) {
+    if (isReplyToSavedReply && !isSavedReply) {
       postAttentionLabel.drawNormalLine(false)
     } else {
       postAttentionLabel.drawNormalLine(true)

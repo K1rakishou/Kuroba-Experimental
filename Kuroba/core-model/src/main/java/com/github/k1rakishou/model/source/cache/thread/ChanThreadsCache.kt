@@ -59,10 +59,6 @@ class ChanThreadsCache(
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions
   ): Boolean {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      return true
-    }
-
     if (chanCacheUpdateOptions is ChanCacheUpdateOptions.DoNotUpdateCache) {
       return false
     }

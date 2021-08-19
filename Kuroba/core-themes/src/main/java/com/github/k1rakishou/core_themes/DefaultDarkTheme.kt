@@ -16,7 +16,7 @@ data class DefaultDarkTheme(
   override val textColorSecondary: Int = Color.parseColor("#8c8ca1"),
   override val textColorHint: Int = Color.parseColor("#7b7b85"),
   override val postHighlightedColor: Int = Color.parseColor("#60947383"),
-  override val postSavedReplyColor: Int = Color.parseColor("#7a33a1"),
+  override val postSavedReplyColor: Int = Color.parseColor("#753ecf"),
   override val postSubjectColor: Int = Color.parseColor("#d5a6bd"),
   override val postDetailsColor: Int = textColorHint,
   override val postNameColor: Int = Color.parseColor("#996878"),
