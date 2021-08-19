@@ -312,7 +312,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
       val x = (width / 2.0 - playIcon.intrinsicWidth * scalar).toInt()
       val y = (height / 2.0 - playIcon.intrinsicHeight * scalar).toInt()
 
-      bounds[x, y, x + playIcon.intrinsicWidth * iconScale] = y + playIcon.intrinsicHeight * iconScale
+      bounds.set(x, y, x + playIcon.intrinsicWidth * iconScale, y + playIcon.intrinsicHeight * iconScale)
       playIcon.bounds = bounds
       playIcon.draw(canvas)
     }

@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,10 +28,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
@@ -136,14 +140,24 @@ class PostOmittedImagesController(
             }
           }
 
-          KurobaComposeImage(
-            request = request,
-            contentScale = contentScale,
-            modifier = Modifier
-              .size(thumbnailSize)
-              .background(Color.Black),
-            imageLoaderV2 = imageLoaderV2
-          )
+          Box {
+            KurobaComposeImage(
+              request = request,
+              contentScale = contentScale,
+              modifier = Modifier
+                .size(thumbnailSize)
+                .background(Color.Black),
+              imageLoaderV2 = imageLoaderV2
+            )
+
+            if (postImage.isPlayableType()) {
+              Image(
+                modifier = Modifier.align(Alignment.Center),
+                painter = painterResource(id = R.drawable.ic_play_circle_outline_white_24dp),
+                contentDescription = null
+              )
+            }
+          }
 
           Spacer(modifier = Modifier.width(4.dp))
 
