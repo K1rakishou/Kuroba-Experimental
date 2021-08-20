@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.loader.internal.usecase.StorePostsIn
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -63,6 +64,8 @@ import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.InputStream
 import java.util.*
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
@@ -93,6 +96,8 @@ class ChanThreadLoaderCoordinator(
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.IO + job + CoroutineName("ChanThreadLoaderCoordinator")
+
+  private val lastFullThreadUpdate = ConcurrentHashMap<ChanDescriptor.ThreadDescriptor, Long>(16)
 
   private val reloadPostsFromDatabaseUseCase by lazy {
     ReloadPostsFromDatabaseUseCase(
@@ -134,13 +139,17 @@ class ChanThreadLoaderCoordinator(
     chanCacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions,
     chanReadOptions: ChanReadOptions,
-    chanLoadOptions: ChanLoadOptions,
-    chanReaderProcessorOptions: ChanReaderProcessor.Options
+    chanLoadOptions: ChanLoadOptions
   ): ModularResult<ThreadLoadResult> {
     threadDownloadManager.awaitUntilInitialized()
 
     val chanLoadUrl = getChanUrl(site, chanDescriptor, page)
     val chanReader = site.chanReader()
+
+    val chanReaderProcessorOptions = ChanReaderProcessor.Options(
+      isDownloadingThread = false,
+      isIncrementalUpdate = chanLoadUrl.isIncremental
+    )
 
     Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, chanDescriptor=$chanDescriptor, " +
       "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions, " +
@@ -249,7 +258,7 @@ class ChanThreadLoaderCoordinator(
           cacheOptions = chanCacheOptions,
           cacheUpdateOptions = cacheUpdateOptions,
           chanDescriptor = chanDescriptor,
-          postParser = postParser
+          postParser = postParser,
         )
 
         loadRequestStatistics(
@@ -371,7 +380,7 @@ class ChanThreadLoaderCoordinator(
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
           cacheUpdateOptions = cacheUpdateOptions,
           chanDescriptor = threadDescriptor,
-          postParser = postParser
+          postParser = postParser,
         )
 
         return@Try threadLoadResult
@@ -445,11 +454,11 @@ class ChanThreadLoaderCoordinator(
 
     return Try {
       val chanReaderProcessor = ChanReaderProcessor(
-        chanPostRepository,
-        chanReadOptions,
-        chanLoadOptions,
-        chanReaderProcessorOptions,
-        chanDescriptor
+        chanPostRepository = chanPostRepository,
+        chanReadOptions = chanReadOptions,
+        chanLoadOptions = chanLoadOptions,
+        options = chanReaderProcessorOptions,
+        chanDescriptor = chanDescriptor
       )
 
       when (chanDescriptor) {
@@ -482,7 +491,13 @@ class ChanThreadLoaderCoordinator(
       false
     }
 
+    val currentTime = System.currentTimeMillis()
+
     if (forceFullLoad || !isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        lastFullThreadUpdate.put(chanDescriptor, currentTime)
+      }
+
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
@@ -490,12 +505,23 @@ class ChanThreadLoaderCoordinator(
 
     val lastPost = chanThreadsCache.getLastPost(threadDescriptor)
     if (lastPost == null) {
+      lastFullThreadUpdate.put(chanDescriptor, currentTime)
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
     val threadPartialLoadUrl = getChanUrlIncrementalLoad(site, threadDescriptor, lastPost.postDescriptor)
     if (threadPartialLoadUrl == null) {
       // Not supported by the site
+      lastFullThreadUpdate.put(chanDescriptor, currentTime)
+      return getChanUrlFullLoad(site, chanDescriptor, page)
+    }
+
+    // We want to fully update the threads posts once in a while to check for deleted posts.
+    val lastUpdateTime = lastFullThreadUpdate[chanDescriptor] ?: 0
+    val timeout = if (isDevBuild()) { ONE_MINUTE } else { THREE_MINUTES }
+
+    if (currentTime - lastUpdateTime > timeout) {
+      lastFullThreadUpdate.put(chanDescriptor, currentTime)
       return getChanUrlFullLoad(site, chanDescriptor, page)
     }
 
@@ -543,6 +569,8 @@ class ChanThreadLoaderCoordinator(
 
   companion object {
     private const val TAG = "ChanThreadLoaderCoordinator"
+    private val THREE_MINUTES = TimeUnit.MINUTES.toMillis(3)
+    private val ONE_MINUTE = TimeUnit.MINUTES.toMillis(1)
   }
 
 }

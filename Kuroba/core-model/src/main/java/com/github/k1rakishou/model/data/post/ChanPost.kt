@@ -73,7 +73,7 @@ open class ChanPost(
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
   }
 
-  open fun deepCopy(): ChanPost {
+  open fun deepCopy(overrideDeleted: Boolean? = null): ChanPost {
     return ChanPost(
       chanPostId = chanPostId,
       postDescriptor = postDescriptor,
@@ -89,7 +89,7 @@ open class ChanPost(
       moderatorCapcode = moderatorCapcode,
       isSavedReply = isSavedReply,
       repliesFrom = repliesFrom,
-      deleted = isDeleted
+      deleted = overrideDeleted ?: isDeleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedArray(this.copyOnDemandContentLoadedArray())
     }

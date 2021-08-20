@@ -10,6 +10,7 @@ import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
+import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.id.ThreadDBId
@@ -203,7 +204,8 @@ class ChanPostRepository(
     chanDescriptor: ChanDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheUpdateOptions: ChanCacheUpdateOptions,
+    postsFromServerData: PostsFromServerData
   ): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     ensureBackgroundThread()
@@ -225,7 +227,8 @@ class ChanPostRepository(
           threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor,
           parsedPosts = parsedPosts,
           cacheOptions = cacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions
+          cacheUpdateOptions = cacheUpdateOptions,
+          postsFromServerData = postsFromServerData
         )
 
         Logger.d(TAG, "insertOrUpdateMany($chanDescriptor) -> $newPostsCount")
@@ -374,7 +377,8 @@ class ChanPostRepository(
               threadDescriptor = threadDescriptor,
               parsedPosts = postsFromDatabase,
               cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-              cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+              cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+              postsFromServerData = null
             )
           }
         }
@@ -459,7 +463,8 @@ class ChanPostRepository(
           threadDescriptor = threadDescriptor,
           parsedPosts = postsFromDatabase,
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-          cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+          cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+          postsFromServerData = null
         )
 
         return@tryWithTransaction postsFromDatabase
@@ -603,7 +608,8 @@ class ChanPostRepository(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheUpdateOptions: ChanCacheUpdateOptions,
+    postsFromServerData: PostsFromServerData
   ): Int {
     ensureBackgroundThread()
 
@@ -630,7 +636,8 @@ class ChanPostRepository(
       threadDescriptor = threadDescriptor,
       parsedPosts = postsThatDifferWithCache,
       cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions
+      cacheUpdateOptions = cacheUpdateOptions,
+      postsFromServerData = postsFromServerData
     )
 
     return postsThatDifferWithCache.size

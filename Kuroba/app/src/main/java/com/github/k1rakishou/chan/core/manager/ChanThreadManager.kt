@@ -4,7 +4,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
-import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
 import com.github.k1rakishou.common.ModularResult
@@ -88,8 +87,7 @@ class ChanThreadManager(
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions,
-    chanReaderProcessorOptions: ChanReaderProcessor.Options = ChanReaderProcessor.Options()
+    chanReadOptions: ChanReadOptions
   ): ThreadLoadResult {
     try {
       Logger.d(TAG, "loadThreadOrCatalog($page, $chanDescriptor, $chanCacheUpdateOptions, " +
@@ -141,8 +139,7 @@ class ChanThreadManager(
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
-        chanReadOptions = chanReadOptions,
-        chanReaderProcessorOptions = chanReaderProcessorOptions
+        chanReadOptions = chanReadOptions
       )
 
       when (threadLoaderResult) {
@@ -419,8 +416,7 @@ class ChanThreadManager(
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
-    chanReadOptions: ChanReadOptions,
-    chanReaderProcessorOptions: ChanReaderProcessor.Options
+    chanReadOptions: ChanReadOptions
   ): ModularResult<ThreadLoadResult> {
     awaitUntilDependenciesInitialized()
 
@@ -478,8 +474,7 @@ class ChanThreadManager(
       chanCacheOptions = chanCacheOptions,
       cacheUpdateOptions = chanCacheUpdateOptions,
       chanReadOptions = chanReadOptions,
-      chanLoadOptions = chanLoadOptions,
-      chanReaderProcessorOptions = chanReaderProcessorOptions
+      chanLoadOptions = chanLoadOptions
     )
   }
 

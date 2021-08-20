@@ -48,7 +48,7 @@ class ChanOriginalPost(
   deleted
 ) {
 
-  override fun deepCopy(): ChanPost {
+  override fun deepCopy(overrideDeleted: Boolean?): ChanPost {
     return ChanOriginalPost(
       chanPostId = chanPostId,
       postDescriptor = postDescriptor,
@@ -71,7 +71,7 @@ class ChanOriginalPost(
       closed = closed,
       archived = archived,
       repliesFrom = repliesFrom,
-      deleted = isDeleted
+      deleted = overrideDeleted ?: isDeleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedArray(this.copyOnDemandContentLoadedArray())
     }

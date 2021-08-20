@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
@@ -39,7 +40,7 @@ internal class ChanPostPersister(
     cacheOptions: ChanCacheOptions,
     cacheUpdateOptions: ChanCacheUpdateOptions,
     chanDescriptor: ChanDescriptor,
-    postParser: PostParser
+    postParser: PostParser,
   ): ThreadResultWithTimeInfo {
     return Try {
       BackgroundUtils.ensureBackgroundThread()
@@ -83,7 +84,11 @@ internal class ChanPostPersister(
           chanDescriptor = chanDescriptor,
           parsedPosts = parsingResult.parsedPosts,
           cacheOptions = cacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions
+          cacheUpdateOptions = cacheUpdateOptions,
+          postsFromServerData = PostsFromServerData(
+            chanReaderProcessor.allPostDescriptorsFromServer,
+            chanReaderProcessor.isIncrementalUpdate
+          )
         )
       }
 

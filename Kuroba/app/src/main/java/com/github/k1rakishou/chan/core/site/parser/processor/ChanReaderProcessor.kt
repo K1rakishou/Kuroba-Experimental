@@ -44,6 +44,12 @@ class ChanReaderProcessor(
 
   private val lock = Mutex()
 
+  val isIncrementalUpdate: Boolean
+    get() = options.isIncrementalUpdate
+
+  val allPostDescriptorsFromServer: Set<PostDescriptor>
+    get() = postOrderedList.toSet()
+
   override suspend fun setOp(op: ChanPostBuilder?) {
     if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
       return
@@ -186,7 +192,10 @@ class ChanReaderProcessor(
       "closed=${closed}, deleted=${deleted}, archived=${archived}, error=${error}}"
   }
 
-  data class Options(val isDownloadingThread: Boolean = false)
+  data class Options(
+    val isDownloadingThread: Boolean = false,
+    val isIncrementalUpdate: Boolean = false
+  )
 
   companion object {
     private const val TAG = "ChanReaderProcessor"

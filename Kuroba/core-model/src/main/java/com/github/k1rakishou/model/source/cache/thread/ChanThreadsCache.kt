@@ -5,6 +5,7 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -110,7 +111,8 @@ class ChanThreadsCache(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheUpdateOptions: ChanCacheUpdateOptions,
+    postsFromServerData: PostsFromServerData?
   ) {
     // We are doing some kinda heavy stuff (reply calculations) so we want this method to always be
     //  called on a background thread.
@@ -139,7 +141,7 @@ class ChanThreadsCache(
     })
 
     if (cacheOptions.canStoreInMemory()) {
-      chanThread.addOrUpdatePosts(parsedPosts)
+      chanThread.addOrUpdatePosts(parsedPosts, postsFromServerData)
     } else if (firstPost != null && firstPost is ChanOriginalPost) {
       chanThread.setOrUpdateOriginalPost(firstPost)
     }

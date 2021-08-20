@@ -6,6 +6,7 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
@@ -101,7 +102,7 @@ class ChanThread(
     return lock.read { threadPosts.toList() }
   }
 
-  fun addOrUpdatePosts(newChanPosts: List<ChanPost>): Boolean {
+  fun addOrUpdatePosts(newChanPosts: List<ChanPost>, postsFromServerData: PostsFromServerData?): Boolean {
     if (newChanPosts.isEmpty()) {
       return true
     }
@@ -115,9 +116,12 @@ class ChanThread(
         }
       }
 
-      var addedOrUpdatedPosts = false
+      val deletedPostsSet = findDeletedPosts(threadPosts, postsFromServerData)
+
+      var addedOrUpdatedOrDeletedPosts = false
       var addedPostsCount = 0
       var updatedPostsCount = 0
+      var deletedPostsCount = 0
 
       newChanPosts.forEach { newChanPost ->
         require(newChanPost.postDescriptor.descriptor is ChanDescriptor.ThreadDescriptor) {
@@ -129,7 +133,7 @@ class ChanThread(
           threadPosts.add(newChanPost)
           postsByPostDescriptors[newChanPost.postDescriptor] = newChanPost
 
-          addedOrUpdatedPosts = true
+          addedOrUpdatedOrDeletedPosts = true
           addedPostsCount++
 
           return@forEach
@@ -143,16 +147,42 @@ class ChanThread(
 
         // We already have this post, we need to merge old and new posts into one and replace old
         // post with the merged post
-        val mergedPost = mergePosts(oldChanPost, newChanPost)
+        val mergedPost = mergePosts(oldChanPost, newChanPost, deletedPostsSet)
 
         threadPosts[oldChanPostIndex] = mergedPost
         postsByPostDescriptors[newChanPost.postDescriptor] = mergedPost
 
-        addedOrUpdatedPosts = true
+        addedOrUpdatedOrDeletedPosts = true
         ++updatedPostsCount
       }
 
-      if (addedOrUpdatedPosts) {
+      if (deletedPostsSet != null && deletedPostsSet.isNotEmpty()) {
+        deletedPostsSet.forEach { deletedPostDescriptor ->
+          val oldChanPostIndex = threadPosts
+            .indexOfFirst { post -> post.postDescriptor == deletedPostDescriptor }
+
+          if (oldChanPostIndex < 0) {
+            return@forEach
+          }
+
+          val oldPost = threadPosts.getOrNull(oldChanPostIndex)
+            ?: return@forEach
+
+          if (oldPost.isDeleted) {
+            return@forEach
+          }
+
+          val updatedPost = oldPost.deepCopy(overrideDeleted = true)
+
+          threadPosts[oldChanPostIndex] = updatedPost
+          postsByPostDescriptors[updatedPost.postDescriptor] = updatedPost
+
+          addedOrUpdatedOrDeletedPosts = true
+          ++deletedPostsCount
+        }
+      }
+
+      if (addedOrUpdatedOrDeletedPosts) {
         threadPosts.sortWith(POSTS_COMPARATOR)
         recalculatePostReplies()
       }
@@ -160,9 +190,9 @@ class ChanThread(
       checkPostsConsistency()
 
       Logger.d(TAG, "Thread cache (${threadDescriptor}) Added ${addedPostsCount} new posts, " +
-        "updated ${updatedPostsCount} posts")
+        "updated ${updatedPostsCount} posts, marked as deleted ${deletedPostsCount} posts")
 
-      return@write addedOrUpdatedPosts
+      return@write addedOrUpdatedOrDeletedPosts
     }
   }
 
@@ -193,7 +223,7 @@ class ChanThread(
         }
 
         val oldChanOriginalPost = threadPosts.first()
-        val mergedChanOriginalPost = mergePosts(oldChanOriginalPost, newChanOriginalPost)
+        val mergedChanOriginalPost = mergePosts(oldChanOriginalPost, newChanOriginalPost, null)
 
         threadPosts[0] = mergedChanOriginalPost
         postsByPostDescriptors[newChanOriginalPost.postDescriptor] = mergedChanOriginalPost
@@ -559,9 +589,33 @@ class ChanThread(
     }
   }
 
-  private fun mergePosts(oldChanPost: ChanPost, newChanPost: ChanPost): ChanPost {
+  private fun findDeletedPosts(
+    oldChanPosts: MutableList<ChanPost>,
+    postsFromServerData: PostsFromServerData?
+  ): Set<PostDescriptor>? {
+    if (postsFromServerData == null || postsFromServerData.isIncrementalUpdate) {
+      return null
+    }
+
+    val newChanPostDescriptors = postsFromServerData.allPostDescriptors
+    val deletedPosts = hashSetWithCap<PostDescriptor>(4)
+
+    oldChanPosts.forEach { oldPost ->
+      if (oldPost.postDescriptor !in newChanPostDescriptors) {
+        deletedPosts += oldPost.postDescriptor
+      }
+    }
+
+    return deletedPosts
+  }
+
+  private fun mergePosts(
+    oldChanPost: ChanPost,
+    newChanPost: ChanPost,
+    deletedPostsSet: Set<PostDescriptor>?
+  ): ChanPost {
     if (oldChanPost is ChanOriginalPost || newChanPost is ChanOriginalPost) {
-      return mergeOriginalPosts(oldChanPost, newChanPost)
+      return mergeOriginalPosts(oldChanPost, newChanPost, deletedPostsSet)
     }
 
     check(oldChanPost.postDescriptor == newChanPost.postDescriptor) {
@@ -586,6 +640,7 @@ class ChanThread(
       moderatorCapcode = newChanPost.moderatorCapcode,
       isSavedReply = newChanPost.isSavedReply,
       deleted = oldChanPost.isDeleted
+        || (deletedPostsSet != null && deletedPostsSet.contains(oldChanPost.postDescriptor))
     )
 
     handlePostContentLoadedMap(mergedPost, oldChanPost, postCommentsDiffer)
@@ -594,7 +649,8 @@ class ChanThread(
 
   private fun mergeOriginalPosts(
     oldChanPost: ChanPost,
-    newPost: ChanPost
+    newPost: ChanPost,
+    deletedPostsSet: Set<PostDescriptor>?
   ): ChanOriginalPost {
     check(oldChanPost is ChanOriginalPost) { "oldChanPost is not ChanOriginalPost" }
     check(newPost is ChanOriginalPost) { "newPost is not ChanOriginalPost" }
@@ -631,6 +687,7 @@ class ChanThread(
       closed = newChanOriginalPost.closed,
       archived = newChanOriginalPost.archived,
       deleted = oldChanOriginalPost.isDeleted
+        || (deletedPostsSet != null && deletedPostsSet.contains(oldChanOriginalPost.postDescriptor))
     )
 
     handlePostContentLoadedMap(mergedOriginalPost, oldChanOriginalPost, postCommentsDiffer)

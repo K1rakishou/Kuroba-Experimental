@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.PostsFromServerData
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
@@ -16,7 +17,8 @@ class StorePostsInRepositoryUseCase(
     chanDescriptor: ChanDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions
+    cacheUpdateOptions: ChanCacheUpdateOptions,
+    postsFromServerData: PostsFromServerData
   ): Int {
     BackgroundUtils.ensureBackgroundThread()
     chanPostRepository.awaitUntilInitialized()
@@ -30,7 +32,8 @@ class StorePostsInRepositoryUseCase(
       chanDescriptor = chanDescriptor,
       parsedPosts = parsedPosts,
       cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions
+      cacheUpdateOptions = cacheUpdateOptions,
+      postsFromServerData = postsFromServerData
     ).unwrap()
   }
 
