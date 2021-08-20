@@ -1215,3 +1215,33 @@ fun Element.getFirstElementByClassWithAnyValue(vararg values: String): Element? 
 fun Element.getFirstElementByClassWithValue(value: String): Element? {
   return getElementsByAttributeValue("class", value).firstOrNull()
 }
+
+data class FullSpanInfo(
+  val span: CharacterStyle,
+  val start: Int,
+  val end: Int,
+  val flags: Int
+)
+
+inline fun <reified T : CharacterStyle> Spannable.getAllSpans(
+  start: Int = 0,
+  end: Int = length
+): List<FullSpanInfo> {
+  return getSpans<T>(start, end, T::class.java).map { span ->
+    return@map FullSpanInfo(span, getSpanStart(span), getSpanEnd(span), getSpanFlags(span))
+  }
+}
+
+fun Spannable.removeSpans(
+  start: Int,
+  end: Int
+) {
+  getSpans(start, end, CharacterStyle::class.java).forEach { span ->
+    val spanStart = getSpanStart(span)
+    val spanEnd = getSpanEnd(span)
+
+    if (spanStart in start..end || spanEnd in start..end) {
+      removeSpan(span)
+    }
+  }
+}

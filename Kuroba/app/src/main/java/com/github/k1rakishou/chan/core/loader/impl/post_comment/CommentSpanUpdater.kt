@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.loader.impl.post_comment
 import android.graphics.Bitmap
 import android.text.SpannableStringBuilder
 import android.text.Spanned
-import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -72,20 +71,14 @@ internal object CommentSpanUpdater {
       invertedSpanUpdateBatchList.forEach { invertedSpanUpdateBatch ->
         val start = postLinkableSpan.start + offset
         val end = postLinkableSpan.end + offset
-        val oldSpans = stringBuilder.getSpans(start, end, CharacterStyle::class.java).filter { oldSpan ->
-          oldSpan !== postLinkableSpan.postLinkable
-        }
         val originalLinkUrl = stringBuilder.substring(start, end)
         val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
 
         // Update the offset with the difference between the new and old links
         offset += formattedLinkUrl.length - originalLinkUrl.length
 
-        // Delete the old link with the text
-        stringBuilder.delete(start, end)
-
-        // Insert new formatted link
-        stringBuilder.insert(start, formattedLinkUrl)
+        // Replace the old link with the new link
+        stringBuilder.replace(start, end, formattedLinkUrl)
 
         // Add the updated span
         stringBuilder.setSpanSafe(
@@ -94,20 +87,6 @@ internal object CommentSpanUpdater {
           start + formattedLinkUrl.length,
           stringBuilder.getSpanFlags(postLinkableSpan.postLinkable)
         )
-
-        // Insert back old spans (and don't forget to update their boundaries) that were
-        // on top of this PostLinkable that we are changing
-        oldSpans.forEach { oldSpan ->
-          val oldSpanStart = stringBuilder.getSpanStart(oldSpan)
-          val oldSpanEnd = stringBuilder.getSpanEnd(oldSpan)
-
-          stringBuilder.setSpanSafe(
-            oldSpan,
-            oldSpanStart,
-            oldSpanEnd + formattedLinkUrl.length,
-            stringBuilder.getSpanFlags(oldSpan)
-          )
-        }
 
         val iconPosition = start + formattedLinkUrl.length
 
