@@ -176,6 +176,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_change_gestures">Change image viewer gestures</string>
     <string name="action_open_thread_by_id">Open thread by ID</string>
     <string name="action_open_thread_by_url">Open thread by url</string>
+    <string name="action_open_media_by_url">Open media (image/video) by url</string>
     <string name="action_share">Share</string>
     <string name="action_chan4_archive">View archive</string>
     <string name="action_open_catalog_page">Open catalog page</string>
@@ -1069,6 +1070,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
     <string name="browse_controller_enter_thread_id">Enter thread id (the OP number, e.g. 123456789)</string>
     <string name="browse_controller_enter_thread_url">Enter thread url</string>
+    <string name="browse_controller_enter_media_url">Enter media url</string>
+    <string name="browse_controller_enter_media_url_error">Failed to convert \'%1$s\' to url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>
     <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
     <string name="browse_controller_enter_page_number">Enter page number</string>

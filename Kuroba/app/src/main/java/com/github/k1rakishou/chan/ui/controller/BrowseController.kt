@@ -33,6 +33,8 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
@@ -60,6 +62,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.*
 import javax.inject.Inject
 
@@ -262,6 +265,7 @@ class BrowseController(
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
+      .withSubItem(ACTION_OPEN_MEDIA_BY_URL, R.string.action_open_media_by_url, { item -> openMediaByUrl(item) })
       .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
       .withSubItem(ACTION_CHAN4_ARCHIVE, R.string.action_chan4_archive, is4chan, { chan4ArchiveClicked() })
@@ -484,6 +488,27 @@ class BrowseController(
       context = context,
       titleTextId = R.string.browse_controller_enter_thread_url,
       onValueEntered = { input: String -> openThreadByUrlInternal(input) },
+      inputType = DialogFactory.DialogInputType.String
+    )
+  }
+
+  private fun openMediaByUrl(item: ToolbarMenuSubItem) {
+    if (chanDescriptor == null) {
+      return
+    }
+
+    dialogFactory.createSimpleDialogWithInput(
+      context = context,
+      titleTextId = R.string.browse_controller_enter_media_url,
+      onValueEntered = { input: String ->
+        val mediaUrl = input.toHttpUrlOrNull()
+        if (mediaUrl == null) {
+          showToast(getString(R.string.browse_controller_enter_media_url_error, input))
+          return@createSimpleDialogWithInput
+        }
+
+        MediaViewerActivity.mixedMedia(context, listOf(MediaLocation.Remote(input)))
+      },
       inputType = DialogFactory.DialogInputType.String
     )
   }
@@ -871,9 +896,10 @@ class BrowseController(
     private const val ACTION_SCROLL_TO_BOTTOM = 908
     private const val ACTION_OPEN_THREAD_BY_ID = 909
     private const val ACTION_OPEN_THREAD_BY_URL = 910
-    private const val ACTION_CATALOG_ALBUM = 911
-    private const val ACTION_CHAN4_ARCHIVE = 912
-    private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 913
+    private const val ACTION_OPEN_MEDIA_BY_URL = 911
+    private const val ACTION_CATALOG_ALBUM = 912
+    private const val ACTION_CHAN4_ARCHIVE = 913
+    private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 914
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001
