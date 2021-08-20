@@ -291,4 +291,35 @@ Previous Thread
     }
   }
 
+  @Test
+  fun html_parser_lainchan_incorrectly_handling_br_tags_parsing_them_as_b_tags() {
+    val html = """
+      This is the Beginner's General for beginners' questions.<br/><br />
+      If with a simple question, and a suitable thread doesn't already exist, just post it here and someone will probably try to answer it.<br/><br/>
+      Remember to do some research before asking a question. No one wants to answer a question that a simple search can already resolve.
+    """.trimIndent()
+
+    val htmlParser = HtmlParser()
+    val nodes = htmlParser.parse(html).nodes
+
+    val expected = """
+This is the Beginner's General for beginners' questions.
+<br>
+<br>
+If with a simple question, and a suitable thread doesn't already exist, just post it here and someone will probably try to answer it.
+<br>
+<br>
+Remember to do some research before asking a question. No one wants to answer a question that a simple search can already resolve.
+
+    """.trimIndent().lines()
+
+    val actual = htmlParser.debugConcatIntoString(nodes).lines()
+    assertEquals(expected.size, actual.size)
+
+    actual.forEachIndexed { index, actualLine ->
+      val expectedLine = expected[index]
+      assertEquals(expectedLine, actualLine)
+    }
+  }
+
 }

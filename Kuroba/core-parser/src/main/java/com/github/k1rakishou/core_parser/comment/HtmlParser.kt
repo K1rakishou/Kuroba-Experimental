@@ -207,7 +207,7 @@ class HtmlParser {
         continue
       }
 
-      if (!isInsideString && (currentCh == '/' || nextCh == '/')) {
+      if (!isInsideString && (currentCh == '/' || currentCh.isWhitespace())) {
         ++offset
         continue
       }
