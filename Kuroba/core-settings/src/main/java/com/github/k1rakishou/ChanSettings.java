@@ -578,8 +578,8 @@ public class ChanSettings {
             forceHttpsUrlScheme = new BooleanSetting(provider, "force_https_url_scheme", true);
 
             //region CACHING
-            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 512, diskCacheSizeGetMin(), 1024);
-            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 1024, diskCacheSizePrefetchGetMin(), 2048);
+            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 256, diskCacheSizeGetMin(), 1024);
+            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 512, diskCacheSizePrefetchGetMin(), 2048);
             diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
             //endregion
 
@@ -740,7 +740,7 @@ public class ChanSettings {
             return 32;
         }
 
-        return 1024;
+        return 512;
     }
 
     private static int diskCacheSizeGetMin() {
@@ -748,7 +748,7 @@ public class ChanSettings {
             return 32;
         }
 
-        return 256;
+        return 128;
     }
 
     public static ChanSettings.LayoutMode getCurrentLayoutMode() {
