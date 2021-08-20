@@ -101,9 +101,15 @@ suspend fun View.awaitUntilGloballyLaidOut() {
 
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
     viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
+      private var callbackRegistered = false
+
       override fun onGlobalLayout() {
-        cancellableContinuation.invokeOnCancellation {
-          viewTreeObserver.removeOnGlobalLayoutListener(this)
+        if (!callbackRegistered) {
+          callbackRegistered = true
+
+          cancellableContinuation.invokeOnCancellation {
+            viewTreeObserver.removeOnGlobalLayoutListener(this)
+          }
         }
 
         viewTreeObserver.removeOnGlobalLayoutListener(this)

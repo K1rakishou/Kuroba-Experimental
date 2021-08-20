@@ -364,7 +364,7 @@ class LocalArchiveController(
 
     Row(modifier = Modifier
       .fillMaxWidth()
-      .height(28.dp)
+      .height(32.dp)
     ) {
       kotlin.run {
         val backgroundColor = remember(key1 = viewMode) {
