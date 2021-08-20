@@ -122,14 +122,15 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     this.replyLayoutCallbacks = replyLayoutCallbacks
 
     this.scope?.cancel()
-    this.scope = MainScope()
+    val newScope = MainScope()
+    this.scope = newScope
 
     presenter.bindChanDescriptor(chanDescriptor)
 
     epoxyRecyclerView.layoutManager = GridLayoutManager(context, MIN_FILES_PER_ROW)
       .apply { spanSizeLookup = controller.spanSizeLookup }
 
-    scope!!.launch {
+    newScope.launch {
       presenter.listenForStateUpdates()
         .collect { state -> renderState(state) }
     }

@@ -547,8 +547,8 @@ class ChanThreadLoaderCoordinator(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postDescriptor: PostDescriptor
   ): ChanLoadUrl? {
-    check(threadDescriptor == postDescriptor.threadDescriptor()) {
-      "ThreadDescriptor ($threadDescriptor) differs from descriptor in this PostDescriptor ($postDescriptor)"
+    if (threadDescriptor != postDescriptor.threadDescriptor()) {
+      return null
     }
 
     val incrementalLoadUrl = site.endpoints().threadPartial(postDescriptor)
