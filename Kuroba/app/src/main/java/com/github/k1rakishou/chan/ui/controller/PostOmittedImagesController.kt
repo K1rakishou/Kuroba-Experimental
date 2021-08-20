@@ -2,10 +2,7 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -22,27 +19,24 @@ import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.R
+import androidx.compose.ui.viewinterop.AndroidView
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
-import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
-import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -66,10 +60,6 @@ class PostOmittedImagesController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   override fun BoxScope.BuildContent() {
-    val thumbnailScaling = remember {
-      ChanSettings.postThumbnailScaling.get()
-    }
-
     LazyVerticalGrid(
       modifier = Modifier
         .widthIn(max = 600.dp)
@@ -80,19 +70,13 @@ class PostOmittedImagesController(
       content = {
         items(postImages.size) { index ->
           val postImage = postImages.get(index)
-          BuildPostImage(postImage, thumbnailScaling)
+          BuildPostImage(postImage)
         }
       })
   }
 
   @Composable
-  private fun BuildPostImage(postImage: ChanPostImage, thumbnailScaling: ChanSettings.PostThumbnailScaling) {
-    val thumbnailUrl = postImage.getThumbnailUrl()
-      ?: return
-
-    val request = remember(key1 = postImage) {
-      ImageLoaderRequest(ImageLoaderRequestData.Url(thumbnailUrl))
-    }
+  private fun BuildPostImage(postImage: ChanPostImage) {
     val thumbnailSize = with(LocalDensity.current) {
       remember(key1 = postImage) {
         val size = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize().toDp()
@@ -111,9 +95,7 @@ class PostOmittedImagesController(
         11.sp
       }
     }
-    val shape = remember {
-      RoundedCornerShape(2.dp)
-    }
+    val shape = remember { RoundedCornerShape(2.dp) }
 
     KurobaComposeCardView(
       modifier = Modifier
@@ -133,31 +115,28 @@ class PostOmittedImagesController(
           .fillMaxWidth()
           .wrapContentHeight()
         ) {
-          val contentScale = remember(key1 = thumbnailScaling) {
-            when (thumbnailScaling) {
-              ChanSettings.PostThumbnailScaling.FitCenter -> ContentScale.Fit
-              ChanSettings.PostThumbnailScaling.CenterCrop -> ContentScale.Crop
-            }
+          val postImageThumbnailView = with(LocalContext.current) {
+            // Apparently it's legal to create an Android view inside of a @Composable function.
+            // https://github.com/android/compose-samples/blob/4079e96bd1e0bb38d682b285da9add1c23373503/Crane/app/src/main/java/androidx/compose/samples/crane/details/MapViewUtils.kt#L38
+            remember(key1 = postImage) { PostImageThumbnailView(this) }
           }
 
-          Box {
-            KurobaComposeImage(
-              request = request,
-              contentScale = contentScale,
-              modifier = Modifier
-                .size(thumbnailSize)
-                .background(Color.Black),
-              imageLoaderV2 = imageLoaderV2
-            )
+          AndroidView(
+            modifier = Modifier.size(thumbnailSize),
+            factory = {
+              postImageThumbnailView.apply {
+                bindPostImage(
+                  postImage = postImage,
+                  canUseHighResCells = true,
+                  thumbnailViewOptions = ThumbnailView.ThumbnailViewOptions(drawRipple = false)
+                )
+              }
+            },
+          )
 
-            if (postImage.isPlayableType()) {
-              Image(
-                modifier = Modifier.align(Alignment.Center),
-                painter = painterResource(id = R.drawable.ic_play_circle_outline_white_24dp),
-                contentDescription = null
-              )
-            }
-          }
+          DisposableEffect(key1 = postImage, effect = {
+            onDispose { postImageThumbnailView.unbindPostImage() }
+          })
 
           Spacer(modifier = Modifier.width(4.dp))
 

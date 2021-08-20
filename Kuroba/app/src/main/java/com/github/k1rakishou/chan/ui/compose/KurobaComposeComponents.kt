@@ -193,6 +193,7 @@ fun KurobaComposeCheckbox(
     .then(modifier)
   ) {
     Checkbox(
+      modifier = Modifier.align(Alignment.CenterVertically),
       checked = isChecked,
       onCheckedChange = { checked ->
         isChecked = checked

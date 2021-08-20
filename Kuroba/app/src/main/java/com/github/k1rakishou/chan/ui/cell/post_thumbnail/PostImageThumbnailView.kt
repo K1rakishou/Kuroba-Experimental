@@ -104,6 +104,13 @@ class PostImageThumbnailView @JvmOverloads constructor(
     bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions)
   }
 
+  override fun unbindPostImage() {
+    postImage = null
+    canUseHighResCells = false
+    thumbnail.unbindImageUrl()
+    compositeDisposable.clear()
+  }
+
   override fun getViewId(): Int {
     return this.id
   }
@@ -146,13 +153,6 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
   fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
     return thumbnail.onThumbnailViewLongClicked(listener)
-  }
-
-  override fun unbindPostImage() {
-    postImage = null
-    canUseHighResCells = false
-    thumbnail.unbindImageUrl()
-    compositeDisposable.clear()
   }
 
   private fun bindPostImage(
@@ -201,7 +201,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
     )
   }
 
-  fun bindPostInfo(postCellData: PostCellData) {
+  fun bindOmittedFilesInfo(postCellData: PostCellData) {
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents
     val multiplier = postCellThumbnailSizePercents.get().toFloat() / postCellThumbnailSizePercents.max.toFloat()
     val totalPadding = ((OMITTED_FILES_INDICATOR_PADDING / 2f) + (OMITTED_FILES_INDICATOR_PADDING * multiplier)).toInt()

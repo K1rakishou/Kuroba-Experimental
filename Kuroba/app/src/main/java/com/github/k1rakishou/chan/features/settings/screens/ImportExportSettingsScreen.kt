@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.settings.ImportExportScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ImportExportSettingsDelegate
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -20,7 +21,8 @@ class ImportExportSettingsScreen(
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
   private val dialogFactory: DialogFactory,
-  private val importExportRepository: ImportExportRepository
+  private val importExportRepository: ImportExportRepository,
+  private val threadDownloadingDelegate: ThreadDownloadingDelegate
 ) : BaseSettingsScreen(
   context,
   ImportExportScreen,
@@ -34,7 +36,8 @@ class ImportExportSettingsScreen(
       fileChooser,
       fileManager,
       dialogFactory,
-      importExportRepository
+      importExportRepository,
+      threadDownloadingDelegate
     )
   }
 

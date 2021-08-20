@@ -253,7 +253,7 @@ class CardPostCell : ConstraintLayout,
       setImageOmittedFilesClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_OMITTED_FILES_CLICK_TOKEN) {
         callback?.onThumbnailOmittedFilesClicked(postCellData, firstImage)
       }
-      bindPostInfo(postCellData)
+      bindOmittedFilesInfo(postCellData)
     }
 
     title = findViewById(R.id.title)

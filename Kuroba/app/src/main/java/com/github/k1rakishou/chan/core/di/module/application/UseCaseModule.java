@@ -208,12 +208,14 @@ public class UseCaseModule {
     @Singleton
     public ExportBackupFileUseCase provideExportBackupFileUseCase(
             Context appContext,
+            AppConstants appConstants,
             DatabaseMetaRepository databaseMetaRepository,
             FileManager fileManager
     ) {
         Logger.deps("ExportBackupFileUseCase");
         return new ExportBackupFileUseCase(
                 appContext,
+                appConstants,
                 databaseMetaRepository,
                 fileManager
         );
@@ -223,11 +225,13 @@ public class UseCaseModule {
     @Singleton
     public ImportBackupFileUseCase provideImportBackupFileUseCase(
             Context appContext,
+            AppConstants appConstants,
             FileManager fileManager
     ) {
         Logger.deps("ImportBackupFileUseCase");
         return new ImportBackupFileUseCase(
                 appContext,
+                appConstants,
                 fileManager
         );
     }

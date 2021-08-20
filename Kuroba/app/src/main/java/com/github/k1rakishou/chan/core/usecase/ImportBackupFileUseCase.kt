@@ -5,6 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeParser
@@ -19,6 +20,7 @@ import java.util.zip.ZipInputStream
 
 class ImportBackupFileUseCase(
   private val appContext: Context,
+  private val appConstants: AppConstants,
   private val fileManager: FileManager
 ) : ISuspendUseCase<ExternalFile, ModularResult<Unit>> {
 
@@ -55,6 +57,8 @@ class ImportBackupFileUseCase(
           fileName.contains(ThemeParser.DARK_THEME_FILE_NAME)
         ) {
           handleThemeFile(fileName, zipInputStream)
+        } else if (fileName.startsWith("${ExportBackupFileUseCase.THREAD_DOWNLOADS_CACHE_DIR}/")) {
+          handleThreadDownloadFile(zipEntry, zipInputStream)
         } else {
           Logger.e(TAG, "Unknown file: $fileName")
           zipInputStream.closeEntry()
@@ -74,6 +78,32 @@ class ImportBackupFileUseCase(
     }
 
     Logger.d(TAG, "Import success!")
+  }
+
+  private fun handleThreadDownloadFile(zipEntry: ZipEntry, zipInputStream: ZipInputStream) {
+    val threadDownloaderCacheDir = appConstants.threadDownloaderCacheDir
+    if (!threadDownloaderCacheDir.exists()) {
+      threadDownloaderCacheDir.mkdirs()
+    }
+
+    val threadDownloadCacheName = zipEntry.name.removePrefix("${ExportBackupFileUseCase.THREAD_DOWNLOADS_CACHE_DIR}/")
+    val outputFile = File(threadDownloaderCacheDir, threadDownloadCacheName)
+
+    if (zipEntry.isDirectory) {
+      return
+    }
+
+    if (outputFile.parentFile?.exists() == false) {
+      outputFile.parentFile?.mkdir()
+    }
+
+    if (!outputFile.exists()) {
+      outputFile.createNewFile()
+    }
+
+    outputFile.outputStream().use { outputStream ->
+      zipInputStream.copyTo(outputStream, ExportBackupFileUseCase.BUFFER_SIZE)
+    }
   }
 
   private fun handleThemeFile(fileName: String, zipInputStream: ZipInputStream) {

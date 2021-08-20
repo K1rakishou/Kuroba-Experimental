@@ -70,6 +70,7 @@ import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyBooleanSetting;
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyLinkSetting;
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyNoSettingsFoundView;
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxySettingsGroupTitle;
+import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptionsController;
 import com.github.k1rakishou.chan.features.setup.AddBoardsController;
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController;
 import com.github.k1rakishou.chan.features.setup.BoardsSetupController;
@@ -263,6 +264,7 @@ public interface ActivityComponent {
     void inject(LocalArchiveController localArchiveController);
     void inject(SearxImageSearchController searxImageSearchController);
     void inject(PostOmittedImagesController postOmittedImagesController);
+    void inject(ExportBackupOptionsController exportBackupOptionsController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

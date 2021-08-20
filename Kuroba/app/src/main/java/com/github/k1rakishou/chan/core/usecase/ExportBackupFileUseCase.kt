@@ -2,9 +2,11 @@ package com.github.k1rakishou.chan.core.usecase
 
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeParser
@@ -24,18 +26,22 @@ import kotlin.time.measureTime
 
 class ExportBackupFileUseCase(
   private val appContext: Context,
+  private val appConstants: AppConstants,
   private val databaseMetaRepository: DatabaseMetaRepository,
   private val fileManager: FileManager
-) : ISuspendUseCase<ExternalFile, ModularResult<Unit>> {
+) : ISuspendUseCase<ExportBackupFileUseCase.Params, ModularResult<Unit>> {
 
-  override suspend fun execute(parameter: ExternalFile): ModularResult<Unit> {
+  override suspend fun execute(parameter: Params): ModularResult<Unit> {
     BackgroundUtils.ensureBackgroundThread()
 
-    return ModularResult.Try { doExportInternal(parameter) }
+    val outputFile = parameter.externalFile
+    val exportBackupOptions = parameter.exportBackupOptions
+
+    return ModularResult.Try { doExportInternal(outputFile, exportBackupOptions) }
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun doExportInternal(outputFile: ExternalFile) {
+  private suspend fun doExportInternal(outputFile: ExternalFile, exportBackupOptions: ExportBackupOptions) {
     Logger.d(TAG, "Export start")
 
     val databases = appContext.databaseList()
@@ -82,6 +88,10 @@ class ExportBackupFileUseCase(
       }
     }
 
+    if (exportBackupOptions.exportDownloadedThreadsMedia) {
+      filesToExport += appConstants.threadDownloaderCacheDir
+    }
+
     filesToExport.forEach { fileToExport ->
       Logger.d(TAG, "File to export: '${fileToExport.absolutePath}'")
     }
@@ -102,34 +112,18 @@ class ExportBackupFileUseCase(
     Logger.d(TAG, "Output zip file='${outputFile.getFullPath()}'")
 
     try {
-      filesToExport.forEach { fileToExport ->
-        if (fileToExport.length() == 0L) {
-          Logger.d(TAG, "Skipping '${fileToExport.absolutePath}' because it has 0 length")
-          return@forEach
+      zipFiles(null, filesToExport, zipOutputStream) { directory, fileToExport ->
+        val fileName = when {
+          fileToExport.name == mainSharedPrefsFileName -> MAIN_PREFS_FILE_NAME
+          fileToExport == appConstants.threadDownloaderCacheDir -> THREAD_DOWNLOADS_CACHE_DIR
+          else -> fileToExport.name
         }
 
-        val fileInputStream = FileInputStream(fileToExport)
-        val bufferedInputStream = BufferedInputStream(fileInputStream, BUFFER_SIZE)
-
-        try {
-          val zipEntryName = if (fileToExport.name == mainSharedPrefsFileName) {
-            MAIN_PREFS_FILE_NAME
-          } else {
-            fileToExport.name
-          }
-
-          zipOutputStream.putNextEntry(ZipEntry(zipEntryName))
-          bufferedInputStream.copyTo(zipOutputStream, BUFFER_SIZE)
-
-          Logger.d(TAG, "Writing file '${fileToExport.absolutePath}' success!")
-          zipOutputStream.closeEntry()
-        } catch (error: Throwable) {
-          Logger.e(TAG, "Writing file '${fileToExport.absolutePath}' error", error)
-          throw error
-        } finally {
-          fileInputStream.closeQuietly()
-          bufferedInputStream.closeQuietly()
+        if (directory == null) {
+          return@zipFiles fileName
         }
+
+        return@zipFiles directory + fileName
       }
 
       Logger.d(TAG, "Export success!")
@@ -142,9 +136,55 @@ class ExportBackupFileUseCase(
     }
   }
 
+  private fun zipFiles(
+    directory: String?,
+    filesToExport: List<File>,
+    zipOutputStream: ZipOutputStream,
+    selectFileName: (String?, File) -> String
+  ) {
+    for (fileToExport in filesToExport) {
+      if (fileToExport.isDirectory) {
+        val innerFiles = fileToExport.listFiles()?.toList() ?: emptyList()
+        val newDirectory = if (directory == null) {
+          selectFileName(null, fileToExport) + "/"
+        } else {
+          selectFileName(directory, fileToExport) + "/"
+        }
+
+        zipFiles(newDirectory, innerFiles, zipOutputStream, selectFileName)
+
+        continue
+      }
+
+      val fileInputStream = FileInputStream(fileToExport)
+      val bufferedInputStream = BufferedInputStream(fileInputStream, BUFFER_SIZE)
+
+      try {
+        val zipEntryName = selectFileName(directory, fileToExport)
+        zipOutputStream.putNextEntry(ZipEntry(zipEntryName))
+        bufferedInputStream.copyTo(zipOutputStream, BUFFER_SIZE)
+
+        Logger.d(TAG, "Writing file (zipEntryName='${zipEntryName}') '${fileToExport.absolutePath}' success!")
+        zipOutputStream.closeEntry()
+      } catch (error: Throwable) {
+        Logger.e(TAG, "Writing file '${fileToExport.absolutePath}' error", error)
+        throw error
+      } finally {
+        fileInputStream.closeQuietly()
+        bufferedInputStream.closeQuietly()
+      }
+    }
+  }
+
+  data class Params(
+    val externalFile: ExternalFile,
+    val exportBackupOptions: ExportBackupOptions
+  )
+
   companion object {
     private const val TAG = "ExportBackupFileUseCase"
     const val MAIN_PREFS_FILE_NAME = "main_prefs.xml"
+    const val THREAD_DOWNLOADS_CACHE_DIR = "thread_downloads_cache_dir"
     const val BUFFER_SIZE = 8192
   }
 }

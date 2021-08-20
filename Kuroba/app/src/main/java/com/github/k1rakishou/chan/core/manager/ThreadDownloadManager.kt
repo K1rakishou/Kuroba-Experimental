@@ -69,7 +69,7 @@ class ThreadDownloadManager(
 
   fun initialize() {
     appScope.launch(Dispatchers.IO) {
-      Logger.d(TAG, "ThreadDownloadingManager.initialize()")
+      Logger.d(TAG, "ThreadDownloadManager.initialize()")
 
       val initResult = threadDownloadRepository.initialize()
       if (initResult is ModularResult.Value) {

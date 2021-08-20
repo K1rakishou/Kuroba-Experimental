@@ -1367,6 +1367,20 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="catalog_load_page">Loading page %1$d</string>
 
+    <string name="import_export_backup_export_thread_downloader_is_running">Thread downloader is running.</string>
+    <string name="import_export_backup_export_thread_downloader_is_running_description">Thread downloader is currently running. Importing cannot be executed while thread downloader is downloading stuff because there may be conflicts. Wait until it\'s done processing threads and try again. Alternatively, you can clear the application data (because it will be cleared either way before importing backup).</string>
+    <string name="import_export_backup_export_success">Export success!</string>
+    <string name="import_export_backup_export_error">Backup export error!</string>
+    <string name="import_export_backup_export_error_description">Backup export error!\nSee logs for more info!\nError: %1$s</string>
+    <string name="import_export_backup_import_error">Import error: %1$s</string>
+    <string name="import_export_backup_import_success">Import success!</string>
+    <string name="import_export_backup_import_success_description">The app will be restarted once this dialog is closed</string>
+    <string name="import_export_backup_import_from_kuroba_error">Import from Kuroba error!</string>
+    <string name="import_export_backup_import_from_kuroba_error_description">Import from Kuroba error!\nSee logs for more info!\nError: %1$s</string>
+    <string name="import_export_backup_import_from_kuroba_success">Import from Kuroba success!</string>
+
+    <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
+
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
     <string name="image_from_archive">(From archive)</string>

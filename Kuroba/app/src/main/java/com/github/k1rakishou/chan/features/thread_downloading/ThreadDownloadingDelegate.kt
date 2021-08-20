@@ -62,12 +62,14 @@ class ThreadDownloadingDelegate(
     get() = downloaderOkHttpClient.get().okHttpClient()
   private val batchCount = appConstants.processorsCount
 
-  private val running = AtomicBoolean(false)
+  private val _running = AtomicBoolean(false)
+  val running: Boolean
+    get() = _running.get()
 
   @OptIn(ExperimentalTime::class)
   suspend fun doWork(): ModularResult<Unit> {
     return ModularResult.Try {
-      if (!running.compareAndSet(false, true)) {
+      if (!_running.compareAndSet(false, true)) {
         Logger.d(TAG, "doWorkInternal() already running")
         return@Try
       }
@@ -76,7 +78,7 @@ class ThreadDownloadingDelegate(
         try {
           doWorkInternal()
         } finally {
-          running.set(false)
+          _running.set(false)
         }
       }
 

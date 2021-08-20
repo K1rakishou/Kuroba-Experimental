@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.screens.*
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -98,6 +99,8 @@ class SettingsCoordinator(
   lateinit var twoCaptchaCheckBalanceUseCase: TwoCaptchaCheckBalanceUseCase
   @Inject
   lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+  @Inject
+  lateinit var threadDownloadingDelegate: ThreadDownloadingDelegate
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -189,7 +192,8 @@ class SettingsCoordinator(
       fileChooser,
       fileManager,
       dialogFactory,
-      importExportRepository
+      importExportRepository,
+      threadDownloadingDelegate
     )
   }
 

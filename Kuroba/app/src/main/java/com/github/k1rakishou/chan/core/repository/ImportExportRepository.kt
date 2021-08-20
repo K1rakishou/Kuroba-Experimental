@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.repository
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase
+import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
@@ -37,8 +38,13 @@ class ImportExportRepository @Inject constructor(
   private val importBackupFileUseCase: ImportBackupFileUseCase
 ) {
 
-  suspend fun exportTo(backupFile: ExternalFile): ModularResult<Unit> {
-    return exportBackupFileUseCase.execute(backupFile)
+  suspend fun exportTo(
+    backupFile: ExternalFile,
+    exportBackupOptions: ExportBackupOptions
+  ): ModularResult<Unit> {
+    val params = ExportBackupFileUseCase.Params(backupFile, exportBackupOptions)
+
+    return exportBackupFileUseCase.execute(params)
   }
 
   suspend fun importFrom(backupFile: ExternalFile): ModularResult<Unit> {

@@ -183,7 +183,7 @@ class PostImageThumbnailViewContainer(
       fileInfoContainerGroup.setVisibilityFast(View.GONE)
     }
 
-    actualThumbnailView.bindPostInfo(postCellData)
+    actualThumbnailView.bindOmittedFilesInfo(postCellData)
   }
 
   override fun onThemeChanged() {

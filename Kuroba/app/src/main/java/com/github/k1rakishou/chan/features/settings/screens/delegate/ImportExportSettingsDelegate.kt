@@ -4,11 +4,14 @@ import android.content.Context
 import android.net.Uri
 import android.widget.Toast
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -32,10 +35,10 @@ class ImportExportSettingsDelegate(
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
   private val dialogFactory: DialogFactory,
-  private val importExportRepository: ImportExportRepository
+  private val importExportRepository: ImportExportRepository,
+  private val threadDownloadingDelegate: ThreadDownloadingDelegate
 ) {
   private val loadingViewController = LoadingViewController(context, true)
-
 
   fun onExportClicked() {
     val dateString = BACKUP_DATE_FORMAT.print(DateTime.now())
@@ -55,6 +58,16 @@ class ImportExportSettingsDelegate(
   }
 
   fun onImportClicked() {
+    if (threadDownloadingDelegate.running) {
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = getString(R.string.import_export_backup_export_thread_downloader_is_running),
+        descriptionText = getString(R.string.import_export_backup_export_thread_downloader_is_running_description)
+      )
+
+      return
+    }
+
     fileChooser.openChooseFileDialog(object : FileChooserCallback() {
       override fun onResult(uri: Uri) {
         onImportFileChosen(uri)
@@ -89,25 +102,40 @@ class ImportExportSettingsDelegate(
       return
     }
 
-    coroutineScope.launch {
-      navigationController.presentController(loadingViewController)
+    val exportBackupOptionsController = ExportBackupOptionsController(
+      context = context,
+      onOptionsSelected = { exportBackupOptions ->
+        coroutineScope.launch {
+          navigationController.presentController(loadingViewController)
 
-      val result = withContext(Dispatchers.Default) {
-        importExportRepository.exportTo(externalFile)
-      }
+          val result = withContext(Dispatchers.Default) {
+            importExportRepository.exportTo(externalFile, exportBackupOptions)
+          }
 
-      loadingViewController.stopPresenting()
+          loadingViewController.stopPresenting()
 
-      when (result) {
-        is ModularResult.Error -> {
-          Logger.e(TAG, "Export error", result.error)
-          showToast(context, "Export error: ${result.error}")
+          when (result) {
+            is ModularResult.Error -> {
+              Logger.e(TAG, "Export error", result.error)
+
+              dialogFactory.createSimpleInformationDialog(
+                context = context,
+                titleText = getString(R.string.import_export_backup_export_error),
+                descriptionText = getString(
+                  R.string.import_export_backup_export_error_description,
+                  result.error.errorMessageOrClassName()
+                )
+              )
+            }
+            is ModularResult.Value -> {
+              showToast(context, R.string.import_export_backup_export_success)
+            }
+          }
         }
-        is ModularResult.Value -> {
-          showToast(context, "Export success!")
-        }
       }
-    }
+    )
+
+    navigationController.presentController(exportBackupOptionsController)
   }
 
   private fun onImportFileChosen(uri: Uri) {
@@ -131,13 +159,13 @@ class ImportExportSettingsDelegate(
       when (result) {
         is ModularResult.Error -> {
           Logger.e(TAG, "Import error", result.error)
-          showToast(context, "Import error: ${result.error}")
+          showToast(context, getString(R.string.import_export_backup_import_error, result.error))
         }
         is ModularResult.Value -> {
           dialogFactory.createSimpleInformationDialog(
             context = context,
-            titleText = "Import success!",
-            descriptionText = "The app will be restarted once this dialog is closed",
+            titleText = getString(R.string.import_export_backup_import_success),
+            descriptionText = getString(R.string.import_export_backup_import_success_description),
             onDismissListener = { (context as StartActivity).restartApp() }
           )
         }
@@ -169,16 +197,18 @@ class ImportExportSettingsDelegate(
 
           dialogFactory.createSimpleInformationDialog(
             context = context,
-            titleText = "Import from Kuroba failure!",
-            descriptionText = "Import from Kuroba error!\n" +
-              "See logs for more info!\nError: ${result.error.errorMessageOrClassName()}"
+            titleText = getString(R.string.import_export_backup_import_from_kuroba_error),
+            descriptionText = getString(
+              R.string.import_export_backup_import_from_kuroba_error_description,
+              result.error.errorMessageOrClassName()
+            )
           )
         }
         is ModularResult.Value -> {
           dialogFactory.createSimpleInformationDialog(
             context = context,
-            titleText = "Import from Kuroba success!",
-            descriptionText = "The app will be restarted once this dialog is closed",
+            titleText = getString(R.string.import_export_backup_import_from_kuroba_success),
+            descriptionText = getString(R.string.import_export_backup_import_success_description),
             onDismissListener = { (context as StartActivity).restartApp() }
           )
         }
