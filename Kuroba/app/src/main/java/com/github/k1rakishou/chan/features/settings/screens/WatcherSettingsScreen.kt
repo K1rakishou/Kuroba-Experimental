@@ -111,7 +111,7 @@ class WatcherSettingsScreen(
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.EnableFilterWatcher,
-          topDescriptionIdFunc = { R.string.setting_watch_enable_thread_watcher },
+          topDescriptionIdFunc = { R.string.setting_watch_enable_filter_watcher },
           bottomDescriptionIdFunc = { R.string.setting_watch_enable_filter_watcher_description },
           setting = ChanSettings.filterWatchEnabled
         )

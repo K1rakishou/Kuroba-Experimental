@@ -304,7 +304,6 @@ public class ChanSettings {
     public static BooleanSetting hideImages;
     public static BooleanSetting removeImageSpoilers;
     public static BooleanSetting revealImageSpoilers;
-    public static BooleanSetting highResCells;
     public static BooleanSetting transparencyOn;
 
     // Set elsewhere in the application
@@ -335,6 +334,7 @@ public class ChanSettings {
     // Other options
     public static BooleanSetting fullUserRotationEnable;
     public static BooleanSetting showCopyApkUpdateDialog;
+    public static StringSetting androidTenGestureZones;
     //endregion
 
     //region MEDIA
@@ -349,8 +349,6 @@ public class ChanSettings {
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
     public static OptionsSetting<NetworkContentAutoLoadMode> videoAutoLoadNetwork;
-    public static BooleanSetting prefetchMedia;
-    public static BooleanSetting showPrefetchLoadingIndicator;
 
     // Misc
     public static BooleanSetting alwaysRandomizePickedFilesNames;
@@ -373,11 +371,13 @@ public class ChanSettings {
     //endregion
 
     //region EXPERIMENTAL
-    public static StringSetting androidTenGestureZones;
     public static BooleanSetting okHttpAllowHttp2;
     public static BooleanSetting okHttpAllowIpv6;
     public static BooleanSetting okHttpUseDnsOverHttps;
     public static BooleanSetting cloudflareForcePreload;
+    public static BooleanSetting prefetchMedia;
+    public static BooleanSetting showPrefetchLoadingIndicator;
+    public static BooleanSetting highResCells;
     //endregion
 
     //region OTHER
@@ -514,7 +514,6 @@ public class ChanSettings {
             hideImages = new BooleanSetting(provider, "preference_hide_images", false);
             removeImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
             revealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
-            highResCells = new BooleanSetting(provider, "high_res_cells", false);
             transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere
@@ -545,6 +544,7 @@ public class ChanSettings {
             // Other options
             fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);
             showCopyApkUpdateDialog = new BooleanSetting(provider, "show_copy_apk_update_dialog", true);
+            androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
             //endregion
 
             //region MEDIA
@@ -567,9 +567,6 @@ public class ChanSettings {
                     NetworkContentAutoLoadMode.class,
                     NetworkContentAutoLoadMode.WIFI
             );
-            prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
-            showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
-            cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
 
             // Misc
             alwaysRandomizePickedFilesNames = new BooleanSetting(provider, "always_randomized_picked_files_names", false);
@@ -590,10 +587,13 @@ public class ChanSettings {
             //endregion
 
             //region EXPERIMENTAL
-            androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
             okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
             okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);
             okHttpUseDnsOverHttps = new BooleanSetting(provider, "ok_http_use_dns_over_https", false);
+            prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
+            showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
+            cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
+            highResCells = new BooleanSetting(provider, "high_res_cells", false);
             //endregion
 
             //region OTHER

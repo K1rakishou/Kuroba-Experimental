@@ -391,7 +391,6 @@ sealed class AppearanceScreen(
 
     object HideImages : ImagesGroup("hide_images")
     object RemoveImageSpoilers : ImagesGroup("remove_image_spoilers")
-    object HighResCells : ImagesGroup("high_res_cells")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = AppearanceScreen.getScreenIdentifier()
@@ -470,6 +469,22 @@ sealed class BehaviorScreen(
     }
   }
 
+  sealed class Android10GestureSettings(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
+  ) : IGroup,
+    BehaviorScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object GesturesExclusionZonesEditor : Android10GestureSettings("gestures_exclusion_zones_editor")
+    object ResetExclusionZones : Android10GestureSettings("reset_exclusion_zones")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = BehaviorScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("android_10_gesture_settings")
+    }
+  }
+
+
   sealed class OtherSettingsGroup(
     settingsId: String,
     groupIdentifier: GroupIdentifier = GeneralGroup.getGroupIdentifier()
@@ -524,8 +539,6 @@ sealed class MediaScreen(
 
     object ImageAutoLoadNetwork : LoadingGroup("image_auto_load_network")
     object VideoAutoLoadNetwork : LoadingGroup("video_auto_load_network")
-    object AutoLoadThreadImages : LoadingGroup("auto_load_thread_images")
-    object ShowPrefetchLoadingIndicator : LoadingGroup("show_prefetch_loading_indicator")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
@@ -716,12 +729,13 @@ sealed class ExperimentalScreen(
   ) : IGroup,
     ExperimentalScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object GesturesExclusionZonesEditor : MainSettingsGroup("gestures_exclusion_zones_editor")
-    object ResetExclusionZones : MainSettingsGroup("reset_exclusion_zones")
     object OkHttpAllowHttp2 : MainSettingsGroup("ok_http_allow_http_2")
     object OkHttpAllowIpv6 : MainSettingsGroup("ok_http_allow_ipv6")
     object OkHttpUseDnsOverHttps : MainSettingsGroup("ok_http_use_dns_over_https")
     object CloudflareForcePreload : MainSettingsGroup("cloudflare_force_preload")
+    object AutoLoadThreadImages : MainSettingsGroup("auto_load_thread_images")
+    object ShowPrefetchLoadingIndicator : MainSettingsGroup("show_prefetch_loading_indicator")
+    object HighResCells : MainSettingsGroup("high_res_cells")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()

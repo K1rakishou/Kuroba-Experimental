@@ -588,7 +588,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_captcha_solvers">Captcha solvers</string>
     <string name="settings_captcha_solvers_description">Automatic, paid, captcha solvers</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
-    <string name="settings_experimental_settings_description">These settings may be in an unstable state. They are for testing. They may break the app and you may have to reset the app data. Use them at your own risk if you are really interested in some feature. Backup everything beforehand.</string>
+    <string name="settings_experimental_settings_description">These settings may become the reason of performance degradation/increased battery consumption or some other unexpected behavior. Use them at your own risk if you are really interested in the features they provide.</string>
 
     <!-- Thread watcher -->
     <string name="setting_watch_summary_disabled">Off</string>
@@ -737,7 +737,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_media_viewer_one_offscreen_page">One offscreen page</string>
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
-    <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images</string>
+    <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -775,6 +775,13 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_full_screen_rotation">Allow full sensor rotation</string>
     <string name="settings_show_copy_apk_dialog_title">Show copy apk dialog when downloading an update</string>
     <string name="settings_show_copy_apk_dialog_message">Every time you download a new update a dialog with suggestion to copy that apk to some other directory will be shown</string>
+
+    <!--  Android 10 gestures  -->
+    <string name="setting_android_10_gestures_groups">Android 10 gestures</string>
+    <string name="setting_exclusion_zones_editor">Android 10 gesture exclusion zones</string>
+    <string name="setting_exclusion_zones_editor_description">Adjust zones where Android 10 gestures will be disabled. \n\nYou will have to rotate your phone/tablet to set zones for different orientations. \nYou will have to restart the app for the changes to be applied!</string>
+    <string name="setting_exclusion_zones_reset_zones">Reset exclusion zones</string>
+    <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
 
     <!-- Media general group -->
     <string name="settings_screen_media">Media</string>
@@ -815,7 +822,7 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
-    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size.</string>
+    <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size. (⚠ May become the reason of high battery/network traffic/disk consumption ⚠)</string>
 
     <!-- Misc group -->
     <string name="settings_group_misc">Misc settings</string>
@@ -885,10 +892,6 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="experimental_settings_group">Experimental settings</string>
     <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
     <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
-    <string name="setting_exclusion_zones_editor">Android 10 gesture exclusion zones</string>
-    <string name="setting_exclusion_zones_editor_description">Adjust zones where Android 10 gestures will be disabled. \n\nYou will have to rotate your phone/tablet to set zones for different orientations. \nYou will have to restart the app for the changes to be applied!</string>
-    <string name="setting_exclusion_zones_reset_zones">Reset exclusion zones</string>
-    <string name="setting_exclusion_zones_reset_zones_description">All exclusion zones will be deleted; the app will be restarted</string>
     <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_use_dns_over_https">Use DNS over HTTPS</string>

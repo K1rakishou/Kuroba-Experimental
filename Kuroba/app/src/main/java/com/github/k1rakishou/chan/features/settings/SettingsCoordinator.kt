@@ -139,7 +139,10 @@ class SettingsCoordinator(
       context,
       navigationController,
       postHideManager,
-      appSettingsUpdateAppRefreshHelper
+      appSettingsUpdateAppRefreshHelper,
+      exclusionZonesHolder,
+      globalWindowInsetsManager,
+      dialogFactory
     )
   }
 
@@ -153,13 +156,7 @@ class SettingsCoordinator(
   }
 
   private val experimentalSettingsScreen by lazy {
-    ExperimentalSettingsScreen(
-      context,
-      navigationController,
-      exclusionZonesHolder,
-      globalWindowInsetsManager,
-      dialogFactory
-    )
+    ExperimentalSettingsScreen(context)
   }
 
   private val developerSettingsScreen by lazy {

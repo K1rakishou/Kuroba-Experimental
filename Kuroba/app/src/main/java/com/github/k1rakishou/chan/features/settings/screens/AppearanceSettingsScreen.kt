@@ -66,15 +66,6 @@ class AppearanceSettingsScreen(
           setting = ChanSettings.removeImageSpoilers
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = AppearanceScreen.ImagesGroup.HighResCells,
-          topDescriptionIdFunc = { R.string.setting_images_high_res },
-          bottomDescriptionIdFunc = { R.string.setting_images_high_res_description },
-          setting = ChanSettings.highResCells,
-          requiresUiRefresh = true
-        )
-
         group
       }
     )

@@ -5,9 +5,12 @@ import android.widget.Toast
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
+import com.github.k1rakishou.chan.features.settings.screens.delegate.ExclusionZoneSettingsDelegate
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
@@ -16,24 +19,78 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.settings.captcha.JsCaptchaCookiesEditorController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils
 
 class BehaviourSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val postHideManager: PostHideManager,
-  private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+  private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper,
+  private val exclusionZonesHolder: Android10GesturesExclusionZonesHolder,
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   BehaviorScreen,
   R.string.settings_screen_behavior
 ) {
 
+  private val exclusionZoneSettingsDelegate by lazy {
+    ExclusionZoneSettingsDelegate(
+      context,
+      navigationController,
+      exclusionZonesHolder,
+      globalWindowInsetsManager,
+      dialogFactory
+    )
+  }
+
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
       buildMainSettingsGroup(),
       buildReplySettingsGroup(),
       buildPostSettingsGroup(),
-      buildOtherSettingsGroup()
+      buildOtherSettingsGroup(),
+      buildAndroid10GestureExclusionZonesSettingsGroup()
+    )
+  }
+
+  private fun buildAndroid10GestureExclusionZonesSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = BehaviorScreen.Android10GestureSettings
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = {
+        val group = SettingsGroup(
+          groupTitle = context.getString(R.string.setting_android_10_gestures_groups),
+          groupIdentifier = identifier
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = BehaviorScreen.Android10GestureSettings.GesturesExclusionZonesEditor,
+          topDescriptionIdFunc = { R.string.setting_exclusion_zones_editor },
+          bottomDescriptionIdFunc = { R.string.setting_exclusion_zones_editor_description },
+          callback = { exclusionZoneSettingsDelegate.showZonesDialog() },
+          isEnabledFunc = { AndroidUtils.isAndroid10() },
+          requiresUiRefresh = true
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = BehaviorScreen.Android10GestureSettings.ResetExclusionZones,
+          topDescriptionIdFunc = { R.string.setting_exclusion_zones_reset_zones },
+          bottomDescriptionIdFunc = { R.string.setting_exclusion_zones_reset_zones_description },
+          callback = {
+            exclusionZonesHolder.resetZones()
+            showToast(context, R.string.done)
+          },
+          isEnabledFunc = { AndroidUtils.isAndroid10() },
+          requiresUiRefresh = true
+        )
+
+        group
+      }
     )
   }
 
