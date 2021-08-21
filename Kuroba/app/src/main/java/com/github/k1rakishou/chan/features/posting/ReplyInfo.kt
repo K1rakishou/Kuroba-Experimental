@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.posting
 
+import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Job
@@ -20,6 +22,10 @@ internal class ReplyInfo(
   val replyModeRef: AtomicReference<ReplyMode> = AtomicReference(initialReplyMode)
 ) {
   private val _canceled = AtomicBoolean(false)
+  private val _lastError = AtomicReference<ReplyResponse?>(null)
+
+  val lastUnsuccessfulReplyResponse: ReplyResponse?
+    get() = _lastError.get()
 
   val currentStatus: PostingStatus
     get() = _status.value
@@ -33,16 +39,31 @@ internal class ReplyInfo(
   @Synchronized
   fun updateStatus(newStatus: PostingStatus) {
     _status.value = newStatus
+
+    if (newStatus is PostingStatus.AfterPosting) {
+      val postResult = newStatus.postResult
+      if (postResult is PostResult.Error) {
+        val replyResponse = ReplyResponse()
+        replyResponse.errorMessage = postResult.throwable.errorMessageOrClassName()
+
+        _lastError.set(replyResponse)
+      } else if (postResult is PostResult.Success && !postResult.replyResponse.posted) {
+        val replyResponse = ReplyResponse(ReplyResponse(postResult.replyResponse))
+        _lastError.set(replyResponse)
+      } else {
+        _lastError.set(null)
+      }
+    }
   }
 
   @Synchronized
   fun cancelReplyUpload() {
     _canceled.set(true)
-
-    val job = activeJob.get() ?: return
-    job.cancel()
-
+    activeJob.get()?.cancel()
     activeJob.set(null)
+    _lastError.set(null)
+
+    _status.value = PostingStatus.Attached(chanDescriptor)
   }
 
   @Synchronized
@@ -50,6 +71,7 @@ internal class ReplyInfo(
     retrying.set(false)
     _canceled.set(false)
     activeJob.set(null)
+    _lastError.set(null)
     enqueuedAt.set(System.currentTimeMillis())
 
     _status.value = PostingStatus.Enqueued(chanDescriptor)

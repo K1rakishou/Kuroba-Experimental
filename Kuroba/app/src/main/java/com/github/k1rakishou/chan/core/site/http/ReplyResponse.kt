@@ -54,6 +54,50 @@ class ReplyResponse {
       return create(siteDescriptor!!.siteName, boardCode, threadNo, postNo)
     }
 
+  constructor() {
+
+  }
+
+  constructor(other: ReplyResponse) : this(
+    other.posted,
+    other.errorMessage,
+    other.siteDescriptor,
+    other.boardCode,
+    other.threadNo,
+    other.postNo,
+    other.password,
+    other.probablyBanned,
+    other.requireAuthentication,
+    other.additionalResponseData,
+    other.rateLimitInfo,
+  )
+
+  constructor(
+    posted: Boolean,
+    errorMessage: String?,
+    siteDescriptor: SiteDescriptor?,
+    boardCode: String,
+    threadNo: Long,
+    postNo: Long,
+    password: String,
+    probablyBanned: Boolean,
+    requireAuthentication: Boolean,
+    additionalResponseData: AdditionalResponseData?,
+    rateLimitInfo: RateLimitInfo?
+  ) {
+    this.posted = posted
+    this.errorMessage = errorMessage
+    this.siteDescriptor = siteDescriptor
+    this.boardCode = boardCode
+    this.threadNo = threadNo
+    this.postNo = postNo
+    this.password = password
+    this.probablyBanned = probablyBanned
+    this.requireAuthentication = requireAuthentication
+    this.additionalResponseData = additionalResponseData
+    this.rateLimitInfo = rateLimitInfo
+  }
+
   sealed class AdditionalResponseData {
     object DvachAntiSpamCheckDetected : AdditionalResponseData() {
       override fun toString(): String {

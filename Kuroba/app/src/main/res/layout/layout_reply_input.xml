@@ -156,7 +156,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             android:visibility="gone"
                             app:layout_constraintEnd_toEndOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
-                            tools:visibility="visible"/>
+                            tools:visibility="visible" />
 
                     </androidx.constraintlayout.widget.ConstraintLayout>
 
@@ -310,20 +310,22 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </LinearLayout>
 
-        <FrameLayout
+        <LinearLayout
             android:id="@+id/reply_input_message_holder"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_alignParentStart="true"
             android:layout_alignParentTop="true"
             android:layout_alignParentEnd="true"
+            android:orientation="horizontal"
             android:visibility="gone"
             tools:visibility="visible">
 
             <com.google.android.material.textview.MaterialTextView
                 android:id="@+id/reply_input_message"
-                android:layout_width="match_parent"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
+                android:layout_weight="1"
                 android:background="?attr/selectableItemBackground"
                 android:clickable="true"
                 android:focusable="true"
@@ -331,7 +333,18 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:textColor="#fff44336"
                 tools:text="Test error message" />
 
-        </FrameLayout>
+            <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/reply_input_close_error_icon"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:clickable="true"
+                android:focusable="true"
+                android:layout_marginEnd="16dp"
+                android:src="@drawable/ic_clear_white_24dp"/>
+
+        </LinearLayout>
 
     </RelativeLayout>
 

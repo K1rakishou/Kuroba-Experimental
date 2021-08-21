@@ -36,7 +36,6 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.view.animation.DecelerateInterpolator
-import android.widget.FrameLayout
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -168,7 +167,8 @@ class ReplyLayout @JvmOverloads constructor(
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
   private lateinit var replyInputMessage: MaterialTextView
-  private lateinit var replyInputMessageHolder: FrameLayout
+  private lateinit var replyInputCloseErrorIcon: AppCompatImageView
+  private lateinit var replyInputMessageHolder: LinearLayout
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
   private lateinit var flag: ColorizableTextView
@@ -404,6 +404,10 @@ class ReplyLayout @JvmOverloads constructor(
       submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, tintColor))
     }
 
+    if (replyInputCloseErrorIcon.drawable != null) {
+      replyInputCloseErrorIcon.setImageDrawable(themeEngine.tintDrawable(replyInputCloseErrorIcon.drawable, tintColor))
+    }
+
     val textColor = if (isCounterOverflowed) {
       themeEngine.chanTheme.errorColor
     } else {
@@ -451,6 +455,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
+    replyInputCloseErrorIcon = replyInputLayout.findViewById(R.id.reply_input_close_error_icon)
     replyInputMessageHolder = replyInputLayout.findViewById(R.id.reply_input_message_holder)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
@@ -485,10 +490,12 @@ class ReplyLayout @JvmOverloads constructor(
     flag.setOnClickListener(this)
 
     replyInputMessage.setOnClickListener {
-      removeCallbacks(closeMessageRunnable)
-      animateReplyInputMessage(appearance = false)
-
+      onReplyInputErrorMessageClicked()
       presenter.executeFloatingReplyMessageClickAction()
+    }
+
+    replyInputCloseErrorIcon.setOnClickListener {
+      onReplyInputErrorMessageClicked()
     }
 
     commentRevertChangeButton.setOnClickListener(this)
@@ -1210,6 +1217,13 @@ class ReplyLayout @JvmOverloads constructor(
     if (commentButtonsHolder.visibility != View.GONE) {
       commentButtonsHolder.visibility = View.GONE
     }
+  }
+
+  private fun onReplyInputErrorMessageClicked() {
+    removeCallbacks(closeMessageRunnable)
+    animateReplyInputMessage(appearance = false)
+
+    presenter.onReplyInputErrorMessageClicked()
   }
 
   @SuppressLint("SetTextI18n")

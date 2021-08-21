@@ -79,9 +79,9 @@ class PostingServiceDelegate(
   private val activeReplyDescriptors = hashMapOf<ChanDescriptor, ReplyInfo>()
 
   private val _stopServiceEventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-  private val _updateMainNotificationFlow = MutableSharedFlow<MainNotificationInfo>(extraBufferCapacity = 1)
-  private val _updateChildNotificationFlow = MutableSharedFlow<ChildNotificationInfo>(extraBufferCapacity = 1)
-  private val _closeChildNotificationFlow = MutableSharedFlow<ChanDescriptor>(extraBufferCapacity = 1)
+  private val _updateMainNotificationFlow = MutableSharedFlow<MainNotificationInfo>(extraBufferCapacity = 16)
+  private val _updateChildNotificationFlow = MutableSharedFlow<ChildNotificationInfo>(extraBufferCapacity = 16)
+  private val _closeChildNotificationFlow = MutableSharedFlow<ChanDescriptor>(extraBufferCapacity = 16)
 
   fun listenForStopServiceEvents(): SharedFlow<Unit> {
     return _stopServiceEventFlow
@@ -109,6 +109,8 @@ class PostingServiceDelegate(
 
       twoCaptchaSolver.get().cancelAll()
     }
+
+    checkAllRepliesProcessed()
   }
 
   suspend fun cancel(chanDescriptor: ChanDescriptor) {
@@ -122,6 +124,8 @@ class PostingServiceDelegate(
 
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
+
+    checkAllRepliesProcessed()
   }
 
   suspend fun listenForPostingStatusUpdates(chanDescriptor: ChanDescriptor): StateFlow<PostingStatus> {
@@ -230,14 +234,34 @@ class PostingServiceDelegate(
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
 
+    checkAllRepliesProcessed()
+  }
+
+  private suspend fun checkAllRepliesProcessed() {
     val allRepliesProcessed = mutex.withLock {
       if (activeReplyDescriptors.isEmpty()) {
         return@withLock true
       }
 
       return@withLock activeReplyDescriptors.values.all { replyInfo ->
-        return@all replyInfo.currentStatus is PostingStatus.Attached
-          || replyInfo.currentStatus.isTerminalEvent()
+        if (replyInfo.currentStatus is PostingStatus.Attached) {
+          return@all true
+        }
+
+        if (replyInfo.currentStatus !is PostingStatus.AfterPosting) {
+          return@all false
+        }
+
+        val postResult = (replyInfo.currentStatus as PostingStatus.AfterPosting).postResult
+        if (postResult is PostResult.Success && postResult.replyResponse.posted) {
+          return@all true
+        }
+
+        if (postResult is PostResult.Canceled) {
+          return@all true
+        }
+
+        return@all false
       }
     }
 
@@ -1316,6 +1340,12 @@ class PostingServiceDelegate(
     }
 
     Logger.d(TAG, "consumeTerminalEvent($replyDescriptor) consumed=$consumed")
+  }
+
+  suspend fun lastUnsuccessfulReplyResponseOrNull(replyDescriptor: ChanDescriptor): ReplyResponse? {
+    return mutex.withLock {
+      return@withLock activeReplyDescriptors[replyDescriptor]?.lastUnsuccessfulReplyResponse
+    }
   }
 
   sealed class ActualPostResult {

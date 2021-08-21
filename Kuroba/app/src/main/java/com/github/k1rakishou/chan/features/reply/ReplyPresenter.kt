@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.features.reply
 
 import android.content.Context
 import android.text.Editable
+import android.text.TextUtils
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -93,6 +94,7 @@ class ReplyPresenter @Inject constructor(
   private var previewOpen = false
   private var floatingReplyMessageClickAction: IFloatingReplyMessageClickAction? = null
   private var postingStatusUpdatesJob: Job? = null
+  private var postingCheckLastErrorJob: Job? = null
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
@@ -208,10 +210,10 @@ class ReplyPresenter @Inject constructor(
 
           when (val postResult = status.postResult) {
             PostResult.Canceled -> {
-              onPostError(status.chanDescriptor, CancellationException("Canceled"))
+              onPostError(CancellationException("Canceled"))
             }
             is PostResult.Error -> {
-              onPostError(status.chanDescriptor, postResult.throwable)
+              onPostError(postResult.throwable)
             }
             is PostResult.Success -> {
               onPostComplete(
@@ -256,6 +258,21 @@ class ReplyPresenter @Inject constructor(
   fun onOpen(open: Boolean) {
     if (open) {
       callback.focusComment()
+
+      postingCheckLastErrorJob?.cancel()
+      postingCheckLastErrorJob = null
+
+      postingCheckLastErrorJob = launch {
+        val descriptor = currentChanDescriptor
+          ?: return@launch
+
+        val lastUnsuccessfulReplyResponse = postingServiceDelegate.get().lastUnsuccessfulReplyResponseOrNull(descriptor)
+        if (lastUnsuccessfulReplyResponse == null || lastUnsuccessfulReplyResponse.posted) {
+          return@launch
+        }
+
+        onPostCompleteUnsuccessful(lastUnsuccessfulReplyResponse)
+      }
     }
   }
 
@@ -636,7 +653,7 @@ class ReplyPresenter @Inject constructor(
     PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, replyMode, retrying)
   }
 
-  private fun onPostError(chanDescriptor: ChanDescriptor, exception: Throwable) {
+  private fun onPostError(exception: Throwable) {
     BackgroundUtils.ensureMainThread()
 
     if (exception is CancellationException) {
@@ -664,6 +681,7 @@ class ReplyPresenter @Inject constructor(
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
+        onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
 
         showCaptcha(
           chanDescriptor = chanDescriptor,
@@ -725,8 +743,21 @@ class ReplyPresenter @Inject constructor(
     updateFloatingReplyMessageClickAction(replyResponse)
 
     val errorMessage = when {
-      additionalErrorMessage != null -> getString(R.string.reply_error_message, additionalErrorMessage)
-      replyResponse.errorMessage != null -> getString(R.string.reply_error_message, replyResponse.errorMessage)
+      additionalErrorMessage != null -> {
+        getString(R.string.reply_error_message, additionalErrorMessage)
+      }
+      replyResponse.errorMessage != null -> {
+        getString(R.string.reply_error_message, replyResponse.errorMessage)
+      }
+      replyResponse.requireAuthentication -> {
+        val errorMessage = if (TextUtils.isEmpty(replyResponse.errorMessage)) {
+          getString(R.string.reply_error_authentication_required)
+        } else {
+          replyResponse.errorMessage
+        }
+
+        getString(R.string.reply_error_message, errorMessage)
+      }
       else -> getString(R.string.reply_error_message, replyResponse)
     }
 
@@ -841,6 +872,13 @@ class ReplyPresenter @Inject constructor(
     updatePostTextSpansDebouncer.post({
       ReplyCommentHelper.processReplyCommentHighlight(themeEngine, commentText)
     }, 250)
+  }
+
+  fun onReplyInputErrorMessageClicked() {
+    val descriptor = currentChanDescriptor
+      ?: return
+
+    launch { postingServiceDelegate.get().cancel(descriptor) }
   }
 
   interface ReplyPresenterCallback {

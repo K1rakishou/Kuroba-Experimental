@@ -83,6 +83,7 @@ class PostingService : Service() {
     kurobaScope.launch {
       postingServiceDelegate.get().listenForChildNotificationsToClose()
         .collect { chanDescriptor ->
+          Logger.d(TAG, "cancelNotification($chanDescriptor)")
           val notificationId = chanDescriptor.hashCode()
 
           notificationManagerCompat.cancel(
@@ -182,6 +183,7 @@ class PostingService : Service() {
       .setOngoing(childNotificationInfo.isOngoing)
       .addCancelAction(childNotificationInfo)
       .addNotificationClickAction(childNotificationInfo)
+      .addNotificationSwipeAwayAction(childNotificationInfo)
       .setTimeoutEx(childNotificationInfo)
       .build()
   }
@@ -244,6 +246,26 @@ class PostingService : Service() {
     )
 
     return addAction(0, getString(R.string.cancel_all), cancelIntent)
+  }
+
+  private fun NotificationCompat.Builder.addNotificationSwipeAwayAction(
+    childNotificationInfo: ChildNotificationInfo
+  ): NotificationCompat.Builder {
+    val intent = Intent(applicationContext, PostingServiceBroadcastReceiver::class.java).apply {
+      setAction(ACTION_TYPE_CANCEL)
+
+      putExtra(CHAN_DESCRIPTOR, DescriptorParcelable.fromDescriptor(childNotificationInfo.chanDescriptor))
+    }
+
+    val cancelIntent = PendingIntent.getBroadcast(
+      applicationContext,
+      RequestCodes.nextRequestCode(),
+      intent,
+      PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    setDeleteIntent(cancelIntent)
+    return this
   }
 
   private fun NotificationCompat.Builder.addCancelAction(
