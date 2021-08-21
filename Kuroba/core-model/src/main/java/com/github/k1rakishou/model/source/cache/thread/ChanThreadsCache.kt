@@ -111,7 +111,7 @@ class ChanThreadsCache(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     postsFromServerData: PostsFromServerData?
   ) {
     // We are doing some kinda heavy stuff (reply calculations) so we want this method to always be
@@ -146,7 +146,7 @@ class ChanThreadsCache(
       chanThread.setOrUpdateOriginalPost(firstPost)
     }
 
-    chanThread.updateLastUpdateTime(cacheUpdateOptions)
+    chanThread.updateLastUpdateTime(chanCacheUpdateOptions)
   }
 
   fun getCachedThreadsCount(): Int {

@@ -1149,7 +1149,7 @@ class ThreadPresenter @Inject constructor(
 
   }
 
-  override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {
+  override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {
     if (!isBound) {
       return
     }
@@ -1241,7 +1241,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
-    if (containsSite && chanDescriptor.isThreadDescriptor()) {
+    if (!inPopup && containsSite && chanDescriptor.isThreadDescriptor()) {
       val isSaved = savedReplyManager.get().isSaved(post.postDescriptor)
       val stringId = if (isSaved) {
         R.string.unmark_as_my_post
@@ -1848,7 +1848,7 @@ class ThreadPresenter @Inject constructor(
             }
             SHOW_POST_MENU_OPTIONS -> {
               val postMenuOptions = mutableListOf<FloatingListMenuItem>()
-              onPopulatePostOptions(post, postMenuOptions)
+              onPopulatePostOptions(post, postMenuOptions, inPopup)
 
               if (postMenuOptions.size > 0) {
                 showPostOptions(post, inPopup, postMenuOptions)

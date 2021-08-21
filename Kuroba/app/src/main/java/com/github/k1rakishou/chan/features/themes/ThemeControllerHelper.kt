@@ -79,7 +79,7 @@ class ThemeControllerHelper(
     override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
     override fun onShowPostReplies(post: ChanPost) {}
     override fun onPreviewThreadPostsClicked(post: ChanPost) {}
-    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>) {}
+    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {}
     override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
     override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
     override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}

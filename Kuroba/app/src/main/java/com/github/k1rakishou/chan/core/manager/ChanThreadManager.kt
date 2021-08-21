@@ -449,9 +449,16 @@ class ChanThreadManager(
     }
 
     if (!chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)) {
-      Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> false")
+      Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, " +
+        "$chanCacheUpdateOptions) -> false")
 
-      val result = tryRefreshCacheFromTheDatabase(chanDescriptor, chanLoadOptions, chanCacheUpdateOptions)
+      val result = tryRefreshCacheFromTheDatabase(
+        chanDescriptor = chanDescriptor,
+        chanLoadOptions = chanLoadOptions,
+        // To avoid using UpdateIfCacheIsOlderThan which is ambiguous
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+      )
+
       if (result != null) {
         return result
       }
@@ -459,7 +466,8 @@ class ChanThreadManager(
       // fallthrough
     }
 
-    Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, $chanCacheUpdateOptions) -> true")
+    Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, " +
+      "$chanCacheUpdateOptions) -> true")
 
     // Notify the bookmarksManager that loader is starting to fetch data from the server so that
     //  bookmarksManager can start loading bookmark info for this thread
@@ -472,7 +480,8 @@ class ChanThreadManager(
       site = site,
       chanDescriptor = chanDescriptor,
       chanCacheOptions = chanCacheOptions,
-      cacheUpdateOptions = chanCacheUpdateOptions,
+      // To avoid using UpdateIfCacheIsOlderThan which is ambiguous
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
       chanReadOptions = chanReadOptions,
       chanLoadOptions = chanLoadOptions
     )

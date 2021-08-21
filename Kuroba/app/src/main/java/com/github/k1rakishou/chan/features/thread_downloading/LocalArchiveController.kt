@@ -599,9 +599,8 @@ class LocalArchiveController(
     threadDownloadView: LocalArchiveViewModel.ThreadDownloadView,
     contentAlpha: Float
   ) {
-    val downloadProgressEvent by viewModel.collectDownloadProgressEventsAsState(
-      threadDescriptor = threadDownloadView.threadDescriptor
-    )
+    val downloadProgressEvent by viewModel.collectDownloadProgressEventsAsState(threadDownloadView.threadDescriptor)
+      .collectAsState(ThreadDownloadProgressNotifier.Event.Empty)
 
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
     val color = remember(key1 = isBackColorDark) {

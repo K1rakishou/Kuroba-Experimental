@@ -628,7 +628,7 @@ class PostCell : ConstraintLayout,
 
     val items = ArrayList<FloatingListMenuItem>()
     if (postCellCallback != null) {
-      postCellCallback?.onPopulatePostOptions(postCellData.post, items)
+      postCellCallback?.onPopulatePostOptions(postCellData.post, items, postCellData.isInPopup)
 
       if (items.size > 0) {
         postCellCallback?.showPostOptions(postCellData.post, postCellData.isInPopup, items)

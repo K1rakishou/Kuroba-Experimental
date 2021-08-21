@@ -282,7 +282,7 @@ class CardPostCell : ConstraintLayout,
       val items = mutableListOf<FloatingListMenuItem>()
 
       if (callback != null) {
-        callback!!.onPopulatePostOptions(postCellData.post, items)
+        callback!!.onPopulatePostOptions(postCellData.post, items, postCellData.isInPopup)
 
         if (items.isNotEmpty()) {
           callback!!.showPostOptions(postCellData.post, postCellData.isInPopup, items)

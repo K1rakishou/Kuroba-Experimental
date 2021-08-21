@@ -980,7 +980,9 @@ class MainController(
       KurobaComposeIcon(
         drawableId = R.drawable.ic_baseline_wb_sunny_24,
         themeEngine = themeEngine,
-        modifier = Modifier.kurobaClickable(onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) })
+        modifier = Modifier.kurobaClickable(
+          onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) }
+        )
       )
 
       Spacer(modifier = Modifier.width(16.dp))
@@ -988,7 +990,9 @@ class MainController(
       KurobaComposeIcon(
         drawableId = R.drawable.ic_more_vert_white_24dp,
         themeEngine = themeEngine,
-        modifier = Modifier.kurobaClickable(onClick = { showDrawerOptions() })
+        modifier = Modifier.kurobaClickable(
+          onClick = { showDrawerOptions() }
+        )
       )
 
       Spacer(modifier = Modifier.width(16.dp))

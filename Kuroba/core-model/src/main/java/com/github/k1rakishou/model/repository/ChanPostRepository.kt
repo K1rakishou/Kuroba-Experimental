@@ -204,7 +204,7 @@ class ChanPostRepository(
     chanDescriptor: ChanDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     postsFromServerData: PostsFromServerData
   ): ModularResult<Int> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
@@ -227,7 +227,7 @@ class ChanPostRepository(
           threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor,
           parsedPosts = parsedPosts,
           cacheOptions = cacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions,
+          chanCacheUpdateOptions = chanCacheUpdateOptions,
           postsFromServerData = postsFromServerData
         )
 
@@ -377,7 +377,7 @@ class ChanPostRepository(
               threadDescriptor = threadDescriptor,
               parsedPosts = postsFromDatabase,
               cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-              cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+              chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
               postsFromServerData = null
             )
           }
@@ -463,7 +463,7 @@ class ChanPostRepository(
           threadDescriptor = threadDescriptor,
           parsedPosts = postsFromDatabase,
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-          cacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+          chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
           postsFromServerData = null
         )
 
@@ -608,7 +608,7 @@ class ChanPostRepository(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     postsFromServerData: PostsFromServerData
   ): Int {
     ensureBackgroundThread()
@@ -636,7 +636,7 @@ class ChanPostRepository(
       threadDescriptor = threadDescriptor,
       parsedPosts = postsThatDifferWithCache,
       cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions,
+      chanCacheUpdateOptions = chanCacheUpdateOptions,
       postsFromServerData = postsFromServerData
     )
 

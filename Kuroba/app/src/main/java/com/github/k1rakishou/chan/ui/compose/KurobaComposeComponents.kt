@@ -333,7 +333,7 @@ fun Modifier.kurobaClickable(
   onClick: (() -> Unit)? = null
 ): Modifier {
   if (onLongClick == null && onClick == null) {
-    error("At least on of callbacks must be non-null")
+    error("At least one of the callbacks must be non-null")
   }
 
   return composed {

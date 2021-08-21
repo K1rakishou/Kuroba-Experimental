@@ -41,7 +41,8 @@ object ComposeHelpers {
   private const val TAG = "ComposeHelpers"
   const val enableDebugCompositionLogs = true
 
-  val SCROLLBAR_WIDTH = 4.dp
+  val SCROLLBAR_WIDTH = 8.dp
+
   class DebugRef(var value: Int)
 
   @Composable
@@ -178,7 +179,12 @@ object ComposeHelpers {
       }
     }
 
-    return SpanStyle(color = color, background = background, fontWeight = fontWeight, textDecoration = textDecoration)
+    return SpanStyle(
+      color = color,
+      background = background,
+      fontWeight = fontWeight,
+      textDecoration = textDecoration
+    )
   }
 
   private fun getColorByColorId(

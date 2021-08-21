@@ -38,7 +38,7 @@ internal class ChanPostPersister(
   suspend fun persistPosts(
     chanReaderProcessor: ChanReaderProcessor,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanDescriptor: ChanDescriptor,
     postParser: PostParser,
   ): ThreadResultWithTimeInfo {
@@ -47,7 +47,7 @@ internal class ChanPostPersister(
       chanPostRepository.awaitUntilInitialized()
 
       Logger.d(TAG, "persistPosts($chanDescriptor, $chanReaderProcessor, $cacheOptions, " +
-        "${postParser.javaClass.simpleName})")
+        "$chanCacheUpdateOptions, ${postParser.javaClass.simpleName})")
 
       if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
         val isUnlimitedCatalog = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
@@ -84,10 +84,12 @@ internal class ChanPostPersister(
           chanDescriptor = chanDescriptor,
           parsedPosts = parsingResult.parsedPosts,
           cacheOptions = cacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions,
+          chanCacheUpdateOptions = chanCacheUpdateOptions,
+          // Only allow deleted post detection we are reloading full thread from the server
           postsFromServerData = PostsFromServerData(
-            chanReaderProcessor.allPostDescriptorsFromServer,
-            chanReaderProcessor.isIncrementalUpdate
+            allPostDescriptors = chanReaderProcessor.allPostDescriptorsFromServer,
+            isIncrementalUpdate = chanReaderProcessor.isIncrementalUpdate,
+            isUpdatingDataFromTheServer = chanCacheUpdateOptions !is ChanCacheUpdateOptions.DoNotUpdateCache
           )
         )
       }

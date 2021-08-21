@@ -137,7 +137,7 @@ class ChanThreadLoaderCoordinator(
     site: Site,
     chanDescriptor: ChanDescriptor,
     chanCacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanReadOptions: ChanReadOptions,
     chanLoadOptions: ChanLoadOptions
   ): ModularResult<ThreadLoadResult> {
@@ -152,8 +152,8 @@ class ChanThreadLoaderCoordinator(
     )
 
     Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, chanDescriptor=$chanDescriptor, " +
-      "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions, " +
-      "chanReader=${chanReader.javaClass.simpleName})")
+      "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
+      "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName})")
 
     return withContext(Dispatchers.IO) {
       BackgroundUtils.ensureBackgroundThread()
@@ -256,7 +256,7 @@ class ChanThreadLoaderCoordinator(
         val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(
           chanReaderProcessor = chanReaderProcessor,
           cacheOptions = chanCacheOptions,
-          cacheUpdateOptions = cacheUpdateOptions,
+          chanCacheUpdateOptions = chanCacheUpdateOptions,
           chanDescriptor = chanDescriptor,
           postParser = postParser,
         )
@@ -378,7 +378,7 @@ class ChanThreadLoaderCoordinator(
         val (threadLoadResult, _) = chanPostPersister.persistPosts(
           chanReaderProcessor = chanReaderProcessor,
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
-          cacheUpdateOptions = cacheUpdateOptions,
+          chanCacheUpdateOptions = cacheUpdateOptions,
           chanDescriptor = threadDescriptor,
           postParser = postParser,
         )

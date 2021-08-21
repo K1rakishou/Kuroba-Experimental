@@ -17,7 +17,7 @@ class StorePostsInRepositoryUseCase(
     chanDescriptor: ChanDescriptor,
     parsedPosts: List<ChanPost>,
     cacheOptions: ChanCacheOptions,
-    cacheUpdateOptions: ChanCacheUpdateOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
     postsFromServerData: PostsFromServerData
   ): Int {
     BackgroundUtils.ensureBackgroundThread()
@@ -32,7 +32,7 @@ class StorePostsInRepositoryUseCase(
       chanDescriptor = chanDescriptor,
       parsedPosts = parsedPosts,
       cacheOptions = cacheOptions,
-      cacheUpdateOptions = cacheUpdateOptions,
+      chanCacheUpdateOptions = chanCacheUpdateOptions,
       postsFromServerData = postsFromServerData
     ).unwrap()
   }

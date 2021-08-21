@@ -157,7 +157,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
       val items = ArrayList<FloatingListMenuItem>()
 
       if (callback != null) {
-        callback!!.onPopulatePostOptions(postCellData.post, items)
+        callback!!.onPopulatePostOptions(postCellData.post, items, postCellData.isInPopup)
 
         if (items.size > 0) {
           callback!!.showPostOptions(postCellData.post, postCellData.isInPopup, items)

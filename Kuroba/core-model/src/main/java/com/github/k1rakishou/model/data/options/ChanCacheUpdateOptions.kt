@@ -26,6 +26,11 @@ sealed class ChanCacheUpdateOptions {
     }
   }
 
+  /**
+   * Only used in the [ChanThreadManager] to figure out whether we can reload posts from the database
+   * or need to load fresh posts from the server. After that is replaced by either [UpdateCache] or
+   * [DoNotUpdateCache]
+   * */
   data class UpdateIfCacheIsOlderThan(val timePeriodMs: Long) : ChanCacheUpdateOptions()
 
   companion object {

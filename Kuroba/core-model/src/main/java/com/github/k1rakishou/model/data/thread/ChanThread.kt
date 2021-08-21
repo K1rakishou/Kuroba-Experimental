@@ -267,13 +267,7 @@ class ChanThread(
   }
 
   fun cacheNeedsUpdate(chanCacheUpdateOption: ChanCacheUpdateOptions): Boolean {
-    when (chanCacheUpdateOption) {
-      ChanCacheUpdateOptions.UpdateCache -> return true
-      ChanCacheUpdateOptions.DoNotUpdateCache -> return false
-      is ChanCacheUpdateOptions.UpdateIfCacheIsOlderThan -> {
-        return lock.read { (System.currentTimeMillis() - lastUpdateTime) > chanCacheUpdateOption.timePeriodMs}
-      }
-    }
+    return lock.read { chanCacheUpdateOption.canUpdate(lastUpdateTime) }
   }
 
   fun updateLastUpdateTime(cacheUpdateOptions: ChanCacheUpdateOptions) {
@@ -593,7 +587,10 @@ class ChanThread(
     oldChanPosts: MutableList<ChanPost>,
     postsFromServerData: PostsFromServerData?
   ): Set<PostDescriptor>? {
-    if (postsFromServerData == null || postsFromServerData.isIncrementalUpdate) {
+    if (postsFromServerData == null
+      || postsFromServerData.isIncrementalUpdate
+      || !postsFromServerData.isUpdatingDataFromTheServer
+    ) {
       return null
     }
 

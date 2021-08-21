@@ -23,6 +23,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -111,13 +112,11 @@ class LocalArchiveViewModel : BaseViewModel() {
     _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
 
-  @Composable
   fun collectDownloadProgressEventsAsState(
     threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): State<ThreadDownloadProgressNotifier.Event> {
+  ): Flow<ThreadDownloadProgressNotifier.Event> {
     return threadDownloadProgressNotifier.listenForProgress(threadDescriptor)
       .sample(16L)
-      .collectAsState(ThreadDownloadProgressNotifier.Event.Empty)
   }
 
   @Composable
