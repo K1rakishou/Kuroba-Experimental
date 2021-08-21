@@ -64,6 +64,7 @@ class ThumbnailLongtapOptionsHelper(
       }
     }
 
+    items += createMenuItem(context, OPEN_IN_EXTERNAL_APP, R.string.action_open_in_browser)
     items += createMenuItem(context, SHARE_MEDIA_FILE_CONTENT, R.string.action_share_content)
     items += createMenuItem(context, DOWNLOAD_MEDIA_FILE_CONTENT, R.string.action_download_content)
     items += createMenuItem(context, DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
@@ -128,6 +129,12 @@ class ThumbnailLongtapOptionsHelper(
         filter.pattern = postImage.fileHash
 
         showFiltersControllerFunc(filter)
+      }
+      OPEN_IN_EXTERNAL_APP -> {
+        val imageUrl = postImage.imageUrl
+          ?: return
+
+        AppModuleAndroidUtils.openLink(imageUrl.toString())
       }
       SHARE_MEDIA_FILE_CONTENT -> {
         imageSaverV2.get().downloadMediaAndShare(postImage) { result ->
@@ -204,6 +211,8 @@ class ThumbnailLongtapOptionsHelper(
     private const val IMAGE_COPY_SERVER_FILE_NAME = 1006
     private const val IMAGE_COPY_MD5_HASH_HEX = 1007
     private const val FILTER_POSTS_WITH_THIS_IMAGE_HASH = 1008
+    private const val OPEN_IN_EXTERNAL_APP = 1009
+
     private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
   }
 

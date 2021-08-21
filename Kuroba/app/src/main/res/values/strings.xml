@@ -234,7 +234,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_download_content">Download file</string>
     <string name="action_download_content_with_options">Download file (show options)</string>
     <string name="action_album_show_image_details">Show image details</string>
-    <string name="action_open_in_browser">Open in browser</string>
+    <string name="action_open_in_browser">Open in browser or external application</string>
     <string name="action_media_search">Media search</string>
     <string name="action_share_media_url">Share media url</string>
     <string name="action_share_media_content">Share media content</string>
@@ -586,7 +586,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_caching">Caching</string>
     <string name="settings_caching_description">Media cache/database cache</string>
     <string name="settings_captcha_solvers">Captcha solvers</string>
-    <string name="settings_captcha_solvers_description">Automatic, paid, captcha solvers</string>
+    <string name="settings_captcha_solvers_description">Automatic, paid, captcha solvers (For ReCaptcha only)</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
     <string name="settings_experimental_settings_description">These settings may become the reason of performance degradation/increased battery consumption or some other unexpected behavior. Use them at your own risk if you are really interested in the features they provide.</string>
 
