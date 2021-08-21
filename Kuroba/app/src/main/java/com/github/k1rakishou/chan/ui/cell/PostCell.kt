@@ -396,12 +396,12 @@ class PostCell : ConstraintLayout,
       }
     }
 
-    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = endPaddingPx, bottom = 0)
+    title.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
     icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
-    comment.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = vertPaddingPx)
+    comment.updatePaddings(left = horizPaddingPx, top = commentVertPaddingPx, right = horizPaddingPx, bottom = commentVertPaddingPx)
 
     if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = endPaddingPx, bottom = 0)
+      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = 0)
     }
 
     // replies view always has horizPaddingPx padding since we never shift it.
@@ -1499,7 +1499,7 @@ class PostCell : ConstraintLayout,
 
     val horizPaddingPx = dp(4f)
     val vertPaddingPx = dp(4f)
-    val endPaddingPx = dp(16f)
+    val commentVertPaddingPx = dp(6f)
     val iconsSpacing = dp(4f)
 
     // Empty comment or comment with only a quote or something like that

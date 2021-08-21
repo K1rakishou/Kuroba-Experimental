@@ -44,6 +44,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
@@ -401,6 +402,7 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
+  @Suppress("IfThenToElvis")
   private suspend fun fallbackPostLoadOnNetworkError(
     chanLoadUrl: ChanLoadUrl,
     chanDescriptor: ChanDescriptor,
@@ -433,8 +435,29 @@ class ChanThreadLoaderCoordinator(
     }
 
     val chanLoaderResponse = databasePostLoader.loadPosts(chanDescriptor)
-    if (chanLoaderResponse == null) {
+    if (chanLoaderResponse == null || chanLoaderResponse.posts.isEmpty()) {
       throw error
+    }
+
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      val boardDescriptor = chanDescriptor.boardDescriptor
+      val prevCatalogSnapshot = chanCatalogSnapshotCache.get(boardDescriptor)
+
+      val isUnlimitedCatalog = if (prevCatalogSnapshot != null) {
+        prevCatalogSnapshot.isUnlimitedCatalog
+      } else {
+        boardManager.byBoardDescriptor(boardDescriptor)
+          ?.isUnlimitedCatalog
+          ?: false
+      }
+
+      val newCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
+        boardDescriptor = boardDescriptor,
+        threadDescriptors = chanLoaderResponse.posts.map { post -> post.postDescriptor.threadDescriptor() },
+        isUnlimitedCatalog = isUnlimitedCatalog
+      )
+
+      chanCatalogSnapshotCache.store(boardDescriptor, newCatalogSnapshot)
     }
 
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
