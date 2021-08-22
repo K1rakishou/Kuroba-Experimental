@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Typeface;
@@ -68,9 +71,6 @@ import java.util.regex.Pattern;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class FilterLayout
         extends LinearLayout
@@ -209,6 +209,7 @@ public class FilterLayout
         boardsSelector.setOnClickListener(this);
         actionText.setOnClickListener(this);
 
+        enabled.setOnCheckedChangeListener(this);
         applyToReplies.setOnCheckedChangeListener(this);
         onlyOnOP.setOnCheckedChangeListener(this);
         applyToSaved.setOnCheckedChangeListener(this);
@@ -530,6 +531,7 @@ public class FilterLayout
         AtomicInteger index = new AtomicInteger(0);
         AtomicBoolean theSameFilterExists = new AtomicBoolean(false);
 
+        boolean enabledChecked = enabled.isChecked();
         boolean applyToRepliesChecked = applyToReplies.isChecked();
         boolean onlyOnOPChecked = onlyOnOP.isChecked();
         boolean applyToSavedChecked = applyToSaved.isChecked();
@@ -540,7 +542,8 @@ public class FilterLayout
             boolean isFilterTheSame = compareWithChanFilter(chanFilterMutable, chanFilter)
                     && chanFilter.getApplyToReplies() == applyToRepliesChecked
                     && chanFilter.getOnlyOnOP() == onlyOnOPChecked
-                    && chanFilter.getApplyToSaved() == applyToSavedChecked;
+                    && chanFilter.getApplyToSaved() == applyToSavedChecked
+                    && chanFilter.getEnabled() == enabledChecked;
 
             if (isFilterTheSame) {
                 theSameFilterExists.set(true);
