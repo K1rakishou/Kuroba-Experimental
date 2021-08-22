@@ -435,36 +435,69 @@ class PostCell : ConstraintLayout,
       return true
     }
 
+    val thumbnailWidth = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize()
     // We allow using comment shift if comment height + post title height + imageFileName height
-    // (if present) is less than 1.5x of thumbnail height
-    var thumbnailSize = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize()
-    thumbnailSize += (thumbnailSize.toFloat() * 0.5f).toInt()
+    // (if present) is less than 2x of thumbnail height
+    val thumbnailHeight = thumbnailWidth * 2
 
-    var availableWidth = postCellData.postCellDataWidthNoPaddings
+    var totalAvailableWidth = postCellData.postCellDataWidthNoPaddings
+    totalAvailableWidth -= getDimen(R.dimen.post_attention_label_width)
+    totalAvailableWidth -= (horizPaddingPx * 2)
+    val availableWidthWithoutThumbnail = totalAvailableWidth - thumbnailWidth
 
-    availableWidth -= getDimen(R.dimen.post_attention_label_width)
-    availableWidth -= (horizPaddingPx * 2)
-    availableWidth -= thumbnailSize
-
-    if (availableWidth <= 0) {
+    if (totalAvailableWidth <= 0) {
       return false
     }
 
-    val titleTextBounds = title.getTextBounds(postCellData.postTitle, availableWidth)
+    val titleTextBounds = title.getTextBounds(postCellData.postTitle, totalAvailableWidth)
 
     val imageFileNameTextBounds = if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.getTextBounds(postFileInfo, availableWidth)
+      imageFileName!!.getTextBounds(postFileInfo, totalAvailableWidth)
     } else {
       TextBounds.EMPTY
     }
 
     val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
-    val availableHeight = thumbnailSize - resultTitleTextBounds.textHeight
+    val availableHeight = thumbnailHeight - resultTitleTextBounds.textHeight
 
-    val commentTextBounds = comment.getTextBounds(postCellData.commentText, availableWidth)
+    val commentTextBounds = comment.getTextBounds(postCellData.commentText, totalAvailableWidth)
     val commentHeight = commentTextBounds.textHeight
 
-    return availableHeight > commentHeight
+    if (availableHeight > commentHeight) {
+      return true
+    }
+
+    if (postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
+      // Special case for when thumbnails are on the right side of a post and the post comment's
+      // lines are all formatted in such way that first N of them are all less than availableWidth.
+      // N in this case is first number lines which height sum is greater than or equal to availableHeight.
+      // This is very useful for tablets with postAlignmentMode == AlignLeft.
+
+      var offset = 0
+      var allLinesFit = true
+
+      for (lineBound in commentTextBounds.lineBounds) {
+        val lineHeight = lineBound.height()
+        val lineWidth = lineBound.width()
+
+        if (lineWidth > availableWidthWithoutThumbnail) {
+          allLinesFit = false
+          break
+        }
+
+        offset += lineHeight.toInt()
+
+        if (offset >= availableHeight) {
+          break
+        }
+      }
+
+      if (allLinesFit) {
+        return true
+      }
+    }
+
+    return false
   }
 
   private fun updatePostCellListeners(postCellData: PostCellData) {

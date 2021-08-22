@@ -60,7 +60,7 @@ class SnackbarWrapper private constructor(
 
     snackbar?.view?.let { snackbarView ->
       if (ChanSettings.isSplitLayoutMode()) {
-        snackbarView.translationY = -(globalWindowInsetsManager.bottom() + MARGIN).toFloat()
+        snackbarView.translationY = -(MARGIN).toFloat()
       } else {
         val bottomNavViewSize = AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
         snackbarView.translationY = -(bottomNavViewSize + MARGIN).toFloat()

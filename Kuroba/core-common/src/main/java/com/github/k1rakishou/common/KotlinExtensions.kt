@@ -1,6 +1,7 @@
 package com.github.k1rakishou.common
 
 import android.graphics.Bitmap
+import android.graphics.RectF
 import android.system.ErrnoException
 import android.system.OsConstants
 import android.text.Layout
@@ -1146,17 +1147,22 @@ fun CharSequence.countLines(): Int {
   return linesCount
 }
 
-data class TextBounds(val textWidth: Int, val textHeight: Int) {
+data class TextBounds(
+  val textWidth: Int,
+  val textHeight: Int,
+  val lineBounds: List<RectF>
+) {
 
   fun mergeWith(other: TextBounds): TextBounds {
     return TextBounds(
       textWidth = Math.max(this.textWidth, other.textWidth),
-      textHeight = this.textHeight + other.textHeight
+      textHeight = this.textHeight + other.textHeight,
+      lineBounds = this.lineBounds + other.lineBounds
     )
   }
 
   companion object {
-    val EMPTY = TextBounds(0, 0)
+    val EMPTY = TextBounds(0, 0, emptyList())
   }
 
 }
@@ -1168,9 +1174,20 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
 
   val staticLayout = StaticLayout(text, paint, availableWidth, Layout.Alignment.ALIGN_NORMAL, 1f, 0f, true)
 
+  val lineBounds = (0 until staticLayout.lineCount)
+    .map { line ->
+      return@map RectF(
+        staticLayout.getLineLeft(line),
+        staticLayout.getLineTop(line).toFloat(),
+        staticLayout.getLineRight(line),
+        staticLayout.getLineBottom(line).toFloat()
+      )
+    }
+
   return TextBounds(
     staticLayout.width,
-    staticLayout.height
+    staticLayout.height,
+    lineBounds
   )
 }
 
