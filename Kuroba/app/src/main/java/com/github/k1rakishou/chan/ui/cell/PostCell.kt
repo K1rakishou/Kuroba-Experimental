@@ -840,7 +840,7 @@ class PostCell : ConstraintLayout,
     if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
       val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
       if (alreadySeen) {
-        alpha = 0.7f
+        alpha = 0.65f
       }
     }
 
