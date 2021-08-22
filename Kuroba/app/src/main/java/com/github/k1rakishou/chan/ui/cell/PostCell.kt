@@ -57,7 +57,6 @@ import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
@@ -662,9 +661,10 @@ class PostCell : ConstraintLayout,
       || postCellData.repliesFromCount > 0
 
     if (!postCellData.isSelectionMode && canBindReplies) {
-      bindRepliesWithImageCountText(postCellData)
+      replies.setVisibilityFast(View.VISIBLE)
+      replies.text = postCellData.catalogRepliesText
     } else {
-      bindRepliesText()
+      replies.setVisibilityFast(View.GONE)
     }
 
     bindGoToPostButton(postCellData)
@@ -904,21 +904,6 @@ class PostCell : ConstraintLayout,
     icons.apply()
   }
 
-  private fun bindRepliesWithImageCountText(postCellData: PostCellData) {
-    replies.setVisibilityFast(View.VISIBLE)
-    replies.text = postCellData.catalogRepliesText
-
-    AndroidUtils.updatePaddings(comment, -1, -1, -1, 0)
-    AndroidUtils.updatePaddings(replies, -1, -1, vertPaddingPx, -1)
-  }
-
-  private fun bindRepliesText() {
-    replies.setVisibilityFast(View.GONE)
-
-    AndroidUtils.updatePaddings(comment, -1, -1, -1, vertPaddingPx)
-    AndroidUtils.updatePaddings(replies, -1, -1, 0, -1)
-  }
-
   @SuppressLint("ClickableViewAccessibility")
   private fun bindPostContent(postCellData: PostCellData) {
     val theme = postCellData.theme
@@ -991,12 +976,10 @@ class PostCell : ConstraintLayout,
       linkable.setMarkedNo(markedNo)
     }
 
-    if (!bind) {
-      if (commentSpanned is Spannable) {
-        commentSpanned.removeSpan(linkClickSpan)
-        commentSpanned.removeSpan(quoteClickSpan)
-        commentSpanned.removeSpan(spoilerClickSpan)
-      }
+    if (!bind && commentSpanned is Spannable) {
+      commentSpanned.removeSpan(linkClickSpan)
+      commentSpanned.removeSpan(quoteClickSpan)
+      commentSpanned.removeSpan(spoilerClickSpan)
     }
   }
 
