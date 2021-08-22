@@ -41,4 +41,10 @@ object ConversionUtils {
       ((bytes[3].toByte() and 0xFF) shl 0)
   }
 
+  @JvmOverloads
+  @JvmStatic
+  fun toIntOrNull(maybeInt: String, radix: Int = 16): Int? {
+    return maybeInt.toIntOrNull(radix)
+  }
+
 }

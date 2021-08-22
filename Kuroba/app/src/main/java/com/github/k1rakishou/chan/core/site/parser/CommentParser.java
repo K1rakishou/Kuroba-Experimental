@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site.parser;
 
 import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRule;
+import static com.github.k1rakishou.chan.core.site.parser.style.StyleRule.tagRuleWithAttr;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 
 import android.graphics.Typeface;
@@ -30,10 +31,12 @@ import android.text.style.UnderlineSpan;
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
+import androidx.core.graphics.ColorUtils;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
+import com.github.k1rakishou.chan.utils.ConversionUtils;
 import com.github.k1rakishou.common.CommentParserConstants;
 import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
@@ -67,7 +70,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private final Pattern boardLinkPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/");
     private final Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
     private final Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
-    private final Pattern colorPattern = Pattern.compile("color:#([0-9a-fA-F]+)");
+    private final Pattern colorPattern = Pattern.compile("color:#?(\\w+)");
 
     public CommentParser() {
         // Required tags.
@@ -79,9 +82,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     public CommentParser addDefaultRules() {
         rule(tagRule("a").action(this::handleAnchor));
         rule(tagRule("iframe").action(this::handleIframe));
-        rule(tagRule("span").cssClass("fortune").action(this::handleFortune));
         rule(tagRule("table").action(this::handleTable));
         rule(tagRule("span").cssClass("deadlink").action(this::handleDeadlink));
+        rule(tagRuleWithAttr("*", "style").action(this::handleAnyTagWithStyleAttr));
 
         rule(tagRule("s").link(PostLinkable.Type.SPOILER));
         rule(tagRule("b").bold());
@@ -144,14 +147,27 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             CharSequence text,
             HtmlTag htmlTag
     ) {
-        List<StyleRule> rules = this.rules.get(tag);
         boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
 
-        if (rules != null) {
+        List<StyleRule> wildcardRules = this.rules.get("*");
+        if (wildcardRules != null) {
             for (int i = 0; i < 2; i++) {
                 boolean highPriority = i == 0;
 
-                for (StyleRule rule : rules) {
+                for (StyleRule rule : wildcardRules) {
+                    if (rule.highPriority() == highPriority && rule.applies(htmlTag, true)) {
+                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
+                    }
+                }
+            }
+        }
+
+        List<StyleRule> normalRules = this.rules.get(tag);
+        if (normalRules != null) {
+            for (int i = 0; i < 2; i++) {
+                boolean highPriority = i == 0;
+
+                for (StyleRule rule : normalRules) {
                     if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
                         return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
                     }
@@ -160,6 +176,42 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         // Unknown tag, return the text;
+        return text;
+    }
+
+    // <span style="color:#0893e1">Test</span>
+    // <span style="color:red">Test</span>
+    private CharSequence handleAnyTagWithStyleAttr(
+            PostParser.Callback callback,
+            ChanPostBuilder post,
+            CharSequence text,
+            HtmlTag tag
+    ) {
+        String style = tag.attrOrNull("style");
+        if (style != null && !TextUtils.isEmpty(style)) {
+            style = style.replace(" ", "");
+
+            Matcher matcher = colorPattern.matcher(style);
+            if (matcher.find()) {
+                String colorRaw = matcher.group(1);
+                if (colorRaw != null) {
+                    Integer colorByName = StaticHtmlColorRepository.getColorValueByHtmlColorName(colorRaw);
+
+                    if (colorByName == null) {
+                        colorByName = ConversionUtils.toIntOrNull(colorRaw);
+                    }
+
+                    if (colorByName != null) {
+                        text = span(
+                                text,
+                                new ForegroundColorSpanHashed(ColorUtils.setAlphaComponent(colorByName, 255)),
+                                new StyleSpan(Typeface.BOLD)
+                        );
+                    }
+                }
+            }
+        }
+
         return text;
     }
 
@@ -399,33 +451,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         return false;
-    }
-
-    private CharSequence handleFortune(
-            PostParser.Callback callback,
-            ChanPostBuilder builder,
-            CharSequence text,
-            HtmlTag spanTag
-    ) {
-        // html looks like <span class="fortune" style="color:#0893e1"><br><br><b>Your fortune:</b>
-        String style = spanTag.attrOrNull("style");
-        if (style != null && !TextUtils.isEmpty(style)) {
-            style = style.replace(" ", "");
-
-            Matcher matcher = colorPattern.matcher(style);
-            if (matcher.find()) {
-                int hexColor = Integer.parseInt(matcher.group(1), 16);
-                if (hexColor >= 0 && hexColor <= 0xffffff) {
-                    text = span(
-                            text,
-                            new ForegroundColorSpanHashed(0xff000000 + hexColor),
-                            new StyleSpan(Typeface.BOLD)
-                    );
-                }
-            }
-        }
-
-        return text;
     }
 
     public CharSequence handleTable(

@@ -2483,7 +2483,7 @@ class ThreadPresenter @Inject constructor(
 
     private const val POST_LINKABLE_LONG_CLICK_MENU_HEADER = "post_linkable_long_click_menu_header"
 
-    const val SCROLL_TO_POST_DELAY_MS = 250L
+    const val SCROLL_TO_POST_DELAY_MS = 125L
   }
 
 }

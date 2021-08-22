@@ -71,6 +71,10 @@ data class HtmlTag(
 
   fun classAttrOrNull(): String? = attrOrNull(CLASS_ATTR)
 
+  fun hasAttr(attrName: String): Boolean {
+    return attributesAsMap.containsKey(attrName)
+  }
+
   fun hasClass(classAttrValue: String): Boolean {
     return classAttrOrNull() == classAttrValue
   }

@@ -66,7 +66,14 @@ public class StyleRule {
     private boolean blockElement;
 
     public static StyleRule tagRule(String tag) {
-        return new StyleRule().tag(tag);
+        return new StyleRule()
+                .tag(tag);
+    }
+
+    public static StyleRule tagRuleWithAttr(String tag, String attr) {
+        return new StyleRule()
+                .tag(tag)
+                .cssClass(attr);
     }
 
     public StyleRule tag(String tag) {
@@ -167,13 +174,23 @@ public class StyleRule {
     }
 
     public boolean applies(HtmlTag htmlTag) {
+        return applies(htmlTag, false);
+    }
+
+    public boolean applies(HtmlTag htmlTag, boolean isWildcard) {
         if (classes == null || classes.isEmpty()) {
             return true;
         }
 
         for (String c : classes) {
-            if (htmlTag.hasClass(c)) {
-                return true;
+            if (isWildcard) {
+                if (htmlTag.hasAttr(c)) {
+                    return true;
+                }
+            } else {
+                if (htmlTag.hasClass(c)) {
+                    return true;
+                }
             }
         }
 
