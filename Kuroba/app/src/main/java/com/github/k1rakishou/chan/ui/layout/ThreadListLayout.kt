@@ -1250,7 +1250,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     fun quickReload(
       showLoading: Boolean = false,
-      chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+      chanCacheUpdateOptions: ChanCacheUpdateOptions
     )
 
     suspend fun onListScrolledToBottom()

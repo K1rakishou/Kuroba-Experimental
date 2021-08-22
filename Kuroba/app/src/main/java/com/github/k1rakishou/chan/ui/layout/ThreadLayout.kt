@@ -1022,15 +1022,93 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    val descriptor = presenter.currentChanDescriptor
-      ?: return
+    if (!canShowSnackBar()) {
+      return
+    }
 
     val type = threadControllerType
       ?: return
 
-    if (threadListLayout.scrolledToBottom() || !BackgroundUtils.isInForeground()) {
+    val text = when {
+      newPostsCount <= 0 && deletedPostsCount <= 0 -> return
+      newPostsCount > 0 && deletedPostsCount <= 0 -> {
+        getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+      }
+      newPostsCount <= 0 && deletedPostsCount > 0 -> {
+        getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+      }
+      else -> {
+        val newPosts = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+        val deletedPosts = getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+
+        "${newPosts}, ${deletedPosts}"
+      }
+    }
+
+    dismissSnackbar()
+
+    newPostsNotification = SnackbarWrapper.create(
+      globalViewStateManager,
+      globalWindowInsetsManager,
+      themeEngine.chanTheme,
+      this,
+      text,
+      Snackbar.LENGTH_LONG
+    ).apply {
+      // Show action only if we are showing new posts and we are not already at the bottom of the thread
+      if (!threadListLayout.scrolledToBottom() && newPostsCount > 0) {
+        setAction(R.string.thread_new_posts_goto) {
+          presenter.onNewPostsViewClicked()
+          dismissSnackbar()
+        }
+      }
+
+      show(type)
+    }
+  }
+
+  override fun showThreadStatusNotification(
+    show: Boolean,
+    nowSticky: Boolean?,
+    nowArchived: Boolean?,
+    nowDeleted: Boolean?,
+    nowClosed: Boolean?
+  ) {
+    if (!show) {
       dismissSnackbar()
       return
+    }
+
+    if (!canShowSnackBar()) {
+      return
+    }
+
+    val type = threadControllerType
+      ?: return
+
+    val text = getThreadStatusText(nowSticky, nowDeleted, nowClosed, nowArchived)
+    if (text.isNullOrEmpty()) {
+      return
+    }
+
+    newPostsNotification = SnackbarWrapper.create(
+      globalViewStateManager,
+      globalWindowInsetsManager,
+      themeEngine.chanTheme,
+      this,
+      text,
+      Snackbar.LENGTH_LONG
+    ).apply {
+      show(type)
+    }
+  }
+
+  override fun canShowSnackBar(): Boolean {
+    val descriptor = presenter.currentChanDescriptor
+      ?: return false
+
+    if (!BackgroundUtils.isInForeground()) {
+      return false
     }
 
     val isReplyLayoutVisible = when (descriptor) {
@@ -1042,41 +1120,11 @@ class ThreadLayout @JvmOverloads constructor(
       }
     }
 
-    if (!isReplyLayoutVisible) {
-      val text = when {
-        newPostsCount <= 0 && deletedPostsCount <= 0 -> return
-        newPostsCount > 0 && deletedPostsCount <= 0 -> {
-          getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
-        }
-        newPostsCount <= 0 && deletedPostsCount > 0 -> {
-          getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
-        }
-        else -> {
-          val newPosts = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
-          val deletedPosts = getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
-
-          "${newPosts}, ${deletedPosts}"
-        }
-      }
-
-      dismissSnackbar()
-
-      newPostsNotification = SnackbarWrapper.create(
-        globalViewStateManager,
-        globalWindowInsetsManager,
-        themeEngine.chanTheme,
-        this,
-        text,
-        Snackbar.LENGTH_LONG
-      ).apply {
-        setAction(R.string.thread_new_posts_goto) {
-          presenter.onNewPostsViewClicked()
-          dismissSnackbar()
-        }
-
-        show(type)
-      }
+    if (isReplyLayoutVisible) {
+      return false
     }
+
+    return true
   }
 
   private fun dismissSnackbar() {
@@ -1278,6 +1326,61 @@ class ThreadLayout @JvmOverloads constructor(
       }
     }
   }
+
+  private fun getThreadStatusText(
+    nowSticky: Boolean?,
+    nowDeleted: Boolean?,
+    nowClosed: Boolean?,
+    nowArchived: Boolean?
+  ): String? {
+    when {
+      nowSticky != null && nowSticky -> {
+        if (nowSticky) {
+          return getString(R.string.thread_is_now_pinned)
+        } else {
+          return getString(R.string.thread_is_no_longer_pinned)
+        }
+      }
+      nowDeleted == true || nowClosed == true || nowArchived == true -> {
+        return buildString {
+          append(getString(R.string.thread_is_now_template))
+          append(" ")
+
+          var addSeparator = false
+
+          if (nowDeleted == true) {
+            append(getString(R.string.thread_deleted))
+            addSeparator = true
+          }
+
+          if (nowClosed == true) {
+            if (addSeparator) {
+              append(" ")
+              append(getString(R.string.thread_is_now_template_separator))
+              append(" ")
+            }
+
+            append(getString(R.string.thread_closed))
+            addSeparator = true
+          }
+
+          if (nowArchived == true) {
+            if (addSeparator) {
+              append(" ")
+              append(getString(R.string.thread_is_now_template_separator))
+              append(" ")
+            }
+
+            append(getString(R.string.thread_archived))
+          }
+        }
+      }
+      else -> {
+        return null
+      }
+    }
+  }
+
 
   interface ThreadLayoutCallback {
     val toolbar: Toolbar?

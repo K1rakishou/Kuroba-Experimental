@@ -73,6 +73,7 @@ import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.thread.ChanThread
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -738,10 +739,10 @@ class ThreadPresenter @Inject constructor(
     }
 
     val newPostsCount = getNewPostsCount(localChanDescriptor)
-    val deletedPostsCount = if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      chanThreadManager.getChanThread(localChanDescriptor)?.getAndConsumeDeletedPostsForUi() ?: 0
+    val chanThread = if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanThreadManager.getChanThread(localChanDescriptor)
     } else {
-      0
+      null
     }
 
     if (isWatching()) {
@@ -755,9 +756,9 @@ class ThreadPresenter @Inject constructor(
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (
         localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()
-        && (newPostsCount > 0 || deletedPostsCount > 0)
+        && threadPresenterCallback?.canShowSnackBar() == true
       ) {
-        threadPresenterCallback?.showNewPostsNotification(true, newPostsCount, deletedPostsCount)
+        showThreadStatusSnackbar(chanThread, newPostsCount)
       }
 
       if (localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
@@ -780,6 +781,36 @@ class ThreadPresenter @Inject constructor(
     }
 
     return true
+  }
+
+  private fun showThreadStatusSnackbar(chanThread: ChanThread?, newPostsCount: Int) {
+    val isNowSticky = chanThread?.getAndConsumeIsStickyForUi()
+    val isNowArchived = chanThread?.getAndConsumeIsArchivedForUi()
+    val isNowDeleted = chanThread?.getAndConsumeIsDeletedForUi()
+    val isNowClosed = chanThread?.getAndConsumeIsClosedForUi()
+
+    // Thread status updates are in priority
+    if (isNowSticky != null || isNowArchived == true || isNowClosed == true || isNowDeleted == true) {
+      threadPresenterCallback?.showThreadStatusNotification(
+        show = true,
+        nowSticky = isNowSticky,
+        nowArchived = isNowArchived,
+        nowDeleted = isNowDeleted,
+        nowClosed = isNowClosed
+      )
+
+      return
+    }
+
+    val deletedPostsCount = chanThread?.getAndConsumeDeletedPostsForUi() ?: 0
+
+    if (newPostsCount > 0 || deletedPostsCount > 0) {
+      threadPresenterCallback?.showNewPostsNotification(
+        show = true,
+        newPostsCount = newPostsCount,
+        deletedPostsCount = deletedPostsCount
+      )
+    }
   }
 
   private fun getNewPostsCount(chanDescriptor: ChanDescriptor): Int {
@@ -940,6 +971,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.showNewPostsNotification(false, -1, -1)
+    threadPresenterCallback?.showThreadStatusNotification(false, null, null, null, null)
 
     // Update the last seen indicator
     showPosts()
@@ -2420,6 +2452,14 @@ class ThreadPresenter @Inject constructor(
     fun hideDeleting(message: String)
     fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
     fun showNewPostsNotification(show: Boolean, newPostsCount: Int, deletedPostsCount: Int)
+    fun showThreadStatusNotification(
+      show: Boolean,
+      nowSticky: Boolean?,
+      nowArchived: Boolean?,
+      nowDeleted: Boolean?,
+      nowClosed: Boolean?
+    )
+    fun canShowSnackBar(): Boolean
     fun showImageReencodingWindow(
       fileUuid: UUID,
       chanDescriptor: ChanDescriptor,

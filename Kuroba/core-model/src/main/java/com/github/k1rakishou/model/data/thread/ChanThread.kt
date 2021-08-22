@@ -46,8 +46,18 @@ class ChanThread(
   @GuardedBy("lock")
   private var lastUpdateTime = 0L
 
+  // All the ***forUi variables/flags are used to display one-shot snackbar messages like
+  // This thread is now sticky/no longer sticky/closed/archived/deleted etc
   @GuardedBy("lock")
   private var deletedPostsForUi = 0
+  @GuardedBy("lock")
+  private var isNowStickyForUi: Boolean? = null
+  @GuardedBy("lock")
+  private var isNowClosedForUi: Boolean? = null
+  @GuardedBy("lock")
+  private var isNowDeletedForUi: Boolean? = null
+  @GuardedBy("lock")
+  private var isNowArchivedForUi: Boolean? = null
 
   val postsCount: Int
     get() = lock.read { threadPosts.size }
@@ -71,6 +81,42 @@ class ChanThread(
       deletedPostsForUi = 0
 
       return@write deletedPosts
+    }
+  }
+
+  fun getAndConsumeIsStickyForUi(): Boolean? {
+    return lock.write {
+      val isSticky = isNowStickyForUi
+      isNowStickyForUi = null
+
+      return@write isSticky
+    }
+  }
+
+  fun getAndConsumeIsClosedForUi(): Boolean? {
+    return lock.write {
+      val isClosed = isNowClosedForUi
+      isNowClosedForUi = null
+
+      return@write isClosed
+    }
+  }
+
+  fun getAndConsumeIsDeletedForUi(): Boolean? {
+    return lock.write {
+      val isDeleted = isNowDeletedForUi
+      isNowDeletedForUi = null
+
+      return@write isDeleted
+    }
+  }
+
+  fun getAndConsumeIsArchivedForUi(): Boolean? {
+    return lock.write {
+      val isArchived = isNowArchivedForUi
+      isNowArchivedForUi = null
+
+      return@write isArchived
     }
   }
 
@@ -157,6 +203,10 @@ class ChanThread(
 
         val oldChanPost = threadPosts[oldChanPostIndex]
 
+        if (oldChanPost is ChanOriginalPost && newChanPost is ChanOriginalPost) {
+          updateThreadStatusFlagsForUi(oldChanPost, newChanPost)
+        }
+
         // We already have this post, we need to merge old and new posts into one and replace old
         // post with the merged post
         val mergedPost = mergePosts(oldChanPost, newChanPost, deletedPostsSet)
@@ -237,6 +287,11 @@ class ChanThread(
         }
 
         val oldChanOriginalPost = threadPosts.first()
+
+        if (oldChanOriginalPost is ChanOriginalPost) {
+          updateThreadStatusFlagsForUi(oldChanOriginalPost, newChanOriginalPost)
+        }
+
         val mergedChanOriginalPost = mergePosts(oldChanOriginalPost, newChanOriginalPost, null)
 
         threadPosts[0] = mergedChanOriginalPost
@@ -308,14 +363,26 @@ class ChanThread(
         ?: return@write
 
       if (deleted != null) {
+        if (chanOriginalPost.isDeleted != deleted) {
+          isNowDeletedForUi = deleted
+        }
+
         chanOriginalPost.isDeleted = deleted
       }
 
       if (archived != null) {
+        if (chanOriginalPost.archived != archived) {
+          isNowArchivedForUi = archived
+        }
+
         chanOriginalPost.archived = archived
       }
 
       if (closed != null) {
+        if (chanOriginalPost.closed != closed) {
+          isNowClosedForUi = closed
+        }
+
         chanOriginalPost.closed = closed
       }
     }
@@ -594,6 +661,26 @@ class ChanThread(
 
         return@mutableIteration true
       }
+    }
+  }
+
+  private fun updateThreadStatusFlagsForUi(
+    oldChanOriginalPost: ChanOriginalPost,
+    newChanOriginalPost: ChanOriginalPost
+  ) {
+    require(lock.isWriteLocked) { "Lock must be write locked!" }
+
+    if (oldChanOriginalPost.sticky != newChanOriginalPost.sticky) {
+      isNowStickyForUi = newChanOriginalPost.sticky
+    }
+    if (oldChanOriginalPost.closed != newChanOriginalPost.closed) {
+      isNowClosedForUi = newChanOriginalPost.closed
+    }
+    if (oldChanOriginalPost.isDeleted != newChanOriginalPost.isDeleted) {
+      isNowDeletedForUi = newChanOriginalPost.isDeleted
+    }
+    if (oldChanOriginalPost.archived != newChanOriginalPost.archived) {
+      isNowArchivedForUi = newChanOriginalPost.archived
     }
   }
 

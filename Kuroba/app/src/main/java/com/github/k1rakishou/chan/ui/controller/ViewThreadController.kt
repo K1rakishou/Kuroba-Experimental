@@ -52,6 +52,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -258,6 +259,13 @@ open class ViewThreadController(
         ChanSettings.markCrossThreadQuotesOnScrollbar.get(),
         ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
+      .addNestedCheckableItem(
+        ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR,
+        R.string.action_mark_deleted_posts_on_scrollbar,
+        true,
+        ChanSettings.markDeletedPostsOnScrollbar.get(),
+        ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR
+      ) { item -> onScrollbarLabelingOptionClicked(item) }
       .build()
   }
 
@@ -437,10 +445,17 @@ open class ViewThreadController(
         item as CheckableToolbarMenuSubItem
         item.isChecked = ChanSettings.markYourPostsOnScrollbar.toggle()
       }
+      ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR -> {
+        item as CheckableToolbarMenuSubItem
+        item.isChecked = ChanSettings.markDeletedPostsOnScrollbar.toggle()
+      }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
 
-    threadLayout.presenter.quickReload()
+    threadLayout.presenter.quickReload(
+      showLoading = false,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+    )
   }
 
   private fun upClicked(item: ToolbarMenuSubItem) {
@@ -751,5 +766,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR = 9101
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
+    private const val ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR = 9104
   }
 }

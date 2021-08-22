@@ -39,6 +39,11 @@ class PostInfoMapItemDecoration(
     alpha = DEFAULT_ALPHA
   }
 
+  private val deletedPostsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = context.resources.getColor(R.color.deleted_post_color)
+    alpha = DEFAULT_ALPHA
+  }
+
   private val testPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = Color.MAGENTA
     alpha = DEFAULT_ALPHA
@@ -90,6 +95,13 @@ class PostInfoMapItemDecoration(
       recyclerView,
       postInfoHolder.postFilterHighlightRanges,
       postFilterHighlightsPaint
+    )
+
+    drawRanges(
+      canvas,
+      recyclerView,
+      postInfoHolder.deletedPostsPositionRanges,
+      deletedPostsPaint
     )
   }
 

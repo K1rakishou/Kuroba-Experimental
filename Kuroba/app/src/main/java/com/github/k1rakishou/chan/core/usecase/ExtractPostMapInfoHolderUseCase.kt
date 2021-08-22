@@ -21,8 +21,38 @@ class ExtractPostMapInfoHolderUseCase(
       myPostsPositionRanges = extractMyPostsPositionsFromPostList(parameter),
       replyPositionRanges = extractReplyPositionsFromPostList(parameter),
       crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter),
-      postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter)
+      postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter),
+      deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter)
     )
+  }
+
+  private fun extractDeletedPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    if (!ChanSettings.markDeletedPostsOnScrollbar.get()) {
+      return emptyList()
+    }
+
+    val postDescriptors = params.postDescriptors
+    if (postDescriptors.isEmpty()) {
+      return emptyList()
+    }
+
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
+    val duplicateChecker: MutableSet<Int> = HashSet()
+    var prevIndex = 0
+
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
+      if (!post.isDeleted || !duplicateChecker.add(index)) {
+        continue
+      }
+
+      connectRangesIfContiguous(prevIndex, index, replyRanges)
+      prevIndex = index
+    }
+
+    return replyRanges
   }
 
   private fun extractPostFilterHighlightsFromPostList(params: Params): List<PostMapInfoEntry> {
@@ -214,7 +244,8 @@ data class PostMapInfoHolder(
   val myPostsPositionRanges: List<PostMapInfoEntry> = emptyList(),
   val replyPositionRanges: List<PostMapInfoEntry> = emptyList(),
   val crossThreadQuotePositionRanges: List<PostMapInfoEntry> = emptyList(),
-  val postFilterHighlightRanges: List<PostMapInfoEntry> = emptyList()
+  val postFilterHighlightRanges: List<PostMapInfoEntry> = emptyList(),
+  val deletedPostsPositionRanges: List<PostMapInfoEntry> = emptyList()
 ) {
 
   fun isEmpty(): Boolean {
@@ -222,6 +253,7 @@ data class PostMapInfoHolder(
       && replyPositionRanges.isEmpty()
       && crossThreadQuotePositionRanges.isEmpty()
       && postFilterHighlightRanges.isEmpty()
+      && deletedPostsPositionRanges.isEmpty()
   }
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
@@ -238,6 +270,10 @@ data class PostMapInfoHolder(
     }
 
     if (!rangesTheSame(postFilterHighlightRanges, otherPostMapInfoHolder.postFilterHighlightRanges)) {
+      return false
+    }
+
+    if (!rangesTheSame(deletedPostsPositionRanges, otherPostMapInfoHolder.deletedPostsPositionRanges)) {
       return false
     }
 

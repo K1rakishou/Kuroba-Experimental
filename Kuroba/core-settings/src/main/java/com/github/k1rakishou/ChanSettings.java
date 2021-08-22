@@ -291,6 +291,7 @@ public class ChanSettings {
     public static BooleanSetting markYourPostsOnScrollbar;
     public static BooleanSetting markRepliesToYourPostOnScrollbar;
     public static BooleanSetting markCrossThreadQuotesOnScrollbar;
+    public static BooleanSetting markDeletedPostsOnScrollbar;
     public static BooleanSetting shiftPostComment;
     public static BooleanSetting postMultipleImagesCompactMode;
 
@@ -485,6 +486,7 @@ public class ChanSettings {
             anonymizeIds = new BooleanSetting(provider, "preference_anonymize_ids", false);
             markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
+            markDeletedPostsOnScrollbar = new BooleanSetting(provider, "mark_deleted_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
             shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
             postMultipleImagesCompactMode = new BooleanSetting(provider, "post_multiple_images_compact_mode", true);
