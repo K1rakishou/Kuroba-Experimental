@@ -656,25 +656,17 @@ class ThreadPresenter @Inject constructor(
     var shouldShowLoadingIndicator = false
 
     val catalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
-    if (catalogDescriptor != null) {
-      if (catalogDescriptor == currentChanDescriptor) {
-        shouldShowLoadingIndicator = true
-      }
-
-      normalLoad(showLoading = false)
+    if (catalogDescriptor == currentChanDescriptor) {
+      shouldShowLoadingIndicator = true
     }
 
     val threadDescriptor = currentOpenedDescriptorStateManager.currentThreadDescriptor
-    if (threadDescriptor != null) {
-      if (threadDescriptor == currentChanDescriptor) {
-        shouldShowLoadingIndicator = true
-      }
-
-      normalLoad(showLoading = false)
+    if (threadDescriptor == currentChanDescriptor) {
+      shouldShowLoadingIndicator = true
     }
 
-    if (shouldShowLoadingIndicator) {
-      threadPresenterCallback?.showLoading()
+    if (catalogDescriptor != null || threadDescriptor != null) {
+      normalLoad(showLoading = shouldShowLoadingIndicator)
     }
   }
 

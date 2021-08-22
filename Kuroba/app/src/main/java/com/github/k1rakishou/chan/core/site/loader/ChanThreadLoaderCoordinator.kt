@@ -337,7 +337,7 @@ class ChanThreadLoaderCoordinator(
     cacheUpdateOptions: ChanCacheUpdateOptions,
     postsToReloadOptions: PostsToReloadOptions
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "reloadAndReparseThread($threadDescriptor, $cacheUpdateOptions, $postsToReloadOptions)")
+    Logger.d(TAG, "reloadAndReparseThreadPosts($threadDescriptor, $cacheUpdateOptions, $postsToReloadOptions)")
 
     return withContext(Dispatchers.IO) {
       return@withContext Try {
