@@ -738,6 +738,11 @@ class ThreadPresenter @Inject constructor(
     }
 
     val newPostsCount = getNewPostsCount(localChanDescriptor)
+    val deletedPostsCount = if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      chanThreadManager.getChanThread(localChanDescriptor)?.getAndConsumeDeletedPostsForUi() ?: 0
+    } else {
+      0
+    }
 
     if (isWatching()) {
       val shouldResetTimer = newPostsCount > 0
@@ -748,8 +753,11 @@ class ThreadPresenter @Inject constructor(
     showPosts()
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      if (newPostsCount > 0 && localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
-        threadPresenterCallback?.showNewPostsNotification(true, newPostsCount)
+      if (
+        localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()
+        && (newPostsCount > 0 || deletedPostsCount > 0)
+      ) {
+        threadPresenterCallback?.showNewPostsNotification(true, newPostsCount, deletedPostsCount)
       }
 
       if (localChanDescriptor.threadNo == loadedChanDescriptor.threadNoOrNull()) {
@@ -931,7 +939,7 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    threadPresenterCallback?.showNewPostsNotification(false, -1)
+    threadPresenterCallback?.showNewPostsNotification(false, -1, -1)
 
     // Update the last seen indicator
     showPosts()
@@ -2411,7 +2419,7 @@ class ThreadPresenter @Inject constructor(
     fun showDeleting()
     fun hideDeleting(message: String)
     fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
-    fun showNewPostsNotification(show: Boolean, newPostsCount: Int)
+    fun showNewPostsNotification(show: Boolean, newPostsCount: Int, deletedPostsCount: Int)
     fun showImageReencodingWindow(
       fileUuid: UUID,
       chanDescriptor: ChanDescriptor,

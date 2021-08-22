@@ -1016,7 +1016,7 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openFiltersController(chanFilterMutable)
   }
 
-  override fun showNewPostsNotification(show: Boolean, newPostsCount: Int) {
+  override fun showNewPostsNotification(show: Boolean, newPostsCount: Int, deletedPostsCount: Int) {
     if (!show) {
       dismissSnackbar()
       return
@@ -1043,7 +1043,22 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     if (!isReplyLayoutVisible) {
-      val text = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+      val text = when {
+        newPostsCount <= 0 && deletedPostsCount <= 0 -> return
+        newPostsCount > 0 && deletedPostsCount <= 0 -> {
+          getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+        }
+        newPostsCount <= 0 && deletedPostsCount > 0 -> {
+          getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+        }
+        else -> {
+          val newPosts = getQuantityString(R.plurals.thread_new_posts, newPostsCount, newPostsCount)
+          val deletedPosts = getQuantityString(R.plurals.thread_deleted_posts, deletedPostsCount, deletedPostsCount)
+
+          "${newPosts}, ${deletedPosts}"
+        }
+      }
+
       dismissSnackbar()
 
       newPostsNotification = SnackbarWrapper.create(

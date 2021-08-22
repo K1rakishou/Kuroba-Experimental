@@ -47,10 +47,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item quantity="one">%d site</item>
         <item quantity="other">%d sites</item>
     </plurals>
-    <plurals name="thread_new_posts">
-        <item quantity="one">%d new post</item>
-        <item quantity="other">%d new posts</item>
-    </plurals>
     <plurals name="post_hidden">
         <item quantity="one">%1$d post hidden</item>
         <item quantity="other">%1$d posts hidden</item>
@@ -164,6 +160,16 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="card_stats_images_compact">%1$dI</string>
     <string name="card_stats_page_compact">Pg %1$d</string>
     <string name="post_multiple_images_compact_mode_file_info">%1$d files, %2$s</string>
+
+    <plurals name="thread_new_posts">
+        <item quantity="one">%d new post</item>
+        <item quantity="other">%d new posts</item>
+    </plurals>
+
+    <plurals name="thread_deleted_posts">
+        <item quantity="one">%d deleted post</item>
+        <item quantity="other">%d deleted posts</item>
+    </plurals>
 
     <string name="action_reload">Reload</string>
     <string name="action_thread_download">Thread download</string>

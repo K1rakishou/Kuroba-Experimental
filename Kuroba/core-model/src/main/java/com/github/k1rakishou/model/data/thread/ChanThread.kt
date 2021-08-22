@@ -46,6 +46,9 @@ class ChanThread(
   @GuardedBy("lock")
   private var lastUpdateTime = 0L
 
+  @GuardedBy("lock")
+  private var deletedPostsForUi = 0
+
   val postsCount: Int
     get() = lock.read { threadPosts.size }
 
@@ -61,6 +64,15 @@ class ChanThread(
 
   val imagesCount: Int
     get() = lock.read { threadPosts.sumBy { post -> post.postImages.size } }
+
+  fun getAndConsumeDeletedPostsForUi(): Int {
+    return lock.write {
+      val deletedPosts = deletedPostsForUi
+      deletedPostsForUi = 0
+
+      return@write deletedPosts
+    }
+  }
 
   fun isClosed(): Boolean = lock.read { getOriginalPost()?.closed ?: false }
   fun isArchived(): Boolean = lock.read { getOriginalPost()?.archived ?: false }
@@ -186,6 +198,8 @@ class ChanThread(
         threadPosts.sortWith(POSTS_COMPARATOR)
         recalculatePostReplies()
       }
+
+      deletedPostsForUi += deletedPostsCount
 
       checkPostsConsistency()
 
