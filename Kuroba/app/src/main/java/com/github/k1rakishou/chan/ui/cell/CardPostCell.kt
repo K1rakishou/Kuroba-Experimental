@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
+import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
@@ -384,16 +385,28 @@ class CardPostCell : ConstraintLayout,
     val postData = postCellData
     val postHighlight = postCellHighlight
 
+    var alpha = 1f
+
+    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
+      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
+      if (alreadySeen) {
+        alpha = 0.7f
+      }
+    }
+
     if (postData == null && postHighlight == null) {
       setBackgroundColor(0)
     } else {
       when {
         postHighlight != null && postHighlight.isHighlighted() -> {
+          val postHighlightedColorWidthAlpha = theme.postHighlightedColor
+            .modifyCurrentAlpha(alpha)
+
           // Do not run this animation when in popup
           if (postData?.isInPopup == false && postHighlight.isBlinking()) {
-            runBackgroundBlinkAnimation(backgroundView, theme)
+            runBackgroundBlinkAnimation(backgroundView, theme, postHighlightedColorWidthAlpha)
           } else {
-            backgroundView.setBackgroundColorFast(theme.postHighlightedColor)
+            backgroundView.setBackgroundColorFast(postHighlightedColorWidthAlpha)
           }
         }
         else -> {
@@ -412,15 +425,6 @@ class CardPostCell : ConstraintLayout,
       this.postCellHighlight = null
     }
 
-    var alpha = 1f
-
-    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
-      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
-      if (alreadySeen) {
-        alpha = 0.7f
-      }
-    }
-
     title.setAlphaFast(alpha)
     icons.setAlphaFast(alpha)
     comment.setAlphaFast(alpha)
@@ -428,10 +432,10 @@ class CardPostCell : ConstraintLayout,
     thumbView?.setAlphaFast(alpha)
   }
 
-  private fun runBackgroundBlinkAnimation(backgroundView: View, theme: ChanTheme) {
+  private fun runBackgroundBlinkAnimation(backgroundView: View, theme: ChanTheme, postHighlightedColor: Int) {
     postBackgroundBlinkAnimation.value.start(
       startColor = 0,
-      endColor = theme.postHighlightedColor,
+      endColor = postHighlightedColor,
       colorUpdateFunc = { bgColor -> backgroundView.setBackgroundColor(bgColor) },
       onAnimationEndFunc = { bindBackgroundColor(theme) }
     )

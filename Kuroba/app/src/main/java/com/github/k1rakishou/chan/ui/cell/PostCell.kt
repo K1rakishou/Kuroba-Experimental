@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
+import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -801,17 +802,28 @@ class PostCell : ConstraintLayout,
   private fun bindBackgroundColor(theme: ChanTheme) {
     val postData = postCellData
     val postHighlight = postCellHighlight
+    var alpha = 1f
+
+    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
+      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
+      if (alreadySeen) {
+        alpha = 0.7f
+      }
+    }
 
     if (postData == null && postHighlight == null) {
       setBackgroundColor(0)
     } else {
       when {
         postHighlight != null && postHighlight.isHighlighted() -> {
+          val postHighlightedColorWidthAlpha = theme.postHighlightedColor
+            .modifyCurrentAlpha(alpha)
+
           // Do not run this animation when in popup
           if (postData?.isInPopup == false && postHighlight.isBlinking()) {
-            runBackgroundBlinkAnimation(theme)
+            runBackgroundBlinkAnimation(theme, postHighlightedColorWidthAlpha)
           } else {
-            setBackgroundColorFast(theme.postHighlightedColor)
+            setBackgroundColorFast(postHighlightedColorWidthAlpha)
           }
         }
         else -> {
@@ -831,15 +843,6 @@ class PostCell : ConstraintLayout,
       this.postCellHighlight = null
     }
 
-    var alpha = 1f
-
-    if (postData != null && postData.markSeenThreads && postData.isViewingCatalog) {
-      val alreadySeen = seenPostsManager.get().isThreadAlreadySeen(postData.postDescriptor.threadDescriptor())
-      if (alreadySeen) {
-        alpha = 0.7f
-      }
-    }
-
     postImageThumbnailViewsContainer.setAlphaFast(alpha)
     title.setAlphaFast(alpha)
     icons.setAlphaFast(alpha)
@@ -851,12 +854,12 @@ class PostCell : ConstraintLayout,
     imageFileName?.setAlphaFast(alpha)
   }
 
-  private fun runBackgroundBlinkAnimation(theme: ChanTheme) {
+  private fun runBackgroundBlinkAnimation(chanTheme: ChanTheme, postHighlightedColor: Int) {
     postBackgroundBlinkAnimation.value.start(
       startColor = 0,
-      endColor = theme.postHighlightedColor,
+      endColor = postHighlightedColor,
       colorUpdateFunc = { bgColor -> setBackgroundColor(bgColor) },
-      onAnimationEndFunc = { bindBackgroundColor(theme) }
+      onAnimationEndFunc = { bindBackgroundColor(chanTheme) }
     )
   }
 

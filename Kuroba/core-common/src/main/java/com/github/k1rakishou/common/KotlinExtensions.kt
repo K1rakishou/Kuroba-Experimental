@@ -16,6 +16,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.view.ViewParent
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.core.view.children
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
@@ -1244,4 +1245,10 @@ fun Spannable.removeSpans(
       removeSpan(span)
     }
   }
+}
+
+fun Int.modifyCurrentAlpha(modifier: Float): Int {
+  val alpha = (this shr 24) and 0xff
+  val newAlpha = (alpha.toFloat() * modifier.coerceIn(0f, 1f)).toInt()
+  return ColorUtils.setAlphaComponent(this, newAlpha)
 }
