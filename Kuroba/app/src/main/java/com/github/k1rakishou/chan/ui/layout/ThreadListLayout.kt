@@ -611,7 +611,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
-      restorePrevScrollPosition(chanDescriptor, initial)
+      // Use post() here to wait until recycler had processed the new posts so that we don't end up
+      // with a race condition where restorePrevScrollPosition() can be called with still empty
+      // recyclerview
+      recyclerView.post { restorePrevScrollPosition(chanDescriptor, initial) }
     }
 
     chanLoadProgressNotifier.get().sendProgressEvent(
@@ -633,6 +636,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     chanDescriptor: ChanDescriptor,
     initial: Boolean
   ) {
+    if (!initial) {
+      return
+    }
+
     val markedPostNo = chanThreadViewableInfoManager.get().getMarkedPostNo(chanDescriptor)
     val markedPost = if (markedPostNo != null) {
       chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
@@ -640,22 +647,25 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       null
     }
 
-    if (markedPost == null && initial) {
-      chanThreadViewableInfoManager.get().view(chanDescriptor) { (_, index, top) ->
-        when (boardPostViewMode) {
-          BoardPostViewMode.LIST -> {
-            (layoutManager as FixedLinearLayoutManager).scrollToPositionWithOffset(
-              index,
-              top
-            )
-          }
-          BoardPostViewMode.GRID,
-          BoardPostViewMode.STAGGER -> {
-            (layoutManager as StaggeredGridLayoutManager).scrollToPositionWithOffset(
-              index,
-              top
-            )
-          }
+    if (markedPost != null) {
+      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) markedPost != null")
+      return
+    }
+
+    val lm = layoutManager
+    if (lm == null) {
+      Logger.e(TAG, "restorePrevScrollPosition($chanDescriptor) layoutManager == null")
+      return
+    }
+
+    chanThreadViewableInfoManager.get().view(chanDescriptor) { (_, index, top) ->
+      when (boardPostViewMode) {
+        BoardPostViewMode.LIST -> {
+          (lm as FixedLinearLayoutManager).scrollToPositionWithOffset(index, top)
+        }
+        BoardPostViewMode.GRID,
+        BoardPostViewMode.STAGGER -> {
+          (lm as StaggeredGridLayoutManager).scrollToPositionWithOffset(index, top)
         }
       }
     }
