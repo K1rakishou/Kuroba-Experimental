@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -72,7 +73,7 @@ class LogsController(context: Context) : Controller(context) {
     view = container
 
     mainScope.launch {
-      val loadingController = LoadingViewController(context, true, "Loading logs, please wait")
+      val loadingController = LoadingViewController(context, true, getString(R.string.settings_logs_loading_logs))
       presentController(loadingController)
 
       try {
@@ -80,6 +81,8 @@ class LogsController(context: Context) : Controller(context) {
         if (logs != null) {
           logText = logs
           logTextView.text = logText
+        } else {
+          showToast(getString(R.string.settings_logs_loading_logs_error))
         }
       } finally {
         loadingController.stopPresenting()

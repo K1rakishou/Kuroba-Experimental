@@ -859,6 +859,8 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <!-- Theme settings -->
     <string name="settings_logs_screen">Logs</string>
     <string name="settings_logs_copy">Copy</string>
+    <string name="settings_logs_loading_logs">Loading logs, please wait</string>
+    <string name="settings_logs_loading_logs_error">Error loading logs</string>
 
     <!-- Developer settings -->
     <string name="settings_force_low_ram_device">Force low ram device</string>
