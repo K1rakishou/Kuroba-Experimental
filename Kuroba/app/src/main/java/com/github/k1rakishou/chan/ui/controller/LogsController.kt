@@ -14,123 +14,118 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.controller;
+package com.github.k1rakishou.chan.ui.controller
 
-import android.content.Context;
-import android.view.ViewGroup;
-import android.widget.ScrollView;
+import android.content.Context
+import android.view.ViewGroup
+import android.widget.ScrollView
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.utils.IOUtils
+import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.IOException
+import javax.inject.Inject
 
-import androidx.annotation.Nullable;
+class LogsController(context: Context) : Controller(context) {
+  @Inject
+  lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
-import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem;
-import com.github.k1rakishou.chan.utils.IOUtils;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.core_themes.ThemeEngine;
+  private lateinit var logTextView: ColorizableTextView
+  private lateinit var logText: String
 
-import org.jetbrains.annotations.NotNull;
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
 
-import java.io.IOException;
-import java.io.InputStream;
+  override fun onCreate() {
+    super.onCreate()
 
-import javax.inject.Inject;
+    navigation.setTitle(R.string.settings_logs_screen)
+    navigation
+      .buildMenu(context)
+      .withOverflow(navigationController)
+      .withSubItem(
+        ACTION_LOGS_COPY,
+        R.string.settings_logs_copy, ToolbarMenuSubItem.ClickCallback { item -> copyLogsClicked(item) })
+      .build()
+      .build()
 
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.common.AndroidUtils.getApplicationLabel;
-import static com.github.k1rakishou.common.AndroidUtils.setClipboardContent;
+    val container = ScrollView(context)
+    container.setBackgroundColor(themeEngine.chanTheme.backColor)
+    logTextView = ColorizableTextView(context)
+    container.addView(
+      logTextView,
+      ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+    )
 
-public class LogsController extends Controller {
-    private static final String TAG = "LogsController";
-    private static final int DEFAULT_LINES_COUNT = 250;
-    private static final int ACTION_LOGS_COPY = 1;
+    view = container
 
-    @Inject
-    ThemeEngine themeEngine;
-    @Inject
-    GlobalWindowInsetsManager globalWindowInsetsManager;
+    mainScope.launch {
+      val loadingController = LoadingViewController(context, true, "Loading logs, please wait")
+      presentController(loadingController)
 
-    private ColorizableTextView logTextView;
-    private String logText;
-
-    @Override
-    protected void injectDependencies(@NotNull ActivityComponent component) {
-        component.inject(this);
-    }
-
-    public LogsController(Context context) {
-        super(context);
-    }
-
-    @Override
-    public void onCreate() {
-        super.onCreate();
-
-        navigation.setTitle(R.string.settings_logs_screen);
-
-        navigation
-                .buildMenu(context)
-                .withOverflow(navigationController)
-                .withSubItem(
-                        ACTION_LOGS_COPY,
-                        R.string.settings_logs_copy,
-                        this::copyLogsClicked
-                )
-                .build()
-                .build();
-
-        ScrollView container = new ScrollView(context);
-        container.setBackgroundColor(themeEngine.getChanTheme().getBackColor());
-        logTextView = new ColorizableTextView(context);
-        container.addView(logTextView, new ViewGroup.LayoutParams(MATCH_PARENT, MATCH_PARENT));
-
-        view = container;
-
-        String logs = loadLogs();
+      try {
+        val logs = withContext(Dispatchers.IO) { loadLogs() }
         if (logs != null) {
-            logText = logs;
-            logTextView.setText(logText);
+          logText = logs
+          logTextView.text = logText
         }
+      } finally {
+        loadingController.stopPresenting()
+      }
     }
+  }
 
-    private void copyLogsClicked(ToolbarMenuSubItem item) {
-        setClipboardContent("Logs", logText);
-        showToast(R.string.settings_logs_copied_to_clipboard);
-    }
+  private fun copyLogsClicked(item: ToolbarMenuSubItem) {
+    AndroidUtils.setClipboardContent("Logs", logText)
+    showToast(R.string.settings_logs_copied_to_clipboard)
+  }
 
-    @Nullable
-    public static String loadLogs() {
-        return loadLogs(DEFAULT_LINES_COUNT);
-    }
+  companion object {
+    private const val TAG = "LogsController"
+    private const val DEFAULT_LINES_COUNT = 500
+    private const val ACTION_LOGS_COPY = 1
 
-    @Nullable
-    public static String loadLogs(int linesCount) {
-        Process process;
-        try {
-            process = new ProcessBuilder().command("logcat",
-                    "-v",
-                    "tag",
-                    "-t",
-                    String.valueOf(linesCount),
-                    "StrictMode:S"
-            ).start();
-        } catch (IOException e) {
-            Logger.e(TAG, "Error starting logcat", e);
-            return null;
+    fun loadLogs(): String? {
+      val process = try {
+        ProcessBuilder().command(
+          "logcat",
+          "-v",
+          "tag",
+          "-t",
+          DEFAULT_LINES_COUNT.toString(),
+          "StrictMode:S"
+        ).start()
+      } catch (e: IOException) {
+        Logger.e(TAG, "Error starting logcat", e)
+        return null
+      }
+
+      val outputStream = process.inputStream
+
+      // This filters our log output to just stuff we care about in-app
+      // (and if a crash happens, the uncaught handler gets it and this will still allow it through)
+      val fullLogsString = StringBuilder(1024)
+      val lineTag = "${AndroidUtils.getApplicationLabel()} | "
+
+      for (line in IOUtils.readString(outputStream).split("\n").toTypedArray()) {
+        if (line.contains(lineTag)) {
+          fullLogsString.appendLine(line)
         }
+      }
 
-        InputStream outputStream = process.getInputStream();
-
-        //This filters our log output to just stuff we care about in-app
-        // (and if a crash happens, the uncaught handler gets it and this will still allow it through)
-        String filtered = "";
-        for (String line : IOUtils.readString(outputStream).split("\n")) {
-            if (line.contains(getApplicationLabel())) filtered = filtered.concat(line).concat("\n");
-        }
-
-        return filtered;
+      return fullLogsString.toString()
     }
+  }
 }

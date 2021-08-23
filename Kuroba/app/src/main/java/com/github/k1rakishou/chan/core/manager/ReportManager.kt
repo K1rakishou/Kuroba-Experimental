@@ -108,7 +108,7 @@ class ReportManager(
 
     try {
       val settings = getReportFooter()
-      val logs = LogsController.loadLogs(CRASH_REPORT_LOGS_LINES_COUNT)
+      val logs = LogsController.loadLogs()
 
       // Most of the time logs already contain the crash logs so we don't really want to print
       // it twice.
