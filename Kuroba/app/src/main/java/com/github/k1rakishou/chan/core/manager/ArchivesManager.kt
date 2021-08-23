@@ -52,13 +52,14 @@ open class ArchivesManager(
   @GuardedBy("lock")
   private val allArchiveDescriptors = mutableListOf<ArchiveDescriptor>()
 
+  @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "ArchivesManager.initialize()")
 
     applicationScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "initializeArchivesManagerInternal() start")
-      initializeArchivesManagerInternal()
-      Logger.d(TAG, "initializeArchivesManagerInternal() end")
+      val time = measureTime { initializeArchivesManagerInternal() }
+      Logger.d(TAG, "initializeArchivesManagerInternal() end, took $time")
     }
   }
 

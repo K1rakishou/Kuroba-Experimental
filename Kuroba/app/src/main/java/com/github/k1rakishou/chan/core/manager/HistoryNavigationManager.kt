@@ -28,6 +28,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 import kotlin.time.seconds
 
 class HistoryNavigationManager(
@@ -68,8 +69,8 @@ class HistoryNavigationManager(
 
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "initializeHistoryNavigationManagerInternal() start")
-      initializeHistoryNavigationManagerInternal()
-      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end")
+      val time = measureTime { initializeHistoryNavigationManagerInternal() }
+      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end, took $time")
     }
   }
 

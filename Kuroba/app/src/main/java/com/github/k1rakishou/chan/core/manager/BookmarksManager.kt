@@ -63,6 +63,7 @@ class BookmarksManager(
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
     get() = _currentOpenedDescriptorStateManager.get()
 
+  @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "BookmarksManager.initialize()")
     startListeningForAppVisibilityUpdates()
@@ -73,8 +74,8 @@ class BookmarksManager(
 
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "initializeBookmarksInternal() start")
-      initializeBookmarksInternal(allSiteNames)
-      Logger.d(TAG, "initializeBookmarksInternal() end")
+      val time = measureTime { initializeBookmarksInternal(allSiteNames) }
+      Logger.d(TAG, "initializeBookmarksInternal() end, took $time")
     }
   }
 

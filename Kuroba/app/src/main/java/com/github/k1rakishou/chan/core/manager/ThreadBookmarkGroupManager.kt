@@ -55,13 +55,14 @@ class ThreadBookmarkGroupManager(
     }
   }
 
+  @OptIn(ExperimentalTime::class)
   fun initialize() {
     Logger.d(TAG, "ThreadBookmarkGroupManager.initialize()")
 
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "loadThreadBookmarkGroupsInternal() start")
-      loadThreadBookmarkGroupsInternal()
-      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() end")
+      val time = measureTime { loadThreadBookmarkGroupsInternal() }
+      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() end, took $time")
     }
   }
 
@@ -468,7 +469,7 @@ class ThreadBookmarkGroupManager(
   }
 
   companion object {
-    private const val TAG = "ThreadBookmarkGroupEntryManager"
+    private const val TAG = "ThreadBookmarkGroupManager"
   }
 
 }

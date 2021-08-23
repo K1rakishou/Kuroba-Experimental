@@ -116,63 +116,33 @@ class SeenPostsManager(
     }
 
     val boardDescriptor = catalogDescriptor.boardDescriptor
-
-    val threadDescriptorsToLoad = lock.read {
-      if (threadDescriptors != null) {
-        alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
-        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(threadDescriptors)
-
-        return@read threadDescriptors
-      } else {
-        val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
-          ?: return@read emptyList()
-
-        if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
-          alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
-          lastLoadedBoardDescriptor = boardDescriptor
-        }
-
-        val toLoad = catalogSnapshot.catalogThreadDescriptorSet
-          .filter { threadDescriptor ->
-            threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
-          }
-
-        if (catalogSnapshot.isUnlimitedCatalog) {
-          alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
-        }
-
-        return@read toLoad
-      }
-    }
-
+    val threadDescriptorsToLoad = getThreadDescriptorsToLoad(threadDescriptors, boardDescriptor)
     if (threadDescriptorsToLoad.isEmpty()) {
       return
     }
 
-    measureTime {
-      val seenPostsGrouped = seenPostsRepository.selectAllByThreadDescriptors(
-        boardDescriptor = boardDescriptor,
-        threadDescriptors = threadDescriptorsToLoad
-      ).safeUnwrap { error ->
-        Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptors " +
-          "(${boardDescriptor}, ${threadDescriptorsToLoad.size}), " +
-          "error = ${error.errorMessageOrClassName()}")
+    val seenPostsGrouped = seenPostsRepository.selectAllByThreadDescriptors(
+      boardDescriptor = boardDescriptor,
+      threadDescriptors = threadDescriptorsToLoad
+    ).safeUnwrap { error ->
+      Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptors " +
+        "(${boardDescriptor}, ${threadDescriptorsToLoad.size}), " +
+        "error = ${error.errorMessageOrClassName()}")
 
-        return@measureTime
-      }.groupBy { seenPost -> seenPost.postDescriptor.threadDescriptor() }
+      return
+    }.groupBy { seenPost -> seenPost.postDescriptor.threadDescriptor() }
 
-      lock.write {
-        Logger.d(TAG, "loadForCatalog($catalogDescriptor) " +
-          "threadDescriptorsToLoad=${threadDescriptorsToLoad.size}, " +
-          "seenPostsGrouped=${seenPostsGrouped.size}, " +
-          "alreadyLoadedDescriptorsForUnlimitedCatalog=${alreadyLoadedDescriptorsForUnlimitedCatalog.size}")
+    lock.write {
+      Logger.d(TAG, "loadForCatalog($catalogDescriptor) " +
+        "threadDescriptorsToLoad=${threadDescriptorsToLoad.size}, " +
+        "seenPostsGrouped=${seenPostsGrouped.size}, " +
+        "alreadyLoadedDescriptorsForUnlimitedCatalog=${alreadyLoadedDescriptorsForUnlimitedCatalog.size}")
 
-        seenPostsGrouped.entries.forEach { (threadDescriptor, seenPosts) ->
-          seenPostsMap.putIfNotContains(threadDescriptor, mutableMapWithCap(seenPosts.size))
+      seenPostsGrouped.entries.forEach { (threadDescriptor, seenPosts) ->
+        seenPostsMap.putIfNotContains(threadDescriptor, mutableMapWithCap(seenPosts.size))
 
-          val innerMap = seenPostsMap[threadDescriptor]!!
-          seenPosts.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
-        }
+        val innerMap = seenPostsMap[threadDescriptor]!!
+        seenPosts.forEach { seenPost -> innerMap[seenPost.postDescriptor] = seenPost }
       }
     }
   }
@@ -319,6 +289,39 @@ class SeenPostsManager(
           Logger.d(TAG, "onThreadDeleteEventReceived.RemoveThreadPostsExceptOP() removed ${removedPosts} posts")
         }
       }
+    }
+  }
+
+  private fun getThreadDescriptorsToLoad(
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>?,
+    boardDescriptor: BoardDescriptor
+  ): List<ChanDescriptor.ThreadDescriptor> {
+    return lock.read {
+      if (threadDescriptors != null) {
+        alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
+        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(threadDescriptors)
+
+        return@read threadDescriptors
+      }
+
+      val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
+        ?: return@read emptyList()
+
+      if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+        alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
+        lastLoadedBoardDescriptor = boardDescriptor
+      }
+
+      val threadDescriptorsToLoad = catalogSnapshot.catalogThreadDescriptorSet
+        .filter { threadDescriptor ->
+          threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
+        }
+
+      if (catalogSnapshot.isUnlimitedCatalog) {
+        alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
+      }
+
+      return@read threadDescriptorsToLoad
     }
   }
 

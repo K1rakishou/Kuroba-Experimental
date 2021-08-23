@@ -74,23 +74,28 @@ class ThreadDownloadManager(
 
   fun isReady() = suspendableInitializer.isInitialized()
 
+  @OptIn(ExperimentalTime::class)
   fun initialize() {
     appScope.launch(Dispatchers.IO) {
-      Logger.d(TAG, "ThreadDownloadManager.initialize()")
+      Logger.d(TAG, "initializeThreadDownloadManagerInternal() start")
+      val time = measureTime { initializeThreadDownloadManagerInternal() }
+      Logger.d(TAG, "initializeThreadDownloadManagerInternal() end, took $time")
+    }
+  }
 
-      val initResult = threadDownloadRepository.initialize()
-      if (initResult is ModularResult.Value) {
-        val threadDownloads = initResult.value
+  private suspend fun initializeThreadDownloadManagerInternal() {
+    val initResult = threadDownloadRepository.initialize()
+    if (initResult is ModularResult.Value) {
+      val threadDownloads = initResult.value
 
-        mutex.withLock {
-          threadDownloads.forEach { threadDownload ->
-            threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload
-          }
+      mutex.withLock {
+        threadDownloads.forEach { threadDownload ->
+          threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload
         }
       }
-
-      suspendableInitializer.initWithModularResult(initResult.mapValue { Unit })
     }
+
+    suspendableInitializer.initWithModularResult(initResult.mapValue { Unit })
   }
 
   suspend fun getDownloadingThreadDescriptors(): Set<ChanDescriptor.ThreadDescriptor> {

@@ -14,6 +14,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.supervisorScope
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class CatalogDataPreloader(
   private val boardManager: BoardManager,
@@ -22,51 +24,57 @@ class CatalogDataPreloader(
   private val seenPostsManager: Lazy<SeenPostsManager>
 ) {
 
+  @OptIn(ExperimentalTime::class)
   suspend fun preloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) begin")
 
-    supervisorScope {
-      val jobs = mutableListOf<Deferred<Unit>>()
+    val time = measureTime {
+      supervisorScope {
+        val jobs = mutableListOf<Deferred<Unit>>()
 
-      jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
-      jobs += async(Dispatchers.IO) {
-        val isUnlimitedCatalog = boardManager.byBoardDescriptor(catalogDescriptor.boardDescriptor)
-          ?.isUnlimitedCatalog
-          ?: false
+        jobs += async(Dispatchers.IO) { postHideManager.preloadForCatalog(catalogDescriptor) }
+        jobs += async(Dispatchers.IO) {
+          val isUnlimitedCatalog = boardManager.byBoardDescriptor(catalogDescriptor.boardDescriptor)
+            ?.isUnlimitedCatalog
+            ?: false
 
-        if (!isUnlimitedCatalog) {
-          chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
-            .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
-            .ignore()
+          if (!isUnlimitedCatalog) {
+            chanCatalogSnapshotRepository.preloadChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
+              .peekError { error -> Logger.e(TAG, "preloadChanCatalogSnapshot($catalogDescriptor) error", error) }
+              .ignore()
+          }
+
+          return@async
         }
 
-        return@async
+        ModularResult.Try { jobs.awaitAll() }
+          .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
+          .ignore()
       }
-
-      ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
-        .ignore()
     }
 
-    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end")
+    Logger.d(TAG, "preloadCatalogInfo($catalogDescriptor) end, took $time")
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun postloadCatalogInfo(catalogDescriptor: ChanDescriptor.CatalogDescriptor) {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "postloadCatalogInfo($catalogDescriptor) begin")
 
-    supervisorScope {
-      val jobs = mutableListOf<Deferred<Unit>>()
+    val time = measureTime {
+      supervisorScope {
+        val jobs = mutableListOf<Deferred<Unit>>()
 
-      jobs += async(Dispatchers.IO) { seenPostsManager.get().loadForCatalog(catalogDescriptor) }
+        jobs += async(Dispatchers.IO) { seenPostsManager.get().loadForCatalog(catalogDescriptor) }
 
-      ModularResult.Try { jobs.awaitAll() }
-        .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
-        .ignore()
+        ModularResult.Try { jobs.awaitAll() }
+          .peekError { error -> Logger.e(TAG, "preloadCatalogInfo() error", error) }
+          .ignore()
+      }
     }
 
-    Logger.d(TAG, "postloadCatalogInfo($catalogDescriptor) end")
+    Logger.d(TAG, "postloadCatalogInfo($catalogDescriptor) end, took $time")
   }
 
   companion object {

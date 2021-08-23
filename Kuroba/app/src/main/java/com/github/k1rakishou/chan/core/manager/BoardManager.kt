@@ -58,7 +58,7 @@ class BoardManager(
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "loadBoardsInternal() start")
       val time = measureTime { loadBoardsInternal(siteDataListAsync) }
-      Logger.d(TAG, "loadBoardsInternal() took ${time}")
+      Logger.d(TAG, "loadBoardsInternal() end, took ${time}")
     }
   }
 

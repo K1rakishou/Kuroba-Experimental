@@ -58,7 +58,7 @@ open class SiteManager(
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "loadSitesInternal() start")
       val time = measureTime { loadSitesInternal(allSitesDeferred) }
-      Logger.d(TAG, "loadSitesInternal() took ${time}")
+      Logger.d(TAG, "loadSitesInternal() end, took ${time}")
     }
   }
 
