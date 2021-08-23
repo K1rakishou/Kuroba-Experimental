@@ -95,7 +95,6 @@ import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.google.android.material.snackbar.Snackbar
 import dagger.Lazy
@@ -142,29 +141,50 @@ class ThreadLayout @JvmOverloads constructor(
   @Inject
   lateinit var presenter: ThreadPresenter
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var _themeEngine: Lazy<ThemeEngine>
   @Inject
-  lateinit var postFilterManager: PostFilterManager
+  lateinit var _postFilterManager: Lazy<PostFilterManager>
   @Inject
-  lateinit var siteManager: SiteManager
+  lateinit var _siteManager: Lazy<SiteManager>
   @Inject
-  lateinit var postHideManager: Lazy<PostHideManager>
+  lateinit var _postHideManager: Lazy<PostHideManager>
   @Inject
-  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
+  lateinit var _bottomNavBarVisibilityStateManager: Lazy<BottomNavBarVisibilityStateManager>
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var _dialogFactory: Lazy<DialogFactory>
   @Inject
-  lateinit var chanThreadManager: ChanThreadManager
+  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
+  lateinit var _chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
-  lateinit var globalViewStateManager: GlobalViewStateManager
-  @Inject
-  lateinit var chanCatalogSnapshotCache: ChanCatalogSnapshotCache
+  lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
+
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  private val postFilterManager: PostFilterManager
+    get() = _postFilterManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val postHideManager: PostHideManager
+    get() = _postHideManager.get()
+  private val bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
+    get() = _bottomNavBarVisibilityStateManager.get()
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  private val dialogFactory: DialogFactory
+    get() = _dialogFactory.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
+    get() = _chanLoadProgressNotifier.get()
+  private val globalViewStateManager: GlobalViewStateManager
+    get() = _globalViewStateManager.get()
 
   private lateinit var callback: ThreadLayoutCallback
   private lateinit var progressLayout: View
@@ -267,7 +287,7 @@ class ThreadLayout @JvmOverloads constructor(
     // View setup
     presenter.create(context, this)
     threadListLayout.onCreate(presenter, this, navigationViewContractType)
-    postPopupHelper = PostPopupHelper(context, presenter, chanThreadManager, this)
+    postPopupHelper = PostPopupHelper(context, presenter, _chanThreadManager, this)
     imageReencodingHelper = ImageOptionsHelper(context, this)
     removedPostsHelper = RemovedPostsHelper(context, presenter, this)
     errorText.typeface = themeEngine.chanTheme.mainFont
@@ -283,7 +303,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     launch {
-      chanLoadProgressNotifier.get().progressEventsFlow.collect { chanLoadProgressEvent ->
+      chanLoadProgressNotifier.progressEventsFlow.collect { chanLoadProgressEvent ->
         if (chanDescriptor != chanLoadProgressEvent.chanDescriptor) {
           return@collect
         }
@@ -842,7 +862,7 @@ class ThreadLayout @JvmOverloads constructor(
         applyToReplies = false
       )
 
-      postHideManager.get().create(postHide)
+      postHideManager.create(postHide)
       presenter.refreshUI()
 
       val snackbarStringId = if (hide) {
@@ -862,7 +882,7 @@ class ThreadLayout @JvmOverloads constructor(
         setAction(R.string.undo, {
           serializedCoroutineExecutor.post {
             postFilterManager.remove(post.postDescriptor)
-            postHideManager.get().remove(postHide.postDescriptor)
+            postHideManager.remove(postHide.postDescriptor)
             presenter.refreshUI()
           }
         })
@@ -896,7 +916,7 @@ class ThreadLayout @JvmOverloads constructor(
         }
       }
 
-      postHideManager.get().createMany(hideList)
+      postHideManager.createMany(hideList)
       presenter.refreshUI()
 
       val formattedString = if (hide) {
@@ -917,7 +937,7 @@ class ThreadLayout @JvmOverloads constructor(
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(postDescriptors)
 
-            postHideManager.get().removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
+            postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
             presenter.refreshUI()
           }
         }
@@ -930,7 +950,7 @@ class ThreadLayout @JvmOverloads constructor(
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
       postFilterManager.remove(post.postDescriptor)
-      postHideManager.get().removeManyChanPostHides(listOf(post.postDescriptor))
+      postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
 
       if (postPopupHelper.isOpen) {
         postPopupHelper.resetCachedPostData(post.postDescriptor)
@@ -956,7 +976,7 @@ class ThreadLayout @JvmOverloads constructor(
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
 
-      postHideManager.get().removeManyChanPostHides(selectedPosts)
+      postHideManager.removeManyChanPostHides(selectedPosts)
       presenter.refreshUI()
 
       SnackbarWrapper.create(

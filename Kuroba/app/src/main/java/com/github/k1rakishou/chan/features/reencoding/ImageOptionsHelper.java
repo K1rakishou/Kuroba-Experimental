@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.reencoding;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.widget.Toast;
@@ -19,14 +21,14 @@ import java.util.UUID;
 
 import javax.inject.Inject;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+import dagger.Lazy;
 
 public class ImageOptionsHelper
         implements ImageOptionsController.ImageOptionsControllerCallbacks,
         ImageReencodeOptionsController.ImageReencodeOptionsCallbacks {
 
     @Inject
-    Gson gson;
+    Lazy<Gson> gson;
 
     private Context context;
     private ImageOptionsController imageOptionsController = null;
@@ -49,7 +51,7 @@ public class ImageOptionsHelper
 
         try {
             // load up the last image options every time this controller is created
-            lastImageOptions = gson.fromJson(
+            lastImageOptions = gson.get().fromJson(
                     ChanSettings.lastImageOptions.get(),
                     ImageReencodingPresenter.ImageOptions.class
             );

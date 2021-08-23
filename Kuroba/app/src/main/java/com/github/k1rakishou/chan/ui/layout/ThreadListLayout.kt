@@ -46,7 +46,6 @@ import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManage
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase
@@ -117,27 +116,46 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   ReplyLayoutFilesArea.ThreadListLayoutCallbacks {
 
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var _themeEngine: Lazy<ThemeEngine>
   @Inject
-  lateinit var postFilterManager: PostFilterManager
+  lateinit var _bottomNavBarVisibilityStateManager: Lazy<BottomNavBarVisibilityStateManager>
   @Inject
-  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
+  lateinit var _extractPostMapInfoHolderUseCase: Lazy<ExtractPostMapInfoHolderUseCase>
   @Inject
-  lateinit var extractPostMapInfoHolderUseCase: Lazy<ExtractPostMapInfoHolderUseCase>
+  lateinit var _lastViewedPostNoInfoHolder: Lazy<LastViewedPostNoInfoHolder>
   @Inject
-  lateinit var lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
+  lateinit var _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
   @Inject
-  lateinit var chanThreadManager: ChanThreadManager
+  lateinit var _chanCatalogSnapshotCache: Lazy<ChanCatalogSnapshotCache>
   @Inject
-  lateinit var chanCatalogSnapshotCache: ChanCatalogSnapshotCache
+  lateinit var _chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
   @Inject
-  lateinit var chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>
-  @Inject
-  lateinit var postHighlightManager: PostHighlightManager
+  lateinit var _postHighlightManager: Lazy<PostHighlightManager>
+
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  private val bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
+    get() = _bottomNavBarVisibilityStateManager.get()
+  private val extractPostMapInfoHolderUseCase: ExtractPostMapInfoHolderUseCase
+    get() = _extractPostMapInfoHolderUseCase.get()
+  private val lastViewedPostNoInfoHolder: LastViewedPostNoInfoHolder
+    get() = _lastViewedPostNoInfoHolder.get()
+  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+    get() = _chanThreadViewableInfoManager.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
+    get() = _chanCatalogSnapshotCache.get()
+  private val chanLoadProgressNotifier: ChanLoadProgressNotifier
+    get() = _chanLoadProgressNotifier.get()
+  private val postHighlightManager: PostHighlightManager
+    get() = _postHighlightManager.get()
 
   private val PARTY: ItemDecoration = object : ItemDecoration() {
     override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
@@ -448,7 +466,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       val indexTop = indexAndTop
         ?: return@post
 
-      chanThreadViewableInfoManager.get().update(chanDescriptor) { chanThreadViewableInfo ->
+      chanThreadViewableInfoManager.update(chanDescriptor) { chanThreadViewableInfo ->
         chanThreadViewableInfo.listViewIndex = indexTop.index
         chanThreadViewableInfo.listViewTop = indexTop.top
       }
@@ -602,7 +620,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       filter.applyFilter(descriptor, posts)
     }
 
-    chanLoadProgressNotifier.get().sendProgressEvent(
+    chanLoadProgressNotifier.sendProgressEvent(
       ChanLoadProgressEvent.RefreshingPosts(descriptor)
     )
     val setThreadPostsDuration = measureTime {
@@ -617,7 +635,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerView.post { restorePrevScrollPosition(chanDescriptor, initial) }
     }
 
-    chanLoadProgressNotifier.get().sendProgressEvent(
+    chanLoadProgressNotifier.sendProgressEvent(
       ChanLoadProgressEvent.End(descriptor)
     )
 
@@ -640,7 +658,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    val markedPostNo = chanThreadViewableInfoManager.get().getMarkedPostNo(chanDescriptor)
+    val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
     val markedPost = if (markedPostNo != null) {
       chanThreadManager.findPostByPostNo(chanDescriptor, markedPostNo)
     } else {
@@ -658,7 +676,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    chanThreadViewableInfoManager.get().view(chanDescriptor) { (_, index, top) ->
+    chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, top) ->
       when (boardPostViewMode) {
         BoardPostViewMode.LIST -> {
           (lm as FixedLinearLayoutManager).scrollToPositionWithOffset(index, top)
@@ -1051,7 +1069,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           )
 
           postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.get().execute(params),
+            extractPostMapInfoHolderUseCase.execute(params),
             catalogSnapshot.postsCount
           )
         }
@@ -1069,7 +1087,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
           )
 
           postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.get().execute(params),
+            extractPostMapInfoHolderUseCase.execute(params),
             chanThread.postsCount
           )
         }

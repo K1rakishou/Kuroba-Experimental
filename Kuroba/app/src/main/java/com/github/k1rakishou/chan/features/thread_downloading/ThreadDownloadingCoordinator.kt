@@ -11,6 +11,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -24,8 +25,11 @@ class ThreadDownloadingCoordinator(
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val _threadDownloadManager: Lazy<ThreadDownloadManager>
 ) {
+
+  private val threadDownloadManager: ThreadDownloadManager
+    get() = _threadDownloadManager.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {

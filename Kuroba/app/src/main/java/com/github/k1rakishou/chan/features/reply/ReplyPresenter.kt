@@ -77,16 +77,16 @@ import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 class ReplyPresenter @Inject constructor(
-  private val replyManager: ReplyManager,
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
+  private val _replyManager: Lazy<ReplyManager>,
+  private val _siteManager: Lazy<SiteManager>,
+  private val _boardManager: Lazy<BoardManager>,
   private val _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>,
-  private val postingServiceDelegate: Lazy<PostingServiceDelegate>,
-  private val twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
-  private val dialogFactory: DialogFactory,
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager,
-  private val captchaHolder: Lazy<CaptchaHolder>,
-  private val themeEngine: ThemeEngine
+  private val _postingServiceDelegate: Lazy<PostingServiceDelegate>,
+  private val _twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
+  private val _dialogFactory: Lazy<DialogFactory>,
+  private val _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>,
+  private val _captchaHolder: Lazy<CaptchaHolder>,
+  private val _themeEngine: Lazy<ThemeEngine>
 ) : CoroutineScope,
   CommentEditingHistory.CommentEditingHistoryListener {
 
@@ -98,8 +98,27 @@ class ReplyPresenter @Inject constructor(
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
+
+  private val replyManager: ReplyManager
+    get() = _replyManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
   private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
     get() = _staticBoardFlagInfoRepository.get()
+  private val postingServiceDelegate: PostingServiceDelegate
+    get() = _postingServiceDelegate.get()
+  private val twoCaptchaSolver: TwoCaptchaSolver
+    get() = _twoCaptchaSolver.get()
+  private val dialogFactory: DialogFactory
+    get() = _dialogFactory.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val captchaHolder: CaptchaHolder
+    get() = _captchaHolder.get()
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
 
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var chanBoard: ChanBoard
@@ -164,7 +183,7 @@ class ReplyPresenter @Inject constructor(
     callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
     postingStatusUpdatesJob = launch {
-      postingServiceDelegate.get().listenForPostingStatusUpdates(chanDescriptor)
+      postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
         .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
     }
 
@@ -226,7 +245,7 @@ class ReplyPresenter @Inject constructor(
           }
 
           Logger.d(TAG, "processPostingStatusUpdates($chanDescriptor) consumeTerminalEvent(${status.chanDescriptor})")
-          postingServiceDelegate.get().consumeTerminalEvent(status.chanDescriptor)
+          postingServiceDelegate.consumeTerminalEvent(status.chanDescriptor)
         }
       }
     }
@@ -266,7 +285,7 @@ class ReplyPresenter @Inject constructor(
         val descriptor = currentChanDescriptor
           ?: return@launch
 
-        val lastUnsuccessfulReplyResponse = postingServiceDelegate.get().lastUnsuccessfulReplyResponseOrNull(descriptor)
+        val lastUnsuccessfulReplyResponse = postingServiceDelegate.lastUnsuccessfulReplyResponseOrNull(descriptor)
         if (lastUnsuccessfulReplyResponse == null || lastUnsuccessfulReplyResponse.posted) {
           return@launch
         }
@@ -416,7 +435,7 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     if (!isReplyLayoutEnabled()) {
-      postingServiceDelegate.get().cancel(chanDescriptor)
+      postingServiceDelegate.cancel(chanDescriptor)
       return
     }
 
@@ -458,8 +477,8 @@ class ReplyPresenter @Inject constructor(
       isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
     )
 
-    if (twoCaptchaSolver.get().isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor())
-      && twoCaptchaSolver.get().isLoggedIn
+    if (twoCaptchaSolver.isSiteCurrentCaptchaTypeSupported(chanDescriptor.siteDescriptor())
+      && twoCaptchaSolver.isLoggedIn
     ) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaAuto,
@@ -496,7 +515,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
-    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.get().hasSolution()) {
+    if (replyMode == ReplyMode.ReplyModeSolveCaptchaManually && !captchaHolder.hasSolution()) {
       showCaptcha(
         chanDescriptor = chanDescriptor,
         replyMode = replyMode,
@@ -865,7 +884,7 @@ class ReplyPresenter @Inject constructor(
     val descriptor = currentChanDescriptor
       ?: return true
 
-    return postingServiceDelegate.get().isReplyCurrentlyInProgress(descriptor)
+    return postingServiceDelegate.isReplyCurrentlyInProgress(descriptor)
   }
 
   fun updateSpans(commentText: Editable) {
@@ -878,7 +897,7 @@ class ReplyPresenter @Inject constructor(
     val descriptor = currentChanDescriptor
       ?: return
 
-    launch { postingServiceDelegate.get().cancel(descriptor) }
+    launch { postingServiceDelegate.cancel(descriptor) }
   }
 
   interface ReplyPresenterCallback {

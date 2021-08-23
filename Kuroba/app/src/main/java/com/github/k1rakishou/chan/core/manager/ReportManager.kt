@@ -61,10 +61,6 @@ class ReportManager(
   private val crashLogsDir: File
     get() = appConstants.crashLogsDir
 
-  init {
-    createDirectoriesIfNotExists()
-  }
-
   fun storeAnr(anrByteStream: ByteArrayOutputStream) {
     if (!createDirectoriesIfNotExists()) {
       return

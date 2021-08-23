@@ -134,7 +134,8 @@ public class Logger {
             return;
         }
 
-        Logger.d(DI_TAG, message);
+        String tag = DI_TAG + " (" + Thread.currentThread().getName() + ":" + Thread.currentThread().getId() + ")";
+        Logger.d(tag, message);
     }
 
     private static boolean canLog() {

@@ -73,6 +73,7 @@ import com.github.k1rakishou.fsaf.manager.base_directory.DirectoryManager
 import com.github.k1rakishou.model.ModelModuleInjector
 import com.github.k1rakishou.model.di.NetworkModule
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 import io.reactivex.exceptions.UndeliverableException
 import io.reactivex.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -109,9 +110,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   @Inject
   lateinit var appDependenciesInitializer: AppDependenciesInitializer
   @Inject
-  lateinit var settingsNotificationManager: SettingsNotificationManager
+  lateinit var settingsNotificationManager: Lazy<SettingsNotificationManager>
   @Inject
-  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  lateinit var applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
   @Inject
   lateinit var reportManager: ReportManager
   @Inject
@@ -316,7 +317,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     reportManager.postTask {
       if (ChanSettings.collectCrashLogs.get() || ChanSettings.collectANRs.get()) {
         if (reportManager.hasReportFiles()) {
-          settingsNotificationManager.notify(SettingNotificationType.CrashLogOrAnr)
+          settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
         }
 
         return@postTask
@@ -451,7 +452,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     if (applicationInForeground != lastForeground) {
       Logger.d(TAG, "^^^ App went foreground ^^^")
 
-      applicationVisibilityManager.onEnteredForeground()
+      applicationVisibilityManager.get().onEnteredForeground()
     }
   }
 
@@ -466,7 +467,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     if (applicationInForeground != lastForeground) {
       Logger.d(TAG, "vvv App went background vvv")
 
-      applicationVisibilityManager.onEnteredBackground()
+      applicationVisibilityManager.get().onEnteredBackground()
     }
   }
 

@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 import io.reactivex.Flowable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -28,10 +29,15 @@ class BookmarkWatcherCoordinator(
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
-  private val bookmarksManager: BookmarksManager,
-  private val bookmarkForegroundWatcher: BookmarkForegroundWatcher
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _bookmarkForegroundWatcher: Lazy<BookmarkForegroundWatcher>
 ) {
   private val running = AtomicBoolean(false)
+
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val bookmarkForegroundWatcher: BookmarkForegroundWatcher
+    get() = _bookmarkForegroundWatcher.get()
 
   fun initialize() {
     Logger.d(TAG, "BookmarkWatcherCoordinator.initialize()")

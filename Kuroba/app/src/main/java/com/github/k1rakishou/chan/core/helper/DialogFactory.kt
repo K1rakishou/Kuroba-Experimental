@@ -24,12 +24,17 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_themes.ThemeEngine
+import dagger.Lazy
 
 
 class DialogFactory(
-  private val applicationVisibilityManager: ApplicationVisibilityManager,
-  private val themeEngine: ThemeEngine
+  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
+  private val _themeEngine: Lazy<ThemeEngine>
 ) {
+  private val applicationVisibilityManager: ApplicationVisibilityManager
+    get() = _applicationVisibilityManager.get()
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
 
   lateinit var navigationController: NavigationController
 

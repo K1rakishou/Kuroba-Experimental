@@ -19,7 +19,6 @@ package com.github.k1rakishou.chan.core.presenter
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -30,6 +29,7 @@ import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -38,15 +38,25 @@ import javax.inject.Inject
 
 class BrowsePresenter @Inject constructor(
   private val appScope: CoroutineScope,
-  private val historyNavigationManager: HistoryNavigationManager,
-  private val bookmarksManager: BookmarksManager,
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
-  private val chanThreadManager: ChanThreadManager,
-  private val chanPostRepository: ChanPostRepository
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _siteManager: Lazy<SiteManager>,
+  private val _boardManager: Lazy<BoardManager>,
+  private val _chanThreadManager: Lazy<ChanThreadManager>,
+  private val _chanPostRepository: Lazy<ChanPostRepository>
 ) {
   private var callback: Callback? = null
   private var currentOpenedBoard: BoardDescriptor? = null
+
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val chanPostRepository: ChanPostRepository
+    get() = _chanPostRepository.get()
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback

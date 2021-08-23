@@ -14,6 +14,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.BoardRepository
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
@@ -32,7 +33,7 @@ import kotlin.time.measureTime
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val boardRepository: BoardRepository
+  private val _boardRepository: Lazy<BoardRepository>
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = DebouncingCoroutineExecutor(appScope)
@@ -46,6 +47,9 @@ class BoardManager(
   private val boardsMap = mutableMapOf<SiteDescriptor, LinkedHashMap<BoardDescriptor, ChanBoard>>()
   @GuardedBy("lock")
   private val ordersMap = mutableMapOf<SiteDescriptor, MutableList<BoardDescriptor>>()
+
+  private val boardRepository: BoardRepository
+    get() = _boardRepository.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize(siteDataListAsync: CompletableDeferred<List<ChanSiteData>>) {

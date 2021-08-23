@@ -57,6 +57,7 @@ import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -76,11 +77,18 @@ open class ViewThreadController(
   ReplyAutoCloseListener {
 
   @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
+  lateinit var _historyNavigationManager: Lazy<HistoryNavigationManager>
   @Inject
-  lateinit var bookmarksManager: BookmarksManager
+  lateinit var _bookmarksManager: Lazy<BookmarksManager>
   @Inject
-  lateinit var threadDownloadManager: ThreadDownloadManager
+  lateinit var _threadDownloadManager: Lazy<ThreadDownloadManager>
+
+  private val historyNavigationManager: HistoryNavigationManager
+    get() = _historyNavigationManager.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val threadDownloadManager: ThreadDownloadManager
+    get() = _threadDownloadManager.get()
 
   private var pinItemPinned = false
   private var threadDescriptor: ThreadDescriptor = startingThreadDescriptor

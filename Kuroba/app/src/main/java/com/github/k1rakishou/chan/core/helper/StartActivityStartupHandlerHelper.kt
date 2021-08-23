@@ -34,9 +34,9 @@ import dagger.Lazy
 
 
 class StartActivityStartupHandlerHelper(
-  private val historyNavigationManager: HistoryNavigationManager,
-  private val siteManager: SiteManager,
-  private val boardManager: BoardManager,
+  private val historyNavigationManager: Lazy<HistoryNavigationManager>,
+  private val siteManager: Lazy<SiteManager>,
+  private val boardManager: Lazy<BoardManager>,
   private val bookmarksManager: Lazy<BookmarksManager>,
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val siteResolver: Lazy<SiteResolver>
@@ -71,10 +71,6 @@ class StartActivityStartupHandlerHelper(
   }
 
   suspend fun setupFromStateOrFreshLaunch(intent: Intent?, savedInstanceState: Bundle?) {
-    historyNavigationManager.awaitUntilInitialized()
-    siteManager.awaitUntilInitialized()
-    boardManager.awaitUntilInitialized()
-
     Logger.d(TAG, "setupFromStateOrFreshLaunch(intent==null: ${intent == null}, " +
         "savedInstanceState==null: ${savedInstanceState == null})")
 
@@ -105,7 +101,8 @@ class StartActivityStartupHandlerHelper(
   private suspend fun restoreFresh(allowedToOpenThread: Boolean) {
     Logger.d(TAG, "restoreFresh(allowedToOpenThread=$allowedToOpenThread)")
 
-    if (!siteManager.areSitesSetup()) {
+    val sm = siteManager.get().apply { awaitUntilInitialized() }
+    if (!sm.areSitesSetup()) {
       Logger.d(TAG, "restoreFresh() Sites are not setup, showSitesNotSetup()")
       browseController?.showSitesNotSetup()
       return
@@ -132,12 +129,14 @@ class StartActivityStartupHandlerHelper(
     }
   }
 
-  private fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
+  private suspend fun getThreadToOpen(): ChanDescriptor.ThreadDescriptor? {
     val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
     Logger.d(TAG, "getThreadToOpen(), loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (loadLastOpenedThreadUponAppStart) {
-      val threadDescriptor = historyNavigationManager.getNavElementAtTop()
+      val hnm = historyNavigationManager.get().apply { awaitUntilInitialized() }
+
+      val threadDescriptor = hnm.getNavElementAtTop()
         ?.descriptor()
         ?.threadDescriptorOrNull()
 
@@ -158,12 +157,14 @@ class StartActivityStartupHandlerHelper(
     return null
   }
 
-  private fun getBoardToOpen(): BoardDescriptor? {
+  private suspend fun getBoardToOpen(): BoardDescriptor? {
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
     Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
     if (loadLastOpenedBoardUponAppStart) {
-      val boardDescriptor = historyNavigationManager.getFirstCatalogNavElement()
+      val hnm = historyNavigationManager.get().apply { awaitUntilInitialized() }
+
+      val boardDescriptor = hnm.getFirstCatalogNavElement()
         ?.descriptor()
         ?.boardDescriptor()
 
@@ -179,19 +180,24 @@ class StartActivityStartupHandlerHelper(
       return boardDescriptor
     }
 
-    return siteManager.firstSiteDescriptor()?.let { firstSiteDescriptor ->
-      return@let boardManager.firstBoardDescriptor(firstSiteDescriptor)
+    val sm = siteManager.get().apply { awaitUntilInitialized() }
+    val bm = boardManager.get().apply { awaitUntilInitialized() }
+
+    return sm.firstSiteDescriptor()?.let { firstSiteDescriptor ->
+      return@let bm.firstBoardDescriptor(firstSiteDescriptor)
     }
   }
 
-  private fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
-    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
+  private suspend fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
+    val sm = siteManager.get().apply { awaitUntilInitialized() }
+
+    val site = sm.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
       Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) -> null")
       return false
     }
 
-    if (!siteManager.isSiteActive(boardDescriptor.siteDescriptor)) {
+    if (!sm.isSiteActive(boardDescriptor.siteDescriptor)) {
       Logger.d(TAG, "$tag siteManager.isSiteActive(${boardDescriptor.siteDescriptor}) -> false")
       return false
     }
@@ -213,8 +219,6 @@ class StartActivityStartupHandlerHelper(
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
 
-    siteManager.awaitUntilInitialized()
-    boardManager.awaitUntilInitialized()
     bookmarksManager.get().awaitUntilInitialized()
 
     when {
@@ -361,7 +365,7 @@ class StartActivityStartupHandlerHelper(
     return true
   }
 
-  private fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+  private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
     val boardDescriptor =
       (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
     val threadDescriptor =
@@ -370,17 +374,21 @@ class StartActivityStartupHandlerHelper(
     return Pair(boardDescriptor, threadDescriptor)
   }
 
-  private fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
+  private suspend fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
     val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
       ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
     } else {
       ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
     }
 
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val sm = siteManager.get().apply { awaitUntilInitialized() }
+
+    sm.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return null
 
-    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    val bm = boardManager.get().apply { awaitUntilInitialized() }
+
+    bm.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return null
 
     return chanDescriptor

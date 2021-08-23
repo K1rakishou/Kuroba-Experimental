@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.settings
 
 import android.content.Context
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.LazySuspend
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
@@ -101,6 +100,8 @@ class SettingsCoordinator(
   lateinit var appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
   @Inject
   lateinit var threadDownloadingDelegate: ThreadDownloadingDelegate
+  @Inject
+  lateinit var updateManager: Lazy<UpdateManager>
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -110,7 +111,7 @@ class SettingsCoordinator(
       context,
       chanFilterManager,
       siteManager,
-      (context as StartActivity).updateManager,
+      updateManager.get(),
       reportManager,
       navigationController,
       dialogFactory

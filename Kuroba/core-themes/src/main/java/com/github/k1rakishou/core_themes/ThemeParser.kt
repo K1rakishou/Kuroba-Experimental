@@ -23,10 +23,12 @@ class ThemeParser(
   private val context: Context,
   private val fileManager: FileManager
 ) {
-  private val gson = GsonBuilder()
-    // Don't forget to update this when a theme json structure changes next time!
-    .setVersion(CURRENT_VERSION)
-    .create()
+  private val gson by lazy {
+    GsonBuilder()
+      // Don't forget to update this when a theme json structure changes next time!
+      .setVersion(CURRENT_VERSION)
+      .create()
+  }
 
   suspend fun parseTheme(themeJson: String) : ThemeParseResult {
     return withContext(Dispatchers.Default) {

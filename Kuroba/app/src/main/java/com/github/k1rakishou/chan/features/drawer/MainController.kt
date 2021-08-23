@@ -152,33 +152,62 @@ class MainController(
   ThemeEngine.ThemeChangesListener {
 
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var _themeEngine: Lazy<ThemeEngine>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var settingsNotificationManager: SettingsNotificationManager
+  lateinit var _settingsNotificationManager: Lazy<SettingsNotificationManager>
   @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
+  lateinit var _historyNavigationManager: Lazy<HistoryNavigationManager>
   @Inject
-  lateinit var siteManager: SiteManager
+  lateinit var _siteManager: Lazy<SiteManager>
   @Inject
-  lateinit var boardManager: BoardManager
+  lateinit var _boardManager: Lazy<BoardManager>
   @Inject
-  lateinit var bookmarksManager: BookmarksManager
+  lateinit var _bookmarksManager: Lazy<BookmarksManager>
   @Inject
-  lateinit var pageRequestManager: Lazy<PageRequestManager>
+  lateinit var _pageRequestManager: Lazy<PageRequestManager>
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
-  lateinit var chanThreadManager: ChanThreadManager
+  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
   @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var _dialogFactory: Lazy<DialogFactory>
   @Inject
-  lateinit var imageSaverV2: Lazy<ImageSaverV2>
+  lateinit var _imageSaverV2: Lazy<ImageSaverV2>
   @Inject
-  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  lateinit var _imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
-  lateinit var globalViewStateManager: GlobalViewStateManager
+  lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
+
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val settingsNotificationManager: SettingsNotificationManager
+    get() = _settingsNotificationManager.get()
+  private val historyNavigationManager: HistoryNavigationManager
+    get() = _historyNavigationManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val pageRequestManager: PageRequestManager
+    get() = _pageRequestManager.get()
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val dialogFactory: DialogFactory
+    get() = _dialogFactory.get()
+  private val imageSaverV2: ImageSaverV2
+    get() = _imageSaverV2.get()
+  private val imageLoaderV2: ImageLoaderV2
+    get() = _imageLoaderV2.get()
+  private val globalViewStateManager: GlobalViewStateManager
+    get() = _globalViewStateManager.get()
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: TouchBlockingFrameLayoutNoBackground
@@ -203,12 +232,12 @@ class MainController(
   private val drawerPresenter by lazy {
     MainControllerPresenter(
       isDevFlavor = isDevBuild(),
-      historyNavigationManager = historyNavigationManager,
-      siteManager = siteManager,
-      bookmarksManager = bookmarksManager,
-      pageRequestManager = pageRequestManager,
-      archivesManager = archivesManager,
-      chanThreadManager = chanThreadManager
+      _historyNavigationManager = _historyNavigationManager,
+      _siteManager = _siteManager,
+      _bookmarksManager = _bookmarksManager,
+      _pageRequestManager = _pageRequestManager,
+      _archivesManager = _archivesManager,
+      _chanThreadManager = _chanThreadManager
     )
   }
 
@@ -819,8 +848,8 @@ class MainController(
 
     val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
       uniqueId,
-      onRetryClicked = { imageSaverV2Options -> imageSaverV2.get().restartUncompleted(uniqueId, imageSaverV2Options) },
-      onCancelClicked = { imageSaverV2.get().deleteDownload(uniqueId) }
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
+      onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
     )
 
     val imageSaverV2OptionsController = ImageSaverV2OptionsController(context, options)
@@ -1038,7 +1067,7 @@ class MainController(
           modifier = Modifier
             .fillMaxWidth()
             .height(48.dp),
-          imageLoaderV2 = imageLoaderV2.get()
+          imageLoaderV2 = imageLoaderV2
         )
 
         val circleColor = remember {
@@ -1076,7 +1105,7 @@ class MainController(
               contentScale = ContentScale.Crop,
               modifier = Modifier
                 .size(20.dp),
-              imageLoaderV2 = imageLoaderV2.get()
+              imageLoaderV2 = imageLoaderV2
             )
           }
 

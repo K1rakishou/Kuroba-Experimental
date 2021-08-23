@@ -81,29 +81,54 @@ abstract class ThreadController(
   AlbumViewController.ThreadControllerCallbacks {
 
   @Inject
-  lateinit var siteManager: SiteManager
+  lateinit var _siteManager: Lazy<SiteManager>
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var _themeEngine: Lazy<ThemeEngine>
   @Inject
-  lateinit var applicationVisibilityManager: ApplicationVisibilityManager
+  lateinit var _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
   @Inject
-  lateinit var chanThreadManager: ChanThreadManager
+  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
   @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var _threadFollowHistoryManager: Lazy<ThreadFollowHistoryManager>
   @Inject
-  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
+  lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
-  lateinit var threadFollowHistoryManager: ThreadFollowHistoryManager
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _mediaViewerScrollerHelper: Lazy<MediaViewerScrollerHelper>
   @Inject
-  lateinit var mediaViewerScrollerHelper: Lazy<MediaViewerScrollerHelper>
+  lateinit var _mediaViewerOpenAlbumHelper: Lazy<MediaViewerOpenAlbumHelper>
   @Inject
-  lateinit var mediaViewerOpenAlbumHelper: Lazy<MediaViewerOpenAlbumHelper>
+  lateinit var _appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
-  lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
+  lateinit var _dialogFactory: Lazy<DialogFactory>
+
+  protected val siteManager: SiteManager
+    get() = _siteManager.get()
+  protected val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  protected val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+    get() = _chanThreadViewableInfoManager.get()
+  protected val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  protected val dialogFactory: DialogFactory
+    get() = _dialogFactory.get()
+  protected val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  protected val threadFollowHistoryManager: ThreadFollowHistoryManager
+    get() = _threadFollowHistoryManager.get()
+  private val applicationVisibilityManager: ApplicationVisibilityManager
+    get() = _applicationVisibilityManager.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val mediaViewerScrollerHelper: MediaViewerScrollerHelper
+    get() = _mediaViewerScrollerHelper.get()
+  private val mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
+    get() = _mediaViewerOpenAlbumHelper.get()
+  private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+    get() = _appSettingsUpdateAppRefreshHelper.get()
 
   protected lateinit var threadLayout: ThreadLayout
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
@@ -148,7 +173,7 @@ abstract class ThreadController(
       context = context,
       scope = mainScope,
       postPopupHelper = threadLayout.popupHelper,
-      chanThreadManager = chanThreadManager,
+      _chanThreadManager = _chanThreadManager,
       presentControllerFunc = { controller -> presentController(controller) },
       showAvailableArchivesListFunc = { postDescriptor ->
         showAvailableArchivesList(postDescriptor = postDescriptor, preview = true)
@@ -158,12 +183,12 @@ abstract class ThreadController(
 
     openExternalThreadHelper = OpenExternalThreadHelper(
       postPopupHelper = threadLayout.popupHelper,
-      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      threadFollowHistoryManager = threadFollowHistoryManager
+      _chanThreadViewableInfoManager = _chanThreadViewableInfoManager,
+      _threadFollowHistoryManager = _threadFollowHistoryManager
     )
 
     mainScope.launch {
-      mediaViewerScrollerHelper.get().mediaViewerScrollEventsFlow
+      mediaViewerScrollerHelper.mediaViewerScrollEventsFlow
         .collect { scrollToImageEvent ->
           val descriptor = scrollToImageEvent.chanDescriptor
           if (descriptor != chanDescriptor) {
@@ -175,7 +200,7 @@ abstract class ThreadController(
     }
 
     mainScope.launch {
-      mediaViewerOpenAlbumHelper.get().mediaViewerOpenAlbumEventsFlow
+      mediaViewerOpenAlbumHelper.mediaViewerOpenAlbumEventsFlow
         .collect { openAlbumEvent ->
           val descriptor = openAlbumEvent.chanDescriptor
           if (descriptor != chanDescriptor) {
@@ -187,7 +212,7 @@ abstract class ThreadController(
     }
 
     mainScope.launch {
-      appSettingsUpdateAppRefreshHelper.get().settingsUpdatedEvent.collect {
+      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
         Logger.d(TAG, "Reloading thread because app settings were updated")
         threadLayout.presenter.normalLoad()
       }

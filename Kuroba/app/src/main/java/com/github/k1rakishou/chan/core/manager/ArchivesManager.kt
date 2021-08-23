@@ -18,6 +18,7 @@ import com.google.gson.Gson
 import com.google.gson.annotations.Expose
 import com.google.gson.annotations.SerializedName
 import com.google.gson.stream.JsonReader
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,17 +32,19 @@ import kotlin.time.measureTime
 
 @DoNotStrip
 open class ArchivesManager(
-  gson: Gson,
+  gson: Lazy<Gson>,
   private val appContext: Context,
   private val applicationScope: CoroutineScope,
   private val appConstants: AppConstants,
   private val verboseLogsEnabled: Boolean
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("ArchivesManager")
-  private val modifiedGson = gson
-    .newBuilder()
-    .excludeFieldsWithoutExposeAnnotation()
-    .create()
+  private val modifiedGson by lazy {
+    gson.get()
+      .newBuilder()
+      .excludeFieldsWithoutExposeAnnotation()
+      .create()
+  }
 
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")

@@ -57,23 +57,23 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 ) : FrameLayout(context, attributeSet, defStyleAttr), ReplyLayoutFilesAreaView {
 
   @Inject
-  lateinit var appConstants: AppConstants
+  lateinit var _appConstants: Lazy<AppConstants>
   @Inject
-  lateinit var replyManager: Lazy<ReplyManager>
+  lateinit var _replyManager: Lazy<ReplyManager>
   @Inject
-  lateinit var imagePickHelper: Lazy<ImagePickHelper>
+  lateinit var _imagePickHelper: Lazy<ImagePickHelper>
   @Inject
-  lateinit var dialogFactory: DialogFactory
+  lateinit var _dialogFactory: Lazy<DialogFactory>
   @Inject
-  lateinit var postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>
+  lateinit var _postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>
   @Inject
-  lateinit var boardManager: Lazy<BoardManager>
+  lateinit var _boardManager: Lazy<BoardManager>
   @Inject
-  lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
+  lateinit var _imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
-  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
+  lateinit var _runtimePermissionsHelper: Lazy<RuntimePermissionsHelper>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
 
   private val controller = ReplyFilesEpoxyController()
   private val epoxyRecyclerView: ColorizableEpoxyRecyclerView
@@ -82,14 +82,33 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   private var replyLayoutCallbacks: ReplyLayoutCallbacks? = null
   private var scope: CoroutineScope? = null
 
+  private val appConstants: AppConstants
+    get() = _appConstants.get()
+  private val replyManager: ReplyManager
+    get() = _replyManager.get()
+  private val imagePickHelper: ImagePickHelper
+    get() = _imagePickHelper.get()
+  private val dialogFactory: DialogFactory
+    get() = _dialogFactory.get()
+  private val postingLimitationsInfoManager: PostingLimitationsInfoManager
+    get() = _postingLimitationsInfoManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val imageLoaderV2: ImageLoaderV2
+    get() = _imageLoaderV2.get()
+  private val runtimePermissionsHelper: RuntimePermissionsHelper
+    get() = _runtimePermissionsHelper.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+
   private val presenter by lazy {
     return@lazy ReplyLayoutFilesAreaPresenter(
       appConstants,
-      replyManager,
-      boardManager,
-      imageLoaderV2,
-      postingLimitationsInfoManager,
-      imagePickHelper,
+      _replyManager,
+      _boardManager,
+      _imageLoaderV2,
+      _postingLimitationsInfoManager,
+      _imagePickHelper,
       runtimePermissionsHelper
     )
   }

@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -26,9 +27,12 @@ class FilterWatcherCoordinator(
   private val appContext: Context,
   private val appScope: CoroutineScope,
   private val appConstants: AppConstants,
-  private val chanFilterManager: ChanFilterManager
+  private val _chanFilterManager: Lazy<ChanFilterManager>
 ) {
   private val restartFilterWatcherDebouncer = DebouncingCoroutineExecutor(appScope)
+
+  private val chanFilterManager: ChanFilterManager
+    get() = _chanFilterManager.get()
 
   fun initialize() {
     Logger.d(TAG, "FilterWatcherCoordinator.initialize()")

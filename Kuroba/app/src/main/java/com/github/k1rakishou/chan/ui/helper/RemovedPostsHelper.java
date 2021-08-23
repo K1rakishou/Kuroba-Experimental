@@ -35,7 +35,7 @@ public class RemovedPostsHelper {
     @Inject
     Lazy<PostHideManager> postHideManager;
     @Inject
-    ChanThreadManager chanThreadManager;
+    Lazy<ChanThreadManager> chanThreadManager;
 
     private Context context;
     private ThreadPresenter presenter;
@@ -64,7 +64,7 @@ public class RemovedPostsHelper {
 
         List<ChanPost> resultPosts = new ArrayList<>();
 
-        chanThreadManager.iteratePostsWhile(threadDescriptor, removedPosts, chanPost -> {
+        chanThreadManager.get().iteratePostsWhile(threadDescriptor, removedPosts, chanPost -> {
             resultPosts.add(chanPost);
             return true;
         });

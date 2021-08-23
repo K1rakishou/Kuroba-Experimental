@@ -9,9 +9,14 @@ import dagger.Lazy
 
 class OpenExternalThreadHelper(
   private val postPopupHelper: PostPopupHelper,
-  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  private val threadFollowHistoryManager: ThreadFollowHistoryManager
+  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val _threadFollowHistoryManager: Lazy<ThreadFollowHistoryManager>
 ) {
+
+  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+    get() = _chanThreadViewableInfoManager.get()
+  private val threadFollowHistoryManager: ThreadFollowHistoryManager
+    get() = _threadFollowHistoryManager.get()
 
   fun openExternalThread(
     currentChanDescriptor: ChanDescriptor,
@@ -39,7 +44,7 @@ class OpenExternalThreadHelper(
   ) {
     Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
 
-    chanThreadViewableInfoManager.get().update(
+    chanThreadViewableInfoManager.update(
       chanDescriptor = threadToOpenDescriptor,
       createEmptyWhenNull = true
     ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }

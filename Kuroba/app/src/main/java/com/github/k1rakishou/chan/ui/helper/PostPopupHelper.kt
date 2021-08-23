@@ -33,16 +33,20 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.PostIndexed
+import dagger.Lazy
 import java.util.*
 
 class PostPopupHelper(
   private val context: Context,
   private val presenter: ThreadPresenter,
-  private val chanThreadManager: ChanThreadManager,
+  private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val callback: PostPopupHelperCallback
 ) {
   private val dataQueue: MutableList<PostPopupData> = ArrayList()
   private var presentingPostRepliesController: BasePostPopupController<out PostPopupData>? = null
+
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
 
   val isOpen: Boolean
     get() = presentingPostRepliesController != null && presentingPostRepliesController!!.alive

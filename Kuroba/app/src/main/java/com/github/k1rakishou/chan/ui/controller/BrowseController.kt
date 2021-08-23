@@ -60,6 +60,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -78,11 +79,18 @@ class BrowseController(
   @Inject
   lateinit var presenter: BrowsePresenter
   @Inject
-  lateinit var boardManager: BoardManager
+  lateinit var _boardManager: Lazy<BoardManager>
   @Inject
-  lateinit var historyNavigationManager: HistoryNavigationManager
+  lateinit var _historyNavigationManager: Lazy<HistoryNavigationManager>
   @Inject
-  lateinit var siteResolver: SiteResolver
+  lateinit var _siteResolver: Lazy<SiteResolver>
+
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val historyNavigationManager: HistoryNavigationManager
+    get() = _historyNavigationManager.get()
+  private val siteResolver: SiteResolver
+    get() = _siteResolver.get()
 
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
@@ -550,7 +558,7 @@ class BrowseController(
       }
 
       if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.get().update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
         }
       }

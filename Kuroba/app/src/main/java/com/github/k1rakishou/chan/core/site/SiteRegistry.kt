@@ -41,58 +41,68 @@ import java.util.*
  * Registry of all sites and url handler we have.
  */
 object SiteRegistry {
-  @JvmField
-  val URL_HANDLERS: MutableList<SiteUrlHandler> = ArrayList()
-  @JvmField
-  val SITE_CLASSES_MAP = mutableMapOf<SiteDescriptor, Class<out Site>>()
 
-  init {
-    URL_HANDLERS.add(Chan4.URL_HANDLER)
-    URL_HANDLERS.add(Lainchan.URL_HANDLER)
-    URL_HANDLERS.add(Sushichan.URL_HANDLER)
-    URL_HANDLERS.add(Dvach.URL_HANDLER)
-    URL_HANDLERS.add(Wired7.URL_HANDLER)
-    URL_HANDLERS.add(Kun8.URL_HANDLER)
-    URL_HANDLERS.add(Chan420.URL_HANDLER)
-    URL_HANDLERS.add(ArchivedMoe.URL_HANDLER)
-    URL_HANDLERS.add(ForPlebs.URL_HANDLER)
-    URL_HANDLERS.add(Nyafuu.URL_HANDLER)
-    URL_HANDLERS.add(DesuArchive.URL_HANDLER)
-    URL_HANDLERS.add(Fireden.URL_HANDLER)
-    URL_HANDLERS.add(B4k.URL_HANDLER)
-    URL_HANDLERS.add(ArchiveOfSins.URL_HANDLER)
-    URL_HANDLERS.add(TokyoChronos.URL_HANDLER)
-    URL_HANDLERS.add(Warosu.URL_HANDLER)
-    URL_HANDLERS.add(WakarimasenMoe.URL_HANDLER)
-    URL_HANDLERS.add(Chan370.URL_HANDLER)
+  val URL_HANDLERS: List<SiteUrlHandler> by lazy {
+    val handlers = mutableListOf<SiteUrlHandler>()
 
-    addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
-    addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
-    addSiteToSiteClassesMap(Sushichan.SITE_NAME, Sushichan::class.java)
-    addSiteToSiteClassesMap(Dvach.SITE_NAME, Dvach::class.java)
-    addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
-    addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
-    addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
-    addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
-    addSiteToSiteClassesMap(ForPlebs.SITE_NAME, ForPlebs::class.java)
-    addSiteToSiteClassesMap(Nyafuu.SITE_NAME, Nyafuu::class.java)
-    addSiteToSiteClassesMap(DesuArchive.SITE_NAME, DesuArchive::class.java)
-    addSiteToSiteClassesMap(Fireden.SITE_NAME, Fireden::class.java)
-    addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
-    addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
-    addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
-    addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
-    addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
-    addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
+    handlers.add(Chan4.URL_HANDLER)
+    handlers.add(Lainchan.URL_HANDLER)
+    handlers.add(Sushichan.URL_HANDLER)
+    handlers.add(Dvach.URL_HANDLER)
+    handlers.add(Wired7.URL_HANDLER)
+    handlers.add(Kun8.URL_HANDLER)
+    handlers.add(Chan420.URL_HANDLER)
+    handlers.add(ArchivedMoe.URL_HANDLER)
+    handlers.add(ForPlebs.URL_HANDLER)
+    handlers.add(Nyafuu.URL_HANDLER)
+    handlers.add(DesuArchive.URL_HANDLER)
+    handlers.add(Fireden.URL_HANDLER)
+    handlers.add(B4k.URL_HANDLER)
+    handlers.add(ArchiveOfSins.URL_HANDLER)
+    handlers.add(TokyoChronos.URL_HANDLER)
+    handlers.add(Warosu.URL_HANDLER)
+    handlers.add(WakarimasenMoe.URL_HANDLER)
+    handlers.add(Chan370.URL_HANDLER)
+
+    return@lazy handlers
   }
 
-  private fun addSiteToSiteClassesMap(siteName: String, siteClass: Class<out Site>) {
+  val SITE_CLASSES_MAP: Map<SiteDescriptor, Class<out Site>> by lazy {
+    val siteClasses = mutableMapOf<SiteDescriptor, Class<out Site>>()
+
+    siteClasses.addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
+    siteClasses.addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Sushichan.SITE_NAME, Sushichan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Dvach.SITE_NAME, Dvach::class.java)
+    siteClasses.addSiteToSiteClassesMap(Wired7.SITE_NAME, Wired7::class.java)
+    siteClasses.addSiteToSiteClassesMap(Kun8.SITE_NAME, Kun8::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan420.SITE_NAME, Chan420::class.java)
+    siteClasses.addSiteToSiteClassesMap(ArchivedMoe.SITE_NAME, ArchivedMoe::class.java)
+    siteClasses.addSiteToSiteClassesMap(ForPlebs.SITE_NAME, ForPlebs::class.java)
+    siteClasses.addSiteToSiteClassesMap(Nyafuu.SITE_NAME, Nyafuu::class.java)
+    siteClasses.addSiteToSiteClassesMap(DesuArchive.SITE_NAME, DesuArchive::class.java)
+    siteClasses.addSiteToSiteClassesMap(Fireden.SITE_NAME, Fireden::class.java)
+    siteClasses.addSiteToSiteClassesMap(B4k.SITE_NAME, B4k::class.java)
+    siteClasses.addSiteToSiteClassesMap(ArchiveOfSins.SITE_NAME, ArchiveOfSins::class.java)
+    siteClasses.addSiteToSiteClassesMap(TokyoChronos.SITE_NAME, TokyoChronos::class.java)
+    siteClasses.addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
+    siteClasses.addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
+    siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
+
+    return@lazy siteClasses
+  }
+
+
+  private fun MutableMap<SiteDescriptor, Class<out Site>>.addSiteToSiteClassesMap(
+    siteName: String,
+    siteClass: Class<out Site>
+  ) {
     val siteDescriptor = SiteDescriptor.create(siteName)
 
-    require(!SITE_CLASSES_MAP.contains(siteDescriptor)) {
+    require(!this.contains(siteDescriptor)) {
       "Site $siteName already added! Make sure that no sites share the same name!"
     }
 
-    SITE_CLASSES_MAP[siteDescriptor] = siteClass
+    this[siteDescriptor] = siteClass
   }
 }

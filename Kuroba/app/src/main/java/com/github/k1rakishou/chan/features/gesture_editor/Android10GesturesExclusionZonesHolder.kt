@@ -12,7 +12,7 @@ import com.google.gson.Gson
 class Android10GesturesExclusionZonesHolder(
   private val gson: Gson
 ) {
-  private val exclusionZones: MutableMap<Int, MutableSet<ExclusionZone>> = loadZones()
+  private val exclusionZones: MutableMap<Int, MutableSet<ExclusionZone>> by lazy { loadZones() }
 
   private fun loadZones(): MutableMap<Int, MutableSet<ExclusionZone>> {
     val zones = mutableMapOf<Int, MutableSet<ExclusionZone>>()

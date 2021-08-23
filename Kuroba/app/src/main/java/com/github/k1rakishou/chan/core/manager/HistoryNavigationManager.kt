@@ -12,6 +12,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.data.navigation.NavHistoryElementInfo
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -31,8 +32,8 @@ import kotlin.time.seconds
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
-  private val historyNavigationRepository: HistoryNavigationRepository,
-  private val applicationVisibilityManager: ApplicationVisibilityManager
+  private val _historyNavigationRepository: Lazy<HistoryNavigationRepository>,
+  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
 ) {
   private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
@@ -44,6 +45,11 @@ class HistoryNavigationManager(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val navigationStack = mutableListWithCap<NavHistoryElement>(MAX_NAV_HISTORY_ENTRIES)
+
+  private val historyNavigationRepository: HistoryNavigationRepository
+    get() = _historyNavigationRepository.get()
+  private val applicationVisibilityManager: ApplicationVisibilityManager
+    get() = _applicationVisibilityManager.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {

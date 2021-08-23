@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ThreadDownloadRepository
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -33,13 +34,19 @@ import kotlin.time.measureTime
 class ThreadDownloadManager(
   private val appCostants: AppConstants,
   private val appScope: CoroutineScope,
-  private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper,
-  private val threadDownloadRepository: ThreadDownloadRepository,
-  private val chanPostRepository: ChanPostRepository
+  private val _threadDownloaderFileManagerWrapper: Lazy<ThreadDownloaderFileManagerWrapper>,
+  private val _threadDownloadRepository: Lazy<ThreadDownloadRepository>,
+  private val _chanPostRepository: Lazy<ChanPostRepository>
 ) {
   private val mutex = Mutex()
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadDownloads")
 
+  private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper
+    get() = _threadDownloaderFileManagerWrapper.get()
+  private val threadDownloadRepository: ThreadDownloadRepository
+    get() = _threadDownloadRepository.get()
+  private val chanPostRepository: ChanPostRepository
+    get() = _chanPostRepository.get()
   private val fileManager: FileManager
     get() = threadDownloaderFileManagerWrapper.fileManager
 

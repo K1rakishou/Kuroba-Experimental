@@ -85,21 +85,22 @@ class StartActivity : ControllerHostActivity(),
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var controllerNavigationManager: ControllerNavigationManager
-  @Inject
-  lateinit var bottomNavBarVisibilityStateManager: BottomNavBarVisibilityStateManager
-  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
-  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
   @Inject
-  lateinit var updateManager: UpdateManager
-  @Inject
   lateinit var startActivityStartupHandlerHelper: StartActivityStartupHandlerHelper
+
+  @Inject
+  lateinit var controllerNavigationManager: Lazy<ControllerNavigationManager>
+  @Inject
+  lateinit var bottomNavBarVisibilityStateManager: Lazy<BottomNavBarVisibilityStateManager>
+  @Inject
+  lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
+  @Inject
+  lateinit var updateManager: Lazy<UpdateManager>
 
   private val compositeDisposable = CompositeDisposable()
   private var intentMismatchWorkaroundActive = false
@@ -168,7 +169,7 @@ class StartActivity : ControllerHostActivity(),
     compositeDisposable.clear()
 
     if (::updateManager.isInitialized) {
-      updateManager.onDestroy()
+      updateManager.get().onDestroy()
     }
 
     if (::imagePickHelper.isInitialized) {
@@ -247,7 +248,7 @@ class StartActivity : ControllerHostActivity(),
     coroutineScope: CoroutineScope,
     savedInstanceState: Bundle?
   ) {
-    updateManager.autoUpdateCheck()
+    updateManager.get().autoUpdateCheck()
 
     coroutineScope.launch {
       startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
@@ -255,12 +256,12 @@ class StartActivity : ControllerHostActivity(),
 
     if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
       compositeDisposable.add(
-        bottomNavBarVisibilityStateManager.listenForViewsStateUpdates()
+        bottomNavBarVisibilityStateManager.get().listenForViewsStateUpdates()
           .subscribe { updateBottomNavBar() }
       )
 
       compositeDisposable.add(
-        controllerNavigationManager.listenForControllerNavigationChanges()
+        controllerNavigationManager.get().listenForControllerNavigationChanges()
           .subscribe { change -> updateBottomNavBarIfNeeded(change) }
       )
     }
@@ -305,7 +306,7 @@ class StartActivity : ControllerHostActivity(),
       return
     }
 
-    if (bottomNavBarVisibilityStateManager.anyOfViewsIsVisible()) {
+    if (bottomNavBarVisibilityStateManager.get().anyOfViewsIsVisible()) {
       mainController.hideBottomNavBar(lockTranslation = true, lockCollapse = true)
       return
     }

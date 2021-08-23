@@ -32,16 +32,35 @@ import kotlin.time.measureTime
 
 class ChanThreadManager(
   private val verboseLogs: Boolean,
-  private val siteManager: SiteManager,
-  private val bookmarksManager: BookmarksManager,
-  private val postFilterManager: PostFilterManager,
-  private val savedReplyManager: SavedReplyManager,
-  private val chanThreadsCache: ChanThreadsCache,
-  private val chanPostRepository: ChanPostRepository,
-  private val chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
-  private val threadDataPreloader: Lazy<ThreadDataPreloader>,
-  private val catalogDataPreloader: Lazy<CatalogDataPreloader>
+  private val _siteManager: Lazy<SiteManager>,
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _postFilterManager: Lazy<PostFilterManager>,
+  private val _savedReplyManager: Lazy<SavedReplyManager>,
+  private val _chanThreadsCache: Lazy<ChanThreadsCache>,
+  private val _chanPostRepository: Lazy<ChanPostRepository>,
+  private val _chanThreadLoaderCoordinator: Lazy<ChanThreadLoaderCoordinator>,
+  private val _threadDataPreloader: Lazy<ThreadDataPreloader>,
+  private val _catalogDataPreloader: Lazy<CatalogDataPreloader>
 ) {
+
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val postFilterManager: PostFilterManager
+    get() = _postFilterManager.get()
+  private val savedReplyManager: SavedReplyManager
+    get() = _savedReplyManager.get()
+  private val chanThreadsCache: ChanThreadsCache
+    get() = _chanThreadsCache.get()
+  private val chanPostRepository: ChanPostRepository
+    get() = _chanPostRepository.get()
+  private val chanThreadLoaderCoordinator: ChanThreadLoaderCoordinator
+    get() = _chanThreadLoaderCoordinator.get()
+  private val threadDataPreloader: ThreadDataPreloader
+    get() = _threadDataPreloader.get()
+  private val catalogDataPreloader: CatalogDataPreloader
+    get() = _catalogDataPreloader.get()
 
   // Only accessed on the main thread
   private val requestedChanDescriptors = hashSetOf<ChanDescriptor>()
@@ -136,11 +155,11 @@ class ChanThreadManager(
         is ModularResult.Value -> {
           when (chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> {
-              val preloadTime = measureTime { threadDataPreloader.get().postloadThreadInfo(chanDescriptor) }
+              val preloadTime = measureTime { threadDataPreloader.postloadThreadInfo(chanDescriptor) }
               Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadThreadInfo took $preloadTime")
             }
             is ChanDescriptor.CatalogDescriptor -> {
-              val preloadTime = measureTime { catalogDataPreloader.get().postloadCatalogInfo(chanDescriptor) }
+              val preloadTime = measureTime { catalogDataPreloader.postloadCatalogInfo(chanDescriptor) }
               Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadCatalogInfo took $preloadTime")
             }
           }
@@ -422,12 +441,12 @@ class ChanThreadManager(
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         val preloadTime = measureTime {
-          threadDataPreloader.get().preloadThreadInfo(chanDescriptor, isCached(chanDescriptor))
+          threadDataPreloader.preloadThreadInfo(chanDescriptor, isCached(chanDescriptor))
         }
         Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadThreadInfo took $preloadTime")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        val preloadTime = measureTime { catalogDataPreloader.get().preloadCatalogInfo(chanDescriptor) }
+        val preloadTime = measureTime { catalogDataPreloader.preloadCatalogInfo(chanDescriptor) }
         Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadCatalogInfo took $preloadTime")
       }
     }
@@ -465,7 +484,7 @@ class ChanThreadManager(
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
-    return chanThreadLoaderCoordinator.get().loadThreadOrCatalog(
+    return chanThreadLoaderCoordinator.loadThreadOrCatalog(
       page = page,
       site = site,
       chanDescriptor = chanDescriptor,
@@ -514,7 +533,7 @@ class ChanThreadManager(
           ChanLoadOption.RetainAll -> return null
         }
 
-        val result = chanThreadLoaderCoordinator.get().reloadAndReparseThreadPosts(
+        val result = chanThreadLoaderCoordinator.reloadAndReparseThreadPosts(
           postParser = postParser,
           threadDescriptor = chanDescriptor,
           cacheUpdateOptions = chanCacheUpdateOptions,
@@ -548,7 +567,7 @@ class ChanThreadManager(
           return ModularResult.value(threadLoadResult)
         }
 
-        return chanThreadLoaderCoordinator.get().reloadAndReparseCatalogPosts(
+        return chanThreadLoaderCoordinator.reloadAndReparseCatalogPosts(
           postParser = postParser,
           catalogDescriptor = chanDescriptor
         )

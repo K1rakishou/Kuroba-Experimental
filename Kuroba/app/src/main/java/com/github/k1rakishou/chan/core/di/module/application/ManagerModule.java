@@ -132,7 +132,7 @@ public class ManagerModule {
     @Singleton
     public SiteManager provideSiteManager(
             CoroutineScope appScope,
-            SiteRepository siteRepository
+            Lazy<SiteRepository> siteRepository
     ) {
         Logger.deps("SiteManager");
         return new SiteManager(
@@ -148,7 +148,7 @@ public class ManagerModule {
     @Singleton
     public BoardManager provideBoardManager(
             CoroutineScope appScope,
-            BoardRepository boardRepository
+            Lazy<BoardRepository> boardRepository
     ) {
         Logger.deps("BoardManager");
         return new BoardManager(
@@ -194,7 +194,7 @@ public class ManagerModule {
     @Singleton
     public ArchivesManager provideArchivesManager(
             Context appContext,
-            Gson gson,
+            Lazy<Gson> gson,
             AppConstants appConstants,
             CoroutineScope appScope
     ) {
@@ -299,8 +299,8 @@ public class ManagerModule {
     @Singleton
     public HistoryNavigationManager provideHistoryNavigationManager(
             CoroutineScope appScope,
-            HistoryNavigationRepository historyNavigationRepository,
-            ApplicationVisibilityManager applicationVisibilityManager
+            Lazy<HistoryNavigationRepository> historyNavigationRepository,
+            Lazy<ApplicationVisibilityManager> applicationVisibilityManager
     ) {
         Logger.deps("HistoryNavigationManager");
         return new HistoryNavigationManager(
@@ -328,10 +328,10 @@ public class ManagerModule {
     @Singleton
     public BookmarksManager provideBookmarksManager(
             CoroutineScope appScope,
-            ApplicationVisibilityManager applicationVisibilityManager,
-            ArchivesManager archivesManager,
-            BookmarksRepository bookmarksRepository,
-            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
+            Lazy<ApplicationVisibilityManager> applicationVisibilityManager,
+            Lazy<ArchivesManager> archivesManager,
+            Lazy<BookmarksRepository> bookmarksRepository,
+            Lazy<CurrentOpenedDescriptorStateManager> currentOpenedDescriptorStateManager
     ) {
         Logger.deps("BookmarksManager");
         return new BookmarksManager(
@@ -420,8 +420,8 @@ public class ManagerModule {
             Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
-            BookmarksManager bookmarksManager,
-            BookmarkForegroundWatcher bookmarkForegroundWatcher
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<BookmarkForegroundWatcher> bookmarkForegroundWatcher
     ) {
         Logger.deps("BookmarkWatcherCoordinator");
         return new BookmarkWatcherCoordinator(
@@ -538,11 +538,11 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ChanFilterManager provideChanFilterManager(
-            ChanFilterRepository chanFilterRepository,
-            ChanPostRepository chanPostRepository,
-            ChanFilterWatchRepository chanFilterWatchRepository,
             CoroutineScope appScope,
-            PostFilterManager postFilterManager
+            Lazy<ChanFilterRepository> chanFilterRepository,
+            Lazy<ChanPostRepository> chanPostRepository,
+            Lazy<ChanFilterWatchRepository> chanFilterWatchRepository,
+            Lazy<PostFilterManager> postFilterManager
     ) {
         Logger.deps("ChanFilterManager");
         return new ChanFilterManager(
@@ -572,8 +572,8 @@ public class ManagerModule {
     @Provides
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
-            ThreadBookmarkGroupRepository threadBookmarkGroupEntryRepository,
-            BookmarksManager bookmarksManager
+            Lazy<ThreadBookmarkGroupRepository> threadBookmarkGroupEntryRepository,
+            Lazy<BookmarksManager> bookmarksManager
     ) {
         Logger.deps("ThreadBookmarkGroupManager");
         return new ThreadBookmarkGroupManager(
@@ -603,12 +603,12 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ChanThreadManager provideChanThreadManager(
-            SiteManager siteManager,
-            BookmarksManager bookmarksManager,
-            PostFilterManager postFilterManager,
-            SavedReplyManager savedReplyManager,
-            ChanThreadsCache chanThreadsCache,
-            ChanPostRepository chanPostRepository,
+            Lazy<SiteManager> siteManager,
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<PostFilterManager> postFilterManager,
+            Lazy<SavedReplyManager> savedReplyManager,
+            Lazy<ChanThreadsCache> chanThreadsCache,
+            Lazy<ChanPostRepository> chanPostRepository,
             Lazy<ChanThreadLoaderCoordinator> chanThreadLoaderCoordinator,
             Lazy<ThreadDataPreloader> threadDataPreloadUseCase,
             Lazy<CatalogDataPreloader> catalogDataPreloadUseCase
@@ -643,7 +643,7 @@ public class ManagerModule {
             Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
-            ChanFilterManager chanFilterManager
+            Lazy<ChanFilterManager> chanFilterManager
     ) {
         Logger.deps("FilterWatcherCoordinator");
         return new FilterWatcherCoordinator(
@@ -765,9 +765,9 @@ public class ManagerModule {
     public ThreadDownloadManager provideThreadDownloadManager(
             AppConstants appConstants,
             CoroutineScope appScope,
-            ThreadDownloaderFileManagerWrapper threadDownloaderFileManagerWrapper,
-            ThreadDownloadRepository threadDownloadRepository,
-            ChanPostRepository chanPostRepository
+            Lazy<ThreadDownloaderFileManagerWrapper> threadDownloaderFileManagerWrapper,
+            Lazy<ThreadDownloadRepository> threadDownloadRepository,
+            Lazy<ChanPostRepository> chanPostRepository
     ) {
         Logger.deps("ThreadDownloadManager");
         return new ThreadDownloadManager(
@@ -785,7 +785,7 @@ public class ManagerModule {
             Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
-            ThreadDownloadManager threadDownloadManager
+            Lazy<ThreadDownloadManager> threadDownloadManager
     ) {
         Logger.deps("ThreadDownloadingCoordinator");
         return new ThreadDownloadingCoordinator(

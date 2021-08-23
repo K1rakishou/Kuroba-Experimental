@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.core.manager.UpdateManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.fsaf.FileChooser;
 import com.github.k1rakishou.fsaf.FileManager;
@@ -50,6 +51,7 @@ public class ActivityModule {
             Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient,
             Lazy<DialogFactory> dialogFactory
     ) {
+        Logger.deps("UpdateManager");
         return new UpdateManager(
                 activity,
                 cacheHandler,
@@ -68,6 +70,7 @@ public class ActivityModule {
             AppCompatActivity activity,
             DialogFactory dialogFactory
     ) {
+        Logger.deps("RuntimePermissionsHelper");
         return new RuntimePermissionsHelper(
                 activity,
                 dialogFactory
@@ -77,13 +80,14 @@ public class ActivityModule {
     @PerActivity
     @Provides
     public StartActivityStartupHandlerHelper provideStartActivityStartupHandlerHelper(
-            HistoryNavigationManager historyNavigationManager,
-            SiteManager siteManager,
-            BoardManager boardManager,
+            Lazy<HistoryNavigationManager> historyNavigationManager,
+            Lazy<SiteManager> siteManager,
+            Lazy<BoardManager> boardManager,
             Lazy<BookmarksManager> bookmarksManager,
             Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
             Lazy<SiteResolver> siteResolver
     ) {
+        Logger.deps("StartActivityStartupHandlerHelper");
         return new StartActivityStartupHandlerHelper(
                 historyNavigationManager,
                 siteManager,
@@ -97,33 +101,38 @@ public class ActivityModule {
     @PerActivity
     @Provides
     public GlobalWindowInsetsManager provideGlobalWindowInsetsManager() {
+        Logger.deps("GlobalWindowInsetsManager");
         return new GlobalWindowInsetsManager();
     }
 
     @PerActivity
     @Provides
     public ControllerNavigationManager provideControllerNavigationManager() {
+        Logger.deps("ControllerNavigationManager");
         return new ControllerNavigationManager();
     }
 
     @PerActivity
     @Provides
     public ThreadFollowHistoryManager provideThreadFollowHistoryManager() {
+        Logger.deps("ThreadFollowHistoryManager");
         return new ThreadFollowHistoryManager();
     }
 
     @PerActivity
     @Provides
     public BottomNavBarVisibilityStateManager provideReplyViewStateManager() {
+        Logger.deps("BottomNavBarVisibilityStateManager");
         return new BottomNavBarVisibilityStateManager();
     }
 
     @PerActivity
     @Provides
     public DialogFactory provideDialogFactory(
-            ApplicationVisibilityManager applicationVisibilityManager,
-            ThemeEngine themeEngine
+            Lazy<ApplicationVisibilityManager> applicationVisibilityManager,
+            Lazy<ThemeEngine> themeEngine
     ) {
+        Logger.deps("DialogFactory");
         return new DialogFactory(
                 applicationVisibilityManager,
                 themeEngine
@@ -133,6 +142,7 @@ public class ActivityModule {
     @PerActivity
     @Provides
     public GlobalViewStateManager provideGlobalViewStateManager() {
+        Logger.deps("GlobalViewStateManager");
         return new GlobalViewStateManager();
     }
 
@@ -142,6 +152,7 @@ public class ActivityModule {
             GlobalWindowInsetsManager globalWindowInsetsManager,
             Lazy<ImageSaverV2> imageSaverV2
     ) {
+        Logger.deps("ThumbnailLongtapOptionsHelper");
         return new ThumbnailLongtapOptionsHelper(
                 globalWindowInsetsManager,
                 imageSaverV2
@@ -151,6 +162,7 @@ public class ActivityModule {
     @PerActivity
     @Provides
     public FileChooser provideFileChooser(AppCompatActivity activity) {
+        Logger.deps("FileChooser");
         return new FileChooser(activity);
     }
 
@@ -159,6 +171,7 @@ public class ActivityModule {
     public PostHighlightManager providePostHighlightManager(
             CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
+        Logger.deps("PostHighlightManager");
         return new PostHighlightManager(currentOpenedDescriptorStateManager);
     }
 

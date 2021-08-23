@@ -13,6 +13,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.model.repository.SiteRepository
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -31,7 +32,7 @@ open class SiteManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
-  private val siteRepository: SiteRepository,
+  private val _siteRepository: Lazy<SiteRepository>,
   private val siteRegistry: SiteRegistry
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("SiteManager")
@@ -46,6 +47,9 @@ open class SiteManager(
   private val siteMap = mutableMapWithCap<SiteDescriptor, Site>(32)
   @GuardedBy("lock")
   private val orders = mutableListWithCap<SiteDescriptor>(32)
+
+  private val siteRepository: SiteRepository
+    get() = _siteRepository.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize(allSitesDeferred: CompletableDeferred<List<ChanSiteData>>) {

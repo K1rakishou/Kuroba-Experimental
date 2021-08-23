@@ -16,6 +16,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupEntryToCreat
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupToCreate
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.ThreadBookmarkGroupRepository
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
@@ -30,8 +31,8 @@ import kotlin.time.measureTime
 class ThreadBookmarkGroupManager(
   private val appScope: CoroutineScope,
   private val verboseLogs: Boolean,
-  private val threadBookmarkGroupEntryRepository: ThreadBookmarkGroupRepository,
-  private val bookmarksManager: BookmarksManager
+  private val _threadBookmarkGroupEntryRepository: Lazy<ThreadBookmarkGroupRepository>,
+  private val _bookmarksManager: Lazy<BookmarksManager>
 ) {
   private val mutex = Mutex()
   private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadBookmarkGroupManager")
@@ -39,6 +40,11 @@ class ThreadBookmarkGroupManager(
   @GuardedBy("mutex")
   // Map<GroupId, ThreadBookmarkGroup>
   private val groupsByGroupIdMap = mutableMapOf<String, ThreadBookmarkGroup>()
+
+  private val threadBookmarkGroupEntryRepository: ThreadBookmarkGroupRepository
+    get() = _threadBookmarkGroupEntryRepository.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
 
   init {
     appScope.launch {

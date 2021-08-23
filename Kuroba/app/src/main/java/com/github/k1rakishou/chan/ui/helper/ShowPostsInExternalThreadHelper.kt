@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.options.ChanReadOptions
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -24,11 +25,13 @@ class ShowPostsInExternalThreadHelper(
   private val context: Context,
   private val scope: CoroutineScope,
   private val postPopupHelper: PostPopupHelper,
-  private val chanThreadManager: ChanThreadManager,
+  private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val presentControllerFunc: (Controller) -> Unit,
   private val showAvailableArchivesListFunc: (PostDescriptor) -> Unit,
   private val showToastFunc: (String) -> Unit
 ) {
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
 
   suspend fun showPostsInExternalThread(
     postDescriptor: PostDescriptor,

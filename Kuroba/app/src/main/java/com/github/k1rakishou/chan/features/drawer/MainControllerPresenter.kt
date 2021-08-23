@@ -38,13 +38,26 @@ import kotlin.time.seconds
 
 class MainControllerPresenter(
   private val isDevFlavor: Boolean,
-  private val historyNavigationManager: HistoryNavigationManager,
-  private val siteManager: SiteManager,
-  private val bookmarksManager: BookmarksManager,
-  private val pageRequestManager: Lazy<PageRequestManager>,
-  private val archivesManager: ArchivesManager,
-  private val chanThreadManager: ChanThreadManager
+  private val _historyNavigationManager: Lazy<HistoryNavigationManager>,
+  private val _siteManager: Lazy<SiteManager>,
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _pageRequestManager: Lazy<PageRequestManager>,
+  private val _archivesManager: Lazy<ArchivesManager>,
+  private val _chanThreadManager: Lazy<ChanThreadManager>
 ) : BasePresenter<MainControllerView>() {
+
+  private val historyNavigationManager: HistoryNavigationManager
+    get() = _historyNavigationManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val pageRequestManager: PageRequestManager
+    get() = _pageRequestManager.get()
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
 
   private val _historyControllerStateFlow = MutableStateFlow<HistoryControllerState>(HistoryControllerState.Empty)
   val historyControllerStateFlow: StateFlow<HistoryControllerState>
@@ -277,7 +290,7 @@ class MainControllerPresenter(
       val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
 
       bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-        val boardPage = pageRequestManager.get().getPage(threadBookmarkView.threadDescriptor)
+        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
 
         return@mapBookmark NavHistoryBookmarkAdditionalInfo(
           watching = threadBookmarkView.isWatching(),

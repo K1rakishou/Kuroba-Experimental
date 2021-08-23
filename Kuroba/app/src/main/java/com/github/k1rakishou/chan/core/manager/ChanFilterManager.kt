@@ -11,6 +11,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterWatchGroup
 import com.github.k1rakishou.model.repository.ChanFilterRepository
 import com.github.k1rakishou.model.repository.ChanFilterWatchRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -28,10 +29,10 @@ import kotlin.time.measureTime
 class ChanFilterManager(
   private val isDevBuild: Boolean,
   private val appScope: CoroutineScope,
-  private val chanFilterRepository: ChanFilterRepository,
-  private val chanPostRepository: ChanPostRepository,
-  private val chanFilterWatchRepository: ChanFilterWatchRepository,
-  private val postFilterManager: PostFilterManager
+  private val _chanFilterRepository: Lazy<ChanFilterRepository>,
+  private val _chanPostRepository: Lazy<ChanPostRepository>,
+  private val _chanFilterWatchRepository: Lazy<ChanFilterWatchRepository>,
+  private val _postFilterManager: Lazy<PostFilterManager>
 ) {
   private val filterChangesFlow = MutableSharedFlow<FilterEvent>(
     extraBufferCapacity = 32,
@@ -49,6 +50,15 @@ class ChanFilterManager(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val filters = mutableListWithCap<ChanFilter>(32)
+
+  private val chanFilterRepository: ChanFilterRepository
+    get() = _chanFilterRepository.get()
+  private val chanPostRepository: ChanPostRepository
+    get() = _chanPostRepository.get()
+  private val chanFilterWatchRepository: ChanFilterWatchRepository
+    get() = _chanFilterWatchRepository.get()
+  private val postFilterManager: PostFilterManager
+    get() = _postFilterManager.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {

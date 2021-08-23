@@ -14,6 +14,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkView
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.repository.BookmarksRepository
+import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
@@ -36,11 +37,11 @@ class BookmarksManager(
   private val isDevFlavor: Boolean,
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
-  private val applicationVisibilityManager: ApplicationVisibilityManager,
-  private val archivesManager: ArchivesManager,
-  private val bookmarksRepository: BookmarksRepository,
+  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
+  private val _archivesManager: Lazy<ArchivesManager>,
+  private val _bookmarksRepository: Lazy<BookmarksRepository>,
   private val siteRegistry: SiteRegistry,
-  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+  private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
   private val lock = ReentrantReadWriteLock()
   private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = 128)
@@ -52,6 +53,15 @@ class BookmarksManager(
 
   @GuardedBy("lock")
   private val bookmarks = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadBookmark>(256)
+
+  private val applicationVisibilityManager: ApplicationVisibilityManager
+    get() = _applicationVisibilityManager.get()
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  private val bookmarksRepository: BookmarksRepository
+    get() = _bookmarksRepository.get()
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+    get() = _currentOpenedDescriptorStateManager.get()
 
   fun initialize() {
     Logger.d(TAG, "BookmarksManager.initialize()")

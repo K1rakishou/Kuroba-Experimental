@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -19,10 +20,15 @@ import kotlin.math.min
 class ChanThreadTicker(
   private val scope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val archivesManager: ArchivesManager,
-  private val chanThreadManager: ChanThreadManager,
+  private val _archivesManager: Lazy<ArchivesManager>,
+  private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val action: suspend (ChanDescriptor) -> Unit
 ) {
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+
   private val debouncer = DebouncingCoroutineExecutor(scope)
   private val chanTickerData = ChanTickerData()
 

@@ -132,27 +132,50 @@ class ReplyLayout @JvmOverloads constructor(
   ReplyLayoutFilesArea.ReplyLayoutCallbacks {
 
   @Inject
-  lateinit var presenter: ReplyPresenter
+  lateinit var _presenter: Lazy<ReplyPresenter>
   @Inject
-  lateinit var captchaHolder: Lazy<CaptchaHolder>
+  lateinit var _captchaHolder: Lazy<CaptchaHolder>
   @Inject
-  lateinit var siteManager: SiteManager
+  lateinit var _siteManager: Lazy<SiteManager>
   @Inject
-  lateinit var boardManager: BoardManager
+  lateinit var _boardManager: Lazy<BoardManager>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var proxyStorage: Lazy<ProxyStorage>
+  lateinit var _proxyStorage: Lazy<ProxyStorage>
   @Inject
-  lateinit var replyManager: Lazy<ReplyManager>
+  lateinit var _replyManager: Lazy<ReplyManager>
   @Inject
   lateinit var _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
   @Inject
-  lateinit var globalViewStateManager: GlobalViewStateManager
+  lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
   @Inject
-  lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
+  lateinit var _appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var _themeEngine: Lazy<ThemeEngine>
+
+  val presenter: ReplyPresenter
+    get() = _presenter.get()
+  private val captchaHolder: CaptchaHolder
+    get() = _captchaHolder.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = _globalWindowInsetsManager.get()
+  private val proxyStorage: ProxyStorage
+    get() = _proxyStorage.get()
+  private val replyManager: ReplyManager
+    get() = _replyManager.get()
+  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
+    get() = _staticBoardFlagInfoRepository.get()
+  private val globalViewStateManager: GlobalViewStateManager
+    get() = _globalViewStateManager.get()
+  private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
+    get() = _appSettingsUpdateAppRefreshHelper.get()
+  private val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
 
   private var threadListLayoutCallbacks: ThreadListLayoutCallbacks? = null
   private var threadListLayoutFilesCallback: ReplyLayoutFilesArea.ThreadListLayoutCallbacks? = null
@@ -160,9 +183,6 @@ class ReplyLayout @JvmOverloads constructor(
   private var blockSelectionChange = false
   private var replyLayoutEnabled = true
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
-
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
-    get() = _staticBoardFlagInfoRepository.get()
 
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
@@ -562,7 +582,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     coroutineScope.launch {
-      appSettingsUpdateAppRefreshHelper.get().settingsUpdatedEvent.collect {
+      appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
         Logger.d(TAG, "Updating ReplyLayout wrapping mode because app settings were updated")
         setWrappingMode(presenter.isExpanded)
       }
@@ -577,7 +597,7 @@ class ReplyLayout @JvmOverloads constructor(
 
     comment.cleanup()
     presenter.unbindReplyImages()
-    captchaHolder.get().clearCallbacks()
+    captchaHolder.clearCallbacks()
     cleanup()
 
     coroutineScope.cancelChildren()
@@ -597,7 +617,7 @@ class ReplyLayout @JvmOverloads constructor(
       replyLayoutFilesArea.updateLayoutManager(presenter.isExpanded)
       updateCommentButtonsHolderVisibility()
 
-      if (proxyStorage.get().isDirty()) {
+      if (proxyStorage.isDirty()) {
         openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
       }
 
@@ -641,7 +661,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     comment.minHeight = REPLY_COMMENT_MIN_HEIGHT
-    captchaHolder.get().setListener(chanDescriptor, this)
+    captchaHolder.setListener(chanDescriptor, this)
   }
 
   override suspend fun bindReplyImages(chanDescriptor: ChanDescriptor) {
@@ -963,7 +983,7 @@ class ReplyLayout @JvmOverloads constructor(
   override fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
-    replyManager.get().readReply(chanDescriptor) { reply: Reply ->
+    replyManager.readReply(chanDescriptor) { reply: Reply ->
       name.setText(reply.postName)
       subject.setText(reply.subject)
 
@@ -1034,7 +1054,7 @@ class ReplyLayout @JvmOverloads constructor(
   override fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor) {
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
-    replyManager.get().readReply(chanDescriptor) { reply: Reply ->
+    replyManager.readReply(chanDescriptor) { reply: Reply ->
       reply.postName = name.text.toString()
       reply.subject = subject.text.toString()
       reply.options = options.text.toString()
