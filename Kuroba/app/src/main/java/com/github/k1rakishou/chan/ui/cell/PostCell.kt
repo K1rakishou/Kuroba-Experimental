@@ -218,9 +218,10 @@ class PostCell : ConstraintLayout,
   }
 
   override fun onThemeChanged() {
-    bindBackgroundColor(themeEngine.chanTheme)
-
     postCellData?.let { pcd ->
+      bindBackgroundColor(pcd.theme)
+
+      comment.setTextColor(pcd.theme.textColorPrimary)
       replies.setTextColor(pcd.theme.textColorSecondary)
       divider.setBackgroundColor(pcd.theme.dividerColor)
 
@@ -897,11 +898,8 @@ class PostCell : ConstraintLayout,
   }
 
   private fun bindPostComment(postCellData: PostCellData) {
-    val theme = postCellData.theme
     val fullPostComment = postCellData.fullPostComment
-
     comment.typeface = Typeface.DEFAULT
-    comment.setTextColor(theme.textColorPrimary)
 
     val newVisibility = if (fullPostComment.isEmpty()
       && (postCellData.singleImageMode || postCellData.postImages.isEmpty())) {

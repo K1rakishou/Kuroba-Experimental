@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.loader.internal.usecase
 
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -46,19 +45,6 @@ class ReloadPostsFromDatabaseUseCase(
           .unwrap()
       }
     }
-  }
-
-  suspend fun reloadCatalogThreads(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>): List<ChanPost> {
-    BackgroundUtils.ensureBackgroundThread()
-    chanPostRepository.awaitUntilInitialized()
-
-    val mapOfPosts = chanPostRepository.getCatalogOriginalPosts(threadDescriptors)
-      .safeUnwrap { error ->
-        Logger.e(TAG, "reloadCatalogThreads() reloadCatalogThreads failure", error)
-        return emptyList()
-      }
-
-    return mutableListWithCap(mapOfPosts.values)
   }
 
   companion object {

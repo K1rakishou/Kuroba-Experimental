@@ -6,11 +6,6 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
 
   fun canClearCache(): Boolean {
     return chanLoadOption is ChanLoadOption.ClearMemoryCache
-      || chanLoadOption is ChanLoadOption.ClearMemoryAndDatabaseCaches
-  }
-
-  fun canClearDatabase(): Boolean {
-    return chanLoadOption is ChanLoadOption.ClearMemoryAndDatabaseCaches
   }
 
   fun isForceUpdating(postDescriptor: PostDescriptor?): Boolean {
@@ -53,12 +48,6 @@ sealed class ChanLoadOption {
   object ClearMemoryCache : ChanLoadOption() {
     override fun toString(): String {
       return "ClearMemoryCache"
-    }
-  }
-
-  object ClearMemoryAndDatabaseCaches : ChanLoadOption() {
-    override fun toString(): String {
-      return "ClearMemoryAndDatabaseCaches"
     }
   }
 

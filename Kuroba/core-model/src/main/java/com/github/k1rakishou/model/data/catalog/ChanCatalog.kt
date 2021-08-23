@@ -29,6 +29,10 @@ class ChanCatalog(
     return lock.read { originalPosts.size }
   }
 
+  fun isEmpty(): Boolean {
+    return lock.read { originalPosts.isEmpty() }
+  }
+
   fun iteratePostsOrdered(iterator: (ChanOriginalPost) -> Unit) {
     iteratePostsOrderedWhile { chanOriginalPost ->
       iterator(chanOriginalPost)

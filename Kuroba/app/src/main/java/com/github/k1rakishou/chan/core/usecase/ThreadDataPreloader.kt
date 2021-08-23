@@ -51,7 +51,7 @@ class ThreadDataPreloader(
 
   suspend fun postloadThreadInfo(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
     Logger.d(TAG, "postloadThreadInfo($threadDescriptor) begin")
-
+    // no-op
     Logger.d(TAG, "postloadThreadInfo($threadDescriptor) end")
   }
 

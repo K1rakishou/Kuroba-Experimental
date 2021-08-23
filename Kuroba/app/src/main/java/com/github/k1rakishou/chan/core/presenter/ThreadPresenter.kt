@@ -651,22 +651,17 @@ class ThreadPresenter @Inject constructor(
     }
 
     chanPostRepository.awaitUntilInitialized()
-    Logger.d(TAG, "onFiltersChanged($currentChanDescriptor) clearing posts cache")
-
-    var shouldShowLoadingIndicator = false
+    Logger.d(TAG, "onFiltersChanged($currentChanDescriptor) force reloading posts from the cache")
 
     val catalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
-    if (catalogDescriptor == currentChanDescriptor) {
-      shouldShowLoadingIndicator = true
-    }
-
     val threadDescriptor = currentOpenedDescriptorStateManager.currentThreadDescriptor
-    if (threadDescriptor == currentChanDescriptor) {
-      shouldShowLoadingIndicator = true
-    }
 
-    if (catalogDescriptor != null || threadDescriptor != null) {
-      normalLoad(showLoading = shouldShowLoadingIndicator)
+    if (catalogDescriptor == currentChanDescriptor || threadDescriptor == currentChanDescriptor) {
+      normalLoad(
+        showLoading = false,
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
+        chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts()
+      )
     }
   }
 
@@ -2059,7 +2054,8 @@ class ThreadPresenter @Inject constructor(
     if (chanThread == null) {
       normalLoad(
         showLoading = true,
-        chanLoadOptions = ChanLoadOptions.clearMemoryCache()
+        chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts(),
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
       )
 
       return

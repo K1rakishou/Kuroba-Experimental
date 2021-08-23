@@ -25,6 +25,8 @@ data class ChanCatalogSnapshot(
   @GuardedBy("lock")
   private val chanCatalogSnapshotEntryList = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
+  val catalogDescriptor by lazy { ChanDescriptor.CatalogDescriptor.create(boardDescriptor) }
+
   val chanCatalogSnapshotEntryListCopy: List<ChanDescriptor.ThreadDescriptor>
     get() = lock.read { chanCatalogSnapshotEntryList.toList() }
 

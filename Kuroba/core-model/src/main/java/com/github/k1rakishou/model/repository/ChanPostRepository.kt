@@ -11,6 +11,7 @@ import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.PostsFromServerData
+import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.id.ThreadDBId
@@ -388,14 +389,14 @@ class ChanPostRepository(
     }
   }
 
-  suspend fun getPostBuilders(
+  suspend fun getThreadPostBuilders(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     postsToReloadOptions: PostsToReloadOptions
   ): ModularResult<List<ChanPostBuilder>> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
     ensureBackgroundThread()
 
-    Logger.d(TAG, "getPostBuilders(threadDescriptor=$threadDescriptor)")
+    Logger.d(TAG, "getThreadPostBuilders(threadDescriptor=$threadDescriptor)")
 
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
@@ -435,6 +436,36 @@ class ChanPostRepository(
         // Do not update the in-memory cache here because we need to parse the posts first.
         return@tryWithTransaction postsFromDatabase
           .map { chanPost ->  ChanPostMapper.toPostBuilder(chanPost) }
+      }
+    }
+  }
+
+  suspend fun getCatalogPostBuilders(
+    catalogSnapshot: ChanCatalogSnapshot,
+  ): ModularResult<List<ChanPostBuilder>> {
+    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
+    ensureBackgroundThread()
+
+    val catalogDescriptor = catalogSnapshot.catalogDescriptor
+    Logger.d(TAG, "getCatalogPostBuilders(catalogDescriptor=$catalogDescriptor)")
+
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        val chanCatalog = chanThreadsCache.getCatalog(catalogDescriptor)
+        if (chanCatalog != null && !chanCatalog.isEmpty()) {
+          return@tryWithTransaction chanCatalog.mapPostsOrdered { chanOriginalPost ->
+            ChanPostMapper.toPostBuilder(chanOriginalPost)
+          }
+        }
+
+        val postsFromDatabaseMap = localSource.getCatalogOriginalPosts(catalogSnapshot.catalogThreadDescriptorList)
+        if (postsFromDatabaseMap.isEmpty()) {
+          return@tryWithTransaction emptyList()
+        }
+
+        // Do not update the in-memory cache here because we need to parse the posts first.
+        return@tryWithTransaction postsFromDatabaseMap.entries
+          .map { (_, chanOriginalPost) -> ChanPostMapper.toPostBuilder(chanOriginalPost) }
       }
     }
   }

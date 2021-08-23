@@ -93,7 +93,7 @@ class ChanThreadManager(
       Logger.d(TAG, "loadThreadOrCatalog($page, $chanDescriptor, $chanCacheUpdateOptions, " +
         "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-      if (chanLoadOptions.canClearCache() || chanLoadOptions.canClearDatabase()) {
+      if (chanLoadOptions.canClearCache()) {
         Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       } else if (chanLoadOptions.isForceUpdating(postDescriptor = null)) {
@@ -112,7 +112,6 @@ class ChanThreadManager(
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
           when (chanLoadOptions.chanLoadOption) {
-            ChanLoadOption.ClearMemoryAndDatabaseCaches,
             ChanLoadOption.ClearMemoryCache -> {
               chanThreadsCache.deleteThread(chanDescriptor)
             }
@@ -121,15 +120,6 @@ class ChanThreadManager(
             }
             ChanLoadOption.RetainAll -> error("Can't retain all here")
           }
-        }
-      }
-
-      if (chanLoadOptions.canClearDatabase()) {
-        Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the database")
-
-        when (chanDescriptor) {
-          is ChanDescriptor.ThreadDescriptor -> chanPostRepository.deleteThread(chanDescriptor)
-          is ChanDescriptor.CatalogDescriptor -> chanPostRepository.deleteCatalog(chanDescriptor)
         }
       }
 
@@ -520,7 +510,6 @@ class ChanThreadManager(
               PostsToReloadOptions.Reload(postDescriptors.toSet())
             }
           }
-          ChanLoadOption.ClearMemoryAndDatabaseCaches,
           ChanLoadOption.ClearMemoryCache -> PostsToReloadOptions.ReloadAll
           ChanLoadOption.RetainAll -> return null
         }
@@ -544,7 +533,25 @@ class ChanThreadManager(
         // fallthrough
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        return chanThreadLoaderCoordinator.get().reloadCatalogFromDatabase(chanDescriptor)
+        val siteDescriptor = chanDescriptor.siteDescriptor()
+
+        val postParser = siteManager.bySiteDescriptor(siteDescriptor)
+          ?.chanReader()
+          ?.getParser()
+
+        if (postParser == null) {
+          val threadLoadResult = ThreadLoadResult.Error(
+            chanDescriptor,
+            ChanLoaderException(SiteManager.SiteNotFoundException(siteDescriptor))
+          )
+
+          return ModularResult.value(threadLoadResult)
+        }
+
+        return chanThreadLoaderCoordinator.get().reloadAndReparseCatalogPosts(
+          postParser = postParser,
+          catalogDescriptor = chanDescriptor
+        )
       }
     }
 

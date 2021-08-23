@@ -6,11 +6,9 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
-import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 
 internal class DatabasePostLoader(
-  private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase,
-  private val chanCatalogSnapshotRepository: ChanCatalogSnapshotRepository
+  private val reloadPostsFromDatabaseUseCase: ReloadPostsFromDatabaseUseCase
 ) : AbstractPostLoader() {
 
   suspend fun loadPosts(chanDescriptor: ChanDescriptor): ChanLoaderResponse? {
@@ -28,30 +26,6 @@ internal class DatabasePostLoader(
       return null
     }
 
-    return ChanLoaderResponse(originalPost, reloadedPosts)
-  }
-
-  suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanLoaderResponse? {
-    BackgroundUtils.ensureBackgroundThread()
-
-    val currentCatalogSnapshot = chanCatalogSnapshotRepository.getCatalogSnapshot(catalogDescriptor)
-      ?: return null
-
-    val reloadedPosts = reloadPostsFromDatabaseUseCase.reloadCatalogThreads(
-      currentCatalogSnapshot.catalogThreadDescriptorList
-    )
-
-    if (reloadedPosts.isEmpty()) {
-      Logger.d(TAG, "loadCatalog() reloadCatalogThreads() returned empty list")
-      return null
-    }
-
-    val originalPost = reloadedPosts.firstOrNull()
-    if (originalPost == null) {
-      return null
-    }
-
-    check(originalPost is ChanOriginalPost) { "First post is not a ChanOriginalPost: $originalPost" }
     return ChanLoaderResponse(originalPost, reloadedPosts)
   }
 

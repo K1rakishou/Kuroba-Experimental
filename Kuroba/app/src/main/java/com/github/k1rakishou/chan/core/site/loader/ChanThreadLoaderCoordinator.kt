@@ -126,10 +126,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   private val databasePostLoader by lazy {
-    DatabasePostLoader(
-      reloadPostsFromDatabaseUseCase,
-      chanCatalogSnapshotRepository
-    )
+    DatabasePostLoader(reloadPostsFromDatabaseUseCase)
   }
 
   @OptIn(ExperimentalTime::class)
@@ -341,7 +338,7 @@ class ChanThreadLoaderCoordinator(
 
     return withContext(Dispatchers.IO) {
       return@withContext Try {
-        val chanPostBuilders = chanPostRepository.getPostBuilders(threadDescriptor, postsToReloadOptions)
+        val chanPostBuilders = chanPostRepository.getThreadPostBuilders(threadDescriptor, postsToReloadOptions)
           .unwrap()
 
         if (chanPostBuilders.isEmpty()) {
@@ -389,15 +386,57 @@ class ChanThreadLoaderCoordinator(
     }
   }
 
-  suspend fun reloadCatalogFromDatabase(
+  suspend fun reloadAndReparseCatalogPosts(
+    postParser: PostParser,
     catalogDescriptor: ChanDescriptor.CatalogDescriptor
   ): ModularResult<ThreadLoadResult> {
-    Logger.d(TAG, "reloadCatalogFromDatabase($catalogDescriptor)")
+    Logger.d(TAG, "reloadAndReparseCatalogPosts($catalogDescriptor)")
 
     return withContext(Dispatchers.IO) {
       return@withContext Try {
-        databasePostLoader.loadCatalog(catalogDescriptor)
-        return@Try ThreadLoadResult.Loaded(catalogDescriptor)
+        val currentCatalogSnapshot = chanCatalogSnapshotRepository.getCatalogSnapshot(catalogDescriptor)
+        if (currentCatalogSnapshot == null || currentCatalogSnapshot.isEmpty()) {
+          return@Try ThreadLoadResult.Error(
+            catalogDescriptor,
+            ChanLoaderException.cacheIsEmptyException(catalogDescriptor)
+          )
+        }
+
+        val chanPostBuilders = chanPostRepository.getCatalogPostBuilders(currentCatalogSnapshot)
+          .unwrap()
+
+        if (chanPostBuilders.isEmpty()) {
+          return@Try ThreadLoadResult.Error(
+            catalogDescriptor,
+            ChanLoaderException.cacheIsEmptyException(catalogDescriptor)
+          )
+        }
+
+        val chanReaderProcessor = ChanReaderProcessor(
+          chanPostRepository = chanPostRepository,
+          chanReadOptions = ChanReadOptions.default(),
+          chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts(),
+          options = ChanReaderProcessor.Options(),
+          chanDescriptor = catalogDescriptor
+        )
+
+        chanPostBuilders.forEach { chanPostBuilder ->
+          if (chanPostBuilder.op) {
+            chanReaderProcessor.setOp(chanPostBuilder)
+          }
+
+          chanReaderProcessor.addPost(chanPostBuilder)
+        }
+
+        val (threadLoadResult, _) = chanPostPersister.persistPosts(
+          chanReaderProcessor = chanReaderProcessor,
+          cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
+          chanCacheUpdateOptions =  ChanCacheUpdateOptions.DoNotUpdateCache,
+          chanDescriptor = catalogDescriptor,
+          postParser = postParser,
+        )
+
+        return@Try threadLoadResult
       }
     }
   }
