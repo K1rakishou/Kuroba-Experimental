@@ -1263,11 +1263,13 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
     }
 
-    if (chanDescriptor.isCatalogDescriptor() || chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP()) {
-      if (!postFilterManager.getFilterStub(post.postDescriptor)) {
-        menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
+    if (!inPopup) {
+      if (chanDescriptor.isCatalogDescriptor() || (chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP())) {
+        if (!postFilterManager.getFilterStub(post.postDescriptor)) {
+          menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
+        }
+        menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
       }
-      menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
