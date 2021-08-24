@@ -119,6 +119,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <string name="bottom_menu_item_reorder">Reorder</string>
     <string name="bottom_menu_item_download">Download</string>
+    <string name="bottom_menu_item_read">Read</string>
     <string name="bottom_menu_item_delete">Delete</string>
     <string name="bottom_menu_item_stop">Stop</string>
     <string name="bottom_menu_item_start">Start</string>

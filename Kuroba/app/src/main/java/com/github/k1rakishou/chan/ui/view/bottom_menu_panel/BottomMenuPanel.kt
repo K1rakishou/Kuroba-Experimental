@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
@@ -224,7 +225,14 @@ class BottomMenuPanel @JvmOverloads constructor(
     }
 
     AndroidUtils.setBoundlessRoundRippleBackground(linearLayout)
-    linearLayout.updatePadding(left = MENU_ITEM_PADDING, right = MENU_ITEM_PADDING)
+
+    val padding = if (isTablet()) {
+      MENU_ITEM_PADDING * 2
+    } else {
+      MENU_ITEM_PADDING
+    }
+
+    linearLayout.updatePadding(left = padding, right = padding)
 
     val textView = AppCompatTextView(context)
     textView.textSize = 11f
@@ -298,7 +306,7 @@ class BottomMenuPanel @JvmOverloads constructor(
     private const val ANIMATION_DURATION = 250L
     private const val HIDE_DELAY = 100L
 
-    private val MENU_ITEM_PADDING = dp(24f)
+    private val MENU_ITEM_PADDING = dp(12f)
     private val MENU_SIZE = dp(24f)
     private val INTERPOLATOR = FastOutSlowInInterpolator()
   }

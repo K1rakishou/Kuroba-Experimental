@@ -256,6 +256,22 @@ class BookmarksPresenter(
     return true
   }
 
+  fun markAsRead(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
+
+    bookmarksManager.enqueuePersistFunc {
+      val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
+        threadBookmark.readAllPostsAndNotifications()
+      }
+
+      if (updatedBookmarkDescriptors.isNotEmpty()) {
+        bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
+      }
+    }
+  }
+
   fun onViewBookmarksModeChanged() {
     Logger.d(TAG, "calling reloadBookmarks() because view bookmarks mode changed")
 

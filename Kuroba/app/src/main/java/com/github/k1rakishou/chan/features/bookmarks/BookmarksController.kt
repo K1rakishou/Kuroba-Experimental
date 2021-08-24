@@ -453,6 +453,9 @@ class BookmarksController(
 
         presentController(threadDownloaderSettingsController, animated = true)
       }
+      BookmarksSelectionHelper.BookmarksMenuItemType.Read -> {
+        bookmarksPresenter.markAsRead(selectedItems)
+      }
     }
 
     bookmarksSelectionHelper.clearSelection()

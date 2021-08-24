@@ -38,13 +38,22 @@ class BookmarksSelectionHelper(
       { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Download, selectedItems.toList()) }
     )
 
+
+    itemsList += BottomMenuPanelItem(
+      BookmarksMenuItemId(BookmarksMenuItemType.Read),
+      R.drawable.exo_ic_check,
+      R.string.bottom_menu_item_read,
+      { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Read, selectedItems.toList()) }
+    )
+
     return itemsList
   }
 
   enum class BookmarksMenuItemType(val id: Int) {
     Delete(0),
     Reorder(1),
-    Download(2)
+    Download(2),
+    Read(3)
   }
 
   class BookmarksMenuItemId(val bookmarksMenuItemType: BookmarksMenuItemType) : BottomMenuPanelItemId {
