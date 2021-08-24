@@ -139,8 +139,6 @@ class ChanThreadLoaderCoordinator(
     chanReadOptions: ChanReadOptions,
     chanLoadOptions: ChanLoadOptions
   ): ModularResult<ThreadLoadResult> {
-    threadDownloadManager.awaitUntilInitialized()
-
     val chanLoadUrl = getChanUrl(site, chanDescriptor, page)
     val chanReader = site.chanReader()
 

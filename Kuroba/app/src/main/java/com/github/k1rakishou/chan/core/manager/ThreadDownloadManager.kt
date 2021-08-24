@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -22,7 +22,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -39,7 +38,6 @@ class ThreadDownloadManager(
   private val _chanPostRepository: Lazy<ChanPostRepository>
 ) {
   private val mutex = Mutex()
-  private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadDownloads")
 
   private val threadDownloaderFileManagerWrapper: ThreadDownloaderFileManagerWrapper
     get() = _threadDownloaderFileManagerWrapper.get()
@@ -53,6 +51,8 @@ class ThreadDownloadManager(
   @GuardedBy("mutex")
   private val threadDownloadsMap = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, ThreadDownload>(16)
 
+  private val initializationRunnable = OneShotRunnable()
+
   private val _threadDownloadUpdateFlow = MutableSharedFlow<Event>(extraBufferCapacity = 16)
   val threadDownloadUpdateFlow: SharedFlow<Event>
     get() = _threadDownloadUpdateFlow.asSharedFlow()
@@ -60,43 +60,6 @@ class ThreadDownloadManager(
   private val _threadsProcessedFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
   val threadsProcessedFlow: SharedFlow<Unit>
     get() = _threadsProcessedFlow.asSharedFlow()
-
-  @OptIn(ExperimentalTime::class)
-  suspend fun awaitUntilInitialized() {
-    if (suspendableInitializer.isInitialized()) {
-      return
-    }
-
-    Logger.d(TAG, "ThreadDownloadManager is not ready yet, waiting...")
-    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
-    Logger.d(TAG, "ThreadDownloadManager initialization completed, took $duration")
-  }
-
-  fun isReady() = suspendableInitializer.isInitialized()
-
-  @OptIn(ExperimentalTime::class)
-  fun initialize() {
-    appScope.launch(Dispatchers.IO) {
-      Logger.d(TAG, "initializeThreadDownloadManagerInternal() start")
-      val time = measureTime { initializeThreadDownloadManagerInternal() }
-      Logger.d(TAG, "initializeThreadDownloadManagerInternal() end, took $time")
-    }
-  }
-
-  private suspend fun initializeThreadDownloadManagerInternal() {
-    val initResult = threadDownloadRepository.initialize()
-    if (initResult is ModularResult.Value) {
-      val threadDownloads = initResult.value
-
-      mutex.withLock {
-        threadDownloads.forEach { threadDownload ->
-          threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload
-        }
-      }
-    }
-
-    suspendableInitializer.initWithModularResult(initResult.mapValue { Unit })
-  }
 
   suspend fun getDownloadingThreadDescriptors(): Set<ChanDescriptor.ThreadDescriptor> {
     ensureInitialized()
@@ -371,6 +334,8 @@ class ThreadDownloadManager(
     httpUrl: HttpUrl,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
   ): AbstractFile? {
+    ensureInitialized()
+
     val canUseThreadDownloaderCache = canUseThreadDownloaderCache(threadDescriptor)
     if (!canUseThreadDownloaderCache) {
       return null
@@ -392,6 +357,8 @@ class ThreadDownloadManager(
   }
 
   suspend fun canUseThreadDownloaderCache(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    ensureInitialized()
+
     return mutex.withLock {
       val statusIsGood = threadDownloadsMap[threadDescriptor]?.status != null
       val wasUpdatedAtLeastOnce = threadDownloadsMap[threadDescriptor]?.lastUpdateTime != null
@@ -468,8 +435,30 @@ class ThreadDownloadManager(
       "downloadMedia=$downloadMedia, success=$success")
   }
 
-  private fun ensureInitialized() {
-    check(suspendableInitializer.isInitialized()) { "ThreadDownloadManager is not initialized yet! Use " }
+  private suspend fun ensureInitialized() {
+    initializationRunnable.runIfNotYet { initializeThreadDownloadManagerInternal() }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  private suspend fun initializeThreadDownloadManagerInternal() {
+    withContext(Dispatchers.IO) {
+      Logger.d(TAG, "initializeThreadDownloadManagerInternal() start")
+
+      val time = measureTime {
+        val initResult = threadDownloadRepository.initialize()
+        if (initResult is ModularResult.Value) {
+          val threadDownloads = initResult.value
+
+          mutex.withLock {
+            threadDownloads.forEach { threadDownload ->
+              threadDownloadsMap[threadDownload.threadDescriptor] = threadDownload
+            }
+          }
+        }
+      }
+
+      Logger.d(TAG, "initializeThreadDownloadManagerInternal() end, took $time")
+    }
   }
 
   sealed class Event {

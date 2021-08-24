@@ -90,7 +90,6 @@ class ThreadDownloadingDelegate(
 
   private suspend fun doWorkInternal() {
     siteManager.awaitUntilInitialized()
-    threadDownloadManager.awaitUntilInitialized()
     chanPostRepository.awaitUntilInitialized()
 
     if (!threadDownloadManager.hasActiveThreads()) {

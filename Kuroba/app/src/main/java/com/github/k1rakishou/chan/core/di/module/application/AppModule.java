@@ -98,7 +98,6 @@ public class AppModule {
             ArchivesManager archivesManager,
             ChanFilterManager chanFilterManager,
             ThreadBookmarkGroupManager threadBookmarkGroupManager,
-            ThreadDownloadManager threadDownloadManager,
             ThreadDownloadingCoordinator threadDownloadingCoordinator
     ) {
         Logger.deps("AppDependenciesInitializer");
@@ -113,7 +112,6 @@ public class AppModule {
                 archivesManager,
                 chanFilterManager,
                 threadBookmarkGroupManager,
-                threadDownloadManager,
                 threadDownloadingCoordinator
         );
     }

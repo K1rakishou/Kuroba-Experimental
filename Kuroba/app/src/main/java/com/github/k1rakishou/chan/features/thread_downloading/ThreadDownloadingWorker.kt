@@ -25,8 +25,6 @@ class ThreadDownloadingWorker(
     Chan.getComponent()
       .inject(this)
 
-    threadDownloadManager.awaitUntilInitialized()
-
     threadDownloadingDelegate.doWork()
       .peekError { error -> Logger.e(TAG, "threadDownloadingDelegate.doWork() unhandled error", error) }
       .ignore()

@@ -328,7 +328,6 @@ class LocalArchiveViewModel : BaseViewModel() {
   }
 
   private suspend fun refreshCacheAndReload() {
-    threadDownloadManager.awaitUntilInitialized()
     chanPostRepository.awaitUntilInitialized()
 
     val threadDownloads = threadDownloadManager.getAllThreadDownloads()

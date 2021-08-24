@@ -330,10 +330,6 @@ open class ViewThreadController(
     }
 
     mainScope.launch {
-      if (!threadDownloadManager.isReady()) {
-        return@launch
-      }
-
       when (threadDownloadManager.getStatus(threadDescriptor)) {
         ThreadDownload.Status.Running -> {
           threadDownloadManager.stopDownloading(threadDescriptor)
@@ -623,10 +619,6 @@ open class ViewThreadController(
   }
 
   private suspend fun updateThreadDownloadItem() {
-    if (!threadDownloadManager.isReady()) {
-      return
-    }
-
     navigation.findSubItem(ACTION_DOWNLOAD_THREAD)?.let { downloadThreadItem ->
       val status = threadDownloadManager.getStatus(threadDescriptor)
       downloadThreadItem.visible = status != ThreadDownload.Status.Completed
