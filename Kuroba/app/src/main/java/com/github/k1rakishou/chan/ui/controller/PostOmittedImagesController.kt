@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -65,7 +64,6 @@ class PostOmittedImagesController(
         .widthIn(max = 600.dp)
         .wrapContentHeight()
         .align(Alignment.Center),
-      verticalArrangement = Arrangement.Center,
       cells = GridCells.Fixed(2),
       content = {
         items(postImages.size) { index ->
