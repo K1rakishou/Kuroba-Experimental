@@ -294,7 +294,6 @@ class BookmarksPresenter(
     BackgroundUtils.ensureBackgroundThread()
 
     bookmarksManager.awaitUntilInitialized()
-    threadBookmarkGroupManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
     val searchQuery = searchFlow.value as? SearchQuery.Searching

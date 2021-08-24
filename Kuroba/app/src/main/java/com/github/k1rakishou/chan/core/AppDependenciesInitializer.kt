@@ -6,7 +6,6 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
@@ -22,7 +21,6 @@ class AppDependenciesInitializer(
   private val filterWatcherCoordinator: FilterWatcherCoordinator,
   private val archivesManager: ArchivesManager,
   private val chanFilterManager: ChanFilterManager,
-  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val threadDownloadingCoordinator: ThreadDownloadingCoordinator
 ) {
 
@@ -32,7 +30,6 @@ class AppDependenciesInitializer(
     siteManager.initialize(allSitesDeferred)
     boardManager.initialize(allSitesDeferred)
     bookmarksManager.initialize()
-    threadBookmarkGroupManager.initialize()
     historyNavigationManager.initialize()
 
     bookmarkWatcherCoordinator.initialize()

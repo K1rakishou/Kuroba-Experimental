@@ -38,7 +38,6 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
-import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
@@ -97,7 +96,6 @@ public class AppModule {
             FilterWatcherCoordinator filterWatcherCoordinator,
             ArchivesManager archivesManager,
             ChanFilterManager chanFilterManager,
-            ThreadBookmarkGroupManager threadBookmarkGroupManager,
             ThreadDownloadingCoordinator threadDownloadingCoordinator
     ) {
         Logger.deps("AppDependenciesInitializer");
@@ -111,7 +109,6 @@ public class AppModule {
                 filterWatcherCoordinator,
                 archivesManager,
                 chanFilterManager,
-                threadBookmarkGroupManager,
                 threadDownloadingCoordinator
         );
     }

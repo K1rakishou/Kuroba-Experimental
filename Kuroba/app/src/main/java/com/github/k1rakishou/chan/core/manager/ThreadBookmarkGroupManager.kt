@@ -1,10 +1,10 @@
 package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
@@ -35,7 +35,6 @@ class ThreadBookmarkGroupManager(
   private val _bookmarksManager: Lazy<BookmarksManager>
 ) {
   private val mutex = Mutex()
-  private val suspendableInitializer = SuspendableInitializer<Unit>("ThreadBookmarkGroupManager")
 
   @GuardedBy("mutex")
   // Map<GroupId, ThreadBookmarkGroup>
@@ -46,6 +45,8 @@ class ThreadBookmarkGroupManager(
   private val bookmarksManager: BookmarksManager
     get() = _bookmarksManager.get()
 
+  private val initializationRunnable = OneShotRunnable()
+
   init {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
@@ -55,43 +56,13 @@ class ThreadBookmarkGroupManager(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
-  fun initialize() {
-    Logger.d(TAG, "ThreadBookmarkGroupManager.initialize()")
-
-    appScope.launch(Dispatchers.IO) {
-      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() start")
-      val time = measureTime { loadThreadBookmarkGroupsInternal() }
-      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() end, took $time")
-    }
-  }
-
-  private suspend fun loadThreadBookmarkGroupsInternal() {
-    when (val groupsResult = threadBookmarkGroupEntryRepository.initialize()) {
-      is ModularResult.Value -> {
-        mutex.withLock {
-          groupsByGroupIdMap.clear()
-
-          groupsResult.value.forEach { threadBookmarkGroup ->
-            groupsByGroupIdMap[threadBookmarkGroup.groupId] = threadBookmarkGroup
-          }
-        }
-
-        suspendableInitializer.initWithValue(Unit)
-        Logger.d(TAG, "loadThreadBookmarkGroupsInternal() done. Loaded ${groupsByGroupIdMap.size} bookmark groups")
-      }
-      is ModularResult.Error -> {
-        suspendableInitializer.initWithError(groupsResult.error)
-        Logger.e(TAG, "loadThreadBookmarkGroupsInternal() error", groupsResult.error)
-      }
-    }
-  }
-
   suspend fun onBookmarkMoving(
     groupId: String,
     fromBookmarkDescriptor: ChanDescriptor.ThreadDescriptor,
     toBookmarkDescriptor: ChanDescriptor.ThreadDescriptor
   ): Boolean {
+    ensureInitialized()
+
     return mutex.withLock {
       val group = groupsByGroupIdMap[groupId]
         ?: return@withLock false
@@ -101,6 +72,8 @@ class ThreadBookmarkGroupManager(
   }
 
   suspend fun persistGroup(groupId: String) {
+    ensureInitialized()
+
     mutex.withLock {
       val group = groupsByGroupIdMap[groupId]
         ?: return@withLock
@@ -117,7 +90,7 @@ class ThreadBookmarkGroupManager(
   suspend fun groupBookmarks(
     threadBookmarkViewList: List<ThreadBookmarkItemView>
   ): List<GroupOfThreadBookmarkItemViews> {
-    check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureInitialized()
 
     if (threadBookmarkViewList.isEmpty()) {
       return emptyList()
@@ -167,25 +140,11 @@ class ThreadBookmarkGroupManager(
     }
   }
 
-  private fun createGroupInfoText(
-    threadBookmarkGroup: ThreadBookmarkGroup,
-    threadBookmarkItemViews: MutableList<ThreadBookmarkItemView>
-  ): String {
-    val totalBookmarksInGroupCount = threadBookmarkItemViews.size
-    val watchingBookmarkInGroupCount = threadBookmarkItemViews
-      .count { threadBookmarkItemView -> threadBookmarkItemView.threadBookmarkStats.watching }
-
-    return String.format(
-      Locale.ENGLISH,
-      "${threadBookmarkGroup.groupName} (${watchingBookmarkInGroupCount}/${totalBookmarksInGroupCount})"
-    )
-  }
-
   /**
    * Toggles the bookmark's group expanded/collapsed state
    * */
   suspend fun toggleBookmarkExpandState(groupId: String): Boolean {
-    check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureInitialized()
 
     return mutex.withLock {
       val group = groupsByGroupIdMap[groupId]
@@ -210,7 +169,7 @@ class ThreadBookmarkGroupManager(
    * Creates new ThreadBookmarkGroupEntry for newly created ThreadBookmarks.
    * */
   private suspend fun createGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
-    check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureInitialized()
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
     // Yes, there is a database call inside of the locked block, but we need atomicity
@@ -346,7 +305,7 @@ class ThreadBookmarkGroupManager(
    * as well.
    * */
   private suspend fun deleteGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
-    check(isReady()) { "ThreadBookmarkGroupEntryManager is not ready yet! Use awaitUntilInitialized()" }
+    ensureInitialized()
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
     // Yes, there is a database call inside of the locked block, but we need atomicity
@@ -423,18 +382,19 @@ class ThreadBookmarkGroupManager(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
-  suspend fun awaitUntilInitialized() {
-    if (isReady()) {
-      return
-    }
+  private fun createGroupInfoText(
+    threadBookmarkGroup: ThreadBookmarkGroup,
+    threadBookmarkItemViews: MutableList<ThreadBookmarkItemView>
+  ): String {
+    val totalBookmarksInGroupCount = threadBookmarkItemViews.size
+    val watchingBookmarkInGroupCount = threadBookmarkItemViews
+      .count { threadBookmarkItemView -> threadBookmarkItemView.threadBookmarkStats.watching }
 
-    Logger.d(TAG, "ThreadBookmarkGroupEntryManager is not ready yet, waiting...")
-    val duration = measureTime { suspendableInitializer.awaitUntilInitialized() }
-    Logger.d(TAG, "ThreadBookmarkGroupEntryManager initialization completed, took $duration")
+    return String.format(
+      Locale.ENGLISH,
+      "${threadBookmarkGroup.groupName} (${watchingBookmarkInGroupCount}/${totalBookmarksInGroupCount})"
+    )
   }
-
-  fun isReady() = suspendableInitializer.isInitialized()
 
   private suspend fun handleBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange) {
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized ||
@@ -442,7 +402,7 @@ class ThreadBookmarkGroupManager(
       return
     }
 
-    awaitUntilInitialized()
+    ensureInitialized()
 
     when (bookmarkChange) {
       BookmarksManager.BookmarkChange.BookmarksInitialized,
@@ -465,6 +425,38 @@ class ThreadBookmarkGroupManager(
 
         deleteGroupEntries(threadDescriptors)
       }
+    }
+  }
+
+  private suspend fun ensureInitialized() {
+    initializationRunnable.runIfNotYet { loadThreadBookmarkGroupsInternal() }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  private suspend fun loadThreadBookmarkGroupsInternal() {
+    withContext(Dispatchers.IO) {
+      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() start")
+
+      val time = measureTime {
+        when (val groupsResult = threadBookmarkGroupEntryRepository.initialize()) {
+          is ModularResult.Value -> {
+            mutex.withLock {
+              groupsByGroupIdMap.clear()
+
+              groupsResult.value.forEach { threadBookmarkGroup ->
+                groupsByGroupIdMap[threadBookmarkGroup.groupId] = threadBookmarkGroup
+              }
+            }
+
+            Logger.d(TAG, "loadThreadBookmarkGroupsInternal() done. Loaded ${groupsByGroupIdMap.size} bookmark groups")
+          }
+          is ModularResult.Error -> {
+            Logger.e(TAG, "loadThreadBookmarkGroupsInternal() error", groupsResult.error)
+          }
+        }
+      }
+
+      Logger.d(TAG, "loadThreadBookmarkGroupsInternal() end, took $time")
     }
   }
 
