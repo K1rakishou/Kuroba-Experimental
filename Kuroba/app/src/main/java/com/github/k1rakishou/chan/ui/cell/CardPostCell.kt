@@ -246,12 +246,16 @@ class CardPostCell : ConstraintLayout,
     thumbView = findViewById<PostImageThumbnailView>(R.id.card_post_cell_thumbnail).apply {
       setRatio(16f / 13f)
 
-      val firstImage = postCellData.firstImage!!
-
       setImageClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_CLICK_TOKEN) {
+        val firstImage = postCellData.firstImage
+          ?: return@setImageClickListener
+
         callback?.onThumbnailClicked(postCellData, firstImage)
       }
       setImageOmittedFilesClickListener(PostImageThumbnailViewsContainer.THUMBNAIL_OMITTED_FILES_CLICK_TOKEN) {
+        val firstImage = postCellData.firstImage
+          ?: return@setImageOmittedFilesClickListener
+
         callback?.onThumbnailOmittedFilesClicked(postCellData, firstImage)
       }
       bindOmittedFilesInfo(postCellData)

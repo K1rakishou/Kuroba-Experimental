@@ -138,22 +138,6 @@ open class ArchivesManager(
     }
   }
 
-  fun getRequestLinkForThread(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor,
-    archiveDescriptor: ArchiveDescriptor
-  ): String? {
-    val archiveData = getArchiveDataByArchiveDescriptor(archiveDescriptor)
-      ?: return null
-
-    return String.format(
-      Locale.ENGLISH,
-      FOOLFUUKA_THREAD_ENDPOINT_FORMAT,
-      archiveData.domain,
-      threadDescriptor.boardCode(),
-      threadDescriptor.threadNo
-    )
-  }
-
   fun getRequestLink(
     archiveType: ArchiveType,
     boardCode: String,
@@ -191,15 +175,6 @@ open class ArchivesManager(
     }
   }
 
-  private fun getArchiveDataByArchiveDescriptor(archiveDescriptor: ArchiveDescriptor): ArchiveData? {
-    return lock.read {
-      return@read allArchivesData.firstOrNull { archiveData ->
-        return@firstOrNull archiveData.name == archiveDescriptor.name
-          && archiveData.domain == archiveDescriptor.domain
-      }
-    }
-  }
-
   private fun loadArchives(): List<ArchiveData> {
     return appContext.assets.open(ARCHIVES_JSON_FILE_NAME).use { inputStream ->
       return@use modifiedGson.fromJson<Array<ArchiveData>>(
@@ -218,20 +193,6 @@ open class ArchivesManager(
       return@read allArchivesData.any { archiveData ->
         return@any archiveData.supports(boardDescriptor)
       }
-    }
-  }
-
-  fun getSupportedSites(siteDescriptor: SiteDescriptor): Set<SiteDescriptor> {
-    return lock.read {
-      val archiveData = allArchivesData.firstOrNull { archiveData ->
-        archiveData.domain == siteDescriptor.siteName
-      }
-
-      if (archiveData == null) {
-        return@read emptySet()
-      }
-
-      return@read archiveData.getSupportedSites()
     }
   }
 

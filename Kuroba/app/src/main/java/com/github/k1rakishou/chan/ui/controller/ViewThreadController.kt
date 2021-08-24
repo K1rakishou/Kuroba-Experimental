@@ -199,12 +199,12 @@ open class ViewThreadController(
       .withSubItem(
         ACTION_PREVIEW_THREAD_IN_ARCHIVE,
         R.string.action_preview_thread_in_archive,
-        archivesManager.supports(threadDescriptor)
+        false
       ) { showAvailableArchivesList(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = true) }
       .withSubItem(
         ACTION_OPEN_THREAD_IN_ARCHIVE,
         R.string.action_open_in_archive,
-        archivesManager.supports(threadDescriptor)
+        false
       ) { showAvailableArchivesList(postDescriptor = threadDescriptor.toOriginalPostDescriptor(), preview = false) }
       .withSubItem(
         ACTION_OPEN_BROWSER,
@@ -616,10 +616,10 @@ open class ViewThreadController(
 
   private suspend fun updateMenuItems() {
     navigation.findSubItem(ACTION_PREVIEW_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
-      retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+      retrieveDeletedPostsItem.visible = archivesManager.supports(threadDescriptor)
     }
     navigation.findSubItem(ACTION_OPEN_THREAD_IN_ARCHIVE)?.let { retrieveDeletedPostsItem ->
-      retrieveDeletedPostsItem.visible = threadDescriptor.siteDescriptor().is4chan()
+      retrieveDeletedPostsItem.visible = archivesManager.supports(threadDescriptor)
     }
 
     updateThreadDownloadItem()

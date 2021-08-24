@@ -162,8 +162,8 @@ class ThemeControllerHelper(
         listOf(
           ChanPostImageBuilder()
             .serverFilename("123123123123.jpg")
-            .imageUrl((AppConstants.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
-            .thumbnailUrl((AppConstants.RESOURCES_ENDPOINT + "release_icon_512.png").toHttpUrl())
+            .imageUrl((AppConstants.RESOURCES_ENDPOINT + "ic_launcher_release_round.png").toHttpUrl())
+            .thumbnailUrl((AppConstants.RESOURCES_ENDPOINT + "ic_launcher_release_round.png").toHttpUrl())
             .filename("icon")
             .extension("png")
             .build()
