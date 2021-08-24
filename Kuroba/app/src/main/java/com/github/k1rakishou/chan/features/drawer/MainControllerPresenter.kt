@@ -75,13 +75,6 @@ class MainControllerPresenter(
     scope.launch {
       setState(HistoryControllerState.Loading)
 
-      // If we somehow managed to get here twice (due to some Android weirdness) we need to manually
-      // reload navigation history, otherwise we will be stuck in Loading state until something
-      // updates the nav history.
-      if (historyNavigationManager.isReady()) {
-        reloadNavigationHistory()
-      }
-
       historyNavigationManager.listenForNavigationStackChanges()
         .asFlow()
         .collect {
@@ -103,7 +96,7 @@ class MainControllerPresenter(
     }
   }
 
-  private fun handleEvents(bookmarkChange: BookmarksManager.BookmarkChange?) {
+  private suspend fun handleEvents(bookmarkChange: BookmarksManager.BookmarkChange?) {
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksCreated) {
       val newNavigationElements = bookmarkChange.threadDescriptors
         .mapNotNull { threadDescriptor -> createNewNavigationElement(threadDescriptor) }
@@ -179,7 +172,7 @@ class MainControllerPresenter(
       .hide()
   }
 
-  fun deleteNavElement(descriptor: ChanDescriptor) {
+  suspend fun deleteNavElement(descriptor: ChanDescriptor) {
     if (descriptor is ChanDescriptor.ThreadDescriptor) {
       if (bookmarksManager.exists(descriptor)) {
         bookmarksManager.deleteBookmark(descriptor)
@@ -189,7 +182,7 @@ class MainControllerPresenter(
     historyNavigationManager.deleteNavElement(descriptor)
   }
 
-  fun pinOrUnpin(descriptor: ChanDescriptor): HistoryNavigationManager.PinResult {
+  suspend fun pinOrUnpin(descriptor: ChanDescriptor): HistoryNavigationManager.PinResult {
     return historyNavigationManager.pinOrUnpin(descriptor)
   }
 
@@ -237,7 +230,6 @@ class MainControllerPresenter(
   }
 
   private suspend fun showNavigationHistoryInternal() {
-    historyNavigationManager.awaitUntilInitialized()
     siteManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
 

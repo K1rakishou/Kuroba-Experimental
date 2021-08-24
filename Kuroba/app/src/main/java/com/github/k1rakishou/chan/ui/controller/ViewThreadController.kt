@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.B
 import com.github.k1rakishou.chan.core.manager.BookmarksManager.BookmarkChange.BookmarksInitialized
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
@@ -493,7 +494,10 @@ open class ViewThreadController(
 
   private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
     Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
-    historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
+
+    if (historyNavigationManager.isInitialized) {
+      historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
+    }
 
     if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
       val browseController = doubleNavigationController!!.getLeftController() as BrowseController
@@ -535,7 +539,10 @@ open class ViewThreadController(
     openingPreviousThread: Boolean = false
   ) {
     Logger.d(TAG, "loadThread($threadDescriptor)")
-    historyNavigationManager.moveNavElementToTop(threadDescriptor)
+
+    if (historyNavigationManager.isInitialized) {
+      historyNavigationManager.moveNavElementToTop(threadDescriptor)
+    }
 
     val presenter = threadLayout.presenter
     if (threadDescriptor != presenter.currentChanDescriptor) {
@@ -741,7 +748,11 @@ open class ViewThreadController(
     super.onGainedFocus(nowFocused)
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
-    historyNavigationManager.moveNavElementToTop(threadDescriptor)
+    if (historyNavigationManager.isInitialized) {
+      mainScope.launch { historyNavigationManager.moveNavElementToTop(threadDescriptor) }
+    }
+
+    currentOpenedDescriptorStateManager.updateCurrentFocusedController(ThreadPresenter.CurrentFocusedController.Thread)
   }
 
   companion object {

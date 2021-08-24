@@ -43,4 +43,20 @@ class NavHistoryLocalSource(
     navHistoryDao.deleteAllExcept(navHistoryIdList)
   }
 
+  suspend fun getFirstNavElement(): NavHistoryElement? {
+    ensureInTransaction()
+
+    return navHistoryDao.selectFirstNavElement()?.let { navHistoryFullDto ->
+      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto)
+    }
+  }
+
+  suspend fun getFirstCatalogNavElement(): NavHistoryElement? {
+    ensureInTransaction()
+
+    return navHistoryDao.selectFirstCatalogNavElement()?.let { navHistoryFullDto ->
+      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto)
+    }
+  }
+
 }

@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
@@ -104,6 +105,8 @@ abstract class ThreadController(
   lateinit var _appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
   lateinit var _dialogFactory: Lazy<DialogFactory>
+  @Inject
+  lateinit var _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 
   protected val siteManager: SiteManager
     get() = _siteManager.get()
@@ -119,6 +122,9 @@ abstract class ThreadController(
     get() = _chanThreadManager.get()
   protected val threadFollowHistoryManager: ThreadFollowHistoryManager
     get() = _threadFollowHistoryManager.get()
+  protected val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+    get() = _currentOpenedDescriptorStateManager.get()
+
   private val applicationVisibilityManager: ApplicationVisibilityManager
     get() = _applicationVisibilityManager.get()
   private val globalWindowInsetsManager: GlobalWindowInsetsManager

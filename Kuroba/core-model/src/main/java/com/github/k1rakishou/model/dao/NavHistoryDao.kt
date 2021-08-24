@@ -40,4 +40,25 @@ abstract class NavHistoryDao {
   """)
   abstract suspend fun deleteAllExcept(excludedIds: List<Long>)
 
+  @Query("""
+    SELECT * 
+    FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
+    INNER JOIN ${NavHistoryElementInfoEntity.TABLE_NAME} nav_infos
+        ON nav_ids.${NavHistoryElementIdEntity.ID_COLUMN_NAME} = nav_infos.${NavHistoryElementInfoEntity.OWNER_NAV_HISTORY_ID_COLUMN_NAME}
+    ORDER BY nav_infos.${NavHistoryElementInfoEntity.ELEMENT_ORDER_COLUMN_NAME} ASC
+    LIMIT 1
+  """)
+  abstract fun selectFirstNavElement(): NavHistoryFullDto?
+
+  @Query("""
+    SELECT * 
+    FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
+    INNER JOIN ${NavHistoryElementInfoEntity.TABLE_NAME} nav_infos
+        ON nav_ids.${NavHistoryElementIdEntity.ID_COLUMN_NAME} = nav_infos.${NavHistoryElementInfoEntity.OWNER_NAV_HISTORY_ID_COLUMN_NAME}
+    WHERE nav_ids.${NavHistoryElementIdEntity.THREAD_NO_COLUMN_NAME} = -1
+    ORDER BY nav_infos.${NavHistoryElementInfoEntity.ELEMENT_ORDER_COLUMN_NAME} ASC
+    LIMIT 1
+  """)
+  abstract fun selectFirstCatalogNavElement(): NavHistoryFullDto?
+
 }

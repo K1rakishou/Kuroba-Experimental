@@ -3,10 +3,12 @@ package com.github.k1rakishou.chan.core.helper
 import java.util.concurrent.atomic.AtomicBoolean
 
 class OneShotRunnable {
-  private val alreadyRun = AtomicBoolean(false)
+  private val _alreadyRun = AtomicBoolean(false)
+  val alreadyRun: Boolean
+    get() = _alreadyRun.get()
 
   suspend fun runIfNotYet(func: suspend () -> Unit) {
-    if (!alreadyRun.compareAndSet(false, true)) {
+    if (!_alreadyRun.compareAndSet(false, true)) {
       return
     }
 

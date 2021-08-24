@@ -134,9 +134,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "getThreadToOpen(), loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
     if (loadLastOpenedThreadUponAppStart) {
-      val hnm = historyNavigationManager.get().apply { awaitUntilInitialized() }
-
-      val threadDescriptor = hnm.getNavElementAtTop()
+      val threadDescriptor = historyNavigationManager.get().getNavElementAtTop()
         ?.descriptor()
         ?.threadDescriptorOrNull()
 
@@ -162,9 +160,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
     if (loadLastOpenedBoardUponAppStart) {
-      val hnm = historyNavigationManager.get().apply { awaitUntilInitialized() }
-
-      val boardDescriptor = hnm.getFirstCatalogNavElement()
+      val boardDescriptor = historyNavigationManager.get().getFirstCatalogNavElement()
         ?.descriptor()
         ?.boardDescriptor()
 

@@ -86,9 +86,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import okhttp3.HttpUrl
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.time.ExperimentalTime
+import kotlin.time.measureTimedValue
 
 class ThreadPresenter @Inject constructor(
   private val _bookmarksManager: Lazy<BookmarksManager>,
@@ -179,7 +181,7 @@ class ThreadPresenter @Inject constructor(
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
-  private var alreadyCreatedNavElement = false
+  private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
@@ -218,6 +220,7 @@ class ThreadPresenter @Inject constructor(
   private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var postBindExecutor: SerializedCoroutineExecutor
+  private lateinit var afterCatalogOrThreadLoadedExecutor: SerializedCoroutineExecutor
   private lateinit var context: Context
 
   override val coroutineContext: CoroutineContext
@@ -300,6 +303,7 @@ class ThreadPresenter @Inject constructor(
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
     postBindExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
+    afterCatalogOrThreadLoadedExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
 
     if (chanThreadTicker.currentChanDescriptor != null) {
       unbindChanDescriptor(false)
@@ -338,7 +342,7 @@ class ThreadPresenter @Inject constructor(
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     Logger.d(TAG, "unbindChanDescriptor(isDestroying=$isDestroying) currentChanDescriptor=$currentChanDescriptor")
 
-    alreadyCreatedNavElement = false
+    alreadyCreatedNavElement.set(false)
 
     if (currentChanDescriptor != null) {
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
@@ -372,6 +376,10 @@ class ThreadPresenter @Inject constructor(
 
       if (::postBindExecutor.isInitialized) {
         postBindExecutor.stop()
+      }
+
+      if (::afterCatalogOrThreadLoadedExecutor.isInitialized) {
+        afterCatalogOrThreadLoadedExecutor.stop()
       }
     }
 
@@ -457,6 +465,7 @@ class ThreadPresenter @Inject constructor(
     return catalogSnapshot.getNextCatalogPage()
   }
 
+  @OptIn(ExperimentalTime::class)
   fun normalLoad(
     showLoading: Boolean = false,
     chanCacheUpdateOptions: ChanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
@@ -483,7 +492,7 @@ class ThreadPresenter @Inject constructor(
     currentLoadThreadJob = launch {
       if (showLoading) {
         threadPresenterCallback?.showLoading()
-        alreadyCreatedNavElement = false
+        alreadyCreatedNavElement.set(false)
       }
 
       if (deleteChanCatalogSnapshot) {
@@ -520,7 +529,8 @@ class ThreadPresenter @Inject constructor(
           onChanLoaderError(threadLoadResult.chanDescriptor, threadLoadResult.exception)
         }
         is ThreadLoadResult.Loaded -> {
-          val successfullyProcessedNewPosts = onChanLoaderData(threadLoadResult.chanDescriptor)
+          val (successfullyProcessedNewPosts, time) = measureTimedValue { onChanLoaderData(threadLoadResult.chanDescriptor) }
+          Logger.d(TAG, "onChanLoaderData(${threadLoadResult.chanDescriptor}) end, took $time")
 
           if (!successfullyProcessedNewPosts) {
             val error = getPossibleChanLoadError(currentChanDescriptor)
@@ -809,13 +819,14 @@ class ThreadPresenter @Inject constructor(
 
     handleMarkedPost()
 
-    if (!alreadyCreatedNavElement) {
-      alreadyCreatedNavElement = true
-      createNewNavHistoryElement(localChanDescriptor)
-    }
+    afterCatalogOrThreadLoadedExecutor.post {
+      if (alreadyCreatedNavElement.compareAndSet(false, true)) {
+        createNewNavHistoryElement(localChanDescriptor)
+      }
 
-    if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      updateBookmarkInfoIfNecessary(localChanDescriptor)
+      if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        updateBookmarkInfoIfNecessary(localChanDescriptor)
+      }
     }
 
     return true
@@ -922,7 +933,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun createNewNavHistoryElement(
+  private suspend fun createNewNavHistoryElement(
     localChanDescriptor: ChanDescriptor,
     canInsertAtTheBeginning: Boolean = true
   ) {

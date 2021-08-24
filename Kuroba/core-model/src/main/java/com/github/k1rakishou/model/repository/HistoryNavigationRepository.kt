@@ -47,4 +47,20 @@ class HistoryNavigationRepository(
     }
   }
 
+  suspend fun getFirstNavElement(): ModularResult<NavHistoryElement?> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.getFirstNavElement()
+      }
+    }
+  }
+
+  suspend fun getFirstCatalogNavElement(): ModularResult<NavHistoryElement?> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.getFirstCatalogNavElement()
+      }
+    }
+  }
+
 }

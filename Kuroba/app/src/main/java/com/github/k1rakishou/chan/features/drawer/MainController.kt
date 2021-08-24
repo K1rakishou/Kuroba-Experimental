@@ -1174,13 +1174,15 @@ class MainController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = drawerOptions,
-      itemClickListener = { item -> onDrawerOptionClicked(item) }
+      itemClickListener = { item ->
+        mainScope.launch { onDrawerOptionClicked(item) }
+      }
     )
 
     presentController(floatingListMenuController)
   }
 
-  private fun onDrawerOptionClicked(item: FloatingListMenuItem) {
+  private suspend fun onDrawerOptionClicked(item: FloatingListMenuItem) {
     when (item.key) {
       ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
         ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
@@ -1212,34 +1214,40 @@ class MainController(
           titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
           negativeButtonText = getString(R.string.do_not),
           positiveButtonText = getString(R.string.clear),
-          onPositiveButtonClickListener = { historyNavigationManager.clear() }
+          onPositiveButtonClickListener = {
+            mainScope.launch { historyNavigationManager.clear() }
+          }
         )
       }
     }
   }
 
   private fun onHistoryEntryViewLongClicked(navHistoryEntry: NavigationHistoryEntry) {
-    val chanDescriptorString = navHistoryEntry.descriptor.userReadableString()
+    mainScope.launch {
+      val chanDescriptorString = navHistoryEntry.descriptor.userReadableString()
 
-    when (drawerPresenter.pinOrUnpin(navHistoryEntry.descriptor)) {
-      HistoryNavigationManager.PinResult.Pinned -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_pinned, chanDescriptorString))
-      }
-      HistoryNavigationManager.PinResult.Unpinned -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_unpinned, chanDescriptorString))
-      }
-      HistoryNavigationManager.PinResult.Failure -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin, chanDescriptorString))
-      }
-      HistoryNavigationManager.PinResult.NoSpaceToPin -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_no_slots_for_pin, chanDescriptorString))
+      when (drawerPresenter.pinOrUnpin(navHistoryEntry.descriptor)) {
+        HistoryNavigationManager.PinResult.Pinned -> {
+          showToast(getString(R.string.drawer_controller_navigation_entry_pinned, chanDescriptorString))
+        }
+        HistoryNavigationManager.PinResult.Unpinned -> {
+          showToast(getString(R.string.drawer_controller_navigation_entry_unpinned, chanDescriptorString))
+        }
+        HistoryNavigationManager.PinResult.Failure -> {
+          showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin, chanDescriptorString))
+        }
+        HistoryNavigationManager.PinResult.NoSpaceToPin -> {
+          showToast(getString(R.string.drawer_controller_navigation_entry_no_slots_for_pin, chanDescriptorString))
+        }
       }
     }
   }
 
   private fun onNavHistoryDeleteClicked(descriptor: ChanDescriptor) {
-    drawerPresenter.deleteNavElement(descriptor)
-    showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
+    mainScope.launch {
+      drawerPresenter.deleteNavElement(descriptor)
+      showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
+    }
   }
 
   private fun onHistoryEntryViewClicked(navHistoryEntry: NavigationHistoryEntry) {

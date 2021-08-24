@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.presenter.BrowsePresenter
+import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -671,13 +672,8 @@ class BrowseController(
 
       val catalogDescriptor = CatalogDescriptor.create(boardDescriptor)
 
-      historyNavigationManager.moveNavElementToTop(catalogDescriptor)
-      boardManager.updateCurrentBoard(boardDescriptor)
-
       navigation.title = "/" + boardDescriptor.boardCode + "/"
       navigation.subtitle = board.name ?: ""
-
-      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
 
       if (!menuBuiltOnce) {
         menuBuiltOnce = true
@@ -685,8 +681,14 @@ class BrowseController(
       }
 
       updateMenuItems()
-
       requireNavController().requireToolbar().updateTitle(navigation)
+
+      if (historyNavigationManager.isInitialized) {
+        historyNavigationManager.moveNavElementToTop(catalogDescriptor)
+      }
+
+      boardManager.updateCurrentBoard(boardDescriptor)
+      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
     }
   }
 
@@ -821,7 +823,10 @@ class BrowseController(
         }
       }
 
-      historyNavigationManager.moveNavElementToTop(descriptor)
+      if (historyNavigationManager.isInitialized) {
+        historyNavigationManager.moveNavElementToTop(descriptor)
+      }
+
       initialized = true
     }
   }
@@ -886,9 +891,11 @@ class BrowseController(
     super.onGainedFocus(nowFocused)
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
-    if (chanDescriptor != null) {
-      historyNavigationManager.moveNavElementToTop(chanDescriptor!!)
+    if (chanDescriptor != null && historyNavigationManager.isInitialized) {
+      mainScope.launch { historyNavigationManager.moveNavElementToTop(chanDescriptor!!) }
     }
+
+    currentOpenedDescriptorStateManager.updateCurrentFocusedController(ThreadPresenter.CurrentFocusedController.Catalog)
   }
 
   companion object {

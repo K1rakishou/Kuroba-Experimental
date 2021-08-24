@@ -300,13 +300,15 @@ public class ManagerModule {
     public HistoryNavigationManager provideHistoryNavigationManager(
             CoroutineScope appScope,
             Lazy<HistoryNavigationRepository> historyNavigationRepository,
-            Lazy<ApplicationVisibilityManager> applicationVisibilityManager
+            Lazy<ApplicationVisibilityManager> applicationVisibilityManager,
+            Lazy<CurrentOpenedDescriptorStateManager> currentOpenedDescriptorStateManager
     ) {
         Logger.deps("HistoryNavigationManager");
         return new HistoryNavigationManager(
                 appScope,
                 historyNavigationRepository,
-                applicationVisibilityManager
+                applicationVisibilityManager,
+                currentOpenedDescriptorStateManager
         );
     }
 

@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.manager
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -22,11 +22,11 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.util.concurrent.atomic.AtomicBoolean
-import java.util.concurrent.locks.ReentrantReadWriteLock
-import kotlin.concurrent.read
-import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.seconds
@@ -34,23 +34,30 @@ import kotlin.time.seconds
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
   private val _historyNavigationRepository: Lazy<HistoryNavigationRepository>,
-  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
+  private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
+  private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
   private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
   private val persistTaskSubject = PublishProcessor.create<Unit>()
   private val persistRunning = AtomicBoolean(false)
-  private val suspendableInitializer = SuspendableInitializer<Unit>("HistoryNavigationManager")
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
-  private val lock = ReentrantReadWriteLock()
-  @GuardedBy("lock")
+  private val mutex = Mutex()
+  @GuardedBy("mutex")
   private val navigationStack = mutableListWithCap<NavHistoryElement>(MAX_NAV_HISTORY_ENTRIES)
+
+  private val initializationRunnable = OneShotRunnable()
 
   private val historyNavigationRepository: HistoryNavigationRepository
     get() = _historyNavigationRepository.get()
   private val applicationVisibilityManager: ApplicationVisibilityManager
     get() = _applicationVisibilityManager.get()
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+    get() = _currentOpenedDescriptorStateManager.get()
+
+  val isInitialized: Boolean
+    get() = initializationRunnable.alreadyRun
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
@@ -66,77 +73,6 @@ class HistoryNavigationManager(
           persisNavigationStack(eager = false)
         }
     }
-
-    appScope.launch(Dispatchers.IO) {
-      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() start")
-      val time = measureTime { initializeHistoryNavigationManagerInternal() }
-      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end, took $time")
-    }
-  }
-
-  private suspend fun initializeHistoryNavigationManagerInternal() {
-    @Suppress("MoveVariableDeclarationIntoWhen")
-    val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
-    when (loadedNavElementsResult) {
-      is ModularResult.Value -> {
-        lock.write {
-          navigationStack.clear()
-          navigationStack.addAll(loadedNavElementsResult.value)
-        }
-
-        suspendableInitializer.initWithValue(Unit)
-        Logger.d(TAG, "initializeHistoryNavigationManagerInternal() done. " +
-          "Loaded ${loadedNavElementsResult.value.size} history nav elements")
-      }
-      is ModularResult.Error -> {
-        suspendableInitializer.initWithError(loadedNavElementsResult.error)
-        Logger.e(TAG, "initializeHistoryNavigationManagerInternal() error", loadedNavElementsResult.error)
-      }
-    }
-
-    navStackChanged()
-  }
-
-  private fun startListeningForAppVisibilityUpdates() {
-    applicationVisibilityManager.addListener { visibility ->
-      if (!suspendableInitializer.isInitialized()) {
-        return@addListener
-      }
-
-      if (visibility != ApplicationVisibility.Background) {
-        return@addListener
-      }
-
-      persisNavigationStack(eager = true)
-    }
-  }
-
-  fun contains(descriptor: ChanDescriptor): Boolean {
-    return lock.read {
-      navigationStack.any { navHistoryElement -> navHistoryElement.descriptor() == descriptor }
-    }
-  }
-
-  fun getAll(reversed: Boolean = false): List<NavHistoryElement> {
-    return lock.read {
-      if (reversed) {
-        return@read navigationStack.toList().reversed()
-      } else {
-        return@read navigationStack.toList()
-      }
-    }
-  }
-
-  fun getNavElementAtTop(): NavHistoryElement? {
-    return lock.read { navigationStack.firstOrNull() }
-  }
-
-  fun getFirstCatalogNavElement(): NavHistoryElement? {
-    return lock.read {
-      return@read navigationStack.firstOrNull { navHistoryElement ->
-        navHistoryElement is NavHistoryElement.Catalog
-      }
-    }
   }
 
   fun listenForNavigationStackChanges(): Flowable<Unit> {
@@ -146,9 +82,48 @@ class HistoryNavigationManager(
       .hide()
   }
 
-  suspend fun awaitUntilInitialized() = suspendableInitializer.awaitUntilInitialized()
+  suspend fun contains(descriptor: ChanDescriptor): Boolean {
+    ensureInitialized()
 
-  fun isReady() = suspendableInitializer.isInitialized()
+    return mutex.withLock {
+      navigationStack.any { navHistoryElement -> navHistoryElement.descriptor() == descriptor }
+    }
+  }
+
+  suspend fun getAll(reversed: Boolean = false): List<NavHistoryElement> {
+    ensureInitialized()
+
+    return mutex.withLock {
+      if (reversed) {
+        return@withLock navigationStack.toList().reversed()
+      } else {
+        return@withLock navigationStack.toList()
+      }
+    }
+  }
+
+  suspend fun getNavElementAtTop(): NavHistoryElement? {
+    if (initializationRunnable.alreadyRun) {
+      return mutex.withLock { navigationStack.firstOrNull() }
+    } else {
+      return historyNavigationRepository.getFirstNavElement()
+        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstNavElement() error", error) }
+        .valueOrNull()
+    }
+  }
+
+  suspend fun getFirstCatalogNavElement(): NavHistoryElement? {
+    if (initializationRunnable.alreadyRun) {
+      return mutex.withLock {
+        return@withLock navigationStack
+          .firstOrNull { navHistoryElement -> navHistoryElement is NavHistoryElement.Catalog }
+      }
+    } else {
+      return historyNavigationRepository.getFirstCatalogNavElement()
+        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstCatalogNavElement() error", error) }
+        .valueOrNull()
+    }
+  }
 
   fun canCreateNavElement(
     bookmarksManager: BookmarksManager,
@@ -175,12 +150,14 @@ class HistoryNavigationManager(
     return true
   }
 
-  fun createNewNavElement(
+  suspend fun createNewNavElement(
     descriptor: ChanDescriptor,
     thumbnailImageUrl: HttpUrl,
     title: String,
     canInsertAtTheBeginning: Boolean
   ) {
+    ensureInitialized()
+
     val newNavigationElement = NewNavigationElement(descriptor, thumbnailImageUrl, title)
     createNewNavElements(listOf(newNavigationElement), canInsertAtTheBeginning)
   }
@@ -195,13 +172,15 @@ class HistoryNavigationManager(
    * restart we will attempt to open last bookmarked thread/thread added to nav history instead of
    * the catalog navigation element.
    * */
-  fun createNewNavElements(
+  suspend fun createNewNavElements(
     newNavigationElements: Collection<NewNavigationElement>,
     canInsertAtTheBeginning: Boolean
   ) {
     if (newNavigationElements.isEmpty()) {
       return
     }
+
+    ensureInitialized()
 
     var created = false
 
@@ -233,12 +212,14 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
+  suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
     if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
       return
     }
 
-    lock.write {
+    ensureInitialized()
+
+    mutex.withLock {
       val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
         return@indexOfFirst when (navHistoryElement) {
           is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
@@ -247,11 +228,11 @@ class HistoryNavigationManager(
       }
 
       if (indexOfElem < 0) {
-        return@write
+        return@withLock
       }
 
       if (navigationStack.getOrNull(indexOfElem)?.navHistoryElementInfo?.pinned == true) {
-        return@write
+        return@withLock
       }
 
       val lastPinnedElementPosition = navigationStack
@@ -264,7 +245,7 @@ class HistoryNavigationManager(
       }
 
       if (newIndex == indexOfElem) {
-        return@write
+        return@withLock
       }
 
       navigationStack.addSafe(newIndex, navigationStack.removeAt(indexOfElem))
@@ -273,15 +254,17 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  private fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
-    return lock.write {
+  private suspend fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
+    ensureInitialized()
+
+    return mutex.withLock {
       val indexOfElem = navigationStack.indexOf(navElement)
       if (indexOfElem >= 0) {
-        return@write false
+        return@withLock false
       }
 
       if (navigationStack.getOrNull(indexOfElem)?.navHistoryElementInfo?.pinned == true) {
-        return@write false
+        return@withLock false
       }
 
       val lastPinnedElementPosition = navigationStack
@@ -300,16 +283,18 @@ class HistoryNavigationManager(
       }
 
       if (newIndex == indexOfElem) {
-        return@write false
+        return@withLock false
       }
 
       navigationStack.addSafe(newIndex, navElement)
-      return@write true
+      return@withLock true
     }
   }
 
-  fun pinOrUnpin(chanDescriptor: ChanDescriptor): PinResult {
-    val pinResult = lock.write {
+  suspend fun pinOrUnpin(chanDescriptor: ChanDescriptor): PinResult {
+    ensureInitialized()
+
+    val pinResult = mutex.withLock {
       val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
         return@indexOfFirst when (navHistoryElement) {
           is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
@@ -318,28 +303,36 @@ class HistoryNavigationManager(
       }
 
       if (indexOfElem < 0) {
-        return@write PinResult.Failure
+        return@withLock PinResult.Failure
       }
 
       val lastPinnedElementIndex = navigationStack
         .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
 
       if (lastPinnedElementIndex >= navigationStack.lastIndex) {
-        return@write PinResult.NoSpaceToPin
+        return@withLock PinResult.NoSpaceToPin
       }
+
+      val navHistoryElementDescriptor = navigationStack.get(indexOfElem).descriptor()
+      val navHistoryElementInfo = navigationStack.get(indexOfElem).navHistoryElementInfo
+      navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
+
+      val isDescriptorCurrentlyOpened =
+        navHistoryElementDescriptor == currentOpenedDescriptorStateManager.currentFocusedDescriptor
 
       val nextPinnedElementIndex = if (lastPinnedElementIndex < 0) {
         0
       } else {
-        lastPinnedElementIndex + 1
+        if (!navHistoryElementInfo.pinned && isDescriptorCurrentlyOpened) {
+          lastPinnedElementIndex
+        } else {
+          lastPinnedElementIndex + 1
+        }
       }
-
-      val navHistoryElementInfo = navigationStack.get(indexOfElem).navHistoryElementInfo
-      navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
 
       navigationStack.addSafe(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
 
-      return@write if (navHistoryElementInfo.pinned) {
+      return@withLock if (navHistoryElementInfo.pinned) {
         PinResult.Pinned
       } else {
         PinResult.Unpinned
@@ -354,16 +347,20 @@ class HistoryNavigationManager(
     return pinResult
   }
 
-  fun deleteNavElement(descriptor: ChanDescriptor) {
+  suspend fun deleteNavElement(descriptor: ChanDescriptor) {
+    ensureInitialized()
+
     removeNavElements(listOf(descriptor))
   }
 
-  fun removeNavElements(descriptors: Collection<ChanDescriptor>) {
+  suspend fun removeNavElements(descriptors: Collection<ChanDescriptor>) {
     if (descriptors.isEmpty()) {
       return
     }
 
-    val removed = lock.write {
+    ensureInitialized()
+
+    val removed = mutex.withLock {
       var removed = false
 
       descriptors.forEach { chanDescriptor ->
@@ -382,7 +379,7 @@ class HistoryNavigationManager(
         removed = true
       }
 
-      return@write removed
+      return@withLock removed
     }
 
     if (!removed) {
@@ -392,12 +389,14 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  fun removeNonBookmarkNavElements(bookmarkDescriptors: Set<ChanDescriptor.ThreadDescriptor>) {
+  suspend fun removeNonBookmarkNavElements(bookmarkDescriptors: Set<ChanDescriptor.ThreadDescriptor>) {
     if (bookmarkDescriptors.isEmpty()) {
       return
     }
 
-    val removed = lock.write {
+    ensureInitialized()
+
+    val removed = mutex.withLock {
       var removed = false
 
       navigationStack.mutableIteration { mutableIterator, navHistoryElement ->
@@ -417,7 +416,7 @@ class HistoryNavigationManager(
         return@mutableIteration true
       }
 
-      return@write removed
+      return@withLock removed
     }
 
     if (!removed) {
@@ -427,14 +426,16 @@ class HistoryNavigationManager(
     navStackChanged()
   }
 
-  fun clear() {
-    val cleared = lock.write {
+  suspend fun clear() {
+    ensureInitialized()
+
+    val cleared = mutex.withLock {
       if (navigationStack.isEmpty()) {
-        return@write false
+        return@withLock false
       }
 
       navigationStack.clear()
-      return@write true
+      return@withLock true
     }
 
     if (!cleared) {
@@ -445,10 +446,6 @@ class HistoryNavigationManager(
   }
 
   private fun persisNavigationStack(eager: Boolean = false) {
-    if (!suspendableInitializer.isInitialized()) {
-      return
-    }
-
     if (!persistRunning.compareAndSet(false, true)) {
       return
     }
@@ -458,7 +455,10 @@ class HistoryNavigationManager(
         Logger.d(TAG, "persistNavigationStack eager called")
 
         try {
-          val navStackCopy = lock.read { navigationStack.toList() }
+          val navStackCopy = mutex.withLock { navigationStack.toList() }
+          if (navStackCopy.isEmpty()) {
+            return@launch
+          }
 
           historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
@@ -475,7 +475,10 @@ class HistoryNavigationManager(
         Logger.d(TAG, "persistNavigationStack async called")
 
         try {
-          val navStackCopy = lock.read { navigationStack.toList() }
+          val navStackCopy = mutex.withLock { navigationStack.toList() }
+          if (navStackCopy.isEmpty()) {
+            return@post
+          }
 
           historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
@@ -493,6 +496,52 @@ class HistoryNavigationManager(
   private fun navStackChanged() {
     navigationStackChangesSubject.onNext(Unit)
     persistTaskSubject.onNext(Unit)
+  }
+
+  private suspend fun ensureInitialized() {
+    initializationRunnable.runIfNotYet { initializeHistoryNavigationManagerInternal() }
+  }
+
+  @OptIn(ExperimentalTime::class)
+  private suspend fun initializeHistoryNavigationManagerInternal() {
+    withContext(Dispatchers.IO) {
+      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() start")
+
+      val time = measureTime {
+        @Suppress("MoveVariableDeclarationIntoWhen")
+        val loadedNavElementsResult = historyNavigationRepository.initialize(MAX_NAV_HISTORY_ENTRIES)
+        when (loadedNavElementsResult) {
+          is ModularResult.Value -> {
+            mutex.withLock {
+              navigationStack.clear()
+              navigationStack.addAll(loadedNavElementsResult.value)
+            }
+
+            Logger.d(
+              TAG, "initializeHistoryNavigationManagerInternal() done. " +
+                "Loaded ${loadedNavElementsResult.value.size} history nav elements"
+            )
+          }
+          is ModularResult.Error -> {
+            Logger.e(TAG, "initializeHistoryNavigationManagerInternal() error", loadedNavElementsResult.error)
+          }
+        }
+
+        navStackChanged()
+      }
+
+      Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end, took $time")
+    }
+  }
+
+  private fun startListeningForAppVisibilityUpdates() {
+    applicationVisibilityManager.addListener { visibility ->
+      if (visibility != ApplicationVisibility.Background) {
+        return@addListener
+      }
+
+      persisNavigationStack(eager = true)
+    }
   }
 
   private fun <T> MutableList<T>.addSafe(index: Int, element: T) {
