@@ -27,7 +27,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import dagger.Lazy
 import okhttp3.HttpUrl
-import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -165,14 +164,10 @@ class ThumbnailMediaView @JvmOverloads constructor(
     Logger.e(TAG, "onThumbnailImageError()", exception)
 
     if (exception.isExceptionImportant()) {
-      val message = String.format(
-        Locale.ENGLISH,
-        "%s: %s",
-        AppModuleAndroidUtils.getString(R.string.image_preview_failed),
-        exception.errorMessageOrClassName()
+      cancellableToast.showToast(
+        context,
+        getString(R.string.image_image_thumbnail_load_failed, exception.errorMessageOrClassName())
       )
-
-      cancellableToast.showToast(context, message)
     }
   }
 

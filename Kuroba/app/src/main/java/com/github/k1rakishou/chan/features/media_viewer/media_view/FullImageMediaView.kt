@@ -223,7 +223,7 @@ class FullImageMediaView(
             if (error.isExceptionImportant() && shown) {
               cancellableToast.showToast(
                 context,
-                getString(R.string.image_failed_big_image_error, error.errorMessageOrClassName())
+                getString(R.string.image_image_download_failed, error.errorMessageOrClassName())
               )
             }
 
@@ -324,11 +324,10 @@ class FullImageMediaView(
           }
 
           if (shown) {
-            if (e.cause is OutOfMemoryError) {
-              cancellableToast.showToast(context, R.string.image_preview_failed_oom)
-            } else {
-              cancellableToast.showToast(context, R.string.image_failed_big_image)
-            }
+            cancellableToast.showToast(
+              context,
+              getString(R.string.image_image_load_failed, e.errorMessageOrClassName())
+            )
           }
 
           actualImageView.setVisibilityFast(View.INVISIBLE)
