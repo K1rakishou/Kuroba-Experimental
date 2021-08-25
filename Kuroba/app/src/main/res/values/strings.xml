@@ -279,6 +279,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thumbnail_omitted_files_indicator_text">+%1$d</string>
     <string name="image_preview_failed">Failed to show image</string>
     <string name="image_preview_failed_oom">Failed to show image (out of memory)</string>
+    <string name="image_tile_load_failed">Failed to load image tile (reason: %1$s)</string>
     <string name="image_failed_big_image">Failed to show image (deep-zoom loading failed)</string>
     <string name="image_failed_big_image_error">Failed to show IMAGE, error: \"%1$s\"</string>
     <string name="image_failed_gif_error">Failed to show GIF, error: \"%1$s\"</string>

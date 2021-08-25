@@ -314,8 +314,8 @@ class FullImageMediaView(
           }
         }
 
-        override fun onError(e: Exception, wasInitial: Boolean) {
-          Logger.e(TAG, "onFullImageUnknownError()", e)
+        override fun onImageLoadError(e: Exception) {
+          Logger.e(TAG, "onImageLoadError()", e)
           animationAwaitable.complete(Unit)
 
           if (!e.isExceptionImportant()) {
@@ -323,14 +323,27 @@ class FullImageMediaView(
             return
           }
 
-          if (e.cause is OutOfMemoryError && shown) {
-            cancellableToast.showToast(context, R.string.image_preview_failed_oom)
-          } else {
-            cancellableToast.showToast(context, R.string.image_failed_big_image)
+          if (shown) {
+            if (e.cause is OutOfMemoryError) {
+              cancellableToast.showToast(context, R.string.image_preview_failed_oom)
+            } else {
+              cancellableToast.showToast(context, R.string.image_failed_big_image)
+            }
           }
 
           actualImageView.setVisibilityFast(View.INVISIBLE)
         }
+
+        override fun onTileLoadError(e: Exception) {
+          Logger.e(TAG, "onTileLoadError()", e)
+          animationAwaitable.complete(Unit)
+
+          cancellableToast.showToast(
+            context,
+            getString(R.string.image_tile_load_failed, e.errorMessageOrClassName())
+          )
+        }
+
       })
 
       actualImageView.setOnClickListener(null)

@@ -67,14 +67,14 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
             @Override
             public void onImageLoadError(Exception e) {
                 if (callback != null) {
-                    callback.onError(e, true);
+                    callback.onImageLoadError(e);
                 }
             }
 
             @Override
             public void onTileLoadError(Exception e) {
                 if (callback != null) {
-                    callback.onError(e, false);
+                    callback.onTileLoadError(e);
                 }
             }
         });
@@ -144,6 +144,8 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
 
         void onImageLoaded();
 
-        void onError(Exception e, boolean wasInitial);
+        void onImageLoadError(Exception e);
+
+        void onTileLoadError(Exception e);
     }
 }
