@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
@@ -34,6 +35,7 @@ class DeveloperSettingsScreen(
   private val fileCacheV2: FileCacheV2,
   private val themeEngine: ThemeEngine,
   private val appConstants: AppConstants,
+  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -128,7 +130,7 @@ class DeveloperSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ThreadDownloadCacheSize,
-          topDescriptionStringFunc = { context.getString(R.string.settings_thread_download_cache_size) },
+          topDescriptionStringFunc = { context.getString(R.string.settings_clear_thread_downloader_disk_cache) },
           bottomDescriptionStringFunc = {
             val oneMb = 1024L * 1024L
 
@@ -142,8 +144,22 @@ class DeveloperSettingsScreen(
             )
           },
           callback = {
-            showToast(context, "Cannot clear thread download cache. You have to delete thread downloads " +
-              "in the local archive screen.")
+            dialogFactory.createSimpleConfirmationDialog(
+              context = context,
+              titleText = getString(R.string.settings_thread_downloader_clear_disk_cache_title),
+              descriptionText = getString(R.string.settings_thread_downloader_clear_disk_cache_description),
+              positiveButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_clear),
+              negativeButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_do_not_clear),
+              onPositiveButtonClickListener = {
+                for (file in appConstants.threadDownloaderCacheDir.listFiles() ?: emptyArray()) {
+                  if (!file.deleteRecursively()) {
+                    Logger.d(TAG, "Failed to delete ${file.absolutePath}")
+                  }
+                }
+
+                showToast(context, "Thread downloader cached cleared")
+              }
+            )
           }
         )
 
@@ -282,6 +298,10 @@ class DeveloperSettingsScreen(
 
       Logger.i("STACKDUMP-FOOTER", "----------------")
     }
+  }
+
+  companion object {
+    private const val TAG = "DeveloperSettingsScreen"
   }
 
 }

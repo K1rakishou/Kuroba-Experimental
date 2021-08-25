@@ -167,7 +167,8 @@ class SettingsCoordinator(
       cacheHandler,
       fileCacheV2,
       themeEngine,
-      appConstants
+      appConstants,
+      dialogFactory
     )
   }
 

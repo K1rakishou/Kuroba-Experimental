@@ -872,7 +872,11 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_crash_app">Crash the app</string>
     <string name="settings_clear_file_cache">Clear media/exoplayer caches</string>
     <string name="settings_clear_file_cache_bottom_description">Currently: internal cache %1$d MB, exoplayer cache: %2$d MB</string>
-    <string name="settings_thread_download_cache_size">Thread download total disk cache size</string>
+    <string name="settings_clear_thread_downloader_disk_cache">Clear thread downloader disk cache</string>
+    <string name="settings_thread_downloader_clear_disk_cache_clear">Clear cache</string>
+    <string name="settings_thread_downloader_clear_disk_cache_do_not_clear">Do not</string>
+    <string name="settings_thread_downloader_clear_disk_cache_title">Clear thread downloader disk cache?</string>
+    <string name="settings_thread_downloader_clear_disk_cache_description">This action will delete all downloaded media for all downloading/downloaded threads. Are you sure you want to do that?</string>
     <string name="settings_thread_download_cache_bottom_description">Currently: %1$d MB</string>
     <string name="settings_dump_thread_stack">Dump active thread stack traces to log</string>
     <string name="settings_reset_thread_open_counter">Reset thread open counter</string>
