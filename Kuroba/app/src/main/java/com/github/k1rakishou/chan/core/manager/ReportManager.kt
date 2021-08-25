@@ -112,7 +112,7 @@ class ReportManager(
         ?.let { msg -> logs?.contains(msg, ignoreCase = true) }
         ?: false
 
-      val resultString = buildString {
+      val resultString = buildString(capacity = 4096) {
         // To avoid log spam that may happen because of, let's say, server failure for
         // couple of days, we want some kind of marker to be able to filter them
         appendLine("=== LOGS(${getCurrentDateAndTimeUTC()}) ===")
@@ -378,11 +378,12 @@ class ReportManager(
   }
 
   fun getReportFooter(): String {
-    return buildString {
+    return buildString(capacity = 256) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
       appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
       appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
+      appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
@@ -416,6 +417,9 @@ class ReportManager(
       if (ChanSettings.filterWatchEnabled.get()) {
         appendLine("Filter watch interval: ${ChanSettings.filterWatchInterval.get()}")
       }
+
+      appendLine("Thread downloader interval: ${ChanSettings.threadDownloaderUpdateInterval.get()}")
+      appendLine("Thread downloader download media on metered network: ${ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()}")
 
       appendLine("------------------------------")
     }

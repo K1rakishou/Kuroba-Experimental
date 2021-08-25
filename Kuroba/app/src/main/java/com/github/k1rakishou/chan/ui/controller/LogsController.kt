@@ -82,7 +82,7 @@ class LogsController(context: Context) : Controller(context) {
 
       try {
         val logs = withContext(Dispatchers.IO) {
-          buildString {
+          buildString(capacity = 4096) {
             val logs = loadLogs()
             if (logs == null) {
               return@buildString
