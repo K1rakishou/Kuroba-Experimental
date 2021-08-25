@@ -23,11 +23,13 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.Dispatchers
@@ -41,6 +43,8 @@ class LogsController(context: Context) : Controller(context) {
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  @Inject
+  lateinit var reportManager: ReportManager
 
   private lateinit var logTextView: ColorizableTextView
   private lateinit var logText: String
@@ -77,8 +81,19 @@ class LogsController(context: Context) : Controller(context) {
       presentController(loadingController)
 
       try {
-        val logs = withContext(Dispatchers.IO) { loadLogs() }
-        if (logs != null) {
+        val logs = withContext(Dispatchers.IO) {
+          buildString {
+            val logs = loadLogs()
+            if (logs == null) {
+              return@buildString
+            }
+
+            appendLine(logs)
+            appendLine(reportManager.getReportFooter())
+          }
+        }
+
+        if (logs.isNotNullNorBlank()) {
           logText = logs
           logTextView.text = logText
         } else {
