@@ -30,6 +30,8 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -52,7 +54,10 @@ import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.ContentAlpha
+import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -63,6 +68,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -146,7 +152,10 @@ import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.accompanist.insets.ProvideWindowInsets
 import com.google.android.material.badge.BadgeDrawable
 import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 
@@ -913,8 +922,14 @@ class MainController(
   @Composable
   private fun ColumnScope.BuildContent() {
     val historyControllerState by drawerViewModel.historyControllerState
+    val searchState = rememberDrawerSearchState()
 
-    BuildNavigationHistoryListHeader()
+    BuildNavigationHistoryListHeader(
+      searchQuery = searchState.query,
+      onSearchQueryChanged = { newQuery -> searchState.query = newQuery },
+      onSwitchDayNightThemeIconClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) },
+      onShowDrawerOptionsIconClick = { showDrawerOptions() }
+    )
 
     val navHistoryEntryList = when (historyControllerState) {
       HistoryControllerState.Loading -> {
@@ -941,13 +956,60 @@ class MainController(
       return
     }
 
-    BuildNavigationHistoryList(navHistoryEntryList)
+    BuildNavigationHistoryList(
+      navHistoryEntryList = navHistoryEntryList,
+      searchState = searchState,
+      onHistoryEntryViewClicked = { navHistoryEntry ->
+        onHistoryEntryViewClicked(navHistoryEntry)
+        mainScope.launch {
+          delay(100L)
+          searchState.reset()
+        }
+      },
+      onHistoryEntryViewLongClicked = { navHistoryEntry -> onHistoryEntryViewLongClicked(navHistoryEntry) },
+      onNavHistoryDeleteClicked = { navHistoryEntry -> onNavHistoryDeleteClicked(navHistoryEntry.descriptor) }
+    )
   }
 
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
-  private fun BuildNavigationHistoryList(navHistoryEntryList: List<NavigationHistoryEntry>) {
+  private fun BuildNavigationHistoryList(
+    navHistoryEntryList: List<NavigationHistoryEntry>,
+    searchState: DrawerSearchState,
+    onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
+    onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
+  ) {
     val state = rememberLazyListState()
+    
+    LaunchedEffect(key1 = searchState.query, block = {
+      withContext(Dispatchers.Default) {
+        searchState.searching = true
+        searchState.results = processSearchQuery(searchState.query, navHistoryEntryList)
+        searchState.searching = false
+      }
+    })
+
+    val query = searchState.query
+    val searching = searchState.searching
+    val results = searchState.results
+
+    if (searching) {
+      return
+    }
+
+    if (results.isEmpty()) {
+      KurobaComposeText(
+        modifier = Modifier
+          .wrapContentHeight()
+          .fillMaxWidth()
+          .padding(8.dp),
+        textAlign = TextAlign.Center,
+        text = "Nothing found by query '${query}'"
+      )
+
+      return
+    }
 
     Column(modifier = Modifier.fillMaxSize()) {
       BoxWithConstraints(
@@ -975,96 +1037,169 @@ class MainController(
           contentPadding = contentPadding,
           cells = GridCells.Fixed(count = spanCount),
           content = {
-            items(count = navHistoryEntryList.size) { index ->
-              val navHistoryEntry = navHistoryEntryList.get(index)
-              BuildNavigationHistoryListEntry(navHistoryEntry)
+            items(count = results.size) { index ->
+              val navHistoryEntry = results[index]
+
+              BuildNavigationHistoryListEntry(
+                navHistoryEntry = navHistoryEntry,
+                onHistoryEntryViewClicked = onHistoryEntryViewClicked,
+                onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
+              )
             }
           })
       }
     }
   }
 
+  private fun processSearchQuery(
+    query: String,
+    navHistoryEntryList: List<NavigationHistoryEntry>
+  ): List<NavigationHistoryEntry> {
+    if (query.isEmpty()) {
+      return navHistoryEntryList
+    }
+
+    return navHistoryEntryList.filter { navigationHistoryEntry ->
+      navigationHistoryEntry.title.contains(other = query, ignoreCase = true)
+    }
+  }
+
   @Composable
-  private fun BuildNavigationHistoryListHeader() {
+  private fun BuildNavigationHistoryListHeader(
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit,
+    onSwitchDayNightThemeIconClick: () -> Unit,
+    onShowDrawerOptionsIconClick: () -> Unit
+  ) {
     val chanTheme = LocalChanTheme.current
+    val backgroundColor = chanTheme.primaryColorCompose
 
     val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
     val topInset = currentInsetsCompose.calculateTopPadding()
+    val toolbarHeight = dimensionResource(id = R.dimen.toolbar_height)
 
     Row(
       modifier = Modifier
-        .fillMaxWidth()
-        .height(42.dp + topInset)
-        .background(chanTheme.primaryColorCompose),
-      horizontalArrangement = Arrangement.End
+        .background(backgroundColor)
     ) {
-      Row(modifier = Modifier
-        .fillMaxHeight()
-        .padding(top = topInset, start = 2.dp, end = 2.dp, bottom = 4.dp)
+      Column(modifier = Modifier
+        .fillMaxWidth()
+        .height(toolbarHeight + topInset)
       ) {
-        BuildNavigationHistoryHeaderSearchInput(chanTheme)
+        Spacer(modifier = Modifier.height(topInset))
 
-        KurobaComposeIcon(
-          drawableId = R.drawable.ic_baseline_wb_sunny_24,
-          themeEngine = themeEngine,
+        Row(
           modifier = Modifier
-            .align(Alignment.CenterVertically)
-            .kurobaClickable(onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) }),
-          colorBelowIcon = chanTheme.primaryColorCompose
-        )
+          .fillMaxHeight()
+          .padding(start = 2.dp, end = 2.dp, bottom = 4.dp),
+          horizontalArrangement = Arrangement.End
+        ) {
+          BuildNavigationHistoryHeaderSearchInput(
+            chanTheme = chanTheme,
+            backgroundColor = backgroundColor,
+            searchQuery = searchQuery,
+            onSearchQueryChanged = onSearchQueryChanged
+          )
 
-        Spacer(modifier = Modifier.width(16.dp))
+          Spacer(modifier = Modifier.width(8.dp))
 
-        KurobaComposeIcon(
-          drawableId = R.drawable.ic_more_vert_white_24dp,
-          themeEngine = themeEngine,
-          modifier = Modifier
-            .align(Alignment.CenterVertically)
-            .kurobaClickable(onClick = { showDrawerOptions() }),
-          colorBelowIcon = chanTheme.primaryColorCompose
-        )
+          KurobaComposeIcon(
+            drawableId = R.drawable.ic_baseline_wb_sunny_24,
+            themeEngine = themeEngine,
+            modifier = Modifier
+              .align(Alignment.CenterVertically)
+              .kurobaClickable(onClick = onSwitchDayNightThemeIconClick),
+            colorBelowIcon = backgroundColor
+          )
 
-        Spacer(modifier = Modifier.width(16.dp))
+          Spacer(modifier = Modifier.width(16.dp))
+
+          KurobaComposeIcon(
+            drawableId = R.drawable.ic_more_vert_white_24dp,
+            themeEngine = themeEngine,
+            modifier = Modifier
+              .align(Alignment.CenterVertically)
+              .kurobaClickable(onClick = onShowDrawerOptionsIconClick),
+            colorBelowIcon = backgroundColor
+          )
+
+          Spacer(modifier = Modifier.width(16.dp))
+        }
       }
     }
   }
 
   @OptIn(ExperimentalAnimationApi::class)
   @Composable
-  private fun RowScope.BuildNavigationHistoryHeaderSearchInput(chanTheme: ChanTheme) {
-    var textFieldValue by remember { mutableStateOf("") }
-
+  private fun RowScope.BuildNavigationHistoryHeaderSearchInput(
+    chanTheme: ChanTheme,
+    backgroundColor: Color,
+    searchQuery: String,
+    onSearchQueryChanged: (String) -> Unit
+  ) {
     Row(
       modifier = Modifier
         .wrapContentHeight()
         .weight(1f)
-        .padding(horizontal = 4.dp, vertical = 4.dp)
+        .padding(start = 4.dp, end = 4.dp, top = 8.dp)
     ) {
 
-      Row(modifier = Modifier.fillMaxSize()) {
+      Row(modifier = Modifier.wrapContentHeight()) {
+        Box(modifier = Modifier
+          .wrapContentHeight()
+          .weight(1f)
+          .align(Alignment.CenterVertically)
+          .padding(horizontal = 4.dp)
+        ) {
+          val interactionSource = remember { MutableInteractionSource() }
 
-        KurobaComposeCustomTextField(
-          modifier = Modifier
-            .wrapContentHeight()
-            .weight(1f)
-            .align(Alignment.CenterVertically)
-            .padding(horizontal = 4.dp),
-          fontSize = 16.sp,
-          singleLine = true,
-          maxLines = 1,
-          value = textFieldValue,
-          onValueChange = { newValue -> textFieldValue = newValue }
-        )
+          KurobaComposeCustomTextField(
+            modifier = Modifier
+              .wrapContentHeight()
+              .fillMaxWidth(),
+            fontSize = 16.sp,
+            singleLine = true,
+            maxLines = 1,
+            value = searchQuery,
+            onValueChange = { newValue -> onSearchQueryChanged(newValue) },
+            interactionSource = interactionSource
+          )
+
+          val isFocused by interactionSource.collectIsFocusedAsState()
+
+          androidx.compose.animation.AnimatedVisibility(
+            visible = !isFocused && searchQuery.isEmpty(),
+            enter = fadeIn(),
+            exit = fadeOut()
+          ) {
+            val alpha = ContentAlpha.medium
+
+            val color = remember(key1 = backgroundColor) {
+              if (isDarkColor(backgroundColor)) {
+                Color.LightGray.copy(alpha = alpha)
+              } else {
+                Color.DarkGray.copy(alpha = alpha)
+              }
+            }
+
+            Text(
+              text = stringResource(id = R.string.search_hint),
+              fontSize = 16.sp,
+              color = color
+            )
+          }
+        }
 
         AnimatedVisibility(
-          visible = textFieldValue.isNotEmpty(),
+          visible = searchQuery.isNotEmpty(),
           enter = fadeIn(),
           exit = fadeOut()
         ) {
           KurobaComposeIcon(
             modifier = Modifier
               .align(Alignment.CenterVertically)
-              .kurobaClickable(bounded = false, onClick = { textFieldValue = "" }),
+              .kurobaClickable(bounded = false, onClick = { onSearchQueryChanged("") }),
             drawableId = R.drawable.ic_clear_white_24dp,
             themeEngine = themeEngine,
             colorBelowIcon = chanTheme.primaryColorCompose
@@ -1075,7 +1210,12 @@ class MainController(
   }
 
   @Composable
-  private fun BuildNavigationHistoryListEntry(navHistoryEntry: NavigationHistoryEntry) {
+  private fun BuildNavigationHistoryListEntry(
+    navHistoryEntry: NavigationHistoryEntry,
+    onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
+    onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
+  ) {
     val chanDescriptor = navHistoryEntry.descriptor
 
     val siteIconRequest = remember(key1 = chanDescriptor) {
@@ -1124,7 +1264,7 @@ class MainController(
           modifier = Modifier
             .align(Alignment.TopStart)
             .size(20.dp)
-            .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry.descriptor) })
+            .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
             .background(color = circleColor, shape = CircleShape),
           painter = painterResource(id = R.drawable.ic_clear_white_24dp),
           contentDescription = null
@@ -1313,6 +1453,29 @@ class MainController(
       if (drawerLayout.isDrawerOpen(drawer)) {
         drawerLayout.closeDrawer(drawer)
       }
+    }
+  }
+
+  @Composable
+  fun rememberDrawerSearchState(
+    searchQuery: String = "",
+    results: List<NavigationHistoryEntry> = emptyList(),
+    searching: Boolean = false
+  ): DrawerSearchState {
+    return remember { DrawerSearchState(searchQuery, results, searching) }
+  }
+
+  class DrawerSearchState(
+    searchQuery: String,
+    results: List<NavigationHistoryEntry>,
+    searching: Boolean
+  ) {
+    var query by mutableStateOf(searchQuery)
+    var results by mutableStateOf(results)
+    var searching by mutableStateOf(searching)
+
+    fun reset() {
+      query = ""
     }
   }
 

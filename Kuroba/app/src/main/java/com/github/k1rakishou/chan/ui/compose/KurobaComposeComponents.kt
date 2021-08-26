@@ -196,7 +196,7 @@ fun KurobaComposeCustomTextField(
   singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions(),
-  label: @Composable (() -> Unit)? = null,
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
   val chanTheme = LocalChanTheme.current
   val textFieldColors = chanTheme.textFieldColors()
@@ -208,7 +208,6 @@ fun KurobaComposeCustomTextField(
       fontSize = fontSize
     )
   }
-  val interactionSource = remember { MutableInteractionSource() }
 
   val indicatorColorState = textFieldColors.indicatorColor(
     enabled = true,
@@ -234,6 +233,7 @@ fun KurobaComposeCustomTextField(
     interactionSource = interactionSource,
     onValueChange = onValueChange
   )
+
 }
 
 private fun Modifier.drawIndicatorLine(

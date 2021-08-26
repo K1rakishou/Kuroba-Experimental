@@ -16,9 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.di.module.application;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getAvailableSpaceInBytes;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
-
 import android.content.Context;
 import android.net.ConnectivityManager;
 
@@ -38,6 +35,7 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
 import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator;
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator;
@@ -53,37 +51,16 @@ import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.google.gson.Gson;
 
-import java.io.File;
-
 import javax.inject.Singleton;
 
 import coil.ImageLoader;
 import coil.request.CachePolicy;
 import dagger.Module;
 import dagger.Provides;
-import kotlin.Lazy;
-import kotlin.LazyKt;
-import kotlin.LazyThreadSafetyMode;
 import kotlinx.coroutines.CoroutineScope;
 
 @Module
 public class AppModule {
-
-    private static final Lazy<File> GET_CACHE_DIR_FUNC = LazyKt.lazy(
-            LazyThreadSafetyMode.SYNCHRONIZED,
-            () -> {
-                File cacheDir = getAppContext().getCacheDir();
-                long spaceInBytes = getAvailableSpaceInBytes(cacheDir);
-
-                Logger.deps("Available space for cache dir: " + spaceInBytes +
-                        " bytes, cacheDirPath = " + cacheDir.getAbsolutePath());
-
-                return cacheDir;
-            });
-
-    public static Lazy<File> getCacheDir() {
-        return GET_CACHE_DIR_FUNC;
-    }
 
     @Provides
     @Singleton
@@ -91,6 +68,7 @@ public class AppModule {
             SiteManager siteManager,
             BoardManager boardManager,
             BookmarksManager bookmarksManager,
+            ThreadBookmarkGroupManager threadBookmarkGroupManager,
             HistoryNavigationManager historyNavigationManager,
             BookmarkWatcherCoordinator bookmarkWatcherCoordinator,
             FilterWatcherCoordinator filterWatcherCoordinator,
@@ -104,6 +82,7 @@ public class AppModule {
                 siteManager,
                 boardManager,
                 bookmarksManager,
+                threadBookmarkGroupManager,
                 historyNavigationManager,
                 bookmarkWatcherCoordinator,
                 filterWatcherCoordinator,

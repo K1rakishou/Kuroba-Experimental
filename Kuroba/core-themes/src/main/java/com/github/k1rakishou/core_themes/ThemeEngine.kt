@@ -378,6 +378,11 @@ open class ThemeEngine(
     }
 
     @JvmStatic
+    fun isDarkColor(color: androidx.compose.ui.graphics.Color): Boolean {
+      return isDarkColor(color.value.toInt())
+    }
+
+    @JvmStatic
     fun isDarkColor(color: Int): Boolean {
       return ColorUtils.calculateLuminance(color) < 0.5f
     }

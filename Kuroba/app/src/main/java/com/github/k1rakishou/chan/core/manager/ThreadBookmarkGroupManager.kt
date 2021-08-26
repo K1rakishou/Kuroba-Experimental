@@ -47,7 +47,7 @@ class ThreadBookmarkGroupManager(
 
   private val initializationRunnable = OneShotRunnable()
 
-  init {
+  fun initialize() {
     appScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .collect { bookmarkChange ->
@@ -397,12 +397,12 @@ class ThreadBookmarkGroupManager(
   }
 
   private suspend fun handleBookmarkChange(bookmarkChange: BookmarksManager.BookmarkChange) {
+    ensureInitialized()
+
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized ||
       bookmarkChange is BookmarksManager.BookmarkChange.BookmarksUpdated) {
       return
     }
-
-    ensureInitialized()
 
     when (bookmarkChange) {
       BookmarksManager.BookmarkChange.BookmarksInitialized,

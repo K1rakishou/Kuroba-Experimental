@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
 import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
@@ -16,6 +17,7 @@ class AppDependenciesInitializer(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val historyNavigationManager: HistoryNavigationManager,
   private val bookmarkWatcherCoordinator: BookmarkWatcherCoordinator,
   private val filterWatcherCoordinator: FilterWatcherCoordinator,
@@ -29,6 +31,10 @@ class AppDependenciesInitializer(
 
     siteManager.initialize(allSitesDeferred)
     boardManager.initialize(allSitesDeferred)
+
+    // threadBookmarkGroupManager must be initialized before bookmarksManager because it listens
+    // for events from bookmarksManager
+    threadBookmarkGroupManager.initialize()
     bookmarksManager.initialize()
     historyNavigationManager.initialize()
 
