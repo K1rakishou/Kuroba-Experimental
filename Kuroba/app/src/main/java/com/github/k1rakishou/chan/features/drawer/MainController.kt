@@ -53,7 +53,6 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -134,10 +133,10 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.countDigits
 import com.github.k1rakishou.chan.utils.findControllerOrNull
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -155,7 +154,6 @@ import javax.inject.Inject
 class MainController(
   context: Context
 ) : Controller(context),
-  MainControllerView,
   MainControllerCallbacks,
   View.OnClickListener,
   WindowInsetsListener,
@@ -239,16 +237,8 @@ class MainController(
     )
   }
 
-  private val drawerPresenter by lazy {
-    MainControllerPresenter(
-      isDevFlavor = isDevBuild(),
-      _historyNavigationManager = _historyNavigationManager,
-      _siteManager = _siteManager,
-      _bookmarksManager = _bookmarksManager,
-      _pageRequestManager = _pageRequestManager,
-      _archivesManager = _archivesManager,
-      _chanThreadManager = _chanThreadManager
-    )
+  private val drawerViewModel by lazy {
+    requireComponentActivity().viewModelByKey<MainControllerViewModel>()
   }
 
   private val childControllersStack = Stack<Controller>()
@@ -329,20 +319,6 @@ class MainController(
     navigationViewContract = view.findViewById(R.id.navigation_view) as NavigationViewContract
     bottomMenuPanel = view.findViewById(R.id.bottom_menu_panel)
 
-    drawerLayout.addDrawerListener(object : DrawerLayout.DrawerListener {
-      override fun onDrawerSlide(drawerView: View, slideOffset: Float) {}
-
-      override fun onDrawerStateChanged(newState: Int) {}
-
-      override fun onDrawerOpened(drawerView: View) {
-        drawerPresenter.onDrawerOpened()
-      }
-
-      override fun onDrawerClosed(drawerView: View) {
-        drawerPresenter.onDrawerClosed()
-      }
-    })
-
     setBottomNavViewButtons()
     navigationViewContract.selectedMenuItemId = R.id.action_browse
     navigationViewContract.viewElevation = dp(4f).toFloat()
@@ -402,7 +378,7 @@ class MainController(
     }
 
     compositeDisposable.add(
-      drawerPresenter.listenForBookmarksBadgeStateChanges()
+      drawerViewModel.listenForBookmarksBadgeStateChanges()
         .subscribe(
           { state -> onBookmarksBadgeStateChanged(state) },
           { error ->
@@ -416,9 +392,6 @@ class MainController(
         .subscribe { onSettingsNotificationChanged() }
     )
 
-    // Must be called after drawerPresenter.listenForStateChanges() so it receives the "Loading"
-    // state as well as other states
-    drawerPresenter.onCreate(this)
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
 
     themeEngine.addListener(this)
@@ -463,11 +436,11 @@ class MainController(
   override fun onShow() {
     super.onShow()
 
-    drawerPresenter.updateBadge()
+    drawerViewModel.updateBadge()
   }
 
   override fun onThemeChanged() {
-    drawerPresenter.onThemeChanged()
+    drawerViewModel.onThemeChanged()
     settingsNotificationManager.onThemeChanged()
 
     navigationViewContract.setBackgroundColor(themeEngine.chanTheme.primaryColor)
@@ -494,7 +467,6 @@ class MainController(
 
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    drawerPresenter.onDestroy()
     compositeDisposable.clear()
     bottomNavViewGestureDetector.cleanup()
   }
@@ -867,7 +839,7 @@ class MainController(
     presentController(imageSaverV2OptionsController)
   }
 
-  private fun onBookmarksBadgeStateChanged(state: MainControllerPresenter.BookmarksBadgeState) {
+  private fun onBookmarksBadgeStateChanged(state: MainControllerViewModel.BookmarksBadgeState) {
     if (state.totalUnseenPostsCount <= 0) {
       if (navigationViewContract.getBadge(R.id.action_bookmarks) != null) {
         navigationViewContract.removeBadge(R.id.action_bookmarks)
@@ -940,30 +912,33 @@ class MainController(
 
   @Composable
   private fun ColumnScope.BuildContent() {
-    val historyControllerState by drawerPresenter.historyControllerStateFlow.collectAsState()
+    val historyControllerState by drawerViewModel.historyControllerState
 
     BuildNavigationHistoryListHeader()
 
     val navHistoryEntryList = when (historyControllerState) {
-      HistoryControllerState.Empty -> {
-        KurobaComposeText(
-          modifier = Modifier.fillMaxSize(),
-          text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty),
-          textAlign = TextAlign.Center,
-        )
-        return
-      }
       HistoryControllerState.Loading -> {
         KurobaComposeProgressIndicator()
         return
       }
       is HistoryControllerState.Error -> {
-        KurobaComposeErrorMessage(errorMessage = (historyControllerState as HistoryControllerState.Error).errorText)
+        KurobaComposeErrorMessage(
+          errorMessage = (historyControllerState as HistoryControllerState.Error).errorText
+        )
         return
       }
       is HistoryControllerState.Data -> {
-        (historyControllerState as HistoryControllerState.Data).navHistoryEntryList
+        remember { drawerViewModel.navigationHistoryEntryList }
       }
+    }
+
+    if (navHistoryEntryList.isEmpty()) {
+      KurobaComposeText(
+        modifier = Modifier.fillMaxSize(),
+        text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty),
+        textAlign = TextAlign.Center,
+      )
+      return
     }
 
     BuildNavigationHistoryList(navHistoryEntryList)
@@ -1063,7 +1038,7 @@ class MainController(
       modifier = Modifier
         .wrapContentHeight()
         .weight(1f)
-        .padding(horizontal = 8.dp, vertical = 4.dp)
+        .padding(horizontal = 4.dp, vertical = 4.dp)
     ) {
 
       Row(modifier = Modifier.fillMaxSize()) {
@@ -1262,23 +1237,18 @@ class MainController(
       ACTION_SHOW_BOOKMARKS -> {
         ChanSettings.drawerShowBookmarkedThreads.toggle()
 
-        if (ChanSettings.drawerShowBookmarkedThreads.get()) {
-          historyNavigationManager.createNewNavElements(
-            newNavigationElements = drawerPresenter.mapBookmarksIntoNewNavigationElements(),
-            canInsertAtTheBeginning = true
-          )
-        } else {
+        if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
           val bookmarkDescriptors = bookmarksManager
             .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
 
           historyNavigationManager.removeNavElements(bookmarkDescriptors)
         }
 
-        drawerPresenter.reloadNavigationHistory()
+        drawerViewModel.reloadNavigationHistory()
       }
       ACTION_SHOW_NAV_HISTORY -> {
         ChanSettings.drawerShowNavigationHistory.toggle()
-        drawerPresenter.reloadNavigationHistory()
+        drawerViewModel.reloadNavigationHistory()
       }
       ACTION_CLEAR_NAV_HISTORY -> {
         dialogFactory.createSimpleConfirmationDialog(
@@ -1298,7 +1268,7 @@ class MainController(
     mainScope.launch {
       val chanDescriptorString = navHistoryEntry.descriptor.userReadableString()
 
-      when (drawerPresenter.pinOrUnpin(navHistoryEntry.descriptor)) {
+      when (drawerViewModel.pinOrUnpin(navHistoryEntry.descriptor)) {
         HistoryNavigationManager.PinResult.Pinned -> {
           showToast(getString(R.string.drawer_controller_navigation_entry_pinned, chanDescriptorString))
         }
@@ -1317,7 +1287,7 @@ class MainController(
 
   private fun onNavHistoryDeleteClicked(descriptor: ChanDescriptor) {
     mainScope.launch {
-      drawerPresenter.deleteNavElement(descriptor)
+      drawerViewModel.deleteNavElement(descriptor)
       showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
     }
   }

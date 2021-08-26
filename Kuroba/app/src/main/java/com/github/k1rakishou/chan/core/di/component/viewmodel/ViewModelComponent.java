@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.di.component.viewmodel;
 
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelModule;
 import com.github.k1rakishou.chan.core.di.scope.PerViewModel;
+import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchControllerViewModel;
@@ -24,6 +25,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(DvachCaptchaLayoutViewModel dvachCaptchaLayoutViewModel);
     public abstract void inject(Chan4CaptchaLayoutViewModel chan4CaptchaLayoutViewModel);
     public abstract void inject(SearxImageSearchControllerViewModel searxImageSearchControllerViewModel);
+    public abstract void inject(MainControllerViewModel mainControllerViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

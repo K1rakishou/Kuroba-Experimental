@@ -5,7 +5,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -13,15 +12,12 @@ import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.data.navigation.NavHistoryElementInfo
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
@@ -29,7 +25,6 @@ import okhttp3.HttpUrl
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
-import kotlin.time.seconds
 
 class HistoryNavigationManager(
   private val appScope: CoroutineScope,
@@ -37,10 +32,11 @@ class HistoryNavigationManager(
   private val _applicationVisibilityManager: Lazy<ApplicationVisibilityManager>,
   private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
-  private val navigationStackChangesSubject = PublishProcessor.create<Unit>()
-  private val persistTaskSubject = PublishProcessor.create<Unit>()
-  private val persistRunning = AtomicBoolean(false)
+  private val _navigationStackUpdatesFlow = MutableSharedFlow<UpdateEvent>(extraBufferCapacity = 64)
+  val navigationStackUpdatesFlow: SharedFlow<UpdateEvent>
+    get() = _navigationStackUpdatesFlow.asSharedFlow()
 
+  private val persistRunning = AtomicBoolean(false)
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
   private val mutex = Mutex()
@@ -63,23 +59,10 @@ class HistoryNavigationManager(
   fun initialize() {
     Logger.d(TAG, "HistoryNavigationManager.initialize()")
     startListeningForAppVisibilityUpdates()
-
-    appScope.launch {
-      persistTaskSubject
-        .onBackpressureLatest()
-        .asFlow()
-        .debounce(1.seconds)
-        .collect {
-          persisNavigationStack(eager = false)
-        }
-    }
   }
 
-  fun listenForNavigationStackChanges(): Flowable<Unit> {
-    return navigationStackChangesSubject
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "listenForNavigationStackChanges error", error) }
-      .hide()
+  suspend fun <T: Any?> doWithLockedNavStack(func: suspend (List<NavHistoryElement>) -> T): T {
+    return mutex.withLock { func(navigationStack) }
   }
 
   suspend fun contains(descriptor: ChanDescriptor): Boolean {
@@ -109,6 +92,13 @@ class HistoryNavigationManager(
       return historyNavigationRepository.getFirstNavElement()
         .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstNavElement() error", error) }
         .valueOrNull()
+    }
+  }
+
+  suspend fun getNavHistoryElementByDescriptor(chanDescriptor: ChanDescriptor): NavHistoryElement? {
+    return mutex.withLock {
+      return@withLock navigationStack
+        .firstOrNull { navHistoryElement -> navHistoryElement.descriptor() == chanDescriptor }
     }
   }
 
@@ -184,7 +174,7 @@ class HistoryNavigationManager(
 
     var created = false
 
-    newNavigationElements.forEach { newNavigationElement ->
+    val mappedNavElements = newNavigationElements.map { newNavigationElement ->
       val descriptor = newNavigationElement.descriptor
       val thumbnailImageUrl = newNavigationElement.thumbnailImageUrl
       val title = newNavigationElement.title
@@ -195,11 +185,13 @@ class HistoryNavigationManager(
         pinned = false
       )
 
-      val navElement = when (descriptor) {
+      return@map when (descriptor) {
         is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
       }
+    }
 
+    mappedNavElements.forEach { navElement ->
       if (addNewOrIgnore(navElement, canInsertAtTheBeginning)) {
         created = true
       }
@@ -209,7 +201,8 @@ class HistoryNavigationManager(
       return
     }
 
-    navStackChanged()
+    _navigationStackUpdatesFlow.emit(UpdateEvent.Created(mappedNavElements))
+    persisNavigationStack(eager = false)
   }
 
   suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
@@ -231,7 +224,10 @@ class HistoryNavigationManager(
         return@withLock
       }
 
-      if (navigationStack.getOrNull(indexOfElem)?.navHistoryElementInfo?.pinned == true) {
+      val movedElement = navigationStack.getOrNull(indexOfElem)
+        ?: return@withLock
+
+      if (movedElement.navHistoryElementInfo.pinned) {
         return@withLock
       }
 
@@ -249,9 +245,10 @@ class HistoryNavigationManager(
       }
 
       navigationStack.addSafe(newIndex, navigationStack.removeAt(indexOfElem))
+      _navigationStackUpdatesFlow.emit(UpdateEvent.Moved(movedElement))
     }
 
-    navStackChanged()
+    persisNavigationStack(eager = false)
   }
 
   private suspend fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
@@ -313,8 +310,9 @@ class HistoryNavigationManager(
         return@withLock PinResult.NoSpaceToPin
       }
 
-      val navHistoryElementDescriptor = navigationStack.get(indexOfElem).descriptor()
-      val navHistoryElementInfo = navigationStack.get(indexOfElem).navHistoryElementInfo
+      val navHistoryElement = navigationStack.get(indexOfElem)
+      val navHistoryElementDescriptor = navHistoryElement.descriptor()
+      val navHistoryElementInfo = navHistoryElement.navHistoryElementInfo
       navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
 
       val isDescriptorCurrentlyOpened =
@@ -331,6 +329,7 @@ class HistoryNavigationManager(
       }
 
       navigationStack.addSafe(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
+      _navigationStackUpdatesFlow.emit(UpdateEvent.PinnedOrUnpinned(navHistoryElement))
 
       return@withLock if (navHistoryElementInfo.pinned) {
         PinResult.Pinned
@@ -343,7 +342,7 @@ class HistoryNavigationManager(
       return pinResult
     }
 
-    navStackChanged()
+    persisNavigationStack(eager = false)
     return pinResult
   }
 
@@ -360,8 +359,8 @@ class HistoryNavigationManager(
 
     ensureInitialized()
 
-    val removed = mutex.withLock {
-      var removed = false
+    val removedElements = mutex.withLock {
+      val removedElements = mutableListWithCap<NavHistoryElement>(descriptors.size)
 
       descriptors.forEach { chanDescriptor ->
         val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
@@ -375,55 +374,18 @@ class HistoryNavigationManager(
           return@forEach
         }
 
-        navigationStack.removeAt(indexOfElem)
-        removed = true
+        removedElements += navigationStack.removeAt(indexOfElem)
       }
 
-      return@withLock removed
+      return@withLock removedElements
     }
 
-    if (!removed) {
+    if (removedElements.isEmpty()) {
       return
     }
 
-    navStackChanged()
-  }
-
-  suspend fun removeNonBookmarkNavElements(bookmarkDescriptors: Set<ChanDescriptor.ThreadDescriptor>) {
-    if (bookmarkDescriptors.isEmpty()) {
-      return
-    }
-
-    ensureInitialized()
-
-    val removed = mutex.withLock {
-      var removed = false
-
-      navigationStack.mutableIteration { mutableIterator, navHistoryElement ->
-        val descriptor = navHistoryElement.descriptor()
-        if (descriptor !is ChanDescriptor.ThreadDescriptor) {
-          removed = true
-          mutableIterator.remove()
-          return@mutableIteration true
-        }
-
-        val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
-        if (threadDescriptor !in bookmarkDescriptors) {
-          removed = true
-          mutableIterator.remove()
-        }
-
-        return@mutableIteration true
-      }
-
-      return@withLock removed
-    }
-
-    if (!removed) {
-      return
-    }
-
-    navStackChanged()
+    _navigationStackUpdatesFlow.emit(UpdateEvent.Deleted(removedElements))
+    persisNavigationStack(eager = false)
   }
 
   suspend fun clear() {
@@ -442,7 +404,8 @@ class HistoryNavigationManager(
       return
     }
 
-    navStackChanged()
+    _navigationStackUpdatesFlow.emit(UpdateEvent.Cleared)
+    persisNavigationStack(eager = false)
   }
 
   private fun persisNavigationStack(eager: Boolean = false) {
@@ -493,11 +456,6 @@ class HistoryNavigationManager(
     }
   }
 
-  private fun navStackChanged() {
-    navigationStackChangesSubject.onNext(Unit)
-    persistTaskSubject.onNext(Unit)
-  }
-
   private suspend fun ensureInitialized() {
     initializationRunnable.runIfNotYet { initializeHistoryNavigationManagerInternal() }
   }
@@ -517,17 +475,15 @@ class HistoryNavigationManager(
               navigationStack.addAll(loadedNavElementsResult.value)
             }
 
-            Logger.d(
-              TAG, "initializeHistoryNavigationManagerInternal() done. " +
-                "Loaded ${loadedNavElementsResult.value.size} history nav elements"
-            )
+            Logger.d(TAG, "initializeHistoryNavigationManagerInternal() done. " +
+                "Loaded ${loadedNavElementsResult.value.size} history nav elements")
           }
           is ModularResult.Error -> {
             Logger.e(TAG, "initializeHistoryNavigationManagerInternal() error", loadedNavElementsResult.error)
           }
         }
 
-        navStackChanged()
+        _navigationStackUpdatesFlow.emit(UpdateEvent.Initialized)
       }
 
       Logger.d(TAG, "initializeHistoryNavigationManagerInternal() end, took $time")
@@ -565,6 +521,15 @@ class HistoryNavigationManager(
     Unpinned(true),
     NoSpaceToPin(false),
     Failure(false),
+  }
+
+  sealed class UpdateEvent {
+    object Initialized : UpdateEvent()
+    data class Created(val navHistoryElements: Collection<NavHistoryElement>) : UpdateEvent()
+    data class PinnedOrUnpinned(val navHistoryElement: NavHistoryElement) : UpdateEvent()
+    data class Moved(val navHistoryElement: NavHistoryElement) : UpdateEvent()
+    data class Deleted(val navHistoryElements: Collection<NavHistoryElement>) : UpdateEvent()
+    object Cleared : UpdateEvent()
   }
 
   data class NewNavigationElement(

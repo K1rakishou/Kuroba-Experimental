@@ -15,7 +15,7 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookma
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController;
 import com.github.k1rakishou.chan.features.drawer.MainController;
-import com.github.k1rakishou.chan.features.drawer.MainControllerPresenter;
+import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryView;
@@ -349,7 +349,7 @@ public interface ActivityComponent {
     void inject(MediaViewerRootLayout mediaViewerRootLayout);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);
-    void inject(MainControllerPresenter mainControllerPresenter);
+    void inject(MainControllerViewModel mainControllerViewModel);
     void inject(AdjustAndroid10GestureZonesView adjustAndroid10GestureZonesView);
     void inject(SettingsCoordinator settingsCoordinator);
     void inject(JsCaptchaCookiesEditorLayout jsCaptchaCookiesEditorLayout);

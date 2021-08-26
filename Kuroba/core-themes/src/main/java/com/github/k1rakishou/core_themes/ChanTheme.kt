@@ -90,7 +90,11 @@ abstract class ChanTheme {
 
     val disabledControlAlpha = (255f * .4f).toInt()
 
-    return DefaultColors(disabledControlAlpha, controlNormalColor)
+    return DefaultColors(
+      disabledControlAlpha = disabledControlAlpha,
+      controlNormalColor = controlNormalColor,
+      controlNormalColorCompose = Color(controlNormalColor)
+    )
   }
 
   fun getDisabledTextColor(color: Int): Int {
@@ -133,11 +137,11 @@ abstract class ChanTheme {
       backgroundColor = Color.Transparent,
       cursorColor = accentColorCompose,
       focusedBorderColor = accentColorCompose.copy(alpha = ContentAlpha.high),
-      unfocusedBorderColor = accentColorCompose.copy(alpha = ContentAlpha.medium),
-      disabledBorderColor = accentColorCompose.copy(alpha = ContentAlpha.disabled),
+      unfocusedBorderColor = defaultColors.controlNormalColorCompose.copy(alpha = ContentAlpha.medium),
+      disabledBorderColor = defaultColors.controlNormalColorCompose.copy(alpha = ContentAlpha.disabled),
       focusedLabelColor = accentColorCompose.copy(alpha = ContentAlpha.high),
-      unfocusedLabelColor = accentColorCompose.copy(ContentAlpha.medium),
-      disabledLabelColor = accentColorCompose.copy(ContentAlpha.disabled),
+      unfocusedLabelColor = defaultColors.controlNormalColorCompose.copy(alpha = ContentAlpha.medium),
+      disabledLabelColor = defaultColors.controlNormalColorCompose.copy(ContentAlpha.disabled),
       leadingIconColor = iconColor,
       disabledLeadingIconColor = iconColor.copy(alpha = ContentAlpha.disabled),
       errorLeadingIconColor = iconColor,
@@ -206,7 +210,8 @@ abstract class ChanTheme {
 
   data class DefaultColors(
     val disabledControlAlpha: Int,
-    val controlNormalColor: Int
+    val controlNormalColor: Int,
+    val controlNormalColorCompose: Color,
   ) {
 
     val disabledControlAlphaFloat: Float
