@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -52,6 +53,8 @@ class MainControllerViewModel : BaseViewModel() {
   lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
   lateinit var _chanThreadManager: Lazy<ChanThreadManager>
+  @Inject
+  lateinit var _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = _historyNavigationManager.get()
@@ -65,6 +68,8 @@ class MainControllerViewModel : BaseViewModel() {
     get() = _archivesManager.get()
   private val chanThreadManager: ChanThreadManager
     get() = _chanThreadManager.get()
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+    get() = _currentOpenedDescriptorStateManager.get()
 
   val historyControllerState = mutableStateOf<HistoryControllerState>(HistoryControllerState.Loading)
   val navigationHistoryEntryList = mutableStateListOf<NavigationHistoryEntry>()
@@ -156,8 +161,22 @@ class MainControllerViewModel : BaseViewModel() {
       .hide()
   }
 
-  suspend fun deleteNavElement(descriptor: ChanDescriptor) {
+  suspend fun deleteNavElement(descriptor: ChanDescriptor): Boolean {
+    val isCurrentlyOpened = isCurrentlyOpened(descriptor)
+    if (isCurrentlyOpened) {
+      return false
+    }
+
     historyNavigationManager.deleteNavElement(descriptor)
+    return true
+  }
+
+  fun deleteBookmarkedNavHistoryElements() {
+    mainScope.launch {
+      ChanSettings.drawerShowBookmarkedThreads.toggle()
+
+      reloadNavigationHistory()
+    }
   }
 
   suspend fun pinOrUnpin(descriptor: ChanDescriptor): HistoryNavigationManager.PinResult {
@@ -252,6 +271,17 @@ class MainControllerViewModel : BaseViewModel() {
       pinned = navigationElement.navHistoryElementInfo.pinned,
       additionalInfo = additionalInfo
     )
+  }
+
+  private fun isCurrentlyOpened(descriptor: ChanDescriptor): Boolean {
+    return when (descriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        descriptor == currentOpenedDescriptorStateManager.currentCatalogDescriptor
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        descriptor == currentOpenedDescriptorStateManager.currentThreadDescriptor
+      }
+    }
   }
 
   private fun canShowBookmarkInfo(

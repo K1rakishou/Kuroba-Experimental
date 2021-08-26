@@ -961,6 +961,7 @@ class MainController(
       searchState = searchState,
       onHistoryEntryViewClicked = { navHistoryEntry ->
         onHistoryEntryViewClicked(navHistoryEntry)
+
         mainScope.launch {
           delay(100L)
           searchState.reset()
@@ -1005,7 +1006,7 @@ class MainController(
           .fillMaxWidth()
           .padding(8.dp),
         textAlign = TextAlign.Center,
-        text = "Nothing found by query '${query}'"
+        text = stringResource(id = R.string.search_nothing_found_with_query, query)
       )
 
       return
@@ -1091,8 +1092,8 @@ class MainController(
 
         Row(
           modifier = Modifier
-          .fillMaxHeight()
-          .padding(start = 2.dp, end = 2.dp, bottom = 4.dp),
+            .fillMaxHeight()
+            .padding(start = 2.dp, end = 2.dp, bottom = 4.dp),
           horizontalArrangement = Arrangement.End
         ) {
           BuildNavigationHistoryHeaderSearchInput(
@@ -1375,16 +1376,7 @@ class MainController(
         ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
       }
       ACTION_SHOW_BOOKMARKS -> {
-        ChanSettings.drawerShowBookmarkedThreads.toggle()
-
-        if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
-          val bookmarkDescriptors = bookmarksManager
-            .mapAllBookmarks { threadBookmarkView -> threadBookmarkView.threadDescriptor }
-
-          historyNavigationManager.removeNavElements(bookmarkDescriptors)
-        }
-
-        drawerViewModel.reloadNavigationHistory()
+        drawerViewModel.deleteBookmarkedNavHistoryElements()
       }
       ACTION_SHOW_NAV_HISTORY -> {
         ChanSettings.drawerShowNavigationHistory.toggle()
@@ -1427,8 +1419,11 @@ class MainController(
 
   private fun onNavHistoryDeleteClicked(descriptor: ChanDescriptor) {
     mainScope.launch {
-      drawerViewModel.deleteNavElement(descriptor)
-      showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
+      if (drawerViewModel.deleteNavElement(descriptor)) {
+        showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
+      } else {
+        showToast(getString(R.string.drawer_controller_navigation_entry_cannot_delete_opened))
+      }
     }
   }
 

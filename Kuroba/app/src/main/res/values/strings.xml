@@ -1185,6 +1185,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin \'%1$s\'</string>
     <string name="drawer_controller_navigation_entry_no_slots_for_pin">No slots left to pin \'%1$s\'. Remove something.</string>
     <string name="drawer_controller_navigation_entry_deleted">Deleted \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_cannot_delete_opened">Cannot delete currently opened history navigation element</string>
 
     <string name="board_selection_controller_grid_layout_mode">Board selection grid mode</string>
 
