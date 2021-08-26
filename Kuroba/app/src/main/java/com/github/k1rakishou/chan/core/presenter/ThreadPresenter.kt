@@ -820,6 +820,8 @@ class ThreadPresenter @Inject constructor(
     handleMarkedPost()
 
     afterCatalogOrThreadLoadedExecutor.post {
+      BackgroundUtils.ensureBackgroundThread()
+
       if (alreadyCreatedNavElement.compareAndSet(false, true)) {
         createNewNavHistoryElement(localChanDescriptor)
       }

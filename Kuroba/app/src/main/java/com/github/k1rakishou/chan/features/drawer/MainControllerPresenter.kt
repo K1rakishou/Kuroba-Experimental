@@ -33,8 +33,8 @@ import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.seconds
 
 class MainControllerPresenter(
   private val isDevFlavor: Boolean,
@@ -84,7 +84,7 @@ class MainControllerPresenter(
 
     scope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .debounce(1.seconds)
+        .debounce(Duration.seconds(1))
         .collect { bookmarkChange ->
           bookmarksManager.awaitUntilInitialized()
 

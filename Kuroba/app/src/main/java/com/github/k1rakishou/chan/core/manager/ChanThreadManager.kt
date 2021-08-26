@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -87,6 +88,8 @@ class ChanThreadManager(
   }
 
   suspend fun isRequestAlreadyActive(chanDescriptor: ChanDescriptor): Boolean {
+    BackgroundUtils.ensureMainThread()
+
     if (!requestedChanDescriptors.add(chanDescriptor)) {
       // This chan descriptor has already been requested
       if (verboseLogs) {
@@ -176,6 +179,7 @@ class ChanThreadManager(
         }
       }
     } finally {
+      BackgroundUtils.ensureMainThread()
       requestedChanDescriptors.remove(chanDescriptor)
     }
   }

@@ -23,6 +23,10 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -33,7 +37,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -49,7 +55,9 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -94,6 +102,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
@@ -130,6 +139,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.countDigits
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -380,9 +390,10 @@ class MainController(
         ProvideWindowInsets {
           val chanTheme = LocalChanTheme.current
 
-          Column(modifier = Modifier
-            .fillMaxSize()
-            .background(chanTheme.backColorCompose)
+          Column(
+            modifier = Modifier
+              .fillMaxSize()
+              .background(chanTheme.backColorCompose)
           ) {
             BuildContent()
           }
@@ -930,9 +941,7 @@ class MainController(
   @Composable
   private fun ColumnScope.BuildContent() {
     val historyControllerState by drawerPresenter.historyControllerStateFlow.collectAsState()
-    val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
 
-    Spacer(modifier = Modifier.height(currentInsetsCompose.calculateTopPadding()))
     BuildNavigationHistoryListHeader()
 
     val navHistoryEntryList = when (historyControllerState) {
@@ -966,17 +975,19 @@ class MainController(
     val state = rememberLazyListState()
 
     Column(modifier = Modifier.fillMaxSize()) {
-      BoxWithConstraints(modifier = Modifier
-        .fillMaxWidth()
-        .weight(1f)) {
+      BoxWithConstraints(
+        modifier = Modifier
+          .fillMaxWidth()
+          .weight(1f)
+      ) {
         val spanCount = with(LocalDensity.current) {
           (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
         }
 
         val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
 
-        val bottomPadding = remember(key1 = currentInsetsCompose) {
-          PaddingValues(bottom = currentInsetsCompose.calculateBottomPadding())
+        val contentPadding = remember(key1 = currentInsetsCompose) {
+          PaddingValues(bottom = currentInsetsCompose.calculateBottomPadding(), top = 4.dp)
         }
 
         val chanTheme = LocalChanTheme.current
@@ -986,7 +997,7 @@ class MainController(
           modifier = Modifier
             .fillMaxSize()
             .simpleVerticalScrollbar(state, chanTheme),
-          contentPadding = bottomPadding,
+          contentPadding = contentPadding,
           cells = GridCells.Fixed(count = spanCount),
           content = {
             items(count = navHistoryEntryList.size) { index ->
@@ -1000,31 +1011,91 @@ class MainController(
 
   @Composable
   private fun BuildNavigationHistoryListHeader() {
-    Row(modifier = Modifier
-      .fillMaxWidth()
-      .height(32.dp)
-      .padding(2.dp),
+    val chanTheme = LocalChanTheme.current
+
+    val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
+    val topInset = currentInsetsCompose.calculateTopPadding()
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(42.dp + topInset)
+        .background(chanTheme.primaryColorCompose),
       horizontalArrangement = Arrangement.End
     ) {
-      KurobaComposeIcon(
-        drawableId = R.drawable.ic_baseline_wb_sunny_24,
-        themeEngine = themeEngine,
-        modifier = Modifier.kurobaClickable(
-          onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) }
+      Row(modifier = Modifier
+        .fillMaxHeight()
+        .padding(top = topInset, start = 2.dp, end = 2.dp, bottom = 4.dp)
+      ) {
+        BuildNavigationHistoryHeaderSearchInput(chanTheme)
+
+        KurobaComposeIcon(
+          drawableId = R.drawable.ic_baseline_wb_sunny_24,
+          themeEngine = themeEngine,
+          modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .kurobaClickable(onClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) }),
+          colorBelowIcon = chanTheme.primaryColorCompose
         )
-      )
 
-      Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
 
-      KurobaComposeIcon(
-        drawableId = R.drawable.ic_more_vert_white_24dp,
-        themeEngine = themeEngine,
-        modifier = Modifier.kurobaClickable(
-          onClick = { showDrawerOptions() }
+        KurobaComposeIcon(
+          drawableId = R.drawable.ic_more_vert_white_24dp,
+          themeEngine = themeEngine,
+          modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .kurobaClickable(onClick = { showDrawerOptions() }),
+          colorBelowIcon = chanTheme.primaryColorCompose
         )
-      )
 
-      Spacer(modifier = Modifier.width(16.dp))
+        Spacer(modifier = Modifier.width(16.dp))
+      }
+    }
+  }
+
+  @OptIn(ExperimentalAnimationApi::class)
+  @Composable
+  private fun RowScope.BuildNavigationHistoryHeaderSearchInput(chanTheme: ChanTheme) {
+    var textFieldValue by remember { mutableStateOf("") }
+
+    Row(
+      modifier = Modifier
+        .wrapContentHeight()
+        .weight(1f)
+        .padding(horizontal = 8.dp, vertical = 4.dp)
+    ) {
+
+      Row(modifier = Modifier.fillMaxSize()) {
+
+        KurobaComposeCustomTextField(
+          modifier = Modifier
+            .wrapContentHeight()
+            .weight(1f)
+            .align(Alignment.CenterVertically)
+            .padding(horizontal = 4.dp),
+          fontSize = 16.sp,
+          singleLine = true,
+          maxLines = 1,
+          value = textFieldValue,
+          onValueChange = { newValue -> textFieldValue = newValue }
+        )
+
+        AnimatedVisibility(
+          visible = textFieldValue.isNotEmpty(),
+          enter = fadeIn(),
+          exit = fadeOut()
+        ) {
+          KurobaComposeIcon(
+            modifier = Modifier
+              .align(Alignment.CenterVertically)
+              .kurobaClickable(bounded = false, onClick = { textFieldValue = "" }),
+            drawableId = R.drawable.ic_clear_white_24dp,
+            themeEngine = themeEngine,
+            colorBelowIcon = chanTheme.primaryColorCompose
+          )
+        }
+      }
     }
   }
 
@@ -1084,10 +1155,11 @@ class MainController(
           contentDescription = null
         )
 
-        Row(modifier = Modifier
-          .wrapContentHeight()
-          .wrapContentWidth()
-          .align(Alignment.TopEnd)
+        Row(
+          modifier = Modifier
+            .wrapContentHeight()
+            .wrapContentWidth()
+            .align(Alignment.TopEnd)
         ) {
 
           if (navHistoryEntry.pinned) {
