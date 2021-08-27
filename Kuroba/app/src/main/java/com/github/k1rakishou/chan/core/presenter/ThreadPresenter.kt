@@ -1261,6 +1261,10 @@ class ThreadPresenter @Inject constructor(
       if (!bookmarksManager.exists(threadDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_BOOKMARK, R.string.action_pin))
       }
+
+      if (historyNavigationManager.canCreateNavElement(bookmarksManager, chanDescriptor)) {
+        menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
+      }
     } else {
       menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote))
       menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text))
@@ -1268,12 +1272,6 @@ class ThreadPresenter @Inject constructor(
 
     if (site.siteFeature(Site.SiteFeature.POST_REPORT)) {
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
-    }
-
-    if (chanDescriptor.isCatalogDescriptor()
-      && historyNavigationManager.canCreateNavElement(bookmarksManager, chanDescriptor)
-    ) {
-      menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
     }
 
     if (!inPopup) {

@@ -191,6 +191,7 @@ fun KurobaComposeCustomTextField(
   value: String,
   onValueChange: (String) -> Unit,
   modifier: Modifier = Modifier,
+  drawBottomIndicator: Boolean = true,
   fontSize: TextUnit = TextUnit.Unspecified,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
@@ -209,20 +210,24 @@ fun KurobaComposeCustomTextField(
     )
   }
 
-  val indicatorColorState = textFieldColors.indicatorColor(
-    enabled = true,
-    isError = false,
-    interactionSource = interactionSource
-  )
+  val indicatorLineModifier = if (drawBottomIndicator) {
+    val indicatorColorState = textFieldColors.indicatorColor(
+      enabled = true,
+      isError = false,
+      interactionSource = interactionSource
+    )
+
+    Modifier.drawIndicatorLine(
+      color = indicatorColorState.value,
+      lineWidth = 2.dp,
+      verticalOffset = 4.dp
+    )
+  } else {
+    Modifier
+  }
 
   BasicTextField(
-    modifier = modifier.then(
-      Modifier.drawIndicatorLine(
-        color = indicatorColorState.value,
-        lineWidth = 2.dp,
-        verticalOffset = 4.dp
-      )
-    ),
+    modifier = modifier.then(indicatorLineModifier),
     textStyle = textStyle,
     singleLine = singleLine,
     maxLines = maxLines,
