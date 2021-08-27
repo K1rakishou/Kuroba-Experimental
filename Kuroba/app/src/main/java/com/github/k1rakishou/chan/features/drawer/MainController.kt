@@ -107,6 +107,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
@@ -166,7 +167,8 @@ class MainController(
   MainControllerCallbacks,
   View.OnClickListener,
   WindowInsetsListener,
-  ThemeEngine.ThemeChangesListener {
+  ThemeEngine.ThemeChangesListener,
+  DrawerLayout.DrawerListener {
 
   @Inject
   lateinit var _themeEngine: Lazy<ThemeEngine>
@@ -336,6 +338,8 @@ class MainController(
     // Must be above bottomNavView
     bottomMenuPanel.elevation = dp(6f).toFloat()
 
+    drawerLayout.addDrawerListener(this)
+
     navigationViewContract.setOnNavigationItemSelectedListener { menuItem ->
       if (navigationViewContract.selectedMenuItemId == menuItem.itemId) {
         return@setOnNavigationItemSelectedListener true
@@ -407,41 +411,6 @@ class MainController(
     onThemeChanged()
   }
 
-  private fun setBottomNavViewButtons() {
-    val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
-    navigationViewContract.navigationMenu.clear()
-
-    bottomNavViewButtons.bottomNavViewButtons().forEachIndexed { index, bottomNavViewButton ->
-      when (bottomNavViewButton) {
-        BottomNavViewButton.Search -> {
-          navigationViewContract.navigationMenu
-            .add(Menu.NONE, R.id.action_search, index, R.string.menu_search)
-            .setIcon(R.drawable.ic_search_white_24dp)
-        }
-        BottomNavViewButton.Archive -> {
-          navigationViewContract.navigationMenu
-            .add(Menu.NONE, R.id.action_archive, index, R.string.menu_archive)
-            .setIcon(R.drawable.ic_baseline_archive_24)
-        }
-        BottomNavViewButton.Bookmarks -> {
-          navigationViewContract.navigationMenu
-            .add(Menu.NONE, R.id.action_bookmarks, index, R.string.menu_bookmarks)
-            .setIcon(R.drawable.ic_baseline_bookmarks)
-        }
-        BottomNavViewButton.Browse -> {
-          navigationViewContract.navigationMenu
-            .add(Menu.NONE, R.id.action_browse, index, R.string.menu_browse)
-            .setIcon(R.drawable.ic_baseline_laptop)
-        }
-        BottomNavViewButton.Settings -> {
-          navigationViewContract.navigationMenu
-            .add(Menu.NONE, R.id.action_settings, index, R.string.menu_settings)
-            .setIcon(R.drawable.ic_baseline_settings)
-        }
-      }
-    }
-  }
-
   override fun onShow() {
     super.onShow()
 
@@ -474,6 +443,7 @@ class MainController(
   override fun onDestroy() {
     super.onDestroy()
 
+    drawerLayout.removeDrawerListener(this)
     themeEngine.removeListener(this)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     compositeDisposable.clear()
@@ -503,6 +473,19 @@ class MainController(
         )
       }
     }
+  }
+
+  override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+  }
+
+  override fun onDrawerOpened(drawerView: View) {
+  }
+
+  override fun onDrawerClosed(drawerView: View) {
+    drawerViewModel.clearSelection()
+  }
+
+  override fun onDrawerStateChanged(newState: Int) {
   }
 
   fun pushChildController(childController: Controller) {
@@ -654,27 +637,6 @@ class MainController(
     }
   }
 
-  private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
-    when (menuItem.itemId) {
-      R.id.action_search -> openGlobalSearchController()
-      R.id.action_archive -> openArchiveController()
-      R.id.action_browse -> closeAllNonMainControllers()
-      R.id.action_bookmarks -> openBookmarksController(emptyList())
-      R.id.action_settings -> openSettingsController()
-    }
-  }
-
-  private fun closeBottomNavBarAwareNavigationControllerListener() {
-    val currentNavController = top
-      ?: return
-
-    if (currentNavController !is BottomNavBarAwareNavigationController) {
-      return
-    }
-
-    popChildController(false)
-  }
-
   fun closeAllNonMainControllers() {
     controllerNavigationManager.onCloseAllNonMainControllers()
 
@@ -709,16 +671,6 @@ class MainController(
     }
   }
 
-  private fun closeAllFloatingControllers(childControllers: List<Controller>) {
-    for (childController in childControllers) {
-      childController.presentingThisController?.stopPresenting(false)
-
-      if (childController.childControllers.isNotEmpty()) {
-        closeAllFloatingControllers(childController.childControllers)
-      }
-    }
-  }
-
   override fun onClick(v: View) {
     // no-op
   }
@@ -737,12 +689,17 @@ class MainController(
       return true
     }
 
-    return if (drawerLayout.isDrawerOpen(drawer)) {
-      drawerLayout.closeDrawer(drawer)
-      true
-    } else {
-      super.onBack()
+    if (drawerViewModel.selectedHistoryEntries.isNotEmpty()) {
+      drawerViewModel.clearSelection()
+      return true
     }
+
+    if (drawerLayout.isDrawerOpen(drawer)) {
+      drawerLayout.closeDrawer(drawer)
+      return true
+    }
+
+    return super.onBack()
   }
 
   override fun hideBottomNavBar(lockTranslation: Boolean, lockCollapse: Boolean) {
@@ -848,77 +805,6 @@ class MainController(
     presentController(imageSaverV2OptionsController)
   }
 
-  private fun onBookmarksBadgeStateChanged(state: MainControllerViewModel.BookmarksBadgeState) {
-    if (state.totalUnseenPostsCount <= 0) {
-      if (navigationViewContract.getBadge(R.id.action_bookmarks) != null) {
-        navigationViewContract.removeBadge(R.id.action_bookmarks)
-      }
-
-      return
-    }
-
-    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_bookmarks)
-    badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
-    badgeDrawable.number = state.totalUnseenPostsCount
-    badgeDrawable.adjustBadgeDrawable()
-
-    val backgroundColor = if (state.hasUnreadReplies) {
-      themeEngine.chanTheme.accentColor
-    } else {
-      if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
-        android.graphics.Color.LTGRAY
-      } else {
-        android.graphics.Color.DKGRAY
-      }
-    }
-
-    badgeDrawable.backgroundColor = backgroundColor
-    badgeDrawable.badgeTextColor = if (isDarkColor(backgroundColor)) {
-      android.graphics.Color.WHITE
-    } else {
-      android.graphics.Color.BLACK
-    }
-  }
-
-  private fun onSettingsNotificationChanged() {
-    val notificationsCount = settingsNotificationManager.count()
-
-    if (notificationsCount <= 0) {
-      if (navigationViewContract.getBadge(R.id.action_settings) != null) {
-        navigationViewContract.removeBadge(R.id.action_settings)
-      }
-
-      return
-    }
-
-    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_settings)
-    badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
-    badgeDrawable.number = notificationsCount
-    badgeDrawable.adjustBadgeDrawable()
-
-    badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
-    badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {
-      android.graphics.Color.WHITE
-    } else {
-      android.graphics.Color.BLACK
-    }
-  }
-
-  private fun BadgeDrawable.adjustBadgeDrawable() {
-    when (navigationViewContract.type) {
-      NavigationViewContract.Type.BottomNavView -> {
-        verticalOffset = dp(4f)
-        horizontalOffset = dp(5f)
-        badgeGravity = BadgeDrawable.TOP_END
-      }
-      NavigationViewContract.Type.SideNavView -> {
-        verticalOffset = 0
-        horizontalOffset = number.countDigits().coerceAtMost(5) * dp(5f)
-        badgeGravity = BadgeDrawable.TOP_START
-      }
-    }
-  }
-
   @Composable
   private fun ColumnScope.BuildContent() {
     val historyControllerState by drawerViewModel.historyControllerState
@@ -931,7 +817,7 @@ class MainController(
       onShowDrawerOptionsIconClick = { showDrawerOptions() }
     )
 
-    val navHistoryEntryList = when (historyControllerState) {
+    val navigationHistoryEntryList = when (historyControllerState) {
       HistoryControllerState.Loading -> {
         KurobaComposeProgressIndicator()
         return
@@ -942,11 +828,10 @@ class MainController(
         )
         return
       }
-      is HistoryControllerState.Data -> {
-        remember { drawerViewModel.navigationHistoryEntryList }
-      }
+      is HistoryControllerState.Data -> drawerViewModel.navigationHistoryEntryList
     }
 
+    val navHistoryEntryList = remember { navigationHistoryEntryList }
     if (navHistoryEntryList.isEmpty()) {
       KurobaComposeText(
         modifier = Modifier.fillMaxSize(),
@@ -967,8 +852,15 @@ class MainController(
           searchState.reset()
         }
       },
-      onHistoryEntryViewLongClicked = { navHistoryEntry -> onHistoryEntryViewLongClicked(navHistoryEntry) },
-      onNavHistoryDeleteClicked = { navHistoryEntry -> onNavHistoryDeleteClicked(navHistoryEntry.descriptor) }
+      onHistoryEntryViewLongClicked = { navHistoryEntry ->
+        onHistoryEntryViewLongClicked(navHistoryEntry)
+      },
+      onHistoryEntrySelectionChanged = { currentlySelected, navHistoryEntry ->
+        drawerViewModel.selectUnselect(navHistoryEntry, currentlySelected.not())
+      },
+      onNavHistoryDeleteClicked = { navHistoryEntry ->
+        onNavHistoryDeleteClicked(navHistoryEntry)
+      }
     )
   }
 
@@ -979,10 +871,9 @@ class MainController(
     searchState: DrawerSearchState,
     onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
-    val state = rememberLazyListState()
-    
     LaunchedEffect(key1 = searchState.query, block = {
       withContext(Dispatchers.Default) {
         searchState.searching = true
@@ -1029,6 +920,7 @@ class MainController(
         }
 
         val chanTheme = LocalChanTheme.current
+        val state = rememberLazyListState()
 
         LazyVerticalGrid(
           state = state,
@@ -1040,29 +932,21 @@ class MainController(
           content = {
             items(count = results.size) { index ->
               val navHistoryEntry = results[index]
+              val isSelectionMode = drawerViewModel.selectedHistoryEntries.isNotEmpty()
+              val isSelected = drawerViewModel.selectedHistoryEntries.contains(navHistoryEntry)
 
               BuildNavigationHistoryListEntry(
                 navHistoryEntry = navHistoryEntry,
+                isSelectionMode = isSelectionMode,
+                isSelected = isSelected,
                 onHistoryEntryViewClicked = onHistoryEntryViewClicked,
                 onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
                 onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
               )
             }
           })
       }
-    }
-  }
-
-  private fun processSearchQuery(
-    query: String,
-    navHistoryEntryList: List<NavigationHistoryEntry>
-  ): List<NavigationHistoryEntry> {
-    if (query.isEmpty()) {
-      return navHistoryEntryList
-    }
-
-    return navHistoryEntryList.filter { navigationHistoryEntry ->
-      navigationHistoryEntry.title.contains(other = query, ignoreCase = true)
     }
   }
 
@@ -1213,8 +1097,11 @@ class MainController(
   @Composable
   private fun BuildNavigationHistoryListEntry(
     navHistoryEntry: NavigationHistoryEntry,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
     onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
     val chanDescriptor = navHistoryEntry.descriptor
@@ -1237,8 +1124,16 @@ class MainController(
         .wrapContentHeight()
         .padding(all = 2.dp)
         .kurobaClickable(
-          onClick = { onHistoryEntryViewClicked(navHistoryEntry) },
-          onLongClick = { onHistoryEntryViewLongClicked(navHistoryEntry) }
+          onClick = {
+            if (isSelectionMode) {
+              onHistoryEntrySelectionChanged(isSelected, navHistoryEntry)
+            } else {
+              onHistoryEntryViewClicked(navHistoryEntry)
+            }
+          },
+          onLongClick = {
+            onHistoryEntryViewLongClicked(navHistoryEntry)
+          }
         ),
     ) {
       Box {
@@ -1257,19 +1152,26 @@ class MainController(
           imageLoaderV2 = imageLoaderV2
         )
 
-        val circleColor = remember {
-          Color(0x80000000L)
-        }
+        val showDeleteButtonShortcut by drawerViewModel.showDeleteButtonShortcut
 
-        Image(
-          modifier = Modifier
-            .align(Alignment.TopStart)
-            .size(20.dp)
-            .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-            .background(color = circleColor, shape = CircleShape),
-          painter = painterResource(id = R.drawable.ic_clear_white_24dp),
-          contentDescription = null
-        )
+        if (isSelectionMode) {
+          KurobaComposeCheckbox(
+            currentlyChecked = isSelected,
+            onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
+          )
+        } else if (showDeleteButtonShortcut) {
+          val circleColor = remember { Color(0x80000000L) }
+
+          Image(
+            modifier = Modifier
+              .align(Alignment.TopStart)
+              .size(20.dp)
+              .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
+              .background(color = circleColor, shape = CircleShape),
+            painter = painterResource(id = R.drawable.ic_clear_white_24dp),
+            contentDescription = null
+          )
+        }
 
         Row(
           modifier = Modifier
@@ -1332,6 +1234,15 @@ class MainController(
     }
   }
 
+  @Composable
+  private fun rememberDrawerSearchState(
+    searchQuery: String = "",
+    results: List<NavigationHistoryEntry> = emptyList(),
+    searching: Boolean = false
+  ): DrawerSearchState {
+    return remember { DrawerSearchState(searchQuery, results, searching) }
+  }
+
   private fun showDrawerOptions() {
     val drawerOptions = mutableListOf<FloatingListMenuItem>()
 
@@ -1353,6 +1264,12 @@ class MainController(
       isCurrentlySelected = ChanSettings.drawerShowNavigationHistory.get()
     )
 
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_SHOW_DELETE_SHORTCUT,
+      name = getString(R.string.drawer_controller_delete_shortcut),
+      isCurrentlySelected = ChanSettings.drawerShowDeleteButtonShortcut.get()
+    )
+
     drawerOptions += FloatingListMenuItem(
       key = ACTION_CLEAR_NAV_HISTORY,
       name = getString(R.string.drawer_controller_clear_nav_history)
@@ -1363,67 +1280,148 @@ class MainController(
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = drawerOptions,
       itemClickListener = { item ->
-        mainScope.launch { onDrawerOptionClicked(item) }
+        mainScope.launch {
+          when (item.key) {
+            ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
+              ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
+            }
+            ACTION_SHOW_BOOKMARKS -> {
+              drawerViewModel.deleteBookmarkedNavHistoryElements()
+            }
+            ACTION_SHOW_NAV_HISTORY -> {
+              ChanSettings.drawerShowNavigationHistory.toggle()
+              drawerViewModel.reloadNavigationHistory()
+            }
+            ACTION_SHOW_DELETE_SHORTCUT -> {
+              drawerViewModel.updateDeleteButtonShortcut(ChanSettings.drawerShowDeleteButtonShortcut.toggle())
+            }
+            ACTION_CLEAR_NAV_HISTORY -> {
+              dialogFactory.createSimpleConfirmationDialog(
+                context = context,
+                titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
+                negativeButtonText = getString(R.string.do_not),
+                positiveButtonText = getString(R.string.clear),
+                onPositiveButtonClickListener = {
+                  mainScope.launch { historyNavigationManager.clear() }
+                }
+              )
+            }
+          }
+        }
       }
     )
 
     presentController(floatingListMenuController)
   }
 
-  private suspend fun onDrawerOptionClicked(item: FloatingListMenuItem) {
-    when (item.key) {
-      ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
-        ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
-      }
-      ACTION_SHOW_BOOKMARKS -> {
-        drawerViewModel.deleteBookmarkedNavHistoryElements()
-      }
-      ACTION_SHOW_NAV_HISTORY -> {
-        ChanSettings.drawerShowNavigationHistory.toggle()
-        drawerViewModel.reloadNavigationHistory()
-      }
-      ACTION_CLEAR_NAV_HISTORY -> {
-        dialogFactory.createSimpleConfirmationDialog(
-          context = context,
-          titleTextId = R.string.drawer_controller_clear_nav_history_dialog_title,
-          negativeButtonText = getString(R.string.do_not),
-          positiveButtonText = getString(R.string.clear),
-          onPositiveButtonClickListener = {
-            mainScope.launch { historyNavigationManager.clear() }
-          }
+  private fun onHistoryEntryViewLongClicked(navHistoryEntry: NavigationHistoryEntry) {
+    val drawerOptions = mutableListOf<FloatingListMenuItem>()
+
+    if (drawerViewModel.selectedHistoryEntries.isEmpty()) {
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_START_SELECTION,
+        name = getString(R.string.drawer_controller_start_navigation_history_selection)
+      )
+
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_SELECT_ALL,
+        name = getString(R.string.drawer_controller_navigation_history_select_all)
+      )
+    }
+
+    if (drawerViewModel.selectedHistoryEntries.isNotEmpty()) {
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_PIN_UNPIN_SELECTED,
+        name = getString(R.string.drawer_controller_pin_unpin_selected)
+      )
+
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_DELETE_SELECTED,
+        name = getString(R.string.drawer_controller_delete_selected)
+      )
+    }
+
+    if (drawerViewModel.selectedHistoryEntries.isEmpty()) {
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_PIN_UNPIN,
+        name = getString(R.string.drawer_controller_pin_unpin)
+      )
+
+      if (navHistoryEntry.descriptor.isThreadDescriptor() && navHistoryEntry.additionalInfo != null) {
+        drawerOptions += FloatingListMenuItem(
+          key = ACTION_SHOW_IN_BOOKMARKS,
+          name = getString(R.string.drawer_controller_show_in_bookmarks)
         )
       }
+
+      drawerOptions += FloatingListMenuItem(
+        key = ACTION_DELETE,
+        name = getString(R.string.drawer_controller_delete_one)
+      )
     }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = drawerOptions,
+      itemClickListener = { item ->
+        mainScope.launch {
+          when (item.key) {
+            ACTION_START_SELECTION -> {
+              drawerViewModel.toggleSelection(navHistoryEntry)
+            }
+            ACTION_SELECT_ALL -> {
+              drawerViewModel.selectAll()
+            }
+            ACTION_PIN_UNPIN -> {
+              pinUnpin(listOf(navHistoryEntry.descriptor))
+            }
+            ACTION_PIN_UNPIN_SELECTED -> {
+              pinUnpin(drawerViewModel.getSelectedDescriptors())
+              drawerViewModel.clearSelection()
+            }
+            ACTION_DELETE_SELECTED -> {
+              drawerViewModel.deleteNavElementsByDescriptors(drawerViewModel.getSelectedDescriptors())
+              drawerViewModel.clearSelection()
+            }
+            ACTION_DELETE -> {
+              onNavHistoryDeleteClicked(navHistoryEntry)
+            }
+            ACTION_SHOW_IN_BOOKMARKS -> {
+              navHistoryEntry.descriptor.threadDescriptorOrNull()?.let { threadDescriptor ->
+                openBookmarksController(listOf(threadDescriptor))
+
+                if (drawerLayout.isDrawerOpen(drawer)) {
+                  drawerLayout.closeDrawer(drawer)
+                }
+              }
+            }
+          }
+        }
+      }
+    )
+
+    presentController(floatingListMenuController)
   }
 
-  private fun onHistoryEntryViewLongClicked(navHistoryEntry: NavigationHistoryEntry) {
-    mainScope.launch {
-      val chanDescriptorString = navHistoryEntry.descriptor.userReadableString()
-
-      when (drawerViewModel.pinOrUnpin(navHistoryEntry.descriptor)) {
-        HistoryNavigationManager.PinResult.Pinned -> {
-          showToast(getString(R.string.drawer_controller_navigation_entry_pinned, chanDescriptorString))
-        }
-        HistoryNavigationManager.PinResult.Unpinned -> {
-          showToast(getString(R.string.drawer_controller_navigation_entry_unpinned, chanDescriptorString))
-        }
-        HistoryNavigationManager.PinResult.Failure -> {
-          showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin, chanDescriptorString))
-        }
-        HistoryNavigationManager.PinResult.NoSpaceToPin -> {
-          showToast(getString(R.string.drawer_controller_navigation_entry_no_slots_for_pin, chanDescriptorString))
-        }
+  private suspend fun pinUnpin(descriptors: Collection<ChanDescriptor>) {
+    when (drawerViewModel.pinOrUnpin(descriptors)) {
+      HistoryNavigationManager.PinResult.Pinned -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_pinned))
+      }
+      HistoryNavigationManager.PinResult.Unpinned -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_unpinned))
+      }
+      HistoryNavigationManager.PinResult.Failure -> {
+        showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin))
       }
     }
   }
 
-  private fun onNavHistoryDeleteClicked(descriptor: ChanDescriptor) {
+  private fun onNavHistoryDeleteClicked(navHistoryEntry: NavigationHistoryEntry) {
     mainScope.launch {
-      if (drawerViewModel.deleteNavElement(descriptor)) {
-        showToast(getString(R.string.drawer_controller_navigation_entry_deleted, descriptor.userReadableString()))
-      } else {
-        showToast(getString(R.string.drawer_controller_navigation_entry_cannot_delete_opened))
-      }
+      drawerViewModel.deleteNavElement(navHistoryEntry)
+      showToast(getString(R.string.drawer_controller_navigation_entry_deleted))
     }
   }
 
@@ -1451,13 +1449,154 @@ class MainController(
     }
   }
 
-  @Composable
-  fun rememberDrawerSearchState(
-    searchQuery: String = "",
-    results: List<NavigationHistoryEntry> = emptyList(),
-    searching: Boolean = false
-  ): DrawerSearchState {
-    return remember { DrawerSearchState(searchQuery, results, searching) }
+  private fun onNavigationItemSelectedListener(menuItem: MenuItem) {
+    when (menuItem.itemId) {
+      R.id.action_search -> openGlobalSearchController()
+      R.id.action_archive -> openArchiveController()
+      R.id.action_browse -> closeAllNonMainControllers()
+      R.id.action_bookmarks -> openBookmarksController(emptyList())
+      R.id.action_settings -> openSettingsController()
+    }
+  }
+
+  private fun closeBottomNavBarAwareNavigationControllerListener() {
+    val currentNavController = top
+      ?: return
+
+    if (currentNavController !is BottomNavBarAwareNavigationController) {
+      return
+    }
+
+    popChildController(false)
+  }
+
+  private fun closeAllFloatingControllers(childControllers: List<Controller>) {
+    for (childController in childControllers) {
+      childController.presentingThisController?.stopPresenting(false)
+
+      if (childController.childControllers.isNotEmpty()) {
+        closeAllFloatingControllers(childController.childControllers)
+      }
+    }
+  }
+
+  private fun setBottomNavViewButtons() {
+    val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
+    navigationViewContract.navigationMenu.clear()
+
+    bottomNavViewButtons.bottomNavViewButtons().forEachIndexed { index, bottomNavViewButton ->
+      when (bottomNavViewButton) {
+        BottomNavViewButton.Search -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_search, index, R.string.menu_search)
+            .setIcon(R.drawable.ic_search_white_24dp)
+        }
+        BottomNavViewButton.Archive -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_archive, index, R.string.menu_archive)
+            .setIcon(R.drawable.ic_baseline_archive_24)
+        }
+        BottomNavViewButton.Bookmarks -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_bookmarks, index, R.string.menu_bookmarks)
+            .setIcon(R.drawable.ic_baseline_bookmarks)
+        }
+        BottomNavViewButton.Browse -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_browse, index, R.string.menu_browse)
+            .setIcon(R.drawable.ic_baseline_laptop)
+        }
+        BottomNavViewButton.Settings -> {
+          navigationViewContract.navigationMenu
+            .add(Menu.NONE, R.id.action_settings, index, R.string.menu_settings)
+            .setIcon(R.drawable.ic_baseline_settings)
+        }
+      }
+    }
+  }
+
+  private fun onBookmarksBadgeStateChanged(state: MainControllerViewModel.BookmarksBadgeState) {
+    if (state.totalUnseenPostsCount <= 0) {
+      if (navigationViewContract.getBadge(R.id.action_bookmarks) != null) {
+        navigationViewContract.removeBadge(R.id.action_bookmarks)
+      }
+
+      return
+    }
+
+    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_bookmarks)
+    badgeDrawable.maxCharacterCount = BOOKMARKS_BADGE_COUNTER_MAX_NUMBERS
+    badgeDrawable.number = state.totalUnseenPostsCount
+    badgeDrawable.adjustBadgeDrawable()
+
+    val backgroundColor = if (state.hasUnreadReplies) {
+      themeEngine.chanTheme.accentColor
+    } else {
+      if (isDarkColor(themeEngine.chanTheme.primaryColor)) {
+        android.graphics.Color.LTGRAY
+      } else {
+        android.graphics.Color.DKGRAY
+      }
+    }
+
+    badgeDrawable.backgroundColor = backgroundColor
+    badgeDrawable.badgeTextColor = if (isDarkColor(backgroundColor)) {
+      android.graphics.Color.WHITE
+    } else {
+      android.graphics.Color.BLACK
+    }
+  }
+
+  private fun onSettingsNotificationChanged() {
+    val notificationsCount = settingsNotificationManager.count()
+
+    if (notificationsCount <= 0) {
+      if (navigationViewContract.getBadge(R.id.action_settings) != null) {
+        navigationViewContract.removeBadge(R.id.action_settings)
+      }
+
+      return
+    }
+
+    val badgeDrawable = navigationViewContract.getOrCreateBadge(R.id.action_settings)
+    badgeDrawable.maxCharacterCount = SETTINGS_BADGE_COUNTER_MAX_NUMBERS
+    badgeDrawable.number = notificationsCount
+    badgeDrawable.adjustBadgeDrawable()
+
+    badgeDrawable.backgroundColor = themeEngine.chanTheme.accentColor
+    badgeDrawable.badgeTextColor = if (isDarkColor(themeEngine.chanTheme.accentColor)) {
+      android.graphics.Color.WHITE
+    } else {
+      android.graphics.Color.BLACK
+    }
+  }
+
+  private fun BadgeDrawable.adjustBadgeDrawable() {
+    when (navigationViewContract.type) {
+      NavigationViewContract.Type.BottomNavView -> {
+        verticalOffset = dp(4f)
+        horizontalOffset = dp(5f)
+        badgeGravity = BadgeDrawable.TOP_END
+      }
+      NavigationViewContract.Type.SideNavView -> {
+        verticalOffset = 0
+        horizontalOffset = number.countDigits().coerceAtMost(5) * dp(5f)
+        badgeGravity = BadgeDrawable.TOP_START
+      }
+    }
+  }
+
+  private fun processSearchQuery(
+    query: String,
+    navHistoryEntryList: List<NavigationHistoryEntry>
+  ): List<NavigationHistoryEntry> {
+    if (query.isEmpty()) {
+      return navHistoryEntryList
+    }
+
+    return navHistoryEntryList.filter { navigationHistoryEntry ->
+      navigationHistoryEntry.title.contains(other = query, ignoreCase = true)
+    }
   }
 
   class DrawerSearchState(
@@ -1485,7 +1624,16 @@ class MainController(
     private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
     private const val ACTION_SHOW_BOOKMARKS = 1
     private const val ACTION_SHOW_NAV_HISTORY = 2
-    private const val ACTION_CLEAR_NAV_HISTORY = 3
+    private const val ACTION_SHOW_DELETE_SHORTCUT = 3
+    private const val ACTION_CLEAR_NAV_HISTORY = 4
+
+    private const val ACTION_START_SELECTION = 100
+    private const val ACTION_SELECT_ALL = 101
+    private const val ACTION_PIN_UNPIN_SELECTED = 102
+    private const val ACTION_PIN_UNPIN = 103
+    private const val ACTION_DELETE_SELECTED = 104
+    private const val ACTION_DELETE = 105
+    private const val ACTION_SHOW_IN_BOOKMARKS = 106
 
     private val GRID_COLUMN_WIDTH = dp(80f)
   }

@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.drawer
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
@@ -8,7 +10,6 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -53,8 +54,6 @@ class MainControllerViewModel : BaseViewModel() {
   lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
   lateinit var _chanThreadManager: Lazy<ChanThreadManager>
-  @Inject
-  lateinit var _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = _historyNavigationManager.get()
@@ -68,11 +67,22 @@ class MainControllerViewModel : BaseViewModel() {
     get() = _archivesManager.get()
   private val chanThreadManager: ChanThreadManager
     get() = _chanThreadManager.get()
-  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
-    get() = _currentOpenedDescriptorStateManager.get()
 
-  val historyControllerState = mutableStateOf<HistoryControllerState>(HistoryControllerState.Loading)
-  val navigationHistoryEntryList = mutableStateListOf<NavigationHistoryEntry>()
+  private val _historyControllerState = mutableStateOf<HistoryControllerState>(HistoryControllerState.Loading)
+  val historyControllerState: State<HistoryControllerState>
+    get() = _historyControllerState
+
+  private var _showDeleteButtonShortcut = mutableStateOf(ChanSettings.drawerShowDeleteButtonShortcut.get())
+  val showDeleteButtonShortcut: State<Boolean>
+    get() = _showDeleteButtonShortcut
+
+  private val _navigationHistoryEntryList = mutableStateListOf<NavigationHistoryEntry>()
+  val navigationHistoryEntryList: List<NavigationHistoryEntry>
+    get() = _navigationHistoryEntryList
+
+  private val _selectedHistoryEntries = mutableStateMapOf<NavigationHistoryEntry, Unit>()
+  val selectedHistoryEntries: Map<NavigationHistoryEntry, Unit>
+    get() = _selectedHistoryEntries
 
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
 
@@ -103,51 +113,45 @@ class MainControllerViewModel : BaseViewModel() {
     reloadNavigationHistory()
   }
 
-  fun mapBookmarksIntoNewNavigationElements(): List<HistoryNavigationManager.NewNavigationElement> {
-    return bookmarksManager.mapNotNullAllBookmarks { threadBookmarkView ->
-      createNewNavigationElement(threadBookmarkView.threadDescriptor)
+  fun getSelectedDescriptors(): List<ChanDescriptor> {
+    return _selectedHistoryEntries.keys.map { it.descriptor }
+  }
+
+  fun updateDeleteButtonShortcut(show: Boolean) {
+    _showDeleteButtonShortcut.value = show
+  }
+
+  fun selectUnselect(navHistoryEntry: NavigationHistoryEntry, select: Boolean) {
+    if (select) {
+      _selectedHistoryEntries.put(navHistoryEntry, Unit)
+    } else {
+      _selectedHistoryEntries.remove(navHistoryEntry)
     }
   }
 
-  private fun createNewNavigationElement(
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): HistoryNavigationManager.NewNavigationElement? {
-    if (!historyNavigationManager.canCreateNavElement(bookmarksManager, threadDescriptor)) {
-      return null
-    }
-
-    val chanOriginalPost = chanThreadManager.getChanThread(threadDescriptor)
-      ?.getOriginalPost()
-
-    var opThumbnailUrl: HttpUrl? = null
-    var title: String? = null
-
-    if (chanOriginalPost != null) {
-      opThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
-        ?.getOriginalPost()
-        ?.firstImage()
-        ?.actualThumbnailUrl
-
-      title = ChanPostUtils.getTitle(
-        chanOriginalPost,
-        threadDescriptor
-      )
+  fun toggleSelection(navHistoryEntry: NavigationHistoryEntry) {
+    if (_selectedHistoryEntries.containsKey(navHistoryEntry)) {
+      _selectedHistoryEntries.remove(navHistoryEntry)
     } else {
-      bookmarksManager.viewBookmark(threadDescriptor) { threadBookmarkView ->
-        opThumbnailUrl = threadBookmarkView.thumbnailUrl
-        title = threadBookmarkView.title
+      _selectedHistoryEntries.put(navHistoryEntry, Unit)
+    }
+  }
+
+  fun selectAll() {
+    val allNavigationHistoryEntries = _navigationHistoryEntryList
+      .filter { navigationHistoryEntry ->
+        return@filter historyNavigationManager.canCreateNavElement(
+          bookmarksManager = bookmarksManager,
+          chanDescriptor = navigationHistoryEntry.descriptor
+        )
       }
-    }
+      .map { navigationHistoryEntry -> Pair(navigationHistoryEntry, Unit) }
 
-    if (opThumbnailUrl == null || title.isNullOrEmpty()) {
-      return null
-    }
+    _selectedHistoryEntries.putAll(allNavigationHistoryEntries)
+  }
 
-    return HistoryNavigationManager.NewNavigationElement(
-      threadDescriptor,
-      opThumbnailUrl!!,
-      title!!
-    )
+  fun clearSelection() {
+    _selectedHistoryEntries.clear()
   }
 
   fun onThemeChanged() {
@@ -161,14 +165,16 @@ class MainControllerViewModel : BaseViewModel() {
       .hide()
   }
 
-  suspend fun deleteNavElement(descriptor: ChanDescriptor): Boolean {
-    val isCurrentlyOpened = isCurrentlyOpened(descriptor)
-    if (isCurrentlyOpened) {
-      return false
-    }
+  suspend fun deleteNavElement(navigationHistoryEntry: NavigationHistoryEntry) {
+    deleteNavElements(listOf(navigationHistoryEntry))
+  }
 
-    historyNavigationManager.deleteNavElement(descriptor)
-    return true
+  suspend fun deleteNavElements(navigationHistoryEntries: Collection<NavigationHistoryEntry>) {
+    deleteNavElementsByDescriptors(navigationHistoryEntries.map { it.descriptor })
+  }
+
+  suspend fun deleteNavElementsByDescriptors(descriptors: Collection<ChanDescriptor>) {
+    historyNavigationManager.deleteNavElements(descriptors)
   }
 
   fun deleteBookmarkedNavHistoryElements() {
@@ -179,14 +185,14 @@ class MainControllerViewModel : BaseViewModel() {
     }
   }
 
-  suspend fun pinOrUnpin(descriptor: ChanDescriptor): HistoryNavigationManager.PinResult {
-    return historyNavigationManager.pinOrUnpin(descriptor)
+  suspend fun pinOrUnpin(descriptors: Collection<ChanDescriptor>): HistoryNavigationManager.PinResult {
+    return historyNavigationManager.pinOrUnpin(descriptors)
   }
 
   suspend fun reloadNavigationHistory() {
     ModularResult.Try {
       return@Try withContext(Dispatchers.Default) {
-        historyControllerState.value = HistoryControllerState.Loading
+        _historyControllerState.value = HistoryControllerState.Loading
 
         siteManager.awaitUntilInitialized()
         bookmarksManager.awaitUntilInitialized()
@@ -194,17 +200,17 @@ class MainControllerViewModel : BaseViewModel() {
         val navHistoryList = historyNavigationManager.getAll()
           .mapNotNull { navigationElement -> navHistoryElementToNavigationHistoryEntryOrNull(navigationElement) }
 
-        navigationHistoryEntryList.clear()
-        navigationHistoryEntryList.addAll(navHistoryList)
+        _navigationHistoryEntryList.clear()
+        _navigationHistoryEntryList.addAll(navHistoryList)
       }
     }
       .peekError { error ->
         Logger.e(TAG, "loadNavigationHistoryInitial() error", error)
-        historyControllerState.value = HistoryControllerState.Error(error.errorMessageOrClassName())
+        _historyControllerState.value = HistoryControllerState.Error(error.errorMessageOrClassName())
       }
       .peekValue {
         Logger.d(TAG, "loadNavigationHistoryInitial() success")
-        historyControllerState.value = HistoryControllerState.Data
+        _historyControllerState.value = HistoryControllerState.Data
       }
       .ignore()
   }
@@ -215,11 +221,6 @@ class MainControllerViewModel : BaseViewModel() {
     val siteDescriptor = when (navigationElement) {
       is NavHistoryElement.Catalog -> navigationElement.descriptor.siteDescriptor()
       is NavHistoryElement.Thread -> navigationElement.descriptor.siteDescriptor()
-    }
-
-    val siteEnabled = siteManager.bySiteDescriptor(siteDescriptor)?.enabled() ?: false
-    if (!siteEnabled) {
-      return null
     }
 
     val descriptor = when (navigationElement) {
@@ -271,17 +272,6 @@ class MainControllerViewModel : BaseViewModel() {
       pinned = navigationElement.navHistoryElementInfo.pinned,
       additionalInfo = additionalInfo
     )
-  }
-
-  private fun isCurrentlyOpened(descriptor: ChanDescriptor): Boolean {
-    return when (descriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        descriptor == currentOpenedDescriptorStateManager.currentCatalogDescriptor
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        descriptor == currentOpenedDescriptorStateManager.currentThreadDescriptor
-      }
-    }
   }
 
   private fun canShowBookmarkInfo(
@@ -355,7 +345,7 @@ class MainControllerViewModel : BaseViewModel() {
 
     val toUpdate = mutableListOf<Pair<Int, NavigationHistoryEntry>>()
 
-    navigationHistoryEntryList.forEachIndexed { index, navigationHistoryEntry ->
+    _navigationHistoryEntryList.forEachIndexed { index, navigationHistoryEntry ->
       if (navigationHistoryEntry.descriptor !in chanDescriptorsSet) {
         return@forEachIndexed
       }
@@ -370,7 +360,7 @@ class MainControllerViewModel : BaseViewModel() {
     }
 
     toUpdate.forEach { (index, navigationHistoryEntry) ->
-      navigationHistoryEntryList[index] = navigationHistoryEntry
+      _navigationHistoryEntryList[index] = navigationHistoryEntry
     }
   }
 
@@ -403,12 +393,12 @@ class MainControllerViewModel : BaseViewModel() {
               val navigationHistoryEntry = navHistoryElementToNavigationHistoryEntryOrNull(navHistoryElement)
                 ?: return@forEach
 
-              if (navHistoryElementIndex >= navigationHistoryEntryList.size) {
-                navigationHistoryEntryList.add(navigationHistoryEntry)
+              if (navHistoryElementIndex >= _navigationHistoryEntryList.size) {
+                _navigationHistoryEntryList.add(navigationHistoryEntry)
                 return@forEach
               }
 
-              navigationHistoryEntryList.add(navHistoryElementIndex, navigationHistoryEntry)
+              _navigationHistoryEntryList.add(navHistoryElementIndex, navigationHistoryEntry)
             }
           }
         }
@@ -416,7 +406,7 @@ class MainControllerViewModel : BaseViewModel() {
           val descriptorsToDelete = updateEvent.navHistoryElements
             .toHashSetBy { navHistoryElement -> navHistoryElement.descriptor() }
 
-          navigationHistoryEntryList.mutableIteration { mutableIterator, navigationHistoryEntry ->
+          _navigationHistoryEntryList.mutableIteration { mutableIterator, navigationHistoryEntry ->
             if (navigationHistoryEntry.descriptor in descriptorsToDelete) {
               mutableIterator.remove()
             }
@@ -427,52 +417,99 @@ class MainControllerViewModel : BaseViewModel() {
         is HistoryNavigationManager.UpdateEvent.Moved -> {
           historyNavigationManager.doWithLockedNavStack { navStack ->
             val movedTo = navStack.indexOf(updateEvent.navHistoryElement)
-            if (movedTo < 0 || movedTo >= navigationHistoryEntryList.size) {
+            if (movedTo < 0 || movedTo >= _navigationHistoryEntryList.size) {
               return@doWithLockedNavStack
             }
 
-            val movedFrom = navigationHistoryEntryList.indexOfFirst { navigationHistoryEntry ->
+            val movedFrom = _navigationHistoryEntryList.indexOfFirst { navigationHistoryEntry ->
               navigationHistoryEntry.descriptor == updateEvent.navHistoryElement.descriptor()
             }
 
-            if (movedFrom < 0 || movedFrom >= navigationHistoryEntryList.size) {
+            if (movedFrom < 0 || movedFrom >= _navigationHistoryEntryList.size || movedTo == movedFrom) {
               return@doWithLockedNavStack
             }
 
-            navigationHistoryEntryList.add(movedTo, navigationHistoryEntryList.removeAt(movedFrom))
+            _navigationHistoryEntryList.add(movedTo, _navigationHistoryEntryList.removeAt(movedFrom))
           }
         }
         is HistoryNavigationManager.UpdateEvent.PinnedOrUnpinned -> {
           historyNavigationManager.doWithLockedNavStack { navStack ->
-            val newNavHistoryElementIndex = navStack.indexOf(updateEvent.navHistoryElement)
-            if (newNavHistoryElementIndex < 0 || newNavHistoryElementIndex >= navigationHistoryEntryList.size) {
-              return@doWithLockedNavStack
+            updateEvent.navHistoryElements.forEach { navHistoryElement ->
+              val newNavHistoryElementIndex = navStack.indexOf(navHistoryElement)
+              if (newNavHistoryElementIndex < 0 || newNavHistoryElementIndex >= _navigationHistoryEntryList.size) {
+                return@forEach
+              }
+
+              val oldNavHistoryElementIndex = _navigationHistoryEntryList.indexOfFirst { navigationHistoryEntry ->
+                navigationHistoryEntry.descriptor == navHistoryElement.descriptor()
+              }
+
+              if (oldNavHistoryElementIndex < 0) {
+                return@forEach
+              }
+
+              val navigationHistoryEntry = navHistoryElementToNavigationHistoryEntryOrNull(navHistoryElement)
+                ?: return@forEach
+
+              if (oldNavHistoryElementIndex == newNavHistoryElementIndex) {
+                _navigationHistoryEntryList[newNavHistoryElementIndex] = navigationHistoryEntry
+              } else {
+                _navigationHistoryEntryList.removeAt(oldNavHistoryElementIndex)
+                _navigationHistoryEntryList.add(newNavHistoryElementIndex, navigationHistoryEntry)
+              }
             }
-
-            val oldNavHistoryElementIndex = navigationHistoryEntryList.indexOfFirst { navigationHistoryEntry ->
-              navigationHistoryEntry.descriptor == updateEvent.navHistoryElement.descriptor()
-            }
-
-            if (oldNavHistoryElementIndex < 0) {
-              return@doWithLockedNavStack
-            }
-
-            val navigationHistoryEntry = navHistoryElementToNavigationHistoryEntryOrNull(updateEvent.navHistoryElement)
-              ?: return@doWithLockedNavStack
-
-            navigationHistoryEntryList.removeAt(oldNavHistoryElementIndex)
-            navigationHistoryEntryList.add(newNavHistoryElementIndex, navigationHistoryEntry)
           }
         }
         HistoryNavigationManager.UpdateEvent.Cleared -> {
-          navigationHistoryEntryList.clear()
+          _navigationHistoryEntryList.clear()
         }
       }
 
-      historyControllerState.value = HistoryControllerState.Data
+      _historyControllerState.value = HistoryControllerState.Data
     } catch (error: Throwable) {
-      historyControllerState.value = HistoryControllerState.Error(errorText = error.errorMessageOrClassName())
+      _historyControllerState.value = HistoryControllerState.Error(errorText = error.errorMessageOrClassName())
     }
+  }
+
+  private fun createNewNavigationElement(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): HistoryNavigationManager.NewNavigationElement? {
+    if (!historyNavigationManager.canCreateNavElement(bookmarksManager, threadDescriptor)) {
+      return null
+    }
+
+    val chanOriginalPost = chanThreadManager.getChanThread(threadDescriptor)
+      ?.getOriginalPost()
+
+    var opThumbnailUrl: HttpUrl? = null
+    var title: String? = null
+
+    if (chanOriginalPost != null) {
+      opThumbnailUrl = chanThreadManager.getChanThread(threadDescriptor)
+        ?.getOriginalPost()
+        ?.firstImage()
+        ?.actualThumbnailUrl
+
+      title = ChanPostUtils.getTitle(
+        chanOriginalPost,
+        threadDescriptor
+      )
+    } else {
+      bookmarksManager.viewBookmark(threadDescriptor) { threadBookmarkView ->
+        opThumbnailUrl = threadBookmarkView.thumbnailUrl
+        title = threadBookmarkView.title
+      }
+    }
+
+    if (opThumbnailUrl == null || title.isNullOrEmpty()) {
+      return null
+    }
+
+    return HistoryNavigationManager.NewNavigationElement(
+      threadDescriptor,
+      opThumbnailUrl!!,
+      title!!
+    )
   }
 
   data class BookmarksBadgeState(

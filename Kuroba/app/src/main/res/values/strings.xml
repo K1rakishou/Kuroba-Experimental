@@ -1175,17 +1175,23 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_do_not_delete">Do not delete</string>
     <string name="drawer_controller_delete_all_pins">Delete all pins</string>
     <string name="drawer_controller_navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here (Additionally, check drawer settings)</string>
+    <string name="drawer_controller_start_navigation_history_selection">Select</string>
+    <string name="drawer_controller_navigation_history_select_all">Select all</string>
+    <string name="drawer_controller_delete_selected">Delete selected</string>
+    <string name="drawer_controller_delete_one">Delete</string>
+    <string name="drawer_controller_pin_unpin">Pin/unpin</string>
+    <string name="drawer_controller_show_in_bookmarks">Show in bookmarks</string>
+    <string name="drawer_controller_pin_unpin_selected">Pin/unpin selected</string>
     <string name="drawer_controller_move_last_accessed_thread_to_top">Move last accessed thread/catalog to top</string>
     <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
     <string name="drawer_controller_show_navigation_history">Show navigation history</string>
+    <string name="drawer_controller_delete_shortcut">Show delete navigation history shortcut</string>
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
-    <string name="drawer_controller_navigation_entry_pinned">Pinned \'%1$s\'</string>
-    <string name="drawer_controller_navigation_entry_unpinned">Unpinned \'%1$s\'</string>
-    <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin \'%1$s\'</string>
-    <string name="drawer_controller_navigation_entry_no_slots_for_pin">No slots left to pin \'%1$s\'. Remove something.</string>
-    <string name="drawer_controller_navigation_entry_deleted">Deleted \'%1$s\'</string>
-    <string name="drawer_controller_navigation_entry_cannot_delete_opened">Cannot delete currently opened history navigation element</string>
+    <string name="drawer_controller_navigation_entry_pinned">Pinned</string>
+    <string name="drawer_controller_navigation_entry_unpinned">Unpinned</string>
+    <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin</string>
+    <string name="drawer_controller_navigation_entry_deleted">Deleted</string>
 
     <string name="board_selection_controller_grid_layout_mode">Board selection grid mode</string>
 

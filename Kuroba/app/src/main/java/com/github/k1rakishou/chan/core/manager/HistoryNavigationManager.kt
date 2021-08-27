@@ -202,7 +202,7 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Created(mappedNavElements))
-    persisNavigationStack(eager = false)
+    persistNavigationStack(eager = false)
   }
 
   suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
@@ -248,7 +248,7 @@ class HistoryNavigationManager(
       _navigationStackUpdatesFlow.emit(UpdateEvent.Moved(movedElement))
     }
 
-    persisNavigationStack(eager = false)
+    persistNavigationStack(eager = false)
   }
 
   private suspend fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
@@ -288,71 +288,87 @@ class HistoryNavigationManager(
     }
   }
 
-  suspend fun pinOrUnpin(chanDescriptor: ChanDescriptor): PinResult {
+  suspend fun pinOrUnpin(chanDescriptors: Collection<ChanDescriptor>): PinResult {
     ensureInitialized()
 
+    if (chanDescriptors.isEmpty()) {
+      return PinResult.Failure
+    }
+
     val pinResult = mutex.withLock {
-      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
-        return@indexOfFirst when (navHistoryElement) {
-          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
-          is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
+      val doPin = chanDescriptors.any { chanDescriptor ->
+        return@any navigationStack.firstOrNull { navHistoryElement ->
+          navHistoryElement.descriptor() == chanDescriptor
         }
+          ?.navHistoryElementInfo
+          ?.pinned == false
       }
 
-      if (indexOfElem < 0) {
-        return@withLock PinResult.Failure
-      }
+      val pinnedUnpinned = mutableListOf<NavHistoryElement>()
 
-      val lastPinnedElementIndex = navigationStack
-        .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
+      for (chanDescriptor in chanDescriptors) {
+        val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+          return@indexOfFirst when (navHistoryElement) {
+            is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
+            is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
+          }
+        }
 
-      if (lastPinnedElementIndex >= navigationStack.lastIndex) {
-        return@withLock PinResult.NoSpaceToPin
-      }
+        if (indexOfElem < 0) {
+          return@withLock PinResult.Failure
+        }
 
-      val navHistoryElement = navigationStack.get(indexOfElem)
-      val navHistoryElementDescriptor = navHistoryElement.descriptor()
-      val navHistoryElementInfo = navHistoryElement.navHistoryElementInfo
-      navHistoryElementInfo.pinned = navHistoryElementInfo.pinned.not()
+        val lastPinnedElementIndex = navigationStack
+          .indexOfLast { navHistoryElement -> navHistoryElement.navHistoryElementInfo.pinned }
 
-      val isDescriptorCurrentlyOpened =
-        navHistoryElementDescriptor == currentOpenedDescriptorStateManager.currentFocusedDescriptor
+        val navHistoryElement = navigationStack.get(indexOfElem)
+        val navHistoryElementDescriptor = navHistoryElement.descriptor()
+        val navHistoryElementInfo = navHistoryElement.navHistoryElementInfo
+        navHistoryElementInfo.pinned = doPin
 
-      val nextPinnedElementIndex = if (lastPinnedElementIndex < 0) {
-        0
-      } else {
-        if (!navHistoryElementInfo.pinned && isDescriptorCurrentlyOpened) {
-          lastPinnedElementIndex
+        val isDescriptorCurrentlyOpened =
+          navHistoryElementDescriptor == currentOpenedDescriptorStateManager.currentFocusedDescriptor
+
+        val nextPinnedElementIndex = if (lastPinnedElementIndex < 0) {
+          0
         } else {
-          lastPinnedElementIndex + 1
+          if (!navHistoryElementInfo.pinned && isDescriptorCurrentlyOpened) {
+            lastPinnedElementIndex
+          } else {
+            lastPinnedElementIndex + 1
+          }
         }
+
+        navigationStack.addSafe(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
+        pinnedUnpinned += navHistoryElement
       }
 
-      navigationStack.addSafe(nextPinnedElementIndex, navigationStack.removeAt(indexOfElem))
-      _navigationStackUpdatesFlow.emit(UpdateEvent.PinnedOrUnpinned(navHistoryElement))
-
-      return@withLock if (navHistoryElementInfo.pinned) {
-        PinResult.Pinned
-      } else {
-        PinResult.Unpinned
+      if (pinnedUnpinned.isNotEmpty()) {
+        _navigationStackUpdatesFlow.emit(UpdateEvent.PinnedOrUnpinned(pinnedUnpinned))
       }
+
+      if (doPin) {
+        return@withLock PinResult.Pinned
+      }
+
+      return@withLock PinResult.Unpinned
     }
 
     if (!pinResult.success) {
       return pinResult
     }
 
-    persisNavigationStack(eager = false)
+    persistNavigationStack(eager = false)
     return pinResult
   }
 
   suspend fun deleteNavElement(descriptor: ChanDescriptor) {
     ensureInitialized()
 
-    removeNavElements(listOf(descriptor))
+    deleteNavElements(listOf(descriptor))
   }
 
-  suspend fun removeNavElements(descriptors: Collection<ChanDescriptor>) {
+  suspend fun deleteNavElements(descriptors: Collection<ChanDescriptor>) {
     if (descriptors.isEmpty()) {
       return
     }
@@ -385,7 +401,7 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Deleted(removedElements))
-    persisNavigationStack(eager = false)
+    persistNavigationStack(eager = false)
   }
 
   suspend fun clear() {
@@ -405,10 +421,10 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Cleared)
-    persisNavigationStack(eager = false)
+    persistNavigationStack(eager = false)
   }
 
-  private fun persisNavigationStack(eager: Boolean = false) {
+  private fun persistNavigationStack(eager: Boolean = false) {
     if (!persistRunning.compareAndSet(false, true)) {
       return
     }
@@ -496,7 +512,7 @@ class HistoryNavigationManager(
         return@addListener
       }
 
-      persisNavigationStack(eager = true)
+      persistNavigationStack(eager = true)
     }
   }
 
@@ -519,14 +535,13 @@ class HistoryNavigationManager(
   enum class PinResult(val success: Boolean) {
     Pinned(true),
     Unpinned(true),
-    NoSpaceToPin(false),
     Failure(false),
   }
 
   sealed class UpdateEvent {
     object Initialized : UpdateEvent()
     data class Created(val navHistoryElements: Collection<NavHistoryElement>) : UpdateEvent()
-    data class PinnedOrUnpinned(val navHistoryElement: NavHistoryElement) : UpdateEvent()
+    data class PinnedOrUnpinned(val navHistoryElements: Collection<NavHistoryElement>) : UpdateEvent()
     data class Moved(val navHistoryElement: NavHistoryElement) : UpdateEvent()
     data class Deleted(val navHistoryElements: Collection<NavHistoryElement>) : UpdateEvent()
     object Cleared : UpdateEvent()
@@ -540,6 +555,9 @@ class HistoryNavigationManager(
 
   companion object {
     private const val TAG = "HistoryNavigationManager"
+
+    // Only used when reloading navigation history back from the database.
+    // Can grow unlimited until the app restart.
     private const val MAX_NAV_HISTORY_ENTRIES = 256
   }
 }

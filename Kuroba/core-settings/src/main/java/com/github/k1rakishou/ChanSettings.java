@@ -413,6 +413,7 @@ public class ChanSettings {
     public static BooleanSetting drawerMoveLastAccessedThreadToTop;
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
+    public static BooleanSetting drawerShowDeleteButtonShortcut;
     public static BooleanSetting isLowRamDeviceForced;
     //endregion
     //endregion
@@ -672,6 +673,11 @@ public class ChanSettings {
             drawerShowNavigationHistory = new BooleanSetting(
                     provider,
                     "drawer_show_navigation_history",
+                    true
+            );
+            drawerShowDeleteButtonShortcut = new BooleanSetting(
+                    provider,
+                    "drawer_show_delete_button_shortcut",
                     true
             );
         } catch (Throwable error) {
