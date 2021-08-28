@@ -198,6 +198,14 @@ public class AndroidUtils {
         return new Point(displayMetrics.widthPixels, displayMetrics.heightPixels);
     }
 
+    public static Point getRealDisplaySize(Context context) {
+        DisplayMetrics displayMetrics = new DisplayMetrics();
+        WindowManager windowManager = ((Activity) context).getWindowManager();
+        windowManager.getDefaultDisplay().getRealMetrics(displayMetrics);
+
+        return new Point(displayMetrics.widthPixels, displayMetrics.heightPixels);
+    }
+
     /**
      * These two methods get the screen size ignoring the current screen orientation.
      */
@@ -208,6 +216,16 @@ public class AndroidUtils {
 
     public static int getMaxScreenSize(Context context) {
         Point displaySize = getDisplaySize(context);
+        return Math.max(displaySize.x, displaySize.y);
+    }
+
+    public static int getRealMinScreenSize(Context context) {
+        Point displaySize = getRealDisplaySize(context);
+        return Math.min(displaySize.x, displaySize.y);
+    }
+
+    public static int getRealMaxScreenSize(Context context) {
+        Point displaySize = getRealDisplaySize(context);
         return Math.max(displaySize.x, displaySize.y);
     }
 
