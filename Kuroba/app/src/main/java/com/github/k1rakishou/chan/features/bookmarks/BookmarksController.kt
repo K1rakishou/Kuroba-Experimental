@@ -78,7 +78,7 @@ import javax.inject.Inject
 
 class BookmarksController(
   context: Context,
-  bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
+  private val bookmarksToHighlight: List<ChanDescriptor.ThreadDescriptor>,
   private val mainControllerCallbacks: MainControllerCallbacks,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context),
@@ -129,23 +129,9 @@ class BookmarksController(
   private val controller = BookmarksEpoxyController()
   private val viewModeChanged = AtomicBoolean(false)
   private val needRestoreScrollPosition = AtomicBoolean(true)
+  private val needScrollToHighlightedBookmark = AtomicBoolean(bookmarksToHighlight.isNotEmpty())
   private var isInSearchMode = false
   private var fastScroller: FastScroller? = null
-
-  private val topAdapterPosition: Int
-    get() {
-      val layoutManager = epoxyRecyclerView.layoutManager
-      if (layoutManager == null) {
-        return -1
-      }
-
-      when (layoutManager) {
-        is GridLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
-        is LinearLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
-      }
-
-      return -1
-    }
 
   private val touchHelperCallback = object : EpoxyModelTouchCallback<EpoxyModel<*>>(controller, EpoxyModel::class.java) {
 
@@ -727,8 +713,14 @@ class BookmarksController(
               updateLayoutManager()
             }
 
-            if (!isInSearchMode && needRestoreScrollPosition.compareAndSet(true, false)) {
-              restoreScrollPosition()
+            if (!isInSearchMode) {
+              val restoreScrollPosition = needRestoreScrollPosition.compareAndSet(true, false)
+              val scrollToHighlighted = needScrollToHighlightedBookmark.compareAndSet(true, false)
+
+              when {
+                restoreScrollPosition && !scrollToHighlighted -> restoreScrollPosition()
+                scrollToHighlighted -> scrollToHighlighted()
+              }
             }
           }
 
@@ -892,6 +884,34 @@ class BookmarksController(
       isGridLayoutManager,
       RecyclerUtils.getIndexAndTop(recyclerView)
     )
+  }
+
+  private fun scrollToHighlighted() {
+    if (bookmarksToHighlight.isEmpty()) {
+      return
+    }
+
+    val firstBookmark = bookmarksToHighlight.first()
+
+    val positionToScrollTo = controller.adapter.copyOfModels.indexOfFirst { epoxyModel ->
+      if (epoxyModel !is UnifiedBookmarkInfoAccessor) {
+        return@indexOfFirst false
+      }
+
+      val threadDescriptor = (epoxyModel as UnifiedBookmarkInfoAccessor).getBookmarkDescriptor()
+        ?: return@indexOfFirst false
+
+      return@indexOfFirst threadDescriptor == firstBookmark
+    }
+
+    if (positionToScrollTo < 0) {
+      return
+    }
+
+    when (val layoutManager = epoxyRecyclerView.layoutManager) {
+      is GridLayoutManager -> layoutManager.scrollToPositionWithOffset(positionToScrollTo, 0)
+      is LinearLayoutManager -> layoutManager.scrollToPositionWithOffset(positionToScrollTo, 0)
+    }
   }
 
   private fun restoreScrollPosition() {
