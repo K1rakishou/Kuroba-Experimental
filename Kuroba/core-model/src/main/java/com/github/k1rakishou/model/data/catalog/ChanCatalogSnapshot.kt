@@ -31,12 +31,12 @@ data class ChanCatalogSnapshot(
     get() = lock.read { chanCatalogSnapshotEntryList.toList() }
 
   val catalogThreadDescriptorList: List<ChanDescriptor.ThreadDescriptor>
-    get() = lock.read { chanCatalogSnapshotEntryList }
+    get() = lock.read { chanCatalogSnapshotEntryList.toList() }
 
   val catalogThreadDescriptorSet: Set<ChanDescriptor.ThreadDescriptor>
-    get() = lock.read { duplicateChecker }
+    get() = lock.read { duplicateChecker.toSet() }
 
-  val catalogPage: Int?
+  val catalogPage: Int
     get() = lock.read { currentCatalogPage }
 
   val isEndReached: Boolean
