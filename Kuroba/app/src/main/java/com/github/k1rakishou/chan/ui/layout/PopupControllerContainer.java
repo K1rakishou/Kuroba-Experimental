@@ -56,7 +56,11 @@ public class PopupControllerContainer extends FrameLayout {
         int heightSize = MeasureSpec.getSize(heightMeasureSpec);
         FrameLayout.LayoutParams child = (LayoutParams) getChildAt(0).getLayoutParams();
 
-        child.height = heightSize - (globalWindowInsetsManager.top() + globalWindowInsetsManager.bottom());
+        if (globalWindowInsetsManager.isKeyboardOpened()) {
+            child.height = heightSize - globalWindowInsetsManager.top();
+        } else {
+            child.height = heightSize - (globalWindowInsetsManager.top() + globalWindowInsetsManager.bottom());
+        }
 
         super.onMeasure(widthMeasureSpec, heightMeasureSpec);
     }

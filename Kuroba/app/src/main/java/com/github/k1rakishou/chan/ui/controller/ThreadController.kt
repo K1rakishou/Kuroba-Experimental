@@ -358,10 +358,14 @@ abstract class ThreadController(
       return
     }
 
+    pushController(albumViewController)
+  }
+
+  override fun pushController(controller: Controller) {
     if (doubleNavigationController != null) {
-      doubleNavigationController!!.pushController(albumViewController)
+      doubleNavigationController!!.pushController(controller)
     } else {
-      navigationController!!.pushController(albumViewController)
+      navigationController!!.pushController(controller)
     }
   }
 

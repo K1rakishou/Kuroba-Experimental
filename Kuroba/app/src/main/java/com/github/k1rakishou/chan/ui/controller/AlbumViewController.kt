@@ -41,8 +41,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToIm
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
-import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
-import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarHeightUpdatesCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
@@ -188,7 +186,14 @@ class AlbumViewController(
 
     mainScope.launch {
       mediaViewerGoToImagePostHelper.mediaViewerGoToPostEventsFlow
-        .collect { goToPostEvent -> goToPost(goToPostEvent) }
+        .collect { goToPostEvent ->
+          val postImage = goToPostEvent.chanPostImage
+          val chanDescriptor = goToPostEvent.chanDescriptor
+
+          popFromNavControllerWithAction(chanDescriptor) { threadController ->
+            threadController.selectPostImage(postImage)
+          }
+        }
     }
 
     requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this)
@@ -372,50 +377,6 @@ class AlbumViewController(
 
     gridDrawable.setTint(Color.WHITE)
     menuItem.setImage(gridDrawable)
-  }
-
-  private fun goToPost(goToPostEvent: MediaViewerGoToImagePostHelper.GoToPostEvent) {
-    val postImage = goToPostEvent.chanPostImage
-    val chanDescriptor = goToPostEvent.chanDescriptor
-
-    var threadController: ThreadController? = null
-    if (previousSiblingController is ThreadController) {
-      // phone mode
-      threadController = previousSiblingController as ThreadController?
-    } else if (previousSiblingController is DoubleNavigationController) {
-      // slide mode
-      val doubleNav = previousSiblingController as DoubleNavigationController
-      if (doubleNav is ThreadSlideController) {
-        if (doubleNav.leftOpen()) {
-          threadController = doubleNav.getLeftController() as ThreadController
-        } else {
-          threadController = doubleNav.getRightController() as ThreadController
-        }
-      } else if (doubleNav.getRightController() is ThreadController) {
-        threadController = doubleNav.getRightController() as ThreadController
-      }
-    } else if (previousSiblingController == null) {
-      // split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
-      val splitNav = parentController!!.parentController!!.presentedByController as SplitNavigationController?
-
-      threadController = when (chanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> {
-          splitNav!!.leftController.childControllers[0] as ThreadController
-        }
-        is ChanDescriptor.ThreadDescriptor -> {
-          splitNav!!.rightController.childControllers[0] as ThreadController
-        }
-      }
-
-      threadController.selectPostImage(postImage)
-      // clear the popup here because split nav is weirdly laid out in the stack
-      splitNav.popController()
-    }
-
-    if (threadController != null) {
-      threadController.selectPostImage(postImage)
-      navigationController!!.popController(false)
-    }
   }
 
   private fun openImage(postImage: ChanPostImage) {

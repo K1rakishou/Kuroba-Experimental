@@ -32,8 +32,11 @@ import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
 import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation
+import com.github.k1rakishou.chan.ui.controller.ThreadController
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -42,6 +45,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
@@ -438,6 +442,47 @@ abstract class Controller(@JvmField var context: Context) {
 
     view.layoutParams = params
     parentView.addView(view, view.layoutParams)
+  }
+
+  fun popFromNavControllerWithAction(chanDescriptor: ChanDescriptor, action: (ThreadController) -> Unit) {
+    var threadController: ThreadController? = null
+
+    if (previousSiblingController is ThreadController) {
+      // phone mode
+      threadController = previousSiblingController as ThreadController?
+    } else if (previousSiblingController is DoubleNavigationController) {
+      // slide mode
+      val doubleNav = previousSiblingController as DoubleNavigationController
+      if (doubleNav is ThreadSlideController) {
+        if (doubleNav.leftOpen()) {
+          threadController = doubleNav.getLeftController() as ThreadController
+        } else {
+          threadController = doubleNav.getRightController() as ThreadController
+        }
+      } else if (doubleNav.getRightController() is ThreadController) {
+        threadController = doubleNav.getRightController() as ThreadController
+      }
+    } else if (previousSiblingController == null) {
+      // split nav has no "sibling" to look at, so we go WAY back to find the view thread controller
+      val splitNav = parentController?.parentController?.presentedByController as SplitNavigationController?
+
+      threadController = when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          splitNav?.leftController?.childControllers?.get(0) as ThreadController?
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          splitNav?.rightController?.childControllers?.get(0) as ThreadController?
+        }
+      }
+
+      // clear the popup here because split nav is weirdly laid out in the stack
+      splitNav?.popController()
+    }
+
+    if (threadController != null) {
+      action(threadController)
+      navigationController!!.popController(false)
+    }
   }
 
   companion object {

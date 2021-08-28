@@ -2485,6 +2485,7 @@ class ThreadPresenter @Inject constructor(
 
     fun hidePostsPopup()
 
+    fun pushController(controller: Controller)
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
     fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun scrollTo(displayPosition: Int, smooth: Boolean)

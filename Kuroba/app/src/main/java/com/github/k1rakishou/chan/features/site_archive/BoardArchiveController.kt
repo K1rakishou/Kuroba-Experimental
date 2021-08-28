@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -112,7 +113,18 @@ class BoardArchiveController(
 
   override fun onInsetsChanged() {
     topPadding = pxToDp(getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top())
-    bottomPadding = pxToDp(getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom())
+
+    when {
+      ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT -> {
+        bottomPadding = pxToDp(getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom())
+      }
+      globalWindowInsetsManager.isKeyboardOpened -> {
+        bottomPadding = pxToDp(globalWindowInsetsManager.keyboardHeight)
+      }
+      else -> {
+        bottomPadding = 0
+      }
+    }
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -154,9 +166,10 @@ class BoardArchiveController(
 
       viewModel.currentlySelectedThreadNo.value = threadNo
 
-      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadNo)
-      onThreadClicked(threadDescriptor)
-      requireNavController().popController()
+      popFromNavControllerWithAction(catalogDescriptor) {
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(catalogDescriptor, threadNo)
+        onThreadClicked(threadDescriptor)
+      }
 
       blockClicking = true
     }

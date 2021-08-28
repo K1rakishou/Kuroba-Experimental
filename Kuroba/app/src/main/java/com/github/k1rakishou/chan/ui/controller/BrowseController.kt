@@ -592,10 +592,12 @@ class BrowseController(
     val boardArchiveController = BoardArchiveController(
       context = context,
       catalogDescriptor = chanDescriptor!! as CatalogDescriptor,
-      onThreadClicked = { threadDescriptor -> mainScope.launch { showThread(threadDescriptor, animated = true) } }
+      onThreadClicked = { threadDescriptor ->
+        mainScope.launch { showThread(threadDescriptor, animated = true) }
+      }
     )
 
-    getCurrentControllerWithNavigation().pushController(boardArchiveController)
+    threadLayout.pushController(boardArchiveController)
   }
 
   private fun openCatalogPageClicked() {
@@ -675,6 +677,9 @@ class BrowseController(
       navigation.title = "/" + boardDescriptor.boardCode + "/"
       navigation.subtitle = board.name ?: ""
 
+      boardManager.updateCurrentBoard(boardDescriptor)
+      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
+
       if (!menuBuiltOnce) {
         menuBuiltOnce = true
         buildMenu()
@@ -686,9 +691,6 @@ class BrowseController(
       if (historyNavigationManager.isInitialized) {
         historyNavigationManager.moveNavElementToTop(catalogDescriptor)
       }
-
-      boardManager.updateCurrentBoard(boardDescriptor)
-      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
     }
   }
 
