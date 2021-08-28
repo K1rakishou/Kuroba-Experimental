@@ -27,9 +27,6 @@ data class ChanCatalogSnapshot(
 
   val catalogDescriptor by lazy { ChanDescriptor.CatalogDescriptor.create(boardDescriptor) }
 
-  val chanCatalogSnapshotEntryListCopy: List<ChanDescriptor.ThreadDescriptor>
-    get() = lock.read { chanCatalogSnapshotEntryList.toList() }
-
   val catalogThreadDescriptorList: List<ChanDescriptor.ThreadDescriptor>
     get() = lock.read { chanCatalogSnapshotEntryList.toList() }
 
@@ -48,7 +45,7 @@ data class ChanCatalogSnapshot(
   fun isEmpty(): Boolean = lock.read { chanCatalogSnapshotEntryList.isEmpty() }
 
   fun mergeWith(chanCatalogSnapshot: ChanCatalogSnapshot) {
-    add(chanCatalogSnapshot.chanCatalogSnapshotEntryListCopy)
+    add(chanCatalogSnapshot.catalogThreadDescriptorList)
   }
 
   fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
