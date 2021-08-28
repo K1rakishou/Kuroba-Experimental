@@ -40,4 +40,10 @@ class ChanFilterLocalSource(
     chanFilterDao.deleteById(filter.getDatabaseId())
   }
 
+  suspend fun deleteAll() {
+    ensureInTransaction()
+
+    chanFilterDao.deleteAll()
+  }
+
 }

@@ -415,6 +415,14 @@ Note that for country code filtering, troll country codes should be prepended wi
             10) Filename"]]>
     </string>
     <string name="filters_controller_open_regex101">Open regex101</string>
+    <string name="filters_controller_export_action">Export filters</string>
+    <string name="filters_controller_import_action">Import filters</string>
+    <string name="filters_controller_import_warning">Importing filters warning</string>
+    <string name="filters_controller_import_warning_description">Importing filters will overwrite your current filters (basically old filters will be deleted and new filters will be created). Do you want to import filters?</string>
+    <string name="filters_controller_do_import">Import</string>
+    <string name="filters_controller_do_not_import">Do not</string>
+    <string name="filters_controller_import_error">Filter import error. Reason: %1$s</string>
+    <string name="filters_controller_export_error">Filter export error. Reason: %1$s</string>
 
     <string name="epoxy_proxy_view_address">Address: %1$s</string>
     <string name="epoxy_proxy_view_port">Port: %1$s</string>

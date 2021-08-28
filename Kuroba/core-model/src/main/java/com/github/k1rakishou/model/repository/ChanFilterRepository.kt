@@ -47,4 +47,12 @@ class ChanFilterRepository(
     }
   }
 
+  suspend fun deleteAll(): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.deleteAll()
+      }
+    }
+  }
+
 }

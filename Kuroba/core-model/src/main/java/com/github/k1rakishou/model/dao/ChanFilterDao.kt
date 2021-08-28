@@ -83,4 +83,7 @@ abstract class ChanFilterDao {
   """)
   abstract suspend fun deleteById(databaseId: Long)
 
+  @Query("DELETE FROM ${ChanFilterEntity.TABLE_NAME}")
+  abstract suspend fun deleteAll()
+
 }

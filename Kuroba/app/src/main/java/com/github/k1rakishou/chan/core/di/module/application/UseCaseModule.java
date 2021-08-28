@@ -29,11 +29,13 @@ import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase;
+import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
+import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
@@ -377,6 +379,38 @@ public class UseCaseModule {
                 postHideManager,
                 chanCatalogSnapshotRepository,
                 seenPostsManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ExportFiltersUseCase provideExportFiltersUseCase(
+            FileManager fileManager,
+            ChanFilterManager chanFilterManager,
+            Moshi moshi
+    ) {
+        Logger.deps("ExportFiltersUseCase");
+
+        return new ExportFiltersUseCase(
+                fileManager,
+                chanFilterManager,
+                moshi
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ImportFiltersUseCase provideImportFiltersUseCase(
+            FileManager fileManager,
+            ChanFilterManager chanFilterManager,
+            Moshi moshi
+    ) {
+        Logger.deps("ImportFiltersUseCase");
+
+        return new ImportFiltersUseCase(
+                fileManager,
+                chanFilterManager,
+                moshi
         );
     }
 

@@ -76,14 +76,12 @@ class FilterWatcherCoordinator(
     filterEvent: ChanFilterManager.FilterEvent? = null,
     isCalledBySwipeToRefresh: Boolean = false
   ) {
-    restartFilterWatcherDebouncer.post(1000L, {
-      if (filterEvent?.hasWatchFilter() == false) {
-        return@post
-      }
+    if (filterEvent?.hasWatchFilter() == false) {
+      return
+    }
 
-      if (verboseLogs) {
-        Logger.d(TAG, "restartFilterWatcherWithTinyDelay()")
-      }
+    restartFilterWatcherDebouncer.post(1000L, {
+      Logger.d(TAG, "restartFilterWatcherWithTinyDelay()")
 
       awaitInitialization()
       printDebugInfo()

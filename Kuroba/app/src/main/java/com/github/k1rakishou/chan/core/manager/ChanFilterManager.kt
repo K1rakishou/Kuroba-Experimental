@@ -107,10 +107,10 @@ class ChanFilterManager(
       Logger.e(TAG, "loadFiltersInternal() unknown error", error)
     }
 
-    filterChangesFlow.tryEmit(FilterEvent.Initialized)
+    filterChangesFlow.emit(FilterEvent.Initialized)
   }
 
-  fun createOrUpdateFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {
+  fun createOrUpdateFilter(chanFilter: ChanFilter, onFinished: () -> Unit) {
     serializedCoroutineExecutor.post {
       val indexOfThisFilter = lock.read {
         if (!chanFilter.hasDatabaseId()) {
@@ -139,8 +139,8 @@ class ChanFilterManager(
         FilterEvent.Updated(listOf(chanFilter))
       }
 
-      filterChangesFlow.tryEmit(filterEvent)
-      onUpdated()
+      filterChangesFlow.emit(filterEvent)
+      onFinished()
     }
   }
 
@@ -200,7 +200,7 @@ class ChanFilterManager(
       clearFiltersAndPostHashes()
       clearFilterWatchGroups(chanFilter)
 
-      filterChangesFlow.tryEmit(FilterEvent.Deleted(listOf(chanFilter)))
+      filterChangesFlow.emit(FilterEvent.Deleted(listOf(chanFilter)))
 
       if (filterWatchGroupResult is ModularResult.Error) {
         Logger.e(TAG, "Failed to get filter watch group by filter id", filterWatchGroupResult.error)
@@ -212,6 +212,26 @@ class ChanFilterManager(
       }
 
       onUpdated()
+    }
+  }
+
+  fun deleteAllFilters(onFinished: (Throwable?) -> Unit) {
+    serializedCoroutineExecutor.post {
+      val result = chanFilterRepository.deleteAll()
+      if (result is ModularResult.Error) {
+        onFinished(result.error)
+        return@post
+      }
+
+      clearFiltersAndPostHashes()
+
+      val allFilters = lock.read { filters.map { filter -> filter.copy() } }
+      allFilters.forEach { chanFilter -> clearFilterWatchGroups(chanFilter) }
+
+      lock.read { filters.clear() }
+      filterChangesFlow.emit(FilterEvent.Deleted(allFilters))
+
+      onFinished(null)
     }
   }
 
@@ -255,7 +275,7 @@ class ChanFilterManager(
 
       clearFiltersAndPostHashes()
 
-      filterChangesFlow.tryEmit(FilterEvent.Updated(allFilters))
+      filterChangesFlow.emit(FilterEvent.Updated(allFilters))
       onUpdated()
     }
   }
