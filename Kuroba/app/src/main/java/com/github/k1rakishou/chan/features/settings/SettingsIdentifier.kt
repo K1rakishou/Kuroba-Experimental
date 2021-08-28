@@ -161,6 +161,7 @@ sealed class DeveloperScreen(
     DeveloperScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object ForceLowRamDevice : MainGroup("force_low_ram_device")
+    object CheckUpateApkVersionCode : MainGroup("check_update_apk_version_code")
     object ViewLogs : MainGroup("view_logs")
     object EnableDisableVerboseLogs : MainGroup("enable_disable_verbose_logs")
     object CrashApp : MainGroup("crash_the_app")

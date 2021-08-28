@@ -390,6 +390,7 @@ public class ChanSettings {
     //region DEVELOPER
     public static BooleanSetting crashOnSafeThrow;
     public static BooleanSetting verboseLogs;
+    public static BooleanSetting checkUpdateApkVersionCode;
     //endregion
 
     //region DATA
@@ -617,6 +618,11 @@ public class ChanSettings {
                     "verbose_logs",
                     // Always true by default for dev/beta flavors
                     chanSettingsInfo.isDevOrBetaBuild()
+            );
+            checkUpdateApkVersionCode = new BooleanSetting(
+                    provider,
+                    "check_update_apk_version_code",
+                    true
             );
             //endregion
 

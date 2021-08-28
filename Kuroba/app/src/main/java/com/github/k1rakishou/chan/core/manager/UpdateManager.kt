@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdate
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isBetaBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
@@ -265,6 +266,7 @@ class UpdateManager(
     }
 
     val actuallyHasUpdate = responseRelease.versionCode > BuildConfig.VERSION_CODE
+      || !ChanSettings.checkUpdateApkVersionCode.get()
 
     Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}, manual=${manual}, " +
       "actuallyHasUpdate=$actuallyHasUpdate, releaseVersionCode=${responseRelease.versionCode}, " +
@@ -588,43 +590,57 @@ class UpdateManager(
       onPositiveButtonClickListener = { installApk(apkFile, responseRelease) }
     )
 
-    val intent = if (AndroidUtils.isAndroidN()) {
-      Logger.d(TAG, "installApk() AndroidN>, apkFile=${apkFile.absolutePath}")
+    try {
+      val intent = if (AndroidUtils.isAndroidN()) {
+        Logger.d(TAG, "installApk() AndroidN and above, apkFile=${apkFile.absolutePath}")
 
-      Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-        flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
-        val apkUri = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
-        setDataAndType(apkUri, "application/vnd.android.package-archive")
+        Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+          flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_GRANT_READ_URI_PERMISSION
+          val apkUri = FileProvider.getUriForFile(context, getAppFileProvider(), apkFile)
+          setDataAndType(apkUri, "application/vnd.android.package-archive")
+        }
+      } else {
+        val externalFileName = "KurobaEx-${responseRelease.versionCode}.apk"
+
+        val externalApkFile = File(
+          Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
+          externalFileName
+        )
+
+        if (externalApkFile.exists()) {
+          externalApkFile.delete()
+        }
+
+        apkFile.copyTo(externalApkFile, overwrite = true)
+        Logger.d(TAG, "installApk() AndroidM and below, apkFile=${externalApkFile.absolutePath}")
+
+        Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
+          val apkUri = Uri.fromFile(externalApkFile)
+          setDataAndType(apkUri, "application/vnd.android.package-archive")
+          flags = Intent.FLAG_ACTIVITY_NEW_TASK
+        }
       }
-    } else {
-      val externalFileName = "KurobaEx-${responseRelease.versionCode}.apk"
 
-      val externalApkFile = File(
-        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-        externalFileName
+      // The installer wants a content scheme from android N and up,
+      // but I don't feel like implementing a content provider just for this feature.
+      // Temporary change the strictmode policy while starting the intent.
+      val vmPolicy = StrictMode.getVmPolicy()
+      StrictMode.setVmPolicy(VmPolicy.LAX)
+      openIntent(intent)
+      StrictMode.setVmPolicy(vmPolicy)
+    } catch (error: Throwable) {
+      if (isDevBuild() || isBetaBuild()) {
+        throw error
+      }
+
+      Logger.e(TAG, "installApk(${apkFile.absolutePath}) error", error)
+
+      dialogFactory.get().createSimpleInformationDialog(
+        context = context,
+        titleText = getString(R.string.update_failed_to_install),
+        descriptionText = getString(R.string.update_failed_to_install_description, error.errorMessageOrClassName())
       )
-
-      if (externalApkFile.exists()) {
-        externalApkFile.delete()
-      }
-
-      apkFile.copyTo(externalApkFile, overwrite = true)
-      Logger.d(TAG, "installApk() AndroidM<, apkFile=${externalApkFile.absolutePath}")
-
-      Intent(Intent.ACTION_INSTALL_PACKAGE).apply {
-        val apkUri = Uri.fromFile(externalApkFile)
-        setDataAndType(apkUri, "application/vnd.android.package-archive")
-        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-      }
     }
-
-    // The installer wants a content scheme from android N and up,
-    // but I don't feel like implementing a content provider just for this feature.
-    // Temporary change the strictmode policy while starting the intent.
-    val vmPolicy = StrictMode.getVmPolicy()
-    StrictMode.setVmPolicy(VmPolicy.LAX)
-    openIntent(intent)
-    StrictMode.setVmPolicy(vmPolicy)
   }
 
   private fun updateInstallRequested(responseRelease: ReleaseUpdateApiResponse) {

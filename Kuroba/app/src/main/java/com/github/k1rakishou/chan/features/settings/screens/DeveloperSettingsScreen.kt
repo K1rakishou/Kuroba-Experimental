@@ -67,6 +67,14 @@ class DeveloperSettingsScreen(
           requiresRestart = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.CheckUpateApkVersionCode,
+          topDescriptionIdFunc = { R.string.settings_check_update_apk_version_code },
+          bottomDescriptionIdFunc = { R.string.settings_check_update_apk_version_code_description },
+          setting = ChanSettings.checkUpdateApkVersionCode,
+        )
+
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ViewLogs,

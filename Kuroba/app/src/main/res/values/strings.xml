@@ -148,6 +148,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="update_already_updated">Already updated</string>
     <string name="update_retry">%1$s was not updated yet. Tap \"retry\" to retry the install.</string>
     <string name="update_retry_button">Retry</string>
+    <string name="update_failed_to_install">Failed to install update. Try to install it manually.</string>
+    <string name="update_failed_to_install_description">Failed to install update. Reason: \'%1$s\'</string>
+
     <string name="update_storage_permission_required_title">Storage permission required</string>
     <string name="update_storage_permission_required">
 "Permission to access storage is required for installing the update.
@@ -872,6 +875,8 @@ Re-enable this permission in the app settings if you permanently disabled it."
     <string name="settings_logs_loading_logs_error">Error loading logs</string>
 
     <!-- Developer settings -->
+    <string name="settings_check_update_apk_version_code">Check update apk version code</string>
+    <string name="settings_check_update_apk_version_code_description">For development only! When turned off you will always be suggested to install the apk update.</string>
     <string name="settings_force_low_ram_device">Force low ram device</string>
     <string name="settings_force_low_ram_device_description">This setting should only be used by old devices with less than ~2GB of memory (very approximate number because this heavily depends on the device). It will enable some additional optimizations and attempt to reduce the amount of memory that is used by memory caches. Additionally it will force media viewer view pager to only have 1 offscreen page instead of 2 (which should reduce OutOfMemory and other similar crashes).</string>
     <string name="settings_open_logs">View logs</string>

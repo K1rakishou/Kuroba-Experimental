@@ -1,15 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
 
-    <!-- Corresponds to the file path chosen in the NetModule.getCacheDir method -->
-    <cache-path
+    <!-- This one is so that we are able to share stuff from the file cache into other apps/install apks -->
+    <files-path
         name="fc"
         path="filecache/" />
-    <external-cache-path
+    <external-files-path
         name="exfc"
         path="filecache/" />
 
-    <!-- This one is for file sharing into other apps-->
+    <!-- This one is for file sharing into other apps -->
     <cache-path
         name="sf"
         path="share_files/" />
