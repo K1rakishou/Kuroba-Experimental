@@ -817,7 +817,7 @@ class MainController(
       onShowDrawerOptionsIconClick = { showDrawerOptions() }
     )
 
-    val navigationHistoryEntryList = when (historyControllerState) {
+    val navHistoryEntryList = when (historyControllerState) {
       HistoryControllerState.Loading -> {
         KurobaComposeProgressIndicator()
         return
@@ -828,10 +828,9 @@ class MainController(
         )
         return
       }
-      is HistoryControllerState.Data -> drawerViewModel.navigationHistoryEntryList
+      is HistoryControllerState.Data -> remember { drawerViewModel.navigationHistoryEntryList }
     }
 
-    val navHistoryEntryList = remember { navigationHistoryEntryList }
     if (navHistoryEntryList.isEmpty()) {
       KurobaComposeText(
         modifier = Modifier.fillMaxSize(),
@@ -875,6 +874,8 @@ class MainController(
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
     LaunchedEffect(key1 = searchState.query, block = {
+      delay(125L)
+
       withContext(Dispatchers.Default) {
         searchState.searching = true
         searchState.results = processSearchQuery(searchState.query, navHistoryEntryList)
@@ -902,6 +903,8 @@ class MainController(
 
       return
     }
+
+    val selectedHistoryEntries = remember { drawerViewModel.selectedHistoryEntries }
 
     Column(modifier = Modifier.fillMaxSize()) {
       BoxWithConstraints(
@@ -932,8 +935,8 @@ class MainController(
           content = {
             items(count = results.size) { index ->
               val navHistoryEntry = results[index]
-              val isSelectionMode = drawerViewModel.selectedHistoryEntries.isNotEmpty()
-              val isSelected = drawerViewModel.selectedHistoryEntries.contains(navHistoryEntry)
+              val isSelectionMode = selectedHistoryEntries.isNotEmpty()
+              val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
 
               BuildNavigationHistoryListEntry(
                 navHistoryEntry = navHistoryEntry,
@@ -1152,7 +1155,7 @@ class MainController(
           imageLoaderV2 = imageLoaderV2
         )
 
-        val showDeleteButtonShortcut by drawerViewModel.showDeleteButtonShortcut
+        val showDeleteButtonShortcut by remember { drawerViewModel.showDeleteButtonShortcut }
 
         if (isSelectionMode) {
           KurobaComposeCheckbox(
@@ -1161,13 +1164,14 @@ class MainController(
           )
         } else if (showDeleteButtonShortcut) {
           val circleColor = remember { Color(0x80000000L) }
+          val shape = remember { CircleShape }
 
           Image(
             modifier = Modifier
               .align(Alignment.TopStart)
               .size(20.dp)
               .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-              .background(color = circleColor, shape = CircleShape),
+              .background(color = circleColor, shape = shape),
             painter = painterResource(id = R.drawable.ic_clear_white_24dp),
             contentDescription = null
           )
