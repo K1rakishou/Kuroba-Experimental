@@ -59,7 +59,7 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
-    updatePaddings(bottom = bottomPadding!!)
+    bottomPadding?.let { padding -> updatePaddings(bottom = padding) }
   }
 
   override fun setToolbar(toolbar: Toolbar) {

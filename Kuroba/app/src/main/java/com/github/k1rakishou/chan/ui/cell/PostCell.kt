@@ -70,7 +70,10 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import java.util.*
@@ -101,13 +104,13 @@ class PostCell : ConstraintLayout,
 
   private var imageFileName: TextView? = null
   private var titleIconsThumbnailBarrier: Barrier? = null
-
   private var postCellData: PostCellData? = null
   private var postCellCallback: PostCellCallback? = null
   private var needAllowParentToInterceptTouchEvents = false
   private var needAllowParentToInterceptTouchEventsDownEventEnded = false
   private var iconSizePx = 0
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
+  private var postTimeUpdaterJob: Job? = null
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
@@ -328,6 +331,9 @@ class PostCell : ConstraintLayout,
     if (postCellCallback != null && postCellData != null) {
       postCellCallback?.onPostUnbind(postCellData, isActuallyRecycling)
     }
+
+    postTimeUpdaterJob?.cancel()
+    postTimeUpdaterJob = null
 
     this.postCellCallback = null
     this.postCellData = null
@@ -683,11 +689,11 @@ class PostCell : ConstraintLayout,
       replies.isClickable = true
     }
 
+    startPostTitleTimeUpdateJob()
     bindBackgroundResources(postCellData)
-
     bindPostAttentionLabel(postCellData, seenPostFadeOutAnimRemainingTimeMs)
     postImageThumbnailViewsContainer.bindPostImages(postCellData)
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
+    bindPostTitle(postCellData)
     bindIcons(postCellData)
     bindPostComment(postCellData)
     bindPostContent(postCellData)
@@ -715,6 +721,48 @@ class PostCell : ConstraintLayout,
 
     if (postCellCallback != null) {
       postCellCallback?.onPostBind(postCellData)
+    }
+  }
+
+  private fun startPostTitleTimeUpdateJob() {
+    postTimeUpdaterJob?.cancel()
+    postTimeUpdaterJob = null
+
+    postTimeUpdaterJob = scope.launch {
+      while (isActive) {
+        if (postCellData == null) {
+          delay(1_000L)
+          continue
+        }
+
+        if (postCellData?.postFullDate == true) {
+          break
+        }
+
+        val timeDelta = System.currentTimeMillis() - ((postCellData?.post?.timestamp ?: 0L) * 1000L)
+        val nextDelayMs = if (timeDelta <= 60_000L) {
+          5_000L
+        } else {
+          60_000L
+        }
+
+        delay(nextDelayMs)
+
+        if (postCellData == null) {
+          continue
+        }
+
+        postCellData?.let { pcd ->
+          pcd.recalculatePostTitle()
+          bindPostTitle(pcd)
+        }
+      }
+    }
+  }
+
+  private fun bindPostTitle(pcd: PostCellData) {
+    if (::title.isInitialized) {
+      ChanPostUtils.wrapTextIntoPrecomputedText(pcd.postTitle, title)
     }
   }
 

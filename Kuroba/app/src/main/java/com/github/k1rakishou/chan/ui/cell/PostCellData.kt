@@ -29,6 +29,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 data class PostCellData(
@@ -144,6 +146,15 @@ data class PostCellData(
     get() = _commentText.value()
   val catalogRepliesText
     get() = _catalogRepliesText.value()
+
+  suspend fun recalculatePostTitle() {
+    postTitlePrecalculated = null
+
+    withContext(Dispatchers.Default) {
+      _postTitle.resetValue()
+      _postTitle.value()
+    }
+  }
 
   fun resetEverything() {
     detailsSizePxPrecalculated = null
@@ -367,8 +378,12 @@ data class PostCellData(
     val postTime = if (postFullDate) {
       ChanPostUtils.getLocalDate(post)
     } else {
-      DateUtils.getRelativeTimeSpanString(post.timestamp * 1000L, System.currentTimeMillis(), DateUtils.SECOND_IN_MILLIS, 0)
-        .toString()
+      DateUtils.getRelativeTimeSpanString(
+        post.timestamp * 1000L,
+        System.currentTimeMillis(),
+        DateUtils.SECOND_IN_MILLIS,
+        0
+      ).toString()
     }
 
     return postTime.replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
