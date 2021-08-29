@@ -119,7 +119,7 @@ class SavedPostsViewModel : BaseViewModel() {
   fun updateQueryAndReload(newQuery: String?) {
     this._searchQuery = newQuery
 
-    searchQueryDebouncer.post(150L, { reloadSavedReplies() })
+    searchQueryDebouncer.post(125L, { reloadSavedReplies() })
   }
 
   private suspend fun reloadSavedReplies() {

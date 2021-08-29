@@ -43,6 +43,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.reactive.asFlow
 import java.util.*
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class SettingsCoordinator(
   private val context: Context,
@@ -220,6 +222,7 @@ class SettingsCoordinator(
 
   private val screensBuiltOnce = SuspendableInitializer<Unit>("screensBuiltOnce")
 
+  @OptIn(ExperimentalTime::class)
   fun onCreate() {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
@@ -228,7 +231,7 @@ class SettingsCoordinator(
       onSearchEnteredSubject
         .asFlow()
         .catch { error -> Logger.e(TAG, "Unknown error received from onSearchEnteredSubject", error) }
-        .debounce(DEBOUNCE_TIME_MS)
+        .debounce(Duration.milliseconds(125))
         .collect { query ->
           screensBuiltOnce.awaitUntilInitialized()
 
@@ -476,6 +479,5 @@ class SettingsCoordinator(
     private const val TAG = "SettingsCoordinator"
 
     private const val MIN_QUERY_LENGTH = 3
-    private const val DEBOUNCE_TIME_MS = 350L
   }
 }

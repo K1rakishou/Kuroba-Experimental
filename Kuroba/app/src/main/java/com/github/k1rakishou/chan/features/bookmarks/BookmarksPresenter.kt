@@ -32,8 +32,8 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
 class BookmarksPresenter(
   private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
@@ -61,7 +61,7 @@ class BookmarksPresenter(
     scope.launch {
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
-          .debounce(100.milliseconds)
+          .debounce(Duration.milliseconds(100))
           .collect {
             withContext(Dispatchers.Default) {
               Logger.d(TAG, "calling showBookmarks() because bookmarks have changed")
@@ -78,7 +78,7 @@ class BookmarksPresenter(
 
       scope.launch {
         bookmarksSelectionHelper.listenForSelectionChanges()
-          .debounce(100.milliseconds)
+          .debounce(Duration.milliseconds(100))
           .collect {
             withContext(Dispatchers.Default) {
               Logger.d(TAG, "calling showBookmarks() because bookmark selection has changed")
@@ -95,7 +95,7 @@ class BookmarksPresenter(
 
       scope.launch {
         searchFlow
-          .debounce(250.milliseconds)
+          .debounce(Duration.milliseconds(125))
           .collect { searchQuery ->
             if (searchQuery is SearchQuery.Opened) {
               // To avoid refreshing bookmarks list twice

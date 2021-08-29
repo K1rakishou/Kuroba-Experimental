@@ -42,8 +42,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.collections.component1
 import kotlin.collections.component2
+import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
 class BoardSelectionController(
   context: Context,
@@ -113,7 +113,7 @@ class BoardSelectionController(
 
     mainScope.launch {
       startListeningForSearchQueries()
-        .debounce(350.milliseconds)
+        .debounce(Duration.milliseconds(125))
         .collect { query -> presenter.onSearchQueryChanged(query) }
     }
 

@@ -170,10 +170,12 @@ class LocalArchiveViewModel : BaseViewModel() {
         }
       }
 
-    return if (query.isNullOrEmpty()) {
-      filteredThreadDownloadViews.toList()
-    } else {
-      filteredThreadDownloadViews.filter { threadDownloadView ->
+    if (query.isNullOrEmpty()) {
+      return filteredThreadDownloadViews.toList()
+    }
+
+    return filteredThreadDownloadViews
+      .filter { threadDownloadView ->
         if (threadDownloadView.threadSubject.contains(query, ignoreCase = true)) {
           return@filter true
         }
@@ -183,8 +185,8 @@ class LocalArchiveViewModel : BaseViewModel() {
         }
 
         return@filter false
-      }.map { threadDownloadView -> threadDownloadView.copy() }
-    }
+      }
+      .map { threadDownloadView -> threadDownloadView.copy() }
   }
 
   fun deleteDownloads(selectedItems: List<ChanDescriptor.ThreadDescriptor>) {

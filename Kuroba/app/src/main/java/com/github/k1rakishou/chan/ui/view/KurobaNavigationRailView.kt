@@ -64,7 +64,7 @@ class KurobaNavigationRailView @JvmOverloads constructor(
   }
 
   override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
-    updatePadding(left = leftPadding!!)
+    leftPadding?.let { padding -> updatePadding(left = padding) }
   }
 
   override fun setToolbar(toolbar: Toolbar) {
