@@ -155,7 +155,7 @@ class PostHighlightManager(
             postHighlight.currentHighlightTypes.set(HighlightType.Blink.bit)
           }
 
-          if (!blink || threadCellData.chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+          if (!blink || threadCellData.chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
             postHighlight.currentHighlightTypes.set(HighlightType.Regular.bit)
           }
         } else {
@@ -201,6 +201,7 @@ class PostHighlightManager(
 
   private fun getHighlightedPostsMap(chanDescriptor: ChanDescriptor): MutableMap<PostDescriptor, PostHighlight> {
     return when (chanDescriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> catalogHighlightedPosts
       is ChanDescriptor.ThreadDescriptor -> threadHighlightedPosts
     }

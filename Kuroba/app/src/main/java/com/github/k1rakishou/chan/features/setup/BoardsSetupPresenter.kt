@@ -273,7 +273,7 @@ class BoardsSetupPresenter(
     boardManager.viewBoardsOrdered(siteDescriptor, true) { chanBoard ->
       boardCellDataList += BoardCellData(
         searchQuery = null,
-        boardDescriptor = chanBoard.boardDescriptor,
+        catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
         boardName = chanBoard.boardName(),
         description = BoardHelper.getDescription(chanBoard)
       )

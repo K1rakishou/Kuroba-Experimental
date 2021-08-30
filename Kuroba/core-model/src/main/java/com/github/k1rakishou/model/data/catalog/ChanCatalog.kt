@@ -9,7 +9,7 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class ChanCatalog(
-  val catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+  val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
   private val originalPosts: List<ChanOriginalPost>
 ) {
   private val lock = ReentrantReadWriteLock()
@@ -77,19 +77,31 @@ class ChanCatalog(
   }
 
   fun findPostWithRepliesRecursive(
-    postNo: Long,
+    postDescriptor: PostDescriptor,
     postsSet: MutableSet<ChanPost>
-  ) {
-    lock.read {
-      for (post in originalPosts) {
-        if (post.postNo() == postNo && !postsSet.contains(post)) {
-          postsSet.add(post)
+  ): Boolean {
+    return lock.read {
+      var found = false
 
-          post.iterateRepliesFrom { replyId ->
-            findPostWithRepliesRecursive(replyId, postsSet)
-          }
+      for (post in originalPosts) {
+        if (post.postDescriptor != postDescriptor || postsSet.contains(post)) {
+          continue
+        }
+
+        found = true
+        postsSet.add(post)
+
+        post.iterateRepliesFrom { replyId ->
+          val lookUpPostDescriptor = PostDescriptor.create(
+            post.postDescriptor.descriptor,
+            replyId
+          )
+
+          findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
         }
       }
+
+      return@read found
     }
   }
 

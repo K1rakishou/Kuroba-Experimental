@@ -212,7 +212,7 @@ class ChanPostRepository(
     ensureBackgroundThread()
 
     return Try {
-      if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+      if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
         val allPostsAreOriginal = parsedPosts.all { post -> post is ChanOriginalPost }
         require(allPostsAreOriginal) { "Not all posts are original posts" }
 

@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -227,11 +228,18 @@ class BoardsSetupController(
         }
         is BoardsSetupControllerState.Data -> {
           state.boardCellDataList.forEach { boardCellData ->
-            epoxyBoardView {
-              id("boards_setup_board_view_${boardCellData.boardDescriptor}")
-              boardName(boardCellData.fullName)
-              boardDescription(boardCellData.description)
-              boardDescriptor(boardCellData.boardDescriptor)
+            when (val catalogDescriptor = boardCellData.catalogDescriptor) {
+              is ChanDescriptor.CatalogDescriptor -> {
+                epoxyBoardView {
+                  id("boards_setup_board_view_${catalogDescriptor.boardDescriptor}")
+                  boardName(boardCellData.fullName)
+                  boardDescription(boardCellData.description)
+                  boardDescriptor(catalogDescriptor.boardDescriptor)
+                }
+              }
+              is ChanDescriptor.CompositeCatalogDescriptor -> {
+                // TODO(KurobaEx): CompositeCatalogDescriptor
+              }
             }
           }
         }

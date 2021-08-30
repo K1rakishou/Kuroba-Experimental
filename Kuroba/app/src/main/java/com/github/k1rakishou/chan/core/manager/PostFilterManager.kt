@@ -84,8 +84,8 @@ class PostFilterManager(
     }
   }
 
-  fun removeAllForDescriptor(chanDescriptor: ChanDescriptor) {
-    lock.write { filterStorage.remove(chanDescriptor) }
+  fun removeAllForDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    lock.write { filterStorage.remove(threadDescriptor) }
   }
 
   fun update(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {

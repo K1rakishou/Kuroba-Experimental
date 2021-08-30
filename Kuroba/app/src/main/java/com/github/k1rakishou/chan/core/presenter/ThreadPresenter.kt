@@ -187,27 +187,40 @@ class ThreadPresenter @Inject constructor(
 
   override val isUnlimitedCatalog: Boolean
     get() {
-      val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+      val descriptor = currentChanDescriptor
         ?: return false
 
-      val isUnlimitedCatalog = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isUnlimitedCatalog
-      if (isUnlimitedCatalog != null) {
-        return isUnlimitedCatalog
+      if (descriptor !is ChanDescriptor.ICatalogDescriptor) {
+        return false
+      }
+
+      if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        // TODO(KurobaEx): CompositeCatalogDescriptor
+        return true
+      }
+
+      val isUnlimitedOrCompositeCatalog = chanCatalogSnapshotCache.get(descriptor)?.isUnlimitedOrCompositeCatalog
+      if (isUnlimitedOrCompositeCatalog != null) {
+        return isUnlimitedOrCompositeCatalog
       }
 
       if (!boardManager.isReady()) {
         return false
       }
 
-      return boardManager.byBoardDescriptor(descriptor.boardDescriptor)?.isUnlimitedCatalog ?: false
+      return boardManager.byBoardDescriptor(descriptor.boardDescriptor())?.isUnlimitedCatalog ?: false
     }
 
   override val unlimitedCatalogEndReached: Boolean
     get() {
-      val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+      val descriptor = currentChanDescriptor
         ?: return false
 
-      return chanCatalogSnapshotCache.get(descriptor.boardDescriptor)?.isEndReached ?: false
+      if (descriptor !is ChanDescriptor.ICatalogDescriptor) {
+        return false
+      }
+
+      return chanCatalogSnapshotCache.get(descriptor)?.isEndReached ?: false
     }
 
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
@@ -309,7 +322,7 @@ class ThreadPresenter @Inject constructor(
       unbindChanDescriptor(false)
     }
 
-    if (chanDescriptor.isCatalogDescriptor() && !ChanSettings.neverShowPages.get()) {
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor && !ChanSettings.neverShowPages.get()) {
       pageRequestManager.getBoardPages(chanDescriptor.boardDescriptor())
     }
 
@@ -321,6 +334,9 @@ class ThreadPresenter @Inject constructor(
       }
       is ChanDescriptor.ThreadDescriptor -> {
         currentOpenedDescriptorStateManager.updateThreadDescriptor(chanDescriptor)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        // TODO(KurobaEx): CompositeCatalogDescriptor
       }
     }
 
@@ -350,7 +366,11 @@ class ThreadPresenter @Inject constructor(
       when (currentChanDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> {
           currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
-          chanCatalogSnapshotCache.delete(currentChanDescriptor.boardDescriptor)
+          chanCatalogSnapshotCache.delete(currentChanDescriptor)
+        }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
+          chanCatalogSnapshotCache.delete(currentChanDescriptor)
         }
         is ChanDescriptor.ThreadDescriptor -> {
           currentOpenedDescriptorStateManager.updateThreadDescriptor(null)
@@ -418,13 +438,13 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun loadCatalogPage(overridePage: Int?) {
-    val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+    val descriptor = currentChanDescriptor as ChanDescriptor.ICatalogDescriptor?
       ?: return
 
-    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)
+    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor)
       ?: return
 
-    if (!catalogSnapshot.isUnlimitedCatalog) {
+    if (!catalogSnapshot.isUnlimitedOrCompositeCatalog) {
       return
     }
 
@@ -452,13 +472,13 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun getNextPage(): Int? {
-    val descriptor = currentChanDescriptor as ChanDescriptor.CatalogDescriptor?
+    val descriptor = currentChanDescriptor as ChanDescriptor.ICatalogDescriptor?
       ?: return null
 
-    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor.boardDescriptor)
+    val catalogSnapshot = chanCatalogSnapshotCache.get(descriptor)
       ?: return null
 
-    if (!catalogSnapshot.isUnlimitedCatalog) {
+    if (!catalogSnapshot.isUnlimitedOrCompositeCatalog) {
       return null
     }
 
@@ -490,32 +510,47 @@ class ThreadPresenter @Inject constructor(
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
     currentLoadThreadJob = launch {
+      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
+        return@launch
+      }
+
       if (showLoading) {
         threadPresenterCallback?.showLoading()
         alreadyCreatedNavElement.set(false)
       }
 
       if (deleteChanCatalogSnapshot) {
-        if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
-          chanCatalogSnapshotCache.delete(currentChanDescriptor.boardDescriptor)
+        if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+          chanCatalogSnapshotCache.delete(currentChanDescriptor)
         }
-      }
-
-      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
-        return@launch
       }
 
       chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
-      val catalogPageToLoad = if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
-        chanCatalogSnapshotCache.get(currentChanDescriptor.boardDescriptor)?.getNextCatalogPage()
+      val catalogPageToLoad = if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        chanCatalogSnapshotCache.get(currentChanDescriptor)?.getNextCatalogPage()
       } else {
         null
       }
 
+      val nextDescriptorToLoad = if (currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        currentChanDescriptor.catalogDescriptors.getOrNull(catalogPageToLoad ?: 0)
+      } else {
+        currentChanDescriptor
+      }
+
+      val compositeCatalogDescriptor = if (currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        currentChanDescriptor
+      } else {
+        null
+      }
+
+      checkNotNull(nextDescriptorToLoad) { "nextDescriptorToLoad is null" }
+
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         page = catalogPageToLoad,
-        chanDescriptor = currentChanDescriptor,
+        compositeCatalogDescriptor = compositeCatalogDescriptor,
+        chanDescriptor = nextDescriptorToLoad,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
         chanCacheOptions = chanCacheOptions,
@@ -529,20 +564,21 @@ class ThreadPresenter @Inject constructor(
           onChanLoaderError(threadLoadResult.chanDescriptor, threadLoadResult.exception)
         }
         is ThreadLoadResult.Loaded -> {
-          val (successfullyProcessedNewPosts, time) = measureTimedValue { onChanLoaderData(threadLoadResult.chanDescriptor) }
+          val (successfullyProcessedNewPosts, time) = measureTimedValue {
+            onChanLoaderData(threadLoadResult.chanDescriptor)
+          }
+
           Logger.d(TAG, "onChanLoaderData(${threadLoadResult.chanDescriptor}) end, took $time")
 
           if (!successfullyProcessedNewPosts) {
             val error = getPossibleChanLoadError(currentChanDescriptor)
             onChanLoaderError(threadLoadResult.chanDescriptor, error)
-          } else {
-            if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
-              chanCatalogSnapshotCache.get(currentChanDescriptor.boardDescriptor)?.onCatalogLoaded(catalogPageToLoad)
-            }
+          } else if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+            chanCatalogSnapshotCache.get(currentChanDescriptor)
+              ?.onCatalogLoaded(catalogPageToLoad)
           }
         }
       }
-
 
       chanThreadLoadingState = ChanThreadLoadingState.Loaded
       currentLoadThreadJob = null
@@ -552,7 +588,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   private fun getPossibleChanLoadError(currentChanDescriptor: ChanDescriptor?): ClientException {
-    if (currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       val catalogPostsCount = chanThreadManager.getChanCatalog(currentChanDescriptor)?.postsCount() ?: 0
       if (catalogPostsCount <= 0) {
         return ClientException("Catalog is empty")
@@ -780,10 +816,18 @@ class ThreadPresenter @Inject constructor(
       return false
     }
 
-    if (localChanDescriptor != loadedChanDescriptor) {
-      Logger.e(TAG, "onChanLoaderData() localChanDescriptor " +
-        "($localChanDescriptor) != loadedChanDescriptor ($loadedChanDescriptor)")
-      return false
+    if (localChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      if (!localChanDescriptor.catalogDescriptors.contains(loadedChanDescriptor)) {
+        Logger.e(TAG, "onChanLoaderData() localChanDescriptor.contains(loadedChanDescriptor) == false " +
+          "($localChanDescriptor, $loadedChanDescriptor)")
+        return false
+      }
+    } else {
+      if (localChanDescriptor != loadedChanDescriptor) {
+        Logger.e(TAG, "onChanLoaderData() localChanDescriptor " +
+          "($localChanDescriptor) != loadedChanDescriptor ($loadedChanDescriptor)")
+        return false
+      }
     }
 
     val newPostsCount = getNewPostsCount(localChanDescriptor)
@@ -995,6 +1039,9 @@ class ThreadPresenter @Inject constructor(
           )
         }
       }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        // TODO(KurobaEx): CompositeCatalogDescriptor
+      }
     }
   }
 
@@ -1151,9 +1198,12 @@ class ThreadPresenter @Inject constructor(
     }
 
     serializedCoroutineExecutor.post {
-      val newThreadDescriptor = currentChanDescriptor!!.toThreadDescriptor(postDescriptor.postNo)
-      highlightPost(postDescriptor, blink = false)
+      val newThreadDescriptor = postDescriptor.descriptor.threadDescriptorOrNull()
+      if (newThreadDescriptor == null) {
+        error("Failed to convert post internal descriptor to thread descriptor: descriptor=${postDescriptor.descriptor}")
+      }
 
+      highlightPost(postDescriptor, blink = false)
       threadPresenterCallback?.showThread(newThreadDescriptor)
     }
   }
@@ -1248,15 +1298,10 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return
 
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?: return
+    val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-        chanDescriptor.siteName(),
-        post.postDescriptor.boardDescriptor().boardCode,
-        post.postNo()
-      )
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      val threadDescriptor = post.postDescriptor.threadDescriptor()
 
       if (!bookmarksManager.exists(threadDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_BOOKMARK, R.string.action_pin))
@@ -1270,17 +1315,15 @@ class ThreadPresenter @Inject constructor(
       menu.add(createMenuItem(POST_OPTION_QUOTE_TEXT, R.string.post_quote_text))
     }
 
-    if (site.siteFeature(Site.SiteFeature.POST_REPORT)) {
+    if (site?.siteFeature(Site.SiteFeature.POST_REPORT) == true) {
       menu.add(createMenuItem(POST_OPTION_REPORT, R.string.post_report))
     }
 
-    if (!inPopup) {
-      if (chanDescriptor.isCatalogDescriptor() || (chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP())) {
-        if (!postFilterManager.getFilterStub(post.postDescriptor)) {
-          menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
-        }
-        menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
+    if (!inPopup && (chanDescriptor.isCatalogDescriptor() || (chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP()))) {
+      if (!postFilterManager.getFilterStub(post.postDescriptor)) {
+        menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
       }
+      menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
@@ -1308,7 +1351,7 @@ class ThreadPresenter @Inject constructor(
     val siteDescriptor = post.postDescriptor.boardDescriptor().siteDescriptor
     val containsSite = siteManager.bySiteDescriptor(siteDescriptor) != null
 
-    if (site.siteFeature(Site.SiteFeature.POST_DELETE)) {
+    if (site?.siteFeature(Site.SiteFeature.POST_DELETE) == true) {
       if (containsSite) {
         val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
         if (savedReply?.password != null) {
@@ -1492,15 +1535,12 @@ class ThreadPresenter @Inject constructor(
           val chanDescriptor = currentChanDescriptor
             ?: return@post
 
-          if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-            threadPresenterCallback?.hideThread(post, post.postNo(), hide)
+          if (chanDescriptor.isCatalogDescriptor()) {
+            threadPresenterCallback?.hideThread(post, hide)
             return@post
           }
 
           chanDescriptor as ChanDescriptor.ThreadDescriptor
-
-          val threadNo = chanThreadManager.getChanThread(chanDescriptor)?.getOriginalPost()?.postNo()
-            ?: return@post
 
           val isEmpty = post.repliesFromCount == 0
           if (isEmpty) {
@@ -1508,15 +1548,13 @@ class ThreadPresenter @Inject constructor(
             hideOrRemovePosts(
               hide = hide,
               wholeChain = false,
-              post = post,
-              threadNo = threadNo
+              post = post
             )
           } else {
             // show a dialog to the user with options to hide/remove the whole chain of posts
             threadPresenterCallback?.showHideOrRemoveWholeChainDialog(
               hide = hide,
-              post = post,
-              threadNo = threadNo
+              post = post
             )
           }
         }
@@ -1635,6 +1673,7 @@ class ThreadPresenter @Inject constructor(
         }
 
         val boardDescriptor = BoardDescriptor.create(siteName, link.toString())
+        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board == null) {
@@ -1642,7 +1681,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.showBoard(boardDescriptor, true)
+        threadPresenterCallback?.showCatalog(catalogDescriptor, true)
         return@post
       }
 
@@ -1654,6 +1693,7 @@ class ThreadPresenter @Inject constructor(
         }
 
         val boardDescriptor = BoardDescriptor.create(siteName, searchLink.board)
+        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
         val board = boardManager.byBoardDescriptor(boardDescriptor)
 
         if (board == null) {
@@ -1661,7 +1701,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
 
-        threadPresenterCallback?.setBoardWithSearchQuery(boardDescriptor, searchLink.query, true)
+        threadPresenterCallback?.setCatalogWithSearchQuery(catalogDescriptor, searchLink.query, true)
         return@post
       }
 
@@ -2219,6 +2259,7 @@ class ThreadPresenter @Inject constructor(
             .appendLine(post.postSubNo())
         }
       }
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> {
         text
           .append("Thread id: ")
@@ -2357,7 +2398,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showImageReencodingWindow(fileUuid, chanDescriptor, supportsReencode)
   }
 
-  fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: ChanPost, threadNo: Long) {
+  fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, post: ChanPost) {
     if (!isBound) {
       return
     }
@@ -2368,7 +2409,7 @@ class ThreadPresenter @Inject constructor(
     val posts: MutableSet<PostDescriptor> = HashSet()
 
     if (wholeChain) {
-      val foundPosts = chanThreadManager.findPostWithReplies(descriptor, post.postNo())
+      val foundPosts = chanThreadManager.findPostWithReplies(post.postDescriptor)
         .map { chanPost -> chanPost.postDescriptor }
 
       posts.addAll(foundPosts)
@@ -2379,11 +2420,11 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    threadPresenterCallback?.hideOrRemovePosts(hide, wholeChain, posts, threadNo)
+    threadPresenterCallback?.hideOrRemovePosts(hide, wholeChain, posts)
   }
 
   fun showRemovedPostsDialog() {
-    if (!isBound || currentChanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (!isBound || currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       return
     }
 
@@ -2464,11 +2505,11 @@ class ThreadPresenter @Inject constructor(
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
     suspend fun previewCatalogThread(postDescriptor: PostDescriptor)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
-    suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean)
+    suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
+    suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
 
-    suspend fun setBoardWithSearchQuery(
-      boardDescriptor: BoardDescriptor,
+    suspend fun setCatalogWithSearchQuery(
+      catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
       searchQuery: String,
       animated: Boolean
     )
@@ -2501,7 +2542,6 @@ class ThreadPresenter @Inject constructor(
     fun confirmPostDelete(post: ChanPost)
     fun showDeleting()
     fun hideDeleting(message: String)
-    fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean)
     fun showNewPostsNotification(show: Boolean, newPostsCount: Int, deletedPostsCount: Int)
     fun showThreadStatusNotification(
       show: Boolean,
@@ -2517,13 +2557,9 @@ class ThreadPresenter @Inject constructor(
       supportsReencode: Boolean
     )
 
-    fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long)
-    fun hideOrRemovePosts(
-      hide: Boolean,
-      wholeChain: Boolean,
-      postDescriptors: Set<PostDescriptor>,
-      threadNo: Long
-    )
+    fun hideThread(post: ChanPost, hide: Boolean)
+    fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>)
+    fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost)
 
     fun unhideOrUnremovePost(post: ChanPost)
     fun viewRemovedPostsForTheThread(

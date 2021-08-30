@@ -36,10 +36,11 @@ internal class ChanPostPersister(
 
   @OptIn(ExperimentalTime::class)
   suspend fun persistPosts(
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
+    chanDescriptor: ChanDescriptor,
     chanReaderProcessor: ChanReaderProcessor,
     cacheOptions: ChanCacheOptions,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
-    chanDescriptor: ChanDescriptor,
     postParser: PostParser,
   ): ThreadResultWithTimeInfo {
     return Try {
@@ -49,16 +50,18 @@ internal class ChanPostPersister(
       Logger.d(TAG, "persistPosts($chanDescriptor, $chanReaderProcessor, $cacheOptions, " +
         "$chanCacheUpdateOptions, ${postParser.javaClass.simpleName})")
 
-      if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-        val isUnlimitedCatalog = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
+      if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        val isUnlimitedCatalog = boardManager.byCatalogDescriptor(chanDescriptor)
           ?.isUnlimitedCatalog
           ?: false
 
+        val descriptor = compositeCatalogDescriptor ?: chanDescriptor
+
         if (isUnlimitedCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {
-          chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)?.onEndOfUnlimitedCatalogReached()
+          chanCatalogSnapshotCache.get(descriptor)?.onEndOfUnlimitedCatalogReached()
         } else {
           val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
-            boardDescriptor = chanDescriptor.boardDescriptor,
+            catalogDescriptor = descriptor,
             threadDescriptors = chanReaderProcessor.getThreadDescriptors(),
             isUnlimitedCatalog = isUnlimitedCatalog
           )
@@ -66,6 +69,13 @@ internal class ChanPostPersister(
           chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
             .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
             .ignore()
+
+          if (
+            compositeCatalogDescriptor != null
+            && compositeCatalogDescriptor.catalogDescriptors.lastOrNull() == chanDescriptor
+          ) {
+            chanCatalogSnapshotCache.get(compositeCatalogDescriptor)?.onEndOfUnlimitedCatalogReached()
+          }
         }
       }
 

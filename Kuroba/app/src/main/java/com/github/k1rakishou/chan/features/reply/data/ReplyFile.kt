@@ -75,7 +75,6 @@ class ReplyFile(
   fun markFileAsTaken(chanDescriptor: ChanDescriptor): ModularResult<Boolean> {
     return Try {
       val replyFileMeta = getReplyFileMeta().unwrap()
-
       if (replyFileMeta.fileTakenBy != null) {
         // File already taken
         return@Try false

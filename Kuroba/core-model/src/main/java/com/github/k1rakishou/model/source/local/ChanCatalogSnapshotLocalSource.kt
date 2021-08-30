@@ -22,75 +22,105 @@ class ChanCatalogSnapshotLocalSource(
       return
     }
 
-    val isUnlimitedCatalog = chanCatalogSnapshot.isUnlimitedCatalog
-
     val catalogSnapshot = chanCatalogSnapshotCache.getOrPut(
-      key = chanCatalogSnapshot.boardDescriptor,
-      valueFunc = { ChanCatalogSnapshot(chanCatalogSnapshot.boardDescriptor, isUnlimitedCatalog) }
+      key = chanCatalogSnapshot.catalogDescriptor,
+      valueFunc = {
+        return@getOrPut ChanCatalogSnapshot(
+          catalogDescriptor = chanCatalogSnapshot.catalogDescriptor,
+          isUnlimitedCatalog = chanCatalogSnapshot.isUnlimitedCatalog
+        )
+      }
     )
 
     catalogSnapshot.mergeWith(chanCatalogSnapshot)
 
-    val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(catalogSnapshot.boardDescriptor)
-      ?: return
-
-    val chanCatalogSnapshotEntityList = catalogSnapshot.catalogThreadDescriptorList
-      .mapIndexed { order, threadDescriptor ->
-        return@mapIndexed ChanCatalogSnapshotEntity(
-          boardId.id,
-          threadDescriptor.threadNo,
-          order
-        )
+    val boardDescriptors = when (val catalogDescriptor = catalogSnapshot.catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        listOf(catalogDescriptor.boardDescriptor)
       }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        catalogDescriptor.catalogDescriptors.map { descriptor -> descriptor.boardDescriptor }
+      }
+      else -> {
+        error("Unknown catalogDescriptor type: ${catalogDescriptor.javaClass.simpleName}")
+      }
+    }.toSet()
 
-    chanCatalogSnapshotDao.deleteManyByBoardId(boardId.id)
-    chanCatalogSnapshotDao.insertMany(chanCatalogSnapshotEntityList)
+    boardDescriptors.forEach { boardDescriptor ->
+      val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(boardDescriptor)
+        ?: return@forEach
+
+      val chanCatalogSnapshotEntityList = catalogSnapshot.catalogThreadDescriptorList
+        .filter { threadDescriptor -> threadDescriptor.boardDescriptor == boardDescriptor }
+        .mapIndexed { order, threadDescriptor ->
+          return@mapIndexed ChanCatalogSnapshotEntity(
+            boardId.id,
+            threadDescriptor.threadNo,
+            order
+          )
+        }
+
+      chanCatalogSnapshotDao.deleteManyByBoardId(boardId.id)
+      chanCatalogSnapshotDao.insertMany(chanCatalogSnapshotEntityList)
+    }
   }
 
   suspend fun preloadChanCatalogSnapshot(
-    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
     isUnlimitedCatalog: Boolean
   ): Boolean {
     ensureInTransaction()
-    val boardDescriptor = catalogDescriptor.boardDescriptor
-
-    val fromCache = chanCatalogSnapshotCache.get(boardDescriptor)
+    val fromCache = chanCatalogSnapshotCache.get(catalogDescriptor)
     if (fromCache != null && !fromCache.isEmpty()) {
       // Already have something cached, no need to overwrite it with the database data
       return false
     }
 
-    val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(boardDescriptor)
-      ?: return false
+    val boardDescriptors = when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        listOf(catalogDescriptor.boardDescriptor)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        catalogDescriptor.catalogDescriptors.map { descriptor -> descriptor.boardDescriptor }
+      }
+    }.toSet()
 
-    val chanCatalogSnapshotEntityList = chanCatalogSnapshotDao.selectManyByBoardIdOrdered(boardId.id)
-    if (chanCatalogSnapshotEntityList.isEmpty()) {
-      return false
-    }
+    var success = false
 
-    val chanCatalogSnapshotEntryList = chanCatalogSnapshotEntityList.map { chanCatalogSnapshotEntity ->
+    boardDescriptors.forEach { boardDescriptor ->
+      val boardId = chanDescriptorCache.getBoardIdByBoardDescriptor(boardDescriptor)
+        ?: return@forEach
+
+      val chanCatalogSnapshotEntityList = chanCatalogSnapshotDao.selectManyByBoardIdOrdered(boardId.id)
+      if (chanCatalogSnapshotEntityList.isEmpty()) {
+        return@forEach
+      }
+
+      val chanCatalogSnapshotEntryList = chanCatalogSnapshotEntityList.map { chanCatalogSnapshotEntity ->
         return@map ChanDescriptor.ThreadDescriptor.create(
           boardDescriptor,
           chanCatalogSnapshotEntity.threadNo
         )
       }
 
-    if (chanCatalogSnapshotEntryList.isEmpty()) {
-      return false
+      if (chanCatalogSnapshotEntryList.isEmpty()) {
+        return@forEach
+      }
+
+      val prevCatalogSnapshot = chanCatalogSnapshotCache.getOrPut(
+        key = catalogDescriptor,
+        valueFunc = { ChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog) }
+      )
+
+      success = true
+      prevCatalogSnapshot.add(chanCatalogSnapshotEntryList)
     }
 
-    val prevCatalogSnapshot = chanCatalogSnapshotCache.getOrPut(
-      key = catalogDescriptor.boardDescriptor,
-      valueFunc = { ChanCatalogSnapshot(boardDescriptor, isUnlimitedCatalog) }
-    )
-
-    prevCatalogSnapshot.add(chanCatalogSnapshotEntryList)
-
-    return true
+    return success
   }
 
   fun getCatalogSnapshot(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalogSnapshot? {
-    return chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
+    return chanCatalogSnapshotCache.get(catalogDescriptor)
   }
 
 }

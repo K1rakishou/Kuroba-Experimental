@@ -149,6 +149,9 @@ data class ReplyChanDescriptor(
             threadNo = null
           )
         }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use CompositeCatalogDescriptor here")
+        }
       }
     }
   }

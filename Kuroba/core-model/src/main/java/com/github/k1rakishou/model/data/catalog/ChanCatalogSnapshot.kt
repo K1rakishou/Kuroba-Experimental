@@ -3,20 +3,19 @@ package com.github.k1rakishou.model.data.catalog
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 data class ChanCatalogSnapshot(
-  val boardDescriptor: BoardDescriptor,
+  val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
   val isUnlimitedCatalog: Boolean
 ) {
   private val lock = ReentrantReadWriteLock()
 
   @GuardedBy("lock")
-  private var currentCatalogPage: Int = START_PAGE
+  private var currentCatalogPage: Int
   @GuardedBy("lock")
   private var endReached: Boolean = false
 
@@ -25,7 +24,8 @@ data class ChanCatalogSnapshot(
   @GuardedBy("lock")
   private val chanCatalogSnapshotEntryList = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
-  val catalogDescriptor by lazy { ChanDescriptor.CatalogDescriptor.create(boardDescriptor) }
+  val isUnlimitedOrCompositeCatalog: Boolean
+    get() = isUnlimitedCatalog || catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor
 
   val catalogThreadDescriptorList: List<ChanDescriptor.ThreadDescriptor>
     get() = lock.read { chanCatalogSnapshotEntryList.toList() }
@@ -42,6 +42,10 @@ data class ChanCatalogSnapshot(
   val postsCount: Int
     get() = lock.read { chanCatalogSnapshotEntryList.size }
 
+  init {
+    currentCatalogPage = getStartCatalogPage()
+  }
+
   fun isEmpty(): Boolean = lock.read { chanCatalogSnapshotEntryList.isEmpty() }
 
   fun mergeWith(chanCatalogSnapshot: ChanCatalogSnapshot) {
@@ -50,8 +54,8 @@ data class ChanCatalogSnapshot(
 
   fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
-      if (!isUnlimitedCatalog) {
-        currentCatalogPage = START_PAGE
+      if (!isUnlimitedOrCompositeCatalog) {
+        currentCatalogPage = getStartCatalogPage()
         duplicateChecker.clear()
         chanCatalogSnapshotEntryList.clear()
       }
@@ -68,27 +72,30 @@ data class ChanCatalogSnapshot(
 
   fun getNextCatalogPage(): Int? {
     return lock.read {
-      if (!isUnlimitedCatalog) {
+      if (!isUnlimitedOrCompositeCatalog) {
         return@read null
       }
 
-      return@read currentCatalogPage.plus(1)
+      return@read when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> currentCatalogPage.plus(1)
+        is ChanDescriptor.CompositeCatalogDescriptor -> currentCatalogPage.plus(1)
+      }
     }
   }
 
   fun onCatalogLoaded(catalogPageToLoad: Int?) {
     lock.write {
-      if (isUnlimitedCatalog) {
-        currentCatalogPage = catalogPageToLoad ?: START_PAGE
+      if (isUnlimitedOrCompositeCatalog) {
+        currentCatalogPage = catalogPageToLoad ?: getStartCatalogPage()
       } else {
-        currentCatalogPage = START_PAGE
+        currentCatalogPage = getStartCatalogPage()
       }
     }
   }
 
   fun onEndOfUnlimitedCatalogReached() {
     lock.write {
-      if (isUnlimitedCatalog) {
+      if (isUnlimitedOrCompositeCatalog) {
         endReached = true
       }
     }
@@ -96,7 +103,7 @@ data class ChanCatalogSnapshot(
 
   fun updateCatalogPage(overridePage: Int) {
     lock.write {
-      if (isUnlimitedCatalog) {
+      if (isUnlimitedOrCompositeCatalog) {
         endReached = false
         currentCatalogPage = (overridePage - 1).coerceAtLeast(0)
         duplicateChecker.clear()
@@ -105,21 +112,29 @@ data class ChanCatalogSnapshot(
     }
   }
 
+  private fun getStartCatalogPage(): Int {
+    return when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> START_PAGE_UNLIMITED_CATALOG
+      is ChanDescriptor.CompositeCatalogDescriptor -> START_PAGE_COMPOSITE_CATALOG
+    }
+  }
+
   override fun toString(): String {
-    return "ChanCatalogSnapshot{boardDescriptor=$boardDescriptor, " +
+    return "ChanCatalogSnapshot{catalogDescriptor=$catalogDescriptor, " +
       "chanCatalogSnapshotEntryList=${chanCatalogSnapshotEntryList.size}, " +
       "currentCatalogPage=${currentCatalogPage}, endReached=${endReached}}"
   }
 
   companion object {
-    private const val START_PAGE = 1
+    private const val START_PAGE_COMPOSITE_CATALOG = 0
+    private const val START_PAGE_UNLIMITED_CATALOG = 1
 
     fun fromSortedThreadDescriptorList(
-      boardDescriptor: BoardDescriptor,
+      catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
       threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
       isUnlimitedCatalog: Boolean
     ): ChanCatalogSnapshot {
-      return ChanCatalogSnapshot(boardDescriptor, isUnlimitedCatalog)
+      return ChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
         .apply { add(threadDescriptors) }
     }
   }

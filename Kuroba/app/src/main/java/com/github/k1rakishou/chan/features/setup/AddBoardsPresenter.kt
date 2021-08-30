@@ -12,6 +12,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -142,7 +143,7 @@ class AddBoardsPresenter(
       matchedBoards += SelectableBoardCellData(
         boardCellData = BoardCellData(
           searchQuery = query,
-          boardDescriptor = chanBoard.boardDescriptor,
+          catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
           boardName = chanBoard.boardName(),
           description = BoardHelper.getDescription(chanBoard)
         ),
@@ -156,13 +157,16 @@ class AddBoardsPresenter(
     }
 
     val sortedBoards = if (query.isEmpty()) {
-      matchedBoards
-        .sortedBy { matchedBoard -> matchedBoard.boardCellData.boardDescriptor.boardCode }
+      matchedBoards.sortedBy { matchedBoard ->
+        matchedBoard.boardCellData.boardCodeOrComposedBoardCodes
+      }
     } else {
       InputWithQuerySorter.sort(
         input = matchedBoards,
         query = query,
-        textSelector = { selectableBoardCellData -> selectableBoardCellData.boardCellData.boardDescriptor.boardCode }
+        textSelector = { selectableBoardCellData ->
+          selectableBoardCellData.boardCellData.boardCodeOrComposedBoardCodes
+        }
       )
     }
 

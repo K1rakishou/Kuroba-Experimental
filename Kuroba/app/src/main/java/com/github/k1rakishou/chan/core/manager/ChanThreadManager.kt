@@ -81,7 +81,7 @@ class ChanThreadManager(
       is ChanDescriptor.ThreadDescriptor -> {
         chanPostRepository.updateThreadLastAccessTime(chanDescriptor)
       }
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         // no-op
       }
     }
@@ -105,25 +105,30 @@ class ChanThreadManager(
   @OptIn(ExperimentalTime::class)
   suspend fun loadThreadOrCatalog(
     page: Int?,
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions
   ): ThreadLoadResult {
-    try {
-      Logger.d(TAG, "loadThreadOrCatalog($page, $chanDescriptor, $chanCacheUpdateOptions, " +
-        "$chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+    require(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+      "CompositeCatalogDescriptor cannot be used here"
+    }
 
-      if (chanLoadOptions.canClearCache()) {
+    try {
+      Logger.d(TAG, "loadThreadOrCatalog($page, $compositeCatalogDescriptor, $chanDescriptor, " +
+        "$chanCacheUpdateOptions, $chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+
+      if (chanLoadOptions.canClearCache() && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
       } else if (chanLoadOptions.isForceUpdating(postDescriptor = null)) {
         val postDescriptors = (chanLoadOptions.chanLoadOption as ChanLoadOption.ForceUpdatePosts).postDescriptors
-        if (postDescriptors == null) {
+        if (postDescriptors == null && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
           Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
           postFilterManager.removeAllForDescriptor(chanDescriptor)
-        } else {
+        } else if (postDescriptors != null) {
           Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeMany()")
           postFilterManager.removeMany(postDescriptors)
         }
@@ -145,8 +150,9 @@ class ChanThreadManager(
         }
       }
 
-      val threadLoaderResult = loadInternal(
+      val threadLoadResult = loadInternal(
         page = page,
+        compositeCatalogDescriptor = compositeCatalogDescriptor,
         chanDescriptor = chanDescriptor,
         chanCacheUpdateOptions = chanCacheUpdateOptions,
         chanLoadOptions = chanLoadOptions,
@@ -154,33 +160,31 @@ class ChanThreadManager(
         chanReadOptions = chanReadOptions
       )
 
-      when (threadLoaderResult) {
-        is ModularResult.Value -> {
-          when (chanDescriptor) {
+      when (threadLoadResult) {
+        is ThreadLoadResult.Loaded -> {
+          when (val descriptor = threadLoadResult.chanDescriptor) {
             is ChanDescriptor.ThreadDescriptor -> {
-              val preloadTime = measureTime { threadDataPreloader.postloadThreadInfo(chanDescriptor) }
-              Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadThreadInfo took $preloadTime")
+              val preloadTime = measureTime { threadDataPreloader.postloadThreadInfo(descriptor) }
+              Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadThreadInfo took $preloadTime")
             }
             is ChanDescriptor.CatalogDescriptor -> {
-              val preloadTime = measureTime { catalogDataPreloader.postloadCatalogInfo(chanDescriptor) }
-              Logger.d(TAG, "loadThreadOrCatalog(), chanDescriptor=${chanDescriptor} postloadCatalogInfo took $preloadTime")
+              val preloadTime = measureTime { catalogDataPreloader.postloadCatalogInfo(descriptor) }
+              Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadCatalogInfo took $preloadTime")
             }
+            is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
           }
-
-          return threadLoaderResult.value
         }
-        is ModularResult.Error -> {
-          val error = threadLoaderResult.error
-          if (error is ChanLoaderException) {
-            return ThreadLoadResult.Error(chanDescriptor, error)
-          } else {
-            return ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error))
-          }
+        is ThreadLoadResult.Error -> {
+          // no-op
         }
       }
+
+      return threadLoadResult
     } finally {
       BackgroundUtils.ensureMainThread()
-      requestedChanDescriptors.remove(chanDescriptor)
+
+      val descriptor = compositeCatalogDescriptor ?: chanDescriptor
+      requestedChanDescriptors.remove(descriptor)
     }
   }
 
@@ -214,21 +218,29 @@ class ChanThreadManager(
           chanThread.iteratePostsOrderedWhile(iterator)
         }
       }
-      is ChanDescriptor.CatalogDescriptor -> {
-        val chanCatalog = chanThreadsCache.getCatalog(chanDescriptor)
-          ?: return
-
-        if (postDescriptors != null) {
-          for (postDescriptor in postDescriptors) {
-            val post = chanCatalog.getPost(postDescriptor)
-              ?: continue
-
-            if (!iterator(post)) {
-              return
-            }
-          }
+      is ChanDescriptor.ICatalogDescriptor -> {
+        val catalogDescriptors = if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+          listOf(chanDescriptor)
         } else {
-          chanCatalog.iteratePostsOrderedWhile(iterator)
+          (chanDescriptor as ChanDescriptor.CompositeCatalogDescriptor).catalogDescriptors
+        }
+
+        catalogDescriptors.forEach { catalogDescriptor ->
+          val chanCatalog = chanThreadsCache.getCatalog(catalogDescriptor)
+            ?: return@forEach
+
+          if (postDescriptors != null) {
+            for (postDescriptor in postDescriptors) {
+              val post = chanCatalog.getPost(postDescriptor)
+                ?: continue
+
+              if (!iterator(post)) {
+                return@forEach
+              }
+            }
+          } else {
+            chanCatalog.iteratePostsOrderedWhile(iterator)
+          }
         }
       }
     }
@@ -250,7 +262,7 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(threadDescriptor)
   }
 
-  fun getChanCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor?): ChanCatalog? {
+  fun getChanCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor?): ChanCatalog? {
     if (catalogDescriptor == null) {
       return null
     }
@@ -293,15 +305,28 @@ class ChanThreadManager(
     return chanThreadsCache.getLastPost(descriptor)
   }
 
-  fun findPostWithReplies(descriptor: ChanDescriptor, postNo: Long): Set<ChanPost> {
+  fun findPostWithReplies(postDescriptor: PostDescriptor): Set<ChanPost> {
     val postsSet = hashSetOf<ChanPost>()
 
-    when (descriptor) {
+    when (val descriptor = postDescriptor.descriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        chanThreadsCache.getThread(descriptor)?.findPostWithRepliesRecursive(postNo, postsSet)
+        chanThreadsCache.getThread(descriptor)
+          ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        getChanCatalog(descriptor)?.findPostWithRepliesRecursive(postNo, postsSet)
+        getChanCatalog(descriptor)
+          ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        for (catalogDescriptor in descriptor.catalogDescriptors) {
+          val found = getChanCatalog(catalogDescriptor)
+            ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
+            ?: false
+
+          if (found) {
+            break
+          }
+        }
       }
     }
 
@@ -372,7 +397,7 @@ class ChanThreadManager(
 
         chanThread.iteratePostsOrdered { chanPost -> listOfPosts += chanPost }
       }
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         val chanCatalog = getChanCatalog(chanDescriptor)
           ?: return mutableListOf()
 
@@ -392,23 +417,30 @@ class ChanThreadManager(
 
   fun isContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType): Boolean {
     when (val descriptor = postDescriptor.descriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        return chanThreadsCache.getCatalog(descriptor)
-          ?.getPost(postDescriptor)
-          ?.isContentLoadedForLoader(loaderType)
-          ?: false
-      }
       is ChanDescriptor.ThreadDescriptor -> {
         return chanThreadsCache.getThread(descriptor)
           ?.getPost(postDescriptor)
           ?.isContentLoadedForLoader(loaderType)
           ?: false
       }
+      is ChanDescriptor.CatalogDescriptor -> {
+        return chanThreadsCache.getCatalog(descriptor)
+          ?.getPost(postDescriptor)
+          ?.isContentLoadedForLoader(loaderType)
+          ?: false
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        // TODO(KurobaEx): CompositeCatalogDescriptor
+        return true
+      }
     }
   }
 
   fun setContentLoadedForLoader(postDescriptor: PostDescriptor, loaderType: LoaderType) {
     when (val descriptor = postDescriptor.descriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
+      }
       is ChanDescriptor.CatalogDescriptor -> {
         chanThreadsCache.getCatalog(descriptor)
           ?.getPost(postDescriptor)
@@ -425,12 +457,13 @@ class ChanThreadManager(
   @OptIn(ExperimentalTime::class)
   private suspend fun loadInternal(
     page: Int?,
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanLoadOptions: ChanLoadOptions,
     chanCacheOptions: ChanCacheOptions,
     chanReadOptions: ChanReadOptions
-  ): ModularResult<ThreadLoadResult> {
+  ): ThreadLoadResult {
     awaitUntilDependenciesInitialized()
 
     when (chanDescriptor) {
@@ -439,6 +472,9 @@ class ChanThreadManager(
       }
       is ChanDescriptor.CatalogDescriptor -> {
         Logger.d(TAG, "loadInternal() Requested catalog /$chanDescriptor/")
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
       }
     }
 
@@ -453,15 +489,19 @@ class ChanThreadManager(
         val preloadTime = measureTime { catalogDataPreloader.preloadCatalogInfo(chanDescriptor) }
         Logger.d(TAG, "loadInternal(), chanDescriptor=${chanDescriptor} preloadCatalogInfo took $preloadTime")
       }
+      is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
     }
 
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       val error = CommonClientException("Couldn't find site ${chanDescriptor.siteDescriptor()}")
-      return ModularResult.value(ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error)))
+      return ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(error))
     }
 
-    if (!chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)) {
+    if (
+      compositeCatalogDescriptor == null
+      && !chanThreadsCache.cacheNeedsUpdate(chanDescriptor, chanCacheUpdateOptions)
+    ) {
       Logger.d(TAG, "loadInternal() chanThreadsCache.cacheNeedsUpdate($chanDescriptor, " +
         "$chanCacheUpdateOptions) -> false")
 
@@ -473,7 +513,7 @@ class ChanThreadManager(
       )
 
       if (result != null) {
-        return result
+        return ThreadLoadResult.fromModularResult(chanDescriptor, result)
       }
 
       // fallthrough
@@ -488,9 +528,10 @@ class ChanThreadManager(
       bookmarksManager.onThreadIsFetchingData(chanDescriptor)
     }
 
-    return chanThreadLoaderCoordinator.loadThreadOrCatalog(
+    val result = chanThreadLoaderCoordinator.loadThreadOrCatalog(
       page = page,
       site = site,
+      compositeCatalogDescriptor = compositeCatalogDescriptor,
       chanDescriptor = chanDescriptor,
       chanCacheOptions = chanCacheOptions,
       // To avoid using UpdateIfCacheIsOlderThan which is ambiguous
@@ -498,6 +539,11 @@ class ChanThreadManager(
       chanReadOptions = chanReadOptions,
       chanLoadOptions = chanLoadOptions
     )
+
+    return when (result) {
+      is ModularResult.Error -> ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(result.error))
+      is ModularResult.Value -> result.value
+    }
   }
 
   private suspend fun tryRefreshCacheFromTheDatabase(
@@ -576,6 +622,7 @@ class ChanThreadManager(
           catalogDescriptor = chanDescriptor
         )
       }
+      is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
     }
 
     return null

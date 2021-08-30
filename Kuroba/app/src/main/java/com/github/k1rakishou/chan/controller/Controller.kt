@@ -467,7 +467,7 @@ abstract class Controller(@JvmField var context: Context) {
       val splitNav = parentController?.parentController?.presentedByController as SplitNavigationController?
 
       threadController = when (chanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> {
+        is ChanDescriptor.ICatalogDescriptor -> {
           splitNav?.leftController?.childControllers?.get(0) as ThreadController?
         }
         is ChanDescriptor.ThreadDescriptor -> {

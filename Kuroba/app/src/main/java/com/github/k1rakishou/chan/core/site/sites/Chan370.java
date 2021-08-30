@@ -79,7 +79,7 @@ public class Chan370
                         .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
                         .toString();
             } else {
-                return getUrl().toString();
+                return null;
             }
         }
     };

@@ -32,6 +32,7 @@ import com.github.k1rakishou.common.DoNotStrip;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import org.jetbrains.annotations.NotNull;
 
@@ -40,7 +41,9 @@ import okhttp3.HttpUrl;
 @DoNotStrip
 public class Lainchan extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
+
     public static final String SITE_NAME = "Lainchan";
+    public static final SiteDescriptor SITE_DESCRIPTOR = SiteDescriptor.Companion.create(SITE_NAME);
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
         private static final String ROOT = "https://lainchan.org/";
@@ -76,7 +79,7 @@ public class Lainchan extends CommonSite {
                         .addPathSegment(((ChanDescriptor.ThreadDescriptor) chanDescriptor).getThreadNo() + ".html")
                         .toString();
             } else {
-                return getUrl().toString();
+                return null;
             }
         }
     };

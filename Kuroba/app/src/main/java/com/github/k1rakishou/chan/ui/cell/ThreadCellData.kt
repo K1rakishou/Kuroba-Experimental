@@ -108,14 +108,15 @@ class ThreadCellData(
     val shiftPostComment = ChanSettings.shiftPostComment.get()
     val textOnly = ChanSettings.textOnly.get()
     val postFileInfo = ChanSettings.postFileInfo.get()
-    val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor is ChanDescriptor.ThreadDescriptor
-    val markSeenThreads = ChanSettings.markSeenThreads.get() && chanDescriptor is ChanDescriptor.CatalogDescriptor
+    val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor.isThreadDescriptor()
+    val markSeenThreads = ChanSettings.markSeenThreads.get() && chanDescriptor.isCatalogDescriptor()
     val chanTheme = theme.fullCopy()
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
 
     val postAlignmentMode = when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor,
+      is ChanDescriptor.CompositeCatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
@@ -192,7 +193,11 @@ class ThreadCellData(
       return null
     }
 
-    if (chanDescriptor !is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor !is ChanDescriptor.ICatalogDescriptor) {
+      return null
+    }
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       return null
     }
 

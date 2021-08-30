@@ -18,6 +18,9 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.core.site.sites.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -108,18 +111,18 @@ class StartActivityStartupHandlerHelper(
       return
     }
 
-    val boardToOpen = getBoardToOpen()
+    val catalogToOpen = getCatalogToOpen()
     val threadToOpen = if (allowedToOpenThread) {
       getThreadToOpen()
     } else {
       null
     }
 
-    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${boardToOpen}, " +
+    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${catalogToOpen}, " +
         "getThreadToOpen returned ${threadToOpen}")
 
-    if (boardToOpen != null) {
-      browseController?.showBoard(boardToOpen, false)
+    if (catalogToOpen != null) {
+      browseController?.showCatalog(catalogToOpen, false)
     } else {
       browseController?.loadWithDefaultBoard()
     }
@@ -155,11 +158,22 @@ class StartActivityStartupHandlerHelper(
     return null
   }
 
-  private suspend fun getBoardToOpen(): BoardDescriptor? {
+  private suspend fun getCatalogToOpen(): ChanDescriptor.ICatalogDescriptor? {
+    // TODO(KurobaEx): CompositeCatalogDescriptor
+    if (true) {
+      return ChanDescriptor.CompositeCatalogDescriptor(
+        listOf(
+          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "a")),
+          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Dvach.SITE_DESCRIPTOR, "a")),
+          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Lainchan.SITE_DESCRIPTOR, "lain")),
+        )
+      )
+    }
+
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
     Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
-    if (loadLastOpenedBoardUponAppStart) {
+    val boardDescriptor = if (loadLastOpenedBoardUponAppStart) {
       val boardDescriptor = historyNavigationManager.get().getFirstCatalogNavElement()
         ?.descriptor()
         ?.boardDescriptor()
@@ -173,15 +187,19 @@ class StartActivityStartupHandlerHelper(
         return null
       }
 
-      return boardDescriptor
+      boardDescriptor
+    } else {
+      val sm = siteManager.get().apply { awaitUntilInitialized() }
+      val bm = boardManager.get().apply { awaitUntilInitialized() }
+
+      sm.firstSiteDescriptor()?.let { firstSiteDescriptor -> bm.firstBoardDescriptor(firstSiteDescriptor) }
     }
 
-    val sm = siteManager.get().apply { awaitUntilInitialized() }
-    val bm = boardManager.get().apply { awaitUntilInitialized() }
-
-    return sm.firstSiteDescriptor()?.let { firstSiteDescriptor ->
-      return@let bm.firstBoardDescriptor(firstSiteDescriptor)
+    if (boardDescriptor == null) {
+      return null
     }
+
+    return ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
   }
 
   private suspend fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
@@ -321,7 +339,10 @@ class StartActivityStartupHandlerHelper(
         "markedPostNo = ${chanDescriptorResult.markedPostNo}")
 
     val chanDescriptor = chanDescriptorResult.chanDescriptor
-    browseController?.setBoard(chanDescriptor.boardDescriptor())
+    val boardDescriptor = chanDescriptor.boardDescriptor()
+    val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
+
+    browseController?.setCatalog(catalogDescriptor)
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (chanDescriptorResult.markedPostNo > 0L) {
@@ -348,14 +369,18 @@ class StartActivityStartupHandlerHelper(
     }
 
     val boardThreadPair = resolveChanState(chanState)
-    if (boardThreadPair.first == null) {
+
+    val boardDescriptor = boardThreadPair.first
+    if (boardDescriptor == null) {
       return false
     }
 
-    browseController?.setBoard(boardThreadPair.first!!)
+    val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
+    browseController?.setCatalog(catalogDescriptor)
 
-    if (boardThreadPair.second != null) {
-      browseController?.showThread(boardThreadPair.second!!, false)
+    val threadDescriptor = boardThreadPair.second
+    if (threadDescriptor != null) {
+      browseController?.showThread(threadDescriptor, false)
     }
 
     return true
@@ -421,19 +446,23 @@ class StartActivityStartupHandlerHelper(
 
     when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
-        browseController?.showBoard(chanDescriptor.boardDescriptor, animated = false)
+        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanDescriptor.boardDescriptor)
+        browseController?.showCatalog(catalogDescriptor, animated = false)
       }
       is ChanDescriptor.ThreadDescriptor -> {
         if (needToLoadBoard) {
-          val boardToOpen = getBoardToOpen()
+          val boardToOpen = getCatalogToOpen()
           if (boardToOpen != null) {
-            browseController?.showBoard(boardToOpen, animated = false)
+            browseController?.showCatalog(boardToOpen, animated = false)
           } else {
             browseController?.loadWithDefaultBoard()
           }
         }
 
         startActivityCallbacks?.loadThread(chanDescriptor, animated = false)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
       }
     }
 
@@ -488,9 +517,9 @@ class StartActivityStartupHandlerHelper(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ) {
     if (needToLoadBoard) {
-      val boardToOpen = getBoardToOpen()
+      val boardToOpen = getCatalogToOpen()
       if (boardToOpen != null) {
-        browseController?.showBoard(boardToOpen, false)
+        browseController?.showCatalog(boardToOpen, false)
       } else {
         browseController?.loadWithDefaultBoard()
       }

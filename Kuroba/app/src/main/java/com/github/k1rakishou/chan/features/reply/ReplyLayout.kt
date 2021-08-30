@@ -647,13 +647,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  suspend fun bindLoadable(chanDescriptor: ChanDescriptor) {
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-    if (site == null) {
-      Logger.e(TAG, "bindLoadable couldn't find site " + chanDescriptor.siteDescriptor())
-      return
-    }
-
+  suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     if (!presenter.bindChanDescriptor(chanDescriptor)) {
       Logger.d(TAG, "bindLoadable failed to bind $chanDescriptor")
       cleanup()
@@ -1278,6 +1272,10 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun processBottomNavViewSwipeUpEvents() {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
+
     val isCatalogReplyLayout = presenter.isCatalogReplyLayout()
       ?: return
 

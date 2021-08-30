@@ -44,6 +44,10 @@ class ReloadPostsFromDatabaseUseCase(
         return chanPostRepository.getCatalogOriginalPosts(chanDescriptor, postsToLoadCount)
           .unwrap()
       }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        // TODO(KurobaEx): CompositeCatalogDescriptor
+        return emptyList()
+      }
     }
   }
 

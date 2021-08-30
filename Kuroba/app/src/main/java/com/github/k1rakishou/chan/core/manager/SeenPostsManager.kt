@@ -11,7 +11,6 @@ import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.SeenPost
@@ -44,7 +43,7 @@ class SeenPostsManager(
   @GuardedBy("lock")
   private val seenPostsToPersist = mutableMapOf<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, SeenPost>>()
   @GuardedBy("lock")
-  private var lastLoadedBoardDescriptor: BoardDescriptor? = null
+  private var lastLoadedCatalogDescriptor: ChanDescriptor.ICatalogDescriptor? = null
   @GuardedBy("lock")
   private val alreadyLoadedDescriptorsForUnlimitedCatalog = hashSetWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
@@ -115,18 +114,17 @@ class SeenPostsManager(
       return
     }
 
-    val boardDescriptor = catalogDescriptor.boardDescriptor
-    val threadDescriptorsToLoad = getThreadDescriptorsToLoad(threadDescriptors, boardDescriptor)
+    val threadDescriptorsToLoad = getThreadDescriptorsToLoad(threadDescriptors, catalogDescriptor)
     if (threadDescriptorsToLoad.isEmpty()) {
       return
     }
 
     val seenPostsGrouped = seenPostsRepository.selectAllByThreadDescriptors(
-      boardDescriptor = boardDescriptor,
+      boardDescriptor = catalogDescriptor.boardDescriptor,
       threadDescriptors = threadDescriptorsToLoad
     ).safeUnwrap { error ->
       Logger.e(TAG, "Error while trying to select all seen posts by threadDescriptors " +
-        "(${boardDescriptor}, ${threadDescriptorsToLoad.size}), " +
+        "(${catalogDescriptor}, ${threadDescriptorsToLoad.size}), " +
         "error = ${error.errorMessageOrClassName()}")
 
       return
@@ -294,7 +292,7 @@ class SeenPostsManager(
 
   private fun getThreadDescriptorsToLoad(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>?,
-    boardDescriptor: BoardDescriptor
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor
   ): List<ChanDescriptor.ThreadDescriptor> {
     return lock.read {
       if (threadDescriptors != null) {
@@ -304,12 +302,12 @@ class SeenPostsManager(
         return@read threadDescriptors
       }
 
-      val catalogSnapshot = catalogSnapshotCache.get(boardDescriptor)
+      val catalogSnapshot = catalogSnapshotCache.get(catalogDescriptor)
         ?: return@read emptyList()
 
-      if (boardDescriptor != lastLoadedBoardDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+      if (catalogDescriptor != lastLoadedCatalogDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
         alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
-        lastLoadedBoardDescriptor = boardDescriptor
+        lastLoadedCatalogDescriptor = catalogDescriptor
       }
 
       val threadDescriptorsToLoad = catalogSnapshot.catalogThreadDescriptorSet

@@ -174,13 +174,10 @@ class ChanThreadsCache(
 
         return chanThreads[chanDescriptor]?.getPost(postDescriptor)
       }
-      is ChanDescriptor.CatalogDescriptor -> {
-        val threadDescriptors = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+      is ChanDescriptor.ICatalogDescriptor -> {
+        val threadDescriptor = chanCatalogSnapshotCache.get(chanDescriptor)
           ?.catalogThreadDescriptorList
-          ?: return null
-
-        val threadDescriptor = threadDescriptors
-          .firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postNo }
+          ?.firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postNo }
           ?: return null
 
         return chanThreads[threadDescriptor]?.getOriginalPost()
@@ -193,8 +190,8 @@ class ChanThreadsCache(
     return chanThreads[threadDescriptor]?.getPost(postDescriptor)
   }
 
-  fun getCatalog(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalog? {
-    val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor.boardDescriptor)
+  fun getCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor): ChanCatalog? {
+    val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor)
       ?.catalogThreadDescriptorList
       ?: return null
 
@@ -213,8 +210,8 @@ class ChanThreadsCache(
       is ChanDescriptor.ThreadDescriptor -> {
         return chanThreads[chanDescriptor]?.hasAtLeastOnePost() ?: false
       }
-      is ChanDescriptor.CatalogDescriptor -> {
-        val catalogThreadDescriptorList = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+      is ChanDescriptor.ICatalogDescriptor -> {
+        val catalogThreadDescriptorList = chanCatalogSnapshotCache.get(chanDescriptor)
           ?.catalogThreadDescriptorList
 
         return catalogThreadDescriptorList != null && catalogThreadDescriptorList.isNotEmpty()
@@ -461,7 +458,7 @@ class ChanThreadsCache(
 
       chanThread.cleanup()
 
-      val isThreadInCurrentCatalog = chanCatalogSnapshotCache.get(chanThread.threadDescriptor.boardDescriptor)
+      val isThreadInCurrentCatalog = chanCatalogSnapshotCache.get(chanThread.threadDescriptor.catalogDescriptor())
         ?.catalogThreadDescriptorSet
         ?.contains(threadDescriptor)
         ?: false

@@ -44,15 +44,18 @@ class LastReplyRepository(
   private val cooldownInfoMap = HashMap<BoardDescriptor, CooldownInfo>()
 
   suspend fun attemptToStartPosting(chanDescriptor: ChanDescriptor): Boolean {
-    val boardDescriptor = chanDescriptor.boardDescriptor()
-
     return mutex.withLock {
       when (chanDescriptor) {
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          return@withLock false
+        }
         is ChanDescriptor.CatalogDescriptor -> {
+          val boardDescriptor = chanDescriptor.boardDescriptor()
           lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
           return@withLock lastThreadMap[boardDescriptor]!!.prepareToPost()
         }
         is ChanDescriptor.ThreadDescriptor -> {
+          val boardDescriptor = chanDescriptor.boardDescriptor
           lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
           return@withLock lastReplyMap[boardDescriptor]!!.prepareToPost()
         }
@@ -61,15 +64,20 @@ class LastReplyRepository(
   }
 
   suspend fun endPostingAttempt(chanDescriptor: ChanDescriptor) {
-    val boardDescriptor = chanDescriptor.boardDescriptor()
-
     mutex.withLock {
       when (chanDescriptor) {
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          // no-op
+        }
         is ChanDescriptor.CatalogDescriptor -> {
+          val boardDescriptor = chanDescriptor.boardDescriptor()
+
           lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
           lastThreadMap[boardDescriptor]!!.endPosting()
         }
         is ChanDescriptor.ThreadDescriptor -> {
+          val boardDescriptor = chanDescriptor.boardDescriptor()
+
           lastReplyMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
           lastReplyMap[boardDescriptor]!!.endPosting()
         }
@@ -84,11 +92,18 @@ class LastReplyRepository(
   ) {
     Logger.d(TAG, "onPostAttemptFinished($chanDescriptor, newCooldownInfo=$newCooldownInfo)")
 
-    mutex.withLockNonCancellable {
-      val boardDescriptor = chanDescriptor.boardDescriptor()
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
 
+    val boardDescriptor = chanDescriptor.boardDescriptor()
+
+    mutex.withLockNonCancellable {
       if (postedSuccessfully) {
         when (chanDescriptor) {
+          is ChanDescriptor.CompositeCatalogDescriptor -> {
+            return@withLockNonCancellable
+          }
           is ChanDescriptor.CatalogDescriptor -> {
             lastThreadMap.putIfNotContainsLazy(boardDescriptor) { LastReply(boardDescriptor) }
             lastThreadMap[boardDescriptor]!!.updateLastReplyAttemptTime()
@@ -121,6 +136,7 @@ class LastReplyRepository(
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
 
     return when (chanDescriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor -> 0
       is ChanDescriptor.CatalogDescriptor -> {
         getTimeUntilNewThread(chanDescriptor.boardDescriptor, replyMode)
       }

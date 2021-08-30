@@ -139,7 +139,7 @@ class ChanReaderProcessor(
   }
 
   private fun differsFromCached(builder: ChanPostBuilder): Boolean {
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       // Always update catalog posts
       return true
     }

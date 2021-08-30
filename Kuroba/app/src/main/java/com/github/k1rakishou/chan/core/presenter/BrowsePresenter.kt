@@ -16,13 +16,20 @@
  */
 package com.github.k1rakishou.chan.core.presenter
 
+import android.content.Context
+import android.graphics.Bitmap
+import android.text.SpannableStringBuilder
+import android.text.style.ImageSpan
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
@@ -42,10 +49,11 @@ class BrowsePresenter @Inject constructor(
   private val _siteManager: Lazy<SiteManager>,
   private val _boardManager: Lazy<BoardManager>,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
-  private val _chanPostRepository: Lazy<ChanPostRepository>
+  private val _chanPostRepository: Lazy<ChanPostRepository>,
+  private val _imageLoaderV2: Lazy<ImageLoaderV2>
 ) {
   private var callback: Callback? = null
-  private var currentOpenedBoard: BoardDescriptor? = null
+  private var currentOpenedCatalog: ChanDescriptor.ICatalogDescriptor? = null
 
   private val bookmarksManager: BookmarksManager
     get() = _bookmarksManager.get()
@@ -57,6 +65,8 @@ class BrowsePresenter @Inject constructor(
     get() = _chanThreadManager.get()
   private val chanPostRepository: ChanPostRepository
     get() = _chanPostRepository.get()
+  private val imageLoaderV2: ImageLoaderV2
+    get() = _imageLoaderV2.get()
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback
@@ -65,16 +75,16 @@ class BrowsePresenter @Inject constructor(
       boardManager.listenForCurrentSelectedBoard()
         .asFlow()
         .collect { currentBoard ->
-          val boardDescriptor = currentBoard.boardDescriptor
+          val catalogDescriptor = currentBoard.catalogDescriptor
 
-          if (currentOpenedBoard == boardDescriptor) {
+          if (currentOpenedCatalog == catalogDescriptor) {
             return@collect
           }
 
-          if (boardDescriptor == null) {
+          if (catalogDescriptor == null) {
             callback?.showSitesNotSetup()
           } else {
-            callback?.loadBoard(boardDescriptor)
+            callback?.loadCatalog(catalogDescriptor)
           }
         }
     }
@@ -82,7 +92,7 @@ class BrowsePresenter @Inject constructor(
 
   fun destroy() {
     callback = null
-    currentOpenedBoard = null
+    currentOpenedCatalog = null
   }
 
   suspend fun loadWithDefaultBoard() {
@@ -99,19 +109,19 @@ class BrowsePresenter @Inject constructor(
     }
 
     if (firstActiveBoardDescriptor != null) {
-      loadBoard(firstActiveBoardDescriptor!!)
+      loadCatalog(ChanDescriptor.CatalogDescriptor.create(firstActiveBoardDescriptor!!))
     } else {
       callback?.showSitesNotSetup()
     }
   }
 
-  suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
+  suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
     if (callback == null) {
       return
     }
 
-    currentOpenedBoard = boardDescriptor
-    callback?.loadBoard(boardDescriptor)
+    currentOpenedCatalog = catalogDescriptor
+    callback?.loadCatalog(catalogDescriptor)
   }
 
   suspend fun bookmarkEveryThread(chanDescriptor: ChanDescriptor?) {
@@ -125,7 +135,7 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
-    chanDescriptor as ChanDescriptor.CatalogDescriptor
+    chanDescriptor as ChanDescriptor.ICatalogDescriptor
     val simpleThreadBookmarkList = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
 
     val catalog = chanThreadManager.getChanCatalog(chanDescriptor)
@@ -179,7 +189,7 @@ class BrowsePresenter @Inject constructor(
       return
     }
 
-    chanDescriptor as ChanDescriptor.CatalogDescriptor
+    chanDescriptor as ChanDescriptor.ICatalogDescriptor
 
     val catalog = chanThreadManager.getChanCatalog(chanDescriptor)
     if (catalog == null) {
@@ -200,6 +210,7 @@ class BrowsePresenter @Inject constructor(
 
         chanThreadManager.loadThreadOrCatalog(
           page = null,
+          compositeCatalogDescriptor = null,
           chanDescriptor = threadDescriptor,
           chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
           chanLoadOptions = ChanLoadOptions.retainAll(),
@@ -217,8 +228,76 @@ class BrowsePresenter @Inject constructor(
     Logger.d(TAG, "cacheEveryThreadClicked() done")
   }
 
+  suspend fun getCompositeCatalogNavigationSubtitle(
+    context: Context,
+    fontSizePx: Int,
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
+    visibleDescriptorsCount: Int = 3
+  ): CharSequence {
+    val duplicates = hashSetOf<SiteDescriptor>()
+    val spannableStringBuilder = SpannableStringBuilder()
+    val catalogsBySites = compositeCatalogDescriptor.catalogDescriptors
+      .groupBy { catalogDescriptor -> catalogDescriptor.siteDescriptor() }
+
+    compositeCatalogDescriptor.catalogDescriptors
+      .take(visibleDescriptorsCount)
+      .forEach { catalogDescriptor ->
+        val siteDescriptor = catalogDescriptor.siteDescriptor()
+
+        if (!duplicates.add(siteDescriptor)) {
+          return@forEach
+        }
+
+        val iconBitmap = siteManager.bySiteDescriptor(siteDescriptor)
+          ?.icon()
+          ?.getIconSuspend(context)
+          ?.bitmap
+
+        if (iconBitmap == null) {
+          return@forEach
+        }
+
+        if (spannableStringBuilder.isNotEmpty()) {
+          spannableStringBuilder.append("+")
+        }
+
+        val catalogs = catalogsBySites[siteDescriptor]
+          ?: return@forEach
+
+        val boardCodes = catalogs.joinToString(
+          separator = ",",
+          prefix = "/",
+          postfix = "/",
+          transform = { descriptor -> descriptor.boardDescriptor.boardCode }
+        )
+
+        spannableStringBuilder
+          .append("  ", getIconSpan(iconBitmap, fontSizePx), 0)
+          .append(boardCodes)
+    }
+
+    if (compositeCatalogDescriptor.catalogDescriptors.size > visibleDescriptorsCount) {
+      val omittedCount = compositeCatalogDescriptor.catalogDescriptors.size - visibleDescriptorsCount
+
+      spannableStringBuilder
+        .append(" + ")
+        .append(omittedCount.toString())
+        .append(" more")
+    }
+
+    return spannableStringBuilder
+  }
+
+  private fun getIconSpan(icon: Bitmap, fontSizePx: Int): ImageSpan {
+    val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
+    val width = (fontSizePx.toFloat() / (icon.height.toFloat() / icon.width.toFloat())).toInt()
+
+    iconSpan.drawable.setBounds(0, 0, width, fontSizePx)
+    return iconSpan
+  }
+
   interface Callback {
-    suspend fun loadBoard(boardDescriptor: BoardDescriptor)
+    suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
     suspend fun showSitesNotSetup()
   }
 

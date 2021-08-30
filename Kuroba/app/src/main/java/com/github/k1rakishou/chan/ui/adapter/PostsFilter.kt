@@ -43,7 +43,7 @@ class PostsFilter(
       )
     )
 
-    if (order != Order.BUMP && chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (order != Order.BUMP && chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       processOrder(order, posts as MutableList<ChanOriginalPost>)
     }
 

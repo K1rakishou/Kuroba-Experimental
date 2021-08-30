@@ -506,6 +506,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_web_search">Web search</string>
     <string name="post_filter">Filter</string>
     <string name="post_posting_is_not_supported">Posting is not supported for this site</string>
+    <string name="post_posting_is_not_supported_composite_catalog">Posting is not supported in composite catalogs</string>
 
     <string name="thread_hidden">Thread hidden</string>
     <string name="thread_removed">Thread removed</string>
@@ -1111,6 +1112,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
     <string name="browse_controller_enter_page_number">Enter page number</string>
     <string name="browse_controller_failed_to_parse_page_number">Failed to convert \'%1$s\' into integer value</string>
+    <string name="browse_controller_composite_catalog_title">Composite catalog</string>
+    <string name="browse_controller_composite_catalog_subtitle_loading">...</string>
 
     <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
     <string name="thread_layout_remove_whole_chain">Remove whole chain</string>
@@ -1411,6 +1414,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="searx_image_search_controller_help_text">Only searx search engines are supported. You can find them all here:\nhttps://searx.space \nNote: Some of them do not support/block the API so they won\'t work.</string>
 
     <string name="catalog_load_page">Loading page %1$d</string>
+    <string name="catalog_load_catalog">Loading catalog \'%1$s\'</string>
 
     <string name="import_export_backup_export_thread_downloader_is_running">Thread downloader is running.</string>
     <string name="import_export_backup_export_thread_downloader_is_running_description">Thread downloader is currently running. Importing cannot be executed while thread downloader is downloading stuff because there may be conflicts. Wait until it\'s done processing threads and try again. Alternatively, you can clear the application data (because it will be cleared either way before importing backup).</string>

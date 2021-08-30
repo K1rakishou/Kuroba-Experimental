@@ -31,4 +31,10 @@ abstract class AbstractChanReaderProcessor {
   abstract suspend fun getToParse(): List<ChanPostBuilder>
   abstract suspend fun getThreadDescriptors(): List<ChanDescriptor.ThreadDescriptor>
   abstract suspend fun getTotalPostsCount(): Int
+
+  init {
+    check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+      error("Cannot use CompositeCatalogDescriptor here")
+    }
+  }
 }

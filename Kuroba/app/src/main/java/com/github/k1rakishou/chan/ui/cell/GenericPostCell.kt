@@ -93,6 +93,7 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
     }
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }

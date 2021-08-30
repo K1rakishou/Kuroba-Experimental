@@ -86,7 +86,6 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -360,7 +359,12 @@ class ThreadLayout @JvmOverloads constructor(
 
   private fun openReplyInternal(openReplyLayout: Boolean): Boolean {
     if (openReplyLayout && !canOpenReplyLayout()) {
-      showToast(context, R.string.post_posting_is_not_supported)
+      if (presenter.currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        showToast(context, R.string.post_posting_is_not_supported_composite_catalog)
+      } else {
+        showToast(context, R.string.post_posting_is_not_supported)
+      }
+
       return false
     }
 
@@ -369,7 +373,13 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   private fun canOpenReplyLayout(): Boolean {
-    val supportsPosting = presenter.currentChanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
+    val chanDescriptor = presenter.currentChanDescriptor
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return false
+    }
+
+    val supportsPosting = chanDescriptor?.siteDescriptor()?.let { siteDescriptor ->
       return@let siteManager.bySiteDescriptor(siteDescriptor)?.siteFeature(Site.SiteFeature.POSTING)
     } ?: false
 
@@ -658,24 +668,24 @@ class ThreadLayout @JvmOverloads constructor(
     callback.openExternalThread(postDescriptor)
   }
 
-  override suspend fun showBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showBoard($boardDescriptor, $animated)")
+  override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showCatalog($catalogDescriptor, $animated)")
 
-    callback.showBoard(boardDescriptor, animated)
+    callback.showCatalog(catalogDescriptor, animated)
   }
 
-  override suspend fun setBoard(boardDescriptor: BoardDescriptor, animated: Boolean) {
-    Logger.d(TAG, "setBoard($boardDescriptor, $animated)")
+  override suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showCatalog($catalogDescriptor, $animated)")
 
-    callback.setBoard(boardDescriptor, animated)
+    callback.setCatalog(catalogDescriptor, animated)
   }
 
-  override suspend fun setBoardWithSearchQuery(
-    boardDescriptor: BoardDescriptor,
+  override suspend fun setCatalogWithSearchQuery(
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
     searchQuery: String,
     animated: Boolean
   ) {
-    Logger.d(TAG, "setBoardWithSearchQuery($boardDescriptor, $searchQuery, $animated)")
+    Logger.d(TAG, "setCatalogWithSearchQuery($catalogDescriptor, $searchQuery, $animated)")
 
     searchLinkPopupOpenJob?.cancel()
     searchLinkPopupOpenJob = null
@@ -689,18 +699,15 @@ class ThreadLayout @JvmOverloads constructor(
             return@launch
           }
 
-          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
-          postPopupHelper.showSearchPopup(catalogDescriptor, searchQuery)
-
+          postPopupHelper.showSearchPopup(catalogDescriptor as ChanDescriptor, searchQuery)
           searchLinkPopupOpenJob = null
         }
       }
     } else {
-      val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
-      postPopupHelper.showSearchPopup(catalogDescriptor, searchQuery)
+      postPopupHelper.showSearchPopup(catalogDescriptor as ChanDescriptor, searchQuery)
     }
 
-    callback.setBoard(boardDescriptor, animated)
+    callback.setCatalog(catalogDescriptor, animated)
   }
 
   override fun showPostsPopup(
@@ -853,7 +860,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun hideThread(post: ChanPost, threadNo: Long, hide: Boolean) {
+  override fun hideThread(post: ChanPost, hide: Boolean) {
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
 
@@ -898,8 +905,7 @@ class ThreadLayout @JvmOverloads constructor(
   override fun hideOrRemovePosts(
     hide: Boolean,
     wholeChain: Boolean,
-    postDescriptors: Set<PostDescriptor>,
-    threadNo: Long
+    postDescriptors: Set<PostDescriptor>
   ) {
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
@@ -1139,6 +1145,7 @@ class ThreadLayout @JvmOverloads constructor(
       is ChanDescriptor.ThreadDescriptor -> {
         bottomNavBarVisibilityStateManager.isThreadReplyLayoutVisible()
       }
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> {
         bottomNavBarVisibilityStateManager.isCatalogReplyLayoutVisible()
       }
@@ -1284,7 +1291,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost, threadNo: Long) {
+  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost) {
     val positiveButtonText = if (hide) {
       getString(R.string.thread_layout_hide_whole_chain)
     } else {
@@ -1307,9 +1314,9 @@ class ThreadLayout @JvmOverloads constructor(
       context = context,
       titleText = message,
       negativeButtonText = negativeButtonText,
-      onNegativeButtonClickListener = { presenter.hideOrRemovePosts(hide, false, post, threadNo) },
+      onNegativeButtonClickListener = { presenter.hideOrRemovePosts(hide, false, post) },
       positiveButtonText = positiveButtonText,
-      onPositiveButtonClickListener = { presenter.hideOrRemovePosts(hide, true, post, threadNo) }
+      onPositiveButtonClickListener = { presenter.hideOrRemovePosts(hide, true, post) }
     )
   }
 
@@ -1412,8 +1419,8 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostsInExternalThread(postDescriptor: PostDescriptor, isPreviewingCatalogThread: Boolean)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
-    suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean)
-    suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean)
+    suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
+    suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
 
     fun pushController(controller: Controller)
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)

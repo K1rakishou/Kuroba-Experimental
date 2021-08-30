@@ -21,18 +21,32 @@ import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
 import coil.request.Disposable
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.FailureAwareImageListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
+import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 
 class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2>) {
   var url: HttpUrl? = null
   private var drawable: BitmapDrawable? = null
   private var requestDisposable: Disposable? = null
+
+  suspend fun getIconSuspend(context: Context): BitmapDrawable {
+    return suspendCancellableCoroutine { cancellableContinuation ->
+      getIcon(
+        context = context,
+        resultFunc = { bitmapDrawable -> cancellableContinuation.resumeValueSafe(bitmapDrawable) },
+        errorDrawableId = R.drawable.error_icon,
+        errorFunc = { bitmapDrawable -> cancellableContinuation.resumeValueSafe(bitmapDrawable) }
+      )
+    }
+  }
 
   fun getIcon(
     context: Context,

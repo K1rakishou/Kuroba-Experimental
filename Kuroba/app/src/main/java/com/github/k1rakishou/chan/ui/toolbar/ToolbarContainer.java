@@ -16,6 +16,13 @@
  */
 package com.github.k1rakishou.chan.ui.toolbar;
 
+import static android.text.TextUtils.isEmpty;
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
+import static com.github.k1rakishou.common.AndroidUtils.updatePaddings;
+
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.AnimatorSet;
@@ -56,13 +63,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import javax.inject.Inject;
-
-import static android.text.TextUtils.isEmpty;
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static android.view.ViewGroup.LayoutParams.WRAP_CONTENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.common.AndroidUtils.removeFromParentView;
-import static com.github.k1rakishou.common.AndroidUtils.updatePaddings;
 
 /**
  * The container for the views created by the toolbar for the navigation items.
@@ -212,7 +212,7 @@ public class ToolbarContainer extends FrameLayout {
         if (!isEmpty(item.subtitle)) {
             TextView subtitleView = view.findViewById(R.id.subtitle);
             if (subtitleView != null) {
-                subtitleView.setText(item.subtitle);
+                subtitleView.setText(item.subtitle, TextView.BufferType.SPANNABLE);
             }
         }
     }

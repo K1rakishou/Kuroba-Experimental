@@ -130,7 +130,7 @@ class Chan420 : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("420chan", "420")
       
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
         val boardCode = chanDescriptor.boardCode()
 
         when (chanDescriptor) {
@@ -145,9 +145,7 @@ class Chan420 : CommonSite() {
 
             return url
           }
-          else -> {
-            return "https://boards.420chan.org/$boardCode/"
-          }
+          else -> return null
         }
       }
     }

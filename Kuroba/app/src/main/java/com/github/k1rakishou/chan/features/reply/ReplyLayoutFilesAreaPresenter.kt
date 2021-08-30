@@ -761,12 +761,20 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
     return postingLimitationsInfoManager.get().getMaxAllowedFilesPerPost(
       chanDescriptor.boardDescriptor()
     )
   }
 
   private suspend fun getTotalFileSizeSumPerPost(chanDescriptor: ChanDescriptor): Long? {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
     return postingLimitationsInfoManager.get().getMaxAllowedTotalFilesSizePerPost(
       chanDescriptor.boardDescriptor()
     )

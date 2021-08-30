@@ -16,7 +16,10 @@ open class PostDescriptor protected constructor(
   fun isOP(): Boolean {
     return when (descriptor) {
       is ChanDescriptor.ThreadDescriptor -> postNo == descriptor.threadNoOrNull()
-      is ChanDescriptor.CatalogDescriptor -> true
+      is ChanDescriptor.CatalogDescriptor,
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
+      }
     }
   }
 
@@ -24,6 +27,9 @@ open class PostDescriptor protected constructor(
     return when (descriptor) {
       is ChanDescriptor.ThreadDescriptor -> descriptor
       is ChanDescriptor.CatalogDescriptor -> descriptor.toThreadDescriptor(postNo)
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot convert CompositeCatalogDescriptor into ThreadDescriptor")
+      }
     }
   }
 
@@ -31,6 +37,9 @@ open class PostDescriptor protected constructor(
     return when (val desc = descriptor) {
       is ChanDescriptor.ThreadDescriptor -> desc.catalogDescriptor()
       is ChanDescriptor.CatalogDescriptor -> desc
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot convert CompositeCatalogDescriptor into CatalogDescriptor")
+      }
     }
   }
 
@@ -43,6 +52,9 @@ open class PostDescriptor protected constructor(
       is ChanDescriptor.CatalogDescriptor -> {
         require(postNo > 0) { "Bad postNo: $postNo" }
         postNo
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
       }
     }
   }
@@ -144,6 +156,9 @@ open class PostDescriptor protected constructor(
           boardCode = chanDescriptor.boardCode(),
           threadNo = postNo
         )
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors")
+        }
       }
     }
 

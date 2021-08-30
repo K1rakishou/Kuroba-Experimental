@@ -167,14 +167,18 @@ class AddBoardsController(
         is AddBoardsControllerState.Data -> {
           state.selectableBoardCellDataList.forEach { selectableBoardCellData ->
             epoxySelectableBoardView {
-              id("add_boards_selectable_board_view_${selectableBoardCellData.boardCellData.boardDescriptor}")
+              id("add_boards_selectable_board_view_${selectableBoardCellData.boardCellData.catalogDescriptor}")
               boardName(selectableBoardCellData.boardCellData.fullName)
               boardDescription(selectableBoardCellData.boardCellData.description)
               boardSelected(selectableBoardCellData.selected)
               bindQuery(selectableBoardCellData.boardCellData.searchQuery)
               onClickedCallback { isChecked ->
+                // TODO(KurobaEx): CompositeCatalogDescriptor
+                val boardDescriptor = selectableBoardCellData.boardCellData.boardDescriptorOrNull
+                  ?: return@onClickedCallback
+
                 presenter.onBoardSelectionChanged(
-                  boardDescriptor = selectableBoardCellData.boardCellData.boardDescriptor,
+                  boardDescriptor = boardDescriptor,
                   checked = isChecked,
                   query = searchView.text
                 )

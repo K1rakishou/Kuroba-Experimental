@@ -324,7 +324,7 @@ abstract class ThreadController(
     transitionThumbnailUrl: String
   ) {
     when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,

@@ -114,6 +114,7 @@ class AlbumViewController(
     super.onCreate()
 
     navigation.title = when (chanDescriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> {
         ChanPostUtils.getTitle(null, chanDescriptor)
       }
@@ -306,6 +307,8 @@ class AlbumViewController(
     var index = 0
 
     when (chanDescriptor) {
+      // TODO(KurobaEx): CompositeCatalogDescriptor (may crash)
+      is ChanDescriptor.CompositeCatalogDescriptor,
       is ChanDescriptor.CatalogDescriptor -> {
         val postImages = mutableListOf<ChanPostImage>()
 
@@ -386,7 +389,7 @@ class AlbumViewController(
     }
 
     when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,

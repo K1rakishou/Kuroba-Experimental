@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.cell
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
@@ -12,8 +13,11 @@ import com.github.k1rakishou.chan.ui.view.LoadView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
+@SuppressLint("ViewConstructor")
 class CatalogStatusCell @JvmOverloads constructor(
+  private val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
   context: Context,
   attrs: AttributeSet? = null
 ) : FrameLayout(context, attrs) {
@@ -111,7 +115,18 @@ class CatalogStatusCell @JvmOverloads constructor(
     loadView.setView(progressView)
 
     val indicator = progressView.findViewById<ColorizableTextView>(R.id.next_page_indicator)
-    indicator.text = getString(R.string.catalog_load_page, nextPage)
+
+    when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        indicator.text = getString(R.string.catalog_load_page, nextPage)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        val nextCatalog = catalogDescriptor.catalogDescriptors.getOrNull(nextPage)
+        checkNotNull(nextCatalog) { "nextCatalog is null!" }
+
+        indicator.text = getString(R.string.catalog_load_catalog, nextCatalog.userReadableString())
+      }
+    }
   }
 
   fun onCatalogEndReached() {

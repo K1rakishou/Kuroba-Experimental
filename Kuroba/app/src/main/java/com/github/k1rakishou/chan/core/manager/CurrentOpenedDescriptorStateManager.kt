@@ -10,7 +10,7 @@ class CurrentOpenedDescriptorStateManager {
   private val _currentCatalogDescriptorFlow = MutableStateFlow<ChanDescriptor.CatalogDescriptor?>(null)
   val currentCatalogDescriptorFlow: StateFlow<ChanDescriptor.CatalogDescriptor?>
     get() = _currentCatalogDescriptorFlow.asStateFlow()
-  val currentCatalogDescriptor: ChanDescriptor.CatalogDescriptor?
+  val currentCatalogDescriptor: ChanDescriptor.ICatalogDescriptor?
     get() = currentCatalogDescriptorFlow.value
 
   private val _currentThreadDescriptorFlow = MutableStateFlow<ChanDescriptor.ThreadDescriptor?>(null)
@@ -24,7 +24,7 @@ class CurrentOpenedDescriptorStateManager {
   val currentFocusedDescriptor: ChanDescriptor?
     get() {
       return when (currentFocusedController) {
-        ThreadPresenter.CurrentFocusedController.Catalog -> currentCatalogDescriptor
+        ThreadPresenter.CurrentFocusedController.Catalog -> currentCatalogDescriptor as ChanDescriptor
         ThreadPresenter.CurrentFocusedController.Thread -> currentThreadDescriptor
         ThreadPresenter.CurrentFocusedController.None -> null
       }

@@ -390,7 +390,7 @@ class MediaViewerActivity : ControllerHostActivity(),
 
     fun catalogMedia(
       context: Context,
-      catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+      catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
       postDescriptorList: List<PostDescriptor>,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,

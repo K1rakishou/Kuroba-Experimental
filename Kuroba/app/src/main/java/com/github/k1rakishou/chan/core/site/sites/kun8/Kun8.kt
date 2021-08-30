@@ -169,7 +169,7 @@ class Kun8 : CommonSite() {
       override val names: Array<String>
         get() = arrayOf("8kun")
 
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
         return when (chanDescriptor) {
           is CatalogDescriptor -> {
             url.newBuilder()
@@ -183,7 +183,7 @@ class Kun8 : CommonSite() {
               .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
               .toString()
           }
-          else -> url.toString()
+          else -> null
         }
       }
     }

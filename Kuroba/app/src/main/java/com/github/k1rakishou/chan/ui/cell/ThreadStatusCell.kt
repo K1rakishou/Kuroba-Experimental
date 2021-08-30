@@ -173,7 +173,7 @@ class ThreadStatusCell(
     val chanDescriptor = callback?.currentChanDescriptor
       ?: return
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor.isCatalogDescriptor()) {
       if (isClickable) {
         isClickable = false
       }

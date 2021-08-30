@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.Flowable
@@ -88,7 +89,7 @@ class BoardSelectionPresenter(
     val newState = BoardSelectionControllerState.Data(
       isGridMode = PersistableChanState.boardSelectionGridMode.get(),
       sortedSiteWithBoardsData = resultMap,
-      currentlySelected = currentOpenedDescriptorStateManager.currentCatalogDescriptor?.boardDescriptor
+      currentlySelected = currentOpenedDescriptorStateManager.currentCatalogDescriptor
     )
 
     setState(newState)
@@ -115,7 +116,7 @@ class BoardSelectionPresenter(
 
       boardCellDataList += BoardCellData(
         searchQuery = query,
-        boardDescriptor = chanBoard.boardDescriptor,
+        catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
         boardName = chanBoard.boardName(),
         description = ""
       )
@@ -131,7 +132,16 @@ class BoardSelectionPresenter(
     val sortedBoards = InputWithQuerySorter.sort(
       input = boardCellDataList,
       query = query,
-      textSelector = { boardCellData -> boardCellData.boardDescriptor.boardCode }
+      textSelector = { boardCellData ->
+        return@sort when (boardCellData.catalogDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            boardCellData.catalogDescriptor.boardCode()
+          }
+          is ChanDescriptor.CompositeCatalogDescriptor -> {
+            boardCellData.catalogDescriptor.userReadableString()
+          }
+        }
+      }
     )
 
     if (query.isEmpty() || activeSiteCount <= 1) {

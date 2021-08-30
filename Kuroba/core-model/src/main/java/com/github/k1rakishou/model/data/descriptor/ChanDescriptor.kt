@@ -25,6 +25,7 @@ sealed class ChanDescriptor {
       // Do not remove the casts
       is ThreadDescriptor -> (this as ThreadDescriptor).equals(other as ThreadDescriptor)
       is CatalogDescriptor -> (this as CatalogDescriptor).equals(other as CatalogDescriptor)
+      is CompositeCatalogDescriptor -> (this as CompositeCatalogDescriptor).equals(other as CompositeCatalogDescriptor)
     }
   }
 
@@ -33,6 +34,7 @@ sealed class ChanDescriptor {
       // Do not remove the casts
       is ThreadDescriptor -> (this as ThreadDescriptor).hashCode()
       is CatalogDescriptor -> (this as CatalogDescriptor).hashCode()
+      is CompositeCatalogDescriptor -> (this as CompositeCatalogDescriptor).hashCode()
     }
   }
 
@@ -50,6 +52,7 @@ sealed class ChanDescriptor {
       is CatalogDescriptor -> {
         ThreadDescriptor.create(boardDescriptor, threadNo!!)
       }
+      is CompositeCatalogDescriptor -> error("Can't convert into thread descriptor")
     }
   }
 
@@ -133,9 +136,14 @@ sealed class ChanDescriptor {
     }
   }
 
+  // ICatalogDescriptor is a marker for all types of CatalogDescriptor (for now there are only two
+  // of them: CatalogDescriptor and CompositeCatalogDescriptor). Very handy when type checking
+  // ChanDescriptors to only allow/disallow catalog descriptors.
+  sealed interface ICatalogDescriptor
+
   class CatalogDescriptor private constructor(
     val boardDescriptor: BoardDescriptor
-  ) : ChanDescriptor() {
+  ) : ChanDescriptor(), ICatalogDescriptor {
     override fun isThreadDescriptor(): Boolean = false
     override fun isCatalogDescriptor(): Boolean = true
 
@@ -195,5 +203,83 @@ sealed class ChanDescriptor {
         return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))
       }
     }
+  }
+
+  class CompositeCatalogDescriptor(
+    val catalogDescriptors: List<CatalogDescriptor>
+  ) : ChanDescriptor(), ICatalogDescriptor {
+
+    init {
+      check(catalogDescriptors.isNotEmpty()) {
+        "catalogDescriptors must not be empty!"
+      }
+      check(catalogDescriptors.size > 1) {
+        "Use CatalogDescriptor for a single catalog!"
+      }
+      check(catalogDescriptors.size <= MAX_CATALOGS_COUNT) {
+        "Composite descriptor has too many catalog descriptors! (count=${catalogDescriptors.size})"
+      }
+    }
+
+    override fun isThreadDescriptor(): Boolean = false
+    override fun isCatalogDescriptor(): Boolean = true
+
+    override fun siteName(): String = error("Can't use site name")
+
+    override fun boardCode(): String = error("Can't use board name")
+
+    override fun threadDescriptorOrNull(): ThreadDescriptor? = null
+
+    override fun catalogDescriptor(): CatalogDescriptor = error("Can't convert into CatalogDescriptor")
+
+    override fun threadNoOrNull(): Long? = null
+
+    override fun boardDescriptor(): BoardDescriptor = error("Can't use board descriptor")
+
+    override fun siteDescriptor(): SiteDescriptor = error("Can't use site descriptor")
+
+    override fun serializeToString(): String {
+      // TODO(KurobaEx): CompositeCatalogDescriptor
+      error("Can't serialize to string")
+    }
+
+    override fun userReadableString(): String {
+      return catalogDescriptors.joinToString(
+        separator = "+",
+        transform = { catalogDescriptor -> catalogDescriptor.boardCode() }
+      )
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as CompositeCatalogDescriptor
+
+      if (catalogDescriptors != other.catalogDescriptors) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return 31 * catalogDescriptors.hashCode()
+    }
+
+    override fun toString(): String {
+      val joined = catalogDescriptors.joinToString(
+        separator = "+",
+        transform = { catalogDescriptor ->
+          val boardDescriptor = catalogDescriptor.boardDescriptor
+          return@joinToString "${boardDescriptor.siteDescriptor.siteName}/${boardDescriptor.boardCode}"
+        }
+      )
+
+      return "CCD{$joined}"
+    }
+
+    companion object {
+      const val MAX_CATALOGS_COUNT = 10
+    }
+
   }
 }

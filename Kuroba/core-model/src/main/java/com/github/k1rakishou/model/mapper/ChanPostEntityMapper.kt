@@ -49,17 +49,24 @@ object ChanPostEntityMapper {
     }
 
     val postDescriptor = when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> PostDescriptor.create(
-        chanDescriptor.siteName(),
-        chanDescriptor.boardCode(),
-        chanDescriptor.threadNo,
-        chanPostIdEntity.postNo
-      )
-      is ChanDescriptor.CatalogDescriptor -> PostDescriptor.create(
-        chanDescriptor.siteName(),
-        chanDescriptor.boardCode(),
-        chanPostIdEntity.postNo
-      )
+      is ChanDescriptor.ThreadDescriptor -> {
+        PostDescriptor.create(
+          siteName = chanDescriptor.siteName(),
+          boardCode = chanDescriptor.boardCode(),
+          threadNo = chanDescriptor.threadNo,
+          postNo = chanPostIdEntity.postNo
+        )
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        PostDescriptor.create(
+          siteName = chanDescriptor.siteName(),
+          boardCode = chanDescriptor.boardCode(),
+          threadNo = chanPostIdEntity.postNo
+        )
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot load/store CompositeCatalogDescriptor from/to database")
+      }
     }
 
     val postImages = postAdditionalData.postImageByPostIdMap[chanPostEntity.chanPostId]

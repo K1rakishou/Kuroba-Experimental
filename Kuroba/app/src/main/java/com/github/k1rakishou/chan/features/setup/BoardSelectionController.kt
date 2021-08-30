@@ -29,7 +29,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -221,25 +221,25 @@ class BoardSelectionController(
             boardCellDataList.forEach { boardCellData ->
               if (gridMode) {
                 epoxyBoardSelectionGridView {
-                  id("boards_selection_board_selection_grid_view_${boardCellData.boardDescriptor}")
+                  id("boards_selection_board_selection_grid_view_${boardCellData.catalogDescriptor}")
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
                   bindQuery(boardCellData.searchQuery)
-                  bindCurrentlySelected(state.currentlySelected == boardCellData.boardDescriptor)
+                  bindCurrentlySelected(state.currentlySelected == boardCellData.catalogDescriptor)
                   bindRowClickCallback {
-                    callback.onBoardSelected(boardCellData.boardDescriptor)
+                    callback.onCatalogSelected(boardCellData.catalogDescriptor)
                     pop()
                   }
                 }
               } else {
                 epoxyBoardSelectionListView {
-                  id("boards_selection_board_selection_list_view_${boardCellData.boardDescriptor}")
+                  id("boards_selection_board_selection_list_view_${boardCellData.catalogDescriptor}")
                   bindBoardCode(boardCellData.boardCodeFormatted)
                   bindBoardName(boardCellData.boardName)
                   bindQuery(boardCellData.searchQuery)
-                  bindCurrentlySelected(state.currentlySelected == boardCellData.boardDescriptor)
+                  bindCurrentlySelected(state.currentlySelected == boardCellData.catalogDescriptor)
                   bindRowClickCallback {
-                    callback.onBoardSelected(boardCellData.boardDescriptor)
+                    callback.onCatalogSelected(boardCellData.catalogDescriptor)
                     pop()
                   }
                 }
@@ -275,7 +275,7 @@ class BoardSelectionController(
   interface UserSelectionListener {
     fun onOpenSitesSettingsClicked()
     fun onSiteSelected(siteDescriptor: SiteDescriptor)
-    fun onBoardSelected(boardDescriptor: BoardDescriptor)
+    fun onCatalogSelected(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
   }
 
   companion object {

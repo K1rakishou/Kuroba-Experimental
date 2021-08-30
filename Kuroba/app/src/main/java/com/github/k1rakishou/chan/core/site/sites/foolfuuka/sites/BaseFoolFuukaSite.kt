@@ -26,21 +26,24 @@ abstract class BaseFoolFuukaSite : CommonSite() {
     private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {
 
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
       // https://archived.moe/
       val baseUrl = url.toString()
 
       return when (chanDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> "${baseUrl}${chanDescriptor.boardCode()}"
-          is ChanDescriptor.ThreadDescriptor -> {
-            if (postNo == null) {
-              // https://archived.moe/a/thread/208364509/
-              "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
-            } else {
-              // https://archived.moe/a/thread/208364509#208364685
-              "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#${postNo}"
-            }
+        is ChanDescriptor.CompositeCatalogDescriptor -> null
+        is ChanDescriptor.CatalogDescriptor -> {
+          "${baseUrl}${chanDescriptor.boardCode()}"
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          if (postNo == null) {
+            // https://archived.moe/a/thread/208364509/
+            "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}"
+          } else {
+            // https://archived.moe/a/thread/208364509#208364685
+            "${baseUrl}${chanDescriptor.boardCode()}/thread/${chanDescriptor.threadNo}#${postNo}"
           }
+        }
       }
     }
 

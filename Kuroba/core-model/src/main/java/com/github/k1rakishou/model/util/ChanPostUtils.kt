@@ -106,11 +106,16 @@ object ChanPostUtils {
     }
 
     if (chanDescriptor != null) {
-      if (chanDescriptor is CatalogDescriptor) {
-        return "/" + chanDescriptor.boardCode() + "/"
-      } else {
-        val threadDescriptor = chanDescriptor as ThreadDescriptor
-        return "/" + chanDescriptor.boardCode() + "/" + threadDescriptor.threadNo
+      when (chanDescriptor) {
+        is CatalogDescriptor -> {
+          return "/" + chanDescriptor.boardCode() + "/"
+        }
+        is ThreadDescriptor -> {
+          return "/" + chanDescriptor.boardCode() + "/" + chanDescriptor.threadNo
+        }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          return chanDescriptor.userReadableString()
+        }
       }
     }
 

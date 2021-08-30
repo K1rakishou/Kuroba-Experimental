@@ -1140,7 +1140,7 @@ class MainController(
         ),
     ) {
       Box {
-        val contentScale = if (navHistoryEntry.descriptor is ChanDescriptor.CatalogDescriptor) {
+        val contentScale = if (navHistoryEntry.descriptor is ChanDescriptor.ICatalogDescriptor) {
           ContentScale.Fit
         } else {
           ContentScale.Crop
@@ -1442,8 +1442,12 @@ class MainController(
         is ChanDescriptor.ThreadDescriptor -> {
           currentTopThreadController.showThread(descriptor, true)
         }
+        is ChanDescriptor.CompositeCatalogDescriptor,
         is ChanDescriptor.CatalogDescriptor -> {
-          currentTopThreadController.showBoard(descriptor.boardDescriptor, true)
+          currentTopThreadController.showCatalog(
+            catalogDescriptor = descriptor as ChanDescriptor.ICatalogDescriptor,
+            animated = true
+          )
         }
       }
 

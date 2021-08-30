@@ -119,6 +119,11 @@ class HistoryNavigationManager(
     bookmarksManager: BookmarksManager,
     chanDescriptor: ChanDescriptor
   ): Boolean {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      // TODO(KurobaEx): CompositeCatalogDescriptor
+      return false
+    }
+
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
       return ChanSettings.drawerShowNavigationHistory.get()
     }
@@ -174,7 +179,7 @@ class HistoryNavigationManager(
 
     var created = false
 
-    val mappedNavElements = newNavigationElements.map { newNavigationElement ->
+    val mappedNavElements = newNavigationElements.mapNotNull { newNavigationElement ->
       val descriptor = newNavigationElement.descriptor
       val thumbnailImageUrl = newNavigationElement.thumbnailImageUrl
       val title = newNavigationElement.title
@@ -185,9 +190,13 @@ class HistoryNavigationManager(
         pinned = false
       )
 
-      return@map when (descriptor) {
+      return@mapNotNull when (descriptor) {
         is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
         is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          // TODO(KurobaEx): CompositeCatalogDescriptor
+          null
+        }
       }
     }
 

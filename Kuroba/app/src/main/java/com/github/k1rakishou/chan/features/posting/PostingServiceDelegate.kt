@@ -1212,21 +1212,21 @@ class PostingServiceDelegate(
   }
 
   private fun bookmarkThread(
-    newThreadDescriptor: ChanDescriptor,
+    newDescriptor: ChanDescriptor,
     threadNo: Long
   ) {
-    if (newThreadDescriptor is ChanDescriptor.ThreadDescriptor) {
-      if (bookmarksManager.exists(newThreadDescriptor)) {
+    if (newDescriptor is ChanDescriptor.ThreadDescriptor) {
+      if (bookmarksManager.exists(newDescriptor)) {
         return
       }
 
-      val thread = chanThreadManager.getChanThread(newThreadDescriptor)
-      val bookmarkThreadDescriptor = newThreadDescriptor.toThreadDescriptor(threadNo)
+      val thread = chanThreadManager.getChanThread(newDescriptor)
+      val bookmarkThreadDescriptor = newDescriptor.toThreadDescriptor(threadNo)
 
       // Reply in an existing thread
       val createBookmarkResult = if (thread != null) {
         val originalPost = thread.getOriginalPost()
-        val title = ChanPostUtils.getTitle(originalPost, newThreadDescriptor)
+        val title = ChanPostUtils.getTitle(originalPost, newDescriptor)
         val thumbnail = originalPost?.firstImage()?.actualThumbnailUrl
 
         bookmarksManager.createBookmark(bookmarkThreadDescriptor, title, thumbnail)
@@ -1235,13 +1235,17 @@ class PostingServiceDelegate(
       }
 
       if (!createBookmarkResult) {
-        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newThreadDescriptor, " +
-          "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
+        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newDescriptor, " +
+          "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newDescriptor, " +
           "threadNo=$threadNo")
       }
-    } else {
+
+      return
+    }
+
+    if (newDescriptor is ChanDescriptor.CatalogDescriptor) {
       val bookmarkThreadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-        boardDescriptor = newThreadDescriptor.boardDescriptor(),
+        boardDescriptor = newDescriptor.boardDescriptor(),
         threadNo = threadNo
       )
 
@@ -1250,7 +1254,7 @@ class PostingServiceDelegate(
       }
 
       // New thread
-      val title = replyManager.readReply(newThreadDescriptor) { reply ->
+      val title = replyManager.readReply(newDescriptor) { reply ->
         PostHelper.getTitle(reply)
       }
 
@@ -1260,11 +1264,16 @@ class PostingServiceDelegate(
       )
 
       if (!createBookmarkResult) {
-        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newThreadDescriptor, " +
-            "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newThreadDescriptor, " +
+        Logger.e(TAG, "bookmarkThread() Failed to create bookmark with newThreadDescriptor=$newDescriptor, " +
+            "threadDescriptor: $bookmarkThreadDescriptor, newThreadDescriptor=$newDescriptor, " +
             "threadNo=$threadNo")
       }
+
+      return
     }
+
+    // newThreadDescriptor is ChanDescriptor.CompositeCatalogDescriptor
+    // no-op
   }
 
   private suspend fun awaitUntilEverythingIsInitialized(chanDescriptor: ChanDescriptor): ModularResult<Unit> {

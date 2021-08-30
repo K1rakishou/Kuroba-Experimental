@@ -48,9 +48,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shareLink
 import com.github.k1rakishou.chan.utils.SharingUtils.getUrlForSharing
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
@@ -478,30 +476,30 @@ open class ViewThreadController(
     }
   }
 
-  override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
+  override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "showBoard($descriptor, $animated)")
-      showBoardInternal(descriptor, animated)
+      Logger.d(TAG, "showCatalog($catalogDescriptor, $animated)")
+      showCatalogInternal(catalogDescriptor, animated)
     }
   }
 
-  override suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean) {
+  override suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "setBoard($descriptor, $animated)")
-      showBoardInternal(descriptor, animated)
+      Logger.d(TAG, "setCatalog($catalogDescriptor, $animated)")
+      showCatalogInternal(catalogDescriptor, animated)
     }
   }
 
-  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
+  private suspend fun showCatalogInternal(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showCatalogInternal($catalogDescriptor, $animated)")
 
     if (historyNavigationManager.isInitialized) {
-      historyNavigationManager.moveNavElementToTop(CatalogDescriptor.create(boardDescriptor))
+      historyNavigationManager.moveNavElementToTop(catalogDescriptor as ChanDescriptor)
     }
 
     if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
       val browseController = doubleNavigationController!!.getLeftController() as BrowseController
-      browseController.setBoard(boardDescriptor)
+      browseController.setCatalog(catalogDescriptor)
 
       // slide layout
       doubleNavigationController!!.switchToController(true, animated)
@@ -514,7 +512,7 @@ open class ViewThreadController(
       // split layout
       val browseController =
         doubleNavigationController!!.getLeftController()!!.childControllers[0] as BrowseController
-      browseController.setBoard(boardDescriptor)
+      browseController.setCatalog(catalogDescriptor)
       return
     }
 
@@ -528,7 +526,7 @@ open class ViewThreadController(
     }
 
     if (browseController != null) {
-      browseController.setBoard(boardDescriptor)
+      browseController.setCatalog(catalogDescriptor)
       requireNavController().popController(animated)
     }
   }

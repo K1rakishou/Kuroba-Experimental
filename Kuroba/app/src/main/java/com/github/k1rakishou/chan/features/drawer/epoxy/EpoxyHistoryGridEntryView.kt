@@ -187,7 +187,7 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
 
     val threadThumbnailUrl = imagesLoaderRequestData?.threadThumbnailUrl
     if (threadThumbnailUrl != null) {
-      val transformation = if (descriptor is ChanDescriptor.CatalogDescriptor) {
+      val transformation = if (descriptor is ChanDescriptor.ICatalogDescriptor) {
         threadThumbnailImage.updateLayoutParams<ViewGroup.LayoutParams> {
           width = context.resources.getDimension(R.dimen.history_entry_thread_image_size).toInt()
         }

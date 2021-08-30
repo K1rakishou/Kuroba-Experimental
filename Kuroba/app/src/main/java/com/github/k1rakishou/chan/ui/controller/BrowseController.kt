@@ -54,8 +54,9 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -63,6 +64,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import java.util.*
@@ -97,6 +99,7 @@ class BrowseController(
 
   private var initialized = false
   private var menuBuiltOnce = false
+  private var updateCompositeCatalogNavigationSubtitleJob: Job? = null
 
   override val threadControllerType: ThreadSlideController.ThreadControllerType
     get() = ThreadSlideController.ThreadControllerType.Catalog
@@ -142,6 +145,9 @@ class BrowseController(
   override fun onDestroy() {
     super.onDestroy()
 
+    updateCompositeCatalogNavigationSubtitleJob?.cancel()
+    updateCompositeCatalogNavigationSubtitleJob = null
+
     presenter.destroy()
   }
 
@@ -158,10 +164,10 @@ class BrowseController(
     initialized = true
   }
 
-  suspend fun setBoard(descriptor: BoardDescriptor) {
-    Logger.d(TAG, "setBoard($descriptor)")
+  suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
+    Logger.d(TAG, "setCatalog($catalogDescriptor)")
 
-    presenter.loadBoard(descriptor)
+    presenter.loadCatalog(catalogDescriptor)
     initialized = true
   }
 
@@ -212,12 +218,12 @@ class BrowseController(
           openSiteSettingsController(siteDescriptor)
         }
 
-        override fun onBoardSelected(boardDescriptor: BoardDescriptor) {
-          if (boardManager.currentBoardDescriptor() == boardDescriptor) {
+        override fun onCatalogSelected(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
+          if (boardManager.currentCatalogDescriptor() == catalogDescriptor) {
             return
           }
 
-          mainScope.launch(Dispatchers.Main.immediate) { loadBoard(boardDescriptor) }
+          mainScope.launch(Dispatchers.Main.immediate) { loadCatalog(catalogDescriptor) }
         }
       })
 
@@ -263,8 +269,9 @@ class BrowseController(
       BoardPostViewMode.STAGGER -> R.string.action_switch_board
     }
 
-    val is4chan = threadLayout.presenter.currentChanDescriptor?.siteDescriptor()?.is4chan() ?: false
+    val is4chan = isCurrentCatalogSiteDescriptor4chan()
     val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
+      && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
 
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
@@ -664,21 +671,41 @@ class BrowseController(
     }
   }
 
-  override suspend fun loadBoard(boardDescriptor: BoardDescriptor) {
+  override suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "loadBoard($boardDescriptor)")
+      Logger.d(TAG, "loadCatalog($catalogDescriptor)")
       boardManager.awaitUntilInitialized()
 
-      val board = boardManager.byBoardDescriptor(boardDescriptor)
-        ?: return@launch
+      updateCompositeCatalogNavigationSubtitleJob?.cancel()
+      updateCompositeCatalogNavigationSubtitleJob = null
 
-      val catalogDescriptor = CatalogDescriptor.create(boardDescriptor)
+      if (catalogDescriptor is CatalogDescriptor) {
+        val boardDescriptor = catalogDescriptor.boardDescriptor
 
-      navigation.title = "/" + boardDescriptor.boardCode + "/"
-      navigation.subtitle = board.name ?: ""
+        val board = boardManager.byBoardDescriptor(boardDescriptor)
+          ?: return@launch
 
-      boardManager.updateCurrentBoard(boardDescriptor)
-      threadLayout.presenter.bindChanDescriptor(catalogDescriptor)
+        navigation.title = "/" + boardDescriptor.boardCode + "/"
+        navigation.subtitle = board.name ?: ""
+      } else {
+        catalogDescriptor as ChanDescriptor.CompositeCatalogDescriptor
+
+        navigation.title = getString(R.string.browse_controller_composite_catalog_title)
+        navigation.subtitle = getString(R.string.browse_controller_composite_catalog_subtitle_loading)
+
+        updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {
+          navigation.subtitle = presenter.getCompositeCatalogNavigationSubtitle(
+            context = context,
+            fontSizePx = sp(12f),
+            compositeCatalogDescriptor = catalogDescriptor
+          )
+
+          requireNavController().requireToolbar().updateTitle(navigation)
+        }
+      }
+
+      boardManager.updateCurrentCatalog(catalogDescriptor)
+      threadLayout.presenter.bindChanDescriptor(catalogDescriptor as ChanDescriptor)
 
       if (!menuBuiltOnce) {
         menuBuiltOnce = true
@@ -689,25 +716,25 @@ class BrowseController(
       requireNavController().requireToolbar().updateTitle(navigation)
 
       if (historyNavigationManager.isInitialized) {
-        historyNavigationManager.moveNavElementToTop(catalogDescriptor)
+        historyNavigationManager.moveNavElementToTop(catalogDescriptor as ChanDescriptor)
       }
     }
   }
 
-  override suspend fun showBoard(descriptor: BoardDescriptor, animated: Boolean) {
+  override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "showBoard($descriptor, $animated)")
+      Logger.d(TAG, "showBoard($catalogDescriptor, $animated)")
 
-      showBoardInternal(descriptor, animated)
+      showBoardInternal(catalogDescriptor, animated)
       initialized = true
     }
   }
 
-  override suspend fun setBoard(descriptor: BoardDescriptor, animated: Boolean) {
+  override suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "setBoard($descriptor, $animated)")
+      Logger.d(TAG, "setCatalog($catalogDescriptor, $animated)")
 
-      setBoard(descriptor)
+      setCatalog(catalogDescriptor)
       initialized = true
     }
   }
@@ -833,8 +860,8 @@ class BrowseController(
     }
   }
 
-  private suspend fun showBoardInternal(boardDescriptor: BoardDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showBoardInternal($boardDescriptor, $animated)")
+  private suspend fun showBoardInternal(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showBoardInternal($catalogDescriptor, $animated)")
 
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
@@ -867,19 +894,19 @@ class BrowseController(
       }
     }
 
-    setBoard(boardDescriptor)
+    setCatalog(catalogDescriptor)
   }
 
   private fun updateMenuItems() {
-    val chanDescriptor = threadLayout.presenter.currentChanDescriptor
-
     navigation.findSubItem(ACTION_CHAN4_ARCHIVE)?.let { chan4ArchiveMenuItem ->
-      val is4chan = chanDescriptor?.siteDescriptor()?.is4chan() ?: false
+      val is4chan = isCurrentCatalogSiteDescriptor4chan()
       chan4ArchiveMenuItem.visible = is4chan
     }
 
     navigation.findSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE)?.let { openUnlimitedCatalogPageMenuItem ->
       val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
+        && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
+
       openUnlimitedCatalogPageMenuItem.visible = isUnlimitedCatalog
     }
   }
@@ -897,7 +924,22 @@ class BrowseController(
       mainScope.launch { historyNavigationManager.moveNavElementToTop(chanDescriptor!!) }
     }
 
-    currentOpenedDescriptorStateManager.updateCurrentFocusedController(ThreadPresenter.CurrentFocusedController.Catalog)
+    currentOpenedDescriptorStateManager.updateCurrentFocusedController(
+      ThreadPresenter.CurrentFocusedController.Catalog
+    )
+  }
+
+  private fun isCurrentCatalogSiteDescriptor4chan(): Boolean {
+    val chanDescriptor = threadLayout.presenter.currentChanDescriptor
+    if (chanDescriptor == null) {
+      return false
+    }
+
+    if (chanDescriptor !is CatalogDescriptor) {
+      return false
+    }
+
+    return chanDescriptor.siteDescriptor().is4chan()
   }
 
   companion object {

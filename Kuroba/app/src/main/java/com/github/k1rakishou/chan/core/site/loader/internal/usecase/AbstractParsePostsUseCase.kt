@@ -132,18 +132,12 @@ abstract class AbstractParsePostsUseCase(
   ): Set<Long> {
     val postsToParseNoSet = postBuildersToParse.map { postBuilder -> postBuilder.id }.toSet()
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       return postsToParseNoSet
     }
 
-    return when (chanDescriptor) {
-      is ChanDescriptor.ThreadDescriptor -> {
-        postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
-      }
-      is ChanDescriptor.CatalogDescriptor -> {
-        postsToParseNoSet
-      }
-    }
+    chanDescriptor as ChanDescriptor.ThreadDescriptor
+    return postsToParseNoSet + chanPostRepository.getCachedThreadPostsNos(chanDescriptor)
   }
 
   protected fun loadFilters(chanDescriptor: ChanDescriptor): List<ChanFilter> {

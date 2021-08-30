@@ -443,17 +443,24 @@ class ChanThread(
   }
 
   fun findPostWithRepliesRecursive(
-    postNo: Long,
+    postDescriptor: PostDescriptor,
     postsSet: MutableSet<ChanPost>
   ) {
     lock.read {
       for (post in threadPosts) {
-        if (post.postNo() == postNo && !postsSet.contains(post)) {
-          postsSet.add(post)
+        if (post.postDescriptor != postDescriptor || postsSet.contains(post)) {
+          continue
+        }
 
-          post.iterateRepliesFrom { replyId ->
-            findPostWithRepliesRecursive(replyId, postsSet)
-          }
+        postsSet.add(post)
+
+        post.iterateRepliesFrom { replyId ->
+          val lookUpPostDescriptor = PostDescriptor.create(
+            post.postDescriptor.descriptor,
+            replyId
+          )
+
+          findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
         }
       }
     }

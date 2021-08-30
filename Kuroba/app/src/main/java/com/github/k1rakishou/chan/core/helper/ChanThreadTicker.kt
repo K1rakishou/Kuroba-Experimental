@@ -138,7 +138,7 @@ class ChanThreadTicker(
 
     // We don't use ticking for catalog (meaning we don't auto update catalogs) so just invoke
     // the action with a slight delay.
-    if (descriptor is ChanDescriptor.CatalogDescriptor) {
+    if (descriptor is ChanDescriptor.ICatalogDescriptor) {
       actor.offer(TickerAction.StopTicker)
       debouncer.post(DEBOUNCE_TIMEOUT) { action.invoke(descriptor) }
 
@@ -162,7 +162,7 @@ class ChanThreadTicker(
       return
     }
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       actor.offer(TickerAction.StopTicker)
       debouncer.post(DEBOUNCE_TIMEOUT) { action.invoke(chanDescriptor) }
 
@@ -231,7 +231,7 @@ class ChanThreadTicker(
       NORMAL_WATCH_TIMEOUTS_SEC.get(currentTimeoutIndex)
     }
 
-    if (currentDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (currentDescriptor is ChanDescriptor.ICatalogDescriptor) {
       // Catalogs are usually not that big so we don't need to do anything additional there + there is
       // no auto updating for catalogs.
       return timeoutSec

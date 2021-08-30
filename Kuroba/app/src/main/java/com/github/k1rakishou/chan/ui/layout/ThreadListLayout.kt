@@ -595,6 +595,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val presenter = threadPresenter
     if (presenter == null) {
       Logger.d(TAG, "showPosts() threadPresenter==null")
+
       return ShowPostsResult(
         result = false,
         applyFilterDuration = Duration.ZERO,
@@ -605,7 +606,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     onThemeChanged()
 
     if (initial) {
-      replyLayout.bindLoadable(descriptor)
+      replyLayout.bindChanDescriptor(descriptor)
 
       recyclerView.layoutManager = null
       recyclerView.layoutManager = layoutManager
@@ -639,7 +640,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       ChanLoadProgressEvent.End(descriptor)
     )
 
-    if (descriptor is ChanDescriptor.CatalogDescriptor) {
+    if (descriptor.isCatalogDescriptor()) {
       postHighlightManager.onCatalogLoaded(postAdapter.threadCellData)
     }
 
@@ -721,7 +722,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
         val canScroll = when (currentFocusedController) {
           ThreadPresenter.CurrentFocusedController.Catalog -> {
-            currentChanDescriptor is ChanDescriptor.CatalogDescriptor
+            currentChanDescriptor is ChanDescriptor.ICatalogDescriptor
           }
           ThreadPresenter.CurrentFocusedController.Thread -> {
             currentChanDescriptor is ThreadDescriptor
@@ -1053,8 +1054,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
 
     when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        val catalogSnapshot = chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)
+      is ChanDescriptor.ICatalogDescriptor -> {
+        val catalogSnapshot = chanCatalogSnapshotCache.get(chanDescriptor)
         if (catalogSnapshot != null) {
           val postDescriptors = catalogSnapshot.catalogThreadDescriptorList
             .map { threadDescriptor -> threadDescriptor.toOriginalPostDescriptor() }
@@ -1097,7 +1098,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (fastScroller == null) {
       val fastScrollerType = when (chanDescriptor) {
         is ThreadDescriptor -> FastScroller.FastScrollerControllerType.Thread
-        is ChanDescriptor.CatalogDescriptor -> FastScroller.FastScrollerControllerType.Catalog
+        is ChanDescriptor.ICatalogDescriptor -> FastScroller.FastScrollerControllerType.Catalog
       }
 
       val scroller = FastScrollerHelper.create(
@@ -1217,6 +1218,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private fun party() {
     val chanDescriptor = getCurrentChanDescriptor()
       ?: return
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
 
     if (chanDescriptor.siteDescriptor().is4chan()) {
       val calendar = Calendar.getInstance()

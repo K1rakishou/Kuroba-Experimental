@@ -40,7 +40,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:minWidth="150dp"
             android:paddingLeft="4dp"
             android:singleLine="true"
-            android:textSize="20dp"
+            android:textSize="20sp"
             tools:text="title"/>
 
         <TextView
@@ -54,7 +54,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:paddingLeft="4dp"
             android:paddingTop="29dp"
             android:singleLine="true"
-            android:textSize="12dp"
+            android:textSize="12sp"
             tools:text="subtitle"/>
     </FrameLayout>
 

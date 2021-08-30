@@ -35,14 +35,14 @@ sealed class ViewableMediaParcelableHolder {
 
     companion object {
       fun fromCatalogDescriptor(
-        catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+        catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
         postDescriptorList: List<PostDescriptor>,
         initialImageUrl: String?,
         transitionInfo: TransitionInfo?,
         mediaViewerOptions: MediaViewerOptions
       ) : CatalogMediaParcelableHolder {
         return CatalogMediaParcelableHolder(
-          catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor),
+          catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor as ChanDescriptor),
           threadNoList = postDescriptorList.map { postDescriptor -> postDescriptor.postNo },
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,

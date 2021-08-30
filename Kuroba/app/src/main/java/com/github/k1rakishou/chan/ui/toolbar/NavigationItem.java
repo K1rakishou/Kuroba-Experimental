@@ -42,7 +42,7 @@ import kotlin.jvm.functions.Function1;
  */
 public class NavigationItem {
     public String title = "";
-    public String subtitle = "";
+    public CharSequence subtitle = "";
 
     public boolean hasBack = true;
     public boolean hasDrawer;

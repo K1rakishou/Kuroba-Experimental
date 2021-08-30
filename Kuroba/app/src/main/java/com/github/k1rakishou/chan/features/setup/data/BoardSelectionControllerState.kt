@@ -1,6 +1,6 @@
 package com.github.k1rakishou.chan.features.setup.data
 
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 sealed class BoardSelectionControllerState {
   object Empty : BoardSelectionControllerState()
@@ -9,6 +9,6 @@ sealed class BoardSelectionControllerState {
   data class Data(
     val isGridMode: Boolean,
     val sortedSiteWithBoardsData: Map<SiteCellData, List<BoardCellData>>,
-    val currentlySelected: BoardDescriptor?
+    val currentlySelected: ChanDescriptor.ICatalogDescriptor?
   ) : BoardSelectionControllerState()
 }

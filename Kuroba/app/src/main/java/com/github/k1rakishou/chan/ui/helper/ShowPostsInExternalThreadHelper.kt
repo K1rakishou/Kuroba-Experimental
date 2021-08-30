@@ -76,6 +76,7 @@ class ShowPostsInExternalThreadHelper(
 
       val threadLoadResult = chanThreadManager.loadThreadOrCatalog(
         page = null,
+        compositeCatalogDescriptor = null,
         chanDescriptor = threadDescriptor,
         chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateIfCacheIsOlderThan(
           timePeriodMs = ChanCacheUpdateOptions.DEFAULT_PERIOD

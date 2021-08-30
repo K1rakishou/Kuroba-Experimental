@@ -2,15 +2,54 @@ package com.github.k1rakishou.chan.features.setup.data
 
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
 class BoardCellData(
   val searchQuery: String?,
-  val boardDescriptor: BoardDescriptor,
+  val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
   val boardName: String,
   val description: String
 ) {
-  val boardCodeFormatted by lazy { "/${boardDescriptor.boardCode}/" }
-  val fullName by lazy { BoardHelper.getName(boardDescriptor.boardCode, boardName) }
+  val boardCodeFormatted by lazy {
+    when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        return@lazy "/${catalogDescriptor.boardDescriptor.boardCode}/"
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        return@lazy "/Composite board/"
+      }
+    }
+  }
+
+  val fullName by lazy {
+    when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        return@lazy BoardHelper.getName(catalogDescriptor.boardDescriptor.boardCode, boardName)
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        return@lazy catalogDescriptor.userReadableString()
+      }
+    }
+  }
+
+  val boardDescriptorOrNull: BoardDescriptor?
+    get() {
+      return when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> catalogDescriptor.boardDescriptor
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          // TODO(KurobaEx): CompositeCatalogDescriptor
+          null
+        }
+      }
+    }
+
+  val boardCodeOrComposedBoardCodes: String
+    get() {
+      return when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> catalogDescriptor.boardDescriptor.boardCode
+        is ChanDescriptor.CompositeCatalogDescriptor -> catalogDescriptor.userReadableString()
+      }
+    }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -18,17 +57,17 @@ class BoardCellData(
 
     other as BoardCellData
 
-    if (boardDescriptor != other.boardDescriptor) return false
+    if (catalogDescriptor != other.catalogDescriptor) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return boardDescriptor.hashCode()
+    return catalogDescriptor.hashCode()
   }
 
   override fun toString(): String {
-    return "BoardCellData(boardDescriptor=$boardDescriptor, fullName='$fullName', description='$description')"
+    return "BoardCellData(catalogDescriptor=$catalogDescriptor, fullName='$fullName', description='$description')"
   }
 
 }

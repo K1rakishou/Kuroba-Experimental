@@ -121,8 +121,6 @@ class ReplyPresenter @Inject constructor(
     get() = _themeEngine.get()
 
   private lateinit var callback: ReplyPresenterCallback
-  private lateinit var chanBoard: ChanBoard
-  private lateinit var site: Site
   private lateinit var context: Context
 
   private val highlightQuotesDebouncer = Debouncer(false)
@@ -144,24 +142,10 @@ class ReplyPresenter @Inject constructor(
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
-    val thisSite = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-    if (thisSite == null) {
-      Logger.e(TAG, "bindChanDescriptor couldn't find ${chanDescriptor.siteDescriptor()}")
-      return false
-    }
-
-    val thisBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-    if (thisBoard == null) {
-      Logger.e(TAG, "bindChanDescriptor couldn't find ${chanDescriptor.boardDescriptor()}")
-      return false
-    }
-
     if (currentChanDescriptor != null) {
       unbindChanDescriptor()
     }
 
-    this.chanBoard = thisBoard
-    this.site = thisSite
     this.currentChanDescriptor = chanDescriptor
 
     callback.bindReplyImages(chanDescriptor)
@@ -173,22 +157,54 @@ class ReplyPresenter @Inject constructor(
     }
 
     replyManager.awaitUntilFilesAreLoaded()
-    callback.loadDraftIntoViews(chanDescriptor)
 
-    if (thisBoard.maxCommentChars > 0) {
-      callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
+    val thisBoard = getBoardByCurrentDescriptorOrNull()
+    if (thisBoard != null) {
+      callback.loadDraftIntoViews(chanDescriptor)
+
+      if (thisBoard.maxCommentChars > 0) {
+        callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
+      }
+
+      callback.showCommentCounter(thisBoard.maxCommentChars > 0)
     }
 
     callback.setCommentHint(getString(stringId))
-    callback.showCommentCounter(thisBoard.maxCommentChars > 0)
 
-    postingStatusUpdatesJob = launch {
-      postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
-        .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      postingStatusUpdatesJob?.cancel()
+      postingStatusUpdatesJob = null
+    } else {
+      postingStatusUpdatesJob = launch {
+        postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
+          .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
+      }
     }
 
     callback.setInputPage()
     return true
+  }
+
+  private fun getBoardByCurrentDescriptorOrNull(): ChanBoard? {
+    val descriptor = currentChanDescriptor
+      ?: return null
+
+    if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
+    return boardManager.byBoardDescriptor(descriptor.boardDescriptor())
+  }
+
+  private fun getSiteByCurrentDescriptorOrNull(): Site? {
+    val descriptor = currentChanDescriptor
+      ?: return null
+
+    if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
+    return siteManager.bySiteDescriptor(descriptor.siteDescriptor())
   }
 
   private suspend fun processPostingStatusUpdates(
@@ -271,27 +287,29 @@ class ReplyPresenter @Inject constructor(
       return null
     }
 
-    return currentChanDescriptor is ChanDescriptor.CatalogDescriptor
+    return currentChanDescriptor is ChanDescriptor.ICatalogDescriptor
   }
 
   fun onOpen(open: Boolean) {
-    if (open) {
-      callback.focusComment()
+    if (!open) {
+      return
+    }
 
-      postingCheckLastErrorJob?.cancel()
-      postingCheckLastErrorJob = null
+    callback.focusComment()
 
-      postingCheckLastErrorJob = launch {
-        val descriptor = currentChanDescriptor
-          ?: return@launch
+    postingCheckLastErrorJob?.cancel()
+    postingCheckLastErrorJob = null
 
-        val lastUnsuccessfulReplyResponse = postingServiceDelegate.lastUnsuccessfulReplyResponseOrNull(descriptor)
-        if (lastUnsuccessfulReplyResponse == null || lastUnsuccessfulReplyResponse.posted) {
-          return@launch
-        }
+    postingCheckLastErrorJob = launch {
+      val descriptor = currentChanDescriptor
+        ?: return@launch
 
-        onPostCompleteUnsuccessful(lastUnsuccessfulReplyResponse)
+      val lastUnsuccessfulReplyResponse = postingServiceDelegate.lastUnsuccessfulReplyResponseOrNull(descriptor)
+      if (lastUnsuccessfulReplyResponse == null || lastUnsuccessfulReplyResponse.posted) {
+        return@launch
       }
+
+      onPostCompleteUnsuccessful(lastUnsuccessfulReplyResponse)
     }
   }
 
@@ -323,33 +341,35 @@ class ReplyPresenter @Inject constructor(
       callback.openSubject(isExpanded)
     }
 
-    val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
+    getBoardByCurrentDescriptorOrNull()?.let { chanBoard ->
+      val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
 
-    callback.openCommentQuoteButton(isExpanded)
+      callback.openCommentQuoteButton(isExpanded)
 
-    if (chanBoard.spoilers) {
-      callback.openCommentSpoilerButton(isExpanded)
-    }
+      if (chanBoard.spoilers) {
+        callback.openCommentSpoilerButton(isExpanded)
+      }
 
-    if (is4chan && chanBoard.boardCode() == "g") {
-      callback.openCommentCodeButton(isExpanded)
-    }
+      if (is4chan && chanBoard.boardCode() == "g") {
+        callback.openCommentCodeButton(isExpanded)
+      }
 
-    if (is4chan && chanBoard.boardCode() == "sci") {
-      callback.openCommentEqnButton(isExpanded)
-      callback.openCommentMathButton(isExpanded)
-    }
+      if (is4chan && chanBoard.boardCode() == "sci") {
+        callback.openCommentEqnButton(isExpanded)
+        callback.openCommentMathButton(isExpanded)
+      }
 
-    if (is4chan && (chanBoard.boardCode() == "jp" || chanBoard.boardCode() == "vip")) {
-      callback.openCommentSJISButton(isExpanded)
-    }
+      if (is4chan && (chanBoard.boardCode() == "jp" || chanBoard.boardCode() == "vip")) {
+        callback.openCommentSJISButton(isExpanded)
+      }
 
-    if (isExpanded && chanBoard.boardSupportsFlagSelection()) {
-      val flagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanBoard.boardDescriptor)
-        ?: return
-      callback.openFlag(flagInfo)
-    } else {
-      callback.hideFlag()
+      if (isExpanded && chanBoard.boardSupportsFlagSelection()) {
+        val flagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanBoard.boardDescriptor)
+          ?: return
+        callback.openFlag(flagInfo)
+      } else {
+        callback.hideFlag()
+      }
     }
   }
 
@@ -584,7 +604,8 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    if (chanBoard.maxCommentChars < 0) {
+    val chanBoard = getBoardByCurrentDescriptorOrNull()
+    if (chanBoard == null || chanBoard.maxCommentChars < 0) {
       return
     }
 

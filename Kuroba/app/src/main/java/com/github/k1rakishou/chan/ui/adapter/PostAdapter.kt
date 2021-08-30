@@ -151,7 +151,10 @@ class PostAdapter(
         )
       }
       PostCellData.TYPE_LOADING_MORE -> {
-        val catalogStatusCell = CatalogStatusCell(inflateContext)
+        val catalogStatusCell = CatalogStatusCell(
+          threadCellData.chanDescriptor as ChanDescriptor.ICatalogDescriptor,
+          inflateContext
+        )
 
         val loadingMoreViewHolder = LoadingMoreViewHolder(
           postAdapterCallback,
@@ -376,7 +379,7 @@ class PostAdapter(
 
   private fun showLoadingMoreView(): Boolean {
     val chanDescriptor = postAdapterCallback.currentChanDescriptor
-    if (chanDescriptor !is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       return false
     }
 
@@ -467,7 +470,8 @@ class PostAdapter(
     val postViewMode = postCellData.boardPostViewMode
 
     val postAlignmentMode = when (postCellData.chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+      is ChanDescriptor.CatalogDescriptor,
+      is ChanDescriptor.CompositeCatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 

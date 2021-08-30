@@ -299,6 +299,9 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
 
     return when (chanDescriptor) {
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
+      }
       is ChanDescriptor.CatalogDescriptor -> {
         "https://sys.$host.org/captcha?board=${boardCode}"
       }

@@ -83,7 +83,7 @@ class ParsePostsV1UseCase(
           postBuilder = postToParse,
           postParser = postParser,
           internalIds = internalIds,
-          isParsingCatalog = chanDescriptor is ChanDescriptor.CatalogDescriptor
+          isParsingCatalog = chanDescriptor is ChanDescriptor.ICatalogDescriptor
         ).parse()
       }
     }

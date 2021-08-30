@@ -133,6 +133,7 @@ class ChanThreadLoaderCoordinator(
   suspend fun loadThreadOrCatalog(
     page: Int?,
     site: Site,
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,
     chanCacheOptions: ChanCacheOptions,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
@@ -147,7 +148,8 @@ class ChanThreadLoaderCoordinator(
       isIncrementalUpdate = chanLoadUrl.isIncremental
     )
 
-    Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, chanDescriptor=$chanDescriptor, " +
+    Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, " +
+      "compositeCatalogDescriptor=$compositeCatalogDescriptor, chanDescriptor=$chanDescriptor, " +
       "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
       "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName})")
 
@@ -191,8 +193,9 @@ class ChanThreadLoaderCoordinator(
           }
 
           return@Try fallbackPostLoadOnNetworkError(
-            chanLoadUrl = chanLoadUrl,
+            compositeCatalogDescriptor = compositeCatalogDescriptor,
             chanDescriptor = chanDescriptor,
+            chanLoadUrl = chanLoadUrl,
             error = error,
             isThreadDownloaded = isThreadDownloaded
           )
@@ -200,8 +203,9 @@ class ChanThreadLoaderCoordinator(
 
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(
-            chanLoadUrl = chanLoadUrl,
+            compositeCatalogDescriptor = compositeCatalogDescriptor,
             chanDescriptor = chanDescriptor,
+            chanLoadUrl = chanLoadUrl,
             error = BadStatusResponseException(response.code),
             isThreadDownloaded = isThreadDownloaded
           )
@@ -250,10 +254,11 @@ class ChanThreadLoaderCoordinator(
           ?: throw NullPointerException("PostParser cannot be null!")
 
         val (threadLoadResult, loadTimeInfo) = chanPostPersister.persistPosts(
+          compositeCatalogDescriptor = compositeCatalogDescriptor,
+          chanDescriptor = chanDescriptor,
           chanReaderProcessor = chanReaderProcessor,
           cacheOptions = chanCacheOptions,
           chanCacheUpdateOptions = chanCacheUpdateOptions,
-          chanDescriptor = chanDescriptor,
           postParser = postParser,
         )
 
@@ -372,10 +377,11 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (threadLoadResult, _) = chanPostPersister.persistPosts(
+          compositeCatalogDescriptor = null,
+          chanDescriptor = threadDescriptor,
           chanReaderProcessor = chanReaderProcessor,
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
           chanCacheUpdateOptions = cacheUpdateOptions,
-          chanDescriptor = threadDescriptor,
           postParser = postParser,
         )
 
@@ -385,8 +391,8 @@ class ChanThreadLoaderCoordinator(
   }
 
   suspend fun reloadAndReparseCatalogPosts(
-    postParser: PostParser,
-    catalogDescriptor: ChanDescriptor.CatalogDescriptor
+    catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+    postParser: PostParser
   ): ModularResult<ThreadLoadResult> {
     Logger.d(TAG, "reloadAndReparseCatalogPosts($catalogDescriptor)")
 
@@ -427,10 +433,11 @@ class ChanThreadLoaderCoordinator(
         }
 
         val (threadLoadResult, _) = chanPostPersister.persistPosts(
+          compositeCatalogDescriptor = null,
+          chanDescriptor = catalogDescriptor,
           chanReaderProcessor = chanReaderProcessor,
           cacheOptions = ChanCacheOptions.onlyCacheInMemory(),
           chanCacheUpdateOptions =  ChanCacheUpdateOptions.DoNotUpdateCache,
-          chanDescriptor = catalogDescriptor,
           postParser = postParser,
         )
 
@@ -441,8 +448,9 @@ class ChanThreadLoaderCoordinator(
 
   @Suppress("IfThenToElvis")
   private suspend fun fallbackPostLoadOnNetworkError(
-    chanLoadUrl: ChanLoadUrl,
+    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,
+    chanLoadUrl: ChanLoadUrl,
     error: Throwable,
     isThreadDownloaded: Boolean
   ): ThreadLoadResult {
@@ -450,6 +458,8 @@ class ChanThreadLoaderCoordinator(
 
     val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
     val isThreadArchived = (error is BadStatusResponseException && error.status == 404) && isThreadDownloaded
+    val catalogSnapshotDescriptor = compositeCatalogDescriptor
+      ?: (chanDescriptor as? ChanDescriptor.ICatalogDescriptor)
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -463,10 +473,10 @@ class ChanThreadLoaderCoordinator(
           deleted = isThreadDeleted
         )
       }
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         val isNotFoundStatus = (error is BadStatusResponseException && error.status == 404)
-        if (isNotFoundStatus) {
-          chanCatalogSnapshotCache.get(chanDescriptor.boardDescriptor)?.onEndOfUnlimitedCatalogReached()
+        if (isNotFoundStatus && catalogSnapshotDescriptor != null) {
+          chanCatalogSnapshotCache.get(catalogSnapshotDescriptor)?.onEndOfUnlimitedCatalogReached()
         }
       }
     }
@@ -476,25 +486,26 @@ class ChanThreadLoaderCoordinator(
       throw error
     }
 
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-      val boardDescriptor = chanDescriptor.boardDescriptor
-      val prevCatalogSnapshot = chanCatalogSnapshotCache.get(boardDescriptor)
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor && catalogSnapshotDescriptor != null) {
+      val prevCatalogSnapshot = chanCatalogSnapshotCache.get(catalogSnapshotDescriptor)
 
-      val isUnlimitedCatalog = if (prevCatalogSnapshot != null) {
-        prevCatalogSnapshot.isUnlimitedCatalog
-      } else {
-        boardManager.byBoardDescriptor(boardDescriptor)
-          ?.isUnlimitedCatalog
-          ?: false
+      val isUnlimitedCatalog = when {
+        prevCatalogSnapshot != null -> prevCatalogSnapshot.isUnlimitedCatalog
+        chanDescriptor is ChanDescriptor.CatalogDescriptor -> {
+          boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
+            ?.isUnlimitedCatalog
+            ?: false
+        }
+        else -> chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
       }
 
       val newCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
-        boardDescriptor = boardDescriptor,
+        catalogDescriptor = catalogSnapshotDescriptor,
         threadDescriptors = chanLoaderResponse.posts.map { post -> post.postDescriptor.threadDescriptor() },
         isUnlimitedCatalog = isUnlimitedCatalog
       )
 
-      chanCatalogSnapshotCache.store(boardDescriptor, newCatalogSnapshot)
+      chanCatalogSnapshotCache.store(catalogSnapshotDescriptor, newCatalogSnapshot)
     }
 
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")
@@ -532,6 +543,9 @@ class ChanThreadLoaderCoordinator(
         is ChanDescriptor.CatalogDescriptor -> {
           chanReader.loadCatalog(chanLoadUrl.urlString, responseBodyStream, chanReaderProcessor)
         }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use CompositeCatalogDescriptor here")
+        }
         else -> throw IllegalArgumentException("Unknown mode")
       }
 
@@ -553,7 +567,7 @@ class ChanThreadLoaderCoordinator(
 
     val currentTime = System.currentTimeMillis()
 
-    if (forceFullLoad || !isThreadCached || chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (forceFullLoad || !isThreadCached || chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         lastFullThreadUpdate.put(chanDescriptor, currentTime)
       }
@@ -596,7 +610,10 @@ class ChanThreadLoaderCoordinator(
       is ChanDescriptor.CatalogDescriptor -> {
         site.endpoints().catalog(chanDescriptor.boardDescriptor, page)
       }
-      else -> throw IllegalArgumentException("Unknown mode")
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
+      }
+      else -> throw IllegalArgumentException("Unknown mode: ${chanDescriptor.javaClass.simpleName}")
     }
 
     return ChanLoadUrl(url = url, isIncremental = false, page = page)

@@ -18,12 +18,15 @@ abstract class BaseFuukaSite : CommonSite() {
     private val siteClass: Class<out Site>
   ) : CommonSiteUrlHandler() {
 
-    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
       // https://warosu.org/
       val baseUrl = url.toString()
 
       return when (chanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> "${baseUrl}${chanDescriptor.boardCode()}"
+        is ChanDescriptor.CompositeCatalogDescriptor -> null
+        is ChanDescriptor.CatalogDescriptor -> {
+          "${baseUrl}${chanDescriptor.boardCode()}"
+        }
         is ChanDescriptor.ThreadDescriptor -> {
           if (postNo == null) {
             // https://warosu.org/g/thread/72382313
