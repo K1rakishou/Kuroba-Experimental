@@ -368,17 +368,16 @@ class StartActivityStartupHandlerHelper(
       return false
     }
 
-    val boardThreadPair = resolveChanState(chanState)
+    val catalogThreadPair = resolveChanState(chanState)
 
-    val boardDescriptor = boardThreadPair.first
-    if (boardDescriptor == null) {
+    val catalogDescriptor = catalogThreadPair.first
+    if (catalogDescriptor == null) {
       return false
     }
 
-    val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
     browseController?.setCatalog(catalogDescriptor)
 
-    val threadDescriptor = boardThreadPair.second
+    val threadDescriptor = catalogThreadPair.second
     if (threadDescriptor != null) {
       browseController?.showThread(threadDescriptor, false)
     }
@@ -386,20 +385,33 @@ class StartActivityStartupHandlerHelper(
     return true
   }
 
-  private suspend fun resolveChanState(state: ChanState): Pair<BoardDescriptor?, ChanDescriptor.ThreadDescriptor?> {
-    val boardDescriptor =
-      (resolveChanDescriptor(state.board) as? ChanDescriptor.CatalogDescriptor)?.boardDescriptor
-    val threadDescriptor =
-      resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
+  private suspend fun resolveChanState(
+    state: ChanState
+  ): Pair<ChanDescriptor.ICatalogDescriptor?, ChanDescriptor.ThreadDescriptor?> {
+    val catalogDescriptor = resolveChanDescriptor(state.board) as? ChanDescriptor.ICatalogDescriptor
+    val threadDescriptor = resolveChanDescriptor(state.thread) as? ChanDescriptor.ThreadDescriptor
 
-    return Pair(boardDescriptor, threadDescriptor)
+    return Pair(catalogDescriptor, threadDescriptor)
   }
 
   private suspend fun resolveChanDescriptor(descriptorParcelable: DescriptorParcelable): ChanDescriptor? {
-    val chanDescriptor = if (descriptorParcelable.isThreadDescriptor()) {
-      ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
-    } else {
-      ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
+    val chanDescriptor = when {
+      descriptorParcelable.isThreadDescriptor() -> {
+        ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(descriptorParcelable)
+      }
+      descriptorParcelable.isCatalogDescriptor() -> {
+        ChanDescriptor.CatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
+      }
+      descriptorParcelable.isCompositeCatalogDescriptor() -> {
+        ChanDescriptor.CompositeCatalogDescriptor.fromDescriptorParcelable(descriptorParcelable)
+      }
+      else -> {
+        error("Unknown descriptorParcelable type: ${descriptorParcelable.javaClass.simpleName}")
+      }
+    }
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return chanDescriptor
     }
 
     val sm = siteManager.get().apply { awaitUntilInitialized() }
@@ -462,7 +474,7 @@ class StartActivityStartupHandlerHelper(
         startActivityCallbacks?.loadThread(chanDescriptor, animated = false)
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        error("Cannot use CompositeCatalogDescriptor here")
+        browseController?.showCatalog(chanDescriptor, animated = false)
       }
     }
 

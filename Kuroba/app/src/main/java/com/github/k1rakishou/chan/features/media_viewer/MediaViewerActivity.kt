@@ -265,6 +265,13 @@ class MediaViewerActivity : ControllerHostActivity(),
           ?.getBundle(MEDIA_VIEWER_PARAMS)
           ?.getParcelable<ViewableMediaParcelableHolder.CatalogMediaParcelableHolder>(CATALOG_DESCRIPTOR_PARAM)
       }
+      VIEW_COMPOSITE_CATALOG_MEDIA_ACTION -> {
+        Logger.d(TAG, "handleNewIntent() action=${action}")
+
+        return intent.extras
+          ?.getBundle(MEDIA_VIEWER_PARAMS)
+          ?.getParcelable<ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder>(COMPOSITE_CATALOG_DESCRIPTOR_PARAM)
+      }
       VIEW_THREAD_MEDIA_ACTION -> {
         Logger.d(TAG, "handleNewIntent() action=${action}")
 
@@ -337,12 +344,14 @@ class MediaViewerActivity : ControllerHostActivity(),
     private const val TAG = "MediaViewerActivity"
 
     private const val VIEW_CATALOG_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.catalog.media.action"
+    private const val VIEW_COMPOSITE_CATALOG_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.composite_catalog.media.action"
     private const val VIEW_THREAD_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.thread.media.action"
     private const val VIEW_MIXED_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.mixed.media.action"
     private const val VIEW_REPLY_ATTACH_MEDIA_ACTION = "${BuildConfig.APPLICATION_ID}_internal.view.reply_attach.media.action"
 
     private const val MEDIA_VIEWER_PARAMS = "MEDIA_VIEWER_PARAMS"
     private const val CATALOG_DESCRIPTOR_PARAM = "CATALOG_DESCRIPTOR"
+    private const val COMPOSITE_CATALOG_DESCRIPTOR_PARAM = "COMPOSITE_CATALOG_DESCRIPTOR"
     private const val THREAD_DESCRIPTOR_PARAM = "THREAD_DESCRIPTOR"
     private const val MIXED_MEDIA_PARAM = "MIXED_MEDIA"
     private const val REPLY_ATTACH_MEDIA_PARAM = "REPLY_ATTACH_MEDIA"
@@ -397,26 +406,50 @@ class MediaViewerActivity : ControllerHostActivity(),
       lastTouchCoordinates: Point,
       mediaViewerOptions: MediaViewerOptions
     ) {
+      val key = when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> CATALOG_DESCRIPTOR_PARAM
+        is ChanDescriptor.CompositeCatalogDescriptor -> COMPOSITE_CATALOG_DESCRIPTOR_PARAM
+      }
+
+      val action = when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> VIEW_CATALOG_MEDIA_ACTION
+        is ChanDescriptor.CompositeCatalogDescriptor -> VIEW_COMPOSITE_CATALOG_MEDIA_ACTION
+      }
+
+      val catalogMediaParcelableHolder = when (catalogDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          ViewableMediaParcelableHolder.CatalogMediaParcelableHolder.fromCatalogDescriptor(
+            catalogDescriptor = catalogDescriptor,
+            postDescriptorList = postDescriptorList,
+            initialImageUrl = initialImageUrl,
+            transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
+              transitionThumbnailUrl = transitionThumbnailUrl,
+              lastTouchPosX = lastTouchCoordinates.x,
+              lastTouchPosY = lastTouchCoordinates.y,
+            ),
+            mediaViewerOptions = mediaViewerOptions
+          )
+        }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder.fromCompositeCatalogDescriptor(
+            compositeCatalogDescriptor = catalogDescriptor,
+            postDescriptorList = postDescriptorList,
+            initialImageUrl = initialImageUrl,
+            transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
+              transitionThumbnailUrl = transitionThumbnailUrl,
+              lastTouchPosX = lastTouchCoordinates.x,
+              lastTouchPosY = lastTouchCoordinates.y,
+            ),
+            mediaViewerOptions = mediaViewerOptions
+          )
+        }
+      }
+
       val intent = Intent(context, MediaViewerActivity::class.java)
-      intent.action = VIEW_CATALOG_MEDIA_ACTION
+      intent.action = action
       intent.putExtra(
         MEDIA_VIEWER_PARAMS,
-        bundleOf(
-          Pair(
-            CATALOG_DESCRIPTOR_PARAM,
-            ViewableMediaParcelableHolder.CatalogMediaParcelableHolder.fromCatalogDescriptor(
-              catalogDescriptor = catalogDescriptor,
-              postDescriptorList = postDescriptorList,
-              initialImageUrl = initialImageUrl,
-              transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
-                transitionThumbnailUrl = transitionThumbnailUrl,
-                lastTouchPosX = lastTouchCoordinates.x,
-                lastTouchPosY = lastTouchCoordinates.y,
-              ),
-              mediaViewerOptions = mediaViewerOptions
-            )
-          )
-        )
+        bundleOf(Pair(key, catalogMediaParcelableHolder))
       )
 
       context.startActivity(intent)

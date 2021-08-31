@@ -126,6 +126,7 @@ sealed class ChanDescriptor {
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): ThreadDescriptor {
         require(descriptorParcelable.isThreadDescriptor()) { "Not a thread descriptor type" }
+        require(descriptorParcelable is SingleDescriptorParcelable) { "Must be SingleDescriptorParcelable" }
 
         return create(
           descriptorParcelable.siteName,
@@ -183,6 +184,7 @@ sealed class ChanDescriptor {
     companion object {
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CatalogDescriptor {
         require(!descriptorParcelable.isThreadDescriptor()) { "Not a catalog descriptor type" }
+        require(descriptorParcelable is SingleDescriptorParcelable) { "Must be SingleDescriptorParcelable" }
 
         return create(
           descriptorParcelable.siteName,
@@ -279,6 +281,12 @@ sealed class ChanDescriptor {
 
     companion object {
       const val MAX_CATALOGS_COUNT = 10
+
+      fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CompositeCatalogDescriptor {
+        require(descriptorParcelable is CompositeDescriptorParcelable) { "Must be CompositeDescriptorParcelable" }
+
+        return CompositeCatalogDescriptor(descriptorParcelable.toCatalogDescriptors())
+      }
     }
 
   }

@@ -97,6 +97,9 @@ class MediaViewerControllerViewModel : ViewModel() {
       BackgroundUtils.ensureBackgroundThread()
 
       val options = when (viewableMediaParcelableHolder) {
+        is ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder -> {
+          viewableMediaParcelableHolder.mediaViewerOptions
+        }
         is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
           viewableMediaParcelableHolder.mediaViewerOptions
         }
@@ -115,6 +118,9 @@ class MediaViewerControllerViewModel : ViewModel() {
 
       if (isNotActivityRecreation) {
         val transitionInfo = when (viewableMediaParcelableHolder) {
+          is ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder -> {
+            viewableMediaParcelableHolder.transitionInfo
+          }
           is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
             viewableMediaParcelableHolder.transitionInfo
           }
@@ -131,8 +137,21 @@ class MediaViewerControllerViewModel : ViewModel() {
       }
 
       val mediaViewerControllerState = when (viewableMediaParcelableHolder) {
+        is ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder -> {
+          val compositeCatalogDescriptor = viewableMediaParcelableHolder.compositeCatalogDescriptor
+          val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
+          val postDescriptors = viewableMediaParcelableHolder.postDescriptorParcelableList
+            .map { postDescriptorParcelable -> postDescriptorParcelable.postDescriptor }
+
+          collectCatalogMedia(compositeCatalogDescriptor, initialImageUrl, postDescriptors)
+        }
         is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
-          collectCatalogMedia(viewableMediaParcelableHolder)
+          val catalogDescriptor = viewableMediaParcelableHolder.catalogDescriptor
+          val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
+          val postDescriptors = viewableMediaParcelableHolder.threadNoList
+            .map { threadNo -> PostDescriptor.create(catalogDescriptor, threadNo) }
+
+          collectCatalogMedia(catalogDescriptor, initialImageUrl, postDescriptors)
         }
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
           collectThreadMedia(viewableMediaParcelableHolder)
@@ -314,19 +333,16 @@ class MediaViewerControllerViewModel : ViewModel() {
   }
 
   private fun collectCatalogMedia(
-    viewableMediaParcelableHolder: ViewableMediaParcelableHolder.CatalogMediaParcelableHolder
+    chanDescriptor: ChanDescriptor,
+    initialImageUrl: HttpUrl?,
+    postDescriptors: List<PostDescriptor>
   ): MediaViewerControllerState? {
     BackgroundUtils.ensureBackgroundThread()
 
     val initialPagerIndex = AtomicInteger(0)
     val mediaIndex = AtomicInteger(0)
-    val scrollToImageWithUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
-    val catalogDescriptor = viewableMediaParcelableHolder.catalogDescriptor
-    val threadNoList = viewableMediaParcelableHolder.threadNoList
 
-    val mediaList = threadNoList.flatMapNotNull { threadNo ->
-      val postDescriptor = PostDescriptor.create(threadDescriptor = catalogDescriptor.toThreadDescriptor(threadNo), postNo = threadNo)
-
+    val mediaList = postDescriptors.flatMapNotNull { postDescriptor ->
       val chanPost = chanThreadManager.getPost(postDescriptor)
       if (chanPost == null) {
         return@flatMapNotNull null
@@ -337,7 +353,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       chanPost.iteratePostImages { chanPostImage ->
         val viewableMedia = processChanPostImage(
           chanPostImage = chanPostImage,
-          scrollToImageWithUrl = scrollToImageWithUrl,
+          scrollToImageWithUrl = initialImageUrl,
           lastViewedIndex = initialPagerIndex,
           mediaIndex = mediaIndex
         )
@@ -372,7 +388,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
 
     return MediaViewerControllerState(
-      descriptor = viewableMediaParcelableHolder.catalogDescriptor,
+      descriptor = chanDescriptor,
       loadedMedia = output.images,
       initialPagerIndex = actualInitialPagerIndex
     )

@@ -29,7 +29,6 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
@@ -232,22 +231,15 @@ class BrowsePresenter @Inject constructor(
     context: Context,
     fontSizePx: Int,
     compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
-    visibleDescriptorsCount: Int = 3
+    visibleSitesCount: Int = 3
   ): CharSequence {
-    val duplicates = hashSetOf<SiteDescriptor>()
     val spannableStringBuilder = SpannableStringBuilder()
     val catalogsBySites = compositeCatalogDescriptor.catalogDescriptors
       .groupBy { catalogDescriptor -> catalogDescriptor.siteDescriptor() }
 
-    compositeCatalogDescriptor.catalogDescriptors
-      .take(visibleDescriptorsCount)
-      .forEach { catalogDescriptor ->
-        val siteDescriptor = catalogDescriptor.siteDescriptor()
-
-        if (!duplicates.add(siteDescriptor)) {
-          return@forEach
-        }
-
+    catalogsBySites.entries
+      .take(visibleSitesCount)
+      .forEach { (siteDescriptor, catalogDescriptors) ->
         val iconBitmap = siteManager.bySiteDescriptor(siteDescriptor)
           ?.icon()
           ?.getIconSuspend(context)
@@ -261,10 +253,7 @@ class BrowsePresenter @Inject constructor(
           spannableStringBuilder.append("+")
         }
 
-        val catalogs = catalogsBySites[siteDescriptor]
-          ?: return@forEach
-
-        val boardCodes = catalogs.joinToString(
+        val boardCodes = catalogDescriptors.joinToString(
           separator = ",",
           prefix = "/",
           postfix = "/",
@@ -276,8 +265,8 @@ class BrowsePresenter @Inject constructor(
           .append(boardCodes)
     }
 
-    if (compositeCatalogDescriptor.catalogDescriptors.size > visibleDescriptorsCount) {
-      val omittedCount = compositeCatalogDescriptor.catalogDescriptors.size - visibleDescriptorsCount
+    if (catalogsBySites.size > visibleSitesCount) {
+      val omittedCount = catalogsBySites.size - visibleSitesCount
 
       spannableStringBuilder
         .append(" + ")
