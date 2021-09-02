@@ -93,7 +93,7 @@ class ComposeBoardsSelectorController(
         .wrapContentHeight()
         .consumeClicks()
         .align(Alignment.Center)
-        .background(chanTheme.backColorSecondaryCompose)
+        .background(chanTheme.backColorCompose)
     ) {
       BuildContentInternal(chanTheme)
 
@@ -168,6 +168,7 @@ class ComposeBoardsSelectorController(
           val cellData = searchResults[index]
 
           BuildBoardCell(
+            chanTheme = chanTheme,
             cellData = cellData,
             onCellClicked = { clickedCellData ->
               onBoardSelected(clickedCellData.catalogCellData.boardDescriptorOrNull!!)
@@ -214,6 +215,7 @@ class ComposeBoardsSelectorController(
 
   @Composable
   private fun BuildBoardCell(
+    chanTheme: ChanTheme,
     cellData: ComposeBoardsSelectorControllerViewModel.CellData,
     onCellClicked: (ComposeBoardsSelectorControllerViewModel.CellData) -> Unit
   ) {
@@ -223,7 +225,8 @@ class ComposeBoardsSelectorController(
       modifier = Modifier
         .size(CELL_SIZE)
         .padding(4.dp)
-        .kurobaClickable(bounded = true, onClick = { onCellClickedRemembered.value.invoke(cellData) })
+        .kurobaClickable(bounded = true, onClick = { onCellClickedRemembered.value.invoke(cellData) }),
+      backgroundColor = chanTheme.backColorSecondaryCompose
     ) {
       Column(
         modifier = Modifier.fillMaxSize()

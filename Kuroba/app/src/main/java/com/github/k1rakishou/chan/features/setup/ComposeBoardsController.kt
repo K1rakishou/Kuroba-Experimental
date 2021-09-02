@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
@@ -95,7 +96,7 @@ class ComposeBoardsController(
         .wrapContentHeight()
         .consumeClicks()
         .align(Alignment.Center)
-        .background(chanTheme.backColorSecondaryCompose)
+        .background(chanTheme.backColorCompose)
     ) {
       BuildHeader()
 
@@ -109,6 +110,7 @@ class ComposeBoardsController(
             val compositionSlot = compositionSlots[index]
 
             BuildCompositionSlot(
+              chanTheme = chanTheme,
               index = index,
               catalogCompositionSlot = compositionSlot,
               onAddOrReplaceBoardClicked = { clickedIndex ->
@@ -216,6 +218,7 @@ class ComposeBoardsController(
 
   @Composable
   private fun BuildCompositionSlot(
+    chanTheme: ChanTheme,
     index: Int,
     catalogCompositionSlot: ComposeBoardsControllerViewModel.CatalogCompositionSlot,
     onAddOrReplaceBoardClicked: (Int) -> Unit,
@@ -229,7 +232,8 @@ class ComposeBoardsController(
         .fillMaxWidth()
         .height(COMPOSITION_SLOT_ITEM_HEIGHT)
         .padding(4.dp)
-        .kurobaClickable(bounded = true, onClick = { onAddOrReplaceBoardClickedRemembered.value.invoke(index) })
+        .kurobaClickable(bounded = true, onClick = { onAddOrReplaceBoardClickedRemembered.value.invoke(index) }),
+      backgroundColor = chanTheme.backColorSecondaryCompose
     ) {
       Box(modifier = Modifier.fillMaxSize()) {
         when (catalogCompositionSlot) {
