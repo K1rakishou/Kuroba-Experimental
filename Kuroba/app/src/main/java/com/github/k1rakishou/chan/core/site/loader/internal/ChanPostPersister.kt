@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.PostsFromServerData
-import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
+import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
@@ -54,27 +54,29 @@ internal class ChanPostPersister(
         val isUnlimitedCatalog = boardManager.byCatalogDescriptor(chanDescriptor)
           ?.isUnlimitedCatalog
           ?: false
-
+        val isUnlimitedOrCompositeCatalog = isUnlimitedCatalog || compositeCatalogDescriptor != null
         val descriptor = compositeCatalogDescriptor ?: chanDescriptor
 
-        if (isUnlimitedCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {
+        if (isUnlimitedOrCompositeCatalog && chanReaderProcessor.endOfUnlimitedCatalogReached) {
           chanCatalogSnapshotCache.get(descriptor)?.onEndOfUnlimitedCatalogReached()
         } else {
-          val chanCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
+          val chanCatalogSnapshot = IChanCatalogSnapshot.fromSortedThreadDescriptorList(
             catalogDescriptor = descriptor,
             threadDescriptors = chanReaderProcessor.getThreadDescriptors(),
             isUnlimitedCatalog = isUnlimitedCatalog
-          )
+          ) as IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
 
           chanCatalogSnapshotRepository.storeChanCatalogSnapshot(chanCatalogSnapshot)
             .peekError { error -> Logger.e(TAG, "storeChanCatalogSnapshot() error", error) }
             .ignore()
 
-          if (
-            compositeCatalogDescriptor != null
-            && compositeCatalogDescriptor.catalogDescriptors.lastOrNull() == chanDescriptor
-          ) {
-            chanCatalogSnapshotCache.get(compositeCatalogDescriptor)?.onEndOfUnlimitedCatalogReached()
+          if (compositeCatalogDescriptor != null) {
+            val isLastDescriptor =
+              compositeCatalogDescriptor.catalogDescriptors.lastOrNull() == chanDescriptor
+
+            if (isLastDescriptor) {
+              chanCatalogSnapshotCache.get(compositeCatalogDescriptor)?.onEndOfUnlimitedCatalogReached()
+            }
           }
         }
       }

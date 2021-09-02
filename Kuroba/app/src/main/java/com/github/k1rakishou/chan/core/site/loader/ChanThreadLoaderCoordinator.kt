@@ -44,7 +44,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
+import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanCacheOptions
@@ -458,8 +458,7 @@ class ChanThreadLoaderCoordinator(
 
     val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
     val isThreadArchived = (error is BadStatusResponseException && error.status == 404) && isThreadDownloaded
-    val catalogSnapshotDescriptor = compositeCatalogDescriptor
-      ?: (chanDescriptor as? ChanDescriptor.ICatalogDescriptor)
+    val catalogSnapshotDescriptor = compositeCatalogDescriptor ?: (chanDescriptor as? ChanDescriptor.ICatalogDescriptor)
 
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
@@ -475,8 +474,19 @@ class ChanThreadLoaderCoordinator(
       }
       is ChanDescriptor.ICatalogDescriptor -> {
         val isNotFoundStatus = (error is BadStatusResponseException && error.status == 404)
-        if (isNotFoundStatus && catalogSnapshotDescriptor != null) {
-          chanCatalogSnapshotCache.get(catalogSnapshotDescriptor)?.onEndOfUnlimitedCatalogReached()
+
+        when {
+          isNotFoundStatus && catalogSnapshotDescriptor != null -> {
+            chanCatalogSnapshotCache.get(catalogSnapshotDescriptor)?.onEndOfUnlimitedCatalogReached()
+          }
+          compositeCatalogDescriptor != null -> {
+            val isLastDescriptor =
+              compositeCatalogDescriptor.catalogDescriptors.lastOrNull() == chanDescriptor
+
+            if (isLastDescriptor) {
+              chanCatalogSnapshotCache.get(compositeCatalogDescriptor)?.onEndOfUnlimitedCatalogReached()
+            }
+          }
         }
       }
     }
@@ -499,13 +509,24 @@ class ChanThreadLoaderCoordinator(
         else -> chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
       }
 
-      val newCatalogSnapshot = ChanCatalogSnapshot.fromSortedThreadDescriptorList(
+      val newCatalogSnapshot = IChanCatalogSnapshot.fromSortedThreadDescriptorList(
         catalogDescriptor = catalogSnapshotDescriptor,
         threadDescriptors = chanLoaderResponse.posts.map { post -> post.postDescriptor.threadDescriptor() },
         isUnlimitedCatalog = isUnlimitedCatalog
       )
 
-      chanCatalogSnapshotCache.store(catalogSnapshotDescriptor, newCatalogSnapshot)
+      val catalogSnapshot = chanCatalogSnapshotCache.getOrPut(
+        key = catalogSnapshotDescriptor,
+        valueFunc = {
+          IChanCatalogSnapshot.fromSortedThreadDescriptorList(
+            catalogDescriptor = catalogSnapshotDescriptor,
+            threadDescriptors = emptyList(),
+            isUnlimitedCatalog = isUnlimitedCatalog
+          )
+        }
+      )
+
+      catalogSnapshot.mergeWith(newCatalogSnapshot)
     }
 
     Logger.e(TAG, "Successfully recovered from network error (${error.errorMessageOrClassName()})")

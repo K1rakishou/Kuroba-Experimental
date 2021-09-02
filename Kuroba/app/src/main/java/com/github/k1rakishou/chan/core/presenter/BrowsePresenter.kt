@@ -26,6 +26,8 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
 import com.github.k1rakishou.common.AndroidUtils
@@ -43,7 +45,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -54,9 +55,11 @@ class BrowsePresenter @Inject constructor(
   private val _bookmarksManager: Lazy<BookmarksManager>,
   private val _siteManager: Lazy<SiteManager>,
   private val _boardManager: Lazy<BoardManager>,
+  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _chanPostRepository: Lazy<ChanPostRepository>,
-  private val _imageLoaderV2: Lazy<ImageLoaderV2>
+  private val _imageLoaderV2: Lazy<ImageLoaderV2>,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private var callback: Callback? = null
   private var currentOpenedCatalog: ChanDescriptor.ICatalogDescriptor? = null
@@ -73,23 +76,27 @@ class BrowsePresenter @Inject constructor(
     get() = _chanPostRepository.get()
   private val imageLoaderV2: ImageLoaderV2
     get() = _imageLoaderV2.get()
+  private val compositeCatalogManager: CompositeCatalogManager
+    get() = _compositeCatalogManager.get()
 
   fun create(controllerScope: CoroutineScope, callback: Callback?) {
     this.callback = callback
 
     controllerScope.launch {
-      boardManager.listenForCurrentSelectedCatalog()
-        .asFlow()
-        .collect { currentBoard ->
-          val catalogDescriptor = currentBoard.catalogDescriptor
-
+      currentOpenedDescriptorStateManager.currentCatalogDescriptorFlow
+        .collect { catalogDescriptor ->
           if (currentOpenedCatalog == catalogDescriptor) {
             return@collect
           }
 
-          if (catalogDescriptor == null) {
+          val noMoreCatalogs = compositeCatalogManager.count() <= 0
+            && boardManager.activeBoardsCountForAllSites() <= 0
+
+          if (catalogDescriptor == null && noMoreCatalogs) {
+            currentOpenedCatalog = catalogDescriptor
             callback?.showSitesNotSetup()
-          } else {
+          } else if (catalogDescriptor != null) {
+            currentOpenedCatalog = catalogDescriptor
             callback?.loadCatalog(catalogDescriptor)
           }
         }
@@ -232,6 +239,12 @@ class BrowsePresenter @Inject constructor(
     }
 
     Logger.d(TAG, "cacheEveryThreadClicked() done")
+  }
+
+  suspend fun getCompositeCatalogNavigationTitle(
+    catalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor
+  ): String? {
+    return compositeCatalogManager.byCompositeCatalogDescriptor(catalogDescriptor)?.name
   }
 
   @OptIn(ExperimentalTime::class)

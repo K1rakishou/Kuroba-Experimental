@@ -9,9 +9,9 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 data class ChanCatalogSnapshot(
-  val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
-  val isUnlimitedCatalog: Boolean
-) {
+  override val catalogDescriptor: ChanDescriptor.CatalogDescriptor,
+  override val isUnlimitedCatalog: Boolean
+) : IChanCatalogSnapshot<ChanDescriptor.CatalogDescriptor> {
   private val lock = ReentrantReadWriteLock()
 
   @GuardedBy("lock")
@@ -24,35 +24,30 @@ data class ChanCatalogSnapshot(
   @GuardedBy("lock")
   private val chanCatalogSnapshotEntryList = mutableListWithCap<ChanDescriptor.ThreadDescriptor>(32)
 
-  val isUnlimitedOrCompositeCatalog: Boolean
-    get() = isUnlimitedCatalog || catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor
-
-  val catalogThreadDescriptorList: List<ChanDescriptor.ThreadDescriptor>
+  override val isUnlimitedOrCompositeCatalog: Boolean
+    get() = isUnlimitedCatalog
+  override val catalogThreadDescriptorList: List<ChanDescriptor.ThreadDescriptor>
     get() = lock.read { chanCatalogSnapshotEntryList.toList() }
-
-  val catalogThreadDescriptorSet: Set<ChanDescriptor.ThreadDescriptor>
+  override val catalogThreadDescriptorSet: Set<ChanDescriptor.ThreadDescriptor>
     get() = lock.read { duplicateChecker.toSet() }
-
-  val catalogPage: Int
+  override val catalogPage: Int
     get() = lock.read { currentCatalogPage }
-
-  val isEndReached: Boolean
+  override val isEndReached: Boolean
     get() = lock.read { endReached }
-
-  val postsCount: Int
+  override val postsCount: Int
     get() = lock.read { chanCatalogSnapshotEntryList.size }
 
   init {
     currentCatalogPage = getStartCatalogPage()
   }
 
-  fun isEmpty(): Boolean = lock.read { chanCatalogSnapshotEntryList.isEmpty() }
+  override fun isEmpty(): Boolean = lock.read { chanCatalogSnapshotEntryList.isEmpty() }
 
-  fun mergeWith(chanCatalogSnapshot: ChanCatalogSnapshot) {
+  override fun mergeWith(chanCatalogSnapshot: IChanCatalogSnapshot<ChanDescriptor.CatalogDescriptor>) {
     add(chanCatalogSnapshot.catalogThreadDescriptorList)
   }
 
-  fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
+  override fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
     lock.write {
       if (!isUnlimitedOrCompositeCatalog) {
         currentCatalogPage = getStartCatalogPage()
@@ -70,20 +65,17 @@ data class ChanCatalogSnapshot(
     }
   }
 
-  fun getNextCatalogPage(): Int? {
+  override fun getNextCatalogPage(): Int? {
     return lock.read {
       if (!isUnlimitedOrCompositeCatalog) {
         return@read null
       }
 
-      return@read when (catalogDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> currentCatalogPage.plus(1)
-        is ChanDescriptor.CompositeCatalogDescriptor -> currentCatalogPage.plus(1)
-      }
+      return@read currentCatalogPage.plus(1)
     }
   }
 
-  fun onCatalogLoaded(catalogPageToLoad: Int?) {
+  override fun onCatalogLoaded(catalogPageToLoad: Int?) {
     lock.write {
       if (isUnlimitedOrCompositeCatalog) {
         currentCatalogPage = catalogPageToLoad ?: getStartCatalogPage()
@@ -93,7 +85,7 @@ data class ChanCatalogSnapshot(
     }
   }
 
-  fun onEndOfUnlimitedCatalogReached() {
+  override fun onEndOfUnlimitedCatalogReached() {
     lock.write {
       if (isUnlimitedOrCompositeCatalog) {
         endReached = true
@@ -101,7 +93,7 @@ data class ChanCatalogSnapshot(
     }
   }
 
-  fun updateCatalogPage(overridePage: Int) {
+  override fun updateCatalogPage(overridePage: Int) {
     lock.write {
       if (isUnlimitedOrCompositeCatalog) {
         endReached = false
@@ -113,30 +105,13 @@ data class ChanCatalogSnapshot(
   }
 
   private fun getStartCatalogPage(): Int {
-    return when (catalogDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> START_PAGE_UNLIMITED_CATALOG
-      is ChanDescriptor.CompositeCatalogDescriptor -> START_PAGE_COMPOSITE_CATALOG
-    }
+    return IChanCatalogSnapshot.START_PAGE_UNLIMITED_CATALOG
   }
 
   override fun toString(): String {
     return "ChanCatalogSnapshot{catalogDescriptor=$catalogDescriptor, " +
       "chanCatalogSnapshotEntryList=${chanCatalogSnapshotEntryList.size}, " +
       "currentCatalogPage=${currentCatalogPage}, endReached=${endReached}}"
-  }
-
-  companion object {
-    private const val START_PAGE_COMPOSITE_CATALOG = 0
-    private const val START_PAGE_UNLIMITED_CATALOG = 1
-
-    fun fromSortedThreadDescriptorList(
-      catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
-      threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
-      isUnlimitedCatalog: Boolean
-    ): ChanCatalogSnapshot {
-      return ChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog)
-        .apply { add(threadDescriptors) }
-    }
   }
 
 }

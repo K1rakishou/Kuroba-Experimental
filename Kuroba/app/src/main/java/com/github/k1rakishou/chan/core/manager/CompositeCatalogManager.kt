@@ -16,7 +16,8 @@ import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.atomic.AtomicInteger
 
 class CompositeCatalogManager(
-  private val compositeCatalogRepository: CompositeCatalogRepository
+  private val compositeCatalogRepository: CompositeCatalogRepository,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private val oneShotRunnable = OneShotRunnable()
   private val mutex = Mutex()
@@ -61,7 +62,10 @@ class CompositeCatalogManager(
           _compositeCatalogUpdatesFlow.emit(Event.Updated(compositeCatalog.compositeCatalogDescriptor))
         } else {
           compositeCatalogs.add(compositeCatalog)
-          _compositeCatalogUpdatesFlow.emit(Event.Created(compositeCatalog.compositeCatalogDescriptor))
+
+          val event = Event.Created(compositeCatalog.compositeCatalogDescriptor)
+          updateCurrentCatalogDescriptorIfNeeded(event)
+          _compositeCatalogUpdatesFlow.emit(event)
         }
       }
     }
@@ -118,6 +122,8 @@ class CompositeCatalogManager(
           compositeCatalogDescriptor1 = compositeCatalogDescriptor1.compositeCatalogDescriptor,
           compositeCatalogDescriptor2 = compositeCatalogDescriptor2.compositeCatalogDescriptor
         )
+
+        updateCurrentCatalogDescriptorIfNeeded(event)
         _compositeCatalogUpdatesFlow.emit(event)
       }
     }
@@ -159,7 +165,9 @@ class CompositeCatalogManager(
         }
 
         if (removed) {
-          _compositeCatalogUpdatesFlow.emit(Event.Deleted(compositeCatalog.compositeCatalogDescriptor))
+          val event = Event.Deleted(compositeCatalog.compositeCatalogDescriptor)
+          updateCurrentCatalogDescriptorIfNeeded(event)
+          _compositeCatalogUpdatesFlow.emit(event)
         }
       }
     }
@@ -197,6 +205,43 @@ class CompositeCatalogManager(
         compositeCatalogs.addAll(loadedCompositeCatalogs)
 
         orderCounter.set(maxOrder)
+      }
+    }
+  }
+
+  private fun updateCurrentCatalogDescriptorIfNeeded(event: Event) {
+    require(mutex.isLocked) { "Mutex must be locked!" }
+
+    val currentCatalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
+    when (event) {
+      is Event.Swapped,
+      is Event.Updated -> return
+      is Event.Created -> {
+        if (currentCatalogDescriptor != null) {
+          return
+        }
+
+        val compositeCatalogDescriptor = compositeCatalogs.firstOrNull()?.compositeCatalogDescriptor
+        if (compositeCatalogDescriptor == null) {
+          return
+        }
+
+        currentOpenedDescriptorStateManager.updateCatalogDescriptor(compositeCatalogDescriptor)
+      }
+      is Event.Deleted -> {
+        if (currentCatalogDescriptor == null) {
+          return
+        }
+
+        if (currentCatalogDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+          return
+        }
+
+        if (event.compositeCatalogDescriptor != currentCatalogDescriptor) {
+          return
+        }
+
+        currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
       }
     }
   }

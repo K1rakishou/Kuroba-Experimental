@@ -2,6 +2,8 @@ package com.github.k1rakishou.model.source.local
 
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
+import com.github.k1rakishou.model.data.catalog.ChanCompositeCatalogSnapshot
+import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.chan.catalog.ChanCatalogSnapshotEntity
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
@@ -15,7 +17,7 @@ class ChanCatalogSnapshotLocalSource(
   private val TAG = "ChanCatalogSnapshotLocalSource"
   private val chanCatalogSnapshotDao = database.chanCatalogSnapshotDao()
 
-  suspend fun storeChanCatalogSnapshot(chanCatalogSnapshot: ChanCatalogSnapshot) {
+  suspend fun storeChanCatalogSnapshot(chanCatalogSnapshot: IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>) {
     ensureInTransaction()
 
     if (chanCatalogSnapshot.isEmpty()) {
@@ -25,8 +27,9 @@ class ChanCatalogSnapshotLocalSource(
     val catalogSnapshot = chanCatalogSnapshotCache.getOrPut(
       key = chanCatalogSnapshot.catalogDescriptor,
       valueFunc = {
-        return@getOrPut ChanCatalogSnapshot(
+        return@getOrPut IChanCatalogSnapshot.fromSortedThreadDescriptorList(
           catalogDescriptor = chanCatalogSnapshot.catalogDescriptor,
+          threadDescriptors = emptyList(),
           isUnlimitedCatalog = chanCatalogSnapshot.isUnlimitedCatalog
         )
       }
@@ -109,7 +112,22 @@ class ChanCatalogSnapshotLocalSource(
 
       val prevCatalogSnapshot = chanCatalogSnapshotCache.getOrPut(
         key = catalogDescriptor,
-        valueFunc = { ChanCatalogSnapshot(catalogDescriptor, isUnlimitedCatalog) }
+        valueFunc = {
+          when (catalogDescriptor) {
+            is ChanDescriptor.CatalogDescriptor -> {
+              ChanCatalogSnapshot(
+                catalogDescriptor = catalogDescriptor,
+                isUnlimitedCatalog = isUnlimitedCatalog
+              ) as IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
+            }
+            is ChanDescriptor.CompositeCatalogDescriptor -> {
+              ChanCompositeCatalogSnapshot(
+                catalogDescriptor = catalogDescriptor
+              ) as IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
+            }
+          }
+
+        }
       )
 
       success = true
@@ -120,7 +138,7 @@ class ChanCatalogSnapshotLocalSource(
   }
 
   fun getCatalogSnapshot(catalogDescriptor: ChanDescriptor.CatalogDescriptor): ChanCatalogSnapshot? {
-    return chanCatalogSnapshotCache.get(catalogDescriptor)
+    return chanCatalogSnapshotCache.get(catalogDescriptor) as ChanCatalogSnapshot?
   }
 
 }

@@ -185,7 +185,7 @@ class ThreadPresenter @Inject constructor(
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
-  override val isUnlimitedCatalog: Boolean
+  override val isUnlimitedOrCompositeCatalog: Boolean
     get() {
       val descriptor = currentChanDescriptor
         ?: return false
@@ -195,7 +195,6 @@ class ThreadPresenter @Inject constructor(
       }
 
       if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
         return true
       }
 
@@ -211,7 +210,7 @@ class ThreadPresenter @Inject constructor(
       return boardManager.byBoardDescriptor(descriptor.boardDescriptor())?.isUnlimitedCatalog ?: false
     }
 
-  override val unlimitedCatalogEndReached: Boolean
+  override val unlimitedOrCompositeCatalogEndReached: Boolean
     get() {
       val descriptor = currentChanDescriptor
         ?: return false
@@ -329,14 +328,11 @@ class ThreadPresenter @Inject constructor(
     chanThreadManager.bindChanDescriptor(chanDescriptor)
 
     when (chanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         currentOpenedDescriptorStateManager.updateCatalogDescriptor(chanDescriptor)
       }
       is ChanDescriptor.ThreadDescriptor -> {
         currentOpenedDescriptorStateManager.updateThreadDescriptor(chanDescriptor)
-      }
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
       }
     }
 
@@ -364,11 +360,7 @@ class ThreadPresenter @Inject constructor(
       onDemandContentLoaderManager.cancelAllForDescriptor(currentChanDescriptor)
 
       when (currentChanDescriptor) {
-        is ChanDescriptor.CatalogDescriptor -> {
-          currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
-          chanCatalogSnapshotCache.delete(currentChanDescriptor)
-        }
-        is ChanDescriptor.CompositeCatalogDescriptor -> {
+        is ChanDescriptor.ICatalogDescriptor -> {
           currentOpenedDescriptorStateManager.updateCatalogDescriptor(null)
           chanCatalogSnapshotCache.delete(currentChanDescriptor)
         }
@@ -1484,12 +1476,11 @@ class ThreadPresenter @Inject constructor(
         POST_OPTION_DELETE -> requestDeletePost(post)
         POST_OPTION_SAVE -> saveUnsavePost(post)
         POST_OPTION_BOOKMARK -> {
-          val threadDescriptor = currentChanDescriptor?.toThreadDescriptor(post.postNo())
-            ?: return@post
-
-          if (!post.postDescriptor.isOP()) {
+          if (post !is ChanOriginalPost) {
             return@post
           }
+
+          val threadDescriptor = post.postDescriptor.threadDescriptor()
 
           chanPostRepository.createEmptyThreadIfNotExists(threadDescriptor)
             .safeUnwrap { error ->
@@ -1499,16 +1490,15 @@ class ThreadPresenter @Inject constructor(
 
           bookmarksManager.createBookmark(
             threadDescriptor,
-            ChanPostUtils.getTitle(post as ChanOriginalPost, currentChanDescriptor),
+            ChanPostUtils.getTitle(post, currentChanDescriptor),
             post.firstImage()?.actualThumbnailUrl
           )
         }
         POST_OPTION_OPEN_BROWSER -> if (isBound) {
-          val site = currentChanDescriptor?.let { chanDescriptor ->
-            siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-          } ?: return@post
+          val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+            ?: return@post
 
-          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.postNo())
+          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
           openLink(url)
         }
         POST_OPTION_OPEN_IN_ARCHIVE -> {
@@ -1522,11 +1512,10 @@ class ThreadPresenter @Inject constructor(
           }
         }
         POST_OPTION_SHARE -> if (isBound) {
-          val site = currentChanDescriptor?.let { chanDescriptor ->
-            siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-          } ?: return@post
+          val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
+            ?: return@post
 
-          val url = site.resolvable().desktopUrl(currentChanDescriptor!!, post.postNo())
+          val url = site.resolvable().desktopUrl(post.postDescriptor.descriptor, post.postNo())
           shareLink(url)
         }
         POST_OPTION_REMOVE,

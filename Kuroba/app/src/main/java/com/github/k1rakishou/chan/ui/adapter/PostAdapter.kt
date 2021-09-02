@@ -383,7 +383,7 @@ class PostAdapter(
       return false
     }
 
-    return postAdapterCallback.isUnlimitedCatalog
+    return postAdapterCallback.isUnlimitedOrCompositeCatalog
   }
 
   suspend fun updatePost(updatedPost: ChanPost) {
@@ -518,7 +518,7 @@ class PostAdapter(
         return
       }
 
-      if (postAdapterCallback.unlimitedCatalogEndReached) {
+      if (postAdapterCallback.unlimitedOrCompositeCatalogEndReached) {
         catalogStatusCell.onCatalogEndReached()
         return
       }
@@ -552,8 +552,8 @@ class PostAdapter(
 
   interface PostAdapterCallback {
     val currentChanDescriptor: ChanDescriptor?
-    val isUnlimitedCatalog: Boolean
-    val unlimitedCatalogEndReached: Boolean
+    val isUnlimitedOrCompositeCatalog: Boolean
+    val unlimitedOrCompositeCatalogEndReached: Boolean
 
     fun loadCatalogPage(overridePage: Int? = null)
     fun getNextPage(): Int?

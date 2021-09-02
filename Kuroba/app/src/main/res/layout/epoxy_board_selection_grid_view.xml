@@ -1,32 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="?attr/selectableItemBackground"
-    android:orientation="vertical"
     android:paddingTop="8dp"
     android:paddingBottom="8dp"
     tools:layout_width="96dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_code"
+    <LinearLayout
+        android:id="@+id/background_view"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:textSize="16sp"
-        android:singleLine="true"
-        android:ellipsize="end"
-        tools:text="/verylongboardname/" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_name"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:textSize="12sp"
-        android:maxLines="3"
-        android:ellipsize="end"
-        tools:text="Anime and Manga" />
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/top_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:textSize="16sp"
+            android:singleLine="true"
+            android:ellipsize="end"
+            tools:text="/verylongboardname/" />
 
-</LinearLayout>
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/bottom_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="center_horizontal"
+            android:textSize="12sp"
+            android:maxLines="3"
+            android:ellipsize="end"
+            tools:text="Anime and Manga" />
+
+    </LinearLayout>
+
+</FrameLayout>

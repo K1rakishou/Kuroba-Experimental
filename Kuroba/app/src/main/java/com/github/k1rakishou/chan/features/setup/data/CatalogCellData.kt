@@ -16,7 +16,7 @@ class CatalogCellData(
         return@lazy "/${catalogDescriptor.boardDescriptor.boardCode}/"
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        return@lazy "/Composite board/"
+        return@lazy catalogDescriptor.userReadableString()
       }
     }
   }

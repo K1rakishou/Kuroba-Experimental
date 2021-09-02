@@ -1,41 +1,49 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/root_view"
     android:layout_width="match_parent"
     android:layout_height="48dp"
     android:background="?attr/selectableItemBackground"
-    android:orientation="horizontal"
     android:paddingTop="8dp"
     android:paddingBottom="8dp">
 
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_code"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="18sp"
-        tools:text="/a/" />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_separator"
-        android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="18sp"
-        android:text=" — " />
-
-    <com.google.android.material.textview.MaterialTextView
-        android:id="@+id/board_name"
+    <LinearLayout
+        android:id="@+id/background_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:ellipsize="end"
-        android:gravity="center_vertical"
-        android:maxLines="1"
-        android:textSize="18sp"
-        tools:text="Anime and Manga" />
+        android:orientation="horizontal">
 
-</LinearLayout>
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/top_title"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="18sp"
+            tools:text="/a/" />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/board_separator"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="18sp"
+            android:text=" — " />
+
+        <com.google.android.material.textview.MaterialTextView
+            android:id="@+id/bottom_title"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:ellipsize="end"
+            android:gravity="center_vertical"
+            android:maxLines="1"
+            android:textSize="18sp"
+            tools:text="Anime and Manga" />
+
+    </LinearLayout>
+
+</FrameLayout>

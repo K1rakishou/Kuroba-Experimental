@@ -18,7 +18,6 @@ import com.github.k1rakishou.model.repository.BoardRepository
 import dagger.Lazy
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -34,12 +33,12 @@ import kotlin.time.measureTime
 class BoardManager(
   private val appScope: CoroutineScope,
   private val isDevFlavor: Boolean,
-  private val _boardRepository: Lazy<BoardRepository>
+  private val _boardRepository: Lazy<BoardRepository>,
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) {
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = DebouncingCoroutineExecutor(appScope)
 
-  private val currentCatalogSubject = BehaviorProcessor.create<CurrentCatalog>()
   private val boardsChangedSubject = PublishProcessor.create<Unit>()
   private val boardMovedSubject = PublishProcessor.create<Unit>()
 
@@ -140,17 +139,6 @@ class BoardManager(
       .doOnError { error -> Logger.e(TAG, "Error while listening for boardMovedSubject updates", error) }
       .hide()
   }
-
-  fun listenForCurrentSelectedCatalog(): Flowable<CurrentCatalog> {
-    return currentCatalogSubject
-      .onBackpressureLatest()
-      .distinctUntilChanged()
-      .observeOn(AndroidSchedulers.mainThread())
-      .doOnError { error -> Logger.e(TAG, "Error while listening for currentBoardSubject", error) }
-      .hide()
-  }
-
-  fun currentCatalogDescriptor(): ChanDescriptor.ICatalogDescriptor? = currentCatalogSubject.value?.catalogDescriptor
 
   suspend fun createOrUpdateBoards(boards: List<ChanBoard>): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
@@ -273,37 +261,47 @@ class BoardManager(
     }
 
     persistBoards()
-
-    when (val currentBoard = currentCatalogSubject.value) {
-      null,
-      CurrentCatalog.Empty -> {
-        if (activate) {
-          currentCatalogSubject.onNext(CurrentCatalog.create(boardDescriptors.first()))
-        }
-      }
-      is CurrentCatalog.Catalog -> {
-        when (currentBoard.catalogDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> {
-            if (currentBoard.catalogDescriptor.boardDescriptor in boardDescriptors && !activate) {
-              val firstActiveBoard = firstBoardDescriptor(siteDescriptor)
-              if (firstActiveBoard != null) {
-                currentCatalogSubject.onNext(CurrentCatalog.create(firstActiveBoard))
-              } else {
-                currentCatalogSubject.onNext(CurrentCatalog.Empty)
-              }
-            }
-          }
-          is ChanDescriptor.CompositeCatalogDescriptor -> {
-            // TODO(KurobaEx): CompositeCatalogDescriptor
-          }
-          else -> currentCatalogSubject.onNext(CurrentCatalog.Empty)
-        }
-      }
-    }
-
+    updateCurrentCatalogDescriptorIfNeeded(activate, boardDescriptors, siteDescriptor)
     boardsChanged()
 
     return true
+  }
+
+  private fun updateCurrentCatalogDescriptorIfNeeded(
+    activate: Boolean,
+    boardDescriptors: Collection<BoardDescriptor>,
+    siteDescriptor: SiteDescriptor
+  ) {
+    val currentCatalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
+    if (currentCatalogDescriptor == null) {
+      if (!activate) {
+        return
+      }
+
+      val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptors.first())
+      currentOpenedDescriptorStateManager.updateCatalogDescriptor(catalogDescriptor)
+      return
+    }
+
+    if (activate) {
+      return
+    }
+
+    if (currentCatalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      // TODO(KurobaEx): CompositeCatalogDescriptor
+      return
+    }
+
+    currentCatalogDescriptor as ChanDescriptor.CatalogDescriptor
+
+    val deactivatingCurrentCatalog = boardDescriptors
+      .any { boardDescriptor -> boardDescriptor == currentCatalogDescriptor.boardDescriptor }
+
+    if (deactivatingCurrentCatalog) {
+      val firstCatalogDescriptor = firstBoardDescriptor(siteDescriptor)
+        ?.let { boardDescriptor -> ChanDescriptor.CatalogDescriptor.create(boardDescriptor) }
+      currentOpenedDescriptorStateManager.updateCatalogDescriptor(firstCatalogDescriptor)
+    }
   }
 
   fun firstBoardDescriptor(siteDescriptor: SiteDescriptor): BoardDescriptor? {
@@ -325,17 +323,6 @@ class BoardManager(
 
       return@read null
     }
-  }
-
-  fun updateCurrentCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor?) {
-    check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
-    ensureBoardsAndOrdersConsistency()
-
-    if (currentCatalogSubject.value?.catalogDescriptor == catalogDescriptor) {
-      return
-    }
-
-    currentCatalogSubject.onNext(CurrentCatalog.create(catalogDescriptor))
   }
 
   fun viewBoards(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Unit) {
@@ -674,29 +661,6 @@ class BoardManager(
       archive = newBoard.archive,
       isUnlimitedCatalog = newBoard.isUnlimitedCatalog,
     )
-  }
-
-  sealed class CurrentCatalog(val catalogDescriptor: ChanDescriptor.ICatalogDescriptor?) {
-    object Empty : CurrentCatalog(null)
-    class Catalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) : CurrentCatalog(catalogDescriptor)
-
-    companion object {
-      fun create(boardDescriptor: BoardDescriptor?): CurrentCatalog {
-        if (boardDescriptor == null) {
-          return Empty
-        }
-
-        return Catalog(ChanDescriptor.CatalogDescriptor.create(boardDescriptor))
-      }
-
-      fun create(catalogDescriptor: ChanDescriptor.ICatalogDescriptor?): CurrentCatalog {
-        if (catalogDescriptor == null) {
-          return Empty
-        }
-
-        return Catalog(catalogDescriptor)
-      }
-    }
   }
 
   enum class BoardViewMode {

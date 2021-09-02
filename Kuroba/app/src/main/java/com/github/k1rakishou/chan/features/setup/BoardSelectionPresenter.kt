@@ -1,10 +1,11 @@
 package com.github.k1rakishou.chan.features.setup
 
 import com.github.k1rakishou.chan.core.base.BasePresenter
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
@@ -14,8 +15,9 @@ import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.site.ChanSiteData
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
@@ -25,7 +27,7 @@ import kotlinx.coroutines.launch
 class BoardSelectionPresenter(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val archivesManager: ArchivesManager,
+  private val compositeCatalogManager: CompositeCatalogManager,
   private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 ) : BasePresenter<BoardSelectionView>() {
   private val stateSubject = PublishProcessor.create<BoardSelectionControllerState>()
@@ -53,32 +55,43 @@ class BoardSelectionPresenter(
       .hide()
   }
 
-  fun onSearchQueryChanged(query: String) {
+  suspend fun onSearchQueryChanged(query: String) {
     showActiveSitesWithBoardsSorted(query)
   }
 
   fun reloadBoards() {
-    showActiveSitesWithBoardsSorted()
+    scope.launch { showActiveSitesWithBoardsSorted() }
   }
 
-  private fun showActiveSitesWithBoardsSorted(query: String = "") {
+  private suspend fun showActiveSitesWithBoardsSorted(query: String = "") {
+    val siteCellDataList = mutableListOf<SiteCellData>()
     val resultMap = linkedMapOf<SiteCellData, List<CatalogCellData>>()
     val activeSiteCount = siteManager.activeSiteCount()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
-      val siteCellData = SiteCellData(
+      siteCellDataList += SiteCellData(
         siteDescriptor = chanSiteData.siteDescriptor,
         siteIcon = site.icon(),
         siteName = site.name(),
         siteEnableState = SiteEnableState.Active
       )
 
-      val collectedBoards = collectBoards(query, chanSiteData, activeSiteCount)
-      if (collectedBoards.isNotEmpty()) {
-        resultMap[siteCellData] = collectedBoards
+      return@viewActiveSitesOrderedWhile true
+    }
+
+    siteCellDataList.forEach { siteCellData ->
+      val site = siteManager.bySiteDescriptor(siteCellData.siteDescriptor)
+        ?: return@forEach
+
+      val collectedCatalogCellData = if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+        collectCatalogCellDataFromCompositeCatalogs(query, activeSiteCount)
+      } else {
+        collectCatalogCellDataFromBoards(query, siteCellData.siteDescriptor, activeSiteCount)
       }
 
-      return@viewActiveSitesOrderedWhile true
+      if (collectedCatalogCellData.isNotEmpty()) {
+        resultMap[siteCellData] = collectedCatalogCellData
+      }
     }
 
     if (resultMap.isEmpty()) {
@@ -95,9 +108,70 @@ class BoardSelectionPresenter(
     setState(newState)
   }
 
-  private fun collectBoards(
+  private suspend fun collectCatalogCellDataFromCompositeCatalogs(
     query: String,
-    chanSiteData: ChanSiteData,
+    activeSiteCount: Int
+  ): List<CatalogCellData> {
+    val catalogCellDataList = mutableListOf<CatalogCellData>()
+
+    val iteratorFunc = iteratorFunc@ { compositeCatalog: CompositeCatalog ->
+      val boardCodes = compositeCatalog.compositeCatalogDescriptor.userReadableString()
+      val compositeCatalogName = compositeCatalog.name
+
+      val matches = query.isEmpty()
+        || boardCodes.contains(query, ignoreCase = true)
+        || compositeCatalogName.contains(query, ignoreCase = true)
+
+      if (!matches) {
+        return@iteratorFunc
+      }
+
+      catalogCellDataList += CatalogCellData(
+        searchQuery = query,
+        catalogDescriptor = compositeCatalog.compositeCatalogDescriptor,
+        boardName = compositeCatalogName,
+        description = boardCodes
+      )
+    }
+
+    if (query.isEmpty()) {
+      compositeCatalogManager.viewCatalogsOrdered(iteratorFunc)
+      return catalogCellDataList
+    }
+
+    compositeCatalogManager.viewCatalogsOrdered(iteratorFunc)
+
+    val sortedCatalogCellData = InputWithQuerySorter.sort(
+      input = catalogCellDataList,
+      query = query,
+      textSelector = { catalogCellData ->
+        return@sort when (catalogCellData.catalogDescriptor) {
+          is ChanDescriptor.CatalogDescriptor -> {
+            catalogCellData.catalogDescriptor.boardCode()
+          }
+          is ChanDescriptor.CompositeCatalogDescriptor -> {
+            catalogCellData.catalogDescriptor.userReadableString()
+          }
+        }
+      }
+    )
+
+    if (query.isEmpty() || activeSiteCount <= 1) {
+      return sortedCatalogCellData
+    }
+
+    val maxBoardsToShow = if (isTablet()) {
+      MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
+    } else {
+      MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
+    }
+
+    return sortedCatalogCellData.take(maxBoardsToShow)
+  }
+
+  private fun collectCatalogCellDataFromBoards(
+    query: String,
+    siteDescriptor: SiteDescriptor,
     activeSiteCount: Int
   ): List<CatalogCellData> {
     val boardCellDataList = mutableListOf<CatalogCellData>()
@@ -123,11 +197,11 @@ class BoardSelectionPresenter(
     }
 
     if (query.isEmpty()) {
-      boardManager.viewActiveBoardsOrdered(chanSiteData.siteDescriptor, iteratorFunc)
+      boardManager.viewActiveBoardsOrdered(siteDescriptor, iteratorFunc)
       return boardCellDataList
     }
 
-    boardManager.viewAllBoards(chanSiteData.siteDescriptor, iteratorFunc)
+    boardManager.viewAllBoards(siteDescriptor, iteratorFunc)
 
     val sortedBoards = InputWithQuerySorter.sort(
       input = boardCellDataList,
@@ -149,9 +223,9 @@ class BoardSelectionPresenter(
     }
 
     val maxBoardsToShow = if (isTablet()) {
-      MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET
+      MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
     } else {
-      MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE
+      MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
     }
 
     return sortedBoards.take(maxBoardsToShow)
@@ -163,7 +237,7 @@ class BoardSelectionPresenter(
 
   companion object {
     private const val TAG = "BoardSelectionPresenter"
-    const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
-    const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
+    const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
+    const val MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
   }
 }

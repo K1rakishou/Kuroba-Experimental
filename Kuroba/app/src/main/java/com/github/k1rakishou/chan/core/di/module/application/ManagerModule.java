@@ -150,13 +150,15 @@ public class ManagerModule {
     @Singleton
     public BoardManager provideBoardManager(
             CoroutineScope appScope,
-            Lazy<BoardRepository> boardRepository
+            Lazy<BoardRepository> boardRepository,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         Logger.deps("BoardManager");
         return new BoardManager(
                 appScope,
                 AppModuleAndroidUtils.isDevBuild(),
-                boardRepository
+                boardRepository,
+                currentOpenedDescriptorStateManager
         );
     }
 
@@ -839,10 +841,14 @@ public class ManagerModule {
     @Singleton
     @Provides
     public CompositeCatalogManager provideCompositeCatalogManager(
-            CompositeCatalogRepository compositeCatalogRepository
+            CompositeCatalogRepository compositeCatalogRepository,
+            CurrentOpenedDescriptorStateManager currentOpenedDescriptorStateManager
     ) {
         Logger.deps("CompositeCatalogManager");
-        return new CompositeCatalogManager(compositeCatalogRepository);
+        return new CompositeCatalogManager(
+                compositeCatalogRepository,
+                currentOpenedDescriptorStateManager
+        );
     }
 
 }

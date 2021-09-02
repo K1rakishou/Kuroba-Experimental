@@ -238,6 +238,8 @@ sealed class ChanDescriptor {
     val catalogDescriptors: List<CatalogDescriptor>
   ) : ChanDescriptor(), ICatalogDescriptor {
     private val _asSet by lazy { catalogDescriptors.toSet() }
+    val asSet: Set<CatalogDescriptor>
+      get() = _asSet
 
     init {
       check(catalogDescriptors.isNotEmpty()) {

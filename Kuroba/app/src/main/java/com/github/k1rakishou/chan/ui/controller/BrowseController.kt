@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -219,7 +220,7 @@ class BrowseController(
         }
 
         override fun onCatalogSelected(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
-          if (boardManager.currentCatalogDescriptor() == catalogDescriptor) {
+          if (currentOpenedDescriptorStateManager.currentCatalogDescriptor == catalogDescriptor) {
             return
           }
 
@@ -270,7 +271,7 @@ class BrowseController(
     }
 
     val is4chan = isCurrentCatalogSiteDescriptor4chan()
-    val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
+    val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedOrCompositeCatalog
       && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
 
     overflowBuilder
@@ -694,6 +695,11 @@ class BrowseController(
         navigation.subtitle = getString(R.string.browse_controller_composite_catalog_subtitle_loading)
 
         updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {
+          val newTitle = presenter.getCompositeCatalogNavigationTitle(catalogDescriptor)
+          if (newTitle.isNotNullNorEmpty()) {
+            navigation.title = newTitle
+          }
+
           navigation.subtitle = presenter.getCompositeCatalogNavigationSubtitle(
             coroutineScope = this,
             context = context,
@@ -705,7 +711,6 @@ class BrowseController(
         }
       }
 
-      boardManager.updateCurrentCatalog(catalogDescriptor)
       threadLayout.presenter.bindChanDescriptor(catalogDescriptor as ChanDescriptor)
 
       if (!menuBuiltOnce) {
@@ -905,7 +910,7 @@ class BrowseController(
     }
 
     navigation.findSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE)?.let { openUnlimitedCatalogPageMenuItem ->
-      val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog
+      val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedOrCompositeCatalog
         && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
 
       openUnlimitedCatalogPageMenuItem.visible = isUnlimitedCatalog

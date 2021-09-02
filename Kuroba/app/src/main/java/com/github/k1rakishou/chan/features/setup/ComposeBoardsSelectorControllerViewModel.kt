@@ -143,9 +143,9 @@ class ComposeBoardsSelectorControllerViewModel : BaseViewModel() {
     }
 
     val maxBoardsToShow = if (AppModuleAndroidUtils.isTablet()) {
-      BoardSelectionPresenter.MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET
+      BoardSelectionPresenter.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_TABLET
     } else {
-      BoardSelectionPresenter.MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE
+      BoardSelectionPresenter.MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
     }
 
     return sortedBoards.take(maxBoardsToShow)

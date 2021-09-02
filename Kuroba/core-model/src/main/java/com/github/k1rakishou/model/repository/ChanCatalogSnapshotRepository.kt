@@ -6,6 +6,7 @@ import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.catalog.ChanCatalogSnapshot
+import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.source.local.ChanCatalogSnapshotLocalSource
 import kotlinx.coroutines.CoroutineScope
@@ -64,7 +65,7 @@ class ChanCatalogSnapshotRepository(
   }
 
   suspend fun storeChanCatalogSnapshot(
-    chanCatalogSnapshot: ChanCatalogSnapshot
+    chanCatalogSnapshot: IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
   ): ModularResult<Unit> {
     Logger.d(TAG, "storeChanCatalogSnapshot($chanCatalogSnapshot)")
 

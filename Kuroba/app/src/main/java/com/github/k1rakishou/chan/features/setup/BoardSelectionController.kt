@@ -8,11 +8,13 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
+import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelectionGridView
+import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionViewModel_
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionGridView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionListView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
@@ -57,7 +59,7 @@ class BoardSelectionController(
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var compositeCatalogManager: CompositeCatalogManager
   @Inject
   lateinit var currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
 
@@ -65,9 +67,14 @@ class BoardSelectionController(
     BoardSelectionPresenter(
       siteManager = siteManager,
       boardManager = boardManager,
-      archivesManager = archivesManager,
+      compositeCatalogManager = compositeCatalogManager,
       currentOpenedDescriptorStateManager = currentOpenedDescriptorStateManager
     )
+  }
+
+  private val spanCount by lazy {
+    val screenWidth = AndroidUtils.getDisplaySize(context).x
+    return@lazy (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
   }
 
   private val controller = BoardsSelectionEpoxyController()
@@ -160,9 +167,6 @@ class BoardSelectionController(
   private fun updateRecyclerLayoutMode() {
     val isGridMode = PersistableChanState.boardSelectionGridMode.get()
     if (isGridMode) {
-      val screenWidth = AndroidUtils.getDisplaySize(context).x
-      val spanCount = (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
-
       epoxyRecyclerView.layoutManager = GridLayoutManager(context, spanCount).apply {
         spanSizeLookup = controller.spanSizeLookup
       }
@@ -219,14 +223,25 @@ class BoardSelectionController(
             val gridMode = PersistableChanState.boardSelectionGridMode.get()
 
             boardCellDataList.forEach { boardCellData ->
+              val topTitle = when (boardCellData.catalogDescriptor) {
+                is ChanDescriptor.CatalogDescriptor -> boardCellData.boardCodeFormatted
+                is ChanDescriptor.CompositeCatalogDescriptor -> boardCellData.boardName
+              }
+
+              val bottomTitle = when (boardCellData.catalogDescriptor) {
+                is ChanDescriptor.CatalogDescriptor -> boardCellData.boardName
+                is ChanDescriptor.CompositeCatalogDescriptor -> boardCellData.boardCodeFormatted
+              }
+
               if (gridMode) {
                 epoxyBoardSelectionGridView {
                   id("boards_selection_board_selection_grid_view_${boardCellData.catalogDescriptor}")
-                  bindBoardCode(boardCellData.boardCodeFormatted)
-                  bindBoardName(boardCellData.boardName)
-                  bindQuery(boardCellData.searchQuery)
-                  bindCurrentlySelected(state.currentlySelected == boardCellData.catalogDescriptor)
-                  bindRowClickCallback {
+                  topTitle(topTitle)
+                  bottomTitle(bottomTitle)
+                  catalogDescriptor(boardCellData.catalogDescriptor)
+                  searchQuery(boardCellData.searchQuery)
+                  selected(state.currentlySelected == boardCellData.catalogDescriptor)
+                  clickListener {
                     callback.onCatalogSelected(boardCellData.catalogDescriptor)
                     pop()
                   }
@@ -234,11 +249,12 @@ class BoardSelectionController(
               } else {
                 epoxyBoardSelectionListView {
                   id("boards_selection_board_selection_list_view_${boardCellData.catalogDescriptor}")
-                  bindBoardCode(boardCellData.boardCodeFormatted)
-                  bindBoardName(boardCellData.boardName)
-                  bindQuery(boardCellData.searchQuery)
-                  bindCurrentlySelected(state.currentlySelected == boardCellData.catalogDescriptor)
-                  bindRowClickCallback {
+                  topTitle(topTitle)
+                  bottomTitle(bottomTitle)
+                  catalogDescriptor(boardCellData.catalogDescriptor)
+                  searchQuery(boardCellData.searchQuery)
+                  selected(state.currentlySelected == boardCellData.catalogDescriptor)
+                  clickListener {
                     callback.onCatalogSelected(boardCellData.catalogDescriptor)
                     pop()
                   }
@@ -265,10 +281,32 @@ class BoardSelectionController(
   }
 
   private class BoardsSelectionEpoxyController : EpoxyController() {
+    private val spanSizeLookup = object : GridLayoutManager.SpanSizeLookup() {
+      override fun getSpanSize(position: Int): Int {
+        val model = adapter.getModelAtPosition(position)
+
+        if (model is EpoxySiteSelectionViewModel_) {
+          return spanCount
+        }
+
+        if (model is EpoxyBoardSelectionGridView) {
+          if (model.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+            return spanCount / 2
+          }
+        }
+
+        return 1
+      }
+    }
+
     var callback: EpoxyController.() -> Unit = {}
 
     override fun buildModels() {
       callback(this)
+    }
+
+    override fun getSpanSizeLookup(): GridLayoutManager.SpanSizeLookup {
+      return spanSizeLookup
     }
   }
 

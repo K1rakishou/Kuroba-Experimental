@@ -18,9 +18,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.core.site.sites.Lainchan
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
-import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -159,17 +156,6 @@ class StartActivityStartupHandlerHelper(
   }
 
   private suspend fun getCatalogToOpen(): ChanDescriptor.ICatalogDescriptor? {
-    // TODO(KurobaEx): CompositeCatalogDescriptor
-    if (true) {
-      return ChanDescriptor.CompositeCatalogDescriptor.create(
-        listOf(
-          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "a")),
-          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Dvach.SITE_DESCRIPTOR, "a")),
-          ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Lainchan.SITE_DESCRIPTOR, "lain")),
-        )
-      )
-    }
-
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
     Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 

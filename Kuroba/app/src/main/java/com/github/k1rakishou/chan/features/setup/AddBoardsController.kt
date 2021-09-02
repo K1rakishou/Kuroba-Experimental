@@ -173,8 +173,9 @@ class AddBoardsController(
               boardSelected(selectableBoardCellData.selected)
               bindQuery(selectableBoardCellData.catalogCellData.searchQuery)
               onClickedCallback { isChecked ->
-                val boardDescriptor = selectableBoardCellData.catalogCellData.boardDescriptorOrNull
-                  ?: return@onClickedCallback
+                val boardDescriptor = checkNotNull(selectableBoardCellData.catalogCellData.boardDescriptorOrNull) {
+                  "Cannot use CompositeCatalogDescriptor here"
+                }
 
                 presenter.onBoardSelectionChanged(
                   boardDescriptor = boardDescriptor,

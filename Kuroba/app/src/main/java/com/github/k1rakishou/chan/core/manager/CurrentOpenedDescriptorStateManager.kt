@@ -7,8 +7,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 
 class CurrentOpenedDescriptorStateManager {
-  private val _currentCatalogDescriptorFlow = MutableStateFlow<ChanDescriptor.CatalogDescriptor?>(null)
-  val currentCatalogDescriptorFlow: StateFlow<ChanDescriptor.CatalogDescriptor?>
+  private val _currentCatalogDescriptorFlow = MutableStateFlow<ChanDescriptor.ICatalogDescriptor?>(null)
+  val currentCatalogDescriptorFlow: StateFlow<ChanDescriptor.ICatalogDescriptor?>
     get() = _currentCatalogDescriptorFlow.asStateFlow()
   val currentCatalogDescriptor: ChanDescriptor.ICatalogDescriptor?
     get() = currentCatalogDescriptorFlow.value
@@ -30,7 +30,7 @@ class CurrentOpenedDescriptorStateManager {
       }
     }
 
-  fun updateCatalogDescriptor(catalogDescriptor: ChanDescriptor.CatalogDescriptor?) {
+  fun updateCatalogDescriptor(catalogDescriptor: ChanDescriptor.ICatalogDescriptor?) {
     _currentCatalogDescriptorFlow.value = catalogDescriptor
   }
 

@@ -11,8 +11,8 @@ open class GenericCacheSource<Key, Value>(
   private val maxSize: Int = DEFAULT_MAX_SIZE,
   private val cacheEntriesToRemovePerTrim: Int = maxSize / 20
 ) : CacheSource<Key, Value> {
-  private val lock = ReentrantReadWriteLock()
-  private val actualCache = LinkedHashMap<Key, Value>(capacity)
+  protected val lock = ReentrantReadWriteLock()
+  protected val actualCache = LinkedHashMap<Key, Value>(capacity)
 
   init {
     check(maxSize >= cacheEntriesToRemovePerTrim) {
