@@ -105,13 +105,17 @@ data class ChanCatalogSnapshot(
   }
 
   private fun getStartCatalogPage(): Int {
-    return IChanCatalogSnapshot.START_PAGE_UNLIMITED_CATALOG
+    return START_PAGE_UNLIMITED_CATALOG
   }
 
   override fun toString(): String {
     return "ChanCatalogSnapshot{catalogDescriptor=$catalogDescriptor, " +
       "chanCatalogSnapshotEntryList=${chanCatalogSnapshotEntryList.size}, " +
       "currentCatalogPage=${currentCatalogPage}, endReached=${endReached}}"
+  }
+
+  companion object {
+    const val START_PAGE_UNLIMITED_CATALOG = 1
   }
 
 }

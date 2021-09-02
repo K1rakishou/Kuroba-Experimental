@@ -305,7 +305,7 @@ class SeenPostsManager(
       val catalogSnapshot = catalogSnapshotCache.get(catalogDescriptor)
         ?: return@read emptyList()
 
-      if (catalogDescriptor != lastLoadedCatalogDescriptor || !catalogSnapshot.isUnlimitedCatalog) {
+      if (catalogDescriptor != lastLoadedCatalogDescriptor || !catalogSnapshot.isUnlimitedOrCompositeCatalog) {
         alreadyLoadedDescriptorsForUnlimitedCatalog.clear()
         lastLoadedCatalogDescriptor = catalogDescriptor
       }
@@ -315,7 +315,7 @@ class SeenPostsManager(
           threadDescriptor !in alreadyLoadedDescriptorsForUnlimitedCatalog && threadDescriptor !in seenPostsMap
         }
 
-      if (catalogSnapshot.isUnlimitedCatalog) {
+      if (catalogSnapshot.isUnlimitedOrCompositeCatalog) {
         alreadyLoadedDescriptorsForUnlimitedCatalog.addAll(catalogSnapshot.catalogThreadDescriptorSet)
       }
 

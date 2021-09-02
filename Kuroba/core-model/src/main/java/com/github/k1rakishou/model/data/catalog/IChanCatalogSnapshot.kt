@@ -21,8 +21,6 @@ interface IChanCatalogSnapshot<T : ChanDescriptor.ICatalogDescriptor> {
   fun updateCatalogPage(overridePage: Int)
 
   companion object {
-    const val START_PAGE_COMPOSITE_CATALOG = 0
-    const val START_PAGE_UNLIMITED_CATALOG = 1
 
     fun <T : ChanDescriptor.ICatalogDescriptor> fromSortedThreadDescriptorList(
       catalogDescriptor: T,

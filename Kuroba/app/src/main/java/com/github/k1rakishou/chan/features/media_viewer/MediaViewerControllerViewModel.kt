@@ -149,7 +149,13 @@ class MediaViewerControllerViewModel : ViewModel() {
           val catalogDescriptor = viewableMediaParcelableHolder.catalogDescriptor
           val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
           val postDescriptors = viewableMediaParcelableHolder.threadNoList
-            .map { threadNo -> PostDescriptor.create(catalogDescriptor, threadNo) }
+            .map { threadNo ->
+              return@map PostDescriptor.create(
+                chanDescriptor = catalogDescriptor,
+                threadNo = threadNo,
+                postNo = threadNo
+              )
+            }
 
           collectCatalogMedia(catalogDescriptor, initialImageUrl, postDescriptors)
         }

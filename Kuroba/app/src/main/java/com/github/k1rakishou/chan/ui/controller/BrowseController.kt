@@ -271,16 +271,16 @@ class BrowseController(
     }
 
     val is4chan = isCurrentCatalogSiteDescriptor4chan()
-    val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedOrCompositeCatalog
-      && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
+    val isCompositeCatalog = threadLayout.presenter.currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
+    val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog && !isCompositeCatalog
 
     overflowBuilder
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
       .addSortMenu()
       .addDevMenu()
       .withSubItem(ACTION_CATALOG_ALBUM, R.string.action_catalog_album, { threadLayout.presenter.showAlbum() })
-      .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, { item -> openBrowserClicked(item) })
-      .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, { item -> openThreadById(item) })
+      .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, !isCompositeCatalog, { item -> openBrowserClicked(item) })
+      .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, !isCompositeCatalog, { item -> openThreadById(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
       .withSubItem(ACTION_OPEN_MEDIA_BY_URL, R.string.action_open_media_by_url, { item -> openMediaByUrl(item) })
       .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
@@ -531,7 +531,7 @@ class BrowseController(
   }
 
   private fun openThreadById(item: ToolbarMenuSubItem) {
-    if (chanDescriptor == null) {
+    if (chanDescriptor == null || chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
       return
     }
 
@@ -904,16 +904,37 @@ class BrowseController(
   }
 
   private fun updateMenuItems() {
-    navigation.findSubItem(ACTION_CHAN4_ARCHIVE)?.let { chan4ArchiveMenuItem ->
+    navigation.findSubItem(ACTION_CHAN4_ARCHIVE)?.let { menuItem ->
       val is4chan = isCurrentCatalogSiteDescriptor4chan()
-      chan4ArchiveMenuItem.visible = is4chan
+      menuItem.visible = is4chan
     }
 
-    navigation.findSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE)?.let { openUnlimitedCatalogPageMenuItem ->
+    navigation.findSubItem(ACTION_OPEN_THREAD_BY_ID)?.let { menuItem ->
+      val isNotCompositeCatalog =
+        threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
+
+      menuItem.visible = isNotCompositeCatalog
+    }
+
+    navigation.findSubItem(ACTION_OPEN_BROWSER)?.let { menuItem ->
+      val isNotCompositeCatalog =
+        threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
+
+      menuItem.visible = isNotCompositeCatalog
+    }
+
+    navigation.findSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE)?.let { menuItem ->
       val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedOrCompositeCatalog
         && threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
 
-      openUnlimitedCatalogPageMenuItem.visible = isUnlimitedCatalog
+      menuItem.visible = isUnlimitedCatalog
+    }
+
+    navigation.findSubItem(ACTION_SHARE)?.let { menuItem ->
+      val isNotCompositeCatalog =
+        threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
+
+      menuItem.visible = isNotCompositeCatalog
     }
   }
 

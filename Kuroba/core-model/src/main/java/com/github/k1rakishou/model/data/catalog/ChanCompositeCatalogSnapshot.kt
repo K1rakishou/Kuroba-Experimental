@@ -124,13 +124,17 @@ class ChanCompositeCatalogSnapshot(
   }
 
   private fun getStartCatalogPage(): Int {
-    return IChanCatalogSnapshot.START_PAGE_COMPOSITE_CATALOG
+    return START_PAGE_COMPOSITE_CATALOG
   }
 
   override fun toString(): String {
     return "ChanCompositeCatalogSnapshot{catalogDescriptor=$catalogDescriptor, " +
       "catalogThreadDescriptorList=${catalogThreadDescriptorList.size}, " +
       "currentCatalogPage=${currentCatalogPage}, endReached=${endReached}}"
+  }
+
+  companion object {
+    const val START_PAGE_COMPOSITE_CATALOG = 0
   }
 
 }

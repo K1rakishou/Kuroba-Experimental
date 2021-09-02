@@ -500,7 +500,7 @@ class ChanThreadLoaderCoordinator(
       val prevCatalogSnapshot = chanCatalogSnapshotCache.get(catalogSnapshotDescriptor)
 
       val isUnlimitedCatalog = when {
-        prevCatalogSnapshot != null -> prevCatalogSnapshot.isUnlimitedCatalog
+        prevCatalogSnapshot != null -> prevCatalogSnapshot.isUnlimitedOrCompositeCatalog
         chanDescriptor is ChanDescriptor.CatalogDescriptor -> {
           boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor)
             ?.isUnlimitedCatalog

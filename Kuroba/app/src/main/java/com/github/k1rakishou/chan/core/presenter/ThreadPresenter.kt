@@ -185,6 +185,31 @@ class ThreadPresenter @Inject constructor(
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
 
+  val isUnlimitedCatalog: Boolean
+    get() {
+      val descriptor = currentChanDescriptor
+        ?: return false
+
+      if (descriptor !is ChanDescriptor.ICatalogDescriptor) {
+        return false
+      }
+
+      if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        return false
+      }
+
+      val isUnlimitedCatalog = chanCatalogSnapshotCache.get(descriptor)?.isUnlimitedCatalog
+      if (isUnlimitedCatalog != null) {
+        return isUnlimitedCatalog
+      }
+
+      if (!boardManager.isReady()) {
+        return false
+      }
+
+      return boardManager.byBoardDescriptor(descriptor.boardDescriptor())?.isUnlimitedCatalog ?: false
+    }
+
   override val isUnlimitedOrCompositeCatalog: Boolean
     get() {
       val descriptor = currentChanDescriptor
