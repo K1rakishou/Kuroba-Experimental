@@ -23,15 +23,9 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.View
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -39,7 +33,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -54,8 +47,6 @@ import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.ContentAlpha
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -104,11 +95,11 @@ import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesCon
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
+import com.github.k1rakishou.chan.ui.compose.BuildNavigationHistoryHeaderSearchInput
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
@@ -145,7 +136,6 @@ import com.github.k1rakishou.chan.utils.countDigits
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.isDarkColor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -983,12 +973,23 @@ class MainController(
             .padding(start = 2.dp, end = 2.dp, bottom = 4.dp),
           horizontalArrangement = Arrangement.End
         ) {
-          BuildNavigationHistoryHeaderSearchInput(
-            chanTheme = chanTheme,
-            backgroundColor = backgroundColor,
-            searchQuery = searchQuery,
-            onSearchQueryChanged = onSearchQueryChanged
-          )
+          Row(
+            modifier = Modifier
+              .wrapContentHeight()
+              .weight(1f)
+          ) {
+            BuildNavigationHistoryHeaderSearchInput(
+              modifier = Modifier
+                .wrapContentHeight()
+                .fillMaxWidth()
+                .padding(start = 4.dp, end = 4.dp, top = 8.dp),
+              chanTheme = chanTheme,
+              themeEngine = themeEngine,
+              backgroundColor = backgroundColor,
+              searchQuery = searchQuery,
+              onSearchQueryChanged = onSearchQueryChanged
+            )
+          }
 
           Spacer(modifier = Modifier.width(8.dp))
 
@@ -1013,85 +1014,6 @@ class MainController(
           )
 
           Spacer(modifier = Modifier.width(16.dp))
-        }
-      }
-    }
-  }
-
-  @OptIn(ExperimentalAnimationApi::class)
-  @Composable
-  private fun RowScope.BuildNavigationHistoryHeaderSearchInput(
-    chanTheme: ChanTheme,
-    backgroundColor: Color,
-    searchQuery: String,
-    onSearchQueryChanged: (String) -> Unit
-  ) {
-    Row(
-      modifier = Modifier
-        .wrapContentHeight()
-        .weight(1f)
-        .padding(start = 4.dp, end = 4.dp, top = 8.dp)
-    ) {
-
-      Row(modifier = Modifier.wrapContentHeight()) {
-        Box(modifier = Modifier
-          .wrapContentHeight()
-          .weight(1f)
-          .align(Alignment.CenterVertically)
-          .padding(horizontal = 4.dp)
-        ) {
-          val interactionSource = remember { MutableInteractionSource() }
-
-          KurobaComposeCustomTextField(
-            modifier = Modifier
-              .wrapContentHeight()
-              .fillMaxWidth(),
-            fontSize = 16.sp,
-            singleLine = true,
-            maxLines = 1,
-            value = searchQuery,
-            onValueChange = { newValue -> onSearchQueryChanged(newValue) },
-            interactionSource = interactionSource
-          )
-
-          val isFocused by interactionSource.collectIsFocusedAsState()
-
-          androidx.compose.animation.AnimatedVisibility(
-            visible = !isFocused && searchQuery.isEmpty(),
-            enter = fadeIn(),
-            exit = fadeOut()
-          ) {
-            val alpha = ContentAlpha.medium
-
-            val color = remember(key1 = backgroundColor) {
-              if (isDarkColor(backgroundColor)) {
-                Color.LightGray.copy(alpha = alpha)
-              } else {
-                Color.DarkGray.copy(alpha = alpha)
-              }
-            }
-
-            Text(
-              text = stringResource(id = R.string.search_hint),
-              fontSize = 16.sp,
-              color = color
-            )
-          }
-        }
-
-        AnimatedVisibility(
-          visible = searchQuery.isNotEmpty(),
-          enter = fadeIn(),
-          exit = fadeOut()
-        ) {
-          KurobaComposeIcon(
-            modifier = Modifier
-              .align(Alignment.CenterVertically)
-              .kurobaClickable(bounded = false, onClick = { onSearchQueryChanged("") }),
-            drawableId = R.drawable.ic_clear_white_24dp,
-            themeEngine = themeEngine,
-            colorBelowIcon = chanTheme.primaryColorCompose
-          )
         }
       }
     }

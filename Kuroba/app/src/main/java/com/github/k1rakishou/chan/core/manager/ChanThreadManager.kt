@@ -219,28 +219,20 @@ class ChanThreadManager(
         }
       }
       is ChanDescriptor.ICatalogDescriptor -> {
-        val catalogDescriptors = if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
-          listOf(chanDescriptor)
-        } else {
-          (chanDescriptor as ChanDescriptor.CompositeCatalogDescriptor).catalogDescriptors
-        }
+        val chanCatalog = chanThreadsCache.getCatalog(chanDescriptor)
+          ?: return
 
-        catalogDescriptors.forEach { catalogDescriptor ->
-          val chanCatalog = chanThreadsCache.getCatalog(catalogDescriptor)
-            ?: return@forEach
+        if (postDescriptors != null) {
+          for (postDescriptor in postDescriptors) {
+            val post = chanCatalog.getPost(postDescriptor)
+              ?: continue
 
-          if (postDescriptors != null) {
-            for (postDescriptor in postDescriptors) {
-              val post = chanCatalog.getPost(postDescriptor)
-                ?: continue
-
-              if (!iterator(post)) {
-                return@forEach
-              }
+            if (!iterator(post)) {
+              return
             }
-          } else {
-            chanCatalog.iteratePostsOrderedWhile(iterator)
           }
+        } else {
+          chanCatalog.iteratePostsOrderedWhile(iterator)
         }
       }
     }

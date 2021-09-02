@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.site.sites.Chan370
+import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.Wired7
@@ -42,31 +43,6 @@ import java.util.*
  */
 object SiteRegistry {
 
-  val URL_HANDLERS: List<SiteUrlHandler> by lazy {
-    val handlers = mutableListOf<SiteUrlHandler>()
-
-    handlers.add(Chan4.URL_HANDLER)
-    handlers.add(Lainchan.URL_HANDLER)
-    handlers.add(Sushichan.URL_HANDLER)
-    handlers.add(Dvach.URL_HANDLER)
-    handlers.add(Wired7.URL_HANDLER)
-    handlers.add(Kun8.URL_HANDLER)
-    handlers.add(Chan420.URL_HANDLER)
-    handlers.add(ArchivedMoe.URL_HANDLER)
-    handlers.add(ForPlebs.URL_HANDLER)
-    handlers.add(Nyafuu.URL_HANDLER)
-    handlers.add(DesuArchive.URL_HANDLER)
-    handlers.add(Fireden.URL_HANDLER)
-    handlers.add(B4k.URL_HANDLER)
-    handlers.add(ArchiveOfSins.URL_HANDLER)
-    handlers.add(TokyoChronos.URL_HANDLER)
-    handlers.add(Warosu.URL_HANDLER)
-    handlers.add(WakarimasenMoe.URL_HANDLER)
-    handlers.add(Chan370.URL_HANDLER)
-
-    return@lazy handlers
-  }
-
   val SITE_CLASSES_MAP: Map<SiteDescriptor, Class<out Site>> by lazy {
     val siteClasses = mutableMapOf<SiteDescriptor, Class<out Site>>()
 
@@ -89,9 +65,12 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
 
+    // A synthetic site which only purpose is to have an order in the global site order for composed
+    // catalogs when showing them on the board selection screen.
+    siteClasses.addSiteToSiteClassesMap(CompositeCatalogSite.SITE_NAME, CompositeCatalogSite::class.java)
+
     return@lazy siteClasses
   }
-
 
   private fun MutableMap<SiteDescriptor, Class<out Site>>.addSiteToSiteClassesMap(
     siteName: String,

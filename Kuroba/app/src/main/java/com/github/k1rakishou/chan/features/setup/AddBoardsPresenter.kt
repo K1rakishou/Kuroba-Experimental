@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.AddBoardsControllerState
-import com.github.k1rakishou.chan.features.setup.data.BoardCellData
+import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SelectableBoardCellData
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
@@ -141,7 +141,7 @@ class AddBoardsPresenter(
       }
 
       matchedBoards += SelectableBoardCellData(
-        boardCellData = BoardCellData(
+        catalogCellData = CatalogCellData(
           searchQuery = query,
           catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
           boardName = chanBoard.boardName(),
@@ -158,14 +158,14 @@ class AddBoardsPresenter(
 
     val sortedBoards = if (query.isEmpty()) {
       matchedBoards.sortedBy { matchedBoard ->
-        matchedBoard.boardCellData.boardCodeOrComposedBoardCodes
+        matchedBoard.catalogCellData.boardCodeOrComposedBoardCodes
       }
     } else {
       InputWithQuerySorter.sort(
         input = matchedBoards,
         query = query,
         textSelector = { selectableBoardCellData ->
-          selectableBoardCellData.boardCellData.boardCodeOrComposedBoardCodes
+          selectableBoardCellData.catalogCellData.boardCodeOrComposedBoardCodes
         }
       )
     }

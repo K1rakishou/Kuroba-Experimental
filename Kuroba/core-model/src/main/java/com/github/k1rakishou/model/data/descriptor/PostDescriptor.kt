@@ -60,10 +60,19 @@ open class PostDescriptor protected constructor(
   }
 
   fun serializeToString(): String {
-    // PD_TD_4chan_g_12345678_345345345_0
+    // PD___TD___4chan___g___12345678___345345345___0
     // or
-    // PD_CD_4chan_g_345345345_0
-    return "PD_${descriptor.serializeToString()}_${postNo}_${postSubNo}"
+    // PD___CD___4chan___g___345345345___0
+
+    return buildString {
+      append("PD")
+      append(ChanDescriptor.SEPARATOR)
+      append(descriptor.serializeToString())
+      append(ChanDescriptor.SEPARATOR)
+      append(postNo)
+      append(ChanDescriptor.SEPARATOR)
+      append(postSubNo)
+    }
   }
 
   fun userReadableString(): String {
@@ -105,17 +114,17 @@ open class PostDescriptor protected constructor(
   companion object {
     private const val TAG = "PostDescriptor"
 
-    // PD_TD_4chan_g_12345678_345345345_0
-    // PD_CD_4chan_g_345345345_0
+    // PD___TD___4chan___g___12345678___345345345___0
+    // PD___CD___4chan___g___345345345___0
     fun deserializeFromString(postDescriptorString: String): PostDescriptor? {
-      val parts = postDescriptorString.split('_')
+      val parts = postDescriptorString.split(ChanDescriptor.SEPARATOR)
 
-      val postDescriptorMark = parts.getOrNull(0)?.toUpperCase(Locale.ENGLISH) ?: return null
+      val postDescriptorMark = parts.getOrNull(0)?.uppercase(Locale.ENGLISH) ?: return null
       if (postDescriptorMark != "PD") {
         return null
       }
 
-      val descriptorType = parts.getOrNull(1)?.toUpperCase(Locale.ENGLISH) ?: return null
+      val descriptorType = parts.getOrNull(1)?.uppercase(Locale.ENGLISH) ?: return null
       val siteName = parts.getOrNull(2) ?: return null
       val boardCode = parts.getOrNull(3) ?: return null
 
@@ -144,6 +153,10 @@ open class PostDescriptor protected constructor(
 
     @JvmStatic
     fun create(chanDescriptor: ChanDescriptor, postNo: Long): PostDescriptor {
+      check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+        "Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors"
+      }
+
       return when (chanDescriptor) {
         is ChanDescriptor.ThreadDescriptor -> create(
           siteName = chanDescriptor.siteName(),
@@ -179,6 +192,10 @@ open class PostDescriptor protected constructor(
 
     @JvmStatic
     fun create(chanDescriptor: ChanDescriptor, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
+      check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+        "Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors"
+      }
+
       return create(chanDescriptor.siteName(), chanDescriptor.boardCode(), threadNo, postNo, postSubNo)
     }
 

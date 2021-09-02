@@ -20,6 +20,8 @@ class Fireden : BaseFoolFuukaSite() {
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.FoolFuukaSearch
 
   override fun setup() {
+    super.setup()
+
     setEnabled(true)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))

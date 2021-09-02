@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.dao.ChanSiteDao
 import com.github.k1rakishou.model.dao.ChanTextSpanDao
 import com.github.k1rakishou.model.dao.ChanThreadDao
 import com.github.k1rakishou.model.dao.ChanThreadViewableInfoDao
+import com.github.k1rakishou.model.dao.CompositeCatalogDao
 import com.github.k1rakishou.model.dao.DatabaseMetaDao
 import com.github.k1rakishou.model.dao.ImageDownloadRequestDao
 import com.github.k1rakishou.model.dao.InlinedFileInfoDao
@@ -50,6 +51,7 @@ import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkReplyEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardEntity
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.catalog.ChanCatalogSnapshotEntity
+import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterWatchGroupEntity
@@ -86,6 +88,9 @@ import com.github.k1rakishou.model.migrations.Migration_v20_to_v21
 import com.github.k1rakishou.model.migrations.Migration_v21_to_v22
 import com.github.k1rakishou.model.migrations.Migration_v22_to_v23
 import com.github.k1rakishou.model.migrations.Migration_v23_to_v24
+import com.github.k1rakishou.model.migrations.Migration_v24_to_v25
+import com.github.k1rakishou.model.migrations.Migration_v25_to_v26
+import com.github.k1rakishou.model.migrations.Migration_v26_to_v27
 import com.github.k1rakishou.model.migrations.Migration_v2_to_v3
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
 import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
@@ -129,13 +134,14 @@ import java.util.concurrent.atomic.AtomicInteger
     ThreadBookmarkGroupEntity::class,
     ThreadBookmarkGroupEntryEntity::class,
     ImageDownloadRequestEntity::class,
-    ThreadDownloadEntity::class
+    ThreadDownloadEntity::class,
+    CompositeCatalogEntity::class
   ],
   views = [
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 24,
+  version = 27,
   exportSchema = true
 )
 @TypeConverters(
@@ -177,6 +183,7 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun chanFilterWatchGroupDao(): ChanFilterWatchGroupDao
   abstract fun imageDownloadRequestDao(): ImageDownloadRequestDao
   abstract fun threadDownloadDao(): ThreadDownloadDao
+  abstract fun compositeCatalogDao(): CompositeCatalogDao
 
   suspend fun ensureInTransaction() {
     require(inTransaction()) { "Must be executed in a transaction!" }
@@ -251,6 +258,9 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v21_to_v22(),
           Migration_v22_to_v23(),
           Migration_v23_to_v24(),
+          Migration_v24_to_v25(),
+          Migration_v25_to_v26(),
+          Migration_v26_to_v27(),
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

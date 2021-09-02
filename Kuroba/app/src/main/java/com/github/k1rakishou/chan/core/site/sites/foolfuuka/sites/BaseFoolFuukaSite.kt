@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites
 
+import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.common.CommonSite
@@ -14,6 +15,11 @@ abstract class BaseFoolFuukaSite : CommonSite() {
   )
 
   abstract fun rootUrl(): HttpUrl
+
+  @CallSuper
+  override fun setup() {
+    setCatalogType(Site.CatalogType.DYNAMIC)
+  }
 
   final override fun commentParserType(): CommentParserType = CommentParserType.FoolFuukaParser
 

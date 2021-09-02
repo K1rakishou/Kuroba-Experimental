@@ -100,6 +100,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="save">Save</string>
+    <string name="update">Update</string>
     <string name="send">Send</string>
     <string name="success">Success</string>
     <string name="error">Error</string>
@@ -1380,6 +1381,20 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="controller_saved_posts_delete_many_posts">Delete %1$d saved post(s)?</string>
     <string name="controller_saved_posts_delete_many_posts_description">This action will delete saved posts and unmark replies as yours in threads. Are you sure you want to do that?</string>
+
+    <string name="controller_compose_boards_title">Combine multiple boards into a single composite catalog.\n(Min: %1$d boards, Max: %2$d boards)</string>
+    <string name="controller_compose_boards_click_to_add_board">Click to add a board</string>
+    <string name="controller_compose_boards_enter_composite_catalog_name_title">Enter composite catalog name</string>
+    <string name="controller_compose_boards_enter_composite_catalog_name_descriptor">1–%1$d characters, the exceeding characters will be chopped off</string>
+    <string name="controller_compose_boards_default_name">Composite catalog</string>
+    <string name="controller_compose_boards_cannot_use_blank_name">Cannot use empty/blank composite catalog name</string>
+    <string name="controller_compose_boards_failed_to_create_composite_catalog">Failed to create/update composite catalog. Reason: \'%1$s\'</string>
+    <string name="controller_compose_boards_create_success">Successfully created/updated composite catalog</string>
+    <string name="controller_compose_boards_composite_catalog_already_exists">Composite catalog with boards \'%1$s\' already exists! Add more boards or remove some.</string>
+
+    <string name="controller_composite_catalogs_setup_title">Configure composite catalogs</string>
+    <string name="controller_composite_catalogs_empty_text">No composite catalogs created yet</string>
+    <string name="controller_composite_catalogs_catalog_deleted">Deleted \'%1$s\'</string>
 
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>

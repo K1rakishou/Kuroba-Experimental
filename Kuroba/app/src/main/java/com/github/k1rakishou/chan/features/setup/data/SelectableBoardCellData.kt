@@ -1,7 +1,7 @@
 package com.github.k1rakishou.chan.features.setup.data
 
 class SelectableBoardCellData(
-  val boardCellData: BoardCellData,
+  val catalogCellData: CatalogCellData,
   var selected: Boolean
 ) {
 
@@ -11,17 +11,17 @@ class SelectableBoardCellData(
 
     other as SelectableBoardCellData
 
-    if (boardCellData != other.boardCellData) return false
+    if (catalogCellData != other.catalogCellData) return false
 
     return true
   }
 
   override fun hashCode(): Int {
-    return boardCellData.hashCode()
+    return catalogCellData.hashCode()
   }
 
   override fun toString(): String {
-    return "SelectableBoardCellData(boardCellData=$boardCellData, selected=$selected)"
+    return "SelectableBoardCellData(boardCellData=$catalogCellData, selected=$selected)"
   }
 
 }

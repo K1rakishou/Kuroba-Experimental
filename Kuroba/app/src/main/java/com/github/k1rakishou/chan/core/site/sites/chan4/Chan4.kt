@@ -506,12 +506,21 @@ open class Chan4 : SiteBase() {
   }
 
   override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
-    return true // everything is supported
+    if (siteFeature == Site.SiteFeature.CATALOG_COMPOSITION) {
+      return false
+    }
+
+    // everything else is supported
+    return true
   }
 
   override fun boardsType(): Site.BoardsType {
     // yes, boards.json
     return Site.BoardsType.DYNAMIC
+  }
+
+  override fun catalogType(): Site.CatalogType {
+    return Site.CatalogType.STATIC
   }
 
   override fun boardFeature(boardFeature: Site.BoardFeature, board: ChanBoard): Boolean {

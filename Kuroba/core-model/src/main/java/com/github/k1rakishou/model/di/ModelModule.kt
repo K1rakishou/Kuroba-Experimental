@@ -17,6 +17,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.model.repository.CompositeCatalogRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
@@ -40,6 +41,7 @@ import com.github.k1rakishou.model.source.local.ChanPostImageLocalSource
 import com.github.k1rakishou.model.source.local.ChanPostLocalSource
 import com.github.k1rakishou.model.source.local.ChanSavedReplyLocalSource
 import com.github.k1rakishou.model.source.local.ChanThreadViewableInfoLocalSource
+import com.github.k1rakishou.model.source.local.CompositeCatalogLocalSource
 import com.github.k1rakishou.model.source.local.DatabaseMetaLocalSource
 import com.github.k1rakishou.model.source.local.ImageDownloadRequestLocalSource
 import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
@@ -343,6 +345,14 @@ class ModelModule {
     return ThreadDownloadLocalSource(database)
   }
 
+  @Singleton
+  @Provides
+  fun provideCompositeCatalogLocalSource(
+    database: KurobaDatabase
+  ): CompositeCatalogLocalSource {
+    return CompositeCatalogLocalSource(database)
+  }
+
   /**
    * Remote sources
    * */
@@ -641,6 +651,20 @@ class ModelModule {
     localSource: ThreadDownloadLocalSource
   ): ThreadDownloadRepository {
     return ThreadDownloadRepository(
+      database,
+      dependencies.coroutineScope,
+      localSource
+    )
+  }
+
+  @Singleton
+  @Provides
+  fun provideCompositeCatalogRepository(
+    database: KurobaDatabase,
+    dependencies: ModelComponent.Dependencies,
+    localSource: CompositeCatalogLocalSource
+  ): CompositeCatalogRepository {
+    return CompositeCatalogRepository(
       database,
       dependencies.coroutineScope,
       localSource

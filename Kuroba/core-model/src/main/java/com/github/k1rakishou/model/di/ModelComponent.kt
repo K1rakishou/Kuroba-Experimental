@@ -14,6 +14,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository
+import com.github.k1rakishou.model.repository.CompositeCatalogRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
@@ -61,6 +62,7 @@ interface ModelComponent {
   fun getImageDownloadRequestRepository(): ImageDownloadRequestRepository
   fun getThreadDownloadRepository(): ThreadDownloadRepository
   fun getChanCatalogSnapshotCache(): ChanCatalogSnapshotCache
+  fun getCompositeCatalogRepository(): CompositeCatalogRepository
 
   @Component.Builder
   interface Builder {

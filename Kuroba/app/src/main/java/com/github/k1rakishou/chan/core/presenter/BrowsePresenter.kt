@@ -20,11 +20,14 @@ import android.content.Context
 import android.graphics.Bitmap
 import android.text.SpannableStringBuilder
 import android.text.style.ImageSpan
+import androidx.core.graphics.drawable.toBitmap
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -37,10 +40,14 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
+import kotlin.time.Duration
+import kotlin.time.ExperimentalTime
 
 class BrowsePresenter @Inject constructor(
   private val appScope: CoroutineScope,
@@ -71,7 +78,7 @@ class BrowsePresenter @Inject constructor(
     this.callback = callback
 
     controllerScope.launch {
-      boardManager.listenForCurrentSelectedBoard()
+      boardManager.listenForCurrentSelectedCatalog()
         .asFlow()
         .collect { currentBoard ->
           val catalogDescriptor = currentBoard.catalogDescriptor
@@ -227,7 +234,9 @@ class BrowsePresenter @Inject constructor(
     Logger.d(TAG, "cacheEveryThreadClicked() done")
   }
 
+  @OptIn(ExperimentalTime::class)
   suspend fun getCompositeCatalogNavigationSubtitle(
+    coroutineScope: CoroutineScope,
     context: Context,
     fontSizePx: Int,
     compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
@@ -240,13 +249,17 @@ class BrowsePresenter @Inject constructor(
     catalogsBySites.entries
       .take(visibleSitesCount)
       .forEach { (siteDescriptor, catalogDescriptors) ->
-        val iconBitmap = siteManager.bySiteDescriptor(siteDescriptor)
-          ?.icon()
-          ?.getIconSuspend(context)
-          ?.bitmap
+        coroutineScope.ensureActive()
+
+        var iconBitmap = withTimeoutOrNull(Duration.seconds(5)) {
+          siteManager.bySiteDescriptor(siteDescriptor)
+            ?.icon()
+            ?.getIconSuspend(context)
+            ?.bitmap
+        }
 
         if (iconBitmap == null) {
-          return@forEach
+          iconBitmap = getDrawable(R.drawable.error_icon).toBitmap()
         }
 
         if (spannableStringBuilder.isNotEmpty()) {

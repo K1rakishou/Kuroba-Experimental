@@ -29,6 +29,8 @@ import com.github.k1rakishou.model.data.site.SiteBoards
 
 @DoNotStrip
 interface Site {
+  val isSynthetic: Boolean
+    get() = false
   val canCreateBoardsManually: Boolean
     get() = false
 
@@ -67,7 +69,13 @@ interface Site {
     /**
      * This site reports image hashes.
      */
-    IMAGE_FILE_HASH
+    IMAGE_FILE_HASH,
+
+    /**
+     * This is a special, synthetic, type of a site that is only used for catalog composition of
+     * other sites.
+     * */
+    CATALOG_COMPOSITION
   }
 
   /**
@@ -112,6 +120,15 @@ interface Site {
     INFINITE(false);
   }
 
+  enum class CatalogType {
+    // All catalog pages are available in the json/html, meaning they can be all loaded at once.
+    STATIC,
+
+    // Used by sites which catalogs are very big (thousands of pages) so they can't be loaded all
+    // at once and need to be loaded incrementally
+    DYNAMIC
+  }
+
   fun enabled(): Boolean
   fun initialize()
   fun postInitialize()
@@ -126,6 +143,7 @@ interface Site {
   fun siteDescriptor(): SiteDescriptor
   fun icon(): SiteIcon
   fun boardsType(): BoardsType
+  fun catalogType(): CatalogType
   fun resolvable(): SiteUrlHandler
   fun siteFeature(siteFeature: SiteFeature): Boolean
   fun boardFeature(boardFeature: BoardFeature, board: ChanBoard): Boolean
@@ -164,7 +182,7 @@ interface Site {
    * */
   fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 
-  fun postingLimitationInfo(): SitePostingLimitationInfo
+  fun postingLimitationInfo(): SitePostingLimitationInfo? = null
 
   fun <T : Setting<*>> requireSettingBySettingId(settingId: SiteSetting.SiteSettingId): T {
     return requireNotNull(getSettingBySettingId(settingId)) { "Setting ${settingId} not found for site ${siteDescriptor()}" }

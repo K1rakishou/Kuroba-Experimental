@@ -45,8 +45,7 @@ class ReloadPostsFromDatabaseUseCase(
           .unwrap()
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
-        return emptyList()
+        error("Cannot use CompositeCatalogDescriptor here")
       }
     }
   }

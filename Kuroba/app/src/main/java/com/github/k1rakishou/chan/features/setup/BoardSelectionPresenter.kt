@@ -5,8 +5,8 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
+import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteCellData
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -62,13 +62,13 @@ class BoardSelectionPresenter(
   }
 
   private fun showActiveSitesWithBoardsSorted(query: String = "") {
-    val resultMap = linkedMapOf<SiteCellData, List<BoardCellData>>()
+    val resultMap = linkedMapOf<SiteCellData, List<CatalogCellData>>()
     val activeSiteCount = siteManager.activeSiteCount()
 
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
       val siteCellData = SiteCellData(
         siteDescriptor = chanSiteData.siteDescriptor,
-        siteIcon = site.icon().url.toString(),
+        siteIcon = site.icon(),
         siteName = site.name(),
         siteEnableState = SiteEnableState.Active
       )
@@ -99,8 +99,8 @@ class BoardSelectionPresenter(
     query: String,
     chanSiteData: ChanSiteData,
     activeSiteCount: Int
-  ): List<BoardCellData> {
-    val boardCellDataList = mutableListOf<BoardCellData>()
+  ): List<CatalogCellData> {
+    val boardCellDataList = mutableListOf<CatalogCellData>()
 
     val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
       val boardCode = chanBoard.formattedBoardCode()
@@ -114,7 +114,7 @@ class BoardSelectionPresenter(
         return@iteratorFunc
       }
 
-      boardCellDataList += BoardCellData(
+      boardCellDataList += CatalogCellData(
         searchQuery = query,
         catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
         boardName = chanBoard.boardName(),
@@ -123,7 +123,7 @@ class BoardSelectionPresenter(
     }
 
     if (query.isEmpty()) {
-      boardManager.viewBoardsOrdered(chanSiteData.siteDescriptor, true, iteratorFunc)
+      boardManager.viewActiveBoardsOrdered(chanSiteData.siteDescriptor, iteratorFunc)
       return boardCellDataList
     }
 
@@ -163,7 +163,7 @@ class BoardSelectionPresenter(
 
   companion object {
     private const val TAG = "BoardSelectionPresenter"
-    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
-    private const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
+    const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_PHONE = 5
+    const val MAX_BOARDS_TO_SHOW_IN_SEARCH_MODE_TABLET = 10
   }
 }

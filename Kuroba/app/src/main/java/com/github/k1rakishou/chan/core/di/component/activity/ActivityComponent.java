@@ -74,6 +74,9 @@ import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBacku
 import com.github.k1rakishou.chan.features.setup.AddBoardsController;
 import com.github.k1rakishou.chan.features.setup.BoardSelectionController;
 import com.github.k1rakishou.chan.features.setup.BoardsSetupController;
+import com.github.k1rakishou.chan.features.setup.ComposeBoardsController;
+import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorController;
+import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupController;
 import com.github.k1rakishou.chan.features.setup.SiteSettingsController;
 import com.github.k1rakishou.chan.features.setup.SitesSetupController;
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView;
@@ -265,6 +268,9 @@ public interface ActivityComponent {
     void inject(SearxImageSearchController searxImageSearchController);
     void inject(PostOmittedImagesController postOmittedImagesController);
     void inject(ExportBackupOptionsController exportBackupOptionsController);
+    void inject(ComposeBoardsController composeBoardsController);
+    void inject(ComposeBoardsSelectorController composeBoardsSelectorController);
+    void inject(CompositeCatalogsSetupController compositeCatalogsSetupController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

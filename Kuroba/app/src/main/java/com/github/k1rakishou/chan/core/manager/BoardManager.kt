@@ -39,7 +39,7 @@ class BoardManager(
   private val suspendableInitializer = SuspendableInitializer<Unit>("BoardManager")
   private val persistBoardsDebouncer = DebouncingCoroutineExecutor(appScope)
 
-  private val currentBoardSubject = BehaviorProcessor.create<CurrentCatalog>()
+  private val currentCatalogSubject = BehaviorProcessor.create<CurrentCatalog>()
   private val boardsChangedSubject = PublishProcessor.create<Unit>()
   private val boardMovedSubject = PublishProcessor.create<Unit>()
 
@@ -141,8 +141,8 @@ class BoardManager(
       .hide()
   }
 
-  fun listenForCurrentSelectedBoard(): Flowable<CurrentCatalog> {
-    return currentBoardSubject
+  fun listenForCurrentSelectedCatalog(): Flowable<CurrentCatalog> {
+    return currentCatalogSubject
       .onBackpressureLatest()
       .distinctUntilChanged()
       .observeOn(AndroidSchedulers.mainThread())
@@ -150,7 +150,7 @@ class BoardManager(
       .hide()
   }
 
-  fun currentCatalogDescriptor(): ChanDescriptor.ICatalogDescriptor? = currentBoardSubject.value?.catalogDescriptor
+  fun currentCatalogDescriptor(): ChanDescriptor.ICatalogDescriptor? = currentCatalogSubject.value?.catalogDescriptor
 
   suspend fun createOrUpdateBoards(boards: List<ChanBoard>): Boolean {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
@@ -274,11 +274,11 @@ class BoardManager(
 
     persistBoards()
 
-    when (val currentBoard = currentBoardSubject.value) {
+    when (val currentBoard = currentCatalogSubject.value) {
       null,
       CurrentCatalog.Empty -> {
         if (activate) {
-          currentBoardSubject.onNext(CurrentCatalog.create(boardDescriptors.first()))
+          currentCatalogSubject.onNext(CurrentCatalog.create(boardDescriptors.first()))
         }
       }
       is CurrentCatalog.Catalog -> {
@@ -287,16 +287,16 @@ class BoardManager(
             if (currentBoard.catalogDescriptor.boardDescriptor in boardDescriptors && !activate) {
               val firstActiveBoard = firstBoardDescriptor(siteDescriptor)
               if (firstActiveBoard != null) {
-                currentBoardSubject.onNext(CurrentCatalog.create(firstActiveBoard))
+                currentCatalogSubject.onNext(CurrentCatalog.create(firstActiveBoard))
               } else {
-                currentBoardSubject.onNext(CurrentCatalog.Empty)
+                currentCatalogSubject.onNext(CurrentCatalog.Empty)
               }
             }
           }
           is ChanDescriptor.CompositeCatalogDescriptor -> {
             // TODO(KurobaEx): CompositeCatalogDescriptor
           }
-          else -> currentBoardSubject.onNext(CurrentCatalog.Empty)
+          else -> currentCatalogSubject.onNext(CurrentCatalog.Empty)
         }
       }
     }
@@ -331,11 +331,11 @@ class BoardManager(
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    if (currentBoardSubject.value?.catalogDescriptor == catalogDescriptor) {
+    if (currentCatalogSubject.value?.catalogDescriptor == catalogDescriptor) {
       return
     }
 
-    currentBoardSubject.onNext(CurrentCatalog.create(catalogDescriptor))
+    currentCatalogSubject.onNext(CurrentCatalog.create(catalogDescriptor))
   }
 
   fun viewBoards(siteDescriptor: SiteDescriptor, boardViewMode: BoardViewMode, func: (ChanBoard) -> Unit) {
@@ -376,7 +376,7 @@ class BoardManager(
     }
   }
 
-  fun viewBoardsOrdered(siteDescriptor: SiteDescriptor, onlyActive: Boolean, func: (ChanBoard) -> Unit) {
+  fun viewActiveBoardsOrdered(siteDescriptor: SiteDescriptor, func: (ChanBoard) -> Unit) {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
@@ -385,7 +385,7 @@ class BoardManager(
         val chanBoard = boardsMap[siteDescriptor]?.get(boardDescriptor)
           ?: return@forEach
 
-        if (!onlyActive || chanBoard.active) {
+        if (chanBoard.active) {
           func(chanBoard)
         }
       }

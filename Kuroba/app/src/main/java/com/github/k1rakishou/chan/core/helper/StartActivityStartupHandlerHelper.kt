@@ -161,7 +161,7 @@ class StartActivityStartupHandlerHelper(
   private suspend fun getCatalogToOpen(): ChanDescriptor.ICatalogDescriptor? {
     // TODO(KurobaEx): CompositeCatalogDescriptor
     if (true) {
-      return ChanDescriptor.CompositeCatalogDescriptor(
+      return ChanDescriptor.CompositeCatalogDescriptor.create(
         listOf(
           ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "a")),
           ChanDescriptor.CatalogDescriptor.create(BoardDescriptor.Companion.create(Dvach.SITE_DESCRIPTOR, "a")),

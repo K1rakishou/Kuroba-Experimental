@@ -12,6 +12,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
+import com.github.k1rakishou.model.repository.CompositeCatalogRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
@@ -219,6 +220,15 @@ public class RoomDatabaseModule {
     ) {
         Logger.deps("ChanCatalogSnapshotCache");
         return modelComponent.getChanCatalogSnapshotCache();
+    }
+
+    @Provides
+    @Singleton
+    public CompositeCatalogRepository provideCompositeCatalogRepository(
+            ModelComponent modelComponent
+    ) {
+        Logger.deps("CompositeCatalogRepository");
+        return modelComponent.getCompositeCatalogRepository();
     }
 
 }

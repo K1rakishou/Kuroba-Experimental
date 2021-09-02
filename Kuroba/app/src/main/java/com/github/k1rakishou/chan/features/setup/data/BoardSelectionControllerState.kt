@@ -8,7 +8,7 @@ sealed class BoardSelectionControllerState {
 
   data class Data(
     val isGridMode: Boolean,
-    val sortedSiteWithBoardsData: Map<SiteCellData, List<BoardCellData>>,
+    val sortedSiteWithBoardsData: Map<SiteCellData, List<CatalogCellData>>,
     val currentlySelected: ChanDescriptor.ICatalogDescriptor?
   ) : BoardSelectionControllerState()
 }

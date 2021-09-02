@@ -77,7 +77,7 @@ sealed class ChanDescriptor {
     }
 
     override fun serializeToString(): String {
-      return "TD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}_${threadNo}"
+      return "TD${SEPARATOR}${boardDescriptor.siteName()}${SEPARATOR}${boardDescriptor.boardCode}${SEPARATOR}${threadNo}"
     }
 
     override fun userReadableString(): String {
@@ -114,6 +114,10 @@ sealed class ChanDescriptor {
 
       @JvmStatic
       fun create(chanDescriptor: ChanDescriptor, threadNo: Long): ThreadDescriptor {
+        check(chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+          "Cannot use ChanDescriptor.CompositeCatalogDescriptor for PostDescriptors"
+        }
+
         return create(chanDescriptor.boardDescriptor(), threadNo)
       }
 
@@ -157,7 +161,7 @@ sealed class ChanDescriptor {
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor
 
     override fun serializeToString(): String {
-      return "CD_${boardDescriptor.siteName()}_${boardDescriptor.boardCode}"
+      return "CD${SEPARATOR}${boardDescriptor.siteName()}${SEPARATOR}${boardDescriptor.boardCode}"
     }
 
     override fun userReadableString(): String {
@@ -204,18 +208,42 @@ sealed class ChanDescriptor {
 
         return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))
       }
+
+      fun deserializeFromString(catalogDescriptorString: String): CatalogDescriptor? {
+        val parts = catalogDescriptorString.split(SEPARATOR)
+
+        if (parts.isEmpty()) {
+          return null
+        }
+
+        if (parts[0] != "CD") {
+          return null
+        }
+
+        if ((parts.size - 1) % 2 != 0) {
+          return null
+        }
+
+        val siteName = parts.getOrNull(1)
+          ?: return null
+        val boardCode = parts.getOrNull(2)
+          ?: return null
+
+        return create(siteName, boardCode)
+      }
     }
   }
 
-  class CompositeCatalogDescriptor(
+  class CompositeCatalogDescriptor private constructor(
     val catalogDescriptors: List<CatalogDescriptor>
   ) : ChanDescriptor(), ICatalogDescriptor {
+    private val _asSet by lazy { catalogDescriptors.toSet() }
 
     init {
       check(catalogDescriptors.isNotEmpty()) {
         "catalogDescriptors must not be empty!"
       }
-      check(catalogDescriptors.size > 1) {
+      check(catalogDescriptors.size >= MIN_CATALOGS_COUNT) {
         "Use CatalogDescriptor for a single catalog!"
       }
       check(catalogDescriptors.size <= MAX_CATALOGS_COUNT) {
@@ -241,8 +269,14 @@ sealed class ChanDescriptor {
     override fun siteDescriptor(): SiteDescriptor = error("Can't use site descriptor")
 
     override fun serializeToString(): String {
-      // TODO(KurobaEx): CompositeCatalogDescriptor
-      error("Can't serialize to string")
+      val joined = catalogDescriptors.joinToString(
+        separator = SEPARATOR,
+        prefix = "",
+        postfix = "",
+        transform = { catalogDescriptor -> catalogDescriptor.serializeToString() }
+      )
+
+      return "CCD${SEPARATOR}${joined}"
     }
 
     override fun userReadableString(): String {
@@ -258,7 +292,8 @@ sealed class ChanDescriptor {
 
       other as CompositeCatalogDescriptor
 
-      if (catalogDescriptors != other.catalogDescriptors) return false
+      if (catalogDescriptors.size != other.catalogDescriptors.size) return false
+      if (_asSet != other._asSet) return false
 
       return true
     }
@@ -280,14 +315,71 @@ sealed class ChanDescriptor {
     }
 
     companion object {
+      const val MIN_CATALOGS_COUNT = 2
       const val MAX_CATALOGS_COUNT = 10
+
+      fun createSafe(catalogDescriptors: List<CatalogDescriptor>): CompositeCatalogDescriptor? {
+        if (catalogDescriptors.size < MIN_CATALOGS_COUNT) {
+          return null
+        }
+
+        if (catalogDescriptors.size > MAX_CATALOGS_COUNT) {
+          return null
+        }
+
+        return create(catalogDescriptors)
+      }
+
+      fun create(catalogDescriptors: List<CatalogDescriptor>): CompositeCatalogDescriptor {
+        return CompositeCatalogDescriptor(catalogDescriptors)
+      }
 
       fun fromDescriptorParcelable(descriptorParcelable: DescriptorParcelable): CompositeCatalogDescriptor {
         require(descriptorParcelable is CompositeDescriptorParcelable) { "Must be CompositeDescriptorParcelable" }
 
         return CompositeCatalogDescriptor(descriptorParcelable.toCatalogDescriptors())
       }
+
+      // CCD___CD___4chan___a___CD___dvach___b___CD___4chan___v
+      fun deserializeFromString(compositeCatalogDescriptorString: String): CompositeCatalogDescriptor? {
+        val parts = compositeCatalogDescriptorString.split(SEPARATOR)
+
+        if (parts.isEmpty()) {
+          return null
+        }
+
+        if (parts[0] != "CCD") {
+          return null
+        }
+
+        if ((parts.size - 1) % 3 != 0) {
+          return null
+        }
+
+        val catalogDescriptors = parts
+          .drop(1)
+          .chunked(3)
+          .mapNotNull { catalogDescriptorParts ->
+            return@mapNotNull CatalogDescriptor.deserializeFromString(
+              catalogDescriptorParts.joinToString(separator = SEPARATOR)
+            )
+          }
+
+        if (catalogDescriptors.size < MIN_CATALOGS_COUNT) {
+          return null
+        }
+
+        if (catalogDescriptors.size > MAX_CATALOGS_COUNT) {
+          return null
+        }
+
+        return CompositeCatalogDescriptor(catalogDescriptors)
+      }
     }
 
+  }
+
+  companion object {
+    const val SEPARATOR = "___"
   }
 }

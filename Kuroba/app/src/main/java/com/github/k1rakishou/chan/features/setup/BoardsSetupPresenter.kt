@@ -6,8 +6,8 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
-import com.github.k1rakishou.chan.features.setup.data.BoardCellData
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
+import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -42,7 +42,10 @@ class BoardsSetupPresenter(
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 
-      if (boardManager.boardsCount(siteDescriptor) > 0) {
+      val siteIsSynthetic = siteManager.bySiteDescriptor(siteDescriptor)?.isSynthetic
+        ?: false
+
+      if (siteIsSynthetic || boardManager.boardsCount(siteDescriptor) > 0) {
         displayActiveBoardsInternal()
       } else {
         updateBoardsFromServerAndDisplayActive()
@@ -172,7 +175,12 @@ class BoardsSetupPresenter(
 
       val site = siteManager.bySiteDescriptor(siteDescriptor)
       if (site == null) {
-        setState(BoardsSetupControllerState.Error("No site found by descriptor: ${siteDescriptor}"))
+        setState(BoardsSetupControllerState.Error("No sites found by descriptor: ${siteDescriptor}"))
+        return@launch
+      }
+
+      if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+        displayActiveBoardsInternal()
         return@launch
       }
 
@@ -261,17 +269,27 @@ class BoardsSetupPresenter(
     displayActiveBoards(withLoadingState = false, withDebouncing = true)
   }
 
-  private fun displayActiveBoardsInternal() {
+  private suspend fun displayActiveBoardsInternal() {
+    val site = siteManager.bySiteDescriptor(siteDescriptor)
+    if (site == null) {
+      setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} does not exist!"))
+      return
+    }
+
     val isSiteActive = siteManager.isSiteActive(siteDescriptor)
     if (!isSiteActive) {
       setState(BoardsSetupControllerState.Error("Site with descriptor ${siteDescriptor} is not active!"))
       return
     }
 
-    val boardCellDataList = mutableListWithCap<BoardCellData>(32)
+    val boardCellDataList = mutableListWithCap<CatalogCellData>(32)
 
-    boardManager.viewBoardsOrdered(siteDescriptor, true) { chanBoard ->
-      boardCellDataList += BoardCellData(
+    if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+      error("Cannot use sites with 'CATALOG_COMPOSITION' feature here")
+    }
+
+    boardManager.viewActiveBoardsOrdered(siteDescriptor) { chanBoard ->
+      boardCellDataList += CatalogCellData(
         searchQuery = null,
         catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(chanBoard.boardDescriptor),
         boardName = chanBoard.boardName(),

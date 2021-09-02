@@ -695,6 +695,7 @@ class BrowseController(
 
         updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {
           navigation.subtitle = presenter.getCompositeCatalogNavigationSubtitle(
+            coroutineScope = this,
             context = context,
             fontSizePx = sp(12f),
             compositeCatalogDescriptor = catalogDescriptor

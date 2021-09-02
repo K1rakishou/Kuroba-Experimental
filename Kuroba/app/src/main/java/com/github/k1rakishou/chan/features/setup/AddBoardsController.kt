@@ -35,7 +35,7 @@ import kotlin.time.milliseconds
 class AddBoardsController(
   context: Context,
   private val siteDescriptor: SiteDescriptor,
-  private val callback: RefreshBoardsCallback
+  private val refreshBoardsFunc: () -> Unit
 ) : BaseFloatingController(context), AddBoardsView {
 
   @Inject
@@ -128,7 +128,7 @@ class AddBoardsController(
       return false
     }
 
-    callback.onRefreshBoards()
+    refreshBoardsFunc()
     stopPresenting()
 
     return true
@@ -167,14 +167,13 @@ class AddBoardsController(
         is AddBoardsControllerState.Data -> {
           state.selectableBoardCellDataList.forEach { selectableBoardCellData ->
             epoxySelectableBoardView {
-              id("add_boards_selectable_board_view_${selectableBoardCellData.boardCellData.catalogDescriptor}")
-              boardName(selectableBoardCellData.boardCellData.fullName)
-              boardDescription(selectableBoardCellData.boardCellData.description)
+              id("add_boards_selectable_board_view_${selectableBoardCellData.catalogCellData.catalogDescriptor}")
+              boardName(selectableBoardCellData.catalogCellData.fullName)
+              boardDescription(selectableBoardCellData.catalogCellData.description)
               boardSelected(selectableBoardCellData.selected)
-              bindQuery(selectableBoardCellData.boardCellData.searchQuery)
+              bindQuery(selectableBoardCellData.catalogCellData.searchQuery)
               onClickedCallback { isChecked ->
-                // TODO(KurobaEx): CompositeCatalogDescriptor
-                val boardDescriptor = selectableBoardCellData.boardCellData.boardDescriptorOrNull
+                val boardDescriptor = selectableBoardCellData.catalogCellData.boardDescriptorOrNull
                   ?: return@onClickedCallback
 
                 presenter.onBoardSelectionChanged(
@@ -201,7 +200,4 @@ class AddBoardsController(
     }
   }
 
-  fun interface RefreshBoardsCallback {
-    fun onRefreshBoards()
-  }
 }

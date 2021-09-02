@@ -6,6 +6,9 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchControllerViewModel;
+import com.github.k1rakishou.chan.features.setup.ComposeBoardsControllerViewModel;
+import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorControllerViewModel;
+import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupControllerViewModel;
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveViewModel;
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveViewModel;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsViewModel;
@@ -26,6 +29,9 @@ public abstract class ViewModelComponent {
     public abstract void inject(Chan4CaptchaLayoutViewModel chan4CaptchaLayoutViewModel);
     public abstract void inject(SearxImageSearchControllerViewModel searxImageSearchControllerViewModel);
     public abstract void inject(MainControllerViewModel mainControllerViewModel);
+    public abstract void inject(ComposeBoardsControllerViewModel composeBoardsControllerViewModel);
+    public abstract void inject(ComposeBoardsSelectorControllerViewModel composeBoardsSelectorControllerViewModel);
+    public abstract void inject(CompositeCatalogsSetupControllerViewModel compositeCatalogsSetupControllerViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

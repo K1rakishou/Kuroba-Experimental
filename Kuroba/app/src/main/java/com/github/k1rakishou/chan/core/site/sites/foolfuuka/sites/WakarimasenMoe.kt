@@ -34,6 +34,8 @@ class WakarimasenMoe: BaseFoolFuukaSite() {
   }
 
   override fun setup() {
+    super.setup()
+
     setEnabled(true)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))

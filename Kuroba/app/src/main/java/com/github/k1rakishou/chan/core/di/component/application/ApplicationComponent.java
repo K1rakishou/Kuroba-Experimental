@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver;
 import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
+import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesPresenter;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service;
 import com.github.k1rakishou.chan.features.posting.PostingService;
@@ -70,6 +71,7 @@ public interface ApplicationComponent {
     void inject(FilterWatcherWorker filterWatcherWorker);
     void inject(ThreadDownloadingWorker threadDownloadingWorker);
     void inject(SiteBase siteBase);
+    void inject(CompositeCatalogSite compositeCatalogSite);
     void inject(SnackbarWrapper snackbarWrapper);
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
     void inject(CloudFlareHandlerInterceptor cloudFlareHandlerInterceptor);

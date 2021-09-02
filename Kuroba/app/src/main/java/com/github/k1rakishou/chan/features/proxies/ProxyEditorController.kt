@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteRegistry
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
@@ -36,6 +37,8 @@ class ProxyEditorController(
 
   @Inject
   lateinit var proxyStorage: ProxyStorage
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private val siteRegistry = SiteRegistry
 
@@ -75,6 +78,10 @@ class ProxyEditorController(
     enableForFullMedia = view.findViewById(R.id.enable_for_full_media)
 
     siteRegistry.SITE_CLASSES_MAP.keys.forEach { siteDescriptor ->
+      if (siteManager.bySiteDescriptor(siteDescriptor)?.isSynthetic == true) {
+        return@forEach
+      }
+
       val siteChip = ColorizableChip(context)
       val chipDrawable = ChipDrawable.createFromAttributes(
         context,

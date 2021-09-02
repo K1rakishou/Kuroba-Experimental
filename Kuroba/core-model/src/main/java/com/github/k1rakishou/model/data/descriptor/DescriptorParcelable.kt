@@ -88,7 +88,7 @@ data class CompositeDescriptorParcelable(
   override fun isCompositeCatalogDescriptor(): Boolean = true
 
   override fun toChanDescriptor(): ChanDescriptor {
-    return ChanDescriptor.CompositeCatalogDescriptor(toCatalogDescriptors())
+    return ChanDescriptor.CompositeCatalogDescriptor.create(toCatalogDescriptors())
   }
 
   fun toCatalogDescriptors(): List<ChanDescriptor.CatalogDescriptor> {

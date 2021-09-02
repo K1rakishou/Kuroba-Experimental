@@ -44,6 +44,8 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import io.reactivex.disposables.CompositeDisposable
@@ -483,6 +485,53 @@ abstract class Controller(@JvmField var context: Context) {
       action(threadController)
       navigationController!!.popController(false)
     }
+  }
+
+  protected fun ModularResult<*>.toastOnError(
+    longToast: Boolean = false,
+    formatErrorMessage: ((Throwable) -> String)? = null
+  ): ModularResult<*> {
+    when (this) {
+      is ModularResult.Error -> {
+        val message = formatErrorMessage?.invoke(this.error)
+          ?: this.error.errorMessageOrClassName()
+
+        val duration = if (longToast) {
+          Toast.LENGTH_LONG
+        } else {
+          Toast.LENGTH_SHORT
+        }
+
+        showToast(message, duration)
+      }
+      is ModularResult.Value -> {
+        // no-op
+      }
+    }
+
+    return this
+  }
+
+  protected fun ModularResult<*>.toastOnSuccess(
+    message: () -> String,
+    longToast: Boolean = false
+  ): ModularResult<*> {
+    when (this) {
+      is ModularResult.Error -> {
+        // no-op
+      }
+      is ModularResult.Value -> {
+        val duration = if (longToast) {
+          Toast.LENGTH_LONG
+        } else {
+          Toast.LENGTH_SHORT
+        }
+
+        showToast(message(), duration)
+      }
+    }
+
+    return this
   }
 
   companion object {

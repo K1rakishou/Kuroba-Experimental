@@ -13,6 +13,7 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableSwitchMaterial
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -37,7 +38,7 @@ class EpoxySiteView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val siteIcon: AppCompatImageView
+  private val siteIconView: AppCompatImageView
   private val siteName: MaterialTextView
   private val siteSwitch: ColorizableSwitchMaterial
   private val siteSettings: AppCompatImageView
@@ -55,7 +56,7 @@ class EpoxySiteView @JvmOverloads constructor(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    siteIcon = findViewById(R.id.site_icon)
+    siteIconView = findViewById(R.id.site_icon)
     siteName = findViewById(R.id.site_name)
     siteSwitch = findViewById(R.id.site_switch)
     siteSettings = findViewById(R.id.site_settings)
@@ -105,10 +106,10 @@ class EpoxySiteView @JvmOverloads constructor(
 
     if (this.isArchiveSite) {
       siteReorder.setVisibilityFast(View.GONE)
-      siteIcon.updateMargins(left = ARCHIVE_SITE_ICON_LEFT_MARGIN)
+      siteIconView.updateMargins(left = ARCHIVE_SITE_ICON_LEFT_MARGIN)
     } else {
       siteReorder.setVisibilityFast(View.VISIBLE)
-      siteIcon.updateMargins(left = 0)
+      siteIconView.updateMargins(left = 0)
     }
   }
 
@@ -119,8 +120,8 @@ class EpoxySiteView @JvmOverloads constructor(
   }
 
   @ModelProp
-  fun bindIcon(pair: Pair<String, SiteEnableState>) {
-    val iconUrl = pair.first
+  fun bindIcon(pair: Pair<SiteIcon, SiteEnableState>) {
+    val siteIcon = pair.first
     val siteEnableState = pair.second
 
     val transformations = if (siteEnableState != SiteEnableState.Active) {
@@ -129,17 +130,21 @@ class EpoxySiteView @JvmOverloads constructor(
       listOf()
     }
 
-    requestDisposable?.dispose()
-    requestDisposable = null
+    if (siteIcon.url != null) {
+      requestDisposable?.dispose()
+      requestDisposable = null
 
-    requestDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      iconUrl,
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIcon),
-      transformations,
-      { drawable -> siteIcon.setImageBitmap(drawable.bitmap) },
-      R.drawable.error_icon
-    )
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        siteIcon.url!!.toString(),
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIconView),
+        transformations,
+        { drawable -> siteIconView.setImageBitmap(drawable.bitmap) },
+        R.drawable.error_icon
+      )
+    } else if (siteIcon.drawable != null) {
+      siteIconView.setImageBitmap(siteIcon.drawable!!.bitmap)
+    }
   }
 
   @ModelProp(ModelProp.Option.NullOnRecycle)
@@ -230,7 +235,7 @@ class EpoxySiteView @JvmOverloads constructor(
     this.requestDisposable?.dispose()
     this.requestDisposable = null
 
-    siteIcon.setImageBitmap(null)
+    siteIconView.setImageBitmap(null)
   }
 
   private fun updateReorderTint() {

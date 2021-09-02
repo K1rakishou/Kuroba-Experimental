@@ -24,7 +24,7 @@ class CurrentOpenedDescriptorStateManager {
   val currentFocusedDescriptor: ChanDescriptor?
     get() {
       return when (currentFocusedController) {
-        ThreadPresenter.CurrentFocusedController.Catalog -> currentCatalogDescriptor as ChanDescriptor
+        ThreadPresenter.CurrentFocusedController.Catalog -> currentCatalogDescriptor as ChanDescriptor?
         ThreadPresenter.CurrentFocusedController.Thread -> currentThreadDescriptor
         ThreadPresenter.CurrentFocusedController.None -> null
       }

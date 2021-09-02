@@ -12,6 +12,7 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.android.material.textview.MaterialTextView
@@ -29,7 +30,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
 
-  private val siteIcon: AppCompatImageView
+  private val siteIconView: AppCompatImageView
   private val siteName: MaterialTextView
   private val divider: View
 
@@ -41,7 +42,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    siteIcon = findViewById(R.id.site_icon)
+    siteIconView = findViewById(R.id.site_icon)
     siteName = findViewById(R.id.site_name)
     divider = findViewById(R.id.divider)
 
@@ -72,18 +73,22 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   }
 
   @ModelProp
-  fun bindIcon(iconUrl: String) {
+  fun bindIcon(siteIcon: SiteIcon) {
     requestDisposable?.dispose()
     requestDisposable = null
 
-    requestDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      iconUrl,
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIcon),
-      listOf(),
-      { drawable -> siteIcon.setImageBitmap(drawable.bitmap) },
-      R.drawable.error_icon
-    )
+    if (siteIcon.url != null) {
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context,
+        siteIcon.url!!.toString(),
+        ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIconView),
+        listOf(),
+        { drawable -> siteIconView.setImageBitmap(drawable.bitmap) },
+        R.drawable.error_icon
+      )
+    } else if (siteIcon.drawable != null) {
+      siteIconView.setImageBitmap(siteIcon.drawable!!.bitmap)
+    }
   }
 
   @CallbackProp

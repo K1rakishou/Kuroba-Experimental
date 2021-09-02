@@ -146,7 +146,7 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = { }
+      onDismissListener = { onCanceled?.invoke() }
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -171,7 +171,7 @@ class DialogFactory(
         .setPositiveButton(positiveButtonTextId) { _, _ ->
           onValueEntered(editText.text.toString())
         }
-        .setNegativeButton(negativeButtonTextId) { _, _ -> onCanceled?.invoke() }
+        .setNegativeButton(negativeButtonTextId) { _, _ -> }
         .setTitleInternal(titleTextId, titleText)
         .setDescriptionInternal(descriptionTextId, descriptionText)
         .setView(container)

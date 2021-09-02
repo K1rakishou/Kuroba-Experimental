@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
+import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
@@ -10,6 +11,11 @@ abstract class BaseFuukaSite : CommonSite() {
   abstract fun rootUrl(): HttpUrl
 
   final override fun commentParserType(): CommentParserType = CommentParserType.FuukaParser
+
+  @CallSuper
+  override fun setup() {
+    setCatalogType(Site.CatalogType.DYNAMIC)
+  }
 
   open class BaseFoolFuukaUrlHandler(
     override val url: HttpUrl,

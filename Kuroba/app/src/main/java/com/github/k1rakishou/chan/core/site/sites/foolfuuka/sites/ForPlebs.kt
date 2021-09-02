@@ -17,6 +17,8 @@ class ForPlebs : BaseFoolFuukaSite() {
   override fun rootUrl(): HttpUrl = ROOT_URL
 
   override fun setup() {
+    super.setup()
+
     setEnabled(true)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))

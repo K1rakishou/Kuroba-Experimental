@@ -7,6 +7,8 @@ import android.text.style.CharacterStyle
 import android.text.style.ForegroundColorSpan
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -52,6 +54,16 @@ object ComposeHelpers {
       SideEffect { ref.value++ }
 
       Logger.d("Compositions_$tag", "Count: ${ref.value}, ref=${ref.hashCode()}")
+    }
+  }
+
+  fun Modifier.consumeClicks(): Modifier {
+    return composed {
+      clickable(
+        interactionSource = remember { MutableInteractionSource() },
+        indication = null,
+        onClick = { /** no-op */ }
+      )
     }
   }
 

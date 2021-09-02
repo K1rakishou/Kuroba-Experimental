@@ -7,8 +7,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
@@ -39,13 +39,13 @@ class SiteSettingsController(
   @Inject
   lateinit var boardManager: BoardManager
   @Inject
-  lateinit var archivesManager: ArchivesManager
+  lateinit var compositeCatalogManager: CompositeCatalogManager
 
   private val presenter by lazy {
     SiteSettingsPresenter(
       siteManager = siteManager,
       boardManager = boardManager,
-      archivesManager = archivesManager
+      compositeCatalogManager = compositeCatalogManager
     )
   }
 
@@ -57,7 +57,12 @@ class SiteSettingsController(
 
   override fun onCreate() {
     super.onCreate()
-    navigation.title = context.getString(R.string.controller_site_settings_title, siteDescriptor.siteName)
+
+    val siteName = siteManager.bySiteDescriptor(siteDescriptor)
+      ?.name()
+      ?: siteDescriptor.siteName
+
+    navigation.title = context.getString(R.string.controller_site_settings_title, siteName)
 
     view = inflate(context, R.layout.controller_site_settings)
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)

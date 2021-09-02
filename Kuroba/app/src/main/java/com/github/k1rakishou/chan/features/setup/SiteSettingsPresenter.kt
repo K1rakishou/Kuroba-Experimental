@@ -6,8 +6,8 @@ import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +33,7 @@ import kotlinx.coroutines.withContext
 class SiteSettingsPresenter(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
-  private val archivesManager: ArchivesManager
+  private val compositeCatalogManager: CompositeCatalogManager
 ) : BasePresenter<SiteSettingsView>() {
 
   suspend fun showSiteSettings(context: Context, siteDescriptor: SiteDescriptor): List<SettingsGroup> {
@@ -200,9 +201,28 @@ class SiteSettingsPresenter(
           context = context,
           identifier = SiteSettingsScreen.GeneralGroup.SetUpBoards,
           topDescriptionStringFunc = { "Set up boards" },
-          bottomDescriptionStringFunc = { "${boardManager.activeBoardsCount(siteDescriptor)} board(s) added" },
+          bottomDescriptionStringFunc = {
+            val isCatalogCompositionSite = siteManager.bySiteDescriptor(siteDescriptor)
+              ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
+
+            if (isCatalogCompositionSite) {
+              "${compositeCatalogManager.count()} composite catalog(s) created"
+            } else {
+              "${boardManager.activeBoardsCount(siteDescriptor)} board(s) added"
+            }
+          },
           callback = {
-            withViewNormal { pushController(BoardsSetupController(context, siteDescriptor)) }
+            val site = siteManager.bySiteDescriptor(siteDescriptor)
+            if (site == null) {
+              Logger.d(TAG, "Site ${siteDescriptor} does not exist")
+              return@createBuilder
+            }
+
+            if (site.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION)) {
+              withViewNormal { pushController(CompositeCatalogsSetupController(context)) }
+            } else {
+              withViewNormal { pushController(BoardsSetupController(context, siteDescriptor)) }
+            }
           }
         )
 

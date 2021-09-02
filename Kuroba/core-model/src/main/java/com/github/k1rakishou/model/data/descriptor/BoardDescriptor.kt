@@ -7,6 +7,10 @@ class BoardDescriptor private constructor(
 
   fun siteName(): String = siteDescriptor.siteName
 
+  fun userReadableString(): String {
+    return "${siteDescriptor.siteName}/${boardCode}/"
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is BoardDescriptor) return false

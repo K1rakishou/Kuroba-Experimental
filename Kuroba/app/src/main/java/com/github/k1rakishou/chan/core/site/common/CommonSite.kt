@@ -68,6 +68,7 @@ abstract class CommonSite : SiteBase() {
   private var name: String? = null
   private var icon: SiteIcon? = null
   private var boardsType: Site.BoardsType? = null
+  private var catalogType: Site.CatalogType = Site.CatalogType.STATIC
   private var commonConfig: CommonConfig? = null
   private var resolvable: CommonSiteUrlHandler? = null
   private var endpoints: CommonEndpoints? = null
@@ -142,6 +143,10 @@ abstract class CommonSite : SiteBase() {
   fun setBoardsType(boardsType: Site.BoardsType?) {
     this.boardsType = boardsType
   }
+
+  fun setCatalogType(catalogType: Site.CatalogType) {
+    this.catalogType = catalogType
+  }
   
   fun setBoards(vararg boards: ChanBoard) {
     boardsType = Site.BoardsType.STATIC
@@ -202,7 +207,11 @@ abstract class CommonSite : SiteBase() {
   override fun boardsType(): Site.BoardsType {
     return boardsType!!
   }
-  
+
+  override fun catalogType(): Site.CatalogType {
+    return catalogType
+  }
+
   override fun resolvable(): SiteUrlHandler {
     return resolvable!!
   }

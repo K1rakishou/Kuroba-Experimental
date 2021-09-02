@@ -1,21 +1,28 @@
 package com.github.k1rakishou.chan.ui.compose
 
 import androidx.annotation.DrawableRes
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.ExperimentalAnimationApi
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
@@ -47,6 +54,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.translate
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -56,7 +64,10 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
+import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import java.util.*
 
@@ -359,8 +370,7 @@ fun KurobaComposeTextBarButton(
     onClick = onClick,
     enabled = enabled,
     modifier = Modifier
-      .wrapContentWidth()
-      .height(36.dp)
+      .wrapContentSize()
       .then(modifier),
     content = {
       val textColor = if (enabled) {
@@ -372,9 +382,7 @@ fun KurobaComposeTextBarButton(
       Text(
         text = text.uppercase(Locale.ENGLISH),
         color = textColor,
-        modifier = Modifier
-          .wrapContentWidth()
-          .fillMaxHeight(),
+        modifier = Modifier.wrapContentSize().align(Alignment.CenterVertically),
         textAlign = TextAlign.Center
       )
     },
@@ -471,5 +479,91 @@ fun KurobaComposeCardView(
     backgroundColor = chanTheme.backColorCompose
   ) {
     content()
+  }
+}
+
+@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun BuildNavigationHistoryHeaderSearchInput(
+  modifier: Modifier = Modifier,
+  chanTheme: ChanTheme,
+  themeEngine: ThemeEngine,
+  backgroundColor: Color,
+  searchQuery: String,
+  onSearchQueryChanged: (String) -> Unit
+) {
+  var localQuery by remember { mutableStateOf(searchQuery) }
+
+  Row(modifier = modifier) {
+    Row(modifier = Modifier.wrapContentHeight()) {
+      Box(modifier = Modifier
+        .wrapContentHeight()
+        .weight(1f)
+        .align(Alignment.CenterVertically)
+        .padding(horizontal = 4.dp)
+      ) {
+        val interactionSource = remember { MutableInteractionSource() }
+
+        KurobaComposeCustomTextField(
+          modifier = Modifier
+            .wrapContentHeight()
+            .fillMaxWidth(),
+          fontSize = 16.sp,
+          singleLine = true,
+          maxLines = 1,
+          value = localQuery,
+          onValueChange = { newValue ->
+            localQuery = newValue
+            onSearchQueryChanged(newValue)
+          },
+          interactionSource = interactionSource
+        )
+
+        val isFocused by interactionSource.collectIsFocusedAsState()
+
+        androidx.compose.animation.AnimatedVisibility(
+          visible = !isFocused && searchQuery.isEmpty(),
+          enter = fadeIn(),
+          exit = fadeOut()
+        ) {
+          val alpha = ContentAlpha.medium
+
+          val color = remember(key1 = backgroundColor) {
+            if (ThemeEngine.isDarkColor(backgroundColor)) {
+              Color.LightGray.copy(alpha = alpha)
+            } else {
+              Color.DarkGray.copy(alpha = alpha)
+            }
+          }
+
+          Text(
+            text = stringResource(id = R.string.search_hint),
+            fontSize = 16.sp,
+            color = color
+          )
+        }
+      }
+
+      AnimatedVisibility(
+        visible = searchQuery.isNotEmpty(),
+        enter = fadeIn(),
+        exit = fadeOut()
+      ) {
+        KurobaComposeIcon(
+          modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .kurobaClickable(
+              bounded = false,
+              onClick = {
+                localQuery = ""
+                onSearchQueryChanged("")
+              }
+            ),
+          drawableId = R.drawable.ic_clear_white_24dp,
+          themeEngine = themeEngine,
+          colorBelowIcon = chanTheme.primaryColorCompose
+        )
+      }
+    }
   }
 }

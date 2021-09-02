@@ -34,8 +34,14 @@ import okhttp3.HttpUrl
 
 class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2>) {
   var url: HttpUrl? = null
-  private var drawable: BitmapDrawable? = null
+  var drawable: BitmapDrawable? = null
+
   private var requestDisposable: Disposable? = null
+
+  fun cancel() {
+    requestDisposable?.dispose()
+    requestDisposable = null
+  }
 
   suspend fun getIconSuspend(context: Context): BitmapDrawable {
     return suspendCancellableCoroutine { cancellableContinuation ->
@@ -45,6 +51,12 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
         errorDrawableId = R.drawable.error_icon,
         errorFunc = { bitmapDrawable -> cancellableContinuation.resumeValueSafe(bitmapDrawable) }
       )
+
+      cancellableContinuation.invokeOnCancellation { error ->
+        if (error != null) {
+          cancel()
+        }
+      }
     }
   }
 
@@ -63,8 +75,7 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
       return
     }
 
-    requestDisposable?.dispose()
-    requestDisposable = null
+    cancel()
 
     requestDisposable = imageLoaderV2.get().loadFromNetwork(
       context,
@@ -128,7 +139,6 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
     result = 31 * result + (drawable?.hashCode() ?: 0)
     return result
   }
-
 
   companion object {
     private const val TAG = "SiteIcon"

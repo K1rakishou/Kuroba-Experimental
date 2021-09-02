@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.ui.helper.BoardHelper
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
-class BoardCellData(
+class CatalogCellData(
   val searchQuery: String?,
   val catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
   val boardName: String,
@@ -55,7 +55,7 @@ class BoardCellData(
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
 
-    other as BoardCellData
+    other as CatalogCellData
 
     if (catalogDescriptor != other.catalogDescriptor) return false
 

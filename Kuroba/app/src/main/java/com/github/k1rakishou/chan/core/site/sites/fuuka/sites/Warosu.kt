@@ -28,6 +28,8 @@ class Warosu : BaseFuukaSite() {
   override fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.FuukaSearch
 
   override fun setup() {
+    super.setup()
+
     setEnabled(true)
     setName(SITE_NAME)
     setIcon(SiteIcon.fromFavicon(imageLoaderV2, FAVICON_URL))

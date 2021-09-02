@@ -4,5 +4,5 @@ sealed class BoardsSetupControllerState {
   object Loading : BoardsSetupControllerState()
   object Empty : BoardsSetupControllerState()
   data class Error(val errorText: String) : BoardsSetupControllerState()
-  data class Data(val boardCellDataList: List<BoardCellData>) : BoardsSetupControllerState()
+  data class Data(val catalogCellDataList: List<CatalogCellData>) : BoardsSetupControllerState()
 }

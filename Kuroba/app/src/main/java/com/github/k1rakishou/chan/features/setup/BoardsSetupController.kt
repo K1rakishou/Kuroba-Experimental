@@ -36,7 +36,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
-import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -132,14 +131,18 @@ class BoardsSetupController(
     super.onCreate()
     navigation.title = context.getString(R.string.controller_boards_setup_title, siteDescriptor.siteName)
 
-    val canCreateBoardsManually = siteManager.bySiteDescriptor(siteDescriptor)
-      ?.canCreateBoardsManually ?: false
+    val site = siteManager.bySiteDescriptor(siteDescriptor)!!
+
+    val syntheticSite = site.isSynthetic
+    val canCreateBoardsManually = site.canCreateBoardsManually
 
     val builder = navigation
       .buildMenu(context)
-      .withItem(R.drawable.ic_refresh_white_24dp) {
-        presenter.updateBoardsFromServerAndDisplayActive()
-      }
+
+    if (!syntheticSite) {
+      builder
+        .withItem(R.drawable.ic_refresh_white_24dp) { presenter.updateBoardsFromServerAndDisplayActive() }
+    }
 
     if (canCreateBoardsManually) {
       builder
@@ -227,19 +230,16 @@ class BoardsSetupController(
           }
         }
         is BoardsSetupControllerState.Data -> {
-          state.boardCellDataList.forEach { boardCellData ->
-            when (val catalogDescriptor = boardCellData.catalogDescriptor) {
-              is ChanDescriptor.CatalogDescriptor -> {
-                epoxyBoardView {
-                  id("boards_setup_board_view_${catalogDescriptor.boardDescriptor}")
-                  boardName(boardCellData.fullName)
-                  boardDescription(boardCellData.description)
-                  boardDescriptor(catalogDescriptor.boardDescriptor)
-                }
-              }
-              is ChanDescriptor.CompositeCatalogDescriptor -> {
-                // TODO(KurobaEx): CompositeCatalogDescriptor
-              }
+          state.catalogCellDataList.forEach { boardCellData ->
+            val boardDescriptor = checkNotNull(boardCellData.boardDescriptorOrNull) {
+              "Cannot use CompositeCatalogDescriptor here"
+            }
+
+            epoxyBoardView {
+              id("boards_setup_board_view_${boardDescriptor}")
+              boardName(boardCellData.fullName)
+              boardDescription(boardCellData.description)
+              boardDescriptor(boardDescriptor)
             }
           }
         }

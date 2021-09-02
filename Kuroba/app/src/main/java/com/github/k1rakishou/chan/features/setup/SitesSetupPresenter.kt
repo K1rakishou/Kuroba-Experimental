@@ -72,7 +72,7 @@ class SitesSetupPresenter(
       val siteEnableState = SiteEnableState.create(chanSiteData.active, site.enabled())
       siteCellDataList += SiteCellData(
         siteDescriptor = chanSiteData.siteDescriptor,
-        siteIcon = site.icon().url.toString(),
+        siteIcon = site.icon(),
         siteName = site.name(),
         siteEnableState = siteEnableState
       )

@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderMana
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager;
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
@@ -102,6 +103,7 @@ import com.github.k1rakishou.model.repository.ChanPostImageRepository;
 import com.github.k1rakishou.model.repository.ChanPostRepository;
 import com.github.k1rakishou.model.repository.ChanSavedReplyRepository;
 import com.github.k1rakishou.model.repository.ChanThreadViewableInfoRepository;
+import com.github.k1rakishou.model.repository.CompositeCatalogRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
@@ -832,6 +834,15 @@ public class ManagerModule {
     public CurrentOpenedDescriptorStateManager provideCurrentOpenedDescriptorStateManager() {
         Logger.deps("CurrentOpenedDescriptorStateManager");
         return new CurrentOpenedDescriptorStateManager();
+    }
+
+    @Singleton
+    @Provides
+    public CompositeCatalogManager provideCompositeCatalogManager(
+            CompositeCatalogRepository compositeCatalogRepository
+    ) {
+        Logger.deps("CompositeCatalogManager");
+        return new CompositeCatalogManager(compositeCatalogRepository);
     }
 
 }

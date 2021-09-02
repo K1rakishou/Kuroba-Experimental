@@ -51,7 +51,9 @@ class PostingLimitationsInfoManager(
     }
 
     val params = PostAttachableLimitationInfo.Params(boardDescriptor.siteDescriptor)
-    return site.postingLimitationInfo().postMaxAttachables.getMaxAllowedAttachablesPerPost(params)
+    return site.postingLimitationInfo()
+      ?.postMaxAttachables
+      ?.getMaxAllowedAttachablesPerPost(params)
   }
 
   suspend fun getMaxAllowedTotalFilesSizePerPost(boardDescriptor: BoardDescriptor): Long? {
@@ -61,7 +63,9 @@ class PostingLimitationsInfoManager(
     }
 
     val params = PostAttachlesMaxTotalSizeInfo.Params(boardDescriptor)
-    return site.postingLimitationInfo().postMaxAttachablesTotalSize.getMaxTotalAttachablesSize(params)
+    return site.postingLimitationInfo()
+      ?.postMaxAttachablesTotalSize
+      ?.getMaxTotalAttachablesSize(params)
   }
 
 }

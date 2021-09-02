@@ -1,0 +1,368 @@
+package com.github.k1rakishou.chan.features.setup
+
+import android.content.Context
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.layout.wrapContentWidth
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
+import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.model.data.catalog.CompositeCatalog
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import javax.inject.Inject
+import kotlin.coroutines.resume
+
+class ComposeBoardsController(
+  context: Context,
+  private val prevCompositeCatalog: CompositeCatalog?
+) : BaseFloatingComposeController(context) {
+
+  @Inject
+  lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var dialogFactory: DialogFactory
+
+  private val viewModel by lazy {
+    requireComponentActivity().viewModelByKey<ComposeBoardsControllerViewModel>()
+  }
+
+  override fun injectDependencies(component: ActivityComponent) {
+    component.inject(this)
+  }
+
+  override fun onCreate() {
+    super.onCreate()
+
+    viewModel.resetCompositionSlots(prevCompositeCatalog)
+  }
+
+  @OptIn(ExperimentalFoundationApi::class)
+  @Composable
+  override fun BoxScope.BuildContent() {
+    val chanTheme = LocalChanTheme.current
+    val compositionSlots = viewModel.catalogCompositionSlots
+
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .consumeClicks()
+        .align(Alignment.Center)
+        .background(chanTheme.backColorSecondaryCompose)
+    ) {
+      BuildHeader()
+
+      LazyVerticalGrid(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        cells = GridCells.Fixed(3),
+        content = {
+          items(compositionSlots.size) { index ->
+            val compositionSlot = compositionSlots[index]
+
+            BuildCompositionSlot(
+              index = index,
+              catalogCompositionSlot = compositionSlot,
+              onAddOrReplaceBoardClicked = { clickedIndex ->
+                val controller = ComposeBoardsSelectorController(
+                  context = context,
+                  currentlyComposedBoards = viewModel.currentlyComposedBoards(),
+                  onBoardSelected = { boardDescriptor -> viewModel.updateSlot(clickedIndex, boardDescriptor) }
+                )
+
+                presentController(controller)
+              },
+              removeBoardClicked = { clickedIndex -> viewModel.clearSlot(clickedIndex) }
+            )
+          }
+        }
+      )
+
+      BuildFooter(
+        compositionSlots = compositionSlots,
+        onCancelClicked = { pop() },
+        onSaveClicked = { mainScope.launch { createOrUpdateCompositeCatalog(compositionSlots) } }
+      )
+    }
+  }
+
+  private suspend fun createOrUpdateCompositeCatalog(
+    compositionSlots: List<ComposeBoardsControllerViewModel.CatalogCompositionSlot>
+  ) {
+    val catalogDescriptors = compositionSlots
+      .mapNotNull { compositionSlot ->
+        if (compositionSlot is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty) {
+          return@mapNotNull null
+        }
+
+        compositionSlot as ComposeBoardsControllerViewModel.CatalogCompositionSlot.Occupied
+        return@mapNotNull compositionSlot.catalogDescriptor
+      }
+
+    val compositeCatalogDescriptor = ChanDescriptor.CompositeCatalogDescriptor.createSafe(catalogDescriptors)
+      ?: return
+
+    if (prevCompositeCatalog == null && viewModel.alreadyExists(compositeCatalogDescriptor)) {
+      val boardsJoined = catalogDescriptors
+        .map { catalogDescriptor -> catalogDescriptor.boardDescriptor }
+        .joinToString(separator = ",", transform = { boardDescriptor -> boardDescriptor.userReadableString() })
+
+      showToast(getString(R.string.controller_compose_boards_composite_catalog_already_exists, boardsJoined))
+      return
+    }
+
+    val compositeCatalogName = suspendCancellableCoroutine<String> { continuation ->
+      dialogFactory.createSimpleDialogWithInput(
+        context = context,
+        titleText = getString(R.string.controller_compose_boards_enter_composite_catalog_name_title),
+        descriptionText = getString(
+          R.string.controller_compose_boards_enter_composite_catalog_name_descriptor,
+          ComposeBoardsControllerViewModel.MAX_COMPOSITE_CATALOG_TITLE_LENGTH
+        ),
+        inputType = DialogFactory.DialogInputType.String,
+        defaultValue = prevCompositeCatalog?.name ?: getString(R.string.controller_compose_boards_default_name),
+        onValueEntered = { compositeCatalogName -> continuation.resume(compositeCatalogName) },
+        onCanceled = { continuation.cancel() }
+      )
+    }
+
+    if (compositeCatalogName.isBlank()) {
+      showToast(getString(R.string.controller_compose_boards_cannot_use_blank_name))
+      return
+    }
+
+    mainScope.launch {
+      when (val result = viewModel.createOrUpdateCompositeCatalog(compositeCatalogName, compositionSlots)) {
+        is ModularResult.Error -> {
+          val message = getString(
+            R.string.controller_compose_boards_failed_to_create_composite_catalog,
+            result.error.errorMessageOrClassName()
+          )
+
+          showToast(message)
+        }
+        is ModularResult.Value -> {
+          showToast(getString(R.string.controller_compose_boards_create_success))
+          pop()
+        }
+      }
+    }
+
+  }
+
+  @Composable
+  private fun BuildHeader() {
+    KurobaComposeText(
+      textAlign = TextAlign.Center,
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .padding(4.dp),
+      text = stringResource(
+        id = R.string.controller_compose_boards_title,
+        ChanDescriptor.CompositeCatalogDescriptor.MIN_CATALOGS_COUNT,
+        ChanDescriptor.CompositeCatalogDescriptor.MAX_CATALOGS_COUNT
+      )
+    )
+  }
+
+  @Composable
+  private fun BuildCompositionSlot(
+    index: Int,
+    catalogCompositionSlot: ComposeBoardsControllerViewModel.CatalogCompositionSlot,
+    onAddOrReplaceBoardClicked: (Int) -> Unit,
+    removeBoardClicked: (Int) -> Unit
+  ) {
+    val onAddOrReplaceBoardClickedRemembered = rememberUpdatedState(newValue = onAddOrReplaceBoardClicked)
+    val removeBoardClickedRemembered = rememberUpdatedState(newValue = removeBoardClicked)
+
+    KurobaComposeCardView(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(COMPOSITION_SLOT_ITEM_HEIGHT)
+        .padding(4.dp)
+        .kurobaClickable(bounded = true, onClick = { onAddOrReplaceBoardClickedRemembered.value.invoke(index) })
+    ) {
+      Box(modifier = Modifier.fillMaxSize()) {
+        when (catalogCompositionSlot) {
+          ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty -> {
+            KurobaComposeText(
+              fontSize = 16.sp,
+              textAlign = TextAlign.Center,
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .align(Alignment.Center),
+              text = stringResource(id = R.string.controller_compose_boards_click_to_add_board)
+            )
+          }
+          is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Occupied -> {
+            Column(
+              modifier = Modifier
+                .wrapContentSize()
+                .align(Alignment.Center)
+            ) {
+              val imageLoaderRequest = remember(key1 = catalogCompositionSlot) {
+                val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
+                val iconUrl = siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url!!
+
+                return@remember ImageLoaderRequest(ImageLoaderRequestData.Url(iconUrl))
+              }
+
+              KurobaComposeImage(
+                modifier = Modifier
+                  .wrapContentWidth()
+                  .height(COMPOSITION_SLOT_ITEM_HEIGHT / 3),
+                request = imageLoaderRequest,
+                imageLoaderV2 = imageLoaderV2,
+                error = {
+                  Image(
+                    modifier = Modifier.fillMaxSize(),
+                    painter = painterResource(id = R.drawable.error_icon),
+                    contentDescription = null
+                  )
+                }
+              )
+
+              val text = remember(key1 = catalogCompositionSlot) {
+                buildString {
+                  append(catalogCompositionSlot.catalogDescriptor.siteDescriptor().siteName)
+                  append("/")
+                  append(catalogCompositionSlot.catalogDescriptor.boardDescriptor.boardCode)
+                  append("/")
+                }
+              }
+
+              Spacer(modifier = Modifier.height(8.dp))
+
+              KurobaComposeText(
+                fontSize = 16.sp,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                  .wrapContentSize()
+                  .align(Alignment.CenterHorizontally),
+                text = text
+              )
+            }
+
+            KurobaComposeIcon(
+              modifier = Modifier
+                .size(28.dp)
+                .kurobaClickable(
+                  bounded = false,
+                  onClick = { removeBoardClickedRemembered.value.invoke(index) }
+                ),
+              drawableId = R.drawable.ic_clear_white_24dp,
+              themeEngine = themeEngine
+            )
+          }
+        }
+      }
+    }
+  }
+
+  @Composable
+  private fun BuildFooter(
+    compositionSlots: List<ComposeBoardsControllerViewModel.CatalogCompositionSlot>,
+    onCancelClicked: () -> Unit,
+    onSaveClicked: () -> Unit
+  ) {
+    val onCancelClickedRemembered = rememberUpdatedState(newValue = onCancelClicked)
+    val onSaveClickedRemembered = rememberUpdatedState(newValue = onSaveClicked)
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(48.dp)
+        .padding(4.dp)
+    ) {
+      Spacer(modifier = Modifier.weight(1f))
+
+      KurobaComposeTextBarButton(
+        modifier = Modifier
+          .wrapContentSize(),
+        onClick = { onCancelClickedRemembered.value.invoke() },
+        text = stringResource(id = R.string.cancel)
+      )
+
+      Spacer(modifier = Modifier.width(16.dp))
+
+      val currentCatalogDescriptors = compositionSlots.mapNotNull { compositionSlot ->
+        if (compositionSlot is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty) {
+          return@mapNotNull null
+        }
+
+        compositionSlot as ComposeBoardsControllerViewModel.CatalogCompositionSlot.Occupied
+        return@mapNotNull compositionSlot.catalogDescriptor
+      }
+
+      val prevCatalogDescriptors = prevCompositeCatalog?.compositeCatalogDescriptor?.catalogDescriptors
+
+      val buttonText = if (prevCatalogDescriptors == currentCatalogDescriptors) {
+        stringResource(id = R.string.update)
+      } else {
+        stringResource(id = R.string.create)
+      }
+
+      KurobaComposeTextBarButton(
+        enabled = currentCatalogDescriptors.size >= 2,
+        modifier = Modifier.wrapContentSize(),
+        onClick = { onSaveClickedRemembered.value.invoke() },
+        text = buttonText
+      )
+    }
+  }
+
+  companion object {
+    private val COMPOSITION_SLOT_ITEM_HEIGHT = 128.dp
+  }
+
+}
