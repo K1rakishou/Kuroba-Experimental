@@ -71,6 +71,10 @@ data class ChanCatalogSnapshot(
         return@read null
       }
 
+      if (endReached) {
+        error("End had already been reached, can't load next page")
+      }
+
       return@read currentCatalogPage.plus(1)
     }
   }

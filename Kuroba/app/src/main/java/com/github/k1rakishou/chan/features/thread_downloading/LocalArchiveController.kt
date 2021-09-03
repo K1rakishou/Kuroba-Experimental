@@ -779,7 +779,7 @@ class LocalArchiveController(
       }
     }
 
-    loadingViewController.enableBack {
+    loadingViewController.enableCancellation {
       if (job.isActive) {
         job.cancel()
       }

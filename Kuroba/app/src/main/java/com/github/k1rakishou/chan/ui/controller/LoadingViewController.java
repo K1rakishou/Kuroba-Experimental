@@ -9,6 +9,7 @@ import android.widget.ProgressBar;
 
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView;
 
 import org.jetbrains.annotations.NotNull;
@@ -20,11 +21,12 @@ import kotlin.jvm.functions.Function0;
 public class LoadingViewController extends BaseFloatingController {
     private ColorizableTextView loadingControllerTitle;
     private ColorizableTextView loadingControllerMessage;
+    private ColorizableBarButton cancelButton;
     private ProgressBar progressBar;
 
     private String title;
     private boolean indeterminate;
-    private boolean backAllowed = false;
+    private boolean cancelAllowed = false;
     private @Nullable Function0<Unit> cancellationFunc;
 
     @Override
@@ -51,10 +53,30 @@ public class LoadingViewController extends BaseFloatingController {
         super.onCreate();
 
         loadingControllerTitle = view.findViewById(R.id.loading_controller_title);
-        loadingControllerTitle.setText(title);
-
-        loadingControllerMessage = view.findViewById(R.id.loading_controller_message);
         progressBar = view.findViewById(R.id.progress_bar);
+        cancelButton = view.findViewById(R.id.loading_controller_cancel_button);
+
+        loadingControllerTitle.setText(title);
+        loadingControllerMessage = view.findViewById(R.id.loading_controller_message);
+
+        if (cancelAllowed) {
+            cancelButton.setVisibility(VISIBLE);
+        } else {
+            cancelButton.setVisibility(GONE);
+        }
+
+        cancelButton.setOnClickListener(view -> {
+            if (cancelButton.getVisibility() != VISIBLE || !cancelAllowed) {
+                return;
+            }
+
+            if (cancellationFunc != null) {
+                cancellationFunc.invoke();
+                cancellationFunc = null;
+            }
+
+            pop();
+        });
     }
 
     @Override
@@ -64,25 +86,22 @@ public class LoadingViewController extends BaseFloatingController {
         cancellationFunc = null;
     }
 
-    public void enableBack() {
-        backAllowed = true;
-    }
-
-    public void enableBack(@NotNull Function0<Unit> cancellationFunc) {
-        backAllowed = true;
+    public void enableCancellation(@NotNull Function0<Unit> cancellationFunc) {
         this.cancellationFunc = cancellationFunc;
+
+        cancelAllowed = true;
     }
 
     // Disable the back button for this controller unless otherwise requested by the above
     @Override
     public boolean onBack() {
-        if (backAllowed) {
-            presentedByController.onBack();
-        }
+        if (cancelAllowed) {
+            if (cancellationFunc != null) {
+                cancellationFunc.invoke();
+                cancellationFunc = null;
+            }
 
-        if (cancellationFunc != null) {
-            cancellationFunc.invoke();
-            cancellationFunc = null;
+            pop();
         }
 
         return true;

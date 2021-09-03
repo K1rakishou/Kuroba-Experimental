@@ -1165,7 +1165,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       context,
       true,
       context.getString(titleTextId)
-    ).apply { enableBack(cancellationFunc) }
+    ).apply { enableCancellation(cancellationFunc) }
 
     threadListLayoutCallback?.presentController(loadingViewController)
   }

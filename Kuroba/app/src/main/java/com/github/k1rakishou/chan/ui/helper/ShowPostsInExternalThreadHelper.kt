@@ -149,7 +149,7 @@ class ShowPostsInExternalThreadHelper(
       )
     }
 
-    loadingController.enableBack {
+    loadingController.enableCancellation {
       cancellationFlag.set(true)
       job.cancel()
     }

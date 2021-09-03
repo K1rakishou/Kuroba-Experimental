@@ -279,6 +279,12 @@ class BrowseController(
       .withSubItem(ACTION_CHANGE_VIEW_MODE, modeStringId) { item -> viewModeClicked(item) }
       .addSortMenu()
       .addDevMenu()
+      .withSubItem(
+        ACTION_LOAD_WHOLE_COMPOSITE_CATALOG,
+        R.string.action_rest_composite_catalog,
+        isCompositeCatalog,
+        { mainScope.launch { threadLayout.presenter.loadWholeCompositeCatalog() } }
+      )
       .withSubItem(ACTION_CATALOG_ALBUM, R.string.action_catalog_album, { threadLayout.presenter.showAlbum() })
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, !isCompositeCatalog, { item -> openBrowserClicked(item) })
       .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, !isCompositeCatalog, { item -> openThreadById(item) })
@@ -923,6 +929,13 @@ class BrowseController(
       menuItem.visible = isNotCompositeCatalog
     }
 
+    navigation.findSubItem(ACTION_LOAD_WHOLE_COMPOSITE_CATALOG)?.let { menuItem ->
+      val isCompositeCatalog =
+        threadLayout.presenter.currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
+
+      menuItem.visible = isCompositeCatalog
+    }
+
     navigation.findSubItem(ACTION_OPEN_BROWSER)?.let { menuItem ->
       val isNotCompositeCatalog =
         threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
@@ -993,6 +1006,7 @@ class BrowseController(
     private const val ACTION_CATALOG_ALBUM = 912
     private const val ACTION_CHAN4_ARCHIVE = 913
     private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 914
+    private const val ACTION_LOAD_WHOLE_COMPOSITE_CATALOG = 915
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

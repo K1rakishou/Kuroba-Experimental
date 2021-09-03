@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
@@ -184,6 +185,18 @@ class ThreadPresenter @Inject constructor(
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentFocusedController = CurrentFocusedController.None
   private var currentLoadThreadJob: Job? = null
+
+  override val endOfCatalogReached: Boolean
+    get() {
+      val descriptor = currentChanDescriptor
+        ?: return false
+
+      if (descriptor !is ChanDescriptor.ICatalogDescriptor) {
+        return false
+      }
+
+      return chanCatalogSnapshotCache.get(descriptor)?.isEndReached ?: true
+    }
 
   val isUnlimitedCatalog: Boolean
     get() {
@@ -470,16 +483,17 @@ class ThreadPresenter @Inject constructor(
       catalogSnapshot.updateCatalogPage(overridePage)
     }
 
-    val catalogPage = catalogSnapshot.catalogPage
     val isEndReached = catalogSnapshot.isEndReached
+    if (isEndReached) {
+      Logger.d(TAG, "loadCatalogPage() isEndReached == true")
+      return
+    }
+
+    val catalogPage = catalogSnapshot.catalogPage
     val nextCatalogPage = catalogSnapshot.getNextCatalogPage()
 
     Logger.d(TAG, "loadCatalogPage() catalogPage=${catalogPage} (overridePage=$overridePage), " +
       "nextCatalogPage=${nextCatalogPage}, isEndReached=$isEndReached")
-
-    if (isEndReached) {
-      return
-    }
 
     if (overridePage != null) {
       normalLoad(showLoading = true, deleteChanCatalogSnapshot = false)
@@ -502,6 +516,152 @@ class ThreadPresenter @Inject constructor(
     return catalogSnapshot.getNextCatalogPage()
   }
 
+  suspend fun loadWholeCompositeCatalog() {
+    BackgroundUtils.ensureMainThread()
+    Logger.d(TAG, "loadWholeCompositeCatalog() start")
+
+    if (currentLoadThreadJob != null) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() currentLoadThreadJob != null")
+      return
+    }
+
+    if (chanThreadLoadingState == ChanThreadLoadingState.Loading) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() chanThreadLoadingState == Loading")
+      return
+    }
+
+    val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
+    if (currentChanDescriptor == null) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() chanThreadTicker.currentChanDescriptor==null")
+      return
+    }
+
+    if (currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor")
+      return
+    }
+
+    if (chanCatalogSnapshotCache.get(currentChanDescriptor)?.isEndReached == true) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() isEndReached == true")
+      showToast(context, R.string.end_post_composite_catalog_already_reached)
+      return
+    }
+
+    chanThreadLoadingState = ChanThreadLoadingState.Loading
+
+    val alreadyPresenting = threadPresenterCallback
+      ?.isAlreadyPresentingController { controller -> controller is LoadingViewController } == true
+
+    val loadingController = if (!alreadyPresenting) {
+      val loadingController = LoadingViewController(context, false)
+      loadingController.enableCancellation {
+        currentLoadThreadJob?.cancel()
+        currentLoadThreadJob = null
+      }
+
+      threadPresenterCallback?.presentController(loadingController, true)
+
+      loadingController
+    } else {
+      null
+    }
+
+    @Suppress("SuspendFunctionOnCoroutineScope")
+    currentLoadThreadJob = launch {
+      this.coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
+        if (cause is CancellationException) {
+          Logger.d(TAG, "loadWholeCompositeCatalog() canceled")
+        }
+
+        chanThreadLoadingState = ChanThreadLoadingState.Loaded
+        currentLoadThreadJob = null
+
+        loadingController?.stopPresenting()
+      }
+
+      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
+        return@launch
+      }
+
+      var lastThreadLoadResult: ThreadLoadResult? = null
+
+      while (isActive) {
+        ensureActive()
+
+        val catalogSnapshot = chanCatalogSnapshotCache.get(currentChanDescriptor)
+        if (catalogSnapshot == null) {
+          Logger.d(TAG, "loadWholeCompositeCatalog() catalogSnapshot == null exiting")
+          break
+        }
+
+        if (catalogSnapshot.isEndReached) {
+          Logger.d(TAG, "loadWholeCompositeCatalog() isEndReached == true exiting")
+          break
+        }
+
+        val catalogPageToLoad = catalogSnapshot.getNextCatalogPage()
+        val totalCatalogPages = (currentChanDescriptor.catalogDescriptors.size - 1)
+
+        Logger.d(TAG, "loadWholeCompositeCatalog() loading ${catalogPageToLoad}/${totalCatalogPages}...")
+
+        val nextDescriptorToLoad = currentChanDescriptor.catalogDescriptors.getOrNull(catalogPageToLoad ?: 0)
+        if (nextDescriptorToLoad == null) {
+          Logger.d(TAG, "loadWholeCompositeCatalog() nextDescriptorToLoad == null exiting")
+          break
+        }
+
+        val message = "Loading catalog '${nextDescriptorToLoad.userReadableString()}' " +
+          "${catalogPageToLoad}/${totalCatalogPages}"
+        loadingController?.updateWithText(message)
+
+        lastThreadLoadResult = chanThreadManager.loadThreadOrCatalog(
+          page = catalogPageToLoad,
+          compositeCatalogDescriptor = currentChanDescriptor,
+          chanDescriptor = nextDescriptorToLoad,
+          chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+          chanLoadOptions = ChanLoadOptions.retainAll(),
+          chanCacheOptions = ChanCacheOptions.onlyCacheInMemory(),
+          chanReadOptions = ChanReadOptions.default()
+        )
+
+        when (lastThreadLoadResult) {
+          is ThreadLoadResult.Loaded -> {
+            Logger.d(TAG, "loadWholeCompositeCatalog() ${nextDescriptorToLoad} success")
+          }
+          is ThreadLoadResult.Error -> {
+            Logger.e(TAG, "loadWholeCompositeCatalog() ${nextDescriptorToLoad} error. " +
+              "Reason: ${lastThreadLoadResult.exception.errorMessage}")
+          }
+        }
+
+        catalogSnapshot.onCatalogLoaded(catalogPageToLoad)
+        Logger.d(TAG, "loadWholeCompositeCatalog() loading ${catalogPageToLoad}/${totalCatalogPages}...done")
+      }
+
+      when (lastThreadLoadResult) {
+        is ThreadLoadResult.Error -> {
+          onChanLoaderError(lastThreadLoadResult.chanDescriptor, lastThreadLoadResult.exception)
+        }
+        is ThreadLoadResult.Loaded -> {
+          val successfullyProcessedNewPosts = onChanLoaderData(lastThreadLoadResult.chanDescriptor)
+          if (!successfullyProcessedNewPosts) {
+            val error = getPossibleChanLoadError(currentChanDescriptor)
+            onChanLoaderError(lastThreadLoadResult.chanDescriptor, error)
+          } else {
+            chanCatalogSnapshotCache.get(currentChanDescriptor)
+              ?.onEndOfUnlimitedCatalogReached()
+          }
+        }
+        null -> {
+          chanCatalogSnapshotCache.get(currentChanDescriptor)
+            ?.onEndOfUnlimitedCatalogReached()
+        }
+      }
+
+      Logger.d(TAG, "normalLoad() end")
+    }
+  }
+
   @OptIn(ExperimentalTime::class)
   fun normalLoad(
     showLoading: Boolean = false,
@@ -511,6 +671,10 @@ class ThreadPresenter @Inject constructor(
     chanReadOptions: ChanReadOptions = ChanReadOptions.default(),
     deleteChanCatalogSnapshot: Boolean = showLoading
   ) {
+    if (currentLoadThreadJob != null) {
+      return
+    }
+
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "normalLoad() start")
 
@@ -531,6 +695,11 @@ class ThreadPresenter @Inject constructor(
         return@launch
       }
 
+      this.coroutineContext[Job.Key]?.invokeOnCompletion {
+        chanThreadLoadingState = ChanThreadLoadingState.Loaded
+        currentLoadThreadJob = null
+      }
+
       if (showLoading) {
         threadPresenterCallback?.showLoading()
         alreadyCreatedNavElement.set(false)
@@ -540,6 +709,17 @@ class ThreadPresenter @Inject constructor(
         if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
           chanCatalogSnapshotCache.delete(currentChanDescriptor)
         }
+      }
+
+      val isEndReached = if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        chanCatalogSnapshotCache.get(currentChanDescriptor)?.isEndReached ?: false
+      } else {
+        false
+      }
+
+      if (isEndReached) {
+        Logger.d(TAG, "normalLoad() isEndReached == true")
+        return@launch
       }
 
       chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
@@ -596,9 +776,6 @@ class ThreadPresenter @Inject constructor(
           }
         }
       }
-
-      chanThreadLoadingState = ChanThreadLoadingState.Loaded
-      currentLoadThreadJob = null
 
       Logger.d(TAG, "normalLoad() end")
     }
@@ -2588,6 +2765,7 @@ class ThreadPresenter @Inject constructor(
 
     suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
 
+    fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun presentController(controller: Controller, animate: Boolean)
     fun showToolbar()
     fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean)

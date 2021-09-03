@@ -1010,6 +1010,10 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.onPostUpdated(updatedPost)
   }
 
+  override fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean {
+    return callback.isAlreadyPresentingController(predicate)
+  }
+
   override fun presentController(
     controller: Controller,
     animate: Boolean

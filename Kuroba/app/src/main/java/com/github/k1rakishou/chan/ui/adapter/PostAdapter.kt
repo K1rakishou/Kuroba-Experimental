@@ -510,6 +510,11 @@ class PostAdapter(
     private var prevCatalogPage: Int? = null
 
     fun bind() {
+      if (postAdapterCallback.endOfCatalogReached) {
+        catalogStatusCell.onCatalogEndReached()
+        return
+      }
+
       val nextPage = postAdapterCallback.getNextPage()
         ?: return
       val prevPage = prevCatalogPage
@@ -552,6 +557,7 @@ class PostAdapter(
 
   interface PostAdapterCallback {
     val currentChanDescriptor: ChanDescriptor?
+    val endOfCatalogReached: Boolean
     val isUnlimitedOrCompositeCatalog: Boolean
     val unlimitedOrCompositeCatalogEndReached: Boolean
 

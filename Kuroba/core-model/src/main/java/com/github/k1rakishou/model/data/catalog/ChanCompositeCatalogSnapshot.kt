@@ -99,7 +99,13 @@ class ChanCompositeCatalogSnapshot(
   }
 
   override fun getNextCatalogPage(): Int {
-    return lock.write { currentCatalogPage.plus(1) }
+    return lock.write {
+      if (endReached) {
+        error("End had already been reached, can't load next page")
+      }
+
+      return@write currentCatalogPage.plus(1)
+    }
   }
 
   override fun onCatalogLoaded(catalogPageToLoad: Int?) {

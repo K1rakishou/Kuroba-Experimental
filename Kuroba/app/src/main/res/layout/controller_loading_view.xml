@@ -29,7 +29,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
         android:layout_width="320dp"
-        android:layout_height="140dp"
+        android:layout_height="wrap_content"
         android:layout_marginStart="8dp"
         android:layout_marginLeft="8dp"
         android:layout_marginTop="8dp"
@@ -43,7 +43,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <androidx.constraintlayout.widget.ConstraintLayout
             android:layout_width="match_parent"
-            android:layout_height="match_parent">
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:layout_marginBottom="12dp">
 
             <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
                 android:id="@+id/loading_controller_title"
@@ -53,36 +55,53 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="24dp"
                 android:gravity="center_horizontal"
+                app:layout_constraintBottom_toTopOf="@+id/progress_container"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/progress_container"
                 tools:ignore="HardcodedText"
                 tools:text="Doing heavy lifting, please wait..." />
 
-            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                android:id="@+id/loading_controller_message"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="0"
-                android:visibility="gone"
-                app:layout_constraintBottom_toBottomOf="@+id/progress_bar"
-                app:layout_constraintEnd_toEndOf="@+id/progress_bar"
-                app:layout_constraintStart_toStartOf="@+id/progress_bar"
-                app:layout_constraintTop_toTopOf="@+id/progress_bar" />
-
-            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
-                android:id="@+id/progress_bar"
+            <FrameLayout
+                android:id="@+id/progress_container"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginStart="8dp"
                 android:layout_marginTop="8dp"
                 android:layout_marginEnd="8dp"
-                android:layout_marginBottom="8dp"
+                app:layout_constraintBottom_toTopOf="@+id/loading_controller_cancel_button"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintHorizontal_bias="0.5"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@+id/loading_controller_title">
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                    android:id="@+id/loading_controller_message"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:visibility="gone"
+                    android:text="0" />
+
+                <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
+                    android:id="@+id/progress_bar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content" />
+
+            </FrameLayout>
+
+            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                android:id="@+id/loading_controller_cancel_button"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/cancel"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/loading_controller_title" />
+                app:layout_constraintTop_toBottomOf="@+id/progress_container" />
 
         </androidx.constraintlayout.widget.ConstraintLayout>
 
