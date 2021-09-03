@@ -16,12 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.presenter
 
-import android.content.Context
-import android.graphics.Bitmap
-import android.text.SpannableStringBuilder
-import android.text.style.ImageSpan
-import androidx.core.graphics.drawable.toBitmap
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
@@ -29,8 +23,6 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
-import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -42,13 +34,9 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeoutOrNull
 import javax.inject.Inject
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
 
 class BrowsePresenter @Inject constructor(
   private val appScope: CoroutineScope,
@@ -85,6 +73,10 @@ class BrowsePresenter @Inject constructor(
     controllerScope.launch {
       currentOpenedDescriptorStateManager.currentCatalogDescriptorFlow
         .collect { catalogDescriptor ->
+          if (catalogDescriptor != null) {
+            callback?.updateToolbarTitle(catalogDescriptor)
+          }
+
           if (currentOpenedCatalog == catalogDescriptor) {
             return@collect
           }
@@ -247,72 +239,9 @@ class BrowsePresenter @Inject constructor(
     return compositeCatalogManager.byCompositeCatalogDescriptor(catalogDescriptor)?.name
   }
 
-  @OptIn(ExperimentalTime::class)
-  suspend fun getCompositeCatalogNavigationSubtitle(
-    coroutineScope: CoroutineScope,
-    context: Context,
-    fontSizePx: Int,
-    compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
-    visibleSitesCount: Int = 3
-  ): CharSequence {
-    val spannableStringBuilder = SpannableStringBuilder()
-    val catalogsBySites = compositeCatalogDescriptor.catalogDescriptors
-      .groupBy { catalogDescriptor -> catalogDescriptor.siteDescriptor() }
-
-    catalogsBySites.entries
-      .take(visibleSitesCount)
-      .forEach { (siteDescriptor, catalogDescriptors) ->
-        coroutineScope.ensureActive()
-
-        var iconBitmap = withTimeoutOrNull(Duration.seconds(5)) {
-          siteManager.bySiteDescriptor(siteDescriptor)
-            ?.icon()
-            ?.getIconSuspend(context)
-            ?.bitmap
-        }
-
-        if (iconBitmap == null) {
-          iconBitmap = getDrawable(R.drawable.error_icon).toBitmap()
-        }
-
-        if (spannableStringBuilder.isNotEmpty()) {
-          spannableStringBuilder.append("+")
-        }
-
-        val boardCodes = catalogDescriptors.joinToString(
-          separator = ",",
-          prefix = "/",
-          postfix = "/",
-          transform = { descriptor -> descriptor.boardDescriptor.boardCode }
-        )
-
-        spannableStringBuilder
-          .append("  ", getIconSpan(iconBitmap, fontSizePx), 0)
-          .append(boardCodes)
-    }
-
-    if (catalogsBySites.size > visibleSitesCount) {
-      val omittedCount = catalogsBySites.size - visibleSitesCount
-
-      spannableStringBuilder
-        .append(" + ")
-        .append(omittedCount.toString())
-        .append(" more")
-    }
-
-    return spannableStringBuilder
-  }
-
-  private fun getIconSpan(icon: Bitmap, fontSizePx: Int): ImageSpan {
-    val iconSpan = ImageSpan(AndroidUtils.getAppContext(), icon)
-    val width = (fontSizePx.toFloat() / (icon.height.toFloat() / icon.width.toFloat())).toInt()
-
-    iconSpan.drawable.setBounds(0, 0, width, fontSizePx)
-    return iconSpan
-  }
-
   interface Callback {
     suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
+    suspend fun updateToolbarTitle(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
     suspend fun showSitesNotSetup()
   }
 

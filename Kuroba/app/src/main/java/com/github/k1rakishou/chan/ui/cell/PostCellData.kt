@@ -294,10 +294,17 @@ data class PostCellData(
 
   private fun calculatePostTitle(): CharSequence {
     val titleParts: MutableList<CharSequence> = ArrayList(5)
-    var postIndexText = ""
 
-    if (chanDescriptor.isThreadDescriptor() && postIndex >= 0) {
-      postIndexText = String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
+    val postIndexText = if (chanDescriptor.isThreadDescriptor() && postIndex >= 0) {
+      String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
+    } else {
+      ""
+    }
+
+    val siteBoardIndicator = if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      "${post.postDescriptor.siteDescriptor().siteName}/${post.postDescriptor.boardDescriptor().boardCode}/ "
+    } else {
+      ""
     }
 
     if (post.subject.isNotNullNorBlank()) {
@@ -320,7 +327,7 @@ data class PostCellData(
 
     val postNoText = SpannableString.valueOf(
       String
-        .format(Locale.ENGLISH, "%sNo. %d", postIndexText, post.postNo())
+        .format(Locale.ENGLISH, "%s%sNo. %d", siteBoardIndicator, postIndexText, post.postNo())
         .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
     )
 

@@ -55,6 +55,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -675,42 +676,8 @@ class BrowseController(
   override suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "loadCatalog($catalogDescriptor)")
-      boardManager.awaitUntilInitialized()
 
-      updateCompositeCatalogNavigationSubtitleJob?.cancel()
-      updateCompositeCatalogNavigationSubtitleJob = null
-
-      if (catalogDescriptor is CatalogDescriptor) {
-        val boardDescriptor = catalogDescriptor.boardDescriptor
-
-        val board = boardManager.byBoardDescriptor(boardDescriptor)
-          ?: return@launch
-
-        navigation.title = "/" + boardDescriptor.boardCode + "/"
-        navigation.subtitle = board.name ?: ""
-      } else {
-        catalogDescriptor as ChanDescriptor.CompositeCatalogDescriptor
-
-        navigation.title = getString(R.string.browse_controller_composite_catalog_title)
-        navigation.subtitle = getString(R.string.browse_controller_composite_catalog_subtitle_loading)
-
-        updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {
-          val newTitle = presenter.getCompositeCatalogNavigationTitle(catalogDescriptor)
-          if (newTitle.isNotNullNorEmpty()) {
-            navigation.title = newTitle
-          }
-
-          navigation.subtitle = presenter.getCompositeCatalogNavigationSubtitle(
-            coroutineScope = this,
-            context = context,
-            fontSizePx = sp(12f),
-            compositeCatalogDescriptor = catalogDescriptor
-          )
-
-          requireNavController().requireToolbar().updateTitle(navigation)
-        }
-      }
-
+      updateToolbarTitle(catalogDescriptor)
       threadLayout.presenter.bindChanDescriptor(catalogDescriptor as ChanDescriptor)
 
       if (!menuBuiltOnce) {
@@ -719,10 +686,50 @@ class BrowseController(
       }
 
       updateMenuItems()
-      requireNavController().requireToolbar().updateTitle(navigation)
 
       if (historyNavigationManager.isInitialized) {
         historyNavigationManager.moveNavElementToTop(catalogDescriptor as ChanDescriptor)
+      }
+    }
+  }
+
+  override suspend fun updateToolbarTitle(catalogDescriptor: ChanDescriptor.ICatalogDescriptor) {
+    boardManager.awaitUntilInitialized()
+
+    updateCompositeCatalogNavigationSubtitleJob?.cancel()
+    updateCompositeCatalogNavigationSubtitleJob = null
+
+    if (catalogDescriptor is CatalogDescriptor) {
+      val boardDescriptor = catalogDescriptor.boardDescriptor
+
+      val board = boardManager.byBoardDescriptor(boardDescriptor)
+        ?: return
+
+      navigation.title = "/" + boardDescriptor.boardCode + "/"
+      navigation.subtitle = board.name ?: ""
+
+      requireNavController().requireToolbar().updateTitle(navigation)
+    } else {
+      catalogDescriptor as ChanDescriptor.CompositeCatalogDescriptor
+
+      navigation.title = getString(R.string.browse_controller_composite_catalog_title)
+      navigation.subtitle = getString(R.string.browse_controller_composite_catalog_subtitle_loading)
+
+      updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {
+        val newTitle = presenter.getCompositeCatalogNavigationTitle(catalogDescriptor)
+        if (newTitle.isNotNullNorEmpty()) {
+          navigation.title = newTitle
+        }
+
+        navigation.subtitle = SpannableHelper.getCompositeCatalogNavigationSubtitle(
+          siteManager = siteManager,
+          coroutineScope = this,
+          context = context,
+          fontSizePx = sp(12f),
+          compositeCatalogDescriptor = catalogDescriptor
+        )
+
+        requireNavController().requireToolbar().updateTitle(navigation)
       }
     }
   }

@@ -32,7 +32,7 @@ class CompositeCatalogLocalSource(
       }
   }
 
-  suspend fun createOrUpdate(compositeCatalog: CompositeCatalog, order: Int) {
+  suspend fun create(compositeCatalog: CompositeCatalog, order: Int) {
     ensureInTransaction()
 
     val entity = CompositeCatalogEntity(

@@ -415,15 +415,11 @@ class ChanThreadManager(
           ?.isContentLoadedForLoader(loaderType)
           ?: false
       }
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         return chanThreadsCache.getCatalog(descriptor)
           ?.getPost(postDescriptor)
           ?.isContentLoadedForLoader(loaderType)
           ?: false
-      }
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
-        return true
       }
     }
   }

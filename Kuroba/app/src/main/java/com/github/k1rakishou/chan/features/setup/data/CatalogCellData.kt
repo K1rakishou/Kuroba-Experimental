@@ -16,7 +16,10 @@ class CatalogCellData(
         return@lazy "/${catalogDescriptor.boardDescriptor.boardCode}/"
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        return@lazy catalogDescriptor.userReadableString()
+        return@lazy catalogDescriptor.catalogDescriptors.joinToString(
+          separator = "+",
+          transform = { catalogDescriptor -> "${catalogDescriptor.siteName()}/${catalogDescriptor.boardCode()}/" }
+        )
       }
     }
   }
@@ -37,7 +40,6 @@ class CatalogCellData(
       return when (catalogDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> catalogDescriptor.boardDescriptor
         is ChanDescriptor.CompositeCatalogDescriptor -> {
-          // TODO(KurobaEx): CompositeCatalogDescriptor
           null
         }
       }

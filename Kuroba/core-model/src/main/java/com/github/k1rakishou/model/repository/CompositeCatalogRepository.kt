@@ -28,10 +28,10 @@ class CompositeCatalogRepository(
     }
   }
 
-  suspend fun createOrUpdate(compositeCatalog: CompositeCatalog, order: Int): ModularResult<Unit> {
+  suspend fun create(compositeCatalog: CompositeCatalog, order: Int): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        return@tryWithTransaction localSource.createOrUpdate(compositeCatalog, order)
+        return@tryWithTransaction localSource.create(compositeCatalog, order)
       }
     }
   }

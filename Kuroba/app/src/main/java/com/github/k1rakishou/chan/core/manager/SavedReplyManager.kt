@@ -86,8 +86,7 @@ class SavedReplyManager(
   fun isSaved(chanDescriptor: ChanDescriptor, postNo: Long, postSubNo: Long): Boolean {
     val threadDescriptor = when (chanDescriptor) {
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
-        return false
+        error("Cannot use CompositeCatalogDescriptor here")
       }
       is ChanDescriptor.ThreadDescriptor -> chanDescriptor
       is ChanDescriptor.CatalogDescriptor -> ChanDescriptor.ThreadDescriptor.create(chanDescriptor, postNo)

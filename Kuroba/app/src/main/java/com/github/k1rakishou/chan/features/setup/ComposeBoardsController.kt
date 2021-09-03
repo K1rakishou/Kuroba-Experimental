@@ -131,7 +131,9 @@ class ComposeBoardsController(
       BuildFooter(
         compositionSlots = compositionSlots,
         onCancelClicked = { pop() },
-        onSaveClicked = { mainScope.launch { createOrUpdateCompositeCatalog(compositionSlots) } }
+        onSaveClicked = {
+          mainScope.launch { createOrUpdateCompositeCatalog(compositionSlots) }
+        }
       )
     }
   }
@@ -152,7 +154,7 @@ class ComposeBoardsController(
     val compositeCatalogDescriptor = ChanDescriptor.CompositeCatalogDescriptor.createSafe(catalogDescriptors)
       ?: return
 
-    if (prevCompositeCatalog == null && viewModel.alreadyExists(compositeCatalogDescriptor)) {
+    if (this.prevCompositeCatalog == null && viewModel.alreadyExists(compositeCatalogDescriptor)) {
       val boardsJoined = catalogDescriptors
         .map { catalogDescriptor -> catalogDescriptor.boardDescriptor }
         .joinToString(separator = ",", transform = { boardDescriptor -> boardDescriptor.userReadableString() })
@@ -170,7 +172,7 @@ class ComposeBoardsController(
           ComposeBoardsControllerViewModel.MAX_COMPOSITE_CATALOG_TITLE_LENGTH
         ),
         inputType = DialogFactory.DialogInputType.String,
-        defaultValue = prevCompositeCatalog?.name ?: getString(R.string.controller_compose_boards_default_name),
+        defaultValue = this.prevCompositeCatalog?.name ?: getString(R.string.controller_compose_boards_default_name),
         onValueEntered = { compositeCatalogName -> continuation.resume(compositeCatalogName) },
         onCanceled = { continuation.cancel() }
       )
@@ -182,7 +184,13 @@ class ComposeBoardsController(
     }
 
     mainScope.launch {
-      when (val result = viewModel.createOrUpdateCompositeCatalog(compositeCatalogName, compositionSlots)) {
+      val result = viewModel.createOrUpdateCompositeCatalog(
+        newCompositeCatalogName = compositeCatalogName,
+        compositionSlots = compositionSlots,
+        prevCompositeCatalog = prevCompositeCatalog
+      )
+
+      when (result) {
         is ModularResult.Error -> {
           val message = getString(
             R.string.controller_compose_boards_failed_to_create_composite_catalog,
@@ -348,9 +356,7 @@ class ComposeBoardsController(
         return@mapNotNull compositionSlot.catalogDescriptor
       }
 
-      val prevCatalogDescriptors = prevCompositeCatalog?.compositeCatalogDescriptor?.catalogDescriptors
-
-      val buttonText = if (prevCatalogDescriptors == currentCatalogDescriptors) {
+      val buttonText = if (prevCompositeCatalog != null) {
         stringResource(id = R.string.update)
       } else {
         stringResource(id = R.string.create)

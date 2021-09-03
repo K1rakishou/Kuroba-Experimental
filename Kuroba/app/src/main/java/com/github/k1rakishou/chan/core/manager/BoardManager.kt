@@ -288,7 +288,6 @@ class BoardManager(
     }
 
     if (currentCatalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      // TODO(KurobaEx): CompositeCatalogDescriptor
       return
     }
 

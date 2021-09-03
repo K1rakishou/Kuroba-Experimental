@@ -238,24 +238,14 @@ class CompositeCatalogsSetupController(
         Spacer(modifier = Modifier.height(4.dp))
 
         val text = remember(key1 = compositeCatalog.compositeCatalogDescriptor) {
-          val catalogDescriptorsGrouped = compositeCatalog.compositeCatalogDescriptor.catalogDescriptors
-            .groupBy { catalogDescriptor -> catalogDescriptor.siteDescriptor() }
-
           return@remember buildString {
-            catalogDescriptorsGrouped.entries.forEach { (siteDescriptor, catalogDescriptors) ->
+            compositeCatalog.compositeCatalogDescriptor.catalogDescriptors.forEach { catalogDescriptor ->
               if (isNotEmpty()) {
                 append(" + ")
               }
 
-              val boardsString = catalogDescriptors
-                .joinToString(
-                  separator = ",",
-                  transform = { catalogDescriptor -> "/${catalogDescriptor.boardCode()}/" }
-                )
-
-              append(siteDescriptor.siteName)
-              append(":")
-              append(boardsString)
+              append(catalogDescriptor.siteDescriptor().siteName)
+              append("/${catalogDescriptor.boardCode()}/")
             }
           }
         }

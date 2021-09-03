@@ -41,12 +41,12 @@ class CompositeCatalogManager(
     }
   }
 
-  suspend fun createOrUpdate(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
+  suspend fun create(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
     ensureInitialized()
 
     return ModularResult.Try {
       return@Try mutex.withLock {
-        compositeCatalogRepository.createOrUpdate(
+        compositeCatalogRepository.create(
           compositeCatalog = compositeCatalog,
           order = getOrder(compositeCatalog.compositeCatalogDescriptor)
         )

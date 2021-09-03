@@ -14,7 +14,6 @@ import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManag
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.features.setup.data.BoardSelectionControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxyBoardSelectionGridView
-import com.github.k1rakishou.chan.features.setup.epoxy.selection.EpoxySiteSelectionViewModel_
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionGridView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxyBoardSelectionListView
 import com.github.k1rakishou.chan.features.setup.epoxy.selection.epoxySiteSelectionView
@@ -285,17 +284,15 @@ class BoardSelectionController(
       override fun getSpanSize(position: Int): Int {
         val model = adapter.getModelAtPosition(position)
 
-        if (model is EpoxySiteSelectionViewModel_) {
-          return spanCount
-        }
-
         if (model is EpoxyBoardSelectionGridView) {
           if (model.catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
             return spanCount / 2
+          } else {
+            return 1
           }
         }
 
-        return 1
+        return spanCount
       }
     }
 

@@ -56,42 +56,51 @@ class BaseBoardSelectionViewHolder : EpoxyHolder(), ThemeEngine.ThemeChangesList
     }
   }
 
+  fun afterPropsSet() {
+    val query = searchQuery
+    if (query.isNullOrEmpty()) {
+      SpannableHelper.cleanSearchSpans(this.topTitle.text)
+      SpannableHelper.cleanSearchSpans(this.bottomTitle.text)
+    } else {
+      SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+        inputQueries = listOf(query),
+        spannableString = this.topTitle.text as SpannableString,
+        color = themeEngine.chanTheme.accentColor,
+        minQueryLength = 1
+      )
+
+      SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
+        inputQueries = listOf(query),
+        spannableString = this.bottomTitle.text as SpannableString,
+        color = themeEngine.chanTheme.accentColor,
+        minQueryLength = 1
+      )
+    }
+  }
+
   fun unbind() {
     themeEngine.removeListener(this)
     SpannableHelper.cleanSearchSpans(this.topTitle.text)
     SpannableHelper.cleanSearchSpans(this.bottomTitle.text)
   }
 
-  private fun afterPropsSet() {
-    val query = searchQuery
-    if (query.isNullOrEmpty()) {
-      SpannableHelper.cleanSearchSpans(this.topTitle.text)
-      SpannableHelper.cleanSearchSpans(this.bottomTitle.text)
-      return
+  fun bindTopTitle(title: String?) {
+    if (title == null) {
+      this.topTitle.setText(null, TextView.BufferType.SPANNABLE)
+    } else {
+      this.topTitle.setText(SpannableString.valueOf(title), TextView.BufferType.SPANNABLE)
     }
 
-    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
-      inputQueries = listOf(query),
-      spannableString = this.topTitle.text as SpannableString,
-      color = themeEngine.chanTheme.accentColor,
-      minQueryLength = 1
-    )
-
-    SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
-      inputQueries = listOf(query),
-      spannableString = this.bottomTitle.text as SpannableString,
-      color = themeEngine.chanTheme.accentColor,
-      minQueryLength = 1
-    )
-  }
-
-  fun bindTopTitle(title: String?) {
-    this.topTitle.setText(SpannableString.valueOf(title), TextView.BufferType.SPANNABLE)
     onThemeChanged()
   }
 
-  fun bindBottomTitle(title: String?) {
-    this.bottomTitle.setText(SpannableString.valueOf(title), TextView.BufferType.SPANNABLE)
+  fun bindBottomTitle(title: CharSequence?) {
+    if (title == null) {
+      this.bottomTitle.setText(null, TextView.BufferType.SPANNABLE)
+    } else {
+      this.bottomTitle.setText(SpannableString.valueOf(title), TextView.BufferType.SPANNABLE)
+    }
+
     onThemeChanged()
   }
 

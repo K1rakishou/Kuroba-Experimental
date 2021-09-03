@@ -13,7 +13,7 @@ abstract class EpoxyBoardSelectionGridView : EpoxyModelWithHolder<BaseBoardSelec
   @EpoxyAttribute
   var topTitle: String? = null
   @EpoxyAttribute
-  var bottomTitle: String? = null
+  var bottomTitle: CharSequence? = null
   @EpoxyAttribute
   var selected: Boolean = false
   @EpoxyAttribute(value = [EpoxyAttribute.Option.IgnoreRequireHashCode])
@@ -31,6 +31,12 @@ abstract class EpoxyBoardSelectionGridView : EpoxyModelWithHolder<BaseBoardSelec
     holder.bindQuery(searchQuery)
     holder.bindCurrentlySelected(selected)
     holder.bindRowClickCallback(clickListener)
+    holder.afterPropsSet()
+  }
+
+  override fun unbind(holder: BaseBoardSelectionViewHolder) {
+    super.unbind(holder)
+    holder.unbind()
   }
 
   override fun createNewHolder(parent: ViewParent): BaseBoardSelectionViewHolder {

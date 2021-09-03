@@ -78,7 +78,8 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
 
   suspend fun createOrUpdateCompositeCatalog(
     newCompositeCatalogName: String,
-    compositionSlots: List<CatalogCompositionSlot>
+    compositionSlots: List<CatalogCompositionSlot>,
+    prevCompositeCatalog: CompositeCatalog?
   ): ModularResult<Unit> {
     val catalogDescriptors = compositionSlots
       .mapNotNull { catalogCompositionSlot ->
@@ -111,7 +112,14 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
       compositeCatalogDescriptor = ChanDescriptor.CompositeCatalogDescriptor.create(catalogDescriptors)
     )
 
-    return compositeCatalogManager.createOrUpdate(compositeCatalog)
+    if (prevCompositeCatalog != null) {
+      val deleteResult = compositeCatalogManager.delete(prevCompositeCatalog)
+      if (deleteResult is ModularResult.Error) {
+        return deleteResult
+      }
+    }
+
+    return compositeCatalogManager.create(compositeCatalog)
   }
 
   suspend fun alreadyExists(compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor): Boolean {
