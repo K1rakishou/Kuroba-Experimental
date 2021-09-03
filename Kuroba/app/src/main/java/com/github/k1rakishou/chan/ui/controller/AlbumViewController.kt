@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
@@ -50,6 +51,7 @@ import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -105,6 +107,8 @@ class AlbumViewController(
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
   @Inject
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
+  @Inject
+  lateinit var compositeCatalogManager: CompositeCatalogManager
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -125,7 +129,6 @@ class AlbumViewController(
         )
       }
     }
-
     navigation.subtitle = AppModuleAndroidUtils.getQuantityString(R.plurals.image, postImages.size, postImages.size)
 
     // View setup
@@ -195,6 +198,18 @@ class AlbumViewController(
             threadController.selectPostImage(postImage)
           }
         }
+    }
+
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      mainScope.launch {
+        val compositeCatalogName = compositeCatalogManager.byCompositeCatalogDescriptor(chanDescriptor)
+          ?.name
+
+        if (compositeCatalogName.isNotNullNorBlank()) {
+          navigation.title = compositeCatalogName
+          requireNavController().requireToolbar().updateTitle(navigation)
+        }
+      }
     }
 
     requireNavController().requireToolbar().addToolbarHeightUpdatesCallback(this)

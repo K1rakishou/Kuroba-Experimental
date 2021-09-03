@@ -712,7 +712,7 @@ class BrowseController(
     } else {
       catalogDescriptor as ChanDescriptor.CompositeCatalogDescriptor
 
-      navigation.title = getString(R.string.browse_controller_composite_catalog_title)
+      navigation.title = getString(R.string.composite_catalog)
       navigation.subtitle = getString(R.string.browse_controller_composite_catalog_subtitle_loading)
 
       updateCompositeCatalogNavigationSubtitleJob = mainScope.launch {

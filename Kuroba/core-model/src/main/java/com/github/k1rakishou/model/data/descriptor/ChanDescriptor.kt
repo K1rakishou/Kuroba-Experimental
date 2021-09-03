@@ -1,5 +1,7 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
+
 sealed class ChanDescriptor {
   abstract fun isThreadDescriptor(): Boolean
   abstract fun isCatalogDescriptor(): Boolean
@@ -160,6 +162,9 @@ sealed class ChanDescriptor {
     override fun siteDescriptor(): SiteDescriptor = boardDescriptor.siteDescriptor
     override fun boardDescriptor(): BoardDescriptor = boardDescriptor
 
+    /**
+     * [CompositeCatalogEntity] depends on this method. Don't forget to update it!
+     * */
     override fun serializeToString(): String {
       return "CD${SEPARATOR}${boardDescriptor.siteName()}${SEPARATOR}${boardDescriptor.boardCode}"
     }
@@ -209,6 +214,9 @@ sealed class ChanDescriptor {
         return CatalogDescriptor(BoardDescriptor.create(siteName, boardCode))
       }
 
+      /**
+       * [CompositeCatalogEntity] depends on this method. Don't forget to update it!
+       * */
       fun deserializeFromString(catalogDescriptorString: String): CatalogDescriptor? {
         val parts = catalogDescriptorString.split(SEPARATOR)
 
@@ -270,6 +278,9 @@ sealed class ChanDescriptor {
 
     override fun siteDescriptor(): SiteDescriptor = error("Can't use site descriptor")
 
+    /**
+     * [CompositeCatalogEntity] depends on this method. Don't forget to update it!
+     * */
     override fun serializeToString(): String {
       val joined = catalogDescriptors.joinToString(
         separator = SEPARATOR,
@@ -342,6 +353,9 @@ sealed class ChanDescriptor {
         return CompositeCatalogDescriptor(descriptorParcelable.toCatalogDescriptors())
       }
 
+      /**
+       * [CompositeCatalogEntity] depends on this method. Don't forget to update it!
+       * */
       // CCD___CD___4chan___a___CD___dvach___b___CD___4chan___v
       fun deserializeFromString(compositeCatalogDescriptorString: String): CompositeCatalogDescriptor? {
         val parts = compositeCatalogDescriptorString.split(SEPARATOR)

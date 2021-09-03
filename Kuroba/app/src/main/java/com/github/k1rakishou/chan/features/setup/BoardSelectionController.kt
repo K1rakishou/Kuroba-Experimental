@@ -71,10 +71,11 @@ class BoardSelectionController(
     )
   }
 
-  private val spanCount by lazy {
-    val screenWidth = AndroidUtils.getDisplaySize(context).x
-    return@lazy (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
-  }
+  private val spanCount: Int
+    get() {
+      val screenWidth = AndroidUtils.getDisplaySize(context).x
+      return (screenWidth / GRID_COLUMN_WIDTH).coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+    }
 
   private val controller = BoardsSelectionEpoxyController()
 

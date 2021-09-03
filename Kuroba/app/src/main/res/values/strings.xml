@@ -1101,6 +1101,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="only_on_op">Only on OP</string>
     <string name="apply_to_saved">Apply to own posts</string>
 
+    <string name="composite_catalog">Composite catalog</string>
+
     <string name="browse_controller_title_app_setup">App Setup</string>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
     <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
@@ -1113,8 +1115,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
     <string name="browse_controller_enter_page_number">Enter page number</string>
     <string name="browse_controller_failed_to_parse_page_number">Failed to convert \'%1$s\' into integer value</string>
-    <string name="browse_controller_composite_catalog_title">Composite catalog</string>
-    <string name="browse_controller_composite_catalog_subtitle_loading">...</string>
+    <string name="browse_controller_composite_catalog_subtitle_loading">…</string>
 
     <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
     <string name="thread_layout_remove_whole_chain">Remove whole chain</string>
