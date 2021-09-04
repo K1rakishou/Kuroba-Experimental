@@ -3,9 +3,11 @@ package com.github.k1rakishou.model.source.local
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.mapper.NavHistoryElementMapper
+import com.squareup.moshi.Moshi
 
 class NavHistoryLocalSource(
   database: KurobaDatabase,
+  private val moshi: Moshi
 ) : AbstractLocalSource(database) {
   private val TAG = "NavHistoryLocalSource"
   private val navHistoryDao = database.navHistoryDao()
@@ -14,14 +16,19 @@ class NavHistoryLocalSource(
     ensureInTransaction()
 
     return navHistoryDao.selectAll(maxCount)
-      .map { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto) }
+      .mapNotNull { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi) }
   }
 
   suspend fun persist(navHistoryStack: List<NavHistoryElement>) {
     ensureInTransaction()
 
-    val navHistoryElementIdEntityList = navHistoryStack.map { navHistoryElement ->
-      NavHistoryElementMapper.toNavHistoryElementIdEntity(navHistoryElement)
+    if (navHistoryStack.isEmpty()) {
+      navHistoryDao.deleteAll()
+      return
+    }
+
+    val navHistoryElementIdEntityList = navHistoryStack.mapNotNull { navHistoryElement ->
+      NavHistoryElementMapper.toNavHistoryElementIdEntity(navHistoryElement, moshi)
     }
 
     val navHistoryIdList = navHistoryDao.insertManyIdsOrReplace(
@@ -47,7 +54,7 @@ class NavHistoryLocalSource(
     ensureInTransaction()
 
     return navHistoryDao.selectFirstNavElement()?.let { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto)
+      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
     }
   }
 
@@ -55,7 +62,7 @@ class NavHistoryLocalSource(
     ensureInTransaction()
 
     return navHistoryDao.selectFirstCatalogNavElement()?.let { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto)
+      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
     }
   }
 

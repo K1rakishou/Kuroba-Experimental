@@ -5,6 +5,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
@@ -16,7 +17,16 @@ data class NavigationHistoryEntry(
   val title: String,
   val pinned: Boolean,
   val additionalInfo: NavHistoryBookmarkAdditionalInfo?
-)
+) {
+
+  val isCompositeIconUrl: Boolean
+    get() = threadThumbnailUrl == COMPOSITE_ICON_URL
+
+  companion object {
+    val COMPOSITE_ICON_URL = AppConstants.COMPOSITE_ICON_URL_LAZY
+  }
+
+}
 
 data class NavHistoryBookmarkAdditionalInfo(
   val watching: Boolean = false,

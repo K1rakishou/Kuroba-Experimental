@@ -15,9 +15,11 @@ import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
+import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.features.drawer.MainController
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service
 import com.github.k1rakishou.chan.ui.controller.BrowseController
@@ -34,12 +36,13 @@ import dagger.Lazy
 
 
 class StartActivityStartupHandlerHelper(
-  private val historyNavigationManager: Lazy<HistoryNavigationManager>,
-  private val siteManager: Lazy<SiteManager>,
-  private val boardManager: Lazy<BoardManager>,
-  private val bookmarksManager: Lazy<BookmarksManager>,
-  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  private val siteResolver: Lazy<SiteResolver>
+  private val _historyNavigationManager: Lazy<HistoryNavigationManager>,
+  private val _siteManager: Lazy<SiteManager>,
+  private val _boardManager: Lazy<BoardManager>,
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val _siteResolver: Lazy<SiteResolver>,
+  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>
 ) {
   // We only want to load a board upon the application start when nothing is loaded yet. Afterward
   // we don't want to do that anymore so that we won't override the currently opened board when
@@ -50,6 +53,21 @@ class StartActivityStartupHandlerHelper(
   private var browseController: BrowseController? = null
   private var mainController: MainController? = null
   private var startActivityCallbacks: StartActivityCallbacks? = null
+
+  private val historyNavigationManager: HistoryNavigationManager
+    get() = _historyNavigationManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+    get() = _chanThreadViewableInfoManager.get()
+  private val siteResolver: SiteResolver
+    get() = _siteResolver.get()
+  private val compositeCatalogManager: CompositeCatalogManager
+    get() = _compositeCatalogManager.get()
 
   fun onCreate(
     context: Context,
@@ -100,9 +118,9 @@ class StartActivityStartupHandlerHelper(
 
   private suspend fun restoreFresh(allowedToOpenThread: Boolean) {
     Logger.d(TAG, "restoreFresh(allowedToOpenThread=$allowedToOpenThread)")
+    siteManager.awaitUntilInitialized()
 
-    val sm = siteManager.get().apply { awaitUntilInitialized() }
-    if (!sm.areSitesSetup()) {
+    if (!siteManager.areSitesSetup()) {
       Logger.d(TAG, "restoreFresh() Sites are not setup, showSitesNotSetup()")
       browseController?.showSitesNotSetup()
       return
@@ -115,7 +133,7 @@ class StartActivityStartupHandlerHelper(
       null
     }
 
-    Logger.d(TAG, "restoreFresh() getBoardToOpen returned ${catalogToOpen}, " +
+    Logger.d(TAG, "restoreFresh() getCatalogToOpen returned ${catalogToOpen}, " +
         "getThreadToOpen returned ${threadToOpen}")
 
     if (catalogToOpen != null) {
@@ -133,72 +151,105 @@ class StartActivityStartupHandlerHelper(
     val loadLastOpenedThreadUponAppStart = ChanSettings.loadLastOpenedThreadUponAppStart.get()
     Logger.d(TAG, "getThreadToOpen(), loadLastOpenedThreadUponAppStart=$loadLastOpenedThreadUponAppStart")
 
-    if (loadLastOpenedThreadUponAppStart) {
-      val threadDescriptor = historyNavigationManager.get().getNavElementAtTop()
-        ?.descriptor()
-        ?.threadDescriptorOrNull()
-
-      if (threadDescriptor == null) {
-        Logger.d(TAG, "getThreadToOpen() -> historyNavigationManager.getNavElementAtTop() -> null")
-        return null
-      }
-
-      val boardDescriptor = threadDescriptor.boardDescriptor
-
-      if (!checkSiteExistsAndActive("getThreadToOpen()", boardDescriptor)) {
-        return null
-      }
-
-      return threadDescriptor
+    if (!loadLastOpenedThreadUponAppStart) {
+      return null
     }
 
-    return null
+    val threadDescriptor = historyNavigationManager.getNavElementAtTop()
+      ?.descriptor()
+      ?.threadDescriptorOrNull()
+
+    if (threadDescriptor == null) {
+      Logger.d(TAG, "getThreadToOpen() -> historyNavigationManager.getNavElementAtTop() == null")
+      return null
+    }
+
+    val boardDescriptor = threadDescriptor.boardDescriptor
+
+    if (!checkSiteExistsAndActive("getThreadToOpen()", boardDescriptor)) {
+      return null
+    }
+
+    Logger.d(TAG, "getThreadToOpen() -> '$threadDescriptor'")
+    return threadDescriptor
   }
 
   private suspend fun getCatalogToOpen(): ChanDescriptor.ICatalogDescriptor? {
     val loadLastOpenedBoardUponAppStart = ChanSettings.loadLastOpenedBoardUponAppStart.get()
-    Logger.d(TAG, "getBoardToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
+    Logger.d(TAG, "getCatalogToOpen(), loadLastOpenedBoardUponAppStart=$loadLastOpenedBoardUponAppStart")
 
-    val boardDescriptor = if (loadLastOpenedBoardUponAppStart) {
-      val boardDescriptor = historyNavigationManager.get().getFirstCatalogNavElement()
-        ?.descriptor()
-        ?.boardDescriptor()
+    if (!loadLastOpenedBoardUponAppStart) {
+      siteManager.awaitUntilInitialized()
+      boardManager.awaitUntilInitialized()
 
+      val firstSiteDescriptor = siteManager.firstSiteDescriptor()
+      if (firstSiteDescriptor == null) {
+        Logger.d(TAG, "getCatalogToOpen() -> firstSiteDescriptor() == null")
+        return null
+      }
+
+      val boardDescriptor = boardManager.firstBoardDescriptor(firstSiteDescriptor)
       if (boardDescriptor == null) {
-        Logger.d(TAG, "getBoardToOpen() -> historyNavigationManager.getFirstCatalogNavElement() -> null")
+        Logger.d(TAG, "getCatalogToOpen() -> firstBoardDescriptor($firstSiteDescriptor) == null")
         return null
       }
 
-      if (!checkSiteExistsAndActive("getBoardToOpen()", boardDescriptor)) {
-        return null
-      }
-
-      boardDescriptor
-    } else {
-      val sm = siteManager.get().apply { awaitUntilInitialized() }
-      val bm = boardManager.get().apply { awaitUntilInitialized() }
-
-      sm.firstSiteDescriptor()?.let { firstSiteDescriptor -> bm.firstBoardDescriptor(firstSiteDescriptor) }
+      Logger.d(TAG, "getCatalogToOpen() -> '$boardDescriptor'")
+      return ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
     }
 
+    val catalogDescriptor = historyNavigationManager.getFirstCatalogNavElement()
+      ?.descriptor()
+
+    if (catalogDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      Logger.d(TAG, "getCatalogToOpen() -> catalogDescriptor is CompositeCatalogDescriptor")
+
+      val siteEnabled = siteManager.bySiteDescriptor(CompositeCatalogSite.SITE_DESCRIPTOR)
+        ?.enabled()
+        ?: false
+
+      if (!siteEnabled) {
+        Logger.d(TAG, "getCatalogToOpen() -> CompositeCatalogSite is not enabled")
+        return null
+      }
+
+      if (compositeCatalogManager.byCompositeCatalogDescriptor(catalogDescriptor) == null) {
+        Logger.d(TAG, "getCatalogToOpen() -> compositeCatalogManager.byCompositeCatalogDescriptor($catalogDescriptor) == null")
+        return null
+      }
+
+      Logger.d(TAG, "getCatalogToOpen() -> '$catalogDescriptor'")
+      return catalogDescriptor
+    }
+
+    Logger.d(TAG, "getCatalogToOpen() -> catalogDescriptor is CatalogDescriptor")
+
+    val boardDescriptor = catalogDescriptor?.boardDescriptor()
     if (boardDescriptor == null) {
+      Logger.d(TAG, "getCatalogToOpen() -> historyNavigationManager.getFirstCatalogNavElement() == null")
       return null
     }
 
+    if (!checkSiteExistsAndActive("getCatalogToOpen()", boardDescriptor)) {
+      Logger.d(TAG, "getCatalogToOpen() -> checkSiteExistsAndActive == false")
+      return null
+    }
+
+    Logger.d(TAG, "getCatalogToOpen() -> '$boardDescriptor'")
     return ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
   }
 
   private suspend fun checkSiteExistsAndActive(tag: String, boardDescriptor: BoardDescriptor): Boolean {
-    val sm = siteManager.get().apply { awaitUntilInitialized() }
+    siteManager.awaitUntilInitialized()
 
-    val site = sm.bySiteDescriptor(boardDescriptor.siteDescriptor)
+    val site = siteManager.bySiteDescriptor(boardDescriptor.siteDescriptor)
     if (site == null) {
-      Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) -> null")
+      Logger.d(TAG, "$tag siteManager.bySiteDescriptor(${boardDescriptor.siteDescriptor}) == null")
       return false
     }
 
-    if (!sm.isSiteActive(boardDescriptor.siteDescriptor)) {
-      Logger.d(TAG, "$tag siteManager.isSiteActive(${boardDescriptor.siteDescriptor}) -> false")
+    if (!siteManager.isSiteActive(boardDescriptor.siteDescriptor)) {
+      Logger.d(TAG, "$tag siteManager.isSiteActive(${boardDescriptor.siteDescriptor}) == false")
       return false
     }
 
@@ -219,7 +270,7 @@ class StartActivityStartupHandlerHelper(
 
     Logger.d(TAG, "onNewIntentInternal called, action=${action}")
 
-    bookmarksManager.get().awaitUntilInitialized()
+    bookmarksManager.awaitUntilInitialized()
 
     when {
       intent.hasExtra(NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
@@ -312,7 +363,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "restoreFromUrl(), url = $data")
 
     val url = data.toString()
-    val chanDescriptorResult = siteResolver.get().resolveChanDescriptorForUrl(url)
+    val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(url)
 
     if (chanDescriptorResult == null) {
       showToast(context, getString(R.string.open_link_not_matched, url), Toast.LENGTH_LONG)
@@ -332,7 +383,7 @@ class StartActivityStartupHandlerHelper(
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.get().update(chanDescriptor, true) { chanThreadViewableInfo ->
+        chanThreadViewableInfoManager.update(chanDescriptor, true) { chanThreadViewableInfo ->
           chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
         }
       }
@@ -400,14 +451,14 @@ class StartActivityStartupHandlerHelper(
       return chanDescriptor
     }
 
-    val sm = siteManager.get().apply { awaitUntilInitialized() }
+    siteManager.awaitUntilInitialized()
 
-    sm.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?: return null
 
-    val bm = boardManager.get().apply { awaitUntilInitialized() }
+    boardManager.awaitUntilInitialized()
 
-    bm.byBoardDescriptor(chanDescriptor.boardDescriptor())
+    boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return null
 
     return chanDescriptor
@@ -449,9 +500,9 @@ class StartActivityStartupHandlerHelper(
       }
       is ChanDescriptor.ThreadDescriptor -> {
         if (needToLoadBoard) {
-          val boardToOpen = getCatalogToOpen()
-          if (boardToOpen != null) {
-            browseController?.showCatalog(boardToOpen, animated = false)
+          val catalogToOpen = getCatalogToOpen()
+          if (catalogToOpen != null) {
+            browseController?.showCatalog(catalogToOpen, animated = false)
           } else {
             browseController?.loadWithDefaultBoard()
           }
@@ -503,10 +554,10 @@ class StartActivityStartupHandlerHelper(
 
     openThreadFromNotificationOrBookmarksController(threadDescriptors)
 
-    val updatedBookmarkDescriptors = bookmarksManager.get().updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
+    val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
     }
-    bookmarksManager.get().persistBookmarksManually(updatedBookmarkDescriptors)
+    bookmarksManager.persistBookmarksManually(updatedBookmarkDescriptors)
 
     return true
   }
@@ -515,9 +566,9 @@ class StartActivityStartupHandlerHelper(
     threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
   ) {
     if (needToLoadBoard) {
-      val boardToOpen = getCatalogToOpen()
-      if (boardToOpen != null) {
-        browseController?.showCatalog(boardToOpen, false)
+      val catalogToOpen = getCatalogToOpen()
+      if (catalogToOpen != null) {
+        browseController?.showCatalog(catalogToOpen, false)
       } else {
         browseController?.loadWithDefaultBoard()
       }

@@ -62,6 +62,9 @@ dependencies {
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
+    implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
+    kapt("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
+
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"
     testImplementation "com.squareup.okhttp3:mockwebserver:${versions.okhttp}"

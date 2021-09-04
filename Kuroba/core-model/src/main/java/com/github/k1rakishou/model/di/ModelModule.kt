@@ -55,6 +55,7 @@ import com.github.k1rakishou.model.source.local.ThreadDownloadLocalSource
 import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
+import com.squareup.moshi.Moshi
 import dagger.Module
 import dagger.Provides
 import okhttp3.OkHttpClient
@@ -87,6 +88,13 @@ class ModelModule {
     return gson
       .registerTypeAdapterFactory(userSettingAdapter)
       .create()
+  }
+
+  @Provides
+  @Singleton
+  fun provideMoshi(): Moshi {
+    return Moshi.Builder()
+      .build()
   }
 
   @Singleton
@@ -171,9 +179,11 @@ class ModelModule {
   @Provides
   fun provideNavHistoryLocalSource(
     database: KurobaDatabase,
+    moshi: Moshi
   ): NavHistoryLocalSource {
     return NavHistoryLocalSource(
-      database
+      database,
+      moshi
     )
   }
 

@@ -119,12 +119,7 @@ class HistoryNavigationManager(
     bookmarksManager: BookmarksManager,
     chanDescriptor: ChanDescriptor
   ): Boolean {
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      // TODO(KurobaEx): CompositeCatalogDescriptor
-      return false
-    }
-
-    if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       return ChanSettings.drawerShowNavigationHistory.get()
     }
 
@@ -191,11 +186,14 @@ class HistoryNavigationManager(
       )
 
       return@mapNotNull when (descriptor) {
-        is ChanDescriptor.ThreadDescriptor -> NavHistoryElement.Thread(descriptor, navElementInfo)
-        is ChanDescriptor.CatalogDescriptor -> NavHistoryElement.Catalog(descriptor, navElementInfo)
+        is ChanDescriptor.ThreadDescriptor -> {
+          NavHistoryElement.Thread(descriptor, navElementInfo)
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          NavHistoryElement.Catalog(descriptor, navElementInfo)
+        }
         is ChanDescriptor.CompositeCatalogDescriptor -> {
-          // TODO(KurobaEx): CompositeCatalogDescriptor
-          null
+          NavHistoryElement.CompositeCatalog(descriptor, navElementInfo)
         }
       }
     }
@@ -224,6 +222,7 @@ class HistoryNavigationManager(
     mutex.withLock {
       val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
         return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.CompositeCatalog -> navHistoryElement.descriptor == descriptor
           is NavHistoryElement.Catalog -> navHistoryElement.descriptor == descriptor
           is NavHistoryElement.Thread -> navHistoryElement.descriptor == descriptor
         }
@@ -318,6 +317,7 @@ class HistoryNavigationManager(
       for (chanDescriptor in chanDescriptors) {
         val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
           return@indexOfFirst when (navHistoryElement) {
+            is NavHistoryElement.CompositeCatalog -> navHistoryElement.descriptor == chanDescriptor
             is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
             is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
           }
@@ -390,6 +390,7 @@ class HistoryNavigationManager(
       descriptors.forEach { chanDescriptor ->
         val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
           return@indexOfFirst when (navHistoryElement) {
+            is NavHistoryElement.CompositeCatalog -> navHistoryElement.descriptor == chanDescriptor
             is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
             is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
           }
@@ -444,9 +445,6 @@ class HistoryNavigationManager(
 
         try {
           val navStackCopy = mutex.withLock { navigationStack.toList() }
-          if (navStackCopy.isEmpty()) {
-            return@launch
-          }
 
           historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->
@@ -464,9 +462,6 @@ class HistoryNavigationManager(
 
         try {
           val navStackCopy = mutex.withLock { navigationStack.toList() }
-          if (navStackCopy.isEmpty()) {
-            return@post
-          }
 
           historyNavigationRepository.persist(navStackCopy)
             .safeUnwrap { error ->

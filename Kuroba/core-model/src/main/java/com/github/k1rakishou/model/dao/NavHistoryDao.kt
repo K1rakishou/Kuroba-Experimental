@@ -33,12 +33,6 @@ abstract class NavHistoryDao {
   """)
   abstract suspend fun selectAll(maxCount: Int): List<NavHistoryFullDto>
 
-  @Query("""
-    DELETE 
-    FROM ${NavHistoryElementIdEntity.TABLE_NAME}
-    WHERE ${NavHistoryElementIdEntity.ID_COLUMN_NAME} NOT IN (:excludedIds)
-  """)
-  abstract suspend fun deleteAllExcept(excludedIds: List<Long>)
 
   @Query("""
     SELECT * 
@@ -55,10 +49,20 @@ abstract class NavHistoryDao {
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
     INNER JOIN ${NavHistoryElementInfoEntity.TABLE_NAME} nav_infos
         ON nav_ids.${NavHistoryElementIdEntity.ID_COLUMN_NAME} = nav_infos.${NavHistoryElementInfoEntity.OWNER_NAV_HISTORY_ID_COLUMN_NAME}
-    WHERE nav_ids.${NavHistoryElementIdEntity.THREAD_NO_COLUMN_NAME} = -1
+    WHERE nav_ids.${NavHistoryElementIdEntity.TYPE_COLUMN_NAME} != ${NavHistoryElementIdEntity.TYPE_THREAD_DESCRIPTOR}
     ORDER BY nav_infos.${NavHistoryElementInfoEntity.ELEMENT_ORDER_COLUMN_NAME} ASC
     LIMIT 1
   """)
   abstract fun selectFirstCatalogNavElement(): NavHistoryFullDto?
+
+  @Query("""
+    DELETE 
+    FROM ${NavHistoryElementIdEntity.TABLE_NAME}
+    WHERE ${NavHistoryElementIdEntity.ID_COLUMN_NAME} NOT IN (:excludedIds)
+  """)
+  abstract suspend fun deleteAllExcept(excludedIds: List<Long>)
+
+  @Query("DELETE FROM ${NavHistoryElementIdEntity.TABLE_NAME}")
+  abstract suspend fun deleteAll()
 
 }

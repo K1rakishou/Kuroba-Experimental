@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
+import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -658,7 +659,7 @@ class ThreadPresenter @Inject constructor(
         }
       }
 
-      Logger.d(TAG, "normalLoad() end")
+      Logger.d(TAG, "loadWholeCompositeCatalog() end")
     }
   }
 
@@ -1234,7 +1235,12 @@ class ThreadPresenter @Inject constructor(
         }
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
-        // TODO(KurobaEx): CompositeCatalogDescriptor
+        historyNavigationManager.createNewNavElement(
+          descriptor = localChanDescriptor,
+          thumbnailImageUrl = NavigationHistoryEntry.COMPOSITE_ICON_URL,
+          title = localChanDescriptor.userReadableString(),
+          canInsertAtTheBeginning = canInsertAtTheBeginning
+        )
       }
     }
   }

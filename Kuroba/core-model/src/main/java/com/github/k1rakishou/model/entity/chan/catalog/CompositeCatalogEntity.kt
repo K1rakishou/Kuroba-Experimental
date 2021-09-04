@@ -10,9 +10,9 @@ import androidx.room.PrimaryKey
 data class CompositeCatalogEntity(
   @PrimaryKey(autoGenerate = false)
   @ColumnInfo(name = COMPOSITE_BOARDS_STRING_COLUMN_NAME)
-  var compositeBoardsString: String,
+  val compositeBoardsString: String,
   @ColumnInfo(name = COMPOSITE_CATALOG_COLUMN_NAME)
-  var name: String,
+  val name: String,
   @ColumnInfo(name = ORDER_COLUMN_NAME)
   var order: Int
 ) {

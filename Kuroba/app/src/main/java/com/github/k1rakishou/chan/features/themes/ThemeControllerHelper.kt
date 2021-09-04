@@ -210,6 +210,8 @@ class ThemeControllerHelper(
       object : PostAdapter.PostAdapterCallback {
         override val currentChanDescriptor: ChanDescriptor?
           get() = dummyThreadDescriptor
+        override val endOfCatalogReached: Boolean
+          get() = false
         override val unlimitedOrCompositeCatalogEndReached: Boolean
           get() = true
 

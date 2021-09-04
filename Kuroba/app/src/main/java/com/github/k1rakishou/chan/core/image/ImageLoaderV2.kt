@@ -94,6 +94,33 @@ class ImageLoaderV2(
     }
   }
 
+  suspend fun loadFromResourcesSuspend(
+    context: Context,
+    @DrawableRes drawableId: Int,
+    imageSize: ImageSize,
+    transformations: List<Transformation> = emptyList()
+  ): ModularResult<BitmapDrawable> {
+    return suspendCancellableCoroutine { continuation ->
+      val disposable = loadFromResources(
+        context = context,
+        drawableId = drawableId,
+        imageSize = imageSize,
+        scale = Scale.FIT,
+        transformations = transformations
+      ) { drawable -> continuation.resumeValueSafe(value(drawable)) }
+
+      continuation.invokeOnCancellation { cause: Throwable? ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        if (!disposable.isDisposed) {
+          disposable.dispose()
+        }
+      }
+    }
+  }
+
   suspend fun loadFromNetworkSuspend(
     context: Context,
     url: String,

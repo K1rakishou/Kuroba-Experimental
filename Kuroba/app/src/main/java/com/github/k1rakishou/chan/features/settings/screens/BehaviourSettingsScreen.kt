@@ -264,22 +264,6 @@ class BehaviourSettingsScreen(
           callback = { navigationController.pushController(JsCaptchaCookiesEditorController(context)) }
         )
 
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.GeneralGroup.LoadLastOpenedBoardUponAppStart,
-          topDescriptionIdFunc = { R.string.setting_load_last_opened_board_upon_app_start_title },
-          bottomDescriptionIdFunc = { R.string.setting_load_last_opened_board_upon_app_start_description },
-          setting = ChanSettings.loadLastOpenedBoardUponAppStart
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = BehaviorScreen.GeneralGroup.LoadLastOpenedThreadUponAppStart,
-          topDescriptionIdFunc = { R.string.setting_load_last_opened_thread_upon_app_start_title },
-          bottomDescriptionIdFunc = { R.string.setting_load_last_opened_thread_upon_app_start_description },
-          setting = ChanSettings.loadLastOpenedThreadUponAppStart
-        )
-
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.ClearPostHides,

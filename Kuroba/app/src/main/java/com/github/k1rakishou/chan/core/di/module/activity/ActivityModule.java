@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager;
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager;
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager;
@@ -85,7 +86,8 @@ public class ActivityModule {
             Lazy<BoardManager> boardManager,
             Lazy<BookmarksManager> bookmarksManager,
             Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
-            Lazy<SiteResolver> siteResolver
+            Lazy<SiteResolver> siteResolver,
+            Lazy<CompositeCatalogManager> compositeCatalogManager
     ) {
         Logger.deps("StartActivityStartupHandlerHelper");
         return new StartActivityStartupHandlerHelper(
@@ -94,7 +96,8 @@ public class ActivityModule {
                 boardManager,
                 bookmarksManager,
                 chanThreadViewableInfoManager,
-                siteResolver
+                siteResolver,
+                compositeCatalogManager
         );
     }
 

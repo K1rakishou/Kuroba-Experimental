@@ -1040,7 +1040,11 @@ class MainController(
     }
 
     val thumbnailRequest = remember(key1 = chanDescriptor) {
-      ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl))
+      if (navHistoryEntry.isCompositeIconUrl) {
+        ImageLoaderRequest(ImageLoaderRequestData.DrawableResource(R.drawable.composition_icon))
+      } else {
+        ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl))
+      }
     }
 
     Column(
@@ -1196,6 +1200,18 @@ class MainController(
       isCurrentlySelected = ChanSettings.drawerShowDeleteButtonShortcut.get()
     )
 
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_RESTORE_LAST_VISITED_CATALOG,
+      name = getString(R.string.setting_load_last_opened_board_upon_app_start_title),
+      isCurrentlySelected = ChanSettings.loadLastOpenedBoardUponAppStart.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_RESTORE_LAST_VISITED_THREAD,
+      name = getString(R.string.setting_load_last_opened_thread_upon_app_start_title),
+      isCurrentlySelected = ChanSettings.loadLastOpenedThreadUponAppStart.get()
+    )
+
     drawerOptions += FloatingListMenuItem(
       key = ACTION_CLEAR_NAV_HISTORY,
       name = getString(R.string.drawer_controller_clear_nav_history)
@@ -1220,6 +1236,12 @@ class MainController(
             }
             ACTION_SHOW_DELETE_SHORTCUT -> {
               drawerViewModel.updateDeleteButtonShortcut(ChanSettings.drawerShowDeleteButtonShortcut.toggle())
+            }
+            ACTION_RESTORE_LAST_VISITED_CATALOG -> {
+              ChanSettings.loadLastOpenedBoardUponAppStart.toggle()
+            }
+            ACTION_RESTORE_LAST_VISITED_THREAD -> {
+              ChanSettings.loadLastOpenedThreadUponAppStart.toggle()
             }
             ACTION_CLEAR_NAV_HISTORY -> {
               dialogFactory.createSimpleConfirmationDialog(
@@ -1556,6 +1578,8 @@ class MainController(
     private const val ACTION_SHOW_NAV_HISTORY = 2
     private const val ACTION_SHOW_DELETE_SHORTCUT = 3
     private const val ACTION_CLEAR_NAV_HISTORY = 4
+    private const val ACTION_RESTORE_LAST_VISITED_CATALOG = 5
+    private const val ACTION_RESTORE_LAST_VISITED_THREAD = 6
 
     private const val ACTION_START_SELECTION = 100
     private const val ACTION_SELECT_ALL = 101

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.compose
 
 import android.content.Context
+import androidx.annotation.DrawableRes
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -163,6 +164,14 @@ private suspend fun ProduceStateScope<ImageLoaderResult>.loadImage(
         transformations = request.transformations
       )
     }
+    is ImageLoaderRequestData.DrawableResource -> {
+      imageLoaderV2.loadFromResourcesSuspend(
+        context = context,
+        drawableId = data.drawableId,
+        imageSize = ImageLoaderV2.ImageSize.FixedImageSize(size.width, size.height),
+        transformations = request.transformations
+      )
+    }
   }.mapValue { bitmapDrawable -> BitmapPainter(bitmapDrawable.bitmap.asImageBitmap()) }
 
   this.value = when (result) {
@@ -187,4 +196,5 @@ sealed class ImageLoaderRequestData {
   data class File(val file: java.io.File) : ImageLoaderRequestData()
   data class Uri(val uri: android.net.Uri) : ImageLoaderRequestData()
   data class Url(val httpUrl: HttpUrl) : ImageLoaderRequestData()
+  data class DrawableResource(@DrawableRes val drawableId: Int) : ImageLoaderRequestData()
 }

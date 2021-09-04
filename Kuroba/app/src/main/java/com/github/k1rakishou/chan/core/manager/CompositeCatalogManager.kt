@@ -31,10 +31,14 @@ class CompositeCatalogManager(
     get() = _compositeCatalogUpdatesFlow.asSharedFlow()
 
   suspend fun doWithLockedCompositeCatalogs(func: suspend (List<CompositeCatalog>) -> Unit) {
+    ensureInitialized()
+
     mutex.withLock { func(compositeCatalogs) }
   }
 
   suspend fun byCompositeCatalogDescriptor(descriptor: ChanDescriptor.CompositeCatalogDescriptor): CompositeCatalog? {
+    ensureInitialized()
+
     return mutex.withLock {
       return@withLock compositeCatalogs
         .firstOrNull { compositeCatalog -> compositeCatalog.compositeCatalogDescriptor == descriptor }

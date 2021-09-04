@@ -784,10 +784,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_captcha_setup_description">Captcha settings are per-site configurable. Tap for site setup.</string>
     <string name="setting_js_captcha_cookies_title">JS captcha cookies</string>
     <string name="setting_js_captcha_cookies_description">By inputting your desktop browser captcha cookies, captcha solving may become easier</string>
-    <string name="setting_load_last_opened_board_upon_app_start_title">Restore last opened board upon app start</string>
-    <string name="setting_load_last_opened_board_upon_app_start_description">When turned on, upon app start the last visited board will be automatically opened (New KurobaEx behavior). Turning this option off will cause loading the first board from the board selection list (Default Clover/Kuroba behavior)</string>
-    <string name="setting_load_last_opened_thread_upon_app_start_title">Restore last opened thread upon app start</string>
-    <string name="setting_load_last_opened_thread_upon_app_start_description">When turned on, upon app start the last visited thread will be automatically opened (New KurobaEx behavior). When turned off no thread will be automatically opened upon app start (Default Clover/Kuroba behavior)</string>
+    <string name="setting_load_last_opened_board_upon_app_start_title">Restore last visited catalog upon app start</string>
+    <string name="setting_load_last_opened_thread_upon_app_start_title">Restore last visited thread upon app start</string>
 
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>

@@ -218,12 +218,8 @@ class MainControllerViewModel : BaseViewModel() {
   private fun navHistoryElementToNavigationHistoryEntryOrNull(
     navigationElement: NavHistoryElement,
   ): NavigationHistoryEntry? {
-    val siteDescriptor = when (navigationElement) {
-      is NavHistoryElement.Catalog -> navigationElement.descriptor.siteDescriptor()
-      is NavHistoryElement.Thread -> navigationElement.descriptor.siteDescriptor()
-    }
-
     val descriptor = when (navigationElement) {
+      is NavHistoryElement.CompositeCatalog -> navigationElement.descriptor
       is NavHistoryElement.Catalog -> navigationElement.descriptor
       is NavHistoryElement.Thread -> navigationElement.descriptor
     }
@@ -237,7 +233,11 @@ class MainControllerViewModel : BaseViewModel() {
       return null
     }
 
-    val isSiteArchive = archivesManager.isSiteArchive(descriptor.siteDescriptor())
+    val isSiteArchive = if (descriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      false
+    } else {
+      archivesManager.isSiteArchive(descriptor.siteDescriptor())
+    }
 
     val additionalInfo = if (canShowBookmarkInfo(descriptor, isSiteArchive)) {
       val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
@@ -259,7 +259,7 @@ class MainControllerViewModel : BaseViewModel() {
     }
 
     val siteThumbnailUrl = if (descriptor is ChanDescriptor.ThreadDescriptor) {
-      siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url
+      siteManager.bySiteDescriptor(descriptor.siteDescriptor())?.icon()?.url
     } else {
       null
     }

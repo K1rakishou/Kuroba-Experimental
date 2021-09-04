@@ -3,6 +3,7 @@ package com.github.k1rakishou.common
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.File
 
 open class AppConstants(
@@ -176,5 +177,9 @@ open class AppConstants(
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
     const val DEFAULT_THUMBNAIL = (RESOURCES_ENDPOINT + "internal_spoiler.png")
+
+    // This is a hack to be able to store into the database and load back an url to the composition
+    // icon which we store in the resources
+    val COMPOSITE_ICON_URL_LAZY by lazy { "https://composite-icon.resource".toHttpUrl() }
   }
 }
