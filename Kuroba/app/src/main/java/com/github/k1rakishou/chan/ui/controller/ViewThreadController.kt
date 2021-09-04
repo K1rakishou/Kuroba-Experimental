@@ -469,6 +469,11 @@ open class ViewThreadController(
     threadLayout.scrollTo(-1, false)
   }
 
+  override suspend fun showThreadWithoutFocusing(descriptor: ThreadDescriptor, animated: Boolean) {
+    Logger.d(TAG, "showThreadWithoutFocusing($descriptor, $animated)")
+    showThread(descriptor, animated)
+  }
+
   override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showThread($descriptor, $animated)")
@@ -492,10 +497,6 @@ open class ViewThreadController(
 
   private suspend fun showCatalogInternal(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     Logger.d(TAG, "showCatalogInternal($catalogDescriptor, $animated)")
-
-    if (historyNavigationManager.isInitialized) {
-      historyNavigationManager.moveNavElementToTop(catalogDescriptor as ChanDescriptor)
-    }
 
     if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
       val browseController = doubleNavigationController!!.getLeftController() as BrowseController
@@ -537,10 +538,6 @@ open class ViewThreadController(
     openingPreviousThread: Boolean = false
   ) {
     Logger.d(TAG, "loadThread($threadDescriptor)")
-
-    if (historyNavigationManager.isInitialized) {
-      historyNavigationManager.moveNavElementToTop(threadDescriptor)
-    }
 
     val presenter = threadLayout.presenter
     if (threadDescriptor != presenter.currentChanDescriptor) {

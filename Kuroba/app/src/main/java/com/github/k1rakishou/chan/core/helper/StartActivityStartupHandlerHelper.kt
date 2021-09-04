@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.features.drawer.MainController
@@ -110,14 +111,14 @@ class StartActivityStartupHandlerHelper(
     // Not from a state or from an url, launch the setup controller if no boards are setup up yet,
     // otherwise load the default saved board.
     if (!handled) {
-      restoreFresh(allowedToOpenThread = true)
+      restoreFresh()
     }
 
     needToLoadBoard = false
   }
 
-  private suspend fun restoreFresh(allowedToOpenThread: Boolean) {
-    Logger.d(TAG, "restoreFresh(allowedToOpenThread=$allowedToOpenThread)")
+  private suspend fun restoreFresh() {
+    Logger.d(TAG, "restoreFresh()")
     siteManager.awaitUntilInitialized()
 
     if (!siteManager.areSitesSetup()) {
@@ -127,11 +128,7 @@ class StartActivityStartupHandlerHelper(
     }
 
     val catalogToOpen = getCatalogToOpen()
-    val threadToOpen = if (allowedToOpenThread) {
-      getThreadToOpen()
-    } else {
-      null
-    }
+    val threadToOpen = getThreadToOpen()
 
     Logger.d(TAG, "restoreFresh() getCatalogToOpen returned ${catalogToOpen}, " +
         "getThreadToOpen returned ${threadToOpen}")
@@ -143,7 +140,25 @@ class StartActivityStartupHandlerHelper(
     }
 
     if (threadToOpen != null) {
-      startActivityCallbacks?.loadThread(threadToOpen, animated = false)
+      val topElement = historyNavigationManager.getNavElementAtTop()
+        ?.descriptor()
+
+      val isThreadTheTopElement = topElement == threadToOpen
+
+      Logger.d(TAG, "restoreFresh() isThreadTheTopElement=$isThreadTheTopElement, " +
+        "(topElement=${topElement}, threadToOpen=$threadToOpen)")
+
+      if (isThreadTheTopElement) {
+        startActivityCallbacks?.loadThread(
+          threadDescriptor = threadToOpen,
+          animated = false
+        )
+      } else {
+        startActivityCallbacks?.loadThreadWithoutFocusing(
+          threadDescriptor = threadToOpen,
+          animated = false
+        )
+      }
     }
   }
 
@@ -155,12 +170,12 @@ class StartActivityStartupHandlerHelper(
       return null
     }
 
-    val threadDescriptor = historyNavigationManager.getNavElementAtTop()
+    val threadDescriptor = historyNavigationManager.getFirstThreadNavElement()
       ?.descriptor()
       ?.threadDescriptorOrNull()
 
     if (threadDescriptor == null) {
-      Logger.d(TAG, "getThreadToOpen() -> historyNavigationManager.getNavElementAtTop() == null")
+      Logger.d(TAG, "getThreadToOpen() -> historyNavigationManager.getFirstThreadNavElement() == null")
       return null
     }
 
@@ -182,15 +197,37 @@ class StartActivityStartupHandlerHelper(
       siteManager.awaitUntilInitialized()
       boardManager.awaitUntilInitialized()
 
-      val firstSiteDescriptor = siteManager.firstSiteDescriptor()
-      if (firstSiteDescriptor == null) {
+      var siteDescriptor = siteManager.firstSiteDescriptor()
+      if (siteDescriptor == null) {
         Logger.d(TAG, "getCatalogToOpen() -> firstSiteDescriptor() == null")
         return null
       }
 
-      val boardDescriptor = boardManager.firstBoardDescriptor(firstSiteDescriptor)
+      val isCompositeCatalogsSite = siteManager.bySiteDescriptor(siteDescriptor)
+        ?.siteFeature(Site.SiteFeature.CATALOG_COMPOSITION) == true
+
+      if (isCompositeCatalogsSite) {
+        Logger.d(TAG, "getCatalogToOpen() -> siteDescriptor has SiteFeature.CATALOG_COMPOSITION")
+
+        val compositeCatalogDescriptor = compositeCatalogManager.firstCompositeCatalog()
+          ?.compositeCatalogDescriptor
+
+        if (compositeCatalogDescriptor != null) {
+          Logger.d(TAG, "getCatalogToOpen() -> '$compositeCatalogDescriptor'")
+          return compositeCatalogDescriptor
+        }
+
+        siteDescriptor = siteManager.secondSiteDescriptor()
+      }
+
+      if (siteDescriptor == null) {
+        Logger.d(TAG, "getCatalogToOpen() -> secondSiteDescriptor() == null")
+        return null
+      }
+
+      val boardDescriptor = boardManager.firstBoardDescriptor(siteDescriptor)
       if (boardDescriptor == null) {
-        Logger.d(TAG, "getCatalogToOpen() -> firstBoardDescriptor($firstSiteDescriptor) == null")
+        Logger.d(TAG, "getCatalogToOpen() -> firstBoardDescriptor($siteDescriptor) == null")
         return null
       }
 
@@ -583,6 +620,7 @@ class StartActivityStartupHandlerHelper(
 
   interface StartActivityCallbacks {
     fun loadThreadAndMarkPost(postDescriptor: PostDescriptor, animated: Boolean)
+    fun loadThreadWithoutFocusing(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
   }
 

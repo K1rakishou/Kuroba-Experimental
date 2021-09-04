@@ -147,6 +147,12 @@ class CompositeCatalogManager(
     return mutex.withLock { compositeCatalogs.size }
   }
 
+  suspend fun firstCompositeCatalog(): CompositeCatalog? {
+    ensureInitialized()
+
+    return mutex.withLock { compositeCatalogs.firstOrNull() }
+  }
+
   suspend fun delete(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
     ensureInitialized()
 

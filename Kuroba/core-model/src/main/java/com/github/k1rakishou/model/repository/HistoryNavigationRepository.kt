@@ -63,4 +63,12 @@ class HistoryNavigationRepository(
     }
   }
 
+  suspend fun getFirstThreadNavElement(): ModularResult<NavHistoryElement?> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.getFirstThreadNavElement()
+      }
+    }
+  }
+
 }

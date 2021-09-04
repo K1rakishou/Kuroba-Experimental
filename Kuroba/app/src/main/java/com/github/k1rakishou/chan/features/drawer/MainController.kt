@@ -613,6 +613,20 @@ class MainController(
     return null
   }
 
+  suspend fun loadThreadWithoutFocusing(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    closeAllNonMainControllers: Boolean = false,
+    animated: Boolean
+  ) {
+    mainScope.launch {
+      if (closeAllNonMainControllers) {
+        closeAllNonMainControllers()
+      }
+
+      topThreadController?.showThreadWithoutFocusing(threadDescriptor, animated)
+    }
+  }
+
   suspend fun loadThread(
     descriptor: ChanDescriptor.ThreadDescriptor,
     closeAllNonMainControllers: Boolean = false,
@@ -1012,8 +1026,6 @@ class MainController(
               .kurobaClickable(onClick = onShowDrawerOptionsIconClick),
             colorBelowIcon = backgroundColor
           )
-
-          Spacer(modifier = Modifier.width(16.dp))
         }
       }
     }

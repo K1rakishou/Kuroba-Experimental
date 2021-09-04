@@ -692,10 +692,6 @@ class BrowseController(
       }
 
       updateMenuItems()
-
-      if (historyNavigationManager.isInitialized) {
-        historyNavigationManager.moveNavElementToTop(catalogDescriptor as ChanDescriptor)
-      }
     }
   }
 
@@ -805,8 +801,28 @@ class BrowseController(
   // This controller can be in various places depending on the layout
   // We dynamically search for it
   override suspend fun showThread(descriptor: ThreadDescriptor, animated: Boolean) {
+    showThreadInternal(
+      descriptor = descriptor,
+      showThreadOptions = ShowThreadOptions(
+        switchToThreadController = true,
+        pushControllerWithAnimation = animated
+      )
+    )
+  }
+
+  override suspend fun showThreadWithoutFocusing(descriptor: ThreadDescriptor, animated: Boolean) {
+    showThreadInternal(
+      descriptor = descriptor,
+      showThreadOptions = ShowThreadOptions(
+        switchToThreadController = false,
+        pushControllerWithAnimation = animated
+      )
+    )
+  }
+
+  private fun showThreadInternal(descriptor: ThreadDescriptor, showThreadOptions: ShowThreadOptions) {
     mainScope.launch(Dispatchers.Main.immediate) {
-      Logger.d(TAG, "showThread($descriptor, $animated)")
+      Logger.d(TAG, "showThread($descriptor, $showThreadOptions)")
 
       // The target ThreadViewController is in a split nav
       // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
@@ -835,11 +851,17 @@ class BrowseController(
             }
           } else {
             val navigationController = StyledToolbarNavigationController(context)
-            splitNav.setRightController(navigationController, animated)
+            splitNav.setRightController(navigationController, showThreadOptions.pushControllerWithAnimation)
             val viewThreadController = ViewThreadController(context, mainControllerCallbacks, descriptor)
             navigationController.pushController(viewThreadController, false)
           }
-          splitNav.switchToController(false, animated)
+
+          if (showThreadOptions.switchToThreadController) {
+            splitNav.switchToController(
+              leftController = false,
+              animated = showThreadOptions.pushControllerWithAnimation
+            )
+          }
         }
         slideNav != null -> {
           // Create a threadview in the right part of the slide nav *without* a toolbar
@@ -853,9 +875,18 @@ class BrowseController(
               descriptor
             )
 
-            slideNav.setRightController(viewThreadController, animated)
+            slideNav.setRightController(
+              rightController = viewThreadController,
+              animated = showThreadOptions.pushControllerWithAnimation
+            )
           }
-          slideNav.switchToController(false, animated)
+
+          if (showThreadOptions.switchToThreadController) {
+            slideNav.switchToController(
+              leftController = false,
+              animated = showThreadOptions.pushControllerWithAnimation
+            )
+          }
         }
         else -> {
           // the target ThreadNav must be pushed to the parent nav controller
@@ -866,13 +897,11 @@ class BrowseController(
             descriptor
           )
 
-          Objects.requireNonNull(navigationController, "navigationController is null")
-          navigationController!!.pushController(viewThreadController, animated)
+          navigationController!!.pushController(
+            to = viewThreadController,
+            animated = showThreadOptions.pushControllerWithAnimation
+          )
         }
-      }
-
-      if (historyNavigationManager.isInitialized) {
-        historyNavigationManager.moveNavElementToTop(descriptor)
       }
 
       initialized = true
@@ -988,6 +1017,11 @@ class BrowseController(
 
     return chanDescriptor.siteDescriptor().is4chan()
   }
+
+  data class ShowThreadOptions(
+    val switchToThreadController: Boolean,
+    val pushControllerWithAnimation: Boolean
+  )
 
   companion object {
     private const val TAG = "BrowseController"

@@ -21,9 +21,9 @@ class NavHistoryLocalSource(
 
   suspend fun persist(navHistoryStack: List<NavHistoryElement>) {
     ensureInTransaction()
+    navHistoryDao.deleteAll()
 
     if (navHistoryStack.isEmpty()) {
-      navHistoryDao.deleteAll()
       return
     }
 
@@ -32,7 +32,7 @@ class NavHistoryLocalSource(
     }
 
     val navHistoryIdList = navHistoryDao.insertManyIdsOrReplace(
-      navHistoryElementIdEntityList
+      navHistoryElementIdEntityList = navHistoryElementIdEntityList
     )
 
     val navHistoryElementInfoEntityList = navHistoryStack.zip(navHistoryIdList)
@@ -40,14 +40,13 @@ class NavHistoryLocalSource(
         val (navHistoryElement, navHistoryId) = pair
 
         return@mapIndexed NavHistoryElementMapper.toNavHistoryElementInfoEntity(
-          navHistoryId,
-          navHistoryElement,
-          order
+          navHistoryId = navHistoryId,
+          navHistoryElement = navHistoryElement,
+          order = order
         )
       }
 
     navHistoryDao.insertManyInfoOrReplace(navHistoryElementInfoEntityList)
-    navHistoryDao.deleteAllExcept(navHistoryIdList)
   }
 
   suspend fun getFirstNavElement(): NavHistoryElement? {
@@ -62,6 +61,14 @@ class NavHistoryLocalSource(
     ensureInTransaction()
 
     return navHistoryDao.selectFirstCatalogNavElement()?.let { navHistoryFullDto ->
+      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
+    }
+  }
+
+  suspend fun getFirstThreadNavElement(): NavHistoryElement? {
+    ensureInTransaction()
+
+    return navHistoryDao.selectFirstThreadNavElement()?.let { navHistoryFullDto ->
       NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
     }
   }

@@ -30,6 +30,7 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -110,7 +111,10 @@ class MainControllerViewModel : BaseViewModel() {
         }
     }
 
-    reloadNavigationHistory()
+    mainScope.launch {
+      delay(500L)
+      reloadNavigationHistory()
+    }
   }
 
   fun getSelectedDescriptors(): List<ChanDescriptor> {

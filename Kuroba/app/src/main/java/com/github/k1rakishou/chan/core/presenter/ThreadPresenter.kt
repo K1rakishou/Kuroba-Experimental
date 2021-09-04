@@ -117,7 +117,8 @@ class ThreadPresenter @Inject constructor(
   private val _chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>,
   private val _postHighlightManager: Lazy<PostHighlightManager>,
   private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
-  private val _chanCatalogSnapshotCache: Lazy<ChanCatalogSnapshotCache>
+  private val _chanCatalogSnapshotCache: Lazy<ChanCatalogSnapshotCache>,
+  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -170,6 +171,8 @@ class ThreadPresenter @Inject constructor(
     get() = _currentOpenedDescriptorStateManager.get()
   private val chanCatalogSnapshotCache: ChanCatalogSnapshotCache
     get() = _chanCatalogSnapshotCache.get()
+  private val compositeCatalogManager: CompositeCatalogManager
+    get() = _compositeCatalogManager.get()
 
   private val chanThreadTicker by lazy {
     ChanThreadTicker(
@@ -1187,6 +1190,15 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    if (historyNavigationManager.contains(localChanDescriptor)) {
+      historyNavigationManager.moveNavElementToTop(
+        descriptor = localChanDescriptor,
+        canMoveAtTheBeginning = canInsertAtTheBeginning
+      )
+
+      return
+    }
+
     when (localChanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
@@ -1235,10 +1247,14 @@ class ThreadPresenter @Inject constructor(
         }
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
+        val title = compositeCatalogManager.byCompositeCatalogDescriptor(localChanDescriptor)
+          ?.name
+          ?: localChanDescriptor.userReadableString()
+
         historyNavigationManager.createNewNavElement(
           descriptor = localChanDescriptor,
           thumbnailImageUrl = NavigationHistoryEntry.COMPOSITE_ICON_URL,
-          title = localChanDescriptor.userReadableString(),
+          title = title,
           canInsertAtTheBeginning = canInsertAtTheBeginning
         )
       }

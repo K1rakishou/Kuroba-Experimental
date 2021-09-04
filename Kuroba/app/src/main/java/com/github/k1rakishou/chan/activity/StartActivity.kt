@@ -332,6 +332,22 @@ class StartActivity : ControllerHostActivity(),
     }
   }
 
+  override fun loadThreadWithoutFocusing(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
+    lifecycleScope.launch {
+      mainController.getViewThreadController()?.let { viewThreadController ->
+        if (viewThreadController.chanDescriptor != threadDescriptor) {
+          viewThreadController.showLoading(animateTransition = false)
+        }
+      }
+
+      mainController.loadThreadWithoutFocusing(
+        threadDescriptor = threadDescriptor,
+        closeAllNonMainControllers = true,
+        animated = animated
+      )
+    }
+  }
+
   override fun loadThread(threadDescriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean) {
     lifecycleScope.launch {
       mainController.getViewThreadController()?.let { viewThreadController ->
@@ -341,7 +357,7 @@ class StartActivity : ControllerHostActivity(),
       }
 
       mainController.loadThread(
-        threadDescriptor,
+        descriptor = threadDescriptor,
         closeAllNonMainControllers = true,
         animated = animated
       )

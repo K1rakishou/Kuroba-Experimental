@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.mutableListWithCap
@@ -17,12 +17,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
-import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -36,8 +34,7 @@ class HistoryNavigationManager(
   val navigationStackUpdatesFlow: SharedFlow<UpdateEvent>
     get() = _navigationStackUpdatesFlow.asSharedFlow()
 
-  private val persistRunning = AtomicBoolean(false)
-  private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
+  private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(appScope)
 
   private val mutex = Mutex()
   @GuardedBy("mutex")
@@ -99,6 +96,19 @@ class HistoryNavigationManager(
     return mutex.withLock {
       return@withLock navigationStack
         .firstOrNull { navHistoryElement -> navHistoryElement.descriptor() == chanDescriptor }
+    }
+  }
+
+  suspend fun getFirstThreadNavElement(): NavHistoryElement? {
+    if (initializationRunnable.alreadyRun) {
+      return mutex.withLock {
+        return@withLock navigationStack
+          .firstOrNull { navHistoryElement -> navHistoryElement is NavHistoryElement.Thread }
+      }
+    } else {
+      return historyNavigationRepository.getFirstThreadNavElement()
+        .peekError { error -> Logger.e(TAG, "historyNavigationRepository.getFirstThreadNavElement() error", error) }
+        .valueOrNull()
     }
   }
 
@@ -209,7 +219,7 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Created(mappedNavElements))
-    persistNavigationStack(eager = false)
+    persistNavigationStack()
   }
 
   suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
@@ -256,7 +266,7 @@ class HistoryNavigationManager(
       _navigationStackUpdatesFlow.emit(UpdateEvent.Moved(movedElement))
     }
 
-    persistNavigationStack(eager = false)
+    persistNavigationStack()
   }
 
   private suspend fun addNewOrIgnore(navElement: NavHistoryElement, canInsertAtTheBeginning: Boolean): Boolean {
@@ -367,7 +377,7 @@ class HistoryNavigationManager(
       return pinResult
     }
 
-    persistNavigationStack(eager = false)
+    persistNavigationStack()
     return pinResult
   }
 
@@ -411,7 +421,7 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Deleted(removedElements))
-    persistNavigationStack(eager = false)
+    persistNavigationStack()
   }
 
   suspend fun clear() {
@@ -431,49 +441,25 @@ class HistoryNavigationManager(
     }
 
     _navigationStackUpdatesFlow.emit(UpdateEvent.Cleared)
-    persistNavigationStack(eager = false)
+    persistNavigationStack()
   }
 
-  private fun persistNavigationStack(eager: Boolean = false) {
-    if (!persistRunning.compareAndSet(false, true)) {
-      return
+  private fun persistNavigationStack() {
+    rendezvousCoroutineExecutor.post {
+      Logger.d(TAG, "persistNavigationStack async called")
+      persistNavigationStackInternal()
+      Logger.d(TAG, "persistNavigationStack async finished")
     }
+  }
 
-    if (eager) {
-      appScope.launch(Dispatchers.Default) {
-        Logger.d(TAG, "persistNavigationStack eager called")
+  private suspend fun persistNavigationStackInternal() {
+    val navStackCopy = mutex.withLock { navigationStack.toList() }
 
-        try {
-          val navStackCopy = mutex.withLock { navigationStack.toList() }
-
-          historyNavigationRepository.persist(navStackCopy)
-            .safeUnwrap { error ->
-              Logger.e(TAG, "Error while trying to persist navigation stack", error)
-              return@launch
-            }
-        } finally {
-          Logger.d(TAG, "persistNavigationStack eager finished")
-          persistRunning.set(false)
-        }
+    historyNavigationRepository.persist(navStackCopy)
+      .safeUnwrap { error ->
+        Logger.e(TAG, "Error while trying to persist navigation stack", error)
+        return
       }
-    } else {
-      serializedCoroutineExecutor.post {
-        Logger.d(TAG, "persistNavigationStack async called")
-
-        try {
-          val navStackCopy = mutex.withLock { navigationStack.toList() }
-
-          historyNavigationRepository.persist(navStackCopy)
-            .safeUnwrap { error ->
-              Logger.e(TAG, "Error while trying to persist navigation stack", error)
-              return@post
-            }
-        } finally {
-          Logger.d(TAG, "persistNavigationStack async finished")
-          persistRunning.set(false)
-        }
-      }
-    }
   }
 
   private suspend fun ensureInitialized() {
@@ -516,7 +502,7 @@ class HistoryNavigationManager(
         return@addListener
       }
 
-      persistNavigationStack(eager = true)
+      persistNavigationStack()
     }
   }
 

@@ -1421,6 +1421,7 @@ class ThreadLayout @JvmOverloads constructor(
     val toolbar: Toolbar?
 
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
+    suspend fun showThreadWithoutFocusing(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostsInExternalThread(postDescriptor: PostDescriptor, isPreviewingCatalogThread: Boolean)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
     suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
