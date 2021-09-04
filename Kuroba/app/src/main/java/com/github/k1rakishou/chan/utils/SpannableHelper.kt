@@ -151,7 +151,7 @@ object SpannableHelper {
     context: Context,
     fontSizePx: Int,
     compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
-    visibleCatalogsCount: Int = 3
+    visibleCatalogsCount: Int = 4
   ): CharSequence {
     val spannableStringBuilder = SpannableStringBuilder()
     val catalogsBySites = compositeCatalogDescriptor.catalogDescriptors

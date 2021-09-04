@@ -84,8 +84,32 @@ class PostFilterManager(
     }
   }
 
-  fun removeAllForDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    lock.write { filterStorage.remove(threadDescriptor) }
+  fun removeAllForDescriptor(chanDescriptor: ChanDescriptor) {
+    lock.write {
+      when (chanDescriptor) {
+        is ChanDescriptor.ICatalogDescriptor -> {
+          val boardDescriptors = when (chanDescriptor) {
+            is ChanDescriptor.CatalogDescriptor -> {
+              setOf(chanDescriptor.boardDescriptor)
+            }
+            is ChanDescriptor.CompositeCatalogDescriptor -> {
+              chanDescriptor.catalogDescriptors
+                .map { catalogDescriptor -> catalogDescriptor.boardDescriptor }
+                .toSet()
+            }
+          }
+
+          filterStorage.mutableIteration { mutableIterator, entry ->
+            if (entry.key.boardDescriptor in boardDescriptors) {
+              mutableIterator.remove()
+            }
+
+            return@mutableIteration true
+          }
+        }
+        is ChanDescriptor.ThreadDescriptor -> filterStorage.remove(chanDescriptor)
+      }
+    }
   }
 
   fun update(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {

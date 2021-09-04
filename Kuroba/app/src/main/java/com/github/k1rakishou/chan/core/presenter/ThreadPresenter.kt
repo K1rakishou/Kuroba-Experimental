@@ -738,8 +738,8 @@ class ThreadPresenter @Inject constructor(
         false
       }
 
-      if (isEndReached) {
-        Logger.d(TAG, "normalLoad() isEndReached == true")
+      if (isEndReached && chanCacheUpdateOptions !is ChanCacheUpdateOptions.DoNotUpdateCache) {
+        Logger.d(TAG, "normalLoad() isEndReached == true, chanCacheUpdateOptions=${chanCacheUpdateOptions}")
         return@launch
       }
 

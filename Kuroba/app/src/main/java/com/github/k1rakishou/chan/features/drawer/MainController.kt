@@ -1137,7 +1137,14 @@ class MainController(
               contentScale = ContentScale.Crop,
               modifier = Modifier
                 .size(20.dp),
-              imageLoaderV2 = imageLoaderV2
+              imageLoaderV2 = imageLoaderV2,
+              error = {
+                Image(
+                  modifier = Modifier.fillMaxSize(),
+                  painter = painterResource(id = R.drawable.error_icon),
+                  contentDescription = null
+                )
+              }
             )
           }
 

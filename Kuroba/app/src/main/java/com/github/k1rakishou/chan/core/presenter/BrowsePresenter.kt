@@ -103,6 +103,9 @@ class BrowsePresenter @Inject constructor(
   suspend fun loadWithDefaultBoard() {
     var firstActiveBoardDescriptor: BoardDescriptor? = null
 
+    siteManager.awaitUntilInitialized()
+    boardManager.awaitUntilInitialized()
+
     siteManager.viewActiveSitesOrderedWhile { chanSiteData, _ ->
       val boardDescriptor = boardManager.firstBoardDescriptor(chanSiteData.siteDescriptor)
       if (boardDescriptor != null) {
