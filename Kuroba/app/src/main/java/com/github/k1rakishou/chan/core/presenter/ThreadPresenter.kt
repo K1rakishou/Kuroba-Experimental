@@ -188,7 +188,8 @@ class ThreadPresenter @Inject constructor(
   private var forcePageUpdate = false
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentFocusedController = CurrentFocusedController.None
-  private var currentLoadThreadJob: Job? = null
+  private var currentNormalLoadThreadJob: Job? = null
+  private var currentFullLoadThreadJob: Job? = null
 
   override val endOfCatalogReached: Boolean
     get() {
@@ -351,8 +352,11 @@ class ThreadPresenter @Inject constructor(
 
     threadPresenterCallback?.showLoading()
 
-    this.currentLoadThreadJob?.cancel()
-    this.currentLoadThreadJob = null
+    this.currentNormalLoadThreadJob?.cancel()
+    this.currentNormalLoadThreadJob = null
+
+    this.currentFullLoadThreadJob?.cancel()
+    this.currentFullLoadThreadJob = null
 
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
@@ -524,8 +528,8 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "loadWholeCompositeCatalog() start")
 
-    if (currentLoadThreadJob != null) {
-      Logger.d(TAG, "loadWholeCompositeCatalog() currentLoadThreadJob != null")
+    if (currentFullLoadThreadJob != null) {
+      Logger.d(TAG, "loadWholeCompositeCatalog() currentFullLoadThreadJob != null")
       return
     }
 
@@ -559,8 +563,8 @@ class ThreadPresenter @Inject constructor(
     val loadingController = if (!alreadyPresenting) {
       val loadingController = LoadingViewController(context, false)
       loadingController.enableCancellation {
-        currentLoadThreadJob?.cancel()
-        currentLoadThreadJob = null
+        currentFullLoadThreadJob?.cancel()
+        currentFullLoadThreadJob = null
       }
 
       threadPresenterCallback?.presentController(loadingController, true)
@@ -571,19 +575,25 @@ class ThreadPresenter @Inject constructor(
     }
 
     @Suppress("SuspendFunctionOnCoroutineScope")
-    currentLoadThreadJob = launch {
+    currentFullLoadThreadJob = launch {
       this.coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
         if (cause is CancellationException) {
           Logger.d(TAG, "loadWholeCompositeCatalog() canceled")
         }
 
+        chanThreadManager.removeRequestedChanDescriptor(currentChanDescriptor)
+
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
-        currentLoadThreadJob = null
+        currentFullLoadThreadJob = null
 
         loadingController?.stopPresenting()
       }
 
-      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
+      if (!chanThreadManager.addRequestedChanDescriptor(currentChanDescriptor)) {
+        if (verboseLogs) {
+          Logger.d(TAG, "loadWholeCompositeCatalog() skipping $currentChanDescriptor because it was already requested")
+        }
+
         return@launch
       }
 
@@ -675,7 +685,8 @@ class ThreadPresenter @Inject constructor(
     chanReadOptions: ChanReadOptions = ChanReadOptions.default(),
     deleteChanCatalogSnapshot: Boolean = showLoading
   ) {
-    if (currentLoadThreadJob != null) {
+    if (currentNormalLoadThreadJob != null) {
+      Logger.d(TAG, "normalLoad() currentNormalLoadThreadJob != null")
       return
     }
 
@@ -688,20 +699,26 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    Logger.d(TAG, "normalLoad(currentChanDescriptor=$currentChanDescriptor, showLoading=$showLoading, " +
-      "chanCacheUpdateOptions=$chanCacheUpdateOptions, chanLoadOptions=$chanLoadOptions, " +
-      "chanCacheOptions=$chanCacheOptions, chanReadOptions=$chanReadOptions)")
+    Logger.d(TAG, "normalLoad(currentChanDescriptor=$currentChanDescriptor\nshowLoading=$showLoading\n" +
+      "chanCacheUpdateOptions=$chanCacheUpdateOptions\nchanLoadOptions=$chanLoadOptions\n" +
+      "chanCacheOptions=$chanCacheOptions\nchanReadOptions=$chanReadOptions)")
 
     chanThreadLoadingState = ChanThreadLoadingState.Loading
 
-    currentLoadThreadJob = launch {
-      if (chanThreadManager.isRequestAlreadyActive(currentChanDescriptor)) {
+    currentNormalLoadThreadJob = launch {
+      if (!chanThreadManager.addRequestedChanDescriptor(currentChanDescriptor)) {
+        if (verboseLogs) {
+          Logger.d(TAG, "normalLoad() skipping $currentChanDescriptor because it was already requested")
+        }
+
         return@launch
       }
 
       this.coroutineContext[Job.Key]?.invokeOnCompletion {
+        chanThreadManager.removeRequestedChanDescriptor(currentChanDescriptor)
+
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
-        currentLoadThreadJob = null
+        currentNormalLoadThreadJob = null
       }
 
       if (showLoading) {
@@ -729,7 +746,11 @@ class ThreadPresenter @Inject constructor(
       chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Begin(currentChanDescriptor))
 
       val catalogPageToLoad = if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-        chanCatalogSnapshotCache.get(currentChanDescriptor)?.getNextCatalogPage()
+        if (chanCacheUpdateOptions is ChanCacheUpdateOptions.DoNotUpdateCache) {
+          chanCatalogSnapshotCache.get(currentChanDescriptor)?.catalogPage
+        } else {
+          chanCatalogSnapshotCache.get(currentChanDescriptor)?.getNextCatalogPage()
+        }
       } else {
         null
       }
@@ -758,7 +779,7 @@ class ThreadPresenter @Inject constructor(
         chanReadOptions = chanReadOptions
       )
 
-      Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult")
+      Logger.d(TAG, "normalLoad() threadLoadResult=$threadLoadResult (currentChanDescriptor=$currentChanDescriptor)")
 
       when (threadLoadResult) {
         is ThreadLoadResult.Error -> {

@@ -327,51 +327,55 @@ class ImageLoaderV2(
           return@launch
         }
 
-        activeListeners.forEach { activeListener ->
-          val resultBitmapDrawable = applyTransformationsToDrawable(
-            context,
-            context.getLifecycleFromContext(),
-            imageFile,
-            activeListener,
-            url
-          )
-
-          mutex.withLockNonCancellable {
-            val activeRequest = activeRequests.get(url)
-              ?: return@withLockNonCancellable
-
-            if (activeRequest.removeImageListenerParam(imageListenerParam)) {
-              activeRequests.remove(url)
+        withContext(NonCancellable) {
+          activeListeners.forEachIndexed { index, activeListener ->
+            if (verboseLogs) {
+              Logger.d(TAG, "notifying listeners: ${index + 1}/${activeListeners.size}, url='$url'")
             }
-          }
 
-          if (resultBitmapDrawable == null) {
-            val transformationKeys = activeListener.transformations
-              .joinToString { transformation -> transformation.key() }
-
-            Logger.e(
-              TAG, "Failed to apply transformations '$url' $imageSize, " +
-                "transformations: ${transformationKeys}, fromCache=$isFromCache"
-            )
-
-            handleFailure(
-              actualListener = activeListener.imageListenerParam,
+            val resultBitmapDrawable = applyTransformationsToDrawable(
               context = context,
-              imageSize = activeListener.imageSize,
-              transformations = activeListener.transformations,
-              throwable = IOException("applyTransformationsToDrawable() returned null")
+              lifecycle = context.getLifecycleFromContext(),
+              imageFile = imageFile,
+              activeListener = activeListener,
+              url = url
             )
 
-            return@forEach
-          }
+            mutex.withLockNonCancellable {
+              val activeRequest = activeRequests.get(url)
+                ?: return@withLockNonCancellable
 
-          withContext(Dispatchers.Main) {
-            when (val listenerParam = activeListener.imageListenerParam) {
-              is ImageListenerParam.SimpleImageListener -> {
-                listenerParam.listener.onResponse(resultBitmapDrawable)
+              if (activeRequest.removeImageListenerParam(imageListenerParam)) {
+                activeRequests.remove(url)
               }
-              is ImageListenerParam.FailureAwareImageListener -> {
-                listenerParam.listener.onResponse(resultBitmapDrawable, isFromCache)
+            }
+
+            if (resultBitmapDrawable == null) {
+              val transformationKeys = activeListener.transformations
+                .joinToString { transformation -> transformation.key() }
+
+              Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
+                "transformations: ${transformationKeys}, fromCache=$isFromCache")
+
+              handleFailure(
+                actualListener = activeListener.imageListenerParam,
+                context = context,
+                imageSize = activeListener.imageSize,
+                transformations = activeListener.transformations,
+                throwable = IOException("applyTransformationsToDrawable() returned null")
+              )
+
+              return@forEachIndexed
+            }
+
+            launch(Dispatchers.Main) {
+              when (val listenerParam = activeListener.imageListenerParam) {
+                is ImageListenerParam.SimpleImageListener -> {
+                  listenerParam.listener.onResponse(resultBitmapDrawable)
+                }
+                is ImageListenerParam.FailureAwareImageListener -> {
+                  listenerParam.listener.onResponse(resultBitmapDrawable, isFromCache)
+                }
               }
             }
           }
@@ -423,23 +427,20 @@ class ImageLoaderV2(
       build()
     }
 
-    return when (val result = imageLoader.execute(request)) {
+    when (val result = imageLoader.execute(request)) {
       is SuccessResult -> {
         val bitmap = result.drawable.toBitmap()
-        BitmapDrawable(context.resources, bitmap)
+        return BitmapDrawable(context.resources, bitmap)
       }
       is ErrorResult -> {
-        Logger.e(
-          TAG, "applyTransformationsToDrawable() error, " +
-            "fileLocation=${fileLocation}, " +
-            "error=${result.throwable.errorMessageOrClassName()}"
-        )
+        Logger.e(TAG, "applyTransformationsToDrawable() error, " +
+          "fileLocation=${fileLocation}, error=${result.throwable.errorMessageOrClassName()}")
 
         if (!fileCacheV2.isRunning(url)) {
           cacheHandler.get().deleteCacheFileByUrl(url)
         }
 
-        null
+        return null
       }
     }
   }

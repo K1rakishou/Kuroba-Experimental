@@ -87,12 +87,14 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
       emptyList(),
       object : FailureAwareImageListener {
         override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
+          this@SiteIcon.drawable = drawable
           resultFunc(drawable)
         }
 
         override fun onNotFound() {
+          Logger.e(TAG, "onNotFound() url='$url'")
+
           if (errorFunc == null) {
-            Logger.e(TAG, "Image not found, url='$url'")
             return
           }
 
@@ -100,8 +102,9 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
         }
 
         override fun onResponseError(error: Throwable) {
+          Logger.e(TAG, "onResponseError() url='$url', error=${error.errorMessageOrClassName()}")
+
           if (errorFunc == null) {
-            Logger.e(TAG, "Image load response error error=${error.errorMessageOrClassName()}")
             return
           }
 

@@ -87,19 +87,16 @@ class ChanThreadManager(
     }
   }
 
-  suspend fun isRequestAlreadyActive(chanDescriptor: ChanDescriptor): Boolean {
+  fun addRequestedChanDescriptor(chanDescriptor: ChanDescriptor): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    if (!requestedChanDescriptors.add(chanDescriptor)) {
-      // This chan descriptor has already been requested
-      if (verboseLogs) {
-        Logger.d(TAG, "loadThreadOrCatalog() skipping $chanDescriptor because it was already requested")
-      }
+    return requestedChanDescriptors.add(chanDescriptor)
+  }
 
-      return true
-    }
+  fun removeRequestedChanDescriptor(chanDescriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
 
-    return false
+    requestedChanDescriptors.remove(chanDescriptor)
   }
 
   @OptIn(ExperimentalTime::class)
@@ -116,76 +113,69 @@ class ChanThreadManager(
       "CompositeCatalogDescriptor cannot be used here"
     }
 
-    try {
-      Logger.d(TAG, "loadThreadOrCatalog($page, $compositeCatalogDescriptor, $chanDescriptor, " +
-        "$chanCacheUpdateOptions, $chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
+    Logger.d(TAG, "loadThreadOrCatalog($page, $compositeCatalogDescriptor, $chanDescriptor, " +
+      "$chanCacheUpdateOptions, $chanLoadOptions, $chanCacheOptions, $chanReadOptions)")
 
-      if (chanLoadOptions.canClearCache() && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+    if (chanLoadOptions.canClearCache() && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
+      postFilterManager.removeAllForDescriptor(chanDescriptor)
+    } else if (chanLoadOptions.isForceUpdating(postDescriptor = null)) {
+      val postDescriptors = (chanLoadOptions.chanLoadOption as ChanLoadOption.ForceUpdatePosts).postDescriptors
+      if (postDescriptors == null && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
         Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
         postFilterManager.removeAllForDescriptor(chanDescriptor)
-      } else if (chanLoadOptions.isForceUpdating(postDescriptor = null)) {
-        val postDescriptors = (chanLoadOptions.chanLoadOption as ChanLoadOption.ForceUpdatePosts).postDescriptors
-        if (postDescriptors == null && chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeAllForDescriptor()")
-          postFilterManager.removeAllForDescriptor(chanDescriptor)
-        } else if (postDescriptors != null) {
-          Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeMany()")
-          postFilterManager.removeMany(postDescriptors)
-        }
+      } else if (postDescriptors != null) {
+        Logger.d(TAG, "loadThreadOrCatalog() postFilterManager.removeMany()")
+        postFilterManager.removeMany(postDescriptors)
       }
-
-      if (chanLoadOptions.canClearCache()) {
-        Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
-
-        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          when (chanLoadOptions.chanLoadOption) {
-            ChanLoadOption.ClearMemoryCache -> {
-              chanThreadsCache.deleteThread(chanDescriptor)
-            }
-            is ChanLoadOption.ForceUpdatePosts -> {
-              // no-op
-            }
-            ChanLoadOption.RetainAll -> error("Can't retain all here")
-          }
-        }
-      }
-
-      val threadLoadResult = loadInternal(
-        page = page,
-        compositeCatalogDescriptor = compositeCatalogDescriptor,
-        chanDescriptor = chanDescriptor,
-        chanCacheUpdateOptions = chanCacheUpdateOptions,
-        chanLoadOptions = chanLoadOptions,
-        chanCacheOptions = chanCacheOptions,
-        chanReadOptions = chanReadOptions
-      )
-
-      when (threadLoadResult) {
-        is ThreadLoadResult.Loaded -> {
-          when (val descriptor = threadLoadResult.chanDescriptor) {
-            is ChanDescriptor.ThreadDescriptor -> {
-              val preloadTime = measureTime { threadDataPreloader.postloadThreadInfo(descriptor) }
-              Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadThreadInfo took $preloadTime")
-            }
-            is ChanDescriptor.CatalogDescriptor -> {
-              val preloadTime = measureTime { catalogDataPreloader.postloadCatalogInfo(descriptor) }
-              Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadCatalogInfo took $preloadTime")
-            }
-            is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
-          }
-        }
-        is ThreadLoadResult.Error -> {
-          // no-op
-        }
-      }
-
-      return threadLoadResult
-    } finally {
-      BackgroundUtils.ensureMainThread()
-
-      val descriptor = compositeCatalogDescriptor ?: chanDescriptor
-      requestedChanDescriptors.remove(descriptor)
     }
+
+    if (chanLoadOptions.canClearCache()) {
+      Logger.d(TAG, "loadThreadOrCatalog() deleting posts from the cache")
+
+      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        when (chanLoadOptions.chanLoadOption) {
+          ChanLoadOption.ClearMemoryCache -> {
+            chanThreadsCache.deleteThread(chanDescriptor)
+          }
+          is ChanLoadOption.ForceUpdatePosts -> {
+            // no-op
+          }
+          ChanLoadOption.RetainAll -> error("Can't retain all here")
+        }
+      }
+    }
+
+    val threadLoadResult = loadInternal(
+      page = page,
+      compositeCatalogDescriptor = compositeCatalogDescriptor,
+      chanDescriptor = chanDescriptor,
+      chanCacheUpdateOptions = chanCacheUpdateOptions,
+      chanLoadOptions = chanLoadOptions,
+      chanCacheOptions = chanCacheOptions,
+      chanReadOptions = chanReadOptions
+    )
+
+    when (threadLoadResult) {
+      is ThreadLoadResult.Loaded -> {
+        when (val descriptor = threadLoadResult.chanDescriptor) {
+          is ChanDescriptor.ThreadDescriptor -> {
+            val preloadTime = measureTime { threadDataPreloader.postloadThreadInfo(descriptor) }
+            Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadThreadInfo took $preloadTime")
+          }
+          is ChanDescriptor.CatalogDescriptor -> {
+            val preloadTime = measureTime { catalogDataPreloader.postloadCatalogInfo(descriptor) }
+            Logger.d(TAG, "loadThreadOrCatalog(), descriptor=${descriptor} postloadCatalogInfo took $preloadTime")
+          }
+          is ChanDescriptor.CompositeCatalogDescriptor -> error("Cannot use CompositeCatalogDescriptor here")
+        }
+      }
+      is ThreadLoadResult.Error -> {
+        // no-op
+      }
+    }
+
+    return threadLoadResult
   }
 
   fun iteratePostsWhile(
