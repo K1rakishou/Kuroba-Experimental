@@ -2393,19 +2393,17 @@ class ThreadPresenter @Inject constructor(
         chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts(),
         chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
       )
+    } else {
+      val postsToUpdate = chanThread
+        .getPostWithRepliesToThisPost(post.postDescriptor)
+        .toSet()
 
-      return
+      normalLoad(
+        showLoading = false,
+        chanLoadOptions = ChanLoadOptions.forceUpdatePosts(postsToUpdate),
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+      )
     }
-
-    val postsToUpdate = chanThread
-      .getPostWithRepliesToThisPost(post.postDescriptor)
-      .toSet()
-
-    normalLoad(
-      showLoading = false,
-      chanLoadOptions = ChanLoadOptions.forceUpdatePosts(postsToUpdate),
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
-    )
   }
 
   private fun requestDeletePost(post: ChanPost) {

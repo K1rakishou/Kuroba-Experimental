@@ -112,6 +112,9 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
       compositeCatalogDescriptor = ChanDescriptor.CompositeCatalogDescriptor.create(catalogDescriptors)
     )
 
+    val prevCompositeCatalogOrder = compositeCatalogManager
+      .orderOf(prevCompositeCatalog?.compositeCatalogDescriptor)
+
     if (prevCompositeCatalog != null) {
       val deleteResult = compositeCatalogManager.delete(prevCompositeCatalog)
       if (deleteResult is ModularResult.Error) {
@@ -119,7 +122,10 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
       }
     }
 
-    return compositeCatalogManager.create(compositeCatalog)
+    return compositeCatalogManager.create(
+      compositeCatalog = compositeCatalog,
+      prevCompositeCatalogOrder = prevCompositeCatalogOrder
+    )
   }
 
   suspend fun alreadyExists(compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor): Boolean {

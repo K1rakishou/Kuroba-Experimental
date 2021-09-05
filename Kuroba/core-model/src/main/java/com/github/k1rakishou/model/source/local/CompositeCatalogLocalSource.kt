@@ -73,4 +73,19 @@ class CompositeCatalogLocalSource(
     compositeCatalogDao.delete(compositeCatalog.compositeCatalogDescriptor.serializeToString())
   }
 
+  suspend fun persist(compositeCatalogs: List<CompositeCatalog>) {
+    ensureInTransaction()
+
+    val compositeCatalogEntities = compositeCatalogs.mapIndexed { order, compositeCatalog ->
+      return@mapIndexed CompositeCatalogEntity(
+        name = compositeCatalog.name,
+        compositeBoardsString = compositeCatalog.compositeCatalogDescriptor.serializeToString(),
+        order = order
+      )
+    }
+
+    compositeCatalogDao.deleteAll()
+    compositeCatalogDao.insertMany(compositeCatalogEntities)
+  }
+
 }

@@ -4,6 +4,7 @@ import androidx.compose.runtime.mutableStateListOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
@@ -36,14 +37,29 @@ class CompositeCatalogsSetupControllerViewModel : BaseViewModel() {
     mainScope.launch { reloadInternal() }
   }
 
-  suspend fun moveUp(movedCompositeCatalog: CompositeCatalog): ModularResult<Unit> {
-    return compositeCatalogManager.move(movedCompositeCatalog, true)
-      .peekError { error -> Logger.e(TAG, "moveUp($movedCompositeCatalog) error", error) }
+  suspend fun move(fromIndex: Int, toIndex: Int): ModularResult<Unit> {
+    if (fromIndex == toIndex) {
+      return ModularResult.value(Unit)
+    }
+
+    val result = compositeCatalogManager.move(fromIndex, toIndex)
+      .peekError { error -> Logger.e(TAG, "move(fromIndex=$fromIndex, toIndex=$toIndex) error", error) }
+
+    if (result is ModularResult.Value && fromIndex != toIndex) {
+      val fromCatalog = _compositeCatalogs.getOrNull(fromIndex)
+      val toCatalog = _compositeCatalogs.getOrNull(toIndex)
+
+      if (fromCatalog != null && toCatalog != null) {
+        _compositeCatalogs.move(fromIndex, toIndex)
+      }
+    }
+
+    return result
   }
 
-  suspend fun moveDown(movedCompositeCatalog: CompositeCatalog): ModularResult<Unit> {
-    return compositeCatalogManager.move(movedCompositeCatalog, false)
-      .peekError { error -> Logger.e(TAG, "moveDown($movedCompositeCatalog) error", error) }
+  suspend fun onMoveEnd(): ModularResult<Unit> {
+    return compositeCatalogManager.persistAll()
+      .peekError { error -> Logger.e(TAG, "persistAll() error", error) }
   }
 
   suspend fun delete(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
@@ -86,32 +102,6 @@ class CompositeCatalogsSetupControllerViewModel : BaseViewModel() {
 
           _compositeCatalogs
             .removeIfKt { catalog -> catalog.compositeCatalogDescriptor == descriptor  }
-        }
-        is CompositeCatalogManager.Event.Swapped -> {
-          val descriptor1 = event.compositeCatalogDescriptor1
-          val descriptor2 = event.compositeCatalogDescriptor2
-
-          if (descriptor1 == descriptor2) {
-            return@doWithLockedCompositeCatalogs
-          }
-
-          val globalCompositeCatalog1 = globalCompositeCatalogs
-            .firstOrNull { catalog -> catalog.compositeCatalogDescriptor == descriptor1 }
-          val globalCompositeCatalog2 = globalCompositeCatalogs
-            .firstOrNull { catalog -> catalog.compositeCatalogDescriptor == descriptor2 }
-
-          if (globalCompositeCatalog1 == null || globalCompositeCatalog2 == null) {
-            return@doWithLockedCompositeCatalogs
-          }
-
-          val indexOfExisting1 = _compositeCatalogs
-            .indexOfFirst { catalog -> catalog.compositeCatalogDescriptor == descriptor1 }
-          val indexOfExisting2 = _compositeCatalogs
-            .indexOfFirst { catalog -> catalog.compositeCatalogDescriptor == descriptor2 }
-
-          val temp = _compositeCatalogs[indexOfExisting2]
-          _compositeCatalogs[indexOfExisting2] = _compositeCatalogs[indexOfExisting1]
-          _compositeCatalogs[indexOfExisting1] = temp
         }
         is CompositeCatalogManager.Event.Updated -> {
           val descriptor = event.compositeCatalogDescriptor

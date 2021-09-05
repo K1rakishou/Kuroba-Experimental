@@ -32,12 +32,10 @@ import io.reactivex.processors.BehaviorProcessor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import javax.inject.Inject
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 class MainControllerViewModel : BaseViewModel() {
@@ -102,9 +100,8 @@ class MainControllerViewModel : BaseViewModel() {
 
     mainScope.launch {
       bookmarksManager.listenForBookmarksChanges()
-        .debounce(Duration.seconds(1))
         .collect { bookmarkChange ->
-          bookmarksManager.awaitUntilInitialized()
+          Logger.d(TAG, "listenForBookmarksChanges bookmarkChange=$bookmarkChange")
 
           updateBadge()
           onBookmarkUpdated(bookmarkChange)

@@ -36,6 +36,9 @@ interface CompositeCatalogDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   suspend fun insert(entity: CompositeCatalogEntity)
 
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  suspend fun insertMany(entities: Collection<CompositeCatalogEntity>)
+
   @Update
   suspend fun update(entity: CompositeCatalogEntity)
 
@@ -45,5 +48,8 @@ interface CompositeCatalogDao {
     WHERE ${CompositeCatalogEntity.COMPOSITE_BOARDS_STRING_COLUMN_NAME} = :compositeBoardsString
   """)
   suspend fun delete(compositeBoardsString: String)
+
+  @Query("DELETE FROM ${CompositeCatalogEntity.TABLE_NAME}")
+  suspend fun deleteAll()
 
 }

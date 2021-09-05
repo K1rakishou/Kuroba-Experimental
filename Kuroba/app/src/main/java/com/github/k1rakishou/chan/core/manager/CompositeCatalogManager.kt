@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.helper.OneShotRunnable
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.core_logger.Logger
@@ -45,14 +46,17 @@ class CompositeCatalogManager(
     }
   }
 
-  suspend fun create(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
+  suspend fun create(compositeCatalog: CompositeCatalog, prevCompositeCatalogOrder: Int?): ModularResult<Unit> {
     ensureInitialized()
 
     return ModularResult.Try {
       return@Try mutex.withLock {
+        val compositeCatalogOrder = prevCompositeCatalogOrder
+          ?: getOrder(compositeCatalog.compositeCatalogDescriptor)
+
         compositeCatalogRepository.create(
           compositeCatalog = compositeCatalog,
-          order = getOrder(compositeCatalog.compositeCatalogDescriptor)
+          order = compositeCatalogOrder
         )
           .peekError { error -> Logger.e(TAG, "createOrUpdate($compositeCatalog) error", error) }
           .unwrap()
@@ -75,60 +79,14 @@ class CompositeCatalogManager(
     }
   }
 
-  suspend fun move(movedCompositeCatalog: CompositeCatalog, movingUp: Boolean): ModularResult<Unit> {
+  suspend fun move(fromIndex: Int, toIndex: Int): ModularResult<Unit> {
     ensureInitialized()
 
     return ModularResult.Try {
       return@Try mutex.withLock {
-        val fromIndex = if (movingUp) {
-          val index = compositeCatalogs.indexOfFirst { catalog -> catalog == movedCompositeCatalog }
-          if (index < 1) {
-            // Can't move if the index is not at least 1
-            return@withLock
-          }
-
-          index
-        } else {
-          val index = compositeCatalogs.indexOfFirst { catalog -> catalog == movedCompositeCatalog }
-          if (index >= compositeCatalogs.lastIndex) {
-            // Can't move if the index is not at least (lastIndex - 1)
-            return@withLock
-          }
-
-          index
-        }
-
-        val toIndex = if (movingUp) {
-          fromIndex - 1
-        } else {
-          fromIndex + 1
-        }
-
-        compositeCatalogRepository.move(
-          fromCompositeCatalog = movedCompositeCatalog,
-          toCompositeCatalog = compositeCatalogs[toIndex]
-        )
-          .peekError { error ->
-            Logger.e(TAG, "move(movedCompositeCatalog=$movedCompositeCatalog, movingUp=$movingUp, " +
-              "fromIndex=$fromIndex, toIndex=$toIndex, compositeCatalogsCount=${compositeCatalogs.size}) " +
-              "error", error)
-          }
-          .unwrap()
-
-        val compositeCatalogDescriptor1 = compositeCatalogs[fromIndex]
-        val compositeCatalogDescriptor2 = compositeCatalogs[toIndex]
-
-        val temp = compositeCatalogs[fromIndex]
-        compositeCatalogs[fromIndex] = compositeCatalogs[toIndex]
-        compositeCatalogs[toIndex] = temp
-
-        val event = Event.Swapped(
-          compositeCatalogDescriptor1 = compositeCatalogDescriptor1.compositeCatalogDescriptor,
-          compositeCatalogDescriptor2 = compositeCatalogDescriptor2.compositeCatalogDescriptor
-        )
-
-        updateCurrentCatalogDescriptorIfNeeded(event)
-        _compositeCatalogUpdatesFlow.emit(event)
+        compositeCatalogs.getOrNull(fromIndex) ?: return@Try
+        compositeCatalogs.getOrNull(toIndex) ?: return@Try
+        compositeCatalogs.move(fromIndex, toIndex)
       }
     }
   }
@@ -151,6 +109,26 @@ class CompositeCatalogManager(
     ensureInitialized()
 
     return mutex.withLock { compositeCatalogs.firstOrNull() }
+  }
+
+  suspend fun orderOf(compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?): Int? {
+    if (compositeCatalogDescriptor == null) {
+      return null
+    }
+
+    ensureInitialized()
+
+    return mutex.withLock {
+      val index = compositeCatalogs.indexOfFirst { compositeCatalog ->
+        compositeCatalog.compositeCatalogDescriptor == compositeCatalogDescriptor
+      }
+
+      if (index < 0) {
+        return@withLock null
+      }
+
+      return@withLock index
+    }
   }
 
   suspend fun delete(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
@@ -181,6 +159,14 @@ class CompositeCatalogManager(
         }
       }
     }
+  }
+
+  suspend fun persistAll(): ModularResult<Unit> {
+    if (!oneShotRunnable.alreadyRun) {
+      return ModularResult.value(Unit)
+    }
+
+    return mutex.withLock { compositeCatalogRepository.persist(compositeCatalogs) }
   }
 
   private fun getOrder(
@@ -224,7 +210,6 @@ class CompositeCatalogManager(
 
     val currentCatalogDescriptor = currentOpenedDescriptorStateManager.currentCatalogDescriptor
     when (event) {
-      is Event.Swapped,
       is Event.Updated -> return
       is Event.Created -> {
         if (currentCatalogDescriptor != null) {
@@ -260,11 +245,6 @@ class CompositeCatalogManager(
     data class Created(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
     data class Updated(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
     data class Deleted(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
-
-    data class Swapped(
-      val compositeCatalogDescriptor1: ChanDescriptor.CompositeCatalogDescriptor,
-      val compositeCatalogDescriptor2: ChanDescriptor.CompositeCatalogDescriptor
-    ) : Event()
   }
 
   companion object {

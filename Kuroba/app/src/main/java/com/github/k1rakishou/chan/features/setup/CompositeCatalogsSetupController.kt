@@ -16,7 +16,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
@@ -41,6 +40,11 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
+import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
+import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
+import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
+import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -93,24 +97,38 @@ class CompositeCatalogsSetupController(
   @Composable
   private fun BuildContent() {
     val chanTheme = LocalChanTheme.current
-    val listState = rememberLazyListState()
+    val reorderState = rememberReorderState()
     val compositeCatalogs = viewModel.compositeCatalogs
 
     Box(modifier = Modifier.fillMaxSize()) {
       if (compositeCatalogs.isNotEmpty()) {
         LazyColumn(
+          state = reorderState.listState,
           contentPadding = PaddingValues(bottom = FAB_SIZE),
           modifier = Modifier
             .fillMaxSize()
-            .simpleVerticalScrollbar(listState, chanTheme),
+            .simpleVerticalScrollbar(reorderState.listState, chanTheme)
+            .reorderable(
+              state = reorderState,
+              onMove = { from, to ->
+                viewModel.move(fromIndex = from, toIndex = to)
+                  .toastOnError(longToast = true)
+                  .ignore()
+              },
+              onDragEnd = { _, _ ->
+                viewModel.onMoveEnd()
+                  .toastOnError(longToast = true)
+                  .ignore()
+              }
+            ),
           content = {
             items(compositeCatalogs.size) { index ->
               val compositeCatalog = compositeCatalogs.get(index)
 
               BuildCompositeCatalogItem(
                 index = index,
-                totalCount = compositeCatalogs.size,
                 chanTheme = chanTheme,
+                reorderState = reorderState,
                 compositeCatalog = compositeCatalog,
                 onCompositeCatalogItemClicked = { clickedCompositeCatalog ->
                   showComposeBoardsController(compositeCatalog = clickedCompositeCatalog)
@@ -125,20 +143,6 @@ class CompositeCatalogsSetupController(
                           clickedCompositeCatalog.name
                         )
                       })
-                      .ignore()
-                  }
-                },
-                onMoveUpClicked = { movedCompositeCatalog ->
-                  rendezvousCoroutineExecutor.post {
-                    viewModel.moveUp(movedCompositeCatalog)
-                      .toastOnError(longToast = true)
-                      .ignore()
-                  }
-                },
-                onMoveDownClicked = { movedCompositeCatalog ->
-                  rendezvousCoroutineExecutor.post {
-                    viewModel.moveDown(movedCompositeCatalog)
-                      .toastOnError(longToast = true)
                       .ignore()
                   }
                 },
@@ -183,18 +187,16 @@ class CompositeCatalogsSetupController(
   @Composable
   private fun BuildCompositeCatalogItem(
     index: Int,
-    totalCount: Int,
     chanTheme: ChanTheme,
+    reorderState: ReorderableState,
     compositeCatalog: CompositeCatalog,
     onCompositeCatalogItemClicked: (CompositeCatalog) -> Unit,
-    onDeleteCompositeCatalogItemClicked: (CompositeCatalog) -> Unit,
-    onMoveUpClicked: (CompositeCatalog) -> Unit,
-    onMoveDownClicked: (CompositeCatalog) -> Unit
+    onDeleteCompositeCatalogItemClicked: (CompositeCatalog) -> Unit
   ) {
-    val onCompositeCatalogItemClickedRemembered = rememberUpdatedState(newValue = onCompositeCatalogItemClicked)
-    val onDeleteCompositeCatalogItemClickedRemembered = rememberUpdatedState(newValue = onDeleteCompositeCatalogItemClicked)
-    val onMoveUpClickedRemembered = rememberUpdatedState(newValue = onMoveUpClicked)
-    val onMoveDownClickedRemembered = rememberUpdatedState(newValue = onMoveDownClicked)
+    val onCompositeCatalogItemClickedRemembered =
+      rememberUpdatedState(newValue = onCompositeCatalogItemClicked)
+    val onDeleteCompositeCatalogItemClickedRemembered =
+      rememberUpdatedState(newValue = onDeleteCompositeCatalogItemClicked)
 
     Row(
       modifier = Modifier
@@ -205,6 +207,8 @@ class CompositeCatalogsSetupController(
           bounded = true,
           onClick = { onCompositeCatalogItemClickedRemembered.value.invoke(compositeCatalog) }
         )
+        .draggedItem(reorderState.offsetByIndex(index))
+        .background(chanTheme.backColorCompose)
     ) {
 
       KurobaComposeIcon(
@@ -260,39 +264,14 @@ class CompositeCatalogsSetupController(
         )
       }
 
-      if (index > 0) {
-        KurobaComposeIcon(
-          modifier = Modifier
-            .size(32.dp)
-            .align(Alignment.CenterVertically)
-            .kurobaClickable(
-              bounded = false,
-              onClick = { onMoveUpClickedRemembered.value.invoke(compositeCatalog) }
-            ),
-          drawableId = R.drawable.ic_baseline_arrow_upward_24,
-          themeEngine = themeEngine
-        )
-      } else {
-        Spacer(modifier = Modifier.size(32.dp))
-      }
-
-      Spacer(modifier = Modifier.width(8.dp))
-
-      if (index < totalCount - 1) {
-        KurobaComposeIcon(
-          modifier = Modifier
-            .size(32.dp)
-            .align(Alignment.CenterVertically)
-            .kurobaClickable(
-              bounded = false,
-              onClick = { onMoveDownClickedRemembered.value.invoke(compositeCatalog) }
-            ),
-          drawableId = R.drawable.ic_baseline_arrow_downward_24,
-          themeEngine = themeEngine
-        )
-      } else {
-        Spacer(modifier = Modifier.size(32.dp))
-      }
+      KurobaComposeIcon(
+        modifier = Modifier
+          .size(32.dp)
+          .align(Alignment.CenterVertically)
+          .detectReorder(reorderState),
+        drawableId = R.drawable.ic_baseline_reorder_24,
+        themeEngine = themeEngine
+      )
 
       Spacer(modifier = Modifier.width(8.dp))
     }

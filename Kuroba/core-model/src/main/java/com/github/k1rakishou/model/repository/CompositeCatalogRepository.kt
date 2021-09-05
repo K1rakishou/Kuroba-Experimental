@@ -55,4 +55,12 @@ class CompositeCatalogRepository(
     }
   }
 
+  suspend fun persist(compositeCatalogs: List<CompositeCatalog>): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        return@tryWithTransaction localSource.persist(compositeCatalogs)
+      }
+    }
+  }
+
 }
