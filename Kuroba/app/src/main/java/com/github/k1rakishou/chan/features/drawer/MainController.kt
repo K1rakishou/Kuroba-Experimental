@@ -478,6 +478,10 @@ class MainController(
   override fun onDrawerStateChanged(newState: Int) {
   }
 
+  fun loadMainControllerDrawerData() {
+    drawerViewModel.firstLoadDrawerData()
+  }
+
   fun pushChildController(childController: Controller) {
     if (childControllers.isNotEmpty()) {
       childControllersStack.push(childControllers.last())

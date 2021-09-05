@@ -158,6 +158,7 @@ class StartActivity : ControllerHostActivity(),
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
 
+    mainController.loadMainControllerDrawerData()
     Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
   }
 

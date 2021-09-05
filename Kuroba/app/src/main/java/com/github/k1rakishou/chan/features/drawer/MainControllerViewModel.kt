@@ -129,7 +129,9 @@ class MainControllerViewModel : BaseViewModel() {
           }
         }
     }
+  }
 
+  fun firstLoadDrawerData() {
     mainScope.launch {
       delay(500L)
       reloadNavigationHistory()
