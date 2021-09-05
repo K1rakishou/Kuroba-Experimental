@@ -411,6 +411,7 @@ public class ChanSettings {
     public static RangeSetting bookmarkGridViewWidth;
     public static OptionsSetting<ImageGestureActionType> mediaViewerTopGestureAction;
     public static OptionsSetting<ImageGestureActionType> mediaViewerBottomGestureAction;
+    public static BooleanSetting drawerGridMode;
     public static BooleanSetting drawerMoveLastAccessedThreadToTop;
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
@@ -669,6 +670,11 @@ public class ChanSettings {
             drawerMoveLastAccessedThreadToTop = new BooleanSetting(
                     provider,
                     "drawer_move_last_accessed_thread_to_top",
+                    true
+            );
+            drawerGridMode = new BooleanSetting(
+                    provider,
+                    "drawer_grid_mode",
                     true
             );
             drawerShowBookmarkedThreads = new BooleanSetting(

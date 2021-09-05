@@ -90,6 +90,8 @@ class MainControllerViewModel : BaseViewModel() {
   val selectedHistoryEntries: Map<NavigationHistoryEntry, Unit>
     get() = _selectedHistoryEntries
 
+  val drawerGridMode = mutableStateOf(ChanSettings.drawerGridMode.get())
+
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
   private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = mainScope)
 

@@ -1210,6 +1210,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_navigation_entry_unpinned">Unpinned</string>
     <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin</string>
     <string name="drawer_controller_navigation_entry_deleted">Deleted</string>
+    <string name="drawer_controller_grid_mode">Grid mode</string>
 
     <string name="board_selection_controller_grid_layout_mode">Board selection grid mode</string>
 

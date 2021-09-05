@@ -44,6 +44,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -68,6 +69,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.*
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
+import coil.transform.CircleCropTransformation
 import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -921,10 +923,6 @@ class MainController(
           .fillMaxWidth()
           .weight(1f)
       ) {
-        val spanCount = with(LocalDensity.current) {
-          (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
-        }
-
         val currentInsetsCompose by globalWindowInsetsManager.currentInsetsCompose
 
         val contentPadding = remember(key1 = currentInsetsCompose) {
@@ -933,31 +931,62 @@ class MainController(
 
         val chanTheme = LocalChanTheme.current
         val state = rememberLazyListState()
+        val drawerGridMode by drawerViewModel.drawerGridMode
 
-        LazyVerticalGrid(
-          state = state,
-          modifier = Modifier
-            .fillMaxSize()
-            .simpleVerticalScrollbar(state, chanTheme),
-          contentPadding = contentPadding,
-          cells = GridCells.Fixed(count = spanCount),
-          content = {
-            items(count = results.size) { index ->
-              val navHistoryEntry = results[index]
-              val isSelectionMode = selectedHistoryEntries.isNotEmpty()
-              val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
+        if (drawerGridMode) {
+          val spanCount = with(LocalDensity.current) {
+            (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
+          }
 
-              BuildNavigationHistoryListEntry(
-                navHistoryEntry = navHistoryEntry,
-                isSelectionMode = isSelectionMode,
-                isSelected = isSelected,
-                onHistoryEntryViewClicked = onHistoryEntryViewClicked,
-                onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
-                onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
-                onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
-              )
-            }
-          })
+          LazyVerticalGrid(
+            state = state,
+            modifier = Modifier
+              .fillMaxSize()
+              .simpleVerticalScrollbar(state, chanTheme),
+            contentPadding = contentPadding,
+            cells = GridCells.Fixed(count = spanCount),
+            content = {
+              items(count = results.size) { index ->
+                val navHistoryEntry = results[index]
+                val isSelectionMode = selectedHistoryEntries.isNotEmpty()
+                val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
+
+                BuildNavigationHistoryListEntryGridMode(
+                  navHistoryEntry = navHistoryEntry,
+                  isSelectionMode = isSelectionMode,
+                  isSelected = isSelected,
+                  onHistoryEntryViewClicked = onHistoryEntryViewClicked,
+                  onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                  onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
+                  onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
+                )
+              }
+            })
+        } else {
+          LazyColumn(
+            state = state,
+            modifier = Modifier
+              .fillMaxSize()
+              .simpleVerticalScrollbar(state, chanTheme),
+            contentPadding = contentPadding,
+            content = {
+              items(count = results.size) { index ->
+                val navHistoryEntry = results[index]
+                val isSelectionMode = selectedHistoryEntries.isNotEmpty()
+                val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
+
+                BuildNavigationHistoryListEntryListMode(
+                  navHistoryEntry = navHistoryEntry,
+                  isSelectionMode = isSelectionMode,
+                  isSelected = isSelected,
+                  onHistoryEntryViewClicked = onHistoryEntryViewClicked,
+                  onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                  onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
+                  onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
+                )
+              }
+            })
+        }
       }
     }
   }
@@ -1037,7 +1066,171 @@ class MainController(
   }
 
   @Composable
-  private fun BuildNavigationHistoryListEntry(
+  private fun BuildNavigationHistoryListEntryListMode(
+    navHistoryEntry: NavigationHistoryEntry,
+    isSelectionMode: Boolean,
+    isSelected: Boolean,
+    onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
+    onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
+    onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
+  ) {
+    val chanDescriptor = navHistoryEntry.descriptor
+
+    val circleCropTransformation = remember(key1 = chanDescriptor) {
+      if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        emptyList()
+      } else {
+        listOf(CIRCLE_CROP)
+      }
+    }
+
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .height(LIST_MODE_ROW_HEIGHT)
+        .padding(all = 2.dp)
+        .kurobaClickable(
+          bounded = true,
+          onClick = {
+            if (isSelectionMode) {
+              onHistoryEntrySelectionChanged(isSelected, navHistoryEntry)
+            } else {
+              onHistoryEntryViewClicked(navHistoryEntry)
+            }
+          },
+          onLongClick = {
+            onHistoryEntryViewLongClicked(navHistoryEntry)
+          }
+        ),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      Box {
+        val contentScale = if (navHistoryEntry.descriptor is ChanDescriptor.ICatalogDescriptor) {
+          ContentScale.Fit
+        } else {
+          ContentScale.Crop
+        }
+
+        val thumbnailRequest = remember(key1 = chanDescriptor) {
+          if (navHistoryEntry.isCompositeIconUrl) {
+            ImageLoaderRequest(
+              data = ImageLoaderRequestData.DrawableResource(R.drawable.composition_icon),
+              transformations = circleCropTransformation
+            )
+          } else {
+            ImageLoaderRequest(
+              data = ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl),
+              transformations = circleCropTransformation
+            )
+          }
+        }
+
+        KurobaComposeImage(
+          request = thumbnailRequest,
+          contentScale = contentScale,
+          modifier = Modifier
+            .size(LIST_MODE_ROW_HEIGHT)
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+          imageLoaderV2 = imageLoaderV2
+        )
+
+        val showDeleteButtonShortcut by remember { drawerViewModel.showDeleteButtonShortcut }
+
+        if (isSelectionMode) {
+          KurobaComposeCheckbox(
+            currentlyChecked = isSelected,
+            onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
+          )
+        } else if (showDeleteButtonShortcut) {
+          val circleColor = remember { Color(0x80000000L) }
+          val shape = remember { CircleShape }
+
+          Image(
+            modifier = Modifier
+              .align(Alignment.TopStart)
+              .size(20.dp)
+              .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
+              .background(color = circleColor, shape = shape),
+            painter = painterResource(id = R.drawable.ic_clear_white_24dp),
+            contentDescription = null
+          )
+        }
+
+        Column(
+          modifier = Modifier
+            .wrapContentHeight()
+            .wrapContentWidth()
+            .align(Alignment.TopEnd)
+        ) {
+          val siteIconRequest = remember(key1 = chanDescriptor) {
+            if (navHistoryEntry.siteThumbnailUrl != null) {
+              ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.siteThumbnailUrl))
+            } else {
+              null
+            }
+          }
+
+          if (siteIconRequest != null) {
+            KurobaComposeImage(
+              request = siteIconRequest,
+              contentScale = ContentScale.Crop,
+              modifier = Modifier.size(20.dp),
+              imageLoaderV2 = imageLoaderV2,
+              error = {
+                Image(
+                  modifier = Modifier.fillMaxSize(),
+                  painter = painterResource(id = R.drawable.error_icon),
+                  contentDescription = null
+                )
+              }
+            )
+
+            Spacer(modifier = Modifier.weight(1f))
+          }
+
+          if (navHistoryEntry.pinned) {
+            Image(
+              modifier = Modifier.size(20.dp),
+              painter = painterResource(id = R.drawable.sticky_icon),
+              contentDescription = null
+            )
+          }
+        }
+      }
+
+      KurobaComposeText(
+        modifier = Modifier
+          .weight(1f)
+          .wrapContentHeight(),
+        text = navHistoryEntry.title,
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        fontSize = 16.sp
+      )
+
+      if (navHistoryEntry.additionalInfo != null) {
+        val additionalInfo = navHistoryEntry.additionalInfo
+        val additionalInfoString = remember(key1 = additionalInfo) {
+          additionalInfo.toAnnotatedString(themeEngine)
+        }
+
+        KurobaComposeText(
+          modifier = Modifier
+            .wrapContentWidth()
+            .wrapContentHeight()
+            .padding(horizontal = 4.dp),
+          maxLines = 1,
+          overflow = TextOverflow.Ellipsis,
+          fontSize = 16.sp,
+          text = additionalInfoString
+        )
+      }
+    }
+  }
+
+  @Composable
+  private fun BuildNavigationHistoryListEntryGridMode(
     navHistoryEntry: NavigationHistoryEntry,
     isSelectionMode: Boolean,
     isSelected: Boolean,
@@ -1201,6 +1394,12 @@ class MainController(
     val drawerOptions = mutableListOf<FloatingListMenuItem>()
 
     drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_GRID_MODE,
+      name = getString(R.string.drawer_controller_grid_mode),
+      isCurrentlySelected = ChanSettings.drawerGridMode.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP,
       name = getString(R.string.drawer_controller_move_last_accessed_thread_to_top),
       isCurrentlySelected = ChanSettings.drawerMoveLastAccessedThreadToTop.get()
@@ -1248,6 +1447,10 @@ class MainController(
       itemClickListener = { item ->
         mainScope.launch {
           when (item.key) {
+            ACTION_GRID_MODE -> {
+              val drawerGridMode = ChanSettings.drawerGridMode.toggle()
+              drawerViewModel.drawerGridMode.value = drawerGridMode
+            }
             ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP -> {
               ChanSettings.drawerMoveLastAccessedThreadToTop.toggle()
             }
@@ -1606,6 +1809,7 @@ class MainController(
     private const val ACTION_CLEAR_NAV_HISTORY = 4
     private const val ACTION_RESTORE_LAST_VISITED_CATALOG = 5
     private const val ACTION_RESTORE_LAST_VISITED_THREAD = 6
+    private const val ACTION_GRID_MODE = 7
 
     private const val ACTION_START_SELECTION = 100
     private const val ACTION_SELECT_ALL = 101
@@ -1616,5 +1820,8 @@ class MainController(
     private const val ACTION_SHOW_IN_BOOKMARKS = 106
 
     private val GRID_COLUMN_WIDTH = dp(80f)
+    private val LIST_MODE_ROW_HEIGHT = 52.dp
+
+    private val CIRCLE_CROP = CircleCropTransformation()
   }
 }
