@@ -289,7 +289,6 @@ class ComposeBoardsController(
                 modifier = Modifier
                   .weight(1f)
                   .fillMaxHeight()
-                  .padding(start = 8.dp)
               ) {
                 val imageLoaderRequest = remember(key1 = catalogCompositionSlot) {
                   val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
@@ -301,6 +300,7 @@ class ComposeBoardsController(
                 KurobaComposeImage(
                   modifier = Modifier
                     .size(28.dp)
+                    .padding(horizontal = 4.dp)
                     .align(Alignment.CenterVertically),
                   request = imageLoaderRequest,
                   imageLoaderV2 = imageLoaderV2,
@@ -329,6 +329,7 @@ class ComposeBoardsController(
                   textAlign = TextAlign.Center,
                   modifier = Modifier
                     .wrapContentSize()
+                    .padding(horizontal = 4.dp)
                     .align(Alignment.CenterVertically),
                   text = text
                 )

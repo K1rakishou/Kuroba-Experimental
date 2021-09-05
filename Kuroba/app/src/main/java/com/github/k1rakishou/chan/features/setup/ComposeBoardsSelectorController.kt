@@ -21,6 +21,7 @@ import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,7 +120,7 @@ class ComposeBoardsSelectorController(
 
     BuildSearchInput(
       backgroundColor = backgroundColor,
-      initialQuery = searchState.searchQuery,
+      searchQuery = searchState.searchQueryState,
       onSearchQueryChanged = { newQuery -> searchState.searchQuery = newQuery }
     )
 
@@ -200,7 +201,7 @@ class ComposeBoardsSelectorController(
   @Composable
   private fun BuildSearchInput(
     backgroundColor: Color,
-    initialQuery: String,
+    searchQuery: MutableState<String>,
     onSearchQueryChanged: (String) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
@@ -214,7 +215,7 @@ class ComposeBoardsSelectorController(
       chanTheme = chanTheme,
       themeEngine = themeEngine,
       backgroundColor = backgroundColor,
-      searchQuery = initialQuery,
+      searchQuery = searchQuery,
       onSearchQueryChanged = { newQuery -> onSearchQueryChangedRemembered.value.invoke(newQuery) }
     )
   }
@@ -285,7 +286,9 @@ class ComposeBoardsSelectorController(
   }
 
   class SearchState {
-    var searchQuery by mutableStateOf("")
+    val searchQueryState = mutableStateOf("")
+    var searchQuery by searchQueryState
+
     var searching by mutableStateOf(false)
     var searchResults by mutableStateOf<List<ComposeBoardsSelectorControllerViewModel.CellData>>(emptyList())
   }

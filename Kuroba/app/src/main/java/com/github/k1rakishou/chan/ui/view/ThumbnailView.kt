@@ -366,10 +366,8 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         val isScopeActive = kurobaScope?.isActive ?: false
 
         if (verboseLogs) {
-          Logger.d(
-            TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
-            "isIoError=$isIoError, isScopeActive=$isScopeActive, remainingAttempts=${ioErrorAttempts.get()}"
-          )
+          Logger.d(TAG, "onResponseError() error: ${error.errorMessageOrClassName()}, " +
+            "isIoError=$isIoError, isScopeActive=$isScopeActive, remainingAttempts=${ioErrorAttempts.get()}")
         }
 
         if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {

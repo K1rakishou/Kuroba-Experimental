@@ -39,6 +39,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -488,10 +489,10 @@ fun KurobaSearchInput(
   chanTheme: ChanTheme,
   themeEngine: ThemeEngine,
   backgroundColor: Color,
-  searchQuery: String,
+  searchQuery: MutableState<String>,
   onSearchQueryChanged: (String) -> Unit
 ) {
-  var localQuery by remember { mutableStateOf(searchQuery) }
+  var localQuery by remember { searchQuery }
 
   Row(modifier = modifier) {
     Row(modifier = Modifier.wrapContentHeight()) {
@@ -530,7 +531,7 @@ fun KurobaSearchInput(
         val isFocused by interactionSource.collectIsFocusedAsState()
 
         androidx.compose.animation.AnimatedVisibility(
-          visible = !isFocused && searchQuery.isEmpty(),
+          visible = !isFocused && localQuery.isEmpty(),
           enter = fadeIn(),
           exit = fadeOut()
         ) {
@@ -553,7 +554,7 @@ fun KurobaSearchInput(
       }
 
       AnimatedVisibility(
-        visible = searchQuery.isNotEmpty(),
+        visible = localQuery.isNotEmpty(),
         enter = fadeIn(),
         exit = fadeOut()
       ) {

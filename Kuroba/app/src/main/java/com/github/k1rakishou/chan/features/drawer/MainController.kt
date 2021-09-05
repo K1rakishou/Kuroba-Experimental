@@ -49,6 +49,7 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -819,7 +820,7 @@ class MainController(
     val searchState = rememberDrawerSearchState()
 
     BuildNavigationHistoryListHeader(
-      searchQuery = searchState.query,
+      searchQuery = searchState.queryState,
       onSearchQueryChanged = { newQuery -> searchState.query = newQuery },
       onSwitchDayNightThemeIconClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) },
       onShowDrawerOptionsIconClick = { showDrawerOptions() }
@@ -963,7 +964,7 @@ class MainController(
 
   @Composable
   private fun BuildNavigationHistoryListHeader(
-    searchQuery: String,
+    searchQuery: MutableState<String>,
     onSearchQueryChanged: (String) -> Unit,
     onSwitchDayNightThemeIconClick: () -> Unit,
     onShowDrawerOptionsIconClick: () -> Unit
@@ -1579,7 +1580,9 @@ class MainController(
     results: List<NavigationHistoryEntry>,
     searching: Boolean
   ) {
-    var query by mutableStateOf(searchQuery)
+    val queryState = mutableStateOf(searchQuery)
+    var query by queryState
+
     var results by mutableStateOf(results)
     var searching by mutableStateOf(searching)
 

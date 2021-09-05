@@ -488,7 +488,7 @@ class ImageLoaderV2(
         return null
       }
 
-      if (error.isNotFoundError() || !error.isExceptionImportant()) {
+      if (error.isNotFoundError() || error is BadContentTypeException || !error.isExceptionImportant()) {
         Logger.e(TAG, "Failed to load '$url' $imageSize, fromCache=false, error: ${error.errorMessageOrClassName()}")
       } else {
         Logger.e(TAG, "Failed to load '$url' $imageSize, fromCache=false", error)
@@ -627,6 +627,14 @@ class ImageLoaderV2(
     runInterruptible {
       val responseBody = response.body
         ?: throw IOException("Response body is null")
+
+      val contentMainType = responseBody.contentType()?.type
+      val contentSubType = responseBody.contentType()?.subtype
+
+      if (contentMainType != "image" && contentMainType != "video") {
+        throw BadContentTypeException("${contentMainType}/${contentSubType}")
+      }
+
       responseBody.byteStream().use { inputStream ->
         cacheFile.outputStream().use { os ->
           inputStream.copyTo(os)

@@ -21,3 +21,4 @@ class BadStatusResponseException(val status: Int) : IOException("Bad status code
 class EmptyBodyResponseException : IOException("Response has no body")
 class NotFoundException : IOException("Not found")
 class ParsingException(message: String) : IOException(message)
+class BadContentTypeException(contentType: String?) : Exception("Unexpected content type: '${contentType}'")
