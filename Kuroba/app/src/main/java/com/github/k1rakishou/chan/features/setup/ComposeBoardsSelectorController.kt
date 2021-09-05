@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.res.painterResource
@@ -39,7 +40,6 @@ import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.ui.compose.BuildNavigationHistoryHeaderSearchInput
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
@@ -49,6 +49,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
+import com.github.k1rakishou.chan.ui.compose.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
@@ -86,6 +87,7 @@ class ComposeBoardsSelectorController(
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
+    val backgroundColor = chanTheme.backColorCompose
 
     Column(
       modifier = Modifier
@@ -93,9 +95,9 @@ class ComposeBoardsSelectorController(
         .wrapContentHeight()
         .consumeClicks()
         .align(Alignment.Center)
-        .background(chanTheme.backColorCompose)
+        .background(backgroundColor)
     ) {
-      BuildContentInternal(chanTheme)
+      BuildContentInternal(chanTheme, backgroundColor)
 
       KurobaComposeTextBarButton(
         modifier = Modifier
@@ -110,12 +112,13 @@ class ComposeBoardsSelectorController(
 
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
-  private fun ColumnScope.BuildContentInternal(chanTheme: ChanTheme) {
+  private fun ColumnScope.BuildContentInternal(chanTheme: ChanTheme, backgroundColor: Color) {
     val searchState = remember { SearchState() }
     val cellDataList = remember { viewModel.cellDataList }
     val listState = rememberLazyListState()
 
     BuildSearchInput(
+      backgroundColor = backgroundColor,
       initialQuery = searchState.searchQuery,
       onSearchQueryChanged = { newQuery -> searchState.searchQuery = newQuery }
     )
@@ -195,12 +198,15 @@ class ComposeBoardsSelectorController(
   }
 
   @Composable
-  private fun BuildSearchInput(initialQuery: String, onSearchQueryChanged: (String) -> Unit) {
+  private fun BuildSearchInput(
+    backgroundColor: Color,
+    initialQuery: String,
+    onSearchQueryChanged: (String) -> Unit
+  ) {
     val chanTheme = LocalChanTheme.current
-    val backgroundColor = chanTheme.primaryColorCompose
     val onSearchQueryChangedRemembered = rememberUpdatedState(newValue = onSearchQueryChanged)
 
-    BuildNavigationHistoryHeaderSearchInput(
+    KurobaSearchInput(
       modifier = Modifier
         .wrapContentHeight()
         .fillMaxWidth()

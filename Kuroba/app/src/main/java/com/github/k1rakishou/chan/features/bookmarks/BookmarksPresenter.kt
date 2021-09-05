@@ -342,7 +342,11 @@ class BookmarksPresenter(
       return@mapNotNullAllBookmarks null
     }
 
-    val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(threadBookmarkItemViewList.toList())
+    val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(
+      threadBookmarkViewList = threadBookmarkItemViewList.toList(),
+      bookmarksToHighlight = bookmarksToHighlight
+    )
+
     // The function call order matters!
     // First we need to do the general sorting.
     sortBookmarks(groupedBookmarks)

@@ -6,10 +6,12 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -17,6 +19,7 @@ import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableIteration
@@ -53,6 +56,8 @@ class MainControllerViewModel : BaseViewModel() {
   lateinit var _archivesManager: Lazy<ArchivesManager>
   @Inject
   lateinit var _chanThreadManager: Lazy<ChanThreadManager>
+  @Inject
+  lateinit var _compositeCatalogManager: Lazy<CompositeCatalogManager>
 
   private val historyNavigationManager: HistoryNavigationManager
     get() = _historyNavigationManager.get()
@@ -66,6 +71,8 @@ class MainControllerViewModel : BaseViewModel() {
     get() = _archivesManager.get()
   private val chanThreadManager: ChanThreadManager
     get() = _chanThreadManager.get()
+  private val compositeCatalogManager: CompositeCatalogManager
+    get() = _compositeCatalogManager.get()
 
   private val _historyControllerState = mutableStateOf<HistoryControllerState>(HistoryControllerState.Loading)
   val historyControllerState: State<HistoryControllerState>
@@ -84,6 +91,7 @@ class MainControllerViewModel : BaseViewModel() {
     get() = _selectedHistoryEntries
 
   private val bookmarksBadgeStateSubject = BehaviorProcessor.createDefault(BookmarksBadgeState(0, false))
+  private val updateNavigationHistoryEntryListExecutor = SerializedCoroutineExecutor(scope = mainScope)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -94,7 +102,9 @@ class MainControllerViewModel : BaseViewModel() {
     mainScope.launch {
       historyNavigationManager.navigationStackUpdatesFlow
         .collect { updateEvent ->
-          withContext(Dispatchers.Main) { onNavigationStackUpdated(updateEvent) }
+          updateNavigationHistoryEntryListExecutor.post {
+            onNavigationStackUpdated(updateEvent)
+          }
         }
     }
 
@@ -104,7 +114,19 @@ class MainControllerViewModel : BaseViewModel() {
           Logger.d(TAG, "listenForBookmarksChanges bookmarkChange=$bookmarkChange")
 
           updateBadge()
-          onBookmarkUpdated(bookmarkChange)
+
+          updateNavigationHistoryEntryListExecutor.post {
+            onBookmarkUpdated(bookmarkChange)
+          }
+        }
+    }
+
+    mainScope.launch {
+      compositeCatalogManager.compositeCatalogUpdateEventsFlow
+        .collect { event ->
+          updateNavigationHistoryEntryListExecutor.post {
+            onCompositeCatalogsUpdated(event)
+          }
         }
     }
 
@@ -295,7 +317,45 @@ class MainControllerViewModel : BaseViewModel() {
     bookmarksBadgeStateSubject.onNext(BookmarksBadgeState(totalUnseenPostsCount, hasUnreadReplies))
   }
 
+  private suspend fun onCompositeCatalogsUpdated(event: CompositeCatalogManager.Event) {
+    compositeCatalogManager.doWithLockedCompositeCatalogs { compositeCatalogs ->
+      when (event) {
+        is CompositeCatalogManager.Event.Created,
+        is CompositeCatalogManager.Event.Deleted -> {
+          // no-op
+        }
+        is CompositeCatalogManager.Event.Updated -> {
+          val newCompositeCatalog = compositeCatalogs
+            .firstOrNull { catalog -> catalog.compositeCatalogDescriptor == event.newCatalogDescriptor }
+
+          if (newCompositeCatalog == null) {
+            return@doWithLockedCompositeCatalogs
+          }
+
+          val title = compositeCatalogs
+            .firstOrNull { compositeCatalog ->
+              return@firstOrNull compositeCatalog.compositeCatalogDescriptor.asSet ==
+                newCompositeCatalog.compositeCatalogDescriptor.asSet
+            }
+            ?.name
+            ?: newCompositeCatalog.compositeCatalogDescriptor.userReadableString()
+
+          historyNavigationManager.updateNavElement(
+            chanDescriptor = event.prevCatalogDescriptor,
+            newNavigationElement = HistoryNavigationManager.NewNavigationElement(
+              descriptor = newCompositeCatalog.compositeCatalogDescriptor,
+              thumbnailImageUrl = NavigationHistoryEntry.COMPOSITE_ICON_URL,
+              title = title
+            )
+          )
+        }
+      }
+    }
+  }
+
   private suspend fun onBookmarkUpdated(bookmarkChange: BookmarksManager.BookmarkChange) {
+    BackgroundUtils.ensureMainThread()
+
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized) {
       return
     }
@@ -366,6 +426,8 @@ class MainControllerViewModel : BaseViewModel() {
   }
 
   private suspend fun onNavigationStackUpdated(updateEvent: HistoryNavigationManager.UpdateEvent) {
+    BackgroundUtils.ensureMainThread()
+
     try {
       when (updateEvent) {
         HistoryNavigationManager.UpdateEvent.Initialized -> {

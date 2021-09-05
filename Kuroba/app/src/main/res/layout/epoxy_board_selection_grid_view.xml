@@ -30,7 +30,7 @@
             android:layout_height="match_parent"
             android:gravity="center_horizontal"
             android:textSize="12sp"
-            android:maxLines="3"
+            android:maxLines="6"
             android:ellipsize="end"
             tools:text="Anime and Manga" />
 

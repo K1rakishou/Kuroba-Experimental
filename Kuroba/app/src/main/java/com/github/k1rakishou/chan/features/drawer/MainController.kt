@@ -95,7 +95,6 @@ import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesCon
 import com.github.k1rakishou.chan.features.search.GlobalSearchController
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController
-import com.github.k1rakishou.chan.ui.compose.BuildNavigationHistoryHeaderSearchInput
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
@@ -105,6 +104,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
@@ -992,7 +992,7 @@ class MainController(
               .wrapContentHeight()
               .weight(1f)
           ) {
-            BuildNavigationHistoryHeaderSearchInput(
+            KurobaSearchInput(
               modifier = Modifier
                 .wrapContentHeight()
                 .fillMaxWidth()

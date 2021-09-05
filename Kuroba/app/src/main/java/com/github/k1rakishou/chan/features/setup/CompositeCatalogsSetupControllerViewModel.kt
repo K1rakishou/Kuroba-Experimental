@@ -104,23 +104,31 @@ class CompositeCatalogsSetupControllerViewModel : BaseViewModel() {
             .removeIfKt { catalog -> catalog.compositeCatalogDescriptor == descriptor  }
         }
         is CompositeCatalogManager.Event.Updated -> {
-          val descriptor = event.compositeCatalogDescriptor
-          val globalCompositeCatalog = globalCompositeCatalogs
-            .firstOrNull { catalog -> catalog.compositeCatalogDescriptor == descriptor }
+          val prevCatalogDescriptor = event.prevCatalogDescriptor
+          val newCatalogDescriptor = event.newCatalogDescriptor
 
-          if (globalCompositeCatalog == null) {
+          val updatedGlobalCompositeCatalog = globalCompositeCatalogs
+            .firstOrNull { catalog -> catalog.compositeCatalogDescriptor == newCatalogDescriptor }
+
+          if (updatedGlobalCompositeCatalog == null) {
             return@doWithLockedCompositeCatalogs
           }
 
-          val indexOfExisting = _compositeCatalogs.indexOfFirst { catalog ->
-            catalog.compositeCatalogDescriptor == descriptor
+          val indexOfPrevCompositeCatalog = _compositeCatalogs.indexOfFirst { catalog ->
+            catalog.compositeCatalogDescriptor == prevCatalogDescriptor
           }
 
-          if (indexOfExisting < 0) {
+          if (indexOfPrevCompositeCatalog < 0) {
             return@doWithLockedCompositeCatalogs
           }
 
-          _compositeCatalogs[indexOfExisting] = globalCompositeCatalog
+          // hack to update _compositeCatalogs list. We can't use set() here because composite catalog
+          // descriptors has a custom equals method that compares sets of catalog descriptors
+          // so if we move catalog descriptors around inside of a composite catalog descriptor
+          // then using set() won't notify the listeners because it will think nothing has changed
+          // (because oldList.equals(newList) will return false.
+          _compositeCatalogs.removeAt(indexOfPrevCompositeCatalog)
+          _compositeCatalogs.add(indexOfPrevCompositeCatalog, updatedGlobalCompositeCatalog)
         }
       }
     }

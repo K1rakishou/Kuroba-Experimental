@@ -222,6 +222,56 @@ class HistoryNavigationManager(
     persistNavigationStack()
   }
 
+  suspend fun updateNavElement(
+    chanDescriptor: ChanDescriptor,
+    newNavigationElement: NewNavigationElement
+  ) {
+    ensureInitialized()
+
+    mutex.withLock {
+      val indexOfElem = navigationStack.indexOfFirst { navHistoryElement ->
+        return@indexOfFirst when (navHistoryElement) {
+          is NavHistoryElement.CompositeCatalog -> navHistoryElement.descriptor == chanDescriptor
+          is NavHistoryElement.Catalog -> navHistoryElement.descriptor == chanDescriptor
+          is NavHistoryElement.Thread -> navHistoryElement.descriptor == chanDescriptor
+        }
+      }
+
+      if (indexOfElem < 0) {
+        return@withLock
+      }
+
+      val prevElement = navigationStack.getOrNull(indexOfElem)
+        ?: return@withLock
+
+      val wasPinned = prevElement.navHistoryElementInfo.pinned
+
+      val navigationHistoryElementInfo = NavHistoryElementInfo(
+        thumbnailUrl = newNavigationElement.thumbnailImageUrl,
+        title = newNavigationElement.title,
+        pinned = wasPinned
+      )
+
+      val newElement = when (val newDescriptor = newNavigationElement.descriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          NavHistoryElement.Catalog(newDescriptor, navigationHistoryElementInfo)
+        }
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          NavHistoryElement.CompositeCatalog(newDescriptor, navigationHistoryElementInfo)
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          NavHistoryElement.Thread(newDescriptor, navigationHistoryElementInfo)
+        }
+      }
+
+      navigationStack[indexOfElem] = newElement
+      _navigationStackUpdatesFlow.emit(UpdateEvent.Deleted(listOf(prevElement)))
+      _navigationStackUpdatesFlow.emit(UpdateEvent.Created(listOf(newElement)))
+    }
+
+    persistNavigationStack()
+  }
+
   suspend fun moveNavElementToTop(descriptor: ChanDescriptor, canMoveAtTheBeginning: Boolean = true) {
     if (!ChanSettings.drawerMoveLastAccessedThreadToTop.get()) {
       return

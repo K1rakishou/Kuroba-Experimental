@@ -42,39 +42,65 @@ class CompositeCatalogManager(
 
     return mutex.withLock {
       return@withLock compositeCatalogs
-        .firstOrNull { compositeCatalog -> compositeCatalog.compositeCatalogDescriptor == descriptor }
+        .firstOrNull { compositeCatalog -> compositeCatalog.compositeCatalogDescriptor.asSet == descriptor.asSet }
     }
   }
 
-  suspend fun create(compositeCatalog: CompositeCatalog, prevCompositeCatalogOrder: Int?): ModularResult<Unit> {
+  suspend fun create(compositeCatalog: CompositeCatalog): ModularResult<Unit> {
     ensureInitialized()
 
     return ModularResult.Try {
       return@Try mutex.withLock {
-        val compositeCatalogOrder = prevCompositeCatalogOrder
-          ?: getOrder(compositeCatalog.compositeCatalogDescriptor)
+        compositeCatalogRepository.create(
+          compositeCatalog = compositeCatalog,
+          order = getOrder(compositeCatalog.compositeCatalogDescriptor)
+        )
+          .peekError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
+          .unwrap()
+
+        compositeCatalogs.add(compositeCatalog)
+
+        val event = Event.Created(compositeCatalog.compositeCatalogDescriptor)
+        updateCurrentCatalogDescriptorIfNeeded(event)
+        _compositeCatalogUpdatesFlow.emit(event)
+      }
+    }
+  }
+
+  suspend fun update(
+    compositeCatalog: CompositeCatalog,
+    prevCompositeCatalog: CompositeCatalog
+  ): ModularResult<Unit> {
+    ensureInitialized()
+
+    return ModularResult.Try {
+      return@Try mutex.withLock {
+        val prevIndex = compositeCatalogs
+          .indexOfFirst { catalog -> catalog.compositeCatalogDescriptor == prevCompositeCatalog.compositeCatalogDescriptor }
+
+        if (prevIndex < 0) {
+          return@withLock
+        }
+
+        compositeCatalogRepository.delete(prevCompositeCatalog)
+          .peekError { error -> Logger.e(TAG, "delete($prevCompositeCatalog) error", error) }
+          .unwrap()
 
         compositeCatalogRepository.create(
           compositeCatalog = compositeCatalog,
-          order = compositeCatalogOrder
+          order = prevIndex
         )
-          .peekError { error -> Logger.e(TAG, "createOrUpdate($compositeCatalog) error", error) }
+          .peekError { error -> Logger.e(TAG, "create($compositeCatalog) error", error) }
           .unwrap()
 
-        val prevIndex = compositeCatalogs.indexOfFirst { catalog ->
-          catalog.compositeCatalogDescriptor == compositeCatalog.compositeCatalogDescriptor
-        }
+        compositeCatalogs[prevIndex] = compositeCatalog
 
-        if (prevIndex >= 0) {
-          compositeCatalogs[prevIndex] = compositeCatalog
-          _compositeCatalogUpdatesFlow.emit(Event.Updated(compositeCatalog.compositeCatalogDescriptor))
-        } else {
-          compositeCatalogs.add(compositeCatalog)
+        val event = Event.Updated(
+          prevCatalogDescriptor = prevCompositeCatalog.compositeCatalogDescriptor,
+          newCatalogDescriptor = compositeCatalog.compositeCatalogDescriptor
+        )
 
-          val event = Event.Created(compositeCatalog.compositeCatalogDescriptor)
-          updateCurrentCatalogDescriptorIfNeeded(event)
-          _compositeCatalogUpdatesFlow.emit(event)
-        }
+        _compositeCatalogUpdatesFlow.emit(event)
       }
     }
   }
@@ -243,7 +269,10 @@ class CompositeCatalogManager(
 
   sealed class Event {
     data class Created(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
-    data class Updated(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
+    data class Updated(
+      val prevCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
+      val newCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
+    ) : Event()
     data class Deleted(val compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor) : Event()
   }
 

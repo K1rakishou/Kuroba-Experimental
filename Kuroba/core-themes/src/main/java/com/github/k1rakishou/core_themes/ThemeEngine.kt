@@ -11,6 +11,7 @@ import androidx.annotation.AttrRes
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.annotation.FloatRange
+import androidx.compose.ui.graphics.toArgb
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
@@ -379,7 +380,7 @@ open class ThemeEngine(
 
     @JvmStatic
     fun isDarkColor(color: androidx.compose.ui.graphics.Color): Boolean {
-      return isDarkColor(color.value.toInt())
+      return isDarkColor(color.toArgb())
     }
 
     @JvmStatic

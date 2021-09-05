@@ -18,6 +18,7 @@ import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
@@ -155,29 +156,36 @@ object SpannableHelper {
   ): CharSequence {
     val spannableStringBuilder = SpannableStringBuilder()
     val catalogsBySites = compositeCatalogDescriptor.catalogDescriptors
+    val cache = mutableMapOf<SiteDescriptor, Bitmap>()
 
     catalogsBySites
       .take(visibleCatalogsCount)
       .forEach { catalogDescriptor ->
         coroutineScope.ensureActive()
 
-        var iconBitmap = withTimeoutOrNull(Duration.seconds(5)) {
-          siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
-            ?.icon()
-            ?.getIconSuspend(context)
-            ?.bitmap
-        }
+        val bitmap = cache.getOrPut(
+          key = catalogDescriptor.siteDescriptor(),
+          defaultValue = {
+            var iconBitmap = withTimeoutOrNull(Duration.seconds(5)) {
+              siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
+                ?.icon()
+                ?.getIconSuspend(context)
+                ?.bitmap
+            }
 
-        if (iconBitmap == null) {
-          iconBitmap = AppModuleAndroidUtils.getDrawable(R.drawable.error_icon).toBitmap()
-        }
+            if (iconBitmap == null) {
+              iconBitmap = AppModuleAndroidUtils.getDrawable(R.drawable.error_icon).toBitmap()
+            }
+
+            return@getOrPut iconBitmap
+          })
 
         if (spannableStringBuilder.isNotEmpty()) {
           spannableStringBuilder.append("+")
         }
 
         spannableStringBuilder
-          .append("  ", getIconSpan(iconBitmap, fontSizePx), 0)
+          .append("  ", getIconSpan(bitmap, fontSizePx), 0)
           .append(catalogDescriptor.boardCode())
       }
 

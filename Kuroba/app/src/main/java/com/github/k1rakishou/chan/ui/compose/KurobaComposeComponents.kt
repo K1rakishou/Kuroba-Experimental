@@ -202,6 +202,7 @@ fun KurobaComposeCustomTextField(
   value: String,
   onValueChange: (String) -> Unit,
   modifier: Modifier = Modifier,
+  textColor: Color = Color.White,
   drawBottomIndicator: Boolean = true,
   fontSize: TextUnit = TextUnit.Unspecified,
   maxLines: Int = Int.MAX_VALUE,
@@ -214,11 +215,8 @@ fun KurobaComposeCustomTextField(
   val textFieldColors = chanTheme.textFieldColors()
 
   val cursorBrush = remember(key1 = chanTheme) { SolidColor(chanTheme.accentColorCompose) }
-  val textStyle = remember(key1 = chanTheme) {
-    TextStyle.Default.copy(
-      color = Color.White,
-      fontSize = fontSize
-    )
+  val textStyle = remember(key1 = textColor, key2 = fontSize) {
+    TextStyle.Default.copy(color = textColor, fontSize = fontSize)
   }
 
   val indicatorLineModifier = if (drawBottomIndicator) {
@@ -485,7 +483,7 @@ fun KurobaComposeCardView(
 
 @OptIn(ExperimentalAnimationApi::class)
 @Composable
-fun BuildNavigationHistoryHeaderSearchInput(
+fun KurobaSearchInput(
   modifier: Modifier = Modifier,
   chanTheme: ChanTheme,
   themeEngine: ThemeEngine,
@@ -505,10 +503,19 @@ fun BuildNavigationHistoryHeaderSearchInput(
       ) {
         val interactionSource = remember { MutableInteractionSource() }
 
+        val textColor = remember(key1 = backgroundColor) {
+          if (ThemeEngine.isDarkColor(backgroundColor)) {
+            Color.White
+          } else {
+            Color.Black
+          }
+        }
+
         KurobaComposeCustomTextField(
           modifier = Modifier
             .wrapContentHeight()
             .fillMaxWidth(),
+          textColor = textColor,
           fontSize = 16.sp,
           singleLine = true,
           maxLines = 1,
@@ -529,7 +536,7 @@ fun BuildNavigationHistoryHeaderSearchInput(
         ) {
           val alpha = ContentAlpha.medium
 
-          val color = remember(key1 = backgroundColor) {
+          val hintColor = remember(key1 = backgroundColor) {
             if (ThemeEngine.isDarkColor(backgroundColor)) {
               Color.LightGray.copy(alpha = alpha)
             } else {
@@ -540,7 +547,7 @@ fun BuildNavigationHistoryHeaderSearchInput(
           Text(
             text = stringResource(id = R.string.search_hint),
             fontSize = 16.sp,
-            color = color
+            color = hintColor
           )
         }
       }

@@ -4,6 +4,8 @@ import androidx.compose.runtime.mutableStateListOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
+import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -14,6 +16,8 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
 
   @Inject
   lateinit var compositeCatalogManager: CompositeCatalogManager
+  @Inject
+  lateinit var historyNavigationManager: HistoryNavigationManager
 
   private val _compositionSlots = mutableStateListOf<CatalogCompositionSlot>()
   val catalogCompositionSlots: List<CatalogCompositionSlot>
@@ -76,12 +80,24 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
     _compositionSlots[clickedIndex] = CatalogCompositionSlot.Empty
   }
 
+
+  suspend fun alreadyExists(compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor): Boolean {
+    return compositeCatalogManager.byCompositeCatalogDescriptor(compositeCatalogDescriptor) != null
+  }
+
+  fun move(fromIndex: Int, toIndex: Int) {
+    _compositionSlots.getOrNull(fromIndex) ?: return
+    _compositionSlots.getOrNull(toIndex) ?: return
+
+    _compositionSlots.move(fromIndex, toIndex)
+  }
+
   suspend fun createOrUpdateCompositeCatalog(
     newCompositeCatalogName: String,
-    compositionSlots: List<CatalogCompositionSlot>,
     prevCompositeCatalog: CompositeCatalog?
   ): ModularResult<Unit> {
-    val catalogDescriptors = compositionSlots
+    val catalogDescriptors = _compositionSlots
+      .toList()
       .mapNotNull { catalogCompositionSlot ->
         if (catalogCompositionSlot is CatalogCompositionSlot.Empty) {
           return@mapNotNull null
@@ -112,24 +128,11 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
       compositeCatalogDescriptor = ChanDescriptor.CompositeCatalogDescriptor.create(catalogDescriptors)
     )
 
-    val prevCompositeCatalogOrder = compositeCatalogManager
-      .orderOf(prevCompositeCatalog?.compositeCatalogDescriptor)
-
     if (prevCompositeCatalog != null) {
-      val deleteResult = compositeCatalogManager.delete(prevCompositeCatalog)
-      if (deleteResult is ModularResult.Error) {
-        return deleteResult
-      }
+      return compositeCatalogManager.update(compositeCatalog, prevCompositeCatalog)
+    } else {
+      return compositeCatalogManager.create(compositeCatalog)
     }
-
-    return compositeCatalogManager.create(
-      compositeCatalog = compositeCatalog,
-      prevCompositeCatalogOrder = prevCompositeCatalogOrder
-    )
-  }
-
-  suspend fun alreadyExists(compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor): Boolean {
-    return compositeCatalogManager.byCompositeCatalogDescriptor(compositeCatalogDescriptor) != null
   }
 
   class CreateCompositeCatalogError(message: String) : Exception(message)

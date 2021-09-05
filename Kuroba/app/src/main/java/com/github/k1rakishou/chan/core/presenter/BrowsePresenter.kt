@@ -93,6 +93,19 @@ class BrowsePresenter @Inject constructor(
           }
         }
     }
+
+    controllerScope.launch {
+      compositeCatalogManager.compositeCatalogUpdateEventsFlow
+        .collect { event ->
+          if (event !is CompositeCatalogManager.Event.Updated) {
+            return@collect
+          }
+
+          if (currentOpenedCatalog == event.prevCatalogDescriptor) {
+            callback?.updateToolbarTitle(event.newCatalogDescriptor)
+          }
+        }
+    }
   }
 
   fun destroy() {

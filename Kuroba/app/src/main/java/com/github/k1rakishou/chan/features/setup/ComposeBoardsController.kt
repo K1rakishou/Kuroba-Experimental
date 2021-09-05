@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,9 +18,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
@@ -36,6 +35,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
@@ -45,6 +45,11 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
+import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
+import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
+import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
+import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -100,11 +105,18 @@ class ComposeBoardsController(
     ) {
       BuildHeader()
 
-      LazyVerticalGrid(
+      val reoderableState = rememberReorderState()
+
+      LazyColumn(
+        state = reoderableState.listState,
         modifier = Modifier
           .fillMaxWidth()
-          .wrapContentHeight(),
-        cells = GridCells.Fixed(3),
+          .weight(1f)
+          .simpleVerticalScrollbar(reoderableState.listState, chanTheme)
+          .reorderable(
+            state = reoderableState,
+            onMove = { from, to -> viewModel.move(from, to) }
+          ),
         content = {
           items(compositionSlots.size) { index ->
             val compositionSlot = compositionSlots[index]
@@ -112,6 +124,7 @@ class ComposeBoardsController(
             BuildCompositionSlot(
               chanTheme = chanTheme,
               index = index,
+              reoderableState = reoderableState,
               catalogCompositionSlot = compositionSlot,
               onAddOrReplaceBoardClicked = { clickedIndex ->
                 val controller = ComposeBoardsSelectorController(
@@ -132,16 +145,15 @@ class ComposeBoardsController(
         compositionSlots = compositionSlots,
         onCancelClicked = { pop() },
         onSaveClicked = {
-          mainScope.launch { createOrUpdateCompositeCatalog(compositionSlots) }
+          mainScope.launch { createOrUpdateCompositeCatalog() }
         }
       )
     }
   }
 
-  private suspend fun createOrUpdateCompositeCatalog(
-    compositionSlots: List<ComposeBoardsControllerViewModel.CatalogCompositionSlot>
-  ) {
-    val catalogDescriptors = compositionSlots
+  private suspend fun createOrUpdateCompositeCatalog() {
+    val catalogDescriptors = viewModel.catalogCompositionSlots
+      .toList()
       .mapNotNull { compositionSlot ->
         if (compositionSlot is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Empty) {
           return@mapNotNull null
@@ -186,7 +198,6 @@ class ComposeBoardsController(
     mainScope.launch {
       val result = viewModel.createOrUpdateCompositeCatalog(
         newCompositeCatalogName = compositeCatalogName,
-        compositionSlots = compositionSlots,
         prevCompositeCatalog = prevCompositeCatalog
       )
 
@@ -228,6 +239,7 @@ class ComposeBoardsController(
   private fun BuildCompositionSlot(
     chanTheme: ChanTheme,
     index: Int,
+    reoderableState: ReorderableState,
     catalogCompositionSlot: ComposeBoardsControllerViewModel.CatalogCompositionSlot,
     onAddOrReplaceBoardClicked: (Int) -> Unit,
     removeBoardClicked: (Int) -> Unit
@@ -240,6 +252,7 @@ class ComposeBoardsController(
         .fillMaxWidth()
         .height(COMPOSITION_SLOT_ITEM_HEIGHT)
         .padding(4.dp)
+        .draggedItem(reoderableState.offsetByIndex(index))
         .kurobaClickable(bounded = true, onClick = { onAddOrReplaceBoardClickedRemembered.value.invoke(index) }),
       backgroundColor = chanTheme.backColorSecondaryCompose
     ) {
@@ -257,64 +270,80 @@ class ComposeBoardsController(
             )
           }
           is ComposeBoardsControllerViewModel.CatalogCompositionSlot.Occupied -> {
-            Column(
-              modifier = Modifier
-                .wrapContentSize()
-                .align(Alignment.Center)
-            ) {
-              val imageLoaderRequest = remember(key1 = catalogCompositionSlot) {
-                val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
-                val iconUrl = siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url!!
+            Row(modifier = Modifier.fillMaxSize()) {
 
-                return@remember ImageLoaderRequest(ImageLoaderRequestData.Url(iconUrl))
-              }
-
-              KurobaComposeImage(
+              KurobaComposeIcon(
                 modifier = Modifier
-                  .wrapContentWidth()
-                  .height(COMPOSITION_SLOT_ITEM_HEIGHT / 3),
-                request = imageLoaderRequest,
-                imageLoaderV2 = imageLoaderV2,
-                error = {
-                  Image(
-                    modifier = Modifier.fillMaxSize(),
-                    painter = painterResource(id = R.drawable.error_icon),
-                    contentDescription = null
-                  )
-                }
+                  .size(32.dp)
+                  .padding(start = 8.dp)
+                  .align(Alignment.CenterVertically)
+                  .kurobaClickable(
+                    bounded = false,
+                    onClick = { removeBoardClickedRemembered.value.invoke(index) }
+                  ),
+                drawableId = R.drawable.ic_clear_white_24dp,
+                themeEngine = themeEngine
               )
 
-              val text = remember(key1 = catalogCompositionSlot) {
-                buildString {
-                  append(catalogCompositionSlot.catalogDescriptor.siteDescriptor().siteName)
-                  append("/")
-                  append(catalogCompositionSlot.catalogDescriptor.boardDescriptor.boardCode)
-                  append("/")
+              Row(
+                modifier = Modifier
+                  .weight(1f)
+                  .fillMaxHeight()
+                  .padding(start = 8.dp)
+              ) {
+                val imageLoaderRequest = remember(key1 = catalogCompositionSlot) {
+                  val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
+                  val iconUrl = siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url!!
+
+                  return@remember ImageLoaderRequest(ImageLoaderRequestData.Url(iconUrl))
                 }
+
+                KurobaComposeImage(
+                  modifier = Modifier
+                    .size(28.dp)
+                    .align(Alignment.CenterVertically),
+                  request = imageLoaderRequest,
+                  imageLoaderV2 = imageLoaderV2,
+                  error = {
+                    Image(
+                      modifier = Modifier.fillMaxSize(),
+                      painter = painterResource(id = R.drawable.error_icon),
+                      contentDescription = null
+                    )
+                  }
+                )
+
+                val text = remember(key1 = catalogCompositionSlot) {
+                  buildString {
+                    append(catalogCompositionSlot.catalogDescriptor.siteDescriptor().siteName)
+                    append("/")
+                    append(catalogCompositionSlot.catalogDescriptor.boardDescriptor.boardCode)
+                    append("/")
+                  }
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                KurobaComposeText(
+                  fontSize = 16.sp,
+                  textAlign = TextAlign.Center,
+                  modifier = Modifier
+                    .wrapContentSize()
+                    .align(Alignment.CenterVertically),
+                  text = text
+                )
               }
 
-              Spacer(modifier = Modifier.height(8.dp))
-
-              KurobaComposeText(
-                fontSize = 16.sp,
-                textAlign = TextAlign.Center,
+              KurobaComposeIcon(
                 modifier = Modifier
-                  .wrapContentSize()
-                  .align(Alignment.CenterHorizontally),
-                text = text
+                  .size(32.dp)
+                  .align(Alignment.CenterVertically)
+                  .detectReorder(reoderableState)
+                  .padding(end = 8.dp),
+                drawableId = R.drawable.ic_baseline_reorder_24,
+                themeEngine = themeEngine
               )
             }
-
-            KurobaComposeIcon(
-              modifier = Modifier
-                .size(28.dp)
-                .kurobaClickable(
-                  bounded = false,
-                  onClick = { removeBoardClickedRemembered.value.invoke(index) }
-                ),
-              drawableId = R.drawable.ic_clear_white_24dp,
-              themeEngine = themeEngine
-            )
           }
         }
       }
@@ -372,7 +401,7 @@ class ComposeBoardsController(
   }
 
   companion object {
-    private val COMPOSITION_SLOT_ITEM_HEIGHT = 128.dp
+    private val COMPOSITION_SLOT_ITEM_HEIGHT = 56.dp
   }
 
 }

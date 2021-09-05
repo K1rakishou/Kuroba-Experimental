@@ -88,7 +88,8 @@ class ThreadBookmarkGroupManager(
    * Transforms an unordered list of bookmarks into an ordered list of groups of ordered bookmarks.
    * */
   suspend fun groupBookmarks(
-    threadBookmarkViewList: List<ThreadBookmarkItemView>
+    threadBookmarkViewList: List<ThreadBookmarkItemView>,
+    bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>
   ): List<GroupOfThreadBookmarkItemViews> {
     ensureInitialized()
 
@@ -113,12 +114,18 @@ class ThreadBookmarkGroupManager(
         val threadBookmarkItemViews =
           mutableListWithCap<ThreadBookmarkItemView>(threadBookmarkGroup.getEntriesCount())
 
+        var shouldGroupBeExpanded = threadBookmarkGroup.isExpanded
+
         threadBookmarkGroup.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
           val orderedThreadBookmarkItemView =
             threadBookmarkViewMapByDescriptor[threadBookmarkGroupEntry.threadDescriptor]
 
           if (orderedThreadBookmarkItemView != null) {
             threadBookmarkItemViews += orderedThreadBookmarkItemView
+          }
+
+          if (threadBookmarkGroupEntry.threadDescriptor in bookmarksToHighlight) {
+            shouldGroupBeExpanded = true
           }
 
           return@iterateEntriesOrderedWhile true
@@ -131,7 +138,7 @@ class ThreadBookmarkGroupManager(
         listOfGroups += GroupOfThreadBookmarkItemViews(
           groupId = threadBookmarkGroup.groupId,
           groupInfoText = createGroupInfoText(threadBookmarkGroup, threadBookmarkItemViews),
-          isExpanded = threadBookmarkGroup.isExpanded,
+          isExpanded = shouldGroupBeExpanded,
           threadBookmarkItemViews = threadBookmarkItemViews
         )
       }

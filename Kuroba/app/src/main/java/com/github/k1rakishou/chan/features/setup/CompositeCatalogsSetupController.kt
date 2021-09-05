@@ -241,7 +241,7 @@ class CompositeCatalogsSetupController(
 
         Spacer(modifier = Modifier.height(4.dp))
 
-        val text = remember(key1 = compositeCatalog.compositeCatalogDescriptor) {
+        val text = remember(key1 = compositeCatalog.compositeCatalogDescriptor.catalogDescriptors) {
           return@remember buildString {
             compositeCatalog.compositeCatalogDescriptor.catalogDescriptors.forEach { catalogDescriptor ->
               if (isNotEmpty()) {
