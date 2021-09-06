@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.google.accompanist.insets.ProvideWindowInsets
 import javax.inject.Inject
@@ -52,14 +53,30 @@ abstract class BaseFloatingComposeController(
               color = backgroundColor,
               modifier = Modifier.fillMaxSize()
             ) {
+              val horizPadding = remember {
+                if (AppModuleAndroidUtils.isTablet()) {
+                  HORIZ_PADDING * 2
+                } else {
+                  HORIZ_PADDING
+                }
+              }
+
+              val vertPadding = remember {
+                if (AppModuleAndroidUtils.isTablet()) {
+                  VERT_PADDING * 2
+                } else {
+                  VERT_PADDING
+                }
+              }
+
               Box(
                 modifier = Modifier
                   .fillMaxSize()
                   .padding(
-                    start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr) + HORIZ_PADDING,
-                    end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + HORIZ_PADDING,
-                    top = currentPaddings.calculateTopPadding() + VERT_PADDING,
-                    bottom = currentPaddings.calculateBottomPadding() + VERT_PADDING,
+                    start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr) + horizPadding,
+                    end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + horizPadding,
+                    top = currentPaddings.calculateTopPadding() + vertPadding,
+                    bottom = currentPaddings.calculateBottomPadding() + vertPadding,
                   )
               ) {
                 BuildContent()
@@ -102,7 +119,7 @@ abstract class BaseFloatingComposeController(
   abstract fun BoxScope.BuildContent()
 
   companion object {
-    val VERT_PADDING = 16.dp
+    val VERT_PADDING = 8.dp
     val HORIZ_PADDING = 16.dp
   }
 }

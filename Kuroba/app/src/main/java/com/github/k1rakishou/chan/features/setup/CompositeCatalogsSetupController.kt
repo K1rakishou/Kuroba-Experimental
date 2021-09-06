@@ -30,10 +30,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -58,6 +60,8 @@ class CompositeCatalogsSetupController(
 ) : Controller(context) {
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val viewModel by lazy {
     requireComponentActivity().viewModelByKey<CompositeCatalogsSetupControllerViewModel>()
@@ -111,12 +115,14 @@ class CompositeCatalogsSetupController(
             .reorderable(
               state = reorderState,
               onMove = { from, to ->
-                viewModel.move(fromIndex = from, toIndex = to)
+                viewModel
+                  .move(fromIndex = from, toIndex = to)
                   .toastOnError(longToast = true)
                   .ignore()
               },
               onDragEnd = { _, _ ->
-                viewModel.onMoveEnd()
+                viewModel
+                  .onMoveEnd()
                   .toastOnError(longToast = true)
                   .ignore()
               }
@@ -158,11 +164,19 @@ class CompositeCatalogsSetupController(
         )
       }
 
+      val bottomOffset = remember {
+        if (ChanSettings.isSplitLayoutMode()) {
+          16.dp + globalWindowInsetsManager.bottomDp()
+        } else {
+          16.dp
+        }
+      }
+
       FloatingActionButton(
         modifier = Modifier
           .size(FAB_SIZE)
           .align(Alignment.BottomEnd)
-          .offset(x = (-16).dp, y = (-16).dp),
+          .offset(x = (-16).dp, y = -(bottomOffset)),
         backgroundColor = chanTheme.accentColorCompose,
         contentColor = Color.White,
         onClick = { showComposeBoardsController(compositeCatalog = null) }
