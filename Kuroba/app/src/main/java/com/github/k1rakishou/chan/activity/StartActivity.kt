@@ -409,6 +409,8 @@ class StartActivity : ControllerHostActivity(),
     } else {
       mainNavigationController.pushController(browseController!!, false)
     }
+
+    browseController!!.onGainedFocus(ThreadSlideController.ThreadControllerType.Catalog)
   }
 
   override fun dispatchKeyEvent(event: KeyEvent): Boolean {

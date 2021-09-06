@@ -394,13 +394,15 @@ fun KurobaComposeTextBarButton(
 fun KurobaComposeSlider(
   value: Float,
   onValueChange: (Float) -> Unit,
-  modifier: Modifier = Modifier
+  modifier: Modifier = Modifier,
+  steps: Int = 0
 ) {
   val chanTheme = LocalChanTheme.current
 
   Slider(
     value = value,
     modifier = modifier,
+    steps = steps,
     onValueChange = onValueChange,
     colors = chanTheme.sliderColors()
   )

@@ -232,13 +232,6 @@ abstract class ThreadController(
     super.onShow()
 
     threadLayout.onShown(threadControllerType)
-    threadLayout.gainedFocus(threadControllerType)
-  }
-
-  override fun onHide() {
-    super.onHide()
-
-    threadLayout.lostFocus(threadControllerType)
   }
 
   override fun onDestroy() {

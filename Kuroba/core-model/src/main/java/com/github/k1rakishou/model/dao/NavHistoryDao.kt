@@ -33,7 +33,6 @@ abstract class NavHistoryDao {
   """)
   abstract suspend fun selectAll(maxCount: Int): List<NavHistoryFullDto>
 
-
   @Query("""
     SELECT * 
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids

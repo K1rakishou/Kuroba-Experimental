@@ -740,7 +740,9 @@ open class ViewThreadController(
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
     if (historyNavigationManager.isInitialized) {
-      mainScope.launch { historyNavigationManager.moveNavElementToTop(threadDescriptor) }
+      if (threadLayout.presenter.chanThreadLoadingState == ThreadPresenter.ChanThreadLoadingState.Loaded) {
+        mainScope.launch { historyNavigationManager.moveNavElementToTop(threadDescriptor) }
+      }
     }
 
     currentOpenedDescriptorStateManager.updateCurrentFocusedController(ThreadPresenter.CurrentFocusedController.Thread)

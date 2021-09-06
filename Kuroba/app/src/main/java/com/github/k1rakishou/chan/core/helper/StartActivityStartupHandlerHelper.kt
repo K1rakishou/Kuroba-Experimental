@@ -625,7 +625,7 @@ class StartActivityStartupHandlerHelper(
   }
 
   companion object {
-    private const val TAG = "StartActivityIntentHandlerHelper"
+    private const val TAG = "StartActivityStartupHandlerHelper"
   }
 
 }

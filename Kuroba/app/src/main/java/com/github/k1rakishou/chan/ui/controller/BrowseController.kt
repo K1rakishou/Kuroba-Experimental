@@ -998,7 +998,9 @@ class BrowseController(
     check(nowFocused == threadControllerType) { "Unexpected controllerType: $nowFocused" }
 
     if (chanDescriptor != null && historyNavigationManager.isInitialized) {
-      mainScope.launch { historyNavigationManager.moveNavElementToTop(chanDescriptor!!) }
+      if (threadLayout.presenter.chanThreadLoadingState == ThreadPresenter.ChanThreadLoadingState.Loaded) {
+        mainScope.launch { historyNavigationManager.moveNavElementToTop(chanDescriptor!!) }
+      }
     }
 
     currentOpenedDescriptorStateManager.updateCurrentFocusedController(

@@ -186,6 +186,7 @@ class ThreadPresenter @Inject constructor(
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
+  private var firstCatalogThreadLoadComplete = false
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentFocusedController = CurrentFocusedController.None
   private var currentNormalLoadThreadJob: Job? = null
@@ -724,6 +725,7 @@ class ThreadPresenter @Inject constructor(
 
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
         currentNormalLoadThreadJob = null
+        firstCatalogThreadLoadComplete = true
       }
 
       if (showLoading) {
@@ -1086,8 +1088,11 @@ class ThreadPresenter @Inject constructor(
     afterCatalogOrThreadLoadedExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
 
-      if (alreadyCreatedNavElement.compareAndSet(false, true)) {
-        createNewNavHistoryElement(localChanDescriptor)
+      if (firstCatalogThreadLoadComplete) {
+        createNewOrMoveOldNavHistoryElement(
+          localChanDescriptor = localChanDescriptor,
+          forced = false
+        )
       }
 
       if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
@@ -1199,9 +1204,10 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private suspend fun createNewNavHistoryElement(
+  private suspend fun createNewOrMoveOldNavHistoryElement(
     localChanDescriptor: ChanDescriptor,
-    canInsertAtTheBeginning: Boolean = true
+    canInsertAtTheBeginning: Boolean = true,
+    forced: Boolean
   ) {
     val canCreateNavElement = historyNavigationManager.canCreateNavElement(
       bookmarksManager,
@@ -1213,14 +1219,28 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (historyNavigationManager.contains(localChanDescriptor)) {
-      historyNavigationManager.moveNavElementToTop(
-        descriptor = localChanDescriptor,
-        canMoveAtTheBeginning = canInsertAtTheBeginning
-      )
+      // Move old
+      val canMoveToTop = when (currentFocusedController()) {
+        CurrentFocusedController.Catalog -> localChanDescriptor is ChanDescriptor.ICatalogDescriptor
+        CurrentFocusedController.Thread -> localChanDescriptor is ChanDescriptor.ThreadDescriptor
+        CurrentFocusedController.None -> ChanSettings.isSplitLayoutMode()
+      }
+
+      if (canMoveToTop) {
+        historyNavigationManager.moveNavElementToTop(
+          descriptor = localChanDescriptor,
+          canMoveAtTheBeginning = canInsertAtTheBeginning
+        )
+      }
 
       return
     }
 
+    if (!forced && !alreadyCreatedNavElement.compareAndSet(false, true)) {
+      return
+    }
+
+    // Create new
     when (localChanDescriptor) {
       is ChanDescriptor.CatalogDescriptor -> {
         val site = siteManager.bySiteDescriptor(localChanDescriptor.siteDescriptor())
@@ -1693,9 +1713,10 @@ class ThreadPresenter @Inject constructor(
               canMoveAtTheBeginning = false
             )
           } else {
-            createNewNavHistoryElement(
+            createNewOrMoveOldNavHistoryElement(
               localChanDescriptor = post.postDescriptor.descriptor,
-              canInsertAtTheBeginning = false
+              canInsertAtTheBeginning = false,
+              forced = true
             )
           }
         }

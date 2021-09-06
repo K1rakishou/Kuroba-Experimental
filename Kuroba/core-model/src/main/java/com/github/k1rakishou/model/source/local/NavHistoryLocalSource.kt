@@ -21,6 +21,8 @@ class NavHistoryLocalSource(
 
   suspend fun persist(navHistoryStack: List<NavHistoryElement>) {
     ensureInTransaction()
+
+    // Always delete before doing anything else
     navHistoryDao.deleteAll()
 
     if (navHistoryStack.isEmpty()) {
@@ -52,25 +54,22 @@ class NavHistoryLocalSource(
   suspend fun getFirstNavElement(): NavHistoryElement? {
     ensureInTransaction()
 
-    return navHistoryDao.selectFirstNavElement()?.let { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
-    }
+    return navHistoryDao.selectFirstNavElement()
+      ?.let { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi) }
   }
 
   suspend fun getFirstCatalogNavElement(): NavHistoryElement? {
     ensureInTransaction()
 
-    return navHistoryDao.selectFirstCatalogNavElement()?.let { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
-    }
+    return navHistoryDao.selectFirstCatalogNavElement()
+      ?.let { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi) }
   }
 
   suspend fun getFirstThreadNavElement(): NavHistoryElement? {
     ensureInTransaction()
 
-    return navHistoryDao.selectFirstThreadNavElement()?.let { navHistoryFullDto ->
-      NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi)
-    }
+    return navHistoryDao.selectFirstThreadNavElement()
+      ?.let { navHistoryFullDto -> NavHistoryElementMapper.fromNavHistoryEntity(navHistoryFullDto, moshi) }
   }
 
 }
