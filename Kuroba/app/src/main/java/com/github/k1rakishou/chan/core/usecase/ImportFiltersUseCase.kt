@@ -3,14 +3,14 @@ package com.github.k1rakishou.chan.core.usecase
 import android.net.Uri
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.resumeErrorSafe
-import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class ImportFiltersUseCase(
   private val fileManager: FileManager,
@@ -44,13 +44,13 @@ class ImportFiltersUseCase(
 
     Logger.d(TAG, "Deleting old filters")
 
-    suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+    suspendCoroutine<Unit> { continuation ->
       chanFilterManager.deleteAllFilters(
         onFinished = { throwable ->
           if (throwable == null) {
-            cancellableContinuation.resumeValueSafe(Unit)
+            continuation.resume(Unit)
           } else {
-            cancellableContinuation.resumeErrorSafe(throwable)
+            continuation.resumeWithException(throwable)
           }
         }
       )

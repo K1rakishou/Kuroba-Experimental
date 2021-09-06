@@ -184,7 +184,13 @@ class RemoteFilePicker(
           }
         })
 
-      cancellableContinuation.invokeOnCancellation { cancelableDownload?.cancel() }
+      cancellableContinuation.invokeOnCancellation { cause ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        cancelableDownload.cancel()
+      }
     }
   }
 

@@ -227,18 +227,26 @@ class MediaViewerController(
       return true
     }
 
-    return suspendCancellableCoroutine { continuation ->
+    return suspendCancellableCoroutine { cancellableContinuation ->
       val options = ImageSaverV2OptionsController.Options.SingleImage(
         simpleSaveableMediaInfo = simpleImageInfo,
         onSaveClicked = { updatedImageSaverV2Options, newFileName ->
           imageSaverV2.get().save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
-          continuation.resumeValueSafe(true)
+          cancellableContinuation.resumeValueSafe(true)
         },
-        onCanceled = { continuation.resumeValueSafe(false) }
+        onCanceled = { cancellableContinuation.resumeValueSafe(false) }
       )
 
       val controller = ImageSaverV2OptionsController(context, options)
       presentController(controller)
+
+      cancellableContinuation.invokeOnCancellation { cause ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        controller.stopPresenting()
+      }
     }
   }
 

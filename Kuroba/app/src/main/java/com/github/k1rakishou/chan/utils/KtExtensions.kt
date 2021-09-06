@@ -100,22 +100,22 @@ suspend fun View.awaitUntilGloballyLaidOut() {
   }
 
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-    viewTreeObserver.addOnGlobalLayoutListener(object : OnGlobalLayoutListener {
-      private var callbackRegistered = false
-
+    val listener = object : OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        if (!callbackRegistered) {
-          callbackRegistered = true
-
-          cancellableContinuation.invokeOnCancellation {
-            viewTreeObserver.removeOnGlobalLayoutListener(this)
-          }
-        }
-
         viewTreeObserver.removeOnGlobalLayoutListener(this)
         cancellableContinuation.resumeValueSafe(Unit)
       }
-    })
+    }
+
+    viewTreeObserver.addOnGlobalLayoutListener(listener)
+
+    cancellableContinuation.invokeOnCancellation { cause ->
+      if (cause == null) {
+        return@invokeOnCancellation
+      }
+
+      viewTreeObserver.removeOnGlobalLayoutListener(listener)
+    }
   }
 }
 

@@ -48,6 +48,7 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -138,18 +139,18 @@ abstract class SiteBase : Site, CoroutineScope {
     )
   }
 
-  override fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)?) {
+  override fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)?): Job? {
     if (!enabled()) {
       callback?.invoke(ModularResult.value(SiteBoards(siteDescriptor(), emptyList())))
-      return
+      return null
     }
 
     if (!boardsType().canList) {
       callback?.invoke(ModularResult.value(SiteBoards(siteDescriptor(), emptyList())))
-      return
+      return null
     }
 
-    launch(Dispatchers.IO) {
+    return launch(Dispatchers.IO) {
       val result = ModularResult.Try {
         boardManager.awaitUntilInitialized()
         Logger.d(TAG, "Requesting boards for site ${name()}")

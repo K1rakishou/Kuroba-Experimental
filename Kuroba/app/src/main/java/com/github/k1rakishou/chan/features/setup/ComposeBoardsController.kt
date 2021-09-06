@@ -55,13 +55,13 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
-import kotlin.coroutines.resume
 
 class ComposeBoardsController(
   context: Context,
@@ -175,8 +175,8 @@ class ComposeBoardsController(
       return
     }
 
-    val compositeCatalogName = suspendCancellableCoroutine<String> { continuation ->
-      dialogFactory.createSimpleDialogWithInput(
+    val compositeCatalogName = suspendCancellableCoroutine<String> { cancellableContinuation ->
+      val alertDialogHandle = dialogFactory.createSimpleDialogWithInput(
         context = context,
         titleText = getString(R.string.controller_compose_boards_enter_composite_catalog_name_title),
         descriptionText = getString(
@@ -185,9 +185,17 @@ class ComposeBoardsController(
         ),
         inputType = DialogFactory.DialogInputType.String,
         defaultValue = this.prevCompositeCatalog?.name ?: getString(R.string.controller_compose_boards_default_name),
-        onValueEntered = { compositeCatalogName -> continuation.resume(compositeCatalogName) },
-        onCanceled = { continuation.cancel() }
+        onValueEntered = { compositeCatalogName -> cancellableContinuation.resumeValueSafe(compositeCatalogName) },
+        onCanceled = { cancellableContinuation.cancel() }
       )
+
+      cancellableContinuation.invokeOnCancellation { cause ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        alertDialogHandle?.dismiss()
+      }
     }
 
     if (compositeCatalogName.isBlank()) {

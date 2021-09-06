@@ -516,7 +516,7 @@ class ReplyNotificationsHelper(
     thumbnailUrl: HttpUrl,
   ): BitmapDrawable? {
     return suspendCancellableCoroutine { cancellableContinuation ->
-      imageLoaderV2.loadFromNetwork(
+      val disposable = imageLoaderV2.loadFromNetwork(
         appContext,
         thumbnailUrl.toString(),
         ImageLoaderV2.ImageSize.FixedImageSize(
@@ -543,6 +543,16 @@ class ReplyNotificationsHelper(
           }
         }
       )
+
+      cancellableContinuation.invokeOnCancellation { cause ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        if (!disposable.isDisposed) {
+          disposable.dispose()
+        }
+      }
     }
   }
 

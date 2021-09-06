@@ -329,8 +329,18 @@ class BoardsSetupPresenter(
 
   private suspend fun loadBoardInfoSuspend(site: Site): ModularResult<Unit> {
     return suspendCancellableCoroutine { cancellableContinuation ->
-      site.loadBoardInfo { result ->
+      val job = site.loadBoardInfo { result ->
         cancellableContinuation.resumeValueSafe(result.mapValue { Unit })
+      }
+
+      cancellableContinuation.invokeOnCancellation { cause ->
+        if (cause == null) {
+          return@invokeOnCancellation
+        }
+
+        if (job?.isActive == true) {
+          job.cancel()
+        }
       }
     }
   }

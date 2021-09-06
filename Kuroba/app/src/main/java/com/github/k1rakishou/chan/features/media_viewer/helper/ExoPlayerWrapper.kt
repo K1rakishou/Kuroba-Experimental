@@ -131,19 +131,19 @@ class ExoPlayerWrapper(
   }
 
   private suspend fun awaitForContentOrError(): Boolean {
-    return suspendCancellableCoroutine { continuation ->
+    return suspendCancellableCoroutine { cancellableContinuation ->
       val listener = object : Player.Listener {
 
         override fun onPlayerErrorChanged(error: PlaybackException?) {
           Logger.e(TAG, "preload() error", error)
           actualExoPlayer.removeListener(this)
 
-          continuation.invokeOnCancellation {
+          cancellableContinuation.invokeOnCancellation {
             actualExoPlayer.removeListener(this)
           }
 
-          if (error != null && continuation.isActive) {
-            continuation.resumeWithException(error)
+          if (error != null && cancellableContinuation.isActive) {
+            cancellableContinuation.resumeWithException(error)
           }
         }
 
@@ -151,13 +151,13 @@ class ExoPlayerWrapper(
           if (state == Player.STATE_ENDED || state == Player.STATE_READY) {
             actualExoPlayer.removeListener(this)
 
-            continuation.invokeOnCancellation {
+            cancellableContinuation.invokeOnCancellation {
               actualExoPlayer.removeListener(this)
             }
 
-            if (continuation.isActive) {
+            if (cancellableContinuation.isActive) {
               val hasContent = state == Player.STATE_READY
-              continuation.resume(hasContent)
+              cancellableContinuation.resume(hasContent)
             }
           }
         }

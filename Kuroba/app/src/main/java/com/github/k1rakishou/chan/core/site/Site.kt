@@ -26,6 +26,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
+import kotlinx.coroutines.Job
 
 @DoNotStrip
 interface Site {
@@ -132,7 +133,7 @@ interface Site {
   fun enabled(): Boolean
   fun initialize()
   fun postInitialize()
-  fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)? = null)
+  fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)? = null): Job?
 
   /**
    * Name of the site. Must be unique. This will be used to find a site among other sites. Usually
