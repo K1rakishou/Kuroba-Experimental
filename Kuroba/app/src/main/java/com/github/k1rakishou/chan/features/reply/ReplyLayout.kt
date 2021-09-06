@@ -24,7 +24,6 @@ import android.graphics.Color
 import android.os.Build
 import android.text.Editable
 import android.text.Selection
-import android.text.TextUtils
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.view.ActionMode
@@ -96,6 +95,7 @@ import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.selectionEndSafe
@@ -1075,18 +1075,26 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun openMessage(message: String?, hideDelayMs: Int) {
     require(hideDelayMs > 0) { "Bad hideDelayMs: $hideDelayMs" }
-    removeCallbacks(closeMessageRunnable)
 
-    replyInputMessage.text = message
+    if (message != null && presenter.floatingReplyMessageHasClickAction) {
+      replyInputMessage.text = getString(R.string.reply_error_message_with_action, message)
+    } else {
+      replyInputMessage.text = message
+    }
 
-    if (!TextUtils.isEmpty(message)) {
+    if (message.isNotNullNorBlank()) {
       animateReplyInputMessage(appearance = true)
+      removeCallbacks(closeMessageRunnable)
       postDelayed(closeMessageRunnable, hideDelayMs.toLong())
     }
   }
 
   private fun animateReplyInputMessage(appearance: Boolean) {
     val valueAnimator = if (appearance) {
+      if (replyInputMessageHolder.visibility == View.VISIBLE) {
+        return
+      }
+
       ValueAnimator.ofFloat(0f, 1f).apply {
         doOnStart {
           replyInputMessageHolder.setAlphaFast(0f)
@@ -1094,6 +1102,10 @@ class ReplyLayout @JvmOverloads constructor(
         }
       }
     } else {
+      if (replyInputMessageHolder.visibility == View.GONE) {
+        return
+      }
+
       ValueAnimator.ofFloat(1f, 0f).apply {
         doOnEnd {
           replyInputMessageHolder.setVisibilityFast(View.GONE)
@@ -1234,10 +1246,13 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun onReplyInputErrorMessageClicked() {
+    hideReplyInputErrorMessage()
+    presenter.onReplyInputErrorMessageClicked()
+  }
+
+  override fun hideReplyInputErrorMessage() {
     removeCallbacks(closeMessageRunnable)
     animateReplyInputMessage(appearance = false)
-
-    presenter.onReplyInputErrorMessageClicked()
   }
 
   @SuppressLint("SetTextI18n")

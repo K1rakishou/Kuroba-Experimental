@@ -99,6 +99,9 @@ class ReplyPresenter @Inject constructor(
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
 
+  val floatingReplyMessageHasClickAction: Boolean
+    get() = floatingReplyMessageClickAction != null
+
   private val replyManager: ReplyManager
     get() = _replyManager.get()
   private val siteManager: SiteManager
@@ -680,6 +683,7 @@ class ReplyPresenter @Inject constructor(
     callback.openCommentSJISButton(false)
     callback.openNameOptions(false)
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
+    removeFloatingReplyMessageClickAction()
   }
 
   private fun makeSubmitCall(
@@ -687,8 +691,6 @@ class ReplyPresenter @Inject constructor(
     replyMode: ReplyMode,
     retrying: Boolean = false
   ) {
-    this@ReplyPresenter.floatingReplyMessageClickAction = null
-
     closeAll()
     PostingService.enqueueReplyChanDescriptor(context, chanDescriptor, replyMode, retrying)
   }
@@ -811,7 +813,7 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
-    this.floatingReplyMessageClickAction = null
+    removeFloatingReplyMessageClickAction()
   }
 
   private suspend fun onPostedSuccessfully(
@@ -898,6 +900,7 @@ class ReplyPresenter @Inject constructor(
   }
 
   fun removeFloatingReplyMessageClickAction() {
+    callback.hideReplyInputErrorMessage()
     floatingReplyMessageClickAction = null
   }
 
@@ -948,6 +951,7 @@ class ReplyPresenter @Inject constructor(
     fun openCommentEqnButton(open: Boolean)
     fun openCommentMathButton(open: Boolean)
     fun openCommentSJISButton(open: Boolean)
+    fun hideReplyInputErrorMessage()
     fun updateCommentCount(count: Int, maxCount: Int, over: Boolean)
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
