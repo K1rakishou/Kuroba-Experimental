@@ -59,11 +59,13 @@ class SnackbarWrapper private constructor(
     }
 
     snackbar?.view?.let { snackbarView ->
+      val bottomInset = globalWindowInsetsManager.bottom()
+
       if (ChanSettings.isSplitLayoutMode()) {
-        snackbarView.translationY = -(MARGIN).toFloat()
+        snackbarView.translationY = -(MARGIN.toFloat() + bottomInset)
       } else {
         val bottomNavViewSize = AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
-        snackbarView.translationY = -(bottomNavViewSize + MARGIN).toFloat()
+        snackbarView.translationY = -(bottomNavViewSize + MARGIN + bottomInset).toFloat()
       }
     }
 
@@ -172,7 +174,7 @@ class SnackbarWrapper private constructor(
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, textId, duration)
-      snackbar.isGestureInsetBottomIgnored = false
+      snackbar.isGestureInsetBottomIgnored = true
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)
@@ -191,7 +193,7 @@ class SnackbarWrapper private constructor(
       require(duration in allowedDurations) { "Bad duration" }
 
       val snackbar = Snackbar.make(view, text, duration)
-      snackbar.isGestureInsetBottomIgnored = false
+      snackbar.isGestureInsetBottomIgnored = true
       snackbar.animationMode = Snackbar.ANIMATION_MODE_FADE
 
       fixSnackbarColors(theme, snackbar)

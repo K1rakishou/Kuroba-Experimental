@@ -270,6 +270,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="search_query_hint">Search query</string>
     <string name="search_nothing_found">Nothing found</string>
     <string name="search_nothing_found_with_query">Nothing found by query \'%1$s\'</string>
+    <string name="search_nothing_to_display_make_sure_sites_boards_active">Nothing to display. Make sure you added some sites/boards first.</string>
 
     <string name="open_link_confirmation">Open this link?</string>
     <string name="open_link_failed">No applications were found to open this link</string>
@@ -1215,7 +1216,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_navigation_entry_deleted">Deleted</string>
     <string name="drawer_controller_grid_mode">Grid mode</string>
 
-    <string name="board_selection_controller_grid_layout_mode">Board selection grid mode</string>
+    <string name="board_selection_controller_grid_layout_mode">Grid mode</string>
 
     <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>

@@ -147,6 +147,18 @@ class ComposeBoardsSelectorController(
       return
     }
 
+    if (cellDataList.isEmpty()) {
+      KurobaComposeText(
+        modifier = Modifier
+          .height(256.dp)
+          .fillMaxWidth()
+          .padding(8.dp),
+        textAlign = TextAlign.Center,
+        text = stringResource(id = R.string.search_nothing_to_display_make_sure_sites_boards_active)
+      )
+      return
+    }
+
     if (searchResults.isEmpty()) {
       KurobaComposeText(
         modifier = Modifier
