@@ -307,17 +307,41 @@ class ChanThread(
     }
   }
 
+  fun getOriginalPostSafe(): ChanOriginalPost? {
+    return lock.read {
+      if (threadPosts.isEmpty()) {
+        return@read null
+      }
+
+      val firstPost = threadPosts.first()
+      if (firstPost is ChanOriginalPost) {
+        return@read firstPost
+      }
+
+      return null
+    }
+  }
+
   fun getOriginalPost(): ChanOriginalPost? {
     return lock.read {
       if (threadPosts.isEmpty()) {
         return@read null
       }
 
-      require(threadPosts.first() is ChanOriginalPost) {
-        "First post is not an original post! post=${threadPosts.first()}"
+      val firstPost = threadPosts.first()
+      if (firstPost is ChanOriginalPost) {
+        return@read firstPost
       }
 
-      return@read threadPosts.first() as ChanOriginalPost
+      val errorMessage = buildString {
+        appendLine("First post is not an original post! firstPost=${threadPosts.first()}")
+        appendLine("Total posts count: ${threadPosts.size}")
+
+        val indexOfOriginalPost = threadPosts.indexOfFirst { it is ChanOriginalPost }
+        appendLine("Actual index of the original post: $indexOfOriginalPost")
+      }
+
+      error(errorMessage)
     }
   }
 
@@ -390,13 +414,15 @@ class ChanThread(
 
   fun canUpdateThread(): Boolean {
     return lock.read {
-      val originalPost = getOriginalPost()
+      val originalPost = getOriginalPostSafe()
       if (originalPost == null) {
         // I guess we should update the thread if we have no posts?
         return@read true
       }
 
-      return@read !originalPost.closed && !originalPost.isDeleted && !originalPost.archived
+      return@read !originalPost.closed
+        && !originalPost.isDeleted
+        && !originalPost.archived
     }
   }
 
@@ -474,6 +500,10 @@ class ChanThread(
       }
 
       postDescriptors.forEach { postDescriptor ->
+        if (postDescriptor.isOP()) {
+          Logger.e(TAG, "Deleting original post ${postDescriptor}!!! This may end up very badly!")
+        }
+
         val postIndex = threadPosts.indexOfFirst { chanPost ->
           chanPost.postDescriptor == postDescriptor
         }

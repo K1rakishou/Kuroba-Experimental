@@ -26,7 +26,6 @@ data class ChanCacheOptions(val options: List<ChanCacheOption>) {
 }
 
 enum class ChanCacheOption {
-  DoNotStoreInMemory,
   StoreInMemory,
   CanAddInFrontOfTheMemoryCache;
 
