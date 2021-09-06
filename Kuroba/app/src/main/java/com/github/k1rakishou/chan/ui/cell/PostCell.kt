@@ -111,6 +111,7 @@ class PostCell : ConstraintLayout,
   private var iconSizePx = 0
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
   private var postTimeUpdaterJob: Job? = null
+  private var postCommentShiftResultCached: PostCommentShiftResult? = null
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
@@ -218,6 +219,8 @@ class PostCell : ConstraintLayout,
     if (postCellData != null) {
       unbindPost(postCellData, isActuallyRecycling)
     }
+
+    postCommentShiftResultCached = null
   }
 
   override fun onThemeChanged() {
@@ -387,10 +390,11 @@ class PostCell : ConstraintLayout,
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
 
-    val shiftCommentToThumbnailSideMode = canShiftPostComment(postCellData)
-
     updatePostCellFileName(postCellData)
-    updatePostCellLayoutRuntime(postCellData, shiftCommentToThumbnailSideMode)
+
+    val postCommentShiftResult = canShiftPostComment(postCellData)
+    updatePostCellLayoutRuntime(postCellData, postCommentShiftResult)
+    this.postCommentShiftResultCached = postCommentShiftResult
 
     if (postCellData.isViewingThread) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
@@ -426,26 +430,32 @@ class PostCell : ConstraintLayout,
     updatePostCellListeners(postCellData)
   }
 
-  private fun canShiftPostComment(postCellData: PostCellData): Boolean {
+  @Suppress("UnnecessaryVariable")
+  private fun canShiftPostComment(postCellData: PostCellData): PostCommentShiftResult {
+    if (postCommentShiftResultCached != null) {
+      return postCommentShiftResultCached!!
+    }
+
     if (!postCellData.shiftPostComment || !postCellData.singleImageMode) {
-      return false
+      return PostCommentShiftResult.CannotShiftComment
     }
 
     val firstImage = postCellData.firstImage
-      ?: return false
+      ?: return PostCommentShiftResult.CannotShiftComment
 
     val postFileInfo = postCellData.postFileInfoMap[firstImage]
-      ?: return false
+      ?: return PostCommentShiftResult.CannotShiftComment
 
     if (postCellData.commentText.length < SUPER_SHORT_COMMENT_LENGTH && postCellData.commentText.countLines() <= 1) {
       // Fast path for very short comments.
-      return true
+      return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
     val thumbnailWidth = PostImageThumbnailViewsContainer.calculatePostCellSingleThumbnailSize()
     // We allow using comment shift if comment height + post title height + imageFileName height
     // (if present) is less than 2x of thumbnail height
-    val thumbnailHeight = thumbnailWidth * 2
+    val multipliedThumbnailHeight = thumbnailWidth * 2
+    val actualThumbnailHeight = thumbnailWidth
 
     var totalAvailableWidth = postCellData.postCellDataWidthNoPaddings
     totalAvailableWidth -= getDimen(R.dimen.post_attention_label_width)
@@ -453,7 +463,7 @@ class PostCell : ConstraintLayout,
     val availableWidthWithoutThumbnail = totalAvailableWidth - thumbnailWidth
 
     if (totalAvailableWidth <= 0) {
-      return false
+      return PostCommentShiftResult.CannotShiftComment
     }
 
     val titleTextBounds = title.getTextBounds(postCellData.postTitle, totalAvailableWidth)
@@ -465,13 +475,11 @@ class PostCell : ConstraintLayout,
     }
 
     val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
-    val availableHeight = thumbnailHeight - resultTitleTextBounds.textHeight
-
     val commentTextBounds = comment.getTextBounds(postCellData.commentText, totalAvailableWidth)
     val commentHeight = commentTextBounds.textHeight
 
-    if (availableHeight > commentHeight) {
-      return true
+    if ((multipliedThumbnailHeight - resultTitleTextBounds.textHeight) > commentHeight) {
+      return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
     if (postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
@@ -494,17 +502,17 @@ class PostCell : ConstraintLayout,
 
         offset += lineHeight.toInt()
 
-        if (offset >= availableHeight) {
+        if (offset >= actualThumbnailHeight) {
           break
         }
       }
 
       if (allLinesFit) {
-        return true
+        return PostCommentShiftResult.JustShift
       }
     }
 
-    return false
+    return PostCommentShiftResult.CannotShiftComment
   }
 
   private fun updatePostCellListeners(postCellData: PostCellData) {
@@ -574,59 +582,90 @@ class PostCell : ConstraintLayout,
     imgFilename.gravity = GravityCompat.START
   }
 
-  private fun updatePostCellLayoutRuntime(postCellData: PostCellData, shiftCommentToThumbnailSideMode: Boolean) {
+  private fun updatePostCellLayoutRuntime(
+    postCellData: PostCellData,
+    postCommentShiftResult: PostCommentShiftResult
+  ) {
+    if (postCommentShiftResultCached != null) {
+      return
+    }
+
     val constraintSet = ConstraintSet()
     constraintSet.clone(this)
 
-    if (shiftCommentToThumbnailSideMode) {
-      constraintSet.createBarrier(
-        R.id.title_icons_thumbnail_barrier,
-        Barrier.BOTTOM,
-        0,
-        R.id.title,
-        R.id.image_filename,
-        R.id.icons
-      )
+    when (postCommentShiftResult) {
+      PostCommentShiftResult.JustShift -> {
+        constraintSet.createBarrier(
+          R.id.title_icons_thumbnail_barrier,
+          Barrier.BOTTOM,
+          0,
+          R.id.title,
+          R.id.image_filename,
+          R.id.icons
+        )
 
-      when (postCellData.postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> {
-          constraintSet.clear(R.id.comment, ConstraintSet.END)
-          constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.thumbnails_container, ConstraintSet.START)
-        }
-        ChanSettings.PostAlignmentMode.AlignRight -> {
-          constraintSet.clear(R.id.comment, ConstraintSet.START)
-          constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.thumbnails_container, ConstraintSet.END)
+        when (postCellData.postAlignmentMode) {
+          ChanSettings.PostAlignmentMode.AlignLeft -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.END)
+            constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.go_to_post_button, ConstraintSet.START)
+          }
+          ChanSettings.PostAlignmentMode.AlignRight -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.START)
+            constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.post_attention_label, ConstraintSet.END)
+          }
         }
       }
+      PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail -> {
+        constraintSet.createBarrier(
+          R.id.title_icons_thumbnail_barrier,
+          Barrier.BOTTOM,
+          0,
+          R.id.title,
+          R.id.image_filename,
+          R.id.icons
+        )
 
-      constraintSet.createHorizontalChain(
-        ConstraintSet.PARENT_ID,
-        ConstraintSet.RIGHT,
-        ConstraintSet.PARENT_ID,
-        ConstraintSet.LEFT,
-        intArrayOf(R.id.thumbnails_container, R.id.comment),
-        floatArrayOf(0f, 1f),
-        ConstraintSet.CHAIN_SPREAD
-      )
-    } else {
-      constraintSet.createBarrier(
-        R.id.title_icons_thumbnail_barrier,
-        Barrier.BOTTOM,
-        0,
-        R.id.thumbnails_container,
-        R.id.title,
-        R.id.image_filename,
-        R.id.icons
-      )
-
-      when (postCellData.postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> {
-          constraintSet.clear(R.id.comment, ConstraintSet.END)
-          constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.go_to_post_button, ConstraintSet.START)
+        when (postCellData.postAlignmentMode) {
+          ChanSettings.PostAlignmentMode.AlignLeft -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.END)
+            constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.thumbnails_container, ConstraintSet.START)
+          }
+          ChanSettings.PostAlignmentMode.AlignRight -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.START)
+            constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.thumbnails_container, ConstraintSet.END)
+          }
         }
-        ChanSettings.PostAlignmentMode.AlignRight -> {
-          constraintSet.clear(R.id.comment, ConstraintSet.START)
-          constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.post_attention_label, ConstraintSet.END)
+
+        constraintSet.createHorizontalChain(
+          ConstraintSet.PARENT_ID,
+          ConstraintSet.RIGHT,
+          ConstraintSet.PARENT_ID,
+          ConstraintSet.LEFT,
+          intArrayOf(R.id.thumbnails_container, R.id.comment),
+          floatArrayOf(0f, 1f),
+          ConstraintSet.CHAIN_SPREAD
+        )
+      }
+      PostCommentShiftResult.CannotShiftComment -> {
+        constraintSet.createBarrier(
+          R.id.title_icons_thumbnail_barrier,
+          Barrier.BOTTOM,
+          0,
+          R.id.thumbnails_container,
+          R.id.title,
+          R.id.image_filename,
+          R.id.icons
+        )
+
+        when (postCellData.postAlignmentMode) {
+          ChanSettings.PostAlignmentMode.AlignLeft -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.END)
+            constraintSet.connect(R.id.comment, ConstraintSet.END, R.id.go_to_post_button, ConstraintSet.START)
+          }
+          ChanSettings.PostAlignmentMode.AlignRight -> {
+            constraintSet.clear(R.id.comment, ConstraintSet.START)
+            constraintSet.connect(R.id.comment, ConstraintSet.START, R.id.post_attention_label, ConstraintSet.END)
+          }
         }
       }
     }
@@ -1554,6 +1593,12 @@ class PostCell : ConstraintLayout,
 
       return true
     }
+  }
+
+  private enum class PostCommentShiftResult {
+    CannotShiftComment,
+    ShiftAndAttachToTheSideOfThumbnail,
+    JustShift
   }
 
   companion object {

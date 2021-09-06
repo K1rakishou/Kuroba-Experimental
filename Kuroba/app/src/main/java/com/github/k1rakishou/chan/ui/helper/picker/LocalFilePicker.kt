@@ -251,7 +251,7 @@ class LocalFilePicker(
         activity,
         RequestCodes.LOCAL_FILE_PICKER_LAST_SELECTION_REQUEST_CODE,
         receiverIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE
       )
 
       activity.registerReceiver(
