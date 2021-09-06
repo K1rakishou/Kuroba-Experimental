@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.search.data
 
-import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.sites.search.SearchBoard
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -16,7 +15,7 @@ internal sealed class GlobalSearchControllerState {
 
 internal data class SelectedSite(
   val siteDescriptor: SiteDescriptor,
-  val siteIcon: SiteIcon,
+  val siteIconUrl: String?,
   val siteGlobalSearchType: SiteGlobalSearchType
 )
 

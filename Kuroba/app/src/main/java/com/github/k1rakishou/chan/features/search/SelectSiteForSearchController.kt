@@ -5,7 +5,6 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
 import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchSiteView
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
@@ -59,12 +58,12 @@ internal class SelectSiteForSearchController(
   private fun renderSites() {
     val sites = mutableListOf<SiteSupportingSearchData>()
 
-    siteManager.viewActiveSitesOrderedWhile { chanSiteData, site ->
+    siteManager.viewActiveSitesOrderedWhile { _, site ->
       if (site.siteGlobalSearchType() != SiteGlobalSearchType.SearchNotSupported) {
         sites += SiteSupportingSearchData(
-          site.siteDescriptor(),
-          site.icon(),
-          site.siteDescriptor() == selectedSite
+          siteDescriptor = site.siteDescriptor(),
+          siteIconUrl = site.icon().url?.toString(),
+          isSelected = site.siteDescriptor() == selectedSite
         )
       }
 
@@ -84,7 +83,7 @@ internal class SelectSiteForSearchController(
 
         epoxySearchSiteView {
           id("epoxy_search_site_view")
-          bindIcon(siteSupportingSearchData.siteIcon)
+          bindIconUrl(siteSupportingSearchData.siteIconUrl)
           bindSiteName(siteSupportingSearchData.siteDescriptor.siteName)
           itemBackgroundColor(siteBackgroundColor)
           bindClickCallback {
@@ -113,7 +112,7 @@ internal class SelectSiteForSearchController(
 
   data class SiteSupportingSearchData(
     val siteDescriptor: SiteDescriptor,
-    val siteIcon: SiteIcon,
+    val siteIconUrl: String?,
     val isSelected: Boolean
   )
 

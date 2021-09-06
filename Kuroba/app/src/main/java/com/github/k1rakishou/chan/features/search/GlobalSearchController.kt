@@ -173,7 +173,7 @@ class GlobalSearchController(
     epoxySearchSiteView {
       id("global_search_epoxy_site")
       bindSiteName(dataState.sitesWithSearch.selectedSite.siteDescriptor.siteName)
-      bindIcon(dataState.sitesWithSearch.selectedSite.siteIcon)
+      bindIconUrl(dataState.sitesWithSearch.selectedSite.siteIconUrl)
       itemBackgroundColor(themeEngine.chanTheme.backColor)
       bindClickCallback {
         val controller = SelectSiteForSearchController(

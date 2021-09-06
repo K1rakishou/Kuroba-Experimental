@@ -177,14 +177,18 @@ internal class GlobalSearchPresenter(
       return
     }
 
-    val siteIcon = site.icon()
+    val siteIconUrl = site.icon().url?.toString()
     val searchType = site.siteGlobalSearchType()
 
     val dataState = GlobalSearchControllerStateData(
       currentTheme = themeEngine.chanTheme.fullCopy(),
       sitesWithSearch = SitesWithSearch(
-        sitesSupportingSearch,
-        SelectedSite(selectedSiteDescriptor, siteIcon, searchType)
+        sites = sitesSupportingSearch,
+        selectedSite = SelectedSite(
+          siteDescriptor = selectedSiteDescriptor,
+          siteIconUrl = siteIconUrl,
+          siteGlobalSearchType = searchType
+        )
       ),
       searchParameters = searchParameters
     )

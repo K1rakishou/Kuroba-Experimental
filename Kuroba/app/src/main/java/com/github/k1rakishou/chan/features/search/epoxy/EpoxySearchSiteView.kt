@@ -69,8 +69,8 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
   }
 
   @ModelProp
-  fun bindIcon(icon: SiteIcon?) {
-    if (icon == null) {
+  fun bindIconUrl(iconUrl: String?) {
+    if (iconUrl == null) {
       this.requestDisposable?.dispose()
       this.requestDisposable = null
       this.siteIcon.setImageBitmap(null)
@@ -86,11 +86,17 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
 
       require(siteIcon.width > 0 && siteIcon.height > 0) { "View (siteIcon) has no size!" }
 
-      icon.getIcon(
-        context,
-        { icon -> siteIconRef.get()?.setImageBitmap(icon.bitmap) },
-        R.drawable.error_icon,
-        { errorIcon -> siteIconRef.get()?.setImageBitmap(errorIcon.bitmap) }
+      requestDisposable = imageLoaderV2.loadFromNetwork(
+        context = context,
+        url = iconUrl.toString(),
+        imageSize = ImageLoaderV2.ImageSize.FixedImageSize(
+          width = SiteIcon.FAVICON_SIZE,
+          height = SiteIcon.FAVICON_SIZE,
+        ),
+        transformations = emptyList(),
+        listener = { drawable -> siteIconRef.get()?.setImageBitmap(drawable.bitmap) },
+        errorDrawableId = R.drawable.error_icon,
+        notFoundDrawableId = R.drawable.error_icon
       )
     }
   }

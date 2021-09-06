@@ -32,7 +32,9 @@ import dagger.Lazy
 import kotlinx.coroutines.suspendCancellableCoroutine
 import okhttp3.HttpUrl
 
-class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2>) {
+class SiteIcon private constructor(
+  private val imageLoaderV2: Lazy<ImageLoaderV2>
+) {
   var url: HttpUrl? = null
   var drawable: BitmapDrawable? = null
 
@@ -145,7 +147,7 @@ class SiteIcon private constructor(private val imageLoaderV2: Lazy<ImageLoaderV2
 
   companion object {
     private const val TAG = "SiteIcon"
-    private const val FAVICON_SIZE = 64
+    const val FAVICON_SIZE = 64
 
     @JvmStatic
     fun fromFavicon(imageLoaderV2: Lazy<ImageLoaderV2>, url: HttpUrl): SiteIcon {
