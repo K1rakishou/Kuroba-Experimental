@@ -51,7 +51,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -455,10 +454,7 @@ open class ViewThreadController(
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
 
-    threadLayout.presenter.quickReload(
-      showLoading = false,
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
-    )
+    threadLayout.presenter.quickReloadFromMemoryCache()
   }
 
   private fun upClicked(item: ToolbarMenuSubItem) {

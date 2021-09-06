@@ -190,8 +190,6 @@ class MainSettingsControllerV2(
       (context as StartActivity).restartApp()
     } else if (hasPendingUiRefresh) {
       hasPendingUiRefresh = false
-      cancellableToast.showToast(context, "UI refreshed")
-
       appSettingsUpdateAppRefreshHelper.get().settingsUpdated()
     }
   }

@@ -186,7 +186,7 @@ class BookmarksPresenter(
       }
 
       val loadingStateCancellationJob = launch {
-        delay(50)
+        delay(125)
         setState(BookmarksControllerState.Loading)
       }
 

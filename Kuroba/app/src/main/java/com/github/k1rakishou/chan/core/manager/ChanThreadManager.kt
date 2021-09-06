@@ -252,15 +252,17 @@ class ChanThreadManager(
     return chanThreadsCache.getCatalog(catalogDescriptor)
   }
 
-  suspend fun deletePost(postDescriptor: PostDescriptor) {
+  suspend fun deletePost(postDescriptor: PostDescriptor): Boolean {
     val result = chanPostRepository.deletePost(postDescriptor)
     if (result is ModularResult.Error) {
       Logger.e(TAG, "Failed to delete post ($postDescriptor) from chanPostRepository")
-      return
+      return false
     }
 
     postFilterManager.remove(postDescriptor)
     savedReplyManager.unsavePost(postDescriptor)
+
+    return true
   }
 
   fun isCached(chanDescriptor: ChanDescriptor?): Boolean {

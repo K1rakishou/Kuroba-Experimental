@@ -333,10 +333,7 @@ class ThreadLayout @JvmOverloads constructor(
       return
     }
 
-    presenter.quickReload(
-      showLoading = false,
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
-    )
+    presenter.quickReloadFromMemoryCache()
   }
 
   override fun onClick(v: View) {
@@ -410,7 +407,10 @@ class ThreadLayout @JvmOverloads constructor(
     refreshedFromSwipe = true
 
     presenter.resetTicker()
-    presenter.normalLoad(showLoading = true)
+    presenter.normalLoad(
+      showLoading = true,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+    )
   }
 
   fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {

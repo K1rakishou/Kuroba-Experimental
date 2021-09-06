@@ -26,6 +26,10 @@ data class ChanLoadOptions(val chanLoadOption: ChanLoadOption) {
       return ChanLoadOptions(ChanLoadOption.ClearMemoryCache)
     }
 
+    fun forceUpdatePost(postDescriptor: PostDescriptor): ChanLoadOptions {
+      return forceUpdatePosts(setOf(postDescriptor))
+    }
+
     // postsAreTheSame will always return false for posts in the set
     fun forceUpdatePosts(postDescriptors: Set<PostDescriptor>): ChanLoadOptions {
       return ChanLoadOptions(ChanLoadOption.ForceUpdatePosts(postDescriptors))

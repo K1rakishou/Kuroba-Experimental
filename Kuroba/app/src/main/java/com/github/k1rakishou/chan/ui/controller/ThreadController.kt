@@ -220,7 +220,7 @@ abstract class ThreadController(
     mainScope.launch {
       appSettingsUpdateAppRefreshHelper.settingsUpdatedEvent.collect {
         Logger.d(TAG, "Reloading thread because app settings were updated")
-        threadLayout.presenter.normalLoad()
+        threadLayout.presenter.quickReloadFromMemoryCache()
       }
     }
 

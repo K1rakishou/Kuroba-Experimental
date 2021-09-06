@@ -81,7 +81,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
@@ -1280,12 +1280,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   interface ThreadListLayoutPresenterCallback {
     suspend fun showThread(threadDescriptor: ThreadDescriptor)
     fun requestNewPostLoad()
-
-    fun quickReload(
-      showLoading: Boolean = false,
-      chanCacheUpdateOptions: ChanCacheUpdateOptions
-    )
-
+    fun quickReloadFromMemoryCache(chanLoadOptions: ChanLoadOptions = ChanLoadOptions.retainAll())
     suspend fun onListScrolledToBottom()
   }
 

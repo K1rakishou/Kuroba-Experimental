@@ -510,6 +510,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_posting_is_not_supported">Posting is not supported for this site</string>
     <string name="post_posting_is_not_supported_composite_catalog">Posting is not supported in composite catalogs</string>
     <string name="end_post_composite_catalog_already_reached">The end of the composite catalog has already been reached</string>
+    <string name="reload_composite_or_unlimited_catalog_manually">Reload unlimited/composite catalog manually to apply changes</string>
 
     <string name="thread_hidden">Thread hidden</string>
     <string name="thread_removed">Thread removed</string>
@@ -1198,6 +1199,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_delete_selected">Delete selected</string>
     <string name="drawer_controller_delete_one">Delete</string>
     <string name="drawer_controller_pin_unpin">Pin/unpin</string>
+    <string name="drawer_controller_bookmark_unbookmark">Bookmark/unbookmark</string>
     <string name="drawer_controller_show_in_bookmarks">Show in bookmarks</string>
     <string name="drawer_controller_pin_unpin_selected">Pin/unpin selected</string>
     <string name="drawer_controller_move_last_accessed_thread_to_top">Move last accessed thread/catalog to top</string>

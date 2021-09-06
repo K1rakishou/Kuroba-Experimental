@@ -1522,6 +1522,13 @@ class MainController(
         name = getString(R.string.drawer_controller_pin_unpin)
       )
 
+      if (navHistoryEntry.descriptor is ChanDescriptor.ThreadDescriptor) {
+        drawerOptions += FloatingListMenuItem(
+          key = ACTION_BOOKMARK_UNBOOKMARK,
+          name = getString(R.string.drawer_controller_bookmark_unbookmark)
+        )
+      }
+
       if (navHistoryEntry.descriptor.isThreadDescriptor() && navHistoryEntry.additionalInfo != null) {
         drawerOptions += FloatingListMenuItem(
           key = ACTION_SHOW_IN_BOOKMARKS,
@@ -1550,6 +1557,20 @@ class MainController(
             }
             ACTION_PIN_UNPIN -> {
               pinUnpin(listOf(navHistoryEntry.descriptor))
+            }
+            ACTION_BOOKMARK_UNBOOKMARK -> {
+              val threadDescriptor = navHistoryEntry.descriptor.threadDescriptorOrNull()
+                ?: return@launch
+
+              if (bookmarksManager.exists(threadDescriptor)) {
+                bookmarksManager.deleteBookmark(threadDescriptor)
+              } else {
+                bookmarksManager.createBookmark(
+                  threadDescriptor = threadDescriptor,
+                  thumbnailUrl = navHistoryEntry.threadThumbnailUrl,
+                  title = navHistoryEntry.title
+                )
+              }
             }
             ACTION_PIN_UNPIN_SELECTED -> {
               pinUnpin(drawerViewModel.getSelectedDescriptors())
@@ -1818,6 +1839,7 @@ class MainController(
     private const val ACTION_DELETE_SELECTED = 104
     private const val ACTION_DELETE = 105
     private const val ACTION_SHOW_IN_BOOKMARKS = 106
+    private const val ACTION_BOOKMARK_UNBOOKMARK = 107
 
     private val GRID_COLUMN_WIDTH = dp(80f)
     private val LIST_MODE_ROW_HEIGHT = 52.dp

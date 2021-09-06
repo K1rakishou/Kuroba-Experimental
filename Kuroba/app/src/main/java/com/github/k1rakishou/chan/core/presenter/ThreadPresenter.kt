@@ -453,22 +453,27 @@ class ThreadPresenter @Inject constructor(
     normalLoad()
   }
 
-  override fun quickReload(showLoading: Boolean, chanCacheUpdateOptions: ChanCacheUpdateOptions) {
+  override fun quickReloadFromMemoryCache(chanLoadOptions: ChanLoadOptions) {
     BackgroundUtils.ensureMainThread()
-    Logger.d(TAG, "quickReload($showLoading, $chanCacheUpdateOptions)")
+    Logger.d(TAG, "quickReloadFromMemoryCache()")
 
     val currentChanDescriptor = chanThreadTicker.currentChanDescriptor
     if (currentChanDescriptor == null) {
-      Logger.d(TAG, "quickReload() chanThreadTicker.currentChanDescriptor==null")
+      Logger.d(TAG, "quickReloadFromMemoryCache() chanThreadTicker.currentChanDescriptor==null")
       return
     }
 
-    launch {
-      normalLoad(
-        showLoading = showLoading,
-        chanCacheUpdateOptions = chanCacheUpdateOptions
-      )
+    if (isUnlimitedOrCompositeCatalog) {
+      showToast(context, R.string.reload_composite_or_unlimited_catalog_manually)
+      Logger.d(TAG, "quickReloadFromMemoryCache() isUnlimitedOrCompositeCatalog == true")
+      return
     }
+
+    normalLoad(
+      showLoading = false,
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
+      chanLoadOptions = chanLoadOptions
+    )
   }
 
   fun resetTicker() {
@@ -973,11 +978,7 @@ class ThreadPresenter @Inject constructor(
     val threadDescriptor = currentOpenedDescriptorStateManager.currentThreadDescriptor
 
     if (catalogDescriptor == currentChanDescriptor || threadDescriptor == currentChanDescriptor) {
-      normalLoad(
-        showLoading = false,
-        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
-        chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts()
-      )
+      quickReloadFromMemoryCache(chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts())
     }
   }
 
@@ -1589,7 +1590,7 @@ class ThreadPresenter @Inject constructor(
     val containsSite = siteManager.bySiteDescriptor(siteDescriptor) != null
 
     if (site?.siteFeature(Site.SiteFeature.POST_DELETE) == true) {
-      if (containsSite) {
+      if (containsSite && !post.isOP()) {
         val savedReply = savedReplyManager.getSavedReply(post.postDescriptor)
         if (savedReply?.password != null) {
           menu.add(createMenuItem(POST_OPTION_DELETE, R.string.post_delete))
@@ -2447,8 +2448,11 @@ class ThreadPresenter @Inject constructor(
           }
 
           if (deleteResponse.deleted) {
-            chanThreadManager.deletePost(post.postDescriptor)
-            normalLoad()
+            if (chanThreadManager.deletePost(post.postDescriptor)) {
+              quickReloadFromMemoryCache(
+                chanLoadOptions = ChanLoadOptions.forceUpdatePost(post.postDescriptor)
+              )
+            }
           }
 
           threadPresenterCallback?.hideDeleting(message)
