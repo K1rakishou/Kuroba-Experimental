@@ -138,14 +138,11 @@ object ReplyCommentHelper {
   }
 
   private fun findGreenTextStartSymbolIndex(lineFormatted: String): Int {
-    for (index in lineFormatted.indices) {
-      val prev = lineFormatted.getOrNull(index - 1)
-      val curr = lineFormatted.getOrNull(index)
-      val next = lineFormatted.getOrNull(index + 1)
+    val curr = lineFormatted.getOrNull(0)
+    val next = lineFormatted.getOrNull(1)
 
-      if (curr == '>' && (prev == null || prev != '>') && (next == null || next != '>')) {
-        return index
-      }
+    if (curr == '>' && (next == null || next != '>')) {
+      return 0
     }
 
     return -1

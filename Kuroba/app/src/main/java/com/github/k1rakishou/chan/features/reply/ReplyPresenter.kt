@@ -914,7 +914,7 @@ class ReplyPresenter @Inject constructor(
   fun updateSpans(commentText: Editable) {
     updatePostTextSpansDebouncer.post({
       ReplyCommentHelper.processReplyCommentHighlight(themeEngine, commentText)
-    }, 250)
+    }, 125)
   }
 
   fun onReplyInputErrorMessageClicked() {

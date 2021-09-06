@@ -15,11 +15,15 @@ class SelectedFilePickerBroadcastReceiver : BroadcastReceiver() {
     }
 
     if (!AndroidUtils.isAndroidL_MR1()) {
+      Logger.d(TAG, "Not Api 22, current Api: ${AndroidUtils.getApiLevel()}")
       return
     }
 
     val component = intent.getParcelableExtra<ComponentName>(Intent.EXTRA_CHOSEN_COMPONENT)
-      ?: return
+    if (component == null) {
+      Logger.d(TAG, "component == null")
+      return
+    }
 
     Logger.d(TAG, "Setting lastRememberedFilePicker to " +
       "(packageName=${component.packageName}, className=${component.className})")

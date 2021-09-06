@@ -281,6 +281,10 @@ public class AndroidUtils {
         return (AudioManager) getAppContext().getSystemService(AUDIO_SERVICE);
     }
 
+    public static int getApiLevel() {
+        return Build.VERSION.SDK_INT;
+    }
+
     public static boolean isAndroid11() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
     }
