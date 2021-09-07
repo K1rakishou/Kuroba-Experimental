@@ -406,8 +406,8 @@ open class ViewThreadController(
       titleTextId = R.string.view_thread_controller_enter_post_id,
       onValueEntered = { input: String ->
         try {
-          val postNo = input.toInt()
-          threadLayout.presenter.scrollToPostByPostNo(postNo.toLong())
+          val postNo = input.toLong()
+          threadLayout.presenter.scrollToPost(PostDescriptor.create(threadDescriptor, postNo))
         } catch (e: NumberFormatException) {
           //ignored
         }

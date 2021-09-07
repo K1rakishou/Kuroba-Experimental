@@ -850,9 +850,21 @@ class PostCell : ConstraintLayout,
           postCellCallback?.onGoToPostButtonClicked(pcd.post, pcd.postViewMode)
         }
       }
+      if (!postCellData.isViewingThread) {
+        goToPostButton.setOnLongClickListener {
+          this.postCellData?.let { pcd ->
+            postCellCallback?.onGoToPostButtonLongClicked(pcd.post, pcd.postViewMode)
+          }
+
+          return@setOnLongClickListener true
+        }
+      } else {
+        goToPostButton.setOnLongClickListener(null)
+      }
     } else {
       goToPostButton.setVisibilityFast(GONE)
       goToPostButton.setOnClickListener(null)
+      goToPostButton.setOnLongClickListener(null)
     }
   }
 

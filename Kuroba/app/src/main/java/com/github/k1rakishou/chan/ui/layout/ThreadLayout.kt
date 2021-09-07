@@ -228,6 +228,9 @@ class ThreadLayout @JvmOverloads constructor(
       threadListLayout.displayingPostDescriptors
     }
 
+  override val displayingPostDescriptorsInThread: List<PostDescriptor>
+    get() = threadListLayout.displayingPostDescriptors
+
   override val currentPosition: IndexAndTop?
     get() = threadListLayout.indexAndTop
 

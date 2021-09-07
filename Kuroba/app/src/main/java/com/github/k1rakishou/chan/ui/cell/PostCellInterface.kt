@@ -50,6 +50,7 @@ interface PostCellInterface {
 
     fun onPostClicked(postDescriptor: PostDescriptor)
     fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode)
+    fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode)
     fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage)
     fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage)
     fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage)

@@ -249,7 +249,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     Logger.d(TAG, "handleNewIntent() viewModel.showMedia() -> $success")
 
     if (!success) {
-      val errorMessage = "Failed to display viewableMedia from intent '$intent'"
+      val errorMessage = "Failed to display viewableMedia (no media to show was found)"
       Toast.makeText(applicationContext, errorMessage, Toast.LENGTH_LONG).show()
     }
 

@@ -1350,12 +1350,12 @@ class ThreadPresenter @Inject constructor(
       var position = -1
 
       if (post != null) {
-        val posts = threadPresenterCallback?.displayingPostDescriptors
+        val posts = threadPresenterCallback?.displayingPostDescriptorsInThread
           ?: return@view
 
         for (i in posts.indices) {
           val needle = posts[i]
-          if (post.postNo() == needle.postNo) {
+          if (post.postDescriptor == needle) {
             position = i
             break
           }
@@ -1373,7 +1373,7 @@ class ThreadPresenter @Inject constructor(
 
   fun scrollToImage(postImage: ChanPostImage, smooth: Boolean) {
     var position = -1
-    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptorsInThread
       ?: return
 
     out@ for (i in postDescriptors.indices) {
@@ -1394,23 +1394,19 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  fun scrollToPost(needle: PostDescriptor, smooth: Boolean) {
-    scrollToPostByPostNo(needle.postNo, smooth)
-  }
-
   @JvmOverloads
-  fun scrollToPostByPostNo(postNo: Long, smooth: Boolean = true) {
+  fun scrollToPost(needle: PostDescriptor, smooth: Boolean = true) {
     var position = -1
 
-    val posts = threadPresenterCallback?.displayingPostDescriptors
+    val posts = threadPresenterCallback?.displayingPostDescriptorsInThread
     if (posts == null || posts.isEmpty()) {
-      Logger.e(TAG, "scrollToPostByPostNo($postNo) posts are null or empty")
+      Logger.e(TAG, "scrollToPost($needle) posts are null or empty")
       return
     }
 
     for (i in posts.indices) {
-      val post = posts[i]
-      if (post.postNo == postNo) {
+      val postDescriptor = posts[i]
+      if (postDescriptor == needle) {
         position = i
         break
       }
@@ -1426,7 +1422,7 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun selectPostImage(postImage: ChanPostImage) {
-    val postDescriptors = threadPresenterCallback?.displayingPostDescriptors
+    val postDescriptors = threadPresenterCallback?.displayingPostDescriptorsInThread
       ?: return
 
     for (postDescriptor in postDescriptors) {
@@ -1480,6 +1476,13 @@ class ThreadPresenter @Inject constructor(
 
       threadPresenterCallback?.postClicked(post.postDescriptor)
     }
+  }
+
+  override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
+    threadPresenterCallback?.hidePostsPopup()
+
+    scrollToPost(needle = post.postDescriptor, smooth = true)
+    highlightPost(post.postDescriptor, blink = true)
   }
 
   override fun onThumbnailClicked(
@@ -2746,6 +2749,7 @@ class ThreadPresenter @Inject constructor(
 
   interface ThreadPresenterCallback {
     val displayingPostDescriptors: List<PostDescriptor>
+    val displayingPostDescriptorsInThread: List<PostDescriptor>
     val currentPosition: IndexAndTop?
 
     suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)

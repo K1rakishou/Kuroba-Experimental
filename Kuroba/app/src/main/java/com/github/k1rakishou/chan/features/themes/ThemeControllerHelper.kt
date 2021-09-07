@@ -74,6 +74,7 @@ class ThemeControllerHelper(
     override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
     override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
+    override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
     override fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
     override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {}
     override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
