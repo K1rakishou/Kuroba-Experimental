@@ -1,0 +1,50 @@
+v0.12.3
+TLDR version:
+!!! The very first application start may take some time (10-45 seconds) due to disk cache changes (some files need to be moved) !!!
+- Android 12 support.
+- Navigation history reworked.
+- Jetpack Compose screens performance improvements.
+- Application startup time improvements.
+- Composite catalogs.
+
+Full version:
+- Composite catalogs. This feature allows you to combine multiple boards (2-10 boards) into a single catalog which can then be loaded like a regular catalog (like the archive catalogs with unlimited amount of pages but in composite catalogs the amount of pages is the amount of added boards). It's also possible to fully load composite catalog without having to scroll down until the last board of the composite catalog (Three dots menu -> Load the rest of this composite catalog). Only non-archive sites can be used in composite catalogs.
+- Add LIST view mode for navigation history.
+- Periodically update PostCell's title to update the time if it's set to relative time.
+- Fix snackbar appearing below the bottom nav view on Android API < Q.
+- Fix a crash when opening ReportProblemLayout with a very huge logcat log (unable to create layer for ColorizableEditText).
+- Other minor fixes.
+
+v0.12.2
+- Fix crash when updating apk.
+
+v0.12.1
+- More improvements for the navigation history list.
+- Add ability to export/import filters.
+- Fix a bug where full image would be hidden a error is occurred while trying to zoom in into the image.
+- Fix a bug where Android 10 gesture exclusion zones would randomly get reset.
+- Fix PopupControllerContainer and BoardArchiveController when using SPLIT layout mode.
+
+v0.12.0
+- Navigation history has been reworked. Now it's possible to pin/unpin navigation history elements (boards/threads) for quick access.
+- Add an option to mark already visited threads in the catalog. They will appear more transparent in the catalog. Enabled by default (disable by searching for "Mark already seen threads" in the settings).
+- Add compact mode for multi image posts (omit all images except the first one + ability to display omitted images). Enabled by default (disable by searching for "Post multiple images compact mode" in the settings).
+- Posts marked as yours are now marked differently. Instead of changing whole post background, your posts are now marked with a line on the left side of the post and replies to your posts are marked with dotted line. The line uses "post_saved_reply_color" color which was currently updated for the two default themes but not for the rest. You will probably have to update it manually if you are using a custom theme or wait when github themes are updated (which should happen by the next release).
+- Migrate crashlogs, anrs, file_chunks_cache, filecache directories from the Android cache directory to files directory. The reason for this migration is that sometimes Android may start cleaning up the app's cache directory even when the app is running (and even if the device has enough of disk space) which breaks everything related to CacheHandler until app restart. We don't want this to happen so from now on all the cached files will be located in the "files" directory. To clear app's disk caches (media and exoplayer) there is a button in the developer settings (application's developer settings not Android's). This weird Android behavior was one of the reasons of the bug where images sometimes would stop loading until app restart.
+- Add an option to export downloaded threads media into a backup (this may make backups very large).
+- Decrease min and default disk caches size.
+- Fix deleted posts in threads not being marked as deleted in threads.
+- Add "open media by url" option.
+- Fix CommentSpanUpdater incorrectly updating link spans.
+- Fix incorrect parsing of "<br />" tags on Lainchan.
+- Always show last posting error in the reply layout when opening it until: 1. The user swipes away the notification. 2. The user clicks the reply layout error message.
+- Fix catalog not showing any threads after full catalog reload when in airplane mode (no internet).
+- Track thread status (Closed/Archived/Deleted/Pinned/Unpinned) and display it to the user (snackbar). Track deleted thread posts and display them to the user (snackbar). Add ability to mark deleted posts on the scrollbar.
+- Some adjustments for post comment shift + fix huge bottom offset of snackbar in SPLIT layout mode.
+- Fix not being able to disable filters one by one.
+- Enabling/disabling filters now uses memory cache to reload posts instead of reloading them from the server.
+- Move loadLogs() to a background thread.
+- Add ability to mark selected bookmarks as read.
+- Try to figure out the posting timeout and wait before sending a reply if a board has the cooldown info. Should fix the bug when the captcha is required to be solved twice when posting more than once sequentially.
+- Remove ability to hide 4chan captcha background (wasn't really that useful, lots of people got confused by it).
+- Fix a crash when opening media in threads with tons of media (1000+ images).
