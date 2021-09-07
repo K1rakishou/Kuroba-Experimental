@@ -15,10 +15,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <plurals name="posts">
-        <item quantity="one">%d post</item>
-        <item quantity="other">%d posts</item>
-    </plurals>
     <plurals name="reply">
         <item quantity="one">%d reply</item>
         <item quantity="other">%d replies</item>
@@ -34,10 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <plurals name="type">
         <item quantity="one">%d type</item>
         <item quantity="other">%d types</item>
-    </plurals>
-    <plurals name="bookmark">
-        <item quantity="one">%d bookmark</item>
-        <item quantity="other">%d bookmarks</item>
     </plurals>
     <plurals name="filter">
         <item quantity="one">%d filter</item>
@@ -55,34 +47,10 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         <item quantity="one">%1$d post removed</item>
         <item quantity="other">%1$d posts removed</item>
     </plurals>
-    <plurals name="watch_title">
-        <item quantity="one">Watching one thread</item>
-        <item quantity="other">Watching %d threads</item>
-    </plurals>
-    <plurals name="download_title">
-        <item quantity="one">Downloading one thread</item>
-        <item quantity="other">Downloading %d threads</item>
-    </plurals>
 
-    <plurals name="watch_new_quotes">
-        <item quantity="one">%d new post quoting you</item>
-        <item quantity="other">%d new posts quoting you</item>
-    </plurals>
-    <plurals name="watch_new_quoting">
-        <item quantity="one">%1$d new post, %2$d quoting you</item>
-        <item quantity="other">%1$d new posts, %2$d quoting you</item>
-    </plurals>
-
-    <string-array name="setting_watch_sounds">
-        <item>All posts</item>
-        <item>Only posts quoting you</item>
-    </string-array>
-
-    <string name="empty" />
     <string name="cancel">Cancel</string>
     <string name="cancel_all">Cancel all</string>
     <string name="canceled">Canceled</string>
-    <string name="timeout">Timeout</string>
     <string name="add">Add</string>
     <string name="close">Close</string>
     <string name="back">Back</string>
@@ -91,10 +59,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="undo">Undo</string>
     <string name="reset">Reset</string>
     <string name="done">Done</string>
-    <string name="continue_text">Continue</string>
     <string name="create">Create</string>
     <string name="do_not">Do not</string>
-    <string name="move">Move</string>
     <string name="edit">Edit</string>
     <string name="remove">Remove</string>
     <string name="yes">Yes</string>
@@ -102,16 +68,12 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="save">Save</string>
     <string name="update">Update</string>
     <string name="send">Send</string>
-    <string name="success">Success</string>
-    <string name="error">Error</string>
     <string name="help">Help</string>
-    <string name="more">More</string>
     <string name="retry">Retry</string>
     <string name="apply">Apply</string>
     <string name="clear">Clear</string>
     <string name="resolve">Resolve</string>
     <string name="unhandled_error">Unhandled error!</string>
-    <string name="unknown_error">Unknown error</string>
     <string name="loading">Loading…</string>
     <string name="download">Download</string>
 
@@ -177,7 +139,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     </plurals>
 
     <string name="action_reload">Reload</string>
-    <string name="action_thread_download">Thread download</string>
     <string name="action_pin">Bookmark</string>
     <string name="action_view_removed_posts">View removed posts</string>
     <string name="action_preview_thread_in_archive">Preview in archive</string>
@@ -185,28 +146,22 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_catalog_album">Catalog album</string>
     <string name="action_rest_composite_catalog">Load the rest of this composite catalog</string>
-    <string name="action_change_gestures">Change image viewer gestures</string>
     <string name="action_open_thread_by_id">Open thread by ID</string>
     <string name="action_open_thread_by_url">Open thread by url</string>
     <string name="action_open_media_by_url">Open media (image/video) by url</string>
     <string name="action_share">Share</string>
     <string name="action_chan4_archive">View archive</string>
     <string name="action_open_catalog_page">Open catalog page</string>
-    <string name="action_share_url">Share file url</string>
     <string name="action_go_to_post">Go to post</string>
-    <string name="action_scrollbar_post_highlights">Scrollbar post highlights</string>
     <string name="action_thread_options">Thread options</string>
     <string name="action_allow_image_transparency">Allow image transparency</string>
-    <string name="action_image_rotate">Rotate image</string>
     <string name="action_search">Search</string>
-    <string name="action_search_image">Image search</string>
     <string name="action_switch_catalog_grid">Catalog (grid) mode</string>
     <string name="action_switch_catalog_stagger">Catalog (stagger) mode</string>
     <string name="action_switch_board">Board mode</string>
 
     <string name="action_start_thread_download">Start thread download</string>
     <string name="action_stop_thread_download">Stop thread download</string>
-    <string name="action_thread_downloader_root_dir_options">Change thread downloader root directory</string>
 
     <string name="action_copy_link_text">Copy link text</string>
     <string name="action_copy_link_value">Copy link value</string>
@@ -234,8 +189,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_scroll_to_bottom">Bottom</string>
     <string name="action_sort">Sort</string>
     <string name="action_browse_dev_menu">Dev menu</string>
-    <string name="action_rename_pin">Rename bookmark</string>
-    <string name="action_rename">Rename</string>
     <string name="action_reply">Reply</string>
     <string name="action_copy_image_full_url">Copy full image url</string>
     <string name="action_copy_image_thumbnail_url">Copy image thumbnail url</string>
@@ -273,11 +226,9 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="search_nothing_to_display_make_sure_sites_boards_active">Nothing to display. Make sure you added some sites/boards first.</string>
 
     <string name="open_link_confirmation">Open this link?</string>
-    <string name="open_link_failed">No applications were found to open this link</string>
     <string name="open_link_failed_url">No applications were found to open link \"%1$s\"</string>
     <string name="open_intent_failed">No applications were found to open intent \"%1$s\"</string>
     <string name="open_link_failed_url_additional_info">No applications were found to open link \"%1$s\" (%2$s)</string>
-    <string name="open_file_picker_failed">No file picker applications were found</string>
     <string name="image_pick_delegate_select_file_picker">Select a file picker to open a file…</string>
 
     <string name="thumbnail_load_failed_network">Reload</string>
@@ -290,9 +241,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_failed_gif_error">Failed to load gif (reason: %1$s)</string>
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
     <string name="image_not_found">Image not found</string>
-    <string name="image_spoiler_filename">Spoilered file</string>
-    <string name="image_hidden_filename">Hidden file</string>
-    <string name="thread_boards_search_hint">Search</string>
     <string name="thread_load_failed_ssl">HTTPS error</string>
     <string name="thread_load_failed_ssl_with_reason">HTTPS error (reason: %1$s)</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
@@ -326,29 +274,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_empty_setup_feature" translatable="false">&#128564;</string>
     <string name="thread_empty_setup_title">Nothing to show</string>
     <string name="thread_empty_setup_body">Add a site to begin browsing</string>
-    <string name="thread_empty_setup_hint">Add a site here</string>
 
-    <string name="setup_sites_empty">No sites added</string>
-    <string name="setup_sites_description">Add a site by its URL or name</string>
-
-    <string name="setup_sites_site_description">%s added</string>
-    <string name="setup_site_title">Configure %s</string>
-    <string name="setup_site_group_general">General</string>
-
-    <string name="setup_site_boards">Set up boards</string>
-    <string name="setup_site_boards_description">%s added</string>
-    <string name="setup_site_group_login">Authentication</string>
-    <string name="setup_site_login">Login</string>
-    <string name="setup_site_login_description_enabled">Logged in</string>
-    <string name="setup_site_third_party_archives">Third-party archives</string>
-    <string name="setup_site_setup_archives_title">Setup archives</string>
-    <string name="setup_site_setup_archives_description">These archives are for restoring deleted posts/images in a thread\n\nTotal archives: %1$d (-%2$d)\nEnabled archives: %3$d\nWorking archives: %4$d</string>
-
-    <string name="setup_site_login_description_disabled">Off</string>
-    <string name="setup_board_empty">No boards added</string>
-    <string name="setup_board_removed">Removed \"%s\"</string>
-    <string name="setup_board_added">%s added</string>
-    <string name="setup_board_select_all">Select all</string>
     <string name="filter_enabled">Enabled</string>
     <string name="filter_filter">Filter</string>
     <string name="filter_action">Action</string>
@@ -360,7 +286,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_color">Highlight post</string>
     <string name="filter_remove">Remove post</string>
     <string name="filter_watch">Watch post</string>
-    <string name="filter_invalid_pattern">Invalid pattern</string>
     <string name="filter_all_currently_active_boards">(All currently added boards)</string>
 
     <string name="filter_preview">Test your filter</string>
@@ -477,26 +402,14 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <string name="board_check_all">Check all</string>
 
-    <string name="archive_title">%s archive</string>
-    <string name="archive_error">Error loading archive</string>
-
-    <string name="drawer_pinned">Bookmarked threads</string>
-    <string name="drawer_pin_removed">Removed \"%1$s\"</string>
-    <string name="drawer_pin_with_saved_thread_removed">Removed pin \"%1$s\" with saved thread</string>
-    <string name="drawer_pins_cleared">%1$s cleared</string>
-    <string name="drawer_pins_non_cleared">No bookmarks cleared</string>
-    <string name="drawer_pins_non_cleared_try_all">No bookmarks cleared. Hold to remove all.</string>
-
     <string name="post_highlight_id">Highlight ID</string>
     <string name="post_unhighlight_id">Unhighlight ID</string>
     <string name="post_highlight_tripcode">Highlight tripcode</string>
     <string name="post_unhighlight_tripcode">Unhighlight tripcode</string>
     <string name="post_filter_tripcode">Filter tripcode</string>
-    <string name="post_filter_image_hash">Filter image hash</string>
     <string name="post_text_copied">Text copied to clipboard</string>
     <string name="post_quote">Quote</string>
     <string name="post_quote_text">Quote text</string>
-    <string name="post_select_text">Select text</string>
     <string name="post_info">Info</string>
     <string name="post_info_title">Post info</string>
     <string name="post_show_links">Show links</string>
@@ -522,25 +435,10 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_subject">Subject</string>
     <string name="reply_comment_thread">Comment reply</string>
     <string name="reply_comment_board">Comment new thread</string>
-    <string name="reply_file_name">File name</string>
-    <string name="reply_file_too_big">Warning: File size too big (%1$s / %2$s)</string>
-    <string name="reply_webm_too_big">Warning: WebM size too big (%1$s / %2$s)</string>
-    <string name="reply_file_open_unknown_error">Failed to open file: unknown error</string>
-    <string name="reply_file_open_failed_to_copy_picked_file">Failed to open file: failed to copy picked file</string>
-    <string name="reply_file_open_reply_draft_not_found">Failed to open file: reply draft not found</string>
-    <string name="reply_file_open_no_file_pickers_found">Failed to open file: no file pickers found</string>
-    <string name="reply_file_open_filed_to_create_pick_file">Failed to open file: failed to create pick file</string>
-    <string name="reply_file_open_clipboard_error">Failed to open file: clipboard access error</string>
-    <string name="reply_file_open_failed_to_load_remote_file">Failed to open file: failed to load remote file</string>
-    <string name="reply_spoiler_image">Spoiler image</string>
-    <string name="reply_no_preview">No preview</string>
     <string name="reply_submit">Submit</string>
     <string name="reply_error_message">Error posting: %s</string>
-    <string name="reply_error_message_timer_reply">Error posting: You must wait %d seconds before posting a reply.</string>
-    <string name="reply_error_message_timer_thread">Error posting: You must wait %d seconds before posting a thread.</string>
     <string name="reply_error_failed_to_process_dvach_anti_spam_locally">Failed to process dvach anti-spam, reason: %1$s.</string>
     <string name="reply_error_authentication_required">Authentication required</string>
-    <string name="reply_captcha_text">Type the text</string>
     <string name="reply_comment_button_quote" translatable="false">&gt;</string>
     <string name="reply_comment_button_spoiler">Spoiler</string>
     <string name="reply_comment_button_code">Code</string>
@@ -552,7 +450,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="reply_comment_button_eqn_tag">[eqn]</string>
     <string name="reply_comment_button_math_tag">[math]</string>
     <string name="reply_comment_button_sjis_tag">[sjis]</string>
-    <string name="reply_attach_long_click_hint">Long tap to attach image by it\'s URL from the clipboard</string>
     <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
     <string name="reply_flag_format">Flag: %1$s</string>
     <string name="reply_captcha_failure">Captcha failure</string>
@@ -568,38 +465,19 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="delete_image_only">Only delete the image</string>
     <string name="delete_error">Error deleting post: %1$s</string>
     <string name="delete_error_post_is_not_saved">Error deleting post: No information found that this post is yours</string>
-    <string name="delete_error_unknown">Unknown error while deleting post</string>
-
-    <string name="watch_pause_pins">Stop watching</string>
-    <string name="watch_idle">No new posts</string>
 
     <string name="filters_screen">Filters</string>
 
     <string name="album_download_screen">Select images (%1$d / %2$d)</string>
     <string name="album_download_none_checked">Please select images to download</string>
     <string name="album_download_no_suitable_images">No suitable images to download were found (not inlined, not hidden)</string>
-    <string name="image_saver_album_download_success">Finished saving images; downloaded to %1$s</string>
 
     <string name="report_screen">Report %1$s</string>
-
-    <string name="bookmark_watcher_summary">Watching %1$d thread(s) (%2$d deleted, %3$d archived)</string>
-    <string name="bookmark_watcher_title">Watching thread(s)</string>
-
-    <string name="image_save_notification_downloading">Downloading images…</string>
-    <string name="image_save_notification_cancel">Tap to cancel</string>
-    <string name="image_save_saved">Image saved</string>
-    <string name="image_saver_saved_as_message">Saved as \"%1$s\"</string>
-
-    <string name="thread_page_limit">Thread hit last page</string>
-
-    <string name="drawer_settings">Settings</string>
-    <string name="drawer_history">History</string>
 
     <!-- Main settings -->
     <string name="settings_screen">Settings</string>
 
     <!-- Main "Settings" group -->
-    <string name="settings_group_settings">Settings</string>
     <string name="settings_watch">Thread/Filter watchers, thread downloader</string>
     <string name="settings_watch_summary_enabled">Thread/Filter watcher, thread downloader settings.</string>
     <string name="settings_sites">Sites</string>
@@ -622,11 +500,9 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_experimental_settings_description">These settings may become the reason of performance degradation/increased battery consumption or some other unexpected behavior. Use them at your own risk if you are really interested in the features they provide.</string>
 
     <!-- Thread watcher -->
-    <string name="setting_watch_summary_disabled">Off</string>
 
     <string name="settings_screen_watch">Thread/filter watcher, thread downloader settings</string>
     <string name="settings_thread_watcher_group">Thread watcher</string>
-    <string name="setting_watch_info">To watch bookmarks for new posts, turn the thread watcher on.</string>
     <string name="setting_watch_enable_thread_watcher">Enable thread watcher</string>
     <string name="setting_watch_enable_thread_watcher_description">Watch bookmarks when app is in the foreground</string>
     <string name="setting_watch_enable_background">Enable background thread watcher</string>
@@ -686,7 +562,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_screen_appearance">Appearance</string>
     <string name="settings_group_appearance">Appearance</string>
     <string name="setting_theme">Theme</string>
-    <string name="setting_full_screen_mode">Allow image viewer full screen mode</string>
 
     <!-- Appearance -->
     <string name="settings_group_layout">Layout</string>
@@ -706,9 +581,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_bottom_js_captcha">Bottom captcha</string>
     <string name="setting_bottom_js_captcha_description">Makes the JS captcha float to the bottom of the screen</string>
     <string name="setting_enable_reply_fab_description">Disabling replaces the round button with a menu option</string>
-    <string name="setting_enable_reply_count">Enable the reply counter</string>
     <string name="setting_font_size">Font size</string>
-    <string name="setting_font_size_default">(default)</string>
     <string name="setting_post_cell_thumbnail_size">Post thumbnail size (percents)</string>
     <string name="setting_post_thumbnail_scaling">Post thumbnail scaling type</string>
     <string name="setting_post_thumbnail_scaling_fit_center">Fit center</string>
@@ -816,14 +689,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Media general group -->
     <string name="settings_screen_media">Media</string>
 
-    <string name="save_location_screen">Save location</string>
-    <string name="save_location_storage_permission_required_title">Storage permission required</string>
-    <string name="save_location_storage_permission_required">
-"Permission to access storage is required for browsing files.
-
-Re-enable this permission in the app settings if you permanently disabled it."
-    </string>
-
     <!-- Media cache size group -->
     <string name="settings_media_cache_size">Media cache size</string>
     <string name="normal_cache_size_title">Media disk cache size</string>
@@ -861,10 +726,6 @@ Re-enable this permission in the app settings if you permanently disabled it."
 
 
     <!-- Save location settings -->
-    <string name="setting_folder_pick_ok">Choose</string>
-    <string name="setting_folder_navigate_up">Up</string>
-    <string name="save_new_folder">Add a new folder</string>
-    <string name="new_folder_hint">Folder name</string>
 
     <!-- Database summary settings -->
     <string name="settings_database_summary">Database summary</string>
@@ -990,7 +851,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
-    <string name="could_not_decode_image_bitmap">Could not decode image bitmap</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>
     <string name="could_not_reencode_image">Could not reencode image</string>
     <string name="image_options_change_image_checksum">Change image checksum</string>
@@ -1029,7 +889,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_saved_posts_delete_all_dialog_description">This action will delete ALL saved posts. You won\'t receive notifications for those posts anymore and they won\'t be marked as yours. Are you sure you want to continue?</string>
 
     <string name="controller_sites_setup_no_sites">No sites loaded, this shouldn\'t happen</string>
-    <string name="controller_sites_setup_archives_group">Archives (%1$d/%2$d)</string>
 
     <string name="controller_boards_setup_no_boards">No boards added</string>
     <string name="controller_boards_setup_title">Configure boards of %1$s</string>
@@ -1065,8 +924,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_proxy_editor_proxy_type_socks">SOCKS</string>
     <string name="controller_proxy_editor_enable_on_sites">Enable on sites</string>
     <string name="controller_proxy_editor_actions">Actions</string>
-    <string name="controller_proxy_editor_enable_for">Enable for</string>
-    <string name="controller_proxy_editor_cannot_add_new_proxy">Cannot add new proxy</string>
     <string name="controller_proxy_editor_proxy_added">New proxy added. Restart the app</string>
     <string name="controller_proxy_editor_proxy_updated">Proxy updated. Restart the app</string>
     <string name="controller_proxy_editor_proxy_deleted">Proxy deleted. Restart the app</string>
@@ -1083,23 +940,11 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="controller_search">Global search</string>
     <string name="controller_search_empty_sites">No sites supporting search found</string>
-    <string name="controller_search_search_input_hint">Enter search query</string>
 
     <string name="controller_search_searching">Searching %1$s for \"%2$s\"</string>
     <string name="controller_search_results">%1$s \"%2$s\" found total: %3$d</string>
     <string name="controller_search_results_unknown">%1$s \"%2$s\" found total: unknown</string>
     <string name="controller_search_results_end_of_list">End of results</string>
-
-    <string name="successfully_exported_text">Exported successfully"</string>
-    <string name="import_warning_title">Warning</string>
-    <string name="import_warning_text">You are about to import settings/saved pins/filters/hidden posts from a file.
-        The file must be located at \"%1$s\" and have a name \"%2$s\".
-        This will clear all your existing settings/pins/threads and replace them with the ones from the file.
-        You MAY LOSE some of your settings/pins/hidden threads if you are trying to import a file created with a different app version (upgrade or downgrade).
-        The app will be restarted. \nAre you sure you want to continue?
-    </string>
-    <string name="error_external_storage_is_not_mounted">External storage is not mounted</string>
-    <string name="could_not_create_dir_for_export_error_text">Could not create directory for export file %1$s; you probably won\'t be able to export settings</string>
 
     <string name="apply_to_replies">Apply to replies</string>
     <string name="only_on_op">Only on OP</string>
@@ -1109,8 +954,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="browse_controller_title_app_setup">App Setup</string>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
-    <string name="browse_controller_cannot_open_board">Cannot open board, it does not exist in the BoardRepository. Are you trying to open a board you didn\'t manually add?</string>
-    <string name="browse_controller_cannot_open_thread">Cannot open thread, it does not exist in the database. This is most likely a bug.</string>
     <string name="browse_controller_enter_thread_id">Enter thread id (the OP number, e.g. 123456789)</string>
     <string name="browse_controller_enter_thread_url">Enter thread url</string>
     <string name="browse_controller_enter_media_url">Enter media url</string>
@@ -1142,13 +985,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="restored_n_posts">Restored %1$d posts</string>
     <string name="no_removed_posts_for_current_thread">No removed posts found for the current thread</string>
     <string name="select_all">Select all</string>
-    <string name="settings_captcha_group">Captcha</string>
-    <string name="settings_use_new_captcha_window">Use new captcha window for no-js captcha</string>
-    <string name="settings_use_real_google_cookies_description">When enabled, a GET request to google.com will be executed to get a cookie, which will be used for captcha authentication.
-        The hardcoded ones sometimes will make you re-enter the captcha dozens of times.
-        Those cookies will be updated automatically (every three months).
-        You may update them manually if you want.
-    </string>
 
     <!-- Captcha settings -->
     <string name="captcha_layout_v2_verify_button_text">Verify</string>
@@ -1171,31 +1007,18 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>
     <string name="captcha_layout_v2_captcha_request_is_already_in_progress">Captcha request is already in progress</string>
     <string name="captcha_layout_v2_you_are_requesting_captcha_too_fast">You are requesting captcha too fast</string>
-    <string name="captcha_layout_v2_refresh_cookies">Refresh cookies</string>
     <string name="image_url_copied_to_clipboard">URL copied to clipboard</string>
     <string name="image_file_name_copied_to_clipboard">File name copied to clipboard</string>
     <string name="image_file_hash_copied_to_clipboard">File hash copied to clipboard</string>
     <string name="link_text_copied_to_clipboard">Link text copied to clipboard</string>
     <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
 
-    <string name="could_not_remove_site_error_message">Could not remove site %1$s (error message: %2$s)</string>
-
     <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
     <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
-    <string name="filter_removed_undo">Removed filter %1$s</string>
-    <string name="image_url_get_attempt">Getting image from clipboard URL…</string>
-    <string name="image_url_get_failed">Failed to get image from clipboard, reason = %1$s</string>
-    <string name="image_url_get_success">Got image from clipboard</string>
 
-    <string name="view_thread_controller_thread_downloading_requires_write_permission">Thread downloading requires the WRITE_EXTERNAL_STORAGE permission</string>
     <string name="view_thread_controller_enter_post_id">Enter post id to scroll to</string>
 
-    <string name="warning">Warning</string>
-
-    <string name="drawer_controller_at_least_one_pin_has_download_flag">At least one pin has the \"Download\" flag, which makes this delete operation irreversible (because this operation will delete all of the saved thread\'s files from the disk). Do you really want to delete all pins?</string>
-    <string name="drawer_controller_do_not_delete">Do not delete</string>
-    <string name="drawer_controller_delete_all_pins">Delete all pins</string>
     <string name="drawer_controller_navigation_history_is_empty">Navigation history is empty.\n\nOpen a board or a thread to add it here (Additionally, check drawer settings)</string>
     <string name="drawer_controller_start_navigation_history_selection">Select</string>
     <string name="drawer_controller_navigation_history_select_all">Select all</string>
@@ -1219,18 +1042,12 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="board_selection_controller_grid_layout_mode">Grid mode</string>
 
-    <string name="thread_layout_background_watcher_is_disabled_message">Thread is currently being downloaded, but the background watcher is disabled so it won\'t be incrementally updated. To enable incremental thread updating, you have to enable the background thread watcher.</string>
     <string name="cannot_open_in_browser_already_deleted">Can\'t open this thread in a browser</string>
     <string name="cannot_shared_thread_already_deleted">Can\'t share this thread</string>
     <string name="thread_follow_history_has_been_cleared">Thread follow history has been cleared</string>
     <string name="thread_loading_error_title">Failed to load thread</string>
     <string name="thread_download_archive_thread_warning_title">Downloading archive threads</string>
     <string name="thread_download_archive_thread_warning_description">You are trying to download a thread that is stored in third-party archive. Thread downloader periodically updates threads locally until it detects that a thread is closed, deleted or is not in the board catalog anymore. Since this is a third-party archive, neither of those conditions will ever be met. So archive threads will continue being downloaded pretty much forever. You will have to stop such downloads manually otherwise it will never stop and will continue to consume battery.</string>
-
-    <string name="setting_youtube_dur_title">Enable Youtube durations</string>
-    <string name="setting_youtube_dur_description">Adds duration parsing to Youtube titles; does not do anything with titles off</string>
-    <string name="pdf_not_viewable">PDFs are not internally viewable; you can still download this file.</string>
-    <string name="swf_not_viewable">SWFs are not internally viewable; you can still download this file.</string>
 
     <string name="lorem_ipsum">
         The standard Lorem Ipsum passage, used since the 1500s
@@ -1241,12 +1058,10 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="report_controller_problem_description">Problem description:</string>
     <string name="report_controller_attach_logs">Attach logs</string>
     <string name="report_controller_no_logs">No logs</string>
-    <string name="report_controller_cancel">Cancel</string>
     <string name="report_controller_send_report">Send report</string>
     <string name="report_controller_title_cannot_be_empty_error">Title cannot be empty!</string>
     <string name="report_controller_description_cannot_be_empty_error">If description is empty, logs cannot be empty!</string>
     <string name="report_controller_logs_are_empty_error">\"Attach logs\" option is checked, but logs are empty!</string>
-    <string name="report_controller_sending_report_message">Sending report…</string>
     <string name="report_controller_report_sent_message">Sent \;)</string>
     <string name="report_controller_error_while_trying_to_send_report">Error while trying to send report: %1$s</string>
 
@@ -1267,7 +1082,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="theme_settings_controller_theme_set">Theme \'%1$s\' set as %2$s theme</string>
 
     <string name="layout_reply_files_area_too_many_attachables_text">Too many files to display them all at once (%1$d out of %2$d max). Upload or delete some of them to display the rest.</string>
-    <string name="layout_reply_files_area_open_in_editor_action">Open in editor</string>
     <string name="layout_reply_files_area_delete_file_action">Delete this file</string>
     <string name="layout_reply_files_area_delete_selected_files_action">Delete selected files</string>
     <string name="layout_reply_files_area_remove_file_name">Remove file name of selected files</string>
@@ -1311,9 +1125,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="deleted_n_report_files">Deleted %1$d report file(s)</string>
     <string name="sent_n_report_files">Sent %1$d report file(s)</string>
 
-    <string name="media_settings_base_dir_reset_message">Base directory reset to default</string>
-    <string name="media_settings_could_not_create_default_baseDir">Could not create default base dir: %1$s</string>
-
     <string name="site_uses_dynamic_boards">"Unable to go to board (site likely has dynamic boards). Add the board using the boards menu first."</string>
     <string name="archive_is_not_enabled">Archive for boards /%1$s/ is not enabled or does not exist</string>
     <string name="failed_to_find_board_with_code">Failed to find board with code /%1$s/</string>
@@ -1326,18 +1137,14 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="update_manager_could_not_copy_apk">Couldn\'t copy file contents from file (%1$s) into (%2$s)</string>
     <string name="update_manager_apk_copied">Apk successfully copied</string>
 
-    <string name="could_not_initialized_captcha">Couldn\'t initialize captcha, reason: %1$s</string>
     <string name="fail_reason_webview_is_not_installed">WebView is not installed</string>
     <string name="fail_reason_some_part_of_webview_not_initialized">Some part of WebViewChromium couldn\'t get initialized: (%1$s)</string>
 
-    <string name="setting_enable_image_link_loading">Enable image link loading</string>
-    <string name="setting_enable_image_link_loading_description">Adds any JPG, PNG, GIF, WEBM, MP4, PDF, BMP, WEBP, MP3, SWF, M4A, OGG, or FLAC files linked in posts as internally viewable post attachments, with a special spoiler image due to no thumbnails being available</string>
     <string name="add_new_zone">Add new zone</string>
     <string name="setting_exclusion_zones_left_zone_portrait">Left zone (Portrait orientation)</string>
     <string name="setting_exclusion_zones_right_zone_portrait">Right zone (Portrait orientation)</string>
     <string name="setting_exclusion_zones_left_zone_landscape">Left zone (Landscape orientation)</string>
     <string name="setting_exclusion_zones_right_zone_landscape">Right zone (Landscape orientation)</string>
-    <string name="setting_exclusion_zones_actions_dialog_title">Android 10 exclusion zones actions</string>
     <string name="setting_exclusion_zones_wrong_phone_orientation">Wrong phone orientation, you need to rotate your phone 90 degrees to any side before using this option.</string>
     <string name="setting_exclusion_zones_edit_or_remove_zone_title">Edit or remove zone?</string>
     <string name="setting_exclusion_zones_zone_remove_message">Zone removed. Restart the app for the changes to kick in.</string>
@@ -1453,8 +1260,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
-    <string name="file_has_exif_data">This file has exif data. Consider re-encoding it before posting.</string>
-    <string name="image_from_archive">(From archive)</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>
     <string name="updater_is_disabled_for_fdroid_builds">Updater is disabled for F-Droid builds</string>
