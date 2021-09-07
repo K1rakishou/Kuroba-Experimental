@@ -27,9 +27,20 @@ class ReportProblemController(context: Context)
     super.onCreate()
     navigation.setTitle(R.string.report_controller_report_an_error_problem)
 
-    view = ReportProblemLayout(context).apply {
+    val reportProblemLayout = ReportProblemLayout(context).apply {
       onReady(this@ReportProblemController)
     }
+
+    view = reportProblemLayout
+
+    navigation
+      .buildMenu(context)
+      .withItem(
+        ACTION_SEND_REPORT,
+        R.drawable.ic_send_white_24dp,
+        { reportProblemLayout.onSendReportClick() }
+      )
+      .build()
 
     onInsetsChanged()
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -62,5 +73,9 @@ class ReportProblemController(context: Context)
 
   override fun onFinished() {
     this.navigationController!!.popController()
+  }
+
+  companion object {
+    private const val ACTION_SEND_REPORT = 1
   }
 }

@@ -5,7 +5,6 @@ import android.widget.FrameLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.ui.controller.LogsController
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.ReportProblemView
@@ -16,7 +15,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import io.reactivex.disposables.CompositeDisposable
 import javax.inject.Inject
 
 class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProblemView {
@@ -27,13 +25,10 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
   lateinit var themeEngine: ThemeEngine
 
   private var callbacks: ReportProblemControllerCallbacks? = null
-  private lateinit var compositeDisposable: CompositeDisposable
-
   private val reportActivityProblemTitle: ColorizableEditText
   private val reportActivityProblemDescription: ColorizableEditText
   private val reportActivityAttachLogsButton: ColorizableCheckBox
   private val reportActivityLogsText: ColorizableEditText
-  private val reportActivitySendReport: ColorizableBarButton
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -44,13 +39,10 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
       reportActivityProblemDescription = findViewById(R.id.report_controller_problem_description)
       reportActivityAttachLogsButton = findViewById(R.id.report_controller_attach_logs_button)
       reportActivityLogsText = findViewById(R.id.report_controller_logs_text)
-      reportActivitySendReport = findViewById(R.id.report_controller_send_report)
     }
   }
 
   fun onReady(controllerCallbacks: ReportProblemControllerCallbacks) {
-    compositeDisposable = CompositeDisposable()
-
     val logs = LogsController.loadLogs()
     if (logs != null) {
       val reportFooter = reportManager.getReportFooter()
@@ -60,17 +52,15 @@ class ReportProblemLayout(context: Context) : FrameLayout(context), ReportProble
     reportActivityAttachLogsButton.setOnCheckedChangeListener { _, isChecked ->
       reportActivityLogsText.isEnabled = isChecked
     }
-    reportActivitySendReport.setOnClickListener { onSendReportClick() }
 
     this.callbacks = controllerCallbacks
   }
 
   fun destroy() {
-    compositeDisposable.dispose()
     callbacks = null
   }
 
-  private fun onSendReportClick() {
+  fun onSendReportClick() {
     if (callbacks == null) {
       return
     }
