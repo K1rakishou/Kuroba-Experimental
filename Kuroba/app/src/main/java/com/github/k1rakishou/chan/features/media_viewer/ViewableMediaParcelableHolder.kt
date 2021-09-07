@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -26,7 +25,6 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class CompositeCatalogMediaParcelableHolder(
     val catalogDescriptorParcelable: DescriptorParcelable,
-    val postDescriptorParcelableList: List<PostDescriptorParcelable>,
     val initialImageUrl: String?,
     val transitionInfo: TransitionInfo?,
     val mediaViewerOptions: MediaViewerOptions
@@ -39,15 +37,12 @@ sealed class ViewableMediaParcelableHolder {
     companion object {
       fun fromCompositeCatalogDescriptor(
         compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor,
-        postDescriptorList: List<PostDescriptor>,
         initialImageUrl: String?,
         transitionInfo: TransitionInfo?,
         mediaViewerOptions: MediaViewerOptions
       ) : CompositeCatalogMediaParcelableHolder {
         return CompositeCatalogMediaParcelableHolder(
           catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(compositeCatalogDescriptor),
-          postDescriptorParcelableList = postDescriptorList
-            .map { postDescriptor -> PostDescriptorParcelable.fromPostDescriptor(postDescriptor) },
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,
           mediaViewerOptions = mediaViewerOptions
@@ -59,7 +54,6 @@ sealed class ViewableMediaParcelableHolder {
   @Parcelize
   data class CatalogMediaParcelableHolder(
     val catalogDescriptorParcelable: DescriptorParcelable,
-    val threadNoList: List<Long>,
     val initialImageUrl: String?,
     val transitionInfo: TransitionInfo?,
     val mediaViewerOptions: MediaViewerOptions
@@ -72,14 +66,12 @@ sealed class ViewableMediaParcelableHolder {
     companion object {
       fun fromCatalogDescriptor(
         catalogDescriptor: ChanDescriptor.CatalogDescriptor,
-        postDescriptorList: List<PostDescriptor>,
         initialImageUrl: String?,
         transitionInfo: TransitionInfo?,
         mediaViewerOptions: MediaViewerOptions
       ) : CatalogMediaParcelableHolder {
         return CatalogMediaParcelableHolder(
           catalogDescriptorParcelable = DescriptorParcelable.fromDescriptor(catalogDescriptor as ChanDescriptor),
-          threadNoList = postDescriptorList.map { postDescriptor -> postDescriptor.postNo },
           initialImageUrl = initialImageUrl,
           transitionInfo = transitionInfo,
           mediaViewerOptions = mediaViewerOptions

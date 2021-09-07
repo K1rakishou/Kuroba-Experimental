@@ -17,6 +17,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.flatMapNotNull
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -140,24 +141,14 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder -> {
           val compositeCatalogDescriptor = viewableMediaParcelableHolder.compositeCatalogDescriptor
           val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
-          val postDescriptors = viewableMediaParcelableHolder.postDescriptorParcelableList
-            .map { postDescriptorParcelable -> postDescriptorParcelable.postDescriptor }
 
-          collectCatalogMedia(compositeCatalogDescriptor, initialImageUrl, postDescriptors)
+          collectCatalogMedia(compositeCatalogDescriptor, initialImageUrl)
         }
         is ViewableMediaParcelableHolder.CatalogMediaParcelableHolder -> {
           val catalogDescriptor = viewableMediaParcelableHolder.catalogDescriptor
           val initialImageUrl = viewableMediaParcelableHolder.initialImageUrl?.toHttpUrlOrNull()
-          val postDescriptors = viewableMediaParcelableHolder.threadNoList
-            .map { threadNo ->
-              return@map PostDescriptor.create(
-                chanDescriptor = catalogDescriptor,
-                threadNo = threadNo,
-                postNo = threadNo
-              )
-            }
 
-          collectCatalogMedia(catalogDescriptor, initialImageUrl, postDescriptors)
+          collectCatalogMedia(catalogDescriptor, initialImageUrl)
         }
         is ViewableMediaParcelableHolder.ThreadMediaParcelableHolder -> {
           collectThreadMedia(viewableMediaParcelableHolder)
@@ -339,37 +330,39 @@ class MediaViewerControllerViewModel : ViewModel() {
   }
 
   private fun collectCatalogMedia(
-    chanDescriptor: ChanDescriptor,
-    initialImageUrl: HttpUrl?,
-    postDescriptors: List<PostDescriptor>
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
+    initialImageUrl: HttpUrl?
   ): MediaViewerControllerState? {
     BackgroundUtils.ensureBackgroundThread()
 
     val initialPagerIndex = AtomicInteger(0)
     val mediaIndex = AtomicInteger(0)
 
-    val mediaList = postDescriptors.flatMapNotNull { postDescriptor ->
-      val chanPost = chanThreadManager.getPost(postDescriptor)
-      if (chanPost == null) {
-        return@flatMapNotNull null
-      }
+    val catalogDescriptors = when (catalogDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> listOf(catalogDescriptor)
+      is ChanDescriptor.CompositeCatalogDescriptor -> catalogDescriptor.catalogDescriptors
+    }
 
-      val mediaList = mutableListOf<ViewableMedia>()
+    val mediaList = mutableListWithCap<ViewableMedia>(64)
 
-      chanPost.iteratePostImages { chanPostImage ->
-        val viewableMedia = processChanPostImage(
-          chanPostImage = chanPostImage,
-          scrollToImageWithUrl = initialImageUrl,
-          lastViewedIndex = initialPagerIndex,
-          mediaIndex = mediaIndex
-        )
+    catalogDescriptors.forEach { descriptor ->
+      val catalogSnapshot = chanThreadManager.getChanCatalog(descriptor)
+        ?: return@forEach
 
-        if (viewableMedia != null) {
-          mediaList += viewableMedia
+      catalogSnapshot.iteratePostsOrdered { chanOriginalPost ->
+        chanOriginalPost.iteratePostImages { chanPostImage ->
+          val viewableMedia = processChanPostImage(
+            chanPostImage = chanPostImage,
+            scrollToImageWithUrl = initialImageUrl,
+            lastViewedIndex = initialPagerIndex,
+            mediaIndex = mediaIndex
+          )
+
+          if (viewableMedia != null) {
+            mediaList += viewableMedia
+          }
         }
       }
-
-      return@flatMapNotNull mediaList
     }
 
     if (mediaList.isNullOrEmpty()) {
@@ -394,7 +387,7 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
 
     return MediaViewerControllerState(
-      descriptor = chanDescriptor,
+      descriptor = catalogDescriptor as ChanDescriptor,
       loadedMedia = output.images,
       initialPagerIndex = actualInitialPagerIndex
     )

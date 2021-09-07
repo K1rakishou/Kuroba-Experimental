@@ -329,10 +329,6 @@ class ImageLoaderV2(
 
         withContext(NonCancellable) {
           activeListeners.forEachIndexed { index, activeListener ->
-            if (verboseLogs) {
-              Logger.d(TAG, "notifying listeners: ${index + 1}/${activeListeners.size}, url='$url'")
-            }
-
             val resultBitmapDrawable = applyTransformationsToDrawable(
               context = context,
               lifecycle = context.getLifecycleFromContext(),

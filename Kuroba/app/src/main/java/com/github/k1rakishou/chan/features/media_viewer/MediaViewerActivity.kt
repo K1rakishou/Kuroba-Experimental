@@ -400,7 +400,6 @@ class MediaViewerActivity : ControllerHostActivity(),
     fun catalogMedia(
       context: Context,
       catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
-      postDescriptorList: List<PostDescriptor>,
       initialImageUrl: String?,
       transitionThumbnailUrl: String,
       lastTouchCoordinates: Point,
@@ -420,7 +419,6 @@ class MediaViewerActivity : ControllerHostActivity(),
         is ChanDescriptor.CatalogDescriptor -> {
           ViewableMediaParcelableHolder.CatalogMediaParcelableHolder.fromCatalogDescriptor(
             catalogDescriptor = catalogDescriptor,
-            postDescriptorList = postDescriptorList,
             initialImageUrl = initialImageUrl,
             transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
               transitionThumbnailUrl = transitionThumbnailUrl,
@@ -433,7 +431,6 @@ class MediaViewerActivity : ControllerHostActivity(),
         is ChanDescriptor.CompositeCatalogDescriptor -> {
           ViewableMediaParcelableHolder.CompositeCatalogMediaParcelableHolder.fromCompositeCatalogDescriptor(
             compositeCatalogDescriptor = catalogDescriptor,
-            postDescriptorList = postDescriptorList,
             initialImageUrl = initialImageUrl,
             transitionInfo = ViewableMediaParcelableHolder.TransitionInfo(
               transitionThumbnailUrl = transitionThumbnailUrl,

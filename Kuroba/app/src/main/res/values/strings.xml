@@ -729,6 +729,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_post_draw_post_thumbnail_background">Draw background behind post thumbnails</string>
     <string name="setting_post_file_info">Show file info on posts</string>
     <string name="setting_post_shift_post_comment">Shift post comment to be to the left/right side of thumbnail when possible</string>
+    <string name="setting_post_shift_post_comment_description">Works the best when thumbnails are on the right side of the post</string>
     <string name="setting_post_multiple_images_compact_mode">Post multiple images compact mode</string>
     <string name="setting_post_multiple_images_compact_mode_description">When enabled, all posts with multiple images will only show the first image. Clicking it will show the rest.</string>
     <string name="settings_group_images">Images</string>

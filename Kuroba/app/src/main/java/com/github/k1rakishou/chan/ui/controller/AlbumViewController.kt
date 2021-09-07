@@ -407,7 +407,6 @@ class AlbumViewController(
         MediaViewerActivity.catalogMedia(
           context = context,
           catalogDescriptor = chanDescriptor,
-          postDescriptorList = mapPostImagesToPostDescriptors(),
           initialImageUrl = postImages[index].imageUrl?.toString(),
           transitionThumbnailUrl = postImages[index].getThumbnailUrl()!!.toString(),
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),

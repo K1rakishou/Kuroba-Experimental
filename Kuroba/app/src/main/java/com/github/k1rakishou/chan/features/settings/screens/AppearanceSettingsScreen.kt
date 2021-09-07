@@ -152,6 +152,7 @@ class AppearanceSettingsScreen(
           context = context,
           identifier = AppearanceScreen.PostGroup.ShiftPostComment,
           topDescriptionIdFunc = { R.string.setting_post_shift_post_comment },
+          bottomDescriptionIdFunc = { R.string.setting_post_shift_post_comment_description },
           setting = ChanSettings.shiftPostComment,
           requiresUiRefresh = true
         )
