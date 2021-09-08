@@ -56,6 +56,10 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = ChanSettings.videoDefaultMuted.get()
       && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
 
+  private var _activityInForeground = false
+  val activityInForeground: Boolean
+    get() = _activityInForeground
+
   private var _isSoundMuted = defaultMuteState
   val isSoundMuted: Boolean
     get() = _isSoundMuted
@@ -68,6 +72,10 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = _mediaViewerOptions
   val chanDescriptor: ChanDescriptor?
     get() = mediaViewerState.value?.descriptor
+
+  fun updateActivityIsInForeground(inForeground: Boolean) {
+    _activityInForeground = inForeground
+  }
 
   fun toggleIsSoundMuted() {
     _isSoundMuted = _isSoundMuted.not()

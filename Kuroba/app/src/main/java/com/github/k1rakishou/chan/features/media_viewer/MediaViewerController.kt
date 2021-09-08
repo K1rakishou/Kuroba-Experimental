@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
+import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.view.View
 import androidx.activity.ComponentActivity
@@ -382,7 +383,7 @@ class MediaViewerController(
     BackgroundUtils.ensureMainThread()
 
     if (transitionInfo == null) {
-      mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)
+      mediaViewerRootLayout.setBackgroundColor(FINAL_BACKGROUND_COLOR)
       return
     }
 
@@ -395,7 +396,7 @@ class MediaViewerController(
     }
 
     if (resultBitmap == null) {
-      mediaViewerRootLayout.setBackgroundColor(BACKGROUND_COLOR)
+      mediaViewerRootLayout.setBackgroundColor(FINAL_BACKGROUND_COLOR)
       return
     }
 
@@ -405,7 +406,8 @@ class MediaViewerController(
     suspendCancellableCoroutine<Unit> { continuation ->
       appearPreviewImage.runAppearAnimation(
         view,
-        BACKGROUND_COLOR,
+        START_BACKGROUND_COLOR,
+        FINAL_BACKGROUND_COLOR,
         { currentBackgroundColor -> mediaViewerRootLayout.setBackgroundColor(currentBackgroundColor) },
         { continuation.resumeValueSafe(Unit) }
       )
@@ -421,7 +423,8 @@ class MediaViewerController(
 
   companion object {
     private const val TAG = "MediaViewerController"
-    private const val BACKGROUND_COLOR = 0xDD000000L.toInt()
+    private const val START_BACKGROUND_COLOR = Color.TRANSPARENT
+    private const val FINAL_BACKGROUND_COLOR = Color.BLACK
     private const val MAX_WAIT_TIME_MS = 1000L
   }
 }

@@ -643,6 +643,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
+    <string name="setting_use_mpv">Use mpv video player</string>
+    <string name="setting_use_mpv_description">When turned on mpv video player will be used to play videos instead of the ExoPlayer. When turned off ExoPlayer will be used.</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -744,6 +746,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <!-- Developer settings -->
     <string name="settings_check_update_apk_version_code">Check update apk version code</string>
     <string name="settings_check_update_apk_version_code_description">For development only! When turned off you will always be suggested to install the apk update.</string>
+    <string name="settings_check_show_mpv_internal_logs">Show MPV internal logs</string>
+    <string name="settings_check_show_mpv_internal_logs_description">When set to true we will include MPV (video player) logs when taking them for reports. This is mandatory when you want to report a video that cannot be played by MPV. Such reports without MPV logs will be discarded.</string>
     <string name="settings_force_low_ram_device">Force low ram device</string>
     <string name="settings_force_low_ram_device_description">This setting should only be used by old devices with less than ~2GB of memory (very approximate number because this heavily depends on the device). It will enable some additional optimizations and attempt to reduce the amount of memory that is used by memory caches. Additionally it will force media viewer view pager to only have 1 offscreen page instead of 2 (which should reduce OutOfMemory and other similar crashes).</string>
     <string name="settings_open_logs">View logs</string>
@@ -1256,6 +1260,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="import_export_backup_import_from_kuroba_error">Import from Kuroba error!</string>
     <string name="import_export_backup_import_from_kuroba_error_description">Import from Kuroba error!\nSee logs for more info!\nError: %1$s</string>
     <string name="import_export_backup_import_from_kuroba_success">Import from Kuroba success!</string>
+
+    <string name="mpv_hw_decoding">HW</string>
+    <string name="mpv_sw_decoding">SW</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 

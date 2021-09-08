@@ -26,6 +26,7 @@ import android.os.StrictMode
 import com.github.k1rakishou.BookmarkGridViewInfo
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettingsInfo
+import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
@@ -189,6 +190,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.init(tagPrefix, isDevBuild())
     ChanSettings.init(createChanSettingsInfo())
     PersistableChanState.init(createPersistableChanStateInfo())
+    MpvSettings.init()
 
     AppModuleAndroidUtils.printApplicationSignatureHash()
   }

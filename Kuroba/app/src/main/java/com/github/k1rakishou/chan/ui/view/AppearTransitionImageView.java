@@ -75,6 +75,7 @@ public class AppearTransitionImageView extends AppCompatImageView {
 
     public void runAppearAnimation(
             View controllerRootView,
+            int startBackgroundColor,
             int finalBackgroundColor,
             Function1<Integer, Unit> backgroundColorFunc,
             Function0<Unit> onEndFunc
@@ -94,7 +95,7 @@ public class AppearTransitionImageView extends AppCompatImageView {
                 finalRadius
         );
 
-        ValueAnimator backgroundColorAnimation = ValueAnimator.ofArgb(0, finalBackgroundColor);
+        ValueAnimator backgroundColorAnimation = ValueAnimator.ofArgb(startBackgroundColor, finalBackgroundColor);
         backgroundColorAnimation.addUpdateListener(animation -> {
             int color = (int) animation.getAnimatedValue();
             backgroundColorFunc.invoke(color);

@@ -124,6 +124,8 @@ class MediaViewerActivity : ControllerHostActivity(),
     if (::mediaViewerController.isInitialized) {
       mediaViewerController.onResume()
     }
+
+    viewModel.updateActivityIsInForeground(true)
   }
 
   override fun onPause() {
@@ -132,6 +134,8 @@ class MediaViewerActivity : ControllerHostActivity(),
     if (::mediaViewerController.isInitialized) {
       mediaViewerController.onPause()
     }
+
+    viewModel.updateActivityIsInForeground(false)
   }
 
   override fun onDestroy() {
@@ -146,7 +150,8 @@ class MediaViewerActivity : ControllerHostActivity(),
       fileChooser.removeCallbacks()
     }
 
-    AndroidUtils.getWindow(this).clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    AndroidUtils.getWindow(this)
+      .clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
   }
 
   override fun finish() {

@@ -3,15 +3,17 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.media_viewer.media_view.ExoPlayerVideoMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
+import com.github.k1rakishou.chan.features.media_viewer.media_view.MpvVideoMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
-import com.github.k1rakishou.chan.features.media_viewer.media_view.VideoMediaView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.common.mutableIteration
@@ -140,24 +142,46 @@ class MediaViewerAdapter(
         )
       }
       is ViewableMedia.Video -> {
-        val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
-          as? VideoMediaView.VideoMediaViewState
-          ?: VideoMediaView.VideoMediaViewState()
+        if (ChanSettings.useMpvVideoPlayer.get()) {
+          Logger.d(TAG, "Using MPV")
 
-        VideoMediaView(
-          context = context,
-          initialMediaViewState = initialMediaViewState,
-          viewModel = viewModel,
-          mediaViewContract = mediaViewContract,
-          cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-          fileDataSourceFactory = fileDataSourceFactory,
-          contentDataSourceFactory = contentDataSourceFactory,
-          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
-          isSystemUiHidden = isSystemUiHidden,
-          viewableMedia = viewableMedia,
-          pagerPosition = position,
-          totalPageItemsCount = count,
-        )
+          val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+            as? MpvVideoMediaView.VideoMediaViewState
+            ?: MpvVideoMediaView.VideoMediaViewState()
+
+          MpvVideoMediaView(
+            context = context,
+            initialMediaViewState = initialMediaViewState,
+            viewModel = viewModel,
+            mediaViewContract = mediaViewContract,
+            onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
+            isSystemUiHidden = isSystemUiHidden,
+            viewableMedia = viewableMedia,
+            pagerPosition = position,
+            totalPageItemsCount = count
+          )
+        } else {
+          Logger.d(TAG, "Using ExoPlayer")
+
+          val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+            as? ExoPlayerVideoMediaView.VideoMediaViewState
+            ?: ExoPlayerVideoMediaView.VideoMediaViewState()
+
+          ExoPlayerVideoMediaView(
+            context = context,
+            initialMediaViewState = initialMediaViewState,
+            viewModel = viewModel,
+            mediaViewContract = mediaViewContract,
+            cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+            fileDataSourceFactory = fileDataSourceFactory,
+            contentDataSourceFactory = contentDataSourceFactory,
+            onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
+            isSystemUiHidden = isSystemUiHidden,
+            viewableMedia = viewableMedia,
+            pagerPosition = position,
+            totalPageItemsCount = count
+          )
+        }
       }
       is ViewableMedia.Unsupported -> {
         UnsupportedMediaView(

@@ -379,6 +379,7 @@ public class ChanSettings {
     public static BooleanSetting prefetchMedia;
     public static BooleanSetting showPrefetchLoadingIndicator;
     public static BooleanSetting highResCells;
+    public static BooleanSetting useMpvVideoPlayer;
     //endregion
 
     //region OTHER
@@ -391,6 +392,7 @@ public class ChanSettings {
     public static BooleanSetting crashOnSafeThrow;
     public static BooleanSetting verboseLogs;
     public static BooleanSetting checkUpdateApkVersionCode;
+    public static BooleanSetting showMpvInternalLogs;
     //endregion
 
     //region DATA
@@ -599,6 +601,7 @@ public class ChanSettings {
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
+            useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", true);
             //endregion
 
             //region OTHER
@@ -624,6 +627,11 @@ public class ChanSettings {
                     provider,
                     "check_update_apk_version_code",
                     true
+            );
+            showMpvInternalLogs = new BooleanSetting(
+                    provider,
+                    "show_mpv_internal_logs",
+                    chanSettingsInfo.isDevBuild()
             );
             //endregion
 

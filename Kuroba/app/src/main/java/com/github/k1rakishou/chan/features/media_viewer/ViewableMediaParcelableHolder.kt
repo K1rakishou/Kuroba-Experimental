@@ -332,7 +332,7 @@ data class ViewableMediaMeta(
 
 }
 
-sealed class MediaLocation : Parcelable{
+sealed class MediaLocation : Parcelable {
 
   @Parcelize
   data class Remote(val urlRaw: String) : MediaLocation() {

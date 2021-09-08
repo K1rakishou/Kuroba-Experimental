@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.controller
 import android.content.Context
 import android.view.ViewGroup
 import android.widget.ScrollView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -116,6 +117,8 @@ class LogsController(context: Context) : Controller(context) {
     private const val ACTION_LOGS_COPY = 1
 
     fun loadLogs(): String? {
+      val logMpv = ChanSettings.showMpvInternalLogs.get()
+
       val process = try {
         ProcessBuilder().command(
           "logcat",
@@ -138,7 +141,9 @@ class LogsController(context: Context) : Controller(context) {
       val lineTag = "${AndroidUtils.getApplicationLabel()} | "
 
       for (line in IOUtils.readString(outputStream).split("\n").toTypedArray()) {
-        if (line.contains(lineTag)) {
+        if (line.contains(lineTag, ignoreCase = true)) {
+          fullLogsString.appendLine(line)
+        } else if (logMpv && line.contains("mpv", ignoreCase = true)) {
           fullLogsString.appendLine(line)
         }
       }

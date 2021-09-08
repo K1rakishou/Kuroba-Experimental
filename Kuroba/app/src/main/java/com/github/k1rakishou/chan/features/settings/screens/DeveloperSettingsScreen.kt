@@ -75,6 +75,14 @@ class DeveloperSettingsScreen(
           setting = ChanSettings.checkUpdateApkVersionCode,
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ShowMpvInternalLogs,
+          topDescriptionIdFunc = { R.string.settings_check_show_mpv_internal_logs },
+          bottomDescriptionIdFunc = { R.string.settings_check_show_mpv_internal_logs_description },
+          setting = ChanSettings.showMpvInternalLogs,
+        )
+
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = DeveloperScreen.MainGroup.ViewLogs,

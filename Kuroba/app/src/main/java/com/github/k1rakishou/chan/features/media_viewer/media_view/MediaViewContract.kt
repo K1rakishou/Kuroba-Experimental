@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 
 import android.graphics.drawable.Drawable
 import android.view.View
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
@@ -20,4 +21,6 @@ interface MediaViewContract {
   fun onMediaLongClick(view: View, viewableMedia: ViewableMedia)
   suspend fun defaultArtworkDrawable(): Drawable?
   fun openAlbum(viewableMedia: ViewableMedia)
+
+  fun presentController(controller: Controller, animated: Boolean)
 }

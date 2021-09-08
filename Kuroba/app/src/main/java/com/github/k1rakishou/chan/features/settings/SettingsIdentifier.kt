@@ -162,6 +162,7 @@ sealed class DeveloperScreen(
 
     object ForceLowRamDevice : MainGroup("force_low_ram_device")
     object CheckUpateApkVersionCode : MainGroup("check_update_apk_version_code")
+    object ShowMpvInternalLogs : MainGroup("show_mpv_internal_logs")
     object ViewLogs : MainGroup("view_logs")
     object EnableDisableVerboseLogs : MainGroup("enable_disable_verbose_logs")
     object CrashApp : MainGroup("crash_the_app")
@@ -735,6 +736,7 @@ sealed class ExperimentalScreen(
     object AutoLoadThreadImages : MainSettingsGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : MainSettingsGroup("show_prefetch_loading_indicator")
     object HighResCells : MainSettingsGroup("high_res_cells")
+    object UseMpv : MainSettingsGroup("use_mpv")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()

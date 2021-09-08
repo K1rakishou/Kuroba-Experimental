@@ -40,7 +40,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
-class VideoMediaView(
+class ExoPlayerVideoMediaView(
   context: Context,
   initialMediaViewState: VideoMediaViewState,
   mediaViewContract: MediaViewContract,
@@ -53,7 +53,7 @@ class VideoMediaView(
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
-) : MediaView<ViewableMedia.Video, VideoMediaView.VideoMediaViewState>(
+) : MediaView<ViewableMedia.Video, ExoPlayerVideoMediaView.VideoMediaViewState>(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
@@ -95,7 +95,7 @@ class VideoMediaView(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    inflate(context, R.layout.media_view_video, this)
+    inflate(context, R.layout.media_view_video_exo_player, this)
     setWillNotDraw(false)
 
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
@@ -367,7 +367,7 @@ class VideoMediaView(
 
   private fun startFullVideoPreloading(mediaLocation: MediaLocation): Job {
     return scope.launch {
-      this@VideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected == true
+      this@ExoPlayerVideoMediaView.videoSoundDetected = mediaViewState.videoSoundDetected == true
 
       val showBufferingJob = scope.launch {
         delay(125L)

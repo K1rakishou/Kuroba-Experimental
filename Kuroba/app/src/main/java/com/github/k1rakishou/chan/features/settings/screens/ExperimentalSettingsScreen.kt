@@ -91,6 +91,14 @@ class ExperimentalSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.UseMpv,
+          topDescriptionIdFunc = { R.string.setting_use_mpv },
+          bottomDescriptionIdFunc = { R.string.setting_use_mpv_description },
+          setting = ChanSettings.useMpvVideoPlayer
+        )
+
         group
       }
     )

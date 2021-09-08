@@ -57,6 +57,7 @@ import java.util.List;
 public class AndroidUtils {
     private static final String TAG = "AndroidUtils";
     public static final String CHAN_STATE_PREFS_NAME = "chan_state";
+    public static final String MPV_PREFS_NAME = "mpv_prefs";
 
     @SuppressLint("StaticFieldLeak")
     private static Application application;
@@ -93,6 +94,10 @@ public class AndroidUtils {
 
     public static SharedPreferences getAppState() {
         return getAppContext().getSharedPreferences(CHAN_STATE_PREFS_NAME, MODE_PRIVATE);
+    }
+
+    public static SharedPreferences getMpvState() {
+        return getAppContext().getSharedPreferences(MPV_PREFS_NAME, MODE_PRIVATE);
     }
 
     public static void requestKeyboardFocus(Dialog dialog, final View view) {
