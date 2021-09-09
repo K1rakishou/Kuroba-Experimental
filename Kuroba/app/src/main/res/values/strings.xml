@@ -1263,6 +1263,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="mpv_hw_decoding">HW</string>
     <string name="mpv_sw_decoding">SW</string>
+    <string name="mpv_switching_to_sw_decoding">Switching to software decoding</string>
+    <string name="mpv_switching_to_hw_decoding">Switching to hardware decoding</string>
+    <string name="mpv_fast_video_decoding">Fast video decoding mode</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 

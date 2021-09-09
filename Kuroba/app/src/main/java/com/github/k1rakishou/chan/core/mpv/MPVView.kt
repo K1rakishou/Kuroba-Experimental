@@ -6,11 +6,13 @@ import android.util.AttributeSet
 import android.view.SurfaceHolder
 import android.view.SurfaceView
 import android.view.WindowManager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_FLAG
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_INT64
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_NONE
 import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
 import kotlin.reflect.KProperty
@@ -28,20 +30,19 @@ class MPVView(
     context: Context,
     attrs: AttributeSet
 ) : SurfaceView(context, attrs), SurfaceHolder.Callback {
-    private var filePathToRewind: String? = null
     private var filePath: String? = null
 
     init {
       setWillNotDraw(false)
     }
 
-    fun create(applicationContext: Context) {
+    fun create(applicationContext: Context, appConstants: AppConstants) {
         Logger.d(TAG, "create()")
 
         MPVLib.create(applicationContext)
-        MPVLib.setOptionString("config", "yes")
-        MPVLib.setOptionString("config-dir", applicationContext.filesDir.path)
-        initOptions(applicationContext) // do this before init() so user-supplied config can override our choices
+//        MPVLib.setOptionString("config", "yes")
+//        MPVLib.setOptionString("config-dir", applicationContext.filesDir.path)
+        initOptions(applicationContext, appConstants) // do this before init() so user-supplied config can override our choices
         MPVLib.init()
         // certain options are hardcoded:
         MPVLib.setOptionString("save-position-on-quit", "no")
@@ -54,7 +55,6 @@ class MPVView(
     fun destroy() {
         Logger.d(TAG, "destroy()")
 
-        this.filePathToRewind = null
         this.filePath = null
 
         // Disable surface callbacks to avoid using unintialized mpv state
@@ -62,13 +62,15 @@ class MPVView(
         MPVLib.destroy()
     }
 
-    private fun initOptions(applicationContext: Context) {
+    private fun initOptions(applicationContext: Context, appConstants: AppConstants) {
         // hwdec
         val hwdec = if (MpvSettings.hardwareDecoding.get()) {
             "mediacodec-copy"
         } else {
             "no"
         }
+
+        Logger.d(TAG, "initOptions() hwdec: $hwdec")
 
         // vo: set display fps as reported by android
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -83,13 +85,10 @@ class MPVView(
               "(${Build.VERSION.SDK_INT} < ${Build.VERSION_CODES.M})")
         }
 
-        val vidsync = MpvSettings.videoSync.get()
-        MPVLib.setOptionString("video-sync", vidsync!!)
+        MPVLib.setOptionString("video-sync", "audio")
+        MPVLib.setOptionString("interpolation", "no")
 
-        if (MpvSettings.videoFastCode.get()) {
-            MPVLib.setOptionString("vd-lavc-fast", "yes")
-            MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
-        }
+        reloadFastVideoDecodeOption()
 
         MPVLib.setOptionString("vo", "gpu")
         MPVLib.setOptionString("gpu-context", "android")
@@ -100,22 +99,34 @@ class MPVView(
 //        MPVLib.setOptionString("tls-verify", "no")
 //        MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("input-default-bindings", "yes")
-        // Limit demuxer cache to 32 MiB, the default is too high for mobile devices
-        MPVLib.setOptionString("demuxer-max-bytes", "${32 * 1024 * 1024}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${32 * 1024 * 1024}")
+
+        Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")
+        MPVLib.setOptionString("demuxer-max-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
+        MPVLib.setOptionString("demuxer-max-back-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
+    }
+
+    fun reloadFastVideoDecodeOption() {
+        if (MpvSettings.videoFastCode.get()) {
+            Logger.d(TAG, "initOptions() videoFastCode: true")
+
+            MPVLib.setOptionString("vd-lavc-fast", "yes")
+            MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
+        } else {
+            Logger.d(TAG, "initOptions() videoFastCode: false")
+
+            MPVLib.setOptionString("vd-lavc-fast", "null")
+            MPVLib.setOptionString("vd-lavc-skiploopfilter", "null")
+        }
     }
 
     fun playFile(filePath: String) {
         this.filePath = filePath
-        this.filePathToRewind = filePath
-    }
 
-    fun rewind() {
-        if (filePathToRewind == null) {
-            return
+        if (ChanSettings.videoAutoLoop.get()) {
+            MPVLib.setOptionString("loop-file", "inf")
+        } else {
+            MPVLib.setOptionString("loop-file", "no")
         }
-
-        MPVLib.command(arrayOf("loadfile", filePathToRewind!!))
     }
 
     private fun observeProperties() {
@@ -123,14 +134,12 @@ class MPVView(
         data class Property(val name: String, val format: Int)
         val p = arrayOf(
             Property("time-pos", MPV_FORMAT_INT64),
+            Property("demuxer-cache-duration", MPV_FORMAT_INT64),
             Property("duration", MPV_FORMAT_INT64),
             Property("pause", MPV_FORMAT_FLAG),
             Property("audio", MPV_FORMAT_FLAG),
             Property("mute", MPV_FORMAT_STRING),
-            Property("track-list", MPV_FORMAT_NONE),
             Property("video-params", MPV_FORMAT_NONE),
-            Property("playlist-pos", MPV_FORMAT_NONE),
-            Property("playlist-count", MPV_FORMAT_NONE),
             Property("video-format", MPV_FORMAT_NONE),
         )
 
@@ -154,6 +163,9 @@ class MPVView(
 
     val duration: Int?
         get() = MPVLib.getPropertyInt("duration")
+
+    val demuxerCacheDuration: Int?
+        get() = MPVLib.getPropertyInt("demuxer-cache-duration")
 
     var timePos: Int?
         get() = MPVLib.getPropertyInt("time-pos")

@@ -26,6 +26,7 @@ open class AppConstants(
 
   // 128MB
   val exoPlayerDiskCacheMaxSize = 128L * 1024 * 1024
+  val mpvDemuxerCacheMaxSize: Int
 
   val attachFilesDir: File
     get() {
@@ -120,7 +121,8 @@ open class AppConstants(
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
-    maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager)
+    mpvDemuxerCacheMaxSize = calculateMpvDemuxerCacheSize(activityManager).toInt()
+    maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager).toInt()
     userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
     processorsCount = Runtime.getRuntime().availableProcessors()
       .coerceAtLeast(2)
@@ -139,7 +141,15 @@ open class AppConstants(
     exoPlayerCacheDir = File(context.cacheDir, EXO_PLAYER_CACHE_DIR_NAME)
   }
 
-  private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Int {
+  private fun calculateMpvDemuxerCacheSize(activityManager: ActivityManager?): Long {
+    if (isLowRamDevice || activityManager == null) {
+      return 32 * ONE_MEGABYTE
+    }
+
+    return 64 * ONE_MEGABYTE
+  }
+
+  private fun calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager: ActivityManager?): Long {
     if (isLowRamDevice || activityManager == null) {
       return MINIMUM_POSTS_CACHE_POSTS_COUNT
     }
@@ -155,11 +165,11 @@ open class AppConstants(
 
     // 10 percents of the app's available memory (not device's)
     private const val RAM_PERCENT_FOR_POSTS_CACHE = 10
-    private const val ONE_MEGABYTE = 1 * 1024 * 1024
+    private const val ONE_MEGABYTE = 1L * 1024 * 1024
     private const val AVERAGE_POST_MEMORY_SIZE = 2048
 
-    private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 5000
-    private const val MAX_POSTS_CACHE_COUNT = 16000
+    private const val MINIMUM_POSTS_CACHE_POSTS_COUNT = 5000L
+    private const val MAX_POSTS_CACHE_COUNT = 16000L
 
     private const val USER_AGENT_FORMAT =
       "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"

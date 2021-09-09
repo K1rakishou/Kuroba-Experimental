@@ -3,15 +3,15 @@ package com.github.k1rakishou.chan.features.media_viewer.media_view
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
+import android.net.Uri
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
-import android.widget.SeekBar
 import android.widget.TextView
-import androidx.appcompat.widget.AppCompatSeekBar
+import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.mpv.MPVLib
@@ -21,16 +21,22 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
+import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.ui.DefaultTimeBar
+import com.google.android.exoplayer2.ui.TimeBar
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -58,11 +64,12 @@ class MpvVideoMediaView(
   private val bufferingProgressView: ColorizableProgressBar
 
   private val mpvVideoPosition: TextView
-  private val mpvVideoProgress: AppCompatSeekBar
+  private val mpvVideoProgress: DefaultTimeBar
   private val mpvVideoDuration: TextView
   private val mpvMuteUnmute: ImageButton
   private val mpvHwSw: TextView
   private val mpvPlayPause: ImageButton
+  private val mpvSettings: ImageButton
   private val mpvControlsRoot: LinearLayout
   private val mpvControlsBottomInset: FrameLayout
 
@@ -98,6 +105,9 @@ class MpvVideoMediaView(
     mpvPlayPause = findViewById(R.id.mpv_play_pause)
     mpvControlsRoot = findViewById(R.id.mpv_controls_view_root)
     mpvControlsBottomInset = findViewById(R.id.mpv_controls_insets_view)
+    mpvSettings = findViewById(R.id.mpv_settings)
+
+    mpvSettings.setOnClickListener { showMpvSettings() }
 
     mpvMuteUnmute.setOnClickListener {
       mediaViewContract.toggleSoundMuteState()
@@ -111,31 +121,32 @@ class MpvVideoMediaView(
 
     mpvHwSw.setOnClickListener {
       if (actualVideoPlayerView.hwdecActive) {
-        showToast(context, "Switching to software decoding")
+        showToast(context, R.string.mpv_switching_to_sw_decoding)
+        MpvSettings.hardwareDecoding.set(false)
       } else {
-        showToast(context, "Switching to hardware decoding")
+        showToast(context, R.string.mpv_switching_to_hw_decoding)
+        MpvSettings.hardwareDecoding.set(true)
       }
 
       actualVideoPlayerView.cycleHwdec()
     }
     mpvPlayPause.setOnClickListener { actualVideoPlayerView.cyclePause() }
 
-    mpvVideoProgress.setOnSeekBarChangeListener(object : SeekBar.OnSeekBarChangeListener {
-      override fun onProgressChanged(seekBar: SeekBar, progress: Int, fromUser: Boolean) {
-        if (!fromUser) {
-          return
-        }
-
-        actualVideoPlayerView.timePos = progress
-        updatePlaybackPos(progress)
-      }
-
-      override fun onStartTrackingTouch(seekBar: SeekBar) {
+    mpvVideoProgress.addListener(object : TimeBar.OnScrubListener {
+      override fun onScrubStart(timeBar: TimeBar, position: Long) {
         userIsOperatingSeekbar = true
       }
 
-      override fun onStopTrackingTouch(seekBar: SeekBar) {
+      override fun onScrubMove(timeBar: TimeBar, position: Long) {
+      }
+
+      override fun onScrubStop(timeBar: TimeBar, position: Long, canceled: Boolean) {
         userIsOperatingSeekbar = false
+
+        if (!canceled) {
+          updatePlaybackPos(_position = position, _demuxerCacheDuration = null)
+          actualVideoPlayerView.timePos = position.toInt()
+        }
       }
     })
 
@@ -253,7 +264,7 @@ class MpvVideoMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
-    actualVideoPlayerView.create(context.applicationContext)
+    actualVideoPlayerView.create(context.applicationContext, appConstants)
     actualVideoPlayerView.addObserver(this)
     setFileToPlay(context)
 
@@ -338,9 +349,6 @@ class MpvVideoMediaView(
     when (eventId) {
       MPVLib.mpvEventId.MPV_EVENT_IDLE -> {
         Logger.d(TAG, "onEvent MPV_EVENT_IDLE")
-
-        // TODO(KurobaEx): mpv
-//        actualVideoPlayerView.rewind()
       }
       MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
         if (!_firstLoadOccurred) {
@@ -448,10 +456,13 @@ class MpvVideoMediaView(
 
     when (property) {
       "time-pos" -> {
-        updatePlaybackPos(value.toInt())
+        updatePlaybackPos(_position = value, _demuxerCacheDuration = null)
+      }
+      "demuxer-cache-duration" -> {
+        updatePlaybackPos(_position = null, _demuxerCacheDuration = value)
       }
       "duration" -> {
-        updatePlaybackDuration(value.toInt())
+        updatePlaybackDuration(value)
       }
     }
   }
@@ -482,17 +493,24 @@ class MpvVideoMediaView(
     val filePath = when (val mediaLocation = viewableMedia.mediaLocation) {
       is MediaLocation.Local -> {
         if (mediaLocation.isUri) {
-          cancellableToast.showToast(
-            context,
-            "Cannot play local files by Uri"
-          )
-
-          return
+          try {
+            val uri = Uri.parse(mediaLocation.path)
+            MpvUtils.openContentFd(context.applicationContext, uri)
+          } catch (error: Throwable) {
+            Logger.e(TAG, "setFileToPlay($mediaLocation) error: ${error.errorMessageOrClassName()}")
+            null
+          }
+        } else {
+          mediaLocation.path
         }
-
-        mediaLocation.path
       }
-      is MediaLocation.Remote -> mediaLocation.urlRaw
+      is MediaLocation.Remote -> {
+        mediaLocation.urlRaw
+      }
+    }
+
+    if (filePath == null) {
+      return
     }
 
     actualVideoPlayerView.playFile(filePath)
@@ -508,21 +526,29 @@ class MpvVideoMediaView(
     mpvPlayPause.setImageResource(imageDrawable)
   }
 
-  private fun updatePlaybackPos(position: Int) {
-    mpvVideoPosition.text = MpvUtils.prettyTime(position)
+  private fun updatePlaybackPos(_position: Long?, _demuxerCacheDuration: Long?) {
+    val position = _position
+      ?: actualVideoPlayerView.timePos?.toLong()
+      ?: 0L
+    val demuxerCacheDuration = _demuxerCacheDuration
+      ?: actualVideoPlayerView.demuxerCacheDuration
+      ?: 0L
+
+    mpvVideoPosition.text = MpvUtils.prettyTime(position.toInt())
 
     if (!userIsOperatingSeekbar) {
-      mpvVideoProgress.progress = position
+      mpvVideoProgress.setPosition(position)
+      mpvVideoProgress.setBufferedPosition(position + demuxerCacheDuration.toLong() + 1)
     }
 
     updateDecoderButton()
   }
 
-  private fun updatePlaybackDuration(duration: Int) {
-    mpvVideoDuration.text = MpvUtils.prettyTime(duration)
+  private fun updatePlaybackDuration(duration: Long) {
+    mpvVideoDuration.text = MpvUtils.prettyTime(duration.toInt())
 
     if (!userIsOperatingSeekbar) {
-      mpvVideoProgress.max = duration
+      mpvVideoProgress.setDuration(duration)
     }
   }
 
@@ -536,6 +562,32 @@ class MpvVideoMediaView(
     } else {
       getString(R.string.mpv_sw_decoding)
     }
+  }
+
+  private fun showMpvSettings() {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+
+    menuItems += CheckableFloatingListMenuItem(
+      key = ACTION_VIDEO_FAST_DECODE,
+      name = getString(R.string.mpv_fast_video_decoding),
+      isCurrentlySelected = MpvSettings.videoFastCode.get()
+    )
+
+    val controller = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        when (clickedItem.key as Int) {
+          ACTION_VIDEO_FAST_DECODE -> {
+            MpvSettings.videoFastCode.toggle()
+            actualVideoPlayerView.reloadFastVideoDecodeOption()
+          }
+        }
+      }
+    )
+
+    mediaViewContract.presentController(controller, true)
   }
 
   class GestureDetectorListener(
@@ -571,11 +623,7 @@ class MpvVideoMediaView(
         return false
       }
 
-      // TODO(KurobaEx): mpv
-//      val exoPlayer = actualVideoView.player
-//        ?: return false
-//
-//      exoPlayer.playWhenReady = exoPlayer.playWhenReady.not()
+      actualVideoView.cyclePause()
       return true
     }
 
@@ -622,6 +670,8 @@ class MpvVideoMediaView(
 
   companion object {
     private const val TAG = "MpvVideoMediaView"
+
+    private const val ACTION_VIDEO_FAST_DECODE = 0
   }
 
 }

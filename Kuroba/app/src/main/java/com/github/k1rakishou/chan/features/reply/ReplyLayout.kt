@@ -901,9 +901,8 @@ class ReplyLayout @JvmOverloads constructor(
     val textLines = comment.text
       ?.subSequence(selectionStart, selectionEnd)
       ?.toString()
-      ?.split("\n".toRegex())
-      ?.toTypedArray()
-      ?: emptyArray()
+      ?.split("\n")
+      ?: emptyList()
 
     val rebuilder = StringBuilder()
     for (i in textLines.indices) {

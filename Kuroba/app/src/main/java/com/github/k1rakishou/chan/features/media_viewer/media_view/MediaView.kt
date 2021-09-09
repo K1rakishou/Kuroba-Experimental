@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
@@ -54,6 +55,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract val totalPageItemsCount: Int
   abstract val hasContent: Boolean
 
+  @Inject
+  lateinit var appConstants: AppConstants
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
