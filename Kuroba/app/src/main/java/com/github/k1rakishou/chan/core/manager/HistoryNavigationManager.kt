@@ -503,7 +503,13 @@ class HistoryNavigationManager(
   }
 
   private suspend fun persistNavigationStackInternal() {
+    if (!initializationRunnable.alreadyRun) {
+      Logger.d(TAG, "persistNavigationStackInternal not initialized yet, can't persist")
+      return
+    }
+
     val navStackCopy = mutex.withLock { navigationStack.toList() }
+    Logger.d(TAG, "persistNavigationStackInternal navStackCopy.size=${navStackCopy.size}")
 
     historyNavigationRepository.persist(navStackCopy)
       .safeUnwrap { error ->

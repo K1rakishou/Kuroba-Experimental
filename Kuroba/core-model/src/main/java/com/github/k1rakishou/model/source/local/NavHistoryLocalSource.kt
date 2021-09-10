@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.navigation.NavHistoryElement
 import com.github.k1rakishou.model.mapper.NavHistoryElementMapper
@@ -22,16 +23,18 @@ class NavHistoryLocalSource(
   suspend fun persist(navHistoryStack: List<NavHistoryElement>) {
     ensureInTransaction()
 
-    // Always delete before doing anything else
-    navHistoryDao.deleteAll()
+    Logger.d(TAG, "persist(navHistoryStack.size=${navHistoryStack.size})")
 
     if (navHistoryStack.isEmpty()) {
+      navHistoryDao.deleteAll()
       return
     }
 
     val navHistoryElementIdEntityList = navHistoryStack.mapNotNull { navHistoryElement ->
       NavHistoryElementMapper.toNavHistoryElementIdEntity(navHistoryElement, moshi)
     }
+
+    navHistoryDao.deleteAll()
 
     val navHistoryIdList = navHistoryDao.insertManyIdsOrReplace(
       navHistoryElementIdEntityList = navHistoryElementIdEntityList
