@@ -9,6 +9,7 @@ import android.net.Uri
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
+import android.view.ViewGroup
 import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
@@ -63,6 +64,7 @@ class MpvVideoMediaView(
 ), WindowInsetsListener, MPVLib.EventObserver {
 
   private val thumbnailMediaView: ThumbnailMediaView
+  private val actualVideoPlayerViewContainer: FrameLayout
   private val actualVideoPlayerView: MPVView
   private val bufferingProgressView: ColorizableProgressBar
 
@@ -97,8 +99,10 @@ class MpvVideoMediaView(
     setWillNotDraw(false)
 
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
-    actualVideoPlayerView = findViewById(R.id.actual_video_view)
+    actualVideoPlayerViewContainer = findViewById(R.id.actual_video_player_view_container)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
+    actualVideoPlayerView = MPVView(context, null)
+    actualVideoPlayerView.setVisibilityFast(View.GONE)
 
     mpvVideoPosition = findViewById(R.id.mpv_position)
     mpvVideoProgress = findViewById(R.id.mpv_progress)
@@ -277,6 +281,14 @@ class MpvVideoMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
+    actualVideoPlayerViewContainer.addView(
+      actualVideoPlayerView,
+      ViewGroup.LayoutParams(
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.MATCH_PARENT
+      )
+    )
+
     actualVideoPlayerView.create(context.applicationContext, appConstants)
     actualVideoPlayerView.addObserver(this)
     setFileToPlay(context)
@@ -290,6 +302,8 @@ class MpvVideoMediaView(
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualVideoPlayerView.setVisibilityFast(GONE)
+
+    actualVideoPlayerViewContainer.removeAllViews()
 
     // TODO(KurobaEx): mpv
 //    mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition

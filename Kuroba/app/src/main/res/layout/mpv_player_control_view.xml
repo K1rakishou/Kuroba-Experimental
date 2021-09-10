@@ -5,13 +5,11 @@
     android:layout_height="match_parent"
     android:layoutDirection="ltr">
 
-    <view
-        android:id="@+id/actual_video_view"
-        class="com.github.k1rakishou.chan.core.mpv.MPVView"
-        android:visibility="gone"
+    <FrameLayout
+        android:id="@+id/actual_video_player_view_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        tools:visibility="visible"/>
+        android:layout_height="match_parent" />
+
 
     <LinearLayout
         android:id="@+id/mpv_controls_view_root"

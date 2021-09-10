@@ -1,10 +1,11 @@
 package com.github.k1rakishou.chan.core.mpv
 
 import android.content.Context
+import android.graphics.SurfaceTexture
 import android.os.Build
 import android.util.AttributeSet
-import android.view.SurfaceHolder
-import android.view.SurfaceView
+import android.view.Surface
+import android.view.TextureView
 import android.view.WindowManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
@@ -28,8 +29,8 @@ import kotlin.reflect.KProperty
 @DoNotStrip
 class MPVView(
     context: Context,
-    attrs: AttributeSet
-) : SurfaceView(context, attrs), SurfaceHolder.Callback {
+    attrs: AttributeSet?
+) : TextureView(context, attrs), TextureView.SurfaceTextureListener {
     private var filePath: String? = null
 
     init {
@@ -40,29 +41,7 @@ class MPVView(
         Logger.d(TAG, "create()")
 
         MPVLib.create(applicationContext)
-//        MPVLib.setOptionString("config", "yes")
-//        MPVLib.setOptionString("config-dir", applicationContext.filesDir.path)
-        initOptions(applicationContext, appConstants) // do this before init() so user-supplied config can override our choices
-        MPVLib.init()
-        // certain options are hardcoded:
-        MPVLib.setOptionString("save-position-on-quit", "no")
-        MPVLib.setOptionString("force-window", "no")
 
-        holder.addCallback(this)
-        observeProperties()
-    }
-
-    fun destroy() {
-        Logger.d(TAG, "destroy()")
-
-        this.filePath = null
-
-        // Disable surface callbacks to avoid using unintialized mpv state
-        holder.removeCallback(this)
-        MPVLib.destroy()
-    }
-
-    private fun initOptions(applicationContext: Context, appConstants: AppConstants) {
         // hwdec
         val hwdec = if (MpvSettings.hardwareDecoding.get()) {
             "mediacodec-copy"
@@ -103,6 +82,24 @@ class MPVView(
         Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")
         MPVLib.setOptionString("demuxer-max-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
         MPVLib.setOptionString("demuxer-max-back-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
+
+        MPVLib.init()
+        // certain options are hardcoded:
+        MPVLib.setOptionString("save-position-on-quit", "no")
+        MPVLib.setOptionString("force-window", "no")
+
+        surfaceTextureListener = this
+        observeProperties()
+    }
+
+    fun destroy() {
+        Logger.d(TAG, "destroy()")
+
+        this.filePath = null
+
+        // Disable surface callbacks to avoid using unintialized mpv state
+        surfaceTextureListener = null
+        MPVLib.destroy()
     }
 
     fun reloadFastVideoDecodeOption() {
@@ -259,16 +256,10 @@ class MPVView(
         playbackSpeed = speeds[if (index == -1) 0 else index]
     }
 
-    // Surface callbacks
-
-    override fun surfaceChanged(holder: SurfaceHolder, format: Int, width: Int, height: Int) {
-        MPVLib.setPropertyString("android-surface-size", "${width}x$height")
-    }
-
-    override fun surfaceCreated(holder: SurfaceHolder) {
+    override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
         Logger.d(TAG, "attaching surface")
 
-        MPVLib.attachSurface(holder.surface)
+        MPVLib.attachSurface(Surface(surfaceTexture))
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
         MPVLib.setOptionString("force-window", "yes")
 
@@ -281,12 +272,21 @@ class MPVView(
         }
     }
 
-    override fun surfaceDestroyed(holder: SurfaceHolder) {
+    override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
         Logger.d(TAG, "detaching surface")
 
         MPVLib.setPropertyString("vo", "null")
         MPVLib.setOptionString("force-window", "no")
         MPVLib.detachSurface()
+
+        return true
+    }
+
+    override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
+        MPVLib.setPropertyString("android-surface-size", "${width}x$height")
+    }
+
+    override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {
     }
 
     companion object {
