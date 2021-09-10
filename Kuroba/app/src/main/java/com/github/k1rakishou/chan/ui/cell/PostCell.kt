@@ -112,6 +112,7 @@ class PostCell : ConstraintLayout,
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
   private var postTimeUpdaterJob: Job? = null
   private var postCommentShiftResultCached: PostCommentShiftResult? = null
+  private var blinkExecuted = false
 
   private val linkClickSpan: ColorizableBackgroundColorSpan
   private val quoteClickSpan: ColorizableBackgroundColorSpan
@@ -338,6 +339,7 @@ class PostCell : ConstraintLayout,
     postTimeUpdaterJob?.cancel()
     postTimeUpdaterJob = null
 
+    this.blinkExecuted = false
     this.postCellCallback = null
     this.postCellData = null
     this.postCellHighlight = null
@@ -953,8 +955,9 @@ class PostCell : ConstraintLayout,
             .modifyCurrentAlpha(alpha)
 
           // Do not run this animation when in popup
-          if (postData?.isInPopup == false && postHighlight.isBlinking()) {
+          if (postData?.isInPopup == false && postHighlight.isBlinking() && !blinkExecuted) {
             runBackgroundBlinkAnimation(theme, postHighlightedColorWidthAlpha)
+            blinkExecuted = true
           } else {
             setBackgroundColorFast(postHighlightedColorWidthAlpha)
           }
