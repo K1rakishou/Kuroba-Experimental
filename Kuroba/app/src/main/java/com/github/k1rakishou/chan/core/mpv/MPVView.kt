@@ -75,7 +75,7 @@ class MPVView(
         MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
         MPVLib.setOptionString("ao", "audiotrack,opensles")
         // TODO(KurobaEx): mpv
-//        MPVLib.setOptionString("tls-verify", "no")
+//        MPVLib.setOptionString("tls-verify", "yes")
 //        MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
         MPVLib.setOptionString("input-default-bindings", "yes")
 
@@ -87,6 +87,7 @@ class MPVView(
         // certain options are hardcoded:
         MPVLib.setOptionString("save-position-on-quit", "no")
         MPVLib.setOptionString("force-window", "no")
+        muteUnmute(true)
 
         surfaceTextureListener = this
         observeProperties()

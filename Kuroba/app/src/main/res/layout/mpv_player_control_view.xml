@@ -3,13 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layoutDirection="ltr">
 
     <FrameLayout
         android:id="@+id/actual_video_player_view_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
-
 
     <LinearLayout
         android:id="@+id/mpv_controls_view_root"
@@ -42,7 +42,10 @@
                 android:id="@+id/mpv_progress"
                 android:layout_width="0dp"
                 android:layout_height="36dp"
-                android:layout_weight="1" />
+                android:layout_weight="1"
+                app:bar_height="1dp"
+                app:scrubber_enabled_size="16dp"
+                app:scrubber_dragged_size="22dp" />
 
             <TextView
                 android:id="@+id/mpv_duration"
