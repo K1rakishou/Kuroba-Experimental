@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
+import android.animation.Animator
+import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Canvas
@@ -25,6 +27,7 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
@@ -80,7 +83,7 @@ class MpvVideoMediaView(
   private var _hasContent = false
   private var _hasAudio = false
   private var userIsOperatingSeekbar = false
-
+  private var hideShowAnimation: ValueAnimator? = null
   private var showBufferingJob: Job? = null
 
   override val hasContent: Boolean
@@ -231,6 +234,16 @@ class MpvVideoMediaView(
   override fun draw(canvas: Canvas) {
     super.draw(canvas)
     closeMediaActionHelper.onDraw(canvas)
+  }
+
+  override fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
+    super.onSystemUiVisibilityChanged(systemUIHidden)
+
+    if (systemUIHidden) {
+      hideVideoUi()
+    } else {
+      showVideoUi()
+    }
   }
 
   override fun onInsetsChanged() {
@@ -588,6 +601,66 @@ class MpvVideoMediaView(
     )
 
     mediaViewContract.presentController(controller, true)
+  }
+
+  private fun hideVideoUi() {
+    if (hideShowAnimation != null) {
+      hideShowAnimation?.end()
+      hideShowAnimation = null
+    }
+
+    if (mpvControlsRoot.visibility == View.GONE) {
+      return
+    }
+
+    hideShowAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
+      duration = 200
+      addUpdateListener { animation ->
+        mpvControlsRoot.alpha = animation.animatedValue as Float
+      }
+      addListener(object : SimpleAnimatorListener() {
+        override fun onAnimationStart(animation: Animator?) {
+          mpvControlsRoot.alpha = 1f
+        }
+
+        override fun onAnimationEnd(animation: Animator?) {
+          mpvControlsRoot.alpha = 0f
+          mpvControlsRoot.setVisibilityFast(View.GONE)
+          hideShowAnimation = null
+        }
+      })
+      start()
+    }
+  }
+
+  private fun showVideoUi() {
+    if (hideShowAnimation != null) {
+      hideShowAnimation?.end()
+      hideShowAnimation = null
+    }
+
+    if (mpvControlsRoot.visibility == View.VISIBLE) {
+      return
+    }
+
+    hideShowAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
+      duration = 200
+      addUpdateListener { animation ->
+        mpvControlsRoot.alpha = animation.animatedValue as Float
+      }
+      addListener(object : SimpleAnimatorListener() {
+        override fun onAnimationStart(animation: Animator?) {
+          mpvControlsRoot.alpha = 0f
+        }
+
+        override fun onAnimationEnd(animation: Animator?) {
+          mpvControlsRoot.alpha = 1f
+          mpvControlsRoot.setVisibilityFast(View.VISIBLE)
+          hideShowAnimation = null
+        }
+      })
+      start()
+    }
   }
 
   class GestureDetectorListener(
