@@ -160,6 +160,7 @@ class MpvVideoMediaView(
     mpvMuteUnmute.setEnabledFast(false)
     mpvHwSw.setEnabledFast(false)
     mpvPlayPause.setEnabledFast(false)
+    mpvSettings.setEnabledFast(false)
 
     showBufferingJob = scope.launch {
       delay(125L)
@@ -395,6 +396,7 @@ class MpvVideoMediaView(
 
         mpvHwSw.setEnabledFast(true)
         mpvPlayPause.setEnabledFast(true)
+        mpvSettings.setEnabledFast(true)
 
         if (_hasAudio) {
           mpvMuteUnmute.setEnabledFast(true)

@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layoutDirection="ltr">
 
     <FrameLayout
@@ -17,7 +17,9 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="#CC000000"
-        android:orientation="vertical">
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -29,14 +31,14 @@
                 android:id="@+id/mpv_position"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:gravity="center_vertical"
                 android:includeFontPadding="false"
                 android:paddingLeft="4dp"
                 android:paddingRight="4dp"
-                android:gravity="center_vertical"
                 android:textColor="#FFBEBEBE"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                tools:text="00:50"/>
+                tools:text="00:50" />
 
             <com.google.android.exoplayer2.ui.DefaultTimeBar
                 android:id="@+id/mpv_progress"
@@ -44,21 +46,21 @@
                 android:layout_height="36dp"
                 android:layout_weight="1"
                 app:bar_height="1dp"
-                app:scrubber_enabled_size="16dp"
-                app:scrubber_dragged_size="22dp" />
+                app:scrubber_dragged_size="22dp"
+                app:scrubber_enabled_size="16dp" />
 
             <TextView
                 android:id="@+id/mpv_duration"
                 android:layout_width="wrap_content"
                 android:layout_height="match_parent"
+                android:gravity="center_vertical"
                 android:includeFontPadding="false"
                 android:paddingLeft="4dp"
                 android:paddingRight="4dp"
-                android:gravity="center_vertical"
                 android:textColor="#FFBEBEBE"
                 android:textSize="14sp"
                 android:textStyle="bold"
-                tools:text="10:55"/>
+                tools:text="10:55" />
 
         </LinearLayout>
 
@@ -80,13 +82,13 @@
                 android:layout_width="60dp"
                 android:layout_height="38dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:gravity="center"
-                android:src="@drawable/ic_volume_off_white_24dp"
                 android:clickable="true"
                 android:focusable="true"
+                android:gravity="center"
+                android:src="@drawable/ic_volume_off_white_24dp"
+                android:text="--"
                 android:textColor="@android:color/white"
-                android:textSize="18sp"
-                android:text="--" />
+                android:textSize="18sp" />
 
             <ImageButton
                 android:id="@+id/mpv_play_pause"

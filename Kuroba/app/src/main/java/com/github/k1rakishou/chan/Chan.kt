@@ -401,7 +401,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     Logger.d(TAG, "diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
     Logger.d(TAG, "userAgent: ${appConstants.userAgent}")
     Logger.d(TAG, "kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
-    Logger.d(TAG, "mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")
+    Logger.d(TAG, "useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
 
     Logger.d(TAG, "isLowRamDevice: ${ChanSettings.isLowRamDevice()}, " +
       "isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
