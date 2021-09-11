@@ -77,6 +77,7 @@ class MpvVideoMediaView(
   private val mpvSettings: ImageButton
   private val mpvControlsRoot: LinearLayout
   private val mpvControlsBottomInset: FrameLayout
+  private val mpvErrorMessage: TextView
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
@@ -98,6 +99,8 @@ class MpvVideoMediaView(
     inflate(context, R.layout.media_view_video_mpv, this)
     setWillNotDraw(false)
 
+    MPVLib.tryLoadLibraries(appConstants.mpvNativeLibsDir)
+
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerViewContainer = findViewById(R.id.actual_video_player_view_container)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
@@ -113,6 +116,7 @@ class MpvVideoMediaView(
     mpvControlsRoot = findViewById(R.id.mpv_controls_view_root)
     mpvControlsBottomInset = findViewById(R.id.mpv_controls_insets_view)
     mpvSettings = findViewById(R.id.mpv_settings)
+    mpvErrorMessage = findViewById(R.id.error_message)
 
     mpvSettings.setOnClickListener { showMpvSettings() }
 
@@ -282,29 +286,56 @@ class MpvVideoMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
-    actualVideoPlayerViewContainer.addView(
-      actualVideoPlayerView,
-      ViewGroup.LayoutParams(
-        ViewGroup.LayoutParams.MATCH_PARENT,
-        ViewGroup.LayoutParams.MATCH_PARENT
+    if (MPVLib.librariesAreLoaded()) {
+      mpvErrorMessage.setVisibilityFast(View.GONE)
+      actualVideoPlayerViewContainer.setVisibilityFast(View.VISIBLE)
+
+      actualVideoPlayerViewContainer.addView(
+        actualVideoPlayerView,
+        ViewGroup.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.MATCH_PARENT
+        )
       )
-    )
 
-    actualVideoPlayerView.create(context.applicationContext, appConstants)
-    actualVideoPlayerView.addObserver(this)
-    setFileToPlay(context)
+      actualVideoPlayerView.create(context.applicationContext, appConstants)
+      actualVideoPlayerView.addObserver(this)
+      setFileToPlay(context)
 
-    actualVideoPlayerView.setVisibilityFast(VISIBLE)
+      actualVideoPlayerView.setVisibilityFast(VISIBLE)
+    } else {
+      hideVideoUi()
+
+      showBufferingJob?.cancel()
+      showBufferingJob = null
+
+      bufferingProgressView.setVisibilityFast(View.INVISIBLE)
+      thumbnailMediaView.setVisibilityFast(INVISIBLE)
+
+      actualVideoPlayerViewContainer.removeAllViews()
+      actualVideoPlayerViewContainer.setVisibilityFast(View.GONE)
+
+      val lastError = MPVLib.getLastError()
+      if (lastError != null) {
+        mpvErrorMessage.setVisibilityFast(View.VISIBLE)
+        mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
+      } else {
+        mpvErrorMessage.setVisibilityFast(View.GONE)
+      }
+    }
   }
 
   override fun hide(isLifecycleChange: Boolean) {
-    actualVideoPlayerView.destroy()
-    actualVideoPlayerView.removeObserver(this)
+    if (MPVLib.librariesAreLoaded()) {
+      actualVideoPlayerView.destroy()
+      actualVideoPlayerView.removeObserver(this)
 
-    thumbnailMediaView.setVisibilityFast(View.VISIBLE)
-    actualVideoPlayerView.setVisibilityFast(GONE)
+      thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+      actualVideoPlayerView.setVisibilityFast(GONE)
 
-    actualVideoPlayerViewContainer.removeAllViews()
+      actualVideoPlayerViewContainer.removeAllViews()
+    }
+
 
     // TODO(KurobaEx): mpv
 //    mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
@@ -374,6 +405,10 @@ class MpvVideoMediaView(
   }
 
   private fun eventUi(eventId: Int) {
+    if (!MPVLib.librariesAreLoaded()) {
+      return
+    }
+
     when (eventId) {
       MPVLib.mpvEventId.MPV_EVENT_IDLE -> {
         Logger.d(TAG, "onEvent MPV_EVENT_IDLE")
@@ -650,6 +685,10 @@ class MpvVideoMediaView(
   }
 
   private fun showVideoUi() {
+    if (!MPVLib.librariesAreLoaded()) {
+      return
+    }
+
     if (hideShowAnimation != null) {
       hideShowAnimation?.end()
       hideShowAnimation = null

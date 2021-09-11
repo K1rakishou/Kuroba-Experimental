@@ -46,9 +46,10 @@ class DialogFactory(
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
     onDismissListener: () -> Unit = { },
-    cancelable: Boolean = true
+    cancelable: Boolean = true,
+    checkAppVisibility: Boolean = true
   ): KurobaAlertDialog.AlertDialogHandle? {
-    if (!applicationVisibilityManager.isAppInForeground()) {
+    if (checkAppVisibility && !applicationVisibilityManager.isAppInForeground()) {
       return null
     }
 

@@ -106,6 +106,7 @@ sealed class MainScreen(
     object Filters : MainGroup("filters")
     object Security : MainGroup("security")
     object Caching : MainGroup("caching")
+    object Plugins : MainGroup("plugins")
     object Experimental : MainGroup("experimental")
     object CaptchaSolvers : MainGroup("captcha_solvers")
 
@@ -677,6 +678,38 @@ sealed class CachingScreen(
 }
 
 // ================================================================
+// ================= PluginsSettingsScreen =======================
+// ================================================================
+
+sealed class PluginsScreen(
+  groupIdentifier: GroupIdentifier,
+  settingIdentifier: SettingIdentifier,
+  screenIdentifier: ScreenIdentifier = SecurityScreen.getScreenIdentifier()
+) :
+  IScreen,
+  SettingsIdentifier(screenIdentifier, groupIdentifier, settingIdentifier) {
+
+  sealed class MpvPluginGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = MpvPluginGroup.getGroupIdentifier()
+  ) : IGroup,
+    PluginsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    object UseMpv : MpvPluginGroup("use_mpv")
+    object CheckMpvLibsState : MpvPluginGroup("check_mpv_libs_state")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = MediaScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("mpv_plugin_group")
+    }
+  }
+
+  companion object : IScreenIdentifier() {
+    override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("plugins_screen")
+  }
+}
+
+// ================================================================
 // ================= CaptchaSolversSettingsScreen ===================
 // ================================================================
 
@@ -736,7 +769,6 @@ sealed class ExperimentalScreen(
     object AutoLoadThreadImages : MainSettingsGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : MainSettingsGroup("show_prefetch_loading_indicator")
     object HighResCells : MainSettingsGroup("high_res_cells")
-    object UseMpv : MainSettingsGroup("use_mpv")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()

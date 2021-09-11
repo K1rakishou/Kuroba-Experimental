@@ -191,10 +191,10 @@ suspend inline fun OkHttpClient.suspendConvertIntoJsoupDocument(
   }
 }
 
-suspend inline fun <reified T> OkHttpClient.suspendConvertIntoJsonObjectWithAdapter(
+suspend inline fun <reified T : Any?> OkHttpClient.suspendConvertIntoJsonObjectWithAdapter(
   request: Request,
   adapter: JsonAdapter<T>
-): ModularResult<out T> {
+): ModularResult<out T?> {
   return withContext(Dispatchers.IO) {
     return@withContext Try {
       Logger.d("suspendConvertIntoJsonObjectWithAdapter", "url='${request.url}'")

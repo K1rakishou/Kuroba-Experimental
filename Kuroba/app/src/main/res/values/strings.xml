@@ -494,6 +494,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_security_description">Proxy settings, etc.</string>
     <string name="settings_caching">Caching</string>
     <string name="settings_caching_description">Media cache/database cache</string>
+    <string name="settings_plugins">Plugins</string>
+    <string name="settings_plugins_description">Downloadable plugins</string>
     <string name="settings_captcha_solvers">Captcha solvers</string>
     <string name="settings_captcha_solvers_description">Automatic, paid, captcha solvers (For ReCaptcha only)</string>
     <string name="settings_experimental_settings">⚠ EXPERIMENTAL ⚠</string>
@@ -643,8 +645,6 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
-    <string name="setting_use_mpv">Use mpv video player</string>
-    <string name="setting_use_mpv_description">When turned on mpv video player will be used to play videos instead of the ExoPlayer. When turned off ExoPlayer will be used.</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -726,6 +726,29 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_always_randomize_picked_files_names">Always randomize picked files names</string>
     <string name="setting_always_randomize_picked_files_names_description">Current timestamp in milliseconds will be used as the name of any picked file</string>
 
+
+    <!-- Plugins group -->
+    <string name="settings_plugins_not_available_on_fdroid">Not available on FDroid builds because it uses pre-built native libraries.</string>
+    <string name="settings_plugins_mpv_group">Mpv video player</string>
+    <string name="settings_plugins_use_mpv">Use mpv video player</string>
+    <string name="settings_plugins_use_mpv_description">When turned on mpv video player will be used to play videos instead of the ExoPlayer. When turned off ExoPlayer will be used. You need to install the libraries for it to work.</string>
+    <string name="settings_plugins_libs_status">Mpv libraries status</string>
+    <string name="settings_plugins_libs_downloading_libraries">Downloading libraries</string>
+    <string name="settings_plugins_libs_installation_failure">Failure</string>
+    <string name="settings_plugins_libs_installation_success">Success</string>
+    <string name="settings_plugins_libs_installation_description_failure">Failed to install mpv libraries! Error: \'%1$s\'</string>
+    <string name="settings_plugins_libs_installation_description_success">Successfully installed mpv libraries! The app will now be restarted.</string>
+    <string name="settings_plugins_libs_status_no_libs">Status: libraries are not installed or some libraries are missing or cannot be accessed. Click here to reinstall the libraries.</string>
+    <string name="settings_plugins_libs_status_load_error">Status: Failed to load mpv native libraries. Click here to reinstall the libraries.\nActual error: \'%1$s\'</string>
+    <string name="settings_plugins_libs_status_ok">Status: libraries installed, everything seems to be fine</string>
+    <string name="settings_plugins_libs_status_lib_installed">Installed</string>
+    <string name="settings_plugins_libs_status_lib_missing">Missing</string>
+    <string name="settings_plugins_libs_old_libs_deleted">Old mpv libraries were deleted. The app will now be restarted.</string>
+    <string name="settings_plugins_libs_delete_old_mpv_libs">Delete old mpv libraries</string>
+    <string name="settings_plugins_libs_install_libs_from_github">Install mpv libraries from Github</string>
+    <string name="settings_plugins_libs_install_libs_from_local_directory">Install mpv libraries from local directory</string>
+    <string name="settings_plugins_libs_local_installation_dialog_title">Local installation info</string>
+    <string name="settings_plugins_libs_local_installation_dialog_description">Local mpv library installation is basically the same thing as simply moving pre-built .so files to \'%1$s\' directory. You will have to select a directory where the .so files are located. The libraries must have specific names because no renaming is being done on the libraries they are only moved from one directory to another. You can check out the existing pre-built libraries and how they are named in this repository: https://github.com/K1rakishou/KurobaEx-mpv-libs The libraries must be built for a specific ABI (Application binary interface). The ABIs this phones supports are: \'%2$s\'. If you attempt to load libraries built for an ABI not supported by your phone the application may crash. The instructions on how to build the libraries by yourself can be found in the main application Github repository.</string>
 
     <!-- Save location settings -->
 
@@ -1266,6 +1289,11 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="mpv_switching_to_sw_decoding">Switching to software decoding</string>
     <string name="mpv_switching_to_hw_decoding">Switching to hardware decoding</string>
     <string name="mpv_fast_video_decoding">Fast video decoding mode</string>
+    <string name="mpv_library_load_error">Failed to load mpv native libraries.
+Check whether the libraries are installed correctly or installed at all.
+The simplest way to do that is to fully reinstall them (Go to Settings -> Plugins -> Click \'Mpv libraries status\').
+\n\n
+Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 

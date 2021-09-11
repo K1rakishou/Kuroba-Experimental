@@ -118,6 +118,16 @@ open class AppConstants(
       return field
     }
 
+  val mpvNativeLibsDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdirs()) { "Failed to create mpv native libs directory! mpvNativeLibsDir=${field.absolutePath}" }
+      return field
+    }
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
@@ -131,6 +141,7 @@ open class AppConstants(
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
     mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
     threadDownloaderCacheDir = File(context.filesDir, THREAD_DOWNLOADER_DIR_NAME)
+    mpvNativeLibsDir = File(context.filesDir, MPV_NATIVE_LIBS_DIR_NAME)
 
     crashLogsDir = File(context.filesDir, CRASH_LOGS_DIR_NAME)
     anrsDir = File(context.filesDir, ANRS_DIR_NAME)
@@ -179,6 +190,7 @@ open class AppConstants(
     private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
     private const val THREAD_DOWNLOADER_DIR_NAME = "thread_downloader_storage"
+    private const val MPV_NATIVE_LIBS_DIR_NAME = "mpv_native_libs"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
     private const val CRASH_LOGS_DIR_NAME = "crashlogs"
     private const val ANRS_DIR_NAME = "anrs"

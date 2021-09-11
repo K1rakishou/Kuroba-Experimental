@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import okhttp3.Request
+import java.io.IOException
 import javax.inject.Inject
 
 class Chan4CaptchaLayoutViewModel : BaseViewModel() {
@@ -225,6 +226,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       request = request,
       adapter = captchaInfoRawAdapter
     ).unwrap()
+
+    if (captchaInfoRaw == null) {
+      throw IOException("Failed to convert json to CaptchaInfoRaw")
+    }
 
     if (captchaInfoRaw.error?.contains(ERROR_MSG, ignoreCase = true) == true) {
       val cooldownMs = captchaInfoRaw.cooldown?.times(1000L)

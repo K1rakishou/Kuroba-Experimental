@@ -382,9 +382,9 @@ class ReportManager(
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
       appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
+      appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
-      appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("------------------------------")
@@ -394,6 +394,12 @@ class ReportManager(
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
+      appendLine("userAgent: ${appConstants.userAgent}")
+      appendLine("kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
+
+      appendLine("maxPostsCountInPostsCache: ${appConstants.maxPostsCountInPostsCache}")
+      appendLine("maxAmountOfPostsInDatabase: ${appConstants.maxAmountOfPostsInDatabase}")
+      appendLine("maxAmountOfThreadsInDatabase: ${appConstants.maxAmountOfThreadsInDatabase}")
 
       appendLine("diskCacheSizeMegabytes: ${ChanSettings.diskCacheSizeMegabytes.get()}")
       appendLine("prefetchDiskCacheSizeMegabytes: ${ChanSettings.prefetchDiskCacheSizeMegabytes.get()}")

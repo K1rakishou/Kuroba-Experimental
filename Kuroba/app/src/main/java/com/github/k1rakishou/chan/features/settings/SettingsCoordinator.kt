@@ -11,6 +11,8 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
+import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
@@ -104,6 +106,10 @@ class SettingsCoordinator(
   lateinit var threadDownloadingDelegate: ThreadDownloadingDelegate
   @Inject
   lateinit var updateManager: Lazy<UpdateManager>
+  @Inject
+  lateinit var installMpvNativeLibrariesFromGithubUseCase: InstallMpvNativeLibrariesFromGithubUseCase
+  @Inject
+  lateinit var installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -211,6 +217,19 @@ class SettingsCoordinator(
 
   private val cachingSettingsScreen by lazy { CachingSettingsScreen(context) }
 
+  private val pluginSettingsScreen by lazy {
+    PluginSettingsScreen(
+      context,
+      appConstants,
+      dialogFactory,
+      fileChooser,
+      globalWindowInsetsManager,
+      navigationController,
+      installMpvNativeLibrariesFromGithubUseCase,
+      installMpvNativeLibrariesFromLocalDirectoryUseCase
+    )
+  }
+
   private val onSearchEnteredSubject = BehaviorProcessor.create<String>()
   private val renderSettingsSubject = PublishProcessor.create<RenderAction>()
 
@@ -266,6 +285,7 @@ class SettingsCoordinator(
     mediaSettingsScreen.onCreate()
     securitySettingsScreen.onCreate()
     cachingSettingsScreen.onCreate()
+    pluginSettingsScreen.onCreate()
   }
 
   fun onDestroy() {
@@ -281,6 +301,7 @@ class SettingsCoordinator(
     mediaSettingsScreen.onDestroy()
     securitySettingsScreen.onDestroy()
     cachingSettingsScreen.onDestroy()
+    pluginSettingsScreen.onDestroy()
 
     screenStack.clear()
 
@@ -458,6 +479,7 @@ class SettingsCoordinator(
       graph += mediaSettingsScreen.build()
       graph += securitySettingsScreen.build()
       graph += cachingSettingsScreen.build()
+      graph += pluginSettingsScreen.build()
 
       return@withContext graph
     }

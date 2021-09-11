@@ -57,6 +57,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -80,6 +81,8 @@ class StartActivity : ControllerHostActivity(),
   StartActivityStartupHandlerHelper.StartActivityCallbacks,
   ThemeEngine.ThemeChangesListener {
 
+  @Inject
+  lateinit var appConstants: AppConstants
   @Inject
   lateinit var fileChooser: FileChooser
   @Inject

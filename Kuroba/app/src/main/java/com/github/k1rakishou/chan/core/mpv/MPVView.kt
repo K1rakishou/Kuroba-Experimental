@@ -33,11 +33,12 @@ class MPVView(
 ) : TextureView(context, attrs), TextureView.SurfaceTextureListener {
     private var filePath: String? = null
 
-    init {
-      setWillNotDraw(false)
-    }
-
     fun create(applicationContext: Context, appConstants: AppConstants) {
+        if (!MPVLib.librariesAreLoaded()) {
+            Logger.d(TAG, "create() librariesAreLoaded: false")
+            return
+        }
+
         Logger.d(TAG, "create()")
 
         MPVLib.create(applicationContext)
@@ -94,6 +95,11 @@ class MPVView(
     }
 
     fun destroy() {
+        if (!MPVLib.librariesAreLoaded()) {
+            Logger.d(TAG, "destroy() librariesAreLoaded: false")
+            return
+        }
+
         Logger.d(TAG, "destroy()")
 
         this.filePath = null
@@ -104,6 +110,11 @@ class MPVView(
     }
 
     fun reloadFastVideoDecodeOption() {
+        if (!MPVLib.librariesAreLoaded()) {
+            Logger.d(TAG, "reloadFastVideoDecodeOption() librariesAreLoaded: false")
+            return
+        }
+
         if (MpvSettings.videoFastCode.get()) {
             Logger.d(TAG, "initOptions() videoFastCode: true")
 
@@ -118,6 +129,11 @@ class MPVView(
     }
 
     fun playFile(filePath: String) {
+        if (!MPVLib.librariesAreLoaded()) {
+            Logger.d(TAG, "playFile() librariesAreLoaded: false")
+            return
+        }
+
         this.filePath = filePath
 
         if (ChanSettings.videoAutoLoop.get()) {

@@ -37,6 +37,10 @@ class SearxImageSearchUseCase(
       .peekError { error -> Logger.e(TAG, "suspendConvertIntoJsonObjectWithAdapter error", error) }
       .unwrap()
 
+    if (searxSearchResults == null) {
+      return emptyList()
+    }
+
     return searxSearchResults.results.mapNotNull { searxResult ->
       if (!searxResult.isValid()) {
         return@mapNotNull null

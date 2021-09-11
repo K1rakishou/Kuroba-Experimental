@@ -22,6 +22,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
   private lateinit var floatingListMenu: FloatingListMenu
   private lateinit var clickableArea: ConstraintLayout
 
+  private var itemSelected = false
+
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
@@ -35,6 +37,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
     floatingListMenu = view.findViewById(R.id.floating_list_menu)
     floatingListMenu.setItems(items)
     floatingListMenu.setClickListener { clickedItem ->
+      itemSelected = true
+
       popAll()
       itemClickListener.invoke(clickedItem)
     }
@@ -68,7 +72,10 @@ open class FloatingListMenuController @JvmOverloads constructor(
   override fun onDestroy() {
     super.onDestroy()
 
-    menuDismissListener?.invoke()
+    if (!itemSelected) {
+      menuDismissListener?.invoke()
+    }
+
     floatingListMenu.onDestroy()
 
     floatingListMenu.setClickListener(null)

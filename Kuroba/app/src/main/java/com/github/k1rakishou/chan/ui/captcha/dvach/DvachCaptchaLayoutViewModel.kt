@@ -77,6 +77,10 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
       adapter = captchaInfoAdapter
     ).unwrap()
 
+    if (captchaInfo == null) {
+      throw DvachCaptchaError("Failed to convert json into CaptchaInfo")
+    }
+
     if (!captchaInfo.isValidDvachCaptcha()) {
       throw DvachCaptchaError("Invalid dvach captcha info: ${captchaInfo}")
     }

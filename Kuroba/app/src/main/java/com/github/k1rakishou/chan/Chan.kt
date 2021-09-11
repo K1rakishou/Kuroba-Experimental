@@ -191,8 +191,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     ChanSettings.init(createChanSettingsInfo())
     PersistableChanState.init(createPersistableChanStateInfo())
     MpvSettings.init()
-
-    AppModuleAndroidUtils.printApplicationSignatureHash()
   }
 
   override fun onCreate() {
@@ -247,8 +245,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       maxPostsInDatabaseSettingValue = 125000,
       maxThreadsInDatabaseSettingValue = 12500
     )
-
-    logAppConstantsAndSettings(appConstants)
 
     applicationMigrationManager.performMigration(this)
 
@@ -392,19 +388,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       onUnhandledException(e, exceptionToString(UnhandlerExceptionHandlerType.Normal, e))
       exitProcess(999)
     }
-  }
-
-  private fun logAppConstantsAndSettings(appConstants: AppConstants) {
-    Logger.d(TAG, "maxPostsCountInPostsCache: ${appConstants.maxPostsCountInPostsCache}")
-    Logger.d(TAG, "maxAmountOfPostsInDatabase: ${appConstants.maxAmountOfPostsInDatabase}")
-    Logger.d(TAG, "maxAmountOfThreadsInDatabase: ${appConstants.maxAmountOfThreadsInDatabase}")
-    Logger.d(TAG, "diskCacheCleanupRemovePercent: ${ChanSettings.diskCacheCleanupRemovePercent.get()}")
-    Logger.d(TAG, "userAgent: ${appConstants.userAgent}")
-    Logger.d(TAG, "kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
-    Logger.d(TAG, "useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
-
-    Logger.d(TAG, "isLowRamDevice: ${ChanSettings.isLowRamDevice()}, " +
-      "isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
   }
 
   private fun exceptionToString(type: UnhandlerExceptionHandlerType, e: Throwable): String {

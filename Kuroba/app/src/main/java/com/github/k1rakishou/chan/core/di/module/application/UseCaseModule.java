@@ -36,6 +36,8 @@ import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase;
+import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase;
+import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
@@ -411,6 +413,38 @@ public class UseCaseModule {
                 fileManager,
                 chanFilterManager,
                 moshi
+        );
+    }
+
+    @Provides
+    @Singleton
+    public InstallMpvNativeLibrariesFromGithubUseCase provideInstallMpvNativeLibrariesUseCase(
+            Context applicationContext,
+            AppConstants appConstants,
+            Moshi moshi,
+            ProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        Logger.deps("InstallMpvNativeLibrariesFromGithubUseCase");
+
+        return new InstallMpvNativeLibrariesFromGithubUseCase(
+                applicationContext,
+                appConstants,
+                moshi,
+                proxiedOkHttpClient
+        );
+    }
+
+    @Provides
+    @Singleton
+    public InstallMpvNativeLibrariesFromLocalDirectoryUseCase provideInstallMpvNativeLibrariesFromLocalDirectoryUseCase(
+            AppConstants appConstants,
+            FileManager fileManager
+    ) {
+        Logger.deps("InstallMpvNativeLibrariesFromLocalDirectoryUseCase");
+
+        return new InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
+                appConstants,
+                fileManager
         );
     }
 

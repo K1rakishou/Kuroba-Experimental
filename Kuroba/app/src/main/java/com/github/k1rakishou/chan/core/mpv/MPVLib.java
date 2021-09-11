@@ -10,31 +10,98 @@ package com.github.k1rakishou.chan.core.mpv;
  * NATIVE LIBRARIES DEPEND ON THE CLASS PACKAGE!
  * */
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.view.Surface;
 
 import androidx.annotation.NonNull;
+import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.common.DoNotStrip;
+import com.github.k1rakishou.core_logger.Logger;
 
+import java.io.File;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 @DoNotStrip
 @SuppressWarnings("unused")
 public class MPVLib {
+     private static final String TAG = "MPVLib";
 
-     static {
-        String[] libs = { "mpv", "player" };
-        for (String lib: libs) {
-            System.loadLibrary(lib);
-        }
+     public static final int SUPPORTED_MPV_LIB_VERSION = 1;
+
+     /**
+      * Libraries are sorted by the order of dependency.
+      * The libraries that come first are those that have no dependencies.
+      * The libraries that come last are those that depend on other libraries and will throw
+      * UnsatisfiedLinkError if are attempted to get loaded before all the dependencies are loaded.
+      *
+      * !!!!! DO NOT CHANGE THE ORDER !!!!!!!
+      * */
+     public static final List<String> LIBS = Arrays.asList(
+             "libavutil.so",
+             "libswresample.so",
+             "libavcodec.so",
+             "libavformat.so",
+             "libavdevice.so",
+             "libswscale.so",
+             "libpostproc.so",
+             "libavfilter.so",
+             "libc++_shared.so",
+             "libmpv.so",
+             "libplayer.so"
+     );
+     /** !!!!! DO NOT CHANGE THE ORDER !!!!!!! */
+
+     @Nullable
+     private static Throwable lastError = null;
+     private static boolean librariesLoaded = false;
+
+     @SuppressLint("UnsafeDynamicallyLoadedCode")
+     public static void tryLoadLibraries(File mpvNativeLibsDir) {
+          if (lastError != null || librariesLoaded) {
+               return;
+          }
+
+          try {
+               for (String lib : LIBS) {
+                    File libFile = new File(mpvNativeLibsDir, lib);
+                    Logger.d(TAG, "loadLibraries() loading " + libFile.getPath());
+
+                    System.load(libFile.getPath());
+               }
+
+               librariesLoaded = true;
+          } catch (LinkageError error) {
+               lastError = error;
+               Logger.e(TAG, "loadLibraries() error", error);
+          } catch (Throwable error) {
+               lastError = error;
+               Logger.e(TAG, "loadLibraries() error", error);
+          }
+     }
+
+     public static boolean librariesAreLoaded() {
+          return librariesLoaded && lastError == null;
+     }
+
+     @Nullable
+     public static Throwable getLastError() {
+          return lastError;
      }
 
      public static native void create(Context appctx);
      public static native void init();
      public static native void destroy();
+
+     // TODO(KurobaEx): mpv
+//     public static native int libraryVersion();
+
      public static native void attachSurface(Surface surface);
      public static native void detachSurface();
 
@@ -113,6 +180,46 @@ public class MPVLib {
                for (LogObserver o : log_observers)
                     o.logMessage(prefix, level, text);
           }
+     }
+
+     public static boolean checkLibrariesInstalled(Context context, File mpvNativeLibrariesDir) {
+          Map<String, Boolean> checkedLibsMap = getInstalledLibraries(context, mpvNativeLibrariesDir);
+          boolean allLibsExist = true;
+
+          for (Map.Entry<String, Boolean> stringBooleanEntry : checkedLibsMap.entrySet()) {
+               Boolean exists = stringBooleanEntry.getValue();
+
+               if (!exists) {
+                    allLibsExist = false;
+                    break;
+               }
+          }
+
+          return allLibsExist;
+     }
+
+     @NonNull
+     public static Map<String, Boolean> getInstalledLibraries(Context context, File mpvNativeLibrariesDir) {
+          Map<String, Boolean> checkedLibsMap = new HashMap<String, Boolean>();
+
+          for (String libToCheck : LIBS) {
+               checkedLibsMap.put(libToCheck, false);
+          }
+
+          File[] libsDirFiles = mpvNativeLibrariesDir.listFiles();
+          if (libsDirFiles == null || libsDirFiles.length <= 0) {
+               return checkedLibsMap;
+          }
+
+          for (File libsDirFile : libsDirFiles) {
+               if (checkedLibsMap.containsKey(libsDirFile.getName())) {
+                    if (libsDirFile.exists() && libsDirFile.canRead() && libsDirFile.length() > 0L) {
+                         checkedLibsMap.put(libsDirFile.getName(), true);
+                    }
+               }
+          }
+
+          return checkedLibsMap;
      }
 
      @DoNotStrip
