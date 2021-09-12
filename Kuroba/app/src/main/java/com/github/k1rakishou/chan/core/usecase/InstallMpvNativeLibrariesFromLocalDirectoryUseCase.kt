@@ -45,7 +45,7 @@ class InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
       }
 
       if (!isLibraryExpected) {
-        Logger.d(TAG, "Skipping ${libName}")
+        Logger.d(TAG, "Skipping \'${libName}\'")
         return@forEach
       }
 

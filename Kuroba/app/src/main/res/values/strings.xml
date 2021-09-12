@@ -728,7 +728,6 @@ Note that for country code filtering, troll country codes should be prepended wi
 
 
     <!-- Plugins group -->
-    <string name="settings_plugins_not_available_on_fdroid">Not available on FDroid builds because it uses pre-built native libraries.</string>
     <string name="settings_plugins_mpv_group">Mpv video player</string>
     <string name="settings_plugins_use_mpv">Use mpv video player</string>
     <string name="settings_plugins_use_mpv_description">When turned on mpv video player will be used to play videos instead of the ExoPlayer. When turned off ExoPlayer will be used. You need to install the libraries for it to work.</string>
@@ -740,7 +739,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_plugins_libs_installation_description_success">Successfully installed mpv libraries! The app will now be restarted.</string>
     <string name="settings_plugins_libs_status_no_libs">Status: libraries are not installed or some libraries are missing or cannot be accessed. Click here to reinstall the libraries.</string>
     <string name="settings_plugins_libs_status_load_error">Status: Failed to load mpv native libraries. Click here to reinstall the libraries.\nActual error: \'%1$s\'</string>
-    <string name="settings_plugins_libs_status_ok">Status: libraries installed, everything seems to be fine</string>
+    <string name="settings_plugins_libs_status_player_version_app_version_differ">Status: libplayer.so version \'v%1$d\' is not the same as the version that this app supports \'v%2$d\'. This may lead to crashes or other bugs. It\'s strongly recommended to update the app and the libraries to the latest version.</string>
+    <string name="settings_plugins_libs_status_ok">Status: libraries installed. Everything seems to be fine.\nlibplayer.so version: \'v%1$d\'</string>
     <string name="settings_plugins_libs_status_lib_installed">Installed</string>
     <string name="settings_plugins_libs_status_lib_missing">Missing</string>
     <string name="settings_plugins_libs_old_libs_deleted">Old mpv libraries were deleted. The app will now be restarted.</string>
@@ -749,6 +749,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_plugins_libs_install_libs_from_local_directory">Install mpv libraries from local directory</string>
     <string name="settings_plugins_libs_local_installation_dialog_title">Local installation info</string>
     <string name="settings_plugins_libs_local_installation_dialog_description">Local mpv library installation is basically the same thing as simply moving pre-built .so files to \'%1$s\' directory. You will have to select a directory where the .so files are located. The libraries must have specific names because no renaming is being done on the libraries they are only moved from one directory to another. You can check out the existing pre-built libraries and how they are named in this repository: https://github.com/K1rakishou/KurobaEx-mpv-libs The libraries must be built for a specific ABI (Application binary interface). The ABIs this phones supports are: \'%2$s\'. If you attempt to load libraries built for an ABI not supported by your phone the application may crash. The instructions on how to build the libraries by yourself can be found in the main application Github repository.</string>
+    <string name="settings_plugins_libs_fdroid_github_error">Cannot download and use pre-built libraries on FDroid builds because FDroid forbids doing that. You have to build and install them manually.</string>
 
     <!-- Save location settings -->
 

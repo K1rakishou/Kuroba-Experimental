@@ -1,6 +1,7 @@
 package com.github.k1rakishou.model.repository
 
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -72,7 +73,8 @@ class SeenPostRepository(
       return
     }
 
-    seenPostLocalSource.deleteOlderThan(SeenPostLocalSource.ONE_MONTH_AGO)
+    val deletedCount = seenPostLocalSource.deleteOlderThan(SeenPostLocalSource.ONE_MONTH_AGO)
+    Logger.d(TAG, "seenPostLocalRepositoryCleanup deletedCount=$deletedCount")
   }
 
 }

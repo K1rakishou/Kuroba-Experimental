@@ -33,7 +33,9 @@ import java.util.Map;
 public class MPVLib {
      private static final String TAG = "MPVLib";
 
-     public static final int SUPPORTED_MPV_LIB_VERSION = 1;
+     // When updating the player code or anything related to it update jin/main.cpp:player_version
+     // variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
+     public static final int SUPPORTED_MPV_PLAYER_VERSION = 2;
 
      /**
       * Libraries are sorted by the order of dependency.
@@ -98,9 +100,7 @@ public class MPVLib {
      public static native void create(Context appctx);
      public static native void init();
      public static native void destroy();
-
-     // TODO(KurobaEx): mpv
-//     public static native int libraryVersion();
+     public static native Integer playerVersion();
 
      public static native void attachSurface(Surface surface);
      public static native void detachSurface();

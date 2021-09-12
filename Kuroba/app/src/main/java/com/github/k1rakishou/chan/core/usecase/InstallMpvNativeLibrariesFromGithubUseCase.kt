@@ -30,6 +30,7 @@ class InstallMpvNativeLibrariesFromGithubUseCase(
   private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) : ISuspendUseCase<Unit, ModularResult<Unit>> {
   private val githubReleaseResponsesListType = Types.newParameterizedType(List::class.java, GithubReleaseResponse::class.java)
+  private val lookupTag = "v${MPVLib.SUPPORTED_MPV_PLAYER_VERSION}"
 
   override suspend fun execute(parameter: Unit): ModularResult<Unit> {
     return ModularResult.Try { executeInternal() }
@@ -57,8 +58,6 @@ class InstallMpvNativeLibrariesFromGithubUseCase(
     if (githubReleases == null) {
       throw MpvInstallLibsFromGithubException("Failed to convert json to GithubReleaseResponse")
     }
-
-    val lookupTag = "v${MPVLib.SUPPORTED_MPV_LIB_VERSION}.0"
 
     val releaseForThisApp = githubReleases
       .firstOrNull { githubReleaseResponse -> githubReleaseResponse.tagName.equals(lookupTag, ignoreCase = true) }

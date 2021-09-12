@@ -40,6 +40,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Composite catalogs (ability to combine multiple boards of any available sites (except archives) together into a single catalog).
 
+- Mpv video player (downloadable).
+
 - Lots of other tiny improvements.
 
 ### Screenshots:

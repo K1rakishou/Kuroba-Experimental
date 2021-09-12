@@ -20,8 +20,10 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -132,7 +134,9 @@ class PluginSettingsScreen(
       ACTION_DELETE_INSTALLED_LIBS -> {
         deleteOldMpvLibs()
       }
-      null -> return
+      null -> {
+        // no-op
+      }
     }
   }
 
@@ -214,6 +218,11 @@ class PluginSettingsScreen(
   }
 
   private suspend fun installMpvLibrariesFromGithub() {
+    if (getFlavorType() == AndroidUtils.FlavorType.Fdroid) {
+      showToast(context, getString(R.string.settings_plugins_libs_fdroid_github_error))
+      return
+    }
+
     val loadingViewController = LoadingViewController(
       context,
       true,
@@ -257,7 +266,16 @@ class PluginSettingsScreen(
   }
 
   private fun loadLibrariesAndShowStatus(): String {
-    val libsStatus = MPVLib.getInstalledLibraries(context, appConstants.mpvNativeLibsDir)
+    return buildString {
+      append(getOverallStatus())
+      appendLine()
+      appendLine()
+      append(getLibsStatus())
+    }
+  }
+
+  private fun getLibsStatus(): String {
+    return MPVLib.getInstalledLibraries(context, appConstants.mpvNativeLibsDir)
       .entries
       .joinToString(
         separator = "\n",
@@ -273,21 +291,35 @@ class PluginSettingsScreen(
 
           return@joinToString "${libName}: ${res}"
         })
+  }
 
+  private fun getOverallStatus(): String {
     if (!MPVLib.checkLibrariesInstalled(context, appConstants.mpvNativeLibsDir)) {
-      return getString(R.string.settings_plugins_libs_status_no_libs) + "\n\n" + libsStatus
+      return getString(R.string.settings_plugins_libs_status_no_libs)
     }
 
     MPVLib.tryLoadLibraries(appConstants.mpvNativeLibsDir)
 
     val lastError = MPVLib.getLastError()
     if (lastError != null) {
-      return getString(R.string.settings_plugins_libs_status_load_error, lastError.errorMessageOrClassName()) + "\n\n" + libsStatus
+      return getString(R.string.settings_plugins_libs_status_load_error, lastError.errorMessageOrClassName())
     }
 
-    // TODO(KurobaEx): mpv check libplayer version against the supported app player version.
+    val playerVersion = try {
+      MPVLib.playerVersion()
+    } catch (error: Throwable) {
+      -1
+    }
 
-    return getString(R.string.settings_plugins_libs_status_ok) + "\n\n" + libsStatus
+    if (playerVersion != MPVLib.SUPPORTED_MPV_PLAYER_VERSION) {
+      return getString(
+        R.string.settings_plugins_libs_status_player_version_app_version_differ,
+        playerVersion,
+        MPVLib.SUPPORTED_MPV_PLAYER_VERSION
+      )
+    }
+
+    return getString(R.string.settings_plugins_libs_status_ok, playerVersion)
   }
 
   companion object {

@@ -466,21 +466,29 @@ class MpvVideoMediaView(
           actualVideoPlayerView.muteUnmute(false)
         }
       }
-      MPVLib.mpvEventId.MPV_EVENT_NONE -> Logger.d(TAG, "onEvent MPV_EVENT_NONE")
-      MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN -> Logger.d(TAG, "onEvent MPV_EVENT_SHUTDOWN")
-      MPVLib.mpvEventId.MPV_EVENT_LOG_MESSAGE -> Logger.d(TAG, "onEvent MPV_EVENT_LOG_MESSAGE")
-      MPVLib.mpvEventId.MPV_EVENT_GET_PROPERTY_REPLY -> Logger.d(TAG, "onEvent MPV_EVENT_GET_PROPERTY_REPLY")
-      MPVLib.mpvEventId.MPV_EVENT_SET_PROPERTY_REPLY -> Logger.d(TAG, "onEvent MPV_EVENT_SET_PROPERTY_REPLY")
-      MPVLib.mpvEventId.MPV_EVENT_COMMAND_REPLY -> Logger.d(TAG, "onEvent MPV_EVENT_COMMAND_REPLY")
-      MPVLib.mpvEventId.MPV_EVENT_START_FILE -> Logger.d(TAG, "onEvent MPV_EVENT_START_FILE")
-      MPVLib.mpvEventId.MPV_EVENT_END_FILE -> Logger.d(TAG, "onEvent MPV_EVENT_END_FILE")
-      MPVLib.mpvEventId.MPV_EVENT_TICK -> Logger.d(TAG, "onEvent MPV_EVENT_TICK")
-      MPVLib.mpvEventId.MPV_EVENT_CLIENT_MESSAGE -> Logger.d(TAG, "onEvent MPV_EVENT_CLIENT_MESSAGE")
-      MPVLib.mpvEventId.MPV_EVENT_VIDEO_RECONFIG -> Logger.d(TAG, "onEvent MPV_EVENT_VIDEO_RECONFIG")
-      MPVLib.mpvEventId.MPV_EVENT_SEEK -> Logger.d(TAG, "onEvent MPV_EVENT_SEEK")
-      MPVLib.mpvEventId.MPV_EVENT_PROPERTY_CHANGE -> Logger.d(TAG, "onEvent MPV_EVENT_PROPERTY_CHANGE")
-      MPVLib.mpvEventId.MPV_EVENT_QUEUE_OVERFLOW -> Logger.d(TAG, "onEvent MPV_EVENT_QUEUE_OVERFLOW")
-      MPVLib.mpvEventId.MPV_EVENT_HOOK -> Logger.d(TAG, "onEvent MPV_EVENT_HOOK")
+      MPVLib.mpvEventId.MPV_EVENT_START_FILE -> {
+        Logger.d(TAG, "onEvent MPV_EVENT_START_FILE")
+      }
+      MPVLib.mpvEventId.MPV_EVENT_END_FILE -> {
+        Logger.d(TAG, "onEvent MPV_EVENT_END_FILE")
+      }
+      MPVLib.mpvEventId.MPV_EVENT_SHUTDOWN -> {
+        Logger.d(TAG, "onEvent MPV_EVENT_SHUTDOWN")
+      }
+      MPVLib.mpvEventId.MPV_EVENT_NONE,
+      MPVLib.mpvEventId.MPV_EVENT_LOG_MESSAGE,
+      MPVLib.mpvEventId.MPV_EVENT_GET_PROPERTY_REPLY,
+      MPVLib.mpvEventId.MPV_EVENT_SET_PROPERTY_REPLY,
+      MPVLib.mpvEventId.MPV_EVENT_COMMAND_REPLY,
+      MPVLib.mpvEventId.MPV_EVENT_TICK,
+      MPVLib.mpvEventId.MPV_EVENT_CLIENT_MESSAGE,
+      MPVLib.mpvEventId.MPV_EVENT_VIDEO_RECONFIG,
+      MPVLib.mpvEventId.MPV_EVENT_SEEK,
+      MPVLib.mpvEventId.MPV_EVENT_PROPERTY_CHANGE,
+      MPVLib.mpvEventId.MPV_EVENT_QUEUE_OVERFLOW,
+      MPVLib.mpvEventId.MPV_EVENT_HOOK -> {
+        // no-op
+      }
     }
   }
 
