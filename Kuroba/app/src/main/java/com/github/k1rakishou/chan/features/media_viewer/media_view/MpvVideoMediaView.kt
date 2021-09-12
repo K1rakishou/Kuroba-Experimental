@@ -39,6 +39,8 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.updateHeight
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.file.ExternalFile
+import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.ui.DefaultTimeBar
 import com.google.android.exoplayer2.ui.TimeBar
 import kotlinx.coroutines.Job
@@ -88,6 +90,7 @@ class MpvVideoMediaView(
   private var userIsOperatingSeekbar = false
   private var hideShowAnimation: ValueAnimator? = null
   private var showBufferingJob: Job? = null
+  private var playJob: Job? = null
 
   override val hasContent: Boolean
     get() = _hasContent
@@ -300,7 +303,14 @@ class MpvVideoMediaView(
 
       actualVideoPlayerView.create(context.applicationContext, appConstants)
       actualVideoPlayerView.addObserver(this)
-      setFileToPlay(context)
+
+      playJob?.cancel()
+      playJob = null
+
+      playJob = scope.launch {
+        setFileToPlay(context)
+        playJob = null
+      }
 
       actualVideoPlayerView.setVisibilityFast(VISIBLE)
     } else {
@@ -336,6 +346,8 @@ class MpvVideoMediaView(
       actualVideoPlayerViewContainer.removeAllViews()
     }
 
+    playJob?.cancel()
+    playJob = null
 
     // TODO(KurobaEx): mpv
 //    mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
@@ -561,31 +573,46 @@ class MpvVideoMediaView(
     }
   }
 
-  private fun setFileToPlay(context: Context) {
-    val filePath = when (val mediaLocation = viewableMedia.mediaLocation) {
-      is MediaLocation.Local -> {
-        if (mediaLocation.isUri) {
-          try {
-            val uri = Uri.parse(mediaLocation.path)
-            MpvUtils.openContentFd(context.applicationContext, uri)
-          } catch (error: Throwable) {
-            Logger.e(TAG, "setFileToPlay($mediaLocation) error: ${error.errorMessageOrClassName()}")
-            null
-          }
-        } else {
-          mediaLocation.path
-        }
-      }
-      is MediaLocation.Remote -> {
-        mediaLocation.urlRaw
-      }
-    }
-
+  private suspend fun setFileToPlay(context: Context) {
+    val filePath = getFilePath(context)
     if (filePath == null) {
       return
     }
 
     actualVideoPlayerView.playFile(filePath)
+  }
+
+  private suspend fun getFilePath(context: Context): String? {
+    when (val mediaLocation = viewableMedia.mediaLocation) {
+      is MediaLocation.Local -> {
+        if (mediaLocation.isUri) {
+          try {
+            val uri = Uri.parse(mediaLocation.path)
+            return MpvUtils.openContentFd(context.applicationContext, uri)
+          } catch (error: Throwable) {
+            Logger.e(TAG, "setFileToPlay($mediaLocation) error: ${error.errorMessageOrClassName()}")
+            return null
+          }
+        } else {
+          return mediaLocation.path
+        }
+      }
+      is MediaLocation.Remote -> {
+        val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
+        if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
+          val file = threadDownloadManager.findDownloadedFile(mediaLocation.url, threadDescriptor)
+          if (file != null) {
+            return when (file) {
+              is RawFile -> file.getFullPath()
+              is ExternalFile -> MpvUtils.openContentFd(context.applicationContext, file.getUri())
+              else -> null
+            }
+          }
+        }
+
+        return mediaLocation.urlRaw
+      }
+    }
   }
 
   private fun updatePlaybackStatus(paused: Boolean) {
