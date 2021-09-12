@@ -601,7 +601,7 @@ public class ChanSettings {
             showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
-            useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", true);
+            useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
             //endregion
 
             //region OTHER
