@@ -76,6 +76,7 @@ class CardPostCell : ConstraintLayout,
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
   private var thumbView: PostImageThumbnailView? = null
   private var prevPostImage: ChanPostImage? = null
+  private var blinkExecuted = false
 
   private lateinit var cardContent: FixedRatioLinearLayout
   private lateinit var title: TextView
@@ -205,6 +206,7 @@ class CardPostCell : ConstraintLayout,
 
     thumbView = null
 
+    this.blinkExecuted = false
     this.callback = null
     this.postCellData = null
     this.postCellHighlight = null
@@ -407,7 +409,8 @@ class CardPostCell : ConstraintLayout,
             .modifyCurrentAlpha(alpha)
 
           // Do not run this animation when in popup
-          if (postData?.isInPopup == false && postHighlight.isBlinking()) {
+          if (postData?.isInPopup == false && postHighlight.isBlinking() && !blinkExecuted) {
+            blinkExecuted = true
             runBackgroundBlinkAnimation(backgroundView, theme, postHighlightedColorWidthAlpha)
           } else {
             backgroundView.setBackgroundColorFast(postHighlightedColorWidthAlpha)

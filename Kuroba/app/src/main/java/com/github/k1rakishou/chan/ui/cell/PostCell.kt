@@ -956,8 +956,8 @@ class PostCell : ConstraintLayout,
 
           // Do not run this animation when in popup
           if (postData?.isInPopup == false && postHighlight.isBlinking() && !blinkExecuted) {
-            runBackgroundBlinkAnimation(theme, postHighlightedColorWidthAlpha)
             blinkExecuted = true
+            runBackgroundBlinkAnimation(theme, postHighlightedColorWidthAlpha)
           } else {
             setBackgroundColorFast(postHighlightedColorWidthAlpha)
           }
