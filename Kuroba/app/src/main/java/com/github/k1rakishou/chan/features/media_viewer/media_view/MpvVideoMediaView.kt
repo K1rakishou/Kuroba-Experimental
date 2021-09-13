@@ -290,25 +290,25 @@ class MpvVideoMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
-    if (MPVLib.librariesAreLoaded()) {
-      mpvErrorMessage.setVisibilityFast(View.GONE)
-      actualVideoPlayerViewContainer.setVisibilityFast(View.VISIBLE)
+    playJob?.cancel()
+    playJob = null
 
-      actualVideoPlayerViewContainer.addView(
-        actualVideoPlayerView,
-        ViewGroup.LayoutParams(
-          ViewGroup.LayoutParams.MATCH_PARENT,
-          ViewGroup.LayoutParams.MATCH_PARENT
+    playJob = scope.launch {
+      if (MPVLib.librariesAreLoaded()) {
+        mpvErrorMessage.setVisibilityFast(View.GONE)
+        actualVideoPlayerViewContainer.setVisibilityFast(View.VISIBLE)
+
+        actualVideoPlayerViewContainer.addView(
+          actualVideoPlayerView,
+          ViewGroup.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT
+          )
         )
-      )
 
-      actualVideoPlayerView.create(context.applicationContext, appConstants)
-      actualVideoPlayerView.addObserver(this)
+        actualVideoPlayerView.create(context.applicationContext, appConstants)
+        actualVideoPlayerView.addObserver(this@MpvVideoMediaView)
 
-      playJob?.cancel()
-      playJob = null
-
-      playJob = scope.launch {
         if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
           mediaViewState.resetPosition()
         }
@@ -316,27 +316,26 @@ class MpvVideoMediaView(
         setFileToPlay(context)
 
         playJob = null
-      }
-
-      actualVideoPlayerView.setVisibilityFast(VISIBLE)
-    } else {
-      hideVideoUi()
-
-      showBufferingJob?.cancel()
-      showBufferingJob = null
-
-      bufferingProgressView.setVisibilityFast(View.INVISIBLE)
-      thumbnailMediaView.setVisibilityFast(INVISIBLE)
-
-      actualVideoPlayerViewContainer.removeAllViews()
-      actualVideoPlayerViewContainer.setVisibilityFast(View.GONE)
-
-      val lastError = MPVLib.getLastError()
-      if (lastError != null) {
-        mpvErrorMessage.setVisibilityFast(View.VISIBLE)
-        mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
+        actualVideoPlayerView.setVisibilityFast(VISIBLE)
       } else {
-        mpvErrorMessage.setVisibilityFast(View.GONE)
+        hideVideoUi()
+
+        showBufferingJob?.cancel()
+        showBufferingJob = null
+
+        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
+        thumbnailMediaView.setVisibilityFast(INVISIBLE)
+
+        actualVideoPlayerViewContainer.removeAllViews()
+        actualVideoPlayerViewContainer.setVisibilityFast(View.GONE)
+
+        val lastError = MPVLib.getLastError()
+        if (lastError != null) {
+          mpvErrorMessage.setVisibilityFast(View.VISIBLE)
+          mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
+        } else {
+          mpvErrorMessage.setVisibilityFast(View.GONE)
+        }
       }
     }
   }

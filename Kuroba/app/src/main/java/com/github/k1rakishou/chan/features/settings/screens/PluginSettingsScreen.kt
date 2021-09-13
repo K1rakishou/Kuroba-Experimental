@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
+import android.content.res.AssetManager
 import android.net.Uri
 import android.os.Build
 import com.github.k1rakishou.ChanSettings
@@ -32,6 +33,8 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.directory.TemporaryDirectoryCallback
 import kotlinx.coroutines.suspendCancellableCoroutine
+import java.io.File
+import java.io.IOException
 
 class PluginSettingsScreen(
   context: Context,
@@ -206,6 +209,8 @@ class PluginSettingsScreen(
       is ModularResult.Value -> {
         Logger.d(TAG, "installMpvLibrariesFromLocalDirectory success")
 
+        copyMpvCaCert(context, appConstants)
+
         dialogFactory.createSimpleInformationDialog(
           checkAppVisibility = false,
           context = context,
@@ -254,6 +259,8 @@ class PluginSettingsScreen(
       is ModularResult.Value -> {
         Logger.d(TAG, "installMpvLibrariesFromGithub success")
 
+        copyMpvCaCert(context, appConstants)
+
         dialogFactory.createSimpleInformationDialog(
           checkAppVisibility = false,
           context = context,
@@ -263,6 +270,34 @@ class PluginSettingsScreen(
         )
       }
     }
+  }
+
+  private fun copyMpvCaCert(applicationContext: Context, appConstants: AppConstants) {
+    Logger.d(TAG, "copyMpvCaCert() start")
+
+    val assetManager = applicationContext.assets
+
+    try {
+      assetManager.open(AppConstants.MPV_CERTIFICATE_FILE_NAME, AssetManager.ACCESS_STREAMING).use { inputStream ->
+        val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
+
+        if (mpvCertFile.exists()) {
+          mpvCertFile.delete()
+        }
+
+        mpvCertFile.createNewFile()
+
+        mpvCertFile.outputStream().use { outputStream ->
+          inputStream.copyTo(outputStream)
+        }
+
+        Logger.d(TAG, "Copied asset file: ${AppConstants.MPV_CERTIFICATE_FILE_NAME}")
+      }
+    } catch (e: IOException) {
+      Logger.e(TAG, "Failed to copy asset file: ${AppConstants.MPV_CERTIFICATE_FILE_NAME}", e)
+    }
+
+    Logger.d(TAG, "copyMpvCaCert() end")
   }
 
   private fun loadLibrariesAndShowStatus(): String {

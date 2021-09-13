@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
+import java.io.File
 import kotlin.reflect.KProperty
 
 /**
@@ -75,9 +76,11 @@ class MPVView(
         MPVLib.setOptionString("hwdec", hwdec)
         MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
         MPVLib.setOptionString("ao", "audiotrack,opensles")
-        // TODO(KurobaEx): mpv
-//        MPVLib.setOptionString("tls-verify", "yes")
-//        MPVLib.setOptionString("tls-ca-file", "${this.context.filesDir.path}/cacert.pem")
+
+        val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
+        MPVLib.setOptionString("tls-verify", "yes")
+        MPVLib.setOptionString("tls-ca-file", mpvCertFile.path)
+
         MPVLib.setOptionString("input-default-bindings", "yes")
 
         Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")

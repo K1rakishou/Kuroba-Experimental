@@ -128,6 +128,18 @@ open class AppConstants(
       return field
     }
 
+
+  val mpvCertDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdirs()) { "Failed to create mpv certificate directory! mpvCertDir=${field.absolutePath}" }
+      return field
+    }
+
+
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
@@ -141,7 +153,9 @@ open class AppConstants(
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
     mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
     threadDownloaderCacheDir = File(context.filesDir, THREAD_DOWNLOADER_DIR_NAME)
+
     mpvNativeLibsDir = File(context.filesDir, MPV_NATIVE_LIBS_DIR_NAME)
+    mpvCertDir = File(context.filesDir, MPV_CERT_DIR_NAME)
 
     crashLogsDir = File(context.filesDir, CRASH_LOGS_DIR_NAME)
     anrsDir = File(context.filesDir, ANRS_DIR_NAME)
@@ -191,11 +205,14 @@ open class AppConstants(
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"
     private const val THREAD_DOWNLOADER_DIR_NAME = "thread_downloader_storage"
     private const val MPV_NATIVE_LIBS_DIR_NAME = "mpv_native_libs"
+    private const val MPV_CERT_DIR_NAME = "certs/mpv"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
     private const val CRASH_LOGS_DIR_NAME = "crashlogs"
     private const val ANRS_DIR_NAME = "anrs"
     private const val FILE_CACHE_DIR = "filecache"
     private const val FILE_CHUNKS_CACHE_DIR = "file_chunks_cache"
+
+    const val MPV_CERTIFICATE_FILE_NAME = "cacert.pem"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
     const val DEFAULT_THUMBNAIL = (RESOURCES_ENDPOINT + "internal_spoiler.png")
