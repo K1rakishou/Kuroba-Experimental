@@ -14,6 +14,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -308,7 +309,12 @@ class MpvVideoMediaView(
       playJob = null
 
       playJob = scope.launch {
+        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+          mediaViewState.resetPosition()
+        }
+
         setFileToPlay(context)
+
         playJob = null
       }
 
@@ -337,6 +343,9 @@ class MpvVideoMediaView(
 
   override fun hide(isLifecycleChange: Boolean) {
     if (MPVLib.librariesAreLoaded()) {
+      mediaViewState.prevPosition = actualVideoPlayerView.timePos
+      mediaViewState.prevPaused = actualVideoPlayerView.paused
+
       actualVideoPlayerView.destroy()
       actualVideoPlayerView.removeObserver(this)
 
@@ -348,24 +357,6 @@ class MpvVideoMediaView(
 
     playJob?.cancel()
     playJob = null
-
-    // TODO(KurobaEx): mpv
-//    mediaViewState.prevPosition = mainVideoPlayer.actualExoPlayer.currentPosition
-//    mediaViewState.prevWindowIndex = mainVideoPlayer.actualExoPlayer.currentWindowIndex
-//    mediaViewState.videoSoundDetected = videoSoundDetected
-//
-//    if (mediaViewState.prevPosition <= 0 && mediaViewState.prevWindowIndex <= 0) {
-//      // Reset the flag because (most likely) the user swiped through the pages so fast that the
-//      // player hasn't been able to start playing so it's still in some kind of BUFFERING state or
-//      // something like that so mainVideoPlayer.isPlaying() will return false which will cause the
-//      // player to appear paused if the user switches back to this page. We don't want that that's
-//      // why we are resetting the "playing" to null here.
-//      mediaViewState.playing = null
-//    } else {
-//      mediaViewState.playing = mainVideoPlayer.isPlaying()
-//    }
-//
-//    mainVideoPlayer.pause()
   }
 
   override fun unbind() {
@@ -428,6 +419,14 @@ class MpvVideoMediaView(
       MPVLib.mpvEventId.MPV_EVENT_PLAYBACK_RESTART -> {
         if (!_firstLoadOccurred) {
           _hasAudio = actualVideoPlayerView.audioCodec != null
+
+          if (mediaViewState.prevPosition != null) {
+            actualVideoPlayerView.timePos = mediaViewState.prevPosition
+          }
+
+          if (mediaViewState.prevPaused != null) {
+            actualVideoPlayerView.paused = mediaViewState.prevPaused
+          }
         }
 
         Logger.d(TAG, "onEvent MPV_EVENT_PLAYBACK_RESTART " +
@@ -523,14 +522,6 @@ class MpvVideoMediaView(
       return
     }
 
-    when (property) {
-      "video-params" -> {
-//        updateOrientation()
-      }
-      "video-format" -> {
-//        updateAudioUI()
-      }
-    }
   }
 
   private fun eventPropertyUi(property: String, value: Long) {
@@ -559,8 +550,6 @@ class MpvVideoMediaView(
     when (property) {
       "mute" -> updateMuteUnmuteButtonState()
     }
-
-//    updateDisplayMetadata(property, value)
   }
 
   private fun eventPropertyUi(property: String, value: Boolean) {
@@ -573,13 +562,14 @@ class MpvVideoMediaView(
     }
   }
 
-  private suspend fun setFileToPlay(context: Context) {
+  private suspend fun setFileToPlay(context: Context): Boolean {
     val filePath = getFilePath(context)
     if (filePath == null) {
-      return
+      return false
     }
 
     actualVideoPlayerView.playFile(filePath)
+    return true
   }
 
   private suspend fun getFilePath(context: Context): String? {
@@ -796,27 +786,23 @@ class MpvVideoMediaView(
   }
 
   class VideoMediaViewState(
-    var prevPosition: Long = -1,
-    var prevWindowIndex: Int = -1,
-    var videoSoundDetected: Boolean? = null,
-    var playing: Boolean? = null
+    var prevPosition: Int? = null,
+    var prevPaused: Boolean? = null
   ) : MediaViewState {
 
     fun resetPosition() {
-      prevPosition = -1
-      prevWindowIndex = -1
+      prevPosition = null
+      prevPaused = null
     }
 
     override fun clone(): MediaViewState {
-      return VideoMediaViewState(prevPosition, prevWindowIndex, videoSoundDetected, playing)
+      return VideoMediaViewState(prevPosition, prevPaused)
     }
 
     override fun updateFrom(other: MediaViewState?) {
       if (other == null) {
-        prevPosition = -1
-        prevWindowIndex = -1
-        videoSoundDetected = null
-        playing = null
+        prevPosition = null
+        prevPaused = null
         return
       }
 
@@ -825,9 +811,7 @@ class MpvVideoMediaView(
       }
 
       this.prevPosition = other.prevPosition
-      this.prevWindowIndex = other.prevWindowIndex
-      this.videoSoundDetected = other.videoSoundDetected
-      this.playing = other.playing
+      this.prevPaused = other.prevPaused
     }
   }
 

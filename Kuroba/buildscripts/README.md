@@ -33,7 +33,7 @@ If you're running on Debian/Ubuntu or RHEL/Fedora it will also install the neces
 Go to app/src/main/libs and grab the libs for your ABI.
 Upload them to your devices and then use "Install mpv libraries from local directory".
 Alternatively you can copy them manually (via adb) into the following directory.
-"/data/data/com.github.k1rakishou.chan.<flavor-name-goes-here>/files/mpv_native_libs/".
+"/data/data/com.github.k1rakishou.chan.app-flavor/files/mpv_native_libs/".
 Don't forget to restart the application.
 
 # Credits, notes, etc
