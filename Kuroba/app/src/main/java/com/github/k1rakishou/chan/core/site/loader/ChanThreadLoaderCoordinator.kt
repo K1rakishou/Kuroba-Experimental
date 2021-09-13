@@ -140,26 +140,24 @@ class ChanThreadLoaderCoordinator(
     chanReadOptions: ChanReadOptions,
     chanLoadOptions: ChanLoadOptions
   ): ModularResult<ThreadLoadResult> {
-    val chanLoadUrl = getChanUrl(site, chanDescriptor, page)
-    val chanReader = site.chanReader()
-
-    val chanReaderProcessorOptions = ChanReaderProcessor.Options(
-      isDownloadingThread = false,
-      isIncrementalUpdate = chanLoadUrl.isIncremental
-    )
-
-    Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, " +
-      "compositeCatalogDescriptor=$compositeCatalogDescriptor, chanDescriptor=$chanDescriptor, " +
-      "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
-      "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName})")
-
     return withContext(Dispatchers.IO) {
-      BackgroundUtils.ensureBackgroundThread()
-
-      val isThreadDownloaded = chanDescriptor is ChanDescriptor.ThreadDescriptor
-        && threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)
-
       return@withContext Try {
+        val chanLoadUrl = getChanUrl(site, chanDescriptor, page)
+        val chanReader = site.chanReader()
+
+        val chanReaderProcessorOptions = ChanReaderProcessor.Options(
+          isDownloadingThread = false,
+          isIncrementalUpdate = chanLoadUrl.isIncremental
+        )
+
+        Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, " +
+          "compositeCatalogDescriptor=$compositeCatalogDescriptor, chanDescriptor=$chanDescriptor, " +
+          "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
+          "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName})")
+
+        val isThreadDownloaded = chanDescriptor is ChanDescriptor.ThreadDescriptor
+          && threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)
+
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor && isThreadDownloaded) {
           chanPostRepository.updateThreadState(chanDescriptor, deleted = false, archived = true)
 
