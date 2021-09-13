@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -94,7 +95,8 @@ sealed class ViewableMediaParcelableHolder {
     }
 
     companion object {
-      private const val MAX_POST_DESCRIPTORS = 500
+      private const val TAG = "ThreadMediaParcelableHolder"
+      private const val MAX_POST_DESCRIPTORS = 250
 
       fun fromThreadDescriptor(
         threadDescriptor: ChanDescriptor.ThreadDescriptor,
@@ -105,8 +107,10 @@ sealed class ViewableMediaParcelableHolder {
       ) : ThreadMediaParcelableHolder {
         // To avoid TransactionTooLargeException
         val postNoSubNoList = if (postDescriptorList.size > MAX_POST_DESCRIPTORS) {
+          Logger.d(TAG, "fromThreadDescriptor() ${postDescriptorList.size} > $MAX_POST_DESCRIPTORS")
           null
         } else {
+          Logger.d(TAG, "fromThreadDescriptor() ${postDescriptorList.size} <= $MAX_POST_DESCRIPTORS")
           postDescriptorList.map { postDescriptor -> PostNoSubNo(postDescriptor.postNo, postDescriptor.postSubNo) }
         }
 

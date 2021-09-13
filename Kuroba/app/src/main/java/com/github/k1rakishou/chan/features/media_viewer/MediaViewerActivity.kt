@@ -361,12 +361,13 @@ class MediaViewerActivity : ControllerHostActivity(),
     private const val MIXED_MEDIA_PARAM = "MIXED_MEDIA"
     private const val REPLY_ATTACH_MEDIA_PARAM = "REPLY_ATTACH_MEDIA"
 
-
     @JvmStatic
     fun replyAttachMedia(
       context: Context,
       replyUuidList: List<UUID>
     ) {
+      Logger.d(TAG, "replyAttachMedia() replyUuidList.size=${replyUuidList.size}")
+
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_REPLY_ATTACH_MEDIA_ACTION
       intent.putExtra(
@@ -387,6 +388,8 @@ class MediaViewerActivity : ControllerHostActivity(),
       context: Context,
       mixedMedia: List<MediaLocation>
     ) {
+      Logger.d(TAG, "mixedMedia() mixedMedia.size=${mixedMedia.size}")
+
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_MIXED_MEDIA_ACTION
       intent.putExtra(
@@ -410,6 +413,8 @@ class MediaViewerActivity : ControllerHostActivity(),
       lastTouchCoordinates: Point,
       mediaViewerOptions: MediaViewerOptions
     ) {
+      Logger.d(TAG, "catalogMedia() catalogDescriptor=$catalogDescriptor")
+
       val key = when (catalogDescriptor) {
         is ChanDescriptor.CatalogDescriptor -> CATALOG_DESCRIPTOR_PARAM
         is ChanDescriptor.CompositeCatalogDescriptor -> COMPOSITE_CATALOG_DESCRIPTOR_PARAM
@@ -466,6 +471,8 @@ class MediaViewerActivity : ControllerHostActivity(),
       lastTouchCoordinates: Point,
       mediaViewerOptions: MediaViewerOptions
     ) {
+      Logger.d(TAG, "threadMedia() postDescriptorList.size=${postDescriptorList.size}")
+
       val intent = Intent(context, MediaViewerActivity::class.java)
       intent.action = VIEW_THREAD_MEDIA_ACTION
       intent.putExtra(
