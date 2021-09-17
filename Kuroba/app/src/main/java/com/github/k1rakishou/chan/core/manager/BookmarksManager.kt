@@ -142,8 +142,20 @@ class BookmarksManager(
 
   fun isReady() = suspendableInitializer.isInitialized()
 
-  fun exists(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+  fun contains(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
     return lock.read { bookmarks.containsKey(threadDescriptor) }
+  }
+
+  fun containsAny(chanDescriptors: Collection<ChanDescriptor>): Boolean {
+    return lock.read {
+      return@read chanDescriptors.any { chanDescriptor ->
+        if (chanDescriptor !is ChanDescriptor.ThreadDescriptor) {
+          return@read false
+        }
+
+        return@read bookmarks.containsKey(chanDescriptor)
+      }
+    }
   }
 
   /**

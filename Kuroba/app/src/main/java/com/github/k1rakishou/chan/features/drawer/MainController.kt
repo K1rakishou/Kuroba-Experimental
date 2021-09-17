@@ -1562,7 +1562,7 @@ class MainController(
               val threadDescriptor = navHistoryEntry.descriptor.threadDescriptorOrNull()
                 ?: return@launch
 
-              if (bookmarksManager.exists(threadDescriptor)) {
+              if (bookmarksManager.contains(threadDescriptor)) {
                 bookmarksManager.deleteBookmark(threadDescriptor)
               } else {
                 bookmarksManager.createBookmark(

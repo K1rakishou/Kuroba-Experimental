@@ -366,7 +366,13 @@ class MainControllerViewModel : BaseViewModel() {
 
     val chanDescriptorsSet = when (bookmarkChange) {
       is BookmarksManager.BookmarkChange.BookmarksDeleted -> {
-        bookmarkChange.threadDescriptors.toSet()
+        val deletedBookmarks = bookmarkChange.threadDescriptors.toSet()
+
+        if (deletedBookmarks.isNotEmpty()) {
+          historyNavigationManager.onBookmarksDeleted(deletedBookmarks)
+        }
+
+        deletedBookmarks
       }
       is BookmarksManager.BookmarkChange.BookmarksCreated -> {
         val toUpdate = mutableSetOf<ChanDescriptor>()

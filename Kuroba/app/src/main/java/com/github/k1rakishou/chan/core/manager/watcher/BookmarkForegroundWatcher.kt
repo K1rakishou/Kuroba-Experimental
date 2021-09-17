@@ -114,7 +114,7 @@ class BookmarkForegroundWatcher(
       return
     }
 
-    if (!bookmarksManager.exists(threadDescriptor)) {
+    if (!bookmarksManager.contains(threadDescriptor)) {
       return
     }
 

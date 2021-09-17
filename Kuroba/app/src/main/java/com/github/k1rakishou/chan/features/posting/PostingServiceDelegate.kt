@@ -1216,7 +1216,7 @@ class PostingServiceDelegate(
     threadNo: Long
   ) {
     if (newDescriptor is ChanDescriptor.ThreadDescriptor) {
-      if (bookmarksManager.exists(newDescriptor)) {
+      if (bookmarksManager.contains(newDescriptor)) {
         return
       }
 
@@ -1249,7 +1249,7 @@ class PostingServiceDelegate(
         threadNo = threadNo
       )
 
-      if (bookmarksManager.exists(bookmarkThreadDescriptor)) {
+      if (bookmarksManager.contains(bookmarkThreadDescriptor)) {
         return
       }
 

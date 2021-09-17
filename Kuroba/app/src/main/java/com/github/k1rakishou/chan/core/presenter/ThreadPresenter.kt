@@ -319,7 +319,7 @@ class ThreadPresenter @Inject constructor(
       val threadDescriptor = chanThreadTicker.currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
         ?: return false
 
-      return bookmarksManager.exists(threadDescriptor)
+      return bookmarksManager.contains(threadDescriptor)
     }
 
   override val currentChanDescriptor: ChanDescriptor?
@@ -846,7 +846,7 @@ class ThreadPresenter @Inject constructor(
       return false
     }
 
-    if (bookmarksManager.exists(threadDescriptor)) {
+    if (bookmarksManager.contains(threadDescriptor)) {
       bookmarksManager.deleteBookmark(threadDescriptor)
       return true
     }
@@ -1564,7 +1564,7 @@ class ThreadPresenter @Inject constructor(
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       val threadDescriptor = post.postDescriptor.threadDescriptor()
 
-      if (!bookmarksManager.exists(threadDescriptor)) {
+      if (!bookmarksManager.contains(threadDescriptor)) {
         menu.add(createMenuItem(POST_OPTION_BOOKMARK, R.string.action_pin))
       }
 

@@ -173,7 +173,7 @@ class BrowsePresenter @Inject constructor(
 
       threadsToCreateInDatabase += threadDescriptor
 
-      if (bookmarksManager.exists(threadDescriptor)) {
+      if (bookmarksManager.contains(threadDescriptor)) {
         Logger.d(TAG, "bookmarkEveryThread() bookmark for post ${title.take(50)} already exist")
         return@iteratePostsOrdered
       }

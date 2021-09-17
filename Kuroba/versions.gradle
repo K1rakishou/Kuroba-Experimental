@@ -1,7 +1,7 @@
 def versions = [:]
 versions.kotlin_version = '1.5.30'
 versions.kotlin_coroutines_version = '1.5.1'
-versions.compose_version = "1.1.0-alpha03"
+versions.compose_version = "1.1.0-alpha04"
 versions.accompanist = "0.15.0"
 versions.room_version = '2.3.0'
 versions.dagger_version = '2.38.1'

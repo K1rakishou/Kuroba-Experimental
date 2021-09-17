@@ -140,14 +140,24 @@ class HistoryNavigationManager(
     }
 
     if (!ChanSettings.drawerShowBookmarkedThreads.get()) {
-      return !bookmarksManager.exists(threadDescriptor)
+      return !bookmarksManager.contains(threadDescriptor)
     }
 
     if (!ChanSettings.drawerShowNavigationHistory.get()) {
-      return bookmarksManager.exists(threadDescriptor)
+      return bookmarksManager.contains(threadDescriptor)
     }
 
     return true
+  }
+
+  suspend fun onBookmarksDeleted(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
+
+    if (!ChanSettings.drawerShowNavigationHistory.get()) {
+      deleteNavElements(threadDescriptors)
+    }
   }
 
   suspend fun createNewNavElement(
