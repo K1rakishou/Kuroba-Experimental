@@ -42,7 +42,7 @@ class MPVView(
 
         Logger.d(TAG, "create()")
 
-        MPVLib.create(applicationContext)
+        MPVLib.mpvCreate(applicationContext)
 
         // hwdec
         val hwdec = if (MpvSettings.hardwareDecoding.get()) {
@@ -60,37 +60,37 @@ class MPVView(
             val refreshRate = disp.mode.refreshRate
 
             Logger.d(TAG, "Display ${disp.displayId} reports FPS of $refreshRate")
-            MPVLib.setOptionString("override-display-fps", refreshRate.toString())
+            MPVLib.mpvSetOptionString("override-display-fps", refreshRate.toString())
         } else {
             Logger.d(TAG, "Android version too old, disabling refresh rate functionality " +
               "(${Build.VERSION.SDK_INT} < ${Build.VERSION_CODES.M})")
         }
 
-        MPVLib.setOptionString("video-sync", "audio")
-        MPVLib.setOptionString("interpolation", "no")
+        MPVLib.mpvSetOptionString("video-sync", "audio")
+        MPVLib.mpvSetOptionString("interpolation", "no")
 
         reloadFastVideoDecodeOption()
 
-        MPVLib.setOptionString("vo", "gpu")
-        MPVLib.setOptionString("gpu-context", "android")
-        MPVLib.setOptionString("hwdec", hwdec)
-        MPVLib.setOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
-        MPVLib.setOptionString("ao", "audiotrack,opensles")
+        MPVLib.mpvSetOptionString("vo", "gpu")
+        MPVLib.mpvSetOptionString("gpu-context", "android")
+        MPVLib.mpvSetOptionString("hwdec", hwdec)
+        MPVLib.mpvSetOptionString("hwdec-codecs", "h264,hevc,mpeg4,mpeg2video,vp8,vp9,av1")
+        MPVLib.mpvSetOptionString("ao", "audiotrack,opensles")
 
         val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
-        MPVLib.setOptionString("tls-verify", "yes")
-        MPVLib.setOptionString("tls-ca-file", mpvCertFile.path)
+        MPVLib.mpvSetOptionString("tls-verify", "yes")
+        MPVLib.mpvSetOptionString("tls-ca-file", mpvCertFile.path)
 
-        MPVLib.setOptionString("input-default-bindings", "yes")
+        MPVLib.mpvSetOptionString("input-default-bindings", "yes")
 
         Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")
-        MPVLib.setOptionString("demuxer-max-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
-        MPVLib.setOptionString("demuxer-max-back-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
+        MPVLib.mpvSetOptionString("demuxer-max-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
+        MPVLib.mpvSetOptionString("demuxer-max-back-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
 
-        MPVLib.init()
+        MPVLib.mpvInit()
         // certain options are hardcoded:
-        MPVLib.setOptionString("save-position-on-quit", "no")
-        MPVLib.setOptionString("force-window", "no")
+        MPVLib.mpvSetOptionString("save-position-on-quit", "no")
+        MPVLib.mpvSetOptionString("force-window", "no")
         muteUnmute(true)
 
         surfaceTextureListener = this
@@ -109,7 +109,7 @@ class MPVView(
 
         // Disable surface callbacks to avoid using unintialized mpv state
         surfaceTextureListener = null
-        MPVLib.destroy()
+        MPVLib.mpvDestroy()
     }
 
     fun reloadFastVideoDecodeOption() {
@@ -121,13 +121,13 @@ class MPVView(
         if (MpvSettings.videoFastCode.get()) {
             Logger.d(TAG, "initOptions() videoFastCode: true")
 
-            MPVLib.setOptionString("vd-lavc-fast", "yes")
-            MPVLib.setOptionString("vd-lavc-skiploopfilter", "nonkey")
+            MPVLib.mpvSetOptionString("vd-lavc-fast", "yes")
+            MPVLib.mpvSetOptionString("vd-lavc-skiploopfilter", "nonkey")
         } else {
             Logger.d(TAG, "initOptions() videoFastCode: false")
 
-            MPVLib.setOptionString("vd-lavc-fast", "null")
-            MPVLib.setOptionString("vd-lavc-skiploopfilter", "null")
+            MPVLib.mpvSetOptionString("vd-lavc-fast", "null")
+            MPVLib.mpvSetOptionString("vd-lavc-skiploopfilter", "null")
         }
     }
 
@@ -140,9 +140,9 @@ class MPVView(
         this.filePath = filePath
 
         if (ChanSettings.videoAutoLoop.get()) {
-            MPVLib.setOptionString("loop-file", "inf")
+            MPVLib.mpvSetOptionString("loop-file", "inf")
         } else {
-            MPVLib.setOptionString("loop-file", "no")
+            MPVLib.mpvSetOptionString("loop-file", "no")
         }
     }
 
@@ -175,76 +175,76 @@ class MPVView(
     // Property getters/setters
 
     var paused: Boolean?
-        get() = MPVLib.getPropertyBoolean("pause")
-        set(paused) = MPVLib.setPropertyBoolean("pause", paused!!)
+        get() = MPVLib.mpvGetPropertyBoolean("pause")
+        set(paused) = MPVLib.mpvSetPropertyBoolean("pause", paused!!)
 
     val duration: Int?
-        get() = MPVLib.getPropertyInt("duration")
+        get() = MPVLib.mpvGetPropertyInt("duration")
 
     val demuxerCacheDuration: Int?
-        get() = MPVLib.getPropertyInt("demuxer-cache-duration")
+        get() = MPVLib.mpvGetPropertyInt("demuxer-cache-duration")
 
     var timePos: Int?
-        get() = MPVLib.getPropertyInt("time-pos")
-        set(progress) = MPVLib.setPropertyInt("time-pos", progress!!)
+        get() = MPVLib.mpvGetPropertyInt("time-pos")
+        set(progress) = MPVLib.mpvSetPropertyInt("time-pos", progress!!)
 
     val hwdecActive: Boolean
-        get() = (MPVLib.getPropertyString("hwdec-current") ?: "no") != "no"
+        get() = (MPVLib.mpvGetPropertyString("hwdec-current") ?: "no") != "no"
 
     var playbackSpeed: Double?
-        get() = MPVLib.getPropertyDouble("speed")
-        set(speed) = MPVLib.setPropertyDouble("speed", speed!!)
+        get() = MPVLib.mpvGetPropertyDouble("speed")
+        set(speed) = MPVLib.mpvSetPropertyDouble("speed", speed!!)
 
     val filename: String?
-        get() = MPVLib.getPropertyString("filename")
+        get() = MPVLib.mpvGetPropertyString("filename")
 
     val avsync: String?
-        get() = MPVLib.getPropertyString("avsync")
+        get() = MPVLib.mpvGetPropertyString("avsync")
 
     val decoderFrameDropCount: Int?
-        get() = MPVLib.getPropertyInt("decoder-frame-drop-count")
+        get() = MPVLib.mpvGetPropertyInt("decoder-frame-drop-count")
 
     val frameDropCount: Int?
-        get() = MPVLib.getPropertyInt("frame-drop-count")
+        get() = MPVLib.mpvGetPropertyInt("frame-drop-count")
 
     val containerFps: Double?
-        get() = MPVLib.getPropertyDouble("container-fps")
+        get() = MPVLib.mpvGetPropertyDouble("container-fps")
 
     val estimatedVfFps: Double?
-        get() = MPVLib.getPropertyDouble("estimated-vf-fps")
+        get() = MPVLib.mpvGetPropertyDouble("estimated-vf-fps")
 
     val videoW: Int?
-        get() = MPVLib.getPropertyInt("video-params/w")
+        get() = MPVLib.mpvGetPropertyInt("video-params/w")
 
     val videoH: Int?
-        get() = MPVLib.getPropertyInt("video-params/h")
+        get() = MPVLib.mpvGetPropertyInt("video-params/h")
 
     val videoAspect: Double?
-        get() = MPVLib.getPropertyDouble("video-params/aspect")
+        get() = MPVLib.mpvGetPropertyDouble("video-params/aspect")
 
     val videoCodec: String?
-        get() = MPVLib.getPropertyString("video-codec")
+        get() = MPVLib.mpvGetPropertyString("video-codec")
 
     val audioCodec: String?
-        get() = MPVLib.getPropertyString("audio-codec")
+        get() = MPVLib.mpvGetPropertyString("audio-codec")
 
     val audioSampleRate: Int?
-        get() = MPVLib.getPropertyInt("audio-params/samplerate")
+        get() = MPVLib.mpvGetPropertyInt("audio-params/samplerate")
 
     val audioChannels: Int?
-        get() = MPVLib.getPropertyInt("audio-params/channel-count")
+        get() = MPVLib.mpvGetPropertyInt("audio-params/channel-count")
 
     class TrackDelegate {
         operator fun getValue(thisRef: Any?, property: KProperty<*>): Int {
-            val v = MPVLib.getPropertyString(property.name)
+            val v = MPVLib.mpvGetPropertyString(property.name)
             // we can get null here for "no" or other invalid value
             return v?.toIntOrNull() ?: -1
         }
         operator fun setValue(thisRef: Any?, property: KProperty<*>, value: Int) {
             if (value == -1)
-                MPVLib.setPropertyString(property.name, "no")
+                MPVLib.mpvSetPropertyString(property.name, "no")
             else
-                MPVLib.setPropertyInt(property.name, value)
+                MPVLib.mpvSetPropertyInt(property.name, value)
         }
     }
 
@@ -254,20 +254,20 @@ class MPVView(
 
     // Commands
 
-    fun cyclePause() = MPVLib.command(arrayOf("cycle", "pause"))
+    fun cyclePause() = MPVLib.mpvCommand(arrayOf("cycle", "pause"))
 
     val isMuted: Boolean
-        get() = MPVLib.getPropertyString("mute") != "no"
+        get() = MPVLib.mpvGetPropertyString("mute") != "no"
 
     fun muteUnmute(mute: Boolean) {
         if (mute) {
-            MPVLib.setPropertyString("mute", "yes")
+            MPVLib.mpvSetPropertyString("mute", "yes")
         } else {
-            MPVLib.setPropertyString("mute", "no")
+            MPVLib.mpvSetPropertyString("mute", "no")
         }
     }
 
-    fun cycleHwdec() = MPVLib.command(arrayOf("cycle-values", "hwdec", "mediacodec-copy", "no"))
+    fun cycleHwdec() = MPVLib.mpvCommand(arrayOf("cycle-values", "hwdec", "mediacodec-copy", "no"))
 
     fun cycleSpeed() {
         val speeds = arrayOf(0.5, 0.75, 1.0, 1.25, 1.5, 1.75, 2.0)
@@ -279,31 +279,31 @@ class MPVView(
     override fun onSurfaceTextureAvailable(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
         Logger.d(TAG, "attaching surface")
 
-        MPVLib.attachSurface(Surface(surfaceTexture))
+        MPVLib.mpvAttachSurface(Surface(surfaceTexture))
         // This forces mpv to render subs/osd/whatever into our surface even if it would ordinarily not
-        MPVLib.setOptionString("force-window", "yes")
+        MPVLib.mpvSetOptionString("force-window", "yes")
 
         if (filePath != null) {
-            MPVLib.command(arrayOf("loadfile", filePath as String))
+            MPVLib.mpvCommand(arrayOf("loadfile", filePath as String))
             filePath = null
         } else {
             // We disable video output when the context disappears, enable it back
-            MPVLib.setPropertyString("vo", "gpu")
+            MPVLib.mpvSetPropertyString("vo", "gpu")
         }
     }
 
     override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
         Logger.d(TAG, "detaching surface")
 
-        MPVLib.setPropertyString("vo", "null")
-        MPVLib.setOptionString("force-window", "no")
-        MPVLib.detachSurface()
+        MPVLib.mpvSetPropertyString("vo", "null")
+        MPVLib.mpvSetOptionString("force-window", "no")
+        MPVLib.mpvDetachSurface()
 
         return true
     }
 
     override fun onSurfaceTextureSizeChanged(surfaceTexture: SurfaceTexture, width: Int, height: Int) {
-        MPVLib.setPropertyString("android-surface-size", "${width}x$height")
+        MPVLib.mpvSetPropertyString("android-surface-size", "${width}x$height")
     }
 
     override fun onSurfaceTextureUpdated(surfaceTexture: SurfaceTexture) {

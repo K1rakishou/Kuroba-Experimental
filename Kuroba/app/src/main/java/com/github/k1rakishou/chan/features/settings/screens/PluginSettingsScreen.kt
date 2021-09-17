@@ -341,7 +341,7 @@ class PluginSettingsScreen(
     }
 
     val playerVersion = try {
-      MPVLib.playerVersion()
+      MPVLib.mpvPlayerVersion()
     } catch (error: Throwable) {
       -1
     }

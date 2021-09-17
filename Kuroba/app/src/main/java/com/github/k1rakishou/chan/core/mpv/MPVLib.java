@@ -4,11 +4,11 @@ package com.github.k1rakishou.chan.core.mpv;
 
 /**
  * Taken from https://github.com/mpv-android/mpv-android
- *
+ * <p>
  * DO NOT RENAME!
  * DO NOT MOVE!
  * NATIVE LIBRARIES DEPEND ON THE CLASS PACKAGE!
- * */
+ */
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -31,264 +31,431 @@ import java.util.Map;
 @DoNotStrip
 @SuppressWarnings("unused")
 public class MPVLib {
-     private static final String TAG = "MPVLib";
+    private static final String TAG = "MPVLib";
 
-     // When updating the player code or anything related to it update jin/main.cpp:player_version
-     // variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
-     public static final int SUPPORTED_MPV_PLAYER_VERSION = 2;
+    private static boolean mpvCreated = false;
 
-     /**
-      * Libraries are sorted by the order of dependency.
-      * The libraries that come first are those that have no dependencies.
-      * The libraries that come last are those that depend on other libraries and will throw
-      * UnsatisfiedLinkError if are attempted to get loaded before all the dependencies are loaded.
-      *
-      * !!!!! DO NOT CHANGE THE ORDER !!!!!!!
-      * */
-     public static final List<String> LIBS = Arrays.asList(
-             "libavutil.so",
-             "libswresample.so",
-             "libavcodec.so",
-             "libavformat.so",
-             "libavdevice.so",
-             "libswscale.so",
-             "libpostproc.so",
-             "libavfilter.so",
-             "libc++_shared.so",
-             "libmpv.so",
-             "libplayer.so"
-     );
-     /** !!!!! DO NOT CHANGE THE ORDER !!!!!!! */
+    // When updating the player code or anything related to it update jin/main.cpp:player_version
+    // variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
+    public static final int SUPPORTED_MPV_PLAYER_VERSION = 2;
 
-     @Nullable
-     private static Throwable lastError = null;
-     private static boolean librariesLoaded = false;
+    /**
+     * Libraries are sorted by the order of dependency.
+     * The libraries that come first are those that have no dependencies.
+     * The libraries that come last are those that depend on other libraries and will throw
+     * UnsatisfiedLinkError if are attempted to get loaded before all the dependencies are loaded.
+     *
+     * !!!!! DO NOT CHANGE THE ORDER !!!!!!!
+     * */
+    public static final List<String> LIBS = Arrays.asList(
+            "libavutil.so",
+            "libswresample.so",
+            "libavcodec.so",
+            "libavformat.so",
+            "libavdevice.so",
+            "libswscale.so",
+            "libpostproc.so",
+            "libavfilter.so",
+            "libc++_shared.so",
+            "libmpv.so",
+            "libplayer.so"
+    );
+    /** !!!!! DO NOT CHANGE THE ORDER !!!!!!! */
 
-     @SuppressLint("UnsafeDynamicallyLoadedCode")
-     public static void tryLoadLibraries(File mpvNativeLibsDir) {
-          if (lastError != null || librariesLoaded) {
-               return;
-          }
+    @Nullable
+    private static Throwable lastError = null;
+    private static boolean librariesLoaded = false;
 
-          try {
-               for (String lib : LIBS) {
-                    File libFile = new File(mpvNativeLibsDir, lib);
-                    Logger.d(TAG, "loadLibraries() loading " + libFile.getPath());
+    @SuppressWarnings("TryWithIdenticalCatches")
+    @SuppressLint("UnsafeDynamicallyLoadedCode")
+    public static void tryLoadLibraries(File mpvNativeLibsDir) {
+        if (lastError != null || librariesLoaded) {
+            return;
+        }
 
-                    System.load(libFile.getPath());
-               }
+        try {
+            for (String lib : LIBS) {
+                File libFile = new File(mpvNativeLibsDir, lib);
+                Logger.d(TAG, "loadLibraries() loading " + libFile.getPath());
 
-               librariesLoaded = true;
-          } catch (LinkageError error) {
-               lastError = error;
-               Logger.e(TAG, "loadLibraries() error", error);
-          } catch (Throwable error) {
-               lastError = error;
-               Logger.e(TAG, "loadLibraries() error", error);
-          }
-     }
+                System.load(libFile.getPath());
+            }
 
-     public static boolean librariesAreLoaded() {
-          return librariesLoaded && lastError == null;
-     }
+            librariesLoaded = true;
+        } catch (LinkageError error) {
+            lastError = error;
+            Logger.e(TAG, "loadLibraries() error", error);
+        } catch (Throwable error) {
+            lastError = error;
+            Logger.e(TAG, "loadLibraries() error", error);
+        }
+    }
 
-     @Nullable
-     public static Throwable getLastError() {
-          return lastError;
-     }
+    public static boolean librariesAreLoaded() {
+        return librariesLoaded && lastError == null;
+    }
 
-     public static native void create(Context appctx);
-     public static native void init();
-     public static native void destroy();
-     public static native Integer playerVersion();
+    @Nullable
+    public static Throwable getLastError() {
+        return lastError;
+    }
 
-     public static native void attachSurface(Surface surface);
-     public static native void detachSurface();
+    public static void mpvCreate(Context appctx) {
+        create(appctx);
+        mpvCreated = true;
+    }
 
-     public static native void command(@NonNull String[] cmd);
+    public static void mpvInit() {
+        init();
+    }
 
-     public static native int setOptionString(@NonNull String name, @NonNull String value);
+    public static void mpvDestroy() {
+        if (!mpvCreated) {
+            return;
+        }
 
-     public static native Bitmap grabThumbnail(int dimension);
+        destroy();
+        mpvCreated = false;
+    }
 
-     public static native Integer getPropertyInt(@NonNull String property);
-     public static native void setPropertyInt(@NonNull String property, @NonNull Integer value);
-     public static native Double getPropertyDouble(@NonNull String property);
-     public static native void setPropertyDouble(@NonNull String property, @NonNull Double value);
-     public static native Boolean getPropertyBoolean(@NonNull String property);
-     public static native void setPropertyBoolean(@NonNull String property, @NonNull Boolean value);
-     public static native String getPropertyString(@NonNull String property);
-     public static native void setPropertyString(@NonNull String property, @NonNull String value);
+    @Nullable
+    public static Integer mpvPlayerVersion() {
+        return playerVersion();
+    }
 
-     public static native void observeProperty(@NonNull String property, int format);
+    public static void mpvAttachSurface(Surface surface) {
+        if (!mpvCreated) {
+            return;
+        }
 
-     private static final List<EventObserver> observers = new ArrayList<>();
+        attachSurface(surface);
+    }
 
-     public static void addObserver(EventObserver o) {
-          synchronized (observers) {observers.add(o); }
-     }
-     public static void removeObserver(EventObserver o) {
-          synchronized (observers) { observers.remove(o); }
-     }
+    public static void mpvDetachSurface() {
+        if (!mpvCreated) {
+            return;
+        }
 
-     public static void eventProperty(String property, long value) {
-          synchronized (observers) {
-               for (EventObserver o : observers)
-                    o.eventProperty(property, value);
-          }
-     }
+        detachSurface();
+    }
 
-     public static void eventProperty(String property, boolean value) {
-          synchronized (observers) {
-               for (EventObserver o : observers)
-                    o.eventProperty(property, value);
-          }
-     }
+    public static void mpvCommand(@NonNull String[] cmd) {
+        if (!mpvCreated) {
+            return;
+        }
 
-     public static void eventProperty(String property, String value) {
-          synchronized (observers) {
-               for (EventObserver o : observers)
-                    o.eventProperty(property, value);
-          }
-     }
+        command(cmd);
+    }
 
-     public static void eventProperty(String property) {
-          synchronized (observers) {
-               for (EventObserver o : observers)
-                    o.eventProperty(property);
-          }
-     }
+    @Nullable
+    public static Bitmap mpvGrabThumbnail(int dimension) {
+        if (!mpvCreated) {
+            return null;
+        }
 
-     public static void event(int eventId) {
-          synchronized (observers) {
-               for (EventObserver o : observers)
-                    o.event(eventId);
-          }
-     }
+        return grabThumbnail(dimension);
+    }
 
-     private static final List<LogObserver> log_observers = new ArrayList<>();
+    public static void mpvSetOptionString(@NonNull String name, @NonNull String value) {
+        if (!mpvCreated) {
+            return;
+        }
 
-     public static void addLogObserver(LogObserver o) {
-          synchronized (log_observers) { log_observers.add(o); }
-     }
-     public static void removeLogObserver(LogObserver o) {
-          synchronized (log_observers) { log_observers.remove(o); }
-     }
+        setOptionString(name, value);
+    }
 
-     public static void logMessage(String prefix, int level, String text) {
-          synchronized (log_observers) {
-               for (LogObserver o : log_observers)
-                    o.logMessage(prefix, level, text);
-          }
-     }
+    @Nullable
+    public static Integer mpvGetPropertyInt(@NonNull String property) {
+        if (!mpvCreated) {
+            return null;
+        }
 
-     public static boolean checkLibrariesInstalled(Context context, File mpvNativeLibrariesDir) {
-          Map<String, Boolean> checkedLibsMap = getInstalledLibraries(context, mpvNativeLibrariesDir);
-          boolean allLibsExist = true;
+        return getPropertyInt(property);
+    }
 
-          for (Map.Entry<String, Boolean> stringBooleanEntry : checkedLibsMap.entrySet()) {
-               Boolean exists = stringBooleanEntry.getValue();
+    public static void mpvSetPropertyInt(@NonNull String property, @NonNull Integer value) {
+        if (!mpvCreated) {
+            return;
+        }
 
-               if (!exists) {
-                    allLibsExist = false;
-                    break;
-               }
-          }
+        setPropertyInt(property, value);
+    }
 
-          return allLibsExist;
-     }
+    @Nullable
+    public static Double mpvGetPropertyDouble(@NonNull String property) {
+        if (!mpvCreated) {
+            return null;
+        }
 
-     @NonNull
-     public static Map<String, Boolean> getInstalledLibraries(Context context, File mpvNativeLibrariesDir) {
-          Map<String, Boolean> checkedLibsMap = new HashMap<String, Boolean>();
+        return getPropertyDouble(property);
+    }
 
-          for (String libToCheck : LIBS) {
-               checkedLibsMap.put(libToCheck, false);
-          }
+    public static void mpvSetPropertyDouble(@NonNull String property, @NonNull Double value) {
+        if (!mpvCreated) {
+            return;
+        }
 
-          File[] libsDirFiles = mpvNativeLibrariesDir.listFiles();
-          if (libsDirFiles == null || libsDirFiles.length <= 0) {
-               return checkedLibsMap;
-          }
+        setPropertyDouble(property, value);
+    }
 
-          for (File libsDirFile : libsDirFiles) {
-               if (checkedLibsMap.containsKey(libsDirFile.getName())) {
-                    if (libsDirFile.exists() && libsDirFile.canRead() && libsDirFile.length() > 0L) {
-                         checkedLibsMap.put(libsDirFile.getName(), true);
-                    }
-               }
-          }
+    @Nullable
+    public static Boolean mpvGetPropertyBoolean(@NonNull String property) {
+        if (!mpvCreated) {
+            return null;
+        }
 
-          return checkedLibsMap;
-     }
+        return getPropertyBoolean(property);
+    }
 
-     @DoNotStrip
-     public interface EventObserver {
-          void eventProperty(@NonNull String property);
-          void eventProperty(@NonNull String property, long value);
-          void eventProperty(@NonNull String property, boolean value);
-          void eventProperty(@NonNull String property, @NonNull String value);
-          void event(int eventId);
-     }
+    public static void mpvSetPropertyBoolean(@NonNull String property, @NonNull Boolean value) {
+        if (!mpvCreated) {
+            return;
+        }
 
-     @DoNotStrip
-     public interface LogObserver {
-          void logMessage(@NonNull String prefix, int level, @NonNull String text);
-     }
+        setPropertyBoolean(property, value);
+    }
 
-     @DoNotStrip
-     public static class mpvFormat {
-          public static final int MPV_FORMAT_NONE=0;
-          public static final int MPV_FORMAT_STRING=1;
-          public static final int MPV_FORMAT_OSD_STRING=2;
-          public static final int MPV_FORMAT_FLAG=3;
-          public static final int MPV_FORMAT_INT64=4;
-          public static final int MPV_FORMAT_DOUBLE=5;
-          public static final int MPV_FORMAT_NODE=6;
-          public static final int MPV_FORMAT_NODE_ARRAY=7;
-          public static final int MPV_FORMAT_NODE_MAP=8;
-          public static final int MPV_FORMAT_BYTE_ARRAY=9;
-     }
+    @Nullable
+    public static String mpvGetPropertyString(@NonNull String property) {
+        if (!mpvCreated) {
+            return null;
+        }
 
-     @DoNotStrip
-     public static class mpvEventId {
-          public static final int MPV_EVENT_NONE=0;
-          public static final int MPV_EVENT_SHUTDOWN=1;
-          public static final int MPV_EVENT_LOG_MESSAGE=2;
-          public static final int MPV_EVENT_GET_PROPERTY_REPLY=3;
-          public static final int MPV_EVENT_SET_PROPERTY_REPLY=4;
-          public static final int MPV_EVENT_COMMAND_REPLY=5;
-          public static final int MPV_EVENT_START_FILE=6;
-          public static final int MPV_EVENT_END_FILE=7;
-          public static final int MPV_EVENT_FILE_LOADED=8;
-          public static final @Deprecated int MPV_EVENT_TRACKS_CHANGED=9;
-          public static final @Deprecated int MPV_EVENT_TRACK_SWITCHED=10;
-          public static final int MPV_EVENT_IDLE=11;
-          public static final @Deprecated int MPV_EVENT_PAUSE=12;
-          public static final @Deprecated int MPV_EVENT_UNPAUSE=13;
-          public static final int MPV_EVENT_TICK=14;
-          public static final @Deprecated int MPV_EVENT_SCRIPT_INPUT_DISPATCH=15;
-          public static final int MPV_EVENT_CLIENT_MESSAGE=16;
-          public static final int MPV_EVENT_VIDEO_RECONFIG=17;
-          public static final int MPV_EVENT_AUDIO_RECONFIG=18;
-          public static final @Deprecated int MPV_EVENT_METADATA_UPDATE=19;
-          public static final int MPV_EVENT_SEEK=20;
-          public static final int MPV_EVENT_PLAYBACK_RESTART=21;
-          public static final int MPV_EVENT_PROPERTY_CHANGE=22;
-          public static final @Deprecated int MPV_EVENT_CHAPTER_CHANGE=23;
-          public static final int MPV_EVENT_QUEUE_OVERFLOW=24;
-          public static final int MPV_EVENT_HOOK=25;
-     }
+        return getPropertyString(property);
+    }
 
-     @DoNotStrip
-     public static class mpvLogLevel {
-          public static final int MPV_LOG_LEVEL_NONE=0;
-          public static final int MPV_LOG_LEVEL_FATAL=10;
-          public static final int MPV_LOG_LEVEL_ERROR=20;
-          public static final int MPV_LOG_LEVEL_WARN=30;
-          public static final int MPV_LOG_LEVEL_INFO=40;
-          public static final int MPV_LOG_LEVEL_V=50;
-          public static final int MPV_LOG_LEVEL_DEBUG=60;
-          public static final int MPV_LOG_LEVEL_TRACE=70;
-     }
+    public static void mpvSetPropertyString(@NonNull String property, @NonNull String value) {
+        if (!mpvCreated) {
+            return;
+        }
+
+        setPropertyString(property, value);
+    }
+
+    private static native void create(Context appctx);
+
+    private static native void init();
+
+    private static native void destroy();
+
+    private static native Integer playerVersion();
+
+    private static native void attachSurface(Surface surface);
+
+    private static native void detachSurface();
+
+    private static native void command(@NonNull String[] cmd);
+
+    private static native Bitmap grabThumbnail(int dimension);
+
+    private static native int setOptionString(@NonNull String name, @NonNull String value);
+
+    private static native Integer getPropertyInt(@NonNull String property);
+
+    private static native void setPropertyInt(@NonNull String property, @NonNull Integer value);
+
+    private static native Double getPropertyDouble(@NonNull String property);
+
+    private static native void setPropertyDouble(@NonNull String property, @NonNull Double value);
+
+    private static native Boolean getPropertyBoolean(@NonNull String property);
+
+    private static native void setPropertyBoolean(@NonNull String property, @NonNull Boolean value);
+
+    private static native String getPropertyString(@NonNull String property);
+
+    private static native void setPropertyString(@NonNull String property, @NonNull String value);
+
+    public static native void observeProperty(@NonNull String property, int format);
+
+    private static final List<EventObserver> observers = new ArrayList<>();
+
+    public static void addObserver(EventObserver o) {
+        synchronized (observers) {
+            observers.add(o);
+        }
+    }
+
+    public static void removeObserver(EventObserver o) {
+        synchronized (observers) {
+            observers.remove(o);
+        }
+    }
+
+    public static void eventProperty(String property, long value) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.eventProperty(property, value);
+        }
+    }
+
+    public static void eventProperty(String property, boolean value) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.eventProperty(property, value);
+        }
+    }
+
+    public static void eventProperty(String property, String value) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.eventProperty(property, value);
+        }
+    }
+
+    public static void eventProperty(String property) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.eventProperty(property);
+        }
+    }
+
+    public static void event(int eventId) {
+        synchronized (observers) {
+            for (EventObserver o : observers)
+                o.event(eventId);
+        }
+    }
+
+    private static final List<LogObserver> log_observers = new ArrayList<>();
+
+    public static void addLogObserver(LogObserver o) {
+        synchronized (log_observers) {
+            log_observers.add(o);
+        }
+    }
+
+    public static void removeLogObserver(LogObserver o) {
+        synchronized (log_observers) {
+            log_observers.remove(o);
+        }
+    }
+
+    public static void logMessage(String prefix, int level, String text) {
+        synchronized (log_observers) {
+            for (LogObserver o : log_observers)
+                o.logMessage(prefix, level, text);
+        }
+    }
+
+    public static boolean checkLibrariesInstalled(Context context, File mpvNativeLibrariesDir) {
+        Map<String, Boolean> checkedLibsMap = getInstalledLibraries(context, mpvNativeLibrariesDir);
+        boolean allLibsExist = true;
+
+        for (Map.Entry<String, Boolean> stringBooleanEntry : checkedLibsMap.entrySet()) {
+            Boolean exists = stringBooleanEntry.getValue();
+
+            if (!exists) {
+                allLibsExist = false;
+                break;
+            }
+        }
+
+        return allLibsExist;
+    }
+
+    @NonNull
+    public static Map<String, Boolean> getInstalledLibraries(Context context, File mpvNativeLibrariesDir) {
+        Map<String, Boolean> checkedLibsMap = new HashMap<String, Boolean>();
+
+        for (String libToCheck : LIBS) {
+            checkedLibsMap.put(libToCheck, false);
+        }
+
+        File[] libsDirFiles = mpvNativeLibrariesDir.listFiles();
+        if (libsDirFiles == null || libsDirFiles.length <= 0) {
+            return checkedLibsMap;
+        }
+
+        for (File libsDirFile : libsDirFiles) {
+            if (checkedLibsMap.containsKey(libsDirFile.getName())) {
+                if (libsDirFile.exists() && libsDirFile.canRead() && libsDirFile.length() > 0L) {
+                    checkedLibsMap.put(libsDirFile.getName(), true);
+                }
+            }
+        }
+
+        return checkedLibsMap;
+    }
+
+    @DoNotStrip
+    public interface EventObserver {
+        void eventProperty(@NonNull String property);
+
+        void eventProperty(@NonNull String property, long value);
+
+        void eventProperty(@NonNull String property, boolean value);
+
+        void eventProperty(@NonNull String property, @NonNull String value);
+
+        void event(int eventId);
+    }
+
+    @DoNotStrip
+    public interface LogObserver {
+        void logMessage(@NonNull String prefix, int level, @NonNull String text);
+    }
+
+    @DoNotStrip
+    public static class mpvFormat {
+        public static final int MPV_FORMAT_NONE = 0;
+        public static final int MPV_FORMAT_STRING = 1;
+        public static final int MPV_FORMAT_OSD_STRING = 2;
+        public static final int MPV_FORMAT_FLAG = 3;
+        public static final int MPV_FORMAT_INT64 = 4;
+        public static final int MPV_FORMAT_DOUBLE = 5;
+        public static final int MPV_FORMAT_NODE = 6;
+        public static final int MPV_FORMAT_NODE_ARRAY = 7;
+        public static final int MPV_FORMAT_NODE_MAP = 8;
+        public static final int MPV_FORMAT_BYTE_ARRAY = 9;
+    }
+
+    @DoNotStrip
+    public static class mpvEventId {
+        public static final int MPV_EVENT_NONE = 0;
+        public static final int MPV_EVENT_SHUTDOWN = 1;
+        public static final int MPV_EVENT_LOG_MESSAGE = 2;
+        public static final int MPV_EVENT_GET_PROPERTY_REPLY = 3;
+        public static final int MPV_EVENT_SET_PROPERTY_REPLY = 4;
+        public static final int MPV_EVENT_COMMAND_REPLY = 5;
+        public static final int MPV_EVENT_START_FILE = 6;
+        public static final int MPV_EVENT_END_FILE = 7;
+        public static final int MPV_EVENT_FILE_LOADED = 8;
+        public static final @Deprecated
+        int MPV_EVENT_TRACKS_CHANGED = 9;
+        public static final @Deprecated
+        int MPV_EVENT_TRACK_SWITCHED = 10;
+        public static final int MPV_EVENT_IDLE = 11;
+        public static final @Deprecated
+        int MPV_EVENT_PAUSE = 12;
+        public static final @Deprecated
+        int MPV_EVENT_UNPAUSE = 13;
+        public static final int MPV_EVENT_TICK = 14;
+        public static final @Deprecated
+        int MPV_EVENT_SCRIPT_INPUT_DISPATCH = 15;
+        public static final int MPV_EVENT_CLIENT_MESSAGE = 16;
+        public static final int MPV_EVENT_VIDEO_RECONFIG = 17;
+        public static final int MPV_EVENT_AUDIO_RECONFIG = 18;
+        public static final @Deprecated
+        int MPV_EVENT_METADATA_UPDATE = 19;
+        public static final int MPV_EVENT_SEEK = 20;
+        public static final int MPV_EVENT_PLAYBACK_RESTART = 21;
+        public static final int MPV_EVENT_PROPERTY_CHANGE = 22;
+        public static final @Deprecated
+        int MPV_EVENT_CHAPTER_CHANGE = 23;
+        public static final int MPV_EVENT_QUEUE_OVERFLOW = 24;
+        public static final int MPV_EVENT_HOOK = 25;
+    }
+
+    @DoNotStrip
+    public static class mpvLogLevel {
+        public static final int MPV_LOG_LEVEL_NONE = 0;
+        public static final int MPV_LOG_LEVEL_FATAL = 10;
+        public static final int MPV_LOG_LEVEL_ERROR = 20;
+        public static final int MPV_LOG_LEVEL_WARN = 30;
+        public static final int MPV_LOG_LEVEL_INFO = 40;
+        public static final int MPV_LOG_LEVEL_V = 50;
+        public static final int MPV_LOG_LEVEL_DEBUG = 60;
+        public static final int MPV_LOG_LEVEL_TRACE = 70;
+    }
 }

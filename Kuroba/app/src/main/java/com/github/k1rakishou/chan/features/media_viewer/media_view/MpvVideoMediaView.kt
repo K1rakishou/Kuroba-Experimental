@@ -170,11 +170,6 @@ class MpvVideoMediaView(
     mpvPlayPause.setEnabledFast(false)
     mpvSettings.setEnabledFast(false)
 
-    showBufferingJob = scope.launch {
-      delay(125L)
-      bufferingProgressView.setVisibilityFast(View.VISIBLE)
-    }
-
     val movableContainer = actualVideoPlayerView.findViewById<View>(R.id.media_view_video_root)
       ?: actualVideoPlayerView
 
@@ -204,7 +199,14 @@ class MpvVideoMediaView(
         thumbnailMediaView = thumbnailMediaView,
         actualVideoView = actualVideoPlayerView,
         mediaViewContract = mediaViewContract,
-        tryPreloadingFunc = { false },
+        tryPreloadingFunc = {
+          if (playJob == null) {
+            startPlayingVideo(isLifecycleChange = null)
+            true
+          } else {
+            false
+          }
+        },
         onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) }
       )
     )
@@ -290,13 +292,27 @@ class MpvVideoMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
+    if (canAutoLoad()) {
+      startPlayingVideo(isLifecycleChange)
+    }
+  }
+
+  private fun startPlayingVideo(isLifecycleChange: Boolean? = null) {
     playJob?.cancel()
     playJob = null
 
+    showBufferingJob?.cancel()
+    showBufferingJob = null
+
     playJob = scope.launch {
       if (MPVLib.librariesAreLoaded()) {
-        mpvErrorMessage.setVisibilityFast(View.GONE)
-        actualVideoPlayerViewContainer.setVisibilityFast(View.VISIBLE)
+        showBufferingJob = scope.launch {
+          delay(125L)
+          bufferingProgressView.setVisibilityFast(View.VISIBLE)
+        }
+
+        mpvErrorMessage.setVisibilityFast(GONE)
+        actualVideoPlayerViewContainer.setVisibilityFast(VISIBLE)
 
         actualVideoPlayerViewContainer.addView(
           actualVideoPlayerView,
@@ -309,34 +325,31 @@ class MpvVideoMediaView(
         actualVideoPlayerView.create(context.applicationContext, appConstants)
         actualVideoPlayerView.addObserver(this@MpvVideoMediaView)
 
-        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+        if (isLifecycleChange == false && ChanSettings.videoAlwaysResetToStart.get()) {
           mediaViewState.resetPosition()
         }
 
         setFileToPlay(context)
-
-        playJob = null
         actualVideoPlayerView.setVisibilityFast(VISIBLE)
       } else {
         hideVideoUi()
 
-        showBufferingJob?.cancel()
-        showBufferingJob = null
-
-        bufferingProgressView.setVisibilityFast(View.INVISIBLE)
+        bufferingProgressView.setVisibilityFast(INVISIBLE)
         thumbnailMediaView.setVisibilityFast(INVISIBLE)
 
         actualVideoPlayerViewContainer.removeAllViews()
-        actualVideoPlayerViewContainer.setVisibilityFast(View.GONE)
+        actualVideoPlayerViewContainer.setVisibilityFast(GONE)
 
         val lastError = MPVLib.getLastError()
         if (lastError != null) {
-          mpvErrorMessage.setVisibilityFast(View.VISIBLE)
+          mpvErrorMessage.setVisibilityFast(VISIBLE)
           mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
         } else {
-          mpvErrorMessage.setVisibilityFast(View.GONE)
+          mpvErrorMessage.setVisibilityFast(GONE)
         }
       }
+
+      playJob = null
     }
   }
 
