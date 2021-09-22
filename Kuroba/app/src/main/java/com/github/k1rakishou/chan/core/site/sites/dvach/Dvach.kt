@@ -103,7 +103,7 @@ class Dvach : CommonSite() {
       prefs,
       "preference_captcha_type_dvach",
       CaptchaType::class.java,
-      CaptchaType.V2NOJS
+      CaptchaType.DVACH_CAPTCHA
     )
 
     passCodeInfo = JsonSetting(

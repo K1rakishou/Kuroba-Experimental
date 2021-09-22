@@ -111,14 +111,12 @@ public class FastScroller
     private final int mScrollbarMinimumRange;
     private final int thumbMinLength;
     private int realThumbMinLength = (int) dp(1f);
-    private final int defaultWidth;
+    private final int fastScrollerWidth;
 
     // Final values for the vertical scroll bar
     private StateListDrawable mVerticalThumbDrawable;
     private StateListDrawable realVerticalThumbDrawable;
     private Drawable mVerticalTrackDrawable;
-    private int mVerticalThumbWidth;
-    private int mVerticalTrackWidth;
 
     // Dynamic values for the vertical scroll bar
     int verticalThumbHeight;
@@ -178,7 +176,7 @@ public class FastScroller
 
         this.fastScrollerControllerType = fastScrollerControllerType;
         this.mScrollbarMinimumRange = scrollbarMinimumRange;
-        this.defaultWidth = defaultWidth;
+        this.fastScrollerWidth = defaultWidth;
         this.thumbMinLength = thumbMinLength;
         this.postInfoMapItemDecoration = postInfoMapItemDecoration;
 
@@ -196,9 +194,6 @@ public class FastScroller
         mVerticalThumbDrawable = getThumb(themeEngine.chanTheme);
         realVerticalThumbDrawable = getRealThumb(themeEngine.chanTheme);
         mVerticalTrackDrawable = getTrack(themeEngine.chanTheme);
-
-        mVerticalThumbWidth = Math.max(defaultWidth, mVerticalThumbDrawable.getIntrinsicWidth());
-        mVerticalTrackWidth = Math.max(defaultWidth, mVerticalTrackDrawable.getIntrinsicWidth());
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_THUMB_ALPHA);
         realVerticalThumbDrawable.setAlpha(SCROLLBAR_REAL_THUMB_ALPHA);
@@ -451,7 +446,7 @@ public class FastScroller
     }
 
     private void drawVerticalScrollbar(Canvas canvas, boolean drawInnerThumb) {
-        int left = mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - mVerticalThumbWidth;
+        int left = mRecyclerView.getWidth() - mRecyclerView.getPaddingLeft() - fastScrollerWidth;
         int top = mVerticalThumbCenterY - verticalThumbHeight / 2;
 
         if (top < mRecyclerViewTopPadding) {
@@ -467,24 +462,24 @@ public class FastScroller
         mVerticalThumbDrawable.setBounds(
                 0,
                 0,
-                mVerticalThumbWidth,
+                fastScrollerWidth,
                 verticalThumbHeight
         );
 
         mVerticalTrackDrawable.setBounds(
                 0,
                 mRecyclerView.getPaddingTop(),
-                mVerticalTrackWidth,
+                fastScrollerWidth,
                 mRecyclerView.getHeight() - mRecyclerView.getPaddingBottom()
         );
 
         if (isLayoutRTL()) {
             mVerticalTrackDrawable.draw(canvas);
-            canvas.translate(mVerticalThumbWidth, top);
+            canvas.translate(fastScrollerWidth, top);
             canvas.scale(-1, 1);
             mVerticalThumbDrawable.draw(canvas);
             canvas.scale(1, 1);
-            canvas.translate(-mVerticalThumbWidth, -top);
+            canvas.translate(-fastScrollerWidth, -top);
         } else {
             canvas.translate(left, 0);
             mVerticalTrackDrawable.draw(canvas);
@@ -497,14 +492,14 @@ public class FastScroller
             // Draw the real thumb (with the real height). This one is useful in huge thread to see
             // where exactly a marked post is relative to it.
             int realTop = mVerticalThumbCenterY - (realVerticalThumbHeight / 2);
-            realVerticalThumbDrawable.setBounds(0, 0, mVerticalThumbWidth, realVerticalThumbHeight);
+            realVerticalThumbDrawable.setBounds(0, 0, fastScrollerWidth, realVerticalThumbHeight);
 
             if (isLayoutRTL()) {
-                canvas.translate(mVerticalThumbWidth, realTop);
+                canvas.translate(fastScrollerWidth, realTop);
                 canvas.scale(-1, 1);
                 realVerticalThumbDrawable.draw(canvas);
                 canvas.scale(1, 1);
-                canvas.translate(-mVerticalThumbWidth, -realTop);
+                canvas.translate(-fastScrollerWidth, -realTop);
             } else {
                 canvas.translate(left, 0);
                 canvas.translate(0, realTop);
@@ -664,16 +659,16 @@ public class FastScroller
 
         if (fastScrollerType != ChanSettings.FastScrollerType.ScrollByClickingAnyPointOfTrack) {
             // Can only scroll when the touch is inside the scrollbar's thumb
-            return (isLayoutRTL() ? x <= mRecyclerViewLeftPadding + defaultWidth / 2f
-                    : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - defaultWidth)
-                    && y >= mVerticalThumbCenterY - verticalThumbHeight / 2f - defaultWidth
-                    && y <= mVerticalThumbCenterY + verticalThumbHeight / 2f + defaultWidth;
+            return (isLayoutRTL() ? x <= mRecyclerViewLeftPadding + fastScrollerWidth / 2f
+                    : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - fastScrollerWidth)
+                    && y >= mVerticalThumbCenterY - verticalThumbHeight / 2f - fastScrollerWidth
+                    && y <= mVerticalThumbCenterY + verticalThumbHeight / 2f + fastScrollerWidth;
         }
 
         // Can scroll when clicking any point of the scrollbar's track
         return isLayoutRTL()
-                ? x <= mRecyclerViewLeftPadding + mVerticalThumbWidth / 2.0f
-                : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - mVerticalThumbWidth;
+                ? x <= mRecyclerViewLeftPadding + fastScrollerWidth / 2.0f
+                : x >= mRecyclerViewLeftPadding + mRecyclerViewWidth - fastScrollerWidth;
     }
 
     /**

@@ -64,11 +64,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintTop_toBottomOf="@+id/image_filename"
         tools:layout_height="32dp" />
 
+    <!-- The elevation here is used to make the thumbnails consume the clicks in cases when post
+         comment overlaps the thumbnail which can happen with the post comment shift option enabled
+         together with post thumbnails being on right side -->
     <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
         android:id="@+id/thumbnails_container"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:elevation="1dp"
         app:layout_constraintEnd_toStartOf="@id/go_to_post_button"
         app:layout_constraintTop_toTopOf="parent"
         tools:layout_height="64dp"

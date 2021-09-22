@@ -480,8 +480,8 @@ public class ChanSettings {
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
-            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
-            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
+            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
             postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
             drawPostThumbnailBackground = new BooleanSetting(provider, "draw_post_thumbnail_background", true);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);

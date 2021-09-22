@@ -25,7 +25,8 @@ class PostIcons @JvmOverloads constructor(
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
 ) : View(context, attrs, defStyleAttr) {
-  private var iconsHeight = 0
+  var iconsHeight = 0
+    private set
   private var spacing = 0
   private var icons = 0
   private var previousIcons = 0
@@ -37,6 +38,9 @@ class PostIcons @JvmOverloads constructor(
   private var rtl = false
   private var compactMode = false
   private var httpIcons = mutableListOf<PostIconsHttpIcon>()
+
+  val hasIcons: Boolean
+    get() = icons != 0
 
   init {
     textPaint.typeface = Typeface.create(null as String?, Typeface.ITALIC)
