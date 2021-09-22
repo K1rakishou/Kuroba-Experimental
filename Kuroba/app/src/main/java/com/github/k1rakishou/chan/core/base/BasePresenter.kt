@@ -11,31 +11,21 @@ import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.plus
 import kotlinx.coroutines.withContext
-import java.util.concurrent.atomic.AtomicBoolean
 
 @DoNotStrip
 abstract class BasePresenter<V> {
   private var view: V? = null
-  private val initialized = AtomicBoolean(false)
 
   protected val scope = MainScope() + CoroutineName("Presenter_${this::class.java.simpleName}")
   protected val compositeDisposable = CompositeDisposable()
 
   @CallSuper
   open fun onCreate(view: V) {
-    if (!initialized.compareAndSet(false, true)) {
-      throw RuntimeException("Attempt to double create")
-    }
-
     this.view = view
   }
 
   @CallSuper
   open fun onDestroy() {
-    if (!initialized.compareAndSet(true, false)) {
-      return
-    }
-
     this.view = null
 
     scope.cancel()
@@ -43,10 +33,6 @@ abstract class BasePresenter<V> {
   }
 
   fun withViewNormal(func: V.() -> Unit) {
-    if (!initialized.get()) {
-      throw RuntimeException("Not initialized!")
-    }
-
     view?.let { v -> func(v) }
   }
 
@@ -59,10 +45,6 @@ abstract class BasePresenter<V> {
    * back to presenter.
    * */
   suspend fun withView(func: suspend V.() -> Unit) {
-    if (!initialized.get()) {
-      throw RuntimeException("Not initialized!")
-    }
-
     view?.let { v ->
       withContext(scope.coroutineContext + Dispatchers.Main.immediate) {
         val result = ModularResult.Try { func(v) }

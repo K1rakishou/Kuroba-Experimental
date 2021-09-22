@@ -25,6 +25,7 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.StatFs;
+import android.provider.Settings;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 import android.view.LayoutInflater;
@@ -48,6 +49,7 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
+import com.github.k1rakishou.persist_state.PersistableChanState;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -66,6 +68,24 @@ public class AppModuleAndroidUtils {
         if (AppModuleAndroidUtils.application == null) {
             AppModuleAndroidUtils.application = application;
         }
+    }
+
+    public static boolean checkDontKeepActivitiesSettingEnabledForWarningDialog(Context context) {
+        if (PersistableChanState.dontKeepActivitiesWarningShown.get()) {
+          return false;
+        }
+
+        boolean settingEnabled = Settings.Global.getInt(
+                context.getContentResolver(),
+                Settings.Global.ALWAYS_FINISH_ACTIVITIES,
+                0
+        ) == 1;
+
+        if (settingEnabled) {
+            PersistableChanState.dontKeepActivitiesWarningShown.set(true);
+        }
+
+        return settingEnabled;
     }
 
     public static AndroidUtils.VerifiedBuildType getVerifiedBuildType() {

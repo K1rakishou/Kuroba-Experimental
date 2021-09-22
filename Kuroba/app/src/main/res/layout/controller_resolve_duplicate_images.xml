@@ -86,7 +86,7 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content">
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/cancel_button"
                         android:layout_width="112dp"
                         android:layout_height="wrap_content"
@@ -96,7 +96,7 @@
                         app:layout_constraintEnd_toStartOf="@+id/resolve_button"
                         app:layout_constraintTop_toTopOf="@+id/resolve_button" />
 
-                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                         android:id="@+id/resolve_button"
                         android:layout_width="112dp"
                         android:layout_height="wrap_content"

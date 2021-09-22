@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setAlphaFast
@@ -103,13 +104,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   private val presenter by lazy {
     return@lazy ReplyLayoutFilesAreaPresenter(
-      appConstants,
-      _replyManager,
-      _boardManager,
-      _imageLoaderV2,
-      _postingLimitationsInfoManager,
-      _imagePickHelper,
-      runtimePermissionsHelper
+      context = context,
+      appConstants = appConstants,
+      replyManager = _replyManager,
+      boardManager = _boardManager,
+      imageLoaderV2 = _imageLoaderV2,
+      postingLimitationsInfoManager = _postingLimitationsInfoManager,
+      imagePickHelper = _imagePickHelper,
+      runtimePermissionsHelper = runtimePermissionsHelper
     )
   }
 
@@ -475,6 +477,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       context,
       titleText = context.getString(R.string.attached_file_info),
       descriptionText = fileStatusString
+    )
+  }
+
+  override fun onDontKeepActivitiesSettingDetected() {
+    dialogFactory.createSimpleInformationDialog(
+      context = context,
+      titleText = getString(R.string.dont_keep_activities_setting_enabled),
+      descriptionText = getString(R.string.dont_keep_activities_setting_enabled_description)
     )
   }
 

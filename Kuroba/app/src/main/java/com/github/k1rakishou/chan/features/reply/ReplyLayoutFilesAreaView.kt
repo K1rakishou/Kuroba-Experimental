@@ -12,4 +12,6 @@ interface ReplyLayoutFilesAreaView {
   fun updateFilesStatusTextView(newStatus: String)
   fun showFileStatusMessage(fileStatusString: String)
   fun showReplyLayoutMessage(message: String?, hideDelayMs: Int)
+
+  fun onDontKeepActivitiesSettingDetected()
 }

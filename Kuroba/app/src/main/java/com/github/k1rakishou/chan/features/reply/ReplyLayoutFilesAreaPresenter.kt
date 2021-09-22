@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.MediaUtils
@@ -53,6 +54,7 @@ import java.io.File
 import java.util.*
 
 class ReplyLayoutFilesAreaPresenter(
+  private val context: Context,
   private val appConstants: AppConstants,
   private val replyManager: Lazy<ReplyManager>,
   private val boardManager: Lazy<BoardManager>,
@@ -90,6 +92,11 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun pickLocalFile(showFilePickerChooser: Boolean) {
+    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
+      withViewNormal { onDontKeepActivitiesSettingDetected() }
+      return
+    }
+
     pickFilesExecutor.post {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor
@@ -158,6 +165,11 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun pickRemoteFile(url: String) {
+    if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
+      withViewNormal { onDontKeepActivitiesSettingDetected() }
+      return
+    }
+
     pickFilesExecutor.post {
       handleStateUpdate {
         val chanDescriptor = boundChanDescriptor

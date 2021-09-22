@@ -15,7 +15,7 @@ import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.RecyclerUtils
@@ -52,7 +52,7 @@ class ResolveDuplicateImagesController(
   lateinit var imageSaverV2: Lazy<ImageSaverV2>
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
-  private lateinit var resolveButton: ColorizableButton
+  private lateinit var resolveButton: ColorizableBarButton
   private lateinit var selectAllFromServer: ColorizableCheckBox
   private lateinit var selectAllLocal: ColorizableCheckBox
   private lateinit var selectAllDuplicates: ColorizableCheckBox
@@ -95,7 +95,7 @@ class ResolveDuplicateImagesController(
     checkState[selectAllLocal] = false
     checkState[selectAllDuplicates] = false
 
-    val cancelButton = view.findViewById<ColorizableButton>(R.id.cancel_button)
+    val cancelButton = view.findViewById<ColorizableBarButton>(R.id.cancel_button)
     val outsideArea = view.findViewById<FrameLayout>(R.id.outside_area)
 
     resolveButton.setEnabledFast(false)

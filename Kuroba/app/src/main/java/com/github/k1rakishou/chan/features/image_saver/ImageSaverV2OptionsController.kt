@@ -12,12 +12,15 @@ import androidx.core.view.children
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
@@ -49,8 +52,8 @@ class ImageSaverV2OptionsController(
   private lateinit var additionalDirs: ColorizableEditText
   private lateinit var customFileNameTil: ColorizableTextInputLayout
   private lateinit var additionalDirectoriesTil: ColorizableTextInputLayout
-  private lateinit var cancelButton: ColorizableButton
-  private lateinit var saveButton: ColorizableButton
+  private lateinit var cancelButton: ColorizableBarButton
+  private lateinit var saveButton: ColorizableBarButton
 
   private lateinit var fileNameTextWatcher: TextWatcher
   private lateinit var additionalDirsTextWatcher: TextWatcher
@@ -61,6 +64,8 @@ class ImageSaverV2OptionsController(
   lateinit var fileManager: FileManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   private var needCallCancelFunc = true
   private var overriddenFileName: String? = null
@@ -169,6 +174,16 @@ class ImageSaverV2OptionsController(
     }
 
     rootDir.setOnClickListener {
+      if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
+        dialogFactory.createSimpleInformationDialog(
+          context = context,
+          titleText = getString(R.string.dont_keep_activities_setting_enabled),
+          descriptionText = getString(R.string.dont_keep_activities_setting_enabled_description)
+        )
+
+        return@setOnClickListener
+      }
+
       fileChooser.openChooseDirectoryDialog(object : PermanentDirectoryChooserCallback() {
         override fun onCancel(reason: String) {
           showToast(context.getString(R.string.controller_image_save_options_canceled_with_reason, reason))

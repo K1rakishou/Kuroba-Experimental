@@ -474,6 +474,9 @@ Note that for country code filtering, troll country codes should be prepended wi
 
     <string name="report_screen">Report %1$s</string>
 
+    <string name="dont_keep_activities_setting_enabled">Don\'t keep activities warning</string>
+    <string name="dont_keep_activities_setting_enabled_description">It appears you have \'Don\'t keep activities\' developer setting enabled. This setting may cause lots of different problems such as not being able to pick any files via file pickers. You are not supposed to use it normally, it\'s mostly used for testing. Normally, when picking a file via a file picker, it should launch a new activity (which should work fine) but with this setting enabled, when launching a new activity, it will destroy the previous activity (which is the KurobaEx main activity) thus reloading everything. Similar problems will occur when using any Android feature that requires launching of a new activity (like file sharing/selecting directory location where downloaded files will be stored/etc). It is strongly recommended to disable this setting. This message won\'t be shown anymore.</string>
+
     <!-- Main settings -->
     <string name="settings_screen">Settings</string>
 

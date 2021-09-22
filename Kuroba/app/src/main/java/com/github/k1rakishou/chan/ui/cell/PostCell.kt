@@ -61,6 +61,8 @@ import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.modifyCurrentAlpha
+import com.github.k1rakishou.common.selectionEndSafe
+import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -156,7 +158,10 @@ class PostCell : ConstraintLayout,
     }
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-      val selection = comment.text.subSequence(comment.selectionStart, comment.selectionEnd)
+      val selection = comment.text.subSequence(comment.selectionStartSafe(), comment.selectionEndSafe())
+      if (selection.isEmpty()) {
+        return false
+      }
 
       if (item === quoteMenuItem) {
         if (postCellCallback != null && postCellData != null) {
