@@ -78,8 +78,14 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->
     val call = newCall(request)
 
-    continuation.invokeOnCancellation {
-      Try { call.cancel() }.ignore()
+    continuation.invokeOnCancellation { throwable ->
+      if (throwable != null) {
+        Try {
+          if (!call.isCanceled()) {
+            call.cancel()
+          }
+        }.ignore()
+      }
     }
 
     call.enqueue(object : Callback {

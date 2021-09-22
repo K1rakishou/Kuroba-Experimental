@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -24,6 +25,7 @@ import com.github.k1rakishou.prefs.JsonSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -117,7 +119,14 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
+  @Suppress("MoveVariableDeclarationIntoWhen")
   fun requestCaptcha(chanDescriptor: ChanDescriptor, forced: Boolean) {
+    activeJob?.cancel()
+    activeJob = null
+
+    captchaTtlUpdateJob?.cancel()
+    captchaTtlUpdateJob = null
+
     val prevCaptchaInfo = getCachedCaptchaInfoOrNull(chanDescriptor)
 
     if (!forced
@@ -136,12 +145,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     Logger.d(TAG, "requestCaptcha() requesting new captcha " +
       "(forced: $forced, ttl: ${prevCaptchaInfo?.ttlMillis()}, chanDescriptor=$chanDescriptor)")
 
-    activeJob?.cancel()
-    activeJob = null
-
-    captchaTtlUpdateJob?.cancel()
-    captchaTtlUpdateJob = null
-
     _captchaTtlMillisFlow.value = -1L
     getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
 
@@ -152,29 +155,46 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       viewModelInitialized.awaitUntilInitialized()
 
       val result = ModularResult.Try { requestCaptchaInternal(chanDescriptor) }
-
-      captchaInfoToShow.value = when (result) {
+      when (result) {
         is ModularResult.Error -> {
+          Logger.e(TAG, "requestCaptcha() error=${result.error.errorMessageOrClassName()}")
+
           val error = result.error
           if (error is CaptchaRateLimitError) {
-            captchaInfoToShow.value = AsyncData.Error(error)
-            delay(error.cooldownMs)
+            waitUntilCaptchaRateLimitPassed(error.cooldownMs)
 
             requestCaptcha(chanDescriptor, forced = true)
             return@launch
           }
 
-          AsyncData.Error(error)
+          captchaInfoToShow.value = AsyncData.Error(error)
         }
         is ModularResult.Value -> {
-          AsyncData.Data(result.value)
+          Logger.d(TAG, "requestCaptcha() success")
+
+          captchaInfoCache[chanDescriptor] = result.value
+          startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
+
+          captchaInfoToShow.value = AsyncData.Data(result.value)
         }
       }
 
-      if (result is ModularResult.Value) {
-        captchaInfoCache[chanDescriptor] = result.value
-        startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
+      activeJob = null
+    }
+  }
+
+  private suspend fun CoroutineScope.waitUntilCaptchaRateLimitPassed(initialCooldownMs: Long) {
+    var remainingCooldownMs = initialCooldownMs + 1000L
+
+    while (isActive) {
+      if (remainingCooldownMs <= 0) {
+        break
       }
+
+      delay(1000L)
+
+      captchaInfoToShow.value = AsyncData.Error(CaptchaRateLimitError(remainingCooldownMs))
+      remainingCooldownMs -= 1000L
     }
   }
 
@@ -202,6 +222,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
         delay(1000L)
       }
+
+      captchaTtlUpdateJob = null
     }
   }
 
