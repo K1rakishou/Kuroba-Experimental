@@ -16,6 +16,8 @@ import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import com.squareup.moshi.Types
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import okhttp3.internal.closeQuietly
 import java.io.File
@@ -33,7 +35,7 @@ class InstallMpvNativeLibrariesFromGithubUseCase(
   private val lookupTag = "v${MPVLib.SUPPORTED_MPV_PLAYER_VERSION}"
 
   override suspend fun execute(parameter: Unit): ModularResult<Unit> {
-    return ModularResult.Try { executeInternal() }
+    return ModularResult.Try { withContext(Dispatchers.IO) { executeInternal() } }
   }
 
   private suspend fun executeInternal() {
