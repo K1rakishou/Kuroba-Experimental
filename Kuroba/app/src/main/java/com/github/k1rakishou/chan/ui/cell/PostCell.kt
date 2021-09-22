@@ -399,11 +399,6 @@ class PostCell : ConstraintLayout,
     replies.textSize = textSizeSp.toFloat()
 
     updatePostCellFileName(postCellData)
-    bindIcons(postCellData)
-
-    val postCommentShiftResult = canShiftPostComment(postCellData)
-    updatePostCellLayoutRuntime(postCellData, postCommentShiftResult)
-    this.postCommentShiftResultCached = postCommentShiftResult
 
     if (postCellData.isViewingThread) {
       replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
@@ -492,7 +487,10 @@ class PostCell : ConstraintLayout,
     )
 
     val imageFileNameTextBounds = if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.getTextBounds(postFileInfo, totalAvailableWidth)
+      imageFileName!!.getTextBounds(
+        postFileInfo,
+        (totalAvailableWidth - goToPostButtonWidth - thumbnailWidth)
+      )
     } else {
       TextBounds.EMPTY
     }
@@ -530,11 +528,11 @@ class PostCell : ConstraintLayout,
           break
         }
 
-        textOffset += lineHeight.toInt()
-
-        if (textOffset >= availableHeight) {
+        if ((textOffset + lineHeight.toInt()) >= availableHeight) {
           break
         }
+
+        textOffset += lineHeight.toInt()
       }
 
       return PostCommentShiftResult.ShiftWithTopMargin(textOffset)
@@ -786,6 +784,11 @@ class PostCell : ConstraintLayout,
     }
 
     bindGoToPostButton(postCellData)
+    bindIcons(postCellData)
+
+    val postCommentShiftResult = canShiftPostComment(postCellData)
+    updatePostCellLayoutRuntime(postCellData, postCommentShiftResult)
+    this.postCommentShiftResultCached = postCommentShiftResult
 
     val dividerVisibility = if (postCellData.showDivider) {
       View.VISIBLE
