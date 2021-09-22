@@ -82,9 +82,10 @@ abstract class BaseSettingsController(
       return
     }
 
-    dialogFactory.createSimpleDialogWithInput(
+    dialogFactory.createSimpleDialogWithInputAndResetButton(
       context = context,
-      defaultValue = inputSettingV2.getCurrent().toString(),
+      currentValue = inputSettingV2.getCurrent()?.toString(),
+      defaultValue = inputSettingV2.getDefault()?.toString(),
       inputType = inputType,
       titleText = inputSettingV2.topDescription,
       onValueEntered = { input ->
