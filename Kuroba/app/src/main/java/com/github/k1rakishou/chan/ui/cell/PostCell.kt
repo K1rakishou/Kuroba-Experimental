@@ -514,7 +514,7 @@ class PostCell : ConstraintLayout,
     val availableHeight = thumbnailWidth - resultTitleTextBounds.textHeight - iconsHeight
     val availableWidthWithoutThumbnail = totalAvailableWidth - thumbnailWidth - goToPostButtonWidth
 
-    if (postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
+    if (availableHeight > 0 && postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
       // Special case for when thumbnails are on the right side of a post and the post comment's
       // lines are all formatted in such way that first N of them are all less than availableWidth.
       // N in this case is first number lines which height sum is greater than or equal to availableHeight.
