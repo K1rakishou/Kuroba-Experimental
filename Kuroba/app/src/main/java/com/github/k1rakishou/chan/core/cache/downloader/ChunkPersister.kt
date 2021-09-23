@@ -63,6 +63,13 @@ internal class ChunkPersister(
 
         try {
           chunkResponse.response.useAsResponseBody { responseBody ->
+            val contentMainType = responseBody.contentType()?.type
+            val contentSubType = responseBody.contentType()?.subtype
+
+            if (contentMainType != "image" && contentMainType != "video") {
+              throw FileCacheException.BadContentTypeException("${contentMainType}/${contentSubType}")
+            }
+
             var chunkSize = responseBody.contentLength()
 
             if (totalChunksCount == 1) {
