@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
@@ -40,6 +41,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
+  @Inject
+  lateinit var mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
 
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
@@ -86,10 +89,24 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
       val postDescriptor = currentViewableMedia?.viewableMediaMeta?.ownerPostDescriptor
         ?: return@setOnClickListener
-      val mediaLocation = currentViewableMedia?.mediaLocation
-        ?: return@setOnClickListener
 
-      if (mediaViewerGoToImagePostHelper.tryGoToPost(chanDescriptor, postDescriptor, mediaLocation)) {
+      val mediaViewerOptions = controllerViewModel.mediaViewerOptions.value
+      var closeMediaViewer = false
+
+      if (mediaViewerOptions.mediaViewerOpenedFromAlbum) {
+        val mediaLocation = currentViewableMedia?.mediaLocation
+          ?: return@setOnClickListener
+
+        if (mediaViewerGoToImagePostHelper.tryGoToPost(chanDescriptor, postDescriptor, mediaLocation)) {
+          closeMediaViewer = true
+        }
+      } else if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        if (mediaViewerOpenThreadHelper.tryToOpenThread(chanDescriptor, postDescriptor)) {
+          closeMediaViewer = true
+        }
+      }
+
+      if (closeMediaViewer) {
         mediaViewerToolbarCallbacks?.onCloseButtonClick()
       }
     }
@@ -111,7 +128,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     scope.launch {
       controllerViewModel.mediaViewerOptions.collect { mediaViewerOptions ->
-        updateToolbarStateFromViewOptions(mediaViewerOptions)
+        updateToolbarStateFromViewOptions(mediaViewerOptions, chanDescriptor)
       }
     }
 
@@ -125,7 +142,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     this.currentViewableMedia = viewableMedia
     this.mediaViewerToolbarCallbacks = callbacks
 
-    updateToolbarStateFromViewOptions(controllerViewModel.mediaViewerOptions.value)
+    updateToolbarStateFromViewOptions(controllerViewModel.mediaViewerOptions.value, chanDescriptor)
 
     val toolbarState = toolbarViewModel.restore(viewableMedia.mediaLocation)
     if (toolbarState != null) {
@@ -260,10 +277,17 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
   }
 
-  private fun updateToolbarStateFromViewOptions(mediaViewerOptions: MediaViewerOptions) {
-    toolbarGoToPostButton.setVisibilityFast(
-      if (mediaViewerOptions.mediaViewerOpenedFromAlbum) VISIBLE else GONE
-    )
+  private fun updateToolbarStateFromViewOptions(
+    mediaViewerOptions: MediaViewerOptions,
+    chanDescriptor: ChanDescriptor?
+  ) {
+    val visibility = if (mediaViewerOptions.mediaViewerOpenedFromAlbum || chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      View.VISIBLE
+    } else {
+      View.GONE
+    }
+
+    toolbarGoToPostButton.setVisibilityFast(visibility)
   }
 
   private fun fireOnReloadButtonClickCallback() {

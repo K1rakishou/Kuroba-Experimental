@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -47,7 +48,8 @@ class BrowsePresenter @Inject constructor(
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _chanPostRepository: Lazy<ChanPostRepository>,
   private val _imageLoaderV2: Lazy<ImageLoaderV2>,
-  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager
+  private val currentOpenedDescriptorStateManager: CurrentOpenedDescriptorStateManager,
+  private val mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
 ) {
   private var callback: Callback? = null
   private var currentOpenedCatalog: ChanDescriptor.ICatalogDescriptor? = null
@@ -104,6 +106,13 @@ class BrowsePresenter @Inject constructor(
           if (currentOpenedCatalog == event.prevCatalogDescriptor) {
             callback?.updateToolbarTitle(event.newCatalogDescriptor)
           }
+        }
+    }
+
+    controllerScope.launch {
+      mediaViewerOpenThreadHelper.mediaViewerOpenThreadEventsFlow
+        .collect { threadDescriptor ->
+          callback?.showThread(threadDescriptor, animated = true)
         }
     }
   }
@@ -257,6 +266,8 @@ class BrowsePresenter @Inject constructor(
 
   interface Callback {
     suspend fun loadCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
+    suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
+
     suspend fun updateToolbarTitle(catalogDescriptor: ChanDescriptor.ICatalogDescriptor)
     suspend fun showSitesNotSetup()
   }

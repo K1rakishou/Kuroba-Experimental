@@ -141,7 +141,9 @@ sealed class ViewableMediaParcelableHolder {
 data class PostNoSubNo(val postNo: Long, val postSubNo: Long) : Parcelable
 
 @Parcelize
-data class MediaViewerOptions(val mediaViewerOpenedFromAlbum: Boolean = false) : Parcelable
+data class MediaViewerOptions(
+  val mediaViewerOpenedFromAlbum: Boolean = false
+) : Parcelable
 
 sealed class ViewableMedia(
   open val mediaLocation: MediaLocation,

@@ -324,7 +324,9 @@ abstract class ThreadController(
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
-          mediaViewerOptions = MediaViewerOptions(mediaViewerOpenedFromAlbum = false)
+          mediaViewerOptions = MediaViewerOptions(
+            mediaViewerOpenedFromAlbum = false
+          )
         )
       }
       is ChanDescriptor.ThreadDescriptor -> {
@@ -335,7 +337,9 @@ abstract class ThreadController(
           initialImageUrl = initialImageUrl,
           transitionThumbnailUrl = transitionThumbnailUrl,
           lastTouchCoordinates = globalWindowInsetsManager.lastTouchCoordinates(),
-          mediaViewerOptions = MediaViewerOptions(mediaViewerOpenedFromAlbum = false)
+          mediaViewerOptions = MediaViewerOptions(
+            mediaViewerOpenedFromAlbum = false
+          )
         )
       }
     }
