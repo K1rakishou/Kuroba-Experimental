@@ -528,14 +528,14 @@ class PostCell : ConstraintLayout,
           break
         }
 
-        if ((textOffset + lineHeight.toInt()) >= availableHeight) {
+        textOffset += lineHeight.toInt()
+
+        if (textOffset >= availableHeight) {
           break
         }
-
-        textOffset += lineHeight.toInt()
       }
 
-      return PostCommentShiftResult.ShiftWithTopMargin(textOffset)
+      return PostCommentShiftResult.ShiftWithTopMargin(textOffset.coerceIn(0, availableHeight))
     }
 
     return PostCommentShiftResult.CannotShiftComment
