@@ -186,7 +186,6 @@ class ThreadPresenter @Inject constructor(
 
   private var threadPresenterCallback: ThreadPresenterCallback? = null
   private var forcePageUpdate = false
-  private var firstCatalogThreadLoadComplete = false
   private val alreadyCreatedNavElement = AtomicBoolean(false)
   private var currentFocusedController = CurrentFocusedController.None
   private var currentNormalLoadThreadJob: Job? = null
@@ -725,7 +724,6 @@ class ThreadPresenter @Inject constructor(
 
         chanThreadLoadingState = ChanThreadLoadingState.Loaded
         currentNormalLoadThreadJob = null
-        firstCatalogThreadLoadComplete = true
       }
 
       if (showLoading) {
@@ -1088,12 +1086,10 @@ class ThreadPresenter @Inject constructor(
     afterCatalogOrThreadLoadedExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
 
-      if (firstCatalogThreadLoadComplete) {
-        createNewOrMoveOldNavHistoryElement(
-          localChanDescriptor = localChanDescriptor,
-          forced = false
-        )
-      }
+      createNewOrMoveOldNavHistoryElement(
+        localChanDescriptor = localChanDescriptor,
+        forced = false
+      )
 
       if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
         updateBookmarkInfoIfNecessary(localChanDescriptor)

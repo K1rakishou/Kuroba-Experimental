@@ -153,11 +153,6 @@ class StartActivityStartupHandlerHelper(
           threadDescriptor = threadToOpen,
           animated = false
         )
-      } else {
-        startActivityCallbacks?.loadThreadWithoutFocusing(
-          threadDescriptor = threadToOpen,
-          animated = false
-        )
       }
     }
   }
