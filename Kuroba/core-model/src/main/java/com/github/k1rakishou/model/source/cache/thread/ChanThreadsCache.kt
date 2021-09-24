@@ -195,7 +195,7 @@ class ChanThreadsCache(
       ?.catalogThreadDescriptorList
       ?: return null
 
-    val posts =  threadDescriptors
+    val posts = threadDescriptors
       .mapNotNull { threadDescriptor -> chanThreads[threadDescriptor]?.getOriginalPost() }
 
     return ChanCatalog(catalogDescriptor, posts)

@@ -5,7 +5,6 @@ import com.github.k1rakishou.model.data.catalog.ChanCompositeCatalogSnapshot
 import com.github.k1rakishou.model.data.catalog.IChanCatalogSnapshot
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlin.concurrent.read
-import kotlin.concurrent.write
 
 class ChanCatalogSnapshotCache : GenericCacheSource<
   ChanDescriptor.ICatalogDescriptor,
@@ -41,17 +40,7 @@ class ChanCatalogSnapshotCache : GenericCacheSource<
     key: ChanDescriptor.ICatalogDescriptor,
     valueFunc: () -> IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor>
   ): IChanCatalogSnapshot<ChanDescriptor.ICatalogDescriptor> {
-    return lock.write {
-      val prevValue = get(key)
-      if (prevValue != null) {
-        return@write prevValue
-      }
-
-      val newValue = valueFunc()
-      actualCache[key] = newValue
-
-      return@write newValue
-    }
+    return super.getOrPut(key, valueFunc)
   }
 
   override fun delete(key: ChanDescriptor.ICatalogDescriptor) {

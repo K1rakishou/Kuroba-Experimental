@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.di.module.application;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository;
 import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository;
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
 import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository;
@@ -108,6 +109,13 @@ public class RepositoryModule {
     ) {
         Logger.deps("ChanPostBackgroundColorStorage");
         return new ChanPostBackgroundColorStorage(boardManager, siteResolver);
+    }
+
+    @Provides
+    @Singleton
+    public CurrentlyDisplayedCatalogPostsRepository provideCurrentlyDisplayedPostsRepository() {
+        Logger.deps("CurrentlyDisplayedPostsRepository");
+        return new CurrentlyDisplayedCatalogPostsRepository();
     }
 
 }

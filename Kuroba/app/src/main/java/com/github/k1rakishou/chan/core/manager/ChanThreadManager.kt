@@ -297,20 +297,9 @@ class ChanThreadManager(
         chanThreadsCache.getThread(descriptor)
           ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
       }
-      is ChanDescriptor.CatalogDescriptor -> {
+      is ChanDescriptor.ICatalogDescriptor -> {
         getChanCatalog(descriptor)
           ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
-      }
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        for (catalogDescriptor in descriptor.catalogDescriptors) {
-          val found = getChanCatalog(catalogDescriptor)
-            ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
-            ?: false
-
-          if (found) {
-            break
-          }
-        }
       }
     }
 

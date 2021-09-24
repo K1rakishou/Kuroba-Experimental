@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository
 import com.github.k1rakishou.chan.ui.cell.CatalogStatusCell
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
@@ -65,6 +66,8 @@ class PostAdapter(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
+  @Inject
+  lateinit var currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository
 
   private val postAdapterCallback: PostAdapterCallback
   private val postCellCallback: PostCellCallback
@@ -321,12 +324,22 @@ class PostAdapter(
       chanTheme
     )
 
+    if (threadCellData.chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      currentlyDisplayedCatalogPostsRepository.updatePosts(
+        postDescriptors = threadCellData.map { postCellData -> postCellData.postDescriptor }
+      )
+    }
+
     notifyDataSetChanged()
 
     Logger.d(TAG, "setThread() notifyDataSetChanged called, postIndexedList.size=" + postIndexedList.size)
   }
 
   fun cleanup() {
+    if (threadCellData.chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      currentlyDisplayedCatalogPostsRepository.clear()
+    }
+
     updatingPosts.clear()
     threadCellData.cleanup()
     notifyDataSetChanged()

@@ -8,6 +8,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.shouldLoadForNetworkType
@@ -44,6 +45,8 @@ class MediaViewerControllerViewModel : ViewModel() {
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
   @Inject
   lateinit var replyManager: ReplyManager
+  @Inject
+  lateinit var currentlyDisplayedCatalogPostsRepository: CurrentlyDisplayedCatalogPostsRepository
 
   private val _mediaViewerState = MutableStateFlow<MediaViewerControllerState?>(null)
   private val _transitionInfoFlow = MutableSharedFlow<ViewableMediaParcelableHolder.TransitionInfo?>(extraBufferCapacity = 1)
@@ -345,30 +348,22 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     val initialPagerIndex = AtomicInteger(0)
     val mediaIndex = AtomicInteger(0)
-
-    val catalogDescriptors = when (catalogDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> listOf(catalogDescriptor)
-      is ChanDescriptor.CompositeCatalogDescriptor -> catalogDescriptor.catalogDescriptors
-    }
-
     val mediaList = mutableListWithCap<ViewableMedia>(64)
 
-    catalogDescriptors.forEach { descriptor ->
-      val catalogSnapshot = chanThreadManager.getChanCatalog(descriptor)
-        ?: return@forEach
+    currentlyDisplayedCatalogPostsRepository.iteratePosts { postDescriptor ->
+      val chanOriginalPost = chanThreadManager.getPost(postDescriptor)
+        ?: return@iteratePosts
 
-      catalogSnapshot.iteratePostsOrdered { chanOriginalPost ->
-        chanOriginalPost.iteratePostImages { chanPostImage ->
-          val viewableMedia = processChanPostImage(
-            chanPostImage = chanPostImage,
-            scrollToImageWithUrl = initialImageUrl,
-            lastViewedIndex = initialPagerIndex,
-            mediaIndex = mediaIndex
-          )
+      chanOriginalPost.iteratePostImages { chanPostImage ->
+        val viewableMedia = processChanPostImage(
+          chanPostImage = chanPostImage,
+          scrollToImageWithUrl = initialImageUrl,
+          lastViewedIndex = initialPagerIndex,
+          mediaIndex = mediaIndex
+        )
 
-          if (viewableMedia != null) {
-            mediaList += viewableMedia
-          }
+        if (viewableMedia != null) {
+          mediaList += viewableMedia
         }
       }
     }
