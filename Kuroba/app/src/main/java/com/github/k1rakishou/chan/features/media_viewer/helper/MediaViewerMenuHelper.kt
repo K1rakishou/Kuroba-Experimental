@@ -75,6 +75,12 @@ class MediaViewerMenuHelper(
       isCurrentlySelected = ChanSettings.videoAlwaysResetToStart.get()
     )
 
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_AUTO_SWIPE_AFTER_DOWNLOAD,
+      name = AppModuleAndroidUtils.getString(R.string.setting_auto_swipe_after_download),
+      isCurrentlySelected = ChanSettings.mediaViewerAutoSwipeAfterDownload.get()
+    )
+
     options += FloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
       name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
@@ -116,6 +122,9 @@ class MediaViewerMenuHelper(
       }
       ACTION_VIDEO_ALWAYS_RESET_TO_START -> {
         ChanSettings.videoAlwaysResetToStart.toggle()
+      }
+      ACTION_AUTO_SWIPE_AFTER_DOWNLOAD -> {
+        ChanSettings.mediaViewerAutoSwipeAfterDownload.toggle()
       }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
@@ -176,8 +185,9 @@ class MediaViewerMenuHelper(
     const val ACTION_VIDEO_START_MUTED = 103
     const val ACTION_VIDEO_START_MUTED_WITH_HEADSET = 104
     const val ACTION_VIDEO_ALWAYS_RESET_TO_START = 105
-    const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 106
-    const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 107
+    const val ACTION_AUTO_SWIPE_AFTER_DOWNLOAD = 106
+    const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 107
+    const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 108
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

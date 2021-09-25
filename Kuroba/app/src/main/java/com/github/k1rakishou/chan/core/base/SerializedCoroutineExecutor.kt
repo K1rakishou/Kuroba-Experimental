@@ -44,13 +44,13 @@ class SerializedCoroutineExecutor(
     }
   }
 
-  fun post(func: suspend () -> Unit) {
+  fun post(func: suspend () -> Unit): Boolean {
     if (channel.isClosedForSend) {
-      return
+      return false
     }
 
     val serializedAction = SerializedAction(func)
-    channel.offer(serializedAction)
+    return channel.trySend(serializedAction).isSuccess
   }
 
   fun cancelChildren() {

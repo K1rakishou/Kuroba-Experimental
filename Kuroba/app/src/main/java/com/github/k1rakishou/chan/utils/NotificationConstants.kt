@@ -24,8 +24,20 @@ object NotificationConstants {
   const val POSTING_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_posting_notification_action"
 
   object ReplyNotifications {
-    val notificationIdCounter = AtomicInteger(100000)
+    val notificationIdCounter = AtomicInteger(1000000)
     val notificationIdMap = mutableMapOf<ChanDescriptor.ThreadDescriptor, Int>()
+
+    fun notificationId(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int {
+      val prevNotificationId = notificationIdMap[threadDescriptor]
+      if (prevNotificationId != null) {
+        return prevNotificationId
+      }
+
+      val newNotificationId = notificationIdCounter.incrementAndGet()
+      notificationIdMap[threadDescriptor] = newNotificationId
+
+      return newNotificationId
+    }
 
     const val NOTIFICATION_TAG_PREFIX = "reply_"
 
@@ -55,11 +67,41 @@ object NotificationConstants {
   }
 
   object ImageSaverNotifications {
+    private val notificationIdCounter = AtomicInteger(2000000)
+    private val notificationIdMap = mutableMapOf<String, Int>()
+
+    fun notificationId(uniqueDownloadId: String): Int {
+      val prevNotificationId = notificationIdMap[uniqueDownloadId]
+      if (prevNotificationId != null) {
+        return prevNotificationId
+      }
+
+      val newNotificationId = notificationIdCounter.incrementAndGet()
+      notificationIdMap[uniqueDownloadId] = newNotificationId
+
+      return newNotificationId
+    }
+
     const val IMAGE_SAVER_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_image_saver_notification_channel"
     const val IMAGE_SAVER_NOTIFICATION_NAME = "Notification channel for downloading images"
   }
 
   object PostingServiceNotifications {
+    private val notificationIdCounter = AtomicInteger(3000000)
+    private val notificationIdMap = mutableMapOf<ChanDescriptor, Int>()
+
+    fun notificationId(chanDescriptor: ChanDescriptor): Int {
+      val prevNotificationId = notificationIdMap[chanDescriptor]
+      if (prevNotificationId != null) {
+        return prevNotificationId
+      }
+
+      val newNotificationId = notificationIdCounter.incrementAndGet()
+      notificationIdMap[chanDescriptor] = newNotificationId
+
+      return newNotificationId
+    }
+
     const val MAIN_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_posting_service_main_notification_channel"
     const val MAIN_NOTIFICATION_NAME = "Notification channel for posting service"
 

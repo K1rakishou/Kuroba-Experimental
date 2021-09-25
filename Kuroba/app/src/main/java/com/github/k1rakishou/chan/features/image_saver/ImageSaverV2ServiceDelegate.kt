@@ -100,7 +100,7 @@ class ImageSaverV2ServiceDelegate(
     onBufferOverflow = BufferOverflow.SUSPEND
   )
 
-  private val stopServiceFlow = MutableSharedFlow<Unit>(
+  private val stopServiceFlow = MutableSharedFlow<ServiceStopCommand>(
     extraBufferCapacity = 1,
     onBufferOverflow = BufferOverflow.DROP_OLDEST
   )
@@ -109,7 +109,7 @@ class ImageSaverV2ServiceDelegate(
     return notificationUpdatesFlow.asSharedFlow()
   }
 
-  fun listenForStopServiceEvent(): SharedFlow<Unit> {
+  fun listenForStopServiceEvent(): SharedFlow<ServiceStopCommand> {
     return stopServiceFlow.asSharedFlow()
   }
 
@@ -151,7 +151,9 @@ class ImageSaverV2ServiceDelegate(
     }
   }
 
-  fun downloadImages(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData) {
+  suspend fun downloadImages(imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData) {
+    stopServiceFlow.emit(ServiceStopCommand.Cancel)
+
     serializedCoroutineExecutor.post {
       try {
         val activeDownloadsBefore = mutex.withLock { activeDownloads.size }
@@ -164,8 +166,7 @@ class ImageSaverV2ServiceDelegate(
         Logger.d(TAG, "downloadImages() end, activeDownloadsCountAfter=$activeDownloadsCountAfter")
 
         if (activeDownloadsCountAfter <= 0) {
-          Logger.d(TAG, "downloadImages() stopping service")
-          stopServiceFlow.emit(Unit)
+          stopServiceFlow.emit(ServiceStopCommand.Enqueue)
         }
       } catch (error: Throwable) {
         Logger.e(TAG, "downloadImages() Unhandled exception", error)
@@ -1052,6 +1053,11 @@ class ImageSaverV2ServiceDelegate(
     val imageDownloadRequest: ImageDownloadRequest,
     val imageOnDiskUri: Uri
   )
+
+  enum class ServiceStopCommand {
+    Enqueue,
+    Cancel
+  }
 
   companion object {
     private const val TAG = "ImageSaverV2ServiceDelegate"

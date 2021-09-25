@@ -708,6 +708,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_video_default_muted">Start videos muted</string>
     <string name="setting_headset_default_muted">Mute headset videos</string>
     <string name="setting_video_always_reset_to_start">Always reset videos to beginning</string>
+    <string name="setting_auto_swipe_after_download">Automatically swipe to next media after downloading it</string>
 
     <!-- Save location group -->
     <string name="setting_save_location">Save location</string>
@@ -1256,6 +1257,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="media_viewer_media_is_not_supported_downloadable">Media is not supported but you still can download it or open in browser.</string>
     <string name="media_viewer_media_is_not_supported_not_downloadable">Media is not supported.</string>
     <string name="media_viewer_open_album_action">Open album</string>
+    <string name="media_viewer_auto_swipe_end_reached">End reached</string>
+    <string name="media_viewer_cannot_save_media">Cannot save image because some info required by SimpleImageInfo is not present (image=\'%1$s\')</string>
 
     <string name="thread_downloader_settings_controller_download_thread_media">Download thread media</string>
     <string name="thread_downloader_settings_controller_location_info">Thread media is stored on the internal storage.\n\nDirectory: %1$s</string>

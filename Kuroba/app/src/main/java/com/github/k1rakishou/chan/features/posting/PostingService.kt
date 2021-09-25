@@ -70,7 +70,7 @@ class PostingService : Service() {
       postingServiceDelegate.get().listenForChildNotificationUpdates()
         .collect { childNotificationInfo ->
           val chanDescriptor = childNotificationInfo.chanDescriptor
-          val notificationId = chanDescriptor.hashCode()
+          val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
           notificationManagerCompat.notify(
             "${CHILD_NOTIFICATION_TAG}_${chanDescriptor.serializeToString()}",

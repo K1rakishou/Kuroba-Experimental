@@ -20,6 +20,7 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 
+import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
 
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
@@ -119,6 +120,35 @@ public class OptionalSwipeViewPager extends ViewPager {
         }
     }
 
+    public boolean swipeForward() {
+        int itemCount = getItemCount();
+        if (itemCount == 0 || prevPosition + 1 >= itemCount) {
+            return false;
+        }
+
+        setCurrentItem(prevPosition + 1, true);
+        return true;
+    }
+
+    public boolean swipeBackward() {
+        int itemCount = getItemCount();
+        if (itemCount == 0 || prevPosition - 1 < 0) {
+            return false;
+        }
+
+        setCurrentItem(prevPosition - 1, true);
+        return true;
+    }
+
+    private int getItemCount() {
+        PagerAdapter adapter = getAdapter();
+        if (adapter == null) {
+            return 0;
+        }
+
+        return adapter.getCount();
+    }
+
     public void setSwipingEnabled(boolean swipingEnabled) {
         this.swipingEnabled = swipingEnabled;
     }
@@ -130,6 +160,14 @@ public class OptionalSwipeViewPager extends ViewPager {
     public enum SwipeDirection {
         Default,
         Forward,
-        Backward
+        Backward;
+
+        public SwipeDirection withoutDefault() {
+            if (this == Default) {
+                return Forward;
+            }
+
+            return this;
+        }
     }
 }

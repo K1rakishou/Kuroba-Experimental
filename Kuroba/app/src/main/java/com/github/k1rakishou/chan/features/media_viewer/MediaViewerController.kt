@@ -7,6 +7,7 @@ import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.viewpager.widget.ViewPager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -27,6 +28,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewCont
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
@@ -44,6 +46,8 @@ import com.google.android.exoplayer2.upstream.cache.CacheDataSource
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -77,6 +81,7 @@ class MediaViewerController(
   lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
 
   private var chanDescriptor: ChanDescriptor? = null
+  private var autoSwipeJob: Job? = null
 
   override val viewerChanDescriptor: ChanDescriptor?
     get() = chanDescriptor
@@ -217,10 +222,48 @@ class MediaViewerController(
   override suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean {
     val simpleImageInfo = viewableMedia.toSimpleImageInfoOrNull()
     if (simpleImageInfo == null) {
-      showToast("Cannot save image because some info required by SimpleImageInfo is not present (image=${viewableMedia})")
+      showToast(getString(R.string.media_viewer_cannot_save_media, viewableMedia))
       return false
     }
 
+    val downloading = startMediaDownloadInternal(longClick, simpleImageInfo)
+    if (downloading && ChanSettings.mediaViewerAutoSwipeAfterDownload.get()) {
+      tryEnqueueAutoSwipe()
+    }
+
+    return downloading
+  }
+
+  private fun tryEnqueueAutoSwipe() {
+    autoSwipeJob?.cancel()
+    autoSwipeJob = null
+
+    autoSwipeJob = mainScope.launch {
+      val swiped = when (pager.swipeDirection.withoutDefault()) {
+        null,
+        OptionalSwipeViewPager.SwipeDirection.Default -> return@launch
+        OptionalSwipeViewPager.SwipeDirection.Forward -> {
+          delay(AUTO_SWIPE_DELAY)
+          pager.swipeForward()
+        }
+        OptionalSwipeViewPager.SwipeDirection.Backward -> {
+          delay(AUTO_SWIPE_DELAY)
+          pager.swipeBackward()
+        }
+      }
+
+      if (!swiped) {
+        showToast(getString(R.string.media_viewer_auto_swipe_end_reached))
+      }
+
+      autoSwipeJob = null
+    }
+  }
+
+  private suspend fun startMediaDownloadInternal(
+    longClick: Boolean,
+    simpleImageInfo: ImageSaverV2.SimpleSaveableMediaInfo
+  ): Boolean {
     val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
     if (!longClick && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
@@ -228,7 +271,7 @@ class MediaViewerController(
       return true
     }
 
-    return suspendCancellableCoroutine { cancellableContinuation ->
+    return suspendCancellableCoroutine<Boolean> { cancellableContinuation ->
       val options = ImageSaverV2OptionsController.Options.SingleImage(
         simpleSaveableMediaInfo = simpleImageInfo,
         onSaveClicked = { updatedImageSaverV2Options, newFileName ->
@@ -268,7 +311,7 @@ class MediaViewerController(
   override suspend fun defaultArtworkDrawable(): Drawable? {
     return imageLoaderV2.loadFromNetworkSuspend(
       context,
-      AppConstants.RESOURCES_ENDPOINT + "audio_thumb.png",
+      AppConstants.RESOURCES_ENDPOINT + AUDIO_THUMB_FILE_NAME,
       ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage),
       emptyList()
     ).valueOrNull()
@@ -426,5 +469,7 @@ class MediaViewerController(
     private const val START_BACKGROUND_COLOR = Color.TRANSPARENT
     private const val FINAL_BACKGROUND_COLOR = Color.BLACK
     private const val MAX_WAIT_TIME_MS = 1000L
+    private const val AUTO_SWIPE_DELAY = 350L
+    private const val AUDIO_THUMB_FILE_NAME = "audio_thumb.png"
   }
 }

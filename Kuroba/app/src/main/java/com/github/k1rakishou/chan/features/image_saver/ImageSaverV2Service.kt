@@ -14,6 +14,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.base.KeyBasedSerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -27,10 +28,10 @@ import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
 import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import com.google.gson.Gson
 import dagger.Lazy
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class ImageSaverV2Service : Service() {
@@ -44,6 +45,9 @@ class ImageSaverV2Service : Service() {
   private val notificationManagerCompat by lazy { NotificationManagerCompat.from(applicationContext) }
   private val kurobaScope = KurobaCoroutineScope()
   private val verboseLogs = ChanSettings.verboseLogs.get()
+  private val notificationUpdateExecutor = KeyBasedSerializedCoroutineExecutor<String>(kurobaScope)
+
+  private var stopServiceJob: Job? = null
 
   override fun onBind(intent: Intent?): IBinder? {
     return null
@@ -58,7 +62,7 @@ class ImageSaverV2Service : Service() {
     kurobaScope.launch {
       imageSaverV2ServiceDelegate.get().listenForNotificationUpdates()
         .collect { imageSaverDelegateResult ->
-          withContext(Dispatchers.Main) {
+          notificationUpdateExecutor.post(imageSaverDelegateResult.uniqueId) {
             showDownloadNotification(imageSaverDelegateResult)
           }
         }
@@ -66,11 +70,27 @@ class ImageSaverV2Service : Service() {
 
     kurobaScope.launch {
       imageSaverV2ServiceDelegate.get().listenForStopServiceEvent()
-        .collect {
-          Logger.d(TAG, "Got StopService command, stopping the service")
+        .collect { serviceStopCommand ->
+          Logger.d(TAG, "Got serviceStopCommand: $serviceStopCommand")
 
-          stopForeground(true)
-          stopSelf()
+          when (serviceStopCommand) {
+            ImageSaverV2ServiceDelegate.ServiceStopCommand.Enqueue -> {
+              stopServiceJob?.cancel()
+              stopServiceJob = null
+
+              stopServiceJob = kurobaScope.launch {
+                delay(1000L)
+
+                Logger.d(TAG, "Stopping the service")
+                stopForeground(true)
+                stopSelf()
+              }
+            }
+            ImageSaverV2ServiceDelegate.ServiceStopCommand.Cancel -> {
+              stopServiceJob?.cancel()
+              stopServiceJob = null
+            }
+          }
         }
     }
   }
@@ -79,6 +99,8 @@ class ImageSaverV2Service : Service() {
     super.onDestroy()
 
     Logger.d(TAG, "onDestroy()")
+
+    notificationUpdateExecutor.cancelAll()
     kurobaScope.cancelChildren()
   }
 
@@ -218,7 +240,7 @@ class ImageSaverV2Service : Service() {
       .build()
   }
 
-  private fun showDownloadNotification(
+  private suspend fun showDownloadNotification(
     imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
   ) {
     BackgroundUtils.ensureMainThread()
@@ -285,11 +307,11 @@ class ImageSaverV2Service : Service() {
       .addResolveDuplicateImagesAction(imageSaverDelegateResult)
       .build()
 
-    showNotification(
-      notificationManagerCompat,
-      imageSaverDelegateResult.uniqueId,
-      notification
-    )
+    showNotification(notificationManagerCompat, imageSaverDelegateResult.uniqueId, notification)
+
+    // Wait some time for the notification to actually get updated (since this process
+    // is async and sometimes race conditions occur)
+    delay(32L)
   }
 
   private fun isNotificationOngoing(
@@ -628,14 +650,21 @@ class ImageSaverV2Service : Service() {
       uniqueId: String,
       notification: Notification
     ) {
-      notificationManagerCompat.notify(IMAGE_SAVER_NOTIFICATIONS_TAG, uniqueId.hashCode(), notification)
+      notificationManagerCompat.notify(
+        IMAGE_SAVER_NOTIFICATIONS_TAG,
+        NotificationConstants.ImageSaverNotifications.notificationId(uniqueId),
+        notification
+      )
     }
 
     fun cancelNotification(
       notificationManagerCompat: NotificationManagerCompat,
       uniqueId: String
     ) {
-      notificationManagerCompat.cancel(IMAGE_SAVER_NOTIFICATIONS_TAG, uniqueId.hashCode())
+      notificationManagerCompat.cancel(
+        IMAGE_SAVER_NOTIFICATIONS_TAG,
+        NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+      )
     }
 
     fun startService(context: Context, uniqueId: String, downloadType: Int, imageSaverV2OptionsJson: String) {

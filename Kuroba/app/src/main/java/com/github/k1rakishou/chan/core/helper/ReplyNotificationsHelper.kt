@@ -443,7 +443,7 @@ class ReplyNotificationsHelper(
       )
 
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
-      val notificationId = getOrCalculateNotificationId(threadDescriptor)
+      val notificationId = NotificationConstants.ReplyNotifications.notificationId(threadDescriptor)
 
       val notificationBuilder = NotificationCompat.Builder(
         appContext,
@@ -805,18 +805,6 @@ class ReplyNotificationsHelper(
 
       notificationManagerCompat.createNotificationChannel(replyChannel)
     }
-  }
-
-  private fun getOrCalculateNotificationId(threadDescriptor: ChanDescriptor.ThreadDescriptor): Int {
-    val prevNotificationId = NotificationConstants.ReplyNotifications.notificationIdMap[threadDescriptor]
-    if (prevNotificationId != null) {
-      return prevNotificationId
-    }
-
-    val newNotificationId = NotificationConstants.ReplyNotifications.notificationIdCounter.incrementAndGet()
-    NotificationConstants.ReplyNotifications.notificationIdMap[threadDescriptor] = newNotificationId
-
-    return newNotificationId
   }
 
   private fun getUniqueNotificationTag(threadDescriptor: ChanDescriptor.ThreadDescriptor): String {
