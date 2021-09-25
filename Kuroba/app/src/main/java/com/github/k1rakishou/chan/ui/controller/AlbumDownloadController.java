@@ -164,29 +164,34 @@ public class AlbumDownloadController
 
     @Override
     public void onInsetsChanged() {
-        int bottomPadding = globalWindowInsetsManager.bottom();
+        int bottomInset = globalWindowInsetsManager.bottom();
+        int fabSize = dp(64f);
 
         if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            bottomPadding = 0;
+            bottomInset = 0;
         }
+
+        int recyclerBottomPadding = bottomInset + fabSize;
 
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
                 null,
                 FastScrollerHelper.FAST_SCROLLER_WIDTH,
                 requireNavController().requireToolbar().getToolbarHeight(),
-                bottomPadding
+                recyclerBottomPadding
         );
 
-        KotlinExtensionsKt.updateMargins(
-                download,
-                null,
-                null,
-                null,
-                null,
-                null,
-                globalWindowInsetsManager.bottom()
-        );
+        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+            KotlinExtensionsKt.updateMargins(
+                    download,
+                    null,
+                    null,
+                    null,
+                    null,
+                    null,
+                    bottomInset
+            );
+        }
     }
 
     @Override

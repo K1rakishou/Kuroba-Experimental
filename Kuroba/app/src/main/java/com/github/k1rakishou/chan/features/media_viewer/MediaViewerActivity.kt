@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.FullScreenUtils.hideSystemUI
 import com.github.k1rakishou.chan.utils.FullScreenUtils.isSystemUIHidden
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
@@ -26,6 +27,7 @@ import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColo
 import com.github.k1rakishou.chan.utils.FullScreenUtils.showSystemUI
 import com.github.k1rakishou.chan.utils.FullScreenUtils.toggleSystemUI
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -380,7 +382,7 @@ class MediaViewerActivity : ControllerHostActivity(),
         )
       )
 
-      context.startActivity(intent)
+      context.startActivitySafe(intent)
     }
 
     @JvmStatic
@@ -402,7 +404,7 @@ class MediaViewerActivity : ControllerHostActivity(),
         )
       )
 
-      context.startActivity(intent)
+      context.startActivitySafe(intent)
     }
 
     fun catalogMedia(
@@ -459,7 +461,7 @@ class MediaViewerActivity : ControllerHostActivity(),
         bundleOf(Pair(key, catalogMediaParcelableHolder))
       )
 
-      context.startActivity(intent)
+      context.startActivitySafe(intent)
     }
 
     fun threadMedia(
@@ -495,7 +497,16 @@ class MediaViewerActivity : ControllerHostActivity(),
         )
       )
 
-      context.startActivity(intent)
+      context.startActivitySafe(intent)
+    }
+
+    private fun Context.startActivitySafe(intent: Intent) {
+      try {
+        startActivity(intent)
+      } catch (error: Throwable) {
+        Logger.e(TAG, "startActivitySafe() error", error)
+        showToast(this, "Failed to start activity because of an unknown error. Error=${error.errorMessageOrClassName()}")
+      }
     }
 
   }
