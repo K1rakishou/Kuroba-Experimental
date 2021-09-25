@@ -142,6 +142,7 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
+import com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout;
 import com.github.k1rakishou.chan.ui.layout.PopupControllerContainer;
 import com.github.k1rakishou.chan.ui.layout.PostPopupContainer;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
@@ -397,6 +398,7 @@ public interface ActivityComponent {
     void inject(MediaViewerToolbar mediaViewerToolbar);
     void inject(DvachCaptchaLayout dvachCaptchaLayout);
     void inject(Chan4CaptchaLayout chan4CaptchaLayout);
+    void inject(MrSkeletonLayout mrSkeletonLayout);
 
     @Subcomponent.Builder
     interface Builder {

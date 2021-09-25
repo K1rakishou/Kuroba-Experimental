@@ -1206,6 +1206,9 @@ class ImageLoaderV2(
       is ImageSize.MeasurableImageSize -> {
         size(imageSize.sizeResolver)
       }
+      is ImageSize.Unspecified -> {
+        // no-op
+      }
     }
   }
 
@@ -1242,8 +1245,11 @@ class ImageLoaderV2(
       return when (this) {
         is FixedImageSize -> PixelSize(width, height)
         is MeasurableImageSize -> sizeResolver.size() as PixelSize
+        is Unspecified -> PixelSize(0, 0)
       }
     }
+
+    object Unspecified : ImageSize()
 
     data class FixedImageSize(val width: Int, val height: Int) : ImageSize() {
       override fun toString(): String = "FixedImageSize{${width}x${height}}"

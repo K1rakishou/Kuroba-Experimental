@@ -394,6 +394,8 @@ public class ChanSettings {
     public static BooleanSetting verboseLogs;
     public static BooleanSetting checkUpdateApkVersionCode;
     public static BooleanSetting showMpvInternalLogs;
+    public static BooleanSetting force4chanBirthdayMode;
+    public static BooleanSetting forceHalloweenMode;
     //endregion
 
     //region DATA
@@ -625,16 +627,10 @@ public class ChanSettings {
                     // Always true by default for dev/beta flavors
                     chanSettingsInfo.isDevOrBetaBuild()
             );
-            checkUpdateApkVersionCode = new BooleanSetting(
-                    provider,
-                    "check_update_apk_version_code",
-                    true
-            );
-            showMpvInternalLogs = new BooleanSetting(
-                    provider,
-                    "show_mpv_internal_logs",
-                    chanSettingsInfo.isDevBuild()
-            );
+            checkUpdateApkVersionCode = new BooleanSetting(provider, "check_update_apk_version_code", true);
+            showMpvInternalLogs = new BooleanSetting(provider, "show_mpv_internal_logs", chanSettingsInfo.isDevBuild());
+            force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
+            forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
             //endregion
 
             //region DATA

@@ -19,9 +19,9 @@ package com.github.k1rakishou.chan.ui.layout
 import android.animation.Animator
 import android.animation.AnimatorListenerAdapter
 import android.content.Context
-import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Canvas
+import android.graphics.Paint
 import android.graphics.Rect
 import android.util.AttributeSet
 import android.view.Gravity
@@ -157,38 +157,70 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private val postHighlightManager: PostHighlightManager
     get() = _postHighlightManager.get()
 
-  private val PARTY: ItemDecoration = object : ItemDecoration() {
-    override fun onDrawOver(c: Canvas, parent: RecyclerView, state: RecyclerView.State) {
-      if (hat == null) {
-        hat = BitmapFactory.decodeResource(resources, R.drawable.partyhat)
+  private val chan4BirthdayDecoration = object : ItemDecoration() {
+    private val paint by lazy {
+      Paint(Paint.ANTI_ALIAS_FLAG)
+        .also { paint -> paint.alpha = 160 }
+    }
+
+    private val hat by lazy {
+      BitmapFactory.decodeResource(resources, R.drawable.partyhat)!!
+    }
+
+    override fun onDrawOver(canvas: Canvas, parent: RecyclerView, state: RecyclerView.State) {
+      val chanDescriptor = currentChanDescriptorOrNull()
+        ?: return
+
+      var index = 0
+
+      val postAlignmentMode = when (chanDescriptor) {
+        is ChanDescriptor.ICatalogDescriptor -> ChanSettings.catalogPostAlignmentMode.get()
+        is ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
       }
 
-      var i = 0
-      val j = parent.childCount
-
-      while (i < j) {
-        val child = parent.getChildAt(i)
+      while (index < parent.childCount) {
+        val child = parent.getChildAt(index)
         if (child is GenericPostCell) {
           val post = child.getPost()
 
           if (post == null || !post.isOP() || post.postImages.isEmpty()) {
-            i++
+            index++
             continue
           }
 
           val params = child.layoutParams as RecyclerView.LayoutParams
-          val top = child.top + params.topMargin
-          val left = child.left + params.leftMargin
 
-          c.drawBitmap(
-            hat!!,
-            left - parent.paddingLeft - dp(25f).toFloat(),
-            top - dp(80f) - parent.paddingTop + toolbarHeight().toFloat(),
-            null
-          )
+          when (postAlignmentMode) {
+            ChanSettings.PostAlignmentMode.AlignLeft -> {
+              // Thumbnails on the right side
+
+              val top = child.top + params.topMargin
+              val right = child.right + params.rightMargin
+
+              canvas.drawBitmap(
+                hat,
+                (right - hat.width).toFloat(),
+                top - dp(80f) - parent.paddingTop + toolbarHeight().toFloat(),
+                paint
+              )
+            }
+            ChanSettings.PostAlignmentMode.AlignRight -> {
+              // Thumbnails on the left side
+
+              val top = child.top + params.topMargin
+              val left = child.left + params.leftMargin
+
+              canvas.drawBitmap(
+                hat,
+                left.toFloat(),
+                top - dp(80f) - parent.paddingTop + toolbarHeight().toFloat(),
+                paint
+              )
+            }
+          }
         }
 
-        i++
+        index++
       }
     }
   }
@@ -323,7 +355,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private var boardPostViewMode: BoardPostViewMode? = null
   private var spanCount = 2
   private var prevLastPostNo = 0L
-  private var hat: Bitmap? = null
 
   var replyOpen = false
     private set
@@ -1223,16 +1254,13 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (chanDescriptor.siteDescriptor().is4chan()) {
-      val calendar = Calendar.getInstance()
-      if (calendar[Calendar.MONTH] == Calendar.OCTOBER && calendar[Calendar.DAY_OF_MONTH] == 1) {
-        recyclerView.addItemDecoration(PARTY)
-      }
+    if (chanDescriptor.siteDescriptor().is4chan() && is4chanBirthdayToday()) {
+      recyclerView.addItemDecoration(chan4BirthdayDecoration)
     }
   }
 
   private fun noParty() {
-    recyclerView.removeItemDecoration(PARTY)
+    recyclerView.removeItemDecoration(chan4BirthdayDecoration)
   }
 
   suspend fun onPostUpdated(updatedPost: ChanPost) {
@@ -1251,6 +1279,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onImageOptionsComplete() {
     replyLayout.onImageOptionsComplete()
+  }
+
+  private fun is4chanBirthdayToday(): Boolean {
+    if (ChanSettings.force4chanBirthdayMode.get()) {
+      return true
+    }
+
+    val calendar = Calendar.getInstance()
+
+    return calendar[Calendar.MONTH] == Calendar.OCTOBER
+      && calendar[Calendar.DAY_OF_MONTH] == 1
   }
 
   data class ShowPostsResult @OptIn(ExperimentalTime::class) constructor(

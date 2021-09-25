@@ -403,8 +403,16 @@ object MediaUtils {
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {
-        val newWidth = min(frameBitmap.width, maxWidth)
-        val newHeight = min(frameBitmap.height, maxHeight)
+        var newWidth = min(frameBitmap.width, maxWidth)
+        if (newWidth <= 0) {
+          newWidth = frameBitmap.width
+        }
+
+        var newHeight = min(frameBitmap.height, maxHeight)
+        if (newHeight <= 0) {
+          newHeight = frameBitmap.height
+        }
+
         val audioIconBitmapSize = ((Math.min(newWidth, newHeight)) / 4).coerceAtLeast(dp(32f))
 
         val audioIconBitmap = AppCompatResources.getDrawable(

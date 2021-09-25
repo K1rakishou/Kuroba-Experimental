@@ -176,6 +176,8 @@ sealed class DeveloperScreen(
     object SimulateAppUpdated : MainGroup("simulate_app_updated")
     object SimulateAppNotUpdated : MainGroup("simulate_app_not_updated")
     object AutoThemeSwitcher : MainGroup("auto_theme_switcher")
+    object Force4chanBirthday : MainGroup("force_4chan_birthday")
+    object ForceHalloween : MainGroup("force_halloween")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

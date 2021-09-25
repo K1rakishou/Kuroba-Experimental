@@ -800,6 +800,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="settings_simulate_app_not_updated_bottom">Makes the app think it\'s NOT updated to the latest version. This will be reset the next time you manually check for updates</string>
     <string name="settings_auto_theme_switcher">Auto theme switcher</string>
     <string name="settings_auto_theme_switcher_bottom">Toggles light/dark theme with a slight delay (5 seconds) ad infinitum (Or until app restart). Is used for dynamic themes testing. \n\nCurrent status: %1$s</string>
+    <string name="settings_force_4chan_birthday">Force 4chan birthday</string>
+    <string name="settings_force_halloween">Force halloween</string>
 
     <!-- Security settings -->
     <string name="settings_screen_security">Security</string>

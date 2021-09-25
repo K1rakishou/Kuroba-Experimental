@@ -49,4 +49,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         app:layout_constraintTop_toBottomOf="@+id/progress_view"
         tools:text="Loading thread json"/>
 
+    <com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 </com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingConstraintLayout>
