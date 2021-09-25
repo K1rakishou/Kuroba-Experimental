@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChild
@@ -26,7 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import pl.droidsonroids.gif.GifDrawable
 import pl.droidsonroids.gif.GifImageView
-import java.util.*
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -57,8 +57,8 @@ class MrSkeletonLayout @JvmOverloads constructor(
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
 
-    if (isHalloweenToday()) {
-      scope.launch { attachGifViewIfNeeded() }
+    if (TimeUtils.isHalloweenToday()) {
+      scope.launch { playRandomGif() }
     }
   }
 
@@ -75,7 +75,7 @@ class MrSkeletonLayout @JvmOverloads constructor(
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
-  private suspend fun attachGifViewIfNeeded() {
+  private suspend fun playRandomGif() {
     val skeletonUrl = skeletons.random(random)
 
     val result = imageLoaderV2.loadFromNetworkSuspend(
@@ -135,25 +135,6 @@ class MrSkeletonLayout @JvmOverloads constructor(
 
   private fun getGifView(): GifImageView? {
     return findChild { view -> view is GifImageView } as GifImageView?
-  }
-
-  private fun isHalloweenToday(): Boolean {
-    if (ChanSettings.forceHalloweenMode.get()) {
-      return true
-    }
-
-    val calendar = Calendar.getInstance()
-    val day = calendar[Calendar.DAY_OF_MONTH]
-
-    if (calendar[Calendar.MONTH] == Calendar.OCTOBER) {
-      return day in 29..31
-    }
-
-    if (calendar[Calendar.MONTH] == Calendar.NOVEMBER) {
-      return day == 1
-    }
-
-    return false
   }
 
   companion object {

@@ -32,20 +32,22 @@ open class ThemeEngine(
 ) {
   private val listeners = hashMapOf<Long, ThemeChangesListener>()
   private val attributeCache = AttributeCache()
-
   private val rootViews = mutableMapOf<Activity, View>()
 
   lateinit var defaultDarkTheme: ChanTheme
   lateinit var defaultLightTheme: ChanTheme
-
   private var actualDarkTheme: ChanTheme? = null
   private var actualLightTheme: ChanTheme? = null
 
+  private var isHalloweenToday = false
   private var autoThemeSwitcherJob: Job? = null
 
+  private val halloweenTheme by lazy { HalloweenTheme() }
   open lateinit var chanTheme: ChanTheme
 
-  fun initialize(context: Context) {
+  fun initialize(context: Context, isHalloweenToday: Boolean) {
+    this.isHalloweenToday = isHalloweenToday
+
     defaultDarkTheme = DefaultDarkTheme()
     defaultLightTheme = DefaultLightTheme()
 
@@ -76,8 +78,31 @@ open class ThemeEngine(
     }
   }
 
-  fun lightTheme(): ChanTheme = actualLightTheme ?: defaultLightTheme
-  fun darkTheme(): ChanTheme = actualDarkTheme ?: defaultDarkTheme
+  fun lightTheme(): ChanTheme {
+    val overrideTheme = tryOverrideTheme()
+    if (overrideTheme != null) {
+      return overrideTheme
+    }
+
+    return actualLightTheme ?: defaultLightTheme
+  }
+
+  fun darkTheme(): ChanTheme {
+    val overrideTheme = tryOverrideTheme()
+    if (overrideTheme != null) {
+      return overrideTheme
+    }
+
+    return actualDarkTheme ?: defaultDarkTheme
+  }
+
+  private fun tryOverrideTheme(): ChanTheme? {
+    if (isHalloweenToday) {
+      return halloweenTheme
+    }
+
+    return null
+  }
 
   fun setRootView(activity: Activity, view: View) {
     this.rootViews[activity] = view.rootView

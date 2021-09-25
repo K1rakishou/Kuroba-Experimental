@@ -73,6 +73,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.hackMaxFlingVelocity
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.common.AndroidUtils
@@ -1254,7 +1255,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
-    if (chanDescriptor.siteDescriptor().is4chan() && is4chanBirthdayToday()) {
+    if (chanDescriptor.siteDescriptor().is4chan() && TimeUtils.is4chanBirthdayToday()) {
       recyclerView.addItemDecoration(chan4BirthdayDecoration)
     }
   }
@@ -1279,17 +1280,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onImageOptionsComplete() {
     replyLayout.onImageOptionsComplete()
-  }
-
-  private fun is4chanBirthdayToday(): Boolean {
-    if (ChanSettings.force4chanBirthdayMode.get()) {
-      return true
-    }
-
-    val calendar = Calendar.getInstance()
-
-    return calendar[Calendar.MONTH] == Calendar.OCTOBER
-      && calendar[Calendar.DAY_OF_MONTH] == 1
   }
 
   data class ShowPostsResult @OptIn(ExperimentalTime::class) constructor(

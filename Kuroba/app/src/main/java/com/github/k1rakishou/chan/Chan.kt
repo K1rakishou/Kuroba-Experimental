@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.AppConstants
@@ -260,7 +261,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       fileManager = fileManager
     ).getThemeEngine()
 
-    themeEngine.initialize(this)
+    themeEngine.initialize(this, TimeUtils.isHalloweenToday())
     SpannableModuleInjector.initialize(themeEngine)
 
     val modelComponent = ModelModuleInjector.build(
