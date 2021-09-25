@@ -143,13 +143,17 @@ class MrSkeletonLayout @JvmOverloads constructor(
     }
 
     val calendar = Calendar.getInstance()
+    val day = calendar[Calendar.DAY_OF_MONTH]
 
-    if (calendar[Calendar.MONTH] != Calendar.OCTOBER) {
-      return false
+    if (calendar[Calendar.MONTH] == Calendar.OCTOBER) {
+      return day in 29..31
     }
 
-    val day = calendar[Calendar.DAY_OF_MONTH]
-    return day in 29..31
+    if (calendar[Calendar.MONTH] == Calendar.NOVEMBER) {
+      return day == 1
+    }
+
+    return false
   }
 
   companion object {
