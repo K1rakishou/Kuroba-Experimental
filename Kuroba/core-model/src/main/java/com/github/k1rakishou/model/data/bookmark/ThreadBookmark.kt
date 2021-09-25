@@ -13,6 +13,7 @@ class ThreadBookmark private constructor(
   var seenPostsCount: Int = 0,
   var threadRepliesCount: Int = 0,
   var lastViewedPostNo: Long = 0,
+  var threadLastPostNo: Long = 0,
   val threadBookmarkReplies: MutableMap<PostDescriptor, ThreadBookmarkReply> = mutableMapOf(),
   var title: String? = null,
   var thumbnailUrl: HttpUrl? = null,
@@ -43,6 +44,7 @@ class ThreadBookmark private constructor(
       seenPostsCount = seenPostsCount,
       threadRepliesCount = threadRepliesCount,
       lastViewedPostNo = lastViewedPostNo,
+      threadLastPostNo = threadLastPostNo,
       threadBookmarkReplies = threadBookmarkRepliesCopy,
       title = title,
       thumbnailUrl = thumbnailUrl,
@@ -68,6 +70,10 @@ class ThreadBookmark private constructor(
 
   fun updateLastViewedPostNo(newLastViewedPostNo: Long) {
     lastViewedPostNo = maxOf(lastViewedPostNo, newLastViewedPostNo)
+  }
+
+  fun updateLastThreadPostNo(newLastThreadPostNo: Long) {
+    threadLastPostNo = maxOf(threadLastPostNo, newLastThreadPostNo)
   }
 
   fun updateSeenPostsCount(unseenPostsCount: Int) {
@@ -142,6 +148,7 @@ class ThreadBookmark private constructor(
 
   fun readAllPostsAndNotifications() {
     seenPostsCount = threadRepliesCount
+    lastViewedPostNo = maxOf(lastViewedPostNo, threadLastPostNo)
 
     threadBookmarkReplies.values.forEach { threadBookmarkReply ->
       threadBookmarkReply.alreadySeen = true
@@ -230,6 +237,7 @@ class ThreadBookmark private constructor(
     if (seenPostsCount != other.seenPostsCount) return false
     if (threadRepliesCount != other.threadRepliesCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
+    if (threadLastPostNo != other.threadLastPostNo) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
     if (state != other.state) return false
@@ -249,6 +257,7 @@ class ThreadBookmark private constructor(
     result = 31 * result + seenPostsCount
     result = 31 * result + threadRepliesCount
     result = 31 * result + lastViewedPostNo.hashCode()
+    result = 31 * result + threadLastPostNo.hashCode()
     result = 31 * result + threadBookmarkReplies.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
@@ -260,7 +269,7 @@ class ThreadBookmark private constructor(
 
   override fun toString(): String {
     return "ThreadBookmark(threadDescriptor=$threadDescriptor, groupId=$groupId, seenPostsCount=$seenPostsCount, " +
-      "threadRepliesCount=$threadRepliesCount, lastViewedPostNo=$lastViewedPostNo, " +
+      "threadRepliesCount=$threadRepliesCount, lastViewedPostNo=$lastViewedPostNo, threadLastPostNo=$threadLastPostNo" +
       "threadBookmarkReplies=$threadBookmarkReplies, title=${title?.take(20)}, thumbnailUrl=$thumbnailUrl, " +
       "stickyThread=$stickyThread, state=${stateToString()}, createdOn=${createdOn})"
   }

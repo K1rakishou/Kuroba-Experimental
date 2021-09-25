@@ -25,6 +25,10 @@ class ThreadBookmarkInfoObject(
     }
   }
 
+  fun lastThreadPostNo(): Long {
+    return simplePostObjects.maxOfOrNull { simplePostObject -> simplePostObject.postNo() } ?: 0L
+  }
+
 }
 
 sealed class ThreadBookmarkInfoPostObject {

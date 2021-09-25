@@ -17,6 +17,7 @@ object ThreadBookmarkMapper {
       seenPostsCount = threadBookmark.seenPostsCount,
       totalPostsCount = threadBookmark.threadRepliesCount,
       lastViewedPostNo = threadBookmark.lastViewedPostNo,
+      threadLastPostNo = threadBookmark.threadLastPostNo,
       title = threadBookmark.title,
       thumbnailUrl = threadBookmark.thumbnailUrl,
       state = threadBookmark.state,
@@ -37,6 +38,7 @@ object ThreadBookmarkMapper {
       this.seenPostsCount = threadBookmarkFull.threadBookmarkEntity.seenPostsCount
       this.threadRepliesCount = threadBookmarkFull.threadBookmarkEntity.totalPostsCount
       this.lastViewedPostNo = threadBookmarkFull.threadBookmarkEntity.lastViewedPostNo
+      this.threadLastPostNo = threadBookmarkFull.threadBookmarkEntity.threadLastPostNo
       this.title = threadBookmarkFull.threadBookmarkEntity.title
       this.thumbnailUrl = threadBookmarkFull.threadBookmarkEntity.thumbnailUrl
       this.state = threadBookmarkFull.threadBookmarkEntity.state

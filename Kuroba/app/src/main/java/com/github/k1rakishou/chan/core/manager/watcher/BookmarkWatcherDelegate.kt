@@ -254,11 +254,11 @@ class BookmarkWatcherDelegate(
 
       return@mapNotNull bookmarksManager.updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
         updateSingleBookmark(
-          threadBookmark,
-          threadDescriptor,
-          threadBookmarkInfoObject,
-          originalPost,
-          quotesToMeMap
+          threadBookmark = threadBookmark,
+          threadDescriptor = threadDescriptor,
+          threadBookmarkInfoObject = threadBookmarkInfoObject,
+          originalPost = originalPost,
+          quotesToMeMap = quotesToMeMap
         )
       }
     }
@@ -310,11 +310,11 @@ class BookmarkWatcherDelegate(
     quotesToMeMap.forEach { (myPostNo, replyToMyPostList) ->
       replyToMyPostList.forEach { replyToMyPost ->
         createOrUpdateReplyToMyPosts(
-          threadBookmark,
-          replyToMyPost,
-          threadDescriptor,
-          myPostNo,
-          lastViewedPostNo
+          threadBookmark = threadBookmark,
+          replyToMyPost = replyToMyPost,
+          threadDescriptor = threadDescriptor,
+          myPostNo = myPostNo,
+          lastViewedPostNo = lastViewedPostNo
         )
       }
     }
@@ -329,6 +329,7 @@ class BookmarkWatcherDelegate(
     threadBookmark.updateSeenPostCountAfterFetch(newPostsCount)
     threadBookmark.setBumpLimit(originalPost.isBumpLimit)
     threadBookmark.setImageLimit(originalPost.isImageLimit)
+    threadBookmark.updateLastThreadPostNo(threadBookmarkInfoObject.lastThreadPostNo())
 
     threadBookmark.updateState(
       archived = originalPost.archived,

@@ -14,6 +14,7 @@ class ThreadBookmarkView private constructor(
   val seenPostsCount: Int = 0,
   val totalPostsCount: Int = 0,
   val lastViewedPostNo: Long = 0,
+  val threadLastPostNo: Long = 0,
   val threadBookmarkReplyViews: MutableMap<PostDescriptor, ThreadBookmarkReplyView> = mutableMapOf(),
   val title: String? = null,
   val thumbnailUrl: HttpUrl? = null,
@@ -51,6 +52,7 @@ class ThreadBookmarkView private constructor(
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
+    if (threadLastPostNo != other.threadLastPostNo) return false
     if (title != other.title) return false
     if (thumbnailUrl != other.thumbnailUrl) return false
     if (state != other.state) return false
@@ -70,6 +72,7 @@ class ThreadBookmarkView private constructor(
     result = 31 * result + seenPostsCount
     result = 31 * result + totalPostsCount
     result = 31 * result + lastViewedPostNo.hashCode()
+    result = 31 * result + threadLastPostNo.hashCode()
     result = 31 * result + threadBookmarkReplyViews.hashCode()
     result = 31 * result + (title?.hashCode() ?: 0)
     result = 31 * result + (thumbnailUrl?.hashCode() ?: 0)
@@ -81,7 +84,7 @@ class ThreadBookmarkView private constructor(
 
   override fun toString(): String {
     return "ThreadBookmarkView(threadDescriptor=$threadDescriptor, groupId=$groupId, seenPostsCount=$seenPostsCount, " +
-      "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, " +
+      "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, threadLastPostNo=$threadLastPostNo" +
       "threadBookmarkReplyViews=$threadBookmarkReplyViews, title=${title?.take(20)}, " +
       "thumbnailUrl=$thumbnailUrl, stickyThread=$stickyThread, state=$state, createdOn=$createdOn)"
   }
@@ -114,6 +117,7 @@ class ThreadBookmarkView private constructor(
         seenPostsCount = threadBookmark.seenPostsCount,
         totalPostsCount = threadBookmark.threadRepliesCount,
         lastViewedPostNo = threadBookmark.lastViewedPostNo,
+        threadLastPostNo = threadBookmark.threadLastPostNo,
         threadBookmarkReplyViews = mapToViews(threadBookmark.threadBookmarkReplies),
         title = threadBookmark.title,
         thumbnailUrl = threadBookmark.thumbnailUrl,

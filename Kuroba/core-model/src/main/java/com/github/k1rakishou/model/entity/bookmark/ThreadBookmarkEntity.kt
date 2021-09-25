@@ -51,6 +51,8 @@ data class ThreadBookmarkEntity(
   val totalPostsCount: Int = -1,
   @ColumnInfo(name = LAST_VIEWED_POST_NO_COLUMN_NAME)
   val lastViewedPostNo: Long = 0L,
+  @ColumnInfo(name = THREAD_LAST_POST_NO_COLUMN_NAME)
+  val threadLastPostNo: Long = 0L,
   @ColumnInfo(name = TITLE_COLUMN_NAME)
   val title: String? = null,
   @ColumnInfo(name = THUMBNAIL_URL_COLUMN_NAME)
@@ -70,6 +72,7 @@ data class ThreadBookmarkEntity(
     const val SEEN_POSTS_COUNT_COLUMN_NAME = "seen_posts_count"
     const val TOTAL_POSTS_COUNT_COLUMN_NAME = "total_posts_count"
     const val LAST_VIEWED_POST_NO_COLUMN_NAME = "last_viewed_post_no"
+    const val THREAD_LAST_POST_NO_COLUMN_NAME = "thread_last_post_no"
     const val TITLE_COLUMN_NAME = "title"
     const val THUMBNAIL_URL_COLUMN_NAME = "thumbnail_url"
     const val STATE_COLUMN_NAME = "state"
