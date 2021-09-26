@@ -43,6 +43,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.IntSize
@@ -200,7 +201,7 @@ class Chan4CaptchaLayout(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
         keyboardActions = KeyboardActions(onDone = { verifyCaptcha(captchaInfo, currentInputValue) }),
-        keyboardOptions = KeyboardOptions(autoCorrect = false),
+        keyboardOptions = KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Password),
         maxLines = 1,
         singleLine = true,
         modifier = Modifier

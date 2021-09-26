@@ -173,8 +173,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
         val keyboardOptions = remember(key1 = input) {
           when (input) {
             null -> KeyboardOptions.Default
-            "numeric" -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Number)
-            else -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Text)
+            "numeric" -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.NumberPassword)
+            else -> KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Password)
           }
         }
 
