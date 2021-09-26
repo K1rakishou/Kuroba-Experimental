@@ -31,9 +31,6 @@ internal sealed class FileCacheException(message: String) : Exception(message) {
   internal class HttpCodeException(val statusCode: Int)
     : FileCacheException("HttpCodeException statusCode = $statusCode")
 
-  internal class BadContentTypeException(contentType: String)
-    : FileCacheException("Unexpected content type: '${contentType}'")
-
   internal class BadOutputFileException(
     val path: String,
     val exists: Boolean,

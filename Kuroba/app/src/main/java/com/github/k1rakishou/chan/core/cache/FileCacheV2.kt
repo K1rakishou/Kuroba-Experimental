@@ -432,8 +432,7 @@ class FileCacheV2(
               is FileCacheException.OutputFileDoesNotExist,
               is FileCacheException.ChunkFileDoesNotExist,
               is FileCacheException.HttpCodeException,
-              is FileCacheException.BadOutputFileException,
-              is FileCacheException.BadContentTypeException -> {
+              is FileCacheException.BadOutputFileException -> {
                 if (result.fileCacheException is FileCacheException.HttpCodeException
                   && result.fileCacheException.statusCode == 404) {
                   throw RuntimeException("This shouldn't be handled here!")
