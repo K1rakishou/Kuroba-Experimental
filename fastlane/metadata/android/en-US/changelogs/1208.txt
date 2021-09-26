@@ -9,6 +9,8 @@ TLDR version:
 - New video player support (mpv).
 
 Full version:
+(Due to another mistake in v0.12.7-beta you will have to update it manually since the updater is broken. Only beta versions are affected!).
+
 - Fix a bug where opening a media in composite catalog would sometimes show incorrect full media while showing correct thumbnail.
 - Add ability to open thread when viewing catalog media from the media viewer. When the media is opened from a catalog album the same old behavior still remains (you will be scrolled to the post instead of opening the thread).
 - Fix marking one or more bookmarks as fully read (read and close all notifications) not being persisted which would restore the read post counters to being fully unread on the next bookmarks update iteration.
