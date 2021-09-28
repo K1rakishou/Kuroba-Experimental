@@ -54,7 +54,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -302,6 +302,8 @@ class BookmarksController(
         .collect { selectionEvent -> onNewSelectionEvent(selectionEvent) }
     }
 
+    mainControllerCallbacks.onBottomPanelStateChanged { state -> onInsetsChanged() }
+
     onViewBookmarksModeChanged()
     updateLayoutManager()
 
@@ -344,10 +346,12 @@ class BookmarksController(
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      val navViewSize = getDimen(R.dimen.navigation_view_size)
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom() + navViewSize)
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = mainControllerCallbacks
+    )
+
+    epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {

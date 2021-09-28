@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.features.reencoding;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -50,8 +52,6 @@ import java.util.Locale;
 import java.util.UUID;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 
 public class ImageOptionsController
         extends BaseFloatingController
@@ -207,7 +207,7 @@ public class ImageOptionsController
 
     @Override
     public void onThemeChanged() {
-        int color = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark());
+        int color = themeEngine.resolveDrawableTintColor(themeEngine.getChanTheme().isBackColorDark());
 
         Drawable tintedDrawable = themeEngine.tintDrawable(
                 context,

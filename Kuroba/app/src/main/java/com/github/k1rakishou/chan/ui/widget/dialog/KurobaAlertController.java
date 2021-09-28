@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.ui.widget.dialog;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Build;
@@ -36,8 +38,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import java.lang.ref.WeakReference;
 
 import javax.inject.Inject;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
 
 public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
     private final Context mContext;
@@ -181,32 +181,32 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
     @Override
     public void onThemeChanged() {
         if (mButtonPositive != null) {
-            mButtonPositive.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            mButtonPositive.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             mButtonPositive.invalidate();
         }
 
         if (mButtonNegative != null) {
-            mButtonNegative.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            mButtonNegative.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             mButtonNegative.invalidate();
         }
 
         if (mButtonNeutral != null) {
-            mButtonNeutral.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            mButtonNeutral.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             mButtonNeutral.invalidate();
         }
 
         if (mTitleView != null) {
-            mTitleView.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            mTitleView.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
         }
 
         if (mMessageView != null) {
-            mMessageView.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
-            mMessageView.setLinkTextColor(themeEngine.chanTheme.getPostLinkColor());
+            mMessageView.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+            mMessageView.setLinkTextColor(themeEngine.getChanTheme().getPostLinkColor());
             mMessageView.setMovementMethod(LinkMovementMethod.getInstance());
             mMessageView.setTextIsSelectable(true);
 
-            ViewUtils.setEditTextCursorColor(mMessageView, themeEngine.chanTheme);
-            ViewUtils.setHandlesColors(mMessageView, themeEngine.chanTheme);
+            ViewUtils.setEditTextCursorColor(mMessageView, themeEngine.getChanTheme());
+            ViewUtils.setHandlesColors(mMessageView, themeEngine.getChanTheme());
         }
     }
 

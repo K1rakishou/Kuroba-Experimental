@@ -143,7 +143,7 @@ public class Toolbar
         arrowMenuView.setOnClickListener(this);
         arrowMenuView.setFocusable(true);
         arrowMenuView.setScaleType(ImageView.ScaleType.CENTER);
-        arrowMenuDrawable = new ArrowMenuDrawable();
+        arrowMenuDrawable = new ArrowMenuDrawable(context);
         arrowMenuView.setImageDrawable(arrowMenuDrawable);
 
         AndroidUtils.setBoundlessRoundRippleBackground(arrowMenuView);
@@ -197,6 +197,7 @@ public class Toolbar
         }
 
         setBackgroundColor(themeEngine.getChanTheme().getPrimaryColor());
+        arrowMenuDrawable.onThemeChanged();
     }
 
     @Override

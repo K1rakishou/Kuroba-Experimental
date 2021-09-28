@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.controller.navigation;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.content.Context;
 
 import com.github.k1rakishou.ChanSettings;
@@ -28,8 +30,6 @@ import com.github.k1rakishou.chan.features.drawer.MainController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 
 import org.jetbrains.annotations.NotNull;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 public class StyledToolbarNavigationController extends ToolbarNavigationController {
 
@@ -109,19 +109,23 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
     public boolean onBack() {
         if (super.onBack()) {
             return true;
-        } else if (parentController instanceof PopupController && childControllers.size() == 1) {
+        }
+
+        if (parentController instanceof PopupController && childControllers.size() == 1) {
             ((PopupController) parentController).dismiss();
             return true;
-        } else if (doubleNavigationController != null && childControllers.size() == 1) {
+        }
+
+        if (doubleNavigationController != null && childControllers.size() == 1) {
             if (doubleNavigationController.getRightController() == this) {
                 doubleNavigationController.setRightController(null, false);
                 return true;
-            } else {
-                return false;
             }
-        } else {
+
             return false;
         }
+
+        return false;
     }
 
     @Override

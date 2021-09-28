@@ -1,37 +1,15 @@
-<?xml version="1.0" encoding="utf-8"?><!--
-KurobaEx - *chan browser https://github.com/K1rakishou/Kuroba-Experimental/
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
--->
-<com.github.k1rakishou.chan.ui.layout.PopupControllerContainer xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/top_view"
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/outside_area"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#88000000">
+    android:background="#88000000"
+    android:clickable="true"
+    android:focusable="true">
 
-    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-        android:id="@+id/width_constraint_container"
+    <FrameLayout
+        android:id="@+id/inner_container"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center"
-        android:elevation="4dp">
+        android:layout_height="wrap_content" />
 
-        <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-            android:id="@+id/popup_controller_container"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent" />
-
-    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
-
-</com.github.k1rakishou.chan.ui.layout.PopupControllerContainer>
+</FrameLayout>

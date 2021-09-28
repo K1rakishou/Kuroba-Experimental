@@ -81,7 +81,7 @@ class BottomNavBarAwareNavigationController(
       bottom += globalWindowInsetsManager.bottom()
     }
 
-    if (navigationViewType == NavigationViewContract.Type.BottomNavView) {
+    if (navigationViewType == NavigationViewContract.Type.BottomNavView && ChanSettings.isNavigationViewEnabled()) {
       bottom += bottomNavBarHeight
     }
 

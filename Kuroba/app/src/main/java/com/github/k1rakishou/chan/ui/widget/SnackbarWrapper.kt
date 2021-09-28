@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.widget
 
 import android.graphics.Color
 import android.view.View
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
@@ -61,7 +60,7 @@ class SnackbarWrapper private constructor(
     snackbar?.view?.let { snackbarView ->
       val bottomInset = globalWindowInsetsManager.bottom()
 
-      if (ChanSettings.isSplitLayoutMode()) {
+      if (!KurobaBottomNavigationView.isBottomNavViewEnabled()) {
         snackbarView.translationY = -(MARGIN.toFloat() + bottomInset)
       } else {
         val bottomNavViewSize = AppModuleAndroidUtils.getDimen(R.dimen.navigation_view_size)
@@ -85,7 +84,7 @@ class SnackbarWrapper private constructor(
 
         val bottomNavigationView = findBottomNavigationView(view)
 
-        if (bottomNavigationView?.isFullyVisible() == true || ChanSettings.isSplitLayoutMode()) {
+        if (bottomNavigationView?.isFullyVisible() == true || !KurobaBottomNavigationView.isBottomNavViewEnabled()) {
           val fab = findFab(view)
             ?: return
 
@@ -125,7 +124,7 @@ class SnackbarWrapper private constructor(
   }
 
   private fun findBottomNavigationView(snackbarView: View): KurobaBottomNavigationView? {
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (!KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       return null
     }
 

@@ -25,15 +25,24 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.annotation.CallSuper
 import androidx.annotation.StringRes
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivityCallbacks
 import com.github.k1rakishou.chan.controller.transition.FadeInTransition
 import com.github.k1rakishou.chan.controller.transition.FadeOutTransition
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.navigation.ControllerWithNavigation
+import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar
+import com.github.k1rakishou.chan.features.drawer.MainController
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.chan.ui.controller.PopupController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
@@ -42,6 +51,8 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
@@ -532,6 +543,126 @@ abstract class Controller(@JvmField var context: Context) {
     }
 
     return this
+  }
+
+  /**
+   * Very complex method that checks a lot of stuff. Basically it calculates the bottom padding that
+   * is then used as a content padding of a RecyclerView.
+   * */
+  protected fun calculateBottomPaddingForRecyclerInDp(
+    globalWindowInsetsManager: GlobalWindowInsetsManager,
+    mainControllerCallbacks: MainControllerCallbacks?
+  ): Int {
+    val isInsideBottomNavAwareController = isInsideBottomNavAwareController()
+    val isInsidePopupOrFloatingController = isInsidePopupOrFloatingController()
+    val isInsideRequiresNoBottomNavBarController = isInsideRequiresNoBottomNavBarController()
+    val isSplitLayoutMode = ChanSettings.isSplitLayoutMode()
+    val bottomNavigationViewEnabled =
+      ChanSettings.bottomNavigationViewEnabled.get() && !isInsideRequiresNoBottomNavBarController
+    val isMainController = this is MainController
+
+    val isKeyboardOpened = globalWindowInsetsManager.isKeyboardOpened
+
+    // Main controller is a special case (it may or may not have the bottomNavView) so we handle
+    // it separately
+    if (isKeyboardOpened && !isMainController) {
+      if (isInsideBottomNavAwareController && !isSplitLayoutMode) {
+        return 0
+      }
+
+      return pxToDp(globalWindowInsetsManager.keyboardHeight)
+    }
+
+    // BottomPanel (the one with options like in the BookmarksController) must push the RecyclerView
+    // upward when the bottomNavView is not present (SPLIT layout or it's disabled in the settings)
+    if (mainControllerCallbacks?.isBottomPanelShown == true) {
+      return when {
+        isSplitLayoutMode -> pxToDp(mainControllerCallbacks.bottomPanelHeight)
+        bottomNavigationViewEnabled -> 0
+        else -> pxToDp(globalWindowInsetsManager.bottom())
+      }
+    }
+
+    if (isSplitLayoutMode) {
+      if (isInsidePopupOrFloatingController) {
+        return 0
+      }
+
+      return pxToDp(globalWindowInsetsManager.bottom())
+    }
+
+    if (isInsideBottomNavAwareController || isInsidePopupOrFloatingController) {
+      // Floating controllers handle the bottom inset inside the BaseFloatingController
+      return 0
+    }
+
+    if (bottomNavigationViewEnabled) {
+      if (isMainController) {
+        return pxToDp(globalWindowInsetsManager.bottom())
+      }
+
+      return pxToDp(getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom())
+    }
+
+    if (isMainController) {
+      return 0
+    }
+
+    return pxToDp(globalWindowInsetsManager.bottom())
+  }
+
+  private fun isInsideRequiresNoBottomNavBarController(): Boolean {
+    var controller: Controller? = this
+
+    while (true) {
+      if (controller == null) {
+        break
+      }
+
+      if (controller is RequiresNoBottomNavBar) {
+        return true
+      }
+
+      controller = controller.parentController
+    }
+
+    return false
+  }
+
+  private fun isInsidePopupOrFloatingController(): Boolean {
+    var controller: Controller? = this
+
+    while (true) {
+      if (controller == null) {
+        break
+      }
+
+      if (controller is BaseFloatingComposeController || controller is PopupController) {
+        return true
+      }
+
+      controller = controller.parentController
+    }
+
+    return false
+  }
+
+  private fun isInsideBottomNavAwareController(): Boolean {
+    var controller: Controller? = this
+
+    while (true) {
+      if (controller == null) {
+        break
+      }
+
+      if (controller is BottomNavBarAwareNavigationController) {
+        return true
+      }
+
+      controller = controller.parentController
+    }
+
+    return false
   }
 
   companion object {

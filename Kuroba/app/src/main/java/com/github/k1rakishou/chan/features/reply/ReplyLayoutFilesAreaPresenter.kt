@@ -72,6 +72,10 @@ class ReplyLayoutFilesAreaPresenter(
   fun listenForStateUpdates(): Flow<ReplyLayoutFilesState> = state.asStateFlow()
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
+
     this.boundChanDescriptor = chanDescriptor
 
     scope.launch {

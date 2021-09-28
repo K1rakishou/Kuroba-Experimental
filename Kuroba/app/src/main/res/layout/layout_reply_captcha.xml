@@ -22,12 +22,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     android:clickable="true"
     android:focusable="true">
 
-    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-        android:id="@+id/width_constraint_container"
+    <FrameLayout
+        android:id="@+id/inner_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
-        android:layout_margin="8dp">
+        android:layout_gravity="center">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
             android:id="@+id/card_view"
@@ -41,6 +40,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
-    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
+    </FrameLayout>
 
 </FrameLayout>

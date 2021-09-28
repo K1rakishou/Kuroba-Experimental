@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -97,9 +96,6 @@ class BoardSelectionController(
 
     epoxyRecyclerView = view.findViewById(R.id.epoxy_recycler_view)
     epoxyRecyclerView.setController(controller)
-
-    val resizeableContainer = view.findViewById<ViewContainerWithMaxSize>(R.id.resizable_container)
-    resizeableContainer.takeWholeWidth()
 
     outsideArea = view.findViewById(R.id.outside_area)
     searchView = view.findViewById(R.id.search_view)

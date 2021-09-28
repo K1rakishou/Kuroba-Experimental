@@ -22,7 +22,6 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.google.accompanist.insets.ProvideWindowInsets
 import javax.inject.Inject
 
 abstract class BaseFloatingComposeController(
@@ -43,44 +42,42 @@ abstract class BaseFloatingComposeController(
     view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            val currentPaddings by globalWindowInsetsManager.currentInsetsCompose
-            val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
+          val currentPaddings by globalWindowInsetsManager.currentInsetsCompose
+          val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 
-            Surface(
-              onClick = { pop() },
-              indication = null,
-              color = backgroundColor,
-              modifier = Modifier.fillMaxSize()
+          Surface(
+            onClick = { pop() },
+            indication = null,
+            color = backgroundColor,
+            modifier = Modifier.fillMaxSize()
+          ) {
+            val horizPadding = remember {
+              if (AppModuleAndroidUtils.isTablet()) {
+                HPADDING_TABLET_COMPOSE
+              } else {
+                HPADDING_COMPOSE
+              }
+            }
+
+            val vertPadding = remember {
+              if (AppModuleAndroidUtils.isTablet()) {
+                VPADDING_TABLET_COMPOSE
+              } else {
+                VPADDING_COMPOSE
+              }
+            }
+
+            Box(
+              modifier = Modifier
+                .fillMaxSize()
+                .padding(
+                  start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr) + horizPadding,
+                  end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + horizPadding,
+                  top = currentPaddings.calculateTopPadding() + vertPadding,
+                  bottom = currentPaddings.calculateBottomPadding() + vertPadding,
+                )
             ) {
-              val horizPadding = remember {
-                if (AppModuleAndroidUtils.isTablet()) {
-                  HORIZ_PADDING * 2
-                } else {
-                  HORIZ_PADDING
-                }
-              }
-
-              val vertPadding = remember {
-                if (AppModuleAndroidUtils.isTablet()) {
-                  VERT_PADDING * 2
-                } else {
-                  VERT_PADDING
-                }
-              }
-
-              Box(
-                modifier = Modifier
-                  .fillMaxSize()
-                  .padding(
-                    start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr) + horizPadding,
-                    end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + horizPadding,
-                    top = currentPaddings.calculateTopPadding() + vertPadding,
-                    bottom = currentPaddings.calculateBottomPadding() + vertPadding,
-                  )
-              ) {
-                BuildContent()
-              }
+              BuildContent()
             }
           }
         }
@@ -119,7 +116,10 @@ abstract class BaseFloatingComposeController(
   abstract fun BoxScope.BuildContent()
 
   companion object {
-    val VERT_PADDING = 8.dp
-    val HORIZ_PADDING = 16.dp
+    val HPADDING_COMPOSE = 12.dp
+    val VPADDING_COMPOSE = 16.dp
+
+    val HPADDING_TABLET_COMPOSE = 32.dp
+    val VPADDING_TABLET_COMPOSE = 48.dp
   }
 }

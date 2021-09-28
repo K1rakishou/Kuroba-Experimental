@@ -45,6 +45,14 @@ public abstract class ToolbarNavigationController extends NavigationController i
         toolbar.openSearchWithQuery(null);
     }
 
+    public boolean isSearchOpened() {
+        if (toolbar == null) {
+            return false;
+        }
+
+        return toolbar.isSearchOpened();
+    }
+
     public void closeSearch() {
         toolbar.closeSearch();
     }

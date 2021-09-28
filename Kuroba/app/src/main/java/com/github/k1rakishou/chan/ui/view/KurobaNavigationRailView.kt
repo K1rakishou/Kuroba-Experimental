@@ -1,46 +1,73 @@
 package com.github.k1rakishou.chan.ui.view
 
 import android.content.Context
-import android.content.res.ColorStateList
 import android.util.AttributeSet
-import android.view.Menu
-import android.view.MenuItem
 import android.view.MotionEvent
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
 import androidx.core.view.updatePadding
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.navigation.NavigationBarView.OnItemSelectedListener
-import com.google.android.material.navigationrail.NavigationRailView
+import com.github.k1rakishou.core_themes.ChanTheme
 
 class KurobaNavigationRailView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : NavigationRailView(context, attrs, defStyleAttr), Toolbar.ToolbarCollapseCallback, NavigationViewContract {
+) : FrameLayout(context, attrs, defStyleAttr), Toolbar.ToolbarCollapseCallback, NavigationViewContract {
+
+  private val kurobaComposeIconPanel by lazy {
+    KurobaComposeIconPanel(
+      context = context,
+      orientation = KurobaComposeIconPanel.Orientation.Vertical,
+      defaultSelectedMenuItemId = R.id.action_browse,
+      menuItems = KurobaBottomNavigationView.bottomNavViewButtons()
+    )
+  }
+
+  private var menuItemClickListener: ((Int) -> Boolean)? = null
 
   override val actualView: ViewGroup
     get() = this
-  override val navigationMenu: Menu
-    get() = menu
   override val type: NavigationViewContract.Type
     get() = NavigationViewContract.Type.SideNavView
 
-  override var viewItemTextColor: ColorStateList?
-    get() = itemTextColor
-    set(value) { itemTextColor = value }
-  override var viewItemIconTintList: ColorStateList?
-    get() = itemIconTintList
-    set(value) { itemIconTintList = value }
   override var viewElevation: Float
     get() = elevation
     set(value) { elevation = value }
   override var selectedMenuItemId: Int
-    get() = selectedItemId
-    set(value) { selectedItemId = value }
+    get() = kurobaComposeIconPanel.selectedMenuItemId
+    set(value) { kurobaComposeIconPanel.setMenuItemSelected(value) }
 
   init {
-    labelVisibilityMode = BottomNavigationView.LABEL_VISIBILITY_UNLABELED
+    removeAllViews()
+    addView(ComposeView(context).also { composeView -> composeView.setContent { BuildContent() } })
+  }
+
+  @Composable
+  private fun BuildContent() {
+    kurobaComposeIconPanel.BuildPanel(
+      onMenuItemClicked = { menuItemId -> menuItemClickListener?.invoke(menuItemId) }
+    )
+  }
+
+  override fun setMenuItemSelected(menuItemId: Int) {
+    kurobaComposeIconPanel.setMenuItemSelected(menuItemId)
+  }
+
+  override fun updateBadge(menuItemId: Int, menuItemBadgeInfo: KurobaComposeIconPanel.MenuItemBadgeInfo?) {
+    kurobaComposeIconPanel.updateBadge(menuItemId, menuItemBadgeInfo)
+  }
+
+  override fun onThemeChanged(chanTheme: ChanTheme) {
+    this.setBackgroundColor(chanTheme.primaryColor)
+  }
+
+  override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
+    leftPadding?.let { padding -> updatePadding(left = padding) }
   }
 
   override fun onCollapseTranslation(offset: Float) {
@@ -51,8 +78,8 @@ class KurobaNavigationRailView @JvmOverloads constructor(
     // no-op
   }
 
-  override fun setOnNavigationItemSelectedListener(listener: (MenuItem) -> Boolean) {
-    this.setOnItemSelectedListener(OnItemSelectedListener { item -> listener(item) })
+  override fun setOnNavigationItemSelectedListener(listener: (Int) -> Boolean) {
+    this.menuItemClickListener = listener
   }
 
   override fun setOnOuterInterceptTouchEventListener(listener: (MotionEvent) -> Boolean) {
@@ -61,10 +88,6 @@ class KurobaNavigationRailView @JvmOverloads constructor(
 
   override fun setOnOuterTouchEventListener(listener: (MotionEvent) -> Boolean) {
     // no-op
-  }
-
-  override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
-    leftPadding?.let { padding -> updatePadding(left = padding) }
   }
 
   override fun setToolbar(toolbar: Toolbar) {

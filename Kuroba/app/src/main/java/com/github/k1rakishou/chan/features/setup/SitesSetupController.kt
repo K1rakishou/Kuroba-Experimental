@@ -12,7 +12,6 @@ import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyViewHolder
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -27,6 +26,7 @@ import com.github.k1rakishou.chan.features.setup.epoxy.site.epoxySiteView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
@@ -142,9 +142,12 @@ class SitesSetupController(context: Context) : Controller(context), SitesSetupVi
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   private fun onStateChanged(state: SitesSetupControllerState) {

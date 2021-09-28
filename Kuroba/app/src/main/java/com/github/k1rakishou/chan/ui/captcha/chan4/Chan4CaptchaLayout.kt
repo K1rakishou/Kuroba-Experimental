@@ -79,7 +79,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
@@ -131,17 +130,15 @@ class Chan4CaptchaLayout(
     val view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            val chanTheme = LocalChanTheme.current
+          val chanTheme = LocalChanTheme.current
 
-            Box(
-              modifier = Modifier
-                .fillMaxWidth()
-                .wrapContentHeight()
-                .background(chanTheme.backColorCompose)
-            ) {
-              BuildContent()
-            }
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+              .background(chanTheme.backColorCompose)
+          ) {
+            BuildContent()
           }
         }
       }

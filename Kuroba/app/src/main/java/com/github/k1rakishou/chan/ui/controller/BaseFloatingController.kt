@@ -7,7 +7,7 @@ import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
-import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
 
 abstract class BaseFloatingController(
@@ -41,23 +41,22 @@ abstract class BaseFloatingController(
 
   private fun updatePaddings() {
     val horizPadding = if (isTablet()) {
-      HPADDING * 2
+      HPADDING_TABLET
     } else {
       HPADDING
     }
 
     val vertPadding = if (isTablet()) {
-      VPADDING * 2
+      VPADDING_TABLET
     } else {
       VPADDING
     }
 
-    AndroidUtils.updatePaddings(
-      view,
-      horizPadding + globalWindowInsetsManager.left(),
-      horizPadding + globalWindowInsetsManager.right(),
-      vertPadding + globalWindowInsetsManager.top(),
-      vertPadding + globalWindowInsetsManager.bottom()
+    view.updatePaddings(
+      left = horizPadding + globalWindowInsetsManager.left(),
+      right = horizPadding + globalWindowInsetsManager.right(),
+      top = vertPadding + globalWindowInsetsManager.top(),
+      bottom = vertPadding + globalWindowInsetsManager.bottom()
     )
   }
 
@@ -85,7 +84,10 @@ abstract class BaseFloatingController(
   protected abstract fun getLayoutId(): Int
 
   companion object {
-    private val HPADDING = dp(8f)
-    private val VPADDING = dp(16f)
+    val HPADDING = dp(12f)
+    val VPADDING = dp(16f)
+
+    val HPADDING_TABLET = dp(24f)
+    val VPADDING_TABLET = dp(32f)
   }
 }

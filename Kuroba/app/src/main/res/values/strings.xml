@@ -574,6 +574,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_layout_mode_auto">Auto</string>
 
     <!-- Appearance layout group -->
+    <string name="setting_bottom_navigation_mode">Use bottom navigation</string>
+    <string name="setting_bottom_navigation_mode_description">Disabling this setting will disable the bottom navigation view. All the menu items of the bottom navigation view will be moved into the drawer. Does nothing when SPLIT layout mode is used.</string>
     <string name="setting_layout_mode_slide">Slide mode</string>
     <string name="setting_layout_mode_phone">Phone mode</string>
     <string name="setting_layout_mode_split">Split mode</string>

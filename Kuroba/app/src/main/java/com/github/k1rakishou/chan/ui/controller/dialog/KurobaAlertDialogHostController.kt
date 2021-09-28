@@ -2,12 +2,13 @@ package com.github.k1rakishou.chan.ui.controller.dialog
 
 import android.content.Context
 import android.view.ViewGroup
+import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
@@ -33,11 +34,13 @@ class KurobaAlertDialogHostController(
       onReady(dialogContainer, this)
     }
 
-    view.findViewById<ViewContainerWithMaxSize>(R.id.alert_dialog_container_with_max_size).let { viewContainerWithMaxSize ->
-      viewContainerWithMaxSize.desiredWidth = if (isTablet()) {
-        TABLET_WIDTH
-      } else {
-        NORMAL_WIDTH
+    view.findViewById<FrameLayout>(R.id.inner_container).let { innerContainer ->
+      innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
+        matchConstraintMaxWidth = if (isTablet()) {
+          TABLET_WIDTH
+        } else {
+          NORMAL_WIDTH
+        }
       }
     }
 

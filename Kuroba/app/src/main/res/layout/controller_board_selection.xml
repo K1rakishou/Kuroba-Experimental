@@ -9,11 +9,10 @@
     android:clickable="true"
     android:focusable="true">
 
-    <com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize
-        android:id="@+id/resizable_container"
+    <FrameLayout
+        android:id="@+id/inner_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="8dp">
+        android:layout_height="wrap_content">
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView
             android:id="@+id/card_view"
@@ -72,6 +71,6 @@
 
         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView>
 
-    </com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize>
+    </FrameLayout>
 
 </FrameLayout>

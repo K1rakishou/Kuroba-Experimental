@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem.ToobarThreedotMenuCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
+import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -148,7 +149,7 @@ open class ViewThreadController(
 
     mainControllerCallbacks.resetBottomNavViewCheckState()
 
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+    if (KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       mainControllerCallbacks.showBottomNavBar(unlockTranslation = false, unlockCollapse = false)
     }
   }

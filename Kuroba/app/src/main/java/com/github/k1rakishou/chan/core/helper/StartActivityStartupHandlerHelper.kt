@@ -144,11 +144,12 @@ class StartActivityStartupHandlerHelper(
         ?.descriptor()
 
       val isThreadTheTopElement = topElement == threadToOpen
+      val isSplitLayout = ChanSettings.isSplitLayoutMode()
 
       Logger.d(TAG, "restoreFresh() isThreadTheTopElement=$isThreadTheTopElement, " +
-        "(topElement=${topElement}, threadToOpen=$threadToOpen)")
+        "isSplitLayout=$isSplitLayout, (topElement=${topElement}, threadToOpen=$threadToOpen)")
 
-      if (isThreadTheTopElement) {
+      if (isThreadTheTopElement || isSplitLayout) {
         startActivityCallbacks?.loadThread(
           threadDescriptor = threadToOpen,
           animated = false

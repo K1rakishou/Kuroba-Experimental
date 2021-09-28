@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.theme;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
+import android.content.Context;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.ColorFilter;
@@ -26,12 +29,19 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.text.TextUtils;
 
+import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.ui.helper.PinHelper;
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import javax.inject.Inject;
 
 public class ArrowMenuDrawable
         extends Drawable {
+
+    @Inject
+    ThemeEngine themeEngine;
+
     private final Paint mPaint = new Paint();
 
     // The angle in degress that the arrow head is inclined at.
@@ -55,13 +65,17 @@ public class ArrowMenuDrawable
     private boolean mVerticalMirror = false;
     // The interpolated version of the original progress
     private float mProgress = 0.0f;
+    private float padding = dp(2f);
 
     private String badgeText;
     private boolean badgeRed = false;
     private Paint badgePaint = new Paint();
     private Rect badgeTextBounds = new Rect();
 
-    public ArrowMenuDrawable() {
+    public ArrowMenuDrawable(Context context) {
+        AppModuleAndroidUtils.extractActivityComponent(context)
+                .inject(this);
+
         mPaint.setColor(Color.WHITE);
         mPaint.setAntiAlias(true);
         mPaint.setStyle(Paint.Style.STROKE);
@@ -69,6 +83,10 @@ public class ArrowMenuDrawable
         mPaint.setStrokeCap(Paint.Cap.SQUARE);
         mPaint.setStrokeWidth(mBarThickness);
         badgePaint.setAntiAlias(true);
+    }
+
+    public void onThemeChanged() {
+        invalidateSelf();
     }
 
     @Override
@@ -119,14 +137,19 @@ public class ArrowMenuDrawable
         // Draw a badge over the arrow/menu
         if (badgeText != null) {
             canvas.save();
-            float badgeSize = mSize * 0.7f;
-            float badgeX = mSize - badgeSize / 2f;
+
+            float badgeSize = (mSize + padding) * 0.7f;
+            float badgeX = (mSize + padding) - badgeSize / 2f;
             float badgeY = badgeSize / 2f;
 
             if (badgeRed) {
-                badgePaint.setColor(0xddf44336);
+                badgePaint.setColor(themeEngine.getChanTheme().getAccentColor());
             } else {
-                badgePaint.setColor(0x89000000);
+                if (ThemeEngine.isDarkColor(themeEngine.getChanTheme().getPrimaryColor())) {
+                    badgePaint.setColor(Color.LTGRAY);
+                } else {
+                    badgePaint.setColor(Color.DKGRAY);
+                }
             }
 
             canvas.drawCircle(badgeX, badgeY, badgeSize / 2f, badgePaint);
@@ -140,7 +163,12 @@ public class ArrowMenuDrawable
                 textSize = badgeSize * 0.5f;
             }
 
-            badgePaint.setColor(Color.WHITE);
+            if (badgeRed) {
+                badgePaint.setColor(Color.WHITE);
+            } else {
+                badgePaint.setColor(Color.BLACK);
+            }
+
             badgePaint.setTextSize(textSize);
             badgePaint.getTextBounds(badgeText, 0, badgeText.length(), badgeTextBounds);
             canvas.drawText(badgeText,
@@ -194,6 +222,11 @@ public class ArrowMenuDrawable
     }
 
     public void setBadge(int count, boolean red) {
+        if (ChanSettings.isSplitLayoutMode() || ChanSettings.bottomNavigationViewEnabled.get()) {
+            badgeText = null;
+            return;
+        }
+
         String text = count == 0 ? null : (PinHelper.getShortUnreadCount(count));
         if (badgeRed != red || !TextUtils.equals(text, badgeText)) {
             badgeText = text;

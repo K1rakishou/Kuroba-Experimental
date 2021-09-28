@@ -5,7 +5,6 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -27,6 +26,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
@@ -117,9 +117,12 @@ class MainSettingsControllerV2(
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = mainControllerCallbacks
+    )
+
+    epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {

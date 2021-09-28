@@ -51,6 +51,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
+import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -258,7 +259,7 @@ class StartActivity : ControllerHostActivity(),
       startActivityStartupHandlerHelper.setupFromStateOrFreshLaunch(intent, savedInstanceState)
     }
 
-    if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+    if (KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       compositeDisposable.add(
         bottomNavBarVisibilityStateManager.get().listenForViewsStateUpdates()
           .subscribe { updateBottomNavBar() }
@@ -300,7 +301,7 @@ class StartActivity : ControllerHostActivity(),
   }
 
   private fun updateBottomNavBar() {
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+    if (!KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       return
     }
 

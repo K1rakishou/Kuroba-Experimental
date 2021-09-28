@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener;
+import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
@@ -71,6 +72,7 @@ public class AlbumDownloadController
         extends Controller
         implements View.OnClickListener,
         WindowInsetsListener,
+        RequiresNoBottomNavBar,
         Toolbar.ToolbarHeightUpdatesCallback {
     private static final String ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK_TOKEN = "ALBUM_DOWNLOAD_VIEW_CELL_THUMBNAIL_CLICK";
 
@@ -164,14 +166,14 @@ public class AlbumDownloadController
 
     @Override
     public void onInsetsChanged() {
-        int bottomInset = globalWindowInsetsManager.bottom();
+        int bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+                globalWindowInsetsManager,
+                null
+        );
+
+        int bottomPaddingPx = dp(bottomPaddingDp);
         int fabSize = dp(64f);
-
-        if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-            bottomInset = 0;
-        }
-
-        int recyclerBottomPadding = bottomInset + fabSize;
+        int recyclerBottomPadding = bottomPaddingPx + fabSize;
 
         KotlinExtensionsKt.updatePaddings(
                 recyclerView,
@@ -181,16 +183,8 @@ public class AlbumDownloadController
                 recyclerBottomPadding
         );
 
-        if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
-            KotlinExtensionsKt.updateMargins(
-                    download,
-                    null,
-                    null,
-                    null,
-                    null,
-                    null,
-                    bottomInset
-            );
+        if (!ChanSettings.isSplitLayoutMode()) {
+            KotlinExtensionsKt.updateMargins(download, null, null, null, null, null, bottomPaddingPx);
         }
     }
 

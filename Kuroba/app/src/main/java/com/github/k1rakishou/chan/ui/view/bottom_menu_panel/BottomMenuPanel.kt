@@ -42,6 +42,11 @@ class BottomMenuPanel @JvmOverloads constructor(
   private val items = mutableListOf<BottomMenuPanelItem>()
   private var state = State.NotInitialized
 
+  private var onBottomStateChangedFunc: ((State) -> Unit)? = null
+
+  val isBottomPanelShown: Boolean
+    get() = state == State.Shown
+
   init {
     if (!isInEditMode) {
       AppModuleAndroidUtils.extractActivityComponent(context)
@@ -56,6 +61,10 @@ class BottomMenuPanel @JvmOverloads constructor(
     )
 
     updateColors()
+  }
+
+  fun onBottomPanelStateChanged(func: (State) -> Unit) {
+    onBottomStateChangedFunc = func
   }
 
   override fun onAttachedToWindow() {
@@ -147,7 +156,31 @@ class BottomMenuPanel @JvmOverloads constructor(
       .setInterpolator(INTERPOLATOR)
       .setDuration(ANIMATION_DURATION)
       .withStartAction { alpha = 0f }
-      .withEndAction { state = State.Shown }
+      .withEndAction {
+        state = State.Shown
+        onBottomStateChangedFunc?.invoke(state)
+      }
+      .start()
+  }
+
+  fun hide() {
+    if (state == State.Hidden || state == State.NotInitialized) {
+      return
+    }
+
+    this.items.clear()
+
+    animate().cancel()
+    animate()
+      .translationY(totalHeight().toFloat())
+      .alpha(0f)
+      .setInterpolator(INTERPOLATOR)
+      .setDuration(ANIMATION_DURATION)
+      .withStartAction { alpha = 1f }
+      .withEndAction {
+        state = State.Hidden
+        onBottomStateChangedFunc?.invoke(state)
+      }
       .start()
   }
 
@@ -259,24 +292,6 @@ class BottomMenuPanel @JvmOverloads constructor(
     return oldItemIdSet != newItemIdSet
   }
 
-  fun hide() {
-    if (state == State.Hidden || state == State.NotInitialized) {
-      return
-    }
-
-    this.items.clear()
-
-    animate().cancel()
-    animate()
-      .translationY(totalHeight().toFloat())
-      .alpha(0f)
-      .setInterpolator(INTERPOLATOR)
-      .setDuration(ANIMATION_DURATION)
-      .withStartAction { alpha = 1f }
-      .withEndAction { state = State.Hidden }
-      .start()
-  }
-
   private fun updatePaddings() {
     layoutParams.height = getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom()
 
@@ -294,7 +309,7 @@ class BottomMenuPanel @JvmOverloads constructor(
     }
   }
 
-  fun totalHeight(): Int = layoutParams.height + paddingBottom
+  fun totalHeight(): Int = layoutParams.height
 
   enum class State {
     NotInitialized,

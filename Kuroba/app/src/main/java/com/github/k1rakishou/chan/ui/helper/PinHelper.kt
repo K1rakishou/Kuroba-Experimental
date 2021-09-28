@@ -14,25 +14,22 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.helper;
+package com.github.k1rakishou.chan.ui.helper
 
-public class PinHelper {
-    public static String getShortUnreadCount(int value) {
-        String count;
-        if (value < 0) {
-            count = "?";
-        } else if (value < 1000) {
-            count = String.valueOf(value);
-        } else {
-            int k = value / 1000;
-            if (k < 10) {
-                count = k + "k+";
-            } else if (k < 100) {
-                count = k + "k";
-            } else {
-                count = "XD";
-            }
-        }
-        return count;
+object PinHelper {
+
+  @JvmStatic
+  fun getShortUnreadCount(value: Int): String {
+    if (value < 1000) {
+      return value.toString()
     }
+
+    val thousands = value.toFloat() / 1000f
+    if (thousands >= 1000f) {
+      return thousands.toString() + "kk"
+    }
+
+    return "%.${1}f".format(thousands) + "k"
+  }
+
 }

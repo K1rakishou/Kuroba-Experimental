@@ -8,7 +8,9 @@ import android.widget.FrameLayout
 import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Toast
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.children
+import androidx.core.view.updateLayoutParams
 import androidx.core.widget.doAfterTextChanged
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -20,6 +22,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
@@ -103,6 +106,11 @@ class ImageSaverV2OptionsController(
     additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
     cancelButton = view.findViewById(R.id.cancel_button)
     saveButton = view.findViewById(R.id.save_button)
+
+    val innerContainer = view.findViewById<FrameLayout>(R.id.inner_container)
+    innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      matchConstraintMaxWidth = dp(600f)
+    }
 
     val scrollView = view.findViewById<ScrollView>(R.id.scroll_view)
     scrollView.changeEdgeEffect(themeEngine.chanTheme)
@@ -246,7 +254,7 @@ class ImageSaverV2OptionsController(
       applyOptionsToView()
     }
 
-    val outsideArea = view.findViewById<FrameLayout>(R.id.outside_area)
+    val outsideArea = view.findViewById<ConstraintLayout>(R.id.outside_area)
     outsideArea.setOnClickListener { pop() }
 
     cancelButton.setOnClickListener {

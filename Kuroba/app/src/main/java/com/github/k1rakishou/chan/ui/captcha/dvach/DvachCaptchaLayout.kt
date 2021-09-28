@@ -50,7 +50,6 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import com.google.accompanist.insets.ProvideWindowInsets
 import javax.inject.Inject
 
 class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
@@ -85,17 +84,15 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
     val view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            val chanTheme = LocalChanTheme.current
+          val chanTheme = LocalChanTheme.current
 
-            Box(
-              modifier = Modifier
-                .fillMaxWidth()
-                .height(300.dp)
-                .background(chanTheme.backColorCompose)
-            ) {
-              BuildContent()
-            }
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(300.dp)
+              .background(chanTheme.backColorCompose)
+          ) {
+            BuildContent()
           }
         }
       }

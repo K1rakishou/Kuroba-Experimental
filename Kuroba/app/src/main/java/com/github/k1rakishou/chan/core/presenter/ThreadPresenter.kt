@@ -1337,7 +1337,7 @@ class ThreadPresenter @Inject constructor(
     val chanDescriptor = currentChanDescriptor
       ?: return
 
-    chanThreadViewableInfoManager.view(currentChanDescriptor!!) { chanThreadViewableInfoView ->
+    chanThreadViewableInfoManager.view(chanDescriptor) { chanThreadViewableInfoView ->
       val post = chanThreadManager.findPostByPostNo(
         chanDescriptor,
         chanThreadViewableInfoView.lastViewedPostNo

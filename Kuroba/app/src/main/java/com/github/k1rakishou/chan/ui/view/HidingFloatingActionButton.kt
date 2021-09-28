@@ -116,7 +116,7 @@ class HidingFloatingActionButton
       // We apply the bottom paddings directly in SplitNavigationController when we are in SPLIT
       // mode, so we don't need to do that twice and that's why we set bottomNavViewHeight to 0
       // when in SPLIT mode.
-      bottomNavViewHeight = if (ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT) {
+      bottomNavViewHeight = if (KurobaBottomNavigationView.isBottomNavViewEnabled()) {
         getDimen(R.dimen.navigation_view_size)
       } else {
         0

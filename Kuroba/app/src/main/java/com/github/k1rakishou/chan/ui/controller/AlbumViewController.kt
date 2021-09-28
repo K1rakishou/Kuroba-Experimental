@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mutableListWithCap
@@ -270,20 +271,21 @@ class AlbumViewController(
     if (!heightChanged) {
       return
     }
+
     onInsetsChanged()
   }
 
   override fun onInsetsChanged() {
-    var bottomPadding = globalWindowInsetsManager.bottom()
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      bottomPadding = 0
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
 
     recyclerView.updatePaddings(
-      null,
-      FastScrollerHelper.FAST_SCROLLER_WIDTH,
-      requireNavController().requireToolbar().toolbarHeight,
-      bottomPadding
+      left = null,
+      right = FastScrollerHelper.FAST_SCROLLER_WIDTH,
+      top = requireNavController().requireToolbar().toolbarHeight,
+      bottom = dp(bottomPaddingDp.toFloat())
     )
   }
 

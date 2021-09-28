@@ -43,7 +43,9 @@ open class ThemeEngine(
   private var autoThemeSwitcherJob: Job? = null
 
   private val halloweenTheme by lazy { HalloweenTheme() }
-  open lateinit var chanTheme: ChanTheme
+
+  lateinit var chanTheme: ChanTheme
+    private set
 
   fun initialize(context: Context, isHalloweenToday: Boolean) {
     this.isHalloweenToday = isHalloweenToday

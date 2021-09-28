@@ -5,7 +5,9 @@ import android.content.Context
 import android.view.HapticFeedbackConstants
 import android.view.MotionEvent
 import android.view.View
+import android.widget.FrameLayout
 import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
@@ -17,6 +19,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
 class SimpleListItemsReorderingController(
   context: Context,
@@ -99,6 +102,11 @@ class SimpleListItemsReorderingController(
 
     epoxyRecyclerView = view.findViewById(R.id.reordering_recycler_view)
     epoxyRecyclerView.setController(controller)
+
+    val innerContainer = view.findViewById<FrameLayout>(R.id.inner_container)
+    innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      matchConstraintMaxWidth = dp(360f)
+    }
 
     itemTouchHelper = ItemTouchHelper(touchHelperCallback)
     itemTouchHelper.attachToRecyclerView(epoxyRecyclerView)

@@ -76,7 +76,7 @@ public class OptionalSwipeViewPager extends ViewPager {
         AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
 
-        ViewUtils.changeEdgeEffect(this, themeEngine.chanTheme);
+        ViewUtils.changeEdgeEffect(this, themeEngine.getChanTheme());
     }
 
     @Override

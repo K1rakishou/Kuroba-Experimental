@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.controller.crashlogs
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -11,6 +10,7 @@ import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewReportFilesLayout
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewReportFilesLayoutCallbacks
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.updatePaddings
 import javax.inject.Inject
 
@@ -37,9 +37,12 @@ class ReviewReportFilesController(context: Context)
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      view.updatePaddings(bottom = globalWindowInsetsManager.bottom())
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    view.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   override fun onDestroy() {

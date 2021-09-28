@@ -19,6 +19,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
@@ -36,6 +38,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -52,12 +55,12 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
-import com.google.accompanist.insets.ProvideWindowInsets
 import javax.inject.Inject
 
 class CompositeCatalogsSetupController(
   context: Context
-) : Controller(context) {
+) : Controller(context), WindowInsetsListener {
+
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -66,6 +69,7 @@ class CompositeCatalogsSetupController(
   private val viewModel by lazy {
     requireComponentActivity().viewModelByKey<CompositeCatalogsSetupControllerViewModel>()
   }
+  private val bottomPadding = mutableStateOf(0)
   private val rendezvousCoroutineExecutor = RendezvousCoroutineExecutor(mainScope)
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -77,25 +81,38 @@ class CompositeCatalogsSetupController(
 
     navigation.title = getString(R.string.controller_composite_catalogs_setup_title)
 
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    onInsetsChanged()
     viewModel.reload()
 
     view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            val chanTheme = LocalChanTheme.current
+          val chanTheme = LocalChanTheme.current
 
-            Box(
-              modifier = Modifier
-                .fillMaxSize()
-                .background(chanTheme.backColorCompose)
-            ) {
-              BuildContent()
-            }
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .background(chanTheme.backColorCompose)
+          ) {
+            BuildContent()
           }
         }
       }
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+  }
+
+  override fun onInsetsChanged() {
+    bottomPadding.value = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
   }
 
   @Composable
@@ -104,14 +121,17 @@ class CompositeCatalogsSetupController(
     val reorderState = rememberReorderState()
     val compositeCatalogs = viewModel.compositeCatalogs
 
+    val padding by bottomPadding
+    val bottomPadding = remember(key1 = padding) { PaddingValues(bottom = padding.dp) }
+
     Box(modifier = Modifier.fillMaxSize()) {
       if (compositeCatalogs.isNotEmpty()) {
         LazyColumn(
           state = reorderState.listState,
-          contentPadding = PaddingValues(bottom = FAB_SIZE),
+          contentPadding = bottomPadding,
           modifier = Modifier
             .fillMaxSize()
-            .simpleVerticalScrollbar(reorderState.listState, chanTheme)
+            .simpleVerticalScrollbar(reorderState.listState, chanTheme, bottomPadding)
             .reorderable(
               state = reorderState,
               onMove = { from, to ->
@@ -164,19 +184,17 @@ class CompositeCatalogsSetupController(
         )
       }
 
-      val bottomOffset = remember {
-        if (ChanSettings.isSplitLayoutMode()) {
-          16.dp + globalWindowInsetsManager.bottomDp()
-        } else {
-          16.dp
-        }
+      val fabBottomOffset = if (ChanSettings.isSplitLayoutMode()) {
+        globalWindowInsetsManager.bottomDp()
+      } else {
+        16.dp
       }
 
       FloatingActionButton(
         modifier = Modifier
           .size(FAB_SIZE)
           .align(Alignment.BottomEnd)
-          .offset(x = (-16).dp, y = -(bottomOffset)),
+          .offset(x = (-16).dp, y = -fabBottomOffset),
         backgroundColor = chanTheme.accentColorCompose,
         contentColor = Color.White,
         onClick = { showComposeBoardsController(compositeCatalog = null) }

@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+
 import android.content.Context;
 import android.util.AttributeSet;
 import android.widget.LinearLayout;
@@ -25,8 +27,6 @@ import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import javax.inject.Inject;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
 
 public class PostPopupContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
     public static final int MAX_WIDTH = dp(800);
@@ -77,7 +77,7 @@ public class PostPopupContainer extends LinearLayout implements ThemeEngine.Them
 
     @Override
     public void onThemeChanged() {
-        setBackgroundColor(themeEngine.chanTheme.getBackColor());
+        setBackgroundColor(themeEngine.getChanTheme().getBackColor());
     }
 
     @Override

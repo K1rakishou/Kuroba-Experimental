@@ -53,11 +53,13 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -198,16 +200,18 @@ class FiltersController(context: Context) :
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      view.updatePaddings(null, null, null, globalWindowInsetsManager.bottom())
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
 
-      recyclerView.setPadding(
-        recyclerView.paddingLeft,
-        recyclerView.paddingTop,
-        recyclerView.paddingRight,
-        globalWindowInsetsManager.bottom()
-      )
-    }
+    val fabHeight = dp(64f)
+    val fabBottomMargin = dp(16f)
+
+    add.updateMargins(bottom = bottomPaddingDp + fabBottomMargin)
+    enable.updateMargins(bottom = bottomPaddingDp + fabBottomMargin)
+
+    recyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()) + fabHeight + fabBottomMargin)
   }
 
   override fun onClick(v: View) {

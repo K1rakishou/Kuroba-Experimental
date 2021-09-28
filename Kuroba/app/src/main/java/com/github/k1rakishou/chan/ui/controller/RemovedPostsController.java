@@ -249,8 +249,8 @@ public class RemovedPostsController
             ColorizableCheckBox checkbox = convertView.findViewById(R.id.removed_post_checkbox);
             AppCompatImageView postImage = convertView.findViewById(R.id.post_image);
 
-            postNo.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
-            postComment.setTextColor(themeEngine.chanTheme.getTextColorPrimary());
+            postNo.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
+            postComment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
             postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
             postComment.setText(removedPost.comment);

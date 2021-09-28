@@ -331,6 +331,16 @@ class AppearanceSettingsScreen(
           groupIdentifier = identifier
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = AppearanceScreen.LayoutGroup.BottomNavigationMode,
+          topDescriptionIdFunc = { R.string.setting_bottom_navigation_mode },
+          bottomDescriptionIdFunc = { R.string.setting_bottom_navigation_mode_description },
+          setting = ChanSettings.bottomNavigationViewEnabled,
+          requiresRestart = true,
+          isEnabledFunc = { ChanSettings.isSplitLayoutMode().not() }
+        )
+
         group += ListSettingV2.createBuilder<ChanSettings.LayoutMode>(
           context = context,
           identifier = AppearanceScreen.LayoutGroup.LayoutMode,

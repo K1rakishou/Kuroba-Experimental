@@ -24,13 +24,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
@@ -57,7 +58,6 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -67,7 +67,7 @@ class SavedPostsController(
   private val mainControllerCallbacks: MainControllerCallbacks,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : TabPageController(context),
-  ToolbarNavigationController.ToolbarSearchCallback {
+  ToolbarNavigationController.ToolbarSearchCallback, WindowInsetsListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -76,6 +76,7 @@ class SavedPostsController(
   @Inject
   lateinit var dialogFactory: DialogFactory
 
+  private val bottomPadding = mutableStateOf(0)
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<SavedPostsViewModel>() }
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -119,16 +120,6 @@ class SavedPostsController(
     return super.onBack()
   }
 
-  override fun onDestroy() {
-    super.onDestroy()
-
-    toolbarNavControllerOrNull()?.closeSearch()
-    mainControllerCallbacks.hideBottomPanel()
-
-    viewModel.updateQueryAndReload(null)
-    viewModel.viewModelSelectionHelper.unselectAll()
-  }
-
   override fun onSearchVisibilityChanged(visible: Boolean) {
     if (!visible) {
       viewModel.updateQueryAndReload(null)
@@ -155,17 +146,39 @@ class SavedPostsController(
         }
     }
 
+    mainControllerCallbacks.onBottomPanelStateChanged { onInsetsChanged() }
+
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    onInsetsChanged()
+
     view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            Box(modifier = Modifier.fillMaxSize()) {
-              BuildContent()
-            }
+          Box(modifier = Modifier.fillMaxSize()) {
+            BuildContent()
           }
         }
       }
     }
+  }
+
+  override fun onDestroy() {
+    super.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+
+    toolbarNavControllerOrNull()?.closeSearch()
+    mainControllerCallbacks.hideBottomPanel()
+
+    viewModel.updateQueryAndReload(null)
+    viewModel.viewModelSelectionHelper.unselectAll()
+  }
+
+  override fun onInsetsChanged() {
+    bottomPadding.value = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = mainControllerCallbacks
+    )
   }
 
   @Composable
@@ -212,10 +225,18 @@ class SavedPostsController(
         )
       },
       onHeaderLongClicked = { threadDescriptor ->
+        if (requireToolbarNavController().isSearchOpened) {
+          return@BuildSavedRepliesList
+        }
+
         controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         viewModel.toggleGroupSelection(threadDescriptor)
       },
       onReplyLongClicked = { postDescriptor ->
+        if (requireToolbarNavController().isSearchOpened) {
+          return@BuildSavedRepliesList
+        }
+
         controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         viewModel.toggleSelection(postDescriptor)
       }
@@ -242,20 +263,15 @@ class SavedPostsController(
       }
     })
 
-    val contentPadding = remember {
-      if (ChanSettings.isSplitLayoutMode()) {
-        PaddingValues(bottom = globalWindowInsetsManager.bottomDp())
-      } else {
-        PaddingValues(all = 0.dp)
-      }
-    }
+    val padding by bottomPadding
+    val bottomPadding = remember(key1 = padding) { PaddingValues(bottom = padding.dp) }
 
     LazyColumn(
       state = state,
-      contentPadding = contentPadding,
+      contentPadding = bottomPadding,
       modifier = Modifier
         .fillMaxSize()
-        .simpleVerticalScrollbar(state, chanTheme)
+        .simpleVerticalScrollbar(state, chanTheme, bottomPadding)
     ) {
       if (savedRepliesGrouped.isEmpty()) {
         val searchQuery = viewModel.searchQuery

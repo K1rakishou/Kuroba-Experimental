@@ -137,9 +137,7 @@ class BoardArchiveViewModel(
   fun updateQueryAndReload(query: String?) {
     _searchQuery.value = query
 
-    searchDebouncer.post({
-      reloadArchiveThreads(query)
-    }, 125L)
+    searchDebouncer.post({ reloadArchiveThreads(query) }, 125L)
   }
 
   private fun reloadArchiveThreads(query: String?) {

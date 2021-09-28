@@ -219,7 +219,7 @@ public class FilterLayout
 
     @Override
     public void onThemeChanged() {
-        boolean isDarkColor = themeEngine.chanTheme.isBackColorDark();
+        boolean isDarkColor = themeEngine.getChanTheme().isBackColorDark();
 
         help.setImageDrawable(
                 themeEngine.tintDrawable(getContext(), R.drawable.ic_help_outline_white_24dp)

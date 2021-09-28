@@ -113,8 +113,6 @@ class MainControllerViewModel : BaseViewModel() {
     mainScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .collect { bookmarkChange ->
-          Logger.d(TAG, "listenForBookmarksChanges bookmarkChange=$bookmarkChange")
-
           updateBadge()
 
           updateNavigationHistoryEntryListExecutor.post {

@@ -23,8 +23,11 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxySimpleGroupView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
+import com.github.k1rakishou.chan.ui.view.FastScroller
+import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.AndroidUtils
@@ -53,21 +56,7 @@ class FilterWatchesController(
   private val presenter = FilterWatchesPresenter()
   private val controller = FilterWatchesEpoxyController()
   private val needRestoreScrollPosition = AtomicBoolean(true)
-
-  private val topAdapterPosition: Int
-    get() {
-      val layoutManager = epoxyRecyclerView.layoutManager
-      if (layoutManager == null) {
-        return -1
-      }
-
-      when (layoutManager) {
-        is GridLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
-        is LinearLayoutManager -> return layoutManager.findFirstVisibleItemPosition()
-      }
-
-      return -1
-    }
+  private var fastScroller: FastScroller? = null
 
   private val onScrollListener = object : RecyclerView.OnScrollListener() {
     override fun onScrollStateChanged(recyclerView: RecyclerView, newState: Int) {
@@ -116,6 +105,7 @@ class FilterWatchesController(
 
     updateLayoutManager()
     onInsetsChanged()
+    setupRecycler()
 
     presenter.onCreate(this)
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -129,14 +119,58 @@ class FilterWatchesController(
       epoxyRecyclerView.clear()
     }
 
+    cleanupFastScroller()
+
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     presenter.onDestroy()
   }
 
-  override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
+  private fun cleanupFastScroller() {
+    fastScroller?.let { scroller ->
+      epoxyRecyclerView.removeItemDecoration(scroller)
+      scroller.onCleanup()
     }
+
+    fastScroller = null
+  }
+
+  private fun setupRecycler() {
+    epoxyRecyclerView.addOnScrollListener(onScrollListener)
+
+    if (ChanSettings.draggableScrollbars.get().isEnabled) {
+      epoxyRecyclerView.isVerticalScrollBarEnabled = false
+      cleanupFastScroller()
+
+      val scroller = FastScrollerHelper.create(
+        FastScroller.FastScrollerControllerType.Bookmarks,
+        epoxyRecyclerView,
+        null
+      )
+
+      scroller.setThumbDragListener(object : FastScroller.ThumbDragListener {
+        override fun onDragStarted() {
+          // no-op
+        }
+
+        override fun onDragEnded() {
+          onRecyclerViewScrolled(epoxyRecyclerView)
+        }
+      })
+
+      fastScroller = scroller
+    } else {
+      epoxyRecyclerView.isVerticalScrollBarEnabled = true
+      cleanupFastScroller()
+    }
+  }
+
+  override fun onInsetsChanged() {
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   override fun rebuildNavigationItem(navigationItem: NavigationItem) {

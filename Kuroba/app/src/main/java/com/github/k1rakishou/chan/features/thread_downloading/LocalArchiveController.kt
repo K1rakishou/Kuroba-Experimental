@@ -50,7 +50,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.platform.ComposeView
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -58,7 +57,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
@@ -68,6 +66,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
@@ -92,7 +91,6 @@ import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
-import com.google.accompanist.insets.ProvideWindowInsets
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
@@ -108,7 +106,7 @@ class LocalArchiveController(
   private val mainControllerCallbacks: MainControllerCallbacks,
   private val startActivityCallback: StartActivityStartupHandlerHelper.StartActivityCallbacks
 ) : Controller(context),
-  ToolbarNavigationController.ToolbarSearchCallback {
+  ToolbarNavigationController.ToolbarSearchCallback, WindowInsetsListener {
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -123,6 +121,7 @@ class LocalArchiveController(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
+  private val bottomPadding = mutableStateOf(0)
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<LocalArchiveViewModel>() }
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -181,15 +180,17 @@ class LocalArchiveController(
         .collect { controllerTitleInfo -> updateControllerTitle(controllerTitleInfo) }
     }
 
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    mainControllerCallbacks.onBottomPanelStateChanged { onInsetsChanged() }
+
     updateControllerTitle(viewModel.controllerTitleInfoUpdatesFlow.value)
+    onInsetsChanged()
 
     view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            Box(modifier = Modifier.fillMaxSize()) {
-              BuildContent()
-            }
+          Box(modifier = Modifier.fillMaxSize()) {
+            BuildContent()
           }
         }
       }
@@ -207,11 +208,20 @@ class LocalArchiveController(
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+
     toolbarNavControllerOrNull()?.closeSearch()
     mainControllerCallbacks.hideBottomPanel()
 
     viewModel.updateQueryAndReload(null)
     viewModel.viewModelSelectionHelper.unselectAll()
+  }
+
+  override fun onInsetsChanged() {
+    bottomPadding.value = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = mainControllerCallbacks
+    )
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
@@ -242,6 +252,7 @@ class LocalArchiveController(
     }
 
     BuildThreadDownloadsList(
+      threadDownloadViews = threadDownloadViews,
       onViewModeChanged = { newViewMode ->
         viewModel.viewModelSelectionHelper.unselectAll()
 
@@ -252,7 +263,6 @@ class LocalArchiveController(
         viewModel.viewMode.value = newViewMode
         viewModel.reload()
       },
-      threadDownloadViews = threadDownloadViews,
       onThreadDownloadClicked = { threadDescriptor ->
         if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
           viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor)
@@ -263,6 +273,10 @@ class LocalArchiveController(
         startActivityCallback.loadThread(threadDescriptor, animated = true)
       },
       onThreadDownloadLongClicked = { threadDescriptor ->
+        if (requireToolbarNavController().isSearchOpened) {
+          return@BuildThreadDownloadsList
+        }
+
         controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
         viewModel.viewModelSelectionHelper.toggleSelection(threadDescriptor)
       }
@@ -272,8 +286,8 @@ class LocalArchiveController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildThreadDownloadsList(
-    onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit,
     threadDownloadViews: List<LocalArchiveViewModel.ThreadDownloadView>,
+    onViewModeChanged: (LocalArchiveViewModel.ViewMode) -> Unit,
     onThreadDownloadClicked: (ChanDescriptor.ThreadDescriptor) -> Unit,
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
@@ -306,23 +320,17 @@ class LocalArchiveController(
 
     Column(modifier = Modifier.fillMaxSize()) {
       BuildViewModelSelector(onViewModeChanged = onViewModeChanged)
-      val navViewSize = dimensionResource(id = R.dimen.navigation_view_size)
 
-      val contentPadding = remember {
-        if (ChanSettings.isSplitLayoutMode()) {
-          PaddingValues(bottom = globalWindowInsetsManager.bottomDp() + navViewSize)
-        } else {
-          PaddingValues(all = 0.dp)
-        }
-      }
+      val padding by bottomPadding
+      val bottomPadding = remember(key1 = padding) { PaddingValues(bottom = padding.dp) }
 
       LazyVerticalGrid(
         state = state,
         cells = GridCells.Adaptive(300.dp),
-        contentPadding = contentPadding,
+        contentPadding = bottomPadding,
         modifier = Modifier
           .fillMaxSize()
-          .simpleVerticalScrollbar(state, chanTheme)
+          .simpleVerticalScrollbar(state, chanTheme, bottomPadding)
       ) {
         if (threadDownloadViews.isEmpty()) {
           val searchQuery = viewModel.searchQuery.value

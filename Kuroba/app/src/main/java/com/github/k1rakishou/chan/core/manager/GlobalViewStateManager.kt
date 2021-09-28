@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.manager
 
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.view.FastScroller
+import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
@@ -38,8 +38,7 @@ class GlobalViewStateManager {
   }
 
   fun onBottomNavViewSwipeUpGestureTriggered() {
-    if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
-      // We have both controllers always focused when in SPLIT layout, so just do nothing here
+    if (!KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       return
     }
 

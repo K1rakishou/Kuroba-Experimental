@@ -104,6 +104,7 @@ import com.github.k1rakishou.chan.ui.cell.PostStubCell;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewContainer;
+import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel;
 import com.github.k1rakishou.chan.ui.controller.AlbumDownloadController;
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController;
 import com.github.k1rakishou.chan.ui.controller.BrowseController;
@@ -143,7 +144,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout;
-import com.github.k1rakishou.chan.ui.layout.PopupControllerContainer;
 import com.github.k1rakishou.chan.ui.layout.PostPopupContainer;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
@@ -153,6 +153,7 @@ import com.github.k1rakishou.chan.ui.layout.ThreadListLayout;
 import com.github.k1rakishou.chan.ui.layout.ThreadSlidingPaneLayout;
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ReviewReportFilesLayout;
 import com.github.k1rakishou.chan.ui.layout.crashlogs.ViewFullReportFileLayout;
+import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
@@ -188,7 +189,6 @@ import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.ui.view.ViewContainerWithMaxSize;
 import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
@@ -367,7 +367,6 @@ public interface ActivityComponent {
     void inject(TouchBlockingCoordinatorLayout touchBlockingCoordinatorLayout);
     void inject(TouchBlockingFrameLayout touchBlockingFrameLayout);
     void inject(TouchBlockingLinearLayout touchBlockingLinearLayout);
-    void inject(ViewContainerWithMaxSize viewContainerWithMaxSize);
     void inject(BottomMenuPanel bottomMenuPanel);
     void inject(BookmarkSortingItemView bookmarkSortingItemView);
     void inject(GenericWebViewAuthenticationLayout genericWebViewAuthenticationLayout);
@@ -385,7 +384,6 @@ public interface ActivityComponent {
     void inject(AttachNewFileButton attachNewFileButton);
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);
-    void inject(PopupControllerContainer popupControllerContainer);
     void inject(ToolbarMenuItem toolbarMenuItem);
     void inject(KurobaAlertController kurobaAlertController);
     void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
@@ -399,6 +397,8 @@ public interface ActivityComponent {
     void inject(DvachCaptchaLayout dvachCaptchaLayout);
     void inject(Chan4CaptchaLayout chan4CaptchaLayout);
     void inject(MrSkeletonLayout mrSkeletonLayout);
+    void inject(KurobaComposeIconPanel kurobaComposeIconPanel);
+    void inject(ArrowMenuDrawable arrowMenuDrawable);
 
     @Subcomponent.Builder
     interface Builder {

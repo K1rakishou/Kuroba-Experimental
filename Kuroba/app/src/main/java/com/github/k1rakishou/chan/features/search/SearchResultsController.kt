@@ -5,7 +5,6 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -101,9 +100,12 @@ class SearchResultsController(
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom())
-    }
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
   override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {

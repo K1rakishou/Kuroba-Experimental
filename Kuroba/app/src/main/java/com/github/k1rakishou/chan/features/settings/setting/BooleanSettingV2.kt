@@ -16,6 +16,9 @@ class BooleanSettingV2 : SettingV2() {
   override var notificationType: SettingNotificationType? = null
   private var setting: Setting<Boolean>? = null
 
+  private var isEnabledFunc: (() -> Boolean)? = null
+
+
   private val defaultCallback: () -> Boolean = {
     val newValue = !setting!!.get()
 
@@ -33,7 +36,7 @@ class BooleanSettingV2 : SettingV2() {
     private set
 
   override fun isEnabled(): Boolean {
-    return dependsOnSetting?.get() ?: true
+    return (dependsOnSetting?.get() ?: true) && (isEnabledFunc?.invoke() ?: true)
   }
 
   override fun update(): Int {
@@ -109,6 +112,7 @@ class BooleanSettingV2 : SettingV2() {
       identifier: SettingsIdentifier,
       setting: Setting<Boolean>,
       dependsOnSetting: BooleanSetting? = null,
+      isEnabledFunc: (() -> Boolean)? = null,
       topDescriptionIdFunc: (suspend () -> Int)? = null,
       topDescriptionStringFunc: (suspend () -> String)? = null,
       bottomDescriptionIdFunc: (suspend () -> Int)? = null,
@@ -167,6 +171,8 @@ class BooleanSettingV2 : SettingV2() {
         booleanSettingV2.isChecked = setting.get()
         booleanSettingV2.settingsIdentifier = identifier
         booleanSettingV2.setting = setting
+
+        booleanSettingV2.isEnabledFunc = isEnabledFunc
 
         dependsOnSetting?.let { setting ->
           booleanSettingV2.subscribeToChanges(setting)

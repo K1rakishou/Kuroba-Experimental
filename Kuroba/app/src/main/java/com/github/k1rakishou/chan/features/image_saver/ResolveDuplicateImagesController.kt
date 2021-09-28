@@ -3,6 +3,8 @@ package com.github.k1rakishou.chan.features.image_saver
 import android.content.Context
 import android.widget.CompoundButton
 import android.widget.FrameLayout
+import androidx.constraintlayout.widget.ConstraintLayout
+import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
@@ -17,6 +19,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.doOnRecyclerScrollStopped
@@ -90,13 +93,18 @@ class ResolveDuplicateImagesController(
     selectAllLocal = view.findViewById(R.id.select_all_local)
     selectAllDuplicates = view.findViewById(R.id.select_all_duplicates)
 
+    val innerController = view.findViewById<FrameLayout>(R.id.inner_container)
+    innerController.updateLayoutParams<ConstraintLayout.LayoutParams> {
+      matchConstraintMaxWidth =  dp(600f)
+    }
+
     checkState.clear()
     checkState[selectAllFromServer] = false
     checkState[selectAllLocal] = false
     checkState[selectAllDuplicates] = false
 
     val cancelButton = view.findViewById<ColorizableBarButton>(R.id.cancel_button)
-    val outsideArea = view.findViewById<FrameLayout>(R.id.outside_area)
+    val outsideArea = view.findViewById<ConstraintLayout>(R.id.outside_area)
 
     resolveButton.setEnabledFast(false)
 

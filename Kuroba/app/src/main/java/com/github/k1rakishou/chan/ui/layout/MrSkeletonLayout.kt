@@ -6,13 +6,13 @@ import android.view.Gravity
 import android.widget.FrameLayout
 import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.ui.view.KurobaBottomNavigationView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
@@ -121,7 +121,7 @@ class MrSkeletonLayout @JvmOverloads constructor(
 
   private fun updateGifViewMargins() {
     var bottomNavViewHeight = getDimen(R.dimen.navigation_view_size)
-    if (ChanSettings.isSplitLayoutMode()) {
+    if (!KurobaBottomNavigationView.isBottomNavViewEnabled()) {
       bottomNavViewHeight = 0
     }
 

@@ -2,25 +2,30 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.animation.Animator
 import android.content.Context
-import android.content.res.ColorStateList
 import android.util.AttributeSet
-import android.view.Menu
-import android.view.MenuItem
 import android.view.MotionEvent
+import android.view.View
 import android.view.ViewGroup
+import android.widget.FrameLayout
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.ComposeView
+import com.github.k1rakishou.BottomNavViewButton
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
+import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.common.updatePaddings
-import com.google.android.material.bottomnavigation.BottomNavigationView
-import com.google.android.material.bottomnavigation.BottomNavigationView.OnNavigationItemSelectedListener
+import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.persist_state.PersistableChanState
 
 class KurobaBottomNavigationView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
   defStyleAttr: Int = 0
-) : BottomNavigationView(context, attrs, defStyleAttr), ToolbarCollapseCallback, NavigationViewContract {
+) : FrameLayout(context, attrs, defStyleAttr), ToolbarCollapseCallback, NavigationViewContract {
   private var attachedToWindow = false
   private var toolbar: Toolbar? = null
   private var attachedToToolbar = false
@@ -29,40 +34,73 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   private var lastCollapseTranslationOffset = 0f
   private var isTranslationLocked = false
   private var isCollapseLocked = false
+  private var isBottomNavViewEnabled = ChanSettings.isNavigationViewEnabled()
 
   private var interceptTouchEventListener: ((MotionEvent) -> Boolean)? = null
   private var touchEventListener: ((MotionEvent) -> Boolean)? = null
+  private var menuItemClickListener: ((Int) -> Boolean)? = null
+
+  private val kurobaComposeIconPanel by lazy {
+    KurobaComposeIconPanel(
+      context = context,
+      orientation = KurobaComposeIconPanel.Orientation.Horizontal,
+      defaultSelectedMenuItemId = R.id.action_browse,
+      menuItems = bottomNavViewButtons()
+    )
+  }
 
   override val actualView: ViewGroup
     get() = this
-  override val navigationMenu: Menu
-    get() = menu
   override val type: NavigationViewContract.Type
     get() = NavigationViewContract.Type.BottomNavView
 
-  override var viewItemTextColor: ColorStateList?
-    get() = itemTextColor
-    set(value) { itemTextColor = value }
-  override var viewItemIconTintList: ColorStateList?
-    get() = itemIconTintList
-    set(value) { itemIconTintList = value }
   override var viewElevation: Float
     get() = elevation
     set(value) { elevation = value }
   override var selectedMenuItemId: Int
-    get() = selectedItemId
-    set(value) { selectedItemId = value }
+    get() = kurobaComposeIconPanel.selectedMenuItemId
+    set(value) { kurobaComposeIconPanel.setMenuItemSelected(value) }
 
   init {
     setOnApplyWindowInsetsListener(null)
-    labelVisibilityMode = BottomNavigationView.LABEL_VISIBILITY_UNLABELED
+
+    if (!isBottomNavViewEnabled) {
+      completelyDisableBottomNavigationView()
+    } else {
+      removeAllViews()
+      addView(ComposeView(context).also { composeView -> composeView.setContent { BuildContent() } })
+    }
+  }
+
+  @Composable
+  private fun BuildContent() {
+    kurobaComposeIconPanel.BuildPanel(
+      onMenuItemClicked = { menuItemId -> menuItemClickListener?.invoke(menuItemId) }
+    )
+  }
+
+  override fun setMenuItemSelected(menuItemId: Int) {
+    kurobaComposeIconPanel.setMenuItemSelected(menuItemId)
+  }
+
+  override fun updateBadge(menuItemId: Int, menuItemBadgeInfo: KurobaComposeIconPanel.MenuItemBadgeInfo?) {
+    kurobaComposeIconPanel.updateBadge(menuItemId, menuItemBadgeInfo)
   }
 
   override fun updatePaddings(leftPadding: Int?, bottomPadding: Int?) {
     bottomPadding?.let { padding -> updatePaddings(bottom = padding) }
   }
 
+  override fun onThemeChanged(chanTheme: ChanTheme) {
+    this.setBackgroundColor(chanTheme.primaryColor)
+  }
+
   override fun setToolbar(toolbar: Toolbar) {
+    if (!isBottomNavViewEnabled) {
+      completelyDisableBottomNavigationView()
+      return
+    }
+
     this.toolbar = toolbar
 
     if (attachedToWindow && !attachedToToolbar) {
@@ -74,6 +112,11 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   override fun hide(lockTranslation: Boolean, lockCollapse: Boolean) {
     if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
+    }
+
+    if (!isBottomNavViewEnabled) {
+      completelyDisableBottomNavigationView()
+      return
     }
 
     onCollapseAnimationInternal(collapse = true, isFromToolbarCallbacks = false)
@@ -92,6 +135,11 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
       throw IllegalStateException("The nav bar should always be visible when using SPLIT layout")
     }
 
+    if (!isBottomNavViewEnabled) {
+      completelyDisableBottomNavigationView()
+      return
+    }
+
     if (unlockTranslation) {
       isTranslationLocked = false
     }
@@ -104,6 +152,11 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   }
 
   override fun resetState(unlockTranslation: Boolean, unlockCollapse: Boolean) {
+    if (!isBottomNavViewEnabled) {
+      completelyDisableBottomNavigationView()
+      return
+    }
+
     isTranslationLocked = !unlockTranslation
     isCollapseLocked = !unlockCollapse
 
@@ -111,7 +164,7 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
   }
 
   fun isFullyVisible(): Boolean {
-    return alpha >= 0.99f
+    return alpha >= 0.99f && isBottomNavViewEnabled
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
@@ -197,8 +250,8 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
     onCollapseAnimationInternal(collapse, true)
   }
 
-  override fun setOnNavigationItemSelectedListener(listener: (MenuItem) -> Boolean) {
-    this.setOnNavigationItemSelectedListener(OnNavigationItemSelectedListener { item -> listener(item) })
+  override fun setOnNavigationItemSelectedListener(listener: (Int) -> Boolean) {
+    this.menuItemClickListener = listener
   }
 
   private fun onCollapseAnimationInternal(collapse: Boolean, isFromToolbarCallbacks: Boolean) {
@@ -264,4 +317,63 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
       .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
       .start()
   }
+
+  private fun completelyDisableBottomNavigationView() {
+    visibility = View.GONE
+    isTranslationLocked = true
+    isCollapseLocked = true
+    this.setAlphaFast(0f)
+  }
+
+  companion object {
+
+    fun isBottomNavViewEnabled(): Boolean {
+      if (ChanSettings.getCurrentLayoutMode() == ChanSettings.LayoutMode.SPLIT) {
+        return false
+      }
+
+      return ChanSettings.isNavigationViewEnabled()
+    }
+
+    fun bottomNavViewButtons(): List<KurobaComposeIconPanel.MenuItem> {
+      val bottomNavViewButtons = PersistableChanState.reorderableBottomNavViewButtons.get()
+
+      return bottomNavViewButtons.bottomNavViewButtons().map { bottomNavViewButton ->
+        return@map when (bottomNavViewButton) {
+          BottomNavViewButton.Search -> {
+            KurobaComposeIconPanel.MenuItem(
+              id = R.id.action_search,
+              iconId = R.drawable.ic_search_white_24dp
+            )
+          }
+          BottomNavViewButton.Archive -> {
+            KurobaComposeIconPanel.MenuItem(
+              id = R.id.action_archive,
+              iconId = R.drawable.ic_baseline_archive_24
+            )
+          }
+          BottomNavViewButton.Bookmarks -> {
+            KurobaComposeIconPanel.MenuItem(
+              id = R.id.action_bookmarks,
+              iconId = R.drawable.ic_bookmark_white_24dp
+            )
+          }
+          BottomNavViewButton.Browse -> {
+            KurobaComposeIconPanel.MenuItem(
+              id = R.id.action_browse,
+              iconId = R.drawable.ic_baseline_laptop
+            )
+          }
+          BottomNavViewButton.Settings -> {
+            KurobaComposeIconPanel.MenuItem(
+              id = R.id.action_settings,
+              iconId = R.drawable.ic_baseline_settings
+            )
+          }
+        }
+      }
+    }
+
+  }
+
 }

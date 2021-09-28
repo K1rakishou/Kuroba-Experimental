@@ -17,11 +17,9 @@
 package com.github.k1rakishou.chan.ui.controller;
 
 import android.content.Context;
-import android.view.View;
 import android.widget.FrameLayout;
 
 import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.controller.Controller;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController;
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController;
@@ -29,16 +27,18 @@ import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationContro
 
 import org.jetbrains.annotations.NotNull;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-
 public class PopupController
-        extends Controller
-        implements View.OnClickListener {
+        extends BaseFloatingController {
     private FrameLayout container;
 
     @Override
     protected void injectDependencies(@NotNull ActivityComponent component) {
         component.inject(this);
+    }
+
+    @Override
+    protected int getLayoutId() {
+        return R.layout.layout_controller_popup;
     }
 
     public PopupController(Context context) {
@@ -49,21 +49,16 @@ public class PopupController
     public void onCreate() {
         super.onCreate();
 
-        view = inflate(context, R.layout.layout_controller_popup);
-        FrameLayout topView = view.findViewById(R.id.top_view);
-        topView.setOnClickListener(this);
-        container = view.findViewById(R.id.popup_controller_container);
+        container = view.findViewById(R.id.inner_container);
+
+        FrameLayout topView = view.findViewById(R.id.outside_area);
+        topView.setOnClickListener((v) -> dismiss());
     }
 
     public void setChildController(NavigationController childController) {
         addChildController(childController);
         childController.attachToParentView(container);
         childController.onShow();
-    }
-
-    @Override
-    public void onClick(View v) {
-        dismiss();
     }
 
     public void dismiss() {

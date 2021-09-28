@@ -5,6 +5,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -18,7 +19,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
@@ -46,8 +46,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.google.accompanist.insets.ProvideWindowInsets
-import com.google.accompanist.insets.imePadding
 import javax.inject.Inject
 
 class BoardArchiveController(
@@ -62,8 +60,8 @@ class BoardArchiveController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var blockClicking = false
-  private var topPadding by mutableStateOf(0)
-  private var bottomPadding by mutableStateOf(0)
+  private val topPadding = mutableStateOf(0)
+  private val bottomPadding = mutableStateOf(0)
 
   private val viewModel by lazy {
     val key = catalogDescriptor.serializeToString()
@@ -89,16 +87,13 @@ class BoardArchiveController(
     view = ComposeView(context).apply {
       setContent {
         ProvideChanTheme(themeEngine) {
-          ProvideWindowInsets {
-            val chanTheme = LocalChanTheme.current
+          val chanTheme = LocalChanTheme.current
 
-            Box(modifier = Modifier
-              .fillMaxSize()
-              .padding(top = topPadding.dp, bottom = bottomPadding.dp)
-              .background(chanTheme.backColorCompose)
-            ) {
-              BuildContent()
-            }
+          Box(modifier = Modifier
+            .fillMaxSize()
+            .background(chanTheme.backColorCompose)
+          ) {
+            BuildContent()
           }
         }
       }
@@ -108,22 +103,20 @@ class BoardArchiveController(
   override fun onDestroy() {
     super.onDestroy()
 
+    viewModel.updateQueryAndReload(null)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
   override fun onInsetsChanged() {
-    topPadding = pxToDp(getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top())
+    val toolbarHeight = requireToolbarNavController().toolbar?.toolbarHeight
+      ?: getDimen(R.dimen.toolbar_height)
 
-    when {
-      ChanSettings.getCurrentLayoutMode() != ChanSettings.LayoutMode.SPLIT -> {
-        bottomPadding = pxToDp(getDimen(R.dimen.navigation_view_size) + globalWindowInsetsManager.bottom())
-      }
-      globalWindowInsetsManager.isKeyboardOpened -> {
-        bottomPadding = pxToDp(globalWindowInsetsManager.keyboardHeight)
-      }
-      else -> {
-        bottomPadding = 0
-      }
+    topPadding.value = pxToDp(toolbarHeight)
+
+    bottomPadding.value = when {
+      ChanSettings.isSplitLayoutMode() -> 0
+      globalWindowInsetsManager.isKeyboardOpened -> pxToDp(globalWindowInsetsManager.keyboardHeight)
+      else -> pxToDp(globalWindowInsetsManager.bottom())
     }
   }
 
@@ -193,12 +186,19 @@ class BoardArchiveController(
       }
     })
 
+    val topPd by topPadding
+    val bottomPd by bottomPadding
+
+    val contentPadding = remember(key1 = topPd, key2 = bottomPd) {
+      PaddingValues(top = topPd.dp, bottom = bottomPd.dp)
+    }
+
     LazyColumn(
       state = state,
+      contentPadding = contentPadding,
       modifier = Modifier
         .fillMaxSize()
-        .simpleVerticalScrollbar(state, chanTheme)
-        .imePadding()
+        .simpleVerticalScrollbar(state, chanTheme, contentPadding)
     ) {
       if (archiveThreads.isEmpty()) {
         val searchQuery by viewModel.searchQuery

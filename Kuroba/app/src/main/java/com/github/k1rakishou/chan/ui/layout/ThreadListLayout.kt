@@ -1232,7 +1232,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     } else {
       recyclerBottom += when (navigationViewContractType) {
         NavigationViewContract.Type.BottomNavView -> {
-          globalWindowInsetsManager.bottom() + getDimen(R.dimen.navigation_view_size)
+          if (ChanSettings.isNavigationViewEnabled()) {
+            globalWindowInsetsManager.bottom() + getDimen(R.dimen.navigation_view_size)
+          } else {
+            globalWindowInsetsManager.bottom()
+          }
         }
         NavigationViewContract.Type.SideNavView -> {
           globalWindowInsetsManager.bottom()

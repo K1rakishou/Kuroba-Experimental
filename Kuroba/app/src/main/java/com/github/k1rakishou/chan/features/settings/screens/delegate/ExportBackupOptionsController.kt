@@ -65,7 +65,8 @@ class ExportBackupOptionsController(
       KurobaComposeCheckbox(
         modifier = Modifier
           .fillMaxWidth()
-          .wrapContentHeight(),
+          .wrapContentHeight()
+          .padding(all = 8.dp),
         currentlyChecked = exportBackupOptions.exportDownloadedThreadsMedia,
         onCheckChanged = { isChecked ->
           exportBackupOptions = exportBackupOptions.copy(exportDownloadedThreadsMedia = isChecked)

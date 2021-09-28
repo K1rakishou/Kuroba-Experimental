@@ -573,6 +573,10 @@ fun Throwable.isCoroutineCancellationException(): Boolean {
   }
 }
 
+fun View.updateMargins(all: Int) {
+  updateMargins(start = all, end = all, top = all, bottom = all)
+}
+
 fun View.updateMargins(
   left: Int? = null,
   right: Int? = null,

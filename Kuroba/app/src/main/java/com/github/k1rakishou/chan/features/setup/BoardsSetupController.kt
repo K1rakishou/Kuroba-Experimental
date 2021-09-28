@@ -13,7 +13,6 @@ import com.airbnb.epoxy.EpoxyModel
 import com.airbnb.epoxy.EpoxyModelTouchCallback
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.airbnb.epoxy.EpoxyViewHolder
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -188,13 +187,13 @@ class BoardsSetupController(
   }
 
   override fun onInsetsChanged() {
-    if (ChanSettings.isSplitLayoutMode()) {
-      fabAddBoards.updateMargins(bottom = globalWindowInsetsManager.bottom() + fabBottomPadding)
-      epoxyRecyclerView.updatePaddings(bottom = globalWindowInsetsManager.bottom() + recyclerBottomPadding)
-    } else {
-      fabAddBoards.updateMargins(bottom = fabBottomPadding)
-      epoxyRecyclerView.updatePaddings(bottom = recyclerBottomPadding)
-    }
+    val bottomPadding = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    fabAddBoards.updateMargins(bottom = fabBottomPadding + bottomPadding)
+    epoxyRecyclerView.updatePaddings(bottom = recyclerBottomPadding + bottomPadding)
   }
 
   override fun onDestroy() {

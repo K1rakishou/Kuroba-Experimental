@@ -7,6 +7,8 @@ import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.proxies.data.ProxyEntryView
 import com.github.k1rakishou.chan.features.proxies.data.ProxySetupState
@@ -15,8 +17,11 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.common.updateMargins
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -25,12 +30,14 @@ import javax.inject.Inject
 class ProxySetupController(
   context: Context,
   private val drawerCallbacks: MainControllerCallbacks?
-) : Controller(context), ProxySetupView, ProxySelectionHelper.OnProxyItemClicked {
+) : Controller(context), ProxySetupView, WindowInsetsListener, ProxySelectionHelper.OnProxyItemClicked {
 
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var proxyStorage: ProxyStorage
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private lateinit var epoxyRecyclerView: ColorizableEpoxyRecyclerView
   private lateinit var addProxyButton: ColorizableFloatingActionButton
@@ -72,7 +79,19 @@ class ProxySetupController(
         .collect { selectionEvent -> onNewSelectionEvent(selectionEvent) }
     }
 
+    drawerCallbacks?.onBottomPanelStateChanged {
+      val paddingBottom = if (drawerCallbacks.isBottomPanelShown) {
+        drawerCallbacks.bottomPanelHeight
+      } else {
+        0
+      }
+
+      epoxyRecyclerView.updatePaddings(bottom = paddingBottom)
+    }
+
+    onInsetsChanged()
     presenter.onCreate(this)
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
 
     showProxyEditingNotification()
   }
@@ -80,6 +99,7 @@ class ProxySetupController(
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     epoxyRecyclerView.clear()
     presenter.onDestroy()
     drawerCallbacks?.hideBottomPanel()
@@ -92,6 +112,27 @@ class ProxySetupController(
     }
 
     return result
+  }
+
+  override fun onInsetsChanged() {
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      mainControllerCallbacks = null
+    )
+
+    val bottomPaddingPx = dp(bottomPaddingDp.toFloat())
+    val fabSize = dp(64f)
+    val fabBottomMargin = dp(16f)
+    val recyclerBottomPadding = bottomPaddingPx + fabSize + fabBottomMargin
+
+    epoxyRecyclerView.updatePaddings(
+      left = null,
+      right = null,
+      top = null,
+      bottom = recyclerBottomPadding
+    )
+
+    addProxyButton.updateMargins(null, null, null, null, null, bottomPaddingPx + fabBottomMargin)
   }
 
   override fun showMessage(message: String) {

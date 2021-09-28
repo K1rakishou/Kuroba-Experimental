@@ -3,10 +3,9 @@ package com.github.k1rakishou.core_themes
 import android.content.Context
 import android.util.TypedValue
 import androidx.annotation.AttrRes
-import com.github.k1rakishou.common.mutableMapWithCap
 
 class AttributeCache {
-  private val cache = mutableMapWithCap<Int, Int>(128)
+  private val cache = mutableMapOf<Int, Int>()
 
   fun preloadAttribute(context: Context, @AttrRes attrRes: Int) {
     val outValue = TypedValue()

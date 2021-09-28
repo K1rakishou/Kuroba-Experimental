@@ -191,9 +191,9 @@ public class FastScroller
 
     @Override
     public void onThemeChanged() {
-        mVerticalThumbDrawable = getThumb(themeEngine.chanTheme);
-        realVerticalThumbDrawable = getRealThumb(themeEngine.chanTheme);
-        mVerticalTrackDrawable = getTrack(themeEngine.chanTheme);
+        mVerticalThumbDrawable = getThumb(themeEngine.getChanTheme());
+        realVerticalThumbDrawable = getRealThumb(themeEngine.getChanTheme());
+        mVerticalTrackDrawable = getTrack(themeEngine.getChanTheme());
 
         mVerticalThumbDrawable.setAlpha(SCROLLBAR_THUMB_ALPHA);
         realVerticalThumbDrawable.setAlpha(SCROLLBAR_REAL_THUMB_ALPHA);

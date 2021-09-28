@@ -9,6 +9,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
@@ -67,9 +68,12 @@ object ComposeHelpers {
     }
   }
 
+  private val DefaultPaddingValues = PaddingValues(0.dp)
+
   fun Modifier.simpleVerticalScrollbar(
     state: LazyListState,
     chanTheme: ChanTheme,
+    contentPadding: PaddingValues = DefaultPaddingValues,
     width: Dp = SCROLLBAR_WIDTH
   ): Modifier {
     return composed {
@@ -90,13 +94,17 @@ object ComposeHelpers {
 
           // Draw scrollbar if scrolling or if the animation is still running and lazy column has content
           if (needDrawScrollbar && firstVisibleElementIndex != null) {
-            val elementHeight = this.size.height / state.layoutInfo.totalItemsCount
+            val topPaddingPx = contentPadding.calculateTopPadding().toPx()
+            val bottomPaddingPx = contentPadding.calculateBottomPadding().toPx()
+            val totalHeightWithoutPaddings = this.size.height - topPaddingPx - bottomPaddingPx
+
+            val elementHeight = totalHeightWithoutPaddings / state.layoutInfo.totalItemsCount
             val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
             val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
 
             drawRect(
               color = chanTheme.textColorHintCompose,
-              topLeft = Offset(this.size.width - width.toPx(), scrollbarOffsetY),
+              topLeft = Offset(this.size.width - width.toPx(), topPaddingPx + scrollbarOffsetY),
               size = Size(width.toPx(), scrollbarHeight),
               alpha = alpha
             )
