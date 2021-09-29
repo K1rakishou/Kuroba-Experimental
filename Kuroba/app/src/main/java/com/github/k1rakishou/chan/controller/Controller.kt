@@ -577,7 +577,7 @@ abstract class Controller(@JvmField var context: Context) {
     // upward when the bottomNavView is not present (SPLIT layout or it's disabled in the settings)
     if (mainControllerCallbacks?.isBottomPanelShown == true) {
       return when {
-        isSplitLayoutMode -> pxToDp(mainControllerCallbacks.bottomPanelHeight)
+        isSplitLayoutMode || !bottomNavigationViewEnabled -> pxToDp(mainControllerCallbacks.bottomPanelHeight)
         bottomNavigationViewEnabled -> 0
         else -> pxToDp(globalWindowInsetsManager.bottom())
       }
@@ -588,6 +588,13 @@ abstract class Controller(@JvmField var context: Context) {
         return 0
       }
 
+      return pxToDp(globalWindowInsetsManager.bottom())
+    }
+
+    if (isInsideBottomNavAwareController && !isSplitLayoutMode && !bottomNavigationViewEnabled) {
+      // Controllers is inside the BottomNavAwareController (when the bottomNavigationView is disabled)
+      // have 0 padding so we need to account for the system insets to avoid the recycler being drawn
+      // below the nav bar.
       return pxToDp(globalWindowInsetsManager.bottom())
     }
 

@@ -795,8 +795,17 @@ public class ChanSettings {
 
     public static boolean isNavigationViewEnabled() {
         if (isSplitLayoutMode()) {
-            // The left side navigation view is always enabled on tablets
+            // The left side navigation view is always enabled when in SPLIT mode
             return true;
+        }
+
+        return bottomNavigationViewEnabled.get();
+    }
+
+    public static boolean isBottomNavigationPresent() {
+        if (isSplitLayoutMode()) {
+            // The bottom navigation is moved to the left side in SPLIT mode
+            return false;
         }
 
         return bottomNavigationViewEnabled.get();

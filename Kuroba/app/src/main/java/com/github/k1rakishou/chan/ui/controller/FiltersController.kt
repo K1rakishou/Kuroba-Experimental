@@ -205,13 +205,14 @@ class FiltersController(context: Context) :
       mainControllerCallbacks = null
     )
 
+    val bottomPaddingPx = dp(bottomPaddingDp.toFloat())
     val fabHeight = dp(64f)
     val fabBottomMargin = dp(16f)
 
-    add.updateMargins(bottom = bottomPaddingDp + fabBottomMargin)
-    enable.updateMargins(bottom = bottomPaddingDp + fabBottomMargin)
+    add.updateMargins(bottom = bottomPaddingPx + fabBottomMargin)
+    enable.updateMargins(bottom = bottomPaddingPx + fabBottomMargin)
 
-    recyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()) + fabHeight + fabBottomMargin)
+    recyclerView.updatePaddings(bottom = bottomPaddingPx + fabHeight + fabBottomMargin)
   }
 
   override fun onClick(v: View) {

@@ -187,13 +187,15 @@ class BoardsSetupController(
   }
 
   override fun onInsetsChanged() {
-    val bottomPadding = calculateBottomPaddingForRecyclerInDp(
+    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
       globalWindowInsetsManager = globalWindowInsetsManager,
       mainControllerCallbacks = null
     )
 
-    fabAddBoards.updateMargins(bottom = fabBottomPadding + bottomPadding)
-    epoxyRecyclerView.updatePaddings(bottom = recyclerBottomPadding + bottomPadding)
+    val bottomPaddingPx = dp(bottomPaddingDp.toFloat())
+
+    fabAddBoards.updateMargins(bottom = fabBottomPadding + bottomPaddingPx)
+    epoxyRecyclerView.updatePaddings(bottom = recyclerBottomPadding + bottomPaddingPx)
   }
 
   override fun onDestroy() {

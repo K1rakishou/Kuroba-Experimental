@@ -75,19 +75,15 @@ class BottomNavBarAwareNavigationController(
   }
 
   override fun onInsetsChanged() {
-    var bottom = 0
-
-    if (!ChanSettings.isSplitLayoutMode()) {
-      bottom += globalWindowInsetsManager.bottom()
-    }
-
-    if (navigationViewType == NavigationViewContract.Type.BottomNavView && ChanSettings.isNavigationViewEnabled()) {
-      bottom += bottomNavBarHeight
+    val bottomPadding = if (ChanSettings.isBottomNavigationPresent()) {
+      globalWindowInsetsManager.bottom() + bottomNavBarHeight
+    } else {
+      0
     }
 
     container.updatePaddings(
       top = requireToolbar().toolbarHeight,
-      bottom = bottom
+      bottom = bottomPadding
     )
   }
 
