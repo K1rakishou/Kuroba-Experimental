@@ -28,9 +28,9 @@ data class HalloweenTheme(
   override val postSpoilerRevealTextColor: Int = Color.parseColor("#b8b8b8"),
   override val postUnseenLabelColor: Int = Color.parseColor("#d38d70"),
   override val dividerColor: Int = Color.parseColor("#303438"),
-  override val bookmarkCounterNotWatchingColor: Int = Color.parseColor("#919191"),
+  override val bookmarkCounterNotWatchingColor: Int = Color.parseColor("#5e5e5e"),
   override val bookmarkCounterHasRepliesColor: Int = Color.parseColor("#d77841"),
-  override val bookmarkCounterNormalColor: Int = Color.parseColor("#b9b9b9"),
+  override val bookmarkCounterNormalColor: Int = Color.parseColor("#b39d91"),
 ) : ChanTheme() {
 
   override fun fullCopy(): ChanTheme {
