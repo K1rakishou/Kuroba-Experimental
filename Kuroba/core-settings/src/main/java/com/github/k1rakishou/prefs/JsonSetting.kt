@@ -16,10 +16,16 @@ class JsonSetting<T>(
   key: String,
   def: T
 ) : Setting<T>(settingProvider, key, def) {
+  @Volatile
+  private var hasCached = false
   private var cached: T? = null
   private val settingState = BehaviorProcessor.create<T>()
 
   override fun get(): T {
+    if (hasCached) {
+      return cached!!
+    }
+
     val json = settingProvider.getString(key, ChanSettings.EMPTY_JSON)
 
     cached = try {
@@ -29,6 +35,7 @@ class JsonSetting<T>(
       def
     }
 
+    hasCached = true
     return cached!!
   }
 
@@ -59,7 +66,7 @@ class JsonSetting<T>(
   }
 
   fun isNotDefault(): Boolean {
-    return cached != def
+    return get() != def
   }
 
   fun reset() {

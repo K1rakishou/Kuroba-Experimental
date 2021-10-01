@@ -13,12 +13,15 @@ import androidx.compose.material.SliderDefaults
 import androidx.compose.material.SliderDefaults.DisabledTickAlpha
 import androidx.compose.material.SliderDefaults.InactiveTrackAlpha
 import androidx.compose.material.SliderDefaults.TickAlpha
+import androidx.compose.material.SwitchColors
+import androidx.compose.material.SwitchDefaults
 import androidx.compose.material.TextFieldColors
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.material.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.compositeOver
 import com.github.k1rakishou.core_themes.ThemeEngine.Companion.manipulateColor
 
 @SuppressLint("ResourceType")
@@ -75,6 +78,7 @@ abstract class ChanTheme {
   val bookmarkCounterNotWatchingColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterNotWatchingColor) }
   val bookmarkCounterHasRepliesColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterHasRepliesColor) }
   val bookmarkCounterNormalColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(bookmarkCounterNormalColor) }
+  val postLinkColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(postLinkColor) }
 
   open val mainFont: Typeface = ROBOTO_MEDIUM
 
@@ -205,6 +209,38 @@ abstract class ChanTheme {
       inactiveTickColor = accentColorCompose.copy(alpha = TickAlpha),
       disabledActiveTickColor = activeTickColor.copy(alpha = DisabledTickAlpha),
       disabledInactiveTickColor = disabledInactiveTrackColor.copy(alpha = DisabledTickAlpha)
+    )
+  }
+
+  @Composable
+  fun switchColors(): SwitchColors {
+    val checkedThumbColor = accentColorCompose
+    val uncheckedThumbColor = remember(key1 = defaultColors.controlNormalColorCompose) {
+      manipulateColor(defaultColors.controlNormalColorCompose, 1.2f)
+    }
+    val uncheckedTrackColor = remember(key1 = defaultColors.controlNormalColorCompose) {
+      manipulateColor(defaultColors.controlNormalColorCompose, .6f)
+    }
+
+    return SwitchDefaults.colors(
+      checkedThumbColor = checkedThumbColor,
+      checkedTrackColor = checkedThumbColor,
+      checkedTrackAlpha = 0.54f,
+      uncheckedThumbColor = uncheckedThumbColor,
+      uncheckedTrackColor = uncheckedTrackColor,
+      uncheckedTrackAlpha = 0.38f,
+      disabledCheckedThumbColor = checkedThumbColor
+        .copy(alpha = ContentAlpha.disabled)
+        .compositeOver(uncheckedThumbColor),
+      disabledCheckedTrackColor = checkedThumbColor
+        .copy(alpha = ContentAlpha.disabled)
+        .compositeOver(uncheckedThumbColor),
+      disabledUncheckedThumbColor = uncheckedThumbColor
+        .copy(alpha = ContentAlpha.disabled)
+        .compositeOver(uncheckedThumbColor),
+      disabledUncheckedTrackColor = uncheckedThumbColor
+        .copy(alpha = ContentAlpha.disabled)
+        .compositeOver(uncheckedThumbColor)
     )
   }
 

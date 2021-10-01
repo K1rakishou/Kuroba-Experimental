@@ -22,7 +22,7 @@ import com.github.k1rakishou.SettingProvider;
 
 public class OptionsSetting<T extends Enum & OptionSettingItem>
         extends Setting<T> {
-    private boolean hasCached = false;
+    private volatile boolean hasCached = false;
 
     private T cached;
     private T[] items;

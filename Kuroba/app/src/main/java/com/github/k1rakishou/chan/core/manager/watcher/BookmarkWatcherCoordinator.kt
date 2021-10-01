@@ -5,14 +5,12 @@ import androidx.work.Constraints
 import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
-import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.persist_state.PersistableChanState
 import dagger.Lazy
 import io.reactivex.Flowable
 import kotlinx.coroutines.CancellationException
@@ -176,16 +174,10 @@ class BookmarkWatcherCoordinator(
 
   companion object {
     private const val TAG = "BookmarkWatcherCoordinator"
-    private val OLD_WORK_PRUNED = AtomicBoolean(false)
 
     suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "restartBackgroundWork() called tag=$tag")
-
-      if (!pruneBlockedBookmarkWatcherWork(appConstants, appContext)) {
-        Logger.d(TAG, "restartBackgroundWork($tag) can't continue because pruneOldWork is running")
-        return
-      }
 
       if (!ChanSettings.watchEnabled.get() || !ChanSettings.watchBackground.get()) {
         Logger.d(TAG, "restartBackgroundWork() cannot restart watcher because one of the required " +
@@ -225,11 +217,6 @@ class BookmarkWatcherCoordinator(
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() called tag=$tag")
 
-      if (!pruneBlockedBookmarkWatcherWork(appConstants, appContext)) {
-        Logger.d(TAG, "cancelBackgroundBookmarkWatching($tag) can't continue because pruneOldWork is running")
-        return
-      }
-
       WorkManager
         .getInstance(appContext)
         .cancelUniqueWork(tag)
@@ -239,44 +226,5 @@ class BookmarkWatcherCoordinator(
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() work with tag $tag canceled")
     }
 
-    private suspend fun pruneBlockedBookmarkWatcherWork(appConstants: AppConstants, appContext: Context): Boolean {
-      if (PersistableChanState.appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone.get()) {
-        return true
-      }
-
-      if (!OLD_WORK_PRUNED.compareAndSet(false, true)) {
-        return false
-      }
-
-      val tag = appConstants.bookmarkWatchWorkUniqueTag
-      Logger.d(TAG, "pruneBlockedBookmarkWatcherWork() tag=$tag ...")
-
-      val workInfoList = WorkManager.getInstance(appContext)
-        .getWorkInfosByTag(tag)
-        .await()
-
-      workInfoList.forEachIndexed { index, workInfo ->
-        if (workInfo.state != WorkInfo.State.BLOCKED) {
-          return@forEachIndexed
-        }
-
-        Logger.d(TAG, "pruneBlockedBookmarkWatcherWork() canceling work $index out of ${workInfoList.size}")
-
-        WorkManager
-          .getInstance(appContext)
-          .cancelWorkById(workInfo.id)
-          .await()
-      }
-
-      WorkManager
-        .getInstance(appContext)
-        .pruneWork()
-        .await()
-
-      Logger.d(TAG, "pruneBlockedBookmarkWatcherWork()...done")
-
-      PersistableChanState.appHack_V08X_deleteAllBlockedBookmarkWatcherWorkDone.setSync(true)
-      return true
-    }
   }
 }

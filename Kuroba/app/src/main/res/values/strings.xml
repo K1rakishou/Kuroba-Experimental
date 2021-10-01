@@ -276,33 +276,44 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="thread_empty_setup_body">Add a site to begin browsing</string>
 
     <string name="filter_enabled">Enabled</string>
-    <string name="filter_filter">Filter</string>
-    <string name="filter_action">Action</string>
-    <string name="filter_pattern">Pattern</string>
-    <string name="filter_match_test">Test the pattern</string>
-    <string name="filter_boards">Boards</string>
-    <string name="filter_types">Types</string>
+    <string name="filter_enter_pattern">Enter filter RegEx pattern</string>
+    <string name="filter_test_pattern">Enter any text to test the pattern</string>
+    <string name="filter_note">Enter a note (Links will be clickable)</string>
+    <string name="filter_apply_to_replies">Apply to replies</string>
+    <string name="filter_only_on_op">Only apply to OP</string>
+    <string name="filter_apply_to_own_posts">Apply to my own posts</string>
+    <string name="filter_filter_type_group">Filter type:</string>
+    <string name="filter_boards_group">Boards:</string>
+    <string name="filter_action_group">Action:</string>
+    <string name="filter_highlight_color_group">Highlight color:</string>
+    <string name="filter_all_current_boards">All currently added boards (%1$d)</string>
+    <string name="filter_boards_count">%1$d board(s)</string>
+    <string name="filter_regex_is_empty">Regex is empty</string>
+    <string name="filter_test_text_is_empty">Test text is empty</string>
+    <string name="filter_test_text_match_undefined">Undefined</string>
+    <string name="filter_regex_matches_test_text">Pattern matches the test text!</string>
+    <string name="filter_regex_does_not_match_test_text">Pattern does not match the test text</string>
+    <string name="filter_pattern_is_empty">Filter pattern is empty</string>
+    <string name="filter_cannot_compile_filter_pattern">Cannot compile filter pattern</string>
+    <string name="filter_identical_filter_detected">Identical filter already exists.\nExisting filter index=%1$d</string>
+    <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
+    <string name="filter_no_filter_type_selected">No filter type selected</string>
+    <string name="filter_no_boards_selected">No boards selected</string>
+    <string name="filter_pattern_is_ok">Filter pattern is OK</string>
+    <string name="filter_toggle_select_unselect_all_boards">Toggle all</string>
+    <string name="filter_select_n_boards">Select %1$d board(s)</string>
+    <string name="filter_type_selection_controller_title">Select what parts of a post this filter should try to match</string>
+    <string name="filter_watch_check_all_warning_title">Watch filter and \"Check all boards\" combination warning</string>
+    <string name="filter_watch_check_all_warning_description">Selecting \"Check all boards\" means that if you add more boards in the future, the filter will automatically be applied to those boards as well. \n\nSometimes this is a desired behavior (like when creating filters to hide/remove/highlight posts you will probably want those filters to automatically work on all boards you may or may not add in the future, so that you don\'t have to update filters every time you add new boards). On the other hand, this is very bad when combined with \"watch\" filters because, due to how they work, we have to execute a separate network request for each board (to download board\'s current thread list) which consumes battery and network traffic. So if you add 100 boards afterwards, then 100 requests will be executed on every filter watch update cycle. \n\nBe very careful when using the combination of watch filters together with \"check all boards\". I decided to allow this combination to work because it may be useful in some rare cases. This warning will be shown every time you create a watch filter so you don\'t forget about it.</string>
+    <string name="filter_watcher_disabled_message">Filter watch filter was successfully created but filter watcher is disabled so nothing is going to happen. You need to enable filter watcher in the settings</string>
+    <string name="filter_color_pick">Pick color</string>
+
     <string name="filter_hide">Hide post</string>
     <string name="filter_color">Highlight post</string>
     <string name="filter_remove">Remove post</string>
     <string name="filter_watch">Watch post</string>
-    <string name="filter_all_currently_active_boards">(All currently added boards)</string>
 
-    <string name="filter_preview">Test your filter</string>
-    <string name="filter_no_matches">Does not match</string>
-    <string name="filter_matches">Matches</string>
-    <string name="filter_color_pick">Pick color</string>
     <string name="filter_help_title">Filter help</string>
-    <string name="filter_watch_check_all_warning_title">Watch filter and \"Check all boards\" combination warning</string>
-    <string name="filter_watch_check_all_warning_description">Selecting \"Check all boards\" means that if you add more boards in the future, the filter will automatically be applied to those boards as well. \n\nSometimes this is a desired behavior (like when creating filters to hide/remove/highlight posts you will probably want those filters to automatically work on all boards you may or may not add in the future, so that you don\'t have to update filters every time you add new boards). On the other hand, this is very bad when combined with \"watch\" filters because, due to how they work, we have to execute a separate network request for each board (to download board\'s current thread list) which consumes battery and network traffic. So if you add 100 boards afterwards, then 100 requests will be executed on every filter watch update cycle. \n\nBe very careful when using the combination of watch filters together with \"check all boards\". I decided to allow this combination to work because it may be useful in some rare cases. This warning will be shown every time you create a watch filter so you don\'t forget about it.</string>
-    <string name="filter_pattern_is_empty">Filter pattern is empty</string>
-    <string name="filter_cannot_compile_filter_pattern">Cannot compile filter pattern</string>
-    <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
-    <string name="filter_no_filter_type_selected">No filter type selected</string>
-    <string name="filter_no_boards_selected">No boards selected</string>
-    <string name="filter_identical_filter_detected">Identical filter already exists. Existing filter index=%1$d</string>
-    <string name="filter_watcher_disabled_message">Filter watch filter was successfully created but filter watcher is disabled so nothing is going to happen. You need to enable filter watcher in the settings</string>
-
     <string name="filter_help">
 <![CDATA[
 Filters act on a given pattern and a place to search the pattern.<br>
@@ -328,10 +339,10 @@ Note that for country code filtering, troll country codes should be prepended wi
             of your regular expressions, or as a playground for figuring out an expression. Use Javascript to test.<br><br>
             Actions do the following:<br>
             <b>Hide:</b> Replace the post with a stub. You can tap it to un-hide it.<br>
-            <b>Highlight:</b> A colored bar of your choosing will appear on the left hand side of this post.<br>
+            <b>Highlight:</b> A colored bar of your choosing will appear on the catalog/thread scrollbar.<br>
             <b>Remove:</b> Remove this post. It won\'t be visible at all.<br>
-            <b>Watch:</b> If you have the thread watcher enabled and background watching on,
-            catalogs will be periodically checked based on your interval setting and any OP that matches the filter will be put into your bookmarks.
+            <b>Watch:</b> If you have the filter watcher enabled, catalogs will be periodically checked
+            based on your interval setting and any OP that matches the filter will be put into your bookmarks.
             Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br><br>
             Enabled filters have priority from top to bottom. Filter precedence for actions is as follows:<br>
             1) Capcode or sticky<br>
@@ -348,6 +359,7 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="filters_controller_open_regex101">Open regex101</string>
     <string name="filters_controller_export_action">Export filters</string>
     <string name="filters_controller_import_action">Import filters</string>
+    <string name="filters_controller_show_help">Show filter help</string>
     <string name="filters_controller_import_warning">Importing filters warning</string>
     <string name="filters_controller_import_warning_description">Importing filters will overwrite your current filters (basically old filters will be deleted and new filters will be created). Do you want to import filters?</string>
     <string name="filters_controller_do_import">Import</string>
@@ -981,10 +993,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_search_results">%1$s \"%2$s\" found total: %3$d</string>
     <string name="controller_search_results_unknown">%1$s \"%2$s\" found total: unknown</string>
     <string name="controller_search_results_end_of_list">End of results</string>
-
-    <string name="apply_to_replies">Apply to replies</string>
-    <string name="only_on_op">Only on OP</string>
-    <string name="apply_to_saved">Apply to own posts</string>
 
     <string name="composite_catalog">Composite catalog</string>
 

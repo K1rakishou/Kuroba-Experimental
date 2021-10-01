@@ -8,27 +8,26 @@ class ChanFilterMutable(
   var enabled: Boolean = true,
   var type: Int = FilterType.SUBJECT.flag or FilterType.COMMENT.flag,
   var pattern: String? = null,
+  var allBoardsSelected: Boolean = false,
   var boards: MutableSet<BoardDescriptor> = mutableSetOf(),
   var action: Int = 0,
   var color: Int = 0,
+  var note: String? = null,
   var applyToReplies: Boolean = false,
   var onlyOnOP: Boolean = false,
   var applyToSaved: Boolean = false
 ) {
-  private var allBoardsChecked: Boolean = false
-
   fun matchesBoard(boardDescriptor: BoardDescriptor): Boolean {
     return allBoards() || boards.contains(boardDescriptor)
   }
 
-  fun allBoards(): Boolean = allBoardsChecked && boards.isEmpty()
+  fun allBoards(): Boolean = allBoardsSelected && boards.isEmpty()
 
   fun isWatchFilter(): Boolean {
     return action == FilterAction.WATCH.id
   }
 
   fun applyToBoards(allBoardsChecked: Boolean, boards: List<ChanBoard>) {
-    this.allBoardsChecked = allBoardsChecked
     this.boards.clear()
 
     if (allBoardsChecked) {
@@ -61,6 +60,7 @@ class ChanFilterMutable(
       boards = selectedBoards,
       action = this.action,
       color = this.color,
+      note = this.note,
       applyToReplies = this.applyToReplies,
       onlyOnOP = this.onlyOnOP,
       applyToSaved = this.applyToSaved
@@ -76,7 +76,9 @@ class ChanFilterMutable(
         type = chanFilter.type,
         pattern = chanFilter.pattern,
         action = chanFilter.action,
+        allBoardsSelected = chanFilter.allBoards(),
         color = chanFilter.color,
+        note = chanFilter.note,
         applyToReplies = chanFilter.applyToReplies,
         onlyOnOP = chanFilter.onlyOnOP,
         applyToSaved = chanFilter.applyToSaved,

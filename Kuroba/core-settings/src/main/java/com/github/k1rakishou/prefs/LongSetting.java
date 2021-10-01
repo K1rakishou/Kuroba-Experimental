@@ -21,7 +21,7 @@ import com.github.k1rakishou.SettingProvider;
 
 public class LongSetting
         extends Setting<Long> {
-    private boolean hasCached = false;
+    private volatile boolean hasCached = false;
     private Long cached;
 
     public LongSetting(SettingProvider settingProvider, String key, Long def) {

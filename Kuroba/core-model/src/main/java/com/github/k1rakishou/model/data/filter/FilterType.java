@@ -54,7 +54,7 @@ public enum FilterType {
             case COMMENT:
                 return "Comment";
             case ID:
-                return "ID";
+                return "Poster ID";
             case SUBJECT:
                 return "Subject";
             case FILENAME:

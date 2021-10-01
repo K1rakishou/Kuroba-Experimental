@@ -36,6 +36,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
@@ -404,12 +405,10 @@ abstract class ThreadController(
   }
 
   override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
-    val filtersController = openFiltersController()
-    filtersController.showFilterDialog(chanFilterMutable)
-  }
-
-  private fun openFiltersController(): FiltersController {
-    val filtersController = FiltersController(context)
+    val filtersController = FiltersController(
+      context = context,
+      chanFilterMutable = chanFilterMutable
+    )
 
     if (doubleNavigationController != null) {
       doubleNavigationController!!.openControllerWrappedIntoBottomNavAwareController(filtersController)
@@ -418,7 +417,6 @@ abstract class ThreadController(
     }
 
     requireStartActivity().setSettingsMenuItemSelected()
-    return filtersController
   }
 
   override fun onLostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {

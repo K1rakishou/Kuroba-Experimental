@@ -20,6 +20,10 @@ import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryVie
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryView;
 import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
+import com.github.k1rakishou.chan.features.filters.CreateOrUpdateFilterController;
+import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorController;
+import com.github.k1rakishou.chan.features.filters.FilterTypeSelectionController;
+import com.github.k1rakishou.chan.features.filters.FiltersController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesController;
 import com.github.k1rakishou.chan.features.gesture_editor.AdjustAndroid10GestureZonesView;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController;
@@ -109,7 +113,6 @@ import com.github.k1rakishou.chan.ui.controller.AlbumDownloadController;
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController;
 import com.github.k1rakishou.chan.ui.controller.BrowseController;
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController;
-import com.github.k1rakishou.chan.ui.controller.FiltersController;
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.LicensesController;
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
@@ -142,7 +145,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxySimpleGroupView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
-import com.github.k1rakishou.chan.ui.layout.FilterLayout;
 import com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout;
 import com.github.k1rakishou.chan.ui.layout.PostPopupContainer;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
@@ -272,6 +274,9 @@ public interface ActivityComponent {
     void inject(ComposeBoardsController composeBoardsController);
     void inject(ComposeBoardsSelectorController composeBoardsSelectorController);
     void inject(CompositeCatalogsSetupController compositeCatalogsSetupController);
+    void inject(CreateOrUpdateFilterController createOrUpdateFilterController);
+    void inject(FilterTypeSelectionController filterTypeSelectionController);
+    void inject(FilterBoardSelectorController filterBoardSelectorController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -340,7 +345,6 @@ public interface ActivityComponent {
     void inject(ThumbnailView thumbnailView);
     void inject(PostImageThumbnailView thumbnailView);
     void inject(ThreadLayout threadLayout);
-    void inject(FilterLayout filterLayout);
     void inject(ReplyLayout replyLayout);
     void inject(ThreadListLayout threadListLayout);
     void inject(ToolbarContainer toolbarContainer);

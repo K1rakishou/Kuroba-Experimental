@@ -21,7 +21,7 @@ import android.content.SharedPreferences;
 
 @SuppressLint("ApplySharedPref")
 public class SharedPreferencesSettingProvider implements SettingProvider {
-    private SharedPreferences prefs;
+    private final SharedPreferences prefs;
 
     public SharedPreferencesSettingProvider(SharedPreferences prefs) {
         this.prefs = prefs;
@@ -30,6 +30,14 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
     @Override
     public int getInt(String key, int def) {
         try {
+            if (!prefs.contains(key)) {
+                // Insert the default value into the sharedprefs file so that the next time we
+                // decide to change the default it won't be applied to people who already have
+                // the old default value.
+                prefs.edit().putInt(key, def).apply();
+                return def;
+            }
+
             return prefs.getInt(key, def);
         } catch (Throwable error) {
             prefs.edit().remove(key).commit();
@@ -40,6 +48,12 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
     @Override
     public long getLong(String key, long def) {
         try {
+            if (!prefs.contains(key)) {
+                // See getInt() comment
+                prefs.edit().putLong(key, def).apply();
+                return def;
+            }
+
             return prefs.getLong(key, def);
         } catch (Throwable error) {
             prefs.edit().remove(key).commit();
@@ -50,6 +64,12 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
     @Override
     public boolean getBoolean(String key, boolean def) {
         try {
+            if (!prefs.contains(key)) {
+                // See getInt() comment
+                prefs.edit().putBoolean(key, def).apply();
+                return def;
+            }
+
             return prefs.getBoolean(key, def);
         } catch (Throwable error) {
             prefs.edit().remove(key).commit();
@@ -60,6 +80,12 @@ public class SharedPreferencesSettingProvider implements SettingProvider {
     @Override
     public String getString(String key, String def) {
         try {
+            if (!prefs.contains(key)) {
+                // See getInt() comment
+                prefs.edit().putString(key, def).apply();
+                return def;
+            }
+
             return prefs.getString(key, def);
         } catch (Throwable error) {
             prefs.edit().remove(key).commit();

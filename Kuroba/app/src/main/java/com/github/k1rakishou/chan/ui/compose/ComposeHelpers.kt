@@ -78,7 +78,7 @@ object ComposeHelpers {
   ): Modifier {
     return composed {
       val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
-      val duration = if (state.isScrollInProgress) 10 else 500
+      val duration = if (state.isScrollInProgress) 10 else 1500
 
       val alpha by animateFloatAsState(
         targetValue = targetAlpha,
@@ -89,26 +89,31 @@ object ComposeHelpers {
         Modifier.drawWithContent {
           drawContent()
 
-          val firstVisibleElementIndex = state.layoutInfo.visibleItemsInfo.firstOrNull()?.index
-          val needDrawScrollbar = state.isScrollInProgress || alpha > 0.0f
+          val layoutInfo = state.layoutInfo
+          val firstVisibleElementIndex = layoutInfo.visibleItemsInfo.firstOrNull()?.index
+          val needDrawScrollbar = layoutInfo.totalItemsCount > layoutInfo.visibleItemsInfo.size
+            && (state.isScrollInProgress || alpha > 0.0f)
 
-          // Draw scrollbar if scrolling or if the animation is still running and lazy column has content
-          if (needDrawScrollbar && firstVisibleElementIndex != null) {
-            val topPaddingPx = contentPadding.calculateTopPadding().toPx()
-            val bottomPaddingPx = contentPadding.calculateBottomPadding().toPx()
-            val totalHeightWithoutPaddings = this.size.height - topPaddingPx - bottomPaddingPx
-
-            val elementHeight = totalHeightWithoutPaddings / state.layoutInfo.totalItemsCount
-            val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
-            val scrollbarHeight = state.layoutInfo.visibleItemsInfo.size * elementHeight
-
-            drawRect(
-              color = chanTheme.textColorHintCompose,
-              topLeft = Offset(this.size.width - width.toPx(), topPaddingPx + scrollbarOffsetY),
-              size = Size(width.toPx(), scrollbarHeight),
-              alpha = alpha
-            )
+          // Draw scrollbar if total item count is greater than visible item count and either
+          // currently scrolling or if the animation is still running and lazy column has content
+          if (!needDrawScrollbar || firstVisibleElementIndex == null) {
+            return@drawWithContent
           }
+
+          val topPaddingPx = contentPadding.calculateTopPadding().toPx()
+          val bottomPaddingPx = contentPadding.calculateBottomPadding().toPx()
+          val totalHeightWithoutPaddings = this.size.height - topPaddingPx - bottomPaddingPx
+
+          val elementHeight = totalHeightWithoutPaddings / layoutInfo.totalItemsCount
+          val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
+          val scrollbarHeight = layoutInfo.visibleItemsInfo.size * elementHeight
+
+          drawRect(
+            color = chanTheme.textColorHintCompose,
+            topLeft = Offset(this.size.width - width.toPx(), topPaddingPx + scrollbarOffsetY),
+            size = Size(width.toPx(), scrollbarHeight),
+            alpha = alpha
+          )
         }
       )
     }

@@ -53,6 +53,12 @@ class CatalogCellData(
       }
     }
 
+  fun requireBoardDescriptor(): BoardDescriptor {
+    return requireNotNull(boardDescriptorOrNull) {
+      "boardDescriptorOrNull is null, catalogDescriptor: ${catalogDescriptor}"
+    }
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false

@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.CachingScreen
@@ -26,7 +27,6 @@ import com.github.k1rakishou.chan.features.settings.WatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
-import com.github.k1rakishou.chan.ui.controller.FiltersController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
 import com.github.k1rakishou.chan.ui.controller.ReportProblemController
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewReportFilesController
@@ -264,7 +264,14 @@ class MainSettingsScreen(
             val filtersCount = chanFilterManager.filtersCount()
             getQuantityString(R.plurals.filter, filtersCount, filtersCount)
           },
-          callback = { navigationController.pushController(FiltersController(context)) }
+          callback = {
+            val filtersController = FiltersController(
+              context = context,
+              chanFilterMutable = null
+            )
+
+            navigationController.pushController(filtersController)
+          }
         )
 
         group += LinkSettingV2.createBuilder(

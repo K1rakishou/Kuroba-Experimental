@@ -117,7 +117,8 @@ class ChanFilterManager(
           return@read -1
         }
 
-        return@read filters.indexOfFirst { filter -> filter.getDatabaseId() == chanFilter.getDatabaseId() }
+        return@read filters
+          .indexOfFirst { filter -> filter.getDatabaseId() == chanFilter.getDatabaseId() }
       }
 
       val createFilter = indexOfThisFilter < 0
@@ -131,15 +132,16 @@ class ChanFilterManager(
       if (success) {
         clearFiltersAndPostHashes()
         clearFilterWatchGroups(chanFilter)
+
+        val filterEvent = if (createFilter) {
+          FilterEvent.Created(chanFilter)
+        } else {
+          FilterEvent.Updated(listOf(chanFilter))
+        }
+
+        filterChangesFlow.emit(filterEvent)
       }
 
-      val filterEvent = if (createFilter) {
-        FilterEvent.Created(chanFilter)
-      } else {
-        FilterEvent.Updated(listOf(chanFilter))
-      }
-
-      filterChangesFlow.emit(filterEvent)
       onFinished()
     }
   }
@@ -355,6 +357,10 @@ class ChanFilterManager(
         return@write false
       }
 
+      if (prevChanFilter == newChanFilter) {
+        return@write false
+      }
+
       require(prevChanFilter.hasDatabaseId()) { "prevFilter has no database id!" }
       filters[indexOfThisFilter] = mergePrevAndNewFilters(prevChanFilter, newChanFilter)
 
@@ -383,6 +389,7 @@ class ChanFilterManager(
       boards = newChanFilter.boards,
       action = newChanFilter.action,
       color = newChanFilter.color,
+      note = newChanFilter.note,
       applyToReplies = newChanFilter.applyToReplies,
       onlyOnOP = newChanFilter.onlyOnOP,
       applyToSaved = newChanFilter.applyToSaved

@@ -25,6 +25,7 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlin.math.min
 import kotlin.math.roundToInt
+import androidx.compose.ui.graphics.Color as ComposeColor
 
 open class ThemeEngine(
   private val appScope: CoroutineScope,
@@ -230,6 +231,14 @@ open class ThemeEngine(
     }
   }
 
+  fun resolveDrawableTintColorCompose(isCurrentColorDark: Boolean): ComposeColor {
+    return if (isCurrentColorDark) {
+      LIGHT_DRAWABLE_TINT_COMPOSE
+    } else {
+      DARK_DRAWABLE_TINT_COMPOSE
+    }
+  }
+
   fun tintDrawable(context: Context, @DrawableRes drawableId: Int): Drawable {
     val drawable = ContextCompat.getDrawable(context, drawableId)
       ?: throw IllegalArgumentException("Couldn't find drawable with drawableId: $drawableId")
@@ -378,6 +387,9 @@ open class ThemeEngine(
     val LIGHT_DRAWABLE_TINT = Color.parseColor("#EEEEEE")
     val DARK_DRAWABLE_TINT = Color.parseColor("#7E7E7E")
 
+    val LIGHT_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#EEEEEE"))
+    val DARK_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#7E7E7E"))
+
     /**
      * Makes color brighter if factor > 1.0f or darker if factor < 1.0f
      */
@@ -388,6 +400,11 @@ open class ThemeEngine(
       val g = (Color.green(color) * factor).roundToInt()
       val b = (Color.blue(color) * factor).roundToInt()
       return Color.argb(a, min(r, 255), min(g, 255), min(b, 255))
+    }
+
+    @JvmStatic
+    fun manipulateColor(color: ComposeColor, factor: Float): ComposeColor {
+      return ComposeColor(manipulateColor(color.toArgb(), factor))
     }
 
     @JvmStatic
@@ -406,7 +423,7 @@ open class ThemeEngine(
     }
 
     @JvmStatic
-    fun isDarkColor(color: androidx.compose.ui.graphics.Color): Boolean {
+    fun isDarkColor(color: ComposeColor): Boolean {
       return isDarkColor(color.toArgb())
     }
 

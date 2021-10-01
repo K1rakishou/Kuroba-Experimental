@@ -18,6 +18,21 @@ public enum FilterAction {
 
     private static FilterAction[] enums = new FilterAction[4];
 
+    public static String filterActionName(FilterAction action) {
+        switch (action) {
+            case HIDE:
+                return "Hide post";
+            case COLOR:
+                return "Highlight post";
+            case REMOVE:
+                return "Remove post";
+            case WATCH:
+                return "Watch post";
+        }
+
+        return "Unknown action (" + action.id + ")";
+    }
+
     static {
         for (FilterAction type : values()) {
             enums[type.id] = type;

@@ -20,7 +20,7 @@ import com.github.k1rakishou.Setting;
 import com.github.k1rakishou.SettingProvider;
 
 public class StringSetting extends Setting<String> {
-    private boolean hasCached = false;
+    private volatile boolean hasCached = false;
     private String cached;
 
     public StringSetting(SettingProvider settingProvider, String key, String def) {

@@ -9,6 +9,9 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.forEachGesture
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
@@ -26,8 +29,11 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
@@ -35,10 +41,12 @@ import androidx.compose.material.CircularProgressIndicator
 import androidx.compose.material.ContentAlpha
 import androidx.compose.material.LocalTextStyle
 import androidx.compose.material.Slider
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,9 +62,13 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.isUnspecified
+import androidx.compose.ui.input.pointer.consumeAllChanges
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -120,7 +132,9 @@ fun KurobaComposeText(
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
-  textAlign: TextAlign? = null
+  enabled: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf()
 ) {
   KurobaComposeText(
     text = AnnotatedString(text),
@@ -131,7 +145,9 @@ fun KurobaComposeText(
     maxLines = maxLines,
     overflow = overflow,
     softWrap = softWrap,
-    textAlign = textAlign
+    enabled = enabled,
+    textAlign = textAlign,
+    inlineContent = inlineContent
   )
 }
 
@@ -145,7 +161,9 @@ fun KurobaComposeText(
   maxLines: Int = Int.MAX_VALUE,
   overflow: TextOverflow = TextOverflow.Clip,
   softWrap: Boolean = true,
-  textAlign: TextAlign? = null
+  enabled: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf()
 ) {
   val textColorPrimary = if (color == null) {
     val chanTheme = LocalChanTheme.current
@@ -157,6 +175,73 @@ fun KurobaComposeText(
     color
   }
 
+  val actualTextColorPrimary = if (enabled) {
+    textColorPrimary
+  } else {
+    textColorPrimary.copy(alpha = ContentAlpha.disabled)
+  }
+
+  Text(
+    color = actualTextColorPrimary,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    inlineContent = inlineContent,
+    modifier = modifier,
+  )
+}
+
+@Composable
+fun KurobaComposeClickableText(
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color? = null,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  fontWeight: FontWeight? = null,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextClicked: (TextLayoutResult, Int) -> Boolean
+) {
+  val textColorPrimary = if (color == null) {
+    val chanTheme = LocalChanTheme.current
+
+    remember(key1 = chanTheme.textColorPrimary) {
+      Color(chanTheme.textColorPrimary)
+    }
+  } else {
+    color
+  }
+
+  val layoutResult = remember { mutableStateOf<TextLayoutResult?>(null) }
+
+  val pressIndicatorModifier = Modifier.pointerInput(key1 = onTextClicked) {
+    forEachGesture {
+      awaitPointerEventScope {
+        val downPointerInputChange = awaitFirstDown()
+
+        val upOrCancelPointerInputChange = waitForUpOrCancellation()
+          ?: return@awaitPointerEventScope
+
+        val result = layoutResult.value
+          ?: return@awaitPointerEventScope
+
+        val offset = result.getOffsetForPosition(upOrCancelPointerInputChange.position)
+
+        if (onTextClicked.invoke(result, offset)) {
+          downPointerInputChange.consumeAllChanges()
+          upOrCancelPointerInputChange.consumeAllChanges()
+        }
+      }
+    }
+  }
+
   Text(
     color = textColorPrimary,
     text = text,
@@ -166,7 +251,9 @@ fun KurobaComposeText(
     softWrap = softWrap,
     textAlign = textAlign,
     fontWeight = fontWeight,
-    modifier = modifier
+    inlineContent = inlineContent,
+    modifier = modifier.then(pressIndicatorModifier),
+    onTextLayout = { textLayoutResult -> layoutResult.value = textLayoutResult }
   )
 }
 
@@ -198,16 +285,19 @@ fun KurobaComposeTextField(
   )
 }
 
+@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun KurobaComposeCustomTextField(
   value: String,
   onValueChange: (String) -> Unit,
   modifier: Modifier = Modifier,
   textColor: Color = Color.White,
+  onBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
   fontSize: TextUnit = TextUnit.Unspecified,
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
+  labelText: String? = null,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions(),
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
@@ -230,24 +320,72 @@ fun KurobaComposeCustomTextField(
     Modifier.drawIndicatorLine(
       color = indicatorColorState.value,
       lineWidth = 2.dp,
-      verticalOffset = 4.dp
+      verticalOffset = 2.dp
     )
   } else {
     Modifier
   }
 
-  BasicTextField(
-    modifier = modifier.then(indicatorLineModifier),
-    textStyle = textStyle,
-    singleLine = singleLine,
-    maxLines = maxLines,
-    cursorBrush = cursorBrush,
-    value = value,
-    keyboardOptions = keyboardOptions,
-    keyboardActions = keyboardActions,
-    interactionSource = interactionSource,
-    onValueChange = onValueChange
-  )
+  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
+    TextSelectionColors(
+      handleColor = chanTheme.accentColorCompose,
+      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
+    )
+  }
+
+  var localInput by remember { mutableStateOf(value) }
+
+  Box {
+    if (labelText != null) {
+      val isFocused by interactionSource.collectIsFocusedAsState()
+
+      AnimatedVisibility(
+        visible = !isFocused && localInput.isEmpty(),
+        enter = fadeIn(),
+        exit = fadeOut()
+      ) {
+        val alpha = ContentAlpha.medium
+
+        val hintColor = remember {
+          if (onBackgroundColor.isUnspecified) {
+            Color.DarkGray.copy(alpha = alpha)
+          } else {
+            if (ThemeEngine.isDarkColor(onBackgroundColor)) {
+              Color.LightGray.copy(alpha = alpha)
+            } else {
+              Color.DarkGray.copy(alpha = alpha)
+            }
+          }
+        }
+
+        Text(
+          text = labelText,
+          fontSize = 16.sp,
+          color = hintColor
+        )
+      }
+    }
+
+    CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+      BasicTextField(
+        modifier = modifier
+          .then(indicatorLineModifier)
+          .padding(bottom = 4.dp),
+        textStyle = textStyle,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        cursorBrush = cursorBrush,
+        value = value,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        interactionSource = interactionSource,
+        onValueChange = { text ->
+          localInput = text
+          onValueChange(text)
+        }
+      )
+    }
+  }
 
 }
 
@@ -284,21 +422,37 @@ fun KurobaComposeCheckbox(
   currentlyChecked: Boolean,
   onCheckChanged: (Boolean) -> Unit,
   modifier: Modifier = Modifier,
-  text: String? = null
+  text: String? = null,
+  enabled: Boolean = true
 ) {
   val chanTheme = LocalChanTheme.current
   var isChecked by remember(key1 = currentlyChecked) { mutableStateOf(currentlyChecked) }
 
-  Row(modifier = Modifier
-    .clickable {
-      isChecked = isChecked.not()
-      onCheckChanged(isChecked)
+  val color = remember(key1 = chanTheme) {
+    if (chanTheme.isLightTheme) {
+      Color(0x40000000)
+    } else {
+      Color(0x40ffffff)
     }
-    .then(modifier)
+  }
+
+  Row(
+    modifier = Modifier
+      .clickable(
+        enabled = enabled,
+        interactionSource = remember { MutableInteractionSource() },
+        indication = rememberRipple(bounded = true, color = color),
+        onClick = {
+          isChecked = isChecked.not()
+          onCheckChanged(isChecked)
+        }
+      )
+      .then(modifier)
   ) {
     Checkbox(
       modifier = Modifier.align(Alignment.CenterVertically),
       checked = isChecked,
+      enabled = enabled,
       onCheckedChange = { checked ->
         isChecked = checked
         onCheckChanged(isChecked)
@@ -309,7 +463,11 @@ fun KurobaComposeCheckbox(
     if (text != null) {
       Spacer(modifier = Modifier.width(8.dp))
 
-      KurobaComposeText(text = text)
+      KurobaComposeText(
+        modifier = Modifier.align(Alignment.CenterVertically),
+        text = text,
+        enabled = enabled
+      )
     }
   }
 }
@@ -381,7 +539,9 @@ fun KurobaComposeTextBarButton(
       Text(
         text = text.uppercase(Locale.ENGLISH),
         color = textColor,
-        modifier = Modifier.wrapContentSize().align(Alignment.CenterVertically),
+        modifier = Modifier
+          .wrapContentSize()
+          .align(Alignment.CenterVertically),
         textAlign = TextAlign.Center
       )
     },
@@ -490,9 +650,10 @@ fun KurobaSearchInput(
   modifier: Modifier = Modifier,
   chanTheme: ChanTheme,
   themeEngine: ThemeEngine,
-  backgroundColor: Color,
+  onBackgroundColor: Color,
   searchQuery: MutableState<String>,
-  onSearchQueryChanged: (String) -> Unit
+  onSearchQueryChanged: (String) -> Unit,
+  labelText: String = stringResource(id = R.string.search_hint)
 ) {
   var localQuery by remember { searchQuery }
 
@@ -506,8 +667,8 @@ fun KurobaSearchInput(
       ) {
         val interactionSource = remember { MutableInteractionSource() }
 
-        val textColor = remember(key1 = backgroundColor) {
-          if (ThemeEngine.isDarkColor(backgroundColor)) {
+        val textColor = remember(key1 = onBackgroundColor) {
+          if (ThemeEngine.isDarkColor(onBackgroundColor)) {
             Color.White
           } else {
             Color.Black
@@ -519,40 +680,18 @@ fun KurobaSearchInput(
             .wrapContentHeight()
             .fillMaxWidth(),
           textColor = textColor,
+          onBackgroundColor = onBackgroundColor,
           fontSize = 16.sp,
           singleLine = true,
           maxLines = 1,
           value = localQuery,
+          labelText = labelText,
           onValueChange = { newValue ->
             localQuery = newValue
             onSearchQueryChanged(newValue)
           },
           interactionSource = interactionSource
         )
-
-        val isFocused by interactionSource.collectIsFocusedAsState()
-
-        androidx.compose.animation.AnimatedVisibility(
-          visible = !isFocused && localQuery.isEmpty(),
-          enter = fadeIn(),
-          exit = fadeOut()
-        ) {
-          val alpha = ContentAlpha.medium
-
-          val hintColor = remember(key1 = backgroundColor) {
-            if (ThemeEngine.isDarkColor(backgroundColor)) {
-              Color.LightGray.copy(alpha = alpha)
-            } else {
-              Color.DarkGray.copy(alpha = alpha)
-            }
-          }
-
-          Text(
-            text = stringResource(id = R.string.search_hint),
-            fontSize = 16.sp,
-            color = hintColor
-          )
-        }
       }
 
       AnimatedVisibility(
@@ -577,4 +716,18 @@ fun KurobaSearchInput(
       }
     }
   }
+}
+
+@Composable
+fun KurobaComposeSwitch(
+  initiallyChecked: Boolean,
+  onCheckedChange: (Boolean) -> Unit
+) {
+  val chanTheme = LocalChanTheme.current
+
+  Switch(
+    checked = initiallyChecked,
+    onCheckedChange = onCheckedChange,
+    colors = chanTheme.switchColors()
+  )
 }

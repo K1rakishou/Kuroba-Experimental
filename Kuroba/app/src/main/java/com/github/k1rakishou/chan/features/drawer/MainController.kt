@@ -1043,7 +1043,7 @@ class MainController(
                 .padding(start = 4.dp, end = 4.dp, top = 8.dp),
               chanTheme = chanTheme,
               themeEngine = themeEngine,
-              backgroundColor = backgroundColor,
+              onBackgroundColor = backgroundColor,
               searchQuery = searchQuery,
               onSearchQueryChanged = onSearchQueryChanged
             )
