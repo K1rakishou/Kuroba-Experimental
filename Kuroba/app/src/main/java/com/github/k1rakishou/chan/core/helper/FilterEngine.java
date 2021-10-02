@@ -68,48 +68,12 @@ public class FilterEngine {
         chanFilterManager.createOrUpdateFilter(chanFilterMutable.toChanFilter(), onUpdated);
     }
 
-    public void deleteFilter(ChanFilter filter, Function0<Unit> onUpdated) {
-        chanFilterManager.deleteFilter(filter, onUpdated);
-    }
-
-    public void onFilterMoved(int from, int to, Function0<Unit> onMoved) {
-        chanFilterManager.onFilterMoved(from, to, onMoved);
-    }
-
-    public void enableDisableFilters(List<ChanFilter> filters, boolean enable, Function0<Unit> onUpdated) {
-        chanFilterManager.enableDisableFilters(filters, enable, onUpdated);
-    }
-
     public List<ChanFilter> getEnabledFilters() {
         return chanFilterManager.getEnabledFiltersSorted();
     }
 
-    public List<ChanFilter> getAllFilters() {
-        return chanFilterManager.getAllFilters();
-    }
-
     public boolean matchesBoard(ChanFilter filter, ChanBoard board) {
         return filter.matchesBoard(board.getBoardDescriptor());
-    }
-
-    public boolean matchesBoard(ChanFilterMutable filter, ChanBoard board) {
-        return filter.matchesBoard(board.getBoardDescriptor());
-    }
-
-    public int getFilterBoardCount(ChanFilter filter) {
-        return filter.getFilterBoardCount();
-    }
-
-    public int getFilterBoardCount(ChanFilterMutable filter) {
-        return filter.getFilterBoardCount();
-    }
-
-    public void saveBoardsToFilter(
-            boolean allBoardsChecked,
-            ChanFilterMutable filter,
-            List<ChanBoard> appliedBoards
-    ) {
-        filter.applyToBoards(allBoardsChecked, appliedBoards);
     }
 
     /**

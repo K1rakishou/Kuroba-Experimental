@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.manager
 
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.mutableListWithCap
@@ -146,19 +147,26 @@ class ChanFilterManager(
     }
   }
 
-  fun onFilterMoved(from: Int, to: Int, onMoved: () -> Unit) {
+  fun onFilterMoved(fromIndex: Int, toIndex: Int, onMoved: (Boolean) -> Unit) {
     serializedCoroutineExecutor.post {
-      val allFilters = lock.write {
-        filters.add(to, filters.removeAt(from))
-        filters.map { filter -> filter.copy() }
+      val moved = lock.write {
+        if (filters.size < 2) {
+          return@write false
+        }
+
+        return@write filters.move(fromIdx = fromIndex, toIdx = toIndex)
       }
 
-      chanFilterRepository.updateAllFilters(allFilters)
-        .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
-        .ignore()
-
-      onMoved()
+      onMoved(moved)
     }
+  }
+
+  suspend fun persistReorderedFilters() {
+    val allFilters = lock.write { filters.toList() }
+
+    chanFilterRepository.updateAllFilters(allFilters)
+      .peekError { error -> Logger.e(TAG, "Failed to update filters in database", error) }
+      .ignore()
   }
 
   fun deleteFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {

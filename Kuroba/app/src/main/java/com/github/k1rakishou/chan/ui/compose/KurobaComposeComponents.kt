@@ -720,6 +720,7 @@ fun KurobaSearchInput(
 
 @Composable
 fun KurobaComposeSwitch(
+  modifier: Modifier = Modifier,
   initiallyChecked: Boolean,
   onCheckedChange: (Boolean) -> Unit
 ) {
@@ -728,6 +729,7 @@ fun KurobaComposeSwitch(
   Switch(
     checked = initiallyChecked,
     onCheckedChange = onCheckedChange,
-    colors = chanTheme.switchColors()
+    colors = chanTheme.switchColors(),
+    modifier = modifier
   )
 }

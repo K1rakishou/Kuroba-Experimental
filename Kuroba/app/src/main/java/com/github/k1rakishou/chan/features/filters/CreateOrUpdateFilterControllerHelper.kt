@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
+import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.filter.FilterType
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
@@ -77,7 +78,6 @@ object CreateOrUpdateFilterControllerHelper {
   ): Int {
     val index = AtomicInteger(0)
     val theSameFilterExists = AtomicBoolean(false)
-    val enabledChecked = chanFilterMutable.enabled
     val applyToRepliesChecked = chanFilterMutable.applyToReplies
     val onlyOnOPChecked = chanFilterMutable.onlyOnOP
     val applyToSavedChecked = chanFilterMutable.applyToSaved
@@ -89,8 +89,6 @@ object CreateOrUpdateFilterControllerHelper {
         && chanFilter.applyToReplies == applyToRepliesChecked
         && chanFilter.onlyOnOP == onlyOnOPChecked
         && chanFilter.applyToSaved == applyToSavedChecked
-        && chanFilter.enabled == enabledChecked
-
 
       if (isFilterTheSame) {
         theSameFilterExists.set(true)
@@ -116,8 +114,10 @@ object CreateOrUpdateFilterControllerHelper {
       return false
     }
 
-    if (chanFilterMutable.color != other.color) {
-      return false
+    if (chanFilterMutable.action == other.action && other.action == FilterAction.COLOR.id) {
+      if (chanFilterMutable.color != other.color) {
+        return false
+      }
     }
 
     if (chanFilterMutable.pattern != other.pattern) {

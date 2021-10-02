@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
+import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.toHashSetBy
@@ -83,13 +84,31 @@ class FiltersControllerViewModel : BaseViewModel() {
     }
   }
 
+  suspend fun reorderFilterInMemory(fromIndex: Int, toIndex: Int) {
+    val moved = suspendCoroutine<Boolean> { continuation ->
+      chanFilterManager.onFilterMoved(
+        fromIndex = fromIndex,
+        toIndex = toIndex,
+        onMoved = { moved -> continuation.resume(moved) }
+      )
+    }
+
+    if (moved) {
+      _filters.move(fromIdx = fromIndex, toIdx = toIndex)
+    }
+  }
+
+  suspend fun persistReorderedFilters() {
+    chanFilterManager.persistReorderedFilters()
+  }
+
   private fun processFilterChanges(filterEvent: ChanFilterManager.FilterEvent) {
     when (filterEvent) {
       ChanFilterManager.FilterEvent.Initialized -> {
         // no-op
       }
       is ChanFilterManager.FilterEvent.Created -> {
-        _filters.add(createChanFilterInfo(filterEvent.chanFilter, _filters.size))
+        _filters.add(createChanFilterInfo(filterEvent.chanFilter))
       }
       is ChanFilterManager.FilterEvent.Deleted -> {
         val databaseIds = filterEvent.chanFilters
@@ -106,9 +125,9 @@ class FiltersControllerViewModel : BaseViewModel() {
           }
 
           if (index >= 0) {
-            _filters[index] = createChanFilterInfo(chanFilter, index)
+            _filters[index] = createChanFilterInfo(chanFilter)
           } else {
-            _filters.add(createChanFilterInfo(chanFilter, _filters.size))
+            _filters.add(createChanFilterInfo(chanFilter))
           }
         }
       }
@@ -121,29 +140,20 @@ class FiltersControllerViewModel : BaseViewModel() {
 
     val allFilters = withContext(Dispatchers.Default) {
       return@withContext chanFilterManager.getAllFilters()
-        .mapIndexed { index, chanFilter ->
-          return@mapIndexed createChanFilterInfo(
-            chanFilter = chanFilter,
-            filterIndex = index
-          )
-        }
+        .map { chanFilter -> createChanFilterInfo(chanFilter) }
     }
 
     _filters.clear()
     _filters.addAll(allFilters)
   }
 
-  private fun createChanFilterInfo(
-    chanFilter: ChanFilter,
-    filterIndex: Int,
-  ): ChanFilterInfo {
+  private fun createChanFilterInfo(chanFilter: ChanFilter): ChanFilterInfo {
     val chanTheme = themeEngine.chanTheme
     val detectedLinks = detectLinksInNote(chanFilter.note)
 
     return ChanFilterInfo(
       chanFilter = chanFilter,
       filterText = extractFilterTextInfo(
-        index = filterIndex,
         chanFilter = chanFilter,
         detectedLinksInNote = detectedLinks,
         chanTheme = chanTheme,
@@ -164,18 +174,12 @@ class FiltersControllerViewModel : BaseViewModel() {
 
   // TODO(KurobaEx-filters): strings
   private fun extractFilterTextInfo(
-    index: Int,
     chanFilter: ChanFilter,
     detectedLinksInNote: List<TextRange>,
     chanTheme: ChanTheme,
     activeBoardsCountForAllSites: Int?
   ): AnnotatedString {
     return buildAnnotatedString {
-      append("#")
-      append((index + 1).toString())
-      append(" ")
-      append("\n")
-
       append(AnnotatedString("Pattern: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
       append(chanFilter.pattern ?: "<No pattern?!>")
       append("\n")

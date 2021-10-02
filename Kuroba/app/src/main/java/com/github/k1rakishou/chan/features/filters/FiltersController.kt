@@ -25,14 +25,17 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.Divider
 import androidx.compose.material.FloatingActionButton
@@ -50,6 +53,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextLayoutResult
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
@@ -64,10 +68,16 @@ import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableText
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
+import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
+import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
+import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
+import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.theme.SimpleSquarePainter
@@ -202,12 +212,10 @@ class FiltersController(
   private fun BuildContent() {
     val chanTheme = LocalChanTheme.current
     val filters = remember { viewModel.filters }
-    val listState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
     val bottomPd by bottomPadding
-    val contentPadding = PaddingValues(
-      bottom = bottomPd.dp + FAB_SIZE + (FAB_MARGIN / 2)
-    )
+    val contentPadding = PaddingValues(bottom = bottomPd.dp + FAB_SIZE + (FAB_MARGIN / 2))
+    val reoderableState = rememberReorderState()
 
     Box(modifier = Modifier
       .fillMaxSize()
@@ -215,12 +223,17 @@ class FiltersController(
       LazyColumn(
         modifier = Modifier
           .fillMaxSize()
+          .reorderable(
+            state = reoderableState,
+            onMove = { from, to -> viewModel.reorderFilterInMemory(from, to) },
+            onDragEnd = { _, _ -> viewModel.persistReorderedFilters() }
+          )
           .simpleVerticalScrollbar(
-            state = listState,
+            state = reoderableState.listState,
             chanTheme = chanTheme,
             contentPadding = contentPadding
           ),
-        state = listState,
+        state = reoderableState.listState,
         contentPadding = contentPadding
       ) {
         items(filters.size) { index ->
@@ -229,6 +242,7 @@ class FiltersController(
           BuildChanFilter(
             index = index,
             totalCount = filters.size,
+            reoderableState = reoderableState,
             chanFilterInfo = chanFilterInfo,
             coroutineScope = coroutineScope,
             onFilterClicked = { clickedFilter ->
@@ -259,6 +273,7 @@ class FiltersController(
   private fun BuildChanFilter(
     index: Int,
     totalCount: Int,
+    reoderableState: ReorderableState,
     chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo,
     coroutineScope: CoroutineScope,
     onFilterClicked: (ChanFilter) -> Unit
@@ -269,7 +284,9 @@ class FiltersController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight()
+        .draggedItem(reoderableState.offsetByIndex(index))
         .kurobaClickable(bounded = true, onClick = { onFilterClicked(chanFilterInfo.chanFilter) })
+        .background(color = chanTheme.backColorCompose)
     ) {
       Row(
         modifier = Modifier
@@ -280,24 +297,63 @@ class FiltersController(
           getSquareDrawableContent(chanFilterInfo = chanFilterInfo)
         }
 
+        val fullText = remember(key1 = chanFilterInfo.filterText) {
+          return@remember buildAnnotatedString {
+            append("#")
+            append((index + 1).toString())
+            append(" ")
+            append("\n")
+
+            append(chanFilterInfo.filterText)
+          }
+        }
+
         KurobaComposeClickableText(
           modifier = Modifier
             .weight(1f)
             .wrapContentHeight()
             .padding(horizontal = 8.dp, vertical = 4.dp),
-          text = chanFilterInfo.filterText,
+          text = fullText,
           inlineContent = squareDrawableInlineContent,
           onTextClicked = { textLayoutResult, position -> handleClickedText(textLayoutResult, position) }
         )
 
-        KurobaComposeSwitch(
-          initiallyChecked = chanFilterInfo.chanFilter.enabled,
-          onCheckedChange = { nowChecked ->
-            coroutineScope.launch {
-              viewModel.enableOrDisableFilter(nowChecked, chanFilterInfo.chanFilter)
+        Column(
+          modifier = Modifier
+            .fillMaxHeight()
+            .width(42.dp)
+            .padding(end = 8.dp)
+        ) {
+          KurobaComposeSwitch(
+            modifier = Modifier
+              .fillMaxWidth()
+              .wrapContentHeight()
+              .padding(all = 4.dp),
+            initiallyChecked = chanFilterInfo.chanFilter.enabled,
+            onCheckedChange = { nowChecked ->
+              if (reoderableState.draggedIndex != null) {
+                return@KurobaComposeSwitch
+              }
+
+              coroutineScope.launch {
+                viewModel.enableOrDisableFilter(nowChecked, chanFilterInfo.chanFilter)
+              }
             }
-          }
-        )
+          )
+
+          Spacer(modifier = Modifier.weight(1f))
+
+          KurobaComposeIcon(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(32.dp)
+              .padding(all = 4.dp)
+              .detectReorder(reoderableState),
+            drawableId = R.drawable.ic_baseline_reorder_24,
+            themeEngine = themeEngine
+          )
+        }
+
       }
 
       if (index in 0 until (totalCount - 1)) {
