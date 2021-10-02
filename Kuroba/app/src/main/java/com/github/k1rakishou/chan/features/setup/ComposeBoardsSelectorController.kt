@@ -22,11 +22,8 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -47,12 +44,12 @@ import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -114,37 +111,32 @@ class ComposeBoardsSelectorController(
   @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun ColumnScope.BuildContentInternal(chanTheme: ChanTheme, backgroundColor: Color) {
-    val searchState = remember { SearchState() }
+    val searchState = rememberSimpleSearchState<ComposeBoardsSelectorControllerViewModel.CellData>()
     val cellDataList = remember { viewModel.cellDataList }
     val listState = rememberLazyListState()
 
     BuildSearchInput(
       backgroundColor = backgroundColor,
-      searchQuery = searchState.searchQueryState,
-      onSearchQueryChanged = { newQuery -> searchState.searchQuery = newQuery }
+      searchQuery = searchState.queryState,
+      onSearchQueryChanged = { newQuery -> searchState.query = newQuery }
     )
 
-    LaunchedEffect(key1 = searchState.searchQuery, block = {
+    LaunchedEffect(key1 = searchState.query, block = {
       delay(125L)
 
       withContext(Dispatchers.Default) {
         searchState.searching = true
-        searchState.searchResults = processSearchQuery(searchState.searchQuery, cellDataList)
+        searchState.results = processSearchQuery(searchState.query, cellDataList)
         searchState.searching = false
       }
     })
 
-    val searchQuery = searchState.searchQuery
+    val searchQuery = searchState.query
     val searching = searchState.searching
-    val searchResults = searchState.searchResults
-
-    if (searching) {
-      KurobaComposeProgressIndicator(
-        modifier = Modifier
-          .height(256.dp)
-          .fillMaxWidth()
-      )
-      return
+    val searchResults = if (searching) {
+      cellDataList
+    } else {
+      searchState.results
     }
 
     if (cellDataList.isEmpty()) {
@@ -299,14 +291,6 @@ class ComposeBoardsSelectorController(
         }
       }
     }
-  }
-
-  class SearchState {
-    val searchQueryState = mutableStateOf("")
-    var searchQuery by searchQueryState
-
-    var searching by mutableStateOf(false)
-    var searchResults by mutableStateOf<List<ComposeBoardsSelectorControllerViewModel.CellData>>(emptyList())
   }
 
   companion object {

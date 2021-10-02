@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.filters
 
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
@@ -37,6 +38,8 @@ class FiltersControllerViewModel : BaseViewModel() {
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var themeEngine: ThemeEngine
+
+  var searchQuery = mutableStateOf<String>("")
 
   private val _filters = mutableStateListOf<ChanFilterInfo>()
   val filters: List<ChanFilterInfo>

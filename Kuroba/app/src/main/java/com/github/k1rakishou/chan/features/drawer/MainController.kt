@@ -51,7 +51,6 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -108,6 +107,8 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.search.SimpleSearchState
+import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.ThreadController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -822,7 +823,7 @@ class MainController(
   @Composable
   private fun ColumnScope.BuildContent() {
     val historyControllerState by drawerViewModel.historyControllerState
-    val searchState = rememberDrawerSearchState()
+    val searchState = rememberSimpleSearchState<NavigationHistoryEntry>()
 
     BuildNavigationHistoryListHeader(
       searchQuery = searchState.queryState,
@@ -891,7 +892,7 @@ class MainController(
   @Composable
   private fun ColumnScope.BuildNavigationHistoryList(
     navHistoryEntryList: List<NavigationHistoryEntry>,
-    searchState: DrawerSearchState,
+    searchState: SimpleSearchState<NavigationHistoryEntry>,
     onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
@@ -909,13 +910,13 @@ class MainController(
 
     val query = searchState.query
     val searching = searchState.searching
-    val results = searchState.results
-
-    if (searching) {
-      return
+    val searchResults = if (searching) {
+      navHistoryEntryList
+    } else {
+      searchState.results
     }
 
-    if (results.isEmpty()) {
+    if (searchResults.isEmpty()) {
       KurobaComposeText(
         modifier = Modifier
           .fillMaxWidth()
@@ -956,8 +957,8 @@ class MainController(
           contentPadding = contentPadding,
           cells = GridCells.Fixed(count = spanCount),
           content = {
-            items(count = results.size) { index ->
-              val navHistoryEntry = results[index]
+            items(count = searchResults.size) { index ->
+              val navHistoryEntry = searchResults[index]
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
               val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
 
@@ -981,8 +982,8 @@ class MainController(
             .simpleVerticalScrollbar(state, chanTheme, contentPadding),
           contentPadding = contentPadding,
           content = {
-            items(count = results.size) { index ->
-              val navHistoryEntry = results[index]
+            items(count = searchResults.size) { index ->
+              val navHistoryEntry = searchResults[index]
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
               val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
 
@@ -1391,15 +1392,6 @@ class MainController(
     }
   }
 
-  @Composable
-  private fun rememberDrawerSearchState(
-    searchQuery: String = "",
-    results: List<NavigationHistoryEntry> = emptyList(),
-    searching: Boolean = false
-  ): DrawerSearchState {
-    return remember { DrawerSearchState(searchQuery, results, searching) }
-  }
-
   private fun showDrawerOptions() {
     val drawerOptions = mutableListOf<FloatingListMenuItem>()
 
@@ -1763,22 +1755,6 @@ class MainController(
 
     return navHistoryEntryList.filter { navigationHistoryEntry ->
       navigationHistoryEntry.title.contains(other = query, ignoreCase = true)
-    }
-  }
-
-  class DrawerSearchState(
-    searchQuery: String,
-    results: List<NavigationHistoryEntry>,
-    searching: Boolean
-  ) {
-    val queryState = mutableStateOf(searchQuery)
-    var query by queryState
-
-    var results by mutableStateOf(results)
-    var searching by mutableStateOf(searching)
-
-    fun reset() {
-      query = ""
     }
   }
 

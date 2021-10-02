@@ -41,6 +41,7 @@ import androidx.compose.material.Divider
 import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.Icon
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -50,10 +51,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
@@ -70,6 +73,7 @@ import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScroll
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSwitch
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
@@ -78,6 +82,7 @@ import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
 import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
 import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
+import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchState
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController.ToolbarSearchCallback
 import com.github.k1rakishou.chan.ui.theme.SimpleSquarePainter
@@ -90,6 +95,7 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FileChooserCallback
@@ -97,8 +103,10 @@ import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.joda.time.DateTime
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -158,7 +166,7 @@ class FiltersController(
 
     onInsetsChanged()
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
-
+    viewModel.searchQuery.value = ""
     mainScope.launch { viewModel.reloadFilters() }
 
     if (chanFilterMutable != null) {
@@ -201,11 +209,13 @@ class FiltersController(
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
-    // TODO(KurobaEx-filters): search
+    if (!visible) {
+      viewModel.searchQuery.value = ""
+    }
   }
 
   override fun onSearchEntered(entered: String) {
-    // TODO(KurobaEx-filters): search
+    viewModel.searchQuery.value = entered
   }
 
   @Composable
@@ -220,37 +230,13 @@ class FiltersController(
     Box(modifier = Modifier
       .fillMaxSize()
     ) {
-      LazyColumn(
-        modifier = Modifier
-          .fillMaxSize()
-          .reorderable(
-            state = reoderableState,
-            onMove = { from, to -> viewModel.reorderFilterInMemory(from, to) },
-            onDragEnd = { _, _ -> viewModel.persistReorderedFilters() }
-          )
-          .simpleVerticalScrollbar(
-            state = reoderableState.listState,
-            chanTheme = chanTheme,
-            contentPadding = contentPadding
-          ),
-        state = reoderableState.listState,
-        contentPadding = contentPadding
-      ) {
-        items(filters.size) { index ->
-          val chanFilterInfo = filters.get(index)
-
-          BuildChanFilter(
-            index = index,
-            totalCount = filters.size,
-            reoderableState = reoderableState,
-            chanFilterInfo = chanFilterInfo,
-            coroutineScope = coroutineScope,
-            onFilterClicked = { clickedFilter ->
-              showCreateNewFilterController(ChanFilterMutable.from(clickedFilter))
-            }
-          )
-        }
-      }
+      BuildFilterList(
+        filters = filters,
+        reoderableState = reoderableState,
+        chanTheme = chanTheme,
+        contentPadding = contentPadding,
+        coroutineScope = coroutineScope
+      )
 
       FloatingActionButton(
         modifier = Modifier
@@ -267,6 +253,93 @@ class FiltersController(
         )
       }
     }
+  }
+
+  @Composable
+  private fun BuildFilterList(
+    filters: List<FiltersControllerViewModel.ChanFilterInfo>,
+    reoderableState: ReorderableState,
+    chanTheme: ChanTheme,
+    contentPadding: PaddingValues,
+    coroutineScope: CoroutineScope
+  ) {
+    val searchState = rememberSimpleSearchState<FiltersControllerViewModel.ChanFilterInfo>(
+      searchQueryState = viewModel.searchQuery
+    )
+
+    LaunchedEffect(key1 = searchState.query, block = {
+      delay(125L)
+
+      withContext(Dispatchers.Default) {
+        searchState.searching = true
+        searchState.results = processSearchQuery(searchState.query, filters)
+        searchState.searching = false
+      }
+    })
+
+    val searching = searchState.searching
+    val searchQuery = searchState.query
+    val searchResults = if (searching) {
+      filters
+    } else {
+      searchState.results
+    }
+
+    if (searchResults.isEmpty()) {
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .padding(8.dp),
+        textAlign = TextAlign.Center,
+        text = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+      )
+
+      return
+    }
+
+    LazyColumn(
+      modifier = Modifier
+        .fillMaxSize()
+        .reorderable(
+          state = reoderableState,
+          onMove = { from, to -> viewModel.reorderFilterInMemory(from, to) },
+          onDragEnd = { _, _ -> viewModel.persistReorderedFilters() }
+        )
+        .simpleVerticalScrollbar(
+          state = reoderableState.listState,
+          chanTheme = chanTheme,
+          contentPadding = contentPadding
+        ),
+      state = reoderableState.listState,
+      contentPadding = contentPadding
+    ) {
+      items(searchResults.size) { index ->
+        val chanFilterInfo = searchResults.get(index)
+
+        BuildChanFilter(
+          index = index,
+          totalCount = searchResults.size,
+          reoderableState = reoderableState,
+          chanFilterInfo = chanFilterInfo,
+          coroutineScope = coroutineScope,
+          onFilterClicked = { clickedFilter ->
+            showCreateNewFilterController(ChanFilterMutable.from(clickedFilter))
+          }
+        )
+      }
+    }
+  }
+
+  private fun processSearchQuery(
+    query: String,
+    filters: List<FiltersControllerViewModel.ChanFilterInfo>
+  ): List<FiltersControllerViewModel.ChanFilterInfo> {
+    if (query.isEmpty()) {
+      return filters
+    }
+
+    return filters
+      .filter { chanFilterInfo -> chanFilterInfo.filterText.contains(query, ignoreCase = true) }
   }
 
   @Composable

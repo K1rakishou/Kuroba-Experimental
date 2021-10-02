@@ -557,16 +557,15 @@ abstract class Controller(@JvmField var context: Context) {
     val isInsidePopupOrFloatingController = isInsidePopupOrFloatingController()
     val isInsideRequiresNoBottomNavBarController = isInsideRequiresNoBottomNavBarController()
     val isSplitLayoutMode = ChanSettings.isSplitLayoutMode()
-    val bottomNavigationViewEnabled =
-      ChanSettings.bottomNavigationViewEnabled.get() && !isInsideRequiresNoBottomNavBarController
+    val bottomNavigationViewEnabled = ChanSettings.bottomNavigationViewEnabled.get()
+      && !isInsideRequiresNoBottomNavBarController
     val isMainController = this is MainController
-
     val isKeyboardOpened = globalWindowInsetsManager.isKeyboardOpened
 
     // Main controller is a special case (it may or may not have the bottomNavView) so we handle
     // it separately
     if (isKeyboardOpened && !isMainController) {
-      if (isInsideBottomNavAwareController && !isSplitLayoutMode) {
+      if (ChanSettings.isBottomNavigationPresent()) {
         return 0
       }
 

@@ -68,6 +68,8 @@ class ExportFiltersUseCase(
     val action: Int,
     @Json(name = "color")
     val color: Int,
+    @Json(name = "note")
+    val note: String? = null,
     @Json(name = "apply_to_replies")
     val applyToReplies: Boolean,
     @Json(name = "only_on_op")
@@ -119,6 +121,7 @@ class ExportFiltersUseCase(
         boards = parsedBoards.toSet(),
         action = action,
         color = color,
+        note = note,
         applyToReplies = applyToReplies,
         onlyOnOP = onlyOnOP,
         applyToSaved = applyToSaved
@@ -158,6 +161,7 @@ class ExportFiltersUseCase(
           boards = boardsMappedToString,
           action = chanFilter.action,
           color = chanFilter.color,
+          note = chanFilter.note,
           applyToReplies = chanFilter.applyToReplies,
           onlyOnOP = chanFilter.onlyOnOP,
           applyToSaved = chanFilter.applyToSaved
