@@ -7,12 +7,16 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.buildAnnotatedString
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.compose.reorder.move
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
+import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.toHashSetBy
@@ -48,6 +52,8 @@ class FiltersControllerViewModel : BaseViewModel() {
   private val _activeBoardsCountForAllSites = AtomicInteger(0)
   val activeBoardsCountForAllSites: Int
     get() = _activeBoardsCountForAllSites.get()
+
+  val viewModelSelectionHelper = ViewModelSelectionHelper<ChanFilter, MenuItemClickEvent>()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -98,6 +104,25 @@ class FiltersControllerViewModel : BaseViewModel() {
 
     if (moved) {
       _filters.move(fromIdx = fromIndex, toIdx = toIndex)
+    }
+  }
+
+  fun toggleSelection(clickedFilter: ChanFilter) {
+    viewModelSelectionHelper.toggleSelection(clickedFilter)
+  }
+
+  suspend fun deleteFilters(filtersToDelete: List<ChanFilter>) {
+    if (filtersToDelete.isEmpty()) {
+      return
+    }
+
+    filtersToDelete.forEach { filter ->
+      suspendCoroutine<Unit> { continuation ->
+        chanFilterManager.deleteFilter(
+          chanFilter = filter,
+          onDeleted = { continuation.resume(Unit) }
+        )
+      }
     }
   }
 
@@ -265,11 +290,53 @@ class FiltersControllerViewModel : BaseViewModel() {
     }
   }
 
+  fun getBottomPanelMenus(): List<BottomMenuPanelItem> {
+    val currentlySelectedItems = viewModelSelectionHelper.getCurrentlySelectedItems()
+    if (currentlySelectedItems.isEmpty()) {
+      return emptyList()
+    }
+
+    val itemsList = mutableListOf<BottomMenuPanelItem>()
+
+    itemsList += BottomMenuPanelItem(
+      FilterMenuItemId(MenuItemType.Delete),
+      R.drawable.ic_baseline_delete_outline_24,
+      R.string.bottom_menu_item_delete,
+      {
+        val clickEvent = MenuItemClickEvent(
+          menuItemType = MenuItemType.Delete,
+          items = viewModelSelectionHelper.getCurrentlySelectedItems()
+        )
+
+        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+        viewModelSelectionHelper.unselectAll()
+      }
+    )
+
+    return itemsList
+  }
+
   data class ChanFilterInfo(
     val chanFilter: ChanFilter,
     val filterText: AnnotatedString,
     val detectedLinksInNote: List<TextRange>
   )
+
+  class FilterMenuItemId(val menuItemType: MenuItemType) :
+    BottomMenuPanelItemId {
+    override fun id(): Int {
+      return menuItemType.id
+    }
+  }
+
+  data class MenuItemClickEvent(
+    val menuItemType: MenuItemType,
+    val items: List<ChanFilter>
+  )
+
+  enum class MenuItemType(val id: Int) {
+    Delete(0)
+  }
 
   companion object {
     const val squareDrawableKey = "[SQUARE_PAINTER]"

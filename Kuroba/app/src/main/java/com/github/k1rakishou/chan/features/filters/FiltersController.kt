@@ -19,22 +19,21 @@ package com.github.k1rakishou.chan.features.filters
 import android.content.Context
 import android.net.Uri
 import android.text.Html
+import android.view.HapticFeedbackConstants
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material.Divider
@@ -61,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.FilterEngine
@@ -69,6 +69,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
@@ -76,6 +77,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.SelectableItem
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
 import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
 import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
@@ -88,7 +90,6 @@ import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationCont
 import com.github.k1rakishou.chan.ui.theme.SimpleSquarePainter
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -105,6 +106,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -115,7 +117,8 @@ import javax.inject.Inject
 
 class FiltersController(
   context: Context,
-  private val chanFilterMutable: ChanFilterMutable?
+  private val chanFilterMutable: ChanFilterMutable?,
+  private val mainControllerCallbacks: MainControllerCallbacks
 ) :
   Controller(context),
   ToolbarSearchCallback,
@@ -167,7 +170,23 @@ class FiltersController(
     onInsetsChanged()
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
     viewModel.searchQuery.value = ""
+
+    mainScope.launch {
+      viewModel.viewModelSelectionHelper.selectionMode.collect { selectionEvent ->
+        onNewSelectionEvent(selectionEvent)
+      }
+    }
+
+    mainScope.launch {
+      viewModel.viewModelSelectionHelper.bottomPanelMenuItemClickEventFlow
+        .collect { menuItemClickEvent ->
+          onMenuItemClicked(menuItemClickEvent.menuItemType, menuItemClickEvent.items)
+        }
+    }
+
     mainScope.launch { viewModel.reloadFilters() }
+
+    mainControllerCallbacks.onBottomPanelStateChanged { onInsetsChanged() }
 
     if (chanFilterMutable != null) {
       mainScope.launch {
@@ -196,13 +215,23 @@ class FiltersController(
 
   override fun onDestroy() {
     super.onDestroy()
+
+    mainControllerCallbacks.hideBottomPanel()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+  }
+
+  override fun onBack(): Boolean {
+    if (viewModel.viewModelSelectionHelper.unselectAll()) {
+      return true
+    }
+
+    return super.onBack()
   }
 
   override fun onInsetsChanged() {
     val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
       globalWindowInsetsManager = globalWindowInsetsManager,
-      mainControllerCallbacks = null
+      mainControllerCallbacks = mainControllerCallbacks
     )
 
     bottomPadding.value = bottomPaddingDp
@@ -227,16 +256,24 @@ class FiltersController(
     val contentPadding = PaddingValues(bottom = bottomPd.dp + FAB_SIZE + (FAB_MARGIN / 2))
     val reoderableState = rememberReorderState()
 
-    Box(modifier = Modifier
-      .fillMaxSize()
-    ) {
-      BuildFilterList(
-        filters = filters,
-        reoderableState = reoderableState,
-        chanTheme = chanTheme,
-        contentPadding = contentPadding,
-        coroutineScope = coroutineScope
-      )
+    Box(modifier = Modifier.fillMaxSize()) {
+      if (filters.isNotEmpty()) {
+        BuildFilterList(
+          filters = filters,
+          reoderableState = reoderableState,
+          chanTheme = chanTheme,
+          contentPadding = contentPadding,
+          coroutineScope = coroutineScope
+        )
+      } else {
+        KurobaComposeText(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          text = stringResource(id = R.string.filter_controller_not_filters),
+          textAlign = TextAlign.Center
+        )
+      }
 
       FloatingActionButton(
         modifier = Modifier
@@ -323,23 +360,25 @@ class FiltersController(
           chanFilterInfo = chanFilterInfo,
           coroutineScope = coroutineScope,
           onFilterClicked = { clickedFilter ->
+            if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+              viewModel.toggleSelection(clickedFilter)
+
+              return@BuildChanFilter
+            }
+
             showCreateNewFilterController(ChanFilterMutable.from(clickedFilter))
+          },
+          onFilterLongClicked = { clickedFilter ->
+            if (requireToolbarNavController().isSearchOpened) {
+              return@BuildChanFilter
+            }
+
+            controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
+            viewModel.toggleSelection(clickedFilter)
           }
         )
       }
     }
-  }
-
-  private fun processSearchQuery(
-    query: String,
-    filters: List<FiltersControllerViewModel.ChanFilterInfo>
-  ): List<FiltersControllerViewModel.ChanFilterInfo> {
-    if (query.isEmpty()) {
-      return filters
-    }
-
-    return filters
-      .filter { chanFilterInfo -> chanFilterInfo.filterText.contains(query, ignoreCase = true) }
   }
 
   @Composable
@@ -349,92 +388,100 @@ class FiltersController(
     reoderableState: ReorderableState,
     chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo,
     coroutineScope: CoroutineScope,
-    onFilterClicked: (ChanFilter) -> Unit
+    onFilterClicked: (ChanFilter) -> Unit,
+    onFilterLongClicked: (ChanFilter) -> Unit,
   ) {
     val chanTheme = LocalChanTheme.current
+    val selectionEvent by viewModel.viewModelSelectionHelper.collectSelectionModeAsState()
+    val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
+    val chanFilter = chanFilterInfo.chanFilter
 
-    Column(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight()
-        .draggedItem(reoderableState.offsetByIndex(index))
-        .kurobaClickable(bounded = true, onClick = { onFilterClicked(chanFilterInfo.chanFilter) })
-        .background(color = chanTheme.backColorCompose)
+    SelectableItem(
+      isInSelectionMode = isInSelectionMode,
+      observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(chanFilter) },
+      onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(chanFilter) }
     ) {
-      Row(
+      Column(
         modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
+          .draggedItem(reoderableState.offsetByIndex(index))
+          .kurobaClickable(
+            bounded = true,
+            onLongClick = { onFilterLongClicked(chanFilter) },
+            onClick = { onFilterClicked(chanFilter) }
+          )
+          .background(color = chanTheme.backColorCompose)
       ) {
-        val squareDrawableInlineContent = remember(key1 = chanFilterInfo) {
-          getSquareDrawableContent(chanFilterInfo = chanFilterInfo)
-        }
-
-        val fullText = remember(key1 = chanFilterInfo.filterText) {
-          return@remember buildAnnotatedString {
-            append("#")
-            append((index + 1).toString())
-            append(" ")
-            append("\n")
-
-            append(chanFilterInfo.filterText)
+        Row {
+          val squareDrawableInlineContent = remember(key1 = chanFilterInfo) {
+            getSquareDrawableContent(chanFilterInfo = chanFilterInfo)
           }
-        }
 
-        KurobaComposeClickableText(
-          modifier = Modifier
-            .weight(1f)
-            .wrapContentHeight()
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-          text = fullText,
-          inlineContent = squareDrawableInlineContent,
-          onTextClicked = { textLayoutResult, position -> handleClickedText(textLayoutResult, position) }
-        )
+          val fullText = remember(key1 = chanFilterInfo.filterText) {
+            return@remember buildAnnotatedString {
+              append("#")
+              append((index + 1).toString())
+              append(" ")
+              append("\n")
 
-        Column(
-          modifier = Modifier
-            .fillMaxHeight()
-            .width(42.dp)
-            .padding(end = 8.dp)
-        ) {
-          KurobaComposeSwitch(
-            modifier = Modifier
-              .fillMaxWidth()
-              .wrapContentHeight()
-              .padding(all = 4.dp),
-            initiallyChecked = chanFilterInfo.chanFilter.enabled,
-            onCheckedChange = { nowChecked ->
-              if (reoderableState.draggedIndex != null) {
-                return@KurobaComposeSwitch
-              }
-
-              coroutineScope.launch {
-                viewModel.enableOrDisableFilter(nowChecked, chanFilterInfo.chanFilter)
-              }
+              append(chanFilterInfo.filterText)
             }
-          )
+          }
 
-          Spacer(modifier = Modifier.weight(1f))
-
-          KurobaComposeIcon(
+          KurobaComposeClickableText(
             modifier = Modifier
-              .fillMaxWidth()
-              .height(32.dp)
-              .padding(all = 4.dp)
-              .detectReorder(reoderableState),
-            drawableId = R.drawable.ic_baseline_reorder_24,
-            themeEngine = themeEngine
+              .weight(1f)
+              .wrapContentHeight()
+              .padding(horizontal = 8.dp, vertical = 4.dp),
+            text = fullText,
+            inlineContent = squareDrawableInlineContent,
+            onTextClicked = { textLayoutResult, position -> handleClickedText(textLayoutResult, position) }
           )
+
+          Column(
+            modifier = Modifier
+              .fillMaxHeight()
+              .wrapContentWidth()
+              .padding(end = 8.dp)
+          ) {
+            KurobaComposeSwitch(
+              modifier = Modifier
+                .wrapContentWidth()
+                .wrapContentHeight()
+                .padding(all = 4.dp),
+              initiallyChecked = chanFilter.enabled,
+              onCheckedChange = { nowChecked ->
+                if (reoderableState.draggedIndex != null) {
+                  return@KurobaComposeSwitch
+                }
+
+                coroutineScope.launch {
+                  viewModel.enableOrDisableFilter(nowChecked, chanFilter)
+                }
+              }
+            )
+
+            KurobaComposeIcon(
+              modifier = Modifier
+                .size(32.dp)
+                .padding(all = 4.dp)
+                .align(Alignment.CenterHorizontally)
+                .detectReorder(reoderableState),
+              drawableId = R.drawable.ic_baseline_reorder_24,
+              themeEngine = themeEngine
+            )
+          }
+
         }
 
-      }
-
-      if (index in 0 until (totalCount - 1)) {
-        Divider(
-          modifier = Modifier.padding(horizontal = 4.dp),
-          color = chanTheme.dividerColorCompose,
-          thickness = 1.dp
-        )
+        if (index in 0 until (totalCount - 1)) {
+          Divider(
+            modifier = Modifier.padding(horizontal = 4.dp),
+            color = chanTheme.dividerColorCompose,
+            thickness = 1.dp
+          )
+        }
       }
     }
   }
@@ -538,7 +585,7 @@ class FiltersController(
   private fun helpClicked(item: ToolbarMenuSubItem) {
     DialogFactory.Builder.newBuilder(context, dialogFactory)
       .withTitle(R.string.help)
-      .withDescription(Html.fromHtml(AppModuleAndroidUtils.getString(R.string.filters_controller_help_message)))
+      .withDescription(Html.fromHtml(getString(R.string.filters_controller_help_message)))
       .withCancelable(true)
       .withNegativeButtonTextId(R.string.filters_controller_open_regex101)
       .withOnNegativeButtonClickListener { openLink("https://regex101.com/") }
@@ -581,6 +628,68 @@ class FiltersController(
     return mapOf(
       FiltersControllerViewModel.squareDrawableKey to InlineTextContent(placeholder = placeholder, children = children)
     )
+  }
+
+  private fun onMenuItemClicked(
+    menuItemType: FiltersControllerViewModel.MenuItemType,
+    selectedItems: List<ChanFilter>
+  ) {
+    if (selectedItems.isEmpty()) {
+      return
+    }
+
+    when (menuItemType) {
+      FiltersControllerViewModel.MenuItemType.Delete -> {
+        mainScope.launch { viewModel.deleteFilters(selectedItems) }
+      }
+    }
+  }
+
+  private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent?) {
+    when (selectionEvent) {
+      BaseSelectionHelper.SelectionEvent.EnteredSelectionMode,
+      BaseSelectionHelper.SelectionEvent.ItemSelectionToggled -> {
+        mainControllerCallbacks.showBottomPanel(viewModel.getBottomPanelMenus())
+        enterSelectionModeOrUpdate()
+      }
+      BaseSelectionHelper.SelectionEvent.ExitedSelectionMode -> {
+        mainControllerCallbacks.hideBottomPanel()
+        requireNavController().requireToolbar().exitSelectionMode()
+      }
+      null -> return
+    }
+  }
+
+  private fun enterSelectionModeOrUpdate() {
+    val toolbar = requireNavController().requireToolbar()
+    if (!toolbar.isInSelectionMode) {
+      toolbar.enterSelectionMode(formatSelectionText())
+      return
+    }
+
+    navigation.selectionStateText = formatSelectionText()
+    toolbar.updateSelectionTitle(navigation)
+  }
+
+  private fun formatSelectionText(): String {
+    require(viewModel.viewModelSelectionHelper.isInSelectionMode()) { "Not in selection mode" }
+
+    return getString(
+      R.string.filter_controller_selection_mode,
+      viewModel.viewModelSelectionHelper.selectedItemsCount()
+    )
+  }
+
+  private fun processSearchQuery(
+    query: String,
+    filters: List<FiltersControllerViewModel.ChanFilterInfo>
+  ): List<FiltersControllerViewModel.ChanFilterInfo> {
+    if (query.isEmpty()) {
+      return filters
+    }
+
+    return filters
+      .filter { chanFilterInfo -> chanFilterInfo.filterText.contains(query, ignoreCase = true) }
   }
 
   companion object {

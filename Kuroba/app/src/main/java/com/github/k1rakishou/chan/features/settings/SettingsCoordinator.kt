@@ -51,7 +51,7 @@ import kotlin.time.ExperimentalTime
 class SettingsCoordinator(
   private val context: Context,
   private val navigationController: NavigationController,
-  private val drawerCallbacks: MainControllerCallbacks?
+  private val mainControllerCallbacks: MainControllerCallbacks
 ): SettingsCoordinatorCallbacks {
 
   @Inject
@@ -117,6 +117,7 @@ class SettingsCoordinator(
   private val mainSettingsScreen by lazy {
     MainSettingsScreen(
       context,
+      mainControllerCallbacks,
       chanFilterManager,
       siteManager,
       updateManager.get(),
@@ -211,7 +212,7 @@ class SettingsCoordinator(
       context,
       navigationController,
       proxyStorage,
-      drawerCallbacks
+      mainControllerCallbacks
     )
   }
 

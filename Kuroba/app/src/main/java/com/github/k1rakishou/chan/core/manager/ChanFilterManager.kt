@@ -169,7 +169,7 @@ class ChanFilterManager(
       .ignore()
   }
 
-  fun deleteFilter(chanFilter: ChanFilter, onUpdated: () -> Unit) {
+  fun deleteFilter(chanFilter: ChanFilter, onDeleted: () -> Unit) {
     serializedCoroutineExecutor.post {
       val deletedFilterIndex = lock.write {
         val index = filters.indexOf(chanFilter)
@@ -181,7 +181,7 @@ class ChanFilterManager(
       }
 
       if (deletedFilterIndex < 0) {
-        onUpdated()
+        onDeleted()
         return@post
       }
 
@@ -197,7 +197,7 @@ class ChanFilterManager(
 
       if (!success) {
         lock.write { filters.add(chanFilter) }
-        onUpdated()
+        onDeleted()
         return@post
       }
 
@@ -221,7 +221,7 @@ class ChanFilterManager(
         }
       }
 
-      onUpdated()
+      onDeleted()
     }
   }
 

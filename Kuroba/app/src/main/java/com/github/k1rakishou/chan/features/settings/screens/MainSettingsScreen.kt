@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
+import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
@@ -43,6 +44,7 @@ import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 
 class MainSettingsScreen(
   context: Context,
+  private val mainControllerCallbacks: MainControllerCallbacks,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val updateManager: UpdateManager,
@@ -267,7 +269,8 @@ class MainSettingsScreen(
           callback = {
             val filtersController = FiltersController(
               context = context,
-              chanFilterMutable = null
+              chanFilterMutable = null,
+              mainControllerCallbacks = mainControllerCallbacks
             )
 
             navigationController.pushController(filtersController)

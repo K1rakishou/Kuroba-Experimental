@@ -407,7 +407,8 @@ abstract class ThreadController(
   override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
     val filtersController = FiltersController(
       context = context,
-      chanFilterMutable = chanFilterMutable
+      chanFilterMutable = chanFilterMutable,
+      mainControllerCallbacks = mainControllerCallbacks
     )
 
     if (doubleNavigationController != null) {
