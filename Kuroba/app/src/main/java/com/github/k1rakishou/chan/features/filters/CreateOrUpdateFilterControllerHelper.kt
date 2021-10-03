@@ -64,7 +64,6 @@ object CreateOrUpdateFilterControllerHelper {
       return FilterValidationResult.Error(getString(R.string.filter_no_filter_type_selected))
     }
 
-    // TODO(KurobaEx-filters): ???
     if (!chanFilterMutable.allBoards() && chanFilterMutable.boards.isEmpty()) {
       return FilterValidationResult.Error(getString(R.string.filter_no_boards_selected))
     }

@@ -310,6 +310,18 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_controller_selection_mode">Selected %1$d filter(s)</string>
     <string name="filter_controller_not_filters">No filters created yet</string>
 
+    <string name="filter_pattern_part_no_pattern">No pattern</string>
+    <string name="filter_pattern_part">Pattern:</string>
+    <string name="filter_filter_type_part">Filter type:</string>
+    <string name="filter_boards_part">Boards:</string>
+    <string name="filter_action_part">Action:</string>
+    <string name="filter_apply_to_replies_part">Apply to replies:</string>
+    <string name="filter_only_apply_to_op_part">Only apply to OP:</string>
+    <string name="filter_apply_to_own_posts_part">Apply to my own posts:</string>
+    <string name="filter_note_part">Note:</string>
+    <string name="filter_all_active_boards_part">All currently added boards (%1$s)</string>
+    <string name="filter_n_boards_part">%1$d board(s)</string>
+
     <string name="filter_help_title">Filter help</string>
     <string name="filter_help">
 <![CDATA[

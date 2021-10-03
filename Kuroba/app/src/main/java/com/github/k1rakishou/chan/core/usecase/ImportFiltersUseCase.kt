@@ -70,13 +70,11 @@ class ImportFiltersUseCase(
       return
     }
 
-    chanFilters.forEach { chanFilter ->
-      suspendCancellableCoroutine<Unit> { cancellableContinuation ->
-        chanFilterManager.createOrUpdateFilter(
-          chanFilter = chanFilter,
-          onFinished = { cancellableContinuation.resume(Unit) }
-        )
-      }
+    suspendCancellableCoroutine<Unit> { cancellableContinuation ->
+      chanFilterManager.createOrUpdateFilters(
+        chanFilters = chanFilters,
+        onFinished = { cancellableContinuation.resume(Unit) }
+      )
     }
 
     Logger.d(TAG, "Done")

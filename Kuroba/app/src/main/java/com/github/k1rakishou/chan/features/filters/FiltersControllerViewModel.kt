@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.toHashSetBy
@@ -247,7 +248,6 @@ class FiltersControllerViewModel : BaseViewModel() {
       .map { linkSpan -> TextRange(linkSpan.beginIndex, linkSpan.endIndex) }
   }
 
-  // TODO(KurobaEx-filters): strings
   private fun extractFilterTextInfo(
     chanFilter: ChanFilter,
     detectedLinksInNote: List<TextRange>,
@@ -255,8 +255,12 @@ class FiltersControllerViewModel : BaseViewModel() {
     activeBoardsCountForAllSites: Int?
   ): AnnotatedString {
     return buildAnnotatedString {
-      append(AnnotatedString("Pattern: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
-      append(chanFilter.pattern ?: "<No pattern?!>")
+      append(
+        AnnotatedString(getString(R.string.filter_pattern_part),
+          SpanStyle(color = chanTheme.textColorSecondaryCompose))
+      )
+      append(" ")
+      append(chanFilter.pattern ?: getString(R.string.filter_pattern_part_no_pattern))
       append("\n")
 
       val filterTypes = FilterType.forFlags(chanFilter.type)
@@ -265,22 +269,38 @@ class FiltersControllerViewModel : BaseViewModel() {
           transform = { filterType -> FilterType.filterTypeName(filterType) }
         )
 
-      append(AnnotatedString("Filter type: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+      append(
+        AnnotatedString(getString(R.string.filter_filter_type_part),
+          SpanStyle(color = chanTheme.textColorSecondaryCompose))
+      )
+      append(" ")
       append(filterTypes)
       append("\n")
 
-      append(AnnotatedString("Boards: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+      append(
+        AnnotatedString(getString(R.string.filter_boards_part),
+          SpanStyle(color = chanTheme.textColorSecondaryCompose))
+      )
+      append(" ")
 
       val enabledOnBoards = if (chanFilter.allBoards()) {
-        "All currently added boards (${activeBoardsCountForAllSites ?: "???"})"
+        getString(
+          R.string.filter_all_active_boards_part,
+          activeBoardsCountForAllSites?.toString() ?: "???"
+        )
       } else {
-        "${chanFilter.boards.size} boards"
+        getString(R.string.filter_n_boards_part, chanFilter.boards.size)
       }
 
       append(enabledOnBoards)
       append("\n")
 
-      append(AnnotatedString("Action: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+      append(
+        AnnotatedString(getString(R.string.filter_action_part),
+          SpanStyle(color = chanTheme.textColorSecondaryCompose))
+      )
+      append(" ")
+
       val filterAction = FilterAction.forId(chanFilter.action)
       val filterActionName = FilterAction.filterActionName(filterAction)
       append(filterActionName)
@@ -292,19 +312,31 @@ class FiltersControllerViewModel : BaseViewModel() {
 
       if (chanFilter.applyToReplies) {
         append("\n")
-        append(AnnotatedString("Apply to replies: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+        append(
+          AnnotatedString(getString(R.string.filter_apply_to_replies_part),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
         append(chanFilter.applyToReplies.toString())
       }
 
       if (chanFilter.onlyOnOP) {
         append("\n")
-        append(AnnotatedString("Only apply to OP: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+        append(
+          AnnotatedString(getString(R.string.filter_only_apply_to_op_part),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
         append(chanFilter.onlyOnOP.toString())
       }
 
       if (chanFilter.applyToSaved) {
         append("\n")
-        append(AnnotatedString("Apply to my own posts: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+        append(
+          AnnotatedString(getString(R.string.filter_apply_to_own_posts_part),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
         append(chanFilter.applyToSaved.toString())
       }
 
@@ -331,7 +363,11 @@ class FiltersControllerViewModel : BaseViewModel() {
           }
         }
 
-        append(AnnotatedString("Note: ", SpanStyle(color = chanTheme.textColorSecondaryCompose)))
+        append(
+          AnnotatedString(getString(R.string.filter_note_part),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
         append(filterNotAnnotated)
       }
     }

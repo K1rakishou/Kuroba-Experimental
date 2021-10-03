@@ -229,6 +229,7 @@ class FiltersController(
   override fun onDestroy() {
     super.onDestroy()
 
+    viewModel.viewModelSelectionHelper.unselectAll()
     mainControllerCallbacks.hideBottomPanel()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
@@ -295,7 +296,10 @@ class FiltersController(
           .offset(x = -FAB_MARGIN, y = -(bottomPd.dp + (FAB_MARGIN / 2))),
         backgroundColor = chanTheme.accentColorCompose,
         contentColor = Color.White,
-        onClick = { showCreateNewFilterController(null) }
+        onClick = {
+          viewModel.viewModelSelectionHelper.unselectAll()
+          showCreateNewFilterController(null)
+        }
       ) {
         Icon(
           painter = painterResource(id = R.drawable.ic_add_white_24dp),

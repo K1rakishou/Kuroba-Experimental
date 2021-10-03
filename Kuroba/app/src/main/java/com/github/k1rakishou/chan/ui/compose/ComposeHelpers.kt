@@ -43,10 +43,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 object ComposeHelpers {
   private const val TAG = "ComposeHelpers"
   const val enableDebugCompositionLogs = true
-
+  private val DefaultPaddingValues = PaddingValues(0.dp)
   val SCROLLBAR_WIDTH = 8.dp
-
-  class DebugRef(var value: Int)
 
   @Composable
   inline fun LogCompositions(tag: String) {
@@ -67,8 +65,6 @@ object ComposeHelpers {
       )
     }
   }
-
-  private val DefaultPaddingValues = PaddingValues(0.dp)
 
   fun Modifier.simpleVerticalScrollbar(
     state: LazyListState,
@@ -153,7 +149,8 @@ object ComposeHelpers {
         return@forEach
       }
 
-      annotatedStringBuilder.addStyle(spanStyle, getSpanStart(characterStyle), getSpanEnd(characterStyle))
+      annotatedStringBuilder
+        .addStyle(spanStyle, getSpanStart(characterStyle), getSpanEnd(characterStyle))
     }
 
     return annotatedStringBuilder.toAnnotatedString()
@@ -225,5 +222,7 @@ object ComposeHelpers {
 
     return Color(color)
   }
+
+  class DebugRef(var value: Int)
 
 }
