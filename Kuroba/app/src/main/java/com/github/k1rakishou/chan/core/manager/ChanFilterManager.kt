@@ -83,6 +83,16 @@ class ChanFilterManager(
       .asSharedFlow()
   }
 
+  fun allFiltersEnabled(): Boolean {
+    return lock.read {
+      if (filters.isEmpty()) {
+        return@read true
+      }
+
+      return@read filters.all { chanFilter -> chanFilter.enabled }
+    }
+  }
+
   private suspend fun loadFiltersInternal() {
     val loadFiltersResult = chanFilterRepository.loadAllFilters()
     if (loadFiltersResult is ModularResult.Error) {
@@ -112,35 +122,60 @@ class ChanFilterManager(
   }
 
   fun createOrUpdateFilter(chanFilter: ChanFilter, onFinished: () -> Unit) {
+    createOrUpdateFilters(listOf(chanFilter), onFinished)
+  }
+
+  fun createOrUpdateFilters(chanFilters: Collection<ChanFilter>, onFinished: () -> Unit) {
+    if (chanFilters.isEmpty()) {
+      onFinished()
+      return
+    }
+
     serializedCoroutineExecutor.post {
-      val indexOfThisFilter = lock.read {
-        if (!chanFilter.hasDatabaseId()) {
-          return@read -1
+      val toCreate = mutableMapOf<ChanFilter, Int>()
+      val toUpdate = mutableMapOf<ChanFilter, Int>()
+
+      lock.read {
+        for ((index, chanFilter) in chanFilters.withIndex()) {
+          if (!chanFilter.hasDatabaseId()) {
+            toCreate[chanFilter] = index
+            break
+          }
+
+          val prevIndex = filters
+            .indexOfFirst { filter -> filter.getDatabaseId() == chanFilter.getDatabaseId() }
+
+          if (prevIndex < 0) {
+            toCreate[chanFilter] = prevIndex
+          } else {
+            toUpdate[chanFilter] = prevIndex
+          }
         }
-
-        return@read filters
-          .indexOfFirst { filter -> filter.getDatabaseId() == chanFilter.getDatabaseId() }
       }
 
-      val createFilter = indexOfThisFilter < 0
+      var anySucceeded = false
 
-      val success = if (createFilter) {
-        createNewFilterInternal(indexOfThisFilter, chanFilter)
-      } else {
-        updateOldFilterInternal(indexOfThisFilter, chanFilter)
+      if (toCreate.isNotEmpty()) {
+        val createdFilters = createNewFilterInternal(toCreate)
+        if (createdFilters.isNotEmpty()) {
+          anySucceeded = true
+
+          filterChangesFlow.emit(FilterEvent.Created(createdFilters))
+        }
       }
 
-      if (success) {
+      if (toUpdate.isNotEmpty()) {
+        val updatedFilters = updateOldFilterInternal(toUpdate)
+        if (updatedFilters.isNotEmpty()) {
+          anySucceeded = true
+          filterChangesFlow.emit(FilterEvent.Updated(updatedFilters))
+        }
+      }
+
+
+      if (anySucceeded) {
         clearFiltersAndPostHashes()
-        clearFilterWatchGroups(chanFilter)
-
-        val filterEvent = if (createFilter) {
-          FilterEvent.Created(chanFilter)
-        } else {
-          FilterEvent.Updated(listOf(chanFilter))
-        }
-
-        filterChangesFlow.emit(filterEvent)
+        clearFilterWatchGroups(chanFilters)
       }
 
       onFinished()
@@ -170,33 +205,54 @@ class ChanFilterManager(
   }
 
   fun deleteFilter(chanFilter: ChanFilter, onDeleted: () -> Unit) {
+    deleteFilters(listOf(chanFilter), onDeleted)
+  }
+
+  fun deleteFilters(chanFilters: Collection<ChanFilter>, onDeleted: () -> Unit) {
+    if (chanFilters.isEmpty()) {
+      onDeleted()
+      return
+    }
+
     serializedCoroutineExecutor.post {
-      val deletedFilterIndex = lock.write {
-        val index = filters.indexOf(chanFilter)
-        if (index >= 0) {
-          filters.remove(chanFilter)
+      var atLeastOneDeleted = false
+      val filterWatchGroupResultMap = mutableMapOf<Long, ModularResult<List<ChanFilterWatchGroup>>>()
+
+      for (chanFilter in chanFilters) {
+        val deletedFilterIndex = lock.write {
+          val index = filters.indexOf(chanFilter)
+          if (index >= 0) {
+            filters.remove(chanFilter)
+          }
+
+          return@write index
         }
 
-        return@write index
+        if (deletedFilterIndex < 0) {
+          break
+        }
+
+        // It is important to do this before actually deleting the filter, otherwise this will always
+        // be returning null.
+        val filterWatchGroupResult = chanFilterWatchRepository.getFilterWatchGroupsByFilterId(
+          chanFilter.getDatabaseId()
+        )
+
+        filterWatchGroupResultMap[chanFilter.getDatabaseId()] = filterWatchGroupResult
+
+        val success = chanFilterRepository.deleteFilter(chanFilter)
+          .peekError { error -> Logger.e(TAG, "chanFilterRepository.deleteFilter() error", error) }
+          .mapErrorToValue { false }
+
+        if (!success) {
+          lock.write { filters.add(chanFilter) }
+          break
+        }
+
+        atLeastOneDeleted = true
       }
 
-      if (deletedFilterIndex < 0) {
-        onDeleted()
-        return@post
-      }
-
-      // It is important to do this before actually deleting the filter, otherwise this will always
-      // be returning null.
-      val filterWatchGroupResult = chanFilterWatchRepository.getFilterWatchGroupsByFilterId(
-        chanFilter.getDatabaseId()
-      )
-
-      val success = chanFilterRepository.deleteFilter(chanFilter)
-        .peekError { error -> Logger.e(TAG, "chanFilterRepository.deleteFilter() error", error) }
-        .mapErrorToValue { false }
-
-      if (!success) {
-        lock.write { filters.add(chanFilter) }
+      if (!atLeastOneDeleted) {
         onDeleted()
         return@post
       }
@@ -208,16 +264,23 @@ class ChanFilterManager(
         .ignore()
 
       clearFiltersAndPostHashes()
-      clearFilterWatchGroups(chanFilter)
+      clearFilterWatchGroups(chanFilters)
 
-      filterChangesFlow.emit(FilterEvent.Deleted(listOf(chanFilter)))
+      filterChangesFlow.emit(FilterEvent.Deleted(chanFilters))
 
-      if (filterWatchGroupResult is ModularResult.Error) {
-        Logger.e(TAG, "Failed to get filter watch group by filter id", filterWatchGroupResult.error)
-      } else {
-        val filterWatchGroups = (filterWatchGroupResult as ModularResult.Value).value
-        if (filterWatchGroups.isNotEmpty()) {
-          filterGroupDeletionsFlow.tryEmit(FilterDeletionEvent(chanFilter, filterWatchGroups))
+      filterWatchGroupResultMap.entries.forEach { (databaseId, filterWatchGroupResult) ->
+        if (filterWatchGroupResult is ModularResult.Error) {
+          Logger.e(TAG, "Failed to get filter watch group by filter id", filterWatchGroupResult.error)
+        } else {
+          val filterWatchGroups = (filterWatchGroupResult as ModularResult.Value).value
+          if (filterWatchGroups.isNotEmpty()) {
+            val chanFilter = chanFilters
+              .firstOrNull { chanFilter -> chanFilter.getDatabaseId() == databaseId }
+
+            if (chanFilter != null) {
+              filterGroupDeletionsFlow.tryEmit(FilterDeletionEvent(chanFilter, filterWatchGroups))
+            }
+          }
         }
       }
 
@@ -348,7 +411,11 @@ class ChanFilterManager(
   // watch groups from the DB. The groups will be created anew on the next filter watch update cycle.
   // We do not do this when enabling/disabling filters.
   private suspend fun clearFilterWatchGroups(chanFilter: ChanFilter) {
-    if (!chanFilter.isWatchFilter()) {
+    clearFilterWatchGroups(listOf(chanFilter))
+  }
+
+  private suspend fun clearFilterWatchGroups(chanFilters: Collection<ChanFilter>) {
+    if (chanFilters.none { chanFilter -> chanFilter.isWatchFilter() }) {
       return
     }
 
@@ -357,33 +424,92 @@ class ChanFilterManager(
       .ignore()
   }
 
-  private suspend fun updateOldFilterInternal(indexOfThisFilter: Int, newChanFilter: ChanFilter): Boolean {
-    val updated = lock.write {
-      val prevChanFilter = filters.getOrNull(indexOfThisFilter)
-      if (prevChanFilter == null) {
-        Logger.e(TAG, "Failed to update filter, it was already removed from the filters cache")
-        return@write false
+  private suspend fun createNewFilterInternal(filtersToCreate: Map<ChanFilter, Int>): List<ChanFilter> {
+    val createdFilters = mutableListOf<ChanFilter>()
+
+    for ((chanFilter, indexOfThisFilter) in filtersToCreate.entries) {
+      val index = if (indexOfThisFilter < 0) {
+        lock.write {
+          filters.add(chanFilter)
+          filters.lastIndex
+        }
+      } else {
+        indexOfThisFilter
       }
 
-      if (prevChanFilter == newChanFilter) {
-        return@write false
+      val databaseId = chanFilterRepository.createFilter(chanFilter, index)
+        .peekError { error -> Logger.e(TAG, "chanFilterRepository.createFilter() error", error) }
+        .mapErrorToValue { -1L }
+
+      if (databaseId <= 0L) {
+        Logger.e(TAG, "Failed to create filter ${chanFilter}, bad databaseId = $databaseId")
+        lock.write { filters.remove(chanFilter) }
+
+        break
       }
 
-      require(prevChanFilter.hasDatabaseId()) { "prevFilter has no database id!" }
-      filters[indexOfThisFilter] = mergePrevAndNewFilters(prevChanFilter, newChanFilter)
+      val success = lock.write {
+        val newIndexOfThisFilter = filters.indexOfFirst { filter -> filter == chanFilter }
+        if (newIndexOfThisFilter < 0) {
+          Logger.e(TAG, "Failed to update filter databaseId, it was already removed from the filters cache")
+          return@write false
+        }
 
-      return@write true
+        filters.getOrNull(newIndexOfThisFilter)?.setDatabaseId(databaseId)
+        return@write true
+      }
+
+      if (success) {
+        createdFilters += chanFilter
+      }
     }
 
-    if (!updated) {
-      return false
+    return createdFilters
+  }
+
+  private suspend fun updateOldFilterInternal(filtersToUpdate: Map<ChanFilter, Int>): List<ChanFilter> {
+    val updatedFilters = mutableListOf<ChanFilter>()
+
+    for ((chanFilter, indexOfThisFilter) in filtersToUpdate.entries) {
+      val updated = lock.write {
+        val prevChanFilter = filters.getOrNull(indexOfThisFilter)
+        if (prevChanFilter == null) {
+          Logger.e(TAG, "Failed to update filter, it was already removed from the filters cache")
+          return@write false
+        }
+
+        if (prevChanFilter == chanFilter) {
+          return@write false
+        }
+
+        require(prevChanFilter.hasDatabaseId()) { "prevFilter has no database id!" }
+        filters[indexOfThisFilter] = mergePrevAndNewFilters(prevChanFilter, chanFilter)
+
+        return@write true
+      }
+
+      if (!updated) {
+        break
+      }
+
+      updatedFilters += chanFilter
+    }
+
+    if (updatedFilters.isEmpty()) {
+      return emptyList()
     }
 
     val allFilters = lock.read { filters.map { filter -> filter.copy() } }
 
-    return chanFilterRepository.updateAllFilters(allFilters)
+    val updatedInDatabase = chanFilterRepository.updateAllFilters(allFilters)
       .peekError { error -> Logger.e(TAG, "Failed to update filter in database", error) }
       .mapErrorToValue { false }
+
+    if (!updatedInDatabase) {
+      return emptyList()
+    }
+
+    return updatedFilters
   }
 
   private fun mergePrevAndNewFilters(prevChanFilter: ChanFilter, newChanFilter: ChanFilter): ChanFilter {
@@ -402,39 +528,6 @@ class ChanFilterManager(
       onlyOnOP = newChanFilter.onlyOnOP,
       applyToSaved = newChanFilter.applyToSaved
     )
-  }
-
-  private suspend fun createNewFilterInternal(indexOfThisFilter: Int, chanFilter: ChanFilter): Boolean {
-    val index = if (indexOfThisFilter < 0) {
-      lock.write {
-        filters.add(chanFilter)
-        filters.lastIndex
-      }
-    } else {
-      indexOfThisFilter
-    }
-
-    val databaseId = chanFilterRepository.createFilter(chanFilter, index)
-      .peekError { error -> Logger.e(TAG, "chanFilterRepository.createFilter() error", error) }
-      .mapErrorToValue { -1L }
-
-    if (databaseId <= 0L) {
-      Logger.e(TAG, "Failed to create filter ${chanFilter}, bad databaseId = $databaseId")
-      lock.write { filters.remove(chanFilter) }
-
-      return false
-    }
-
-    return lock.write {
-      val newIndexOfThisFilter = filters.indexOfFirst { filter -> filter == chanFilter }
-      if (newIndexOfThisFilter < 0) {
-        Logger.e(TAG, "Failed to update filter databaseId, it was already removed from the filters cache")
-        return@write false
-      }
-
-      filters.getOrNull(newIndexOfThisFilter)?.setDatabaseId(databaseId)
-      return@write true
-    }
   }
 
   @OptIn(ExperimentalTime::class)
@@ -462,17 +555,17 @@ class ChanFilterManager(
       override fun hasWatchFilter(): Boolean = false
     }
 
-    class Created(val chanFilter: ChanFilter) : FilterEvent() {
-      override fun hasWatchFilter(): Boolean = chanFilter.isWatchFilter()
+    class Created(val chanFilters: Collection<ChanFilter>) : FilterEvent() {
+      override fun hasWatchFilter(): Boolean = chanFilters.any { chanFilter -> chanFilter.isWatchFilter() }
     }
 
-    class Updated(val chanFilters: List<ChanFilter>) : FilterEvent() {
+    class Updated(val chanFilters: Collection<ChanFilter>) : FilterEvent() {
       override fun hasWatchFilter(): Boolean {
         return chanFilters.any { chanFilter -> chanFilter.isWatchFilter() }
       }
     }
 
-    class Deleted(val chanFilters: List<ChanFilter>) : FilterEvent() {
+    class Deleted(val chanFilters: Collection<ChanFilter>) : FilterEvent() {
       override fun hasWatchFilter(): Boolean {
         return chanFilters.any { chanFilter -> chanFilter.isWatchFilter() }
       }

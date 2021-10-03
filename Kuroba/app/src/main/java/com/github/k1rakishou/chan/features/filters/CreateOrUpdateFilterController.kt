@@ -431,7 +431,7 @@ class CreateOrUpdateFilterController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight(),
-      fontSize = 20.sp,
+      fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = pattern ?: "",
       labelText = stringResource(id = R.string.filter_enter_pattern),
@@ -492,7 +492,7 @@ class CreateOrUpdateFilterController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight(),
-      fontSize = 20.sp,
+      fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = testText,
       labelText = stringResource(id = R.string.filter_test_pattern),
@@ -507,7 +507,7 @@ class CreateOrUpdateFilterController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight(),
-      fontSize = 20.sp,
+      fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = note ?: "",
       labelText = stringResource(id = R.string.filter_note),

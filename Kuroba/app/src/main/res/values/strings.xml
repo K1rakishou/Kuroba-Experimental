@@ -310,11 +310,6 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_controller_selection_mode">Selected %1$d filter(s)</string>
     <string name="filter_controller_not_filters">No filters created yet</string>
 
-    <string name="filter_hide">Hide post</string>
-    <string name="filter_color">Highlight post</string>
-    <string name="filter_remove">Remove post</string>
-    <string name="filter_watch">Watch post</string>
-
     <string name="filter_help_title">Filter help</string>
     <string name="filter_help">
 <![CDATA[
@@ -368,6 +363,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="filters_controller_do_not_import">Do not</string>
     <string name="filters_controller_import_error">Filter import error. Reason: %1$s</string>
     <string name="filters_controller_export_error">Filter export error. Reason: %1$s</string>
+    <string name="filters_controller_enable_all_filters">Enable all filters</string>
+    <string name="filters_controller_disable_all_filters">Disable all filters</string>
 
     <string name="epoxy_proxy_view_address">Address: %1$s</string>
     <string name="epoxy_proxy_view_port">Port: %1$s</string>

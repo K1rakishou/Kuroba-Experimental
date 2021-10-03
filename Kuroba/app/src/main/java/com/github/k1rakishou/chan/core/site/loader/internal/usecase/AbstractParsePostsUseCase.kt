@@ -58,6 +58,10 @@ abstract class AbstractParsePostsUseCase(
 
       return@processDataCollectionConcurrently
     }
+
+    Logger.d(TAG, "postParsingProcessFiltersStage() " +
+      "cacheHits=${filterEngine.currentCacheHits()}, " +
+      "cacheMisses=${filterEngine.currentCacheMisses()}")
   }
 
   private fun processFilters(postToParse: ChanPostBuilder, filters: List<ChanFilter>) {

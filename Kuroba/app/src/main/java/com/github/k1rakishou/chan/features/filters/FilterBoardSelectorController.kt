@@ -170,6 +170,11 @@ class FilterBoardSelectorController(
     )
 
     LaunchedEffect(key1 = searchState.query, block = {
+      if (searchState.query.isEmpty()) {
+        searchState.results = cellDataList
+        return@LaunchedEffect
+      }
+
       delay(125L)
 
       withContext(Dispatchers.Default) {

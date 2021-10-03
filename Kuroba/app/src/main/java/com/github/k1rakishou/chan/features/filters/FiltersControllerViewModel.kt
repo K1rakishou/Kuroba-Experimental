@@ -26,6 +26,9 @@ import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.FilterAction
 import com.github.k1rakishou.model.data.filter.FilterType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -53,6 +56,10 @@ class FiltersControllerViewModel : BaseViewModel() {
   val activeBoardsCountForAllSites: Int
     get() = _activeBoardsCountForAllSites.get()
 
+  private val _updateEnableDisableAllFiltersButtonFlow = MutableSharedFlow<Unit>(replay = 1)
+  val updateEnableDisableAllFiltersButtonFlow: SharedFlow<Unit>
+    get() = _updateEnableDisableAllFiltersButtonFlow.asSharedFlow()
+
   val viewModelSelectionHelper = ViewModelSelectionHelper<ChanFilter, MenuItemClickEvent>()
 
   override fun injectDependencies(component: ViewModelComponent) {
@@ -62,7 +69,10 @@ class FiltersControllerViewModel : BaseViewModel() {
   override suspend fun onViewModelReady() {
     mainScope.launch {
       chanFilterManager.listenForFiltersChanges()
-        .collect { filterEvent -> processFilterChanges(filterEvent) }
+        .collect { filterEvent ->
+          processFilterChanges(filterEvent)
+          _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
+        }
     }
   }
 
@@ -91,6 +101,41 @@ class FiltersControllerViewModel : BaseViewModel() {
         onFinished = { continuation.resume(Unit) }
       )
     }
+
+    _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
+  }
+
+  fun allFiltersEnabled(): Boolean = chanFilterManager.allFiltersEnabled()
+  fun hasFilters(): Boolean = chanFilterManager.filtersCount() > 0
+
+  suspend fun enableOrDisableAllFilters() {
+    val allFilters = chanFilterManager.getAllFilters()
+    if (allFilters.isEmpty()) {
+      return
+    }
+
+    val shouldEnableAll = chanFilterManager.allFiltersEnabled().not()
+
+    val updatedFilters = allFilters.mapNotNull { chanFilter ->
+      if (chanFilter.enabled == shouldEnableAll) {
+        return@mapNotNull null
+      }
+
+      return@mapNotNull chanFilter.copy(enable = shouldEnableAll)
+    }
+
+    if (updatedFilters.isEmpty()) {
+      return
+    }
+
+    suspendCoroutine<Unit> { continuation ->
+      chanFilterManager.createOrUpdateFilters(
+        chanFilters = updatedFilters,
+        onFinished = { continuation.resume(Unit) }
+      )
+    }
+
+    _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
   }
 
   suspend fun reorderFilterInMemory(fromIndex: Int, toIndex: Int) {
@@ -116,13 +161,11 @@ class FiltersControllerViewModel : BaseViewModel() {
       return
     }
 
-    filtersToDelete.forEach { filter ->
-      suspendCoroutine<Unit> { continuation ->
-        chanFilterManager.deleteFilter(
-          chanFilter = filter,
-          onDeleted = { continuation.resume(Unit) }
-        )
-      }
+    suspendCoroutine<Unit> { continuation ->
+      chanFilterManager.deleteFilters(
+        chanFilters = filtersToDelete,
+        onDeleted = { continuation.resume(Unit) }
+      )
     }
   }
 
@@ -136,7 +179,9 @@ class FiltersControllerViewModel : BaseViewModel() {
         // no-op
       }
       is ChanFilterManager.FilterEvent.Created -> {
-        _filters.add(createChanFilterInfo(filterEvent.chanFilter))
+        filterEvent.chanFilters.forEach { chanFilter ->
+          _filters.add(createChanFilterInfo(chanFilter))
+        }
       }
       is ChanFilterManager.FilterEvent.Deleted -> {
         val databaseIds = filterEvent.chanFilters
@@ -173,6 +218,8 @@ class FiltersControllerViewModel : BaseViewModel() {
 
     _filters.clear()
     _filters.addAll(allFilters)
+
+    _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
   }
 
   private fun createChanFilterInfo(chanFilter: ChanFilter): ChanFilterInfo {

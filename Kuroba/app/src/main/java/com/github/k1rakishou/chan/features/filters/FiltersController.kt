@@ -73,6 +73,7 @@ import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSwitch
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -161,6 +162,12 @@ class FiltersController(
       .buildMenu(context)
       .withItem(R.drawable.ic_search_white_24dp) { item -> searchClicked(item) }
       .withOverflow(requireNavController())
+      .withSubItem(
+        ACTION_ENABLE_OR_DISABLE_ALL_FILTERS,
+        R.string.filters_controller_enable_all_filters,
+        false,
+        { mainScope.launch { viewModel.enableOrDisableAllFilters() } }
+      )
       .withSubItem(ACTION_EXPORT_FILTERS, R.string.filters_controller_export_action, { item -> exportFilters(item) })
       .withSubItem(ACTION_IMPORT_FILTERS, R.string.filters_controller_import_action, { item -> importFilters(item) })
       .withSubItem(ACTION_SHOW_HELP, R.string.filters_controller_show_help, { item -> helpClicked(item) })
@@ -185,6 +192,11 @@ class FiltersController(
     }
 
     mainScope.launch { viewModel.reloadFilters() }
+
+    mainScope.launch {
+      viewModel.updateEnableDisableAllFiltersButtonFlow
+        .collect { updateEnableDisableAllFiltersButton() }
+    }
 
     mainControllerCallbacks.onBottomPanelStateChanged { onInsetsChanged() }
 
@@ -305,6 +317,11 @@ class FiltersController(
     )
 
     LaunchedEffect(key1 = searchState.query, block = {
+      if (searchState.query.isEmpty()) {
+        searchState.results = filters
+        return@LaunchedEffect
+      }
+
       delay(125L)
 
       withContext(Dispatchers.Default) {
@@ -314,13 +331,13 @@ class FiltersController(
       }
     })
 
-    val searching = searchState.searching
-    val searchQuery = searchState.query
-    val searchResults = if (searching) {
-      filters
-    } else {
-      searchState.results
+    if (searchState.searching) {
+      KurobaComposeProgressIndicator()
+      return
     }
+
+    val searchQuery = searchState.query
+    val searchResults = searchState.results
 
     if (searchResults.isEmpty()) {
       KurobaComposeText(
@@ -434,6 +451,7 @@ class FiltersController(
               .weight(1f)
               .wrapContentHeight()
               .padding(horizontal = 8.dp, vertical = 4.dp),
+            fontSize = 12.sp,
             text = fullText,
             inlineContent = squareDrawableInlineContent,
             onTextClicked = { textLayoutResult, position -> handleClickedText(textLayoutResult, position) }
@@ -578,6 +596,19 @@ class FiltersController(
     })
   }
 
+  private fun updateEnableDisableAllFiltersButton() {
+    navigation.findSubItem(ACTION_ENABLE_OR_DISABLE_ALL_FILTERS)?.let { menuItem ->
+      val text = if (viewModel.allFiltersEnabled()) {
+        getString(R.string.filters_controller_disable_all_filters)
+      } else {
+        getString(R.string.filters_controller_enable_all_filters)
+      }
+
+      menuItem.text = text
+      menuItem.visible = viewModel.hasFilters()
+    }
+  }
+
   private fun searchClicked(item: ToolbarMenuItem) {
     (navigationController as ToolbarNavigationController).showSearch()
   }
@@ -701,6 +732,7 @@ class FiltersController(
     private const val ACTION_EXPORT_FILTERS = 0
     private const val ACTION_IMPORT_FILTERS = 1
     private const val ACTION_SHOW_HELP = 2
+    private const val ACTION_ENABLE_OR_DISABLE_ALL_FILTERS = 3
 
     private val FILTER_DATE_FORMAT = DateTimeFormatterBuilder()
       .append(ISODateTimeFormat.date())

@@ -899,6 +899,11 @@ class MainController(
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
     LaunchedEffect(key1 = searchState.query, block = {
+      if (searchState.query.isEmpty()) {
+        searchState.results = navHistoryEntryList
+        return@LaunchedEffect
+      }
+
       delay(125L)
 
       withContext(Dispatchers.Default) {
@@ -908,13 +913,13 @@ class MainController(
       }
     })
 
-    val query = searchState.query
-    val searching = searchState.searching
-    val searchResults = if (searching) {
-      navHistoryEntryList
-    } else {
-      searchState.results
+    if (searchState.searching) {
+      KurobaComposeProgressIndicator()
+      return
     }
+
+    val query = searchState.query
+    val searchResults = searchState.results
 
     if (searchResults.isEmpty()) {
       KurobaComposeText(

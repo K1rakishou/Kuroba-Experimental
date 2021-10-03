@@ -16,20 +16,16 @@
  */
 package com.github.k1rakishou.chan.core.helper;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-
 import android.text.TextUtils;
 
 import androidx.annotation.AnyThread;
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.board.ChanBoard;
 import com.github.k1rakishou.model.data.filter.ChanFilter;
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable;
-import com.github.k1rakishou.model.data.filter.FilterAction;
 import com.github.k1rakishou.model.data.filter.FilterType;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
@@ -38,6 +34,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImage;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -56,12 +53,21 @@ public class FilterEngine {
     private static final Pattern wildcardPattern = Pattern.compile("\\\\\\*");
 
     private final ChanFilterManager chanFilterManager;
-
+    private final AtomicLong cacheHits = new AtomicLong(0);
+    private final AtomicLong cacheMisses = new AtomicLong(0);
     private final Map<String, Pattern> patternCache = new HashMap<>();
 
     @Inject
     public FilterEngine(ChanFilterManager chanFilterManager) {
         this.chanFilterManager = chanFilterManager;
+    }
+
+    public long currentCacheHits() {
+        return cacheHits.get();
+    }
+
+    public long currentCacheMisses() {
+        return cacheMisses.get();
     }
 
     public void createOrUpdateFilter(ChanFilterMutable chanFilterMutable, Function0<Unit> onUpdated) {
@@ -221,6 +227,12 @@ public class FilterEngine {
         if (!forceCompile) {
             synchronized (patternCache) {
                 pattern = patternCache.get(patternRaw);
+
+                if (pattern == null) {
+                    cacheMisses.incrementAndGet();
+                } else {
+                    cacheHits.incrementAndGet();
+                }
             }
         }
 
@@ -306,20 +318,6 @@ public class FilterEngine {
     private String escapeRegex(String filthy) {
         // Escape regex special characters with a \
         return filterFilthyPattern.matcher(filthy).replaceAll("\\\\$1");
-    }
-
-    public static String actionName(FilterAction action) {
-        switch (action) {
-            case HIDE:
-                return getString(R.string.filter_hide);
-            case COLOR:
-                return getString(R.string.filter_color);
-            case REMOVE:
-                return getString(R.string.filter_remove);
-            case WATCH:
-                return getString(R.string.filter_watch);
-        }
-        return null;
     }
 
 }
