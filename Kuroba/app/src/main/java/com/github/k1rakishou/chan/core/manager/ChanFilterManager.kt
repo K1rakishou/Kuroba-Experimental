@@ -136,10 +136,10 @@ class ChanFilterManager(
       val toUpdate = mutableMapOf<ChanFilter, Int>()
 
       lock.read {
-        for ((index, chanFilter) in chanFilters.withIndex()) {
+        for (chanFilter in chanFilters) {
           if (!chanFilter.hasDatabaseId()) {
-            toCreate[chanFilter] = index
-            break
+            toCreate[chanFilter] = -1
+            continue
           }
 
           val prevIndex = filters
@@ -445,11 +445,13 @@ class ChanFilterManager(
         Logger.e(TAG, "Failed to create filter ${chanFilter}, bad databaseId = $databaseId")
         lock.write { filters.remove(chanFilter) }
 
-        break
+        continue
       }
 
       val success = lock.write {
-        val newIndexOfThisFilter = filters.indexOfFirst { filter -> filter == chanFilter }
+        val newIndexOfThisFilter = filters
+          .indexOfFirst { filter -> !filter.hasDatabaseId() && filter == chanFilter }
+
         if (newIndexOfThisFilter < 0) {
           Logger.e(TAG, "Failed to update filter databaseId, it was already removed from the filters cache")
           return@write false
@@ -489,7 +491,7 @@ class ChanFilterManager(
       }
 
       if (!updated) {
-        break
+        continue
       }
 
       updatedFilters += chanFilter
