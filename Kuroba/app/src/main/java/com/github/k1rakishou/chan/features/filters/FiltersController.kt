@@ -214,9 +214,10 @@ class FiltersController(
         ProvideChanTheme(themeEngine) {
           val chanTheme = LocalChanTheme.current
 
-          Box(modifier = Modifier
-            .fillMaxSize()
-            .background(chanTheme.backColorCompose)
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .background(chanTheme.backColorCompose)
           ) {
             BuildContent()
           }
@@ -367,34 +368,38 @@ class FiltersController(
       state = reoderableState.listState,
       contentPadding = contentPadding
     ) {
-      items(searchResults.size) { index ->
-        val chanFilterInfo = searchResults.get(index)
+      items(
+        count = searchResults.size,
+        key = { index -> searchResults[index].chanFilter.getDatabaseId() },
+        itemContent = { index ->
+          val chanFilterInfo = searchResults[index]
 
-        BuildChanFilter(
-          index = index,
-          totalCount = searchResults.size,
-          reoderableState = reoderableState,
-          chanFilterInfo = chanFilterInfo,
-          coroutineScope = coroutineScope,
-          onFilterClicked = { clickedFilter ->
-            if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+          BuildChanFilter(
+            index = index,
+            totalCount = searchResults.size,
+            reoderableState = reoderableState,
+            chanFilterInfo = chanFilterInfo,
+            coroutineScope = coroutineScope,
+            onFilterClicked = { clickedFilter ->
+              if (viewModel.viewModelSelectionHelper.isInSelectionMode()) {
+                viewModel.toggleSelection(clickedFilter)
+
+                return@BuildChanFilter
+              }
+
+              showCreateNewFilterController(ChanFilterMutable.from(clickedFilter))
+            },
+            onFilterLongClicked = { clickedFilter ->
+              if (requireToolbarNavController().isSearchOpened) {
+                return@BuildChanFilter
+              }
+
+              controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
               viewModel.toggleSelection(clickedFilter)
-
-              return@BuildChanFilter
             }
-
-            showCreateNewFilterController(ChanFilterMutable.from(clickedFilter))
-          },
-          onFilterLongClicked = { clickedFilter ->
-            if (requireToolbarNavController().isSearchOpened) {
-              return@BuildChanFilter
-            }
-
-            controllerViewOrNull()?.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
-            viewModel.toggleSelection(clickedFilter)
-          }
-        )
-      }
+          )
+        }
+      )
     }
   }
 
@@ -413,24 +418,28 @@ class FiltersController(
     val isInSelectionMode = selectionEvent?.isIsSelectionMode() ?: false
     val chanFilter = chanFilterInfo.chanFilter
 
-    SelectableItem(
-      isInSelectionMode = isInSelectionMode,
-      observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(chanFilter) },
-      onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(chanFilter) }
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .draggedItem(reoderableState.offsetByKey(chanFilterInfo.chanFilter.getDatabaseId()))
+        .kurobaClickable(
+          bounded = true,
+          onLongClick = { onFilterLongClicked(chanFilter) },
+          onClick = { onFilterClicked(chanFilter) }
+        )
+        .background(color = chanTheme.backColorCompose)
     ) {
-      Column(
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .draggedItem(reoderableState.offsetByIndex(index))
-          .kurobaClickable(
-            bounded = true,
-            onLongClick = { onFilterLongClicked(chanFilter) },
-            onClick = { onFilterClicked(chanFilter) }
-          )
-          .background(color = chanTheme.backColorCompose)
+      SelectableItem(
+        isInSelectionMode = isInSelectionMode,
+        observeSelectionStateFunc = { viewModel.viewModelSelectionHelper.observeSelectionState(chanFilter) },
+        onSelectionChanged = { viewModel.viewModelSelectionHelper.toggleSelection(chanFilter) }
       ) {
-        Row {
+        Row(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+        ) {
           val squareDrawableInlineContent = remember(key1 = chanFilterInfo) {
             getSquareDrawableContent(chanFilterInfo = chanFilterInfo)
           }
@@ -474,18 +483,28 @@ class FiltersController(
                   return@KurobaComposeSwitch
                 }
 
+                if (isInSelectionMode) {
+                  return@KurobaComposeSwitch
+                }
+
                 coroutineScope.launch {
                   viewModel.enableOrDisableFilter(nowChecked, chanFilter)
                 }
               }
             )
 
+            val reorderModifier = if (isInSelectionMode) {
+              Modifier
+            } else {
+              Modifier.detectReorder(reoderableState)
+            }
+
             KurobaComposeIcon(
               modifier = Modifier
                 .size(32.dp)
                 .padding(all = 4.dp)
                 .align(Alignment.CenterHorizontally)
-                .detectReorder(reoderableState),
+                .then(reorderModifier),
               drawableId = R.drawable.ic_baseline_reorder_24,
               themeEngine = themeEngine
             )

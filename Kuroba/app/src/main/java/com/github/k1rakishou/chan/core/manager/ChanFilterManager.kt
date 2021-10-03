@@ -229,7 +229,7 @@ class ChanFilterManager(
         }
 
         if (deletedFilterIndex < 0) {
-          break
+          continue
         }
 
         // It is important to do this before actually deleting the filter, otherwise this will always
@@ -246,7 +246,7 @@ class ChanFilterManager(
 
         if (!success) {
           lock.write { filters.add(chanFilter) }
-          break
+          continue
         }
 
         atLeastOneDeleted = true
