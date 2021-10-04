@@ -117,7 +117,7 @@ open class ViewThreadController(
         .collect { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) }
     }
 
-    mainScope.launch(Dispatchers.Main.immediate) { loadThread(threadDescriptor) }
+    mainScope.launch(Dispatchers.Main) { loadThread(threadDescriptor) }
   }
 
   private fun updatePinIconStateIfNeeded(bookmarkChange: BookmarkChange) {

@@ -40,58 +40,9 @@ class ChanThreadTicker(
     consumeEach { tickerAction ->
       when (tickerAction) {
         is TickerAction.StartOrResetTicker -> {
-          chanTickerData.stopJob()
-          Logger.d(TAG, "StartOrResetTicker stopping previous job")
+          Logger.d(TAG, "StartOrResetTicker chanDescriptor=${tickerAction.chanDescriptor}")
 
-          val tickerJob = launch {
-            try {
-              val waitTimeMillis = chanTickerData.waitTimeMillis()
-              Logger.d(TAG, "StartOrResetTicker scheduled, waiting ${waitTimeMillis}ms")
-              delay(waitTimeMillis)
-
-              run {
-                Logger.d(TAG, "StartOrResetTicker run action begin")
-
-                try {
-                  action.invoke(tickerAction.chanDescriptor)
-                } catch (error: Throwable) {
-                  if (error is CancellationException || isDevFlavor) {
-                    throw error
-                  }
-
-                  Logger.e(TAG, "Error while trying to execute action in tickerWorkLoop", error)
-                }
-
-                Logger.d(TAG, "StartOrResetTicker run action end")
-              }
-
-              val nextTimeoutIndex = increaseCurrentTimeoutIndex()
-              val nextWaitTimeSeconds = getWaitTimeSeconds()
-
-              if (nextWaitTimeSeconds == null || nextTimeoutIndex == null) {
-                return@launch
-              }
-
-              chanTickerData.updateCurrentTimeoutIndex(nextTimeoutIndex)
-              chanTickerData.updateWaitTimeSeconds(nextWaitTimeSeconds)
-
-              Logger.d(TAG, "StartOrResetTicker done, " +
-                "nextTimeoutIndex=${nextTimeoutIndex}, " +
-                "nextWaitTimeSeconds=${nextWaitTimeSeconds}")
-
-            } catch (error: Throwable) {
-              if (error is CancellationException) {
-                return@launch
-              }
-
-              if (isDevFlavor) {
-                throw error
-              }
-
-              Logger.e(TAG, "StartOrResetTicker error", error)
-            }
-          }
-
+          val tickerJob = launch { startOrRestartTickerInternal(tickerAction) }
           chanTickerData.setJob(tickerJob)
         }
         TickerAction.StopTicker -> {
@@ -193,6 +144,57 @@ class ChanThreadTicker(
 
   fun timeUntilLoadMoreMs(): Long = chanTickerData.getTimeUntilLoadMoreMs()
 
+  private suspend fun startOrRestartTickerInternal(tickerAction: TickerAction.StartOrResetTicker) {
+    try {
+      val waitTimeMillis = chanTickerData.waitTimeMillis()
+      Logger.d(TAG, "startOrRestartTickerInternal scheduled, " +
+        "chanDescriptor=${tickerAction.chanDescriptor}, waiting ${waitTimeMillis}ms")
+
+      delay(waitTimeMillis)
+
+      run {
+        Logger.d(TAG, "startOrRestartTickerInternal run action begin")
+
+        try {
+          action.invoke(tickerAction.chanDescriptor)
+        } catch (error: Throwable) {
+          if (error is CancellationException || isDevFlavor) {
+            throw error
+          }
+
+          Logger.e(TAG, "Error while trying to execute action in tickerWorkLoop", error)
+        }
+
+        Logger.d(TAG, "startOrRestartTickerInternal run action end")
+      }
+
+      val nextTimeoutIndex = increaseCurrentTimeoutIndex()
+      val nextWaitTimeSeconds = getWaitTimeSeconds()
+
+      if (nextWaitTimeSeconds == null || nextTimeoutIndex == null) {
+        return
+      }
+
+      chanTickerData.updateCurrentTimeoutIndex(nextTimeoutIndex)
+      chanTickerData.updateWaitTimeSeconds(nextWaitTimeSeconds)
+
+      Logger.d(TAG, "startOrRestartTickerInternal done, " +
+          "nextTimeoutIndex=${nextTimeoutIndex}, " +
+          "nextWaitTimeSeconds=${nextWaitTimeSeconds}")
+
+    } catch (error: Throwable) {
+      if (error is CancellationException) {
+        return
+      }
+
+      if (isDevFlavor) {
+        throw error
+      }
+
+      Logger.e(TAG, "startOrRestartTickerInternal error", error)
+    }
+  }
+
   @Synchronized
   private fun increaseCurrentTimeoutIndex(): Int? {
     val currentDescriptor = chanTickerData.currentChanDescriptor()
@@ -291,6 +293,8 @@ class ChanThreadTicker(
 
     @Synchronized
     fun setJob(newJob: Job) {
+      stopJob()
+
       tickerJob = newJob
     }
 
