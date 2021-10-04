@@ -171,7 +171,7 @@ public class ToolbarContainer extends FrameLayout {
         if (animation != ToolbarPresenter.AnimationStyle.NONE && previousView != null) {
             setAnimation(itemView, previousView, animation, listener);
 
-            setArrowProgress(1f, !currentView.item.hasArrow());
+            setArrowProgress(1f, !previousView.item.hasArrow());
             itemView.attach();
             return;
         }
