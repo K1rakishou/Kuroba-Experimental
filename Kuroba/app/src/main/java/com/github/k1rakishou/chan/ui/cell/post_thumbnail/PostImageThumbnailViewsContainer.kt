@@ -425,9 +425,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    val isMirrored = cachedThumbnailViewContainerInfoArray.get(BIND)
-      .postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
-
     val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
     val neededWidthPerImage = if (imagesCount == 1) {
       cellPostThumbnailSize
@@ -465,11 +462,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         }
 
         if (imagesCount > 1) {
-          if (isMirrored) {
-            child.updatePadding(left = horizPadding, bottom = horizPadding)
-          } else {
-            child.updatePadding(right = horizPadding, bottom = horizPadding)
-          }
+          child.updatePadding(right = horizPadding, bottom = horizPadding)
         }
 
         child.measure(
@@ -480,11 +473,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         highestChildOfRow = Math.max(highestChildOfRow, child.measuredHeight)
       }
 
-      var curLeft = if (isMirrored) {
-        this.measuredWidth - horizPadding
-      } else {
-        0
-      }
+      var curLeft = 0
 
       // Layout the children
       for (columnIndex in 0 until columnsPerRow) {
@@ -502,32 +491,17 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         curWidth = child.measuredWidth
         curHeight = highestChildOfRow
 
-        if (isMirrored) {
-          child.layout(
-            curLeft - curWidth - paddingLeft,
-            curTop + paddingTop,
-            curLeft - paddingLeft,
-            curTop + curHeight + paddingTop
-          )
+        child.layout(
+          curLeft + paddingLeft,
+          curTop + paddingTop,
+          curLeft + curWidth + paddingLeft,
+          curTop + curHeight + paddingTop
+        )
 
-          curLeft -= curWidth
-        } else {
-          child.layout(
-            curLeft + paddingLeft,
-            curTop + paddingTop,
-            curLeft + curWidth + paddingLeft,
-            curTop + curHeight + paddingTop
-          )
-
-          curLeft += curWidth
-        }
+        curLeft += curWidth
       }
 
-      if (isMirrored) {
-        curTop += highestChildOfRow
-      } else {
-        curTop += highestChildOfRow
-      }
+      curTop += highestChildOfRow
     }
   }
 
