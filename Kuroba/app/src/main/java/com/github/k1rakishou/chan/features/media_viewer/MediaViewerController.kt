@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
@@ -34,6 +35,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.awaitSilently
 import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -57,7 +59,7 @@ import javax.inject.Inject
 class MediaViewerController(
   context: Context,
   private val mediaViewerCallbacks: MediaViewerCallbacks
-) : Controller(context), ViewPager.OnPageChangeListener, MediaViewContract {
+) : Controller(context), ViewPager.OnPageChangeListener, MediaViewContract, WindowInsetsListener {
 
   @Inject
   lateinit var appConstants: AppConstants
@@ -131,12 +133,16 @@ class MediaViewerController(
     mediaViewerToolbar = view.findViewById(R.id.media_viewer_toolbar)
     mediaViewerToolbar.onCreate()
 
+    globalWindowInsetsManager.addInsetsUpdatesListener(this)
+
     pager = view.findViewById(R.id.pager)
     pager.addOnPageChangeListener(this)
 
     val offscreenPageLimit = MediaViewerControllerViewModel.offscreenPageLimit()
     Logger.d(TAG, "offscreenPageLimit=$offscreenPageLimit")
     pager.offscreenPageLimit = offscreenPageLimit
+
+    onInsetsChanged()
 
     mainScope.launch(context = Dispatchers.Main.immediate) {
       viewModel.transitionInfoFlow.collect { transitionInfo ->
@@ -171,6 +177,8 @@ class MediaViewerController(
   override fun onDestroy() {
     super.onDestroy()
 
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+
     mediaViewerAdapter?.onDestroy()
     mediaLongClickMenuHelper.onDestroy()
     mediaViewerToolbar.onDestroy()
@@ -180,6 +188,17 @@ class MediaViewerController(
     pager.adapter = null
 
     ExoPlayerWrapper.releaseAll()
+  }
+
+  override fun onInsetsChanged() {
+    if (ChanSettings.mediaViewerDrawBehindNotch.get()) {
+      mediaViewerRootLayout.updatePaddings(top = 0, bottom = 0)
+    } else {
+      mediaViewerRootLayout.updatePaddings(
+        top = globalWindowInsetsManager.top(),
+        bottom = globalWindowInsetsManager.bottom()
+      )
+    }
   }
 
   override fun onPageSelected(position: Int) {

@@ -40,6 +40,12 @@ class MediaViewerMenuHelper(
     val options = mutableListOf<FloatingListMenuItem>()
 
     options += CheckableFloatingListMenuItem(
+      key = ACTION_DRAW_BEHIND_NOTCH,
+      name = AppModuleAndroidUtils.getString(R.string.action_draw_behind_notch),
+      isCurrentlySelected = ChanSettings.mediaViewerDrawBehindNotch.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
       key = ACTION_ALLOW_IMAGE_TRANSPARENCY,
       name = AppModuleAndroidUtils.getString(R.string.action_allow_image_transparency),
       isCurrentlySelected = ChanSettings.transparencyOn.get()
@@ -104,6 +110,10 @@ class MediaViewerMenuHelper(
     clickedItem: FloatingListMenuItem
   ) {
     when (clickedItem.key as Int) {
+      ACTION_DRAW_BEHIND_NOTCH -> {
+        ChanSettings.mediaViewerDrawBehindNotch.toggle()
+        showToastFunc(R.string.restart_the_media_viewer)
+      }
       ACTION_ALLOW_IMAGE_TRANSPARENCY -> {
         ChanSettings.transparencyOn.toggle()
         mediaViewerAdapter.updateTransparency()
@@ -188,6 +198,7 @@ class MediaViewerMenuHelper(
     const val ACTION_AUTO_SWIPE_AFTER_DOWNLOAD = 106
     const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 107
     const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 108
+    const val ACTION_DRAW_BEHIND_NOTCH = 109
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

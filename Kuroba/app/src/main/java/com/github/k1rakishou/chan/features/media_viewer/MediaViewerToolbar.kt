@@ -13,6 +13,7 @@ import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatImageButton
 import androidx.core.view.doOnPreDraw
 import androidx.core.view.updateLayoutParams
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -266,14 +267,20 @@ class MediaViewerToolbar @JvmOverloads constructor(
   fun toolbarHeight(): Int = height
 
   override fun onInsetsChanged() {
+    val topPadding = if (ChanSettings.mediaViewerDrawBehindNotch.get()) {
+      globalWindowInsetsManager.top()
+    } else {
+      0
+    }
+
     updatePaddings(
       left = globalWindowInsetsManager.left(),
       right = globalWindowInsetsManager.right(),
-      top = globalWindowInsetsManager.top()
+      top = topPadding
     )
 
     updateLayoutParams<ViewGroup.LayoutParams> {
-      height = AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height) + globalWindowInsetsManager.top()
+      height = AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height) + topPadding
     }
   }
 

@@ -348,6 +348,7 @@ public class ChanSettings {
     public static BooleanSetting videoAlwaysResetToStart;
     public static IntegerSetting mediaViewerMaxOffscreenPages;
     public static BooleanSetting mediaViewerAutoSwipeAfterDownload;
+    public static BooleanSetting mediaViewerDrawBehindNotch;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -568,6 +569,7 @@ public class ChanSettings {
             videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
             mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", getMediaViewerOffscreenPagesDefault());
             mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", true);
+            mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,
