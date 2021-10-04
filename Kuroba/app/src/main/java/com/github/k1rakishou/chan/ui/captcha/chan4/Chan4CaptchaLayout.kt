@@ -12,6 +12,7 @@ import androidx.compose.foundation.gestures.rememberScrollableState
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -63,7 +64,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeSlider
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeSnappingSlider
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
@@ -192,7 +193,7 @@ class Chan4CaptchaLayout(
 
     if (captchaInfo != null && !captchaInfo.isNoopChallenge()) {
       var currentInputValue by captchaInfo.currentInputValue
-      var scrollValue by captchaInfo.sliderValue
+      val scrollValueState = captchaInfo.sliderValue
 
       KurobaComposeTextField(
         value = currentInputValue,
@@ -210,14 +211,19 @@ class Chan4CaptchaLayout(
       Spacer(modifier = Modifier.height(8.dp))
 
       if (captchaInfo.needSlider()) {
-        KurobaComposeSlider(
-          value = scrollValue,
-          modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
-          onValueChange = { newValue -> scrollValue = newValue }
-        )
+        BoxWithConstraints {
+          val slideSteps = constraints.maxWidth / PIXELS_PER_STEP
+
+          KurobaComposeSnappingSlider(
+            slideOffsetState = scrollValueState,
+            slideSteps = slideSteps,
+            modifier = Modifier
+              .wrapContentHeight()
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp),
+            onValueChange = { newValue -> scrollValueState.value = newValue }
+          )
+        }
 
         Spacer(modifier = Modifier.height(8.dp))
       }
@@ -486,6 +492,9 @@ class Chan4CaptchaLayout(
   companion object {
     private const val MIN_OFFSET = 100f
     private const val MAX_OFFSET = 400f
+
+    private const val PIXELS_PER_STEP = 50
+
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1
     private const val ACTION_REMEMBER_CAPTCHA_COOKIES = 2
