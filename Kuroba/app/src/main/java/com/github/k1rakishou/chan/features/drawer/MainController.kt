@@ -134,6 +134,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_logger.Logger
@@ -828,7 +829,14 @@ class MainController(
     BuildNavigationHistoryListHeader(
       searchQuery = searchState.queryState,
       onSearchQueryChanged = { newQuery -> searchState.query = newQuery },
-      onSwitchDayNightThemeIconClick = { rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L) },
+      onSwitchDayNightThemeIconClick = {
+        if (TimeUtils.isHalloweenToday()) {
+          showToast(R.string.not_allowed_during_halloween)
+          return@BuildNavigationHistoryListHeader
+        }
+
+        rootLayout.postDelayed({ themeEngine.toggleTheme() }, 125L)
+      },
       onShowDrawerOptionsIconClick = { showDrawerOptions() }
     )
 

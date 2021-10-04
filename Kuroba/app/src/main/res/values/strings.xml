@@ -1327,6 +1327,7 @@ Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 
+    <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
     <string name="updater_is_disabled_for_dev_builds">Updater is disabled for dev builds</string>

@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.features.themes.ThemeSettingsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.persist_state.PersistableChanState
 
@@ -500,7 +501,14 @@ class AppearanceSettingsScreen(
           identifier = AppearanceScreen.MainGroup.ThemeCustomization,
           topDescriptionIdFunc = { R.string.setting_theme },
           bottomDescriptionStringFunc = { themeEngine.chanTheme.name },
-          callback = { navigationController.pushController(ThemeSettingsController(context)) }
+          callback = {
+            if (TimeUtils.isHalloweenToday()) {
+              showToast(context, R.string.not_allowed_during_halloween)
+              return@createBuilder
+            }
+
+            navigationController.pushController(ThemeSettingsController(context))
+          }
         )
 
         group

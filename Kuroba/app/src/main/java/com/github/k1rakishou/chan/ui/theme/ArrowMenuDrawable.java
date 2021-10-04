@@ -68,7 +68,7 @@ public class ArrowMenuDrawable
     private float padding = dp(2f);
 
     private String badgeText;
-    private boolean badgeRed = false;
+    private boolean badgeHightImportance = false;
     private Paint badgePaint = new Paint();
     private Rect badgeTextBounds = new Rect();
 
@@ -138,21 +138,17 @@ public class ArrowMenuDrawable
         if (badgeText != null) {
             canvas.save();
 
-            float badgeSize = (mSize + padding) * 0.7f;
-            float badgeX = (mSize + padding) - badgeSize / 2f;
+            float badgeSize = mSize * 0.7f;
+            float badgeX = mSize - (badgeSize / 2f);
             float badgeY = badgeSize / 2f;
 
-            if (badgeRed) {
+            if (badgeHightImportance) {
                 badgePaint.setColor(themeEngine.getChanTheme().getAccentColor());
             } else {
-                if (ThemeEngine.isDarkColor(themeEngine.getChanTheme().getPrimaryColor())) {
-                    badgePaint.setColor(Color.LTGRAY);
-                } else {
-                    badgePaint.setColor(Color.DKGRAY);
-                }
+                badgePaint.setColor(0xDD000000);
             }
 
-            canvas.drawCircle(badgeX, badgeY, badgeSize / 2f, badgePaint);
+            canvas.drawCircle(badgeX, badgeY, (badgeSize / 2f) + padding, badgePaint);
 
             float textSize;
             if (badgeText.length() == 1) {
@@ -163,19 +159,26 @@ public class ArrowMenuDrawable
                 textSize = badgeSize * 0.5f;
             }
 
-            if (badgeRed) {
-                badgePaint.setColor(Color.WHITE);
+            if (badgeHightImportance) {
+                if (ThemeEngine.isDarkColor(themeEngine.getChanTheme().getAccentColor())) {
+                    badgePaint.setColor(Color.WHITE);
+                } else {
+                    badgePaint.setColor(Color.BLACK);
+                }
             } else {
-                badgePaint.setColor(Color.BLACK);
+                badgePaint.setColor(Color.WHITE);
             }
 
             badgePaint.setTextSize(textSize);
             badgePaint.getTextBounds(badgeText, 0, badgeText.length(), badgeTextBounds);
-            canvas.drawText(badgeText,
+            
+            canvas.drawText(
+                    badgeText,
                     badgeX - badgeTextBounds.right / 2f,
                     badgeY - badgeTextBounds.top / 2f,
                     badgePaint
             );
+            
             canvas.restore();
         }
     }
@@ -221,16 +224,16 @@ public class ArrowMenuDrawable
         }
     }
 
-    public void setBadge(int count, boolean red) {
+    public void setBadge(int count, boolean highImportance) {
         if (ChanSettings.isSplitLayoutMode() || ChanSettings.bottomNavigationViewEnabled.get()) {
             badgeText = null;
             return;
         }
 
         String text = count == 0 ? null : (PinHelper.getShortUnreadCount(count));
-        if (badgeRed != red || !TextUtils.equals(text, badgeText)) {
+        if (badgeHightImportance != highImportance || !TextUtils.equals(text, badgeText)) {
             badgeText = text;
-            badgeRed = red;
+            badgeHightImportance = highImportance;
             invalidateSelf();
         }
     }
