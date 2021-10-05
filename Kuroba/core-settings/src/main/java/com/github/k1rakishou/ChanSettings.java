@@ -483,7 +483,7 @@ public class ChanSettings {
 
             // Post
             fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
-            postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 100);
+            postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 125);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
             catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);

@@ -28,7 +28,8 @@
         app:layout_constraintStart_toEndOf="@+id/actual_thumbnail"
         app:layout_constraintTop_toTopOf="@+id/actual_thumbnail"
         app:layout_constraintVertical_chainStyle="spread"
-        tools:text="JPG" />
+        tools:text="JPG"
+        android:maxWidth="@dimen/cell_post_thumbnail_container_file_info_size"/>
 
     <TextView
         android:id="@+id/thumbnail_file_dimens"
@@ -42,7 +43,8 @@
         app:layout_constraintBottom_toTopOf="@+id/thumbnail_file_size"
         app:layout_constraintStart_toEndOf="@+id/actual_thumbnail"
         app:layout_constraintTop_toBottomOf="@+id/thumbnail_file_extension"
-        tools:text="2.89 MB" />
+        tools:text="2.89 MB"
+        android:maxWidth="@dimen/cell_post_thumbnail_container_file_info_size"/>
 
     <TextView
         android:id="@+id/thumbnail_file_size"
@@ -56,7 +58,8 @@
         app:layout_constraintBottom_toBottomOf="@+id/actual_thumbnail"
         app:layout_constraintStart_toEndOf="@+id/actual_thumbnail"
         app:layout_constraintTop_toBottomOf="@+id/thumbnail_file_dimens"
-        tools:text="14032x33024" />
+        tools:text="9999x9999"
+        android:maxWidth="@dimen/cell_post_thumbnail_container_file_info_size"/>
 
     <androidx.constraintlayout.widget.Group
         android:id="@+id/file_info_container_group"

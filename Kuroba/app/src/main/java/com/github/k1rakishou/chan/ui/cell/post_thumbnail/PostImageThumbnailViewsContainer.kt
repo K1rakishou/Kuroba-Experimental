@@ -365,11 +365,11 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         val child = getChildAt(0)
 
         child.measure(
-          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize + paddingLeft + paddingRight, MeasureSpec.EXACTLY),
-          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize + paddingTop + paddingBottom, MeasureSpec.EXACTLY),
+          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize, MeasureSpec.EXACTLY),
+          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize, MeasureSpec.EXACTLY),
         )
 
-        setMeasuredDimension(child.measuredWidth, child.measuredHeight)
+        setMeasuredDimension(cellPostThumbnailSize, cellPostThumbnailSize)
       }
 
       return
@@ -422,6 +422,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
     val imagesCount = childCount
     if (imagesCount <= 0) {
+      return
+    }
+
+    if (imagesCount == 1) {
+      val child = getChildAt(0)
+      child.layout(0, 0, measuredWidth, measuredHeight)
       return
     }
 
@@ -481,7 +487,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       var curLeft = if (isMirrored) {
-        this.measuredWidth - horizPadding
+        val thumbnailsWidthSum = (0 until columnsPerRow)
+          .sumOf { index -> getChildAt(index)?.measuredWidth ?: 0 }
+
+        this.measuredWidth - thumbnailsWidthSum - horizPadding
       } else {
         0
       }
@@ -502,25 +511,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         curWidth = child.measuredWidth
         curHeight = highestChildOfRow
 
-        if (isMirrored) {
-          child.layout(
-            curLeft - curWidth - paddingLeft,
-            curTop + paddingTop,
-            curLeft - paddingLeft,
-            curTop + curHeight + paddingTop
-          )
-
-          curLeft -= curWidth
-        } else {
-          child.layout(
-            curLeft + paddingLeft,
-            curTop + paddingTop,
-            curLeft + curWidth + paddingLeft,
-            curTop + curHeight + paddingTop
-          )
-
-          curLeft += curWidth
-        }
+        child.layout(curLeft, curTop, curLeft + curWidth, curTop + curHeight)
+        curLeft += curWidth
       }
 
       if (isMirrored) {
