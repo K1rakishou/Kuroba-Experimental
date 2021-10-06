@@ -1592,9 +1592,9 @@ class ThreadPresenter @Inject constructor(
         }
       }
 
-      if (!TextUtils.isEmpty(post.tripcode)) {
+      if (!TextUtils.isEmpty(post.actualTripcode)) {
         if (threadPresenterCallback != null) {
-          if (threadPresenterCallback!!.isTripcodeHighlighted(post.tripcode!!)) {
+          if (threadPresenterCallback!!.isTripcodeHighlighted(post.actualTripcode!!)) {
             menu.add(createMenuItem(POST_OPTION_UNHIGHLIGHT_TRIPCODE, R.string.post_unhighlight_tripcode))
           } else {
             menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
@@ -1602,6 +1602,14 @@ class ThreadPresenter @Inject constructor(
         }
 
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
+      }
+
+      if (!TextUtils.isEmpty(post.name)) {
+        menu.add(createMenuItem(POST_OPTION_FILTER_NAME, R.string.post_filter_name))
+      }
+
+      if (!TextUtils.isEmpty(post.posterId)) {
+        menu.add(createMenuItem(POST_OPTION_FILTER_POSTER_ID, R.string.post_filter_poster_id))
       }
     }
 
@@ -1728,16 +1736,28 @@ class ThreadPresenter @Inject constructor(
         }
         POST_OPTION_HIGHLIGHT_TRIPCODE,
         POST_OPTION_UNHIGHLIGHT_TRIPCODE -> {
-          val tripcode = post.tripcode
+          val tripcode = post.actualTripcode
             ?: return@post
 
           threadPresenterCallback?.highlightUnhighlightPostTripcode(tripcode)
         }
         POST_OPTION_FILTER_TRIPCODE -> {
-          val tripcode = post.tripcode
+          val tripcode = post.actualTripcode
             ?: return@post
 
           threadPresenterCallback?.filterPostTripcode(tripcode)
+        }
+        POST_OPTION_FILTER_NAME -> {
+          val posterName = post.name
+            ?: return@post
+
+          threadPresenterCallback?.filterPostName(posterName)
+        }
+        POST_OPTION_FILTER_POSTER_ID -> {
+          val posterId = post.posterId
+            ?: return@post
+
+          threadPresenterCallback?.filterPosterId(posterId)
         }
         POST_OPTION_DELETE -> requestDeletePost(post)
         POST_OPTION_SAVE -> saveUnsavePost(post)
@@ -2593,10 +2613,10 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    if (!TextUtils.isEmpty(post.tripcode)) {
+    if (!TextUtils.isEmpty(post.fullTripcode)) {
       text
         .append("\nTripcode: ")
-        .append(post.tripcode)
+        .append(post.fullTripcode)
     }
 
     if (post.postIcons.isNotEmpty()) {
@@ -2793,6 +2813,8 @@ class ThreadPresenter @Inject constructor(
     fun highlightUnhighlightPostTripcode(tripcode: CharSequence)
     fun isTripcodeHighlighted(tripcode: CharSequence): Boolean
     fun filterPostTripcode(tripcode: CharSequence)
+    fun filterPostName(posterName: CharSequence)
+    fun filterPosterId(postererId: String)
     fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean)
     fun quote(post: ChanPost, withText: Boolean)
     fun quote(postDescriptor: PostDescriptor, text: CharSequence)
@@ -2865,6 +2887,8 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_ADD_TO_NAV_HISTORY = 21
 
     private const val POST_OPTION_FILTER_TRIPCODE = 100
+    private const val POST_OPTION_FILTER_NAME = 101
+    private const val POST_OPTION_FILTER_POSTER_ID = 102
 
     private const val POST_OPTION_APPLY_THEME_IDX = 1000
     // Let's assume a post cannot contain more than 500 themes

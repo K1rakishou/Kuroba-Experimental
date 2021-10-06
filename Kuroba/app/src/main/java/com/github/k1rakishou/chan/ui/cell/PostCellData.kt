@@ -321,8 +321,8 @@ data class PostCellData(
       titleParts.add("\n")
     }
 
-    if (post.tripcode.isNotNullNorBlank()) {
-      titleParts.add(post.tripcode!!)
+    if (post.fullTripcode.isNotNullNorBlank()) {
+      titleParts.add(post.fullTripcode!!)
     }
 
     val postNoText = SpannableString.valueOf(

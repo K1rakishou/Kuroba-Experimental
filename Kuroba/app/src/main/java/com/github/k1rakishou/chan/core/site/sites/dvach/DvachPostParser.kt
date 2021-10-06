@@ -1,70 +1,83 @@
-package com.github.k1rakishou.chan.core.site.sites.dvach;
+package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import android.graphics.Color;
-import android.text.TextUtils;
+import android.graphics.Color
+import android.text.TextUtils
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
+import com.github.k1rakishou.chan.core.site.parser.CommentParser
+import com.github.k1rakishou.chan.core.site.parser.PostParser
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import org.jsoup.Jsoup
+import org.jsoup.parser.Parser
+import java.util.regex.Pattern
 
-import com.github.k1rakishou.chan.core.manager.ArchivesManager;
-import com.github.k1rakishou.chan.core.site.common.DefaultPostParser;
-import com.github.k1rakishou.chan.core.site.parser.CommentParser;
-import com.github.k1rakishou.core_logger.Logger;
-import com.github.k1rakishou.model.data.post.ChanPost;
-import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+class DvachPostParser(
+  commentParser: CommentParser,
+  archivesManager: ArchivesManager
+) : DefaultPostParser(commentParser, archivesManager) {
 
-import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
-import org.jsoup.nodes.Element;
-import org.jsoup.parser.Parser;
+  override fun defaultName(): String {
+    return DVACH_DEFAULT_POSTER_NAME
+  }
 
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+  override fun parseFull(builder: ChanPostBuilder, callback: PostParser.Callback): ChanPost {
+    builder.name = Parser.unescapeEntities(builder.name, false)
+    parseNameForColor(builder)
+    return super.parseFull(builder, callback)
+  }
 
-public class DvachPostParser extends DefaultPostParser {
+  private fun parseNameForColor(builder: ChanPostBuilder) {
+    val nameRaw: CharSequence = builder.name
 
-    private Pattern colorPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\);");
-    private static final String TAG = "DvachPostParser";
+    try {
+      val name = nameRaw.toString()
+      val document = Jsoup.parseBodyFragment(name)
+      val span = document.body().getElementsByTag("span").first()
 
-    public DvachPostParser(
-            CommentParser commentParser,
-            ArchivesManager archivesManager
-    ) {
-        super(commentParser, archivesManager);
-    }
+      if (span != null) {
+        var style = span.attr("style")
+        builder.posterId = span.text()
 
-    @Override
-    public ChanPost parseFull(ChanPostBuilder builder, Callback callback) {
-        builder.name = Parser.unescapeEntities(builder.name, false);
-        parseNameForColor(builder);
-        return super.parseFull(builder, callback);
-    }
+        val internalNameRaw = document.body().textNodes().getOrNull(0)?.text()?.trim() ?: ""
 
-    private void parseNameForColor(ChanPostBuilder builder) {
-        CharSequence nameRaw = builder.name;
-
-        try {
-            String name = nameRaw.toString();
-
-            Document document = Jsoup.parseBodyFragment(name);
-            Element span = document.body().getElementsByTag("span").first();
-            if (span != null) {
-                String style = span.attr("style");
-                builder.posterId = span.text();
-                builder.name = document.body().textNodes().get(0).text().trim();
-
-                if (!TextUtils.isEmpty(style)) {
-                    style = style.replace(" ", "");
-
-                    Matcher matcher = colorPattern.matcher(style);
-                    if (matcher.find()) {
-                        int r = Integer.parseInt(matcher.group(1));
-                        int g = Integer.parseInt(matcher.group(2));
-                        int b = Integer.parseInt(matcher.group(3));
-
-                        builder.idColor = Color.rgb(r, g, b);
-                    }
-                }
-            }
-        } catch (Exception e) {
-            Logger.e(TAG, "Error parsing name html", e);
+        val parsedName = if (internalNameRaw.contains(POSTER_ID)) {
+          internalNameRaw
+            .removeSuffix(POSTER_ID)
+            .trim()
+        } else {
+          internalNameRaw
         }
+
+        if (parsedName == DVACH_DEFAULT_POSTER_NAME && !ChanSettings.showAnonymousName.get()) {
+          builder.name("")
+        } else {
+          builder.name(parsedName)
+        }
+
+        if (!TextUtils.isEmpty(style)) {
+          style = style.replace(" ", "")
+          val matcher = colorPattern.matcher(style)
+
+          if (matcher.find()) {
+            val r = matcher.group(1).toInt()
+            val g = matcher.group(2).toInt()
+            val b = matcher.group(3).toInt()
+            builder.idColor = Color.rgb(r, g, b)
+          }
+        }
+      }
+    } catch (e: Exception) {
+      Logger.e(TAG, "Error parsing name html", e)
     }
+  }
+
+  companion object {
+    private const val TAG = "DvachPostParser"
+    private val colorPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\);")
+    private const val POSTER_ID = "ID:"
+    const val DVACH_DEFAULT_POSTER_NAME = "Аноним"
+  }
 }

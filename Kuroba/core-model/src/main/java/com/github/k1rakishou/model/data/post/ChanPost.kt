@@ -13,7 +13,7 @@ open class ChanPost(
   val timestamp: Long = -1L,
   val postComment: PostComment,
   val subject: CharSequence?,
-  val tripcode: CharSequence?,
+  val fullTripcode: CharSequence?,
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
@@ -65,6 +65,27 @@ open class ChanPost(
   val boardDescriptor: BoardDescriptor
     get() = postDescriptor.boardDescriptor()
 
+  @get:Synchronized
+  val actualTripcode: String? by lazy {
+    val tripcodeString = if (fullTripcode.isNullOrEmpty()) {
+      return@lazy null
+    } else {
+      fullTripcode.trim()
+    }
+
+    val index = tripcodeString.lastIndexOf(" ")
+    if (index < 0) {
+      return@lazy null
+    }
+
+    val actualTripcodeMaybe = tripcodeString.substring(startIndex = index + 1)
+    if (!actualTripcodeMaybe.startsWith("!")) {
+      return@lazy null
+    }
+
+    return@lazy actualTripcodeMaybe
+  }
+
   init {
     for (loaderType in LoaderType.values()) {
       onDemandContentLoadedArray[loaderType.arrayIndex] = false
@@ -83,7 +104,7 @@ open class ChanPost(
       timestamp = timestamp,
       postComment = postComment.copy(),
       subject = subject.copy(),
-      tripcode = tripcode.copy(),
+      fullTripcode = fullTripcode.copy(),
       name = name,
       posterId = posterId,
       moderatorCapcode = moderatorCapcode,
@@ -200,7 +221,7 @@ open class ChanPost(
     if (name != other.name) {
       return false
     }
-    if (tripcode != other.tripcode) {
+    if (fullTripcode != other.fullTripcode) {
       return false
     }
     if (posterId != other.posterId) {
@@ -244,7 +265,7 @@ open class ChanPost(
     result = 31 * result + postComment.hashCode()
     result = 31 * result + subject.hashCode()
     result = 31 * result + (name?.hashCode() ?: 0)
-    result = 31 * result + tripcode.hashCode()
+    result = 31 * result + fullTripcode.hashCode()
     result = 31 * result + (posterId?.hashCode() ?: 0)
     result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
     result = 31 * result + isSavedReply.hashCode()

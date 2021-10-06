@@ -787,7 +787,27 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun filterPostTripcode(tripcode: CharSequence) {
-    callback.openFilterForType(FilterType.TRIPCODE, tripcode.toString())
+    callback.openFilterForType(
+      type = FilterType.TRIPCODE,
+      filterText = tripcode.toString(),
+      caseSensitive = false
+    )
+  }
+
+  override fun filterPostName(posterName: CharSequence) {
+    callback.openFilterForType(
+      type = FilterType.NAME,
+      filterText = posterName.toString(),
+      caseSensitive = false
+    )
+  }
+
+  override fun filterPosterId(postererId: String) {
+    callback.openFilterForType(
+      type = FilterType.ID,
+      filterText = postererId,
+      caseSensitive = false
+    )
   }
 
   override fun quote(post: ChanPost, withText: Boolean) {
@@ -1440,7 +1460,7 @@ class ThreadLayout @JvmOverloads constructor(
     fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun openReportController(post: ChanPost)
     fun hideSwipeRefreshLayout()
-    fun openFilterForType(type: FilterType, filterText: String)
+    fun openFilterForType(type: FilterType, filterText: String, caseSensitive: Boolean = true)
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()

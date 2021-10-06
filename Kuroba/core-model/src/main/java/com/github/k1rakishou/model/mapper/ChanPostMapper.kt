@@ -28,7 +28,7 @@ object ChanPostMapper {
         .subject(chanPost.subject)
         .name(chanPost.name)
         .comment(chanPost.postComment.originalUnparsedComment)
-        .tripcode(chanPost.tripcode)
+        .tripcode(chanPost.fullTripcode)
         .setUnixTimestampSeconds(chanPost.timestamp)
         .postImages(chanPost.postImages, postDescriptor)
         .posterId(chanPost.posterId)
@@ -48,7 +48,7 @@ object ChanPostMapper {
         .subject(chanPost.subject)
         .name(chanPost.name)
         .comment(chanPost.postComment.originalUnparsedComment)
-        .tripcode(chanPost.tripcode)
+        .tripcode(chanPost.fullTripcode)
         .setUnixTimestampSeconds(chanPost.timestamp)
         .postImages(chanPost.postImages, postDescriptor)
         .posterId(chanPost.posterId)
@@ -105,7 +105,7 @@ object ChanPostMapper {
         name = chanPostBuilder.name,
         postComment = postComment,
         subject = chanPostBuilder.subject,
-        tripcode = chanPostBuilder.tripcode,
+        fullTripcode = chanPostBuilder.tripcode,
         posterId = chanPostBuilder.posterId,
         moderatorCapcode = chanPostBuilder.moderatorCapcode,
         isSavedReply = chanPostBuilder.isSavedReply,

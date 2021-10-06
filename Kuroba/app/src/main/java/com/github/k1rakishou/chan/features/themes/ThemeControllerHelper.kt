@@ -179,11 +179,11 @@ class ThemeControllerHelper(
     posts.add(post2)
 
     hackSpanColors(post1.subject, theme)
-    hackSpanColors(post1.tripcode, theme)
+    hackSpanColors(post1.fullTripcode, theme)
     hackSpanColors(post1.postComment.comment(), theme)
 
     hackSpanColors(post2.subject, theme)
-    hackSpanColors(post2.tripcode, theme)
+    hackSpanColors(post2.fullTripcode, theme)
     hackSpanColors(post2.postComment.comment(), theme)
 
     val linearLayout = LinearLayout(context)

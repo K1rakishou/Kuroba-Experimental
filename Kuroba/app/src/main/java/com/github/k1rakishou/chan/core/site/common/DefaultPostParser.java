@@ -61,6 +61,7 @@ import kotlin.text.StringsKt;
 public class DefaultPostParser implements PostParser {
     private static final String TAG = "DefaultPostParser";
 
+    static final String CHAN4_DEFAULT_POSTER_NAME = "Anonymous";
     private final ThreadLocal<HtmlParser> htmlParserThreadLocal = new ThreadLocal<>();
     private final CommentParser commentParser;
     private final ArchivesManager archivesManager;
@@ -71,6 +72,10 @@ public class DefaultPostParser implements PostParser {
     ) {
         this.commentParser = commentParser;
         this.archivesManager = archivesManager;
+    }
+
+    public String defaultName() {
+        return CHAN4_DEFAULT_POSTER_NAME;
     }
 
     @Override
@@ -121,14 +126,17 @@ public class DefaultPostParser implements PostParser {
         boolean anonymize = ChanSettings.anonymize.get();
         boolean anonymizeIds = ChanSettings.anonymizeIds.get();
 
-        final String defaultName = "Anonymous";
         if (anonymize) {
-            builder.name(defaultName);
+            builder.name("");
             builder.tripcode("");
         }
 
         if (anonymizeIds) {
             builder.posterId("");
+        }
+
+        if (builder.name.equals(defaultName()) && !ChanSettings.showAnonymousName.get()) {
+            builder.name("");
         }
 
         SpannableString nameSpan = null;
@@ -151,7 +159,7 @@ public class DefaultPostParser implements PostParser {
             builder.subject = subjectSpan;
         }
 
-        if (!TextUtils.isEmpty(builder.name) && (!builder.name.equals(defaultName) || ChanSettings.showAnonymousName.get())) {
+        if (!TextUtils.isEmpty(builder.name) || ChanSettings.showAnonymousName.get()) {
             nameSpan = new SpannableString(builder.name);
             nameSpan.setSpan(
                     new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),

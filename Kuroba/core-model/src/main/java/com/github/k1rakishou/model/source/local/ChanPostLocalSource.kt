@@ -272,7 +272,7 @@ class ChanPostLocalSource(
 
       val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
         gson,
-        chanPost.tripcode
+        chanPost.fullTripcode
       ) ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(

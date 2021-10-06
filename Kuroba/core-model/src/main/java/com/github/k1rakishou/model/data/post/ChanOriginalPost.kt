@@ -58,7 +58,7 @@ class ChanOriginalPost(
       timestamp = timestamp,
       postComment = postComment.copy(),
       subject = subject.copy(),
-      tripcode = tripcode.copy(),
+      tripcode = fullTripcode.copy(),
       name = name,
       posterId = posterId,
       moderatorCapcode = moderatorCapcode,

@@ -6,6 +6,6 @@ enum class LoaderType(val arrayIndex: Int) {
   Chan4CloudFlareImagePreLoader(2);
 
   companion object {
-    const val COUNT = 3
+    val COUNT = values().size
   }
 }

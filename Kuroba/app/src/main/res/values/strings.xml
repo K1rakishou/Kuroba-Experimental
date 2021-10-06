@@ -300,7 +300,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
     <string name="filter_no_filter_type_selected">No filter type selected</string>
     <string name="filter_no_boards_selected">No boards selected</string>
-    <string name="filter_pattern_is_ok">Filter pattern is OK</string>
+    <string name="filter_everything_is_ok">Everything seems to be OK</string>
     <string name="filter_toggle_select_unselect_all_boards">Toggle all</string>
     <string name="filter_select_n_boards">Select %1$d board(s)</string>
     <string name="filter_type_selection_controller_title">Select what parts of a post this filter should try to match</string>
@@ -431,6 +431,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="post_highlight_tripcode">Highlight tripcode</string>
     <string name="post_unhighlight_tripcode">Unhighlight tripcode</string>
     <string name="post_filter_tripcode">Filter tripcode</string>
+    <string name="post_filter_name">Filter name</string>
+    <string name="post_filter_poster_id">Filter poster ID</string>
     <string name="post_text_copied">Text copied to clipboard</string>
     <string name="post_quote">Quote</string>
     <string name="post_quote_text">Quote text</string>

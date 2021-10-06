@@ -411,7 +411,7 @@ class CreateOrUpdateFilterController(
 
     val regexStatusText = when (val validationResult = filterValidationResult) {
       is FilterValidationResult.Error -> validationResult.errorMessage
-      FilterValidationResult.Success -> stringResource(id = R.string.filter_pattern_is_ok)
+      FilterValidationResult.Success -> stringResource(id = R.string.filter_everything_is_ok)
       FilterValidationResult.Undefined -> ""
     }
 

@@ -131,7 +131,7 @@ object ChanPostEntityMapper {
         name = chanPostEntity.name,
         postComment = mapPostComment(gson, chanTextSpanEntityList),
         subject = mapSubject(gson, chanTextSpanEntityList),
-        tripcode = mapTripcode(gson, chanTextSpanEntityList),
+        fullTripcode = mapTripcode(gson, chanTextSpanEntityList),
         posterId = chanPostEntity.posterId,
         moderatorCapcode = chanPostEntity.moderatorCapcode,
         isSavedReply = chanPostEntity.isSavedReply,

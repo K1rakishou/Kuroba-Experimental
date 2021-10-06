@@ -240,7 +240,12 @@ class DvachApiV2(
         builder.tripcode(threadPost.trip)
       }
 
-      builder.name(threadPost.name)
+      if (threadPost.name != DvachPostParser.DVACH_DEFAULT_POSTER_NAME) {
+        builder.name(threadPost.name)
+      } else {
+        builder.name("")
+      }
+
       builder.subject(threadPost.subject)
       builder.comment(threadPost.comment)
       builder.setUnixTimestampSeconds(threadPost.timestamp)

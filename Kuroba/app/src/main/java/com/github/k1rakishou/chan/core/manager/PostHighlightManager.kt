@@ -112,7 +112,7 @@ class PostHighlightManager(
       }
 
       val hasThisPostId = threadCellData
-        .any { postCellData -> postCellData.post.tripcode.contentEquals(tripcodeToHighlight, ignoreCase = true) }
+        .any { postCellData -> postCellData.post.actualTripcode.contentEquals(tripcodeToHighlight, ignoreCase = true) }
 
       if (hasThisPostId) {
         return true
@@ -127,7 +127,7 @@ class PostHighlightManager(
 
     // TODO(KurobaEx): batch
     threadCellData.forEach { postCellData ->
-      val tripcode = postCellData.post.tripcode
+      val tripcode = postCellData.post.actualTripcode
         ?: return@forEach
 
       updatePostHighlight(threadCellData.chanDescriptor, postCellData.postDescriptor) { postHighlight ->

@@ -397,14 +397,24 @@ abstract class ThreadController(
     swipeRefreshLayout.isRefreshing = false
   }
 
-  override fun openFilterForType(type: FilterType, filterText: String) {
+  override fun openFilterForType(type: FilterType, filterText: String, caseSensitive: Boolean) {
+    val caseInsensitiveFlag = if (caseSensitive) {
+      ""
+    } else {
+      "i"
+    }
+
     val filter = ChanFilterMutable()
     filter.type = type.flag
-    filter.pattern = "/$filterText/"
+    filter.pattern = "/${filterText.trim()}/$caseInsensitiveFlag"
     openFiltersController(filter)
   }
 
   override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
+    if (chanDescriptor != null) {
+      chanFilterMutable.boards.add(chanDescriptor!!.boardDescriptor())
+    }
+
     val filtersController = FiltersController(
       context = context,
       chanFilterMutable = chanFilterMutable,
