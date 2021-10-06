@@ -22,7 +22,7 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   private val enabledLogs: Boolean = true,
   private val value: CompletableDeferred<T> = CompletableDeferred()
 ) {
-  private val error = AtomicReference<Throwable>(null)
+  private val error = AtomicReference<Throwable?>(null)
 
   @GuardedBy("itself")
   private val waiters = ArrayList<(Throwable?) -> Unit>()
@@ -64,7 +64,13 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilInitialized() {
     if (value.isCompleted) {
-      notifyAllWaiters()
+      val throwable = error.get()
+      notifyAllWaiters(throwable = throwable)
+
+      if (throwable != null) {
+        throw throwable
+      }
+
       // This will throw if it was initialized with an error
       value.getCompleted()
       return
@@ -87,13 +93,18 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
       return false
     }
 
-    error.get()?.let { initializationError -> throw RuntimeException(initializationError) }
+    error.get()?.let { initializationError -> throw initializationError }
     return true
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun get(): T {
     if (value.isCompleted) {
+      val throwable = error.get()
+      if (throwable != null) {
+        throw throwable
+      }
+
       return value.getCompleted()
     }
 
@@ -104,6 +115,11 @@ class SuspendableInitializer<T> @JvmOverloads constructor(
   @OptIn(ExperimentalCoroutinesApi::class)
   fun getOrNull(): T? {
     if (value.isCompleted) {
+      val throwable = error.get()
+      if (throwable != null) {
+        return null
+      }
+
       return value.getCompleted()
     }
 

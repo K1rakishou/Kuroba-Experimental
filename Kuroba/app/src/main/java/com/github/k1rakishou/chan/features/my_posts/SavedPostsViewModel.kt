@@ -284,6 +284,8 @@ class SavedPostsViewModel : BaseViewModel() {
   )
 
   companion object {
+    private const val TAG = "SavedPostsViewModel"
+
     private val DATE_TIME_PRINTER = DateTimeFormatterBuilder()
       .append(ISODateTimeFormat.date())
       .appendLiteral(' ')

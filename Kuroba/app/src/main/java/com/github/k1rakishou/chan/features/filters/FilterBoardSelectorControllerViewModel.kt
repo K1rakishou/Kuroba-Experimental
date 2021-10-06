@@ -160,4 +160,8 @@ class FilterBoardSelectorControllerViewModel  : BaseViewModel() {
     val catalogCellData: CatalogCellData
   )
 
+  companion object {
+    private const val TAG = "FilterBoardSelectorControllerViewModel"
+  }
+
 }

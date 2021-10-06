@@ -185,4 +185,8 @@ class BoardArchiveViewModel(
   }
 
   class ArchiveNotSupportedException(boardCode: String) : Exception("Board '/$boardCode/' has no archive")
+
+  companion object {
+    private const val TAG = "BoardArchiveViewModel"
+  }
 }

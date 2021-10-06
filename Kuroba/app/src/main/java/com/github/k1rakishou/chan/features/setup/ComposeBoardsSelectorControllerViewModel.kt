@@ -175,4 +175,8 @@ class ComposeBoardsSelectorControllerViewModel : BaseViewModel() {
     }
   }
 
+  companion object {
+    private const val TAG = "ComposeBoardsSelectorControllerViewModel"
+  }
+
 }

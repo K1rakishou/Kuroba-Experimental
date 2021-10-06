@@ -35,4 +35,8 @@ class ThreadDownloaderSettingsViewModel : BaseViewModel() {
       ThreadDownloaderOptions(downloadMedia.value)
     )
   }
+
+  companion object {
+    private const val TAG = "ThreadDownloaderSettingsViewModel"
+  }
 }

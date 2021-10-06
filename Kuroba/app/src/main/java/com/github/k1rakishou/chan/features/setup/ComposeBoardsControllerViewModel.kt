@@ -143,6 +143,7 @@ class ComposeBoardsControllerViewModel : BaseViewModel() {
   }
 
   companion object {
+    private const val TAG = "ComposeBoardsControllerViewModel"
     const val MAX_COMPOSITE_CATALOG_TITLE_LENGTH = 18
   }
 

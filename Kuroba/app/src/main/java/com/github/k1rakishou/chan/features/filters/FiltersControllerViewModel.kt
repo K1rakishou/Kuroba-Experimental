@@ -422,6 +422,8 @@ class FiltersControllerViewModel : BaseViewModel() {
   }
 
   companion object {
+    private const val TAG = "FiltersControllerViewModel"
+
     const val squareDrawableKey = "[SQUARE_PAINTER]"
     const val LINK_TAG = "[LINK]"
   }
