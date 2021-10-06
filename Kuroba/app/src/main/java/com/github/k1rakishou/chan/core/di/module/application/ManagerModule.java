@@ -115,17 +115,15 @@ import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 
 import java.util.HashSet;
-import java.util.concurrent.Executor;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
-import io.reactivex.schedulers.Schedulers;
 import kotlin.LazyThreadSafetyMode;
 import kotlinx.coroutines.CoroutineScope;
+import kotlinx.coroutines.Dispatchers;
 
 @Module
 public class ManagerModule {
@@ -244,11 +242,11 @@ public class ManagerModule {
     @Provides
     @Singleton
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
+            CoroutineScope appScope,
             Lazy<PrefetchLoader> prefetchLoader,
             Lazy<PostExtraContentLoader> postExtraContentLoader,
             Lazy<Chan4CloudFlareImagePreloader> chan4CloudFlareImagePreloader,
-            ChanThreadManager chanThreadManager,
-            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+            ChanThreadManager chanThreadManager
     ) {
         Logger.deps("OnDemandContentLoaderManager");
         kotlin.Lazy<HashSet<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(LazyThreadSafetyMode.SYNCHRONIZED, () -> {
@@ -261,7 +259,8 @@ public class ManagerModule {
         });
 
         return new OnDemandContentLoaderManager(
-                Schedulers.from(onDemandContentLoaderExecutor),
+                appScope,
+                Dispatchers.getDefault(),
                 loadersLazy,
                 chanThreadManager
         );

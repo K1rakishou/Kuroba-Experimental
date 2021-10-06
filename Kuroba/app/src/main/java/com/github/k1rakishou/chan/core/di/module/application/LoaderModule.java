@@ -18,15 +18,12 @@ import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentReposi
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.Executor;
 
-import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
-import io.reactivex.schedulers.Schedulers;
 
 @Module
 public class LoaderModule {
@@ -38,13 +35,11 @@ public class LoaderModule {
             Lazy<CacheHandler> cacheHandler,
             PrefetchStateManager prefetchStateManager,
             Lazy<ChanThreadManager> chanThreadManager,
-            Lazy<ThreadDownloadManager> threadDownloadManager,
-            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+            Lazy<ThreadDownloadManager> threadDownloadManager
     ) {
         Logger.deps("PrefetchLoader");
 
         return new PrefetchLoader(
-                Schedulers.from(onDemandContentLoaderExecutor),
                 fileCacheV2,
                 cacheHandler,
                 chanThreadManager,
@@ -101,8 +96,7 @@ public class LoaderModule {
             YoutubeMediaServiceExtraInfoFetcher youtubeMediaServiceExtraInfoFetcher,
             SoundCloudMediaServiceExtraInfoFetcher soundCloudMediaServiceExtraInfoFetcher,
             StreamableMediaServiceExtraInfoFetcher streamableMediaServiceExtraInfoFetcher,
-            ChanThreadManager chanThreadManager,
-            @Named(ExecutorsModule.onDemandContentLoaderExecutorName) Executor onDemandContentLoaderExecutor
+            ChanThreadManager chanThreadManager
     ) {
         Logger.deps("PostExtraContentLoader");
 
@@ -112,7 +106,6 @@ public class LoaderModule {
         fetchers.add(streamableMediaServiceExtraInfoFetcher);
 
         return new PostExtraContentLoader(
-                Schedulers.from(onDemandContentLoaderExecutor),
                 chanThreadManager,
                 fetchers
         );

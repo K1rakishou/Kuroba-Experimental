@@ -19,14 +19,10 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType
 import com.github.k1rakishou.model.data.post.LoaderType
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import dagger.Lazy
-import io.reactivex.Scheduler
-import io.reactivex.Single
-import kotlinx.coroutines.runBlocking
 import java.io.File
 import kotlin.math.abs
 
 class PrefetchLoader(
-  private val scheduler: Scheduler,
   private val fileCacheV2: Lazy<FileCacheV2>,
   private val cacheHandler: Lazy<CacheHandler>,
   private val chanThreadManager: Lazy<ChanThreadManager>,
@@ -34,31 +30,29 @@ class PrefetchLoader(
   private val threadDownloadManager: Lazy<ThreadDownloadManager>
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
 
-  override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-    return Single.fromCallable {
-      val post = chanThreadManager.get().getPost(postLoaderData.postDescriptor)
-      if (post == null) {
-        return@fromCallable false
-      }
+  override suspend fun isCached(postLoaderData: PostLoaderData): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
 
-      return@fromCallable post.postImages
-        .filter { postImage -> postImage.canBeUsedForPrefetch() }
-        .all { postImage ->
-          val fileUrl = postImage.imageUrl?.toString()
-            ?: return@all true
-
-          return@all cacheHandler.get().isAlreadyDownloaded(fileUrl)
-        }
+    val post = chanThreadManager.get().getPost(postLoaderData.postDescriptor)
+    if (post == null) {
+      return false
     }
-      .subscribeOn(scheduler)
-      .onErrorReturnItem(false)
+
+    return post.postImages
+      .filter { postImage -> postImage.canBeUsedForPrefetch() }
+      .all { postImage ->
+        val fileUrl = postImage.imageUrl?.toString()
+          ?: return@all true
+
+        return@all cacheHandler.get().isAlreadyDownloaded(fileUrl)
+      }
   }
 
-  override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+  override suspend fun startLoading(postLoaderData: PostLoaderData): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
 
     val threadDescriptor = postLoaderData.postDescriptor.threadDescriptor()
-    val downloadStatus = runBlocking { threadDownloadManager.get().getStatus(threadDescriptor) }
+    val downloadStatus = threadDownloadManager.get().getStatus(threadDescriptor)
 
     if (downloadStatus != null && downloadStatus != ThreadDownload.Status.Stopped) {
       // If downloading a thread then don't use the media prefetch
@@ -118,13 +112,14 @@ class PrefetchLoader(
         override fun onStop(file: File?) = onPrefetchCompleted(prefetch.postImage)
         override fun onCancel() = onPrefetchCompleted(prefetch.postImage, false)
       })
+
       postLoaderData.addDisposeFunc { cancelableDownload.cancelPrefetch() }
     }
 
     // Always false for prefetches because there is nothing in the view that we need to update
     // after doing a prefetch (Actually there is but we don't need to do notifyItemChanged for
     // PostAdapter).
-    return succeeded(false)
+    return succeeded(needUpdateView = false, loaderResultData = null)
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {

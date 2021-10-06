@@ -1,21 +1,20 @@
 package com.github.k1rakishou.chan.core.loader
 
 import com.github.k1rakishou.model.data.post.LoaderType
-import io.reactivex.Single
 
 abstract class OnDemandContentLoader(
   val loaderType: LoaderType
 ) {
-  abstract fun isCached(postLoaderData: PostLoaderData): Single<Boolean>
-  abstract fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult>
+  abstract suspend fun isCached(postLoaderData: PostLoaderData): Boolean
+  abstract suspend fun startLoading(postLoaderData: PostLoaderData): LoaderResult
   abstract fun cancelLoading(postLoaderData: PostLoaderData)
 
-  protected fun succeeded(needUpdateView: Boolean): Single<LoaderResult> {
-    return Single.just(LoaderResult.Succeeded(loaderType, needUpdateView))
+  protected fun succeeded(needUpdateView: Boolean, loaderResultData: LoaderResultData?): LoaderResult {
+    return LoaderResult.Succeeded(loaderType, needUpdateView, loaderResultData)
   }
 
-  protected fun failed(): Single<LoaderResult> = Single.just(LoaderResult.Failed(loaderType))
-  protected fun rejected(): Single<LoaderResult> = Single.just(LoaderResult.Rejected(loaderType))
+  protected fun failed(): LoaderResult = LoaderResult.Failed(loaderType)
+  protected fun rejected(): LoaderResult = LoaderResult.Rejected(loaderType)
 
   override fun equals(other: Any?): Boolean {
     if (this === other) {

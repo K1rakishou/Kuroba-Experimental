@@ -10,7 +10,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
-import io.reactivex.Single
 
 /**
  * Base interface for link extra info fetcher.
@@ -23,9 +22,9 @@ internal abstract class ExternalMediaServiceExtraInfoFetcher {
 
   abstract fun isEnabled(): Boolean
 
-  abstract fun isCached(videoId: GenericVideoId): Single<Boolean>
+  abstract suspend fun isCached(videoId: GenericVideoId): Boolean
 
-  abstract fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): Single<ModularResult<SpanUpdateBatch>>
+  abstract suspend fun fetch(requestUrl: String, linkInfoRequest: LinkInfoRequest): ModularResult<SpanUpdateBatch>
 
   /**
    * Whether this fetcher can parse the link

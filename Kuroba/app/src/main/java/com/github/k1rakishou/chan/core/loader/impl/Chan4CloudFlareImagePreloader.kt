@@ -6,28 +6,25 @@ import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.model.data.post.LoaderType
-import io.reactivex.Single
 
 class Chan4CloudFlareImagePreloader(
   private val chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager
 ) : OnDemandContentLoader(LoaderType.Chan4CloudFlareImagePreLoader) {
 
-  override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-    val isCached = chan4CloudFlareImagePreloaderManager.isCached(
-      postLoaderData.postDescriptor
-    )
+  override suspend fun isCached(postLoaderData: PostLoaderData): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
 
-    return Single.just(isCached)
+    return chan4CloudFlareImagePreloaderManager.isCached(postLoaderData.postDescriptor)
   }
 
-  override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+  override suspend fun startLoading(postLoaderData: PostLoaderData): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
 
     if (!chan4CloudFlareImagePreloaderManager.startLoading(postLoaderData.postDescriptor)) {
       return rejected()
     }
 
-    return succeeded(needUpdateView = false)
+    return succeeded(needUpdateView = false, loaderResultData = null)
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {

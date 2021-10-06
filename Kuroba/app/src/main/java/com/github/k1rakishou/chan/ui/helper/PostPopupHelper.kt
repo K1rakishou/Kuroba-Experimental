@@ -124,7 +124,7 @@ class PostPopupHelper(
       return null
     }
 
-    return dataQueue[dataQueue.size - 1]
+    return dataQueue.getOrNull(dataQueue.size - 1)
   }
 
   fun resetCachedPostData(postDescriptor: PostDescriptor) {

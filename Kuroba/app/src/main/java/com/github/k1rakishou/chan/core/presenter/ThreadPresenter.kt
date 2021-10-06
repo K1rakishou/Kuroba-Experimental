@@ -330,6 +330,11 @@ class ThreadPresenter @Inject constructor(
         .debounce(1000L)
         .collect { filterEvent -> onFiltersChanged(filterEvent) }
     }
+
+    launch {
+      onDemandContentLoaderManager.postUpdateFlow
+        .collect { batchResult -> onPostUpdatedWithNewContent(batchResult) }
+    }
   }
 
   fun create(context: Context, threadPresenterCallback: ThreadPresenterCallback) {
@@ -381,14 +386,6 @@ class ThreadPresenter @Inject constructor(
         currentOpenedDescriptorStateManager.updateThreadDescriptor(chanDescriptor)
       }
     }
-
-    compositeDisposable.add(
-      onDemandContentLoaderManager.listenPostContentUpdates()
-        .subscribe(
-          { batchResult -> onPostUpdatedWithNewContent(batchResult) },
-          { error -> Logger.e(TAG, "Post content updates error", error) }
-        )
-    )
 
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)

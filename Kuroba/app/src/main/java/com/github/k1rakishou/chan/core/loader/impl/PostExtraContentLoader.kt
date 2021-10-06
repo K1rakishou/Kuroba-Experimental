@@ -12,64 +12,43 @@ import com.github.k1rakishou.chan.core.loader.impl.post_comment.SpanUpdateBatch
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.putIfNotContains
+import com.github.k1rakishou.common.processDataCollectionConcurrently
+import com.github.k1rakishou.common.putIfNotContainsLazy
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.LoaderType
-import io.reactivex.Flowable
-import io.reactivex.Scheduler
-import io.reactivex.Single
+import kotlinx.coroutines.withTimeout
 import java.util.concurrent.TimeUnit
 
 internal class PostExtraContentLoader(
-  private val scheduler: Scheduler,
   private val chanThreadManager: ChanThreadManager,
   private val linkExtraInfoFetchers: List<ExternalMediaServiceExtraInfoFetcher>
 ) : OnDemandContentLoader(LoaderType.PostExtraContentLoader) {
 
-  override fun isCached(postLoaderData: PostLoaderData): Single<Boolean> {
-    return Single.defer {
-      val videoIds = extractVideoIds(postLoaderData)
-      if (videoIds.isEmpty()) {
-        return@defer Single.just(true)
-      }
+  override suspend fun isCached(postLoaderData: PostLoaderData): Boolean {
+    BackgroundUtils.ensureBackgroundThread()
 
-      return@defer Flowable.fromIterable(linkExtraInfoFetchers)
-        .flatMapSingle { fetcher ->
-          return@flatMapSingle Flowable.fromIterable(videoIds)
-            .flatMapSingle { videoId ->
-              return@flatMapSingle fetcher.isCached(videoId)
-                .onErrorReturnItem(false)
-            }
-            .toList()
-            .map { results -> results.all { result -> result } }
+    val videoIds = extractVideoIds(postLoaderData)
+    if (videoIds.isEmpty()) {
+      return true
+    }
+
+    val results = processDataCollectionConcurrently(linkExtraInfoFetchers) { fetcher ->
+      return@processDataCollectionConcurrently videoIds.all { videoId ->
+        try {
+          return@all fetcher.isCached(videoId)
+        } catch (error: Throwable) {
+          return@all false
         }
-        .toList()
-        .map { results -> results.all { result -> result } }
-    }.subscribeOn(scheduler)
-  }
-
-  private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
-    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
-      ?: return emptyList()
-
-    val comment = post.postComment.originalComment()
-    if (comment.isEmpty() || comment !is Spanned) {
-      return emptyList()
+      }
     }
 
-    val postLinkableSpans = parseSpans(comment)
-    if (postLinkableSpans.isEmpty()) {
-      return emptyList()
-    }
-
-    return createNewRequests(postLinkableSpans)
-      .map { (_, linkInfoRequest) -> linkInfoRequest.videoId }
+    return results.all { success -> success }
   }
 
-  override fun startLoading(postLoaderData: PostLoaderData): Single<LoaderResult> {
+  override suspend fun startLoading(postLoaderData: PostLoaderData): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
 
     val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
@@ -91,44 +70,51 @@ internal class PostExtraContentLoader(
       return rejected()
     }
 
-    return Single.fromCallable { createNewRequests(postLinkableSpans) }
-      .flatMap { newSpans ->
-        if (newSpans.isEmpty()) {
-          return@flatMap rejected()
-        }
+    val newSpans = createNewRequests(postLinkableSpans)
 
-        return@flatMap Flowable.fromIterable(newSpans.entries)
-          .subscribeOn(scheduler)
-          .flatMapSingle({ (requestUrl, linkInfoRequest) ->
-            return@flatMapSingle fetchExtraLinkInfo(requestUrl, linkInfoRequest)
-          }, false, MAX_CONCURRENT_REQUESTS)
-          .toList()
-          .flatMap { spanUpdateBatchResultList ->
-            val spanUpdateBatchList = spanUpdateBatchResultList
-              .mapNotNull { it.valueOrNull() }
+    if (newSpans.isEmpty()) {
+      return rejected()
+    }
 
-            if (spanUpdateBatchList.isEmpty()) {
-              // All results are errors
-              return@flatMap failed()
-            }
+    val spanUpdateBatchResultList = processDataCollectionConcurrently(newSpans.entries) { (requestUrl, linkInfoRequest) ->
+      fetchExtraLinkInfo(requestUrl, linkInfoRequest)
+    }
 
-            return@flatMap updateSpans(post, spanUpdateBatchList)
-          }
-          .doOnError { error -> Logger.e(TAG, "Internal unhandled error", error) }
-          .onErrorResumeNext { failed() }
-      }
-      .doOnError { error -> Logger.e(TAG, "External unhandled error", error) }
-      .onErrorResumeNext { failed() }
+    val spanUpdateBatchList = spanUpdateBatchResultList.mapNotNull { it.valueOrNull() }
+    if (spanUpdateBatchList.isEmpty()) {
+      // All results are errors
+      return failed()
+    }
+
+    return updateSpans(post, spanUpdateBatchList)
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {
     // I guess there is no real need to cancel these requests since they are lightweight
   }
 
-  private fun updateSpans(
+  private fun extractVideoIds(postLoaderData: PostLoaderData): List<GenericVideoId> {
+    val post = chanThreadManager.getPost(postLoaderData.postDescriptor)
+      ?: return emptyList()
+
+    val comment = post.postComment.originalComment()
+    if (comment.isEmpty() || comment !is Spanned) {
+      return emptyList()
+    }
+
+    val postLinkableSpans = parseSpans(comment)
+    if (postLinkableSpans.isEmpty()) {
+      return emptyList()
+    }
+
+    return createNewRequests(postLinkableSpans)
+      .map { (_, linkInfoRequest) -> linkInfoRequest.videoId }
+  }
+
+  private suspend fun updateSpans(
     post: ChanPost,
     spanUpdateBatchList: List<SpanUpdateBatch>
-  ): Single<LoaderResult> {
+  ): LoaderResult {
     BackgroundUtils.ensureBackgroundThread()
 
     val updated = try {
@@ -149,13 +135,13 @@ internal class PostExtraContentLoader(
 
     chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
     // Something was updated we need to redraw the post, so return success
-    return succeeded(true)
+    return succeeded(needUpdateView = true, loaderResultData = null)
   }
 
-  private fun fetchExtraLinkInfo(
+  private suspend fun fetchExtraLinkInfo(
     requestUrl: String,
     linkInfoRequest: LinkInfoRequest
-  ): Single<ModularResult<SpanUpdateBatch>> {
+  ): ModularResult<SpanUpdateBatch> {
     BackgroundUtils.ensureBackgroundThread()
 
     val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
@@ -163,17 +149,19 @@ internal class PostExtraContentLoader(
     }
 
     if (fetcher == null) {
-      val error = ModularResult.error<SpanUpdateBatch>(
-        IllegalStateException("Couldn't find fetcher for " +
-          "mediaServiceType ${linkInfoRequest.mediaServiceType}")
+      return ModularResult.error(
+        IllegalStateException(
+          "Couldn't find fetcher for " +
+            "mediaServiceType ${linkInfoRequest.mediaServiceType}"
+        )
       )
-
-      return Single.just(error)
     }
 
-    return fetcher.fetch(requestUrl, linkInfoRequest)
-      .timeout(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-      .onErrorReturn { error -> ModularResult.Error(error) }
+    return ModularResult.Try {
+      withTimeout(TimeUnit.MINUTES.toMillis(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS)) {
+        fetcher.fetch(requestUrl, linkInfoRequest).unwrap()
+      }
+    }
   }
 
   private fun createNewRequests(
@@ -203,13 +191,18 @@ internal class PostExtraContentLoader(
         }
 
         val requestUrl = fetcher.formatRequestUrl(originalUrl)
-        val linkInfoRequest = LinkInfoRequest(
-          fetcher.extractLinkVideoId(originalUrl),
-          fetcher.mediaServiceType,
-          mutableListOf()
+
+        newSpans.putIfNotContainsLazy(
+          key = requestUrl,
+          valueFunc = {
+            return@putIfNotContainsLazy LinkInfoRequest(
+              fetcher.extractLinkVideoId(originalUrl),
+              fetcher.mediaServiceType,
+              mutableListOf()
+            )
+          }
         )
 
-        newSpans.putIfNotContains(requestUrl, linkInfoRequest)
         newSpans[requestUrl]!!.oldPostLinkableSpans.add(postLinkableSpan)
       }
     }

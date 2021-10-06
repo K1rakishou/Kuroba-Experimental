@@ -34,7 +34,6 @@ import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileN
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
 import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
-import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule
 import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule
 import com.github.k1rakishou.chan.core.di.module.application.ManagerModule
@@ -296,7 +295,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       .appConstants(appConstants)
       .modelMainComponent(modelComponent)
       .appModule(AppModule())
-      .executorsModule(ExecutorsModule())
       .roomDatabaseModule(RoomDatabaseModule())
       .gsonModule(JsonParserModule())
       .loaderModule(LoaderModule())

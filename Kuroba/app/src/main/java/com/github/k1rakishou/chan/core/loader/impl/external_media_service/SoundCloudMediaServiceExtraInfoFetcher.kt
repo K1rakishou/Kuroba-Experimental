@@ -14,8 +14,6 @@ import com.github.k1rakishou.model.data.media.GenericVideoId
 import com.github.k1rakishou.model.data.media.SoundCloudVideoId
 import com.github.k1rakishou.model.data.video_service.MediaServiceType
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
-import io.reactivex.Single
-import kotlinx.coroutines.rx2.rxSingle
 import java.util.regex.Pattern
 
 internal class SoundCloudMediaServiceExtraInfoFetcher(
@@ -31,41 +29,37 @@ internal class SoundCloudMediaServiceExtraInfoFetcher(
     )
   }
 
-  override fun isCached(videoId: GenericVideoId): Single<Boolean> {
+  override suspend fun isCached(videoId: GenericVideoId): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
-    return rxSingle {
-      return@rxSingle mediaServiceLinkExtraContentRepository.isCached(videoId, mediaServiceType)
-        .unwrap()
-    }
+    return mediaServiceLinkExtraContentRepository.isCached(videoId, mediaServiceType)
+      .unwrap()
   }
 
-  override fun fetch(
+  override suspend fun fetch(
     requestUrl: String,
     linkInfoRequest: LinkInfoRequest
-  ): Single<ModularResult<SpanUpdateBatch>> {
+  ): ModularResult<SpanUpdateBatch> {
     BackgroundUtils.ensureBackgroundThread()
 
-    return rxSingle {
-      if (!isEnabled()) {
-        return@rxSingle ModularResult.value(
-          SpanUpdateBatch(
-            requestUrl,
-            ExtraLinkInfo.Success(mediaServiceType, null, null),
-            linkInfoRequest.oldPostLinkableSpans,
-            soundCloudIcon
-          )
+    if (!isEnabled()) {
+      return ModularResult.value(
+        SpanUpdateBatch(
+          requestUrl,
+          ExtraLinkInfo.Success(mediaServiceType, null, null),
+          linkInfoRequest.oldPostLinkableSpans,
+          soundCloudIcon
         )
-      }
-
-      return@rxSingle genericFetch(
-        TAG,
-        soundCloudIcon,
-        requestUrl,
-        linkInfoRequest,
-        mediaServiceLinkExtraContentRepository
       )
     }
+
+    return genericFetch(
+      TAG,
+      soundCloudIcon,
+      requestUrl,
+      linkInfoRequest,
+      mediaServiceLinkExtraContentRepository
+    )
   }
 
   // set of tracks (we can only get title)

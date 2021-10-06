@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent;
 import com.github.k1rakishou.chan.core.di.module.application.AppModule;
-import com.github.k1rakishou.chan.core.di.module.application.ExecutorsModule;
 import com.github.k1rakishou.chan.core.di.module.application.HelperModule;
 import com.github.k1rakishou.chan.core.di.module.application.JsonParserModule;
 import com.github.k1rakishou.chan.core.di.module.application.LoaderModule;
@@ -49,7 +48,6 @@ import kotlinx.coroutines.CoroutineScope;
 @Singleton
 @Component(modules = {
         AppModule.class,
-        ExecutorsModule.class,
         JsonParserModule.class,
         HelperModule.class,
         LoaderModule.class,
@@ -111,8 +109,6 @@ public interface ApplicationComponent {
         Builder modelMainComponent(ModelComponent modelComponent);
         @BindsInstance
         Builder appModule(AppModule appModule);
-        @BindsInstance
-        Builder executorsModule(ExecutorsModule executorsModule);
         @BindsInstance
         Builder gsonModule(JsonParserModule jsonParserModule);
         @BindsInstance

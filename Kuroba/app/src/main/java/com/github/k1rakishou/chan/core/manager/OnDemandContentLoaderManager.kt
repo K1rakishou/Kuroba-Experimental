@@ -1,22 +1,24 @@
 package com.github.k1rakishou.chan.core.manager
 
-import android.annotation.SuppressLint
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.base.QueueableConcurrentCoroutineExecutor
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import io.reactivex.Flowable
-import io.reactivex.Scheduler
-import io.reactivex.android.schedulers.AndroidSchedulers
-import io.reactivex.functions.BiFunction
-import io.reactivex.processors.PublishProcessor
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.withTimeoutOrNull
 import java.util.*
-import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantReadWriteLock
 import kotlin.collections.HashMap
 import kotlin.collections.set
@@ -24,128 +26,34 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 class OnDemandContentLoaderManager(
-  private val workerScheduler: Scheduler,
+  private val scope: CoroutineScope,
+  private val dispatcher: CoroutineDispatcher,
   private val loadersLazy: Lazy<HashSet<OnDemandContentLoader>>,
   private val chanThreadManager: ChanThreadManager
 ) {
-  private val rwLock = ReentrantReadWriteLock()
+  private val lock = ReentrantReadWriteLock()
   private val loaders: HashSet<OnDemandContentLoader>
     get() = loadersLazy.value
 
   @GuardedBy("rwLock")
   private val activeLoaders = HashMap<ChanDescriptor, HashMap<PostDescriptor, PostLoaderData>>()
 
-  private val postLoaderRxQueue = PublishProcessor.create<PostLoaderData>()
-  private val postUpdateRxQueue = PublishProcessor.create<LoaderBatchResult>()
+  private val _postUpdateFlow = MutableSharedFlow<LoaderBatchResult>(extraBufferCapacity = 128)
+  val postUpdateFlow: SharedFlow<LoaderBatchResult>
+    get() = _postUpdateFlow
 
-  init {
-    initPostLoaderRxQueue()
-  }
-
-  @SuppressLint("CheckResult")
-  private fun initPostLoaderRxQueue() {
-    postLoaderRxQueue
-      .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
-      .observeOn(workerScheduler)
-      .flatMap { value -> addDelayIfSomethingIsNotCachedYet(value) }
-      .flatMap { postLoaderData -> processLoaders(postLoaderData) }
-      .subscribe({
-        // Do nothing
-      }, { error ->
-        throw RuntimeException("$TAG Uncaught exception!!! " +
-          "workerQueue is in error state now!!! " +
-          "This should not happen!!!, original error = " + error.message)
-      }, {
-        throw RuntimeException(
-          "$TAG workerQueue stream has completed!!! This should not happen!!!"
-        )
-      })
-  }
-
-  /**
-   * Checks whether all info for the [postLoaderData] is cached by all loaders. If any loader has
-   * no cached data for [postLoaderData] then adds a delay (so that we can have time to be
-   * able to cancel it). If everything is cached then the delay is not added.
-   * Also, updates [Post.onDemandContentLoadedMap] for the current post.
-   * */
-  private fun addDelayIfSomethingIsNotCachedYet(postLoaderData: PostLoaderData): Flowable<PostLoaderData> {
-    val postDescriptor = postLoaderData.postDescriptor
-
-    val post = chanThreadManager.getPost(postDescriptor)
-    if (post == null || post.allLoadersCompletedLoading()) {
-      return Flowable.just(postLoaderData)
-    }
-
-    val loadersCachedResultFlowable = Flowable.fromIterable(loaders)
-      .flatMapSingle { loader ->
-        return@flatMapSingle loader.isCached(PostLoaderData(postDescriptor))
-          .onErrorReturnItem(false)
-      }
-      .toList()
-      .map { cacheResults -> cacheResults.all { cacheResult -> cacheResult } }
-      .toFlowable()
-      .share()
-
-    val allCachedStream = loadersCachedResultFlowable
-      .filter { allCached -> allCached }
-      .map { postLoaderData }
-
-    val notAllCachedStream = loadersCachedResultFlowable
-      .filter { allCached -> !allCached }
-      .map { postLoaderData }
-      // Add LOADING_DELAY_TIME_MS seconds delay to every emitted event.
-      // We do that so that we don't download everything when user quickly
-      // scrolls through posts. In other words, we only start running the
-      // loader after LOADING_DELAY_TIME_MS seconds have passed since
-      // onPostBind() was called. If onPostUnbind() was called during that
-      // time frame we cancel the loader if it has already started loading or
-      // just do nothing if it hasn't started loading yet.
-      .zipWith(Flowable.timer(LOADING_DELAY_TIME_MS, TimeUnit.MILLISECONDS, workerScheduler), ZIP_FUNC)
-      .onBackpressureBuffer(MIN_QUEUE_CAPACITY, false, true)
-      .filter { (postLoaderData, _) -> isStillActive(postLoaderData) }
-      .map { (postLoaderData, _) -> postLoaderData }
-
-    return Flowable.merge(allCachedStream, notAllCachedStream)
-  }
-
-  private fun processLoaders(postLoaderData: PostLoaderData): Flowable<Unit> {
-    return Flowable.fromIterable(loaders)
-      .subscribeOn(workerScheduler)
-      .flatMapSingle { loader ->
-        return@flatMapSingle loader.startLoading(postLoaderData)
-          .doOnError { error ->
-            // All loaders' unhandled errors come here
-            val loaderName = postLoaderData::class.java.simpleName
-            Logger.e(TAG, "Loader: $loaderName unhandled error", error)
-          }
-          .timeout(MAX_LOADER_LOADING_TIME_MS, TimeUnit.MILLISECONDS, workerScheduler)
-          .onErrorReturnItem(LoaderResult.Failed(loader.loaderType))
-      }
-      .toList()
-      .map { results -> LoaderBatchResult(postLoaderData.postDescriptor, results) }
-      .doOnSuccess { loaderBatchResults ->
-        removeFromActiveLoaders(loaderBatchResults.postDescriptor, cancelLoaders = false)
-        postUpdateRxQueue.onNext(loaderBatchResults)
-      }
-      .map { Unit }
-      .toFlowable()
-  }
-
-  fun listenPostContentUpdates(): Flowable<LoaderBatchResult> {
-    BackgroundUtils.ensureMainThread()
-
-    return postUpdateRxQueue
-      .onBackpressureBuffer()
-      .observeOn(AndroidSchedulers.mainThread())
-      .hide()
-  }
+  private val executor = QueueableConcurrentCoroutineExecutor(
+    maxConcurrency = 64,
+    dispatcher = dispatcher,
+    scope = scope
+  )
 
   fun onPostBind(postDescriptor: PostDescriptor) {
     check(loaders.isNotEmpty()) { "No loaders!" }
 
     val chanDescriptor = postDescriptor.descriptor
 
-    val postLoaderData = rwLock.write {
+    val postLoaderData = lock.write {
       if (!activeLoaders.containsKey(chanDescriptor)) {
         activeLoaders[chanDescriptor] = hashMapOf()
       }
@@ -164,7 +72,23 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    postLoaderRxQueue.onNext(postLoaderData)
+    val job = executor.post {
+      val loaderBatchResults = try {
+        onPostBindInternal(postLoaderData)
+      } catch (error: Throwable) {
+        if (error.isExceptionImportant()) {
+          Logger.e(TAG, "onPostBindInternal(${postLoaderData.postDescriptor}) error", error)
+        }
+
+        null
+      }
+
+      if (loaderBatchResults != null) {
+        _postUpdateFlow.emit(loaderBatchResults)
+      }
+    }
+
+    postLoaderData.setJob(job)
   }
 
   fun onPostUnbind(postDescriptor: PostDescriptor, isActuallyRecycling: Boolean) {
@@ -189,7 +113,7 @@ class OnDemandContentLoaderManager(
 
     Logger.d(TAG, "cancelAllForDescriptor called for $threadDescriptor")
 
-    rwLock.write {
+    lock.write {
       val postLoaderDataList = activeLoaders[threadDescriptor]
         ?: return@write
 
@@ -203,8 +127,49 @@ class OnDemandContentLoaderManager(
     }
   }
 
+  private suspend fun onPostBindInternal(postLoaderData: PostLoaderData): LoaderBatchResult? {
+    BackgroundUtils.ensureBackgroundThread()
+    val postDescriptor = postLoaderData.postDescriptor
+
+    val post = chanThreadManager.getPost(postDescriptor)
+    if (post == null || post.allLoadersCompletedLoading()) {
+      // Everything is done
+      return null
+    }
+
+    val allLoadersCached = loaders.all { loader -> loader.isCached(PostLoaderData(postDescriptor)) }
+    if (!allLoadersCached) {
+      // Add LOADING_DELAY_TIME_MS seconds delay to every emitted event.
+      // We do that so that we don't download everything when user quickly
+      // scrolls through posts. In other words, we only start running the
+      // loader after LOADING_DELAY_TIME_MS seconds have passed since
+      // onPostBind() was called. If onPostUnbind() was called during that
+      // time frame we cancel the loader if it has already started loading or
+      // just do nothing if it hasn't started loading yet.
+      delay(LOADING_DELAY_TIME_MS)
+    }
+
+    if (!isStillActive(postLoaderData)) {
+      return null
+    }
+
+    val loaderResults = processDataCollectionConcurrently(loaders) { loader ->
+      val result = withTimeoutOrNull(MAX_LOADER_LOADING_TIME_MS) { loader.startLoading(postLoaderData) }
+      if (result == null) {
+        return@processDataCollectionConcurrently LoaderResult.Failed(loader.loaderType)
+      }
+
+      return@processDataCollectionConcurrently result
+    }
+
+    val loaderBatchResults = LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
+    removeFromActiveLoaders(loaderBatchResults.postDescriptor, cancelLoaders = false)
+
+    return loaderBatchResults
+  }
+
   private fun removeFromActiveLoaders(postDescriptor: PostDescriptor, cancelLoaders: Boolean = true) {
-    rwLock.write {
+    lock.write {
       val postLoaderData = activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
         ?: return@write
 
@@ -215,7 +180,7 @@ class OnDemandContentLoaderManager(
   }
 
   private fun isStillActive(postLoaderData: PostLoaderData): Boolean {
-    return rwLock.read {
+    return lock.read {
       val chanDescriptor = postLoaderData.postDescriptor.descriptor
       val postDescriptor = postLoaderData.postDescriptor
 
@@ -226,12 +191,7 @@ class OnDemandContentLoaderManager(
 
   companion object {
     private const val TAG = "OnDemandContentLoaderManager"
-    private const val MIN_QUEUE_CAPACITY = 32
     const val LOADING_DELAY_TIME_MS = 1500L
     const val MAX_LOADER_LOADING_TIME_MS = 10_000L
-
-    private val ZIP_FUNC = BiFunction<PostLoaderData, Long, Pair<PostLoaderData, Long>> { postLoaderData, timer ->
-      Pair(postLoaderData, timer)
-    }
   }
 }
