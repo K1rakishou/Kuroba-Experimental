@@ -46,7 +46,7 @@ public class ChanPostBuilder {
     public String moderatorCapcode = "";
     public int idColor;
     public boolean isSavedReply;
-    public Set<Long> repliesToIds = new HashSet<>();
+    public Set<PostDescriptor> repliesToIds = new HashSet<>();
     @Nullable
     public CharSequence tripcode;
     @Nullable
@@ -320,11 +320,22 @@ public class ChanPostBuilder {
     }
 
     public ChanPostBuilder addReplyTo(long postId) {
-        repliesToIds.add(postId);
+        if (boardDescriptor == null) {
+            throw new NullPointerException("boardDescriptor is not initialized yet");
+        }
+
+        PostDescriptor postDescriptor = PostDescriptor.create(
+                boardDescriptor.siteName(),
+                boardDescriptor.getBoardCode(),
+                getOpId(),
+                postId
+        );
+
+        repliesToIds.add(postDescriptor);
         return this;
     }
 
-    public ChanPostBuilder repliesToIds(Set<Long> replyIds) {
+    public ChanPostBuilder repliesToIds(Set<PostDescriptor> replyIds) {
         repliesToIds.clear();
         repliesToIds.addAll(replyIds);
         return this;

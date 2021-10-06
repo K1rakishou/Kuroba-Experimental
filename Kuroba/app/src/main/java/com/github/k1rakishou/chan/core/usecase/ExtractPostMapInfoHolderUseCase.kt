@@ -97,20 +97,20 @@ class ExtractPostMapInfoHolderUseCase(
     }
 
     val threadDescriptor = postDescriptors.first().threadDescriptor()
-    val savedPostNoSet = HashSet(
+    val savedPostDescriptorSet = HashSet(
       savedReplyManager.retainSavedPostNoMap(postDescriptors, threadDescriptor)
     )
 
-    if (savedPostNoSet.isEmpty()) {
+    if (savedPostDescriptorSet.isEmpty()) {
       return emptyList()
     }
 
-    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList(savedPostNoSet.size)
-    val duplicateChecker: MutableSet<Int> = HashSet(savedPostNoSet.size)
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList(savedPostDescriptorSet.size)
+    val duplicateChecker: MutableSet<Int> = HashSet(savedPostDescriptorSet.size)
     var prevIndex = 0
 
-    for ((index, post) in postDescriptors.withIndex()) {
-      if (!savedPostNoSet.contains(post.postNo) || !duplicateChecker.add(index)) {
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      if (!savedPostDescriptorSet.contains(postDescriptor) || !duplicateChecker.add(index)) {
         continue
       }
 

@@ -91,12 +91,7 @@ class ChanCatalog(
         found = true
         postsSet.add(post)
 
-        post.iterateRepliesFrom { replyId ->
-          val lookUpPostDescriptor = PostDescriptor.create(
-            post.postDescriptor.descriptor,
-            replyId
-          )
-
+        post.iterateRepliesFrom { lookUpPostDescriptor ->
           findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
         }
       }

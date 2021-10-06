@@ -242,8 +242,8 @@ class PostHideManager(
     return chanPostHideList
   }
 
-  fun getHiddenPostsMap(postDescriptorSet: Set<PostDescriptor>): MutableMap<Long, ChanPostHide> {
-    val resultMap = mutableMapOf<Long, ChanPostHide>()
+  fun getHiddenPostsMap(postDescriptorSet: Set<PostDescriptor>): MutableMap<PostDescriptor, ChanPostHide> {
+    val resultMap = mutableMapOf<PostDescriptor, ChanPostHide>()
 
     lock.read {
       postDescriptorSet.forEach { postDescriptor ->
@@ -251,7 +251,7 @@ class PostHideManager(
 
         postHideMap[chanDescriptor]?.entries?.forEach { (postDescriptor, chanPostHide) ->
           if (postDescriptor in postDescriptorSet) {
-            resultMap[postDescriptor.postNo] = chanPostHide
+            resultMap[postDescriptor] = chanPostHide
           }
         }
       }

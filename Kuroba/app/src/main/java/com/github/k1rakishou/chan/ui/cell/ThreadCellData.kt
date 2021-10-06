@@ -123,13 +123,13 @@ class ThreadCellData(
     val postFilterManager = _postFilterManager.get()
     val filterHashMap = postFilterManager.getManyFilterHashes(postDescriptors)
     val filterStubMap = postFilterManager.getManyFilterStubs(postDescriptors)
-    val threadPostReplyMap = mutableMapWithCap<Long, Boolean>(postIndexedList.size)
+    val threadPostReplyMap = mutableMapWithCap<PostDescriptor, Boolean>(postIndexedList.size)
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       val savedReplies = _savedReplyManager.get().getThreadSavedReplies(chanDescriptor)
 
       savedReplies.forEach { savedReply ->
-        threadPostReplyMap[savedReply.postDescriptor.postNo] = true
+        threadPostReplyMap[savedReply.postDescriptor] = true
       }
     }
 
@@ -172,7 +172,8 @@ class ThreadCellData(
         postAlignmentMode = postAlignmentMode,
         postCellThumbnailSizePercents = postCellThumbnailSizePercents,
         isSavedReply = postIndexed.post.isSavedReply,
-        isReplyToSavedReply = postIndexed.post.repliesTo.any { replyTo -> threadPostReplyMap[replyTo] == true }
+        isReplyToSavedReply = postIndexed.post.repliesTo
+          .any { replyTo -> threadPostReplyMap[replyTo] == true }
       )
 
       postCellData.postCellCallback = postCellCallback

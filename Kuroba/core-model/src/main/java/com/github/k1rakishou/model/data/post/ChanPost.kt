@@ -9,7 +9,7 @@ open class ChanPost(
   val postDescriptor: PostDescriptor,
   val postImages: List<ChanPostImage>,
   val postIcons: List<ChanPostHttpIcon>,
-  val repliesTo: Set<Long>,
+  val repliesTo: Set<PostDescriptor>,
   val timestamp: Long = -1L,
   val postComment: PostComment,
   val subject: CharSequence?,
@@ -18,7 +18,7 @@ open class ChanPost(
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
   val isSavedReply: Boolean = false,
-  repliesFrom: Set<Long>? = null,
+  repliesFrom: Set<PostDescriptor>? = null,
   deleted: Boolean = false
 ) {
   /**
@@ -33,7 +33,7 @@ open class ChanPost(
   var isDeleted: Boolean = deleted
 
   @get:Synchronized
-  val repliesFrom = mutableSetOf<Long>()
+  val repliesFrom = mutableSetOf<PostDescriptor>()
 
   @Synchronized
   fun postNo(): Long = postDescriptor.postNo
@@ -154,7 +154,7 @@ open class ChanPost(
   }
 
   @Synchronized
-  open fun iterateRepliesFrom(iterator: (Long) -> Unit) {
+  open fun iterateRepliesFrom(iterator: (PostDescriptor) -> Unit) {
     for (replyNo in repliesFrom) {
       iterator.invoke(replyNo)
     }

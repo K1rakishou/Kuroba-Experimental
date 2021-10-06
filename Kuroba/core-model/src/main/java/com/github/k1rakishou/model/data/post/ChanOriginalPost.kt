@@ -8,7 +8,7 @@ class ChanOriginalPost(
   postDescriptor: PostDescriptor,
   postImages: List<ChanPostImage>,
   postIcons: List<ChanPostHttpIcon>,
-  repliesTo: Set<Long>,
+  repliesTo: Set<PostDescriptor>,
   timestamp: Long = -1L,
   postComment: PostComment,
   subject: CharSequence? = null,
@@ -28,7 +28,7 @@ class ChanOriginalPost(
   @get:Synchronized
   @set:Synchronized
   var archived: Boolean = false,
-  repliesFrom: Set<Long>? = null,
+  repliesFrom: Set<PostDescriptor>? = null,
   deleted: Boolean = false
 ) : ChanPost(
   chanPostId,

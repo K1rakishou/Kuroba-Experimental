@@ -167,17 +167,15 @@ class ChanThreadsCache(
     return chanThreads[threadDescriptor]?.getOriginalPost()
   }
 
-  fun getPostFromCache(chanDescriptor: ChanDescriptor, postNo: Long): ChanPost? {
+  fun getPostFromCache(chanDescriptor: ChanDescriptor, postDescriptor: PostDescriptor): ChanPost? {
     when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        val postDescriptor = PostDescriptor.create(chanDescriptor, postNo)
-
         return chanThreads[chanDescriptor]?.getPost(postDescriptor)
       }
       is ChanDescriptor.ICatalogDescriptor -> {
         val threadDescriptor = chanCatalogSnapshotCache.get(chanDescriptor)
           ?.catalogThreadDescriptorList
-          ?.firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postNo }
+          ?.firstOrNull { threadDescriptor -> threadDescriptor.threadNo == postDescriptor.getThreadNo() }
           ?: return null
 
         return chanThreads[threadDescriptor]?.getOriginalPost()

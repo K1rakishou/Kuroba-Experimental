@@ -26,6 +26,8 @@ import kotlin.collections.component2
 import kotlin.collections.set
 import kotlin.concurrent.read
 import kotlin.concurrent.write
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ChanThread(
   private val isDevBuild: Boolean,
@@ -160,6 +162,7 @@ class ChanThread(
     return lock.read { threadPosts.toList() }
   }
 
+  @OptIn(ExperimentalTime::class)
   fun addOrUpdatePosts(newChanPosts: List<ChanPost>, postsFromServerData: PostsFromServerData?): Boolean {
     if (newChanPosts.isEmpty()) {
       return true
@@ -244,17 +247,23 @@ class ChanThread(
         }
       }
 
-      if (addedOrUpdatedOrDeletedPosts) {
-        threadPosts.sortWith(POSTS_COMPARATOR)
-        recalculatePostReplies()
+      val sortAndRecalculationDuration = measureTime {
+        if (addedOrUpdatedOrDeletedPosts) {
+          if (!postsAreSorted()) {
+            Logger.d(TAG, "addOrUpdatePosts() posts need to be sorted")
+            threadPosts.sortWith(POSTS_COMPARATOR)
+          }
+
+          recalculatePostReplies(newChanPosts)
+        }
       }
 
       deletedPostsForUi += deletedPostsCount
-
       checkPostsConsistency()
 
       Logger.d(TAG, "Thread cache (${threadDescriptor}) Added ${addedPostsCount} new posts, " +
-        "updated ${updatedPostsCount} posts, marked as deleted ${deletedPostsCount} posts")
+        "updated ${updatedPostsCount} posts, marked as deleted ${deletedPostsCount} posts. " +
+        "sortAndRecalculationDuration=$sortAndRecalculationDuration")
 
       return@write addedOrUpdatedOrDeletedPosts
     }
@@ -300,7 +309,10 @@ class ChanThread(
         threadPosts.add(newChanOriginalPost)
         postsByPostDescriptors[newChanOriginalPost.postDescriptor] = newChanOriginalPost
 
-        threadPosts.sortWith(POSTS_COMPARATOR)
+        if (!postsAreSorted()) {
+          Logger.d(TAG, "setOrUpdateOriginalPost() posts need to be sorted")
+          threadPosts.sortWith(POSTS_COMPARATOR)
+        }
       }
 
       checkPostsConsistency()
@@ -480,12 +492,7 @@ class ChanThread(
 
         postsSet.add(post)
 
-        post.iterateRepliesFrom { replyId ->
-          val lookUpPostDescriptor = PostDescriptor.create(
-            post.postDescriptor.descriptor,
-            replyId
-          )
-
+        post.iterateRepliesFrom { lookUpPostDescriptor ->
           findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
         }
       }
@@ -879,19 +886,21 @@ class ChanThread(
     }
   }
 
-  private fun recalculatePostReplies() {
+  private fun recalculatePostReplies(newChanPosts: List<ChanPost>) {
     require(lock.isWriteLocked) { "Lock must be write locked!" }
 
-    val postsByNo: MutableMap<Long, ChanPost> = HashMap()
-    for (post in threadPosts) {
-      postsByNo[post.postNo()] = post
-    }
+    val replies = HashMap<PostDescriptor, MutableList<PostDescriptor>>(threadPosts.size)
 
-    // Maps post no's to a list of no's that that post received replies from
-    val replies: MutableMap<Long, MutableList<Long>> = HashMap()
+    for (newChanPost in newChanPosts) {
+      val sourcePost = postsByPostDescriptors[newChanPost.postDescriptor]
+        ?: continue
 
-    for (sourcePost in threadPosts) {
       for (replyTo in sourcePost.repliesTo) {
+        if (postsByPostDescriptors[replyTo]?.repliesFrom?.contains(sourcePost.postDescriptor) == true) {
+          // Already processed
+          continue
+        }
+
         var value = replies[replyTo]
 
         if (value == null) {
@@ -899,14 +908,13 @@ class ChanThread(
           replies[replyTo] = value
         }
 
-        value.add(sourcePost.postNo())
+        value.add(sourcePost.postDescriptor)
       }
     }
 
     for ((postNo, replyList) in replies) {
-      val subject = postsByNo[postNo]
+      val subject = postsByPostDescriptors[postNo]
 
-      // Sometimes a post replies to a ghost, a post that doesn't exist.
       subject?.repliesFrom?.addAll(replyList)
     }
   }
@@ -959,6 +967,25 @@ class ChanThread(
     }
   }
 
+  private fun postsAreSorted(): Boolean {
+    require(lock.isWriteLocked) { "Lock must be write locked!" }
+
+    for (threadPostWindow in threadPosts.windowed(size = 2, step = 1)) {
+      val prevPost = threadPostWindow.getOrNull(0) ?: break
+      val currPost = threadPostWindow.getOrNull(1) ?: break
+
+      if (currPost.postNo() < prevPost.postNo()) {
+        return false
+      }
+
+      if (currPost.postNo() == prevPost.postNo() && currPost.postSubNo() < prevPost.postSubNo()) {
+        return false
+      }
+    }
+
+    return true
+  }
+
   fun slicePosts(vararg rangesArg: IntRange): List<ChanPost> {
     require(rangesArg.isNotEmpty()) { "ranges must not be empty" }
 
@@ -997,11 +1024,7 @@ class ChanThread(
 
       val resultPosts = mutableListOf<PostDescriptor>()
       resultPosts += chanPost.postDescriptor
-
-      val replies = chanPost.repliesFrom
-        .map { replyFrom -> PostDescriptor.create(postDescriptor.descriptor, replyFrom) }
-
-      resultPosts.addAll(replies)
+      resultPosts.addAll(chanPost.repliesFrom)
       return@read resultPosts
     }
   }

@@ -199,20 +199,19 @@ class SavedReplyManager(
   fun retainSavedPostNoMap(
     postList: List<PostDescriptor>,
     threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ): List<Long> {
+  ): List<PostDescriptor> {
     if (postList.isEmpty()) {
       return emptyList()
     }
 
     return lock.read {
       val savedRepliesNoSet = savedReplyMap[threadDescriptor]
-        ?.map { chanSavedReply -> chanSavedReply.postDescriptor.postNo }
+        ?.map { chanSavedReply -> chanSavedReply.postDescriptor }
         ?.toSet()
         ?: return@read emptyList()
 
       return@read postList
-        .filter { post -> savedRepliesNoSet.contains(post.postNo) }
-        .map { post -> post.postNo }
+        .filter { postDescriptor -> savedRepliesNoSet.contains(postDescriptor) }
     }
   }
 

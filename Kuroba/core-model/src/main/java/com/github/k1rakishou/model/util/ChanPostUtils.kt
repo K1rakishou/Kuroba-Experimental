@@ -11,6 +11,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
@@ -260,9 +261,9 @@ object ChanPostUtils {
   }
 
   @JvmStatic
-  fun findPostWithReplies(postNo: Long, posts: List<ChanPost>): HashSet<ChanPost> {
+  fun findPostWithReplies(postDescriptor: PostDescriptor, posts: List<ChanPost>): HashSet<ChanPost> {
     val postsSet = HashSet<ChanPost>()
-    findPostWithRepliesRecursive(postNo, posts, postsSet)
+    findPostWithRepliesRecursive(postDescriptor, posts, postsSet)
     return postsSet
   }
 
@@ -270,12 +271,12 @@ object ChanPostUtils {
    * Finds a post by it's id and then finds all posts that has replied to this post recursively
    */
   private fun findPostWithRepliesRecursive(
-    postNo: Long,
+    postDescriptor: PostDescriptor,
     posts: List<ChanPost>,
     postsSet: MutableSet<ChanPost>
   ) {
     for (post in posts) {
-      if (post.postNo() == postNo && !postsSet.contains(post)) {
+      if (post.postDescriptor == postDescriptor && !postsSet.contains(post)) {
         postsSet.add(post)
 
         post.iterateRepliesFrom { replyId ->

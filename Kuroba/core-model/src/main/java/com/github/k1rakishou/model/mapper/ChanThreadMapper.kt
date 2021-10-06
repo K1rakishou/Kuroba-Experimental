@@ -54,7 +54,15 @@ object ChanThreadMapper {
       ?: emptyList()
 
     val repliesTo = postAdditionalData.postReplyToByPostIdMap[chanPostFull.chanPostIdEntity.postId]
-      ?.map { chanPostReplyEntity -> chanPostReplyEntity.replyNo }
+      ?.map { chanPostReplyEntity ->
+        return@map PostDescriptor.create(
+          siteName = postDescriptor.siteDescriptor().siteName,
+          boardCode = postDescriptor.boardDescriptor().boardCode,
+          threadNo = postDescriptor.getThreadNo(),
+          postNo = chanPostReplyEntity.replyNo,
+          postSubNo = chanPostReplyEntity.replySubNo
+        )
+      }
       ?.toSet()
       ?: emptySet()
 

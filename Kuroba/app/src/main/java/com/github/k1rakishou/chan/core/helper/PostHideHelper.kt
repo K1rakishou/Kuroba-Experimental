@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.PostFilter
@@ -33,9 +34,9 @@ class PostHideHelper(
       val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
 
       @SuppressLint("UseSparseArrays")
-      val postsFastLookupMap: MutableMap<Long, ChanPost> = LinkedHashMap()
+      val postsFastLookupMap: MutableMap<PostDescriptor, ChanPost> = LinkedHashMap()
       for (post in posts) {
-        postsFastLookupMap[post.postNo()] = post
+        postsFastLookupMap[post.postDescriptor] = post
       }
 
       applyFiltersToReplies(posts, postsFastLookupMap)
@@ -90,21 +91,21 @@ class PostHideHelper(
   }
 
   private fun hideRepliesToAlreadyHiddenPosts(
-    postsFastLookupMap: Map<Long, ChanPost>,
-    hiddenPostsLookupMap: MutableMap<Long, ChanPostHide>
+    postsFastLookupMap: Map<PostDescriptor, ChanPost>,
+    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>
   ) {
     val newHiddenPosts: MutableList<ChanPostHide> = ArrayList()
 
     for (post in postsFastLookupMap.values) {
-      if (hiddenPostsLookupMap.containsKey(post.postNo())) {
+      if (hiddenPostsLookupMap.containsKey(post.postDescriptor)) {
         continue
       }
 
-      for (replyNo in post.repliesTo) {
-        if (hiddenPostsLookupMap.containsKey(replyNo)) {
-          val parentPost = postsFastLookupMap[replyNo]
+      for (replyPostDescriptor in post.repliesTo) {
+        if (hiddenPostsLookupMap.containsKey(replyPostDescriptor)) {
+          val parentPost = postsFastLookupMap[replyPostDescriptor]
             ?: continue
-          val parentHiddenPost = hiddenPostsLookupMap[replyNo]
+          val parentHiddenPost = hiddenPostsLookupMap[replyPostDescriptor]
             ?: continue
 
           val filterRemove: Boolean = postFilterManager.getFilterRemove(
@@ -122,8 +123,7 @@ class PostHideHelper(
             applyToReplies = true
           )
 
-          // TODO(KurobaEx): archive ghost posts
-          hiddenPostsLookupMap[newHiddenPost.postDescriptor.postNo] = newHiddenPost
+          hiddenPostsLookupMap[newHiddenPost.postDescriptor] = newHiddenPost
           newHiddenPosts.add(newHiddenPost)
 
           //post is already hidden no need to check other replies
@@ -139,7 +139,7 @@ class PostHideHelper(
     postHideManager.createMany(newHiddenPosts)
   }
 
-  private fun applyFiltersToReplies(posts: List<ChanPost>, postsFastLookupMap: MutableMap<Long, ChanPost>) {
+  private fun applyFiltersToReplies(posts: List<ChanPost>, postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>) {
     for (post in posts) {
       if (post.postDescriptor.isOP()) {
         // skip the OP
@@ -169,7 +169,7 @@ class PostHideHelper(
    */
   private fun applyPostFilterActionToChildPosts(
     parentPost: ChanPost,
-    postsFastLookupMap: MutableMap<Long, ChanPost>
+    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
   ) {
     if (postsFastLookupMap.isEmpty()
       || !postFilterManager.getFilterReplies(parentPost.postDescriptor)) {
@@ -179,20 +179,20 @@ class PostHideHelper(
 
     // find all replies to the post recursively
     val postWithAllReplies = ChanPostUtils.findPostWithReplies(
-      parentPost.postNo(),
+      parentPost.postDescriptor,
       postsFastLookupMap.values.toList()
     )
 
-    val postNoWithAllReplies: MutableSet<Long> = HashSet(postWithAllReplies.size)
-    postWithAllReplies.mapTo(postNoWithAllReplies, ChanPost::postNo)
+    val postDescriptorWithAllReplies: MutableSet<PostDescriptor> = HashSet(postWithAllReplies.size)
+    postWithAllReplies.mapTo(postDescriptorWithAllReplies, ChanPost::postDescriptor)
 
-    for (no in postNoWithAllReplies) {
-      if (no == parentPost.postNo()) {
+    for (postDescriptor in postDescriptorWithAllReplies) {
+      if (postDescriptor == parentPost.postDescriptor) {
         // do nothing with the parent post
         continue
       }
 
-      val childPost = postsFastLookupMap[no]
+      val childPost = postsFastLookupMap[postDescriptor]
         // cross-thread post
         ?: continue
 
@@ -213,7 +213,7 @@ class PostHideHelper(
       )
 
       // assign the filter parameters to the child post
-      postsFastLookupMap[no] = childPost
+      postsFastLookupMap[postDescriptor] = childPost
       postWithAllReplies.remove(childPost)
       postWithAllReplies.add(childPost)
     }
@@ -243,14 +243,14 @@ class PostHideHelper(
   }
 
   private fun findHiddenPost(
-    hiddenPostsLookupMap: Map<Long, ChanPostHide>,
+    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
     post: ChanPost
   ): ChanPostHide? {
     if (hiddenPostsLookupMap.isEmpty()) {
       return null
     }
 
-    return hiddenPostsLookupMap[post.postNo()]
+    return hiddenPostsLookupMap[post.postDescriptor]
   }
 
   companion object {

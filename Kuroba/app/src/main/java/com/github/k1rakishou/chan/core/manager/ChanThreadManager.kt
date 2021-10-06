@@ -278,7 +278,13 @@ class ChanThreadManager(
       return null
     }
 
-    return chanThreadsCache.getPostFromCache(chanDescriptor, postNo)
+    val postDescriptor = PostDescriptor.create(chanDescriptor, postNo)
+
+    return chanThreadsCache.getPostFromCache(chanDescriptor, postDescriptor)
+  }
+
+  fun findPostByPostDescriptor(postDescriptor: PostDescriptor): ChanPost? {
+    return chanThreadsCache.getPostFromCache(postDescriptor.descriptor, postDescriptor)
   }
 
   fun getThreadPostsCount(descriptor: ChanDescriptor.ThreadDescriptor): Int {

@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.entity.chan.post
 
-import androidx.room.*
+import androidx.room.ColumnInfo
+import androidx.room.Entity
+import androidx.room.ForeignKey
+import androidx.room.Index
+import androidx.room.PrimaryKey
 
 @Entity(
   tableName = ChanPostReplyEntity.TABLE_NAME,
@@ -19,6 +23,7 @@ import androidx.room.*
       value = [
         ChanPostReplyEntity.OWNER_POST_ID_COLUMN_NAME,
         ChanPostReplyEntity.REPLY_NO_COLUMN_NAME,
+        ChanPostReplyEntity.REPLY_SUB_NO_COLUMN_NAME,
         ChanPostReplyEntity.REPLY_TYPE_COLUMN_NAME
       ],
       unique = true
@@ -40,6 +45,8 @@ data class ChanPostReplyEntity(
   val ownerPostId: Long,
   @ColumnInfo(name = REPLY_NO_COLUMN_NAME)
   val replyNo: Long,
+  @ColumnInfo(name = REPLY_SUB_NO_COLUMN_NAME)
+  val replySubNo: Long,
   @ColumnInfo(name = REPLY_TYPE_COLUMN_NAME)
   val replyType: ReplyType
 ) {
@@ -60,6 +67,7 @@ data class ChanPostReplyEntity(
     const val POST_REPLY_ID_COLUMN_NAME = "post_reply_id"
     const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
     const val REPLY_NO_COLUMN_NAME = "reply_no"
+    const val REPLY_SUB_NO_COLUMN_NAME = "reply_sub_no"
     const val REPLY_TYPE_COLUMN_NAME = "reply_type"
 
     const val OWNER_POST_ID_REPLY_TYPE_INDEX_NAME = "${TABLE_NAME}_owner_post_id_reply_type_idx"

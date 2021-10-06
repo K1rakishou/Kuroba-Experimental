@@ -210,7 +210,8 @@ class ChanPostLocalSource(
           ChanPostReplyEntity(
             postReplyId = 0L,
             ownerPostId = chanPostIdEntity.postId,
-            replyNo = replyTo,
+            replyNo = replyTo.postNo,
+            replySubNo = replyTo.postSubNo,
             replyType = ChanPostReplyEntity.ReplyType.ReplyTo
           )
         }.toList()
