@@ -25,6 +25,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
@@ -62,6 +63,8 @@ class PostAdapter(
   lateinit var postFilterManager: Lazy<PostFilterManager>
   @Inject
   lateinit var savedReplyManager: Lazy<SavedReplyManager>
+  @Inject
+  lateinit var postFilterHighlightManager: Lazy<PostFilterHighlightManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -119,6 +122,7 @@ class PostAdapter(
     threadCellData = ThreadCellData(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       _postFilterManager = postFilterManager,
+      _postFilterHighlightManager = postFilterHighlightManager,
       _savedReplyManager = savedReplyManager,
       initialTheme = themeEngine.chanTheme
     )

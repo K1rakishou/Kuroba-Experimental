@@ -36,7 +36,6 @@ import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.DialogFactory
-import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -1023,7 +1022,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>) {
+  override suspend fun onPostUpdated(updatedPost: ChanPost) {
     BackgroundUtils.ensureMainThread()
 
     if (postPopupHelper.isOpen) {

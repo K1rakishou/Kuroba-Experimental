@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
@@ -21,6 +22,7 @@ import kotlinx.coroutines.withContext
 class ThreadCellData(
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _postFilterManager: Lazy<PostFilterManager>,
+  private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   private val _savedReplyManager: Lazy<SavedReplyManager>,
   initialTheme: ChanTheme
 ): Iterable<PostCellData> {
@@ -97,6 +99,10 @@ class ThreadCellData(
   ): List<PostCellData> {
     BackgroundUtils.ensureBackgroundThread()
 
+    val postFilterManager = _postFilterManager.get()
+    val postFilterHighlightManager = _postFilterHighlightManager.get()
+    val savedReplyManager = _savedReplyManager.get()
+
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
 
@@ -120,18 +126,19 @@ class ThreadCellData(
       is ChanDescriptor.ThreadDescriptor -> ChanSettings.threadPostAlignmentMode.get()
     }
 
-    val postFilterManager = _postFilterManager.get()
     val filterHashMap = postFilterManager.getManyFilterHashes(postDescriptors)
     val filterStubMap = postFilterManager.getManyFilterStubs(postDescriptors)
     val threadPostReplyMap = mutableMapWithCap<PostDescriptor, Boolean>(postIndexedList.size)
 
     if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-      val savedReplies = _savedReplyManager.get().getThreadSavedReplies(chanDescriptor)
+      val savedReplies = savedReplyManager.getThreadSavedReplies(chanDescriptor)
 
       savedReplies.forEach { savedReply ->
         threadPostReplyMap[savedReply.postDescriptor] = true
       }
     }
+
+    val highlightFilterKeywordMap = postFilterHighlightManager.getHighlightFilterKeywordForDescriptor(postDescriptors)
 
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
       val postDescriptor = postIndexed.post.postDescriptor
@@ -169,6 +176,7 @@ class ThreadCellData(
         stub = filterStubMap[postDescriptor] ?: false,
         filterHash = filterHashMap[postDescriptor] ?: 0,
         searchQuery = defaultSearchQuery,
+        keywordsToHighlight = highlightFilterKeywordMap[postDescriptor] ?: emptySet(),
         postAlignmentMode = postAlignmentMode,
         postCellThumbnailSizePercents = postCellThumbnailSizePercents,
         isSavedReply = postIndexed.post.isSavedReply,

@@ -11,11 +11,7 @@ sealed class LoaderResult(val loaderType: LoaderType) {
    * Some loaders do not add any new visible information to a post (like PrefetchLoader) so it's
    * reasonable to not update the view if it was the only executed loader.
    * */
-  class Succeeded(
-    loaderType: LoaderType,
-    val needUpdateView: Boolean,
-    val loaderResultData: LoaderResultData?
-  ) : LoaderResult(loaderType)
+  class Succeeded(loaderType: LoaderType, val needUpdateView: Boolean) : LoaderResult(loaderType)
 
   /**
    * Loader failed to load new content for current post (no internet connection or something
@@ -30,8 +26,4 @@ sealed class LoaderResult(val loaderType: LoaderType) {
    * When Rejected is returned that means that we don't need to update the post (there is no info)
    * */
   class Rejected(loaderType: LoaderType) : LoaderResult(loaderType)
-}
-
-sealed class LoaderResultData {
-  data class FilterHighlights(val highlightWordSet: Set<String>) : LoaderResultData()
 }

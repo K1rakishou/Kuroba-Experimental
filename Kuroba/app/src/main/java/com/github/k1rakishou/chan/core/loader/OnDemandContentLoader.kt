@@ -9,8 +9,8 @@ abstract class OnDemandContentLoader(
   abstract suspend fun startLoading(postLoaderData: PostLoaderData): LoaderResult
   abstract fun cancelLoading(postLoaderData: PostLoaderData)
 
-  protected fun succeeded(needUpdateView: Boolean, loaderResultData: LoaderResultData?): LoaderResult {
-    return LoaderResult.Succeeded(loaderType, needUpdateView, loaderResultData)
+  protected fun succeeded(needUpdateView: Boolean): LoaderResult {
+    return LoaderResult.Succeeded(loaderType, needUpdateView)
   }
 
   protected fun failed(): LoaderResult = LoaderResult.Failed(loaderType)

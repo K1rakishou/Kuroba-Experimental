@@ -74,14 +74,14 @@ class EpoxySelectableBoardView @JvmOverloads constructor(
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
       inputQueries = listOf(query),
       spannableString = this.boardName.text as SpannableString,
-      color = themeEngine.chanTheme.accentColor,
+      bgColor = themeEngine.chanTheme.accentColor,
       minQueryLength = 1
     )
 
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
       inputQueries = listOf(query),
       spannableString = this.boardDescription.text as SpannableString,
-      color = themeEngine.chanTheme.accentColor,
+      bgColor = themeEngine.chanTheme.accentColor,
       minQueryLength = 1
     )
   }

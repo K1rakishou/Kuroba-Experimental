@@ -4,6 +4,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
+import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -25,6 +26,7 @@ class PostRepliesAdapter(
   chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   postFilterManager: Lazy<PostFilterManager>,
   savedReplyManager: Lazy<SavedReplyManager>,
+  postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
@@ -32,6 +34,7 @@ class PostRepliesAdapter(
     chanThreadViewableInfoManager = chanThreadViewableInfoManager,
     _postFilterManager = postFilterManager,
     _savedReplyManager = savedReplyManager,
+    _postFilterHighlightManager = postFilterHighlightManager,
     initialTheme = initialTheme
   )
 

@@ -92,7 +92,7 @@ class GlobalSearchUseCase(
           SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedComment,
-            color = theme.accentColor,
+            bgColor = theme.accentColor,
             minQueryLength = 1
           )
 
@@ -109,7 +109,7 @@ class GlobalSearchUseCase(
           SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
             inputQueries = getAllQueries(searchResult.searchParams),
             spannableString = spannedSubject,
-            color = theme.accentColor,
+            bgColor = theme.accentColor,
             minQueryLength = 1
           )
 

@@ -85,6 +85,7 @@ class PostRepliesPopupController(
       chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       postFilterManager = postFilterManager,
       savedReplyManager = savedReplyManager,
+      postFilterHighlightManager = postFilterHighlightManager,
       initialTheme = themeEngine.chanTheme
     )
 

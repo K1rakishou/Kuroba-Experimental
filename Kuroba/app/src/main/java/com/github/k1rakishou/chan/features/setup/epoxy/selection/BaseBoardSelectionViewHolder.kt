@@ -65,14 +65,14 @@ class BaseBoardSelectionViewHolder : EpoxyHolder(), ThemeEngine.ThemeChangesList
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(query),
         spannableString = this.topTitle.text as SpannableString,
-        color = themeEngine.chanTheme.accentColor,
+        bgColor = themeEngine.chanTheme.accentColor,
         minQueryLength = 1
       )
 
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(query),
         spannableString = this.bottomTitle.text as SpannableString,
-        color = themeEngine.chanTheme.accentColor,
+        bgColor = themeEngine.chanTheme.accentColor,
         minQueryLength = 1
       )
     }

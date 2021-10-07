@@ -24,6 +24,7 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
@@ -59,6 +60,7 @@ data class PostCellData(
   var filterHash: Int,
   var postViewMode: PostViewMode,
   var searchQuery: SearchQuery,
+  val keywordsToHighlight: Set<HighlightFilterKeyword>,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
   val isSavedReply: Boolean,
@@ -239,6 +241,7 @@ data class PostCellData(
       filterHash = filterHash,
       postViewMode = postViewMode,
       searchQuery = searchQuery,
+      keywordsToHighlight = keywordsToHighlight.toSet(),
       postAlignmentMode = postAlignmentMode,
       postCellThumbnailSizePercents = postCellThumbnailSizePercents,
       isSavedReply = isSavedReply,
@@ -313,7 +316,7 @@ data class PostCellData(
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(searchQuery.query),
         spannableString = postSubject,
-        color = theme.accentColor,
+        bgColor = theme.accentColor,
         minQueryLength = searchQuery.queryMinValidLength
       )
 
@@ -334,7 +337,7 @@ data class PostCellData(
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
       inputQueries = listOf(searchQuery.query),
       spannableString = postNoText,
-      color = theme.accentColor,
+      bgColor = theme.accentColor,
       minQueryLength = searchQuery.queryMinValidLength
     )
 
@@ -402,9 +405,20 @@ data class PostCellData(
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
       inputQueries = listOf(searchQuery.query),
       spannableString = commentText,
-      color = theme.accentColor,
+      bgColor = theme.accentColor,
       minQueryLength = searchQuery.queryMinValidLength
     )
+
+    if (keywordsToHighlight.isNotEmpty()) {
+      val keywordsToHighlightMap = keywordsToHighlight.associateBy { it.keyword }
+
+      SpannableHelper.findAllFilterHighlightQueryEntriesInsideSpannableStringAndMarkThem(
+        inputQueries = keywordsToHighlight.map { it.keyword },
+        spannableString = commentText,
+        minQueryLength = searchQuery.queryMinValidLength,
+        keywordsToHighlightMap = keywordsToHighlightMap
+      )
+    }
 
     return commentText
   }
@@ -416,7 +430,7 @@ data class PostCellData(
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(searchQuery.query),
         spannableString = postFileInfoSpannable,
-        color = theme.accentColor,
+        bgColor = theme.accentColor,
         minQueryLength = searchQuery.queryMinValidLength
       )
     }

@@ -135,7 +135,7 @@ internal class PostExtraContentLoader(
 
     chanThreadManager.setContentLoadedForLoader(post.postDescriptor, loaderType)
     // Something was updated we need to redraw the post, so return success
-    return succeeded(needUpdateView = true, loaderResultData = null)
+    return succeeded(needUpdateView = true)
   }
 
   private suspend fun fetchExtraLinkInfo(

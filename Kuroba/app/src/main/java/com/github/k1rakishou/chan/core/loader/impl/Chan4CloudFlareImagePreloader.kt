@@ -24,7 +24,7 @@ class Chan4CloudFlareImagePreloader(
       return rejected()
     }
 
-    return succeeded(needUpdateView = false, loaderResultData = null)
+    return succeeded(needUpdateView = false)
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {

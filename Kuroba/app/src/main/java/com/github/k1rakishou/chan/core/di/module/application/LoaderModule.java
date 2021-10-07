@@ -2,15 +2,20 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
+import com.github.k1rakishou.chan.core.loader.impl.PostHighlightFilterLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundCloudMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
+import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager;
+import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
 import com.github.k1rakishou.core_logger.Logger;
@@ -57,6 +62,26 @@ public class LoaderModule {
 
         return new Chan4CloudFlareImagePreloader(
                 chan4CloudFlareImagePreloaderManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public PostHighlightFilterLoader providePostHighlightFilterLoader(
+            ChanFilterManager chanFilterManager,
+            FilterEngine filterEngine,
+            PostFilterManager postFilterManager,
+            ChanThreadManager chanThreadManager,
+            PostFilterHighlightManager postFilterHighlightManager
+    ) {
+        Logger.deps("PostHighlightFilterLoader");
+
+        return new PostHighlightFilterLoader(
+                chanFilterManager,
+                filterEngine,
+                postFilterManager,
+                chanThreadManager,
+                postFilterHighlightManager
         );
     }
 

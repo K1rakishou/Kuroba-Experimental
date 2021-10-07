@@ -39,6 +39,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
+import com.github.k1rakishou.chan.core.loader.impl.PostHighlightFilterLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
@@ -53,6 +54,7 @@ import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManag
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
+import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager;
@@ -246,6 +248,7 @@ public class ManagerModule {
             Lazy<PrefetchLoader> prefetchLoader,
             Lazy<PostExtraContentLoader> postExtraContentLoader,
             Lazy<Chan4CloudFlareImagePreloader> chan4CloudFlareImagePreloader,
+            Lazy<PostHighlightFilterLoader> postHighlightFilterLoader,
             ChanThreadManager chanThreadManager
     ) {
         Logger.deps("OnDemandContentLoaderManager");
@@ -254,6 +257,7 @@ public class ManagerModule {
             loaders.add(chan4CloudFlareImagePreloader.get());
             loaders.add(prefetchLoader.get());
             loaders.add(postExtraContentLoader.get());
+            loaders.add(postHighlightFilterLoader.get());
 
             return loaders;
         });
@@ -848,6 +852,13 @@ public class ManagerModule {
                 compositeCatalogRepository,
                 currentOpenedDescriptorStateManager
         );
+    }
+
+    @Singleton
+    @Provides
+    public PostFilterHighlightManager providePostFilterHighlightManager() {
+        Logger.deps("PostFilterHighlightManager");
+        return new PostFilterHighlightManager();
     }
 
 }

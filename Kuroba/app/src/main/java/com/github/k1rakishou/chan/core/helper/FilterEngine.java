@@ -31,9 +31,14 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -80,6 +85,33 @@ public class FilterEngine {
 
     public boolean matchesBoard(ChanFilter filter, ChanBoard board) {
         return filter.matchesBoard(board.getBoardDescriptor());
+    }
+
+    @NotNull
+    public Set<String> extractMatchedKeywords(
+            @NotNull ChanFilter chanFilter,
+            @NotNull CharSequence text
+    ) {
+        Pattern pattern = null;
+        synchronized (patternCache) {
+            pattern = patternCache.get(chanFilter.getPattern());
+        }
+
+        if (pattern == null) {
+            return Collections.emptySet();
+        }
+
+        Matcher matcher = pattern.matcher(text);
+        Set<String> keywords = new HashSet<>();
+
+        while (matcher.find()) {
+            int start = matcher.start();
+            int end = matcher.end();
+
+            keywords.add(text.subSequence(start, end).toString());
+        }
+
+        return keywords;
     }
 
     /**

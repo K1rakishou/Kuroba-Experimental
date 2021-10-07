@@ -31,8 +31,16 @@ class ChanFilter(
     return enabled && isWatchFilter()
   }
 
+  fun isEnabledHighlightFilter(): Boolean {
+    return enabled && isHighlightFilter()
+  }
+
   fun isWatchFilter(): Boolean {
     return action == FilterAction.WATCH.id
+  }
+
+  fun isHighlightFilter(): Boolean {
+    return action == FilterAction.COLOR.id
   }
 
   fun matchesBoard(boardDescriptor: BoardDescriptor): Boolean {

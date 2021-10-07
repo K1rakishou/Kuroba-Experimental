@@ -20,9 +20,8 @@ class QueueableConcurrentCoroutineExecutor(
 
   fun post(action: suspend () -> Unit): Job {
     return scope.launch(dispatcher) {
-      semaphore.acquire()
-
       try {
+        semaphore.acquire()
         action.invoke()
       } finally {
         semaphore.release()

@@ -8,17 +8,23 @@ import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.text.getSpans
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
+import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
+import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
+import com.github.k1rakishou.core_spannable.PostFilterHighlightBackgroundSpan
+import com.github.k1rakishou.core_spannable.PostFilterHighlightForegroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
@@ -27,14 +33,64 @@ import kotlin.time.ExperimentalTime
 
 object SpannableHelper {
 
+  fun findAllFilterHighlightQueryEntriesInsideSpannableStringAndMarkThem(
+    inputQueries: Collection<String>,
+    spannableString: SpannableString,
+    minQueryLength: Int,
+    keywordsToHighlightMap: Map<String, HighlightFilterKeyword>
+  ) {
+    findAllQueryEntriesInsideSpannableStringAndMarkThem(
+      inputQueries = inputQueries,
+      spannableString = spannableString,
+      bgColor = 0,
+      minQueryLength = minQueryLength,
+      shouldDeleteSpanFunc = { style ->
+        style is PostFilterHighlightForegroundSpan || style is PostFilterHighlightBackgroundSpan
+      },
+      queryBgSpanColorFunc = { keyword ->
+        val bgColor = keywordsToHighlightMap[keyword]?.color ?: 0
+        val bgColorWithAlpha = ColorUtils.setAlphaComponent(bgColor, 160)
+
+        PostFilterHighlightBackgroundSpan(bgColorWithAlpha)
+      },
+      queryFgSpanColorFunc = { keyword ->
+        val color = keywordsToHighlightMap[keyword]?.color ?: 0
+
+        val textColor = if (ThemeEngine.isDarkColor(color)) {
+          Color.LTGRAY
+        } else {
+          Color.DKGRAY
+        }
+
+        PostFilterHighlightForegroundSpan(textColor)
+      }
+    )
+  }
+
   fun findAllQueryEntriesInsideSpannableStringAndMarkThem(
     inputQueries: Collection<String>,
     spannableString: SpannableString,
-    color: Int,
-    minQueryLength: Int
+    bgColor: Int,
+    minQueryLength: Int,
+    shouldDeleteSpanFunc: (CharacterStyle) -> Boolean = { style ->
+      style is PostSearchQueryBackgroundSpan || style is PostSearchQueryForegroundSpan
+    },
+    queryBgSpanColorFunc: (String) -> BackgroundColorSpanHashed = {
+      val bgColorWithAlpha = ColorUtils.setAlphaComponent(bgColor, 160)
+      PostSearchQueryBackgroundSpan(bgColorWithAlpha)
+    },
+    queryFgSpanColorFunc: (String) -> ForegroundColorSpanHashed = {
+      val textColor = if (ThemeEngine.isDarkColor(bgColor)) {
+        Color.LTGRAY
+      } else {
+        Color.DKGRAY
+      }
+
+      PostSearchQueryForegroundSpan(textColor)
+    }
   ) {
     // Remove spans that may be left after previous execution of this function
-    cleanSearchSpans(spannableString)
+    cleanSearchSpans(spannableString, shouldDeleteSpanFunc)
 
     val validQueries = inputQueries
       .filter { query ->
@@ -61,15 +117,10 @@ object SpannableHelper {
           }
 
           if (compared == query.length) {
-            spans += SpanToAdd(offset, query.length, PostSearchQueryBackgroundSpan(color))
+            val keyword = spannableString.substring(offset, offset + query.length)
 
-            val textColor = if (ThemeEngine.isDarkColor(color)) {
-              Color.LTGRAY
-            } else {
-              Color.DKGRAY
-            }
-
-            spans += SpanToAdd(offset, query.length, PostSearchQueryForegroundSpan(textColor))
+            spans += SpanToAdd(offset, query.length, queryBgSpanColorFunc(keyword))
+            spans += SpanToAdd(offset, query.length, queryFgSpanColorFunc(keyword))
 
             addedAtLeastOneSpan = true
           }
@@ -82,44 +133,46 @@ object SpannableHelper {
       }
 
       spans.forEach { spanToAdd ->
-        spannableString.setSpan(
-          spanToAdd.span,
-          spanToAdd.position,
-          spanToAdd.position + spanToAdd.length,
-          0
-        )
+        spannableString.setSpan(spanToAdd.span, spanToAdd.position, spanToAdd.position + spanToAdd.length, 0)
       }
     }
 
     // It is assumed that the original, uncut, text has this query somewhere where we can't see it now.
-    if (!addedAtLeastOneSpan
+    if (bgColor != 0
+      && !addedAtLeastOneSpan
       && spannableString.endsWith(ELLIPSIZE_SYMBOL)
       && spannableString.length >= ELLIPSIZE_SYMBOL.length
     ) {
       val start = spannableString.length - ELLIPSIZE_SYMBOL.length
       val end = spannableString.length
 
-      spannableString.setSpan(PostSearchQueryBackgroundSpan(color), start, end, 0)
-
-      val textColor = if (ThemeEngine.isDarkColor(color)) {
+      val textColor = if (ThemeEngine.isDarkColor(bgColor)) {
         Color.LTGRAY
       } else {
         Color.DKGRAY
       }
 
+      spannableString.setSpan(PostSearchQueryBackgroundSpan(bgColor), start, end, 0)
       spannableString.setSpan(PostSearchQueryForegroundSpan(textColor), start, end, 0)
     }
   }
 
-  fun cleanSearchSpans(input: CharSequence) {
+  fun cleanSearchSpans(
+    input: CharSequence,
+    shouldDeleteSpanFunc: (CharacterStyle) -> Boolean = { style ->
+      style is PostSearchQueryBackgroundSpan || style is PostSearchQueryForegroundSpan
+    }
+  ) {
     if (input !is Spannable) {
       return
     }
 
-    input.getSpans<PostSearchQueryBackgroundSpan>()
-      .forEach { span -> input.removeSpan(span) }
-    input.getSpans<PostSearchQueryForegroundSpan>()
-      .forEach { span -> input.removeSpan(span) }
+    input.getSpans<CharacterStyle>()
+      .forEach { span ->
+        if (shouldDeleteSpanFunc(span)) {
+          input.removeSpan(span)
+        }
+      }
   }
 
   private fun compare(query: String, parsedComment: CharSequence, currentPosition: Int): Int {

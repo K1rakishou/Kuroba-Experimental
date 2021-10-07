@@ -31,7 +31,6 @@ import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
 import com.github.k1rakishou.chan.core.helper.ThumbnailLongtapOptionsHelper
 import com.github.k1rakishou.chan.core.loader.LoaderBatchResult
-import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.LoaderResult.Succeeded
 import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.site.Site
@@ -983,11 +982,11 @@ class ThreadPresenter @Inject constructor(
     BackgroundUtils.ensureMainThread()
 
     if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
-      val updatedPost = chanThreadManager.getPost(batchResult.postDescriptor)
-        ?: return
-
       serializedCoroutineExecutor.post {
-        threadPresenterCallback?.onPostUpdated(updatedPost, batchResult.results)
+        val updatedPost = chanThreadManager.getPost(batchResult.postDescriptor)
+          ?: return@post
+
+        threadPresenterCallback?.onPostUpdated(updatedPost)
       }
     }
   }
@@ -2848,7 +2847,7 @@ class ThreadPresenter @Inject constructor(
       selectedPosts: List<PostDescriptor>
     )
 
-    suspend fun onPostUpdated(updatedPost: ChanPost, results: List<LoaderResult>)
+    suspend fun onPostUpdated(updatedPost: ChanPost)
 
     fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun presentController(controller: Controller, animate: Boolean)

@@ -172,7 +172,6 @@ class ChanFilterManager(
         }
       }
 
-
       if (anySucceeded) {
         clearFiltersAndPostHashes()
         clearFilterWatchGroups(chanFilters)
@@ -379,6 +378,13 @@ class ChanFilterManager(
     return lock.read {
       return@read filters
         .filter { chanFilter -> chanFilter.isEnabledWatchFilter() }
+    }
+  }
+
+  fun getEnabledHighlightFilters(): List<ChanFilter> {
+    return lock.read {
+      return@read filters
+        .filter { chanFilter -> chanFilter.isEnabledHighlightFilter() }
     }
   }
 

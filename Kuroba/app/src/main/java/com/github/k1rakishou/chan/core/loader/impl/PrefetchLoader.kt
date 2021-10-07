@@ -119,7 +119,7 @@ class PrefetchLoader(
     // Always false for prefetches because there is nothing in the view that we need to update
     // after doing a prefetch (Actually there is but we don't need to do notifyItemChanged for
     // PostAdapter).
-    return succeeded(needUpdateView = false, loaderResultData = null)
+    return succeeded(needUpdateView = false)
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {

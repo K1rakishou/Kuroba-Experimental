@@ -108,10 +108,7 @@ class OnDemandContentLoaderManager(
       return
     }
 
-    BackgroundUtils.ensureMainThread()
     val threadDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
-
-    Logger.d(TAG, "cancelAllForDescriptor called for $threadDescriptor")
 
     lock.write {
       val postLoaderDataList = activeLoaders[threadDescriptor]
@@ -138,15 +135,15 @@ class OnDemandContentLoaderManager(
     }
 
     val allLoadersCached = loaders.all { loader -> loader.isCached(PostLoaderData(postDescriptor)) }
+
+    // Add some delay here to avoid visual glitches when quickly scrolling through posts
+    // (Especially when using the fast scroller). In case when the post loader results are not
+    // cached by the loaders we use the long delay, otherwise if everything is already cached,
+    // we use the short delay.
     if (!allLoadersCached) {
-      // Add LOADING_DELAY_TIME_MS seconds delay to every emitted event.
-      // We do that so that we don't download everything when user quickly
-      // scrolls through posts. In other words, we only start running the
-      // loader after LOADING_DELAY_TIME_MS seconds have passed since
-      // onPostBind() was called. If onPostUnbind() was called during that
-      // time frame we cancel the loader if it has already started loading or
-      // just do nothing if it hasn't started loading yet.
-      delay(LOADING_DELAY_TIME_MS)
+      delay(LONG_LOADING_DELAY_TIME_MS)
+    } else {
+      delay(SHORT_LOADING_DELAY_TIME_MS)
     }
 
     if (!isStillActive(postLoaderData)) {
@@ -162,10 +159,11 @@ class OnDemandContentLoaderManager(
       return@processDataCollectionConcurrently result
     }
 
-    val loaderBatchResults = LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
-    removeFromActiveLoaders(loaderBatchResults.postDescriptor, cancelLoaders = false)
+    if (!isStillActive(postLoaderData)) {
+      return null
+    }
 
-    return loaderBatchResults
+    return LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
   }
 
   private fun removeFromActiveLoaders(postDescriptor: PostDescriptor, cancelLoaders: Boolean = true) {
@@ -175,6 +173,7 @@ class OnDemandContentLoaderManager(
 
       if (cancelLoaders) {
         loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
+        postLoaderData.disposeAll()
       }
     }
   }
@@ -191,7 +190,8 @@ class OnDemandContentLoaderManager(
 
   companion object {
     private const val TAG = "OnDemandContentLoaderManager"
-    const val LOADING_DELAY_TIME_MS = 1500L
+    const val LONG_LOADING_DELAY_TIME_MS = 1500L
+    const val SHORT_LOADING_DELAY_TIME_MS = 500L
     const val MAX_LOADER_LOADING_TIME_MS = 10_000L
   }
 }
