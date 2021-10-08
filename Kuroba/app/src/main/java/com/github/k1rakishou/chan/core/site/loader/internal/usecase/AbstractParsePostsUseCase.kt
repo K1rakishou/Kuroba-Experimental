@@ -40,7 +40,14 @@ abstract class AbstractParsePostsUseCase(
     postBuildersToParse: List<ChanPostBuilder>
   ): ParsingResult
 
-  protected suspend fun postParsingProcessFiltersStage(
+  protected suspend fun processSavedReplies(postBuildersToParse: List<ChanPostBuilder>) {
+    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
+      // needed for "Apply to own posts" to work correctly
+      postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
+    }
+  }
+
+  protected suspend fun processFilters(
     postBuildersToParse: List<ChanPostBuilder>,
     filters: List<ChanFilter>
   ) {
@@ -49,9 +56,6 @@ abstract class AbstractParsePostsUseCase(
     }
 
     processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
-      // needed for "Apply to own posts" to work correctly
-      postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
-
       if (filters.isNotEmpty()) {
         processFilters(postToParse, filters)
       }

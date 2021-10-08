@@ -53,6 +53,7 @@ class ParsePostsV1UseCase(
     }
 
     val internalIds = getInternalIds(chanDescriptor, postBuildersToParse)
+    processSavedReplies(postBuildersToParse)
 
     chanLoadProgressNotifier.sendProgressEvent(
       ChanLoadProgressEvent.ParsingPosts(chanDescriptor, postBuildersToParse.size)
@@ -83,7 +84,7 @@ class ParsePostsV1UseCase(
     )
 
     val filterProcessingDuration = measureTime {
-      postParsingProcessFiltersStage(postBuildersToParse, filters)
+      processFilters(postBuildersToParse, filters)
     }
 
     Logger.d(TAG, "parseNewPostsPosts(chanDescriptor=$chanDescriptor, " +
