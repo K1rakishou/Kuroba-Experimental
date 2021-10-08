@@ -986,7 +986,21 @@ class ThreadPresenter @Inject constructor(
   private fun onPostUpdatedWithNewContent(batchResult: LoaderBatchResult) {
     BackgroundUtils.ensureMainThread()
 
-    if (currentChanDescriptor == null || currentChanDescriptor != batchResult.postDescriptor.descriptor) {
+    val isTheSameDescriptor = when (val descriptor = currentChanDescriptor) {
+      is ChanDescriptor.CatalogDescriptor -> {
+        descriptor.boardDescriptor == batchResult.postDescriptor.boardDescriptor()
+      }
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        descriptor.catalogDescriptors
+          .any { catalogDescriptor -> catalogDescriptor.boardDescriptor == batchResult.postDescriptor.boardDescriptor()}
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        descriptor == batchResult.postDescriptor.threadDescriptor()
+      }
+      null -> false
+    }
+
+    if (!isTheSameDescriptor) {
       return
     }
 
