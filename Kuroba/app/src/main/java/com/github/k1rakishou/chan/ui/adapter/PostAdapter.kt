@@ -403,18 +403,29 @@ class PostAdapter(
     return postAdapterCallback.isUnlimitedOrCompositeCatalog
   }
 
-  suspend fun updatePost(updatedPost: ChanPost) {
+  suspend fun updatePosts(updatedPosts: List<ChanPost>) {
     BackgroundUtils.ensureMainThread()
 
-    val postIndex = threadCellData.getPostCellDataIndexToUpdate(updatedPost.postDescriptor)
-      ?: return
-
-    if (!threadCellData.onPostUpdated(updatedPost)) {
+    if (updatedPosts.isEmpty()) {
       return
     }
 
-    updatingPosts.add(updatedPost.postDescriptor)
-    notifyItemChanged(postIndex)
+    val updatePostDescriptors = updatedPosts.map { post -> post.postDescriptor }
+
+    val postIndexRange = threadCellData.getPostCellDataIndexToUpdate(updatePostDescriptors)
+      ?: return
+
+    if (!threadCellData.onPostsUpdated(updatedPosts)) {
+      return
+    }
+
+    updatingPosts.addAll(updatePostDescriptors)
+
+    if (postIndexRange.last == postIndexRange.first) {
+      notifyItemChanged(postIndexRange.first)
+    } else {
+      notifyItemRangeChanged(postIndexRange.first, (postIndexRange.last - postIndexRange.first) + 1)
+    }
   }
 
   fun getPostNo(itemPosition: Int): Long {

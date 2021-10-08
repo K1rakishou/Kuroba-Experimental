@@ -256,43 +256,49 @@ class ThreadCellData(
     }
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost): Boolean {
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>): Boolean {
     BackgroundUtils.ensureMainThread()
 
-    val postCellDataIndex = postCellDataList
-      .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
+    var updatedAtLeastOne = false
 
-    if (postCellDataIndex < 0) {
-      return false
+    for (updatedPost in updatedPosts) {
+      val postCellDataIndex = postCellDataList
+        .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
+
+      if (postCellDataIndex < 0) {
+        continue
+      }
+
+      val postCellData = postCellDataList.getOrNull(postCellDataIndex)
+        ?: continue
+
+      val updatedPostCellData = withContext(Dispatchers.Default) {
+        val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
+
+        return@withContext postIndexedListToPostCellDataList(
+          postCellCallback = postCellCallback!!,
+          chanDescriptor = chanDescriptor!!,
+          theme = currentTheme,
+          postIndexedList = listOf(postIndexed),
+          postDescriptors = listOf(updatedPost.postDescriptor),
+          postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
+        )
+      }
+
+      // We need to recalculate the index again because it might have changed and if it did
+      // we need to skip this onPostUpdated call
+      val postCellDataIndex2 = postCellDataList
+        .indexOfFirst { pcd -> pcd.postDescriptor == updatedPost.postDescriptor }
+
+      if (postCellDataIndex != postCellDataIndex2) {
+        continue
+      }
+
+      postCellDataList[postCellDataIndex] = updatedPostCellData.first()
+      updatedAtLeastOne = true
     }
 
-    val postCellData = postCellDataList.getOrNull(postCellDataIndex)
-      ?: return false
-
-    val updatedPostCellData = withContext(Dispatchers.Default) {
-      val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
-
-      return@withContext postIndexedListToPostCellDataList(
-        postCellCallback = postCellCallback!!,
-        chanDescriptor = chanDescriptor!!,
-        theme = currentTheme,
-        postIndexedList = listOf(postIndexed),
-        postDescriptors = listOf(updatedPost.postDescriptor),
-        postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
-      )
-    }
-
-    // We need to recalculate the index again because it might have changed and if it did
-    // we need to skip this onPostUpdated call
-    val postCellDataIndex2 = postCellDataList
-      .indexOfFirst { pcd -> pcd.postDescriptor == updatedPost.postDescriptor }
-
-    if (postCellDataIndex != postCellDataIndex2) {
-      return false
-    }
-
-    postCellDataList[postCellDataIndex] = updatedPostCellData.first()
-    return true
+    return updatedAtLeastOne
   }
 
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
@@ -317,34 +323,60 @@ class ThreadCellData(
     return postCellDataList.get(getPostPosition(index))
   }
 
-  fun getPostCellDataIndex(postDescriptor: PostDescriptor): Int? {
-    val index = postCellDataList
-      .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
-
-    if (index < 0) {
+  fun getPostCellDataIndexes(postDescriptors: List<PostDescriptor>): IntRange? {
+    if (postDescriptors.isEmpty()) {
       return null
     }
 
-    return index
+    val indexes = postDescriptors.mapNotNull { postDescriptor ->
+      val index = postCellDataList
+        .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+
+      if (index < 0) {
+        return@mapNotNull null
+      }
+
+      return@mapNotNull index
+    }
+
+    val start = indexes.minOrNull()
+      ?: return null
+    val end = indexes.maxOrNull()
+      ?: return null
+
+    return IntRange(start = start, endInclusive = end)
   }
 
-  fun getPostCellDataIndexToUpdate(postDescriptor: PostDescriptor): Int? {
-    var postIndex = postCellDataList
-      .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
-
-    if (postIndex < 0) {
+  fun getPostCellDataIndexToUpdate(postDescriptors: List<PostDescriptor>): IntRange? {
+    if (postDescriptors.isEmpty()) {
       return null
     }
 
-    if (lastSeenIndicatorPosition in 0..postIndex) {
-      ++postIndex
+    val indexes = postDescriptors.mapNotNull { postDescriptor ->
+      var postIndex = postCellDataList
+        .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+
+      if (postIndex < 0) {
+        return@mapNotNull null
+      }
+
+      if (lastSeenIndicatorPosition in 0..postIndex) {
+        ++postIndex
+      }
+
+      if (postIndex < 0 && postIndex > postsCount()) {
+        return@mapNotNull null
+      }
+
+      return@mapNotNull postIndex
     }
 
-    if (postIndex < 0 && postIndex > postsCount()) {
-      return null
-    }
+    val start = indexes.minOrNull()
+      ?: return null
+    val end = indexes.maxOrNull()
+      ?: return null
 
-    return postIndex
+    return IntRange(start = start, endInclusive = end)
   }
 
   fun getLastPostCellDataOrNull(): PostCellData? = postCellDataList.lastOrNull()

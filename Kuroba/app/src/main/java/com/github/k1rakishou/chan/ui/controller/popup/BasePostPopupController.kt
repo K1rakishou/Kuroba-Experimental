@@ -170,7 +170,7 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     return thumbnail
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost) {
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
     if (!::postsView.isInitialized) {
       return
     }
@@ -180,7 +180,7 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     val adapter = postsView.adapter as? PostRepliesAdapter
       ?: return
 
-    adapter.onPostUpdated(updatedPost)
+    adapter.updatePosts(updatedPosts)
   }
 
   fun displayData(chanDescriptor: ChanDescriptor, data: PostPopupHelper.PostPopupData) {

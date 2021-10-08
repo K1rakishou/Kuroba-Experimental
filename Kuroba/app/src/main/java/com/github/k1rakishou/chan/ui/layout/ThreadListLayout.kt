@@ -1268,9 +1268,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.removeItemDecoration(chan4BirthdayDecoration)
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost) {
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
     BackgroundUtils.ensureMainThread()
-    postAdapter.updatePost(updatedPost)
+    postAdapter.updatePosts(updatedPosts)
   }
 
   fun isErrorShown(): Boolean {

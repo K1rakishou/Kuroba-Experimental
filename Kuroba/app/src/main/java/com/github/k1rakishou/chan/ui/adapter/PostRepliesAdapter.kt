@@ -107,19 +107,23 @@ class PostRepliesAdapter(
     threadCellData.resetCachedPostData(postDescriptor)
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost) {
-    val postDescriptor = updatedPost.postDescriptor
+  suspend fun updatePosts(updatedPosts: List<ChanPost>) {
+    val postDescriptors = updatedPosts.map { post -> post.postDescriptor }
 
-    val postCellDataIndex = threadCellData.getPostCellDataIndex(postDescriptor)
-    if (postCellDataIndex == null) {
+    val postIndexRange = threadCellData.getPostCellDataIndexes(postDescriptors)
+    if (postIndexRange == null) {
       return
     }
 
-    if (!threadCellData.onPostUpdated(updatedPost)) {
+    if (!threadCellData.onPostsUpdated(updatedPosts)) {
       return
     }
 
-    notifyItemChanged(postCellDataIndex)
+    if (postIndexRange.last == postIndexRange.first) {
+      notifyItemChanged(postIndexRange.first)
+    } else {
+      notifyItemRangeChanged(postIndexRange.first, (postIndexRange.last - postIndexRange.first) + 1)
+    }
   }
 
   class ReplyViewHolder(itemView: GenericPostCell) : RecyclerView.ViewHolder(itemView) {

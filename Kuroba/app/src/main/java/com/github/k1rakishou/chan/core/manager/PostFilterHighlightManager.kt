@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.manager
 
+import androidx.annotation.GuardedBy
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
@@ -10,7 +11,8 @@ import kotlin.concurrent.write
 class PostFilterHighlightManager {
   private val lock = ReentrantReadWriteLock()
 
-  private val currentHighlights = mutableMapOf<PostDescriptor, Set<HighlightFilterKeyword>>()
+  @GuardedBy("lock")
+  private val currentHighlights = mutableMapWithCap<PostDescriptor, Set<HighlightFilterKeyword>>(128)
 
   fun contains(postDescriptor: PostDescriptor): Boolean {
     return lock.read { currentHighlights[postDescriptor]?.isNotEmpty() == true }

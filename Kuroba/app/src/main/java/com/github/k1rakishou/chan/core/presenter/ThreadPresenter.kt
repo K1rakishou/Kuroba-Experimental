@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutorWithAccumulator
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.ChanThreadTicker
@@ -274,11 +275,13 @@ class ThreadPresenter @Inject constructor(
   private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
   private lateinit var postBindExecutor: SerializedCoroutineExecutor
+  private lateinit var postUnbindExecutor: SerializedCoroutineExecutor
   private lateinit var afterCatalogOrThreadLoadedExecutor: SerializedCoroutineExecutor
+  private lateinit var postUpdatesExecutor: ThrottlingCoroutineExecutorWithAccumulator<PostDescriptor>
   private lateinit var context: Context
 
   override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("ThreadPresenter")
+    get() = job + Dispatchers.Main
 
   val isBound: Boolean
     get() {
@@ -365,7 +368,9 @@ class ThreadPresenter @Inject constructor(
     postOptionsClickExecutor = RendezvousCoroutineExecutor(this)
     serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
     postBindExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
+    postUnbindExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
     afterCatalogOrThreadLoadedExecutor = SerializedCoroutineExecutor(this, dispatcher = Dispatchers.Default)
+    postUpdatesExecutor = ThrottlingCoroutineExecutorWithAccumulator(this)
 
     if (chanThreadTicker.currentChanDescriptor != null) {
       unbindChanDescriptor(false)
@@ -432,8 +437,16 @@ class ThreadPresenter @Inject constructor(
         postBindExecutor.stop()
       }
 
+      if (::postUnbindExecutor.isInitialized) {
+        postUnbindExecutor.stop()
+      }
+
       if (::afterCatalogOrThreadLoadedExecutor.isInitialized) {
         afterCatalogOrThreadLoadedExecutor.stop()
+      }
+
+      if (::postUpdatesExecutor.isInitialized) {
+        postUpdatesExecutor.cancelAll()
       }
     }
 
@@ -913,12 +926,7 @@ class ThreadPresenter @Inject constructor(
     postBindExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
 
-      if (currentChanDescriptor == null) {
-        return@post
-      }
-
       val postDescriptor = postCellData.postDescriptor
-
       onDemandContentLoaderManager.onPostBind(postDescriptor)
       seenPostsManager.onPostBind(postCellData.isViewingThread, postDescriptor)
       threadBookmarkViewPost(postCellData)
@@ -928,15 +936,12 @@ class ThreadPresenter @Inject constructor(
   override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {
     BackgroundUtils.ensureMainThread()
 
-    postBindExecutor.post {
+    postUnbindExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
-
-      if (currentChanDescriptor == null) {
-        return@post
-      }
 
       val postDescriptor = postCellData.postDescriptor
 
+      postUpdatesExecutor.cancel(postCellData.postDescriptor)
       onDemandContentLoaderManager.onPostUnbind(postDescriptor, isActuallyRecycling)
       seenPostsManager.onPostUnbind(postCellData.isViewingThread, postDescriptor)
       threadBookmarkViewPost(postCellData)
@@ -981,12 +986,18 @@ class ThreadPresenter @Inject constructor(
   private fun onPostUpdatedWithNewContent(batchResult: LoaderBatchResult) {
     BackgroundUtils.ensureMainThread()
 
-    if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
-      serializedCoroutineExecutor.post {
-        val updatedPost = chanThreadManager.getPost(batchResult.postDescriptor)
-          ?: return@post
+    if (currentChanDescriptor == null || currentChanDescriptor != batchResult.postDescriptor.descriptor) {
+      return
+    }
 
-        threadPresenterCallback?.onPostUpdated(updatedPost)
+    if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
+      postUpdatesExecutor.post(item = batchResult.postDescriptor, timeout = 200) { collectedPostDescriptors ->
+        val updatedPosts = chanThreadManager.getPosts(collectedPostDescriptors)
+        if (updatedPosts.isEmpty()) {
+          return@post
+        }
+
+        threadPresenterCallback?.onPostsUpdated(updatedPosts)
       }
     }
   }
@@ -2847,7 +2858,7 @@ class ThreadPresenter @Inject constructor(
       selectedPosts: List<PostDescriptor>
     )
 
-    suspend fun onPostUpdated(updatedPost: ChanPost)
+    suspend fun onPostsUpdated(updatedPosts: List<ChanPost>)
 
     fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean
     fun presentController(controller: Controller, animate: Boolean)

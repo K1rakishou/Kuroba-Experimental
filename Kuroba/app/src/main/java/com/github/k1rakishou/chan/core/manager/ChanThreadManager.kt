@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.flatMapNotNull
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.catalog.ChanCatalog
@@ -333,6 +334,14 @@ class ChanThreadManager(
 
   fun getPost(postDescriptor: PostDescriptor): ChanPost? {
     return chanThreadsCache.getThread(postDescriptor.threadDescriptor())?.getPost(postDescriptor)
+  }
+
+  fun getPosts(postDescriptors: Collection<PostDescriptor>): List<ChanPost> {
+    val postGroups = postDescriptors.groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
+
+    return postGroups.entries.flatMapNotNull { (threadDescriptor, postDescriptors) ->
+      chanThreadsCache.getThread(threadDescriptor)?.getPosts(postDescriptors)
+    }
   }
 
   fun getCatalogPreviewPosts(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPost> {

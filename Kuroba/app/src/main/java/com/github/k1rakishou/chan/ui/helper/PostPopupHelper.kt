@@ -131,9 +131,9 @@ class PostPopupHelper(
     presentingPostRepliesController?.resetCachedPostData(postDescriptor)
   }
 
-  suspend fun onPostUpdated(updatedPost: ChanPost) {
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
     BackgroundUtils.ensureMainThread()
-    presentingPostRepliesController?.onPostUpdated(updatedPost)
+    presentingPostRepliesController?.onPostsUpdated(updatedPosts)
   }
 
   fun pop() {

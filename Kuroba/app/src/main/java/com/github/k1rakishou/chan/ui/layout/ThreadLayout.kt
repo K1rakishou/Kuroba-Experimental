@@ -986,11 +986,11 @@ class ThreadLayout @JvmOverloads constructor(
 
       if (postPopupHelper.isOpen) {
         postPopupHelper.resetCachedPostData(post.postDescriptor)
-        postPopupHelper.onPostUpdated(post)
+        postPopupHelper.onPostsUpdated(listOf(post))
       }
 
       threadListLayout.resetCachedPostData(post.postDescriptor)
-      threadListLayout.onPostUpdated(post)
+      threadListLayout.onPostsUpdated(listOf(post))
     }
   }
 
@@ -1022,14 +1022,14 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override suspend fun onPostUpdated(updatedPost: ChanPost) {
+  override suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
     BackgroundUtils.ensureMainThread()
 
     if (postPopupHelper.isOpen) {
-      postPopupHelper.onPostUpdated(updatedPost)
+      postPopupHelper.onPostsUpdated(updatedPosts)
     }
 
-    threadListLayout.onPostUpdated(updatedPost)
+    threadListLayout.onPostsUpdated(updatedPosts)
   }
 
   override fun isAlreadyPresentingController(predicate: (Controller) -> Boolean): Boolean {
