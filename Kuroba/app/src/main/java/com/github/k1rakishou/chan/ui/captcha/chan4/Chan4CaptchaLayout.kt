@@ -184,6 +184,7 @@ class Chan4CaptchaLayout(
 
   @Composable
   private fun BuildCaptchaWindow() {
+    val chanTheme = LocalChanTheme.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
@@ -217,6 +218,7 @@ class Chan4CaptchaLayout(
           KurobaComposeSnappingSlider(
             slideOffsetState = scrollValueState,
             slideSteps = slideSteps,
+            backgroundColor = chanTheme.backColorCompose,
             modifier = Modifier
               .wrapContentHeight()
               .fillMaxWidth()

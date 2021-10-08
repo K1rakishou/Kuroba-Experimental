@@ -307,15 +307,17 @@ class LastReplyRepository(
 
     if (willBeAbleToPostAt > currentTime) {
       // We can't post yet because lastReplyTime + boardCooldown is greater than current time
-      var resultCooldownMs = willBeAbleToPostAt - currentTime
+      val cooldownMs = willBeAbleToPostAt - currentTime
 
-      if (postingWithPasscode) {
-        resultCooldownMs /= 2
+      val resultCooldownMs = if (postingWithPasscode) {
+        cooldownMs / 2
+      } else {
+        cooldownMs
       }
 
       Logger.d(TAG, "checkLastReplyCooldown($boardDescriptor, $hasAttachedImages) " +
         "currentTime ($currentTime) > willBeAbleToPostAt ($willBeAbleToPostAt), " +
-        "postingWithPasscode=${postingWithPasscode}, resultCooldownMs=${resultCooldownMs}")
+        "postingWithPasscode=${postingWithPasscode}, cooldownMs=${cooldownMs}, resultCooldownMs=${resultCooldownMs}")
 
       return resultCooldownMs
     }

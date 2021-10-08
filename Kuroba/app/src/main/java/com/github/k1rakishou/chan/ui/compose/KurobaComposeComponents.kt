@@ -759,8 +759,9 @@ fun KurobaComposeSwitch(
 fun KurobaComposeSnappingSlider(
   modifier: Modifier = Modifier,
   slideOffsetState: MutableState<Float>,
-  slideSteps: Int? = null,
   onValueChange: (Float) -> Unit,
+  backgroundColor: Color,
+  slideSteps: Int? = null,
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
   val chanTheme = LocalChanTheme.current
@@ -779,7 +780,14 @@ fun KurobaComposeSnappingSlider(
       )
   ) {
     val trackColor = chanTheme.accentColorCompose
-    val thumbColorNormal = chanTheme.accentColorCompose
+    val thumbColorNormal = remember(key1 = backgroundColor) {
+      if (ThemeEngine.isDarkColor(trackColor)) {
+        Color.LightGray
+      } else {
+        Color.DarkGray
+      }
+    }
+
     val thumbColorPressed = remember(key1 = thumbColorNormal) {
       if (ThemeEngine.isDarkColor(thumbColorNormal)) {
         ThemeEngine.manipulateColor(thumbColorNormal, 1.2f)
@@ -863,6 +871,7 @@ fun KurobaComposeSnappingSlider(
       onDraw = {
         val centerY = size.height / 2f
         val thumbCenterY = (size.height + trackWidth) / 2f
+        val halfRadius = thumbRadiusNormal / 2
 
         drawRect(
           color = trackColor,
@@ -870,7 +879,8 @@ fun KurobaComposeSnappingSlider(
           size = Size(size.width, trackWidth)
         )
 
-        val positionX = slideOffset * size.width
+        val positionX = (slideOffset * size.width)
+          .coerceIn(halfRadius, size.width - halfRadius)
 
         drawCircle(
           color = thumbColor,
