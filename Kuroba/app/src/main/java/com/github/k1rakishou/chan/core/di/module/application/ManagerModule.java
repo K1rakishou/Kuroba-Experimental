@@ -551,7 +551,8 @@ public class ManagerModule {
             Lazy<ChanFilterRepository> chanFilterRepository,
             Lazy<ChanPostRepository> chanPostRepository,
             Lazy<ChanFilterWatchRepository> chanFilterWatchRepository,
-            Lazy<PostFilterManager> postFilterManager
+            Lazy<PostFilterManager> postFilterManager,
+            Lazy<PostFilterHighlightManager> postFilterHighlightManager
     ) {
         Logger.deps("ChanFilterManager");
         return new ChanFilterManager(
@@ -560,6 +561,7 @@ public class ManagerModule {
                 chanFilterRepository,
                 chanPostRepository,
                 chanFilterWatchRepository,
+                postFilterHighlightManager,
                 postFilterManager
         );
     }

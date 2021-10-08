@@ -33,6 +33,7 @@ class ChanFilterManager(
   private val _chanFilterRepository: Lazy<ChanFilterRepository>,
   private val _chanPostRepository: Lazy<ChanPostRepository>,
   private val _chanFilterWatchRepository: Lazy<ChanFilterWatchRepository>,
+  private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   private val _postFilterManager: Lazy<PostFilterManager>
 ) {
   private val filterChangesFlow = MutableSharedFlow<FilterEvent>(
@@ -60,6 +61,8 @@ class ChanFilterManager(
     get() = _chanFilterWatchRepository.get()
   private val postFilterManager: PostFilterManager
     get() = _postFilterManager.get()
+  private val postFilterHighlightManager: PostFilterHighlightManager
+    get() = _postFilterHighlightManager.get()
 
   @OptIn(ExperimentalTime::class)
   fun initialize() {
@@ -407,10 +410,12 @@ class ChanFilterManager(
     }
   }
 
-  // Whenever we update the filters we need to reload already cached posts and parse them again
+  // Whenever we update the filters we need to reload already cached posts and parse them again.
+  // We also need to clear the existing post highlights so that they can get recalculated
   private fun clearFiltersAndPostHashes() {
     postFilterManager.clear()
     chanPostRepository.clearPostHashes()
+    postFilterHighlightManager.clear()
   }
 
   // Whenever we create/update/or delete a filter with WATCH flag, we want to delete all filter

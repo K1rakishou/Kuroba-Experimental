@@ -26,6 +26,10 @@ class PostFilterHighlightManager {
     lock.write { currentHighlights[postDescriptor] = highlightFilterKeywords }
   }
 
+  fun clear() {
+    lock.write { currentHighlights.clear() }
+  }
+
   fun getHighlightFilterKeywordForDescriptor(
     postDescriptors: Collection<PostDescriptor>
   ): Map<PostDescriptor, Set<HighlightFilterKeyword>> {
