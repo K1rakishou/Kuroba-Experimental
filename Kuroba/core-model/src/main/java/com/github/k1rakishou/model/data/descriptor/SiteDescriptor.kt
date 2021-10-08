@@ -13,6 +13,10 @@ class SiteDescriptor private constructor(
     return siteName.equals("2ch.hk", ignoreCase = true)
   }
 
+  fun isDiochan(): Boolean {
+    return siteName.equals("Diochan", ignoreCase = true)
+  }
+
   fun isLainchan(): Boolean {
     return siteName.equals("Lainchan", ignoreCase = true)
   }

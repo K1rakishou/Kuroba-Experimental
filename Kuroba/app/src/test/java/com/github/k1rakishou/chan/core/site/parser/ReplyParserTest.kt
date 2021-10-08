@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.site.parser
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.ParserRepository
+import com.github.k1rakishou.chan.core.site.sites.Diochan
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -67,6 +68,18 @@ class ReplyParserTest {
     assertEquals(296403883, (replies[0] as ReplyParser.ExtractedQuote.Quote).postId)
     assertEquals(296404474, (replies[1] as ReplyParser.ExtractedQuote.Quote).postId)
     assertEquals(296404782, (replies[2] as ReplyParser.ExtractedQuote.Quote).postId)
+  }
+
+  @Test
+  fun `test extract quotes from diochan_com comment`() {
+    whenever(siteManager.bySiteDescriptor(any())).thenReturn(Diochan())
+
+    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("diochan.com"), VICHAN_PARSER_TEST_COMMENT)
+    assertEquals(2, replies.size)
+    assertTrue(replies.all { it is ReplyParser.ExtractedQuote.Quote })
+
+    assertEquals(28948, (replies[0] as ReplyParser.ExtractedQuote.Quote).postId)
+    assertEquals(28950, (replies[1] as ReplyParser.ExtractedQuote.Quote).postId)
   }
 
   @Test
