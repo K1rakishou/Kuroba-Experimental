@@ -160,6 +160,16 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = AppearanceScreen.PostGroup.ForceShiftPostComment,
+          topDescriptionIdFunc = { R.string.setting_force_post_shift_post_comment },
+          bottomDescriptionIdFunc = { R.string.setting_force_post_shift_post_comment_description },
+          setting = ChanSettings.forceShiftPostComment,
+          dependsOnSetting = ChanSettings.shiftPostComment,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = AppearanceScreen.PostGroup.PostMultipleImagesCompactMode,
           topDescriptionIdFunc = { R.string.setting_post_multiple_images_compact_mode },
           bottomDescriptionIdFunc = { R.string.setting_post_multiple_images_compact_mode_description },

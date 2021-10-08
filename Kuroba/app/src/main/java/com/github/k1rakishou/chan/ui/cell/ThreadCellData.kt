@@ -112,6 +112,7 @@ class ThreadCellData(
     val tapNoReply = ChanSettings.tapNoReply.get()
     val postFullDate = ChanSettings.postFullDate.get()
     val shiftPostComment = ChanSettings.shiftPostComment.get()
+    val forceShiftPostComment = ChanSettings.forceShiftPostComment.get()
     val textOnly = ChanSettings.textOnly.get()
     val postFileInfo = ChanSettings.postFileInfo.get()
     val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor.isThreadDescriptor()
@@ -168,6 +169,7 @@ class ThreadCellData(
         tapNoReply = tapNoReply,
         postFullDate = postFullDate,
         shiftPostComment = shiftPostComment,
+        forceShiftPostComment = forceShiftPostComment,
         postMultipleImagesCompactMode = postMultipleImagesCompactMode,
         textOnly = textOnly,
         postFileInfo = postFileInfo,

@@ -450,6 +450,10 @@ class PostCell : ConstraintLayout,
     val postFileInfo = postCellData.postFileInfoMap[firstImage]
       ?: return PostCommentShiftResult.CannotShiftComment
 
+    if (postCellData.forceShiftPostComment) {
+      return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
+    }
+
     if (postCellData.commentText.length < SUPER_SHORT_COMMENT_LENGTH && postCellData.commentText.countLines() <= 1) {
       // Fast path for very short comments.
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail

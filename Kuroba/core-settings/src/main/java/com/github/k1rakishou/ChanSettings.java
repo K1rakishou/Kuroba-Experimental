@@ -294,6 +294,7 @@ public class ChanSettings {
     public static BooleanSetting markCrossThreadQuotesOnScrollbar;
     public static BooleanSetting markDeletedPostsOnScrollbar;
     public static BooleanSetting shiftPostComment;
+    public static BooleanSetting forceShiftPostComment;
     public static BooleanSetting postMultipleImagesCompactMode;
 
     // Post links parsing
@@ -500,6 +501,7 @@ public class ChanSettings {
             markDeletedPostsOnScrollbar = new BooleanSetting(provider, "mark_deleted_on_scrollbar", true);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
             shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
+            forceShiftPostComment = new BooleanSetting(provider, "force_shift_post_comment", false);
             postMultipleImagesCompactMode = new BooleanSetting(provider, "post_multiple_images_compact_mode", true);
 
             // Post links parsing
