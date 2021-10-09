@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer
 import android.content.Context
 import android.graphics.Color
 import android.graphics.drawable.Drawable
+import android.net.Uri
 import android.view.View
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
@@ -33,10 +34,16 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.common.extractFileName
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
@@ -81,6 +88,8 @@ class MediaViewerController(
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
   @Inject
   lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
+  @Inject
+  lateinit var fileChooser: FileChooser
 
   private var chanDescriptor: ChanDescriptor? = null
   private var autoSwipeJob: Job? = null
@@ -239,13 +248,18 @@ class MediaViewerController(
   }
 
   override suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean {
-    val simpleImageInfo = viewableMedia.toSimpleImageInfoOrNull()
-    if (simpleImageInfo == null) {
-      showToast(getString(R.string.media_viewer_cannot_save_media, viewableMedia))
-      return false
+    val downloading = if (viewableMedia.viewableMediaMeta.ownerPostDescriptor == null) {
+      tryDownloadIntoUserProvidedFile(viewableMedia)
+    } else {
+      val simpleImageInfo = viewableMedia.toSimpleImageInfoOrNull()
+      if (simpleImageInfo == null) {
+        showToast(getString(R.string.media_viewer_cannot_save_media, viewableMedia))
+        return false
+      }
+
+      startMediaDownloadInternal(longClick, simpleImageInfo)
     }
 
-    val downloading = startMediaDownloadInternal(longClick, simpleImageInfo)
     if (downloading && ChanSettings.mediaViewerAutoSwipeAfterDownload.get()) {
       tryEnqueueAutoSwipe()
     }
@@ -276,6 +290,57 @@ class MediaViewerController(
       }
 
       autoSwipeJob = null
+    }
+  }
+
+  private suspend fun tryDownloadIntoUserProvidedFile(viewableMedia: ViewableMedia): Boolean {
+    val remoteMediaLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
+      ?: return false
+
+    var fileName = remoteMediaLocation.url.extractFileName()
+    if (fileName.isNullOrEmpty()) {
+      val fileExtension = StringUtils.extractFileNameExtension(remoteMediaLocation.url.toString())
+      if (fileExtension.isNotNullNorEmpty()) {
+        fileName = "media_file.${fileExtension}"
+      }
+    }
+
+    if (fileName == null) {
+      fileName = "media_file"
+    }
+
+    val outputFileUri = suspendCancellableCoroutine<Uri?> { cancellableContinuation ->
+      fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
+        override fun onCancel(reason: String) {
+          cancellableContinuation.resumeValueSafe(null)
+        }
+
+        override fun onResult(uri: Uri) {
+          cancellableContinuation.resumeValueSafe(uri)
+        }
+      })
+    }
+
+    if (outputFileUri == null) {
+      return false
+    }
+
+    val result = imageSaverV2.get().downloadMediaIntoUserProvidedFile(
+      mediaUrl = remoteMediaLocation.url,
+      outputFileUri = outputFileUri
+    )
+
+    when (result) {
+      is ModularResult.Error -> {
+        Logger.e(TAG, "downloadMediaIntoUserProvidedFile('${remoteMediaLocation.url}', " +
+          "'${outputFileUri}') error", result.error)
+        return false
+      }
+      is ModularResult.Value -> {
+        Logger.d(TAG, "downloadMediaIntoUserProvidedFile('${remoteMediaLocation.url}', " +
+          "'${outputFileUri}') success")
+        return true
+      }
     }
   }
 
