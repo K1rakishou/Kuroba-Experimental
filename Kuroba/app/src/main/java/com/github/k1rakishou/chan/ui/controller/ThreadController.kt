@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
+import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
@@ -310,6 +311,15 @@ abstract class ThreadController(
 
   fun selectPostImage(postImage: ChanPostImage) {
     threadLayout.presenter.selectPostImage(postImage)
+  }
+
+  override fun openMediaLinkInMediaViewer(link: String) {
+    Logger.d(TAG, "openMediaLinkInMediaViewer($link)")
+
+    MediaViewerActivity.mixedMedia(
+      context = context,
+      mixedMedia = listOf(MediaLocation.Remote(link))
+    )
   }
 
   override fun showImages(
