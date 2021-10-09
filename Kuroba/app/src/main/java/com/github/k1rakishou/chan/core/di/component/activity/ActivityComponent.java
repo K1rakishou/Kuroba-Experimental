@@ -146,7 +146,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextView;
 import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout;
-import com.github.k1rakishou.chan.ui.layout.PostPopupContainer;
 import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
@@ -381,7 +380,6 @@ public interface ActivityComponent {
     void inject(CircularChunkedLoadingBar circularChunkedLoadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
     void inject(PostStubCell postStubCell);
-    void inject(PostPopupContainer postPopupContainer);
     void inject(SearchLayout searchLayout);
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
     void inject(ReplyLayoutFilesArea replyLayoutFilesArea);

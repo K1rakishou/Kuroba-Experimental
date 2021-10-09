@@ -40,8 +40,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Objects;
-
 import javax.inject.Inject;
 
 public class SplitNavigationController
@@ -225,8 +223,9 @@ public class SplitNavigationController
                     mainControllerCallbacks.resetBottomNavViewCheckState();
                 }
 
-                Objects.requireNonNull(presentingThisController);
-                presentingThisController.stopPresenting();
+                if (presentingThisController != null) {
+                    presentingThisController.stopPresenting();
+                }
 
                 popup = null;
                 popupChild = null;
@@ -245,8 +244,9 @@ public class SplitNavigationController
                 mainControllerCallbacks.resetBottomNavViewCheckState();
             }
 
-            Objects.requireNonNull(presentingThisController);
-            presentingThisController.stopPresenting();
+            if (presentingThisController != null) {
+                presentingThisController.stopPresenting();
+            }
 
             popup = null;
             popupChild = null;
@@ -265,8 +265,9 @@ public class SplitNavigationController
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        return (rightController != null && rightController.dispatchKeyEvent(event)) || (leftController != null
-                && leftController.dispatchKeyEvent(event)) || super.dispatchKeyEvent(event);
+        return (rightController != null && rightController.dispatchKeyEvent(event))
+                || (leftController != null && leftController.dispatchKeyEvent(event))
+                || super.dispatchKeyEvent(event);
     }
 
 }
