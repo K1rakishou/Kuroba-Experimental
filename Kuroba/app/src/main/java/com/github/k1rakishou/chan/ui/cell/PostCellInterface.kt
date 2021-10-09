@@ -55,6 +55,7 @@ interface PostCellInterface {
     fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage)
     fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage)
     fun onShowPostReplies(post: ChanPost)
+    fun onPostPosterIdClicked(post: ChanPost)
     fun onPreviewThreadPostsClicked(post: ChanPost)
     fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean)
     fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean)

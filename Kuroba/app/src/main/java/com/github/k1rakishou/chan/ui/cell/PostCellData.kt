@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
+import androidx.core.text.getSpans
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
@@ -18,8 +19,10 @@ import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
+import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -327,7 +330,19 @@ data class PostCellData(
     }
 
     if (post.fullTripcode.isNotNullNorBlank()) {
-      titleParts.add(post.fullTripcode!!)
+      val tripcodeFull = SpannableStringBuilder.valueOf(post.fullTripcode!!)
+
+      val posterIdMarkerSpans = tripcodeFull.getSpans<PosterIdMarkerSpan>()
+      if (posterIdMarkerSpans.isNotEmpty()) {
+        posterIdMarkerSpans.forEach { posterIdMarkerSpan ->
+          val start = tripcodeFull.getSpanStart(posterIdMarkerSpan)
+          val end = tripcodeFull.getSpanEnd(posterIdMarkerSpan)
+
+          tripcodeFull.setSpanSafe(PostCell.PosterIdClickableSpan(postCellCallback, post), start, end, 0)
+        }
+      }
+
+      titleParts.add(tripcodeFull)
     }
 
     val postNoText = SpannableString.valueOf(

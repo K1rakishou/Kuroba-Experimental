@@ -1623,13 +1623,30 @@ class PostCell : ConstraintLayout,
   }
 
   class PostNumberClickableSpan(
-    private var postCellCallback: PostCellCallback?,
-    private var post: ChanPost?
+    private val postCellCallback: PostCellCallback?,
+    private val post: ChanPost?
   ) : ClickableSpan() {
 
     override fun onClick(widget: View) {
       post?.let { post ->
         postCellCallback?.onPostNoClicked(post)
+      }
+    }
+
+    override fun updateDrawState(ds: TextPaint) {
+      ds.isUnderlineText = false
+    }
+
+  }
+
+  class PosterIdClickableSpan(
+    private val postCellCallback: PostCellCallback?,
+    private val post: ChanPost?
+  ) : ClickableSpan() {
+
+    override fun onClick(widget: View) {
+      post?.let { post ->
+        postCellCallback?.onPostPosterIdClicked(post)
       }
     }
 
