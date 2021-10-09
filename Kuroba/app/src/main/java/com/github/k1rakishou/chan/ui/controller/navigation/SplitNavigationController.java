@@ -265,8 +265,9 @@ public class SplitNavigationController
 
     @Override
     public boolean dispatchKeyEvent(KeyEvent event) {
-        return (rightController != null && rightController.dispatchKeyEvent(event)) || (leftController != null
-                && leftController.dispatchKeyEvent(event)) || super.dispatchKeyEvent(event);
+        return (rightController != null && rightController.dispatchKeyEvent(event))
+                || (leftController != null && leftController.dispatchKeyEvent(event))
+                || super.dispatchKeyEvent(event);
     }
 
 }
