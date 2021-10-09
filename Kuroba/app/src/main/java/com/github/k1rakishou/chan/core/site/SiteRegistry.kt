@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.core.site.sites.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.Wired7
+import com.github.k1rakishou.chan.core.site.sites.*
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -47,6 +48,7 @@ object SiteRegistry {
     val siteClasses = mutableMapOf<SiteDescriptor, Class<out Site>>()
 
     siteClasses.addSiteToSiteClassesMap(Chan4.SITE_NAME, Chan4::class.java)
+    siteClasses.addSiteToSiteClassesMap(Diochan.SITE_NAME, Diochan::class.java)
     siteClasses.addSiteToSiteClassesMap(Lainchan.SITE_NAME, Lainchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Sushichan.SITE_NAME, Sushichan::class.java)
     siteClasses.addSiteToSiteClassesMap(Dvach.SITE_NAME, Dvach::class.java)

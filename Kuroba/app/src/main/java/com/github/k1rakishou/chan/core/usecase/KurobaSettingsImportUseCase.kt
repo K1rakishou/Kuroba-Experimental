@@ -6,10 +6,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.sites.Lainchan
-import com.github.k1rakishou.chan.core.site.sites.Sushichan
-import com.github.k1rakishou.chan.core.site.sites.Wired7
-import com.github.k1rakishou.chan.core.site.sites.Chan370
+import com.github.k1rakishou.chan.core.site.sites.*
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach

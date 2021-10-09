@@ -114,7 +114,7 @@ class FetchThreadBookmarkInfoUseCase(
         inputStream
       ).safeUnwrap { error -> return@use ThreadBookmarkFetchResult.Error(error, threadDescriptor) }
 
-      if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan()) {
+      if (isDevFlavor && !threadDescriptor.siteDescriptor().isLainchan() && !threadDescriptor.siteDescriptor().isDiochan()) {
         ensureCorrectPostOrder(threadBookmarkInfoObject.simplePostObjects)
       }
 
