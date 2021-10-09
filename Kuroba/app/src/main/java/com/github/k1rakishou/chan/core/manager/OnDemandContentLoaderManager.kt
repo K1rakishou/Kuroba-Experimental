@@ -166,15 +166,14 @@ class OnDemandContentLoaderManager(
     return LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
   }
 
-  private fun removeFromActiveLoaders(postDescriptor: PostDescriptor, cancelLoaders: Boolean = true) {
-    lock.write {
-      val postLoaderData = activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
-        ?: return@write
+  private fun removeFromActiveLoaders(postDescriptor: PostDescriptor) {
+    val postLoaderData = lock.write {
+      activeLoaders[postDescriptor.descriptor]?.remove(postDescriptor)
+    }
 
-      if (cancelLoaders) {
-        loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
-        postLoaderData.disposeAll()
-      }
+    if (postLoaderData != null) {
+      loaders.forEach { loader -> loader.cancelLoading(postLoaderData) }
+      postLoaderData.disposeAll()
     }
   }
 

@@ -2351,12 +2351,49 @@ class ThreadPresenter @Inject constructor(
       }
 
       threadPresenterCallback?.showPostsPopup(
-        threadDescriptor,
-        postViewMode,
-        post.postDescriptor,
-        posts
+        threadDescriptor = threadDescriptor,
+        postViewMode = postViewMode,
+        postDescriptor = post.postDescriptor,
+        posts = posts
       )
     }
+  }
+
+  override fun onPostPosterIdClicked(post: ChanPost) {
+    if (!isBound || currentChanDescriptor == null || post.posterId.isNullOrEmpty()) {
+      return
+    }
+
+    val threadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    val chanThread = chanThreadManager.getChanThread(threadDescriptor)
+      ?: return
+
+    val postsWithTheSamePosterId = mutableListOf<ChanPost>()
+
+    chanThread.iteratePostsOrdered { chanPost ->
+      if (chanPost.posterId == post.posterId) {
+        postsWithTheSamePosterId += chanPost
+      }
+    }
+
+    if (postsWithTheSamePosterId.isEmpty()) {
+      showToast(context, R.string.thread_presenter_no_posts_with_poster_id_found)
+      return
+    }
+
+    if (postsWithTheSamePosterId.size == 1) {
+      showToast(context, R.string.thread_presenter_only_one_post_with_poster_id_found)
+      return
+    }
+
+    threadPresenterCallback?.showPostsPopup(
+      threadDescriptor = threadDescriptor,
+      postViewMode = PostCellData.PostViewMode.RepliesPopup,
+      postDescriptor = post.postDescriptor,
+      posts = postsWithTheSamePosterId
+    )
   }
 
   override fun onPreviewThreadPostsClicked(post: ChanPost) {

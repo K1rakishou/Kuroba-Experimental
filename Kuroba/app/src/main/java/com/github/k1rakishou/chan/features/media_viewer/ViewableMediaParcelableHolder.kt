@@ -187,7 +187,7 @@ sealed class ViewableMedia(
   }
 
   fun canMediaBeDownloaded(): Boolean {
-    return viewableMediaMeta.ownerPostDescriptor != null && mediaLocation is MediaLocation.Remote
+    return mediaLocation is MediaLocation.Remote
   }
 
   fun canGoToMediaPost(): Boolean {

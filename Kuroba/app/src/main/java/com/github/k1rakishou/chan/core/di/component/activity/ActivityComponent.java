@@ -381,7 +381,6 @@ public interface ActivityComponent {
     void inject(CircularChunkedLoadingBar circularChunkedLoadingBar);
     void inject(ThreadSlidingPaneLayout threadSlidingPaneLayout);
     void inject(PostStubCell postStubCell);
-    void inject(PostPopupContainer postPopupContainer);
     void inject(SearchLayout searchLayout);
     void inject(SplitNavigationControllerLayout splitNavigationControllerLayout);
     void inject(ReplyLayoutFilesArea replyLayoutFilesArea);
@@ -403,6 +402,7 @@ public interface ActivityComponent {
     void inject(MrSkeletonLayout mrSkeletonLayout);
     void inject(KurobaComposeIconPanel kurobaComposeIconPanel);
     void inject(ArrowMenuDrawable arrowMenuDrawable);
+    void inject(PostPopupContainer postPopupContainer);
 
     @Subcomponent.Builder
     interface Builder {

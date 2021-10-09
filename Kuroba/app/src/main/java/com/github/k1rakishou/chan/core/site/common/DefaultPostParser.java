@@ -17,8 +17,8 @@
 package com.github.k1rakishou.chan.core.site.common;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
-import static com.github.k1rakishou.core_themes.ThemeEngine.getComplementaryColor;
 
+import android.graphics.Color;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -45,7 +45,9 @@ import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
+import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
+import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
@@ -145,7 +147,6 @@ public class DefaultPostParser implements PostParser {
         SpannableString capcodeSpan = null;
 
         int detailsSizePx = sp(Integer.parseInt(ChanSettings.fontSize.get()) - 4);
-
         if (!TextUtils.isEmpty(builder.subject)) {
             SpannableString subjectSpan = new SpannableString(builder.subject);
 
@@ -194,9 +195,15 @@ public class DefaultPostParser implements PostParser {
         if (!TextUtils.isEmpty(builder.posterId)) {
             idSpan = new SpannableString(formatPosterId(builder));
 
-            idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
-            idSpan.setSpan(new BackgroundColorSpanHashed(getComplementaryColor(builder.idColor)), 0, idSpan.length(), 0);
+            int backgroundColor = Color.BLACK;
+            if (ThemeEngine.isDarkColor(builder.idColor)) {
+                backgroundColor = Color.WHITE;
+            }
+
+            idSpan.setSpan(new ForegroundColorSpanHashed(backgroundColor), 0, idSpan.length(), 0);
+            idSpan.setSpan(new BackgroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
             idSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, idSpan.length(), 0);
+            idSpan.setSpan(new PosterIdMarkerSpan(), 0, idSpan.length(), 0);
         }
 
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {

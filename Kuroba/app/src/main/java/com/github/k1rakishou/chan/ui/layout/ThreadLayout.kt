@@ -23,6 +23,7 @@ import android.os.Build
 import android.util.AttributeSet
 import android.view.KeyEvent
 import android.view.View
+import android.webkit.MimeTypeMap
 import android.widget.CheckBox
 import android.widget.LinearLayout
 import android.widget.TextView
@@ -623,6 +624,19 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun openLink(link: String) {
+    val extension = MimeTypeMap.getFileExtensionFromUrl(link)
+    if (extension.isNotEmpty()) {
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+      if (mimeType != null && (mimeType.startsWith("image") || mimeType.startsWith("video"))) {
+        openMediaLinkInternal(link)
+        return
+      }
+    }
+
+    openRegularLinkInternal(link)
+  }
+
+  private fun openRegularLinkInternal(link: String) {
     if (!ChanSettings.openLinkConfirmation.get()) {
       AppModuleAndroidUtils.openLink(link)
       return
@@ -633,6 +647,24 @@ class ThreadLayout @JvmOverloads constructor(
       titleTextId = R.string.open_link_confirmation,
       descriptionText = link,
       onPositiveButtonClickListener = { AppModuleAndroidUtils.openLink(link) }
+    )
+  }
+
+  private fun openMediaLinkInternal(link: String) {
+    if (!ChanSettings.openLinkConfirmation.get()) {
+      callback.openMediaLinkInMediaViewer(link)
+      return
+    }
+
+    dialogFactory.createSimpleConfirmationDialog(
+      context = context,
+      titleTextId = R.string.open_link_in_internal_media_viewer,
+      descriptionTextId = R.string.open_link_in_internal_media_viewer_descriptor,
+      positiveButtonText = getString(R.string.yes),
+      onPositiveButtonClickListener = { callback.openMediaLinkInMediaViewer(link) },
+      negativeButtonText = getString(R.string.no),
+      onNegativeButtonClickListener = { AppModuleAndroidUtils.openLink(link) },
+      neutralButtonText = getString(R.string.cancel)
     )
   }
 
@@ -1450,6 +1482,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
 
     fun pushController(controller: Controller)
+    fun openMediaLinkInMediaViewer(link: String)
     fun showImages(chanDescriptor: ChanDescriptor, initialImageUrl: String?, transitionThumbnailUrl: String)
     fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun onShowPosts()

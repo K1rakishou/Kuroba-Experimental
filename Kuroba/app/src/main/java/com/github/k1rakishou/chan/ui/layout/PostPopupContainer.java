@@ -29,9 +29,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine;
 import javax.inject.Inject;
 
 public class PostPopupContainer extends LinearLayout implements ThemeEngine.ThemeChangesListener {
-    public static final int MAX_WIDTH = dp(800);
-    private static final int HORIZ_PADDING = dp(24);
-    private int maxWidth = MAX_WIDTH;
+    private static final int MAX_WIDTH = dp(800);
 
     @Inject
     ThemeEngine themeEngine;
@@ -54,11 +52,6 @@ public class PostPopupContainer extends LinearLayout implements ThemeEngine.Them
     private void init(Context context) {
         AppModuleAndroidUtils.extractActivityComponent(getContext())
                 .inject(this);
-
-        int minScreenSizeWithPaddings = AndroidUtils.getMinScreenSize(context) - HORIZ_PADDING;
-        if (maxWidth > minScreenSizeWithPaddings) {
-            maxWidth = minScreenSizeWithPaddings;
-        }
     }
 
     @Override
@@ -82,9 +75,19 @@ public class PostPopupContainer extends LinearLayout implements ThemeEngine.Them
 
     @Override
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        super.onMeasure(
-                MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY),
-                heightMeasureSpec
-        );
+        int maxWidth = MAX_WIDTH;
+        int minScreenSizeWithPaddings = AndroidUtils.getScreenWidth(getContext());
+
+        if (maxWidth > minScreenSizeWithPaddings) {
+            maxWidth = minScreenSizeWithPaddings;
+        }
+
+        int parentMaxWidth = MeasureSpec.getSize(widthMeasureSpec);
+        if (maxWidth > parentMaxWidth) {
+            maxWidth = parentMaxWidth;
+        }
+
+        int newWidthSpec = MeasureSpec.makeMeasureSpec(maxWidth, MeasureSpec.EXACTLY);
+        super.onMeasure(newWidthSpec, heightMeasureSpec);
     }
 }

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.image_saver
 
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import androidx.core.content.FileProvider
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -179,12 +180,49 @@ class ImageSaverV2(
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
+  suspend fun downloadMediaIntoUserProvidedFile(
+    mediaUrl: HttpUrl,
+    outputFileUri: Uri
+  ): ModularResult<Unit> {
+    return ModularResult.Try {
+      return@Try withContext(Dispatchers.IO) {
+        Logger.d(TAG, "downloadMediaIntoUserProvidedFile('${mediaUrl}', '${outputFileUri}')")
+
+        val outputFile = fileManager.fromUri(outputFileUri)
+        if (outputFile == null) {
+          throw ImageSaverV2ServiceDelegate.ResultFileAccessError(outputFileUri.toString())
+        }
+
+        try {
+          doIoTaskWithAttempts(3) {
+            try {
+              imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFile, null)
+            } catch (error: Throwable) {
+              if (error is IOException && error.isOutOfDiskSpaceError()) {
+                throw ImageSaverV2ServiceDelegate.OutOfDiskSpaceException()
+              }
+
+              throw error
+            }
+          }
+        } catch (error: Throwable) {
+          Logger.e(TAG, "downloadMediaIntoUserProvidedFile() error while downloading file $mediaUrl}", error)
+          fileManager.delete(outputFile)
+          throw error
+        }
+
+        Logger.d(TAG, "downloadMediaIntoUserProvidedFile('${mediaUrl}') file downloaded")
+      }
+    }
+  }
+
+  @Suppress("BlockingMethodInNonBlockingContext")
   suspend fun downloadMediaAndShare(
     mediaUrl: HttpUrl,
     downloadFileName: String,
     threadDescriptor: ChanDescriptor.ThreadDescriptor?
   ) {
-    withContext(Dispatchers.Default) {
+    withContext(Dispatchers.IO) {
       Logger.d(TAG, "shareInternal('${mediaUrl}')")
 
       val shareFilesDir = File(getAppContext().cacheDir, SHARE_FILES_DIR_NAME)

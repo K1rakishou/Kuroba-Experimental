@@ -55,6 +55,13 @@ public class PopupController
         topView.setOnClickListener((v) -> dismiss());
     }
 
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        dismiss();
+    }
+
     public void setChildController(NavigationController childController) {
         addChildController(childController);
         childController.attachToParentView(container);
