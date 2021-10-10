@@ -1,0 +1,25 @@
+v1.0.1
+TLDR version:
+Finally the v1.0.0 is here! This means that all the huge features that were planned had been finally implemented. Now the app shouldn't be in the development hell anymore and things shouldn't change as quickly as before. Instead, stabilization and bug fixing will become the priority. 
+
+Full version:
+- Add ability to show all posts in a thread with a specific posterId by clicking that ID.
+- Fix the old PostPopupContainer conflicting with the BaseFloatingController when measuring the max child controller width thus causing the reply popup to sometimes be slightly outside of the view bounds.
+- Add ability to open any urls that are potentially pointing to a media content (detected by the file extension) in the internal media viewer.
+- Add ability to download media files opened by external links.
+- Diochan support. Thanks to @Dashchanon
+- Fix BottomNavView disappearing from the bottom of the drawer when the "Use bottom navigation" setting is disabled and drawer history/bookmark displaying is disabled as well.
+
+v1.0.0
+- Add a setting to move bottom navigation view into the drawer.
+- FiltersController reworked.
+- ArrowMenuDrawable animation fixed.
+- 4chan captcha slider now uses snapping to certain parts of the slider which should make it less smooth. If you still want the smoother captcha image scrolling you can slide the image itself.
+- Add a setting to not draw behind the notch on phones with notches (can be found in the media viewer settings).
+- Fix opening thread links from external apps getting stuck in the loading state until the user reloads the thread manually.
+- Do not change the order of post images (when a post has more than one image) when using PostAlignmentMode.AlignLeft.
+- Some performance improvements when adding/updating thread posts into the post cache.
+- Fix tripcode filtering. Add ability to create filters for posterId and posterName.
+- Post highlight filters will now highlight the actual keyword directly in the post comment.
+- Add a setting to always use post comment shift (Clover/Kuroba thubmnail style).
+- Fix a bug where changing a default application setting state in an update would be used by every client that had never changed that setting locally. Basically, if there was a setting to display post thumbnails on the left side of a post by default, it was never touched be the user, and then in the next update the default value is changed to display posts on the right side, the new default value would be used. 
