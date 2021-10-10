@@ -193,10 +193,8 @@ class ThreadCellData(
 
     newPostCellDataLazyList
       .bidirectionalSequenceIndexed(startingPosition.coerceIn(0, newPostCellDataLazyList.lastIndex))
-      .forEach { newPostCellDataLazyIndexed ->
+      .forEach { (_, newPostCellDataLazy) ->
         ensureActive()
-
-        val newPostCellDataLazy = newPostCellDataLazyIndexed.value
         newPostCellDataLazy.getOrCalculate(isPrecalculating = true)
       }
   }

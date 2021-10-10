@@ -378,7 +378,7 @@ class ReportManager(
   }
 
   fun getReportFooter(): String {
-    return buildString(capacity = 256) {
+    return buildString(capacity = 512) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
       appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
@@ -394,6 +394,7 @@ class ReportManager(
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
+      appendLine("asyncPostCellDataCalculation: ${ChanSettings.asyncPostCellDataCalculation.get()}")
       appendLine("userAgent: ${appConstants.userAgent}")
       appendLine("kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
 
