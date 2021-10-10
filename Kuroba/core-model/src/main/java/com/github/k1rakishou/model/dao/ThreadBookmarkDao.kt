@@ -5,7 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Update
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
@@ -37,7 +37,7 @@ abstract class ThreadBookmarkDao {
   """)
   abstract suspend fun selectManyThreadBookmarkIdPairs(ownerThreadIds: Collection<Long>): List<ThreadBookmarkIdPairDatabaseObject>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${ThreadBookmarkEntity.TABLE_NAME} bookmarks

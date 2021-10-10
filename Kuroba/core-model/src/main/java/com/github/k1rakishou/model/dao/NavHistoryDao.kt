@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementIdEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryElementInfoEntity
 import com.github.k1rakishou.model.entity.navigation.NavHistoryFullDto
@@ -22,7 +22,7 @@ abstract class NavHistoryDao {
     navHistoryElementInfoEntityList: List<NavHistoryElementInfoEntity>
   ): List<Long>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
@@ -33,6 +33,7 @@ abstract class NavHistoryDao {
   """)
   abstract suspend fun selectAll(maxCount: Int): List<NavHistoryFullDto>
 
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
@@ -43,6 +44,7 @@ abstract class NavHistoryDao {
   """)
   abstract fun selectFirstNavElement(): NavHistoryFullDto?
 
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids
@@ -54,6 +56,7 @@ abstract class NavHistoryDao {
   """)
   abstract fun selectFirstCatalogNavElement(): NavHistoryFullDto?
 
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${NavHistoryElementIdEntity.TABLE_NAME} nav_ids

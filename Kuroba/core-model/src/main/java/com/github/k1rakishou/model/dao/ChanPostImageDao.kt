@@ -5,6 +5,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.k1rakishou.model.entity.chan.post.ChanPostIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostImageEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
@@ -44,6 +45,7 @@ abstract class ChanPostImageDao {
     """)
   abstract suspend fun selectByOwnerPostIdList(ownerPostIdList: List<Long>): List<ChanPostImageEntity>
 
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT *
     FROM ${ChanPostImageEntity.TABLE_NAME} images

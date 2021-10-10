@@ -72,7 +72,7 @@ abstract class ChanBoardDao {
     """)
   abstract suspend fun selectBoardDatabaseId(siteName: String, boardCode: String): Long?
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT *
     FROM ${ChanBoardIdEntity.TABLE_NAME} cbie

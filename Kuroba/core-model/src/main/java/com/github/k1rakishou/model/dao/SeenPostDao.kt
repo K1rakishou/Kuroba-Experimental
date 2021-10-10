@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.k1rakishou.model.entity.SeenPostEntity
 import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 import org.joda.time.DateTime
@@ -21,6 +22,7 @@ abstract class SeenPostDao {
     """)
   abstract suspend fun selectAllByThreadId(threadId: Long): List<SeenPostEntity>
 
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT * 
     FROM ${SeenPostEntity.TABLE_NAME} spe

@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Update
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterBoardConstraintEntity
 import com.github.k1rakishou.model.entity.chan.filter.ChanFilterEntity
@@ -23,7 +23,7 @@ abstract class ChanFilterDao {
   @Update(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun updateMany(chanFilterEntityList: List<ChanFilterEntity>)
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT *
     FROM ${ChanFilterEntity.TABLE_NAME} cfe

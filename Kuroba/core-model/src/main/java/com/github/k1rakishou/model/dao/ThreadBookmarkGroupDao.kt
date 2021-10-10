@@ -4,7 +4,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import androidx.room.Update
 import com.github.k1rakishou.model.entity.bookmark.BookmarkThreadDescriptor
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
@@ -26,7 +26,7 @@ abstract class ThreadBookmarkGroupDao {
   @Update(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
     SELECT *
     FROM ${ThreadBookmarkGroupEntity.TABLE_NAME} groups

@@ -5,7 +5,7 @@ import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
-import androidx.room.RoomWarnings
+import androidx.room.RewriteQueriesToDropUnusedColumns
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.entity.chan.board.ChanBoardIdEntity
 import com.github.k1rakishou.model.entity.chan.post.ChanPostEntity
@@ -17,7 +17,7 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 @Dao
 abstract class ChanPostDao {
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -33,7 +33,7 @@ abstract class ChanPostDao {
     """)
   abstract suspend fun selectAllByThreadIdExceptOp(ownerThreadId: Long): List<ChanPostFull>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -126,7 +126,7 @@ abstract class ChanPostDao {
     threadId: Long
   ): List<PostDescriptorDatabaseObject>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -140,7 +140,7 @@ abstract class ChanPostDao {
     """)
   abstract suspend fun selectManyByThreadIdAndPostNos(ownerThreadId: Long, postNos: Collection<Long>): List<ChanPostIdEntity>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
@@ -153,7 +153,7 @@ abstract class ChanPostDao {
     """)
   protected abstract suspend fun selectOriginalPostsGrouped(ownerThreadIds: Collection<Long>): List<ChanPostFull>
 
-  @SuppressWarnings(RoomWarnings.CURSOR_MISMATCH)
+  @RewriteQueriesToDropUnusedColumns
   @Query("""
         SELECT *
         FROM ${ChanPostIdEntity.TABLE_NAME} cp_id
