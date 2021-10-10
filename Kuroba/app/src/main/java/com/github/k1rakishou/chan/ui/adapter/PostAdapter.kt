@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
+import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadCellData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -316,16 +317,18 @@ class PostAdapter(
     chanDescriptor: ChanDescriptor,
     chanTheme: ChanTheme,
     postIndexedList: List<PostIndexed>,
-    postCellDataWidthNoPaddings: Int
+    postCellDataWidthNoPaddings: Int,
+    prevScrollPositionData: PreviousThreadScrollPositionData? = null
   ) {
     BackgroundUtils.ensureMainThread()
 
     threadCellData.updateThreadData(
-      postCellCallback,
-      chanDescriptor,
-      postIndexedList,
-      postCellDataWidthNoPaddings,
-      chanTheme
+      postCellCallback = postCellCallback,
+      chanDescriptor = chanDescriptor,
+      postIndexedList = postIndexedList,
+      postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
+      theme = chanTheme,
+      prevScrollPositionData = prevScrollPositionData
     )
 
     if (threadCellData.chanDescriptor is ChanDescriptor.ICatalogDescriptor) {

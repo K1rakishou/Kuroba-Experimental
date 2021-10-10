@@ -418,6 +418,59 @@ inline fun <T, R> List<T>.bidirectionalMap(
     .toList()
 }
 
+
+fun <T> List<T>.bidirectionalSequenceIndexed(startPosition: Int = size / 2): Sequence<IndexedValue<T>> {
+  return sequence<IndexedValue<T>> {
+    if (isEmpty()) {
+      return@sequence
+    }
+
+    if (size == 1) {
+      yield(IndexedValue(index = 0, value = first()))
+      return@sequence
+    }
+
+    var position = startPosition
+    var index = 0
+    var increment = true
+
+    var reachedLeftSide = false
+    var reachedRightSide = false
+
+    while (true) {
+      val element = getOrNull(position)
+      if (element == null) {
+        if (reachedLeftSide && reachedRightSide) {
+          break
+        }
+
+        if (position <= 0) {
+          reachedLeftSide = true
+        }
+
+        if (position >= lastIndex) {
+          reachedRightSide = true
+        }
+      }
+
+      if (element != null) {
+        yield(IndexedValue(index = position, value = element))
+      }
+
+      ++index
+
+      if (increment) {
+        position += index
+      } else {
+        position -= index
+      }
+
+      increment = increment.not()
+    }
+  }
+}
+
+
 fun <T> List<T>.bidirectionalSequence(startPosition: Int = size / 2): Sequence<T> {
   return sequence<T> {
     if (isEmpty()) {

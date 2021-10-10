@@ -1,14 +1,18 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.bidirectionalSequenceIndexed
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -16,8 +20,14 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlin.time.ExperimentalTime
+import kotlin.time.measureTime
 
 class ThreadCellData(
   private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
@@ -25,12 +35,14 @@ class ThreadCellData(
   private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   private val _savedReplyManager: Lazy<SavedReplyManager>,
   initialTheme: ChanTheme
-): Iterable<PostCellData> {
-  private val postCellDataList: MutableList<PostCellData> = mutableListWithCap(64)
+): Iterable<ThreadCellData.PostCellDataLazy> {
+  private val postCellDataLazyList: MutableList<PostCellDataLazy> = mutableListWithCap(64)
+  private val coroutineScope = KurobaCoroutineScope()
 
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
   private var currentTheme: ChanTheme = initialTheme
+  private var lazyCalculationJob: Job? = null
 
   var postViewMode: PostCellData.PostViewMode = PostCellData.PostViewMode.Normal
   var defaultIsCompact: Boolean = false
@@ -48,16 +60,70 @@ class ThreadCellData(
   val chanDescriptor: ChanDescriptor?
     get() = _chanDescriptor
 
-  override fun iterator(): Iterator<PostCellData> {
-    return postCellDataList.iterator()
+  override fun iterator(): Iterator<PostCellDataLazy> {
+    return postCellDataLazyList.iterator()
   }
 
+  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>): Boolean {
+    BackgroundUtils.ensureMainThread()
+
+    var updatedAtLeastOne = false
+
+    for (updatedPost in updatedPosts) {
+      val postCellDataIndex = postCellDataLazyList
+        .indexOfFirst { postCellDataLazy ->
+          return@indexOfFirst postCellDataLazy.postDescriptor == updatedPost.postDescriptor
+        }
+
+      if (postCellDataIndex < 0) {
+        continue
+      }
+
+      val postCellData = postCellDataLazyList.getOrNull(postCellDataIndex)?.getOrCalculate()
+        ?: continue
+
+      val updatedPostCellData = withContext(Dispatchers.Default) {
+        val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
+
+        val updatedPostCellData = postIndexedListToLazyPostCellDataList(
+          postCellCallback = postCellCallback!!,
+          chanDescriptor = chanDescriptor!!,
+          theme = currentTheme,
+          postIndexedList = listOf(postIndexed),
+          postDescriptors = listOf(updatedPost.postDescriptor),
+          postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
+        )
+
+        // precalculate right away
+        updatedPostCellData.forEach { postCellDataLazy -> postCellDataLazy.getOrCalculate(isPrecalculating = true) }
+
+        return@withContext updatedPostCellData
+      }
+
+      // We need to recalculate the index again because it might have changed and if it did
+      // we need to skip this onPostUpdated call
+      val postCellDataIndex2 = postCellDataLazyList
+        .indexOfFirst { pcdLazy -> pcdLazy.postDescriptor == updatedPost.postDescriptor }
+
+      if (postCellDataIndex != postCellDataIndex2) {
+        continue
+      }
+
+      postCellDataLazyList[postCellDataIndex] = updatedPostCellData.first()
+      updatedAtLeastOne = true
+    }
+
+    return updatedAtLeastOne
+  }
+
+  @OptIn(ExperimentalTime::class)
   suspend fun updateThreadData(
     postCellCallback: PostCellInterface.PostCellCallback,
     chanDescriptor: ChanDescriptor,
     postIndexedList: List<PostIndexed>,
     postCellDataWidthNoPaddings: Int,
-    theme: ChanTheme
+    theme: ChanTheme,
+    prevScrollPositionData: PreviousThreadScrollPositionData? = null
   ) {
     require(postCellDataWidthNoPaddings > 0) { "Bad postCellDataWidthNoPaddings: ${postCellDataWidthNoPaddings}" }
     BackgroundUtils.ensureMainThread()
@@ -68,8 +134,8 @@ class ThreadCellData(
 
     val postDescriptors = postIndexedList.map { postIndexed -> postIndexed.post.postDescriptor }
 
-    val newPostCellDataList = withContext(Dispatchers.Default) {
-      return@withContext postIndexedListToPostCellDataList(
+    val newPostCellDataLazyList = withContext(Dispatchers.Default) {
+      return@withContext postIndexedListToLazyPostCellDataList(
         postCellCallback = postCellCallback,
         chanDescriptor = chanDescriptor,
         theme = theme,
@@ -79,24 +145,70 @@ class ThreadCellData(
       )
     }
 
+    Logger.d(TAG, "updateThreadData() asyncPostCellDataCalculation=${ChanSettings.asyncPostCellDataCalculation.get()}")
+
+    if (ChanSettings.asyncPostCellDataCalculation.get()) {
+      lazyCalculationJob?.cancel()
+      lazyCalculationJob = coroutineScope.launch(Dispatchers.IO) {
+        Logger.d(TAG, "runPreloading() start")
+        val preloadingDuration = measureTime { runPreloadingTask(prevScrollPositionData, newPostCellDataLazyList) }
+        Logger.d(TAG, "runPreloading() end, took $preloadingDuration")
+      }
+    }
+
     BackgroundUtils.ensureMainThread()
 
-    this.postCellDataList.clear()
-    this.postCellDataList.addAll(newPostCellDataList)
+    this.postCellDataLazyList.clear()
+    this.postCellDataLazyList.addAll(newPostCellDataLazyList)
 
     if (postViewMode.canShowLastSeenIndicator()) {
       this.lastSeenIndicatorPosition = getLastSeenIndicatorPosition(chanDescriptor) ?: -1
     }
   }
 
-  private suspend fun postIndexedListToPostCellDataList(
+  private fun CoroutineScope.runPreloadingTask(
+    prevScrollPositionData: PreviousThreadScrollPositionData?,
+    newPostCellDataLazyList: List<PostCellDataLazy>
+  ) {
+    var startingPosition = 0
+
+    if (prevScrollPositionData != null) {
+      val prevVisibleItemIndex = prevScrollPositionData.prevVisibleItemIndex
+      val prevVisiblePostNo = prevScrollPositionData.prevVisiblePostNo
+
+      if (prevVisibleItemIndex != null && prevVisibleItemIndex >= 0) {
+        startingPosition = prevVisibleItemIndex
+      } else if (prevVisiblePostNo != null) {
+        val foundIndex = newPostCellDataLazyList.indexOfFirst { newPostCellDataLazy ->
+          newPostCellDataLazy.postDescriptor.postNo == prevVisiblePostNo
+        }
+
+        if (foundIndex >= 0) {
+          startingPosition = foundIndex
+        }
+      }
+    }
+
+    Logger.d(TAG, "runPreloading() startingPosition=$startingPosition, dataListSize=${newPostCellDataLazyList.size}")
+
+    newPostCellDataLazyList
+      .bidirectionalSequenceIndexed(startingPosition.coerceIn(0, newPostCellDataLazyList.lastIndex))
+      .forEach { newPostCellDataLazyIndexed ->
+        ensureActive()
+
+        val newPostCellDataLazy = newPostCellDataLazyIndexed.value
+        newPostCellDataLazy.getOrCalculate(isPrecalculating = true)
+      }
+  }
+
+  private suspend fun postIndexedListToLazyPostCellDataList(
     postCellCallback: PostCellInterface.PostCellCallback,
     chanDescriptor: ChanDescriptor,
     theme: ChanTheme,
     postIndexedList: List<PostIndexed>,
     postDescriptors: List<PostDescriptor>,
     postCellDataWidthNoPaddings: Int
-  ): List<PostCellData> {
+  ): List<PostCellDataLazy> {
     BackgroundUtils.ensureBackgroundThread()
 
     val postFilterManager = _postFilterManager.get()
@@ -104,7 +216,7 @@ class ThreadCellData(
     val savedReplyManager = _savedReplyManager.get()
 
     val totalPostsCount = postIndexedList.size
-    val resultList = mutableListWithCap<PostCellData>(totalPostsCount)
+    val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
 
     val fontSize = ChanSettings.fontSize.get().toInt()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
@@ -142,54 +254,67 @@ class ThreadCellData(
     val highlightFilterKeywordMap = postFilterHighlightManager.getHighlightFilterKeywordForDescriptor(postDescriptors)
 
     postIndexedList.forEachIndexed { orderInList, postIndexed ->
-      val postDescriptor = postIndexed.post.postDescriptor
+      val lazyFunc = lazy {
+        val postDescriptor = postIndexed.post.postDescriptor
 
-      val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
-        && postViewMode != PostCellData.PostViewMode.Search
-        && postIndexed.post.postImages.size > 1
+        val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
+          && postViewMode != PostCellData.PostViewMode.Search
+          && postIndexed.post.postImages.size > 1
 
-      val boardPage = boardPages?.boardPages
-        ?.firstOrNull { boardPage -> boardPage.threads[postDescriptor.threadDescriptor()] != null }
+        val boardPage = boardPages?.boardPages
+          ?.firstOrNull { boardPage -> boardPage.threads[postDescriptor.threadDescriptor()] != null }
 
-      val postCellData = PostCellData(
-        chanDescriptor = chanDescriptor,
+        val postCellData = PostCellData(
+          chanDescriptor = chanDescriptor,
+          post = postIndexed.post,
+          postIndex = postIndexed.postIndex,
+          postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
+          textSizeSp = fontSize,
+          theme = chanTheme,
+          postViewMode = postViewMode,
+          markedPostNo = defaultMarkedNo,
+          showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
+          compact = defaultIsCompact,
+          boardPostViewMode = defaultBoardPostViewMode,
+          boardPostsSortOrder = boardPostsSortOrder,
+          boardPage = boardPage,
+          neverShowPages = neverShowPages,
+          tapNoReply = tapNoReply,
+          postFullDate = postFullDate,
+          shiftPostComment = shiftPostComment,
+          forceShiftPostComment = forceShiftPostComment,
+          postMultipleImagesCompactMode = postMultipleImagesCompactMode,
+          textOnly = textOnly,
+          postFileInfo = postFileInfo,
+          markUnseenPosts = markUnseenPosts,
+          markSeenThreads = markSeenThreads,
+          stub = filterStubMap[postDescriptor] ?: false,
+          filterHash = filterHashMap[postDescriptor] ?: 0,
+          searchQuery = defaultSearchQuery,
+          keywordsToHighlight = highlightFilterKeywordMap[postDescriptor] ?: emptySet(),
+          postAlignmentMode = postAlignmentMode,
+          postCellThumbnailSizePercents = postCellThumbnailSizePercents,
+          isSavedReply = postIndexed.post.isSavedReply,
+          isReplyToSavedReply = postIndexed.post.repliesTo
+            .any { replyTo -> threadPostReplyMap[replyTo] == true }
+        )
+
+        postCellData.postCellCallback = postCellCallback
+        postCellData.preload()
+
+        return@lazy postCellData
+      }
+
+      val postCellDataLazy = PostCellDataLazy(
         post = postIndexed.post,
-        postIndex = postIndexed.postIndex,
-        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
-        textSizeSp = fontSize,
-        theme = chanTheme,
-        postViewMode = postViewMode,
-        markedPostNo = defaultMarkedNo,
-        showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
-        compact = defaultIsCompact,
-        boardPostViewMode = defaultBoardPostViewMode,
-        boardPostsSortOrder = boardPostsSortOrder,
-        boardPage = boardPage,
-        neverShowPages = neverShowPages,
-        tapNoReply = tapNoReply,
-        postFullDate = postFullDate,
-        shiftPostComment = shiftPostComment,
-        forceShiftPostComment = forceShiftPostComment,
-        postMultipleImagesCompactMode = postMultipleImagesCompactMode,
-        textOnly = textOnly,
-        postFileInfo = postFileInfo,
-        markUnseenPosts = markUnseenPosts,
-        markSeenThreads = markSeenThreads,
-        stub = filterStubMap[postDescriptor] ?: false,
-        filterHash = filterHashMap[postDescriptor] ?: 0,
-        searchQuery = defaultSearchQuery,
-        keywordsToHighlight = highlightFilterKeywordMap[postDescriptor] ?: emptySet(),
-        postAlignmentMode = postAlignmentMode,
-        postCellThumbnailSizePercents = postCellThumbnailSizePercents,
-        isSavedReply = postIndexed.post.isSavedReply,
-        isReplyToSavedReply = postIndexed.post.repliesTo
-          .any { replyTo -> threadPostReplyMap[replyTo] == true }
+        lazyDataCalcFunc = lazyFunc
       )
 
-      postCellData.postCellCallback = postCellCallback
-      postCellData.preload()
+      if (!ChanSettings.asyncPostCellDataCalculation.get()) {
+        postCellDataLazy.getOrCalculate(isPrecalculating = true)
+      }
 
-      resultList += postCellData
+      resultList += postCellDataLazy
     }
 
     return resultList
@@ -215,11 +340,21 @@ class ThreadCellData(
     return postCellCallback.getBoardPages(chanDescriptor.boardDescriptor())
   }
 
-  fun isEmpty(): Boolean = postCellDataList.isEmpty()
+  fun isEmpty(): Boolean = postCellDataLazyList.isEmpty()
 
   fun cleanup() {
-    postCellDataList.forEach { postCellData -> postCellData.cleanup() }
-    postCellDataList.clear()
+    lazyCalculationJob?.cancel()
+    lazyCalculationJob = null
+
+    coroutineScope.cancelChildren()
+
+    postCellDataLazyList.forEach { postCellDataLazy ->
+      if (postCellDataLazy.isInitialized) {
+        postCellDataLazy.postCellDataCalculated.cleanup()
+      }
+    }
+
+    postCellDataLazyList.clear()
 
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
@@ -229,10 +364,14 @@ class ThreadCellData(
   fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {
     defaultSearchQuery = searchQuery
 
-    postCellDataList.forEach { postCellData ->
-      postCellData.resetCommentTextCache()
-      postCellData.resetPostTitleCache()
-      postCellData.resetPostFileInfoCache()
+    postCellDataLazyList.forEach { postCellDataLazy ->
+      if (postCellDataLazy.isInitialized) {
+        val postCellData = postCellDataLazy.postCellDataCalculated
+
+        postCellData.resetCommentTextCache()
+        postCellData.resetPostTitleCache()
+        postCellData.resetPostFileInfoCache()
+      }
     }
   }
 
@@ -241,88 +380,49 @@ class ThreadCellData(
     defaultBoardPostViewMode = boardPostViewMode
     defaultIsCompact = compact
 
-    postCellDataList.forEach { postCellData ->
-      val compactChanged = postCellData.compact != compact
-      val boardPostViewModeChanged = postCellData.boardPostViewMode != boardPostViewMode
+    postCellDataLazyList.forEach { postCellDataLazy ->
+      if (postCellDataLazy.isInitialized) {
+        val postCellData = postCellDataLazy.postCellDataCalculated
 
-      postCellData.boardPostViewMode = boardPostViewMode
-      postCellData.compact = compact
+        val compactChanged = postCellData.compact != compact
+        val boardPostViewModeChanged = postCellData.boardPostViewMode != boardPostViewMode
 
-      if (boardPostViewModeChanged) {
-        postCellData.resetCommentTextCache()
-      }
+        postCellData.boardPostViewMode = boardPostViewMode
+        postCellData.compact = compact
 
-      if (compactChanged) {
-        postCellData.resetCatalogRepliesTextCache()
+        if (boardPostViewModeChanged) {
+          postCellData.resetCommentTextCache()
+        }
+
+        if (compactChanged) {
+          postCellData.resetCatalogRepliesTextCache()
+        }
       }
     }
-  }
-
-  suspend fun onPostsUpdated(updatedPosts: List<ChanPost>): Boolean {
-    BackgroundUtils.ensureMainThread()
-
-    var updatedAtLeastOne = false
-
-    for (updatedPost in updatedPosts) {
-      val postCellDataIndex = postCellDataList
-        .indexOfFirst { postCellData -> postCellData.postDescriptor == updatedPost.postDescriptor }
-
-      if (postCellDataIndex < 0) {
-        continue
-      }
-
-      val postCellData = postCellDataList.getOrNull(postCellDataIndex)
-        ?: continue
-
-      val updatedPostCellData = withContext(Dispatchers.Default) {
-        val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
-
-        return@withContext postIndexedListToPostCellDataList(
-          postCellCallback = postCellCallback!!,
-          chanDescriptor = chanDescriptor!!,
-          theme = currentTheme,
-          postIndexedList = listOf(postIndexed),
-          postDescriptors = listOf(updatedPost.postDescriptor),
-          postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
-        )
-      }
-
-      // We need to recalculate the index again because it might have changed and if it did
-      // we need to skip this onPostUpdated call
-      val postCellDataIndex2 = postCellDataList
-        .indexOfFirst { pcd -> pcd.postDescriptor == updatedPost.postDescriptor }
-
-      if (postCellDataIndex != postCellDataIndex2) {
-        continue
-      }
-
-      postCellDataList[postCellDataIndex] = updatedPostCellData.first()
-      updatedAtLeastOne = true
-    }
-
-    return updatedAtLeastOne
   }
 
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    val postCellDataIndex = postCellDataList
-      .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+    val postCellDataIndex = postCellDataLazyList
+      .indexOfFirst { postCellDataLazy -> postCellDataLazy.postDescriptor == postDescriptor }
 
     if (postCellDataIndex < 0) {
       return
     }
 
-    val postCellData = postCellDataList.getOrNull(postCellDataIndex)
+    val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
       ?: return
 
-    postCellData.resetEverything()
+    if (postCellDataLazy.isInitialized) {
+      postCellDataLazy.postCellDataCalculated.resetEverything()
+    }
   }
 
   fun getPostCellDataSafe(index: Int): PostCellData? {
-    return postCellDataList.getOrNull(getPostPosition(index))
+    return postCellDataLazyList.getOrNull(getPostPosition(index))?.getOrCalculate()
   }
 
   fun getPostCellData(index: Int): PostCellData {
-    return postCellDataList.get(getPostPosition(index))
+    return postCellDataLazyList.get(getPostPosition(index)).getOrCalculate()
   }
 
   fun getPostCellDataIndexes(postDescriptors: List<PostDescriptor>): IntRange? {
@@ -331,8 +431,8 @@ class ThreadCellData(
     }
 
     val indexes = postDescriptors.mapNotNull { postDescriptor ->
-      val index = postCellDataList
-        .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+      val index = postCellDataLazyList
+        .indexOfFirst { postCellDataLazy -> postCellDataLazy.postDescriptor == postDescriptor }
 
       if (index < 0) {
         return@mapNotNull null
@@ -355,8 +455,8 @@ class ThreadCellData(
     }
 
     val indexes = postDescriptors.mapNotNull { postDescriptor ->
-      var postIndex = postCellDataList
-        .indexOfFirst { postCellData -> postCellData.postDescriptor == postDescriptor }
+      var postIndex = postCellDataLazyList
+        .indexOfFirst { postCellDataLazy -> postCellDataLazy.postDescriptor == postDescriptor }
 
       if (postIndex < 0) {
         return@mapNotNull null
@@ -381,10 +481,10 @@ class ThreadCellData(
     return IntRange(start = start, endInclusive = end)
   }
 
-  fun getLastPostCellDataOrNull(): PostCellData? = postCellDataList.lastOrNull()
+  fun getLastPostCellDataOrNull(): PostCellData? = postCellDataLazyList.lastOrNull()?.getOrCalculate()
 
   fun postsCount(): Int {
-    var size = postCellDataList.size
+    var size = postCellDataLazyList.size
 
     if (showStatusView()) {
       size++
@@ -435,13 +535,13 @@ class ThreadCellData(
       if (chanThreadViewableInfoView.lastViewedPostNo >= 0) {
         // Do not process the last post, the indicator does not have to appear at the bottom
         var postIndex = 0
-        val displayListSize = postCellDataList.size - 1
+        val displayListSize = postCellDataLazyList.size - 1
 
         while (postIndex < displayListSize) {
-          val postCellData = postCellDataList.getOrNull(postIndex)
+          val postCellDataLazy = postCellDataLazyList.getOrNull(postIndex)
             ?: break
 
-          if (postCellData.postNo == chanThreadViewableInfoView.lastViewedPostNo) {
+          if (postCellDataLazy.postDescriptor.postNo == chanThreadViewableInfoView.lastViewedPostNo) {
             return@view postIndex + 1
           }
 
@@ -453,6 +553,65 @@ class ThreadCellData(
 
       return@view null
     }
+  }
+
+  class PostCellDataLazy(
+    val post: ChanPost,
+    private val lazyDataCalcFunc: kotlin.Lazy<PostCellData>
+  ) {
+    val postDescriptor: PostDescriptor
+      get() = post.postDescriptor
+
+    val isInitialized: Boolean
+      get() = lazyDataCalcFunc.isInitialized()
+
+    val postCellDataCalculated: PostCellData
+      get() {
+        check(lazyDataCalcFunc.isInitialized()) { "lazyDataCalcFunc is not initialized yet!" }
+        return lazyDataCalcFunc.value
+      }
+
+    fun getOrCalculate(isPrecalculating: Boolean = false): PostCellData {
+      val isAlreadyCalculated = lazyDataCalcFunc.isInitialized()
+      val calculatedValue = lazyDataCalcFunc.value
+
+      if (!isAlreadyCalculated && !isPrecalculating && isDevBuild()) {
+        Logger.e(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
+          "postNo=${calculatedValue.postNo}")
+      }
+
+      return calculatedValue
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as PostCellDataLazy
+
+      if (post != other.post) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return post.hashCode()
+    }
+
+    override fun toString(): String {
+      val lazyDataCalcFuncResult = if (lazyDataCalcFunc.isInitialized()) {
+        lazyDataCalcFunc.value.toString()
+      } else {
+        "<Not calculated>"
+      }
+
+      return "PostCellDataLazy(postDescriptor=$postDescriptor, lazyDataCalcFuncResult=$lazyDataCalcFuncResult)"
+    }
+
+  }
+
+  companion object {
+    private const val TAG = "ThreadCellData"
   }
 
 }

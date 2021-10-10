@@ -65,8 +65,9 @@ class PostHighlightManager(
         continue
       }
 
-      val hasThisPostId = threadCellData
-        .any { postCellData -> postCellData.post.posterId.contentEquals(postIdToHighlight, ignoreCase = true) }
+      val hasThisPostId = threadCellData.any { postCellDataLazy ->
+        postCellDataLazy.post.posterId.contentEquals(postIdToHighlight, ignoreCase = true)
+      }
 
       if (hasThisPostId) {
         return true
@@ -80,11 +81,11 @@ class PostHighlightManager(
     BackgroundUtils.ensureMainThread()
 
     // TODO(KurobaEx): batch
-    threadCellData.forEach { postCellData ->
-      val posterId = postCellData.post.posterId
+    threadCellData.forEach { postCellDataLazy ->
+      val posterId = postCellDataLazy.post.posterId
         ?: return@forEach
 
-      updatePostHighlight(threadCellData.chanDescriptor, postCellData.postDescriptor) { postHighlight ->
+      updatePostHighlight(threadCellData.chanDescriptor, postCellDataLazy.postDescriptor) { postHighlight ->
         if (postIdToHighlight.isNotBlank() && posterId.contentEquals(postIdToHighlight, ignoreCase = true)) {
           postHighlight.currentHighlightTypes.flip(HighlightType.PostId.bit)
         } else {
@@ -111,8 +112,9 @@ class PostHighlightManager(
         continue
       }
 
-      val hasThisPostId = threadCellData
-        .any { postCellData -> postCellData.post.actualTripcode.contentEquals(tripcodeToHighlight, ignoreCase = true) }
+      val hasThisPostId = threadCellData.any { postCellData ->
+        postCellData.post.actualTripcode.contentEquals(tripcodeToHighlight, ignoreCase = true)
+      }
 
       if (hasThisPostId) {
         return true
@@ -126,11 +128,11 @@ class PostHighlightManager(
     BackgroundUtils.ensureMainThread()
 
     // TODO(KurobaEx): batch
-    threadCellData.forEach { postCellData ->
-      val tripcode = postCellData.post.actualTripcode
+    threadCellData.forEach { postCellDataLazy ->
+      val tripcode = postCellDataLazy.post.actualTripcode
         ?: return@forEach
 
-      updatePostHighlight(threadCellData.chanDescriptor, postCellData.postDescriptor) { postHighlight ->
+      updatePostHighlight(threadCellData.chanDescriptor, postCellDataLazy.postDescriptor) { postHighlight ->
         if (tripcodeToHighlight.isNotBlank() && tripcode.contentEquals(tripcodeToHighlight, ignoreCase = true)) {
           postHighlight.currentHighlightTypes.flip(HighlightType.PostTripcode.bit)
         } else {
@@ -146,10 +148,10 @@ class PostHighlightManager(
     BackgroundUtils.ensureMainThread()
 
     // TODO(KurobaEx): batch
-    threadCellData.forEach { postCellData ->
-      val postDescriptor = postCellData.post.postDescriptor
+    threadCellData.forEach { postCellDataLazy ->
+      val postDescriptor = postCellDataLazy.postDescriptor
 
-      updatePostHighlight(threadCellData.chanDescriptor, postCellData.postDescriptor) { postHighlight ->
+      updatePostHighlight(threadCellData.chanDescriptor, postCellDataLazy.postDescriptor) { postHighlight ->
         if (postDescriptors != null && postDescriptors.contains(postDescriptor)) {
           if (blink) {
             postHighlight.currentHighlightTypes.set(HighlightType.Blink.bit)

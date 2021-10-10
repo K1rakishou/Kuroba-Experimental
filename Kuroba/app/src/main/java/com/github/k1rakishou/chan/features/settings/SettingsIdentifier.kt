@@ -773,6 +773,7 @@ sealed class ExperimentalScreen(
     object AutoLoadThreadImages : MainSettingsGroup("auto_load_thread_images")
     object ShowPrefetchLoadingIndicator : MainSettingsGroup("show_prefetch_loading_indicator")
     object HighResCells : MainSettingsGroup("high_res_cells")
+    object AsyncPostCellDataCalculation : MainSettingsGroup("async_post_cell_data_calculation")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = ExperimentalScreen.getScreenIdentifier()

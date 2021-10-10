@@ -91,6 +91,14 @@ class ExperimentalSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.AsyncPostCellDataCalculation,
+          topDescriptionIdFunc = { R.string.setting_async_post_cell_data_calculation },
+          bottomDescriptionIdFunc = { R.string.setting_async_post_cell_data_calculation_description },
+          setting = ChanSettings.asyncPostCellDataCalculation,
+        )
+
         group
       }
     )

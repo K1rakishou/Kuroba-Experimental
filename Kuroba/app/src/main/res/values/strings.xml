@@ -680,6 +680,8 @@ Note that for country code filtering, troll country codes should be prepended wi
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
+    <string name="setting_async_post_cell_data_calculation">Async post cell data calculation</string>
+    <string name="setting_async_post_cell_data_calculation_description">Turning this setting on improves catalog/thread opening performance (You should see less to none of the \'Diffing new and old posts, applying results\' loading step). This is achieved by doing the \'diffing\' step asynchronously with the other stuff instead of waiting until it\'s fully done. Diffing in this case means calculation of new posts\' intermediate post cell data (like post title, comment, etc. considering all the settings, since it depends on the settings) and then comparing it with already displayed data to figure out which post cells had changed since the last thread update. This setting is experimental because it\'s very hard to test all possible combinations that may accidentally break something. (⚠ May become the reason of weird catalog/thread post cell glitches and other unexpected bugs ⚠)</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

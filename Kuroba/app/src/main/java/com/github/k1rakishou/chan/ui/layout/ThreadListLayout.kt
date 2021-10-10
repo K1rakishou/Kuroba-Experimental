@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
+import com.github.k1rakishou.chan.ui.cell.PreviousThreadScrollPositionData
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
@@ -653,14 +654,22 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       filter.applyFilter(descriptor, posts)
     }
 
-    chanLoadProgressNotifier.sendProgressEvent(
-      ChanLoadProgressEvent.RefreshingPosts(descriptor)
-    )
+    val chanDescriptor = currentChanDescriptorOrNull()
+    chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.RefreshingPosts(descriptor))
+
+
     val setThreadPostsDuration = measureTime {
-      postAdapter.setThread(descriptor, themeEngine.chanTheme, filteredPosts, recyclerViewWidth)
+      val prevScrollPositionData = getPrevScrollPosition(chanDescriptor, initial)
+
+      postAdapter.setThread(
+        chanDescriptor = descriptor,
+        chanTheme = themeEngine.chanTheme,
+        postIndexedList = filteredPosts,
+        postCellDataWidthNoPaddings = recyclerViewWidth,
+        prevScrollPositionData = prevScrollPositionData,
+      )
     }
 
-    val chanDescriptor = currentChanDescriptorOrNull()
     if (chanDescriptor != null) {
       // Use post() here to wait until recycler had processed the new posts so that we don't end up
       // with a race condition where restorePrevScrollPosition() can be called with still empty
@@ -668,9 +677,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       recyclerView.post { restorePrevScrollPosition(chanDescriptor, initial) }
     }
 
-    chanLoadProgressNotifier.sendProgressEvent(
-      ChanLoadProgressEvent.End(descriptor)
-    )
+    chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.End(descriptor))
 
     if (descriptor.isCatalogDescriptor()) {
       postHighlightManager.onCatalogLoaded(postAdapter.threadCellData)
@@ -681,6 +688,40 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       applyFilterDuration = applyFilterDuration,
       setThreadPostsDuration = setThreadPostsDuration
     )
+  }
+
+  private fun getPrevScrollPosition(chanDescriptor: ChanDescriptor?, initial: Boolean): PreviousThreadScrollPositionData? {
+    if (chanDescriptor == null) {
+      return null
+    }
+
+    if (initial) {
+      val markedPostNo = chanThreadViewableInfoManager.getMarkedPostNo(chanDescriptor)
+      if (markedPostNo != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = null,
+          prevVisiblePostNo = markedPostNo
+        )
+      }
+
+      val prevVisibleItemIndex = chanThreadViewableInfoManager.view(chanDescriptor) { (_, index, _) -> index }
+      if (prevVisibleItemIndex != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = prevVisibleItemIndex,
+          prevVisiblePostNo = null
+        )
+      }
+    } else {
+      val currentIndexAndTop = indexAndTop
+      if (currentIndexAndTop != null) {
+        return PreviousThreadScrollPositionData(
+          prevVisibleItemIndex = currentIndexAndTop.index,
+          prevVisiblePostNo = null
+        )
+      }
+    }
+
+    return null
   }
 
   private fun restorePrevScrollPosition(

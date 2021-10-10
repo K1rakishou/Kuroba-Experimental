@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.StringUtils
@@ -205,9 +204,7 @@ data class PostCellData(
     _catalogRepliesText.resetValue()
   }
 
-  suspend fun preload() {
-    BackgroundUtils.ensureBackgroundThread()
-
+  fun preload() {
     // Force lazily evaluated values to get calculated and cached
     _detailsSizePx.value()
     _postTitle.value()
