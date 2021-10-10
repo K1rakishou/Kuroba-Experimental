@@ -853,7 +853,9 @@ class MainController(
         val navHistoryEntryList = remember { drawerViewModel.navigationHistoryEntryList }
         if (navHistoryEntryList.isEmpty()) {
           KurobaComposeText(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier
+              .fillMaxWidth()
+              .weight(1f),
             text = stringResource(id = R.string.drawer_controller_navigation_history_is_empty),
             textAlign = TextAlign.Center,
           )
