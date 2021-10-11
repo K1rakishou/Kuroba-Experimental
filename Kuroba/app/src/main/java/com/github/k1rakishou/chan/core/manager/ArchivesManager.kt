@@ -212,6 +212,14 @@ open class ArchivesManager(
     }
   }
 
+  fun bySiteDescriptor(siteDescriptor: SiteDescriptor): ArchiveDescriptor? {
+    return lock.read {
+      return@read allArchivesData
+        .firstOrNull { archiveData -> archiveData.siteDescriptor == siteDescriptor }
+        ?.getArchiveDescriptor()
+    }
+  }
+
   fun isSiteArchive(siteDescriptor: SiteDescriptor): Boolean {
     return lock.read {
       return@read allArchiveDescriptors.any { archiveDescriptor -> archiveDescriptor.domain == siteDescriptor.siteName }
@@ -252,6 +260,8 @@ open class ArchivesManager(
 
     val domain: String
       get() = getSanitizedDomain()
+    val siteDescriptor: SiteDescriptor
+      get() = archiveDescriptor!!.siteDescriptor
     
     fun setSupportedSites(sites: Set<SiteDescriptor>) {
       require(this.supportedSites == null) { "Double initialization!" }

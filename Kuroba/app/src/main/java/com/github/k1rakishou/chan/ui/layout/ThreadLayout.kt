@@ -549,9 +549,6 @@ class ThreadLayout @JvmOverloads constructor(
               getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
             )
           }
-          is CookieResult.Timeout -> {
-            showToast(context, getString(R.string.firewall_check_timeout, firewallType, cookieResult.timeoutMs))
-          }
           CookieResult.Canceled -> {
             showToast(context, getString(R.string.firewall_check_canceled, firewallType))
           }

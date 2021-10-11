@@ -809,6 +809,22 @@ fun View.updateHeight(newHeight: Int) {
   layoutParams = updatedLayoutParams
 }
 
+fun String.ellipsizeMiddle(maxLength: Int): String {
+  val minStringLength = 5
+
+  if (maxLength < minStringLength) {
+    return this
+  }
+
+  if (this.length <= maxLength) {
+    return this
+  }
+
+  val resultLength = maxLength - ELLIPSIZE_SYMBOL.length
+
+  return this.take(resultLength / 2) + ELLIPSIZE_SYMBOL + this.takeLast(resultLength / 2)
+}
+
 fun String.ellipsizeEnd(maxLength: Int): String {
   val minStringLength = 5
 

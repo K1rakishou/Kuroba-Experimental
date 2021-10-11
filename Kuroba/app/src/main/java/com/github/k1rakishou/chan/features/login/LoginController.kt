@@ -263,7 +263,6 @@ class LoginController(
           val error = when (cookieResult) {
             is CookieResult.CookieValue -> throw IllegalStateException("Must not be used here")
             CookieResult.Canceled -> getString(R.string.canceled)
-            is CookieResult.Timeout -> getString(R.string.dvach_antispam_result_timeout, cookieResult.timeoutMs)
             is CookieResult.Error -> cookieResult.exception.errorMessageOrClassName()
           }
 

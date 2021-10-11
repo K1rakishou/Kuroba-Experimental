@@ -266,11 +266,7 @@ class GlobalSearchController(
       id("global_search_board_selection_button_view_$selectedSiteName")
       boardCode(selectedBoardCode)
       bindClickCallback {
-        val boardsSupportingSearch = archivesManager.getBoardsSupportingSearch(selectedSiteDescriptor)
-          .toList()
-          .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
-          .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
-
+        val boardsSupportingSearch = getFoolFuukaBoardsSupportingSearch(selectedSiteDescriptor)
         if (boardsSupportingSearch.isEmpty()) {
           showToast(R.string.no_boards_supporting_search_found)
           return@bindClickCallback
@@ -345,6 +341,32 @@ class GlobalSearchController(
     }
 
     return newSearchParameters.isValid()
+  }
+
+  private fun getFoolFuukaBoardsSupportingSearch(selectedSiteDescriptor: SiteDescriptor): List<SearchBoard> {
+    val isFoolFuukaArchive = archivesManager.bySiteDescriptor(selectedSiteDescriptor)
+      ?.archiveType
+      ?.isFoolFuukaArchive()
+
+    if (isFoolFuukaArchive == true) {
+      return boardManager.getAllBoardDescriptorsForSite(selectedSiteDescriptor)
+        .toList()
+        .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
+        .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
+    }
+
+    val isFuukaArchive = archivesManager.bySiteDescriptor(selectedSiteDescriptor)
+      ?.archiveType
+      ?.isFuukaArchive()
+
+    if (isFuukaArchive == true) {
+      return archivesManager.getBoardsSupportingSearch(selectedSiteDescriptor)
+        .toList()
+        .sortedBy { boardDescriptor -> boardDescriptor.boardCode }
+        .map { boardDescriptor -> SearchBoard.SingleBoard(boardDescriptor) }
+    }
+
+    return emptyList()
   }
 
   private fun EpoxyController.renderSimpleQuerySearch(

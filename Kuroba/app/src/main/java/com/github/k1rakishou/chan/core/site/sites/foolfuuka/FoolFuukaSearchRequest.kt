@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPostBuilder
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.getFirstElementByClassWithValue
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
 import com.github.k1rakishou.core_logger.Logger
@@ -324,7 +325,6 @@ class FoolFuukaSearchRequest(
     val boardCode = extractedAttributeValues.getAttrValue("data-board")
       ?: searchParams.boardDescriptor.boardCode
 
-
     collector.lastOrNull()!!.siteName = searchParams.boardDescriptor.siteName()
     collector.lastOrNull()!!.boardCode = boardCode
     collector.lastOrNull()!!.postNo = postId
@@ -358,9 +358,6 @@ class FoolFuukaSearchRequest(
       check(postBuilder.threadNo == threadNo) {
         "Bad threadNo! postBuilder.threadNo=${postBuilder.threadNo}, threadNo=$threadNo"
       }
-      check(postBuilder.postNo == postNo) {
-        "Bad threadNo! postBuilder.postNo=${postBuilder.postNo}, postNo=$postNo"
-      }
     }
   }
 
@@ -375,6 +372,14 @@ class FoolFuukaSearchRequest(
     val parserCommandExecutor = KurobaHtmlParserCommandExecutor<FoolFuukaSearchPageCollector>()
 
     try {
+      val alertElement = document.getFirstElementByClassWithValue("alert")
+      val alertHeading = alertElement?.getFirstElementByClassWithValue("alert-heading")
+
+      if (alertHeading != null) {
+        Logger.e(TAG, "parserCommandExecutor.executeCommands() error, \'alert\' element was found")
+        return SearchResult.Failure(SearchError.FailedToSearchError(alertElement.text()))
+      }
+
       parserCommandExecutor.executeCommands(
         document,
         commandBuffer,

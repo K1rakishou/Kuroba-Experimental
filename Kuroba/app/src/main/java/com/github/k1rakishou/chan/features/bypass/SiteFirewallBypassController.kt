@@ -2,12 +2,10 @@ package com.github.k1rakishou.chan.features.bypass
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.view.View
 import android.webkit.CookieManager
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import android.webkit.WebViewDatabase
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
@@ -15,6 +13,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -27,8 +26,7 @@ class SiteFirewallBypassController(
   context: Context,
   private val firewallType: FirewallType,
   private val urlToOpen: String,
-  private val onResult: (CookieResult) -> Unit,
-  private val timeoutMs: Long = DEFAULT_TIMEOUT_MS
+  private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context) {
 
   @Inject
@@ -37,30 +35,28 @@ class SiteFirewallBypassController(
   lateinit var siteResolver: SiteResolver
 
   private lateinit var webView: WebView
+  private lateinit var closeButton: ColorizableButton
 
   private var resultNotified = false
 
   private val cookieResultCompletableDeferred = CompletableDeferred<CookieResult>()
-
   private val cookieManager by lazy { CookieManager.getInstance() }
   private val webClient by lazy { createWebClient(firewallType) }
 
-  private fun createWebClient(mode: FirewallType): WebViewClient {
+  private fun createWebClient(mode: FirewallType): BypassWebClient {
     return when (mode) {
       FirewallType.Cloudflare -> {
         CloudFlareCheckBypassWebClient(
           originalRequestUrlHost = urlToOpen,
           cookieManager = cookieManager,
-          cookieResultCompletableDeferred = cookieResultCompletableDeferred,
-          timeoutMs = timeoutMs
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred
         )
       }
       FirewallType.DvachAntiSpam -> {
         DvachAntiSpamCheckBypassWebClient(
           originalRequestUrlHost = urlToOpen,
           cookieManager = cookieManager,
-          cookieResultCompletableDeferred = cookieResultCompletableDeferred,
-          timeoutMs = timeoutMs
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred
         )
       }
     }
@@ -87,7 +83,7 @@ class SiteFirewallBypassController(
   override fun onDestroy() {
     super.onDestroy()
 
-    (webClient as BypassWebClient).destroy()
+    webClient.destroy()
     webView.stopLoading()
 
     if (!cookieResultCompletableDeferred.isCompleted) {
@@ -103,8 +99,10 @@ class SiteFirewallBypassController(
     val clickableArea = view.findViewById<ConstraintLayout>(R.id.clickable_area)
     clickableArea.setOnClickListener { pop() }
 
-    val closableArea = view.findViewById<View>(R.id.closable_area)
-    closableArea.setOnClickListener { pop() }
+    closeButton = view.findViewById(R.id.close_button)
+    closeButton.setOnClickListener {
+      pop()
+    }
 
     webView.stopLoading()
     webView.clearCache(true)
@@ -149,9 +147,6 @@ class SiteFirewallBypassController(
       }
       is CookieResult.Error -> {
         Logger.e(TAG, "Error: ${cookieResult.exception.errorMessageOrClassName()}")
-      }
-      is CookieResult.Timeout -> {
-        Logger.e(TAG, "Timeout")
       }
       CookieResult.Canceled -> {
         Logger.e(TAG, "Canceled")
@@ -210,8 +205,5 @@ class SiteFirewallBypassController(
   companion object {
     private const val TAG = "CloudFlareBypassController"
     const val MAX_PAGE_LOADS_COUNT = 10
-    const val DEFAULT_TIMEOUT_MS = 15_000L
-    const val CHAN4_SEARCH_TIMEOUT_MS = 30_000L
-    const val WAROSU_SEARCH_TIMEOUT_MS = 30_000L
   }
 }

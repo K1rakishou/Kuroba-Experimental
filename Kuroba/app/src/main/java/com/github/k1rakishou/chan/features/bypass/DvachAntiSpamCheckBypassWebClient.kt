@@ -8,9 +8,8 @@ import java.util.regex.Pattern
 class DvachAntiSpamCheckBypassWebClient(
   private val originalRequestUrlHost: String,
   private val cookieManager: CookieManager,
-  cookieResultCompletableDeferred: CompletableDeferred<CookieResult>,
-  timeoutMs: Long
-) : BypassWebClient(cookieResultCompletableDeferred, timeoutMs) {
+  cookieResultCompletableDeferred: CompletableDeferred<CookieResult>
+) : BypassWebClient(cookieResultCompletableDeferred) {
   private var pageLoadsCounter = 0
 
   override fun onPageFinished(view: WebView?, url: String?) {

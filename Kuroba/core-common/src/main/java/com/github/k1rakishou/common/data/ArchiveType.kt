@@ -16,6 +16,40 @@ enum class ArchiveType(
     TokyoChronos("tokyochronos.net"),
     WakarimasenMoe("archive.wakarimasen.moe");
 
+    fun isFoolFuukaArchive(): Boolean {
+        return when (this) {
+            Warosu -> false
+            ForPlebs,
+            Nyafuu,
+            DesuArchive,
+            Fireden,
+            B4k,
+            Bstats,
+            ArchivedMoe,
+            TheBarchive,
+            ArchiveOfSins,
+            TokyoChronos,
+            WakarimasenMoe -> true
+        }
+    }
+
+    fun isFuukaArchive(): Boolean {
+        return when (this) {
+            Warosu -> true
+            ForPlebs,
+            Nyafuu,
+            DesuArchive,
+            Fireden,
+            B4k,
+            Bstats,
+            ArchivedMoe,
+            TheBarchive,
+            ArchiveOfSins,
+            TokyoChronos,
+            WakarimasenMoe -> false
+        }
+    }
+
     companion object {
         private val map = hashMapOf(
             ForPlebs.domain to ForPlebs,

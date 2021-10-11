@@ -194,7 +194,7 @@ class ImageSaverV2(
         }
 
         try {
-          doIoTaskWithAttempts(3) {
+          doIoTaskWithAttempts(ImageSaverV2ServiceDelegate.MAX_IO_ERROR_RETRIES_COUNT) {
             try {
               imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFile, null)
             } catch (error: Throwable) {
@@ -257,7 +257,7 @@ class ImageSaverV2(
       val outputFileRaw = fileManager.fromRawFile(outputFile)
 
       try {
-        doIoTaskWithAttempts(3) {
+        doIoTaskWithAttempts(ImageSaverV2ServiceDelegate.MAX_IO_ERROR_RETRIES_COUNT) {
           try {
             imageSaverV2ServiceDelegate.downloadFileIntoFile(mediaUrl, outputFileRaw, threadDescriptor)
           } catch (error: Throwable) {

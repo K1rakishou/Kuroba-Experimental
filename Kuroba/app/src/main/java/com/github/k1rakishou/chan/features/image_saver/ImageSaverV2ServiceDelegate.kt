@@ -1064,6 +1064,6 @@ class ImageSaverV2ServiceDelegate(
     private const val MAX_VISIBLE_NOTIFICATIONS_PROD = 12
     private const val MAX_VISIBLE_NOTIFICATIONS_TEST = 3
 
-    private const val MAX_IO_ERROR_RETRIES_COUNT = 3
+    const val MAX_IO_ERROR_RETRIES_COUNT = 3
   }
 }

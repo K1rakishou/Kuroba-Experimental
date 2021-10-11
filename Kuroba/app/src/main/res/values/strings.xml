@@ -1299,13 +1299,11 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="thread_downloader_settings_controller_location_info">Thread media is stored on the internal storage.\n\nDirectory: %1$s</string>
 
     <string name="dvach_antispam_result_canceled">Dvach anti-spam result: Canceled</string>
-    <string name="dvach_antispam_result_timeout">Dvach anti-spam result: Timeout (%1$d ms)</string>
     <string name="dvach_antispam_result_error">Dvach anti-spam result: Error %1$s</string>
     <string name="dvach_antispam_result_success">Dvach anti-spam result: Success</string>
 
     <string name="firewall_check_success">Successfully passed %1$s checks!</string>
     <string name="firewall_check_failure">Failed to pass %1$s checks, reason: %2$s</string>
-    <string name="firewall_check_timeout">Failed to pass %1$s checks, reason: Timeout (%2$d ms)</string>
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
 
     <string name="searx_image_search_controller_base_url_hint">Searx instance base url, e.g. %1$s</string>
