@@ -1337,21 +1337,25 @@ class PostCell : ConstraintLayout,
 
       val layout = widget.layout
       val line = layout.getLineForVertical(y)
-      val off = layout.getOffsetForHorizontal(line, x.toFloat())
-      val clickableSpans = buffer.getSpans(off, off, ClickableSpan::class.java).toList()
+      val lineLeft = layout.getLineLeft(line)
+      val lineRight = layout.getLineRight(line)
 
-      if (clickableSpans.isNotEmpty()) {
-        onClickableSpanClicked(widget, buffer, action, clickableSpans)
+      if (clickCoordinatesHitPostComment(x, lineLeft, lineRight)) {
+        val offset = layout.getOffsetForHorizontal(line, x.toFloat())
+        val clickableSpans = buffer.getSpans(offset, offset, ClickableSpan::class.java).toList()
+        if (clickableSpans.isNotEmpty()) {
+          onClickableSpanClicked(widget, buffer, action, clickableSpans)
 
-        if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
-          val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
-          if (postLinkables.isNotEmpty()) {
-            performLinkLongClick = PerformalLinkLongClick(postLinkables)
-            handler.postDelayed(performLinkLongClick!!, longPressTimeout)
+          if (action == MotionEvent.ACTION_DOWN && performLinkLongClick == null) {
+            val postLinkables = clickableSpans.filterIsInstance<PostLinkable>()
+            if (postLinkables.isNotEmpty()) {
+              performLinkLongClick = PerformalLinkLongClick(postLinkables)
+              handler.postDelayed(performLinkLongClick!!, longPressTimeout)
+            }
           }
-        }
 
-        return true
+          return true
+        }
       }
 
       buffer.removeSpan(linkClickSpan)
@@ -1359,6 +1363,14 @@ class PostCell : ConstraintLayout,
       buffer.removeSpan(spoilerClickSpan)
 
       return false
+    }
+
+    private fun clickCoordinatesHitPostComment(x: Int, lineLeft: Float, lineRight: Float): Boolean {
+      if (ChanSettings.postLinksTakeWholeHorizSpace.get()) {
+        return true
+      }
+
+      return x >= lineLeft && x < lineRight
     }
 
     fun touchOverlapsAnyClickableSpan(textView: TextView, event: MotionEvent): Boolean {

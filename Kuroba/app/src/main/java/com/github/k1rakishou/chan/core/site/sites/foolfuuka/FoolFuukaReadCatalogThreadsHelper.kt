@@ -29,10 +29,14 @@ class FoolFuukaReadCatalogThreadsHelper {
 
     val originalPostElements = document
       .getElementById("main")
-      .getElementsByTag("article")
-      .filter { element ->
+      ?.getElementsByTag("article")
+      ?.filter { element ->
         element.attributes().any { attribute -> attribute.value.contains("clearfix thread doc_id", ignoreCase = true) }
       }
+
+    if (originalPostElements == null) {
+      return
+    }
 
     originalPostElements.forEach { originalPostElement ->
       try {

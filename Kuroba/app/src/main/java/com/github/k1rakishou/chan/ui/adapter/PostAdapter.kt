@@ -267,13 +267,17 @@ class PostAdapter(
   }
 
   override fun onViewAttachedToWindow(holder: RecyclerView.ViewHolder) {
-    // this is a hack to make sure text is selectable
     super.onViewAttachedToWindow(holder)
 
-    if (holder.itemView is PostCell) {
-      val cell = holder.itemView as PostCell
-      cell.findViewById<View>(R.id.comment).isEnabled = false
-      cell.findViewById<View>(R.id.comment).isEnabled = true
+    // this is a hack to make sure text is selectable
+    if (holder.itemView is GenericPostCell) {
+      val postCell = (holder.itemView as? GenericPostCell)?.getChildPostCellView() as? PostCell
+      if (postCell != null) {
+        postCell.findViewById<View>(R.id.comment)?.let { postComment ->
+          postComment.isEnabled = false
+          postComment.isEnabled = true
+        }
+      }
     }
   }
 

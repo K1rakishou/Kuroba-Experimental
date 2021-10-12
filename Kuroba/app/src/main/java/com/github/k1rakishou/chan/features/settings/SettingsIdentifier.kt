@@ -465,6 +465,7 @@ sealed class BehaviorScreen(
 
     object VolumeKeysScrolling : PostGroup("volume_keys_scrolling")
     object TapNoReply : PostGroup("tap_no_reply")
+    object PostLinksTakeWholeHorizSpace : PostGroup("post_links_take_whole_horiz_space")
     object MarkUnseenPosts : PostGroup("mark_unseen_posts")
     object MarkSeenThreads : PostGroup("mark_seen_threads")
 

@@ -154,6 +154,15 @@ class BehaviourSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = BehaviorScreen.PostGroup.PostLinksTakeWholeHorizSpace,
+          topDescriptionIdFunc = { R.string.setting_post_links_take_whole_horiz_space },
+          bottomDescriptionIdFunc = { R.string.setting_post_links_take_whole_horiz_space_descriptor },
+          setting = ChanSettings.postLinksTakeWholeHorizSpace,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = BehaviorScreen.PostGroup.MarkUnseenPosts,
           topDescriptionIdFunc = { R.string.setting_mark_unseen_posts_title },
           bottomDescriptionIdFunc = { R.string.setting_mark_unseen_posts_description },

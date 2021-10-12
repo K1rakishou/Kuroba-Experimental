@@ -72,9 +72,7 @@ open class PostLinkable(
         if (type == Type.QUOTE) {
           val value = when (linkableValue) {
             is Value.LongValue -> linkableValue.value
-            else -> throw IllegalArgumentException(
-              "Unsupported value type: ${linkableValue::class.java.simpleName}"
-            )
+            else -> throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
           }
 
           if (value == markedNo) {

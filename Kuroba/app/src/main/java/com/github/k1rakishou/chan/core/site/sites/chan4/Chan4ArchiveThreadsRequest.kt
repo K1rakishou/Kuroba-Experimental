@@ -50,6 +50,7 @@ class Chan4ArchiveThreadsRequest(
 
   private fun readHtml(document: Document): List<NativeArchivePost> {
     val table = document.getElementById("arc-list")
+      ?: return emptyList()
     val tableBody = table.getElementsByTag("tbody").firstOrNull()
       ?: return emptyList()
     val trs = tableBody.getElementsByTag("tr")

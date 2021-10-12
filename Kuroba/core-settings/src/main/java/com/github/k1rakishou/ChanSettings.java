@@ -331,6 +331,7 @@ public class ChanSettings {
     // Post
     public static BooleanSetting volumeKeysScrolling;
     public static BooleanSetting tapNoReply;
+    public static BooleanSetting postLinksTakeWholeHorizSpace;
     public static BooleanSetting markUnseenPosts;
     public static BooleanSetting markSeenThreads;
 
@@ -554,6 +555,7 @@ public class ChanSettings {
             // Post
             volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
             tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", false);
+            postLinksTakeWholeHorizSpace = new BooleanSetting(provider, "post_links_take_whole_horiz_space", true);
             markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
             markSeenThreads = new BooleanSetting(provider, "preference_mark_seen_threads", true);
 
