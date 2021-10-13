@@ -674,10 +674,6 @@ class ImageLoaderV2(
       return null
     }
 
-    if (!cacheHandler.get().isAlreadyDownloaded(cacheFile)) {
-      return null
-    }
-
     if (!cacheFile.exists() || cacheFile.length() == 0L) {
       return null
     }

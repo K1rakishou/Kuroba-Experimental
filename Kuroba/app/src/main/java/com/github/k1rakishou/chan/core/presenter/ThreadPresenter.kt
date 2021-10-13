@@ -834,13 +834,15 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun onForegroundChanged(foreground: Boolean) {
-    if (!isBound) {
+    if (!isBoundAndCached) {
       return
     }
 
     if (foreground && isWatching()) {
+      Logger.d(TAG, "onForegroundChanged(descriptor=${currentChanDescriptor}) calling resetTicker()")
       chanThreadTicker.resetTicker()
     } else {
+      Logger.d(TAG, "onForegroundChanged(descriptor=${currentChanDescriptor}) calling stopTicker()")
       chanThreadTicker.stopTicker(resetCurrentChanDescriptor = false)
     }
   }

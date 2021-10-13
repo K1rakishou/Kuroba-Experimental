@@ -142,6 +142,10 @@ class CacheHandler(
           return@withLocalLock null
         }
 
+        if (!isAlreadyDownloaded(cacheFile)) {
+          return@withLocalLock null
+        }
+
         return@withLocalLock cacheFile
       } catch (error: IOException) {
         Logger.e(TAG, "Error while trying to get cache file (deleting)", error)
