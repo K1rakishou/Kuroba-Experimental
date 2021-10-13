@@ -143,8 +143,6 @@ class MediaViewerAdapter(
       }
       is ViewableMedia.Video -> {
         if (ChanSettings.useMpvVideoPlayer.get()) {
-          Logger.d(TAG, "Using MPV")
-
           val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
             as? MpvVideoMediaView.VideoMediaViewState
             ?: MpvVideoMediaView.VideoMediaViewState()
@@ -161,8 +159,6 @@ class MediaViewerAdapter(
             totalPageItemsCount = count
           )
         } else {
-          Logger.d(TAG, "Using ExoPlayer")
-
           val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
             as? ExoPlayerVideoMediaView.VideoMediaViewState
             ?: ExoPlayerVideoMediaView.VideoMediaViewState()
