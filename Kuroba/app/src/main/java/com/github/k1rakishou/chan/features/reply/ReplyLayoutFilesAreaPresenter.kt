@@ -73,6 +73,7 @@ class ReplyLayoutFilesAreaPresenter(
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {
     if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      reloadFilesFromDiskAndInitState(chanDescriptor)
       return
     }
 

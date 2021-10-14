@@ -131,6 +131,10 @@ class ReplyManager(
   @Synchronized
   fun reloadFilesFromDisk(appConstants: AppConstants): ModularResult<Unit> {
     if (filesLoaded) {
+      if (!filesLoadedInitializer.isInitialized()) {
+        filesLoadedInitializer.initWithValue(Unit)
+      }
+
       return ModularResult.value(Unit)
     }
 

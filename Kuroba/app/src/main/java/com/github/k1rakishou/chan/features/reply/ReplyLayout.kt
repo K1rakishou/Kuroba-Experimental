@@ -974,6 +974,10 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun loadDraftIntoViews(chanDescriptor: ChanDescriptor) {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return
+    }
+
     val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply: Reply ->
