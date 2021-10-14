@@ -49,7 +49,6 @@ internal object CommentSpanUpdater {
     .appendLiteral("]")
     .toFormatter()
 
-  @Synchronized
   fun updateSpansForPostComment(
     chanThreadManager: ChanThreadManager,
     postDescriptor: PostDescriptor,
@@ -59,50 +58,54 @@ internal object CommentSpanUpdater {
 
     val post = chanThreadManager.getPost(postDescriptor)
       ?: return false
-    val stringBuilder = SpannableStringBuilder(post.postComment.originalComment())
-    val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
-
-    // Since we are inserting new text, old spans will become incorrect right after the first
-    // insertion. To fix that we need to have a counter of extra characters added into the ssb
-    var offset = 0
     var updated = false
 
-    groupedSpanUpdates.entries.forEach { (postLinkableSpan, invertedSpanUpdateBatchList) ->
-      invertedSpanUpdateBatchList.forEach { invertedSpanUpdateBatch ->
-        val start = postLinkableSpan.start + offset
-        val end = postLinkableSpan.end + offset
-        val originalLinkUrl = stringBuilder.substring(start, end)
-        val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
+    post.postComment.updateComment { originalComment ->
+      val stringBuilder = SpannableStringBuilder(originalComment)
+      val groupedSpanUpdates = groupSpanUpdatesByOldSpans(spanUpdateBatchList)
 
-        // Update the offset with the difference between the new and old links
-        offset += formattedLinkUrl.length - originalLinkUrl.length
+      // Since we are inserting new text, old spans will become incorrect right after the first
+      // insertion. To fix that we need to have a counter of extra characters added into the ssb
+      var offset = 0
 
-        // Replace the old link with the new link
-        stringBuilder.replace(start, end, formattedLinkUrl)
+      groupedSpanUpdates.entries.forEach { (postLinkableSpan, invertedSpanUpdateBatchList) ->
+        invertedSpanUpdateBatchList.forEach { invertedSpanUpdateBatch ->
+          val start = postLinkableSpan.start + offset
+          val end = postLinkableSpan.end + offset
+          val originalLinkUrl = stringBuilder.substring(start, end)
+          val formattedLinkUrl = formatLinkUrl(originalLinkUrl, invertedSpanUpdateBatch.extraLinkInfo)
 
-        // Add the updated span
-        stringBuilder.setSpanSafe(
-          postLinkableSpan.postLinkable,
-          start,
-          start + formattedLinkUrl.length,
-          stringBuilder.getSpanFlags(postLinkableSpan.postLinkable)
-        )
+          // Update the offset with the difference between the new and old links
+          offset += formattedLinkUrl.length - originalLinkUrl.length
 
-        val iconPosition = start + formattedLinkUrl.length
+          // Replace the old link with the new link
+          stringBuilder.replace(start, end, formattedLinkUrl)
 
-        // Add the icon span
-        stringBuilder.setSpanSafe(
-          getIconSpan(invertedSpanUpdateBatch.iconBitmap),
-          iconPosition - 1,
-          iconPosition,
-          (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
-        )
+          // Add the updated span
+          stringBuilder.setSpanSafe(
+            postLinkableSpan.postLinkable,
+            start,
+            start + formattedLinkUrl.length,
+            stringBuilder.getSpanFlags(postLinkableSpan.postLinkable)
+          )
 
-        updated = true
+          val iconPosition = start + formattedLinkUrl.length
+
+          // Add the icon span
+          stringBuilder.setSpanSafe(
+            getIconSpan(invertedSpanUpdateBatch.iconBitmap),
+            iconPosition - 1,
+            iconPosition,
+            (500 shl Spanned.SPAN_PRIORITY_SHIFT) and Spanned.SPAN_PRIORITY
+          )
+
+          updated = true
+        }
       }
+
+      return@updateComment stringBuilder
     }
 
-    post.postComment.updateComment(stringBuilder)
     return updated
   }
 

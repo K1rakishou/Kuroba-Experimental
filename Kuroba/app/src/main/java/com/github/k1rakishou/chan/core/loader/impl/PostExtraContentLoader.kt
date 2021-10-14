@@ -71,7 +71,6 @@ internal class PostExtraContentLoader(
     }
 
     val newSpans = createNewRequests(postLinkableSpans)
-
     if (newSpans.isEmpty()) {
       return rejected()
     }
@@ -149,16 +148,13 @@ internal class PostExtraContentLoader(
     }
 
     if (fetcher == null) {
-      return ModularResult.error(
-        IllegalStateException(
-          "Couldn't find fetcher for " +
-            "mediaServiceType ${linkInfoRequest.mediaServiceType}"
-        )
-      )
+      val error = IllegalStateException("Couldn't find fetcher for mediaServiceType ${linkInfoRequest.mediaServiceType}")
+      return ModularResult.error(error)
     }
 
     return ModularResult.Try {
       withTimeout(TimeUnit.MINUTES.toMillis(MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS)) {
+        Logger.d(TAG, "fetchExtraLinkInfo('$requestUrl') fetcher=${fetcher.javaClass.simpleName}")
         fetcher.fetch(requestUrl, linkInfoRequest).unwrap()
       }
     }
@@ -218,16 +214,9 @@ internal class PostExtraContentLoader(
       return emptyList()
     }
 
-    val duplicateChecker = hashSetOf<PostLinkable>()
-
     return postLinkableSpans.mapNotNull { postLinkable ->
       if (postLinkable.type != PostLinkable.Type.LINK) {
         // Not a link
-        return@mapNotNull null
-      }
-
-      if (!duplicateChecker.add(postLinkable)) {
-        // To avoid bugs when there are duplicate links
         return@mapNotNull null
       }
 

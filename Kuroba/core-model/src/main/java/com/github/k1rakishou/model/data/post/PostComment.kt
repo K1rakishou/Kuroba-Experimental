@@ -55,7 +55,9 @@ class PostComment(
   }
 
   @Synchronized
-  fun updateComment(newComment: CharSequence) {
+  fun updateComment(updater: (CharSequence) -> CharSequence) {
+    val newComment = updater(originalComment)
+
     this._updatedComment = newComment
     this._updatedCommentHash = MurmurHashUtils.murmurhash3_x64_128(newComment)
   }
