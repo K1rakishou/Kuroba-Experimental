@@ -33,7 +33,7 @@ public class VichanCommentParser extends CommentParser implements ICommentParser
         addDefaultRules();
 
         rule(StyleRule.tagRule("p")
-                .cssClass("quote")
+                .withCssClass("quote")
                 .foregroundColorId(ChanThemeColorId.PostInlineQuoteColor)
                 .linkify());
     }

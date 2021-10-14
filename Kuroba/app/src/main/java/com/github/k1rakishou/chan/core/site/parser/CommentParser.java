@@ -83,7 +83,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         rule(tagRule("a").action(this::handleAnchor));
         rule(tagRule("iframe").action(this::handleIframe));
         rule(tagRule("table").action(this::handleTable));
-        rule(tagRule("span").cssClass("deadlink").action(this::handleDeadlink));
+        rule(tagRule("span").withCssClass("deadlink").action(this::handleDeadlink));
         rule(tagRuleWithAttr("*", "style").action(this::handleAnyTagWithStyleAttr));
 
         rule(tagRule("s").link(PostLinkable.Type.SPOILER));
@@ -92,7 +92,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         rule(tagRule("em").italic());
 
         rule(tagRule("pre")
-                .cssClass("prettyprint")
+                .withCssClass("prettyprint")
                 .monospace()
                 .size(sp(12f))
                 .backgroundColorId(ChanThemeColorId.BackColorSecondary)
@@ -100,12 +100,13 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         );
 
         rule(tagRule("span")
-                .cssClass("spoiler")
+                .withCssClass("spoiler")
                 .link(PostLinkable.Type.SPOILER)
         );
 
-        rule(tagRule("span").cssClass("abbr").nullify());
-        rule(tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor).linkify());
+        rule(tagRule("span").withCssClass("abbr").nullify());
+        rule(tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor));
+        rule(tagRule("span").withoutAnyOfCssClass("quote").linkify());
 
         rule(tagRule("strong").bold());
         rule(tagRule("strong-red;").bold().foregroundColorId(ChanThemeColorId.AccentColor));

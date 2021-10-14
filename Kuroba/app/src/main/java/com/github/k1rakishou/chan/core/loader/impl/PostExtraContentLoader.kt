@@ -214,6 +214,8 @@ internal class PostExtraContentLoader(
       return emptyList()
     }
 
+    val duplicateChecker = hashSetOf<PostLinkableWithPosition>()
+
     return postLinkableSpans.mapNotNull { postLinkable ->
       if (postLinkable.type != PostLinkable.Type.LINK) {
         // Not a link
@@ -225,6 +227,12 @@ internal class PostExtraContentLoader(
 
       if (start == -1 || end == -1) {
         // Something is wrong with this span
+        return@mapNotNull null
+      }
+
+      val postLinkableWithPosition = PostLinkableWithPosition(postLinkable, start, end)
+      if (!duplicateChecker.add(postLinkableWithPosition)) {
+        // To avoid bugs when there are duplicate links
         return@mapNotNull null
       }
 
@@ -241,9 +249,14 @@ internal class PostExtraContentLoader(
     }
   }
 
+  private data class PostLinkableWithPosition(
+    val postLinkable: PostLinkable,
+    val start: Int,
+    val end: Int
+  )
+
   companion object {
     private const val TAG = "PostExtraContentLoader"
-    private const val MAX_CONCURRENT_REQUESTS = 4
     private const val MAX_LINK_INFO_FETCH_TIMEOUT_SECONDS = 3L
   }
 }

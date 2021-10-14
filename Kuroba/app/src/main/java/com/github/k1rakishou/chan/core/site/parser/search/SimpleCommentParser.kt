@@ -36,7 +36,7 @@ open class SimpleCommentParser {
     rule(StyleRule.tagRule("em").italic())
 
     rule(StyleRule.tagRule("pre")
-      .cssClass("prettyprint")
+      .withCssClass("prettyprint")
       .monospace()
       .size(sp(12f))
       .backgroundColorId(ChanThemeColorId.BackColorSecondary)
@@ -44,11 +44,11 @@ open class SimpleCommentParser {
     )
 
     rule(StyleRule.tagRule("span")
-      .cssClass("spoiler")
+      .withCssClass("spoiler")
       .link(PostLinkable.Type.SPOILER)
     )
 
-    rule(StyleRule.tagRule("span").cssClass("abbr").nullify())
+    rule(StyleRule.tagRule("span").withCssClass("abbr").nullify())
     rule(StyleRule.tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor).linkify())
 
     rule(StyleRule.tagRule("strong").bold())

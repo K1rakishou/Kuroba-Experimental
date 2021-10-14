@@ -41,6 +41,8 @@ import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.google.common.collect.Sets;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -48,7 +50,8 @@ public class StyleRule {
     private final Set<String> blockElements = Sets.newHashSet("p", "div");
 
     private String tag;
-    private List<String> classes;
+    private Set<String> expectedClasses;
+    private Set<String> notExpectedClasses;
     private List<Action> actions = new ArrayList<>();
     private ChanThemeColorId foregroundChanThemeColorId = null;
     private ChanThemeColorId backgroundChanThemeColorId = null;
@@ -73,7 +76,7 @@ public class StyleRule {
     public static StyleRule tagRuleWithAttr(String tag, String attr) {
         return new StyleRule()
                 .tag(tag)
-                .cssClass(attr);
+                .withCssClass(attr);
     }
 
     public StyleRule tag(String tag) {
@@ -90,11 +93,21 @@ public class StyleRule {
         return tag;
     }
 
-    public StyleRule cssClass(String cssClass) {
-        if (classes == null) {
-            classes = new ArrayList<>(4);
+    public StyleRule withCssClass(String cssClass) {
+        if (expectedClasses == null) {
+            expectedClasses = new HashSet<>(4);
         }
-        classes.add(cssClass);
+        expectedClasses.add(cssClass);
+
+        return this;
+    }
+
+    public StyleRule withoutAnyOfCssClass(String... cssClasses) {
+        if (notExpectedClasses == null) {
+            notExpectedClasses = new HashSet<>(4);
+        }
+
+        notExpectedClasses.addAll(Arrays.asList(cssClasses));
 
         return this;
     }
@@ -170,7 +183,7 @@ public class StyleRule {
     }
 
     public boolean highPriority() {
-        return classes != null && !classes.isEmpty();
+        return expectedClasses != null && !expectedClasses.isEmpty();
     }
 
     public boolean applies(HtmlTag htmlTag) {
@@ -178,11 +191,25 @@ public class StyleRule {
     }
 
     public boolean applies(HtmlTag htmlTag, boolean isWildcard) {
-        if (classes == null || classes.isEmpty()) {
+        if (notExpectedClasses != null && !notExpectedClasses.isEmpty()) {
+            for (String c : notExpectedClasses) {
+                if (isWildcard) {
+                    if (htmlTag.hasAttr(c)) {
+                        return false;
+                    }
+                } else {
+                    if (htmlTag.hasClass(c)) {
+                        return false;
+                    }
+                }
+            }
+        }
+
+        if (expectedClasses == null || expectedClasses.isEmpty()) {
             return true;
         }
 
-        for (String c : classes) {
+        for (String c : expectedClasses) {
             if (isWildcard) {
                 if (htmlTag.hasAttr(c)) {
                     return true;
@@ -305,6 +332,14 @@ public class StyleRule {
             }
         }
         return result;
+    }
+
+    @Override
+    public String toString() {
+        return "StyleRule{" +
+                "tag='" + tag + '\'' +
+                ", expectedClasses=" + expectedClasses +
+                '}';
     }
 
     public interface Action {

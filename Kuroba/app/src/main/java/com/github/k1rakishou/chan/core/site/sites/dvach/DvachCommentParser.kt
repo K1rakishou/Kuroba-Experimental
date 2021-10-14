@@ -17,8 +17,8 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
 
   override fun addDefaultRules(): DvachCommentParser {
     super.addDefaultRules()
-    rule(StyleRule.tagRule("span").cssClass("s").strikeThrough())
-    rule(StyleRule.tagRule("span").cssClass("u").underline())
+    rule(StyleRule.tagRule("span").withCssClass("s").strikeThrough())
+    rule(StyleRule.tagRule("span").withCssClass("u").underline())
     return this
   }
 
