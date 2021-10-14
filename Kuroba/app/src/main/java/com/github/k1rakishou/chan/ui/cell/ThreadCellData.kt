@@ -147,7 +147,7 @@ class ThreadCellData(
 
     Logger.d(TAG, "updateThreadData() asyncPostCellDataCalculation=${ChanSettings.asyncPostCellDataCalculation.get()}")
 
-    if (ChanSettings.asyncPostCellDataCalculation.get()) {
+    if (ChanSettings.asyncPostCellDataCalculation.get() && newPostCellDataLazyList.isNotEmpty()) {
       lazyCalculationJob?.cancel()
       lazyCalculationJob = coroutineScope.launch(Dispatchers.IO) {
         Logger.d(TAG, "runPreloading() start")
@@ -187,6 +187,10 @@ class ThreadCellData(
           startingPosition = foundIndex
         }
       }
+    }
+
+    if (newPostCellDataLazyList.isEmpty()) {
+      return
     }
 
     Logger.d(TAG, "runPreloading() startingPosition=$startingPosition, dataListSize=${newPostCellDataLazyList.size}")
