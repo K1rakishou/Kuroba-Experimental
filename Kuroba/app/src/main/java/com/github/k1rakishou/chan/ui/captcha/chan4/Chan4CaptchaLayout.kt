@@ -83,6 +83,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
+import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
@@ -198,9 +199,14 @@ class Chan4CaptchaLayout(
 
       KurobaComposeTextField(
         value = currentInputValue,
-        onValueChange = { newValue -> currentInputValue = newValue },
-        keyboardActions = KeyboardActions(onDone = { verifyCaptcha(captchaInfo, currentInputValue) }),
-        keyboardOptions = KeyboardOptions(autoCorrect = false, keyboardType = KeyboardType.Password),
+        onValueChange = { newValue -> currentInputValue = newValue.uppercase(Locale.ENGLISH) },
+        keyboardActions = KeyboardActions(
+          onDone = { verifyCaptcha(captchaInfo, currentInputValue) }
+        ),
+        keyboardOptions = KeyboardOptions(
+          autoCorrect = false,
+          keyboardType = KeyboardType.Password
+        ),
         maxLines = 1,
         singleLine = true,
         modifier = Modifier
