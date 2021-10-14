@@ -369,7 +369,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
           MeasureSpec.makeMeasureSpec(cellPostThumbnailSize, MeasureSpec.EXACTLY),
         )
 
-        setMeasuredDimension(cellPostThumbnailSize, cellPostThumbnailSize)
+        setMeasuredDimension(
+          cellPostThumbnailSize + paddingLeft + paddingRight,
+          cellPostThumbnailSize + paddingTop + paddingBottom
+        )
       }
 
       return
@@ -427,7 +430,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     if (imagesCount == 1) {
       val child = getChildAt(0)
-      child.layout(0, 0, measuredWidth, measuredHeight)
+      child.layout(paddingLeft, paddingTop, measuredWidth - paddingRight, measuredHeight - paddingBottom)
       return
     }
 
