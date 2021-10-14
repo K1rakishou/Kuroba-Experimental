@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.DialogFactory.Builder.Companion.newBuilder
 import com.github.k1rakishou.chan.core.helper.FilterEngine
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
@@ -95,6 +96,8 @@ class CreateOrUpdateFilterController(
   lateinit var filterEngine: FilterEngine
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
+  @Inject
+  lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var dialogFactory: DialogFactory
 
@@ -533,6 +536,7 @@ class CreateOrUpdateFilterController(
           return@withContext CreateOrUpdateFilterControllerHelper.validateFilter(
             filterEngine = filterEngine,
             chanFilterManager = chanFilterManager,
+            archivesManager = archivesManager,
             chanFilterMutable = chanFilterMutable
           )
         }

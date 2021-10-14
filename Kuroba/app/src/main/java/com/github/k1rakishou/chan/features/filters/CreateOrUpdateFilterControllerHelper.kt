@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.features.filters
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.FilterEngine
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterAction
@@ -14,9 +16,10 @@ import java.util.regex.Pattern
 
 object CreateOrUpdateFilterControllerHelper {
 
-  fun validateFilter(
+  suspend fun validateFilter(
     filterEngine: FilterEngine,
     chanFilterManager: ChanFilterManager,
+    archivesManager: ArchivesManager,
     chanFilterMutable: ChanFilterMutable
   ): FilterValidationResult {
     if (chanFilterMutable.pattern.isNullOrEmpty()) {
@@ -50,13 +53,38 @@ object CreateOrUpdateFilterControllerHelper {
         if (filterType != FilterType.COMMENT && filterType != FilterType.SUBJECT) {
 
           val name = FilterType.filterTypeName(filterType)
-          val errorMessage: String = getString(
+          val errorMessage = getString(
             R.string.filter_type_not_allowed_with_watch_filters,
             name
           )
 
           return FilterValidationResult.Error(errorMessage)
         }
+      }
+
+      val siteDescriptors = chanFilterMutable.boards
+        .toHashSetBy { boardDescriptor -> boardDescriptor.siteDescriptor }
+
+      if (siteDescriptors.isNotEmpty()) {
+        archivesManager.awaitUntilInitialized()
+
+        val archiveSites = siteDescriptors
+          .filter { siteDescriptor -> archivesManager.isSiteArchive(siteDescriptor) }
+          .map { siteDescriptor -> siteDescriptor.siteName }
+
+        if (archiveSites.isNotEmpty()) {
+          val errorMessage = getString(
+            R.string.filter_sites_not_allowed_with_watch_filters,
+            archiveSites.joinToString()
+          )
+
+          return FilterValidationResult.Error(errorMessage)
+        }
+      }
+
+      if (chanFilterMutable.allBoards()) {
+        val errorMessage = getString(R.string.filter_all_boards_not_allowed_with_watch_filters,)
+        return FilterValidationResult.Error(errorMessage)
       }
     }
 

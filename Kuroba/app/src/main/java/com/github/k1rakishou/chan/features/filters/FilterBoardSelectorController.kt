@@ -253,10 +253,10 @@ class FilterBoardSelectorController(
       return emptyList()
     }
 
-    val filteredCellDataList = cellDataList.filter { navigationHistoryEntry ->
+    val filteredCellDataList = cellDataList.filter { entry ->
       return@filter splitSearchQuery.any { searchQuery ->
-        return@any navigationHistoryEntry.catalogCellData.boardCodeFormatted
-          .contains(other = searchQuery, ignoreCase = true)
+        return@any entry.catalogCellData.boardCodeFormatted.contains(searchQuery, ignoreCase = true)
+          || entry.siteCellData.siteName.contains(searchQuery, ignoreCase = true)
       }
     }
 

@@ -300,6 +300,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_cannot_compile_filter_pattern">Cannot compile filter pattern</string>
     <string name="filter_identical_filter_detected">Identical filter already exists.\nExisting filter index=%1$d</string>
     <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
+    <string name="filter_sites_not_allowed_with_watch_filters">Boards from archive sites are not allowed to be used with WATCH filters (Because they have endless catalogs). Found archive sites: \'%1$s\'</string>
+    <string name="filter_all_boards_not_allowed_with_watch_filters">Cannot use \'All currently added boards\' with WATCH filters.</string>
     <string name="filter_no_filter_type_selected">No filter type selected</string>
     <string name="filter_no_boards_selected">No boards selected</string>
     <string name="filter_everything_is_ok">Everything seems to be OK</string>
@@ -956,7 +958,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="controller_filter_watches">Filter watches</string>
 
-    <string name="controller_saved_posts">Saved posts</string>
+    <string name="controller_saved_posts">My posts</string>
     <string name="controller_saved_posts_delete_all">Delete all saved posts</string>
     <string name="controller_saved_posts_delete_all_dialog_title">Delete all saved posts?</string>
     <string name="controller_saved_posts_delete_all_dialog_description">This action will delete ALL saved posts. You won\'t receive notifications for those posts anymore and they won\'t be marked as yours. Are you sure you want to continue?</string>
@@ -1282,7 +1284,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="search_found_unknown">Found: ???</string>
     <string name="search_found_count">Found: %1$d</string>
 
-    <string name="saved_posts_tab_title">Saved posts</string>
+    <string name="saved_posts_tab_title">My posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
     <string name="filter_watches_tab_title">Filter watches</string>
 
