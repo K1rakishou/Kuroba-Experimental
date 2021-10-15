@@ -218,8 +218,12 @@ class Chan4CaptchaLayout(
       Spacer(modifier = Modifier.height(8.dp))
 
       if (captchaInfo.needSlider()) {
-        BoxWithConstraints {
-          val slideSteps = constraints.maxWidth / PIXELS_PER_STEP
+        BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+          val slideSteps = if (captchaInfo.imgWidth != null) {
+            captchaInfo.imgWidth / PIXELS_PER_IMG_WIDTH_STEP
+          } else {
+            constraints.maxWidth / PIXELS_PER_STEP
+          }
 
           KurobaComposeSnappingSlider(
             slideOffsetState = scrollValueState,
@@ -502,6 +506,7 @@ class Chan4CaptchaLayout(
     private const val MAX_OFFSET = 400f
 
     private const val PIXELS_PER_STEP = 50
+    private const val PIXELS_PER_IMG_WIDTH_STEP = 8
 
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1

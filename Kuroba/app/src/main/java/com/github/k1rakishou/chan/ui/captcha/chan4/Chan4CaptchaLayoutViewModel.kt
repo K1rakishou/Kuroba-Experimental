@@ -271,7 +271,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         challenge = NOOP_CHALLENGE,
         startedAt = System.currentTimeMillis(),
         ttlSeconds = captchaInfoRaw.ttlSeconds(),
-        bgInitialOffset = 0f
+        bgInitialOffset = 0f,
+        imgWidth = null
       )
     }
     
@@ -312,7 +313,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       challenge = captchaInfoRaw.challenge!!,
       startedAt = System.currentTimeMillis(),
       ttlSeconds = captchaInfoRaw.ttl!!,
-      bgInitialOffset = bgInitialOffset.toFloat()
+      bgInitialOffset = bgInitialOffset.toFloat(),
+      imgWidth = captchaInfoRaw.imgWidth
     )
   }
 
@@ -415,7 +417,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val challenge: String,
     val startedAt: Long,
     val ttlSeconds: Int,
-    val bgInitialOffset: Float
+    val bgInitialOffset: Float,
+    val imgWidth: Int?
   ) {
     var currentInputValue = mutableStateOf<String>("")
     var sliderValue = mutableStateOf(0f)
