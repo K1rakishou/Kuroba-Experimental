@@ -105,6 +105,7 @@ abstract class AbstractParsePostsUseCase(
     return when (FilterAction.forId(filter.action)) {
       FilterAction.COLOR -> {
         PostFilter(
+          ownerFilterId = filter.getDatabaseId(),
           enabled = filter.enabled,
           filterHighlightedColor = filter.color,
           filterReplies = filter.applyToReplies,
@@ -114,6 +115,7 @@ abstract class AbstractParsePostsUseCase(
       }
       FilterAction.HIDE -> {
         PostFilter(
+          ownerFilterId = filter.getDatabaseId(),
           enabled = filter.enabled,
           filterStub = true,
           filterReplies = filter.applyToReplies,
@@ -122,6 +124,7 @@ abstract class AbstractParsePostsUseCase(
       }
       FilterAction.REMOVE -> {
         PostFilter(
+          ownerFilterId = filter.getDatabaseId(),
           enabled = filter.enabled,
           filterRemove = true,
           filterReplies = filter.applyToReplies,

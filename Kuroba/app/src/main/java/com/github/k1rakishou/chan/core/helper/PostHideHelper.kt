@@ -8,7 +8,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
-import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 
@@ -57,9 +56,12 @@ class PostHideHelper(
         val hiddenPost = findHiddenPost(hiddenPostsLookupMap, post)
         if (hiddenPost != null) {
           if (hiddenPost.onlyHide) {
+            val ownerFilterId = postFilterManager.getOwnerFilterId(hiddenPost.postDescriptor)
+
             // hide post
             updatePostWithCustomFilter(
               childPost = post,
+              ownerFilterId = ownerFilterId,
               filterHighlightedColor = 0,
               filterStub = true,
               filterRemove = false,
@@ -202,14 +204,17 @@ class PostHideHelper(
         continue
       }
 
+      val postFilter = postFilterManager.getPostFilter(childPost.postDescriptor)
+
       updatePostWithCustomFilter(
         childPost = childPost,
-        filterHighlightedColor = postFilterManager.getFilterHighlightedColor(parentPost.postDescriptor),
-        filterStub = postFilterManager.getFilterStub(parentPost.postDescriptor),
-        filterRemove = postFilterManager.getFilterRemove(parentPost.postDescriptor),
-        filterWatch = postFilterManager.getFilterWatch(parentPost.postDescriptor),
+        ownerFilterId = postFilter?.ownerFilterId,
+        filterHighlightedColor = postFilter?.highlightedColor ?: 0,
+        filterStub = postFilter?.stub ?: false,
+        filterRemove = postFilter?.remove ?: false,
+        filterWatch = postFilter?.watch ?: false,
         filterReplies = true,
-        filterSaved = postFilterManager.getFilterSaved(parentPost.postDescriptor)
+        filterSaved = postFilter?.saved ?: false
       )
 
       // assign the filter parameters to the child post
@@ -224,6 +229,7 @@ class PostHideHelper(
    */
   private fun updatePostWithCustomFilter(
     childPost: ChanPost,
+    ownerFilterId: Long?,
     filterHighlightedColor: Int,
     filterStub: Boolean,
     filterRemove: Boolean,
@@ -231,7 +237,10 @@ class PostHideHelper(
     filterReplies: Boolean,
     filterSaved: Boolean
   ) {
-    postFilterManager.update(childPost.postDescriptor) { postFilter: PostFilter ->
+    postFilterManager.update(
+      postDescriptor = childPost.postDescriptor,
+      ownerFilterId = ownerFilterId
+    ) { postFilter ->
       postFilter.enabled = true
       postFilter.filterHighlightedColor = filterHighlightedColor
       postFilter.filterStub = filterStub

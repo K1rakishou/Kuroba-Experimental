@@ -73,14 +73,16 @@ public class UseCaseModule {
             SavedReplyManager savedReplyManager,
             SiteManager siteManager,
             ChanThreadManager chanThreadManager,
-            PostFilterManager postFilterManager
+            PostFilterManager postFilterManager,
+            ChanFilterManager chanFilterManager
     ) {
         Logger.deps("ExtractPostMapInfoHolderUseCase");
         return new ExtractPostMapInfoHolderUseCase(
                 savedReplyManager,
                 siteManager,
                 chanThreadManager,
-                postFilterManager
+                postFilterManager,
+                chanFilterManager
         );
     }
 

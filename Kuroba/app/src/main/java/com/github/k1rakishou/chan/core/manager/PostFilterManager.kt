@@ -112,12 +112,16 @@ class PostFilterManager(
     }
   }
 
-  fun update(postDescriptor: PostDescriptor, updateFunc: (PostFilter) -> Unit) {
+  fun update(postDescriptor: PostDescriptor, ownerFilterId: Long?, updateFunc: (PostFilter) -> Unit) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()
       filterStorage.putIfNotContains(threadDescriptor, mutableMapWithCap(128))
 
-      val postFilter = filterStorage[threadDescriptor]!!.getOrPut(postDescriptor, { PostFilter() })
+      val postFilter = filterStorage[threadDescriptor]!!.getOrPut(
+        key = postDescriptor,
+        defaultValue = { PostFilter(ownerFilterId = ownerFilterId) }
+      )
+
       updateFunc(postFilter)
       filterStorage[threadDescriptor]!![postDescriptor] = postFilter
     }
@@ -133,6 +137,10 @@ class PostFilterManager(
 
       return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
     }
+  }
+
+  fun getPostFilter(postDescriptor: PostDescriptor): PostFilter? {
+    return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor) }
   }
 
   fun getManyFilterHashes(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int> {
@@ -169,29 +177,29 @@ class PostFilterManager(
     }
   }
 
-  fun getManyFilterHighlightedColors(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int> {
+  fun getManyFilterHighlights(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
     }
 
     return lock.read {
-      val resultMap = mutableMapWithCap<PostDescriptor, Int>(postDescriptors.size)
+      val resultMap = mutableMapWithCap<PostDescriptor, PostFilter>(postDescriptors.size)
 
       for (postDescriptor in postDescriptors) {
         val threadDescriptor = postDescriptor.threadDescriptor()
         val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
 
-        val filterHighlightColor = if (!enabled) {
+        val postFilterHighlight = if (!enabled) {
           null
         } else {
-          filterStorage[threadDescriptor]?.get(postDescriptor)?.filterHighlightedColor
+          filterStorage[threadDescriptor]?.get(postDescriptor)
         }
 
-        if (filterHighlightColor == null) {
+        if (postFilterHighlight == null) {
           continue
         }
 
-        resultMap[postDescriptor] = filterHighlightColor
+        resultMap[postDescriptor] = postFilterHighlight
       }
 
       return@read resultMap
@@ -334,6 +342,10 @@ class PostFilterManager(
         || postFilter.filterSaved
         || postFilter.filterReplies
     }
+  }
+
+  fun getOwnerFilterId(postDescriptor: PostDescriptor): Long? {
+    return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor)?.ownerFilterId }
   }
 
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {

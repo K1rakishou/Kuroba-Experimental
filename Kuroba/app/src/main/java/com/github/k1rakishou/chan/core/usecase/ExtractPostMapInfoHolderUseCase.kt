@@ -1,19 +1,22 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.filter.FilterAction
 import java.util.*
 
 class ExtractPostMapInfoHolderUseCase(
   private val savedReplyManager: SavedReplyManager,
   private val siteManager: SiteManager,
   private val chanThreadManager: ChanThreadManager,
-  private val postFilterManager: PostFilterManager
+  private val postFilterManager: PostFilterManager,
+  private val chanFilterManager: ChanFilterManager
 ) : IUseCase<ExtractPostMapInfoHolderUseCase.Params, PostMapInfoHolder> {
 
   override fun execute(parameter: Params): PostMapInfoHolder {
@@ -61,18 +64,38 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
+    val filtersMap = chanFilterManager.getEnabledHighlightFilters()
+      .associateBy { chanFilter -> chanFilter.getDatabaseId() }
+    if (filtersMap.isEmpty()) {
+      return emptyList()
+    }
+
+    val filterHighlightsMap = postFilterManager.getManyFilterHighlights(postDescriptors)
+    if (filterHighlightsMap.isEmpty()) {
+      return emptyList()
+    }
+
     val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
     val duplicateChecker: MutableSet<Int> = HashSet()
-    val filterHighlightedColorsMap = postFilterManager.getManyFilterHighlightedColors(postDescriptors)
     var prevIndex = 0
 
     for ((index, post) in postDescriptors.withIndex()) {
-      val filterColor = filterHighlightedColorsMap[post]
-      if (filterColor == null || !duplicateChecker.add(index)) {
+      val filterHighlight = filterHighlightsMap[post]
+        ?: continue
+
+      if (filterHighlight.ownerFilterId == null
+        || filterHighlight.filterHighlightedColor == 0
+        || !duplicateChecker.add(index)
+      ) {
         continue
       }
 
-      connectRangesIfContiguousWithColor(prevIndex, index, filterColor, replyRanges)
+      val chanFilter = filtersMap[filterHighlight.ownerFilterId]
+      if (chanFilter?.action != FilterAction.COLOR.id) {
+        continue
+      }
+
+      connectRangesIfContiguousWithColor(prevIndex, index, chanFilter.color, replyRanges)
       prevIndex = index
     }
 
