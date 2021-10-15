@@ -219,15 +219,14 @@ class Chan4CaptchaLayout(
 
       if (captchaInfo.needSlider()) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
-          val slideSteps = if (captchaInfo.imgWidth != null) {
-            captchaInfo.imgWidth / PIXELS_PER_IMG_WIDTH_STEP
-          } else {
-            constraints.maxWidth / PIXELS_PER_STEP
-          }
+          val widthDiff = captchaInfo.widthDiff()
+
+          val slideSteps = widthDiff
+            ?: (constraints.maxWidth / PIXELS_PER_STEP)
 
           KurobaComposeSnappingSlider(
             slideOffsetState = scrollValueState,
-            slideSteps = slideSteps,
+            slideSteps = slideSteps.coerceAtLeast(MIN_SLIDE_STEPS),
             backgroundColor = chanTheme.backColorCompose,
             modifier = Modifier
               .wrapContentHeight()
@@ -505,8 +504,8 @@ class Chan4CaptchaLayout(
     private const val MIN_OFFSET = 100f
     private const val MAX_OFFSET = 400f
 
+    private const val MIN_SLIDE_STEPS = 25
     private const val PIXELS_PER_STEP = 50
-    private const val PIXELS_PER_IMG_WIDTH_STEP = 8
 
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1

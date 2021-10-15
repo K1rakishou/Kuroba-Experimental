@@ -40,6 +40,7 @@ import kotlinx.coroutines.launch
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.math.abs
 
 class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
@@ -272,7 +273,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         startedAt = System.currentTimeMillis(),
         ttlSeconds = captchaInfoRaw.ttlSeconds(),
         bgInitialOffset = 0f,
-        imgWidth = null
+        imgWidth = null,
+        bgWidth = null
       )
     }
     
@@ -314,7 +316,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       startedAt = System.currentTimeMillis(),
       ttlSeconds = captchaInfoRaw.ttl!!,
       bgInitialOffset = bgInitialOffset.toFloat(),
-      imgWidth = captchaInfoRaw.imgWidth
+      imgWidth = captchaInfoRaw.imgWidth,
+      bgWidth = captchaInfoRaw.bgWidth
     )
   }
 
@@ -418,10 +421,24 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val startedAt: Long,
     val ttlSeconds: Int,
     val bgInitialOffset: Float,
-    val imgWidth: Int?
+    val imgWidth: Int?,
+    val bgWidth: Int?
   ) {
     var currentInputValue = mutableStateOf<String>("")
     var sliderValue = mutableStateOf(0f)
+
+    fun widthDiff(): Int? {
+      if (imgWidth == null || bgWidth == null) {
+        return null
+      }
+
+      val diff = abs(imgWidth - bgWidth)
+      if (diff == 0) {
+        return null
+      }
+
+      return diff
+    }
 
     fun reset() {
       currentInputValue.value = ""
