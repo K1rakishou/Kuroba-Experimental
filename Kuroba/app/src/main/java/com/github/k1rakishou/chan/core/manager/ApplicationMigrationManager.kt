@@ -11,9 +11,7 @@ class ApplicationMigrationManager {
     val prevVersion = PersistableChanState.applicationMigrationVersion.get()
 
     try {
-      Logger.d(TAG, "performMigration $prevVersion -> $LATEST_VERSION begin")
       performMigrationInternal(context, prevVersion)
-      Logger.d(TAG, "performMigration $prevVersion -> $LATEST_VERSION end")
     } catch (error: Throwable) {
       Logger.e(TAG, "performMigration $prevVersion -> $LATEST_VERSION error", error)
     }
