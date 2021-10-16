@@ -1607,23 +1607,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
-      if (!TextUtils.isEmpty(post.posterId) && threadPresenterCallback != null) {
-        if (threadPresenterCallback!!.isPostIdHighlighted(post.posterId!!)) {
-          menu.add(createMenuItem(POST_OPTION_UNHIGHLIGHT_ID, R.string.post_unhighlight_id))
-        } else {
-          menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_ID, R.string.post_highlight_id))
-        }
-      }
-
       if (!TextUtils.isEmpty(post.actualTripcode)) {
-        if (threadPresenterCallback != null) {
-          if (threadPresenterCallback!!.isTripcodeHighlighted(post.actualTripcode!!)) {
-            menu.add(createMenuItem(POST_OPTION_UNHIGHLIGHT_TRIPCODE, R.string.post_unhighlight_tripcode))
-          } else {
-            menu.add(createMenuItem(POST_OPTION_HIGHLIGHT_TRIPCODE, R.string.post_highlight_tripcode))
-          }
-        }
-
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
       }
 
@@ -1749,20 +1733,6 @@ class ThreadPresenter @Inject constructor(
               forced = true
             )
           }
-        }
-        POST_OPTION_HIGHLIGHT_ID,
-        POST_OPTION_UNHIGHLIGHT_ID -> {
-          val posterId = post.posterId
-            ?: return@post
-
-          threadPresenterCallback?.highlightUnhighlightPostId(posterId)
-        }
-        POST_OPTION_HIGHLIGHT_TRIPCODE,
-        POST_OPTION_UNHIGHLIGHT_TRIPCODE -> {
-          val tripcode = post.actualTripcode
-            ?: return@post
-
-          threadPresenterCallback?.highlightUnhighlightPostTripcode(tripcode)
         }
         POST_OPTION_FILTER_TRIPCODE -> {
           val tripcode = post.actualTripcode
@@ -2366,27 +2336,56 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    onMarkerSpanClicked(
+      post = post,
+      filterFunc = { chanPost -> chanPost.posterId == post.posterId }
+    )
+  }
+
+  override fun onPostPosterNameClicked(post: ChanPost) {
+    if (!isBound || currentChanDescriptor == null || post.name.isNullOrEmpty()) {
+      return
+    }
+
+    onMarkerSpanClicked(
+      post = post,
+      filterFunc = { chanPost -> chanPost.name == post.name }
+    )
+  }
+
+  override fun onPostPosterTripcodeClicked(post: ChanPost) {
+    if (!isBound || currentChanDescriptor == null || post.actualTripcode.isNullOrEmpty()) {
+      return
+    }
+
+    onMarkerSpanClicked(
+      post = post,
+      filterFunc = { chanPost -> chanPost.actualTripcode == post.actualTripcode }
+    )
+  }
+
+  private fun onMarkerSpanClicked(post: ChanPost, filterFunc: (ChanPost) -> Boolean) {
     val threadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
 
     val chanThread = chanThreadManager.getChanThread(threadDescriptor)
       ?: return
 
-    val postsWithTheSamePosterId = mutableListOf<ChanPost>()
+    val postsOfTheSamePoster = mutableListOf<ChanPost>()
 
     chanThread.iteratePostsOrdered { chanPost ->
-      if (chanPost.posterId == post.posterId) {
-        postsWithTheSamePosterId += chanPost
+      if (filterFunc(chanPost)) {
+        postsOfTheSamePoster += chanPost
       }
     }
 
-    if (postsWithTheSamePosterId.isEmpty()) {
-      showToast(context, R.string.thread_presenter_no_posts_with_poster_id_found)
+    if (postsOfTheSamePoster.isEmpty()) {
+      showToast(context, R.string.thread_presenter_no_posts_of_the_same_poster_found)
       return
     }
 
-    if (postsWithTheSamePosterId.size == 1) {
-      showToast(context, R.string.thread_presenter_only_one_post_with_poster_id_found)
+    if (postsOfTheSamePoster.size == 1) {
+      showToast(context, R.string.thread_presenter_only_one_post_of_the_same_poster_found)
       return
     }
 
@@ -2394,7 +2393,7 @@ class ThreadPresenter @Inject constructor(
       threadDescriptor = threadDescriptor,
       postViewMode = PostCellData.PostViewMode.RepliesPopup,
       postDescriptor = post.postDescriptor,
-      posts = postsWithTheSamePosterId
+      posts = postsOfTheSamePoster
     )
   }
 
@@ -2868,10 +2867,6 @@ class ThreadPresenter @Inject constructor(
     fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>)
     fun scrollTo(displayPosition: Int, smooth: Boolean)
     fun smoothScrollNewPosts(displayPosition: Int)
-    fun isPostIdHighlighted(id: String): Boolean
-    fun highlightUnhighlightPostId(id: String)
-    fun highlightUnhighlightPostTripcode(tripcode: CharSequence)
-    fun isTripcodeHighlighted(tripcode: CharSequence): Boolean
     fun filterPostTripcode(tripcode: CharSequence)
     fun filterPostName(posterName: CharSequence)
     fun filterPosterId(postererId: String)
@@ -2930,20 +2925,16 @@ class ThreadPresenter @Inject constructor(
     private const val POST_OPTION_LINKS = 3
     private const val POST_OPTION_COPY_TEXT = 4
     private const val POST_OPTION_REPORT = 5
-    private const val POST_OPTION_HIGHLIGHT_ID = 6
     private const val POST_OPTION_DELETE = 7
     private const val POST_OPTION_SAVE = 8
     private const val POST_OPTION_BOOKMARK = 9
     private const val POST_OPTION_SHARE = 10
-    private const val POST_OPTION_HIGHLIGHT_TRIPCODE = 11
     private const val POST_OPTION_HIDE = 12
     private const val POST_OPTION_OPEN_BROWSER = 13
     private const val POST_OPTION_OPEN_IN_ARCHIVE = 14
     private const val POST_OPTION_PREVIEW_IN_ARCHIVE = 16
     private const val POST_OPTION_REMOVE = 17
     private const val POST_OPTION_APPLY_THEME = 18
-    private const val POST_OPTION_UNHIGHLIGHT_ID = 19
-    private const val POST_OPTION_UNHIGHLIGHT_TRIPCODE = 20
     private const val POST_OPTION_ADD_TO_NAV_HISTORY = 21
 
     private const val POST_OPTION_FILTER_TRIPCODE = 100

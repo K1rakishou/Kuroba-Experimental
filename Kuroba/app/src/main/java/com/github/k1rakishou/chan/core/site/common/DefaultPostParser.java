@@ -46,6 +46,8 @@ import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan;
+import com.github.k1rakishou.core_spannable.PosterNameMarkerSpan;
+import com.github.k1rakishou.core_spannable.PosterTripcodeMarkerSpan;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPost;
@@ -160,14 +162,10 @@ public class DefaultPostParser implements PostParser {
             builder.subject = subjectSpan;
         }
 
-        if (!TextUtils.isEmpty(builder.name) || ChanSettings.showAnonymousName.get()) {
+        if (!TextUtils.isEmpty(builder.name)) {
             nameSpan = new SpannableString(builder.name);
-            nameSpan.setSpan(
-                    new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
-                    0,
-                    nameSpan.length(),
-                    0
-            );
+            nameSpan.setSpan(new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, nameSpan.length(), 0);
+            nameSpan.setSpan(new PosterNameMarkerSpan(), 0, nameSpan.length(), 0);
         }
 
         if (!TextUtils.isEmpty(builder.tripcode)) {
@@ -176,19 +174,9 @@ public class DefaultPostParser implements PostParser {
                 // This is kinda dumb but that's how it was originally and now it's the same in the DB
                 // so changing it is a huge pain in the ass.
                 tripcodeSpan = new SpannableString(tripcode);
-                tripcodeSpan.setSpan(
-                        new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor),
-                        0,
-                        tripcodeSpan.length(),
-                        0
-                );
-
-                tripcodeSpan.setSpan(
-                        new AbsoluteSizeSpanHashed(detailsSizePx),
-                        0,
-                        tripcodeSpan.length(),
-                        0
-                );
+                tripcodeSpan.setSpan(new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, tripcodeSpan.length(), 0);
+                tripcodeSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, tripcodeSpan.length(), 0);
+                tripcodeSpan.setSpan(new PosterTripcodeMarkerSpan(), 0, nameSpan.length(), 0);
             }
         }
 

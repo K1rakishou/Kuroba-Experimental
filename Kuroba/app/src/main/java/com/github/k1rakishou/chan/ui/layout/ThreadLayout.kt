@@ -798,22 +798,6 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.highlightPost(postDescriptor, blink)
   }
 
-  override fun isPostIdHighlighted(id: String): Boolean {
-    return threadListLayout.isPostIdHighlighted(id)
-  }
-
-  override fun isTripcodeHighlighted(tripcode: CharSequence): Boolean {
-    return threadListLayout.isTripcodeHighlighted(tripcode)
-  }
-
-  override fun highlightUnhighlightPostId(id: String) {
-    threadListLayout.highlightPostId(id)
-  }
-
-  override fun highlightUnhighlightPostTripcode(tripcode: CharSequence) {
-    threadListLayout.highlightPostTripcode(tripcode)
-  }
-
   override fun filterPostTripcode(tripcode: CharSequence) {
     callback.openFilterForType(
       type = FilterType.TRIPCODE,

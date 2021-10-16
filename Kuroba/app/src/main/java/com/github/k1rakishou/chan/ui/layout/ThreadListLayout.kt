@@ -1019,22 +1019,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.scrollToPosition(scrollPosition)
   }
 
-  fun isPostIdHighlighted(id: String): Boolean {
-    return postHighlightManager.isPostIdHighlighted(postAdapter.threadCellData, id)
-  }
-
-  fun isTripcodeHighlighted(tripcode: CharSequence): Boolean {
-    return postHighlightManager.isTripcodeHighlighted(postAdapter.threadCellData, tripcode)
-  }
-
-  fun highlightPostId(postId: String) {
-    postHighlightManager.highlightPostId(postAdapter.threadCellData, postId)
-  }
-
-  fun highlightPostTripcode(tripcode: CharSequence) {
-    postHighlightManager.highlightPostTripcode(postAdapter.threadCellData, tripcode)
-  }
-
   fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
     if (postDescriptor == null) {
       highlightPosts(null, blink)

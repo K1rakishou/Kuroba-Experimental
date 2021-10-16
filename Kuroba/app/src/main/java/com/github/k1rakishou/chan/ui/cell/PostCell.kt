@@ -1668,6 +1668,40 @@ class PostCell : ConstraintLayout,
 
   }
 
+  class PosterNameClickableSpan(
+    private val postCellCallback: PostCellCallback?,
+    private val post: ChanPost?
+  ) : ClickableSpan() {
+
+    override fun onClick(widget: View) {
+      post?.let { post ->
+        postCellCallback?.onPostPosterNameClicked(post)
+      }
+    }
+
+    override fun updateDrawState(ds: TextPaint) {
+      ds.isUnderlineText = false
+    }
+
+  }
+
+  class PosterTripcodeClickableSpan(
+    private val postCellCallback: PostCellCallback?,
+    private val post: ChanPost?
+  ) : ClickableSpan() {
+
+    override fun onClick(widget: View) {
+      post?.let { post ->
+        postCellCallback?.onPostPosterTripcodeClicked(post)
+      }
+    }
+
+    override fun updateDrawState(ds: TextPaint) {
+      ds.isUnderlineText = false
+    }
+
+  }
+
   private inner class PostCellDoubleTapDetector : GestureDetector.SimpleOnGestureListener() {
     override fun onDoubleTap(e: MotionEvent): Boolean {
       val touchOverlapsAnyClickableSpan = commentMovementMethod.touchOverlapsAnyClickableSpan(comment, e)

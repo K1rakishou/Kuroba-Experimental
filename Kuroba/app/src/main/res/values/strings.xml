@@ -445,10 +445,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
 
     <string name="board_check_all">Check all</string>
 
-    <string name="post_highlight_id">Highlight ID</string>
-    <string name="post_unhighlight_id">Unhighlight ID</string>
-    <string name="post_highlight_tripcode">Highlight tripcode</string>
-    <string name="post_unhighlight_tripcode">Unhighlight tripcode</string>
     <string name="post_filter_tripcode">Filter tripcode</string>
     <string name="post_filter_name">Filter name</string>
     <string name="post_filter_poster_id">Filter poster ID</string>
@@ -937,8 +933,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="site_settings_site_is_not_active">Site %1$s is not active. It\'s either completely disabled or you need to activate it first</string>
 
     <string name="thread_presenter_no_archives_found_to_open_thread">No archives found to open %1$s. Check that you have enabled archives to open this thread. It is also possible that no archives support this site/board.</string>
-    <string name="thread_presenter_no_posts_with_poster_id_found">No posts with the same poster id found</string>
-    <string name="thread_presenter_only_one_post_with_poster_id_found">Only one post found with the same poster id</string>
+    <string name="thread_presenter_no_posts_of_the_same_poster_found">No posts of the same poster found</string>
+    <string name="thread_presenter_only_one_post_of_the_same_poster_found">Only one post of the same poster found</string>
 
     <string name="scale_reduce">Reduce: %1$dx%2$d to %3$dx%4$d (%5$d%%)</string>
     <string name="could_not_apply_image_options">Could not apply new image options (error message is %1$s)</string>

@@ -86,6 +86,8 @@ class ThemeControllerHelper(
     override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
     override fun onPostNoClicked(post: ChanPost) {}
     override fun onPostPosterIdClicked(post: ChanPost) {}
+    override fun onPostPosterNameClicked(post: ChanPost) {}
+    override fun onPostPosterTripcodeClicked(post: ChanPost) {}
     override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}

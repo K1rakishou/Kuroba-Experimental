@@ -22,6 +22,8 @@ import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan
+import com.github.k1rakishou.core_spannable.PosterNameMarkerSpan
+import com.github.k1rakishou.core_spannable.PosterTripcodeMarkerSpan
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -329,14 +331,25 @@ data class PostCellData(
     if (post.fullTripcode.isNotNullNorBlank()) {
       val tripcodeFull = SpannableStringBuilder.valueOf(post.fullTripcode!!)
 
-      val posterIdMarkerSpans = tripcodeFull.getSpans<PosterIdMarkerSpan>()
-      if (posterIdMarkerSpans.isNotEmpty()) {
-        posterIdMarkerSpans.forEach { posterIdMarkerSpan ->
-          val start = tripcodeFull.getSpanStart(posterIdMarkerSpan)
-          val end = tripcodeFull.getSpanEnd(posterIdMarkerSpan)
+      tripcodeFull.getSpans<PosterIdMarkerSpan>().forEach { posterIdMarkerSpan ->
+        val start = tripcodeFull.getSpanStart(posterIdMarkerSpan)
+        val end = tripcodeFull.getSpanEnd(posterIdMarkerSpan)
 
-          tripcodeFull.setSpanSafe(PostCell.PosterIdClickableSpan(postCellCallback, post), start, end, 0)
-        }
+        tripcodeFull.setSpanSafe(PostCell.PosterIdClickableSpan(postCellCallback, post), start, end, 0)
+      }
+
+      tripcodeFull.getSpans<PosterNameMarkerSpan>().forEach { posterNameMarkerSpan ->
+        val start = tripcodeFull.getSpanStart(posterNameMarkerSpan)
+        val end = tripcodeFull.getSpanEnd(posterNameMarkerSpan)
+
+        tripcodeFull.setSpanSafe(PostCell.PosterNameClickableSpan(postCellCallback, post), start, end, 0)
+      }
+
+      tripcodeFull.getSpans<PosterTripcodeMarkerSpan>().forEach { posterTripcodeMarkerSpan ->
+        val start = tripcodeFull.getSpanStart(posterTripcodeMarkerSpan)
+        val end = tripcodeFull.getSpanEnd(posterTripcodeMarkerSpan)
+
+        tripcodeFull.setSpanSafe(PostCell.PosterTripcodeClickableSpan(postCellCallback, post), start, end, 0)
       }
 
       titleParts.add(tripcodeFull)
