@@ -210,16 +210,22 @@ class CreateOrUpdateFilterController(
     var applyToReplies by remember { chanFilterMutableState.applyToReplies }
     var onlyOnOP by remember { chanFilterMutableState.onlyOnOP }
     var applyToSaved by remember { chanFilterMutableState.applyToSaved }
+    var applyToEmptyComments by remember { chanFilterMutableState.applyToEmptyComments }
     val arrowDropDownDrawable = remember { getTextDrawableContent() }
 
     if (action == FilterAction.WATCH.id) {
       applyToReplies = false
       applyToSaved = false
+      applyToEmptyComments = false
       onlyOnOP = true
     }
 
     if (action != FilterAction.COLOR.id) {
       color = defaultFilterHighlightColor
+    }
+
+    if (applyToEmptyComments) {
+      chanFilterMutableState.pattern.value = null
     }
 
     val filterTypes = remember(key1 = type) {
@@ -388,6 +394,16 @@ class CreateOrUpdateFilterController(
       currentlyChecked = applyToSaved,
       onCheckChanged = { checked -> applyToSaved = checked }
     )
+
+    KurobaComposeCheckbox(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight(),
+      text = stringResource(id = R.string.filter_apply_to_post_with_empty_comment),
+      enabled = action != FilterAction.WATCH.id,
+      currentlyChecked = applyToEmptyComments,
+      onCheckChanged = { checked -> applyToEmptyComments = checked }
+    )
   }
 
   @Composable
@@ -396,6 +412,7 @@ class CreateOrUpdateFilterController(
     var pattern by remember { chanFilterMutableState.pattern }
     var testText by remember { chanFilterMutableState.testPattern }
     var note by remember { chanFilterMutableState.note }
+    val applyToEmptyComments by remember { chanFilterMutableState.applyToEmptyComments }
     val filterValidationResult by remember { chanFilterMutableState.filterValidationResult }
 
     val keyboardOptions = remember {
@@ -408,13 +425,17 @@ class CreateOrUpdateFilterController(
 
     val regexStatusBgColor = when (filterValidationResult) {
       is FilterValidationResult.Error -> regexStatusErrorColor
-      FilterValidationResult.Success -> regexStatusOkColor
+      is FilterValidationResult.Success -> regexStatusOkColor
       FilterValidationResult.Undefined -> regexStatusUnspecifiedColor
     }
 
     val regexStatusText = when (val validationResult = filterValidationResult) {
-      is FilterValidationResult.Error -> validationResult.errorMessage
-      FilterValidationResult.Success -> stringResource(id = R.string.filter_everything_is_ok)
+      is FilterValidationResult.Error -> {
+        validationResult.errorMessage
+      }
+      is FilterValidationResult.Success -> {
+        stringResource(id = R.string.filter_everything_is_ok, validationResult.mode.name)
+      }
       FilterValidationResult.Undefined -> ""
     }
 
@@ -434,6 +455,7 @@ class CreateOrUpdateFilterController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight(),
+      enabled = !applyToEmptyComments,
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = pattern ?: "",
@@ -526,7 +548,24 @@ class CreateOrUpdateFilterController(
     onCancelClicked: () -> Unit,
     onSaveClicked: () -> Unit
   ) {
-    val chanFilterMutable = chanFilterMutableState.asChanFilterMutable()
+    val enabled by chanFilterMutableState.enabled
+    val type by chanFilterMutableState.type
+    val pattern by chanFilterMutableState.pattern
+    val allBoards by chanFilterMutableState.allBoards
+    val boards by chanFilterMutableState.boards
+    val action by chanFilterMutableState.action
+    val color by chanFilterMutableState.color
+    val note by chanFilterMutableState.note
+    val applyToReplies by chanFilterMutableState.applyToReplies
+    val onlyOnOP by chanFilterMutableState.onlyOnOP
+    val applyToSaved by chanFilterMutableState.applyToSaved
+    val applyToEmptyComments by chanFilterMutableState.applyToEmptyComments
+
+    val chanFilterMutable = remember(enabled, type, pattern, allBoards, boards, action, color,
+      note, applyToReplies, onlyOnOP, applyToSaved, applyToEmptyComments
+    ) {
+      return@remember chanFilterMutableState.asChanFilterMutable()
+    }
 
     val filterValidationResult by produceState<FilterValidationResult>(
       initialValue = FilterValidationResult.Undefined,
@@ -738,6 +777,7 @@ class CreateOrUpdateFilterController(
     val applyToReplies: MutableState<Boolean> = mutableStateOf(false),
     val onlyOnOP: MutableState<Boolean> = mutableStateOf(false),
     val applyToSaved: MutableState<Boolean> = mutableStateOf(false),
+    val applyToEmptyComments: MutableState<Boolean> = mutableStateOf(false),
 
     val testPattern: MutableState<String> = mutableStateOf(""),
     val filterValidationResult: MutableState<FilterValidationResult> = mutableStateOf(FilterValidationResult.Undefined)
@@ -757,6 +797,7 @@ class CreateOrUpdateFilterController(
         applyToReplies = applyToReplies.value,
         onlyOnOP = onlyOnOP.value,
         applyToSaved = applyToSaved.value,
+        applyToEmptyComments = applyToEmptyComments.value,
       )
     }
 
@@ -775,6 +816,7 @@ class CreateOrUpdateFilterController(
           chanFilterMutableState.applyToReplies.value = chanFilterMutable.applyToReplies
           chanFilterMutableState.onlyOnOP.value = chanFilterMutable.onlyOnOP
           chanFilterMutableState.applyToSaved.value = chanFilterMutable.applyToSaved
+          chanFilterMutableState.applyToEmptyComments.value = chanFilterMutable.applyToEmptyComments
 
           chanFilterMutableState.color.value = if (chanFilterMutable.color != 0) {
             chanFilterMutable.color

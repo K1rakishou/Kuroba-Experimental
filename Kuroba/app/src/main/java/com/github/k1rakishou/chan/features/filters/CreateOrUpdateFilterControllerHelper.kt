@@ -22,7 +22,7 @@ object CreateOrUpdateFilterControllerHelper {
     archivesManager: ArchivesManager,
     chanFilterMutable: ChanFilterMutable
   ): FilterValidationResult {
-    if (chanFilterMutable.pattern.isNullOrEmpty()) {
+    if (chanFilterMutable.pattern.isNullOrEmpty() && !chanFilterMutable.applyToEmptyComments) {
       return FilterValidationResult.Error(getString(R.string.filter_pattern_is_empty))
     }
 
@@ -32,8 +32,18 @@ object CreateOrUpdateFilterControllerHelper {
       0
     }
 
-    if (filterEngine.compile(chanFilterMutable.pattern, extraFlags) == null) {
-      return FilterValidationResult.Error(getString(R.string.filter_cannot_compile_filter_pattern))
+    val regexMode = if (chanFilterMutable.applyToEmptyComments) {
+      FilterEngine.RegexMode.EmptyPattern
+    } else {
+      when (val compilationResult = filterEngine.compile(chanFilterMutable.pattern, extraFlags)) {
+        is FilterEngine.PatternCompilationResult.Error -> {
+          return FilterValidationResult.Error(compilationResult.errorMessage)
+        }
+        FilterEngine.PatternCompilationResult.PatternIsEmpty -> {
+          return FilterValidationResult.Error(getString(R.string.filter_cannot_compile_filter_pattern_it_is_empty))
+        }
+        is FilterEngine.PatternCompilationResult.Success -> compilationResult.mode
+      }
     }
 
     // Only check for filter duplicates when creating new filters. Otherwise thread it as old filter
@@ -41,9 +51,7 @@ object CreateOrUpdateFilterControllerHelper {
     if (chanFilterMutable.databaseId <= 0L) {
       val indexOfExistingFilter = indexOfExistingFilter(chanFilterManager, chanFilterMutable)
       if (indexOfExistingFilter >= 0) {
-        return FilterValidationResult.Error(
-          getString(R.string.filter_identical_filter_detected, indexOfExistingFilter)
-        )
+        return FilterValidationResult.Error(getString(R.string.filter_identical_filter_detected, indexOfExistingFilter))
       }
     }
 
@@ -96,7 +104,7 @@ object CreateOrUpdateFilterControllerHelper {
       return FilterValidationResult.Error(getString(R.string.filter_no_boards_selected))
     }
 
-    return FilterValidationResult.Success
+    return FilterValidationResult.Success(regexMode)
   }
 
   private fun indexOfExistingFilter(
@@ -184,7 +192,7 @@ object CreateOrUpdateFilterControllerHelper {
 
 sealed class FilterValidationResult {
   object Undefined : FilterValidationResult()
-  object Success : FilterValidationResult()
+  data class Success(val mode: FilterEngine.RegexMode) : FilterValidationResult()
   data class Error(val errorMessage: String) : FilterValidationResult()
 }
 

@@ -29,7 +29,9 @@ data class ChanFilterEntity(
   @ColumnInfo(name = ONLY_ON_OP_COLUMN_NAME)
   val onlyOnOP: Boolean = false,
   @ColumnInfo(name = APPLY_TO_SAVED_COLUMN_NAME)
-  val applyToSaved: Boolean = false
+  val applyToSaved: Boolean = false,
+  @ColumnInfo(name = APPLY_TO_POSTS_WITH_EMPTY_COMMENT)
+  val applyToEmptyComments: Boolean = false
 ) {
 
   companion object {
@@ -46,5 +48,6 @@ data class ChanFilterEntity(
     const val APPLY_TO_REPLIES_COLUMN_NAME = "apply_to_replies"
     const val ONLY_ON_OP_COLUMN_NAME = "only_on_op"
     const val APPLY_TO_SAVED_COLUMN_NAME = "apply_to_saved"
+    const val APPLY_TO_POSTS_WITH_EMPTY_COMMENT = "apply_to_posts_with_empty_comment"
   }
 }

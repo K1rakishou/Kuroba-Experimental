@@ -539,7 +539,8 @@ class ChanFilterManager(
       note = newChanFilter.note,
       applyToReplies = newChanFilter.applyToReplies,
       onlyOnOP = newChanFilter.onlyOnOP,
-      applyToSaved = newChanFilter.applyToSaved
+      applyToSaved = newChanFilter.applyToSaved,
+      applyToEmptyComments = newChanFilter.applyToEmptyComments,
     )
   }
 

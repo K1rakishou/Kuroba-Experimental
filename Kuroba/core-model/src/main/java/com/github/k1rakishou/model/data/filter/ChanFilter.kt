@@ -13,7 +13,8 @@ class ChanFilter(
   val note: String? = null,
   val applyToReplies: Boolean = false,
   val onlyOnOP: Boolean = false,
-  val applyToSaved: Boolean = false
+  val applyToSaved: Boolean = false,
+  val applyToEmptyComments: Boolean = false
 ) {
 
   @Synchronized
@@ -66,6 +67,7 @@ class ChanFilter(
       applyToReplies = applyToReplies,
       onlyOnOP = onlyOnOP,
       applyToSaved = applyToSaved,
+      applyToEmptyComments = applyToEmptyComments,
     )
   }
 
@@ -86,6 +88,7 @@ class ChanFilter(
     if (applyToReplies != other.applyToReplies) return false
     if (onlyOnOP != other.onlyOnOP) return false
     if (applyToSaved != other.applyToSaved) return false
+    if (applyToEmptyComments != other.applyToEmptyComments) return false
 
     return true
   }
@@ -102,13 +105,15 @@ class ChanFilter(
     result = 31 * result + applyToReplies.hashCode()
     result = 31 * result + onlyOnOP.hashCode()
     result = 31 * result + applyToSaved.hashCode()
+    result = 31 * result + applyToEmptyComments.hashCode()
     return result
   }
 
   override fun toString(): String {
     return "ChanFilter(filterDatabaseId=$filterDatabaseId, enabled=$enabled, type=$type, " +
       "pattern=$pattern, boards=$boards, action=$action, color=$color, note=$note" +
-      "applyToReplies=$applyToReplies, onlyOnOP=$onlyOnOP, applyToSaved=$applyToSaved)"
+      "applyToReplies=$applyToReplies, onlyOnOP=$onlyOnOP, applyToSaved=$applyToSaved, " +
+      "applyToEmptyComments=$applyToEmptyComments)"
   }
 
 }

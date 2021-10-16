@@ -312,6 +312,7 @@ fun KurobaComposeCustomTextField(
   value: String,
   onValueChange: (String) -> Unit,
   modifier: Modifier = Modifier,
+  enabled: Boolean = true,
   textColor: Color = Color.White,
   onBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
@@ -333,7 +334,7 @@ fun KurobaComposeCustomTextField(
 
   val indicatorLineModifier = if (drawBottomIndicator) {
     val indicatorColorState = textFieldColors.indicatorColor(
-      enabled = true,
+      enabled = enabled,
       isError = false,
       interactionSource = interactionSource
     )
@@ -361,11 +362,15 @@ fun KurobaComposeCustomTextField(
       val isFocused by interactionSource.collectIsFocusedAsState()
 
       AnimatedVisibility(
-        visible = !isFocused && localInput.isEmpty(),
+        visible = !enabled || (!isFocused && localInput.isEmpty()),
         enter = fadeIn(),
         exit = fadeOut()
       ) {
-        val alpha = ContentAlpha.medium
+        val alpha = if (enabled) {
+          ContentAlpha.medium
+        } else {
+          ContentAlpha.disabled
+        }
 
         val hintColor = remember {
           if (onBackgroundColor.isUnspecified) {
@@ -392,6 +397,7 @@ fun KurobaComposeCustomTextField(
         modifier = modifier
           .then(indicatorLineModifier)
           .padding(bottom = 4.dp),
+        enabled = enabled,
         textStyle = textStyle,
         singleLine = singleLine,
         maxLines = maxLines,

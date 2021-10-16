@@ -28,6 +28,7 @@ object ChanFilterMapper {
       applyToReplies = chanFilterFull.chanFilterEntity.applyToReplies,
       onlyOnOP = chanFilterFull.chanFilterEntity.onlyOnOP,
       applyToSaved = chanFilterFull.chanFilterEntity.applyToSaved,
+      applyToEmptyComments = chanFilterFull.chanFilterEntity.applyToEmptyComments,
     )
   }
 
@@ -45,6 +46,7 @@ object ChanFilterMapper {
         applyToReplies = chanFilter.applyToReplies,
         onlyOnOP = chanFilter.onlyOnOP,
         applyToSaved = chanFilter.applyToSaved,
+        applyToEmptyComments = chanFilter.applyToEmptyComments,
       ),
       chanFilterBoardConstraintEntityList = chanFilter.boards.map { boardDescriptor ->
         ChanFilterBoardConstraintEntity(

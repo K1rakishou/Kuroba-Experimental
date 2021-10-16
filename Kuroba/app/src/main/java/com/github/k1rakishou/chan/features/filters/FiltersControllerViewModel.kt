@@ -340,6 +340,16 @@ class FiltersControllerViewModel : BaseViewModel() {
         append(chanFilter.applyToSaved.toString())
       }
 
+      if (chanFilter.applyToEmptyComments) {
+        append("\n")
+        append(
+          AnnotatedString(getString(R.string.filter_apply_to_post_with_empty_comment),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
+        append(chanFilter.applyToEmptyComments.toString())
+      }
+
       val filterNote = chanFilter.note
       if (filterNote.isNotNullNorBlank()) {
         append("\n")

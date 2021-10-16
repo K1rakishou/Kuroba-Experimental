@@ -285,6 +285,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_apply_to_replies">Apply to replies</string>
     <string name="filter_only_on_op">Only apply to OP</string>
     <string name="filter_apply_to_own_posts">Apply to my own posts</string>
+    <string name="filter_apply_to_post_with_empty_comment">Apply to posts with empty comment</string>
     <string name="filter_filter_type_group">Filter type:</string>
     <string name="filter_boards_group">Boards:</string>
     <string name="filter_action_group">Action:</string>
@@ -298,13 +299,14 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_regex_does_not_match_test_text">Pattern does not match the test text</string>
     <string name="filter_pattern_is_empty">Filter pattern is empty</string>
     <string name="filter_cannot_compile_filter_pattern">Cannot compile filter pattern</string>
+    <string name="filter_cannot_compile_filter_pattern_it_is_empty">Cannot compile filter pattern, it\'s empty</string>
     <string name="filter_identical_filter_detected">Identical filter already exists.\nExisting filter index=%1$d</string>
     <string name="filter_type_not_allowed_with_watch_filters">Filter type (%1$s) is not allowed in combination with watch filter action. Only COMMENT and/or SUBJECT types are allowed!</string>
     <string name="filter_sites_not_allowed_with_watch_filters">Boards from archive sites are not allowed to be used with WATCH filters (Because they have endless catalogs). Found archive sites: \'%1$s\'</string>
     <string name="filter_all_boards_not_allowed_with_watch_filters">Cannot use \'All currently added boards\' with WATCH filters.</string>
     <string name="filter_no_filter_type_selected">No filter type selected</string>
     <string name="filter_no_boards_selected">No boards selected</string>
-    <string name="filter_everything_is_ok">Everything seems to be OK</string>
+    <string name="filter_everything_is_ok">Everything seems to be OK (Mode: %1$s)</string>
     <string name="filter_toggle_select_unselect_all_boards">Toggle all</string>
     <string name="filter_select_n_boards">Select %1$d board(s)</string>
     <string name="filter_type_selection_controller_title">Select what parts of a post this filter should try to match</string>
@@ -335,16 +337,29 @@ If the pattern matches, then the post can be hidden, removed, highlighted, or au
 <p>
     These filters are pattern based, and have three modes:<br>
     <br>
-    1. The pattern <tt>foo bar</tt> will match text that has any of the words in it. It will match <i>foo</i> or <i>bar</i>, but not <i>foobar</i>.
+    1. (MultipleWords) The pattern <tt>foo bar</tt> will match text that has any of the words in it. It will match <i>foo</i> or <i>bar</i>, but not <i>foobar</i>.
     Placing a * allows any character to be filled in: <tt>f*o</tt> will match both <i>foo</i> and <i>foooo</i>, but not <i>foobar</i><br>
     <br>
-    2. Quoting your pattern with <tt>\"</tt> (like <tt>\"foo bar\"</tt>) will match the text exactly.
+    2. (ExactSentence) Quoting your pattern with <tt>\"</tt> (like <tt>\"foo bar\"</tt>) will match the text exactly.
     <i>foo bar</i> will match, but <i>foo</i> will not.<br>
     <br>
-    3. Regular expressions. <tt>/^>implying/</tt> for example. You can use <tt>/^>ImPlYiNg/<b>i</b></tt> to make the regex case insensitive.
+    3. (Pattern) Regular expressions. <tt>/^>implying/</tt> for example.
+    <br>
+    Supported regex flags:
+    <br>
+    Case insensitive flag (i): <tt>/^>ImPlYiNg/<b>i</b></tt>
+    <br>
+    Multiline flag (m): <tt>/^>ImPlYiNg/<b>m</b></tt>
 </p>
 <br>
-Note that for country code filtering, troll country codes should be prepended with "t_". In addition, a country code filter automatically implies the case insensitive flag for regex.
+Note that for country code filtering, troll country codes should be prepended with <tt>t_</tt>.
+To filter out all trolls flags on /pol/ you can use <tt>\/t_*\/</tt> pattern with <tt>COUNTRY CODE</tt> filter type.
+In addition, a country code filter automatically implies the case insensitive flag for regex.
+<br>
+<br>
+Make sure the mode is the one you want it to be.
+Sometimes you can make a mistake in the pattern which will result in using a different regex mode (Like when you expect to use a pattern mode but in the pattern status it says <tt>MultipleWords</tt>.
+Usually that means that you forgot to remove a space from the beginning or the end of a pattern.
 ]]>
     </string>
 

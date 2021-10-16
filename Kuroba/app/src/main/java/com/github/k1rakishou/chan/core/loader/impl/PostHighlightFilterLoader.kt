@@ -49,9 +49,7 @@ class PostHighlightFilterLoader(
       if (filterEngine.matches(chanFilter, chanPost.postComment.comment(), false)) {
         val keywords = filterEngine.extractMatchedKeywords(chanFilter, chanPost.postComment.comment())
         if (keywords.isNotEmpty()) {
-          return@flatMapNotNull keywords.toHashSetBy { keyword ->
-            HighlightFilterKeyword(keyword, chanFilter.color)
-          }
+          return@flatMapNotNull keywords.toHashSetBy { keyword -> HighlightFilterKeyword(keyword, chanFilter.color) }
         }
       }
 
