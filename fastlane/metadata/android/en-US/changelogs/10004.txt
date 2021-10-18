@@ -1,0 +1,49 @@
+v1.0.4
+TLDR version:
+Finally the v1.0.0 is here! This means that all the huge features that were planned had been finally implemented. Now the app shouldn't be in the development hell anymore and things shouldn't change as quickly as before. Instead, stabilization and bug fixing will become the priority. 
+
+Full version:
+- Add empty list checks to avoid crashes when using async post cell data calculation setting.
+- Fix thumbnails in single image posts being slightly cut off at the bottom-right.
+- Fix link recognizing sometimes not working when a post has multiple entries of the same link. (Only one of the links is updated with the title/duration).
+- Some filter adjustments. Add ability to filter boards by site name in the filter creation dialog. Do not allow using WATCH filters with archive sites. Do not allow using WATCH filters with "all boards".
+- Rename "Saved posts" controller to "My posts".
+- Auto-capitalize entered 4chan captcha symbols.
+- Fix parsing of quote links inside of a <span> tag which resulted in the same link converted into PostLinkable twice which might break the link recognition in some situations.
+- Fix a weird bug that occurs when reloading the app with the composite catalog being the last accessed catalog which results in the catalog not being loaded because of a silent crash.
+- Fix a bug where creating a non-highlight filter would also be considered as a highlight filter and all matching posts will be marked on the scrollbars.
+- Use the difference in BG and FG captcha images to calculate the slide step count for the slider.
+- Some improvements for filters. Add ability to match filters against posts with empty comment.  Add 'm' (multiline) regex flag support. Update filter creation help.
+- Add ability to display all post of a poster by their name/tripcode/posterId. Remove ability to highlight posts by poster name/tripcode/posterId.
+- Show the amount of currently active thread downloads in the bottom navigation view.
+- Add support for 2ch.hk built-in thread archive (+ media). Basically, it's now possible to open "some" threads because the archive works god-only-knows-how, some threads work, some do not. There is also a delay in like 30 minute after a thread dies before it can be accessed in the archives. But then there are also some threads that can't be accessed at all. So do not expect all threads to be able to be accessed via the built-in 2ch.hk archive.
+
+v1.0.3
+- Add a setting, disabling which, will stop giving any kind of post links a hitbox that takes whole post cell width. Right now, if there is a link in a post it can be clicked even when clicking empty post space on the right side of the post. Disabling it will prevent that. But this works on all kinds of links including post quotes. Enabled by default (which was always like that) can be found in the behavior settings in the Post group.
+- Actually fix the bug when opening imageboard thread links won't load the thread until manual reload is clicked.
+
+v1.0.2
+- Async post cell data calculation. A setting that improves catalog/thread loading speed. Can be found in the experimental settings. Read the setting description for more details. For now it's experimental and disabled by default but once it's stable enough it will be used by default.
+- Add ability to use global search with desuarchive.
+
+v1.0.1
+- Add ability to show all posts in a thread with a specific posterId by clicking that ID.
+- Fix the old PostPopupContainer conflicting with the BaseFloatingController when measuring the max child controller width thus causing the reply popup to sometimes be slightly outside of the view bounds.
+- Add ability to open any urls that are potentially pointing to a media content (detected by the file extension) in the internal media viewer.
+- Add ability to download media files opened by external links.
+- Diochan support. Thanks to @Dashchanon
+- Fix BottomNavView disappearing from the bottom of the drawer when the "Use bottom navigation" setting is disabled and drawer history/bookmark displaying is disabled as well.
+
+v1.0.0
+- Add a setting to move bottom navigation view into the drawer.
+- FiltersController reworked.
+- ArrowMenuDrawable animation fixed.
+- 4chan captcha slider now uses snapping to certain parts of the slider which should make it less smooth. If you still want the smoother captcha image scrolling you can slide the image itself.
+- Add a setting to not draw behind the notch on phones with notches (can be found in the media viewer settings).
+- Fix opening thread links from external apps getting stuck in the loading state until the user reloads the thread manually.
+- Do not change the order of post images (when a post has more than one image) when using PostAlignmentMode.AlignLeft.
+- Some performance improvements when adding/updating thread posts into the post cache.
+- Fix tripcode filtering. Add ability to create filters for posterId and posterName.
+- Post highlight filters will now highlight the actual keyword directly in the post comment.
+- Add a setting to always use post comment shift (Clover/Kuroba thubmnail style).
+- Fix a bug where changing a default application setting state in an update would be used by every client that had never changed that setting locally. Basically, if there was a setting to display post thumbnails on the left side of a post by default, it was never touched be the user, and then in the next update the default value is changed to display posts on the right side, the new default value would be used. 
