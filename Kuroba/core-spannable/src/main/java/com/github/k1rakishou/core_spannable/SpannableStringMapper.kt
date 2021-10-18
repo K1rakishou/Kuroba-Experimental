@@ -640,7 +640,7 @@ object SpannableStringMapper {
           PostLinkable.Type.ARCHIVE
         )
       }
-      else -> throw IllegalArgumentException("Not implemented for type " + serializablePostLinkableSpan.postLinkableType.name)
+      else -> return null
     }
   }
 

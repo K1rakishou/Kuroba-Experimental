@@ -83,6 +83,7 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
@@ -143,6 +144,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -186,6 +189,8 @@ class MainController(
   lateinit var _imageLoaderV2: Lazy<ImageLoaderV2>
   @Inject
   lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
+  @Inject
+  lateinit var _threadDownloadManager: Lazy<ThreadDownloadManager>
 
   private val themeEngine: ThemeEngine
     get() = _themeEngine.get()
@@ -215,6 +220,8 @@ class MainController(
     get() = _imageLoaderV2.get()
   private val globalViewStateManager: GlobalViewStateManager
     get() = _globalViewStateManager.get()
+  private val threadDownloadManager: ThreadDownloadManager
+    get() = _threadDownloadManager.get()
 
   private lateinit var rootLayout: TouchBlockingFrameLayout
   private lateinit var container: TouchBlockingFrameLayoutNoBackground
@@ -405,6 +412,12 @@ class MainController(
       settingsNotificationManager.listenForNotificationUpdates()
         .subscribe { onSettingsNotificationChanged() }
     )
+
+    mainScope.launch {
+      threadDownloadManager.threadDownloadUpdateFlow
+        .debounce(500L)
+        .collect { event -> onNewThreadDownloadEvent(event) }
+    }
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
 
@@ -1730,6 +1743,38 @@ class MainController(
       mainToolbarNavigationController?.toolbar?.arrowMenuDrawable?.setBadge(
         state.totalUnseenPostsCount,
         state.hasUnreadReplies
+      )
+    }
+  }
+
+  private suspend fun onNewThreadDownloadEvent(event: ThreadDownloadManager.Event) {
+    val activeThreadDownloadsCount = threadDownloadManager.getAllActiveThreadDownloads().size
+
+    if (activeThreadDownloadsCount <= 0) {
+      navigationViewContract.updateBadge(
+        menuItemId = R.id.action_archive,
+        menuItemBadgeInfo = null
+      )
+
+      kurobaComposeBottomPanel.updateBadge(
+        menuItemId = R.id.action_archive,
+        menuItemBadgeInfo = null
+      )
+    } else {
+      navigationViewContract.updateBadge(
+        menuItemId = R.id.action_archive,
+        menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Counter(
+          counter = activeThreadDownloadsCount,
+          highlight = false
+        )
+      )
+
+      kurobaComposeBottomPanel.updateBadge(
+        menuItemId = R.id.action_archive,
+        menuItemBadgeInfo = KurobaComposeIconPanel.MenuItemBadgeInfo.Counter(
+          counter = activeThreadDownloadsCount,
+          highlight = false
+        )
       )
     }
   }
