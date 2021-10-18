@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.common.AppConstants
@@ -186,7 +187,7 @@ internal class PartialContentSupportChecker(
             return
           }
 
-          handleResponse(response, url, emitter, startTime)
+          handleResponse(site, response, url, emitter, startTime)
         }
       })
     }
@@ -224,6 +225,7 @@ internal class PartialContentSupportChecker(
   }
 
   private fun handleResponse(
+    site: Site?,
     response: Response,
     url: String,
     emitter: SingleEmitter<PartialContentCheckResult>,
@@ -231,15 +233,16 @@ internal class PartialContentSupportChecker(
   ) {
     val statusCode = response.code
     if (statusCode == 404) {
+      val notFoundOnServer = site?.redirectsToArchiveThread() != true
+
       // Fast path: the server returned 404 so that mean we don't have to do any other GET
       // requests since the file does not exist
       val result = PartialContentCheckResult(
         supportsPartialContentDownload = false,
-        notFoundOnServer = true
+        notFoundOnServer = notFoundOnServer
       )
-      cache(url, result)
 
-      emitter.tryOnError(FileCacheException.FileNotFoundOnTheServerException())
+      emitter.onSuccess(cache(url, result))
       return
     }
 
