@@ -58,7 +58,7 @@ class DvachApiV2(
 
     val error = dvachThreadsFresh?.error
     if (error != null && error.isActuallyError()) {
-      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+      chanReaderProcessor.error = SiteSpecificError.DvachError(error.errorCode, error.message())
 
       if (error.isThreadDeleted()) {
         chanReaderProcessor.deleted = true
@@ -116,7 +116,7 @@ class DvachApiV2(
 
     val error = dvachThreadIncremental?.error
     if (error != null && error.isActuallyError()) {
-      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+      chanReaderProcessor.error = SiteSpecificError.DvachError(error.errorCode, error.message())
 
       if (error.isThreadDeleted()) {
         chanReaderProcessor.deleted = true
@@ -168,7 +168,7 @@ class DvachApiV2(
 
     val error = dvachCatalog?.error
     if (error != null && error.isActuallyError()) {
-      chanReaderProcessor.error = SiteSpecificError.ErrorCode(error.errorCode, error.message())
+      chanReaderProcessor.error = SiteSpecificError.DvachError(error.errorCode, error.message())
 
       if (error.cantAccessCatalog()) {
         chanReaderProcessor.closed = true
@@ -443,6 +443,10 @@ class DvachApiV2(
       private const val THREAD_IS_CLOSED = -7
       private const val BOARD_IS_CLOSED = -41
       private const val BOARD_IS_VIP_ONLY = -42
+
+      fun isNotFoundError(errorCode: Int): Boolean {
+        return errorCode == BOARD_DOES_NOT_EXIST || errorCode == THREAD_DOES_NOT_EXIST
+      }
     }
 
   }

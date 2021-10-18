@@ -16,6 +16,10 @@ class BadStatusResponseException(val status: Int) : IOException("Bad status code
     return status == 404
   }
 
+  companion object {
+    fun notFoundResponse(): BadStatusResponseException = BadStatusResponseException(404)
+  }
+
 }
 
 class EmptyBodyResponseException : IOException("Response has no body")

@@ -191,6 +191,23 @@ class ChanThreadLoaderCoordinator(
 
         chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Loading(chanDescriptor))
 
+        val reloadFunc: suspend (error: Throwable) -> ThreadLoadResult = func@ { error: Throwable ->
+          return@func fallbackPostLoadOnNetworkError(
+            page = page,
+            site = site,
+            compositeCatalogDescriptor = compositeCatalogDescriptor,
+            chanDescriptor = chanDescriptor,
+            chanCacheOptions = chanCacheOptions,
+            chanCacheUpdateOptions = chanCacheUpdateOptions,
+            chanReadOptions = chanReadOptions,
+            chanLoadOptions = chanLoadOptions,
+            chanLoadUrl = chanLoadUrl,
+            error = error,
+            isThreadDownloaded = isThreadDownloaded,
+            postProcessFlags = postProcessFlags
+          )
+        }
+
         val (response, requestDuration) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build()) }
         } catch (error: Throwable) {
@@ -198,37 +215,11 @@ class ChanThreadLoaderCoordinator(
             throw error
           }
 
-          return@Try fallbackPostLoadOnNetworkError(
-            page = page,
-            site = site,
-            compositeCatalogDescriptor = compositeCatalogDescriptor,
-            chanDescriptor = chanDescriptor,
-            chanCacheOptions = chanCacheOptions,
-            chanCacheUpdateOptions = chanCacheUpdateOptions,
-            chanReadOptions = chanReadOptions,
-            chanLoadOptions = chanLoadOptions,
-            postProcessFlags = postProcessFlags,
-            chanLoadUrl = chanLoadUrl,
-            error = error,
-            isThreadDownloaded = isThreadDownloaded
-          )
+          return@Try reloadFunc(error)
         }
 
         if (!response.isSuccessful) {
-          return@Try fallbackPostLoadOnNetworkError(
-            page = page,
-            site = site,
-            compositeCatalogDescriptor = compositeCatalogDescriptor,
-            chanDescriptor = chanDescriptor,
-            chanCacheOptions = chanCacheOptions,
-            chanCacheUpdateOptions = chanCacheUpdateOptions,
-            chanReadOptions = chanReadOptions,
-            chanLoadOptions = chanLoadOptions,
-            postProcessFlags = postProcessFlags,
-            chanLoadUrl = chanLoadUrl,
-            error = BadStatusResponseException(response.code),
-            isThreadDownloaded = isThreadDownloaded
-          )
+          return@Try reloadFunc(BadStatusResponseException(response.code))
         }
 
         chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.Reading(chanDescriptor))
@@ -253,8 +244,13 @@ class ChanThreadLoaderCoordinator(
         Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl='${chanLoadUrl}') chanReaderProcessor=${chanReaderProcessor}")
 
         if (chanReaderProcessor.error != null) {
-          when (val error = chanReaderProcessor.error!!) {
-            is SiteSpecificError.ErrorCode -> {
+          val error = chanReaderProcessor.error!!
+          if (error.isNotFoundError()) {
+            return@Try reloadFunc(BadStatusResponseException.notFoundResponse())
+          }
+
+          when (error) {
+            is SiteSpecificError.DvachError -> {
               throw SiteError(error.errorCode, error.errorMessage)
             }
             else -> error("Unknown error: ${error}")
