@@ -176,7 +176,7 @@ public class DefaultPostParser implements PostParser {
                 tripcodeSpan = new SpannableString(tripcode);
                 tripcodeSpan.setSpan(new ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, tripcodeSpan.length(), 0);
                 tripcodeSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, tripcodeSpan.length(), 0);
-                tripcodeSpan.setSpan(new PosterTripcodeMarkerSpan(), 0, nameSpan.length(), 0);
+                tripcodeSpan.setSpan(new PosterTripcodeMarkerSpan(), 0, tripcodeSpan.length(), 0);
             }
         }
 
