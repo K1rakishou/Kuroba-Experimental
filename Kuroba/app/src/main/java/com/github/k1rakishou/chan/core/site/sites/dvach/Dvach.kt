@@ -402,6 +402,8 @@ class Dvach : CommonSite() {
     return chunkDownloaderSiteProperties
   }
 
+  override fun redirectsToArchiveThread(): Boolean = true
+
   inner class DvachEndpoints(commonSite: CommonSite) : VichanEndpoints(
     commonSite,
     URL_HANDLER.url!!.toString(),
@@ -454,6 +456,18 @@ class Dvach : CommonSite() {
         .addPathSegment(fromPostDescriptor.boardDescriptor().boardCode)
         .addPathSegment(fromPostDescriptor.getThreadNo().toString())
         .addPathSegment(fromPostDescriptor.postNo.toString())
+        .build()
+    }
+
+    // https://2ch.hk/board_code/arch/res/thread_no.json
+    override fun threadArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host(URL_HANDLER.url!!.host)
+        .addPathSegment(threadDescriptor.boardCode())
+        .addPathSegment("arch")
+        .addPathSegment("res")
+        .addPathSegment("${threadDescriptor.threadNo}.json")
         .build()
     }
 

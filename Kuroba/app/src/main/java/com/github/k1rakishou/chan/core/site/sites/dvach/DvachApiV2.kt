@@ -90,6 +90,10 @@ class DvachApiV2(
     extraThreadInfo.posters = posters
 
     processPostsInternal(threadPosts, chanReaderProcessor, board, endpoints)
+
+    if (requestUrl.contains("/arch/res/")) {
+      chanReaderProcessor.archived = true
+    }
   }
 
   override suspend fun loadThreadIncremental(

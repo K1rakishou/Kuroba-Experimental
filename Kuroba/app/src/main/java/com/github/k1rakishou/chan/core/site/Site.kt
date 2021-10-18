@@ -185,6 +185,8 @@ interface Site {
 
   fun postingLimitationInfo(): SitePostingLimitationInfo? = null
 
+  fun redirectsToArchiveThread(): Boolean = false
+
   fun <T : Setting<*>> requireSettingBySettingId(settingId: SiteSetting.SiteSettingId): T {
     return requireNotNull(getSettingBySettingId(settingId)) { "Setting ${settingId} not found for site ${siteDescriptor()}" }
   }

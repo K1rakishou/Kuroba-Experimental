@@ -42,6 +42,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       site = site,
       chanDescriptor = threadDescriptor,
       page = null,
+      postProcessFlags = null,
       forceFullLoad = true
     )
 

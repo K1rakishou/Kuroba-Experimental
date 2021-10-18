@@ -54,6 +54,7 @@ open class ChanLoaderException(
         }
         is SiteError -> exception.shortMessage()
         is ClientException -> exception.errorMessageOrClassName()
+        is ChanLoaderException -> exception.errorMessage
         else -> exception.message ?: getString(R.string.thread_load_failed_parsing)
       }
     }

@@ -138,11 +138,18 @@ class ChanThreadLoaderCoordinator(
     chanCacheOptions: ChanCacheOptions,
     chanCacheUpdateOptions: ChanCacheUpdateOptions,
     chanReadOptions: ChanReadOptions,
-    chanLoadOptions: ChanLoadOptions
+    chanLoadOptions: ChanLoadOptions,
+    postProcessFlags: PostProcessFlags? = null
   ): ModularResult<ThreadLoadResult> {
     return withContext(Dispatchers.IO) {
       return@withContext Try {
-        val chanLoadUrl = getChanUrl(site, chanDescriptor, page)
+        val chanLoadUrl = getChanUrl(
+          site = site,
+          chanDescriptor = chanDescriptor,
+          page = page,
+          postProcessFlags = postProcessFlags
+        )
+
         val chanReader = site.chanReader()
 
         val chanReaderProcessorOptions = ChanReaderProcessor.Options(
@@ -153,7 +160,8 @@ class ChanThreadLoaderCoordinator(
         Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl=$chanLoadUrl, " +
           "compositeCatalogDescriptor=$compositeCatalogDescriptor, chanDescriptor=$chanDescriptor, " +
           "chanCacheOptions=$chanCacheOptions, chanCacheUpdateOptions=$chanCacheUpdateOptions, " +
-          "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName})")
+          "chanReadOptions=$chanReadOptions, chanReader=${chanReader.javaClass.simpleName}, " +
+          "postProcessFlags=$postProcessFlags)")
 
         val isThreadDownloaded = chanDescriptor is ChanDescriptor.ThreadDescriptor
           && threadDownloadManager.isThreadFullyDownloaded(chanDescriptor)
@@ -191,8 +199,15 @@ class ChanThreadLoaderCoordinator(
           }
 
           return@Try fallbackPostLoadOnNetworkError(
+            page = page,
+            site = site,
             compositeCatalogDescriptor = compositeCatalogDescriptor,
             chanDescriptor = chanDescriptor,
+            chanCacheOptions = chanCacheOptions,
+            chanCacheUpdateOptions = chanCacheUpdateOptions,
+            chanReadOptions = chanReadOptions,
+            chanLoadOptions = chanLoadOptions,
+            postProcessFlags = postProcessFlags,
             chanLoadUrl = chanLoadUrl,
             error = error,
             isThreadDownloaded = isThreadDownloaded
@@ -201,8 +216,15 @@ class ChanThreadLoaderCoordinator(
 
         if (!response.isSuccessful) {
           return@Try fallbackPostLoadOnNetworkError(
+            page = page,
+            site = site,
             compositeCatalogDescriptor = compositeCatalogDescriptor,
             chanDescriptor = chanDescriptor,
+            chanCacheOptions = chanCacheOptions,
+            chanCacheUpdateOptions = chanCacheUpdateOptions,
+            chanReadOptions = chanReadOptions,
+            chanLoadOptions = chanLoadOptions,
+            postProcessFlags = postProcessFlags,
             chanLoadUrl = chanLoadUrl,
             error = BadStatusResponseException(response.code),
             isThreadDownloaded = isThreadDownloaded
@@ -230,15 +252,6 @@ class ChanThreadLoaderCoordinator(
 
         Logger.d(TAG, "loadThreadOrCatalog(chanLoadUrl='${chanLoadUrl}') chanReaderProcessor=${chanReaderProcessor}")
 
-        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-          chanPostRepository.updateThreadState(
-            threadDescriptor = chanDescriptor,
-            deleted = chanReaderProcessor.deleted && !isThreadDownloaded,
-            archived = chanReaderProcessor.archived || isThreadDownloaded,
-            closed = chanReaderProcessor.closed
-          )
-        }
-
         if (chanReaderProcessor.error != null) {
           when (val error = chanReaderProcessor.error!!) {
             is SiteSpecificError.ErrorCode -> {
@@ -259,6 +272,15 @@ class ChanThreadLoaderCoordinator(
           chanCacheUpdateOptions = chanCacheUpdateOptions,
           postParser = postParser,
         )
+
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+          chanPostRepository.updateThreadState(
+            threadDescriptor = chanDescriptor,
+            deleted = chanReaderProcessor.deleted && !isThreadDownloaded,
+            archived = chanReaderProcessor.archived || isThreadDownloaded,
+            closed = chanReaderProcessor.closed
+          )
+        }
 
         loadRequestStatistics(
           url = chanLoadUrl.url,
@@ -446,8 +468,15 @@ class ChanThreadLoaderCoordinator(
 
   @Suppress("IfThenToElvis")
   private suspend fun fallbackPostLoadOnNetworkError(
+    page: Int?,
+    site: Site,
     compositeCatalogDescriptor: ChanDescriptor.CompositeCatalogDescriptor?,
     chanDescriptor: ChanDescriptor,
+    chanCacheOptions: ChanCacheOptions,
+    chanCacheUpdateOptions: ChanCacheUpdateOptions,
+    chanReadOptions: ChanReadOptions,
+    chanLoadOptions: ChanLoadOptions,
+    postProcessFlags: PostProcessFlags? = null,
     chanLoadUrl: ChanLoadUrl,
     error: Throwable,
     isThreadDownloaded: Boolean
@@ -455,6 +484,22 @@ class ChanThreadLoaderCoordinator(
     BackgroundUtils.ensureBackgroundThread()
 
     val isThreadDeleted = (error is BadStatusResponseException && error.status == 404) && !isThreadDownloaded
+
+    // Check for null beforehand to avoid infinite recursion
+    if (postProcessFlags == null && isThreadDeleted && site.redirectsToArchiveThread()) {
+      return loadThreadOrCatalog(
+        page = page,
+        site = site,
+        compositeCatalogDescriptor = compositeCatalogDescriptor,
+        chanDescriptor = chanDescriptor,
+        chanCacheOptions = chanCacheOptions,
+        chanCacheUpdateOptions = chanCacheUpdateOptions,
+        chanReadOptions = chanReadOptions,
+        chanLoadOptions = chanLoadOptions,
+        postProcessFlags = PostProcessFlags(reloadingAfter404 = true)
+      ).unwrap()
+    }
+
     val isThreadArchived = (error is BadStatusResponseException && error.status == 404) && isThreadDownloaded
     val catalogSnapshotDescriptor = compositeCatalogDescriptor ?: (chanDescriptor as? ChanDescriptor.ICatalogDescriptor)
 
@@ -576,8 +621,16 @@ class ChanThreadLoaderCoordinator(
     site: Site,
     chanDescriptor: ChanDescriptor,
     page: Int?,
+    postProcessFlags: PostProcessFlags? = null,
     forceFullLoad: Boolean = false
   ): ChanLoadUrl {
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor && postProcessFlags?.reloadingAfter404 == true) {
+      val url = site.endpoints().threadArchive(chanDescriptor)
+      if (url != null) {
+        return ChanLoadUrl(url = url, isIncremental = false, page = page)
+      }
+    }
+
     val isThreadCached = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
       chanThreadsCache.getThreadPostsCount(chanDescriptor) > 1
     } else {
@@ -621,7 +674,11 @@ class ChanThreadLoaderCoordinator(
     return threadPartialLoadUrl
   }
 
-  private fun getChanUrlFullLoad(site: Site, chanDescriptor: ChanDescriptor, page: Int?): ChanLoadUrl {
+  private fun getChanUrlFullLoad(
+    site: Site,
+    chanDescriptor: ChanDescriptor,
+    page: Int?
+  ): ChanLoadUrl {
     val url = when (chanDescriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
         site.endpoints().thread(chanDescriptor)
@@ -654,6 +711,8 @@ class ChanThreadLoaderCoordinator(
 
     return ChanLoadUrl(url = incrementalLoadUrl, isIncremental = true, page = null)
   }
+
+  data class PostProcessFlags(val reloadingAfter404: Boolean)
 
   data class ChanLoadUrl(
     val url: HttpUrl,

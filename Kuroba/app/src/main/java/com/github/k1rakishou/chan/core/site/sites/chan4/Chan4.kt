@@ -267,7 +267,7 @@ open class Chan4 : SiteBase() {
       return search
     }
 
-    override fun archive(boardDescriptor: BoardDescriptor): HttpUrl {
+    override fun boardArchive(boardDescriptor: BoardDescriptor): HttpUrl {
       return b.newBuilder()
         .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment("archive")
@@ -461,7 +461,7 @@ open class Chan4 : SiteBase() {
     }
 
     override suspend fun archive(boardDescriptor: BoardDescriptor): ModularResult<List<NativeArchivePost>> {
-      val archiveUrl = requireNotNull(endpoints().archive(boardDescriptor))
+      val archiveUrl = requireNotNull(endpoints().boardArchive(boardDescriptor))
 
       val requestBuilder = Request.Builder()
         .url(archiveUrl)
