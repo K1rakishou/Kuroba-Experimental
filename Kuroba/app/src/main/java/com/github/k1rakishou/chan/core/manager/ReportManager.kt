@@ -396,7 +396,7 @@ class ReportManager(
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
       appendLine("asyncPostCellDataCalculation: ${ChanSettings.asyncPostCellDataCalculation.get()}")
       appendLine("userAgent: ${appConstants.userAgent}")
-      appendLine("kurobaExUserAgent: ${appConstants.kurobaExUserAgent}")
+      appendLine("kurobaExCustomUserAgent: ${appConstants.kurobaExCustomUserAgent}")
 
       appendLine("maxPostsCountInPostsCache: ${appConstants.maxPostsCountInPostsCache}")
       appendLine("maxAmountOfPostsInDatabase: ${appConstants.maxAmountOfPostsInDatabase}")

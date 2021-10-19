@@ -35,7 +35,7 @@ abstract class SiteRequestModifier<T : Site>(
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
     if (httpCall.site.siteDescriptor().is4chan()) {
-      requestBuilder.addHeader(userAgentHeaderKey, appConstants.kurobaExUserAgent)
+      requestBuilder.addHeader(userAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
     } else {
       requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
     }

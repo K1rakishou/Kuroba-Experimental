@@ -241,7 +241,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       context = applicationContext,
       flavorType = flavorType,
       isLowRamDevice = ChanSettings.isLowRamDevice(),
-      kurobaExUserAgent = kurobaExUserAgent,
+      kurobaExCustomUserAgent = kurobaExUserAgent,
       maxPostsInDatabaseSettingValue = 125000,
       maxThreadsInDatabaseSettingValue = 12500
     )

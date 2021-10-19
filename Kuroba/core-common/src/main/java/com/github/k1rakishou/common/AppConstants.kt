@@ -3,6 +3,8 @@ package com.github.k1rakishou.common
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import android.webkit.WebSettings
+import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.File
 
@@ -10,7 +12,7 @@ open class AppConstants(
   context: Context,
   private val flavorType: AndroidUtils.FlavorType,
   private val isLowRamDevice: Boolean,
-  val kurobaExUserAgent: String,
+  val kurobaExCustomUserAgent: String,
   maxPostsInDatabaseSettingValue: Int,
   maxThreadsInDatabaseSettingValue: Int
 ) {
@@ -145,7 +147,16 @@ open class AppConstants(
 
     mpvDemuxerCacheMaxSize = calculateMpvDemuxerCacheSize(activityManager).toInt()
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager).toInt()
-    userAgent = String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+
+    userAgent = try {
+      WebSettings.getDefaultUserAgent(context)
+    } catch (error: Throwable) {
+      // Who knows what may happen if the user deletes webview from the system so just in case
+      // switch to a default user agent in case of a crash
+      Logger.e(TAG, "WebSettings.getDefaultUserAgent() error", error)
+      String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+    }
+
     processorsCount = Runtime.getRuntime().availableProcessors()
       .coerceAtLeast(2)
 
@@ -186,6 +197,8 @@ open class AppConstants(
   }
 
   companion object {
+    private const val TAG = "AppConstants"
+
     const val loggingInterceptorEnabled = false
 
     // 10 percents of the app's available memory (not device's)
