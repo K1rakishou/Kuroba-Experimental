@@ -81,6 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="unmark_as_my_post">Unmark as my post</string>
 
     <string name="bottom_menu_item_reorder">Reorder</string>
+    <string name="bottom_menu_item_move">Move</string>
     <string name="bottom_menu_item_download">Download</string>
     <string name="bottom_menu_item_read">Read</string>
     <string name="bottom_menu_item_delete">Delete</string>
@@ -961,6 +962,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_bookmarks_set_grid_bookmark_view_width">Set grid bookmark view width</string>
     <string name="controller_bookmarks_clear_all_bookmarks_confirmation_message">Are you sure you want to clear ALL bookmarks?</string>
     <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
+    <string name="controller_bookmarks_create_bookmark_group">Create bookmark group</string>
+    <string name="controller_bookmarks_bookmark_groups_settings">Bookmark groups settings</string>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
@@ -1351,6 +1354,13 @@ The simplest way to do that is to fully reinstall them (Go to Settings -> Plugin
 Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
+
+    <string name="bookmark_groups_controller_no_groups_created">No groups created</string>
+    <string name="bookmark_groups_controller_select_bookmark_group">Select bookmark group to move selected bookmarks into</string>
+    <string name="bookmark_groups_controller_create_new_group">Create new group</string>
+    <string name="bookmark_groups_enter_new_group_name">Enter bookmark group name (must be unique)</string>
+    <string name="bookmark_groups_group_will_become_visible_after">Group will become visible after you add bookmarks into it</string>
+    <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>

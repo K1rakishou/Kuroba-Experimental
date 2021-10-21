@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
@@ -185,6 +186,7 @@ public class UseCaseModule {
             CoroutineScope appScope,
             BoardManager boardManager,
             BookmarksManager bookmarksManager,
+            ThreadBookmarkGroupManager threadBookmarkGroupManager,
             ChanFilterManager chanFilterManager,
             SiteManager siteManager,
             Lazy<ProxiedOkHttpClient> proxiedOkHttpClient,
@@ -199,6 +201,7 @@ public class UseCaseModule {
                 appConstants,
                 boardManager,
                 bookmarksManager,
+                threadBookmarkGroupManager,
                 chanFilterManager,
                 siteManager,
                 appScope,

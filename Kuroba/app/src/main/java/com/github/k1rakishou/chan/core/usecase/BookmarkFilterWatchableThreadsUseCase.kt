@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
@@ -40,6 +41,7 @@ class BookmarkFilterWatchableThreadsUseCase(
   private val appConstants: AppConstants,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val appScope: CoroutineScope,
@@ -107,10 +109,10 @@ class BookmarkFilterWatchableThreadsUseCase(
       catalogThread.replaceRawCommentWithParsed(parsedComment.toString())
 
       val matchedFilter = tryMatchWatchFiltersWithThreadInfo(
-        enabledWatchFilters,
-        catalogBoardDescriptor,
-        parsedComment,
-        subject
+        enabledWatchFilters = enabledWatchFilters,
+        catalogBoardDescriptor = catalogBoardDescriptor,
+        parsedComment = parsedComment,
+        subject = subject
       )
 
       if (matchedFilter != null) {
@@ -164,6 +166,7 @@ class BookmarkFilterWatchableThreadsUseCase(
           threadDescriptor = bookmarkThreadDescriptor,
           title = createBookmarkSubject(filterWatchCatalogThreadInfoObject),
           thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl,
+          groupId = ThreadBookmarkGroupManager.FILTER_WATCHER_GROUP_ID,
           initialFlags = filterWatchFlags
         )
 
@@ -179,12 +182,12 @@ class BookmarkFilterWatchableThreadsUseCase(
       // Bookmark already created and has "Filter watch" flag
     }
 
+
     if (bookmarksToCreate.isNotEmpty()) {
       val createdThreadBookmarks = bookmarksToCreate.mapNotNull { simpleThreadBookmark ->
         val databaseId = chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
           .peekError { error ->
-            Logger.e(TAG, "createEmptyThreadIfNotExists() " +
-              "threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
+            Logger.e(TAG, "createEmptyThreadIfNotExists() threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
           }
           .valueOrNull()
 
@@ -197,7 +200,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
       bookmarksManager.createBookmarksSuspend(createdThreadBookmarks)
 
-      Logger.d(TAG, "createBookmarks() created ${createdThreadBookmarks.size} " +
+      Logger.d(TAG, "createOrUpdateBookmarks() created ${createdThreadBookmarks.size} " +
         "out of ${bookmarksToCreate.size} bookmarks")
     }
 
@@ -210,11 +213,11 @@ class BookmarkFilterWatchableThreadsUseCase(
         bookmarksManager.persistBookmarksManually(updatedBookmarks)
       }
 
-      Logger.d(TAG, "createBookmarks() updated ${updatedBookmarks.size} bookmarks")
+      Logger.d(TAG, "createOrUpdateBookmarks() updated ${updatedBookmarks.size} bookmarks")
     }
 
     if (bookmarksToCreate.isEmpty() && bookmarksToUpdate.isEmpty()) {
-      Logger.d(TAG, "createBookmarks() nothing to create, nothing to update")
+      Logger.d(TAG, "createOrUpdateBookmarks() nothing to create, nothing to update")
     }
 
     return createFilterWatchGroups(filterWatchGroupsToCreate)

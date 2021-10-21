@@ -9,7 +9,7 @@ import kotlin.collections.HashMap
 
 class ThreadBookmark private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-  val groupId: String,
+  var groupId: String?,
   var seenPostsCount: Int = 0,
   var threadRepliesCount: Int = 0,
   var lastViewedPostNo: Long = 0,
@@ -253,7 +253,7 @@ class ThreadBookmark private constructor(
 
   override fun hashCode(): Int {
     var result = threadDescriptor.hashCode()
-    result = 31 * result + groupId.hashCode()
+    result = 31 * result + (groupId?.hashCode() ?: 0)
     result = 31 * result + seenPostsCount
     result = 31 * result + threadRepliesCount
     result = 31 * result + lastViewedPostNo.hashCode()
@@ -422,7 +422,7 @@ class ThreadBookmark private constructor(
         state = bookmarkInitialState,
         createdOn = createdOn,
         // Bookmark's siteName is the default group when creating a new bookmark
-        groupId = groupId ?: threadDescriptor.siteName()
+        groupId = groupId
       )
     }
   }

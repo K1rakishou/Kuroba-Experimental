@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.di.component.viewmodel;
 
 import com.github.k1rakishou.chan.core.di.module.viewmodel.ViewModelModule;
 import com.github.k1rakishou.chan.core.di.scope.PerViewModel;
+import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupSettingsControllerViewModel;
 import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel;
 import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorControllerViewModel;
 import com.github.k1rakishou.chan.features.filters.FiltersControllerViewModel;
@@ -36,6 +37,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(CompositeCatalogsSetupControllerViewModel compositeCatalogsSetupControllerViewModel);
     public abstract void inject(FiltersControllerViewModel filtersControllerViewModel);
     public abstract void inject(FilterBoardSelectorControllerViewModel filterBoardSelectorControllerViewModel);
+    public abstract void inject(BookmarkGroupSettingsControllerViewModel bookmarkGroupSettingsControllerViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

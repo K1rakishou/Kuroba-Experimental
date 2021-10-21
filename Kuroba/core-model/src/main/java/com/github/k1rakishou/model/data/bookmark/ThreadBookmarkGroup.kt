@@ -9,12 +9,19 @@ class ThreadBookmarkGroup(
   @set:Synchronized
   var isExpanded: Boolean,
   @get:Synchronized
-  val groupOrder: Int,
+  @set:Synchronized
+  var groupOrder: Int,
   // Map<ThreadBookmarkGroupEntryDatabaseId, ThreadBookmarkGroupEntry>
   private val entries: MutableMap<Long, ThreadBookmarkGroupEntry>,
   // List<ThreadBookmarkGroupEntryDatabaseId>
   private val orders: MutableList<Long>
 ) {
+
+  @Synchronized
+  fun getBookmarkDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
+    return entries.values
+      .map { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.threadDescriptor }
+  }
 
   @Synchronized
   fun iterateEntriesOrderedWhile(iterator: (Int, ThreadBookmarkGroupEntry) -> Boolean) {
@@ -116,12 +123,12 @@ class ThreadBookmarkGroup(
       ?: return false
 
     val fromIndex = orders.indexOfFirst { databaseId -> databaseId == fromDatabaseId }
-    if (fromIndex < 0 || fromIndex > orders.lastIndex) {
+    if (fromIndex < 0) {
       return false
     }
 
     val toIndex = orders.indexOfFirst { databaseId -> databaseId == toDatabaseId }
-    if (toIndex < 0 || toIndex > orders.lastIndex) {
+    if (toIndex < 0) {
       return false
     }
 
@@ -141,11 +148,15 @@ class ThreadBookmarkGroupEntry(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor
 )
 
+class SimpleThreadBookmarkGroupToCreate(
+  val groupName: String,
+  val entries: List<ChanDescriptor.ThreadDescriptor> = mutableListOf()
+)
+
 class ThreadBookmarkGroupToCreate(
   val groupId: String,
   val groupName: String,
   val isExpanded: Boolean,
-  val needCreate: Boolean,
   val groupOrder: Int,
   val entries: MutableList<ThreadBookmarkGroupEntryToCreate> = mutableListOf()
 ) {
@@ -158,7 +169,7 @@ class ThreadBookmarkGroupToCreate(
 
   override fun toString(): String {
     return "ThreadBookmarkGroupToCreate(groupId='$groupId', groupName='$groupName', " +
-      "isExpanded=$isExpanded, needCreate=$needCreate, groupOrder=$groupOrder, entriesCount=${entries.size})"
+      "isExpanded=$isExpanded, groupOrder=$groupOrder, entriesCount=${entries.size})"
   }
 }
 

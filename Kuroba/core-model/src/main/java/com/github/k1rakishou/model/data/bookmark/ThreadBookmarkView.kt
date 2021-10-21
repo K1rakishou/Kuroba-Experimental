@@ -10,7 +10,7 @@ import kotlin.math.max
 
 class ThreadBookmarkView private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-  val groupId: String,
+  val groupId: String?,
   val seenPostsCount: Int = 0,
   val totalPostsCount: Int = 0,
   val lastViewedPostNo: Long = 0,
@@ -68,7 +68,7 @@ class ThreadBookmarkView private constructor(
 
   override fun hashCode(): Int {
     var result = threadDescriptor.hashCode()
-    result = 31 * result + groupId.hashCode()
+    result = 31 * result + (groupId?.hashCode() ?: 0)
     result = 31 * result + seenPostsCount
     result = 31 * result + totalPostsCount
     result = 31 * result + lastViewedPostNo.hashCode()

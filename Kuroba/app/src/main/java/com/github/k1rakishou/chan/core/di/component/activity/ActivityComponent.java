@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
+import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupsSettingsController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksPresenter;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController;
@@ -277,6 +278,7 @@ public interface ActivityComponent {
     void inject(CreateOrUpdateFilterController createOrUpdateFilterController);
     void inject(FilterTypeSelectionController filterTypeSelectionController);
     void inject(FilterBoardSelectorController filterBoardSelectorController);
+    void inject(BookmarkGroupsSettingsController bookmarkGroupsSettingsController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

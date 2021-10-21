@@ -374,6 +374,11 @@ class BookmarksController(
       }
       .withOverflow(requireNavController())
       .withSubItem(
+        ACTION_BOOKMARK_GROUPS_SETTINGS,
+        R.string.controller_bookmarks_bookmark_groups_settings,
+        { bookmarkGroupsSettings() }
+      )
+      .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
         { bookmarksPresenter.markAllAsSeen() })
@@ -432,6 +437,14 @@ class BookmarksController(
         } else {
           bookmarksPresenter.updateReorderingMode(enterReorderingMode = true)
         }
+      }
+      BookmarksSelectionHelper.BookmarksMenuItemType.MoveToGroup -> {
+        val controller = BookmarkGroupsSettingsController(
+          context = context,
+          bookmarksToMove = selectedItems,
+          refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
+        )
+        presentController(controller)
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.Download -> {
         val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
@@ -591,6 +604,15 @@ class BookmarksController(
       epoxyRecyclerView.isVerticalScrollBarEnabled = true
       cleanupFastScroller()
     }
+  }
+
+  private fun bookmarkGroupsSettings() {
+    val controller = BookmarkGroupsSettingsController(
+      context = context,
+      refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
+    )
+
+    presentController(controller)
   }
 
   private fun onSetGridBookmarkViewWidthClicked() {
@@ -1074,5 +1096,6 @@ class BookmarksController(
     private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001
     private const val ACTION_CLEAR_ALL_BOOKMARKS = 2002
     private const val ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH = 2003
+    private const val ACTION_BOOKMARK_GROUPS_SETTINGS = 2004
   }
 }

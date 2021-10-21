@@ -32,12 +32,18 @@ class BookmarksSelectionHelper(
     )
 
     itemsList += BottomMenuPanelItem(
+      BookmarksMenuItemId(BookmarksMenuItemType.MoveToGroup),
+      R.drawable.ic_baseline_drive_file_move_24,
+      R.string.bottom_menu_item_move,
+      { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.MoveToGroup, selectedItems.toList()) }
+    )
+
+    itemsList += BottomMenuPanelItem(
       BookmarksMenuItemId(BookmarksMenuItemType.Download),
       R.drawable.ic_baseline_file_download_24,
       R.string.bottom_menu_item_download,
       { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Download, selectedItems.toList()) }
     )
-
 
     itemsList += BottomMenuPanelItem(
       BookmarksMenuItemId(BookmarksMenuItemType.Read),
@@ -53,7 +59,8 @@ class BookmarksSelectionHelper(
     Delete(0),
     Reorder(1),
     Download(2),
-    Read(3)
+    Read(3),
+    MoveToGroup(4)
   }
 
   class BookmarksMenuItemId(val bookmarksMenuItemType: BookmarksMenuItemType) : BottomMenuPanelItemId {

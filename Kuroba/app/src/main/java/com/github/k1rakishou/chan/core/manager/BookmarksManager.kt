@@ -68,13 +68,9 @@ class BookmarksManager(
     Logger.d(TAG, "BookmarksManager.initialize()")
     startListeningForAppVisibilityUpdates()
 
-    val allSiteNames = siteRegistry.SITE_CLASSES_MAP.keys
-      .map { siteDescriptor -> siteDescriptor.siteName }
-      .toSet()
-
     appScope.launch(Dispatchers.IO) {
       Logger.d(TAG, "initializeBookmarksInternal() start")
-      val time = measureTime { initializeBookmarksInternal(allSiteNames) }
+      val time = measureTime { initializeBookmarksInternal() }
       Logger.d(TAG, "initializeBookmarksInternal() end, took $time")
     }
   }
@@ -93,8 +89,8 @@ class BookmarksManager(
     }
   }
 
-  private suspend fun initializeBookmarksInternal(allSiteNames: Set<String>) {
-    when (val bookmarksResult = bookmarksRepository.initialize(allSiteNames)) {
+  private suspend fun initializeBookmarksInternal() {
+    when (val bookmarksResult = bookmarksRepository.initialize()) {
       is ModularResult.Value -> {
         lock.write {
           bookmarks.clear()
@@ -250,6 +246,7 @@ class BookmarksManager(
         val threadBookmark = ThreadBookmark.create(
           threadDescriptor = threadDescriptor,
           createdOn = DateTime.now(),
+          groupId = simpleThreadBookmark.groupId,
           initialFlags = initialFlags
         ).apply {
           this.title = title
@@ -711,7 +708,8 @@ class BookmarksManager(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val title: String? = null,
     val thumbnailUrl: HttpUrl? = null,
-    val initialFlags: BitSet? = null
+    val initialFlags: BitSet? = null,
+    val groupId: String? = null
   )
 
   @DoNotStrip

@@ -20,6 +20,9 @@ abstract class ThreadBookmarkGroupDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun createGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
 
+  @Update(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun updateGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
+
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   abstract suspend fun insertMany(threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>): List<Long>
 
@@ -36,10 +39,17 @@ abstract class ThreadBookmarkGroupDao {
     GROUP BY groups.${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}
     ORDER BY groups.${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
   """)
-  abstract suspend fun selectAll(): List<ThreadBookmarkGroupWithEntries>
+  abstract suspend fun selectGroupsWithEntries(): List<ThreadBookmarkGroupWithEntries>
 
   @Query("SELECT * FROM ${ThreadBookmarkGroupEntity.TABLE_NAME}")
   abstract suspend fun selectAllGroups(): List<ThreadBookmarkGroupEntity>
+
+  @Query("""
+    SELECT ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}
+    FROM ${ThreadBookmarkGroupEntity.TABLE_NAME}
+    WHERE ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} IN (:groupIds)
+  """)
+  abstract suspend fun selectExistingGroupIds(groupIds: Collection<String>): List<String>
 
   @Query("""
     SELECT 
@@ -69,4 +79,11 @@ abstract class ThreadBookmarkGroupDao {
     WHERE ${ThreadBookmarkGroupEntryEntity.ID_COLUMN_NAME} IN (:databaseIdsToDelete)
   """)
   abstract suspend fun deleteBookmarkEntries(databaseIdsToDelete: Collection<Long>)
+
+  @Query("""
+    DELETE
+    FROM ${ThreadBookmarkGroupEntity.TABLE_NAME}
+    WHERE ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME} = :groupId
+  """)
+  abstract suspend fun deleteGroup(groupId: String)
 }
