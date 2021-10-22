@@ -76,7 +76,7 @@ class FilterEngine @Inject constructor(
       val end = matcher.end()
 
       // Avoid empty keywords and some bugged patterns
-      if (end >= start) {
+      if (start >= end) {
         continue
       }
 

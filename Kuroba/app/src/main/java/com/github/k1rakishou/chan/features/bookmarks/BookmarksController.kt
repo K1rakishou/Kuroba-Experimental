@@ -382,11 +382,6 @@ class BookmarksController(
         { restartFilterWatcherClicked() }
       )
       .withSubItem(
-        ACTION_BOOKMARK_GROUPS_SETTINGS,
-        R.string.controller_bookmarks_bookmark_groups_settings,
-        { bookmarkGroupsSettings() }
-      )
-      .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
         { bookmarksPresenter.markAllAsSeen() })
@@ -394,6 +389,11 @@ class BookmarksController(
         ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
         R.string.controller_bookmarks_prune_inactive_bookmarks,
         { subItem -> onPruneNonActiveBookmarksClicked(subItem) }
+      )
+      .withSubItem(
+        ACTION_BOOKMARK_GROUPS_SETTINGS,
+        R.string.controller_bookmarks_bookmark_groups_settings,
+        { bookmarkGroupsSettings() }
       )
       .withSubItem(
         ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
