@@ -38,7 +38,6 @@ object ThreadBookmarkGroupMapper {
         )
       }
       .associateBy { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.databaseId }
-      .toMutableMap()
 
     val orders = threadBookmarkGroupEntryEntities
       .sortedBy { threadBookmarkGroupEntryEntity -> threadBookmarkGroupEntryEntity.orderInGroup }
@@ -49,8 +48,8 @@ object ThreadBookmarkGroupMapper {
       groupName = threadBookmarkGroupEntity.groupName,
       isExpanded = threadBookmarkGroupEntity.isExpanded,
       groupOrder = threadBookmarkGroupEntity.groupOrder,
-      entries = threadBookmarkGroupEntries,
-      orders = orders.toMutableList()
+      newEntries = threadBookmarkGroupEntries,
+      newOrders = orders
     )
   }
 

@@ -20,6 +20,7 @@ import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
@@ -44,7 +45,7 @@ class BookmarksManager(
   private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>
 ) {
   private val lock = ReentrantReadWriteLock()
-  private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = 128)
+  private val bookmarksChangeFlow = MutableSharedFlow<BookmarkChange>(extraBufferCapacity = Channel.UNLIMITED)
   private val threadIsFetchingEventsSubject = PublishProcessor.create<ChanDescriptor.ThreadDescriptor>()
 
   private val persistBookmarksExecutor = SerializedCoroutineExecutor(appScope)
@@ -204,9 +205,11 @@ class BookmarksManager(
   }
 
   /**
-   * Creates bookmarks and persist them right away.
+   * A special method for creating bookmarks that is used by filter watcher. It creates bookmarks,
+   * persists them but does not emit the BookmarkChange event because, instead of auto-creating
+   * bookmark groups, we want to create them manually in this particular case.
    * */
-  suspend fun createBookmarksSuspend(simpleThreadBookmarkList: List<SimpleThreadBookmark>): Boolean {
+  suspend fun createBookmarksForFilterWatcher(simpleThreadBookmarkList: List<SimpleThreadBookmark>): Boolean {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
     val actuallyCreated = createBookmarksInternal(simpleThreadBookmarkList)
@@ -215,10 +218,20 @@ class BookmarksManager(
     }
 
     persistBookmarksInternal()
-    bookmarksChangeFlow.emit(BookmarkChange.BookmarksCreated(actuallyCreated))
+    // Do not emit BookmarkChange here because we want to manually create groups
 
     Logger.d(TAG, "Bookmarks created (${actuallyCreated.size})")
     return true
+  }
+
+  suspend fun emitBookmarksCreatedEventForFilterWatcher(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+  ) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
+
+    bookmarksChangeFlow.emit(BookmarkChange.BookmarksCreated(threadDescriptors))
   }
 
   private fun createBookmarksInternal(
@@ -246,7 +259,6 @@ class BookmarksManager(
         val threadBookmark = ThreadBookmark.create(
           threadDescriptor = threadDescriptor,
           createdOn = DateTime.now(),
-          groupId = simpleThreadBookmark.groupId,
           initialFlags = initialFlags
         ).apply {
           this.title = title
@@ -708,8 +720,7 @@ class BookmarksManager(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val title: String? = null,
     val thumbnailUrl: HttpUrl? = null,
-    val initialFlags: BitSet? = null,
-    val groupId: String? = null
+    val initialFlags: BitSet? = null
   )
 
   @DoNotStrip

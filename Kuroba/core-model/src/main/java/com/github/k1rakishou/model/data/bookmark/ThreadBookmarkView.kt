@@ -10,7 +10,6 @@ import kotlin.math.max
 
 class ThreadBookmarkView private constructor(
   val threadDescriptor: ChanDescriptor.ThreadDescriptor,
-  val groupId: String?,
   val seenPostsCount: Int = 0,
   val totalPostsCount: Int = 0,
   val lastViewedPostNo: Long = 0,
@@ -48,7 +47,6 @@ class ThreadBookmarkView private constructor(
     other as ThreadBookmarkView
 
     if (threadDescriptor != other.threadDescriptor) return false
-    if (groupId != other.groupId) return false
     if (seenPostsCount != other.seenPostsCount) return false
     if (totalPostsCount != other.totalPostsCount) return false
     if (lastViewedPostNo != other.lastViewedPostNo) return false
@@ -68,7 +66,6 @@ class ThreadBookmarkView private constructor(
 
   override fun hashCode(): Int {
     var result = threadDescriptor.hashCode()
-    result = 31 * result + (groupId?.hashCode() ?: 0)
     result = 31 * result + seenPostsCount
     result = 31 * result + totalPostsCount
     result = 31 * result + lastViewedPostNo.hashCode()
@@ -83,7 +80,7 @@ class ThreadBookmarkView private constructor(
   }
 
   override fun toString(): String {
-    return "ThreadBookmarkView(threadDescriptor=$threadDescriptor, groupId=$groupId, seenPostsCount=$seenPostsCount, " +
+    return "ThreadBookmarkView(threadDescriptor=$threadDescriptor, seenPostsCount=$seenPostsCount, " +
       "totalPostsCount=$totalPostsCount, lastViewedPostNo=$lastViewedPostNo, threadLastPostNo=$threadLastPostNo" +
       "threadBookmarkReplyViews=$threadBookmarkReplyViews, title=${title?.take(20)}, " +
       "thumbnailUrl=$thumbnailUrl, stickyThread=$stickyThread, state=$state, createdOn=$createdOn)"
@@ -113,7 +110,6 @@ class ThreadBookmarkView private constructor(
     fun fromThreadBookmark(threadBookmark: ThreadBookmark): ThreadBookmarkView {
       return ThreadBookmarkView(
         threadDescriptor = threadBookmark.threadDescriptor,
-        groupId = threadBookmark.groupId,
         seenPostsCount = threadBookmark.seenPostsCount,
         totalPostsCount = threadBookmark.threadRepliesCount,
         lastViewedPostNo = threadBookmark.lastViewedPostNo,

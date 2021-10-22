@@ -166,6 +166,14 @@ class BookmarkGroupsSettingsController(
                 bookmarkGroupClicked = { groupId -> bookmarkGroupClicked(groupId) },
                 removeBookmarkGroupClicked = { groupId ->
                   mainScope.launch { viewModel.removeBookmarkGroup(groupId) }
+                },
+                bookmarkGroupSettingsClicked = { groupId ->
+                  val controller = BookmarkGroupPatternSettings(
+                    context = context,
+                    bookmarkGroupId = groupId
+                  )
+
+                  presentController(controller)
                 }
               )
             }
@@ -252,12 +260,14 @@ class BookmarkGroupsSettingsController(
     threadBookmarkGroupItem: BookmarkGroupSettingsControllerViewModel.ThreadBookmarkGroupItem,
     reoderableState: ReorderableState,
     bookmarkGroupClicked: (String) -> Unit,
+    bookmarkGroupSettingsClicked: (String) -> Unit,
     removeBookmarkGroupClicked: (String) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
     val groupId = threadBookmarkGroupItem.groupId
     val removeBoardClickedRemembered = rememberUpdatedState(newValue = removeBookmarkGroupClicked)
     val bookmarkGroupClickedRemembered = rememberUpdatedState(newValue = bookmarkGroupClicked)
+    val bookmarkGroupSettingsClickedRemembered = rememberUpdatedState(newValue = bookmarkGroupSettingsClicked)
 
     val modifier = if (isBookmarkMoveMode) {
       Modifier.kurobaClickable(
@@ -281,7 +291,7 @@ class BookmarkGroupsSettingsController(
           KurobaComposeIcon(
             modifier = Modifier
               .size(32.dp)
-              .padding(start = 8.dp)
+              .padding(horizontal = 8.dp)
               .align(Alignment.CenterVertically)
               .kurobaClickable(
                 bounded = false,
@@ -316,8 +326,23 @@ class BookmarkGroupsSettingsController(
             modifier = Modifier
               .size(32.dp)
               .align(Alignment.CenterVertically)
+              .padding(horizontal = 8.dp)
+              .kurobaClickable(
+                bounded = false,
+                onClick = { bookmarkGroupSettingsClickedRemembered.value.invoke(groupId) }
+              ),
+            drawableId = R.drawable.ic_settings_white_24dp,
+            themeEngine = themeEngine
+          )
+
+          Spacer(modifier = Modifier.width(8.dp))
+
+          KurobaComposeIcon(
+            modifier = Modifier
+              .size(32.dp)
+              .align(Alignment.CenterVertically)
               .detectReorder(reoderableState)
-              .padding(end = 8.dp),
+              .padding(horizontal = 8.dp),
             drawableId = R.drawable.ic_baseline_reorder_24,
             themeEngine = themeEngine
           )

@@ -329,7 +329,6 @@ class BookmarksPresenter(
 
           return@mapNotNullAllBookmarks ThreadBookmarkItemView(
             threadDescriptor = threadBookmarkView.threadDescriptor,
-            groupId = threadBookmarkView.groupId ?: ThreadBookmarkGroupManager.DEFAULT_GROUP_ID,
             title = title,
             highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
             thumbnailUrl = threadBookmarkView.thumbnailUrl,

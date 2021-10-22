@@ -19,18 +19,10 @@ import java.util.*
       childColumns = [ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME],
       onDelete = ForeignKey.CASCADE,
       onUpdate = ForeignKey.CASCADE
-    ),
-    ForeignKey(
-      entity = ThreadBookmarkGroupEntity::class,
-      parentColumns = [ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME],
-      childColumns = [ThreadBookmarkEntity.OWNER_GROUP_ID_COLUMN_NAME],
-      onDelete = ForeignKey.SET_NULL,
-      onUpdate = ForeignKey.CASCADE
     )
   ],
   indices = [
     Index(ThreadBookmarkEntity.CREATED_ON_COLUMN_NAME),
-    Index(ThreadBookmarkEntity.OWNER_GROUP_ID_COLUMN_NAME),
     Index(
       value = [ThreadBookmarkEntity.OWNER_THREAD_ID_COLUMN_NAME],
       unique = true
@@ -43,8 +35,6 @@ data class ThreadBookmarkEntity(
   var threadBookmarkId: Long = 0L,
   @ColumnInfo(name = OWNER_THREAD_ID_COLUMN_NAME)
   val ownerThreadId: Long = 0L,
-  @ColumnInfo(name = OWNER_GROUP_ID_COLUMN_NAME)
-  val ownerGroupId: String?,
   @ColumnInfo(name = SEEN_POSTS_COUNT_COLUMN_NAME)
   val seenPostsCount: Int = -1,
   @ColumnInfo(name = TOTAL_POSTS_COUNT_COLUMN_NAME)
@@ -68,7 +58,6 @@ data class ThreadBookmarkEntity(
 
     const val THREAD_BOOKMARK_ID_COLUMN_NAME = "thread_bookmark_id"
     const val OWNER_THREAD_ID_COLUMN_NAME = "owner_thread_id"
-    const val OWNER_GROUP_ID_COLUMN_NAME = "owner_group_id"
     const val SEEN_POSTS_COUNT_COLUMN_NAME = "seen_posts_count"
     const val TOTAL_POSTS_COUNT_COLUMN_NAME = "total_posts_count"
     const val LAST_VIEWED_POST_NO_COLUMN_NAME = "last_viewed_post_no"

@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
+import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettings;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupsSettingsController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksPresenter;
@@ -16,11 +17,9 @@ import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyGridThreadBookma
 import com.github.k1rakishou.chan.features.bookmarks.epoxy.EpoxyListThreadBookmarkViewHolder;
 import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController;
 import com.github.k1rakishou.chan.features.drawer.MainController;
-import com.github.k1rakishou.chan.features.drawer.MainControllerViewModel;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryGridEntryView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryHeaderView;
 import com.github.k1rakishou.chan.features.drawer.epoxy.EpoxyHistoryListEntryView;
-import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController;
 import com.github.k1rakishou.chan.features.filters.CreateOrUpdateFilterController;
 import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorController;
 import com.github.k1rakishou.chan.features.filters.FilterTypeSelectionController;
@@ -257,7 +256,6 @@ public interface ActivityComponent {
     void inject(SelectBoardForSearchController selectBoardForSearchController);
     void inject(SiteFirewallBypassController siteFirewallBypassController);
     void inject(TabHostController tabHostController);
-    void inject(FilterWatchesController filterWatchesController);
     void inject(ImageSaverV2OptionsController imageSaverV2OptionsController);
     void inject(ResolveDuplicateImagesController resolveDuplicateImagesController);
     void inject(KurobaAlertDialogHostController kurobaAlertDialogHostController);
@@ -279,6 +277,8 @@ public interface ActivityComponent {
     void inject(FilterTypeSelectionController filterTypeSelectionController);
     void inject(FilterBoardSelectorController filterBoardSelectorController);
     void inject(BookmarkGroupsSettingsController bookmarkGroupsSettingsController);
+    void inject(BookmarkGroupPatternSettings bookmarkGroupPatternSettings);
+    void inject(KurobaAlertController kurobaAlertController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);
@@ -361,7 +361,6 @@ public interface ActivityComponent {
     void inject(MediaViewerRootLayout mediaViewerRootLayout);
     void inject(BookmarksPresenter bookmarksPresenter);
     void inject(BaseThreadBookmarkViewHolder baseThreadBookmarkViewHolder);
-    void inject(MainControllerViewModel mainControllerViewModel);
     void inject(AdjustAndroid10GestureZonesView adjustAndroid10GestureZonesView);
     void inject(SettingsCoordinator settingsCoordinator);
     void inject(JsCaptchaCookiesEditorLayout jsCaptchaCookiesEditorLayout);
@@ -390,7 +389,6 @@ public interface ActivityComponent {
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);
     void inject(ToolbarMenuItem toolbarMenuItem);
-    void inject(KurobaAlertController kurobaAlertController);
     void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
     void inject(ThumbnailMediaView thumbnailMediaView);
     void inject(FullImageMediaView fullImageMediaView);

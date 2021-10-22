@@ -1,6 +1,10 @@
 package com.github.k1rakishou.model.data.bookmark
 
+import com.github.k1rakishou.common.hashSetWithCap
+import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import java.util.concurrent.atomic.AtomicLong
 
 class ThreadBookmarkGroup(
   val groupId: String,
@@ -11,11 +15,77 @@ class ThreadBookmarkGroup(
   @get:Synchronized
   @set:Synchronized
   var groupOrder: Int,
-  // Map<ThreadBookmarkGroupEntryDatabaseId, ThreadBookmarkGroupEntry>
-  private val entries: MutableMap<Long, ThreadBookmarkGroupEntry>,
-  // List<ThreadBookmarkGroupEntryDatabaseId>
-  private val orders: MutableList<Long>
+  newEntries: Map<Long, ThreadBookmarkGroupEntry> = emptyMap(),
+  newOrders: List<Long> = emptyList()
 ) {
+  // Map<ThreadBookmarkGroupEntryDatabaseId, ThreadBookmarkGroupEntry>
+  private val entries: MutableMap<Long, ThreadBookmarkGroupEntry> = mutableMapWithCap(16)
+  // List<ThreadBookmarkGroupEntryDatabaseId>
+  private val orders: MutableList<Long> = mutableListWithCap(16)
+  private val fastLookupDescriptorSet: MutableSet<ChanDescriptor.ThreadDescriptor> = hashSetWithCap(16)
+
+  init {
+    entries.clear()
+    entries.putAll(newEntries)
+
+    orders.clear()
+    orders.addAll(newOrders)
+
+    fastLookupDescriptorSet.clear()
+
+    entries.values.forEach { threadBookmarkGroupEntry ->
+      fastLookupDescriptorSet.add(threadBookmarkGroupEntry.threadDescriptor)
+    }
+  }
+
+  @Synchronized
+  fun removeThreadBookmarkGroupEntry(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry) {
+    entries.remove(threadBookmarkGroupEntry.databaseId)
+    fastLookupDescriptorSet.remove(threadBookmarkGroupEntry.threadDescriptor)
+    orders.remove(threadBookmarkGroupEntry.databaseId)
+
+    checkConsistency()
+  }
+
+  @Synchronized
+  fun addThreadBookmarkGroupEntry(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry) {
+    entries[threadBookmarkGroupEntry.databaseId] = threadBookmarkGroupEntry
+    fastLookupDescriptorSet.add(threadBookmarkGroupEntry.threadDescriptor)
+
+    val existingIndex = orders.indexOf(threadBookmarkGroupEntry.databaseId)
+    if (existingIndex < 0) {
+      orders.add(threadBookmarkGroupEntry.databaseId)
+    }
+  }
+
+  @Synchronized
+  fun addThreadBookmarkGroupEntry(
+    reserveDBId: Long,
+    threadBookmarkGroupEntry: ThreadBookmarkGroupEntry,
+    orderInGroup: Int
+  ) {
+    entries[threadBookmarkGroupEntry.databaseId] = threadBookmarkGroupEntry
+    fastLookupDescriptorSet.add(threadBookmarkGroupEntry.threadDescriptor)
+
+    if (orders[orderInGroup] != reserveDBId) {
+      error("Inconsistency detected! expected=${reserveDBId}, actual=${orders[orderInGroup]}")
+    }
+
+    orders[orderInGroup] = threadBookmarkGroupEntry.databaseId
+  }
+
+  @Synchronized
+  fun contains(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
+    return fastLookupDescriptorSet.contains(threadDescriptor)
+  }
+
+  @Synchronized
+  fun getGroupEntryByThreadDescriptor(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ThreadBookmarkGroupEntry? {
+    return entries.values
+      .firstOrNull { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.threadDescriptor == threadDescriptor }
+  }
 
   @Synchronized
   fun getBookmarkDescriptors(): List<ChanDescriptor.ThreadDescriptor> {
@@ -40,70 +110,28 @@ class ThreadBookmarkGroup(
   }
 
   @Synchronized
-  fun removeThreadBookmarkGroupEntry(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry) {
-    entries.remove(threadBookmarkGroupEntry.databaseId)
-    removeDatabaseId(threadBookmarkGroupEntry.databaseId)
-
-    checkConsistency()
-  }
-
-  @Synchronized
-  fun addThreadBookmarkGroupEntry(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry) {
-    entries[threadBookmarkGroupEntry.databaseId] = threadBookmarkGroupEntry
-    addDatabaseId(threadBookmarkGroupEntry.databaseId)
-  }
-
-  @Synchronized
-  fun addThreadBookmarkGroupEntry(threadBookmarkGroupEntry: ThreadBookmarkGroupEntry, orderInGroup: Int) {
-    entries[threadBookmarkGroupEntry.databaseId] = threadBookmarkGroupEntry
-
-    check(orders[orderInGroup] == RESERVE_DB_ID) {
-      "Inconsistency detected! orders[orderInGroup]=${orders[orderInGroup]}"
-    }
-
-    orders[orderInGroup] = threadBookmarkGroupEntry.databaseId
-  }
-
-  @Synchronized
   fun getEntriesCount(): Int = entries.size
 
   @Synchronized
-  fun containsEntryWithThreadDescriptor(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
-    return entries
-      .values
-      .any { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.threadDescriptor == threadDescriptor }
-  }
-
-  @Synchronized
-  private fun removeDatabaseId(databaseId: Long) {
-    orders.remove(databaseId)
-  }
-
-  @Synchronized
-  private fun addDatabaseId(newDatabaseId: Long) {
-    val index = orders.indexOf(newDatabaseId)
-    if (index >= 0) {
-      return
-    }
-
-    orders.add(newDatabaseId)
-  }
-
-  @Synchronized
-  fun reserveSpaceForBookmarkOrder(): Int {
-    orders.add(RESERVE_DB_ID)
+  fun reserveSpaceForBookmarkOrder(reserveDBId: Long): Int {
+    orders.add(reserveDBId)
     return orders.lastIndex
   }
 
   @Synchronized
-  fun removeTemporaryOrders() {
-    orders.removeAll { order -> order == RESERVE_DB_ID }
+  fun removeTemporaryOrders(reserveDBId: Long) {
+    require(reserveDBId < 0) { "Unexpected: reserveDBId: $reserveDBId" }
+
+    orders.removeAll { order -> order == reserveDBId }
   }
 
   @Synchronized
   fun checkConsistency() {
     check(entries.size == orders.size) {
       "Inconsistency detected! entries.size=${entries.size}, orders.size=${orders.size}"
+    }
+    check(entries.size == fastLookupDescriptorSet.size) {
+      "Inconsistency detected! entries.size=${entries.size}, fastLookupDescriptorSet.size=${fastLookupDescriptorSet.size}"
     }
   }
 
@@ -136,24 +164,63 @@ class ThreadBookmarkGroup(
     return true
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ThreadBookmarkGroup
+
+    if (groupId != other.groupId) return false
+    if (groupName != other.groupName) return false
+    if (isExpanded != other.isExpanded) return false
+    if (groupOrder != other.groupOrder) return false
+    if (entries != other.entries) return false
+    if (orders != other.orders) return false
+    if (fastLookupDescriptorSet != other.fastLookupDescriptorSet) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = groupId.hashCode()
+    result = 31 * result + groupName.hashCode()
+    result = 31 * result + isExpanded.hashCode()
+    result = 31 * result + groupOrder
+    result = 31 * result + entries.hashCode()
+    result = 31 * result + orders.hashCode()
+    result = 31 * result + fastLookupDescriptorSet.hashCode()
+    return result
+  }
+
+  override fun toString(): String {
+    return "ThreadBookmarkGroup(groupId='$groupId', groupName='$groupName', " +
+      "isExpanded=$isExpanded, groupOrder=$groupOrder, entriesCount=${entries.size}, " +
+      "ordersCount=${orders.size}, fastLookupDescriptorSetCount=${fastLookupDescriptorSet.size})"
+  }
+
   companion object {
-    const val RESERVE_DB_ID = -1L
+    private val RESERVE_DB_ID = AtomicLong(-1L)
+
+    fun nextReserveDBId(): Long {
+      return RESERVE_DB_ID.getAndAdd(-1)
+    }
   }
 }
 
-class ThreadBookmarkGroupEntry(
+data class ThreadBookmarkGroupEntry(
   val databaseId: Long,
   val ownerGroupId: String,
   val ownerBookmarkId: Long,
   val threadDescriptor: ChanDescriptor.ThreadDescriptor
 )
 
-class SimpleThreadBookmarkGroupToCreate(
+data class SimpleThreadBookmarkGroupToCreate(
   val groupName: String,
   val entries: List<ChanDescriptor.ThreadDescriptor> = mutableListOf()
 )
 
 class ThreadBookmarkGroupToCreate(
+  val reserveDBId: Long,
   val groupId: String,
   val groupName: String,
   val isExpanded: Boolean,
@@ -173,7 +240,7 @@ class ThreadBookmarkGroupToCreate(
   }
 }
 
-class ThreadBookmarkGroupEntryToCreate(
+data class ThreadBookmarkGroupEntryToCreate(
   @get:Synchronized
   @set:Synchronized
   var databaseId: Long = -1L,

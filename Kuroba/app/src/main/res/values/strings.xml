@@ -964,11 +964,13 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
     <string name="controller_bookmarks_create_bookmark_group">Create bookmark group</string>
     <string name="controller_bookmarks_bookmark_groups_settings">Bookmark groups settings</string>
+    <string name="controller_bookmarks_restart_filter_watcher">Restart filter watcher</string>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
     <string name="controller_bookmarks_watcher_disabled">(Watcher disabled)</string>
     <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
+    <string name="controller_bookmarks_filter_watcher_restarted">Filter watcher restarted. Wait 5–10 seconds for the threads to get updated</string>
 
     <string name="controller_filter_watches">Filter watches</string>
 
@@ -1300,7 +1302,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="saved_posts_tab_title">My posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
-    <string name="filter_watches_tab_title">Filter watches</string>
 
     <string name="share_success_start">New media share intent, processing…</string>
     <string name="share_is_in_progress">Share is already in progress</string>

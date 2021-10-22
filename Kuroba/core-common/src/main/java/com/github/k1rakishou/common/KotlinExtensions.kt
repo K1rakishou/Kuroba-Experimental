@@ -535,7 +535,7 @@ inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index
   return mapReverseIndexedNotNullTo(ArrayList<R>(), transform)
 }
 
-public fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector: (T) -> K): HashSet<K> {
+public inline fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector: (T) -> K): HashSet<K> {
   val hashSet = hashSetWithCap<K>(capacity)
 
   for (element in this) {

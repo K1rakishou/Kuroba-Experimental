@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
-import com.github.k1rakishou.chan.features.filter_watches.FilterWatchesController
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTabLayout
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -68,12 +67,6 @@ class TabHostController(
         .setText(context.getString(R.string.bookmarks_tab_title))
         .setTag(PageType.Bookmarks),
       pageType == PageType.Bookmarks
-    )
-    tabLayout.addTab(
-      tabLayout.newTab()
-        .setText(context.getString(R.string.filter_watches_tab_title))
-        .setTag(PageType.FilterWatches),
-      pageType == PageType.FilterWatches
     )
 
     tabLayout.addOnTabSelectedListener(simpleOnTabSelectedListener)
@@ -189,12 +182,6 @@ class TabHostController(
             startActivityCallback = startActivityCallback
           )
         }
-        PageType.FilterWatches -> {
-          FilterWatchesController(
-            context = context,
-            startActivityCallback = startActivityCallback
-          )
-        }
       }
     }
 
@@ -233,15 +220,13 @@ class TabHostController(
    * */
   enum class PageType(val pageIndex: Int) {
     SavedPosts(0),
-    Bookmarks(1),
-    FilterWatches(2);
+    Bookmarks(1);
 
     companion object {
       fun fromInt(value: Int): PageType {
         return when (value) {
           0 -> SavedPosts
           1 -> Bookmarks
-          2 -> FilterWatches
           else -> Bookmarks
         }
       }

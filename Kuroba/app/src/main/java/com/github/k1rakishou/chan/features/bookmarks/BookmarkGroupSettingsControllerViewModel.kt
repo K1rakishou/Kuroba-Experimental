@@ -76,13 +76,6 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
 
     if (removeResult.valueOrNull() == true) {
       if (prevBookmarkDescriptorsInGroup.isNotEmpty()) {
-        bookmarksManager.updateBookmarksNoPersist(prevBookmarkDescriptorsInGroup) { threadBookmarkView ->
-          if (threadBookmarkView.groupId == groupId) {
-            threadBookmarkView.groupId = ThreadBookmarkGroupManager.DEFAULT_GROUP_ID
-          }
-        }
-
-        bookmarksManager.persistBookmarksManually(prevBookmarkDescriptorsInGroup)
         threadBookmarkGroupManager.createGroupEntries(prevBookmarkDescriptorsInGroup)
       }
 
