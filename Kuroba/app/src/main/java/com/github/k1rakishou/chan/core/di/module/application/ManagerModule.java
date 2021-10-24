@@ -81,6 +81,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
@@ -584,14 +585,16 @@ public class ManagerModule {
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
             Lazy<ThreadBookmarkGroupRepository> threadBookmarkGroupEntryRepository,
-            Lazy<BookmarksManager> bookmarksManager
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<GetThreadBookmarkGroupIdsUseCase> getThreadBookmarkGroupIdsUseCase
     ) {
         Logger.deps("ThreadBookmarkGroupManager");
         return new ThreadBookmarkGroupManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
                 threadBookmarkGroupEntryRepository,
-                bookmarksManager
+                bookmarksManager,
+                getThreadBookmarkGroupIdsUseCase
         );
     }
 

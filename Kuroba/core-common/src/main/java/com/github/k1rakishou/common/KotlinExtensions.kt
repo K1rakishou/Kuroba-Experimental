@@ -58,6 +58,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.InterruptedIOException
+import java.lang.Thread.currentThread
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -1373,4 +1374,38 @@ fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
   }
 
   return true
+}
+
+fun Thread.callStack(): String {
+  val resultString = java.lang.StringBuilder(256)
+  var index = 0
+
+  for (ste in currentThread().stackTrace) {
+    val className = ste?.className ?: continue
+    val fileName = ste?.fileName ?: continue
+    val methodName = ste?.methodName ?: continue
+    val lineNumber = ste?.lineNumber ?: continue
+
+    if (!className.startsWith("com.github.k1rakishou")) {
+      continue
+    }
+
+    if (fileName.contains("KotlinExtensions.kt") && methodName.contains("callStack")) {
+      continue
+    }
+
+    if (index > 0) {
+      resultString.appendLine()
+    }
+
+    resultString.append("[${fileName}:${lineNumber}]")
+    resultString.append(" ")
+    resultString.append(className)
+    resultString.append("#")
+    resultString.append(methodName)
+
+    ++index
+  }
+
+  return resultString.toString()
 }

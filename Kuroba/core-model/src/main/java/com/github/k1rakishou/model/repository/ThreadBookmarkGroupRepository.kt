@@ -59,18 +59,34 @@ class ThreadBookmarkGroupRepository(
     }
   }
 
-  suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
+  suspend fun executeCreateAndDeleteTransactions(
+    createTransaction: CreateBookmarkGroupEntriesTransaction,
+    deleteTransaction: DeleteBookmarkGroupEntriesTransaction
+  ): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        localSource.updateGroup(group)
+        localSource.executeCreateTransaction(createTransaction)
+        localSource.executeDeleteTransaction(deleteTransaction)
       }
     }
   }
 
-  suspend fun updateGroupOrders(groups: List<ThreadBookmarkGroup>): ModularResult<Unit> {
+  suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
+    return updateGroups(listOf(group))
+  }
+
+  suspend fun updateGroups(groups: List<ThreadBookmarkGroup>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        localSource.updateGroupOrders(groups)
+        localSource.updateGroups(groups)
+      }
+    }
+  }
+
+  suspend fun updateGroupEntries(groups: List<ThreadBookmarkGroup>): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.updateGroupEntries(groups)
       }
     }
   }

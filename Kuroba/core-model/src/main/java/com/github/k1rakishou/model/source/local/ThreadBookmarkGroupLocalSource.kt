@@ -11,9 +11,11 @@ import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntity
 import com.github.k1rakishou.model.mapper.ThreadBookmarkGroupMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
+import com.squareup.moshi.Moshi
 
 class ThreadBookmarkGroupLocalSource(
   database: KurobaDatabase,
+  private val moshi: Moshi,
   private val isDevFlavor: Boolean,
   private val chanDescriptorCache: ChanDescriptorCache
 ) : AbstractLocalSource(database) {
@@ -47,6 +49,7 @@ class ThreadBookmarkGroupLocalSource(
           ?: emptyList()
 
         return@map ThreadBookmarkGroupMapper.fromEntity(
+          moshi = moshi,
           threadBookmarkGroupEntity = threadBookmarkGroupEntity,
           threadBookmarkGroupEntryEntities = threadBookmarkGroupWithEntries,
           bookmarkThreadDescriptorsMap = bookmarkThreadDescriptorsMap
@@ -79,13 +82,17 @@ class ThreadBookmarkGroupLocalSource(
         groupId = group.groupId,
         groupName = group.groupName,
         isExpanded = group.isExpanded,
-        groupOrder = group.groupOrder
+        groupOrder = group.groupOrder,
+        groupMatcherPattern = ThreadBookmarkGroupMapper.matchingPatternToEntity(
+          moshi = moshi,
+          matchingPattern = group.matchingPattern
+        )
       )
     }
 
     groupsToCreate
       .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-      .forEach { chunk -> threadBookmarkGroupDao.createGroups(chunk) }
+      .forEach { chunk -> threadBookmarkGroupDao.insertGroups(chunk) }
 
     val bookmarkEntriesToCreateMap = mutableMapOf<String, MutableList<ThreadBookmarkGroupEntryToCreate>>()
     val bookmarkThreadDescriptors = mutableListOf<ChanDescriptor.ThreadDescriptor>()
@@ -122,7 +129,7 @@ class ThreadBookmarkGroupLocalSource(
 
       val databaseIds = threadBookmarkGroupEntryEntities
         .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
-        .flatMap { chunk -> threadBookmarkGroupDao.insertMany(chunk) }
+        .flatMap { chunk -> threadBookmarkGroupDao.insertManyGroupEntries(chunk) }
 
       check(threadBookmarkGroupEntryEntities.size == databaseIds.size) {
         "Sizes do not match: " +
@@ -149,24 +156,11 @@ class ThreadBookmarkGroupLocalSource(
       .forEach { chunk -> threadBookmarkGroupDao.deleteBookmarkEntries(chunk) }
 
     deleteTransaction.toUpdate.forEach { (_, groupEntries) ->
-      threadBookmarkGroupDao.updateMany(ThreadBookmarkGroupMapper.toEntityList(groupEntries))
+      threadBookmarkGroupDao.updateManyGroupEntries(ThreadBookmarkGroupMapper.toEntityList(groupEntries))
     }
   }
 
-  suspend fun updateGroup(group: ThreadBookmarkGroup) {
-    ensureInTransaction()
-
-    val entitiesList = mutableListOf<ThreadBookmarkGroupEntryEntity>()
-
-    group.iterateEntriesOrderedWhile { order, threadBookmarkGroupEntry ->
-      entitiesList += ThreadBookmarkGroupMapper.toEntity(order, threadBookmarkGroupEntry)
-      return@iterateEntriesOrderedWhile true
-    }
-
-    threadBookmarkGroupDao.updateMany(entitiesList)
-  }
-
-  suspend fun updateGroupOrders(groups: List<ThreadBookmarkGroup>) {
+  suspend fun updateGroups(groups: List<ThreadBookmarkGroup>) {
     ensureInTransaction()
 
     val threadBookmarkGroupEntityList = groups
@@ -176,7 +170,11 @@ class ThreadBookmarkGroupLocalSource(
           groupId = group.groupId,
           groupName = group.groupName,
           isExpanded = group.isExpanded,
-          groupOrder = newOrder
+          groupOrder = newOrder,
+          groupMatcherPattern = ThreadBookmarkGroupMapper.matchingPatternToEntity(
+            moshi = moshi,
+            matchingPattern = group.matchingPattern
+          )
         )
       }
 
@@ -185,6 +183,21 @@ class ThreadBookmarkGroupLocalSource(
     }
 
     threadBookmarkGroupDao.updateGroups(threadBookmarkGroupEntityList)
+  }
+
+  suspend fun updateGroupEntries(groups: List<ThreadBookmarkGroup>) {
+    ensureInTransaction()
+
+    groups.forEach { group ->
+      val entitiesList = mutableListOf<ThreadBookmarkGroupEntryEntity>()
+
+      group.iterateEntriesOrderedWhile { order, threadBookmarkGroupEntry ->
+        entitiesList += ThreadBookmarkGroupMapper.toEntity(order, threadBookmarkGroupEntry)
+        return@iterateEntriesOrderedWhile true
+      }
+
+      threadBookmarkGroupDao.updateManyGroupEntries(entitiesList)
+    }
   }
 
   suspend fun deleteGroup(groupId: String) {

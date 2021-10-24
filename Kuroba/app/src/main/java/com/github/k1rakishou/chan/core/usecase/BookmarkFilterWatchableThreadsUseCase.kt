@@ -17,8 +17,10 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import com.github.k1rakishou.model.data.bookmark.SimpleThreadBookmarkGroupToCreate
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupMatchPatternBuilder
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
@@ -223,14 +225,18 @@ class BookmarkFilterWatchableThreadsUseCase(
         val simpleThreadBookmarkGroupsToCreate = bookmarkGroupsToCreate.entries
           .map { (filterPattern, threadDescriptors) ->
             return@map SimpleThreadBookmarkGroupToCreate(
-              groupName = "[FW] $filterPattern",
-              entries = threadDescriptors
+              groupName = filterPattern,
+              entries = threadDescriptors,
+              matchingPattern = ThreadBookmarkGroupMatchPatternBuilder
+                .newBuilder(filterPattern, BookmarkGroupMatchFlag.Type.PostSubject)
+                .or(filterPattern, BookmarkGroupMatchFlag.Type.PostComment)
+                .build()
             )
           }
 
         Logger.d(TAG, "createOrUpdateBookmarks() createNewGroupEntries() " +
           "groupsCount=${simpleThreadBookmarkGroupsToCreate.size}")
-        threadBookmarkGroupManager.createNewGroupEntries(simpleThreadBookmarkGroupsToCreate)
+        threadBookmarkGroupManager.createNewGroupEntriesFromFilterWatcher(simpleThreadBookmarkGroupsToCreate)
 
         val createdThreadBookmarkDescriptors = createdThreadBookmarks
           .map { simpleThreadBookmark -> simpleThreadBookmark.threadDescriptor }

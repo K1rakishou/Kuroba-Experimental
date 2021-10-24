@@ -7,8 +7,8 @@ import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
-import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettings;
-import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupsSettingsController;
+import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupPatternSettingsController;
+import com.github.k1rakishou.chan.features.bookmarks.BookmarkGroupSettingsController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksController;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksPresenter;
 import com.github.k1rakishou.chan.features.bookmarks.BookmarksSortingController;
@@ -276,8 +276,8 @@ public interface ActivityComponent {
     void inject(CreateOrUpdateFilterController createOrUpdateFilterController);
     void inject(FilterTypeSelectionController filterTypeSelectionController);
     void inject(FilterBoardSelectorController filterBoardSelectorController);
-    void inject(BookmarkGroupsSettingsController bookmarkGroupsSettingsController);
-    void inject(BookmarkGroupPatternSettings bookmarkGroupPatternSettings);
+    void inject(BookmarkGroupSettingsController bookmarkGroupSettingsController);
+    void inject(BookmarkGroupPatternSettingsController bookmarkGroupPatternSettingsController);
     void inject(KurobaAlertController kurobaAlertController);
 
     void inject(ColorizableBarButton colorizableBarButton);

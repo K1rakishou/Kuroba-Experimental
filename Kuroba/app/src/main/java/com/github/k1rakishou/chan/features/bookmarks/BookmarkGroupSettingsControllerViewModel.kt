@@ -10,8 +10,11 @@ import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.move
 import com.github.k1rakishou.common.removeIfKt
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
@@ -71,19 +74,21 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
   }
 
   suspend fun removeBookmarkGroup(groupId: String): ModularResult<Unit> {
-    val prevBookmarkDescriptorsInGroup = threadBookmarkGroupManager.getBookmarkDescriptorsInGroup(groupId)
-    val removeResult = threadBookmarkGroupManager.removeBookmarkGroup(groupId)
+    return withContext(NonCancellable) {
+      val prevBookmarkDescriptorsInGroup = threadBookmarkGroupManager.getBookmarkDescriptorsInGroup(groupId)
 
-    if (removeResult.valueOrNull() == true) {
-      if (prevBookmarkDescriptorsInGroup.isNotEmpty()) {
-        threadBookmarkGroupManager.createGroupEntries(prevBookmarkDescriptorsInGroup)
+      val removeResult = threadBookmarkGroupManager.removeBookmarkGroup(groupId)
+      if (removeResult.valueOrNull() == true) {
+        if (prevBookmarkDescriptorsInGroup.isNotEmpty()) {
+          threadBookmarkGroupManager.createGroupEntries(prevBookmarkDescriptorsInGroup)
+        }
+
+        threadBookmarkGroupItems
+          .removeIfKt { threadBookmarkGroupItem -> threadBookmarkGroupItem.groupId == groupId }
       }
 
-      threadBookmarkGroupItems
-        .removeIfKt { threadBookmarkGroupItem -> threadBookmarkGroupItem.groupId == groupId }
+      return@withContext removeResult.mapValue { Unit }
     }
-
-    return removeResult.mapValue { Unit }
   }
 
   suspend fun moveBookmarksIntoGroup(
@@ -107,6 +112,6 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
     val groupOrder: Int,
     val groupEntriesCount: Int
   ) {
-    fun isDefaultGroup(): Boolean = ThreadBookmarkGroupManager.isDefaultGroup(groupId)
+    fun isDefaultGroup(): Boolean = ThreadBookmarkGroup.isDefaultGroup(groupId)
   }
 }

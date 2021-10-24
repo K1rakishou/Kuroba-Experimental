@@ -16,6 +16,8 @@
  */
 package com.github.k1rakishou.chan.utils;
 
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+
 import android.os.Handler;
 import android.os.Looper;
 
@@ -23,9 +25,8 @@ import androidx.core.os.HandlerCompat;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_logger.Logger;
-
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class BackgroundUtils {
     private static final Handler mainHandler = new Handler(Looper.getMainLooper());
@@ -66,8 +67,8 @@ public class BackgroundUtils {
         if (ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on a background thread!");
         } else {
-            Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but " +
-                    "got " + Thread.currentThread().getName());
+            Logger.e("BackgroundUtils", "ensureMainThread() expected main thread but got " + Thread.currentThread().getName());
+            Logger.e("BackgroundUtils", KotlinExtensionsKt.callStack(Thread.currentThread()));
         }
     }
 
@@ -79,8 +80,8 @@ public class BackgroundUtils {
         if (ChanSettings.crashOnSafeThrow.get()) {
             throw new IllegalStateException("Cannot be executed on the main thread!");
         } else {
-            Logger.e("BackgroundUtils", "ensureBackgroundThread() expected background thread " +
-                    "but got main");
+            Logger.e("BackgroundUtils", "ensureBackgroundThread() expected background thread but got main");
+            Logger.e("BackgroundUtils", KotlinExtensionsKt.callStack(Thread.currentThread()));
         }
     }
 }

@@ -1363,6 +1363,67 @@ Actual error: \'%1$s\'</string>
     <string name="bookmark_groups_group_will_become_visible_after">Group will become visible after you add bookmarks into it</string>
     <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists</string>
 
+    <string name="bookmark_group_settings_site_name_matcher">Site name:</string>
+    <string name="bookmark_group_settings_board_code_matcher">Board code:</string>
+    <string name="bookmark_group_settings_post_subject_matcher">Post subject:</string>
+    <string name="bookmark_group_settings_post_comment_matcher">Post comment:</string>
+    <string name="bookmark_group_settings_unknown_matcher">Unknown matcher type (%1$s):</string>
+    <string name="bookmark_group_settings_add_matcher">Add matcher</string>
+    <string name="bookmark_group_settings_select_matcher">Select matcher</string>
+    <string name="bookmark_group_settings_matcher_site_name">Site name</string>
+    <string name="bookmark_group_settings_matcher_board_code">Board code</string>
+    <string name="bookmark_group_settings_matcher_post_subject">Post subject</string>
+    <string name="bookmark_group_settings_matcher_post_comment">Post comment</string>
+    <string name="bookmark_group_settings_select_matcher_operator">Select matcher operator</string>
+    <string name="bookmark_group_settings_matcher_operator_and">AND</string>
+    <string name="bookmark_group_settings_matcher_operator_or">OR</string>
+
+    <string name="bookmark_group_settings_matcher_help_title">Bookmark group matcher help</string>
+    <string name="bookmark_group_settings_matcher_help">
+<![CDATA[
+    By default all new bookmarks are created in the <tt>Default group</tt>.
+    <br>
+    You can create new groups and move the bookmarks into them manually but there is also a new ability to automize this process: <tt>bookmark group matchers</tt>.
+    <br>
+    They work similar to how filters work but instead of having only one regex pattern that is then matched against post comment/subject/etc you can create up to 8
+    separate regex patterns and combine them with two operators: <tt>AND</tt> or <tt>OR</tt>.
+    <br>
+    The matchers can be applied to 4 different parts of a thread original post:
+    <br>
+    <p>
+        1. Site name.
+        <br>
+        2. Board code.
+        <br>
+        3. OP subject.
+        <br>
+        4. OP comment.
+        <br>
+    </p>
+    The syntax is very similar to filter pattern syntax.
+    <br>
+    By combining the matchers together you can create the following example bookmark groups:
+    <br>
+    <p>
+        - Combining site name matcher <tt>/4chan/i</tt> with board code matcher <tt>/g/i</tt> using the <tt>AND</tt>
+        operator will make a group into which all 4chan/g/ bookmarked threads will be moved.
+        <br>
+        - Combining post subject matcher <tt>/dpt/i</tt> with post comment matcher <tt>/dpt/i</tt> using the <tt>OR</tt>
+        operator will make a group into which all bookmarked threads with subject/comment containing word combination <tt>dpt</tt> will be moved.
+        <br>
+    </p>
+    <br>
+    The exception to this rule are the bookmarks created by filter watches. They will be moved into their own groups which are called by the matched filter\'s pattern.
+    <br>
+    When deleting a bookmark group all the bookmarks that are currently in that group will be moved into the <tt>Default group</tt>.
+    <br>
+    <br>
+    If you have multiple bookmark groups, when creating new bookmarks, they are processed by the bookmark group matchers in the order as seen in the <tt>Bookmark group settings</tt>
+    screen except for the <tt>Default group</tt> which is always processed last and basically always matches all the remaining bookmarks not matched by other matchers.
+    <br>
+]]>
+    </string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

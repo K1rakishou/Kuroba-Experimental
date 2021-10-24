@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
+import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase;
@@ -450,6 +451,20 @@ public class UseCaseModule {
         return new InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
                 appConstants,
                 fileManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public GetThreadBookmarkGroupIdsUseCase provideGetThreadBookmarkGroupIdsUseCase(
+            Lazy<ThreadBookmarkGroupManager> threadBookmarkGroupManager,
+            Lazy<ChanThreadManager> chanThreadManager
+    ) {
+        Logger.deps("GetThreadBookmarkGroupIdsUseCase");
+
+        return new GetThreadBookmarkGroupIdsUseCase(
+                threadBookmarkGroupManager,
+                chanThreadManager
         );
     }
 

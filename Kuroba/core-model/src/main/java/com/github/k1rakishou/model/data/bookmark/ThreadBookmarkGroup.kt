@@ -3,8 +3,10 @@ package com.github.k1rakishou.model.data.bookmark
 import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.mutableMapWithCap
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.util.concurrent.atomic.AtomicLong
+import java.util.regex.Pattern
 
 class ThreadBookmarkGroup(
   val groupId: String,
@@ -16,8 +18,15 @@ class ThreadBookmarkGroup(
   @set:Synchronized
   var groupOrder: Int,
   newEntries: Map<Long, ThreadBookmarkGroupEntry> = emptyMap(),
-  newOrders: List<Long> = emptyList()
+  newOrders: List<Long> = emptyList(),
+  newMatchingPattern: ThreadBookmarkGroupMatchPattern?
 ) {
+  @get:Synchronized
+  @set:Synchronized
+  private var _matchingPattern: ThreadBookmarkGroupMatchPattern? = null
+  val matchingPattern: ThreadBookmarkGroupMatchPattern?
+    get() = _matchingPattern
+
   // Map<ThreadBookmarkGroupEntryDatabaseId, ThreadBookmarkGroupEntry>
   private val entries: MutableMap<Long, ThreadBookmarkGroupEntry> = mutableMapWithCap(16)
   // List<ThreadBookmarkGroupEntryDatabaseId>
@@ -36,6 +45,24 @@ class ThreadBookmarkGroup(
     entries.values.forEach { threadBookmarkGroupEntry ->
       fastLookupDescriptorSet.add(threadBookmarkGroupEntry.threadDescriptor)
     }
+
+    _matchingPattern = newMatchingPattern
+  }
+
+  fun isDefaultGroup(): Boolean = Companion.isDefaultGroup(groupId)
+
+  fun matches(boardDescriptor: BoardDescriptor, postSubject: CharSequence, postComment: CharSequence): Boolean {
+    if (isDefaultGroup()) {
+      // Default group matches everything
+      return true
+    }
+
+    return _matchingPattern?.matches(boardDescriptor, postSubject, postComment) ?: false
+  }
+
+  @Synchronized
+  fun updateMatchingPattern(threadBookmarkGroupMatchPattern: ThreadBookmarkGroupMatchPattern?) {
+    _matchingPattern = threadBookmarkGroupMatchPattern
   }
 
   @Synchronized
@@ -201,6 +228,26 @@ class ThreadBookmarkGroup(
   companion object {
     private val RESERVE_DB_ID = AtomicLong(-1L)
 
+    const val DEFAULT_GROUP_ID = "default_group"
+    const val DEFAULT_GROUP_NAME = "Default group"
+
+    const val MAX_MATCH_GROUPS = 8
+
+    private val WHITESPACE_PATTERN = Pattern.compile("\\s+").toRegex()
+
+    fun isDefaultGroup(groupId: String): Boolean {
+      return groupId == DEFAULT_GROUP_ID
+    }
+
+    fun rawGroupNameToGroupId(groupName: String): String? {
+      val groupId = groupName.trim().replace(WHITESPACE_PATTERN, "_")
+      if (groupId.isBlank()) {
+        return null
+      }
+
+      return groupId
+    }
+
     fun nextReserveDBId(): Long {
       return RESERVE_DB_ID.getAndAdd(-1)
     }
@@ -216,7 +263,8 @@ data class ThreadBookmarkGroupEntry(
 
 data class SimpleThreadBookmarkGroupToCreate(
   val groupName: String,
-  val entries: List<ChanDescriptor.ThreadDescriptor> = mutableListOf()
+  val entries: List<ChanDescriptor.ThreadDescriptor> = mutableListOf(),
+  val matchingPattern: ThreadBookmarkGroupMatchPattern?
 )
 
 class ThreadBookmarkGroupToCreate(
@@ -225,7 +273,8 @@ class ThreadBookmarkGroupToCreate(
   val groupName: String,
   val isExpanded: Boolean,
   val groupOrder: Int,
-  val entries: MutableList<ThreadBookmarkGroupEntryToCreate> = mutableListOf()
+  val entries: MutableList<ThreadBookmarkGroupEntryToCreate> = mutableListOf(),
+  val matchingPattern: ThreadBookmarkGroupMatchPattern?
 ) {
 
   fun getEntryDatabaseIdsSorted(): List<Long> {

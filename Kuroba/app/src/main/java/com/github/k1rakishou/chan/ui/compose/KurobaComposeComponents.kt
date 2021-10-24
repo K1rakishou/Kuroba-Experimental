@@ -313,7 +313,7 @@ fun KurobaComposeCustomTextField(
   onValueChange: (String) -> Unit,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
-  textColor: Color = Color.White,
+  textColor: Color = Color.Unspecified,
   onBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
   fontSize: TextUnit = TextUnit.Unspecified,
@@ -328,8 +328,19 @@ fun KurobaComposeCustomTextField(
   val textFieldColors = chanTheme.textFieldColors()
 
   val cursorBrush = remember(key1 = chanTheme) { SolidColor(chanTheme.accentColorCompose) }
-  val textStyle = remember(key1 = textColor, key2 = fontSize) {
-    TextStyle.Default.copy(color = textColor, fontSize = fontSize)
+
+  val actualTextColor = if (!textColor.isUnspecified) {
+    textColor
+  } else {
+    if (ThemeEngine.isDarkColor(onBackgroundColor)) {
+      Color.White
+    } else {
+      Color.Black
+    }
+  }
+
+  val textStyle = remember(key1 = actualTextColor, key2 = fontSize) {
+    TextStyle.Default.copy(color = actualTextColor, fontSize = fontSize)
   }
 
   val indicatorLineModifier = if (drawBottomIndicator) {
@@ -372,7 +383,7 @@ fun KurobaComposeCustomTextField(
           ContentAlpha.disabled
         }
 
-        val hintColor = remember {
+        val hintColor = remember(key1 = onBackgroundColor) {
           if (onBackgroundColor.isUnspecified) {
             Color.DarkGray.copy(alpha = alpha)
           } else {

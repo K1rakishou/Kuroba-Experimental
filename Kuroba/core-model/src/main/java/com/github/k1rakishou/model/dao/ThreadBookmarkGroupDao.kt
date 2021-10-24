@@ -18,16 +18,16 @@ import com.github.k1rakishou.model.entity.chan.thread.ChanThreadEntity
 abstract class ThreadBookmarkGroupDao {
 
   @Insert(onConflict = OnConflictStrategy.REPLACE)
-  abstract suspend fun createGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
+  abstract suspend fun insertGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
+
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertManyGroupEntries(threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>): List<Long>
 
   @Update(onConflict = OnConflictStrategy.IGNORE)
   abstract suspend fun updateGroups(groupsToCreate: List<ThreadBookmarkGroupEntity>)
 
-  @Insert(onConflict = OnConflictStrategy.REPLACE)
-  abstract suspend fun insertMany(threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>): List<Long>
-
-  @Update(onConflict = OnConflictStrategy.REPLACE)
-  abstract suspend fun updateMany(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
+  @Update(onConflict = OnConflictStrategy.IGNORE)
+  abstract suspend fun updateManyGroupEntries(threadBookmarkGroupEntryEntityList: List<ThreadBookmarkGroupEntryEntity>)
 
   @RewriteQueriesToDropUnusedColumns
   @Query("""

@@ -1,12 +1,8 @@
 package com.github.k1rakishou.chan.features.filters
 
 import android.content.Context
-import android.graphics.Typeface
 import android.text.Html
 import android.text.SpannableStringBuilder
-import android.text.style.BackgroundColorSpan
-import android.text.style.StyleSpan
-import android.text.style.TypefaceSpan
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -76,6 +72,7 @@ import com.github.k1rakishou.chan.ui.view.ColorPickerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -704,27 +701,10 @@ class CreateOrUpdateFilterController(
   }
 
   private fun showFiltersHelpDialog() {
-    val message = SpannableStringBuilder.valueOf(Html.fromHtml(getString(R.string.filter_help)))
-    val typefaceSpans = message.getSpans(0, message.length, TypefaceSpan::class.java)
-
-    for (span in typefaceSpans) {
-      if (span.family.equals("monospace")) {
-        val start = message.getSpanStart(span)
-        val end = message.getSpanEnd(span)
-
-        message.setSpan(BackgroundColorSpan(0x22000000), start, end, 0)
-      }
-    }
-
-    val styleSpans: Array<StyleSpan> = message.getSpans(0, message.length, StyleSpan::class.java)
-    for (span in styleSpans) {
-      if (span.style == Typeface.ITALIC) {
-        val start = message.getSpanStart(span)
-        val end = message.getSpanEnd(span)
-
-        message.setSpan(BackgroundColorSpan(0x22000000), start, end, 0)
-      }
-    }
+    val message = SpannableHelper.convertHtmlStringTagsIntoSpans(
+      message = SpannableStringBuilder.valueOf(Html.fromHtml(getString(R.string.filter_help))),
+      chanTheme = themeEngine.chanTheme
+    )
 
     DialogFactory.Builder.newBuilder(context, dialogFactory)
       .withTitle(R.string.filter_help_title)

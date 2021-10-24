@@ -208,8 +208,6 @@ class ImageLoaderV2(
     @DrawableRes errorDrawableId: Int = R.drawable.ic_image_error_loading,
     @DrawableRes notFoundDrawableId: Int = R.drawable.ic_image_not_found
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
     return loadFromNetwork(
       context = context,
       url = url,
@@ -232,8 +230,6 @@ class ImageLoaderV2(
     listener: FailureAwareImageListener,
     postDescriptor: PostDescriptor? = null
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
     return loadFromNetwork(
       context = context,
       url = requestUrl,
@@ -254,7 +250,6 @@ class ImageLoaderV2(
     // threads files' first and if not found then attempt to load it from the network.
     postDescriptor: PostDescriptor? = null
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
     val completableDeferred = CompletableDeferred<Unit>()
 
     val job = appScope.launch(Dispatchers.IO) {
@@ -565,7 +560,7 @@ class ImageLoaderV2(
 
     val cacheFile = cacheHandler.get().getOrCreateCacheFile(url)
     if (cacheFile == null) {
-      Logger.e(TAG, "loadFromNetworkInternalIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
+      Logger.e(TAG, "loadFromNetworkIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
       return null
     }
 
@@ -577,7 +572,7 @@ class ImageLoaderV2(
       }
 
       if (error.isCoroutineCancellationException()) {
-        Logger.e(TAG, "loadFromNetworkInternalIntoFile() canceled '$url'")
+        Logger.e(TAG, "loadFromNetworkIntoFile() canceled '$url'")
         return null
       }
 

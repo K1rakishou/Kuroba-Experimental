@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.features.bookmarks
 
 import android.content.Context
+import android.text.Html
+import android.text.SpannableStringBuilder
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -44,13 +46,14 @@ import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
 import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
-class BookmarkGroupsSettingsController(
+class BookmarkGroupSettingsController(
   context: Context,
   private val bookmarksToMove: List<ChanDescriptor.ThreadDescriptor>? = null,
   private val refreshBookmarksFunc: () -> Unit
@@ -90,13 +93,18 @@ class BookmarkGroupsSettingsController(
       .consumeClicks()
       .background(chanTheme.backColorCompose)
     ) {
-      BuildContentInternal()
+      BuildContentInternal(
+        onHelpClicked = { showGroupMatcherHelp() }
+      )
     }
   }
 
   @Composable
-  private fun BoxScope.BuildContentInternal() {
+  private fun BoxScope.BuildContentInternal(
+    onHelpClicked: () -> Unit
+  ) {
     val reoderableState = rememberReorderState()
+    val onHelpClickedRemembered = rememberUpdatedState(newValue = onHelpClicked)
 
     val loading by viewModel.loading
     if (loading) {
@@ -122,17 +130,36 @@ class BookmarkGroupsSettingsController(
         .wrapContentHeight()
         .align(Alignment.Center)
     ) {
-      if (isBookmarkMoveMode) {
-        KurobaComposeText(
+      Spacer(modifier = Modifier.height(8.dp))
+
+      Row(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+      ) {
+        if (isBookmarkMoveMode) {
+          KurobaComposeText(
+            modifier = Modifier
+              .wrapContentHeight()
+              .weight(1f),
+            textAlign = TextAlign.Center,
+            text = stringResource(id = R.string.bookmark_groups_controller_select_bookmark_group)
+          )
+        } else {
+          Spacer(modifier = Modifier.weight(1f))
+        }
+
+        KurobaComposeIcon(
           modifier = Modifier
-            .wrapContentHeight()
-            .fillMaxWidth(),
-          textAlign = TextAlign.Center,
-          text = stringResource(id = R.string.bookmark_groups_controller_select_bookmark_group)
+            .kurobaClickable(onClick = { onHelpClickedRemembered.value.invoke() }),
+          drawableId = R.drawable.ic_help_outline_white_24dp,
+          themeEngine = themeEngine
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.width(8.dp))
       }
+
+      Spacer(modifier = Modifier.height(8.dp))
 
       val chanTheme = LocalChanTheme.current
 
@@ -168,7 +195,7 @@ class BookmarkGroupsSettingsController(
                   mainScope.launch { viewModel.removeBookmarkGroup(groupId) }
                 },
                 bookmarkGroupSettingsClicked = { groupId ->
-                  val controller = BookmarkGroupPatternSettings(
+                  val controller = BookmarkGroupPatternSettingsController(
                     context = context,
                     bookmarkGroupId = groupId
                   )
@@ -288,10 +315,11 @@ class BookmarkGroupsSettingsController(
     ) {
       Row(modifier = Modifier.fillMaxSize()) {
         if (!isBookmarkMoveMode && !threadBookmarkGroupItem.isDefaultGroup()) {
+          Spacer(modifier = Modifier.width(8.dp))
+
           KurobaComposeIcon(
             modifier = Modifier
-              .size(32.dp)
-              .padding(horizontal = 8.dp)
+              .size(28.dp)
               .align(Alignment.CenterVertically)
               .kurobaClickable(
                 bounded = false,
@@ -300,6 +328,8 @@ class BookmarkGroupsSettingsController(
             drawableId = R.drawable.ic_clear_white_24dp,
             themeEngine = themeEngine
           )
+
+          Spacer(modifier = Modifier.width(8.dp))
         }
 
         val groupText = remember(key1 = removeBookmarkGroupClicked) {
@@ -322,33 +352,49 @@ class BookmarkGroupsSettingsController(
         )
 
         if (!isBookmarkMoveMode) {
-          KurobaComposeIcon(
-            modifier = Modifier
-              .size(32.dp)
-              .align(Alignment.CenterVertically)
-              .padding(horizontal = 8.dp)
-              .kurobaClickable(
-                bounded = false,
-                onClick = { bookmarkGroupSettingsClickedRemembered.value.invoke(groupId) }
-              ),
-            drawableId = R.drawable.ic_settings_white_24dp,
-            themeEngine = themeEngine
-          )
+          if (!threadBookmarkGroupItem.isDefaultGroup()) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            KurobaComposeIcon(
+              modifier = Modifier
+                .size(28.dp)
+                .align(Alignment.CenterVertically)
+                .kurobaClickable(
+                  bounded = false,
+                  onClick = { bookmarkGroupSettingsClickedRemembered.value.invoke(groupId) }
+                ),
+              drawableId = R.drawable.ic_settings_white_24dp,
+              themeEngine = themeEngine
+            )
+          }
 
           Spacer(modifier = Modifier.width(8.dp))
 
           KurobaComposeIcon(
             modifier = Modifier
-              .size(32.dp)
+              .size(28.dp)
               .align(Alignment.CenterVertically)
-              .detectReorder(reoderableState)
-              .padding(horizontal = 8.dp),
+              .detectReorder(reoderableState),
             drawableId = R.drawable.ic_baseline_reorder_24,
             themeEngine = themeEngine
           )
+
+          Spacer(modifier = Modifier.width(8.dp))
         }
       }
     }
+  }
+
+  private fun showGroupMatcherHelp() {
+    val message = SpannableHelper.convertHtmlStringTagsIntoSpans(
+      message = SpannableStringBuilder.valueOf(Html.fromHtml(getString(R.string.bookmark_group_settings_matcher_help))),
+      chanTheme = themeEngine.chanTheme
+    )
+
+    DialogFactory.Builder.newBuilder(context, dialogFactory)
+      .withTitle(R.string.bookmark_group_settings_matcher_help_title)
+      .withDescription(message)
+      .create()
   }
 
   companion object {

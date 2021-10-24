@@ -283,11 +283,13 @@ class ModelModule {
   @Provides
   fun provideThreadBookmarkGroupLocalSource(
     database: KurobaDatabase,
+    moshi: Moshi,
     dependencies: ModelComponent.Dependencies,
     chanDescriptorCache: ChanDescriptorCache
   ): ThreadBookmarkGroupLocalSource {
     return ThreadBookmarkGroupLocalSource(
       database,
+      moshi,
       dependencies.isDevFlavor,
       chanDescriptorCache
     )

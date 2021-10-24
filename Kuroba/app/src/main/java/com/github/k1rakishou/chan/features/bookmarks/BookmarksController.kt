@@ -448,7 +448,7 @@ class BookmarksController(
         }
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.MoveToGroup -> {
-        val controller = BookmarkGroupsSettingsController(
+        val controller = BookmarkGroupSettingsController(
           context = context,
           bookmarksToMove = selectedItems,
           refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
@@ -616,7 +616,7 @@ class BookmarksController(
   }
 
   private fun bookmarkGroupsSettings() {
-    val controller = BookmarkGroupsSettingsController(
+    val controller = BookmarkGroupSettingsController(
       context = context,
       refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
     )
