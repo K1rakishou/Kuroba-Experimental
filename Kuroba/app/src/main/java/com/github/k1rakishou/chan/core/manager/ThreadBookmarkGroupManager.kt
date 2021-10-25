@@ -376,7 +376,7 @@ class ThreadBookmarkGroupManager(
     }
   }
 
-  suspend fun groupAlreadyExists(groupName: String): ModularResult<Boolean> {
+  suspend fun existingGroupIdAndName(groupName: String): ModularResult<GroupIdWithName?> {
     ensureInitialized()
 
     return ModularResult.Try {
@@ -385,7 +385,15 @@ class ThreadBookmarkGroupManager(
         throw GroupCreationError("Invalid group name: \'$groupName\' (empty or blank)")
       }
 
-      return@Try mutex.withLockNonCancellable { groupsByGroupIdMap.containsKey(groupId) }
+      return@Try mutex.withLockNonCancellable {
+        val existingGroup = groupsByGroupIdMap[groupId]
+          ?: return@withLockNonCancellable null
+
+        return@withLockNonCancellable GroupIdWithName(
+          groupId = existingGroup.groupId,
+          groupName = existingGroup.groupName
+        )
+      }
     }
   }
 

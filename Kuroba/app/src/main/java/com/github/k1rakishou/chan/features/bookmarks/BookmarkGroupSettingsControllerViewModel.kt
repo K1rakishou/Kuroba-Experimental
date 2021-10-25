@@ -103,8 +103,8 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
     return threadBookmarkGroupManager.createBookmarkGroup(groupName)
   }
 
-  suspend fun groupAlreadyExists(groupName: String): ModularResult<Boolean> {
-    return threadBookmarkGroupManager.groupAlreadyExists(groupName)
+  suspend fun existingGroupIdAndName(groupName: String): ModularResult<ThreadBookmarkGroupManager.GroupIdWithName?> {
+    return threadBookmarkGroupManager.existingGroupIdAndName(groupName)
   }
 
   data class ThreadBookmarkGroupItem(

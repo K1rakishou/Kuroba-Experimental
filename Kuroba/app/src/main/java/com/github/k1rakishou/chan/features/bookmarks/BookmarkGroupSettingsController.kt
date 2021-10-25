@@ -261,15 +261,17 @@ class BookmarkGroupSettingsController(
       defaultValue = prevGroupName,
       onValueEntered = { groupName ->
         mainScope.launch {
-          val alreadyExists = viewModel.groupAlreadyExists(groupName)
+          val groupIdWithName = viewModel.existingGroupIdAndName(groupName)
             .toastOnError(longToast = true)
             .safeUnwrap { error ->
-              Logger.e(TAG, "groupAlreadyExists($groupName) error", error)
+              Logger.e(TAG, "existingGroupIdAndName($groupName) error", error)
               return@launch
             }
 
-          if (alreadyExists) {
-            showToast(getString(R.string.bookmark_groups_group_already_exists, groupName))
+          if (groupIdWithName != null) {
+            showToast(getString(R.string.bookmark_groups_group_already_exists,
+              groupIdWithName.groupName, groupIdWithName.groupId))
+
             createBookmarkGroup(prevGroupName = groupName)
             return@launch
           }

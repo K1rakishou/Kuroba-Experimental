@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.RegexPatternCompiler
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import kotlinx.coroutines.launch
@@ -81,6 +82,40 @@ class BookmarkGroupPatternSettingsControllerViewModel : BaseViewModel() {
     }
   }
 
+  suspend fun validateGroupMatchers(
+    mutableMatcherFlags: List<MatchFlagMutable>
+  ): GroupMatcherValidationResult {
+    val duplicateChecker = hashMapOf<String, Int>()
+
+    for ((index, mutableMatcherFlag) in mutableMatcherFlags.withIndex()) {
+      val patternRaw = mutableMatcherFlag.patternRaw.value
+      val matcherType = mutableMatcherFlag.matcherType.value
+
+      when (val patternCompilationResult = RegexPatternCompiler.compile(patternRaw)) {
+        is RegexPatternCompiler.PatternCompilationResult.Success -> {
+          // no-op
+        }
+        is RegexPatternCompiler.PatternCompilationResult.Error -> {
+          return GroupMatcherValidationResult.Error(patternCompilationResult.errorMessage)
+        }
+        RegexPatternCompiler.PatternCompilationResult.PatternIsEmpty -> {
+          return GroupMatcherValidationResult.Error("Matcher at index ${index} has empty pattern")
+        }
+      }
+
+      val duplicateCheckValue = "${patternRaw}_${matcherType.rawType}"
+
+      val duplicateIndex = duplicateChecker.put(duplicateCheckValue, index)
+      if (duplicateIndex != null) {
+        return GroupMatcherValidationResult.Error(
+          "Duplicate matchers detected: #${duplicateIndex} and #${index}"
+        )
+      }
+    }
+
+    return GroupMatcherValidationResult.Ok
+  }
+
   suspend fun saveGroupMatcherPattern(bookmarkGroupId: String): Boolean {
     val matchFlag = convertToMatchFlag()
       ?: return false
@@ -132,6 +167,20 @@ class BookmarkGroupPatternSettingsControllerViewModel : BaseViewModel() {
 
   }
 
+}
+
+sealed class GroupMatcherValidationResult {
+  fun isOk(): Boolean {
+    return when (this) {
+      Ok -> true
+      is Error,
+      Validating -> false
+    }
+  }
+
+  object Ok : GroupMatcherValidationResult()
+  object Validating : GroupMatcherValidationResult()
+  data class Error(val message: String) : GroupMatcherValidationResult()
 }
 
 class MatchFlagMutable(

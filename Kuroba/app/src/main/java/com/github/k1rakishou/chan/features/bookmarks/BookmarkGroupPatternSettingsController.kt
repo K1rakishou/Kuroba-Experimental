@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,11 +18,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
@@ -31,6 +38,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -58,6 +66,8 @@ class BookmarkGroupPatternSettingsController(
 
   @Inject
   lateinit var dialogFactory: DialogFactory
+
+  private var matcherValidationTrigger: MutableState<Int> = mutableStateOf(0)
 
   private val viewModel by lazy {
     requireComponentActivity().viewModelByKey<BookmarkGroupPatternSettingsControllerViewModel>()
@@ -120,8 +130,8 @@ class BookmarkGroupPatternSettingsController(
               BuildMatcherGroup(
                 mutableMatcherFlag = mutableMatcherFlag,
                 index = itemIndex,
-                totalCount = mutableMatcherFlags.size,
-                onRemoveMatcherFlagClicked = { index -> viewModel.removeMatcherFlag(index) },
+                totalCount= mutableMatcherFlags.size,
+                onRemoveMatcherFlagClicked = { index -> onRemoveMatcherFlagClicked(index) },
                 onSelectMatcherFlagClicked = { index -> onSelectMatcherFlagClicked(index) },
                 onSelectMatcherOperatorClicked = { index -> onSelectMatcherOperatorClicked(index) },
                 onAddNewMatcherGroupClicked = { onAddNewMatcherGroupClicked() }
@@ -129,6 +139,51 @@ class BookmarkGroupPatternSettingsController(
             }
           )
         }
+      )
+
+      BuildFooter()
+    }
+  }
+
+  @Composable
+  private fun BuildFooter() {
+    val validationTrigger by remember { matcherValidationTrigger }
+    val mutableMatcherFlags = viewModel.mutableMatcherFlags
+
+    val validationResult by produceState<GroupMatcherValidationResult>(
+      initialValue = GroupMatcherValidationResult.Validating,
+      key1 = validationTrigger,
+      producer = {
+        value = viewModel.validateGroupMatchers(mutableMatcherFlags)
+      }
+    )
+
+    LaunchedEffect(key1 = true, block = { triggerMatcherValidation() })
+
+    Column(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+    ) {
+      val text = when (val vr = validationResult) {
+        is GroupMatcherValidationResult.Error -> "Error: ${vr.message}"
+        GroupMatcherValidationResult.Ok -> "Everything seems to be OK"
+        GroupMatcherValidationResult.Validating -> "Validating"
+      }
+
+      val bgColor = when (validationResult) {
+        is GroupMatcherValidationResult.Error -> validationErrorColor
+        GroupMatcherValidationResult.Ok -> validationOkColor
+        GroupMatcherValidationResult.Validating -> validationInProgressColor
+      }
+
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .background(bgColor),
+        color = Color.White,
+        text = text
       )
 
       Row(
@@ -148,6 +203,7 @@ class BookmarkGroupPatternSettingsController(
         Spacer(modifier = Modifier.width(8.dp))
 
         KurobaComposeTextBarButton(
+          enabled = validationResult.isOk(),
           onClick = {
             mainScope.launch {
               viewModel.saveGroupMatcherPattern(bookmarkGroupId)
@@ -157,6 +213,7 @@ class BookmarkGroupPatternSettingsController(
           text = stringResource(id = R.string.save)
         )
       }
+
     }
   }
 
@@ -210,10 +267,18 @@ class BookmarkGroupPatternSettingsController(
           .wrapContentHeight()
       ) {
 
-        if (index > 0) {
+        KurobaComposeText(
+          modifier = Modifier
+            .align(Alignment.CenterVertically)
+            .width(20.dp),
+          text = "#${index}"
+        )
+
+        if (totalCount > 1) {
           KurobaComposeIcon(
             modifier = Modifier
               .size(28.dp)
+              .align(Alignment.CenterVertically)
               .kurobaClickable(
                 bounded = false,
                 onClick = { onRemoveMatcherFlagClickedRemembered.value.invoke(index) }
@@ -223,19 +288,29 @@ class BookmarkGroupPatternSettingsController(
           )
 
           Spacer(modifier = Modifier.width(8.dp))
-        } else if (totalCount > 1) {
+        } else {
           Spacer(modifier = Modifier.size(36.dp))
         }
 
-        KurobaComposeText(
+        KurobaComposeCardView(
           modifier = Modifier
-            .align(Alignment.CenterVertically)
+            .wrapContentSize()
             .kurobaClickable(
               bounded = true,
               onClick = { onSelectMatcherFlagClickedRemembered.value.invoke(index) }
             ),
-          text = flagAsString
-        )
+          backgroundColor = chanTheme.backColorSecondaryCompose
+        ) {
+          Box(modifier = Modifier.weight(1f)) {
+            KurobaComposeText(
+              modifier = Modifier
+                .align(Alignment.Center)
+                .padding(4.dp)
+                .width(96.dp),
+              text = flagAsString
+            )
+          }
+        }
 
         Spacer(modifier = Modifier.width(8.dp))
 
@@ -248,30 +323,55 @@ class BookmarkGroupPatternSettingsController(
             imeAction = ImeAction.Next,
             keyboardType = KeyboardType.Password
           ),
+          labelText = stringResource(id = R.string.bookmark_group_settings_enter_matcher_pattern),
           onBackgroundColor = chanTheme.backColorCompose,
           value = patternRaw,
-          onValueChange = { newValue -> patternRaw = newValue }
+          onValueChange = { newValue ->
+            patternRaw = newValue
+            triggerMatcherValidation()
+          }
         )
       }
 
       val matcherOperator by mutableMatcherFlag.matcherOperator
+      Spacer(modifier = Modifier.height(10.dp))
 
       if (matcherOperator == null && index < ThreadBookmarkGroup.MAX_MATCH_GROUPS) {
-        KurobaComposeTextBarButton(
-          modifier = Modifier
+        KurobaComposeCardView(
+          Modifier
             .wrapContentSize()
-            .align(Alignment.CenterHorizontally),
-          onClick = { onAddNewMatcherGroupClickedRemembered.value.invoke() },
-          text = stringResource(id = R.string.bookmark_group_settings_add_matcher)
-        )
+            .align(Alignment.CenterHorizontally)
+            .kurobaClickable(
+              bounded = true,
+              onClick = { onAddNewMatcherGroupClickedRemembered.value.invoke() }
+            ),
+          backgroundColor = chanTheme.backColorSecondaryCompose
+        ) {
+          KurobaComposeText(
+            modifier = Modifier
+              .weight(1f)
+              .padding(horizontal = 8.dp, vertical = 4.dp),
+            text = stringResource(id = R.string.bookmark_group_settings_add_matcher)
+          )
+        }
       } else if (matcherOperator != null) {
-        KurobaComposeTextBarButton(
-          modifier = Modifier
+        KurobaComposeCardView(
+          Modifier
             .wrapContentSize()
-            .align(Alignment.CenterHorizontally),
-          onClick = { onSelectMatcherOperatorClickedRemembered.value.invoke(index) },
-          text = matcherOperator!!.name.uppercase(Locale.ENGLISH)
-        )
+            .align(Alignment.CenterHorizontally)
+            .kurobaClickable(
+              bounded = true,
+              onClick = { onSelectMatcherOperatorClickedRemembered.value.invoke(index) }
+            ),
+          backgroundColor = chanTheme.backColorSecondaryCompose
+        ) {
+          KurobaComposeText(
+            modifier = Modifier
+              .weight(1f)
+              .padding(horizontal = 8.dp, vertical = 4.dp),
+            text = matcherOperator!!.name.uppercase(Locale.ENGLISH)
+          )
+        }
       }
     }
   }
@@ -282,6 +382,7 @@ class BookmarkGroupPatternSettingsController(
         ?: return@launch
 
       viewModel.updateMatcherOperator(index, matcherOperator)
+      triggerMatcherValidation()
     }
   }
 
@@ -291,6 +392,7 @@ class BookmarkGroupPatternSettingsController(
         ?: return@launch
 
       viewModel.updateMatcherFlag(index, matcherFlag)
+      triggerMatcherValidation()
     }
   }
 
@@ -300,7 +402,13 @@ class BookmarkGroupPatternSettingsController(
         ?: return@launch
 
       viewModel.addNextMatcherGroup(matcherOperator)
+      triggerMatcherValidation()
     }
+  }
+
+  private fun onRemoveMatcherFlagClicked(index: Int) {
+    viewModel.removeMatcherFlag(index)
+    triggerMatcherValidation()
   }
 
   private suspend fun selectMatcherFlag(): BookmarkGroupMatchFlag.Type? {
@@ -415,6 +523,10 @@ class BookmarkGroupPatternSettingsController(
     }
   }
 
+  private fun triggerMatcherValidation() {
+    matcherValidationTrigger.value = matcherValidationTrigger.value + 1
+  }
+
   companion object {
     private const val CONJ_OPERATOR_ITEM_HEADER = 0
     private const val CONJ_OPERATOR_ITEM_AND = 1
@@ -425,6 +537,10 @@ class BookmarkGroupPatternSettingsController(
     private const val FLAG_ITEM_BOARD_CODE = 102
     private const val FLAG_ITEM_POST_SUBJECT = 103
     private const val FLAG_ITEM_POST_COMMENT = 104
+
+    private val validationOkColor = Color(0xFF1cb01c)
+    private val validationErrorColor = Color(0xFFad1f1f)
+    private val validationInProgressColor = Color(0xFF525050)
   }
 
 }

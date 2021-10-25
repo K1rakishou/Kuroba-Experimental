@@ -1362,13 +1362,13 @@ Actual error: \'%1$s\'</string>
     <string name="bookmark_groups_controller_group_has_no_matcher">Group \'%1$s\' has no matcher</string>
     <string name="bookmark_groups_enter_new_group_name">Enter bookmark group name (must be unique)</string>
     <string name="bookmark_groups_group_will_become_visible_after">Group will become visible after you add bookmarks into it</string>
-    <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists</string>
+    <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists (groupId=\'%2$s\')</string>
 
-    <string name="bookmark_group_settings_site_name_matcher">Site name:</string>
-    <string name="bookmark_group_settings_board_code_matcher">Board code:</string>
-    <string name="bookmark_group_settings_post_subject_matcher">Post subject:</string>
-    <string name="bookmark_group_settings_post_comment_matcher">Post comment:</string>
-    <string name="bookmark_group_settings_unknown_matcher">Unknown matcher type (%1$s):</string>
+    <string name="bookmark_group_settings_site_name_matcher">Site name</string>
+    <string name="bookmark_group_settings_board_code_matcher">Board code</string>
+    <string name="bookmark_group_settings_post_subject_matcher">Post subject</string>
+    <string name="bookmark_group_settings_post_comment_matcher">Post comment</string>
+    <string name="bookmark_group_settings_unknown_matcher">Unknown matcher type (%1$s)</string>
     <string name="bookmark_group_settings_add_matcher">Add matcher</string>
     <string name="bookmark_group_settings_select_matcher">Select matcher</string>
     <string name="bookmark_group_settings_matcher_site_name">Site name</string>
@@ -1378,6 +1378,7 @@ Actual error: \'%1$s\'</string>
     <string name="bookmark_group_settings_select_matcher_operator">Select matcher operator</string>
     <string name="bookmark_group_settings_matcher_operator_and">AND</string>
     <string name="bookmark_group_settings_matcher_operator_or">OR</string>
+    <string name="bookmark_group_settings_enter_matcher_pattern">Enter matcher pattern</string>
 
     <string name="bookmark_group_settings_matcher_help_title">Bookmark group matcher help</string>
     <string name="bookmark_group_settings_matcher_help">
@@ -1385,6 +1386,9 @@ Actual error: \'%1$s\'</string>
     By default all new bookmarks are created in the <tt>Default group</tt>.
     <br>
     You can create new groups and move the bookmarks into them manually but there is also a new ability to automize this process: <tt>bookmark group matchers</tt>.
+    <br>
+    Note: only the newly created bookmarks are affected by the matchers. In other words, after a bookmark was created and moved into a group you can only
+    move it manually to another group or delete it and then create again to trigger the bookmark matchers.
     <br>
     They work similar to how filters work but instead of having only one regex pattern that is then matched against post comment/subject/etc you can create up to 8
     separate regex patterns and combine them with two operators: <tt>AND</tt> or <tt>OR</tt>.
