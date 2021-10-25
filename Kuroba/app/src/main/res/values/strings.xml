@@ -1359,6 +1359,7 @@ Actual error: \'%1$s\'</string>
     <string name="bookmark_groups_controller_no_groups_created">No groups created</string>
     <string name="bookmark_groups_controller_select_bookmark_group">Select bookmark group to move selected bookmarks into</string>
     <string name="bookmark_groups_controller_create_new_group">Create new group</string>
+    <string name="bookmark_groups_controller_group_has_no_matcher">Group \'%1$s\' has no matcher</string>
     <string name="bookmark_groups_enter_new_group_name">Enter bookmark group name (must be unique)</string>
     <string name="bookmark_groups_group_will_become_visible_after">Group will become visible after you add bookmarks into it</string>
     <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists</string>

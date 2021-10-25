@@ -201,6 +201,9 @@ class BookmarkGroupSettingsController(
                   )
 
                   presentController(controller)
+                },
+                bookmarkWarningClicked = { groupId ->
+                  showToast(getString(R.string.bookmark_groups_controller_group_has_no_matcher, groupId))
                 }
               )
             }
@@ -288,13 +291,15 @@ class BookmarkGroupSettingsController(
     reoderableState: ReorderableState,
     bookmarkGroupClicked: (String) -> Unit,
     bookmarkGroupSettingsClicked: (String) -> Unit,
-    removeBookmarkGroupClicked: (String) -> Unit
+    removeBookmarkGroupClicked: (String) -> Unit,
+    bookmarkWarningClicked: (String) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
     val groupId = threadBookmarkGroupItem.groupId
     val removeBoardClickedRemembered = rememberUpdatedState(newValue = removeBookmarkGroupClicked)
     val bookmarkGroupClickedRemembered = rememberUpdatedState(newValue = bookmarkGroupClicked)
     val bookmarkGroupSettingsClickedRemembered = rememberUpdatedState(newValue = bookmarkGroupSettingsClicked)
+    val bookmarkWarningClickedRemembered = rememberUpdatedState(newValue = bookmarkWarningClicked)
 
     val modifier = if (isBookmarkMoveMode) {
       Modifier.kurobaClickable(
@@ -352,6 +357,22 @@ class BookmarkGroupSettingsController(
         )
 
         if (!isBookmarkMoveMode) {
+          if (threadBookmarkGroupItem.hasNoMatcher && !threadBookmarkGroupItem.isDefaultGroup()) {
+            Spacer(modifier = Modifier.width(8.dp))
+
+            KurobaComposeIcon(
+              modifier = Modifier
+                .size(28.dp)
+                .align(Alignment.CenterVertically)
+                .kurobaClickable(
+                  bounded = false,
+                  onClick = { bookmarkWarningClickedRemembered.value.invoke(groupId) }
+                ),
+              drawableId = R.drawable.ic_alert,
+              themeEngine = themeEngine
+            )
+          }
+
           if (!threadBookmarkGroupItem.isDefaultGroup()) {
             Spacer(modifier = Modifier.width(8.dp))
 

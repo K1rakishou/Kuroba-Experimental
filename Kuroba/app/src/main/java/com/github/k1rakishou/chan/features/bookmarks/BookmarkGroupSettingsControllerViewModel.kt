@@ -41,22 +41,20 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
     mainScope.launch {
       val newThreadBookmarkGroupItems = mutableListOf<ThreadBookmarkGroupItem>()
 
-      threadBookmarkGroupManager.viewBookmarkGroups { threadBookmarkGroup ->
+      threadBookmarkGroupManager.viewBookmarkGroupsOrdered { threadBookmarkGroup ->
         newThreadBookmarkGroupItems += ThreadBookmarkGroupItem(
           groupId = threadBookmarkGroup.groupId,
           groupName = threadBookmarkGroup.groupName,
           groupOrder = threadBookmarkGroup.groupOrder,
-          groupEntriesCount = threadBookmarkGroup.getEntriesCount()
+          groupEntriesCount = threadBookmarkGroup.getEntriesCount(),
+          hasNoMatcher = threadBookmarkGroup.matchingPattern == null
         )
       }
 
       threadBookmarkGroupItems.clear()
 
       if (newThreadBookmarkGroupItems.isNotEmpty()) {
-        val sortedThreadBookmarkGroupItems = newThreadBookmarkGroupItems
-          .sortedBy { threadBookmarkGroupItem -> threadBookmarkGroupItem.groupOrder }
-
-        threadBookmarkGroupItems.addAll(sortedThreadBookmarkGroupItems)
+        threadBookmarkGroupItems.addAll(newThreadBookmarkGroupItems)
       }
 
       _loading.value = false
@@ -80,7 +78,10 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
       val removeResult = threadBookmarkGroupManager.removeBookmarkGroup(groupId)
       if (removeResult.valueOrNull() == true) {
         if (prevBookmarkDescriptorsInGroup.isNotEmpty()) {
-          threadBookmarkGroupManager.createGroupEntries(prevBookmarkDescriptorsInGroup)
+          threadBookmarkGroupManager.createGroupEntries(
+            bookmarkThreadDescriptors = prevBookmarkDescriptorsInGroup,
+            forceDefaultGroup = true
+          )
         }
 
         threadBookmarkGroupItems
@@ -110,7 +111,8 @@ class BookmarkGroupSettingsControllerViewModel : BaseViewModel() {
     val groupId: String,
     val groupName: String,
     val groupOrder: Int,
-    val groupEntriesCount: Int
+    val groupEntriesCount: Int,
+    val hasNoMatcher: Boolean
   ) {
     fun isDefaultGroup(): Boolean = ThreadBookmarkGroup.isDefaultGroup(groupId)
   }

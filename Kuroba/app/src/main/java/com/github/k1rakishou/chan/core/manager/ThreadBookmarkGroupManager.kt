@@ -73,7 +73,10 @@ class ThreadBookmarkGroupManager(
     ensureInitialized()
 
     return mutex.withLockNonCancellable {
-      for ((groupId, threadBookmarkGroup) in groupsByGroupIdMap.entries) {
+      val threadBookmarkGroupEntriesSorted = groupsByGroupIdMap.entries
+        .sortedBy { (_, threadBookmarkGroup) -> threadBookmarkGroup.groupOrder }
+
+      for ((groupId, threadBookmarkGroup) in threadBookmarkGroupEntriesSorted) {
         if (threadBookmarkGroup.isDefaultGroup()) {
           // Skip the default group here since it always matches everything and will be used
           // if no other group matches this bookmark info
@@ -110,11 +113,14 @@ class ThreadBookmarkGroupManager(
     return mutex.withLockNonCancellable { groupsByGroupIdMap[bookmarkGroupId]?.matchingPattern }
   }
 
-  suspend fun viewBookmarkGroups(viewer: (ThreadBookmarkGroup) -> Unit) {
+  suspend fun viewBookmarkGroupsOrdered(viewer: (ThreadBookmarkGroup) -> Unit) {
     ensureInitialized()
 
     mutex.withLockNonCancellable {
-      groupsByGroupIdMap.values.forEach { threadBookmarkGroup ->
+      val threadBookmarkGroupEntriesOrdered = groupsByGroupIdMap.entries
+        .sortedBy { (_, threadBookmarkGroup) -> threadBookmarkGroup.groupOrder }
+
+      threadBookmarkGroupEntriesOrdered.forEach { (_, threadBookmarkGroup) ->
         viewer(threadBookmarkGroup)
       }
     }
@@ -364,7 +370,7 @@ class ThreadBookmarkGroupManager(
         return@withLockNonCancellable
       }
 
-      threadBookmarkGroupRepository.updateGroupEntries(groups)
+      threadBookmarkGroupRepository.updateGroups(groups)
         .peekError { error -> Logger.e(TAG, "updateGroups() error", error) }
         .ignore()
     }
@@ -518,12 +524,19 @@ class ThreadBookmarkGroupManager(
   /**
    * Creates new ThreadBookmarkGroupEntry for newly created ThreadBookmarks.
    * */
-  suspend fun createGroupEntries(bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>): Boolean {
+  suspend fun createGroupEntries(
+    bookmarkThreadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    forceDefaultGroup: Boolean
+  ): Boolean {
     ensureInitialized()
     require(bookmarkThreadDescriptors.isNotEmpty()) { "bookmarkThreadDescriptors is empty!" }
 
-    val parameters = GetThreadBookmarkGroupIdsUseCase.Parameters(bookmarkThreadDescriptors)
-    val matchedGroupsMap = getThreadBookmarkGroupIdsUseCase.execute(parameters).groupsMap
+    val matchedGroupsMap = if (forceDefaultGroup) {
+      emptyMap()
+    } else {
+      val parameters = GetThreadBookmarkGroupIdsUseCase.Parameters(bookmarkThreadDescriptors)
+      getThreadBookmarkGroupIdsUseCase.execute(parameters).groupsMap
+    }
 
     // Yes, there is a database call inside of the locked block, but we need atomicity
     return mutex.withLockNonCancellable {
@@ -627,7 +640,7 @@ class ThreadBookmarkGroupManager(
             groupName = groupName,
             isExpanded = true,
             groupOrder = groupOrder,
-            newMatchingPattern = null
+            newMatchingPattern = bookmarkGroupToCreate.matchingPattern
           )
         }
 
@@ -660,7 +673,7 @@ class ThreadBookmarkGroupManager(
           groupName = groupName,
           isExpanded = true,
           groupOrder = groupOrder,
-          matchingPattern = null,
+          matchingPattern = bookmarkGroupToCreate.matchingPattern,
           entries = entries.toMutableList()
         )
 
@@ -721,7 +734,7 @@ class ThreadBookmarkGroupManager(
           groupOrder = threadBookmarkGroupToCreate.groupOrder,
           newEntries = threadBookmarkGroupEntries,
           newOrders = threadBookmarkGroupToCreate.getEntryDatabaseIdsSorted().toMutableList(),
-          newMatchingPattern = null
+          newMatchingPattern = threadBookmarkGroupToCreate.matchingPattern
         )
       } else {
         threadBookmarkGroupEntries.values.forEach { threadBookmarkGroupEntry ->
@@ -860,7 +873,7 @@ class ThreadBookmarkGroupManager(
           Logger.d(TAG, "New BookmarksCreated event, threadDescriptors count: ${threadDescriptors.size}")
         }
 
-        createGroupEntries(threadDescriptors)
+        createGroupEntries(bookmarkThreadDescriptors = threadDescriptors, forceDefaultGroup = false)
       }
       is BookmarksManager.BookmarkChange.BookmarksDeleted -> {
         val threadDescriptors = bookmarkChange.threadDescriptors.toList()
