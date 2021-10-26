@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.mapper
 
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupEntry
@@ -142,22 +143,28 @@ object ThreadBookmarkGroupMapper {
       return null
     }
 
-    val bookmarkGroupMatchFlagList = moshi
-      .adapter<BookmarkGroupMatchFlagJsonList>(BookmarkGroupMatchFlagJsonList::class.java)
-      .fromJson(matchingPatternRaw)
-      ?.list
-      ?.mapNotNull { bookmarkGroupMatchFlagJson ->
-        val matcherType = BookmarkGroupMatchFlag.Type.fromRawTypeOrNull(bookmarkGroupMatchFlagJson.matcherType)
-          ?: return@mapNotNull null
-        val operator = BookmarkGroupMatchFlag.Operator.fromOperatorIdOrNull(bookmarkGroupMatchFlagJson.operator)
+    val bookmarkGroupMatchFlagList = try {
+      moshi
+        .adapter<BookmarkGroupMatchFlagJsonList>(BookmarkGroupMatchFlagJsonList::class.java)
+        .fromJson(matchingPatternRaw)
+        ?.list
+        ?.mapNotNull { bookmarkGroupMatchFlagJson ->
+          val matcherType = BookmarkGroupMatchFlag.Type.fromRawTypeOrNull(bookmarkGroupMatchFlagJson.matcherType)
+            ?: return@mapNotNull null
+          val operator = BookmarkGroupMatchFlag.Operator.fromOperatorIdOrNull(bookmarkGroupMatchFlagJson.operator)
 
-        return@mapNotNull BookmarkGroupMatchFlag(
-          rawPattern = bookmarkGroupMatchFlagJson.rawPattern,
-          type = matcherType,
-          nextGroupMatchFlag = null,
-          operator = operator
-        )
-      }
+          return@mapNotNull BookmarkGroupMatchFlag(
+            rawPattern = bookmarkGroupMatchFlagJson.rawPattern,
+            type = matcherType,
+            nextGroupMatchFlag = null,
+            operator = operator
+          )
+        }
+    } catch (error: Throwable) {
+      Logger.e("ThreadBookmarkGroupMapper", "matchingPatternFromEntity() failed to convert " +
+        "json \'$matchingPatternRaw\' into BookmarkGroupMatchFlagJsonList")
+      return null
+    }
 
     if (bookmarkGroupMatchFlagList == null || bookmarkGroupMatchFlagList.isEmpty()) {
       return null
