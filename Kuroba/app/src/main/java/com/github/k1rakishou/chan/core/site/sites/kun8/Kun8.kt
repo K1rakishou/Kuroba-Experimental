@@ -54,9 +54,9 @@ class Kun8 : CommonSite() {
         val fpath = arg["fpath"]?.toIntOrNull() ?: 1
 
         val url = if (fpath == 1) {
-          "https://media.8kun.top/file_store/$tim.$ext".toHttpUrlOrNull()
+          "https://media.128ducks.com/file_store/$tim.$ext".toHttpUrlOrNull()
         } else {
-          "https://media.8kun.top/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
+          "https://media.128ducks.com/${boardDescriptor.boardCode}/src/$tim.$ext".toHttpUrlOrNull()
         }
 
         return requireNotNull(url) { "image url is null" }
@@ -69,7 +69,7 @@ class Kun8 : CommonSite() {
         arg: Map<String, String>
       ): HttpUrl {
         if (spoiler) {
-          return "https://media.8kun.top/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
+          return "https://media.128ducks.com/static/assets/${boardDescriptor.boardCode}/spoiler.png".toHttpUrl()
         }
 
         val tim = requireNotNull(arg["tim"]) { "\"tim\" parameter not found" }
@@ -81,12 +81,12 @@ class Kun8 : CommonSite() {
         }
 
         val url = if (fpath == 1) {
-          "https://media.8kun.top/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
+          "https://media.128ducks.com/file_store/thumb/$tim.$extension".toHttpUrlOrNull()
         } else {
           // Oldstyle images seems to always have "jpg" extension. But even if some of them don't
           // (I couldn't find any but there might be some) there is no way to figure out the true
           // extension because API only sends the original image extension.
-          "https://media.8kun.top/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
+          "https://media.128ducks.com/${boardDescriptor.boardCode}/thumb/$tim.$extension".toHttpUrlOrNull()
         }
 
         return requireNotNull(url) { "thumbnail url is null" }
