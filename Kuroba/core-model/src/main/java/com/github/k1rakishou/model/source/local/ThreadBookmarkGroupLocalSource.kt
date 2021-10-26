@@ -25,7 +25,7 @@ class ThreadBookmarkGroupLocalSource(
   suspend fun selectAll(): List<ThreadBookmarkGroup> {
     ensureInTransaction()
 
-    val threadBookmarkGroupList = threadBookmarkGroupDao.selectAllGroups()
+    val threadBookmarkGroupList = threadBookmarkGroupDao.selectAllGroupsOrdered()
     val threadBookmarkGroupWithEntriesList = threadBookmarkGroupDao.selectGroupsWithEntries()
 
     val bookmarkIds = threadBookmarkGroupWithEntriesList.flatMap { threadBookmarkGroupWithEntries ->
@@ -43,13 +43,14 @@ class ThreadBookmarkGroupLocalSource(
       .associateBy { threadBookmarkGroup -> threadBookmarkGroup.threadBookmarkGroupEntity.groupId }
 
     return threadBookmarkGroupList
-      .map { threadBookmarkGroupEntity ->
+      .mapIndexed { groupOrder, threadBookmarkGroupEntity ->
         val threadBookmarkGroupWithEntries = threadBookmarkGroupWithEntriesMap[threadBookmarkGroupEntity.groupId]
           ?.threadBookmarkGroupEntryEntities
           ?: emptyList()
 
-        return@map ThreadBookmarkGroupMapper.fromEntity(
+        return@mapIndexed ThreadBookmarkGroupMapper.fromEntity(
           moshi = moshi,
+          groupOrder = groupOrder,
           threadBookmarkGroupEntity = threadBookmarkGroupEntity,
           threadBookmarkGroupEntryEntities = threadBookmarkGroupWithEntries,
           bookmarkThreadDescriptorsMap = bookmarkThreadDescriptorsMap
@@ -164,13 +165,12 @@ class ThreadBookmarkGroupLocalSource(
     ensureInTransaction()
 
     val threadBookmarkGroupEntityList = groups
-      .sortedBy { group -> group.groupOrder }
-      .mapIndexed { newOrder, group ->
-        return@mapIndexed ThreadBookmarkGroupEntity(
+      .map { group ->
+        return@map ThreadBookmarkGroupEntity(
           groupId = group.groupId,
           groupName = group.groupName,
           isExpanded = group.isExpanded,
-          groupOrder = newOrder,
+          groupOrder = group.groupOrder,
           groupMatcherPattern = ThreadBookmarkGroupMapper.matchingPatternToEntity(
             moshi = moshi,
             matchingPattern = group.matchingPattern

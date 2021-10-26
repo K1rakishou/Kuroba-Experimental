@@ -15,6 +15,8 @@ import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkView
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -114,13 +116,6 @@ class BookmarksPresenter(
             }
           }
       }
-
-      if (bookmarksRefreshed.compareAndSet(false, true)) {
-        bookmarksManager.refreshBookmarks()
-      }
-
-      Logger.d(TAG, "calling reloadBookmarks() first time")
-      reloadBookmarks()
     }
   }
 
@@ -142,9 +137,9 @@ class BookmarksPresenter(
   ): Boolean {
     return runBlocking(Dispatchers.Default) {
       val result = threadBookmarkGroupManager.onBookmarkMoving(
-        groupId,
-        fromBookmarkDescriptor,
-        toBookmarkDescriptor
+        groupId = groupId,
+        fromBookmarkDescriptor = fromBookmarkDescriptor,
+        toBookmarkDescriptor = toBookmarkDescriptor
       )
 
       if (!result) {
@@ -292,7 +287,6 @@ class BookmarksPresenter(
 
   private suspend fun showBookmarks(loadingStateCancellationJob: Job? = null) {
     BackgroundUtils.ensureBackgroundThread()
-
     bookmarksManager.awaitUntilInitialized()
 
     val isWatcherEnabled = ChanSettings.watchEnabled.get()
@@ -309,52 +303,55 @@ class BookmarksPresenter(
     val downloadingThreadDescriptors = threadDownloadManager.getDownloadingThreadDescriptors()
 
     val threadBookmarkItemViewList = bookmarksManager
-      .mapNotNullAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
+      .mapAllBookmarks<ThreadBookmarkItemView> { threadBookmarkView ->
         val title = threadBookmarkView.title
           ?: "No title"
 
-        if (query == null || title.contains(query, ignoreCase = true)) {
-          val threadBookmarkStats = getThreadBookmarkStats(
-            isWatcherEnabled = isWatcherEnabled,
-            threadBookmarkView = threadBookmarkView,
-            downloadingThreadDescriptors = downloadingThreadDescriptors
-          )
+        val threadBookmarkStats = getThreadBookmarkStats(
+          isWatcherEnabled = isWatcherEnabled,
+          threadBookmarkView = threadBookmarkView,
+          downloadingThreadDescriptors = downloadingThreadDescriptors
+        )
 
-          val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
-            val isSelected = bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor)
-            ThreadBookmarkSelection(isSelected)
-          } else {
-            null
-          }
+        val selection = if (bookmarksSelectionHelper.isInSelectionMode()) {
+          val isSelected = bookmarksSelectionHelper.isSelected(threadBookmarkView.threadDescriptor)
+          ThreadBookmarkSelection(isSelected)
+        } else {
+          null
+        }
 
-          return@mapNotNullAllBookmarks ThreadBookmarkItemView(
-            threadDescriptor = threadBookmarkView.threadDescriptor,
-            title = title,
-            highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
-            thumbnailUrl = threadBookmarkView.thumbnailUrl,
-            threadBookmarkStats = threadBookmarkStats,
-            selection = selection,
-            createdOn = threadBookmarkView.createdOn
-          )
+        return@mapAllBookmarks ThreadBookmarkItemView(
+          threadDescriptor = threadBookmarkView.threadDescriptor,
+          title = title,
+          highlight = threadBookmarkView.threadDescriptor in bookmarksToHighlight,
+          thumbnailUrl = threadBookmarkView.thumbnailUrl,
+          threadBookmarkStats = threadBookmarkStats,
+          selection = selection,
+          createdOn = threadBookmarkView.createdOn
+        )
       }
-
-      return@mapNotNullAllBookmarks null
-    }
 
     val groupedBookmarks = threadBookmarkGroupManager.groupBookmarks(
       threadBookmarkViewList = threadBookmarkItemViewList.toList(),
-      bookmarksToHighlight = bookmarksToHighlight
+      bookmarksToHighlight = bookmarksToHighlight,
+      hasSearchQuery = query.isNotNullNorEmpty()
     )
+
+    val groupedFilteredBookmarks = if (query.isNotNullNorEmpty()) {
+      processSearchQuery(groupedBookmarks, query)
+    } else {
+      groupedBookmarks
+    }
 
     // The function call order matters!
     // First we need to do the general sorting.
-    sortBookmarks(groupedBookmarks)
+    sortBookmarks(groupedFilteredBookmarks)
 
     // Then we need to move dead bookmarks to bottom.
-    moveDeadBookmarksToEnd(groupedBookmarks)
+    moveDeadBookmarksToEnd(groupedFilteredBookmarks)
 
     // Bookmarks with replies have the highest priority, so we are moving them at the latest step.
-    moveBookmarksWithUnreadRepliesToTop(groupedBookmarks)
+    moveBookmarksWithUnreadRepliesToTop(groupedFilteredBookmarks)
 
     // Cancel the setState(Loading) event
     loadingStateCancellationJob?.let { job ->
@@ -363,7 +360,7 @@ class BookmarksPresenter(
       }
     }
 
-    if (groupedBookmarks.isEmpty()) {
+    if (groupedFilteredBookmarks.isEmpty()) {
       if (query != null) {
         setState(BookmarksControllerState.NothingFound(query))
       } else {
@@ -373,7 +370,33 @@ class BookmarksPresenter(
       return
     }
 
-    setState(BookmarksControllerState.Data(isReorderingMode.get(), groupedBookmarks))
+    setState(BookmarksControllerState.Data(isReorderingMode.get(), groupedFilteredBookmarks))
+  }
+
+  private fun processSearchQuery(
+    groupedBookmarks: List<GroupOfThreadBookmarkItemViews>,
+    query: String
+  ): List<GroupOfThreadBookmarkItemViews> {
+    val resultGroupedBookmarks = mutableListOf<GroupOfThreadBookmarkItemViews>()
+
+    for (groupedBookmark in groupedBookmarks) {
+      if (groupedBookmark.groupInfoText.contains(query, ignoreCase = true)) {
+        resultGroupedBookmarks += groupedBookmark
+        continue
+      }
+
+      groupedBookmark.threadBookmarkItemViews.mutableIteration { mutableIterator, threadBookmarkItemView ->
+        if (!threadBookmarkItemView.title.contains(query, ignoreCase = true)) {
+          mutableIterator.remove()
+        }
+
+        return@mutableIteration true
+      }
+
+      resultGroupedBookmarks += groupedBookmark
+    }
+
+    return resultGroupedBookmarks
   }
 
   private fun moveBookmarksWithUnreadRepliesToTop(

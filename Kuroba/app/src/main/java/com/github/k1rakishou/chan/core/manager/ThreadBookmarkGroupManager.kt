@@ -444,7 +444,8 @@ class ThreadBookmarkGroupManager(
    * */
   suspend fun groupBookmarks(
     threadBookmarkViewList: List<ThreadBookmarkItemView>,
-    bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>
+    bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
+    hasSearchQuery: Boolean
   ): List<GroupOfThreadBookmarkItemViews> {
     ensureInitialized()
 
@@ -471,7 +472,7 @@ class ThreadBookmarkGroupManager(
         val threadBookmarkItemViews =
           mutableListWithCap<ThreadBookmarkItemView>(threadBookmarkGroup.getEntriesCount())
 
-        var shouldGroupBeExpanded = threadBookmarkGroup.isExpanded
+        var shouldGroupBeExpanded = threadBookmarkGroup.isExpanded || hasSearchQuery
 
         threadBookmarkGroup.iterateEntriesOrderedWhile { _, threadBookmarkGroupEntry ->
           val orderedThreadBookmarkItemView =

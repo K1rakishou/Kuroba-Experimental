@@ -1376,7 +1376,8 @@ fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
   return true
 }
 
-fun Thread.callStack(): String {
+@JvmOverloads
+fun Thread.callStack(tag: String = ""): String {
   val resultString = java.lang.StringBuilder(256)
   var index = 0
 
@@ -1398,7 +1399,7 @@ fun Thread.callStack(): String {
       resultString.appendLine()
     }
 
-    resultString.append("[${fileName}:${lineNumber}]")
+    resultString.append("${tag} ${index}-[${fileName}:${lineNumber}]")
     resultString.append(" ")
     resultString.append(className)
     resultString.append("#")

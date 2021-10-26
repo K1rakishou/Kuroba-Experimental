@@ -41,8 +41,12 @@ abstract class ThreadBookmarkGroupDao {
   """)
   abstract suspend fun selectGroupsWithEntries(): List<ThreadBookmarkGroupWithEntries>
 
-  @Query("SELECT * FROM ${ThreadBookmarkGroupEntity.TABLE_NAME}")
-  abstract suspend fun selectAllGroups(): List<ThreadBookmarkGroupEntity>
+  @Query("""
+    SELECT * 
+    FROM ${ThreadBookmarkGroupEntity.TABLE_NAME}
+    ORDER BY ${ThreadBookmarkGroupEntity.GROUP_ORDER_COLUMN_NAME} ASC
+  """)
+  abstract suspend fun selectAllGroupsOrdered(): List<ThreadBookmarkGroupEntity>
 
   @Query("""
     SELECT ${ThreadBookmarkGroupEntity.GROUP_ID_COLUMN_NAME}

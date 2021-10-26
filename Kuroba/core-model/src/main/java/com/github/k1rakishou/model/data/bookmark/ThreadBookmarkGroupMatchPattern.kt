@@ -152,7 +152,7 @@ class BookmarkGroupMatchFlag(
   ): Boolean {
     val matches = match(boardDescriptor, postSubject, postComment)
 
-    when (nextGroupMatchFlag?.operator) {
+    when (operator) {
       Operator.And -> {
         return matches && nextGroupMatchFlag!!.matches(boardDescriptor, postSubject, postComment)
       }

@@ -16,6 +16,7 @@ object ThreadBookmarkGroupMapper {
 
   fun fromEntity(
     moshi: Moshi,
+    groupOrder: Int,
     threadBookmarkGroupEntity: ThreadBookmarkGroupEntity,
     threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>,
     bookmarkThreadDescriptorsMap: Map<Long, BookmarkThreadDescriptor>
@@ -52,7 +53,7 @@ object ThreadBookmarkGroupMapper {
       groupId = threadBookmarkGroupEntity.groupId,
       groupName = threadBookmarkGroupEntity.groupName,
       isExpanded = threadBookmarkGroupEntity.isExpanded,
-      groupOrder = threadBookmarkGroupEntity.groupOrder,
+      groupOrder = groupOrder,
       newEntries = threadBookmarkGroupEntries,
       newOrders = orders,
       newMatchingPattern = matchingPatternFromEntity(
