@@ -1411,14 +1411,13 @@ Actual error: \'%1$s\'</string>
     By combining the matchers together you can create the following example bookmark groups:
     <br>
     <p>
-        - Combining site name matcher <tt>/4chan/i</tt> with board code matcher <tt>/g/i</tt> using the <tt>AND</tt>
-        operator will make a group into which all 4chan/g/ bookmarked threads will be moved.
-        <br>
-        - Combining post subject matcher <tt>/dpt/i</tt> with post comment matcher <tt>/dpt/i</tt> using the <tt>OR</tt>
-        operator will make a group into which all bookmarked threads with subject or comment containing word combination <tt>dpt</tt> will be moved.
-        <br>
+        - If you create a group with site name matcher <tt>/4chan/i</tt>, board code matcher <tt>/g/i</tt> using the <tt>AND</tt>
+        operator then all bookmarks created on 4chan/g/ (and only there) will be moved into this group.<br>
+        - If you create a group with post subject matcher <tt>/mjg/i</tt>, post comment matcher <tt>/mjg/i</tt> using the <tt>OR</tt>
+        operator then all bookmarks with <tt>/mjg/</tt> in OP subject or comment will be moved into this group.<br>
+        - If you create a group with post subject matcher <tt>/vn/i</tt> with no other matchers then every bookmark on every site
+        (on every board) will be moved into this group if it contains <tt>/vn/i</tt> in the thread subject.<br>
     </p>
-    <br>
     The exception to this rule are the bookmarks created by filter watches. They will be moved into their own groups which are called by the matched filter\'s pattern.
     <br>
     When deleting a bookmark group all the bookmarks that are currently in that group will be moved into the <tt>Default group</tt>.
