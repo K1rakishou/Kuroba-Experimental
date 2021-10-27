@@ -709,20 +709,19 @@ open class Chan4 : SiteBase() {
       }
 
       override fun respondsTo(url: HttpUrl): Boolean {
-        val host = url.host
+        val host = url.host.removePrefix("www.")
 
         return host == "4chan.org"
-          || host == "www.4chan.org"
-          || host == "boards.4chan.org"
           || host == "4channel.org"
-          || host == "www.4channel.org"
+          || host == "boards.4chan.org"
           || host == "boards.4channel.org"
+          || host == "sys.4chan.org"
+          || host == "sys.4channel.org"
+          || host == "find.4chan.org"
+          || host == "find.4channel.org"
           || host == "a.4cdn.org"
           || host == "i.4cdn.org"
           || host == "s.4cdn.org"
-          || host == "sys.4chan.org"
-          || host == "boards.4chan.org"
-          || host == "find.4chan.org"
       }
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
