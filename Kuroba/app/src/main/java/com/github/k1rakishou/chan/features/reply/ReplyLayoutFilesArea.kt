@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonW
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
 import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.helper.picker.AbstractFilePicker
@@ -200,6 +201,13 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     }
 
     controller.callback = stateRenderer@ {
+      if (state.loading) {
+        epoxyLoadingView {
+          id("reply_layout_files_area_loading_view")
+        }
+        return@stateRenderer
+      }
+
       val attachables = state.attachables
 
       if (attachables.size == 1 && attachables.first() is ReplyNewAttachable) {

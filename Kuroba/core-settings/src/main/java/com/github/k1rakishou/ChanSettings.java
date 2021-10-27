@@ -385,7 +385,6 @@ public class ChanSettings {
     public static BooleanSetting showPrefetchLoadingIndicator;
     public static BooleanSetting highResCells;
     public static BooleanSetting useMpvVideoPlayer;
-    public static BooleanSetting asyncPostCellDataCalculation;
     //endregion
 
     //region OTHER
@@ -615,7 +614,6 @@ public class ChanSettings {
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
             useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
-            asyncPostCellDataCalculation = new BooleanSetting(provider, "async_post_cell_data_calculation", false);
             //endregion
 
             //region OTHER

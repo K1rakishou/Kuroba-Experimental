@@ -66,7 +66,7 @@ class ReplyLayoutFilesAreaPresenter(
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
   private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
   private val fileChangeExecutor = SerializedCoroutineExecutor(scope)
-  private val state = MutableStateFlow(ReplyLayoutFilesState())
+  private val state = MutableStateFlow(ReplyLayoutFilesState(loading = true))
   private var boundChanDescriptor: ChanDescriptor? = null
 
   fun listenForStateUpdates(): Flow<ReplyLayoutFilesState> = state.asStateFlow()
@@ -519,7 +519,11 @@ class ReplyLayoutFilesAreaPresenter(
         val attachables = enumerateReplyAttachables(chanDescriptor).unwrap()
 
         val oldState = state.value
-        val newState = ReplyLayoutFilesState(isReplyLayoutExpanded, attachables)
+        val newState = ReplyLayoutFilesState(
+          isReplyLayoutExpanded = isReplyLayoutExpanded,
+          loading = false,
+          attachables = attachables
+        )
         state.value = newState
 
         if (oldState != newState) {

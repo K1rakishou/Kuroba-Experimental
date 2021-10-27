@@ -16,7 +16,6 @@
  */
 package com.github.k1rakishou.chan.core.helper
 
-import android.text.TextUtils
 import androidx.annotation.AnyThread
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.common.RegexPatternCompiler
@@ -231,7 +230,7 @@ class FilterEngine @Inject constructor(
     text: CharSequence?,
     forceCompile: Boolean
   ): Boolean {
-    if (TextUtils.isEmpty(text)) {
+    if (text.isNullOrEmpty()) {
       return false
     }
 
@@ -260,17 +259,16 @@ class FilterEngine @Inject constructor(
       }
     }
 
-    if (pattern != null) {
-      val matcher = pattern!!.matcher(text)
+    if (pattern == null) {
+      return false
+    }
 
-      try {
-        return matcher.find()
-      } catch (e: IllegalArgumentException) {
-        Logger.e(TAG, "matcher.find() exception, pattern=" + pattern!!.pattern(), e)
-        return false
-      }
-    } else {
-      Logger.e(TAG, "Invalid pattern (null)")
+    val matcher = pattern!!.matcher(text)
+
+    try {
+      return matcher.find()
+    } catch (e: IllegalArgumentException) {
+      Logger.e(TAG, "matcher.find() exception, pattern=" + pattern!!.pattern(), e)
       return false
     }
   }

@@ -394,7 +394,6 @@ class ReportManager(
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
-      appendLine("asyncPostCellDataCalculation: ${ChanSettings.asyncPostCellDataCalculation.get()}")
       appendLine("userAgent: ${appConstants.userAgent}")
       appendLine("kurobaExCustomUserAgent: ${appConstants.kurobaExCustomUserAgent}")
 
