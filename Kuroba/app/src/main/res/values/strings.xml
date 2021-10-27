@@ -1356,6 +1356,7 @@ Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 
+    <string name="bookmark_groups_controller_title">Bookmark groups</string>
     <string name="bookmark_groups_controller_no_groups_created">No groups created</string>
     <string name="bookmark_groups_controller_select_bookmark_group">Select bookmark group to move selected bookmarks into</string>
     <string name="bookmark_groups_controller_create_new_group">Create new group</string>
@@ -1414,7 +1415,7 @@ Actual error: \'%1$s\'</string>
         operator will make a group into which all 4chan/g/ bookmarked threads will be moved.
         <br>
         - Combining post subject matcher <tt>/dpt/i</tt> with post comment matcher <tt>/dpt/i</tt> using the <tt>OR</tt>
-        operator will make a group into which all bookmarked threads with subject/comment containing word combination <tt>dpt</tt> will be moved.
+        operator will make a group into which all bookmarked threads with subject or comment containing word combination <tt>dpt</tt> will be moved.
         <br>
     </p>
     <br>
@@ -1423,8 +1424,10 @@ Actual error: \'%1$s\'</string>
     When deleting a bookmark group all the bookmarks that are currently in that group will be moved into the <tt>Default group</tt>.
     <br>
     <br>
-    If you have multiple bookmark groups, when creating new bookmarks, they are processed by the bookmark group matchers in the order as seen in the <tt>Bookmark group settings</tt>
-    screen except for the <tt>Default group</tt> which is always processed last and basically always matches all the remaining bookmarks not matched by other matchers.
+    If you have multiple bookmark groups, when creating new bookmarks, they are processed by the bookmark group matchers in the order as seen in the <tt>Bookmark groups</tt>
+    screen except for the <tt>Default group</tt> which is always processed last and basically always matches all the remaining bookmarks not matched by other matchers. In other words,
+    the ordering matters. For example, if you create a matcher with the <tt>*</tt> regex and move it on the very top of the bookmark groups list, it will match all newly created bookmarks
+    and they all will be moved into that group. All the matchers after that <tt>global</tt> matcher won\'t even have a chance to match anything.
     <br>
 ]]>
     </string>

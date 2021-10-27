@@ -5,7 +5,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 
 class ThreadBookmarkGroupMatchPattern(
-  val matchFlag: BookmarkGroupMatchFlag
+  private val matchFlag: BookmarkGroupMatchFlag
 ) {
 
   fun deepCopy(): ThreadBookmarkGroupMatchPattern {
@@ -117,7 +117,8 @@ class BookmarkGroupMatchFlag(
   val patternCompiled by lazy {
     val compilationResult = RegexPatternCompiler.compile(rawPattern = rawPattern)
     if (compilationResult.patternOrNull == null) {
-      Logger.e("BookmarkGroupMatchFlag", "RegexPatternCompiler.compile('$rawPattern') failure (compilationResult=$compilationResult)")
+      Logger.e("BookmarkGroupMatchFlag", "RegexPatternCompiler.compile('$rawPattern') " +
+        "failure (compilationResult=$compilationResult)")
     }
 
     return@lazy compilationResult.patternOrNull
@@ -218,9 +219,8 @@ class BookmarkGroupMatchFlag(
     companion object {
       fun fromOperatorIdOrNull(operatorId: Int?): Operator? {
         return when (operatorId) {
-          Operator.And.operatorId -> Operator.And
-          Operator.Or.operatorId -> Operator.Or
-          null -> null
+          And.operatorId -> And
+          Or.operatorId -> Or
           else -> null
         }
       }

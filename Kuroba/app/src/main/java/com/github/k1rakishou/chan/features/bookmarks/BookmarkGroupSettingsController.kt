@@ -146,7 +146,13 @@ class BookmarkGroupSettingsController(
             text = stringResource(id = R.string.bookmark_groups_controller_select_bookmark_group)
           )
         } else {
-          Spacer(modifier = Modifier.weight(1f))
+          KurobaComposeText(
+            modifier = Modifier
+              .wrapContentHeight()
+              .weight(1f),
+            textAlign = TextAlign.Center,
+            text = stringResource(id = R.string.bookmark_groups_controller_title)
+          )
         }
 
         KurobaComposeIcon(
