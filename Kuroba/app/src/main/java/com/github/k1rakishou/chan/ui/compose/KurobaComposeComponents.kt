@@ -292,18 +292,27 @@ fun KurobaComposeTextField(
 ) {
   val chanTheme = LocalChanTheme.current
 
-  TextField(
-    value = value,
-    label = label,
-    onValueChange = onValueChange,
-    maxLines = maxLines,
-    singleLine = singleLine,
-    modifier = modifier,
-    keyboardOptions = keyboardOptions,
-    keyboardActions = keyboardActions,
-    colors = chanTheme.textFieldColors(),
-    textStyle = textStyle
-  )
+  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
+    TextSelectionColors(
+      handleColor = chanTheme.accentColorCompose,
+      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
+    )
+  }
+
+  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+    TextField(
+      value = value,
+      label = label,
+      onValueChange = onValueChange,
+      maxLines = maxLines,
+      singleLine = singleLine,
+      modifier = modifier,
+      keyboardOptions = keyboardOptions,
+      keyboardActions = keyboardActions,
+      colors = chanTheme.textFieldColors(),
+      textStyle = textStyle
+    )
+  }
 }
 
 @OptIn(ExperimentalAnimationApi::class)

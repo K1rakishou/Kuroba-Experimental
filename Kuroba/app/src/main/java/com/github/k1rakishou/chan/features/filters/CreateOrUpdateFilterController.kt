@@ -36,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
@@ -113,6 +115,8 @@ class CreateOrUpdateFilterController(
         .align(Alignment.Center)
     ) {
       KurobaComposeCardView {
+        val focusManager = LocalFocusManager.current
+
         Column(modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
@@ -122,8 +126,11 @@ class CreateOrUpdateFilterController(
         ) {
           BuildCreateOrUpdateFilterLayout(
             onHelpClicked = { showFiltersHelpDialog() },
-            onCancelClicked = { pop() },
-            onSaveClicked = { onSaveFilterClicked() },
+            onCancelClicked = {
+              focusManager.clearFocus(force = true)
+              pop()
+            },
+            onSaveClicked = { onSaveFilterClicked(focusManager = focusManager) },
             onChangeFilterTypesClicked = { showFilterTypeSelectionController() },
             onChangeFilterBoardsClicked = { showFilterBoardSelectorController() },
             onChangeFilterActionClicked = { showAvailableFilterActions() },
@@ -666,7 +673,7 @@ class CreateOrUpdateFilterController(
       .create()
   }
 
-  private fun onSaveFilterClicked() {
+  private fun onSaveFilterClicked(focusManager: FocusManager) {
     val chanFilterMutable = chanFilterMutableState.asChanFilterMutable()
 
     if (chanFilterMutable.allBoards() && chanFilterMutable.isWatchFilter()) {
@@ -686,6 +693,7 @@ class CreateOrUpdateFilterController(
         }
       }
 
+      focusManager.clearFocus(force = true)
       pop()
     }
   }

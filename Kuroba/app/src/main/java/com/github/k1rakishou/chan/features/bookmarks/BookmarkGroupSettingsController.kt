@@ -23,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -88,23 +89,33 @@ class BookmarkGroupSettingsController(
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
+    val focusManager = LocalFocusManager.current
 
     Box(modifier = Modifier
       .consumeClicks()
       .background(chanTheme.backColorCompose)
     ) {
       BuildContentInternal(
-        onHelpClicked = { showGroupMatcherHelp() }
+        onHelpClicked = { showGroupMatcherHelp() },
+        onCloseClicked = {
+          focusManager.clearFocus(force = true)
+          pop()
+        },
+        onCreateGroupClicked = { createBookmarkGroup() }
       )
     }
   }
 
   @Composable
   private fun BoxScope.BuildContentInternal(
-    onHelpClicked: () -> Unit
+    onHelpClicked: () -> Unit,
+    onCloseClicked: () -> Unit,
+    onCreateGroupClicked: () -> Unit
   ) {
     val reoderableState = rememberReorderState()
     val onHelpClickedRemembered = rememberUpdatedState(newValue = onHelpClicked)
+    val onCloseClickedRemembered = rememberUpdatedState(newValue = onCloseClicked)
+    val onCreateGroupClickedRemembered = rememberUpdatedState(newValue = onCreateGroupClicked)
 
     val loading by viewModel.loading
     if (loading) {
@@ -225,14 +236,14 @@ class BookmarkGroupSettingsController(
         Spacer(modifier = Modifier.weight(1f))
 
         KurobaComposeTextBarButton(
-          onClick = { pop() },
+          onClick = { onCloseClickedRemembered.value.invoke() },
           text = stringResource(id = R.string.close)
         )
 
         Spacer(modifier = Modifier.width(8.dp))
 
         KurobaComposeTextBarButton(
-          onClick = { createBookmarkGroup() },
+          onClick = { onCreateGroupClickedRemembered.value.invoke() },
           text = stringResource(id = R.string.bookmark_groups_controller_create_new_group)
         )
 

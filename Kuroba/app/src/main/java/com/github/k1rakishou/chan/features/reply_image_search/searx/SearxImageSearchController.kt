@@ -33,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -95,6 +96,7 @@ class SearxImageSearchController(
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
+    val focusManager = LocalFocusManager.current
 
     Column(
       modifier = Modifier
@@ -139,6 +141,8 @@ class SearxImageSearchController(
       ) {
         BuildSearxResults(
           onImageClicked = { searxImage ->
+            focusManager.clearFocus(force = true)
+
             onImageSelected(searxImage.fullImageUrl)
             pop()
           }
@@ -172,7 +176,10 @@ class SearxImageSearchController(
         Spacer(modifier = Modifier.weight(1f))
 
         KurobaComposeTextBarButton(
-          onClick = { pop() },
+          onClick = {
+            focusManager.clearFocus(force = true)
+            pop()
+          },
           text = stringResource(id = R.string.close)
         )
 

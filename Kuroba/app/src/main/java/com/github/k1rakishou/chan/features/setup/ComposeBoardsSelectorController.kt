@@ -29,6 +29,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.painter.BitmapPainter
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -95,6 +96,8 @@ class ComposeBoardsSelectorController(
         .align(Alignment.Center)
         .background(backgroundColor)
     ) {
+      val focusManager = LocalFocusManager.current
+
       BuildContentInternal(chanTheme, backgroundColor)
 
       KurobaComposeTextBarButton(
@@ -102,7 +105,10 @@ class ComposeBoardsSelectorController(
           .wrapContentSize()
           .align(Alignment.End)
           .padding(horizontal = 8.dp, vertical = 4.dp),
-        onClick = { pop() },
+        onClick = {
+          focusManager.clearFocus(force = true)
+          pop()
+        },
         text = stringResource(id = R.string.close)
       )
     }
