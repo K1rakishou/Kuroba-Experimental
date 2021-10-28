@@ -29,6 +29,7 @@ object RegexPatternCompiler {
     when {
       isRegex.matches() -> {
         var flags = 0
+
         // This is a /Pattern/
         val flagsGroup = isRegex.groupOrNull(2)
           ?.lowercase(Locale.ENGLISH)
@@ -76,6 +77,9 @@ object RegexPatternCompiler {
       rawPattern.length >= 2 && rawPattern[0] == '"' && rawPattern[rawPattern.length - 1] == '"' -> {
         // "matches an exact sentence"
         val text = escapeRegex(rawPattern.substring(1, rawPattern.length - 1))
+        if (text.isEmpty()) {
+          return PatternCompilationResult.PatternIsEmpty
+        }
 
         val pattern = Pattern.compile(text, Pattern.CASE_INSENSITIVE)
         return PatternCompilationResult.Success(pattern, RegexMode.ExactSentence)

@@ -691,6 +691,20 @@ open class Chan4 : SiteBase() {
 
     @JvmStatic
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {
+      private val hosts = setOf(
+        "4chan.org",
+        "4channel.org",
+        "boards.4chan.org",
+        "boards.4channel.org",
+        "sys.4chan.org",
+        "sys.4channel.org",
+        "find.4chan.org",
+        "find.4channel.org",
+        "a.4cdn.org",
+        "i.4cdn.org",
+        "s.4cdn.org",
+      )
+
       private val mediaHosts = arrayOf(
         "https://i.4cdn.org/".toHttpUrl(),
         "https://is2.4chan.org/".toHttpUrl(),
@@ -711,17 +725,7 @@ open class Chan4 : SiteBase() {
       override fun respondsTo(url: HttpUrl): Boolean {
         val host = url.host.removePrefix("www.")
 
-        return host == "4chan.org"
-          || host == "4channel.org"
-          || host == "boards.4chan.org"
-          || host == "boards.4channel.org"
-          || host == "sys.4chan.org"
-          || host == "sys.4channel.org"
-          || host == "find.4chan.org"
-          || host == "find.4channel.org"
-          || host == "a.4cdn.org"
-          || host == "i.4cdn.org"
-          || host == "s.4cdn.org"
+        return hosts.contains(host)
       }
 
       override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String {
