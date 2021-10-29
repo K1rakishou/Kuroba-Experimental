@@ -163,6 +163,10 @@ class HtmlAttribute(
   private var valueAsString: String? = null
 
   fun nameAsString(): String {
+    if (name.isEmpty()) {
+      return ""
+    }
+
     if (nameAsString == null) {
       nameAsString = String(name)
     }
@@ -171,6 +175,10 @@ class HtmlAttribute(
   }
 
   fun valueAsString(): String {
+    if (value.isEmpty()) {
+      return ""
+    }
+
     if (valueAsString == null) {
       valueAsString = String(value)
     }

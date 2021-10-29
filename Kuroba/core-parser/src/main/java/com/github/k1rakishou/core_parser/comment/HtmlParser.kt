@@ -127,7 +127,6 @@ class HtmlParser {
 
   private fun createHtmlTag(parentNode: HtmlNode?, tagRaw: CharArray, tagIndex: Int): HtmlNode.Tag {
     val tagParts = splitIntoPartsBySeparator(tagRaw, separator = ' ')
-
     if (tagParts.isEmpty()) {
       throw ParsingException("tagParts is empty! tagRaw=${tagRaw.joinToString()}")
     }
@@ -137,7 +136,12 @@ class HtmlParser {
 
     for (tagPart in tagParts) {
       if (!tagPart.contains('=')) {
-        tagNameMaybe = tagPart
+        if (tagNameMaybe == null) {
+          tagNameMaybe = tagPart
+        } else {
+          attributes.add(HtmlAttribute(tagPart, charArrayOf()))
+        }
+
         continue
       }
 
@@ -149,18 +153,24 @@ class HtmlParser {
         continue
       }
 
-      val firstCh = attrValue.firstOrNull()
+      val firstCh = attrValue.getOrNull(0)
         ?: continue
+      val secondCh = attrValue.getOrNull(1)
 
-      if (firstCh == '\"') {
-        attrValue = attrValue.copyOfRange(1, attrValue.lastIndex)
+      if (firstCh == '\\' && secondCh == '\"') {
+        attrValue = attrValue.copyOfRange(2, attrValue.size)
+      } else if (firstCh == '\"') {
+        attrValue = attrValue.copyOfRange(1, attrValue.size)
       }
 
-      val lastCh = attrValue.lastOrNull()
+      val lastCh = attrValue.getOrNull(attrValue.lastIndex)
         ?: continue
+      val secondToLastCh = attrValue.getOrNull(attrValue.lastIndex - 1)
 
-      if (lastCh == '\"') {
-        attrValue = attrValue.copyOfRange(0, attrValue.lastIndex - 1)
+      if (secondToLastCh == '\\' && lastCh == '\"') {
+        attrValue = attrValue.copyOfRange(0, attrValue.size - 2)
+      } else if (lastCh == '\"') {
+        attrValue = attrValue.copyOfRange(0, attrValue.size - 1)
       }
 
       attributes.add(HtmlAttribute(attrName, attrValue))
@@ -192,10 +202,13 @@ class HtmlParser {
     val currentTagPart = mutableListWithCap<Char>(32)
 
     while (offset < tagRaw.size) {
+      val prevCh = tagRaw.getOrNull(offset - 1)
       val currentCh = tagRaw[offset]
       val nextCh = tagRaw.getOrNull(offset + 1)
 
-      if (currentCh == '\"') {
+      if (currentCh == '\"' && prevCh != '\\') {
+        isInsideString = isInsideString.not()
+      } else if (currentCh == '\\' && nextCh == '\"') {
         isInsideString = isInsideString.not()
       }
 
@@ -273,8 +286,12 @@ class HtmlParser {
       resultString
         .append(", ")
         .append(attribute.name)
-        .append('=')
-        .append(attribute.value)
+
+      if (attribute.value.isNotEmpty()) {
+        resultString
+          .append('=')
+          .append(attribute.value)
+      }
     }
 
     return resultString.toString()
