@@ -586,11 +586,17 @@ class BrowseController(
 
   private fun openThreadByIdInternal(input: String) {
     mainScope.launch(Dispatchers.Main.immediate) {
+      val threadNo = input.toLong()
+      if (threadNo <= 0) {
+        showToast(getString(R.string.browse_controller_error_thread_id_negative_or_zero))
+        return@launch
+      }
+
       try {
         val threadDescriptor = ThreadDescriptor.create(
-          chanDescriptor!!.siteName(),
-          chanDescriptor!!.boardCode(),
-          input.toLong()
+          siteName = chanDescriptor!!.siteName(),
+          boardCode = chanDescriptor!!.boardCode(),
+          threadNo = input.toLong()
         )
 
         showThread(threadDescriptor, true)

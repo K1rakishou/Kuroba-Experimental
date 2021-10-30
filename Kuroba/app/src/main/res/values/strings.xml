@@ -1045,6 +1045,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_enter_media_url_error">Failed to convert \'%1$s\' to url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>
     <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
+    <string name="browse_controller_error_thread_id_negative_or_zero">ThreadId must be positive and greater than 0</string>
     <string name="browse_controller_enter_page_number">Enter page number</string>
     <string name="browse_controller_failed_to_parse_page_number">Failed to convert \'%1$s\' into integer value</string>
     <string name="browse_controller_composite_catalog_subtitle_loading">…</string>
