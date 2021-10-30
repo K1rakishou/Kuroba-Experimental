@@ -85,7 +85,15 @@ object RegexPatternCompiler {
         return PatternCompilationResult.Success(pattern, RegexMode.ExactSentence)
       }
       else -> {
-        val words = rawPattern.split(" ")
+        val words = rawPattern
+          .split(" ")
+          .map { word -> word.trim() }
+          .filter { word -> word.isNotEmpty() }
+
+        if (words.isEmpty()) {
+          return PatternCompilationResult.PatternIsEmpty
+        }
+
         val text = StringBuilder(32)
         var index = 0
         val wordsLength = words.size
