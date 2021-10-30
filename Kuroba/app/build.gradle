@@ -50,8 +50,8 @@ android {
         //          m -> Minor version
         //          p -> patch
         //          MmmPP
-        versionCode 10004
-        versionName "v1.0.4"
+        versionCode 10100
+        versionName "v1.1.0"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
