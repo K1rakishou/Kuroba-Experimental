@@ -1209,6 +1209,8 @@ class PostingServiceDelegate(
         newReply.flag = prevFlag
       }
     }
+
+    replyManager.deleteCachedDraftFromDisk(prevChanDescriptor)
   }
 
   private fun bookmarkThread(

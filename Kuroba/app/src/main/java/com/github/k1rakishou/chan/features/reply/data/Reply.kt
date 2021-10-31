@@ -22,6 +22,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
+import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import java.util.*
 import java.util.regex.Pattern
 
@@ -30,17 +31,25 @@ import java.util.regex.Pattern
  */
 class Reply(
   @JvmField
-  val chanDescriptor: ChanDescriptor
+  val chanDescriptor: ChanDescriptor,
+  private val basicReplyInfo: BasicReplyInfo = BasicReplyInfo()
 ) {
-  private val basicReplyInfo = BasicReplyInfo()
-  private val captchaInfo = CaptchaInfo()
-  private val filesTakenForThisReply = mutableListOf<ReplyFile>()
+  private val captchaInfo: CaptchaInfo = CaptchaInfo()
+  private val filesTakenForThisReply: MutableList<ReplyFile> = mutableListOf<ReplyFile>()
+
+  private var _lastUpdatedAt = System.currentTimeMillis()
+  val lastUpdatedAt: Long
+    get() = _lastUpdatedAt
+
+  private var dirty = false
 
   @get:Synchronized
   @set:Synchronized
   var postName: String = basicReplyInfo.name
     get() = basicReplyInfo.name
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.name = value
       field = value
     }
@@ -50,6 +59,8 @@ class Reply(
   var options: String = basicReplyInfo.options
     get() = basicReplyInfo.options
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.options = value
       field = value
     }
@@ -59,6 +70,8 @@ class Reply(
   var subject: String = basicReplyInfo.subject
     get() = basicReplyInfo.subject
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.subject = value
       field = value
     }
@@ -68,6 +81,8 @@ class Reply(
   var comment: String = basicReplyInfo.comment
     get() = basicReplyInfo.comment
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.comment = value
       field = value
     }
@@ -77,6 +92,8 @@ class Reply(
   var flag: String = basicReplyInfo.flag
     get() = basicReplyInfo.flag
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.flag = value
       field = value
     }
@@ -86,6 +103,8 @@ class Reply(
   var password: String = basicReplyInfo.password
     get() = basicReplyInfo.password
     set(value) {
+      onReplyUpdated()
+
       basicReplyInfo.password = value
       field = value
     }
@@ -97,6 +116,29 @@ class Reply(
   @get:Synchronized
   val captchaSolution: CaptchaSolution?
     get() = captchaInfo.captchaSolution
+
+  private fun onReplyUpdated() {
+    _lastUpdatedAt = System.currentTimeMillis()
+    dirty = true
+  }
+
+  @Synchronized
+  fun toReplyDataJson(): ReplyDataJson? {
+    if (basicReplyInfo.isEmpty() || !dirty) {
+      return null
+    }
+
+    dirty = false
+
+    return ReplyDataJson(
+      chanDescriptor = DescriptorParcelable.fromDescriptor(chanDescriptor),
+      name = basicReplyInfo.name,
+      options = basicReplyInfo.options,
+      flag = basicReplyInfo.flag,
+      subject = basicReplyInfo.subject,
+      comment = basicReplyInfo.comment,
+    )
+  }
 
   @Synchronized
   fun threadNo(): Long {
@@ -221,6 +263,26 @@ class Reply(
     return stringBuilder.length
   }
 
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as Reply
+
+    if (chanDescriptor != other.chanDescriptor) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    return chanDescriptor.hashCode()
+  }
+
+  override fun toString(): String {
+    return "Reply(chanDescriptor=$chanDescriptor, _lastUpdatedAt=$_lastUpdatedAt, " +
+      "basicReplyInfo=$basicReplyInfo, captchaInfo=$captchaInfo)"
+  }
+
   data class BasicReplyInfo(
     @JvmField
     var name: String = "",
@@ -235,6 +297,15 @@ class Reply(
     @JvmField
     var password: String = "",
   ) {
+
+    fun isEmpty(): Boolean {
+      return name.isEmpty()
+        && options.isEmpty()
+        && flag.isEmpty()
+        && subject.isEmpty()
+        && comment.isEmpty()
+        && password.isEmpty()
+    }
 
     @Synchronized
     fun resetAfterPosting() {

@@ -116,6 +116,7 @@ import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
+import com.squareup.moshi.Moshi;
 
 import java.util.HashSet;
 
@@ -175,11 +176,18 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReplyManager provideReplyManager(
+            ApplicationVisibilityManager applicationVisibilityManager,
             AppConstants appConstants,
+            Moshi moshi,
             Gson gson
     ) {
         Logger.deps("ReplyManager");
-        return new ReplyManager(appConstants, gson);
+        return new ReplyManager(
+                applicationVisibilityManager,
+                appConstants,
+                moshi,
+                gson
+        );
     }
 
     @Provides
