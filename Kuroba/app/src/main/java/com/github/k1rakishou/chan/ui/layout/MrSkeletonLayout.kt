@@ -160,6 +160,13 @@ class MrSkeletonLayout @JvmOverloads constructor(
       "https://s.4cdn.org/image/skeletons/14.gif",
       "https://s.4cdn.org/image/skeletons/15.gif",
       "https://s.4cdn.org/image/skeletons/16.gif",
+      "https://s.4cdn.org/image/skeletons/17.gif",
+      "https://s.4cdn.org/image/skeletons/18.gif",
+      "https://s.4cdn.org/image/skeletons/19.gif",
+      "https://s.4cdn.org/image/skeletons/20.gif",
+      "https://s.4cdn.org/image/skeletons/21.gif",
+      "https://s.4cdn.org/image/skeletons/22.gif",
+      "https://s.4cdn.org/image/skeletons/23.gif"
     )
   }
 }
