@@ -463,6 +463,9 @@ class ReplyManager(
       return
     }
 
+    var persistedCount = 0
+    var deletedCount = 0
+
     Logger.d(TAG, "persistDrafts() persisting ${draftsSorted.size} out of ${drafts.size}")
 
     for ((chanDescriptor, reply) in draftsSorted) {
@@ -484,6 +487,8 @@ class ReplyManager(
           .toJson(replyDataJson)
 
         draftFile.writeText(replyDataJsonString)
+
+        ++persistedCount
       } catch (error: Throwable) {
         Logger.e(TAG, "persistDrafts() failed to store reply for descriptor ${chanDescriptor}", error)
       }
@@ -501,12 +506,14 @@ class ReplyManager(
 
         val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
         draftFile.delete()
+
+        ++deletedCount
       } catch (error: Throwable) {
         Logger.e(TAG, "persistDrafts() failed to remove old reply draft for descriptor ${chanDescriptor}", error)
       }
     }
 
-    Logger.d(TAG, "persistDrafts() done")
+    Logger.d(TAG, "persistDrafts() done persistedCount=$persistedCount, deletedCount=$deletedCount")
   }
 
   @Synchronized
