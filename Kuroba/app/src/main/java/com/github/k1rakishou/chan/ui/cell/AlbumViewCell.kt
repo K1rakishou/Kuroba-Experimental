@@ -14,164 +14,190 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.ui.cell;
+package com.github.k1rakishou.chan.ui.cell
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize;
+import android.content.Context
+import android.util.AttributeSet
+import android.widget.FrameLayout
+import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
+import com.github.k1rakishou.chan.ui.view.ThumbnailView.ThumbnailViewOptions
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ICatalogDescriptor
+import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
+import com.github.k1rakishou.model.util.ChanPostUtils.getTitle
+import dagger.Lazy
+import java.util.*
+import javax.inject.Inject
 
-import android.content.Context;
-import android.util.AttributeSet;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.TextView;
+class AlbumViewCell @JvmOverloads constructor(
+  context: Context,
+  attrs: AttributeSet? = null,
+  defStyleAttr: Int = 0
+) : FrameLayout(context, attrs, defStyleAttr) {
 
-import androidx.annotation.NonNull;
+  @Inject
+  lateinit var onDemandContentLoaderManager: Lazy<OnDemandContentLoaderManager>
+  @Inject
+  lateinit var chanThreadManager: Lazy<ChanThreadManager>
 
-import com.github.k1rakishou.ChanSettings;
-import com.github.k1rakishou.chan.R;
-import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
-import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.view.ThumbnailView;
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
-import com.github.k1rakishou.model.data.post.ChanPostImage;
+  var postImage: ChanPostImage? = null
+    private set
+  lateinit var postImageThumbnailView: PostImageThumbnailView
+    private set
 
-import javax.inject.Inject;
+  private lateinit var imageDetails: TextView
+  private lateinit var threadSubject: TextView
 
-import dagger.Lazy;
+  private var ratio = 0f
 
-public class AlbumViewCell extends FrameLayout {
-    private static final float MAX_RATIO = 2f;
-    private static final float MIN_RATIO = .4f;
-    private static final int ADDITIONAL_HEIGHT = dp(32);
+  override fun onFinishInflate() {
+    super.onFinishInflate()
+    init(context)
 
-    @Inject
-    Lazy<OnDemandContentLoaderManager> onDemandContentLoaderManager;
+    postImageThumbnailView = findViewById(R.id.thumbnail_image_view)
+    threadSubject = findViewById(R.id.thread_subject)
+    imageDetails = findViewById(R.id.image_details)
+  }
 
-    private ChanPostImage postImage;
-    private PostImageThumbnailView thumbnailView;
-    private TextView text;
-    private float ratio = 0f;
+  private fun init(context: Context) {
+    AppModuleAndroidUtils.extractActivityComponent(context)
+      .inject(this)
+  }
 
-    public AlbumViewCell(Context context) {
-        this(context, null);
-    }
+  fun bindPostImage(
+    chanDescriptor: ChanDescriptor?,
+    postImage: ChanPostImage,
+    canUseHighResCells: Boolean,
+    isStaggeredGridMode: Boolean,
+    showDetails: Boolean
+  ) {
+    this.postImage = postImage
 
-    public AlbumViewCell(Context context, AttributeSet attrs) {
-        this(context, attrs, 0);
-    }
+    postImageThumbnailView.bindPostImage(
+      postImage = postImage,
+      canUseHighResCells = canUseHighResCells,
+      thumbnailViewOptions = ThumbnailViewOptions(
+        postThumbnailScaling = ChanSettings.PostThumbnailScaling.CenterCrop,
+        drawThumbnailBackground = true,
+        drawRipple = true
+      )
+    )
 
-    public AlbumViewCell(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-    }
+    if (showDetails) {
+      imageDetails.visibility = VISIBLE
+      imageDetails.text = formatImageDetails(postImage)
 
-    @Override
-    protected void onFinishInflate() {
-        super.onFinishInflate();
-
-        init(getContext());
-
-        thumbnailView = findViewById(R.id.thumbnail_image_view);
-        text = findViewById(R.id.text);
-    }
-
-    private void init(Context context) {
-        AppModuleAndroidUtils.extractActivityComponent(context)
-                .inject(this);
-    }
-
-    public void bindPostImage(
-            @NonNull ChanPostImage postImage,
-            boolean canUseHighResCells,
-            boolean isStaggeredGridMode,
-            boolean showDetails
-    ) {
-        this.postImage = postImage;
-        thumbnailView.bindPostImage(
-                postImage,
-                canUseHighResCells,
-                new ThumbnailView.ThumbnailViewOptions(ChanSettings.PostThumbnailScaling.CenterCrop, true, true)
-        );
-
-        if (showDetails) {
-            String details = postImage.getExtension().toUpperCase()
-                    + " "
-                    + postImage.getImageWidth()
-                    + "x"
-                    + postImage.getImageHeight()
-                    + " "
-                    + getReadableFileSize(postImage.getSize());
-
-            text.setVisibility(View.VISIBLE);
-            text.setText(postImage.isInlined() ? postImage.getExtension().toUpperCase() : details);
+      if (chanDescriptor is ICatalogDescriptor) {
+        if (bindThreadSubjectDetails(postImage, chanDescriptor)) {
+          threadSubject.visibility = VISIBLE
         } else {
-            text.setVisibility(View.GONE);
+          threadSubject.visibility = GONE
         }
-
-        if (isStaggeredGridMode) {
-            setRatioFromImageDimensions();
-        } else {
-            ratio = 0f;
-        }
-
-        onDemandContentLoaderManager.get().onPostBind(postImage.getOwnerPostDescriptor());
+      } else {
+        threadSubject.visibility = GONE
+      }
+    } else {
+      threadSubject.visibility = GONE
+      imageDetails.visibility = GONE
     }
 
-    public void unbindPostImage() {
-        thumbnailView.unbindPostImage();
-        onDemandContentLoaderManager.get().onPostUnbind(postImage.getOwnerPostDescriptor(), true);
+    if (isStaggeredGridMode) {
+      setRatioFromImageDimensions()
+    } else {
+      ratio = 0f
     }
 
-    public void setRatioFromImageDimensions() {
-        int imageWidth = postImage.getImageWidth();
-        int imageHeight = postImage.getImageHeight();
+    onDemandContentLoaderManager.get().onPostBind(postImage.ownerPostDescriptor)
+  }
 
-        if (imageWidth <= 0 || imageHeight <= 0) {
-            return;
-        }
+  private fun bindThreadSubjectDetails(postImage: ChanPostImage, chanDescriptor: ChanDescriptor?): Boolean {
+    val chanThread = chanThreadManager.get().getChanThread(postImage.ownerPostDescriptor.threadDescriptor())
+    if (chanThread != null) {
+      val chanOriginalPost = chanThread.getOriginalPostSafe()
+      if (chanOriginalPost != null) {
+        val subject = getTitle(chanOriginalPost, chanDescriptor)
+        threadSubject.text = subject
 
-        this.ratio = ((float) imageWidth / (float) imageHeight);
-
-        if (this.ratio > MAX_RATIO) {
-            this.ratio = MAX_RATIO;
-        }
-
-        if (this.ratio < MIN_RATIO) {
-            this.ratio = MIN_RATIO;
-        }
+        return true
+      }
     }
 
-    public ChanPostImage getPostImage() {
-        return postImage;
+    return false
+  }
+
+  private fun formatImageDetails(postImage: ChanPostImage): String {
+    if (postImage.isInlined) {
+      return postImage.extension?.uppercase(Locale.ENGLISH) ?: ""
     }
 
-    public PostImageThumbnailView getPostImageThumbnailView() {
-        return thumbnailView;
+    return buildString {
+      append(postImage.extension?.uppercase(Locale.ENGLISH) ?: "")
+      append(" ")
+      append(postImage.imageWidth)
+      append("x")
+      append(postImage.imageHeight)
+      append(" ")
+      append(getReadableFileSize(postImage.size))
+    }
+  }
+
+  fun unbindPostImage() {
+    postImageThumbnailView.unbindPostImage()
+    onDemandContentLoaderManager.get().onPostUnbind(postImage!!.ownerPostDescriptor, true)
+  }
+
+  private fun setRatioFromImageDimensions() {
+    val imageWidth = postImage?.imageWidth ?: 0
+    val imageHeight = postImage?.imageHeight ?: 0
+    if (imageWidth <= 0 || imageHeight <= 0) {
+      return
     }
 
-    @Override
-    protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        if (ratio == 0f) {
-            int heightMode = MeasureSpec.getMode(heightMeasureSpec);
-
-            if (MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
-                    && (heightMode == MeasureSpec.UNSPECIFIED
-                    || heightMode == MeasureSpec.AT_MOST)) {
-                int width = MeasureSpec.getSize(widthMeasureSpec);
-                int height = width + ADDITIONAL_HEIGHT;
-
-                super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY));
-            } else {
-                super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-            }
-
-            return;
-        }
-
-        int width = MeasureSpec.getSize(widthMeasureSpec);
-
-        super.onMeasure(
-                widthMeasureSpec,
-                MeasureSpec.makeMeasureSpec((int) (width / ratio), MeasureSpec.EXACTLY)
-        );
+    ratio = imageWidth.toFloat() / imageHeight.toFloat()
+    if (ratio > MAX_RATIO) {
+      ratio = MAX_RATIO
     }
+
+    if (ratio < MIN_RATIO) {
+      ratio = MIN_RATIO
+    }
+  }
+
+  override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
+    if (ratio == 0f) {
+      val heightMode = MeasureSpec.getMode(heightMeasureSpec)
+
+      if (
+        MeasureSpec.getMode(widthMeasureSpec) == MeasureSpec.EXACTLY
+        && (heightMode == MeasureSpec.UNSPECIFIED || heightMode == MeasureSpec.AT_MOST)
+      ) {
+        val width = MeasureSpec.getSize(widthMeasureSpec)
+        val height = width + ADDITIONAL_HEIGHT
+        super.onMeasure(widthMeasureSpec, MeasureSpec.makeMeasureSpec(height, MeasureSpec.EXACTLY))
+      } else {
+        super.onMeasure(widthMeasureSpec, heightMeasureSpec)
+      }
+
+      return
+    }
+
+    val width = MeasureSpec.getSize(widthMeasureSpec)
+    super.onMeasure(
+      widthMeasureSpec,
+      MeasureSpec.makeMeasureSpec((width / ratio).toInt(), MeasureSpec.EXACTLY)
+    )
+  }
+
+  companion object {
+    private const val MAX_RATIO = 2f
+    private const val MIN_RATIO = .4f
+    private val ADDITIONAL_HEIGHT = AppModuleAndroidUtils.dp(32f)
+  }
 }

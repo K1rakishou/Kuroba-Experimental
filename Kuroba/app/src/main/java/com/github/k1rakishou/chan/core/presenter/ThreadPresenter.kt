@@ -1565,7 +1565,8 @@ class ThreadPresenter @Inject constructor(
       },
       showFiltersControllerFunc = { chanFilterMutable ->
         threadPresenterCallback?.openFiltersController(chanFilterMutable)
-      }
+      },
+      openThreadFunc = { }
     )
 
   }

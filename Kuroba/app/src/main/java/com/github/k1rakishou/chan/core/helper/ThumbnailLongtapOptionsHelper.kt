@@ -16,6 +16,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -32,7 +33,8 @@ class ThumbnailLongtapOptionsHelper(
     isCurrentlyInAlbum: Boolean,
     postImage: ChanPostImage,
     presentControllerFunc: (Controller) -> Unit,
-    showFiltersControllerFunc: (ChanFilterMutable) -> Unit
+    showFiltersControllerFunc: (ChanFilterMutable) -> Unit,
+    openThreadFunc: (PostDescriptor) -> Unit
   ) {
     val fullImageName = buildString {
       append((postImage.filename ?: postImage.serverFilename))
@@ -45,6 +47,11 @@ class ThumbnailLongtapOptionsHelper(
 
     val items = mutableListOf<FloatingListMenuItem>()
     items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER, fullImageName)
+
+    if (isCurrentlyInAlbum) {
+      items += createMenuItem(context, OPEN_THREAD, R.string.action_open_thread)
+    }
+
     items += createMenuItem(context, IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
     items += createMenuItem(context, IMAGE_COPY_THUMBNAIL_URL, R.string.action_copy_image_thumbnail_url)
 
@@ -70,16 +77,17 @@ class ThumbnailLongtapOptionsHelper(
     items += createMenuItem(context, DOWNLOAD_WITH_OPTIONS_MEDIA_FILE_CONTENT, R.string.action_download_content_with_options)
 
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items,
-      { item ->
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = items,
+      itemClickListener = { item ->
         onThumbnailOptionClicked(
           context = context,
           id = item.key as Int,
           postImage = postImage,
           presentControllerFunc = presentControllerFunc,
-          showFiltersControllerFunc = showFiltersControllerFunc
+          showFiltersControllerFunc = showFiltersControllerFunc,
+          openThreadFunc
         )
       }
     )
@@ -92,9 +100,13 @@ class ThumbnailLongtapOptionsHelper(
     id: Int,
     postImage: ChanPostImage,
     presentControllerFunc: (Controller) -> Unit,
-    showFiltersControllerFunc: (ChanFilterMutable) -> Unit
+    showFiltersControllerFunc: (ChanFilterMutable) -> Unit,
+    openThreadFunc: (PostDescriptor) -> Unit
   ) {
     when (id) {
+      OPEN_THREAD -> {
+        openThreadFunc(postImage.ownerPostDescriptor)
+      }
       IMAGE_COPY_FULL_URL -> {
         if (postImage.imageUrl == null) {
           return
@@ -212,6 +224,7 @@ class ThumbnailLongtapOptionsHelper(
     private const val IMAGE_COPY_MD5_HASH_HEX = 1007
     private const val FILTER_POSTS_WITH_THIS_IMAGE_HASH = 1008
     private const val OPEN_IN_EXTERNAL_APP = 1009
+    private const val OPEN_THREAD = 1010
 
     private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
   }

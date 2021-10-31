@@ -18,7 +18,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_margin="1dp">
+    android:layout_margin="1dp"
+    tools:layout_height="128dp">
 
     <com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView
         android:id="@+id/thumbnail_image_view"
@@ -26,15 +27,35 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="match_parent" />
 
     <TextView
-        android:id="@+id/text"
+        android:id="@+id/thread_subject"
         android:layout_width="match_parent"
-        android:layout_height="32dp"
+        android:layout_height="wrap_content"
+        android:layout_gravity="top"
+        android:background="#8a000000"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="2"
+        android:paddingStart="6dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="2dp"
+        android:textColor="#ffffffff"
+        android:textSize="10sp"
+        tools:ignore="SmallSp" />
+
+    <TextView
+        android:id="@+id/image_details"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:background="#8a000000"
-        android:gravity="center_vertical"
-        android:maxLines="2"
-        android:paddingLeft="8dp"
-        android:paddingRight="8dp"
+        android:ellipsize="end"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="6dp"
+        android:paddingTop="2dp"
+        android:paddingEnd="6dp"
+        android:paddingBottom="2dp"
         android:textColor="#ffffffff"
         android:textSize="10sp"
         tools:ignore="SmallSp" />

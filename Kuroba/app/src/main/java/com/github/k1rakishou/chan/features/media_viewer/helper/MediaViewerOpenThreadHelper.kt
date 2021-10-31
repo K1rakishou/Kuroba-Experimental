@@ -17,14 +17,7 @@ class MediaViewerOpenThreadHelper {
   val mediaViewerOpenThreadEventsFlow: SharedFlow<ChanDescriptor.ThreadDescriptor>
     get() = _mediaViewerOpenThreadEventsFlow.asSharedFlow()
 
-  fun tryToOpenThread(
-    chanDescriptor: ChanDescriptor?,
-    postDescriptor: PostDescriptor
-  ): Boolean {
-    if (chanDescriptor == null) {
-      return false
-    }
-
+  fun tryToOpenThread(postDescriptor: PostDescriptor): Boolean {
     _mediaViewerOpenThreadEventsFlow.tryEmit(postDescriptor.threadDescriptor())
     return true
   }

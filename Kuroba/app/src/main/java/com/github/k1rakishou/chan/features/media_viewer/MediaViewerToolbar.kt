@@ -102,7 +102,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
           closeMediaViewer = true
         }
       } else if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-        if (mediaViewerOpenThreadHelper.tryToOpenThread(chanDescriptor, postDescriptor)) {
+        if (mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)) {
           closeMediaViewer = true
         }
       }

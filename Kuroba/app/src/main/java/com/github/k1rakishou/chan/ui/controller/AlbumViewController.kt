@@ -39,13 +39,13 @@ import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen.Companion.clampColumnsCount
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableGridRecyclerView
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarHeightUpdatesCallback
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuItem
-import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.FastScroller
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.FixedLinearLayoutManager
@@ -107,6 +107,8 @@ class AlbumViewController(
   @Inject
   lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
   @Inject
+  lateinit var mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
+  @Inject
   lateinit var filterOutHiddenImagesUseCase: FilterOutHiddenImagesUseCase
   @Inject
   lateinit var compositeCatalogManager: CompositeCatalogManager
@@ -162,7 +164,7 @@ class AlbumViewController(
         R.string.action_album_show_image_details,
         true,
         showAlbumViewsImageDetails.get()
-      ) { subItem: ToolbarMenuSubItem -> onToggleAlbumViewsImageInfoToggled(subItem) }
+      ) { onToggleAlbumViewsImageInfoToggled() }
       .build()
       .build()
 
@@ -372,8 +374,13 @@ class AlbumViewController(
     }
   }
 
-  private fun onToggleAlbumViewsImageInfoToggled(subItem: ToolbarMenuSubItem) {
-    showAlbumViewsImageDetails.toggle()
+  private fun onToggleAlbumViewsImageInfoToggled() {
+    val nowChecked = showAlbumViewsImageDetails.toggle()
+
+    navigation.findCheckableSubItem(ACTION_TOGGLE_IMAGE_DETAILS)?.let { subItem ->
+      subItem.isChecked = nowChecked
+    }
+
     albumAdapter?.refresh()
   }
 
@@ -451,7 +458,14 @@ class AlbumViewController(
       isCurrentlyInAlbum = true,
       postImage = postImage,
       presentControllerFunc = { controller -> presentController(controller) },
-      showFiltersControllerFunc = { }
+      showFiltersControllerFunc = { },
+      openThreadFunc = { postDescriptor ->
+        popFromNavControllerWithAction(chanDescriptor) {
+          // no-op
+        }
+
+        mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)
+      }
     )
   }
 
@@ -472,18 +486,16 @@ class AlbumViewController(
     }
 
     override fun onBindViewHolder(holder: AlbumItemCellHolder, position: Int) {
-      val postImage = postImages?.get(position)
-      if (postImage == null) {
-        return
-      }
-
+      val postImage = postImages.get(position)
       val canUseHighResCells = ColorizableGridRecyclerView.canUseHighResCells(recyclerView.currentSpanCount)
       val isStaggeredGridMode = !albumLayoutGridMode.get()
+
       holder.cell.bindPostImage(
-        postImage,
-        canUseHighResCells,
-        isStaggeredGridMode,
-        showAlbumViewsImageDetails.get()
+        chanDescriptor = chanDescriptor,
+        postImage = postImage,
+        canUseHighResCells = canUseHighResCells,
+        isStaggeredGridMode = isStaggeredGridMode,
+        showDetails = showAlbumViewsImageDetails.get()
       )
     }
 
@@ -492,7 +504,7 @@ class AlbumViewController(
     }
 
     override fun getItemCount(): Int {
-      return postImages!!.size
+      return postImages.size
     }
 
     override fun getItemId(position: Int): Long {
