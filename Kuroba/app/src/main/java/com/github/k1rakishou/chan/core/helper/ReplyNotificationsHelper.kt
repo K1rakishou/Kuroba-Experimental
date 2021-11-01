@@ -43,6 +43,8 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReplyView
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import dagger.Lazy
@@ -239,7 +241,6 @@ class ReplyNotificationsHelper(
       .count { threadBookmarkReplyView -> !threadBookmarkReplyView.alreadyNotified }
     val hasNewReplies = newRepliesCount > 0
 
-    unreadNotificationsGrouped.values.flatten().forEach { reply -> Logger.d(TAG, "reply=$reply") }
     val useSoundForReplyNotifications = ChanSettings.useSoundForReplyNotifications.get()
 
     Logger.d(
@@ -294,8 +295,11 @@ class ReplyNotificationsHelper(
       .setContentText(titleText)
       .setSmallIcon(iconId)
       .setupClickOnNotificationIntent(
-        RequestCodes.nextRequestCode(),
-        unreadNotificationsGrouped.keys
+        requestCode = RequestCodes.nextRequestCode(),
+        threadDescriptors = unreadNotificationsGrouped.keys,
+        postDescriptors = unreadNotificationsGrouped.values.flatMap { threadBookmarkViewSet ->
+          threadBookmarkViewSet.map { threadBookmarkReplyView -> threadBookmarkReplyView.postDescriptor }
+        }
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAutoCancel(true)
@@ -386,8 +390,11 @@ class ReplyNotificationsHelper(
       .setupSoundAndVibration(hasNewReplies, useSoundForReplyNotifications)
       .setupSummaryNotificationsStyle(titleText)
       .setupClickOnNotificationIntent(
-        RequestCodes.nextRequestCode(),
-        unreadNotificationsGrouped.keys
+        requestCode = RequestCodes.nextRequestCode(),
+        threadDescriptors = unreadNotificationsGrouped.keys,
+        postDescriptors = unreadNotificationsGrouped.values.flatMap { threadBookmarkViewList ->
+          threadBookmarkViewList.map { threadBookmarkReplyView -> threadBookmarkReplyView.postDescriptor }
+        }
       )
       .setupDeleteNotificationIntent(unreadNotificationsGrouped.keys)
       .setAllowSystemGeneratedContextualActions(false)
@@ -435,13 +442,11 @@ class ReplyNotificationsHelper(
       }
 
       val threadTitle = getThreadTitle(originalPosts, threadDescriptor)
-
       val titleText = appContext.resources.getString(
         R.string.reply_notifications_new_replies_in_thread,
         threadBookmarkReplies.size,
         threadDescriptor.threadNo
       )
-
       val notificationTag = getUniqueNotificationTag(threadDescriptor)
       val notificationId = NotificationConstants.ReplyNotifications.notificationId(threadDescriptor)
 
@@ -457,8 +462,11 @@ class ReplyNotificationsHelper(
         .setAutoCancel(true)
         .setupReplyNotificationsStyle(threadTitle, threadBookmarkReplies)
         .setupClickOnNotificationIntent(
-          RequestCodes.nextRequestCode(),
-          listOf(threadDescriptor)
+          requestCode = RequestCodes.nextRequestCode(),
+          threadDescriptors = listOf(threadDescriptor),
+          postDescriptors = threadBookmarkReplies.map { threadBookmarkReplyView ->
+            threadBookmarkReplyView.postDescriptor
+          }
         )
         .setupDeleteNotificationIntent(listOf(threadDescriptor))
         .setAllowSystemGeneratedContextualActions(false)
@@ -585,11 +593,15 @@ class ReplyNotificationsHelper(
 
   private fun NotificationCompat.Builder.setupClickOnNotificationIntent(
     requestCode: Int,
-    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    postDescriptors: Collection<PostDescriptor>
   ): NotificationCompat.Builder {
     val intent = Intent(appContext, StartActivity::class.java)
     val threadDescriptorsParcelable = threadDescriptors.map { threadDescriptor ->
       DescriptorParcelable.fromDescriptor(threadDescriptor)
+    }
+    val postDescriptorsParcelable = postDescriptors.map { postDescriptor ->
+      PostDescriptorParcelable.fromPostDescriptor(postDescriptor)
     }
 
     intent
@@ -604,6 +616,10 @@ class ReplyNotificationsHelper(
       .putParcelableArrayListExtra(
         NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY,
         ArrayList(threadDescriptorsParcelable)
+      )
+      .putParcelableArrayListExtra(
+        NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_POST_DESCRIPTORS_KEY,
+        ArrayList(postDescriptorsParcelable)
       )
 
     val pendingIntent = PendingIntent.getActivity(

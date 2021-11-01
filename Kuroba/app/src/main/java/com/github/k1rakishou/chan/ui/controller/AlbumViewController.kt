@@ -552,7 +552,7 @@ class AlbumViewController(
   }
 
   companion object {
-    private val DEFAULT_SPAN_WIDTH = AppModuleAndroidUtils.dp(120f)
+    private val DEFAULT_SPAN_WIDTH = dp(120f)
     private const val ACTION_DOWNLOAD = 0
     private const val ACTION_TOGGLE_LAYOUT_MODE = 1
     private const val ACTION_TOGGLE_IMAGE_DETAILS = 2

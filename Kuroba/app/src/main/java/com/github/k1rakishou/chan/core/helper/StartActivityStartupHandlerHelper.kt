@@ -33,6 +33,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptorParcelable
 import dagger.Lazy
 
 
@@ -45,7 +46,7 @@ class StartActivityStartupHandlerHelper(
   private val _siteResolver: Lazy<SiteResolver>,
   private val _compositeCatalogManager: Lazy<CompositeCatalogManager>
 ) {
-  // We only want to load a board upon the application start when nothing is loaded yet. Afterward
+  // We only want to load a board upon the application start when nothing is loaded yet. Afterwards
   // we don't want to do that anymore so that we won't override the currently opened board when
   // opening threads from notifications.
   private var needToLoadBoard = true
@@ -563,9 +564,12 @@ class StartActivityStartupHandlerHelper(
       return false
     }
 
-    Logger.d(TAG, "onNewIntent() last page notification clicked, threads count = ${threadDescriptors.size}")
+    Logger.d(TAG, "onNewIntent() last page notification clicked (threadDescriptors=${threadDescriptors.size})")
 
-    openThreadFromNotificationOrBookmarksController(threadDescriptors)
+    openThreadFromNotificationOrBookmarksController(
+      threadDescriptors = threadDescriptors,
+      postDescriptors = emptyList()
+    )
 
     return true
   }
@@ -577,15 +581,21 @@ class StartActivityStartupHandlerHelper(
     val threadDescriptors = extras.getParcelableArrayList<DescriptorParcelable>(
       NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
     )?.map { it -> ChanDescriptor.ThreadDescriptor.fromDescriptorParcelable(it) }
+    val postDescriptors = extras.getParcelableArrayList<PostDescriptorParcelable>(
+      NotificationConstants.ReplyNotifications.R_NOTIFICATION_CLICK_POST_DESCRIPTORS_KEY
+    )?.map { it -> it.postDescriptor } ?: emptyList()
 
     if (mainController == null || threadDescriptors.isNullOrEmpty()) {
       return false
     }
 
-    Logger.d(TAG, "onNewIntent() reply notification clicked, " +
-        "marking as seen ${threadDescriptors.size} bookmarks")
+    Logger.d(TAG, "onNewIntent() reply notification clicked " +
+      "(threadDescriptors=${threadDescriptors.size}, postDescriptors=${postDescriptors.size})")
 
-    openThreadFromNotificationOrBookmarksController(threadDescriptors)
+    openThreadFromNotificationOrBookmarksController(
+      threadDescriptors = threadDescriptors,
+      postDescriptors = postDescriptors
+    )
 
     val updatedBookmarkDescriptors = bookmarksManager.updateBookmarksNoPersist(threadDescriptors) { threadBookmark ->
       threadBookmark.markAsSeenAllReplies()
@@ -596,21 +606,35 @@ class StartActivityStartupHandlerHelper(
   }
 
   private suspend fun openThreadFromNotificationOrBookmarksController(
-    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    postDescriptors: List<PostDescriptor>
   ) {
+    Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() " +
+      "threadDescriptorsCount=${threadDescriptors.size}, postDescriptorsCount=${postDescriptors.size}")
+
     if (needToLoadBoard) {
       val catalogToOpen = getCatalogToOpen()
       if (catalogToOpen != null) {
-        browseController?.showCatalog(catalogToOpen, false)
+        Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> showCatalogWithoutFocusing()")
+        browseController?.showCatalogWithoutFocusing(catalogToOpen, false)
       } else {
+        Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> loadWithDefaultBoard()")
         browseController?.loadWithDefaultBoard()
       }
     }
 
-    if (threadDescriptors.size == 1) {
-      startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
-    } else {
+    if (threadDescriptors.size != 1) {
+      Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> openBookmarksController()")
       mainController?.openBookmarksController(threadDescriptors)
+      return
+    }
+
+    if (postDescriptors.size == 1) {
+      Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> loadThreadAndMarkPost()")
+      startActivityCallbacks?.loadThreadAndMarkPost(postDescriptors.first(), animated = false)
+    } else {
+      Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> loadThread()")
+      startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
     }
   }
 

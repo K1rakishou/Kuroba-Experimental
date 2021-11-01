@@ -96,7 +96,6 @@ class StartActivity : ControllerHostActivity(),
   lateinit var imagePickHelper: ImagePickHelper
   @Inject
   lateinit var startActivityStartupHandlerHelper: StartActivityStartupHandlerHelper
-
   @Inject
   lateinit var controllerNavigationManager: Lazy<ControllerNavigationManager>
   @Inject

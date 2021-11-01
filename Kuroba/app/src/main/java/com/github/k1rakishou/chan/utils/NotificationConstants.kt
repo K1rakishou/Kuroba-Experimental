@@ -52,6 +52,7 @@ object NotificationConstants {
     val REPLIES_PRE_OREO_NOTIFICATION_TAG = "REPLIES_PRE_OREO_NOTIFICATION_TAG_${getFlavorType().name}"
 
     const val R_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "reply_notification_click_thread_descriptors"
+    const val R_NOTIFICATION_CLICK_POST_DESCRIPTORS_KEY = "reply_notification_click_post_descriptors"
     const val R_NOTIFICATION_SWIPE_THREAD_DESCRIPTORS_KEY = "reply_notification_swipe_thread_descriptors"
   }
 

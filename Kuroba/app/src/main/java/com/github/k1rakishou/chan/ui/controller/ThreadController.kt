@@ -538,6 +538,16 @@ abstract class ThreadController(
     presentController(floatingListMenuController)
   }
 
+  data class ShowThreadOptions(
+    val switchToThreadController: Boolean,
+    val pushControllerWithAnimation: Boolean
+  )
+
+  data class ShowCatalogOptions(
+    val switchToCatalogController: Boolean,
+    val withAnimation: Boolean
+  )
+
   companion object {
     private const val TAG = "ThreadController"
   }
