@@ -207,22 +207,26 @@ class GifMediaView(
 
     scope.launch {
       if (!hasContent) {
-        fullGifDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullGifLoadingError()", error)
+        val result = fullGifDeferred.awaitCatching()
+        if (result.isFailure) {
+          val error = result.exceptionOrNull()!!
+          Logger.e(TAG, "onFullGifLoadingError()", error)
 
-            if (error.isExceptionImportant() && shown) {
-              cancellableToast.showToast(
-                context,
-                AppModuleAndroidUtils.getString(R.string.image_failed_gif_error, error.errorMessageOrClassName())
-              )
-            }
+          if (error.isExceptionImportant() && shown) {
+            cancellableToast.showToast(
+              context,
+              AppModuleAndroidUtils.getString(R.string.image_failed_gif_error, error.errorMessageOrClassName())
+            )
+          }
 
-            actualGifView.setVisibilityFast(View.INVISIBLE)
+          actualGifView.setVisibilityFast(View.INVISIBLE)
+        } else {
+          val filePath = result.getOrThrow()
+
+          if (!setBigGifFromFile(filePath)) {
+            return@launch
           }
-          .onSuccess { filePath ->
-            setBigGifFromFile(filePath)
-          }
+        }
 
         loadingBar.setVisibilityFast(GONE)
       }
@@ -287,8 +291,8 @@ class GifMediaView(
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
-  private suspend fun setBigGifFromFile(filePath: FilePath) {
-    coroutineScope {
+  private suspend fun setBigGifFromFile(filePath: FilePath): Boolean {
+    return coroutineScope {
       val drawable = try {
         createGifDrawableSafe(filePath)
       } catch (e: Throwable) {
@@ -298,7 +302,19 @@ class GifMediaView(
           cancellableToast.showToast(context, "Failed to draw Gif. Error: ${e.message}")
         }
 
-        return@coroutineScope
+        return@coroutineScope true
+      }
+
+      if (drawable.numberOfFrames == 1) {
+        val imageMedia = ViewableMedia.Image(
+          mediaLocation = viewableMedia.mediaLocation,
+          previewLocation = viewableMedia.previewLocation,
+          spoilerLocation = viewableMedia.spoilerLocation,
+          viewableMediaMeta = viewableMedia.viewableMediaMeta,
+        )
+
+        mediaViewContract.reloadAs(pagerPosition, imageMedia)
+        return@coroutineScope false
       }
 
       actualGifView.setImageDrawable(drawable)
@@ -322,6 +338,7 @@ class GifMediaView(
       }
 
       animationAwaitable.await()
+      return@coroutineScope true
     }
   }
 

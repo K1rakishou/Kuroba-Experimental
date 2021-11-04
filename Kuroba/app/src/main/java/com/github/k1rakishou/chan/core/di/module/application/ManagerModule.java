@@ -464,10 +464,10 @@ public class ManagerModule {
     public ReplyNotificationsHelper provideReplyNotificationsHelper(
             Context appContext,
             CoroutineScope appScope,
-            BookmarksManager bookmarksManager,
-            ChanPostRepository chanPostRepository,
-            ImageLoaderV2 imageLoaderV2,
-            ThemeEngine themeEngine,
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<ChanPostRepository> chanPostRepository,
+            Lazy<ImageLoaderV2> imageLoaderV2,
+            Lazy<ThemeEngine> themeEngine,
             Lazy<SimpleCommentParser> simpleCommentParser
     ) {
         Logger.deps("ReplyNotificationsHelper");

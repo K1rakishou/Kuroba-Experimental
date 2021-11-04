@@ -21,6 +21,7 @@ interface MediaViewContract {
   fun onMediaLongClick(view: View, viewableMedia: ViewableMedia)
   suspend fun defaultArtworkDrawable(): Drawable?
   fun openAlbum(viewableMedia: ViewableMedia)
+  fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia)
 
   fun presentController(controller: Controller, animated: Boolean)
 }

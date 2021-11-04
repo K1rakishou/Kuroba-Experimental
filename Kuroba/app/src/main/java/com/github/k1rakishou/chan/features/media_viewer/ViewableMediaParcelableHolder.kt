@@ -336,6 +336,10 @@ data class ViewableMediaMeta(
     return "${serverMediaName}.${extension}"
   }
 
+  fun isGif(): Boolean {
+    return extension?.equals("gif", ignoreCase = true) ?: false
+  }
+
 }
 
 sealed class MediaLocation : Parcelable {

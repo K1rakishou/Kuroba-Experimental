@@ -42,6 +42,7 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.io.File
+import java.io.InputStream
 import javax.inject.Inject
 
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
@@ -375,6 +376,20 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   sealed class FilePath {
+    fun inputStream(fileManager: FileManager): InputStream? {
+      when (this) {
+        is JavaPath -> {
+          return File(this.path).inputStream()
+        }
+        is UriPath -> {
+          val abstractFile = fileManager.fromUri(this.uri)
+            ?: return null
+
+          return fileManager.getInputStream(abstractFile)
+        }
+      }
+    }
+
     data class JavaPath(val path: String) : FilePath()
     data class UriPath(val uri: Uri) : FilePath()
   }

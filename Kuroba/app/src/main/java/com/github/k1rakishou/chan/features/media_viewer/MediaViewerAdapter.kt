@@ -27,7 +27,7 @@ class MediaViewerAdapter(
   private val mediaViewerToolbar: MediaViewerToolbar,
   private val mediaViewContract: MediaViewContract,
   private val initialPagerIndex: Int,
-  private val viewableMediaList: List<ViewableMedia>,
+  private val viewableMediaList: MutableList<ViewableMedia>,
   private val previewThumbnailLocation: MediaLocation,
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper,
   private val cachedHttpDataSourceFactory: DataSource.Factory,
@@ -37,6 +37,7 @@ class MediaViewerAdapter(
   private val isSystemUiHidden: () -> Boolean,
   private val swipeDirection: () -> OptionalSwipeViewPager.SwipeDirection
 ) : ViewPagerAdapter() {
+  private val forceUpdateViewWithMedia = mutableSetOf<ViewableMedia>()
   private val loadedViews = mutableListOf<LoadedView>()
   private val previewThumbnailLocationLoaded = CompletableDeferred<Unit>()
 
@@ -100,6 +101,20 @@ class MediaViewerAdapter(
         loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = true)
       }
     }
+  }
+
+  override fun getItemPosition(`object`: Any): Int {
+    if (`object` !is MediaView<*, *>) {
+      return super.getItemPosition(`object`)
+    }
+
+    val mediaView = `object` as MediaView<*, *>
+    if (mediaView.viewableMedia in forceUpdateViewWithMedia) {
+      forceUpdateViewWithMedia.remove(mediaView.viewableMedia)
+      return POSITION_NONE
+    }
+
+    return super.getItemPosition(`object`)
   }
 
   @Suppress("UNCHECKED_CAST")
@@ -259,6 +274,8 @@ class MediaViewerAdapter(
   override fun finishUpdate(container: ViewGroup) {
     super.finishUpdate(container)
 
+    forceUpdateViewWithMedia.clear()
+
     if (firstUpdateHappened) {
       return
     }
@@ -331,6 +348,12 @@ class MediaViewerAdapter(
 
   fun updateTransparency() {
     loadedViews.forEach { loadedView -> loadedView.mediaView.onUpdateTransparency() }
+  }
+
+  fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
+    forceUpdateViewWithMedia.add(viewableMediaList[pagerPosition])
+    viewableMediaList[pagerPosition] = viewableMedia
+    notifyDataSetChanged()
   }
 
   data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia, MediaViewState>)

@@ -26,6 +26,8 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkReply
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import dagger.Lazy
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -162,7 +164,7 @@ class BookmarkWatcherDelegate(
       }
 
       try {
-        replyNotificationsHelper.get().showOrUpdateNotifications()
+        withContext(Dispatchers.Main) { replyNotificationsHelper.get().showOrUpdateNotifications() }
       } catch (error: Throwable) {
         Logger.e(TAG, "replyNotificationsHelper.showOrUpdateNotifications() crashed!", error)
       }

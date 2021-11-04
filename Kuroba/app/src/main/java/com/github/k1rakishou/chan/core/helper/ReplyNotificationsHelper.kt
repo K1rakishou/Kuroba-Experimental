@@ -67,14 +67,25 @@ class ReplyNotificationsHelper(
   private val appScope: CoroutineScope,
   private val notificationManagerCompat: NotificationManagerCompat,
   private val notificationManager: NotificationManager,
-  private val bookmarksManager: BookmarksManager,
-  private val chanPostRepository: ChanPostRepository,
-  private val imageLoaderV2: ImageLoaderV2,
-  private val themeEngine: ThemeEngine,
-  private val simpleCommentParser: Lazy<SimpleCommentParser>
+  private val _bookmarksManager: Lazy<BookmarksManager>,
+  private val _chanPostRepository: Lazy<ChanPostRepository>,
+  private val _imageLoaderV2: Lazy<ImageLoaderV2>,
+  private val _themeEngine: Lazy<ThemeEngine>,
+  private val _simpleCommentParser: Lazy<SimpleCommentParser>
 ) {
   private val debouncer = DebouncingCoroutineExecutor(appScope)
   private val working = AtomicBoolean(false)
+
+  val bookmarksManager: BookmarksManager
+    get() = _bookmarksManager.get()
+  val chanPostRepository: ChanPostRepository
+    get() = _chanPostRepository.get()
+  val imageLoaderV2: ImageLoaderV2
+    get() = _imageLoaderV2.get()
+  val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  val simpleCommentParser: SimpleCommentParser
+    get() = _simpleCommentParser.get()
 
   init {
     appScope.launch {
@@ -713,7 +724,7 @@ class ReplyNotificationsHelper(
         val commentRaw = threadBookmarkReplyView.commentRaw
         if (commentRaw != null) {
           // Convert to string to get rid of spans
-          val parsedComment = simpleCommentParser.get().parseComment(commentRaw)
+          val parsedComment = simpleCommentParser.parseComment(commentRaw)
             ?.toString()
 
           if (!parsedComment.isNullOrEmpty()) {

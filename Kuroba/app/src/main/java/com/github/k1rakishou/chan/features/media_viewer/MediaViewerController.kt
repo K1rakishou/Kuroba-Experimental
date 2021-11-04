@@ -418,6 +418,11 @@ class MediaViewerController(
     closeMediaViewer()
   }
 
+  override fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
+    mediaViewerAdapter?.reloadAs(pagerPosition, viewableMedia)
+    onPageSelected(pagerPosition)
+  }
+
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
     mediaViewerAdapter?.onSystemUiVisibilityChanged(systemUIHidden)
   }

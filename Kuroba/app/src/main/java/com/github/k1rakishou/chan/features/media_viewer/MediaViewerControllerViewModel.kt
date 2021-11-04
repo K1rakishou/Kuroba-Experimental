@@ -244,7 +244,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = null,
-      loadedMedia = viewableMediaList,
+      loadedMedia = viewableMediaList.toMutableList(),
       initialPagerIndex = 0
     )
   }
@@ -335,7 +335,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = viewableMediaParcelableHolder.threadDescriptor,
-      loadedMedia = output.images,
+      loadedMedia = output.images.toMutableList(),
       initialPagerIndex = actualInitialPagerIndex
     )
   }
@@ -391,7 +391,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = catalogDescriptor as ChanDescriptor,
-      loadedMedia = output.images,
+      loadedMedia = output.images.toMutableList(),
       initialPagerIndex = actualInitialPagerIndex
     )
   }
@@ -412,7 +412,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = null,
-      loadedMedia = viewableMediaList,
+      loadedMedia = viewableMediaList.toMutableList(),
       initialPagerIndex = 0
     )
   }
@@ -579,7 +579,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   class MediaViewerControllerState(
     val descriptor: ChanDescriptor?,
-    val loadedMedia: List<ViewableMedia>,
+    val loadedMedia: MutableList<ViewableMedia>,
     val initialPagerIndex: Int = 0
   ) {
     fun isEmpty(): Boolean = loadedMedia.isEmpty()
