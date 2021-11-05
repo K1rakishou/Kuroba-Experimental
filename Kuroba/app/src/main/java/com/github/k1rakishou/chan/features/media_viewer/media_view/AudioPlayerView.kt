@@ -47,6 +47,7 @@ class AudioPlayerView @JvmOverloads constructor(
   private var hasSoundPostUrl: Boolean = false
   private var positionAndDurationUpdateJob: Job? = null
   private var hideShowAnimation: ValueAnimator? = null
+  private var audioPlayerCallbacks: AudioPlayerCallbacks? = null
 
   private lateinit var audioPlayerViewState: AudioPlayerViewState
   private lateinit var mediaViewContract: MediaViewContract
@@ -79,6 +80,7 @@ class AudioPlayerView @JvmOverloads constructor(
   }
 
   fun bind(
+    audioPlayerCallbacks: AudioPlayerCallbacks,
     viewableMedia: ViewableMedia,
     audioPlayerViewState: AudioPlayerViewState,
     mediaViewContract: MediaViewContract,
@@ -93,6 +95,7 @@ class AudioPlayerView @JvmOverloads constructor(
       return
     }
 
+    this.audioPlayerCallbacks = audioPlayerCallbacks
     this.audioPlayerViewState = audioPlayerViewState
     this.mediaViewContract = mediaViewContract
     this.globalWindowInsetsManager = globalWindowInsetsManager
@@ -122,15 +125,12 @@ class AudioPlayerView @JvmOverloads constructor(
     }
 
     audioPlayerPlayPause.setOnClickListener {
-      val nowPlaying = soundPostVideoPlayer.isPlaying().not()
+      val isNowPlaying = soundPostVideoPlayer.isPlaying().not()
 
-      if (nowPlaying) {
-        soundPostVideoPlayer.start()
-      } else {
-        soundPostVideoPlayer.pause()
-      }
+      pauseUnpause(isNowPaused = !isNowPlaying)
+      updatePlayIcon(isNowPlaying = isNowPlaying)
 
-      updatePlayIcon(nowPlaying)
+      audioPlayerCallbacks.onAudioPlayerPlaybackChanged(isNowPaused = !isNowPlaying)
     }
 
     positionAndDurationUpdateJob?.cancel()
@@ -142,6 +142,7 @@ class AudioPlayerView @JvmOverloads constructor(
 
     audioPlayerRestart.setOnClickListener {
       soundPostVideoPlayer.resetPosition()
+      audioPlayerCallbacks.onRewindPlayback()
     }
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
@@ -179,6 +180,7 @@ class AudioPlayerView @JvmOverloads constructor(
 
   fun unbind() {
     hasSoundPostUrl = false
+    audioPlayerCallbacks = null
 
     if (soundPostVideoPlayerLazy.isInitialized() && soundPostVideoPlayer.hasContent) {
       soundPostVideoPlayer.release()
@@ -217,13 +219,19 @@ class AudioPlayerView @JvmOverloads constructor(
     )
   }
 
-  suspend fun stop() {
+  fun pauseUnpause(isNowPaused: Boolean) {
     if (!hasSoundPostUrl) {
       return
     }
 
-    if (soundPostVideoPlayerLazy.isInitialized() && soundPostVideoPlayer.isPlaying()) {
-      soundPostVideoPlayer.pause()
+    if (soundPostVideoPlayerLazy.isInitialized()) {
+      if (isNowPaused) {
+        soundPostVideoPlayer.pause()
+      } else {
+        soundPostVideoPlayer.start()
+      }
+
+      updatePlayIcon(isNowPlaying = !isNowPaused)
     }
   }
 
@@ -233,7 +241,10 @@ class AudioPlayerView @JvmOverloads constructor(
     }
 
     if (soundPostVideoPlayerLazy.isInitialized() && soundPostVideoPlayer.isPlaying()) {
-      showAudioPlayerView()
+      if (!mediaViewContract.isSystemUiHidden()) {
+        showAudioPlayerView()
+      }
+
       onInsetsChanged()
       onAudioPlaying()
 
@@ -244,7 +255,11 @@ class AudioPlayerView @JvmOverloads constructor(
     if (soundPostActualSoundMedia != null) {
       if (loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
         positionAndDurationUpdateJob?.start()
-        showAudioPlayerView()
+
+        if (!mediaViewContract.isSystemUiHidden()) {
+          showAudioPlayerView()
+        }
+
         onInsetsChanged()
         onAudioPlaying()
 
@@ -313,8 +328,8 @@ class AudioPlayerView @JvmOverloads constructor(
     audioPlayerMuteUnmute.setImageResource(imageDrawable)
   }
 
-  private fun updatePlayIcon(nowPlaying: Boolean) {
-    val imageDrawable = if (nowPlaying) {
+  private fun updatePlayIcon(isNowPlaying: Boolean) {
+    val imageDrawable = if (isNowPlaying) {
       R.drawable.exo_controls_pause
     } else {
       R.drawable.exo_controls_play
@@ -417,6 +432,11 @@ class AudioPlayerView @JvmOverloads constructor(
       this.prevWindowIndex = other.prevWindowIndex
       this.playing = other.playing
     }
+  }
+
+  interface AudioPlayerCallbacks {
+    fun onAudioPlayerPlaybackChanged(isNowPaused: Boolean)
+    fun onRewindPlayback()
   }
 
   companion object {

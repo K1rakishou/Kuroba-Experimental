@@ -151,9 +151,13 @@ class MediaViewerAdapter(
         )
       }
       is ViewableMedia.Gif -> {
+        val initialMediaViewState = viewModel.getPrevMediaViewStateOrNull(viewableMedia.mediaLocation)
+          as? GifMediaView.GifMediaViewState
+          ?: GifMediaView.GifMediaViewState()
+
         GifMediaView(
           context = context,
-          initialMediaViewState = GifMediaView.GifMediaViewState(),
+          initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
           cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
           fileDataSourceFactory = fileDataSourceFactory,

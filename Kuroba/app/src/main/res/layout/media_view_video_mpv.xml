@@ -31,4 +31,10 @@
         android:gravity="center_vertical"
         android:visibility="gone"/>
 
+    <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
+        android:id="@+id/audio_player_view"
+        android:layout_gravity="bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
 </FrameLayout>

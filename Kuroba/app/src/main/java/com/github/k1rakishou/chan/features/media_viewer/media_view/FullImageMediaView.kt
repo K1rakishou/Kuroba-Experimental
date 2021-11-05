@@ -289,7 +289,7 @@ class FullImageMediaView(
     fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<FilePath>()
 
-    audioPlayerView.stop()
+    audioPlayerView.pauseUnpause(isNowPaused = true)
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualImageView.setVisibilityFast(View.INVISIBLE)

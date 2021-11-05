@@ -54,7 +54,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   private val fileDataSourceFactory: DataSource.Factory,
   private val contentDataSourceFactory: DataSource.Factory,
   val mediaViewState: S
-) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0), MediaViewerToolbar.MediaViewerToolbarCallbacks {
+) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0),
+  MediaViewerToolbar.MediaViewerToolbarCallbacks,
+  AudioPlayerView.AudioPlayerCallbacks {
   abstract val viewableMedia: T
   abstract val pagerPosition: Int
   abstract val totalPageItemsCount: Int
@@ -143,16 +145,19 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = true
     bind()
 
-    audioPlayerView.bind(
-      viewableMedia = viewableMedia,
-      audioPlayerViewState = mediaViewState.audioPlayerViewState!!,
-      mediaViewContract = mediaViewContract,
-      globalWindowInsetsManager = globalWindowInsetsManager,
-      threadDownloadManager = threadDownloadManager,
-      cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-      fileDataSourceFactory = fileDataSourceFactory,
-      contentDataSourceFactory = contentDataSourceFactory
-    )
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.bind(
+        audioPlayerCallbacks = this,
+        viewableMedia = viewableMedia,
+        audioPlayerViewState = mediaViewState.audioPlayerViewState,
+        mediaViewContract = mediaViewContract,
+        globalWindowInsetsManager = globalWindowInsetsManager,
+        threadDownloadManager = threadDownloadManager,
+        cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+        fileDataSourceFactory = fileDataSourceFactory,
+        contentDataSourceFactory = contentDataSourceFactory
+      )
+    }
 
     Logger.d(TAG, "onBind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
@@ -211,7 +216,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       mediaViewToolbar?.showToolbar()
     }
 
-    audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
+    audioPlayerView?.onSystemUiVisibilityChanged(systemUIHidden)
   }
 
   @CallSuper
@@ -220,6 +225,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   override suspend fun reloadMedia() {
+
+  }
+
+  override fun onAudioPlayerPlaybackChanged(isNowPaused: Boolean) {
+
+  }
+
+  override fun onRewindPlayback() {
 
   }
 

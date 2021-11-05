@@ -8,6 +8,7 @@ import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import android.widget.FrameLayout
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -124,7 +125,13 @@ class GifMediaView(
 
           return@GestureDetectorListener false
         },
-        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) }
+        onMediaLongClick = { mediaViewContract.onMediaLongClick(this, viewableMedia) },
+        pauseUnpauseGifFunc = {
+          val isNowPlaying = (actualGifView.drawable as? GifDrawable)?.isPlaying?.not()
+            ?: return@GestureDetectorListener
+
+          onPauseUnpauseButtonToggled(isNowPlaying = isNowPlaying)
+        }
       )
     )
 
@@ -240,17 +247,39 @@ class GifMediaView(
 
       onUpdateTransparency()
 
+      audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+        isLifecycleChange = isLifecycleChange,
+        viewableMedia = viewableMedia
+      )
+
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-      if (gifImageViewDrawable != null && !gifImageViewDrawable.isPlaying) {
-        gifImageViewDrawable.start()
+      if (gifImageViewDrawable != null) {
+        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
+          mediaViewState.resetPosition()
+        }
+
+        val playing = mediaViewState.playing ?: true
+
+        if (playing) {
+          gifImageViewDrawable.start()
+        } else {
+          gifImageViewDrawable.pause()
+        }
+
+        gifImageViewDrawable.seekToFrame(mediaViewState.prevFrameIndex)
       }
     }
   }
 
   override fun hide(isLifecycleChange: Boolean) {
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-    if (gifImageViewDrawable != null && gifImageViewDrawable.isPlaying) {
-      gifImageViewDrawable.pause()
+    if (gifImageViewDrawable != null) {
+      mediaViewState.prevFrameIndex = gifImageViewDrawable.currentFrameIndex
+      mediaViewState.playing = gifImageViewDrawable.isPlaying
+
+      if (gifImageViewDrawable.isPlaying) {
+        gifImageViewDrawable.pause()
+      }
     }
   }
 
@@ -283,6 +312,8 @@ class GifMediaView(
     fullGifDeferred.cancel()
     fullGifDeferred = CompletableDeferred<FilePath>()
 
+    audioPlayerView.pauseUnpause(isNowPaused = true)
+
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualGifView.setVisibilityFast(View.INVISIBLE)
     actualGifView.setImageDrawable(null)
@@ -295,6 +326,34 @@ class GifMediaView(
     )
 
     show(isLifecycleChange = false)
+  }
+
+  override fun onAudioPlayerPlaybackChanged(isNowPaused: Boolean) {
+    pauseUnpauseGif(isNowPaused)
+  }
+
+  @Suppress("IfThenToSafeAccess")
+  override fun onRewindPlayback() {
+    val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
+    if (gifImageViewDrawable != null) {
+      gifImageViewDrawable.seekTo(0)
+    }
+  }
+
+  private fun onPauseUnpauseButtonToggled(isNowPlaying: Boolean) {
+    pauseUnpauseGif(isNowPaused = !isNowPlaying)
+    audioPlayerView.pauseUnpause(isNowPaused = !isNowPlaying)
+  }
+
+  private fun pauseUnpauseGif(isNowPaused: Boolean) {
+    val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
+    if (gifImageViewDrawable != null) {
+      if (isNowPaused) {
+        gifImageViewDrawable.pause()
+      } else {
+        gifImageViewDrawable.start()
+      }
+    }
   }
 
   @Suppress("BlockingMethodInNonBlockingContext")
@@ -386,12 +445,36 @@ class GifMediaView(
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }
 
-  class GifMediaViewState : MediaViewState() {
+  class GifMediaViewState(
+    var prevFrameIndex: Int = 0,
+    var playing: Boolean? = null,
+    audioPlayerViewState: AudioPlayerView.AudioPlayerViewState = AudioPlayerView.AudioPlayerViewState()
+  ) : MediaViewState(audioPlayerViewState) {
+
+    override fun resetPosition() {
+      super.resetPosition()
+
+      prevFrameIndex = 0
+      playing = null
+      audioPlayerViewState!!.resetPosition()
+    }
+
     override fun clone(): MediaViewState {
-      return this
+      return GifMediaViewState(
+        prevFrameIndex = prevFrameIndex,
+        playing = playing,
+        audioPlayerViewState = audioPlayerViewState!!.clone() as AudioPlayerView.AudioPlayerViewState
+      )
     }
 
     override fun updateFrom(other: MediaViewState?) {
+      if (other !is GifMediaViewState) {
+        return
+      }
+
+      prevFrameIndex = other.prevFrameIndex
+      playing = other.playing
+      audioPlayerViewState!!.updateFrom(other.audioPlayerViewState)
     }
   }
 
@@ -400,7 +483,8 @@ class GifMediaView(
     private val actualGifView: GifImageView,
     private val mediaViewContract: MediaViewContract,
     private val tryPreloadingFunc: () -> Boolean,
-    private val onMediaLongClick: () -> Unit
+    private val onMediaLongClick: () -> Unit,
+    private val pauseUnpauseGifFunc: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
     override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
@@ -419,14 +503,7 @@ class GifMediaView(
         return false
       }
 
-      val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
-      if (gifImageViewDrawable != null) {
-        if (gifImageViewDrawable.isPlaying) {
-          gifImageViewDrawable.pause()
-        } else {
-          gifImageViewDrawable.start()
-        }
-      }
+      pauseUnpauseGifFunc()
 
       return super.onDoubleTap(e)
     }
@@ -436,7 +513,8 @@ class GifMediaView(
     }
   }
 
-  private class GifIsTooBigException(sizeInBytes: Long) : Exception("Gif is too big! (${sizeInBytes / (1024 * 1024)} MB)")
+  private class GifIsTooBigException(sizeInBytes: Long)
+    : Exception("Gif is too big! (${sizeInBytes / (1024 * 1024)} MB)")
 
   companion object {
     private const val TAG = "GifMediaView"

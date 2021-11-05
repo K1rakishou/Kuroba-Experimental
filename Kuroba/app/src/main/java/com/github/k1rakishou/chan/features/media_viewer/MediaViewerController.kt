@@ -242,6 +242,10 @@ class MediaViewerController(
     return viewModel.isSoundMuted
   }
 
+  override fun isSystemUiHidden(): Boolean {
+    return mediaViewerCallbacks.isSystemUiHidden()
+  }
+
   override fun onTapped() {
     mediaViewerCallbacks.toggleFullScreenMode()
   }
