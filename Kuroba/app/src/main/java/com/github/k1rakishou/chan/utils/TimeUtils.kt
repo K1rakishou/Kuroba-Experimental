@@ -2,8 +2,10 @@ package com.github.k1rakishou.chan.utils
 
 import com.github.k1rakishou.ChanSettings
 import org.joda.time.DateTime
+import org.joda.time.Period
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.format.PeriodFormatterBuilder
 import java.util.*
 
 object TimeUtils {
@@ -16,6 +18,18 @@ object TimeUtils {
     .appendLiteral(" UTC")
     .toFormatter()
     .withZoneUTC()
+
+  private val periodFormatter = PeriodFormatterBuilder().printZeroAlways()
+    .minimumPrintedDigits(2)
+    .appendMinutes()
+    .appendLiteral(":")
+    .appendSeconds()
+    .toFormatter()
+
+  @JvmStatic
+  fun formatPeriod(period: Long): String {
+    return periodFormatter.print(Period(period))
+  }
 
   @JvmStatic
   fun getCurrentDateAndTimeUTC(): String {

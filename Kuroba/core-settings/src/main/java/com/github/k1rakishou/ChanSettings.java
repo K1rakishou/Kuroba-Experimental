@@ -351,6 +351,7 @@ public class ChanSettings {
     public static IntegerSetting mediaViewerMaxOffscreenPages;
     public static BooleanSetting mediaViewerAutoSwipeAfterDownload;
     public static BooleanSetting mediaViewerDrawBehindNotch;
+    public static BooleanSetting mediaViewerSoundPostsEnabled;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -574,6 +575,7 @@ public class ChanSettings {
             mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", getMediaViewerOffscreenPagesDefault());
             mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
             mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
+            mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,

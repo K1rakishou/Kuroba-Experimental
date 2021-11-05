@@ -22,6 +22,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.FileDescriptorMode
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -40,6 +41,9 @@ class GifMediaView(
   mediaViewContract: MediaViewContract,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  cachedHttpDataSourceFactory: DataSource.Factory,
+  fileDataSourceFactory: DataSource.Factory,
+  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Gif,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -47,7 +51,10 @@ class GifMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
-  mediaViewState = initialMediaViewState
+  mediaViewState = initialMediaViewState,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
 ) {
 
   private val movableContainer: FrameLayout
@@ -379,7 +386,7 @@ class GifMediaView(
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }
 
-  class GifMediaViewState : MediaViewState {
+  class GifMediaViewState : MediaViewState() {
     override fun clone(): MediaViewState {
       return this
     }

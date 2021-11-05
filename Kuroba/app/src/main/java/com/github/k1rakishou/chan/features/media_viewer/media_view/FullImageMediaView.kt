@@ -26,6 +26,7 @@ import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -42,6 +43,9 @@ class FullImageMediaView(
   mediaViewContract: MediaViewContract,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  cachedHttpDataSourceFactory: DataSource.Factory,
+  fileDataSourceFactory: DataSource.Factory,
+  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -49,9 +53,11 @@ class FullImageMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
   mediaViewState = initialMediaViewState
 ) {
-
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
@@ -210,7 +216,6 @@ class FullImageMediaView(
   }
 
   override fun bind() {
-
   }
 
   override fun show(isLifecycleChange: Boolean) {
@@ -218,27 +223,34 @@ class FullImageMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onUpdateTransparency()
 
-    if (!hasContent) {
-      scope.launch {
-        fullImageDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullImageLoadingError()", error)
+    scope.launch {
+      if (hasContent) {
+        audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+          isLifecycleChange = isLifecycleChange,
+          viewableMedia = viewableMedia
+        )
 
-            if (error.isExceptionImportant() && shown) {
-              cancellableToast.showToast(
-                context,
-                getString(R.string.image_image_download_failed, error.errorMessageOrClassName())
-              )
-            }
-
-            actualImageView.setVisibilityFast(View.INVISIBLE)
-          }
-          .onSuccess { filePath ->
-            setBigImageFromFile(filePath)
-          }
-
-        loadingBar.setVisibilityFast(GONE)
+        return@launch
       }
+
+      fullImageDeferred.awaitCatching()
+        .onFailure { error ->
+          Logger.e(TAG, "onFullImageLoadingError()", error)
+
+          if (error.isExceptionImportant() && shown) {
+            cancellableToast.showToast(
+              context,
+              getString(R.string.image_image_download_failed, error.errorMessageOrClassName())
+            )
+          }
+
+          actualImageView.setVisibilityFast(View.INVISIBLE)
+        }
+        .onSuccess { filePath ->
+          setBigImageFromFile(isLifecycleChange, filePath)
+        }
+
+      loadingBar.setVisibilityFast(GONE)
     }
   }
 
@@ -277,6 +289,8 @@ class FullImageMediaView(
     fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<FilePath>()
 
+    audioPlayerView.stop()
+
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualImageView.setVisibilityFast(View.INVISIBLE)
     actualImageView.setCallback(null)
@@ -292,7 +306,7 @@ class FullImageMediaView(
     show(isLifecycleChange = false)
   }
 
-  private suspend fun setBigImageFromFile(filePath: FilePath) {
+  private suspend fun setBigImageFromFile(isLifecycleChange: Boolean, filePath: FilePath) {
     coroutineScope {
       val animationAwaitable = CompletableDeferred<Unit>()
 
@@ -351,7 +365,7 @@ class FullImageMediaView(
 
       actualImageView.setOnClickListener(null)
 
-      if (viewableMedia.viewableMediaMeta.isGif()) {
+      if (viewableMedia.viewableMediaMeta.isGif) {
         val imageSource = withContext(Dispatchers.IO) {
           val inputStream = filePath.inputStream(fileManager)
           if (inputStream == null) {
@@ -385,6 +399,11 @@ class FullImageMediaView(
 
         actualImageView.setImage(imageSource)
       }
+
+      audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+        isLifecycleChange = isLifecycleChange,
+        viewableMedia = viewableMedia
+      )
 
       // Trigger the SubsamplingScaleImageView to start loading the full image but don't show it yet.
       actualImageView.alpha = 0f
@@ -442,13 +461,28 @@ class FullImageMediaView(
 
   }
 
-  class FullImageState : MediaViewState {
+  class FullImageState(
+    audioPlayerViewState: AudioPlayerView.AudioPlayerViewState = AudioPlayerView.AudioPlayerViewState()
+  ) : MediaViewState(audioPlayerViewState) {
+
+    override fun resetPosition() {
+      super.resetPosition()
+
+      audioPlayerViewState!!.resetPosition()
+    }
+
     override fun clone(): MediaViewState {
-      return this
+      return FullImageState(
+        audioPlayerViewState = audioPlayerViewState!!.clone() as AudioPlayerView.AudioPlayerViewState
+      )
     }
 
     override fun updateFrom(other: MediaViewState?) {
+      if (other !is FullImageState) {
+        return
+      }
 
+      audioPlayerViewState!!.updateFrom(other.audioPlayerViewState)
     }
   }
 

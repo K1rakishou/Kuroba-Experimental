@@ -5,7 +5,9 @@ import android.view.View
 import android.view.ViewGroup
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.media_viewer.media_view.AudioMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.ExoPlayerVideoMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView
@@ -24,6 +26,7 @@ import kotlinx.coroutines.CompletableDeferred
 class MediaViewerAdapter(
   private val context: Context,
   private val viewModel: MediaViewerControllerViewModel,
+  private val threadDownloadManager: ThreadDownloadManager,
   private val mediaViewerToolbar: MediaViewerToolbar,
   private val mediaViewContract: MediaViewContract,
   private val initialPagerIndex: Int,
@@ -137,6 +140,9 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = initialMediaViewState,
           mediaViewContract = mediaViewContract,
+          cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+          fileDataSourceFactory = fileDataSourceFactory,
+          contentDataSourceFactory = contentDataSourceFactory,
           onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
@@ -149,6 +155,9 @@ class MediaViewerAdapter(
           context = context,
           initialMediaViewState = GifMediaView.GifMediaViewState(),
           mediaViewContract = mediaViewContract,
+          cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+          fileDataSourceFactory = fileDataSourceFactory,
+          contentDataSourceFactory = contentDataSourceFactory,
           onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
@@ -167,6 +176,9 @@ class MediaViewerAdapter(
             initialMediaViewState = initialMediaViewState,
             viewModel = viewModel,
             mediaViewContract = mediaViewContract,
+            cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+            fileDataSourceFactory = fileDataSourceFactory,
+            contentDataSourceFactory = contentDataSourceFactory,
             onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
             isSystemUiHidden = isSystemUiHidden,
             viewableMedia = viewableMedia,
@@ -194,11 +206,29 @@ class MediaViewerAdapter(
           )
         }
       }
+      is ViewableMedia.Audio -> {
+        AudioMediaView(
+          context = context,
+          initialMediaViewState = AudioMediaView.AudioMediaViewState(),
+          mediaViewContract = mediaViewContract,
+          cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+          fileDataSourceFactory = fileDataSourceFactory,
+          contentDataSourceFactory = contentDataSourceFactory,
+          onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
+          isSystemUiHidden = isSystemUiHidden,
+          viewableMedia = viewableMedia,
+          pagerPosition = position,
+          totalPageItemsCount = count
+        )
+      }
       is ViewableMedia.Unsupported -> {
         UnsupportedMediaView(
           context = context,
           initialMediaViewState = UnsupportedMediaView.UnsupportedMediaViewState(),
           mediaViewContract = mediaViewContract,
+          cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+          fileDataSourceFactory = fileDataSourceFactory,
+          contentDataSourceFactory = contentDataSourceFactory,
           onThumbnailFullyLoadedFunc = onThumbnailFullyLoaded,
           isSystemUiHidden = isSystemUiHidden,
           viewableMedia = viewableMedia,
@@ -208,6 +238,7 @@ class MediaViewerAdapter(
       }
     }
 
+    mediaView.id = View.generateViewId()
     mediaView.startPreloading()
     loadedViews.add(LoadedView(position, mediaView as MediaView<ViewableMedia, MediaViewState>))
 

@@ -608,6 +608,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       val imageType = when (viewableMedia) {
         is ViewableMedia.Gif -> ChanPostImageType.GIF
         is ViewableMedia.Image -> ChanPostImageType.STATIC
+        is ViewableMedia.Audio,
         is ViewableMedia.Video -> ChanPostImageType.MOVIE
         is ViewableMedia.Unsupported -> return false
       }

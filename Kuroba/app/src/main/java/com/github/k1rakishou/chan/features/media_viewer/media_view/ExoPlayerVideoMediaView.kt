@@ -57,7 +57,10 @@ class ExoPlayerVideoMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
-  mediaViewState = initialMediaViewState
+  mediaViewState = initialMediaViewState,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
 ), WindowInsetsListener {
 
   private val thumbnailMediaView: ThumbnailMediaView
@@ -464,7 +467,7 @@ class ExoPlayerVideoMediaView(
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
         // after the activity is paused and then unpaused (like when the user turns off/on the phone
         // screen).
-        val newPosition = (mediaViewState.prevPosition - SEEK_POSITION_DELTA).coerceAtLeast(0)
+        val newPosition = (mediaViewState.prevPosition - ExoPlayerWrapper.SEEK_POSITION_DELTA).coerceAtLeast(0)
         mainVideoPlayer.seekTo(mediaViewState.prevWindowIndex, newPosition)
       }
     }
@@ -493,9 +496,11 @@ class ExoPlayerVideoMediaView(
     var prevWindowIndex: Int = -1,
     var videoSoundDetected: Boolean? = null,
     var playing: Boolean? = null
-  ) : MediaViewState {
+  ) : MediaViewState() {
 
-    fun resetPosition() {
+    override fun resetPosition() {
+      super.resetPosition()
+
       prevPosition = -1
       prevWindowIndex = -1
     }
@@ -571,6 +576,5 @@ class ExoPlayerVideoMediaView(
 
   companion object {
     private const val TAG = "VideoMediaView"
-    private const val SEEK_POSITION_DELTA = 100
   }
 }

@@ -87,6 +87,12 @@ class MediaViewerMenuHelper(
       isCurrentlySelected = ChanSettings.mediaViewerAutoSwipeAfterDownload.get()
     )
 
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_ENABLE_SOUND_POSTS,
+      name = AppModuleAndroidUtils.getString(R.string.setting_enable_sound_posts),
+      isCurrentlySelected = ChanSettings.mediaViewerSoundPostsEnabled.get()
+    )
+
     options += FloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
       name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
@@ -135,6 +141,10 @@ class MediaViewerMenuHelper(
       }
       ACTION_AUTO_SWIPE_AFTER_DOWNLOAD -> {
         ChanSettings.mediaViewerAutoSwipeAfterDownload.toggle()
+      }
+      ACTION_ENABLE_SOUND_POSTS -> {
+        ChanSettings.mediaViewerSoundPostsEnabled.toggle()
+        showToastFunc(R.string.restart_the_media_viewer)
       }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
@@ -199,6 +209,7 @@ class MediaViewerMenuHelper(
     const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 107
     const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 108
     const val ACTION_DRAW_BEHIND_NOTCH = 109
+    const val ACTION_ENABLE_SOUND_POSTS = 110
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

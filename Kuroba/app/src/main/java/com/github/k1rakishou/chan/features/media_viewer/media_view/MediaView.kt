@@ -37,6 +37,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.google.android.exoplayer2.upstream.DataSource
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
@@ -49,6 +50,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
   protected val mediaViewContract: MediaViewContract,
+  private val cachedHttpDataSourceFactory: DataSource.Factory,
+  private val fileDataSourceFactory: DataSource.Factory,
+  private val contentDataSourceFactory: DataSource.Factory,
   val mediaViewState: S
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0), MediaViewerToolbar.MediaViewerToolbarCallbacks {
   abstract val viewableMedia: T
@@ -86,6 +90,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
+
+  protected val audioPlayerView: AudioPlayerView by lazy {
+    return@lazy findViewById<AudioPlayerView>(R.id.audio_player_view)
+  }
 
   val bound: Boolean
     get() = _bound
@@ -135,6 +143,17 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = true
     bind()
 
+    audioPlayerView.bind(
+      viewableMedia = viewableMedia,
+      audioPlayerViewState = mediaViewState.audioPlayerViewState!!,
+      mediaViewContract = mediaViewContract,
+      globalWindowInsetsManager = globalWindowInsetsManager,
+      threadDownloadManager = threadDownloadManager,
+      cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+      fileDataSourceFactory = fileDataSourceFactory,
+      contentDataSourceFactory = contentDataSourceFactory
+    )
+
     Logger.d(TAG, "onBind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
@@ -143,6 +162,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
+    audioPlayerView.show(isLifecycleChange)
     show(isLifecycleChange)
 
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
@@ -153,6 +173,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
+    audioPlayerView.hide(isLifecycleChange)
     hide(isLifecycleChange)
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
@@ -163,6 +184,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = false
     _preloadingCalled = false
     _mediaViewToolbar?.onDestroy()
+    audioPlayerView.unbind()
 
     cancellableToast.cancel()
     scope.cancelChildren()
@@ -188,6 +210,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     } else {
       mediaViewToolbar?.showToolbar()
     }
+
+    audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
   }
 
   @CallSuper

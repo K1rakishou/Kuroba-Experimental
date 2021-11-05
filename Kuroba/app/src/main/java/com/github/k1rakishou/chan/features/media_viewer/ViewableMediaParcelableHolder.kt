@@ -1,9 +1,12 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.os.Parcelable
+import android.webkit.MimeTypeMap
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.extractFileName
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -12,7 +15,11 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import org.jsoup.parser.Parser
+import java.net.URLDecoder
+import java.nio.charset.StandardCharsets
 import java.util.*
+import java.util.regex.Pattern
 
 sealed class ViewableMediaParcelableHolder {
 
@@ -303,6 +310,13 @@ sealed class ViewableMedia(
     override val viewableMediaMeta: ViewableMediaMeta
   ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
 
+  data class Audio(
+    override val mediaLocation: MediaLocation,
+    override val previewLocation: MediaLocation?,
+    override val spoilerLocation: MediaLocation?,
+    override val viewableMediaMeta: ViewableMediaMeta
+  ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
+
   data class Unsupported(
     override val mediaLocation: MediaLocation,
     override val previewLocation: MediaLocation?,
@@ -311,6 +325,8 @@ sealed class ViewableMedia(
   ) : ViewableMedia(mediaLocation, previewLocation, spoilerLocation, viewableMediaMeta)
 
 }
+
+private val SOUND_POST_PATTERN by lazy { Pattern.compile("\\[sound=(.*?)\\]") }
 
 data class ViewableMediaMeta(
   val ownerPostDescriptor: PostDescriptor?,
@@ -324,20 +340,86 @@ data class ViewableMediaMeta(
   val isSpoiler: Boolean
 ) {
 
-  fun formatFullServerMediaName(): String? {
+  val fullServerMediaName by lazy {
     if (serverMediaName.isNullOrEmpty()) {
-      return null
+      return@lazy null
     }
 
     if (extension.isNullOrEmpty()) {
-      return serverMediaName
+      return@lazy serverMediaName
     }
 
-    return "${serverMediaName}.${extension}"
+    return@lazy "${serverMediaName}.${extension}"
   }
 
-  fun isGif(): Boolean {
-    return extension?.equals("gif", ignoreCase = true) ?: false
+  val isGif by lazy {
+    return@lazy extension?.equals("gif", ignoreCase = true) ?: false
+  }
+
+  val soundPostActualSoundMedia by lazy {
+    if (!ChanSettings.mediaViewerSoundPostsEnabled.get()) {
+      return@lazy null
+    }
+
+    if (originalMediaName.isNullOrEmpty()) {
+      return@lazy null
+    }
+
+    try {
+      val matcher = SOUND_POST_PATTERN.matcher(originalMediaName)
+      if (!matcher.find()) {
+        return@lazy null
+      }
+
+      val url = matcher.groupOrNull(1)
+        ?: return@lazy null
+
+      var unescapedUrl = URLDecoder.decode(Parser.unescapeEntities(url, false), StandardCharsets.UTF_8.name())
+
+      if (unescapedUrl.startsWith("https://")) {
+        unescapedUrl = unescapedUrl.removePrefix("https://")
+      }
+      if (unescapedUrl.startsWith("http://")) {
+        unescapedUrl = unescapedUrl.removePrefix("http://")
+      }
+      if (unescapedUrl.startsWith("www.")) {
+        unescapedUrl = unescapedUrl.removePrefix("www.")
+      }
+
+      val extension = MimeTypeMap.getFileExtensionFromUrl(unescapedUrl)
+      if (extension.isNullOrEmpty()) {
+        return@lazy null
+      }
+
+      val mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
+      if (mimeType.isNullOrEmpty()) {
+        return@lazy null
+      }
+
+      if (!mimeType.startsWith("audio/")) {
+        return@lazy null
+      }
+
+      return@lazy ViewableMedia.Audio(
+        mediaLocation = MediaLocation.Remote("https://$unescapedUrl"),
+        previewLocation = null,
+        spoilerLocation = null,
+        viewableMediaMeta = ViewableMediaMeta(
+          ownerPostDescriptor = null,
+          serverMediaName = null,
+          originalMediaName = null,
+          extension = null,
+          mediaWidth = null,
+          mediaHeight = null,
+          mediaSize = null,
+          mediaHash = null,
+          isSpoiler = false
+        )
+      )
+    } catch (error: Throwable) {
+      Logger.e("ViewableMediaMeta", "soundPostActualSoundMedia error", error)
+      return@lazy null
+    }
   }
 
 }

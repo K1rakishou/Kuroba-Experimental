@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
@@ -90,6 +91,8 @@ class MediaViewerController(
   lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
   @Inject
   lateinit var fileChooser: FileChooser
+  @Inject
+  lateinit var threadDownloadManager: ThreadDownloadManager
 
   private var chanDescriptor: ChanDescriptor? = null
   private var autoSwipeJob: Job? = null
@@ -450,6 +453,7 @@ class MediaViewerController(
       context = context,
       viewModel = viewModel,
       mediaViewerToolbar = mediaViewerToolbar,
+      threadDownloadManager = threadDownloadManager,
       mediaViewContract = this@MediaViewerController,
       initialPagerIndex = mediaViewerState.initialPagerIndex,
       viewableMediaList = mediaViewerState.loadedMedia,

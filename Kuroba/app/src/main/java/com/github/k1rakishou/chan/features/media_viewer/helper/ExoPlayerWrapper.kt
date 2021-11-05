@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.media_viewer.helper
 import android.content.Context
 import android.net.Uri
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -19,10 +20,15 @@ import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.source.MediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
@@ -37,14 +43,21 @@ class ExoPlayerWrapper(
   private val mediaViewContract: MediaViewContract,
   private val onAudioDetected: () -> Unit
 ) {
+  private val scope = KurobaCoroutineScope()
   private val reusableExoPlayer by lazy { getOrCreateExoPlayer()  }
   val actualExoPlayer by lazy { reusableExoPlayer.exoPlayer }
+
+  private var timelineUpdateJob: Job? = null
 
   private var _hasContent = false
   val hasContent: Boolean
     get() = _hasContent
 
   private var firstFrameRendered: CompletableDeferred<Unit>? = null
+
+  private val _positionAndDurationFlow = MutableStateFlow(Pair(0L, 0L))
+  val positionAndDurationFlow: StateFlow<Pair<Long, Long>>
+    get() = _positionAndDurationFlow.asStateFlow()
 
   suspend fun preload(
     viewableMedia: ViewableMedia,
@@ -73,10 +86,8 @@ class ExoPlayerWrapper(
           firstFrameRendered?.complete(Unit)
           actualExoPlayer.removeListener(this)
 
-          coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
-            if (cause is CancellationException) {
-              actualExoPlayer.removeListener(this)
-            }
+          coroutineContext[Job.Key]?.invokeOnCompletion {
+            actualExoPlayer.removeListener(this)
           }
         }
       })
@@ -86,10 +97,8 @@ class ExoPlayerWrapper(
           onAudioDetected()
           actualExoPlayer.removeAnalyticsListener(this)
 
-          coroutineContext[Job.Key]?.invokeOnCompletion { cause ->
-            if (cause is CancellationException) {
-              actualExoPlayer.removeAnalyticsListener(this)
-            }
+          coroutineContext[Job.Key]?.invokeOnCompletion {
+            actualExoPlayer.removeAnalyticsListener(this)
           }
         }
       })
@@ -130,6 +139,93 @@ class ExoPlayerWrapper(
       .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
   }
 
+  suspend fun startAndAwaitFirstFrame() {
+    start()
+
+    val deferred = requireNotNull(firstFrameRendered) { "firstFrameRendered is null!" }
+
+    if (actualExoPlayer.videoFormat == null) {
+      deferred.complete(Unit)
+    }
+
+    deferred.await()
+  }
+
+  fun start() {
+    actualExoPlayer.repeatMode = if (ChanSettings.videoAutoLoop.get()) {
+      Player.REPEAT_MODE_ALL
+    } else {
+      Player.REPEAT_MODE_OFF
+    }
+
+    actualExoPlayer.volume = if (mediaViewContract.isSoundCurrentlyMuted()) {
+      0f
+    } else {
+      1f
+    }
+
+    timelineUpdateJob?.cancel()
+    timelineUpdateJob = scope.launch {
+      while (isActive) {
+        _positionAndDurationFlow.value = Pair(
+          actualExoPlayer.currentPosition.coerceAtLeast(0),
+          actualExoPlayer.duration.coerceAtLeast(0)
+        )
+
+        delay(1000L)
+      }
+    }
+
+    actualExoPlayer.play()
+  }
+
+  fun muteUnMute(mute: Boolean) {
+    actualExoPlayer.volume = if (mute) {
+      0f
+    } else {
+      1f
+    }
+  }
+
+  fun pause() {
+    actualExoPlayer.pause()
+  }
+
+  fun release() {
+    _hasContent = false
+
+    synchronized(reusableExoPlayer) {
+      reusableExoPlayer.giveBack()
+    }
+
+    timelineUpdateJob?.cancel()
+    timelineUpdateJob = null
+
+    scope.cancelChildren()
+
+    firstFrameRendered = null
+  }
+
+  fun setNoContent() {
+    _hasContent = false
+  }
+
+  fun isPlaying(): Boolean {
+    return actualExoPlayer.isPlaying
+  }
+
+  fun seekTo(windowIndex: Int, position: Long) {
+    actualExoPlayer.seekTo(windowIndex, position)
+  }
+
+  fun hasNoVideo(): Boolean {
+    return actualExoPlayer.videoFormat == null
+  }
+
+  fun resetPosition() {
+    actualExoPlayer.seekTo(0, 0)
+  }
+
   private suspend fun awaitForContentOrError(): Boolean {
     return suspendCancellableCoroutine { cancellableContinuation ->
       val listener = object : Player.Listener {
@@ -168,60 +264,6 @@ class ExoPlayerWrapper(
     }
   }
 
-  suspend fun startAndAwaitFirstFrame() {
-    start()
-
-    val deferred = requireNotNull(firstFrameRendered) { "firstFrameRendered is null!" }
-
-    if (actualExoPlayer.videoFormat == null) {
-      deferred.complete(Unit)
-    }
-
-    deferred.await()
-  }
-
-  fun start() {
-    actualExoPlayer.repeatMode = if (ChanSettings.videoAutoLoop.get()) {
-      Player.REPEAT_MODE_ALL
-    } else {
-      Player.REPEAT_MODE_OFF
-    }
-
-    actualExoPlayer.volume = if (mediaViewContract.isSoundCurrentlyMuted()) {
-      0f
-    } else {
-      1f
-    }
-
-    actualExoPlayer.play()
-  }
-
-  fun muteUnMute(mute: Boolean) {
-    actualExoPlayer.volume = if (mute) {
-      0f
-    } else {
-      1f
-    }
-  }
-
-  fun pause() {
-    actualExoPlayer.pause()
-  }
-
-  fun release() {
-    _hasContent = false
-
-    synchronized(reusableExoPlayer) {
-      reusableExoPlayer.giveBack()
-    }
-
-    firstFrameRendered = null
-  }
-
-  fun setNoContent() {
-    _hasContent = false
-  }
-
   private fun getOrCreateExoPlayer(): ReusableExoPlayer {
     return synchronized(reusableExoPlayerCache) {
       val exoPlayer = reusableExoPlayerCache
@@ -244,22 +286,6 @@ class ExoPlayerWrapper(
 
       return@synchronized newReusableExoPlayer
     }
-  }
-
-  fun isPlaying(): Boolean {
-    return actualExoPlayer.isPlaying
-  }
-
-  fun seekTo(windowIndex: Int, position: Long) {
-    actualExoPlayer.seekTo(windowIndex, position)
-  }
-
-  fun hasNoVideo(): Boolean {
-    return actualExoPlayer.videoFormat == null
-  }
-
-  fun resetPosition() {
-    actualExoPlayer.seekTo(0, 0)
   }
 
   class ReusableExoPlayer(
@@ -290,6 +316,7 @@ class ExoPlayerWrapper(
 
   companion object {
     private const val TAG = "ExoPlayerWrapper"
+    const val SEEK_POSITION_DELTA = 100
 
     private val reusableExoPlayerCache = mutableListOf<ReusableExoPlayer>()
 

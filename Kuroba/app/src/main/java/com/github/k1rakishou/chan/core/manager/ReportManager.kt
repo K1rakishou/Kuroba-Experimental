@@ -381,7 +381,7 @@ class ReportManager(
     return buildString(capacity = 512) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
-      appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
+      appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)

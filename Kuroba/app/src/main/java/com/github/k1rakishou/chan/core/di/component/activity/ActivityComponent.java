@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerRootLayout;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar;
+import com.github.k1rakishou.chan.features.media_viewer.media_view.AudioMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.ExoPlayerVideoMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.FullImageMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.media_view.GifMediaView;
@@ -392,6 +393,7 @@ public interface ActivityComponent {
     void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
     void inject(ThumbnailMediaView thumbnailMediaView);
     void inject(FullImageMediaView fullImageMediaView);
+    void inject(AudioMediaView audioMediaView);
     void inject(UnsupportedMediaView unsupportedMediaView);
     void inject(GifMediaView gifMediaView);
     void inject(ExoPlayerVideoMediaView exoPlayerVideoMediaView);

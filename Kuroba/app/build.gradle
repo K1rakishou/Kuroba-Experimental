@@ -44,7 +44,6 @@ android {
         // this is the default dev signing signature, update it if you change the dev keystore
         buildConfigField "String", "DEBUG_SIGNATURE", "\"DC5195CC40E42B95267D500B6E93E46EC51028C67BDD3D09BBB9C208BF20C8FE\""
         buildConfigField "String", "COMMIT_HASH", "\"" + getCommitHash() + "\""
-        buildConfigField "String", "BUILD_NUMBER", "\"" + getCurrentBuildNumber() + "\""
 
         //          M -> Major version
         //          m -> Minor version
@@ -336,25 +335,6 @@ dependencies {
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 
     devImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
-}
-
-// Increase the build number task
-task increaseBuildNumber {
-    def travisFlag = System.getenv("TRAVIS_CI_FLAG")
-    if (travisFlag == null) {
-        File f = file('buildnumber.property')
-        def prevBuildNumber = Integer.valueOf(f.readLines("UTF-8")[0])
-        def newBuildNumber = prevBuildNumber + 1
-        println("Increasing the build number: " + prevBuildNumber + " -> " + newBuildNumber)
-
-        f.write(String.valueOf(newBuildNumber))
-    }
-}
-preBuild.dependsOn increaseBuildNumber
-
-def getCurrentBuildNumber() {
-    File f = file('buildnumber.property')
-    return Integer.valueOf(f.readLines("UTF-8")[0])
 }
 
 //====================================================================

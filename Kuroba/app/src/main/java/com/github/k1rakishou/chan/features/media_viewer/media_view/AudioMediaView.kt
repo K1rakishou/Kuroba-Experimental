@@ -14,25 +14,23 @@ import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
-class UnsupportedMediaView(
+class AudioMediaView(
   context: Context,
-  initialMediaViewState: UnsupportedMediaViewState,
+  initialMediaViewState: AudioMediaViewState,
   mediaViewContract: MediaViewContract,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
   cachedHttpDataSourceFactory: DataSource.Factory,
   fileDataSourceFactory: DataSource.Factory,
   contentDataSourceFactory: DataSource.Factory,
-  override val viewableMedia: ViewableMedia.Unsupported,
+  override val viewableMedia: ViewableMedia.Audio,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
-) : MediaView<ViewableMedia.Unsupported, UnsupportedMediaView.UnsupportedMediaViewState>(
+) : MediaView<ViewableMedia.Audio, AudioMediaView.AudioMediaViewState>(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
@@ -63,9 +61,9 @@ class UnsupportedMediaView(
     val movableContainer = findViewById<ConstraintLayout>(R.id.movable_container)
 
     if (viewableMedia.mediaLocation is MediaLocation.Remote) {
-      mediaViewNotSupportedMessage.text = getString(R.string.media_viewer_media_is_not_supported_downloadable)
+      mediaViewNotSupportedMessage.text = AppModuleAndroidUtils.getString(R.string.media_viewer_media_is_not_supported_downloadable)
     } else {
-      mediaViewNotSupportedMessage.text = getString(R.string.media_viewer_media_is_not_supported_not_downloadable)
+      mediaViewNotSupportedMessage.text = AppModuleAndroidUtils.getString(R.string.media_viewer_media_is_not_supported_not_downloadable)
     }
 
     closeMediaActionHelper = CloseMediaActionHelper(
@@ -88,7 +86,7 @@ class UnsupportedMediaView(
       openInBrowserButton.setVisibilityFast(View.VISIBLE)
 
       openInBrowserButton.setOnClickListener {
-        openLink(mediaLocation.urlRaw)
+        AppModuleAndroidUtils.openLink(mediaLocation.urlRaw)
       }
     } else {
       openInBrowserButton.setVisibilityFast(View.GONE)
@@ -149,7 +147,8 @@ class UnsupportedMediaView(
     closeMediaActionHelper.onDraw(canvas)
   }
 
-  class UnsupportedMediaViewState : MediaViewState() {
+  class AudioMediaViewState : MediaViewState() {
+
     override fun clone(): MediaViewState {
       return this
     }
@@ -173,6 +172,6 @@ class UnsupportedMediaView(
   }
 
   companion object {
-    private const val TAG = "UnsupportedMediaView"
+    private const val TAG = "AudioMediaView"
   }
 }
