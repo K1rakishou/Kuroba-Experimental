@@ -77,6 +77,10 @@ class MediaViewerAdapter(
 
   override fun getCount(): Int = viewableMediaList.size
 
+  fun getViewableMediaListByIndex(index: Int): ViewableMedia? {
+    return viewableMediaList.getOrNull(index)
+  }
+
   fun onPause() {
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.shown) {
@@ -337,6 +341,7 @@ class MediaViewerAdapter(
     super.destroyItem(container, position, obj)
 
     val mediaView = obj as MediaView<ViewableMedia, *>
+    mediaView.onHide(isLifecycleChange = false)
     mediaView.onUnbind()
 
     loadedViews.mutableIteration { mutableIterator, mv ->

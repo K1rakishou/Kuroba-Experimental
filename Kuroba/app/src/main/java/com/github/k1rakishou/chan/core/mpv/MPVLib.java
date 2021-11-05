@@ -101,6 +101,10 @@ public class MPVLib {
     }
 
     public static void mpvCreate(Context appctx) {
+        if (mpvCreated) {
+            return;
+        }
+
         create(appctx);
         mpvCreated = true;
     }

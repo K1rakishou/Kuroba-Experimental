@@ -389,7 +389,11 @@ class MediaViewerController(
     val adapter = mediaViewerAdapter
       ?: return
 
-    mediaViewerMenuHelper.onMediaViewerOptionsClick(context, adapter)
+    mediaViewerMenuHelper.onMediaViewerOptionsClick(
+      context = context,
+      mediaViewerAdapter = adapter,
+      reloadMediaFunc = { reloadCurrentMedia() }
+    )
   }
 
   override fun onMediaLongClick(
@@ -423,6 +427,15 @@ class MediaViewerController(
     }
 
     closeMediaViewer()
+  }
+
+  private fun reloadCurrentMedia() {
+    val pagerPosition = pager.currentItem
+
+    val viewableMedia = mediaViewerAdapter?.getViewableMediaListByIndex(pagerPosition)
+      ?: return
+
+    reloadAs(pagerPosition, viewableMedia)
   }
 
   override fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
