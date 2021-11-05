@@ -18,6 +18,7 @@ import com.google.android.exoplayer2.SimpleExoPlayer
 import com.google.android.exoplayer2.analytics.AnalyticsListener
 import com.google.android.exoplayer2.decoder.DecoderCounters
 import com.google.android.exoplayer2.source.MediaSource
+import com.google.android.exoplayer2.source.MergingMediaSource
 import com.google.android.exoplayer2.source.ProgressiveMediaSource
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
@@ -132,6 +133,20 @@ class ExoPlayerWrapper(
               .createMediaSource(MediaItem.fromUri(file.getUri()))
           }
         }
+      }
+    }
+
+    val soundPostActualSoundMedia = viewableMedia.viewableMediaMeta.soundPostActualSoundMedia
+    if (soundPostActualSoundMedia != null) {
+      val urlRaw = (soundPostActualSoundMedia.mediaLocation as? MediaLocation.Remote)?.urlRaw
+
+      if (urlRaw != null) {
+        val videoSource = ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
+          .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
+        val audioSource = ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
+          .createMediaSource(MediaItem.fromUri(Uri.parse(urlRaw)))
+
+        return MergingMediaSource(videoSource, audioSource)
       }
     }
 
