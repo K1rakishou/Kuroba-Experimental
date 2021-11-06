@@ -259,7 +259,6 @@ class GifMediaView(
         }
 
         val playing = mediaViewState.playing ?: true
-
         if (playing) {
           gifImageViewDrawable.start()
         } else {
@@ -382,6 +381,8 @@ class GifMediaView(
         mediaViewContract.reloadAs(pagerPosition, imageMedia)
         return@coroutineScope false
       }
+
+      drawable.pause()
 
       actualGifView.setImageDrawable(drawable)
       actualGifView.setOnClickListener(null)

@@ -390,6 +390,7 @@ class ReportManager(
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
+      appendLine("Bottom navigation enabled: ${ChanSettings.bottomNavigationViewEnabled.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.prefetchMedia.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")

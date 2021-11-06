@@ -851,7 +851,10 @@ fun CharSequence.ellipsizeEnd(maxLength: Int): CharSequence {
     return this
   }
 
-  return TextUtils.concat(this.take(maxLength - ELLIPSIZE_SYMBOL.length), ELLIPSIZE_SYMBOL)
+  val spannableString = SpannableString.valueOf(this)
+  val cutString = subSequence(0, (maxLength - ELLIPSIZE_SYMBOL.length).coerceAtMost(spannableString.length))
+
+  return TextUtils.concat(cutString, ELLIPSIZE_SYMBOL)
 }
 
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
