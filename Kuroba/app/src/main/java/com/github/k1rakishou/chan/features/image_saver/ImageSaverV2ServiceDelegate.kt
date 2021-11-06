@@ -47,6 +47,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.supervisorScope
@@ -948,14 +949,22 @@ class ImageSaverV2ServiceDelegate(
   }
 
   fun enqueueDeleteNotification(uniqueId: String, timeoutMs: Long) {
+    cancelDeleteNotification(uniqueId)
+
     val job = appScope.launch {
       delay(timeoutMs)
-
       cancelNotificationJobMap.remove(uniqueId)
-      ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
+
+      if (isActive) {
+        ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
+      }
     }
 
     cancelNotificationJobMap[uniqueId] = job
+  }
+
+  fun cancelDeleteNotification(uniqueId: String) {
+    cancelNotificationJobMap.remove(uniqueId)?.cancel()
   }
 
   class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")
