@@ -426,6 +426,14 @@ data class ViewableMediaMeta(
 
 sealed class MediaLocation : Parcelable {
 
+  val value: String
+    get() {
+      return when (this) {
+        is Local -> path
+        is Remote -> urlRaw
+      }
+    }
+
   @Parcelize
   data class Remote(val urlRaw: String) : MediaLocation() {
     @IgnoredOnParcel

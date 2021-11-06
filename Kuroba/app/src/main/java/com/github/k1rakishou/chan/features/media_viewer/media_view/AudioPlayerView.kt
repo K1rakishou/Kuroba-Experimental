@@ -13,14 +13,17 @@ import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -51,6 +54,7 @@ class AudioPlayerView @JvmOverloads constructor(
 
   private lateinit var audioPlayerViewState: AudioPlayerViewState
   private lateinit var mediaViewContract: MediaViewContract
+  private lateinit var cacheHandler: CacheHandler
   private lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   private lateinit var threadDownloadManager: ThreadDownloadManager
   private lateinit var cachedHttpDataSourceFactory: DataSource.Factory
@@ -82,6 +86,7 @@ class AudioPlayerView @JvmOverloads constructor(
   fun bind(
     audioPlayerCallbacks: AudioPlayerCallbacks,
     viewableMedia: ViewableMedia,
+    cacheHandler: CacheHandler,
     audioPlayerViewState: AudioPlayerViewState,
     mediaViewContract: MediaViewContract,
     globalWindowInsetsManager: GlobalWindowInsetsManager,
@@ -98,6 +103,7 @@ class AudioPlayerView @JvmOverloads constructor(
     this.audioPlayerCallbacks = audioPlayerCallbacks
     this.audioPlayerViewState = audioPlayerViewState
     this.mediaViewContract = mediaViewContract
+    this.cacheHandler = cacheHandler
     this.globalWindowInsetsManager = globalWindowInsetsManager
     this.threadDownloadManager = threadDownloadManager
     this.cachedHttpDataSourceFactory = cachedHttpDataSourceFactory
@@ -253,7 +259,12 @@ class AudioPlayerView @JvmOverloads constructor(
 
     val soundPostActualSoundMedia = viewableMedia.viewableMediaMeta.soundPostActualSoundMedia
     if (soundPostActualSoundMedia != null) {
-      if (loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
+      val canAutoLoad = MediaViewerControllerViewModel.canAutoLoad(
+        cacheHandler = cacheHandler,
+        viewableMedia = soundPostActualSoundMedia
+      )
+
+      if (canAutoLoad && loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
         positionAndDurationUpdateJob?.start()
 
         if (!mediaViewContract.isSystemUiHidden()) {
@@ -264,6 +275,13 @@ class AudioPlayerView @JvmOverloads constructor(
         onAudioPlaying()
 
         return
+      } else if (!canAutoLoad) {
+        val message = getString(
+          R.string.media_viewer_error_cannot_load_bg_audio_because_of_settings,
+          soundPostActualSoundMedia.mediaLocation.value
+        )
+
+        cancellableToast.showToast(context, message)
       }
 
       // fallthrough
@@ -312,7 +330,9 @@ class AudioPlayerView @JvmOverloads constructor(
       return true
     } catch (error: Throwable) {
       Logger.e(TAG, "Failed to load image bg audio: ${soundPostActualSoundMedia.mediaLocation}", error)
-      cancellableToast.showToast(context, "Failed to load image bg audio, error=${error.errorMessageOrClassName()}")
+
+      val errorMessage = getString(R.string.media_viewer_error_loading_bg_audio, error.errorMessageOrClassName())
+      cancellableToast.showToast(context, errorMessage)
 
       return false
     }

@@ -149,6 +149,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       audioPlayerView.bind(
         audioPlayerCallbacks = this,
         viewableMedia = viewableMedia,
+        cacheHandler = cacheHandler.get(),
         audioPlayerViewState = mediaViewState.audioPlayerViewState,
         mediaViewContract = mediaViewContract,
         globalWindowInsetsManager = globalWindowInsetsManager,

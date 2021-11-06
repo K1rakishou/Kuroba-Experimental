@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeout
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
@@ -104,7 +105,7 @@ class ExoPlayerWrapper(
         }
       })
 
-      _hasContent = awaitForContentOrError()
+      _hasContent = withTimeout(MAX_BG_AUDIO_DOWNLOAD_WAIT_TIME_MS) { awaitForContentOrError() }
     }
   }
 
@@ -331,6 +332,8 @@ class ExoPlayerWrapper(
 
   companion object {
     private const val TAG = "ExoPlayerWrapper"
+    private const val MAX_BG_AUDIO_DOWNLOAD_WAIT_TIME_MS = 15_000L
+
     const val SEEK_POSITION_DELTA = 100
 
     private val reusableExoPlayerCache = mutableListOf<ReusableExoPlayer>()

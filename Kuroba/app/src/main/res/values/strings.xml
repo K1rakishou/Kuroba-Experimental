@@ -246,6 +246,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_failed_gif_error">Failed to load gif (reason: %1$s)</string>
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
     <string name="image_not_found">Image not found</string>
+    <string name="media_viewer_error_loading_bg_audio">Failed to load image bg audio, error=\'$1%s\'</string>
+    <string name="media_viewer_error_cannot_load_bg_audio_because_of_settings">Cannot load BG audio (\'$1%s\') because current media load settings do not allow doing that</string>
     <string name="thread_load_failed_ssl">HTTPS error</string>
     <string name="thread_load_failed_ssl_with_reason">HTTPS error (reason: %1$s)</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
