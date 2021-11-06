@@ -5,7 +5,6 @@ import android.view.View
 import android.view.ViewGroup
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
-import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.AudioMediaView
 import com.github.k1rakishou.chan.features.media_viewer.media_view.ExoPlayerVideoMediaView
@@ -18,6 +17,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.MpvVideoMedia
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
 import com.google.android.exoplayer2.upstream.DataSource
@@ -25,8 +25,8 @@ import kotlinx.coroutines.CompletableDeferred
 
 class MediaViewerAdapter(
   private val context: Context,
+  private val appConstants: AppConstants,
   private val viewModel: MediaViewerControllerViewModel,
-  private val threadDownloadManager: ThreadDownloadManager,
   private val mediaViewerToolbar: MediaViewerToolbar,
   private val mediaViewContract: MediaViewContract,
   private val initialPagerIndex: Int,
@@ -341,7 +341,11 @@ class MediaViewerAdapter(
     super.destroyItem(container, position, obj)
 
     val mediaView = obj as MediaView<ViewableMedia, *>
-    mediaView.onHide(isLifecycleChange = false)
+
+    if (mediaView.shown) {
+      mediaView.onHide(isLifecycleChange = false)
+    }
+
     mediaView.onUnbind()
 
     loadedViews.mutableIteration { mutableIterator, mv ->

@@ -216,7 +216,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       mediaViewToolbar?.showToolbar()
     }
 
-    audioPlayerView?.onSystemUiVisibilityChanged(systemUIHidden)
+    audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
   }
 
   @CallSuper
