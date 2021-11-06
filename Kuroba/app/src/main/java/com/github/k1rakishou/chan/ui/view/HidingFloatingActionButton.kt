@@ -313,17 +313,13 @@ class HidingFloatingActionButton
       return
     }
 
+    cancelPrevAnimation()
+
     val newFabAlpha = if (collapse) {
       0f
     } else {
       1f
     }
-
-    if (newFabAlpha == this.alpha) {
-      return
-    }
-
-    cancelPrevAnimation()
 
     currentFabAnimation = if (collapse) {
       CurrentFabAnimation.Hiding
@@ -337,7 +333,7 @@ class HidingFloatingActionButton
 
       doOnStart {
         if (!collapse) {
-          setVisibilityFast(VISIBLE)
+          this@HidingFloatingActionButton.setVisibilityFast(VISIBLE)
         }
       }
 
@@ -345,7 +341,11 @@ class HidingFloatingActionButton
         currentFabAnimation = CurrentFabAnimation.None
 
         if (collapse) {
-          setVisibilityFast(GONE)
+          this@HidingFloatingActionButton.setAlphaFast(0f)
+          this@HidingFloatingActionButton.setVisibilityFast(GONE)
+        } else {
+          this@HidingFloatingActionButton.setAlphaFast(1f)
+          this@HidingFloatingActionButton.setVisibilityFast(VISIBLE)
         }
       }
 
