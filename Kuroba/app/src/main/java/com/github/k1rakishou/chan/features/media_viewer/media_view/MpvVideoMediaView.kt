@@ -304,6 +304,74 @@ class MpvVideoMediaView(
     }
   }
 
+  override fun hide(isLifecycleChange: Boolean) {
+    if (MPVLib.librariesAreLoaded()) {
+      mediaViewState.prevPosition = actualVideoPlayerView.timePos
+      mediaViewState.prevPaused = actualVideoPlayerView.paused
+
+      actualVideoPlayerView.destroy()
+      actualVideoPlayerView.removeObserver(this)
+
+      thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+      actualVideoPlayerView.setVisibilityFast(GONE)
+
+      actualVideoPlayerViewContainer.removeAllViews()
+    }
+
+    playJob?.cancel()
+    playJob = null
+
+    _firstLoadOccurred = false
+  }
+
+  override fun unbind() {
+    thumbnailMediaView.unbind()
+    closeMediaActionHelper.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    _hasContent = false
+  }
+
+  override fun eventProperty(property: String) {
+    if (!viewModel.activityInForeground || !shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property) }
+  }
+
+  override fun eventProperty(property: String, value: Boolean) {
+    if (!viewModel.activityInForeground || !shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun eventProperty(property: String, value: Long) {
+    if (!viewModel.activityInForeground || !shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun eventProperty(property: String, value: String) {
+    if (!viewModel.activityInForeground || !shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun event(eventId: Int) {
+    if (!viewModel.activityInForeground || !shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventUi(eventId) }
+  }
+
   private fun startPlayingVideo(isLifecycleChange: Boolean? = null) {
     playJob?.cancel()
     playJob = null
@@ -358,72 +426,6 @@ class MpvVideoMediaView(
 
       playJob = null
     }
-  }
-
-  override fun hide(isLifecycleChange: Boolean) {
-    if (MPVLib.librariesAreLoaded()) {
-      mediaViewState.prevPosition = actualVideoPlayerView.timePos
-      mediaViewState.prevPaused = actualVideoPlayerView.paused
-
-      actualVideoPlayerView.destroy()
-      actualVideoPlayerView.removeObserver(this)
-
-      thumbnailMediaView.setVisibilityFast(View.VISIBLE)
-      actualVideoPlayerView.setVisibilityFast(GONE)
-
-      actualVideoPlayerViewContainer.removeAllViews()
-    }
-
-    playJob?.cancel()
-    playJob = null
-  }
-
-  override fun unbind() {
-    thumbnailMediaView.unbind()
-    closeMediaActionHelper.onDestroy()
-
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    _hasContent = false
-  }
-
-  override fun eventProperty(property: String) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property) }
-  }
-
-  override fun eventProperty(property: String, value: Boolean) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun eventProperty(property: String, value: Long) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun eventProperty(property: String, value: String) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun event(eventId: Int) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventUi(eventId) }
   }
 
   private fun eventUi(eventId: Int) {

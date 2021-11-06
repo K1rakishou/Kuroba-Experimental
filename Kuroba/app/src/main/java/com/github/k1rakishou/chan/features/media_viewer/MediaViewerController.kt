@@ -389,7 +389,13 @@ class MediaViewerController(
     mediaViewerMenuHelper.onMediaViewerOptionsClick(
       context = context,
       mediaViewerAdapter = adapter,
-      reloadMediaFunc = { reloadCurrentMedia() }
+      reloadMediaFunc = {
+        if (viewableMedia !is ViewableMedia.Video) {
+          return@onMediaViewerOptionsClick
+        }
+
+        reloadCurrentMedia()
+      }
     )
   }
 

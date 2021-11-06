@@ -232,34 +232,36 @@ class ExoPlayerVideoMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
     updateMuteUnMuteState()
 
-    if (playJob == null) {
-      playJob = scope.launch {
-        if (hasContent) {
-          // Already loaded and ready to play
-          switchToPlayerViewAndStartPlaying(isLifecycleChange)
-        } else {
-          fullVideoDeferred.awaitCatching()
-            .onFailure { error ->
-              Logger.e(TAG, "onFullVideoLoadingError()", error)
+    if (playJob != null) {
+      return
+    }
 
-              if (error.isExceptionImportant() && shown) {
-                cancellableToast.showToast(
-                  context,
-                  getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
-                )
-              }
+    playJob = scope.launch {
+      if (hasContent) {
+        // Already loaded and ready to play
+        switchToPlayerViewAndStartPlaying(isLifecycleChange)
+      } else {
+        fullVideoDeferred.awaitCatching()
+          .onFailure { error ->
+            Logger.e(TAG, "onFullVideoLoadingError()", error)
 
-              actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+            if (error.isExceptionImportant() && shown) {
+              cancellableToast.showToast(
+                context,
+                getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
+              )
             }
-            .onSuccess {
-              if (hasContent) {
-                switchToPlayerViewAndStartPlaying(isLifecycleChange)
-              }
-            }
-        }
 
-        playJob = null
+            actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+          }
+          .onSuccess {
+            if (hasContent) {
+              switchToPlayerViewAndStartPlaying(isLifecycleChange)
+            }
+          }
       }
+
+      playJob = null
     }
   }
 
