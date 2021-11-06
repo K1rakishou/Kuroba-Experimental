@@ -1460,5 +1460,6 @@ Actual error: \'%1$s\'</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
     <string name="catalog_end_reached">Catalog end reached</string>
+    <string name="failed_post_find_post_to_scroll_to">Failed to find post to scroll to (postNo=\'%1$d\')</string>
 
 </resources>

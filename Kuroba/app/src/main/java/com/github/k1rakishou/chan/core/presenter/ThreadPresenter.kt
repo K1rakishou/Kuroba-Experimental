@@ -18,6 +18,7 @@ package com.github.k1rakishou.chan.core.presenter
 
 import android.content.Context
 import android.text.TextUtils
+import android.widget.Toast
 import androidx.annotation.StringRes
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -1185,6 +1186,7 @@ class ThreadPresenter @Inject constructor(
       val markedPost = chanThreadManager.findPostByPostNo(currentChanDescriptor, markedPostNo)
       if (markedPost == null) {
         Logger.e(TAG, "handleMarkedPost() Failed to find post ($currentChanDescriptor, $markedPostNo)")
+        showToast(context, getString(R.string.failed_post_find_post_to_scroll_to, markedPostNo), Toast.LENGTH_LONG)
         return@getAndConsumeMarkedPostNo
       }
 
