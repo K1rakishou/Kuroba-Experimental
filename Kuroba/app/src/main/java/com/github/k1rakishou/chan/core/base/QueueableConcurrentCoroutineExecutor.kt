@@ -6,6 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Semaphore
+import kotlinx.coroutines.sync.withPermit
 
 class QueueableConcurrentCoroutineExecutor(
   private val maxConcurrency: Int = Runtime.getRuntime().availableProcessors(),
@@ -20,12 +21,7 @@ class QueueableConcurrentCoroutineExecutor(
 
   fun post(action: suspend () -> Unit): Job {
     return scope.launch(dispatcher) {
-      try {
-        semaphore.acquire()
-        action.invoke()
-      } finally {
-        semaphore.release()
-      }
+      semaphore.withPermit { action.invoke() }
     }
   }
 
