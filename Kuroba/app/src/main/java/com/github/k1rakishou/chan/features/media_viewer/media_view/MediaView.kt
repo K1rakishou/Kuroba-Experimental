@@ -304,9 +304,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   protected suspend fun startFullMediaPreloading(
+    forced: Boolean,
     loadingBar: CircularChunkedLoadingBar,
     mediaLocationRemote: MediaLocation.Remote,
-    fullMediaDeferred: CompletableDeferred<FilePath>,
+    fullMediaDeferred: CompletableDeferred<MediaPreloadResult>,
     onEndFunc: () -> Unit,
   ): CancelableDownload? {
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
@@ -320,7 +321,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       }
 
       if (filePath != null) {
-        fullMediaDeferred.complete(filePath)
+        fullMediaDeferred.complete(MediaPreloadResult(filePath, forced))
         onEndFunc()
         return null
       }
@@ -352,7 +353,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
         override fun onSuccess(file: File) {
           BackgroundUtils.ensureMainThread()
-          fullMediaDeferred.complete(FilePath.JavaPath(file.absolutePath))
+          fullMediaDeferred.complete(MediaPreloadResult(FilePath.JavaPath(file.absolutePath), forced))
         }
 
         override fun onNotFound() {
@@ -412,6 +413,8 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   open fun gestureCanBeExecuted(imageGestureActionType: ChanSettings.ImageGestureActionType): Boolean {
     return true
   }
+
+  data class MediaPreloadResult(val filePath: FilePath, val isForced: Boolean)
 
   sealed class FilePath {
     fun inputStream(fileManager: FileManager): InputStream? {

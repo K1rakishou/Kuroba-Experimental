@@ -901,8 +901,8 @@ suspend fun CompletableDeferred<*>.awaitSilently() {
   }
 }
 
-suspend fun <T> CompletableDeferred<T>.awaitCatching(): Result<T> {
-  return kotlin.runCatching { await() }
+suspend fun <T> CompletableDeferred<T>.awaitCatching(): ModularResult<T> {
+  return ModularResult.Try { await() }
 }
 
 fun View.resetClickListener() {

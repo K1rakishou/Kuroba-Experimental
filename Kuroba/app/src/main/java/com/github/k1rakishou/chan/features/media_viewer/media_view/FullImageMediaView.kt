@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
@@ -67,7 +68,7 @@ class FullImageMediaView(
   private val gestureDetectorListener: GestureDetectorListener
   private val closeMediaActionHelper: CloseMediaActionHelper
 
-  private var fullImageDeferred = CompletableDeferred<FilePath>()
+  private var fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
@@ -109,6 +110,7 @@ class FullImageMediaView(
         if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
           scope.launch {
             preloadCancelableDownload = startFullMediaPreloading(
+              forced = true,
               loadingBar = loadingBar,
               mediaLocationRemote = viewableMedia.mediaLocation,
               fullMediaDeferred = fullImageDeferred,
@@ -200,6 +202,7 @@ class FullImageMediaView(
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       scope.launch {
         preloadCancelableDownload = startFullMediaPreloading(
+          forced = false,
           loadingBar = loadingBar,
           mediaLocationRemote = viewableMedia.mediaLocation,
           fullMediaDeferred = fullImageDeferred,
@@ -208,9 +211,19 @@ class FullImageMediaView(
       }
     } else if (viewableMedia.mediaLocation is MediaLocation.Local) {
       if (viewableMedia.mediaLocation.isUri) {
-        fullImageDeferred.complete(FilePath.UriPath(Uri.parse(viewableMedia.mediaLocation.path)))
+        val mediaPreloadResult = MediaPreloadResult(
+          filePath = FilePath.UriPath(Uri.parse(viewableMedia.mediaLocation.path)),
+          isForced = false,
+        )
+
+        fullImageDeferred.complete(mediaPreloadResult)
       } else {
-        fullImageDeferred.complete(FilePath.JavaPath(viewableMedia.mediaLocation.path))
+        val mediaPreloadResult = MediaPreloadResult(
+          filePath = FilePath.JavaPath(viewableMedia.mediaLocation.path),
+          isForced = false,
+        )
+
+        fullImageDeferred.complete(mediaPreloadResult)
       }
     }
   }
@@ -225,16 +238,21 @@ class FullImageMediaView(
 
     scope.launch {
       if (hasContent) {
-        audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
-          isLifecycleChange = isLifecycleChange,
-          viewableMedia = viewableMedia
-        )
+        val isForced = fullImageDeferred.awaitCatching().valueOrNull()?.isForced
+        if (isForced != null) {
+          audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+            isLifecycleChange = isLifecycleChange,
+            isForceLoad = isForced,
+            viewableMedia = viewableMedia
+          )
 
-        return@launch
+          return@launch
+        }
       }
 
-      fullImageDeferred.awaitCatching()
-        .onFailure { error ->
+      when (val fullImageDeferredResult = fullImageDeferred.awaitCatching()) {
+        is ModularResult.Error -> {
+          val error = fullImageDeferredResult.error
           Logger.e(TAG, "onFullImageLoadingError()", error)
 
           if (error.isExceptionImportant() && shown) {
@@ -246,9 +264,11 @@ class FullImageMediaView(
 
           actualImageView.setVisibilityFast(View.INVISIBLE)
         }
-        .onSuccess { filePath ->
-          setBigImageFromFile(isLifecycleChange, filePath)
+        is ModularResult.Value -> {
+          val mediaPreloadResult = fullImageDeferredResult.value
+          setBigImageFromFile(isLifecycleChange, mediaPreloadResult)
         }
+      }
 
       loadingBar.setVisibilityFast(GONE)
     }
@@ -287,7 +307,7 @@ class FullImageMediaView(
     cacheHandler.get().deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullImageDeferred.cancel()
-    fullImageDeferred = CompletableDeferred<FilePath>()
+    fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
 
     audioPlayerView.pauseUnpause(isNowPaused = true)
 
@@ -297,6 +317,7 @@ class FullImageMediaView(
     actualImageView.recycle()
 
     preloadCancelableDownload = startFullMediaPreloading(
+      forced = true,
       loadingBar = loadingBar,
       mediaLocationRemote = mediaLocation,
       fullMediaDeferred = fullImageDeferred,
@@ -306,7 +327,10 @@ class FullImageMediaView(
     show(isLifecycleChange = false)
   }
 
-  private suspend fun setBigImageFromFile(isLifecycleChange: Boolean, filePath: FilePath) {
+  private suspend fun setBigImageFromFile(
+    isLifecycleChange: Boolean,
+    mediaPreloadResult: MediaPreloadResult
+  ) {
     coroutineScope {
       val animationAwaitable = CompletableDeferred<Unit>()
 
@@ -364,6 +388,7 @@ class FullImageMediaView(
       })
 
       actualImageView.setOnClickListener(null)
+      val filePath = mediaPreloadResult.filePath
 
       if (viewableMedia.viewableMediaMeta.isGif) {
         val imageSource = withContext(Dispatchers.IO) {
@@ -402,6 +427,7 @@ class FullImageMediaView(
 
       audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
         isLifecycleChange = isLifecycleChange,
+        isForceLoad = mediaPreloadResult.isForced,
         viewableMedia = viewableMedia
       )
 

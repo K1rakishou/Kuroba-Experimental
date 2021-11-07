@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.findChild
@@ -240,25 +241,30 @@ class ExoPlayerVideoMediaView(
       if (hasContent) {
         // Already loaded and ready to play
         switchToPlayerViewAndStartPlaying(isLifecycleChange)
-      } else {
-        fullVideoDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullVideoLoadingError()", error)
+        playJob = null
 
-            if (error.isExceptionImportant() && shown) {
-              cancellableToast.showToast(
-                context,
-                getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
-              )
-            }
+        return@launch
+      }
 
-            actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+      when (val fullVideoDeferredResult = fullVideoDeferred.awaitCatching()) {
+        is ModularResult.Error -> {
+          val error = fullVideoDeferredResult.error
+          Logger.e(TAG, "onFullVideoLoadingError()", error)
+
+          if (error.isExceptionImportant() && shown) {
+            cancellableToast.showToast(
+              context,
+              getString(R.string.image_failed_video_error, error.errorMessageOrClassName())
+            )
           }
-          .onSuccess {
-            if (hasContent) {
-              switchToPlayerViewAndStartPlaying(isLifecycleChange)
-            }
+
+          actualVideoPlayerView.setVisibilityFast(View.INVISIBLE)
+        }
+        is ModularResult.Value -> {
+          if (hasContent) {
+            switchToPlayerViewAndStartPlaying(isLifecycleChange)
           }
+        }
       }
 
       playJob = null

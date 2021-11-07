@@ -241,12 +241,18 @@ class AudioPlayerView @JvmOverloads constructor(
     }
   }
 
-  suspend fun loadAndPlaySoundPostAudioIfPossible(isLifecycleChange: Boolean, viewableMedia: ViewableMedia) {
+  suspend fun loadAndPlaySoundPostAudioIfPossible(
+    isLifecycleChange: Boolean,
+    isForceLoad: Boolean,
+    viewableMedia: ViewableMedia
+  ) {
     if (!hasSoundPostUrl) {
       return
     }
 
     if (soundPostVideoPlayerLazy.isInitialized() && soundPostVideoPlayer.isPlaying()) {
+      Logger.d(TAG, "loadAndPlaySoundPostAudioIfPossible() isPlaying == true")
+
       if (!mediaViewContract.isSystemUiHidden()) {
         showAudioPlayerView()
       }
@@ -264,7 +270,10 @@ class AudioPlayerView @JvmOverloads constructor(
         viewableMedia = soundPostActualSoundMedia
       )
 
-      if (canAutoLoad && loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
+      Logger.d(TAG, "loadAndPlaySoundPostAudioIfPossible() canAutoLoad: ${canAutoLoad}, isForceLoad: ${isForceLoad}, " +
+        "soundPostActualSoundMedia: ${soundPostActualSoundMedia.mediaLocation}")
+
+      if ((isForceLoad || canAutoLoad) && loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
         positionAndDurationUpdateJob?.start()
 
         if (!mediaViewContract.isSystemUiHidden()) {
@@ -305,6 +314,8 @@ class AudioPlayerView @JvmOverloads constructor(
         soundPostVideoPlayer.resetPosition()
       }
 
+      Logger.d(TAG, "loadImageBgAudio() preload()")
+
       soundPostVideoPlayer.preload(
         viewableMedia = soundPostActualSoundMedia,
         mediaLocation = soundPostActualSoundMedia.mediaLocation,
@@ -313,6 +324,8 @@ class AudioPlayerView @JvmOverloads constructor(
       )
 
       if (audioPlayerViewState.playing == null || audioPlayerViewState.playing == true) {
+        Logger.d(TAG, "loadImageBgAudio() startAndAwaitFirstFrame()")
+
         soundPostVideoPlayer.startAndAwaitFirstFrame()
       } else if (audioPlayerViewState.prevWindowIndex >= 0 && audioPlayerViewState.prevPosition >= 0) {
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
@@ -327,9 +340,10 @@ class AudioPlayerView @JvmOverloads constructor(
         soundPostVideoPlayer.actualExoPlayer.duration
       )
 
+      Logger.d(TAG, "loadImageBgAudio() success")
       return true
     } catch (error: Throwable) {
-      Logger.e(TAG, "Failed to load image bg audio: ${soundPostActualSoundMedia.mediaLocation}", error)
+      Logger.e(TAG, "loadImageBgAudio() Failed to load image bg audio: ${soundPostActualSoundMedia.mediaLocation}", error)
 
       val errorMessage = getString(R.string.media_viewer_error_loading_bg_audio, error.errorMessageOrClassName())
       cancellableToast.showToast(context, errorMessage)

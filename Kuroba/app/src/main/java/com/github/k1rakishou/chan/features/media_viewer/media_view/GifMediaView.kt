@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAn
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
@@ -66,7 +67,7 @@ class GifMediaView(
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
 
-  private var fullGifDeferred = CompletableDeferred<FilePath>()
+  private var fullGifDeferred = CompletableDeferred<MediaPreloadResult>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
@@ -110,6 +111,7 @@ class GifMediaView(
           if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
             scope.launch {
               preloadCancelableDownload = startFullMediaPreloading(
+                forced = true,
                 loadingBar = loadingBar,
                 mediaLocationRemote = viewableMedia.mediaLocation,
                 fullMediaDeferred = fullGifDeferred,
@@ -200,14 +202,20 @@ class GifMediaView(
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       scope.launch {
         preloadCancelableDownload = startFullMediaPreloading(
+          forced = false,
           loadingBar = loadingBar,
           mediaLocationRemote = viewableMedia.mediaLocation,
           fullMediaDeferred = fullGifDeferred,
           onEndFunc = { preloadCancelableDownload = null }
         )
       }
-    }  else if (viewableMedia.mediaLocation is MediaLocation.Local) {
-      fullGifDeferred.complete(FilePath.JavaPath(viewableMedia.mediaLocation.path))
+    } else if (viewableMedia.mediaLocation is MediaLocation.Local) {
+      val mediaPreloadResult = MediaPreloadResult(
+        filePath = FilePath.JavaPath(viewableMedia.mediaLocation.path),
+        isForced = false
+      )
+
+      fullGifDeferred.complete(mediaPreloadResult)
     }
   }
 
@@ -220,10 +228,9 @@ class GifMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
     scope.launch {
-      if (!hasContent) {
-        val result = fullGifDeferred.awaitCatching()
-        if (result.isFailure) {
-          val error = result.exceptionOrNull()!!
+      when (val fullGifDeferredResult = fullGifDeferred.awaitCatching()) {
+        is ModularResult.Error -> {
+          val error = fullGifDeferredResult.error
           Logger.e(TAG, "onFullGifLoadingError()", error)
 
           if (error.isExceptionImportant() && shown) {
@@ -234,23 +241,26 @@ class GifMediaView(
           }
 
           actualGifView.setVisibilityFast(View.INVISIBLE)
-        } else {
-          val filePath = result.getOrThrow()
-
-          if (!setBigGifFromFile(filePath)) {
-            return@launch
-          }
         }
+        is ModularResult.Value -> {
+          if (!hasContent) {
+            val filePath = fullGifDeferredResult.value.filePath
+            if (!setBigGifFromFile(filePath)) {
+              return@launch
+            }
+          }
 
-        loadingBar.setVisibilityFast(GONE)
+          audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+            isLifecycleChange = isLifecycleChange,
+            isForceLoad = fullGifDeferredResult.value.isForced,
+            viewableMedia = viewableMedia
+          )
+        }
       }
 
-      onUpdateTransparency()
+      loadingBar.setVisibilityFast(GONE)
 
-      audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
-        isLifecycleChange = isLifecycleChange,
-        viewableMedia = viewableMedia
-      )
+      onUpdateTransparency()
 
       val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
       if (gifImageViewDrawable != null) {
@@ -309,7 +319,7 @@ class GifMediaView(
     cacheHandler.get().deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullGifDeferred.cancel()
-    fullGifDeferred = CompletableDeferred<FilePath>()
+    fullGifDeferred = CompletableDeferred<MediaPreloadResult>()
 
     audioPlayerView.pauseUnpause(isNowPaused = true)
 
@@ -318,6 +328,7 @@ class GifMediaView(
     actualGifView.setImageDrawable(null)
 
     preloadCancelableDownload = startFullMediaPreloading(
+      forced = true,
       loadingBar = loadingBar,
       mediaLocationRemote = mediaLocation,
       fullMediaDeferred = fullGifDeferred,

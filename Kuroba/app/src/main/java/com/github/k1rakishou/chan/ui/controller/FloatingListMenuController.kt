@@ -39,8 +39,8 @@ open class FloatingListMenuController @JvmOverloads constructor(
     floatingListMenu.setClickListener { clickedItem ->
       itemSelected = true
 
-      popAll()
       itemClickListener.invoke(clickedItem)
+      popAll()
     }
 
     val innerContainer = view.findViewById<FrameLayout>(R.id.inner_container)
@@ -64,7 +64,7 @@ open class FloatingListMenuController @JvmOverloads constructor(
     var parent = presentedByController
 
     while (parent is FloatingListMenuController && parent.alive) {
-      parent.stopPresenting()
+      parent.stopPresenting(false)
       parent = parent.presentedByController
     }
   }

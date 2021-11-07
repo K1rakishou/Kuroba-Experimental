@@ -38,7 +38,8 @@ class MediaViewerAdapter(
   private val contentDataSourceFactory: DataSource.Factory,
   private val chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager,
   private val isSystemUiHidden: () -> Boolean,
-  private val swipeDirection: () -> OptionalSwipeViewPager.SwipeDirection
+  private val swipeDirection: () -> OptionalSwipeViewPager.SwipeDirection,
+  private val getAndConsumeLifecycleChangeFlag: () -> Boolean
 ) : ViewPagerAdapter() {
   private val forceUpdateViewWithMedia = mutableSetOf<ViewableMedia>()
   private val loadedViews = mutableListOf<LoadedView>()
@@ -46,7 +47,10 @@ class MediaViewerAdapter(
 
   private var firstUpdateHappened = false
   private var initialImageBindHappened = false
-  private var lastViewedMediaPosition = 0
+
+  private var _lastViewedMediaPosition = 0
+  val lastViewedMediaPosition: Int
+    get() = _lastViewedMediaPosition
 
   suspend fun awaitUntilPreviewThumbnailFullyLoaded() {
     Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...")
@@ -56,7 +60,7 @@ class MediaViewerAdapter(
 
   fun onDestroy() {
     Logger.d(TAG, "onDestroy()")
-    lastViewedMediaPosition = 0
+    _lastViewedMediaPosition = 0
 
     if (previewThumbnailLocationLoaded.isActive) {
       previewThumbnailLocationLoaded.cancel()
@@ -77,8 +81,8 @@ class MediaViewerAdapter(
 
   override fun getCount(): Int = viewableMediaList.size
 
-  fun getViewableMediaListByIndex(index: Int): ViewableMedia? {
-    return viewableMediaList.getOrNull(index)
+  fun getLoadedViews(): List<LoadedView> {
+    return loadedViews.toList()
   }
 
   fun onPause() {
@@ -91,11 +95,13 @@ class MediaViewerAdapter(
         viewModel.storeMediaViewState(loadedView.mediaView.viewableMedia.mediaLocation, mediaViewState)
       }
     }
+
+    getAndConsumeLifecycleChangeFlag()
   }
 
   fun onResume() {
     loadedViews.forEach { loadedView ->
-      if (loadedView.viewIndex != lastViewedMediaPosition) {
+      if (loadedView.viewIndex != _lastViewedMediaPosition) {
         return@forEach
       }
 
@@ -108,6 +114,8 @@ class MediaViewerAdapter(
         loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = true)
       }
     }
+
+    getAndConsumeLifecycleChangeFlag()
   }
 
   override fun getItemPosition(`object`: Any): Int {
@@ -304,9 +312,9 @@ class MediaViewerAdapter(
     }
 
     if (!firstUpdateHappened) {
-      lastViewedMediaPosition = initialPagerIndex
+      _lastViewedMediaPosition = initialPagerIndex
     } else {
-      lastViewedMediaPosition = position
+      _lastViewedMediaPosition = position
     }
   }
 
@@ -319,7 +327,8 @@ class MediaViewerAdapter(
       return
     }
 
-    lastViewedMediaPosition = initialPagerIndex
+    _lastViewedMediaPosition = initialPagerIndex
+    val isLifecycleChange = getAndConsumeLifecycleChangeFlag()
 
     loadedViews.forEach { loadedView ->
       if (!loadedView.mediaView.bound) {
@@ -327,7 +336,7 @@ class MediaViewerAdapter(
       }
 
       if (loadedView.viewIndex == initialPagerIndex && !loadedView.mediaView.shown) {
-        loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = false)
+        loadedView.mediaView.onShow(mediaViewerToolbar, isLifecycleChange = isLifecycleChange)
       }
     }
 
@@ -395,8 +404,19 @@ class MediaViewerAdapter(
   }
 
   fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
-    forceUpdateViewWithMedia.add(viewableMediaList[pagerPosition])
-    viewableMediaList[pagerPosition] = viewableMedia
+    reloadManyAs(listOf(Pair(pagerPosition, viewableMedia)))
+  }
+
+  fun reloadManyAs(toReload: List<Pair<Int, ViewableMedia>>) {
+    if (toReload.isEmpty()) {
+      return
+    }
+
+    toReload.forEach { (pagerPosition, viewableMedia) ->
+      forceUpdateViewWithMedia.add(viewableMediaList[pagerPosition])
+      viewableMediaList[pagerPosition] = viewableMedia
+    }
+
     notifyDataSetChanged()
   }
 

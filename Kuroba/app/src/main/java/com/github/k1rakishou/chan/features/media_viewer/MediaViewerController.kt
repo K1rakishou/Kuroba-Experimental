@@ -93,6 +93,7 @@ class MediaViewerController(
 
   private var chanDescriptor: ChanDescriptor? = null
   private var autoSwipeJob: Job? = null
+  private var lifecycleChange = false
 
   override val viewerChanDescriptor: ChanDescriptor?
     get() = chanDescriptor
@@ -176,10 +177,12 @@ class MediaViewerController(
   }
 
   fun onResume() {
+    lifecycleChange = true
     mediaViewerAdapter?.onResume()
   }
 
   fun onPause() {
+    lifecycleChange = true
     mediaViewerAdapter?.onPause()
   }
 
@@ -389,13 +392,7 @@ class MediaViewerController(
     mediaViewerMenuHelper.onMediaViewerOptionsClick(
       context = context,
       mediaViewerAdapter = adapter,
-      reloadMediaFunc = {
-        if (viewableMedia !is ViewableMedia.Video) {
-          return@onMediaViewerOptionsClick
-        }
-
-        reloadCurrentMedia()
-      }
+      reloadMediaFunc = { reloadLoadedMedia() }
     )
   }
 
@@ -432,13 +429,20 @@ class MediaViewerController(
     closeMediaViewer()
   }
 
-  private fun reloadCurrentMedia() {
-    val pagerPosition = pager.currentItem
+  private fun reloadLoadedMedia() {
+    val adapter = mediaViewerAdapter ?: return
 
-    val viewableMedia = mediaViewerAdapter?.getViewableMediaListByIndex(pagerPosition)
-      ?: return
+    val loadedViews = adapter.getLoadedViews()
+    if (loadedViews.isEmpty()) {
+      return
+    }
 
-    reloadAs(pagerPosition, viewableMedia)
+    val toReload = loadedViews
+      .filter { loadedView -> loadedView.mediaView.viewableMedia is ViewableMedia.Video }
+      .map { loadedView -> Pair(loadedView.viewIndex, loadedView.mediaView.viewableMedia) }
+
+    adapter.reloadManyAs(toReload)
+    adapter.doBind(adapter.lastViewedMediaPosition)
   }
 
   override fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
@@ -484,7 +488,12 @@ class MediaViewerController(
       contentDataSourceFactory = DataSource.Factory { ContentDataSource(context) },
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
       isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
-      swipeDirection = { pager.swipeDirection }
+      swipeDirection = { pager.swipeDirection },
+      getAndConsumeLifecycleChangeFlag = {
+        val wasLifecycleChange = lifecycleChange
+        lifecycleChange = false
+        return@MediaViewerAdapter wasLifecycleChange
+      }
     )
 
     pager.adapter = adapter
