@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.ui.widget.CancellableToast
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.TimeUtils
+import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.updatePaddings
@@ -115,7 +116,11 @@ class AudioPlayerView @JvmOverloads constructor(
     audioPlayerPlayPause = findViewById(R.id.audio_player_play_pause)
     audioPlayerRestart = findViewById(R.id.audio_player_restart)
     audioPlayerPositionDuration = findViewById(R.id.audio_player_position_duration)
-    audioPlayerControlsRoot.visibility = View.GONE
+
+    audioPlayerMuteUnmute.setEnabledFast(false)
+    audioPlayerPlayPause.setEnabledFast(false)
+    audioPlayerRestart.setEnabledFast(false)
+    audioPlayerControlsRoot.setVisibilityFast(View.VISIBLE)
 
     audioPlayerMuteUnmute.setOnClickListener {
       mediaViewContract.toggleSoundMuteState()
@@ -152,6 +157,7 @@ class AudioPlayerView @JvmOverloads constructor(
     }
 
     globalWindowInsetsManager.addInsetsUpdatesListener(this)
+    onInsetsChanged()
   }
 
   fun show(isLifecycleChange: Boolean) {
@@ -204,11 +210,7 @@ class AudioPlayerView @JvmOverloads constructor(
   }
 
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
-    if (!hasSoundPostUrl) {
-      return
-    }
-
-    if (soundPostVideoPlayer.hasContent) {
+    if (hasSoundPostUrl && soundPostVideoPlayer.hasContent) {
       if (systemUIHidden) {
         hideAudioPlayerView()
       } else {
@@ -296,10 +298,15 @@ class AudioPlayerView @JvmOverloads constructor(
       // fallthrough
     }
 
-    audioPlayerControlsRoot.visibility = GONE
+    hideAudioPlayerView()
   }
 
   private fun onAudioPlaying() {
+    audioPlayerMuteUnmute.setEnabledFast(true)
+    audioPlayerPlayPause.setEnabledFast(true)
+    audioPlayerRestart.setEnabledFast(true)
+    audioPlayerControlsRoot.setVisibilityFast(View.VISIBLE)
+
     updateAudioIcon(mediaViewContract.isSoundCurrentlyMuted())
     updatePlayIcon(soundPostVideoPlayer.isPlaying())
   }
