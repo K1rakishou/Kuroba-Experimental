@@ -121,26 +121,47 @@ class ExoPlayerWrapper(
     mediaLocation as MediaLocation.Remote
 
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
+    val soundPostActualSoundMedia = viewableMedia.viewableMediaMeta.soundPostActualSoundMedia
+
+    // Check whether we can use video from the thread downloader cache
     if (threadDescriptor != null && threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor)) {
       val file = threadDownloadManager.findDownloadedFile(mediaLocation.url, threadDescriptor)
       if (file != null) {
-        when (file) {
+        // We can, use the cached video
+        val videoSource = when (file) {
           is RawFile -> {
-            return ProgressiveMediaSource.Factory(fileDataSourceFactory)
+            ProgressiveMediaSource.Factory(fileDataSourceFactory)
               .createMediaSource(MediaItem.fromUri(Uri.parse(file.getFullPath())))
           }
           is ExternalFile -> {
-            return ProgressiveMediaSource.Factory(contentDataSourceFactory)
+            ProgressiveMediaSource.Factory(contentDataSourceFactory)
               .createMediaSource(MediaItem.fromUri(file.getUri()))
           }
+          else -> error("Unknown file type: ${file.javaClass.simpleName}")
         }
+
+        // Check whether there is sound post link
+        val urlRaw = (soundPostActualSoundMedia?.mediaLocation as? MediaLocation.Remote)?.urlRaw
+        if (urlRaw == null) {
+          // There is no link, use only the video source
+          return videoSource
+        }
+
+        // There, merge local video with remote audio (since we don't download sound posts' audio
+        // locally)
+        val audioSource = ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
+          .createMediaSource(MediaItem.fromUri(Uri.parse(urlRaw)))
+
+        return MergingMediaSource(videoSource, audioSource)
       }
+
+      // fallthrough
     }
 
-    val soundPostActualSoundMedia = viewableMedia.viewableMediaMeta.soundPostActualSoundMedia
+    // Thread is not downloaded or the file is not cached, check for the sound post link and use
+    // merged source if there is
     if (soundPostActualSoundMedia != null) {
       val urlRaw = (soundPostActualSoundMedia.mediaLocation as? MediaLocation.Remote)?.urlRaw
-
       if (urlRaw != null) {
         val videoSource = ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
           .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
@@ -151,6 +172,7 @@ class ExoPlayerWrapper(
       }
     }
 
+    // There is no sound post link, just use regular remote video source
     return ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
       .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
   }
