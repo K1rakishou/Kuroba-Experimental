@@ -274,7 +274,7 @@ class FullImageMediaView(
     }
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     actualImageView.resetScaleAndCenter()
   }
 

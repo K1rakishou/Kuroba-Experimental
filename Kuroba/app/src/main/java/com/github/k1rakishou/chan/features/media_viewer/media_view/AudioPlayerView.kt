@@ -65,6 +65,9 @@ class AudioPlayerView @JvmOverloads constructor(
   private val scope = KurobaCoroutineScope()
   private val cancellableToast by lazy { CancellableToast() }
 
+  private val pauseInBg: Boolean
+    get() = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+
   private val soundPostVideoPlayerLazy = lazy {
     ExoPlayerWrapper(
       context = context,
@@ -166,7 +169,7 @@ class AudioPlayerView @JvmOverloads constructor(
     }
   }
 
-  fun hide(isLifecycleChange: Boolean) {
+  fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     if (!hasSoundPostUrl) {
       return
     }
@@ -186,7 +189,10 @@ class AudioPlayerView @JvmOverloads constructor(
         audioPlayerViewState.playing = soundPostVideoPlayer.isPlaying()
       }
 
-      soundPostVideoPlayer.pause()
+      val needPause = soundPostVideoPlayer.isPlaying() && ((isPausing && pauseInBg) || isBecomingInactive)
+      if (needPause) {
+        soundPostVideoPlayer.pause()
+      }
     }
   }
 

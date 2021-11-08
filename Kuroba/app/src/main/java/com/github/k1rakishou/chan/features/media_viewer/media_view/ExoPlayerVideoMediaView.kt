@@ -271,7 +271,7 @@ class ExoPlayerVideoMediaView(
     }
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     playJob?.cancel()
     playJob = null
 
@@ -290,7 +290,10 @@ class ExoPlayerVideoMediaView(
       mediaViewState.playing = mainVideoPlayer.isPlaying()
     }
 
-    mainVideoPlayer.pause()
+    val needPause = mainVideoPlayer.isPlaying() && ((isPausing && pauseInBg) || isBecomingInactive)
+    if (needPause) {
+      mainVideoPlayer.pause()
+    }
   }
 
   override fun unbind() {

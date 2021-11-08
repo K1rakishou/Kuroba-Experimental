@@ -92,6 +92,12 @@ class MediaViewerMenuHelper(
     )
 
     options += CheckableFloatingListMenuItem(
+      key = ACTION_PAUSE_PLAYERS_WHEN_IN_BG,
+      name = AppModuleAndroidUtils.getString(R.string.setting_pause_players_when_in_bg),
+      isCurrentlySelected = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
       key = ACTION_ENABLE_SOUND_POSTS,
       name = AppModuleAndroidUtils.getString(R.string.setting_enable_sound_posts),
       isCurrentlySelected = ChanSettings.mediaViewerSoundPostsEnabled.get()
@@ -152,6 +158,9 @@ class MediaViewerMenuHelper(
       }
       ACTION_AUTO_SWIPE_AFTER_DOWNLOAD -> {
         ChanSettings.mediaViewerAutoSwipeAfterDownload.toggle()
+      }
+      ACTION_PAUSE_PLAYERS_WHEN_IN_BG -> {
+        ChanSettings.mediaViewerPausePlayersWhenInBackground.toggle()
       }
       ACTION_ENABLE_SOUND_POSTS -> {
         ChanSettings.mediaViewerSoundPostsEnabled.toggle()
@@ -226,6 +235,7 @@ class MediaViewerMenuHelper(
     const val ACTION_DRAW_BEHIND_NOTCH = 109
     const val ACTION_ENABLE_SOUND_POSTS = 110
     const val ACTION_USE_MPV = 111
+    const val ACTION_PAUSE_PLAYERS_WHEN_IN_BG = 112
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

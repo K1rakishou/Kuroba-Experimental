@@ -147,7 +147,7 @@ class ExoPlayerWrapper(
           return videoSource
         }
 
-        // There, merge local video with remote audio (since we don't download sound posts' audio
+        // There is, merge local video with remote audio (since we don't download sound posts' audio
         // locally)
         val audioSource = ProgressiveMediaSource.Factory(cachedHttpDataSourceFactory)
           .createMediaSource(MediaItem.fromUri(Uri.parse(urlRaw)))

@@ -68,7 +68,7 @@ class MediaViewerAdapter(
 
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.shown) {
-        loadedView.mediaView.onHide(isLifecycleChange = true)
+        loadedView.mediaView.onHide(isLifecycleChange = true, isPausing = false, isBecomingInactive = false)
       }
 
       if (loadedView.mediaView.bound) {
@@ -88,7 +88,7 @@ class MediaViewerAdapter(
   fun onPause() {
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.shown) {
-        loadedView.mediaView.onHide(isLifecycleChange = true)
+        loadedView.mediaView.onHide(isLifecycleChange = true, isPausing = true, isBecomingInactive = false)
 
         // Store media view state
         val mediaViewState = loadedView.mediaView.mediaViewState
@@ -286,7 +286,7 @@ class MediaViewerAdapter(
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.viewableMedia != view.mediaView.viewableMedia) {
         if (loadedView.mediaView.shown) {
-          loadedView.mediaView.onHide(isLifecycleChange = false)
+          loadedView.mediaView.onHide(isLifecycleChange = false, isPausing = true, isBecomingInactive = true)
 
           // Store media view state
           val mediaViewState = loadedView.mediaView.mediaViewState
@@ -352,7 +352,7 @@ class MediaViewerAdapter(
     val mediaView = obj as MediaView<ViewableMedia, *>
 
     if (mediaView.shown) {
-      mediaView.onHide(isLifecycleChange = false)
+      mediaView.onHide(isLifecycleChange = false, isPausing = false, isBecomingInactive = true)
     }
 
     mediaView.onUnbind()

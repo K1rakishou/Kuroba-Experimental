@@ -33,10 +33,18 @@ class MPVView(
     attrs: AttributeSet?
 ) : TextureView(context, attrs), TextureView.SurfaceTextureListener {
     private var filePath: String? = null
+    private var _initialized = false
+    val initialized: Boolean
+        get() = _initialized
 
     fun create(applicationContext: Context, appConstants: AppConstants) {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "create() librariesAreLoaded: false")
+            _initialized = false
+            return
+        }
+
+        if (MPVLib.isCreated()) {
             return
         }
 
@@ -95,11 +103,18 @@ class MPVView(
 
         surfaceTextureListener = this
         observeProperties()
+
+        _initialized = true
     }
 
     fun destroy() {
         if (!MPVLib.librariesAreLoaded()) {
             Logger.d(TAG, "destroy() librariesAreLoaded: false")
+            _initialized = false
+            return
+        }
+
+        if (!MPVLib.isCreated()) {
             return
         }
 
@@ -110,6 +125,8 @@ class MPVView(
         // Disable surface callbacks to avoid using unintialized mpv state
         surfaceTextureListener = null
         MPVLib.mpvDestroy()
+
+        _initialized = false
     }
 
     fun reloadFastVideoDecodeOption() {

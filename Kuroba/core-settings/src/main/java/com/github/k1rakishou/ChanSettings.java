@@ -352,6 +352,7 @@ public class ChanSettings {
     public static BooleanSetting mediaViewerAutoSwipeAfterDownload;
     public static BooleanSetting mediaViewerDrawBehindNotch;
     public static BooleanSetting mediaViewerSoundPostsEnabled;
+    public static BooleanSetting mediaViewerPausePlayersWhenInBackground;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -576,6 +577,7 @@ public class ChanSettings {
             mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
             mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
             mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
+            mediaViewerPausePlayersWhenInBackground = new BooleanSetting(provider, "preference_media_viewer_pause_players_when_in_background", true);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,

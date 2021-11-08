@@ -93,6 +93,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   protected val scope = KurobaCoroutineScope()
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
 
+  protected val pauseInBg: Boolean
+    get() = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+
   protected val audioPlayerView: AudioPlayerView by lazy {
     return@lazy findViewById<AudioPlayerView>(R.id.audio_player_view)
   }
@@ -174,13 +177,13 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
-  fun onHide(isLifecycleChange: Boolean) {
+  fun onHide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     _shown = false
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
-    audioPlayerView.hide(isLifecycleChange)
-    hide(isLifecycleChange)
+    audioPlayerView.hide(isLifecycleChange = isLifecycleChange, isPausing = isPausing, isBecomingInactive = isBecomingInactive)
+    hide(isLifecycleChange = isLifecycleChange, isPausing = isPausing, isBecomingInactive = isBecomingInactive)
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
@@ -202,7 +205,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract fun preload()
   abstract fun bind()
   abstract fun show(isLifecycleChange: Boolean)
-  abstract fun hide(isLifecycleChange: Boolean)
+  abstract fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean)
   abstract fun unbind()
 
   protected open fun updateTransparency(backgroundColor: Int?) {

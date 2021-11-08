@@ -760,6 +760,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_headset_default_muted">Mute headset videos</string>
     <string name="setting_video_always_reset_to_start">Always reset videos to beginning</string>
     <string name="setting_auto_swipe_after_download">Automatically swipe to next media after downloading it</string>
+    <string name="setting_pause_players_when_in_bg">Pause players (video/audio) when app goes into background</string>
     <string name="setting_enable_sound_posts">Enable sound posts</string>
 
     <!-- Save location group -->

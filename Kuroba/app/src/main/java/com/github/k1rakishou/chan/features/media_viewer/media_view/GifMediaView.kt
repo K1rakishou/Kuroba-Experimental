@@ -280,7 +280,7 @@ class GifMediaView(
     }
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
     if (gifImageViewDrawable != null) {
       mediaViewState.prevFrameIndex = gifImageViewDrawable.currentFrameIndex

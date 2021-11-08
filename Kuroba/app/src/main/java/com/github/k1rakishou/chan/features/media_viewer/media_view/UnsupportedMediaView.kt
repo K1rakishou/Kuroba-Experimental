@@ -120,7 +120,7 @@ class UnsupportedMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     // no-op
   }
 
