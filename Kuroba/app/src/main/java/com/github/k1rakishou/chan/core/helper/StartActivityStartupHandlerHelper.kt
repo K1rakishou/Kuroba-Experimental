@@ -394,6 +394,7 @@ class StartActivityStartupHandlerHelper(
     val data = intent?.data
       ?: return false
 
+    siteManager.awaitUntilInitialized()
     Logger.d(TAG, "restoreFromUrl(), url = $data")
 
     val url = data.toString()
