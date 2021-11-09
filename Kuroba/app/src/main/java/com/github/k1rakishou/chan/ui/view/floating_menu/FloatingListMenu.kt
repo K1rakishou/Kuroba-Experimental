@@ -48,6 +48,8 @@ class FloatingListMenu @JvmOverloads constructor(
   }
 
   fun onDestroy() {
+    this.itemClickListener = null
+    this.stackCallback = null
     epoxyRecyclerView.clear()
   }
 

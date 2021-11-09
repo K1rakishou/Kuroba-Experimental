@@ -79,10 +79,11 @@ class ThreadCellData(
         continue
       }
 
-      val postCellData = postCellDataLazyList.getOrNull(postCellDataIndex)?.getOrCalculate()
+      val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
         ?: continue
 
       val updatedPostCellData = withContext(Dispatchers.Default) {
+        val postCellData = postCellDataLazy.getOrCalculate()
         val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
 
         val updatedPostCellData = postIndexedListToLazyPostCellDataList(
@@ -573,7 +574,7 @@ class ThreadCellData(
 
       if (!isAlreadyCalculated && !isPrecalculating && isDevBuild()) {
         Logger.e(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
-          "postNo=${calculatedValue.postNo}")
+          "index=${calculatedValue.postIndex}, postNo=${calculatedValue.postNo}")
       }
 
       return calculatedValue
