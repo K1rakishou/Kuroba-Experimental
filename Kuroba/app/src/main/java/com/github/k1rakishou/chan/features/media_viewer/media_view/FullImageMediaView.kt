@@ -22,14 +22,20 @@ import com.github.k1rakishou.chan.ui.view.CustomScaleImageView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.awaitCatching
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import pl.droidsonroids.gif.GifDrawable
+import java.io.BufferedInputStream
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class FullImageMediaView(
@@ -38,6 +44,9 @@ class FullImageMediaView(
   mediaViewContract: MediaViewContract,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  cachedHttpDataSourceFactory: DataSource.Factory,
+  fileDataSourceFactory: DataSource.Factory,
+  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Image,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -45,9 +54,11 @@ class FullImageMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
   mediaViewState = initialMediaViewState
 ) {
-
   private val movableContainer: FrameLayout
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
@@ -57,7 +68,7 @@ class FullImageMediaView(
   private val gestureDetectorListener: GestureDetectorListener
   private val closeMediaActionHelper: CloseMediaActionHelper
 
-  private var fullImageDeferred = CompletableDeferred<FilePath>()
+  private var fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
   private var preloadCancelableDownload: CancelableDownload? = null
 
   override val hasContent: Boolean
@@ -99,6 +110,7 @@ class FullImageMediaView(
         if (viewableMedia.mediaLocation is MediaLocation.Remote && canForcePreload) {
           scope.launch {
             preloadCancelableDownload = startFullMediaPreloading(
+              forced = true,
               loadingBar = loadingBar,
               mediaLocationRemote = viewableMedia.mediaLocation,
               fullMediaDeferred = fullImageDeferred,
@@ -150,6 +162,10 @@ class FullImageMediaView(
     return actualImageView.imageViewportTouchSide.isTouchingAllSides
   }
 
+  override fun onInsetsChanged() {
+
+  }
+
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
     if (ev != null && closeMediaActionHelper.onInterceptTouchEvent(ev)) {
       return true
@@ -190,6 +206,7 @@ class FullImageMediaView(
     if (viewableMedia.mediaLocation is MediaLocation.Remote && canPreload(forced = false)) {
       scope.launch {
         preloadCancelableDownload = startFullMediaPreloading(
+          forced = false,
           loadingBar = loadingBar,
           mediaLocationRemote = viewableMedia.mediaLocation,
           fullMediaDeferred = fullImageDeferred,
@@ -198,15 +215,24 @@ class FullImageMediaView(
       }
     } else if (viewableMedia.mediaLocation is MediaLocation.Local) {
       if (viewableMedia.mediaLocation.isUri) {
-        fullImageDeferred.complete(FilePath.UriPath(Uri.parse(viewableMedia.mediaLocation.path)))
+        val mediaPreloadResult = MediaPreloadResult(
+          filePath = FilePath.UriPath(Uri.parse(viewableMedia.mediaLocation.path)),
+          isForced = false,
+        )
+
+        fullImageDeferred.complete(mediaPreloadResult)
       } else {
-        fullImageDeferred.complete(FilePath.JavaPath(viewableMedia.mediaLocation.path))
+        val mediaPreloadResult = MediaPreloadResult(
+          filePath = FilePath.JavaPath(viewableMedia.mediaLocation.path),
+          isForced = false,
+        )
+
+        fullImageDeferred.complete(mediaPreloadResult)
       }
     }
   }
 
   override fun bind() {
-
   }
 
   override fun show(isLifecycleChange: Boolean) {
@@ -214,31 +240,45 @@ class FullImageMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onUpdateTransparency()
 
-    if (!hasContent) {
-      scope.launch {
-        fullImageDeferred.awaitCatching()
-          .onFailure { error ->
-            Logger.e(TAG, "onFullImageLoadingError()", error)
+    scope.launch {
+      if (hasContent) {
+        val isForced = fullImageDeferred.awaitCatching().valueOrNull()?.isForced
+        if (isForced != null) {
+          audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+            isLifecycleChange = isLifecycleChange,
+            isForceLoad = isForced,
+            viewableMedia = viewableMedia
+          )
 
-            if (error.isExceptionImportant() && shown) {
-              cancellableToast.showToast(
-                context,
-                getString(R.string.image_image_download_failed, error.errorMessageOrClassName())
-              )
-            }
-
-            actualImageView.setVisibilityFast(View.INVISIBLE)
-          }
-          .onSuccess { filePath ->
-            setBigImageFromFile(filePath)
-          }
-
-        loadingBar.setVisibilityFast(GONE)
+          return@launch
+        }
       }
+
+      when (val fullImageDeferredResult = fullImageDeferred.awaitCatching()) {
+        is ModularResult.Error -> {
+          val error = fullImageDeferredResult.error
+          Logger.e(TAG, "onFullImageLoadingError()", error)
+
+          if (error.isExceptionImportant() && shown) {
+            cancellableToast.showToast(
+              context,
+              getString(R.string.image_image_download_failed, error.errorMessageOrClassName())
+            )
+          }
+
+          actualImageView.setVisibilityFast(View.INVISIBLE)
+        }
+        is ModularResult.Value -> {
+          val mediaPreloadResult = fullImageDeferredResult.value
+          setBigImageFromFile(isLifecycleChange, mediaPreloadResult)
+        }
+      }
+
+      loadingBar.setVisibilityFast(GONE)
     }
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     actualImageView.resetScaleAndCenter()
   }
 
@@ -271,7 +311,9 @@ class FullImageMediaView(
     cacheHandler.get().deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
 
     fullImageDeferred.cancel()
-    fullImageDeferred = CompletableDeferred<FilePath>()
+    fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
+
+    audioPlayerView.pauseUnpause(isNowPaused = true)
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualImageView.setVisibilityFast(View.INVISIBLE)
@@ -279,6 +321,7 @@ class FullImageMediaView(
     actualImageView.recycle()
 
     preloadCancelableDownload = startFullMediaPreloading(
+      forced = true,
       loadingBar = loadingBar,
       mediaLocationRemote = mediaLocation,
       fullMediaDeferred = fullImageDeferred,
@@ -288,7 +331,10 @@ class FullImageMediaView(
     show(isLifecycleChange = false)
   }
 
-  private suspend fun setBigImageFromFile(filePath: FilePath) {
+  private suspend fun setBigImageFromFile(
+    isLifecycleChange: Boolean,
+    mediaPreloadResult: MediaPreloadResult
+  ) {
     coroutineScope {
       val animationAwaitable = CompletableDeferred<Unit>()
 
@@ -346,13 +392,48 @@ class FullImageMediaView(
       })
 
       actualImageView.setOnClickListener(null)
+      val filePath = mediaPreloadResult.filePath
 
-      val imageSource = when (filePath) {
-        is FilePath.JavaPath -> ImageSource.uri(filePath.path).tiling(true)
-        is FilePath.UriPath -> ImageSource.uri(filePath.uri).tiling(true)
+      if (viewableMedia.viewableMediaMeta.isGif) {
+        val imageSource = withContext(Dispatchers.IO) {
+          val inputStream = filePath.inputStream(fileManager)
+          if (inputStream == null) {
+            return@withContext null
+          }
+
+          val gifDrawable = inputStream.use { stream ->
+            BufferedInputStream(stream).use { bis -> GifDrawable(bis) }
+          }
+
+          return@withContext ImageSource
+            .bitmap(gifDrawable.seekToFrameAndGet(1))
+            .tiling(true)
+        }
+
+        if (imageSource == null) {
+          cancellableToast.showToast(
+            context,
+            getString(R.string.image_image_load_failed, "Failed to load 1-frame gif as a bitmap")
+          )
+
+          return@coroutineScope
+        }
+
+        actualImageView.setImage(imageSource)
+      } else {
+        val imageSource = when (filePath) {
+          is FilePath.JavaPath -> ImageSource.uri(filePath.path).tiling(true)
+          is FilePath.UriPath -> ImageSource.uri(filePath.uri).tiling(true)
+        }
+
+        actualImageView.setImage(imageSource)
       }
 
-      actualImageView.setImage(imageSource)
+      audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+        isLifecycleChange = isLifecycleChange,
+        isForceLoad = mediaPreloadResult.isForced,
+        viewableMedia = viewableMedia
+      )
 
       // Trigger the SubsamplingScaleImageView to start loading the full image but don't show it yet.
       actualImageView.alpha = 0f
@@ -410,13 +491,28 @@ class FullImageMediaView(
 
   }
 
-  class FullImageState : MediaViewState {
+  class FullImageState(
+    audioPlayerViewState: AudioPlayerView.AudioPlayerViewState = AudioPlayerView.AudioPlayerViewState()
+  ) : MediaViewState(audioPlayerViewState) {
+
+    override fun resetPosition() {
+      super.resetPosition()
+
+      audioPlayerViewState!!.resetPosition()
+    }
+
     override fun clone(): MediaViewState {
-      return this
+      return FullImageState(
+        audioPlayerViewState = audioPlayerViewState!!.clone() as AudioPlayerView.AudioPlayerViewState
+      )
     }
 
     override fun updateFrom(other: MediaViewState?) {
+      if (other !is FullImageState) {
+        return
+      }
 
+      audioPlayerViewState!!.updateFrom(other.audioPlayerViewState)
     }
   }
 

@@ -26,8 +26,6 @@ class ThreadBookmarkGroupRepository(
         ensureBackgroundThread()
 
         val (bookmarks, duration) = measureTimedValue {
-          localSource.deleteEmptyGroups()
-
           return@measureTimedValue localSource.selectAll()
         }
 
@@ -61,10 +59,42 @@ class ThreadBookmarkGroupRepository(
     }
   }
 
-  suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
+  suspend fun executeCreateAndDeleteTransactions(
+    createTransaction: CreateBookmarkGroupEntriesTransaction,
+    deleteTransaction: DeleteBookmarkGroupEntriesTransaction
+  ): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        localSource.updateGroup(group)
+        localSource.executeCreateTransaction(createTransaction)
+        localSource.executeDeleteTransaction(deleteTransaction)
+      }
+    }
+  }
+
+  suspend fun updateGroup(group: ThreadBookmarkGroup): ModularResult<Unit> {
+    return updateGroups(listOf(group))
+  }
+
+  suspend fun updateGroups(groups: List<ThreadBookmarkGroup>): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.updateGroups(groups)
+      }
+    }
+  }
+
+  suspend fun updateGroupEntries(groups: List<ThreadBookmarkGroup>): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.updateGroupEntries(groups)
+      }
+    }
+  }
+
+  suspend fun deleteBookmarkGroup(groupId: String): ModularResult<Unit> {
+    return applicationScope.dbCall {
+      return@dbCall tryWithTransaction {
+        localSource.deleteGroup(groupId)
       }
     }
   }

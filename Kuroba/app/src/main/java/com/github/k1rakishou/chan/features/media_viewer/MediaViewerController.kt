@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -93,6 +94,7 @@ class MediaViewerController(
 
   private var chanDescriptor: ChanDescriptor? = null
   private var autoSwipeJob: Job? = null
+  private var lifecycleChange = false
 
   override val viewerChanDescriptor: ChanDescriptor?
     get() = chanDescriptor
@@ -176,10 +178,12 @@ class MediaViewerController(
   }
 
   fun onResume() {
+    lifecycleChange = true
     mediaViewerAdapter?.onResume()
   }
 
   fun onPause() {
+    lifecycleChange = true
     mediaViewerAdapter?.onPause()
   }
 
@@ -197,6 +201,13 @@ class MediaViewerController(
     pager.adapter = null
 
     ExoPlayerWrapper.releaseAll()
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    mediaViewerAdapter?.onInsetsChanged()
+    onInsetsChanged()
   }
 
   override fun onInsetsChanged() {
@@ -237,6 +248,10 @@ class MediaViewerController(
 
   override fun isSoundCurrentlyMuted(): Boolean {
     return viewModel.isSoundMuted
+  }
+
+  override fun isSystemUiHidden(): Boolean {
+    return mediaViewerCallbacks.isSystemUiHidden()
   }
 
   override fun onTapped() {
@@ -382,7 +397,11 @@ class MediaViewerController(
     val adapter = mediaViewerAdapter
       ?: return
 
-    mediaViewerMenuHelper.onMediaViewerOptionsClick(context, adapter)
+    mediaViewerMenuHelper.onMediaViewerOptionsClick(
+      context = context,
+      mediaViewerAdapter = adapter,
+      reloadMediaFunc = { reloadLoadedMedia() }
+    )
   }
 
   override fun onMediaLongClick(
@@ -418,6 +437,27 @@ class MediaViewerController(
     closeMediaViewer()
   }
 
+  private fun reloadLoadedMedia() {
+    val adapter = mediaViewerAdapter ?: return
+
+    val loadedViews = adapter.getLoadedViews()
+    if (loadedViews.isEmpty()) {
+      return
+    }
+
+    val toReload = loadedViews
+      .filter { loadedView -> loadedView.mediaView.viewableMedia is ViewableMedia.Video }
+      .map { loadedView -> Pair(loadedView.viewIndex, loadedView.mediaView.viewableMedia) }
+
+    adapter.reloadManyAs(toReload)
+    adapter.doBind(adapter.lastViewedMediaPosition)
+  }
+
+  override fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia) {
+    mediaViewerAdapter?.reloadAs(pagerPosition, viewableMedia)
+    onPageSelected(pagerPosition)
+  }
+
   fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
     mediaViewerAdapter?.onSystemUiVisibilityChanged(systemUIHidden)
   }
@@ -443,6 +483,7 @@ class MediaViewerController(
 
     val adapter = MediaViewerAdapter(
       context = context,
+      appConstants = appConstants,
       viewModel = viewModel,
       mediaViewerToolbar = mediaViewerToolbar,
       mediaViewContract = this@MediaViewerController,
@@ -455,7 +496,12 @@ class MediaViewerController(
       contentDataSourceFactory = DataSource.Factory { ContentDataSource(context) },
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
       isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
-      swipeDirection = { pager.swipeDirection }
+      swipeDirection = { pager.swipeDirection },
+      getAndConsumeLifecycleChangeFlag = {
+        val wasLifecycleChange = lifecycleChange
+        lifecycleChange = false
+        return@MediaViewerAdapter wasLifecycleChange
+      }
     )
 
     pager.adapter = adapter

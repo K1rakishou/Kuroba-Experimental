@@ -498,10 +498,10 @@ abstract class Controller(@JvmField var context: Context) {
     }
   }
 
-  protected fun ModularResult<*>.toastOnError(
+  protected fun <T> ModularResult<T>.toastOnError(
     longToast: Boolean = false,
     formatErrorMessage: ((Throwable) -> String)? = null
-  ): ModularResult<*> {
+  ): ModularResult<T> {
     when (this) {
       is ModularResult.Error -> {
         val message = formatErrorMessage?.invoke(this.error)
@@ -523,10 +523,10 @@ abstract class Controller(@JvmField var context: Context) {
     return this
   }
 
-  protected fun ModularResult<*>.toastOnSuccess(
+  protected fun <T> ModularResult<T>.toastOnSuccess(
     message: () -> String,
     longToast: Boolean = false
-  ): ModularResult<*> {
+  ): ModularResult<T> {
     when (this) {
       is ModularResult.Error -> {
         // no-op

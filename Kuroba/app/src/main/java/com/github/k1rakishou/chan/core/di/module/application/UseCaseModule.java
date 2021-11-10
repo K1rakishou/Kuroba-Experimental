@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.core.manager.PostHideManager;
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager;
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
@@ -33,6 +34,7 @@ import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
 import com.github.k1rakishou.chan.core.usecase.FilterOutHiddenImagesUseCase;
+import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase;
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase;
@@ -185,6 +187,7 @@ public class UseCaseModule {
             CoroutineScope appScope,
             BoardManager boardManager,
             BookmarksManager bookmarksManager,
+            ThreadBookmarkGroupManager threadBookmarkGroupManager,
             ChanFilterManager chanFilterManager,
             SiteManager siteManager,
             Lazy<ProxiedOkHttpClient> proxiedOkHttpClient,
@@ -199,6 +202,7 @@ public class UseCaseModule {
                 appConstants,
                 boardManager,
                 bookmarksManager,
+                threadBookmarkGroupManager,
                 chanFilterManager,
                 siteManager,
                 appScope,
@@ -447,6 +451,20 @@ public class UseCaseModule {
         return new InstallMpvNativeLibrariesFromLocalDirectoryUseCase(
                 appConstants,
                 fileManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public GetThreadBookmarkGroupIdsUseCase provideGetThreadBookmarkGroupIdsUseCase(
+            Lazy<ThreadBookmarkGroupManager> threadBookmarkGroupManager,
+            Lazy<ChanThreadManager> chanThreadManager
+    ) {
+        Logger.deps("GetThreadBookmarkGroupIdsUseCase");
+
+        return new GetThreadBookmarkGroupIdsUseCase(
+                threadBookmarkGroupManager,
+                chanThreadManager
         );
     }
 

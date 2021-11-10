@@ -79,10 +79,11 @@ class ThreadCellData(
         continue
       }
 
-      val postCellData = postCellDataLazyList.getOrNull(postCellDataIndex)?.getOrCalculate()
+      val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
         ?: continue
 
       val updatedPostCellData = withContext(Dispatchers.Default) {
+        val postCellData = postCellDataLazy.getOrCalculate()
         val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
 
         val updatedPostCellData = postIndexedListToLazyPostCellDataList(
@@ -145,9 +146,7 @@ class ThreadCellData(
       )
     }
 
-    Logger.d(TAG, "updateThreadData() asyncPostCellDataCalculation=${ChanSettings.asyncPostCellDataCalculation.get()}")
-
-    if (ChanSettings.asyncPostCellDataCalculation.get() && newPostCellDataLazyList.isNotEmpty()) {
+    if (newPostCellDataLazyList.isNotEmpty()) {
       lazyCalculationJob?.cancel()
       lazyCalculationJob = coroutineScope.launch(Dispatchers.IO) {
         Logger.d(TAG, "runPreloading() start")
@@ -311,10 +310,6 @@ class ThreadCellData(
         post = postIndexed.post,
         lazyDataCalcFunc = lazyFunc
       )
-
-      if (!ChanSettings.asyncPostCellDataCalculation.get()) {
-        postCellDataLazy.getOrCalculate(isPrecalculating = true)
-      }
 
       resultList += postCellDataLazy
     }
@@ -579,7 +574,7 @@ class ThreadCellData(
 
       if (!isAlreadyCalculated && !isPrecalculating && isDevBuild()) {
         Logger.e(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
-          "postNo=${calculatedValue.postNo}")
+          "index=${calculatedValue.postIndex}, postNo=${calculatedValue.postNo}")
       }
 
       return calculatedValue

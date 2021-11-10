@@ -1459,6 +1459,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThreadWithoutFocusing(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostsInExternalThread(postDescriptor: PostDescriptor, isPreviewingCatalogThread: Boolean)
     suspend fun openExternalThread(postDescriptor: PostDescriptor)
+    suspend fun showCatalogWithoutFocusing(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
     suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
     suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
 

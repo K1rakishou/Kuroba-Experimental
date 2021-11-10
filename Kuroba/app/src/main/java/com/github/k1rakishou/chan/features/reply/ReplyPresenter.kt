@@ -128,6 +128,7 @@ class ReplyPresenter @Inject constructor(
 
   private val highlightQuotesDebouncer = Debouncer(false)
   private val updatePostTextSpansDebouncer = Debouncer(false)
+  private val rememberDraftDebounder = Debouncer(false)
 
   var isExpanded = false
     private set
@@ -618,12 +619,13 @@ class ReplyPresenter @Inject constructor(
     )
   }
 
-  fun onSelectionChanged() {
-    val chanDescriptor = currentChanDescriptor
-      ?: return
+  fun loadViewsIntoDraft() {
+    rememberDraftDebounder.post({
+      val chanDescriptor = currentChanDescriptor
+        ?: return@post
 
-    callback.loadViewsIntoDraft(chanDescriptor)
-    highlightQuotes()
+      callback.loadViewsIntoDraft(chanDescriptor)
+    }, 100)
   }
 
   fun quote(post: ChanPost, withText: Boolean) {
@@ -866,7 +868,7 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private fun highlightQuotes() {
+  fun highlightQuotes() {
     highlightQuotesDebouncer.post({
       val chanDescriptor = currentChanDescriptor
         ?: return@post

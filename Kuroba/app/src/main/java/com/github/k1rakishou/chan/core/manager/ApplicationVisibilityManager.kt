@@ -2,20 +2,19 @@ package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_logger.Logger
+import java.util.concurrent.CopyOnWriteArrayList
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ApplicationVisibilityManager {
   private var currentApplicationVisibility: ApplicationVisibility = ApplicationVisibility.Background
-  private val listeners = mutableSetOf<ApplicationVisibilityListener>()
+  private val listeners = CopyOnWriteArrayList<ApplicationVisibilityListener>()
 
   fun addListener(listener: ApplicationVisibilityListener) {
-    BackgroundUtils.ensureMainThread()
     listeners += listener
   }
 
   fun removeListener(listener: ApplicationVisibilityListener) {
-    BackgroundUtils.ensureMainThread()
     listeners -= listener
   }
 

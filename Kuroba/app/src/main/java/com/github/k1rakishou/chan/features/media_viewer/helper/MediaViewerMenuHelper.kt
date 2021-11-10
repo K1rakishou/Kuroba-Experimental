@@ -18,7 +18,11 @@ class MediaViewerMenuHelper(
   private val showToastFunc: (Int) -> Unit
 ) {
 
-  fun onMediaViewerOptionsClick(context: Context, mediaViewerAdapter: MediaViewerAdapter) {
+  fun onMediaViewerOptionsClick(
+    context: Context,
+    mediaViewerAdapter: MediaViewerAdapter,
+    reloadMediaFunc: () -> Unit
+  ) {
     val mediaLongClickOptions = buildMediaViewerOptions()
     if (mediaLongClickOptions.isEmpty()) {
       return
@@ -29,7 +33,7 @@ class MediaViewerMenuHelper(
       globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       mediaLongClickOptions,
       itemClickListener = { clickedItem ->
-        handleMenuItemClick(context, mediaViewerAdapter, clickedItem)
+        handleMenuItemClick(context, mediaViewerAdapter, clickedItem, reloadMediaFunc)
       }
     )
 
@@ -87,6 +91,24 @@ class MediaViewerMenuHelper(
       isCurrentlySelected = ChanSettings.mediaViewerAutoSwipeAfterDownload.get()
     )
 
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_PAUSE_PLAYERS_WHEN_IN_BG,
+      name = AppModuleAndroidUtils.getString(R.string.setting_pause_players_when_in_bg),
+      isCurrentlySelected = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_ENABLE_SOUND_POSTS,
+      name = AppModuleAndroidUtils.getString(R.string.setting_enable_sound_posts),
+      isCurrentlySelected = ChanSettings.mediaViewerSoundPostsEnabled.get()
+    )
+
+    options += CheckableFloatingListMenuItem(
+      key = ACTION_USE_MPV,
+      name = AppModuleAndroidUtils.getString(R.string.settings_plugins_use_mpv),
+      isCurrentlySelected = ChanSettings.useMpvVideoPlayer.get()
+    )
+
     options += FloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
       name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
@@ -107,7 +129,8 @@ class MediaViewerMenuHelper(
   private fun handleMenuItemClick(
     context: Context,
     mediaViewerAdapter: MediaViewerAdapter,
-    clickedItem: FloatingListMenuItem
+    clickedItem: FloatingListMenuItem,
+    reloadMediaFunc: () -> Unit
   ) {
     when (clickedItem.key as Int) {
       ACTION_DRAW_BEHIND_NOTCH -> {
@@ -135,6 +158,17 @@ class MediaViewerMenuHelper(
       }
       ACTION_AUTO_SWIPE_AFTER_DOWNLOAD -> {
         ChanSettings.mediaViewerAutoSwipeAfterDownload.toggle()
+      }
+      ACTION_PAUSE_PLAYERS_WHEN_IN_BG -> {
+        ChanSettings.mediaViewerPausePlayersWhenInBackground.toggle()
+      }
+      ACTION_ENABLE_SOUND_POSTS -> {
+        ChanSettings.mediaViewerSoundPostsEnabled.toggle()
+        showToastFunc(R.string.restart_the_media_viewer)
+      }
+      ACTION_USE_MPV -> {
+        ChanSettings.useMpvVideoPlayer.toggle()
+        reloadMediaFunc()
       }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
@@ -199,6 +233,9 @@ class MediaViewerMenuHelper(
     const val ACTION_MEDIA_VIEWER_GESTURE_SETTINGS = 107
     const val ACTION_MAX_OFFSCREEN_PAGES_SETTING = 108
     const val ACTION_DRAW_BEHIND_NOTCH = 109
+    const val ACTION_ENABLE_SOUND_POSTS = 110
+    const val ACTION_USE_MPV = 111
+    const val ACTION_PAUSE_PLAYERS_WHEN_IN_BG = 112
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

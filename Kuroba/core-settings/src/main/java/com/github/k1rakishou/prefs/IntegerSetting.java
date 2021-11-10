@@ -30,17 +30,8 @@ public class IntegerSetting extends Setting<Integer> {
     private Integer cached;
 
     public IntegerSetting(SettingProvider settingProvider, String key, Integer def) {
-        this(settingProvider, key, def, false);
-    }
-
-    public IntegerSetting(SettingProvider settingProvider, String key, Integer def, boolean skipInitial) {
         super(settingProvider, key, def);
-
-        if (!skipInitial) {
-            settingState.onNext(settingProvider.getInt(key, def));
-        }
     }
-
 
     @Override
     public Integer get() {

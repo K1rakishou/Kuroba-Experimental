@@ -25,6 +25,7 @@ import com.github.k1rakishou.json.JsonSetting
 import com.github.k1rakishou.json.LongJsonSetting
 import com.github.k1rakishou.json.RuntimeTypeAdapterFactory
 import com.github.k1rakishou.json.StringJsonSetting
+import com.github.k1rakishou.model.data.descriptor.DescriptorParcelableMoshiAdapter
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
@@ -92,6 +93,7 @@ class JsonParserModule {
     Logger.deps("Moshi");
 
     return Moshi.Builder()
+      .add(DescriptorParcelableMoshiAdapter())
       .build()
   }
 

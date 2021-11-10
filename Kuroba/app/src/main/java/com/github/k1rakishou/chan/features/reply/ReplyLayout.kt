@@ -44,6 +44,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
 import androidx.core.content.ContextCompat
+import androidx.core.widget.addTextChangedListener
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -213,6 +214,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var replyLayoutFilesArea: ReplyLayoutFilesArea
 
   private var isCounterOverflowed = false
+  private val textChangeListeners = mutableListOf<TextWatcher>()
 
   private val coroutineScope = KurobaCoroutineScope()
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(coroutineScope)
@@ -559,6 +561,11 @@ class ReplyLayout @JvmOverloads constructor(
     submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_send_white_24dp))
     more.setImageDrawable(moreDropdown)
 
+    textChangeListeners += name.addTextChangedListener(afterTextChanged = { presenter.loadViewsIntoDraft() })
+    textChangeListeners += subject.addTextChangedListener(afterTextChanged = { presenter.loadViewsIntoDraft() })
+    textChangeListeners += flag.addTextChangedListener(afterTextChanged = { presenter.loadViewsIntoDraft() })
+    textChangeListeners += options.addTextChangedListener(afterTextChanged = { presenter.loadViewsIntoDraft() })
+
     setView(replyInputLayout)
     elevation = dp(4f).toFloat()
   }
@@ -594,6 +601,14 @@ class ReplyLayout @JvmOverloads constructor(
   fun onDestroy() {
     this.threadListLayoutCallbacks = null
     this.threadListLayoutFilesCallback = null
+
+    textChangeListeners.forEach { textWatcher ->
+      name.removeTextChangedListener(textWatcher)
+      subject.removeTextChangedListener(textWatcher)
+      flag.removeTextChangedListener(textWatcher)
+      options.removeTextChangedListener(textWatcher)
+    }
+    textChangeListeners.clear()
 
     comment.cleanup()
     presenter.unbindReplyImages()
@@ -992,6 +1007,11 @@ class ReplyLayout @JvmOverloads constructor(
 
       blockSelectionChange = true
       comment.setText(reply.comment)
+
+      if (reply.comment.isNotEmpty()) {
+        comment.setSelection(reply.comment.length)
+      }
+
       blockSelectionChange = false
     }
   }
@@ -1285,7 +1305,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun onSelectionChanged() {
     if (!blockSelectionChange) {
-      presenter.onSelectionChanged()
+      presenter.loadViewsIntoDraft()
+      presenter.highlightQuotes()
     }
   }
 

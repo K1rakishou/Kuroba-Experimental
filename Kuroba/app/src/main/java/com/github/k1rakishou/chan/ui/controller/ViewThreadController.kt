@@ -161,12 +161,9 @@ open class ViewThreadController(
 
   protected fun buildMenu() {
     val menuBuilder = navigation.buildMenu(context)
-    if (!ChanSettings.textOnly.get()) {
-      menuBuilder
-        .withItem(ACTION_ALBUM, R.drawable.ic_image_white_24dp) { item -> albumClicked(item) }
-    }
 
     menuBuilder
+      .withItem(ACTION_ALBUM, R.drawable.ic_image_white_24dp) { item -> albumClicked(item) }
       .withItem(ACTION_PIN, R.drawable.ic_bookmark_border_white_24dp) { item -> pinClicked(item) }
     val menuOverflowBuilder = menuBuilder.withOverflow(navigationController, this)
 
@@ -478,29 +475,62 @@ open class ViewThreadController(
     }
   }
 
+  override suspend fun showCatalogWithoutFocusing(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    mainScope.launch(Dispatchers.Main.immediate) {
+      Logger.d(TAG, "showCatalog($catalogDescriptor, $animated)")
+
+      showCatalogInternal(
+        catalogDescriptor = catalogDescriptor,
+        showCatalogOptions = ShowCatalogOptions(
+          switchToCatalogController = false,
+          withAnimation = animated
+        )
+      )
+    }
+  }
+
   override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showCatalog($catalogDescriptor, $animated)")
-      showCatalogInternal(catalogDescriptor, animated)
+
+      showCatalogInternal(
+        catalogDescriptor = catalogDescriptor,
+        showCatalogOptions = ShowCatalogOptions(
+          switchToCatalogController = true,
+          withAnimation = animated
+        )
+      )
     }
   }
 
   override suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "setCatalog($catalogDescriptor, $animated)")
-      showCatalogInternal(catalogDescriptor, animated)
+
+      showCatalogInternal(
+        catalogDescriptor = catalogDescriptor,
+        showCatalogOptions = ShowCatalogOptions(
+          switchToCatalogController = true,
+          withAnimation = animated
+        )
+      )
     }
   }
 
-  private suspend fun showCatalogInternal(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showCatalogInternal($catalogDescriptor, $animated)")
+  private suspend fun showCatalogInternal(
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
+    showCatalogOptions: ShowCatalogOptions
+  ) {
+    Logger.d(TAG, "showCatalogInternal($catalogDescriptor, $showCatalogOptions)")
 
     if (doubleNavigationController != null && doubleNavigationController?.getLeftController() is BrowseController) {
       val browseController = doubleNavigationController!!.getLeftController() as BrowseController
       browseController.setCatalog(catalogDescriptor)
 
-      // slide layout
-      doubleNavigationController!!.switchToController(true, animated)
+      if (showCatalogOptions.switchToCatalogController) {
+        // slide layout
+        doubleNavigationController!!.switchToController(true, showCatalogOptions.withAnimation)
+      }
 
       return
     }
@@ -525,7 +555,7 @@ open class ViewThreadController(
 
     if (browseController != null) {
       browseController.setCatalog(catalogDescriptor)
-      requireNavController().popController(animated)
+      requireNavController().popController(showCatalogOptions.withAnimation)
     }
   }
 

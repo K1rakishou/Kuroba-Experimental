@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.manager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter
 import com.github.k1rakishou.chan.features.reply.data.Reply
+import com.github.k1rakishou.chan.features.reply.data.ReplyDataJson
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.features.reply.data.ReplyFilesStorage
@@ -28,21 +29,29 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.SuspendableInitializer
+import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.Gson
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.flow.Flow
+import okio.buffer
+import okio.source
 import java.io.File
 import java.io.IOException
 import java.util.*
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
+import kotlin.time.measureTimedValue
 
 /**
  * Manages replies.
  */
+@OptIn(ExperimentalTime::class)
 class ReplyManager(
+  private val applicationVisibilityManager: ApplicationVisibilityManager,
   private val appConstants: AppConstants,
+  private val moshi: Moshi,
   commonGson: Gson
 ) {
   @Volatile
@@ -56,6 +65,15 @@ class ReplyManager(
 
   private val drafts: MutableMap<ChanDescriptor, Reply> = HashMap()
   private val replyFilesStorage by lazy { ReplyFilesStorage(gson, appConstants) }
+
+  init {
+    applicationVisibilityManager.addListener { applicationVisibility ->
+      if (applicationVisibility.isInBackground()) {
+        val duration = measureTime { persistDrafts() }
+        Logger.d(TAG, "persistDrafts() took $duration")
+      }
+    }
+  }
 
   @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilFilesAreLoaded() {
@@ -138,11 +156,17 @@ class ReplyManager(
       return ModularResult.value(Unit)
     }
 
-    val result = replyFilesStorage.reloadAllFilesFromDisk(
-      appConstants.attachFilesDir,
-      appConstants.attachFilesMetaDir,
-      appConstants.mediaPreviewsDir
-    )
+    val restoreDraftsDuration = measureTime { restoreDrafts() }
+    Logger.d(TAG, "reloadFilesFromDisk() restoreDrafts() took $restoreDraftsDuration")
+
+    val (result, reloadAllFilesFromDiskDuration) = measureTimedValue {
+      replyFilesStorage.reloadAllFilesFromDisk(
+        appConstants.attachFilesDir,
+        appConstants.attachFilesMetaDir,
+        appConstants.mediaPreviewsDir
+      )
+    }
+    Logger.d(TAG, "reloadFilesFromDisk() reloadAllFilesFromDisk() took $reloadAllFilesFromDiskDuration")
 
     filesLoaded = true
     filesLoadedInitializer.initWithValue(Unit)
@@ -420,6 +444,127 @@ class ReplyManager(
   }
 
   @Synchronized
+  fun deleteCachedDraftFromDisk(chanDescriptor: ChanDescriptor) {
+    val draftOnDisk = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
+    draftOnDisk.delete()
+
+    Logger.d(TAG, "deleteCachedDraftFromDisk($chanDescriptor), draftOnDisk='${draftOnDisk.absolutePath}'")
+  }
+
+  @Synchronized
+  private fun persistDrafts() {
+    val draftsSorted = drafts
+      .entries
+      .sortedByDescending { (_, reply) -> reply.lastUpdatedAt }
+      .take(MAX_DRAFTS_PERSISTED)
+
+    if (draftsSorted.isEmpty()) {
+      Logger.d(TAG, "persistDrafts() drafts are empty")
+      return
+    }
+
+    var persistedCount = 0
+    var deletedCount = 0
+
+    Logger.d(TAG, "persistDrafts() persisting ${draftsSorted.size} out of ${drafts.size}")
+
+    for ((chanDescriptor, reply) in draftsSorted) {
+      try {
+        if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+          continue
+        }
+
+        val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
+
+        val replyDataJson = reply.toReplyDataJson()
+        if (replyDataJson == null) {
+          draftFile.delete()
+          continue
+        }
+
+        val replyDataJsonString = moshi
+          .adapter<ReplyDataJson>(ReplyDataJson::class.java)
+          .toJson(replyDataJson)
+
+        draftFile.writeText(replyDataJsonString)
+
+        ++persistedCount
+      } catch (error: Throwable) {
+        Logger.e(TAG, "persistDrafts() failed to store reply for descriptor ${chanDescriptor}", error)
+      }
+    }
+
+    val draftDescriptorsSet = draftsSorted.toHashSetBy { (chanDescriptor, _) -> chanDescriptor }
+    Logger.d(TAG, "persistDrafts() deleting old drafts")
+
+    // Delete old drafts that are not included in MAX_DRAFTS_PERSISTED
+    for ((chanDescriptor, _) in drafts.entries) {
+      try {
+        if (chanDescriptor in draftDescriptorsSet) {
+          continue
+        }
+
+        val draftFile = File(appConstants.replyDraftsDir, chanDescriptor.replyDraftFileName())
+        draftFile.delete()
+
+        ++deletedCount
+      } catch (error: Throwable) {
+        Logger.e(TAG, "persistDrafts() failed to remove old reply draft for descriptor ${chanDescriptor}", error)
+      }
+    }
+
+    Logger.d(TAG, "persistDrafts() done persistedCount=$persistedCount, deletedCount=$deletedCount")
+  }
+
+  @Synchronized
+  private fun restoreDrafts() {
+    val draftFiles = appConstants.replyDraftsDir.listFiles()
+    if (draftFiles.isNullOrEmpty()) {
+      Logger.d(TAG, "restoreDrafts() draftFiles is empty")
+      return
+    }
+
+    for (draftFile in draftFiles) {
+      try {
+        val replyDataJson = draftFile.source().buffer().use { bufferedSource ->
+          return@use moshi
+            .adapter<ReplyDataJson>(ReplyDataJson::class.java)
+            .fromJson(bufferedSource)
+        }
+
+        if (replyDataJson == null || replyDataJson.isEmpty()) {
+          continue
+        }
+
+        val reply = replyDataJson.toReplyOrNull()
+          ?: continue
+
+        drafts[reply.chanDescriptor] = reply
+      } catch (error: Throwable) {
+        Logger.e(TAG, "restoreDrafts() failed restore draft for file ${draftFile.absolutePath}", error)
+        draftFile.delete()
+      }
+    }
+
+    Logger.d(TAG, "restoreDrafts() done, draftsCount=${drafts.size}")
+  }
+
+  private fun ChanDescriptor.replyDraftFileName(): String {
+    when (this) {
+      is ChanDescriptor.CompositeCatalogDescriptor -> {
+        error("Cannot use CompositeCatalogDescriptor here")
+      }
+      is ChanDescriptor.CatalogDescriptor -> {
+        return "${siteName()}_${boardCode()}.json"
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        return "${siteName()}_${boardCode()}_${threadNo}.json"
+      }
+      else -> error("Unexpected descriptor type: ${javaClass.simpleName}")
+    }
+  }
+
+  @Synchronized
   private fun ensureFilesLoaded() {
     check(filesLoaded) { "Files are not loaded yet!" }
   }
@@ -434,6 +579,7 @@ class ReplyManager(
   companion object {
     private const val TAG = "ReplyManager"
     private const val REPLY_FILE_META_GSON_VERSION = 1.0
+    private const val MAX_DRAFTS_PERSISTED = 16
 
     const val ATTACH_FILE_NAME = "attach_file"
     const val ATTACH_FILE_META_NAME = "attach_file_meta"

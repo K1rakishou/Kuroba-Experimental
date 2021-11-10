@@ -24,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -94,6 +95,7 @@ class ComposeBoardsController(
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
     val compositionSlots = viewModel.catalogCompositionSlots
+    val focusManager = LocalFocusManager.current
 
     Column(
       modifier = Modifier
@@ -143,7 +145,10 @@ class ComposeBoardsController(
 
       BuildFooter(
         compositionSlots = compositionSlots,
-        onCancelClicked = { pop() },
+        onCancelClicked = {
+          focusManager.clearFocus(force = true)
+          pop()
+        },
         onSaveClicked = {
           mainScope.launch { createOrUpdateCompositeCatalog() }
         }

@@ -14,6 +14,7 @@ interface MediaViewContract {
   fun toggleSoundMuteState()
   fun isSoundCurrentlyMuted(): Boolean
 
+  fun isSystemUiHidden(): Boolean
   fun onTapped()
   fun closeMediaViewer()
   suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean
@@ -21,6 +22,7 @@ interface MediaViewContract {
   fun onMediaLongClick(view: View, viewableMedia: ViewableMedia)
   suspend fun defaultArtworkDrawable(): Drawable?
   fun openAlbum(viewableMedia: ViewableMedia)
+  fun reloadAs(pagerPosition: Int, viewableMedia: ViewableMedia)
 
   fun presentController(controller: Controller, animated: Boolean)
 }

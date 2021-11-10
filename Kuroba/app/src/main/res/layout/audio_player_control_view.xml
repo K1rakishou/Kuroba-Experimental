@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/audio_player_controls_view"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layoutDirection="ltr">
+
+    <LinearLayout
+        android:id="@+id/audio_player_controls_view_root"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:background="#CC000000"
+        android:orientation="vertical"
+        android:visibility="gone"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/audio_player_position_duration"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:paddingLeft="4dp"
+                android:paddingRight="4dp"
+                android:textColor="#FFBEBEBE"
+                android:textSize="14sp"
+                android:textStyle="bold"
+                android:text="--" />
+
+            <ImageButton
+                android:id="@+id/audio_player_mute_unmute"
+                android:layout_width="60dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_volume_off_white_24dp" />
+
+            <ImageButton
+                android:id="@+id/audio_player_play_pause"
+                android:layout_width="60dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/exo_controls_pause" />
+
+
+            <ImageButton
+                android:id="@+id/audio_player_restart"
+                android:layout_width="60dp"
+                android:layout_height="38dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_baseline_keyboard_return_24" />
+
+        </LinearLayout>
+
+        <FrameLayout
+            android:id="@+id/audio_player_controls_insets_view"
+            android:layout_width="match_parent"
+            android:layout_height="0dp" />
+
+    </LinearLayout>
+
+</FrameLayout>

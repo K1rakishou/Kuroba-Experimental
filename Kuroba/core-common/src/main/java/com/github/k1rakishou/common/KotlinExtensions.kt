@@ -58,6 +58,7 @@ import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
 import java.io.InterruptedIOException
+import java.lang.Thread.currentThread
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.util.*
@@ -535,7 +536,7 @@ inline fun <T, R : Any> Collection<T>.mapReverseIndexedNotNull(transform: (index
   return mapReverseIndexedNotNullTo(ArrayList<R>(), transform)
 }
 
-public fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector: (T) -> K): HashSet<K> {
+public inline fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector: (T) -> K): HashSet<K> {
   val hashSet = hashSetWithCap<K>(capacity)
 
   for (element in this) {
@@ -850,7 +851,10 @@ fun CharSequence.ellipsizeEnd(maxLength: Int): CharSequence {
     return this
   }
 
-  return TextUtils.concat(this.take(maxLength - ELLIPSIZE_SYMBOL.length), ELLIPSIZE_SYMBOL)
+  val spannableString = SpannableString.valueOf(this)
+  val cutString = subSequence(0, (maxLength - ELLIPSIZE_SYMBOL.length).coerceAtMost(spannableString.length))
+
+  return TextUtils.concat(cutString, ELLIPSIZE_SYMBOL)
 }
 
 @Suppress("ReplaceSizeCheckWithIsNotEmpty", "NOTHING_TO_INLINE")
@@ -897,8 +901,8 @@ suspend fun CompletableDeferred<*>.awaitSilently() {
   }
 }
 
-suspend fun <T> CompletableDeferred<T>.awaitCatching(): Result<T> {
-  return kotlin.runCatching { await() }
+suspend fun <T> CompletableDeferred<T>.awaitCatching(): ModularResult<T> {
+  return ModularResult.Try { await() }
 }
 
 fun View.resetClickListener() {
@@ -1347,4 +1351,65 @@ fun Int.modifyCurrentAlpha(modifier: Float): Int {
   val alpha = (this shr 24) and 0xff
   val newAlpha = (alpha.toFloat() * modifier.coerceIn(0f, 1f)).toInt()
   return ColorUtils.setAlphaComponent(this, newAlpha)
+}
+
+fun <T> MutableList<T>.move(fromIdx: Int, toIdx: Int): Boolean {
+  if (fromIdx == toIdx) {
+    return false
+  }
+
+  if (fromIdx < 0 || fromIdx >= size) {
+    return false
+  }
+
+  if (toIdx < 0 || toIdx >= size) {
+    return false
+  }
+
+  if (toIdx > fromIdx) {
+    for (i in fromIdx until toIdx) {
+      this[i] = this[i + 1].also { this[i + 1] = this[i] }
+    }
+  } else {
+    for (i in fromIdx downTo toIdx + 1) {
+      this[i] = this[i - 1].also { this[i - 1] = this[i] }
+    }
+  }
+
+  return true
+}
+
+@JvmOverloads
+fun Thread.callStack(tag: String = ""): String {
+  val resultString = java.lang.StringBuilder(256)
+  var index = 0
+
+  for (ste in currentThread().stackTrace) {
+    val className = ste?.className ?: continue
+    val fileName = ste?.fileName ?: continue
+    val methodName = ste?.methodName ?: continue
+    val lineNumber = ste?.lineNumber ?: continue
+
+    if (!className.startsWith("com.github.k1rakishou")) {
+      continue
+    }
+
+    if (fileName.contains("KotlinExtensions.kt") && methodName.contains("callStack")) {
+      continue
+    }
+
+    if (index > 0) {
+      resultString.appendLine()
+    }
+
+    resultString.append("${tag} ${index}-[${fileName}:${lineNumber}]")
+    resultString.append(" ")
+    resultString.append(className)
+    resultString.append("#")
+    resultString.append(methodName)
+
+    ++index
+  }
+
+  return resultString.toString()
 }

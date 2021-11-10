@@ -6,16 +6,21 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
+import com.github.k1rakishou.model.data.bookmark.SimpleThreadBookmarkGroupToCreate
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupMatchPatternBuilder
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilter
@@ -29,6 +34,8 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
 import org.jsoup.parser.Parser
@@ -40,6 +47,7 @@ class BookmarkFilterWatchableThreadsUseCase(
   private val appConstants: AppConstants,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
+  private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
   private val appScope: CoroutineScope,
@@ -107,10 +115,10 @@ class BookmarkFilterWatchableThreadsUseCase(
       catalogThread.replaceRawCommentWithParsed(parsedComment.toString())
 
       val matchedFilter = tryMatchWatchFiltersWithThreadInfo(
-        enabledWatchFilters,
-        catalogBoardDescriptor,
-        parsedComment,
-        subject
+        enabledWatchFilters = enabledWatchFilters,
+        catalogBoardDescriptor = catalogBoardDescriptor,
+        parsedComment = parsedComment,
+        subject = subject
       )
 
       if (matchedFilter != null) {
@@ -128,7 +136,7 @@ class BookmarkFilterWatchableThreadsUseCase(
 
     Logger.d(TAG, "doWorkInternal() matchedCatalogThreads=${matchedCatalogThreads.size}")
 
-    val result = createOrUpdateBookmarks(matchedCatalogThreads)
+    val result = withContext(NonCancellable) { createOrUpdateBookmarks(matchedCatalogThreads) }
     Logger.d(TAG, "doWorkInternal() Success: $result")
 
     return result
@@ -140,6 +148,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     val filterWatchGroupsToCreate = mutableListOf<ChanFilterWatchGroup>()
     val bookmarksToCreate = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
     val bookmarksToUpdate = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+    val bookmarkGroupsToCreate = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
 
     matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
       val bookmarkThreadDescriptor = filterWatchCatalogThreadInfoObject.threadDescriptor
@@ -151,8 +160,8 @@ class BookmarkFilterWatchableThreadsUseCase(
       // Since we delete filter watch groups every time we create/delete/update a filter with "watch"
       // flag, we need to recreate groups every time we fetch them from the server.
       filterWatchGroupsToCreate += ChanFilterWatchGroup(
-        filterWatchCatalogThreadInfoObject.matchedFilter().getDatabaseId(),
-        bookmarkThreadDescriptor
+        ownerChanFilterDatabaseId = filterWatchCatalogThreadInfoObject.matchedFilter().getDatabaseId(),
+        threadDescriptor = bookmarkThreadDescriptor
       )
 
       if (isFilterWatchBookmark == null) {
@@ -166,6 +175,16 @@ class BookmarkFilterWatchableThreadsUseCase(
           thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl,
           initialFlags = filterWatchFlags
         )
+
+        val filterPatter = filterWatchCatalogThreadInfoObject.matchedFilter().pattern
+        if (filterPatter.isNotNullNorEmpty()) {
+          val bookmarkDescriptors = bookmarkGroupsToCreate.getOrPut(
+            key = filterPatter,
+            defaultValue = { mutableListOf() }
+          )
+
+          bookmarkDescriptors.add(bookmarkThreadDescriptor)
+        }
 
         return@forEach
       }
@@ -181,12 +200,13 @@ class BookmarkFilterWatchableThreadsUseCase(
 
     if (bookmarksToCreate.isNotEmpty()) {
       val createdThreadBookmarks = bookmarksToCreate.mapNotNull { simpleThreadBookmark ->
-        val databaseId = chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
-          .peekError { error ->
-            Logger.e(TAG, "createEmptyThreadIfNotExists() " +
-              "threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
-          }
-          .valueOrNull()
+        val databaseId =
+          chanPostRepository.createEmptyThreadIfNotExists(simpleThreadBookmark.threadDescriptor)
+            .peekError { error ->
+              Logger.e(TAG, "createEmptyThreadIfNotExists() " +
+                  "threadDescriptor=${simpleThreadBookmark.threadDescriptor} error", error)
+            }
+            .valueOrNull()
 
         if (databaseId == null || databaseId < 0L) {
           return@mapNotNull null
@@ -195,9 +215,35 @@ class BookmarkFilterWatchableThreadsUseCase(
         return@mapNotNull simpleThreadBookmark
       }
 
-      bookmarksManager.createBookmarksSuspend(createdThreadBookmarks)
+      val success = bookmarksManager.createBookmarksForFilterWatcher(createdThreadBookmarks)
+      Logger.d(TAG, "createOrUpdateBookmarks() createBookmarksForFilterWatcher() " +
+        "createdThreadBookmarks=${createdThreadBookmarks.size}")
 
-      Logger.d(TAG, "createBookmarks() created ${createdThreadBookmarks.size} " +
+      if (success && bookmarkGroupsToCreate.isNotEmpty()) {
+        // Create thread bookmark groups for each filter pattern where the bookmarks will be moved
+        // into
+        val simpleThreadBookmarkGroupsToCreate = bookmarkGroupsToCreate.entries
+          .map { (filterPattern, threadDescriptors) ->
+            return@map SimpleThreadBookmarkGroupToCreate(
+              groupName = filterPattern,
+              entries = threadDescriptors,
+              matchingPattern = ThreadBookmarkGroupMatchPatternBuilder
+                .newBuilder(filterPattern, BookmarkGroupMatchFlag.Type.PostSubject)
+                .or(filterPattern, BookmarkGroupMatchFlag.Type.PostComment)
+                .build()
+            )
+          }
+
+        Logger.d(TAG, "createOrUpdateBookmarks() createNewGroupEntries() " +
+          "groupsCount=${simpleThreadBookmarkGroupsToCreate.size}")
+        threadBookmarkGroupManager.createNewGroupEntriesFromFilterWatcher(simpleThreadBookmarkGroupsToCreate)
+
+        val createdThreadBookmarkDescriptors = createdThreadBookmarks
+          .map { simpleThreadBookmark -> simpleThreadBookmark.threadDescriptor }
+        bookmarksManager.emitBookmarksCreatedEventForFilterWatcher(createdThreadBookmarkDescriptors)
+      }
+
+      Logger.d(TAG, "createOrUpdateBookmarks() success=$success created ${createdThreadBookmarks.size} " +
         "out of ${bookmarksToCreate.size} bookmarks")
     }
 
@@ -210,17 +256,19 @@ class BookmarkFilterWatchableThreadsUseCase(
         bookmarksManager.persistBookmarksManually(updatedBookmarks)
       }
 
-      Logger.d(TAG, "createBookmarks() updated ${updatedBookmarks.size} bookmarks")
+      Logger.d(TAG, "createOrUpdateBookmarks() updated ${updatedBookmarks.size} bookmarks")
     }
 
     if (bookmarksToCreate.isEmpty() && bookmarksToUpdate.isEmpty()) {
-      Logger.d(TAG, "createBookmarks() nothing to create, nothing to update")
+      Logger.d(TAG, "createOrUpdateBookmarks() nothing to create, nothing to update")
     }
 
     return createFilterWatchGroups(filterWatchGroupsToCreate)
   }
 
-  private suspend fun createFilterWatchGroups(filterWatchGroupsToCreate: List<ChanFilterWatchGroup>): Boolean {
+  private suspend fun createFilterWatchGroups(
+    filterWatchGroupsToCreate: List<ChanFilterWatchGroup>
+  ): Boolean {
     if (filterWatchGroupsToCreate.isEmpty()) {
       Logger.d(TAG, "createFilterWatchGroups() No filter watch groups to create")
       return true

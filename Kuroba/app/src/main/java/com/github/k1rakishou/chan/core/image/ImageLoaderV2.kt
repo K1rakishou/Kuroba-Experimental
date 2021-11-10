@@ -64,20 +64,39 @@ import kotlin.time.measureTimedValue
 class ImageLoaderV2(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
-  private val imageLoader: ImageLoader,
-  private val replyManager: ReplyManager,
-  private val themeEngine: ThemeEngine,
-  private val cacheHandler: Lazy<CacheHandler>,
-  private val fileCacheV2: FileCacheV2,
-  private val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper,
-  private val siteResolver: SiteResolver,
-  private val coilOkHttpClient: CoilOkHttpClient,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val _imageLoader: Lazy<ImageLoader>,
+  private val _replyManager: Lazy<ReplyManager>,
+  private val _themeEngine: Lazy<ThemeEngine>,
+  private val _cacheHandler: Lazy<CacheHandler>,
+  private val _fileCacheV2: Lazy<FileCacheV2>,
+  private val _imageLoaderFileManagerWrapper: Lazy<ImageLoaderFileManagerWrapper>,
+  private val _siteResolver: Lazy<SiteResolver>,
+  private val _coilOkHttpClient: Lazy<CoilOkHttpClient>,
+  private val _threadDownloadManager: Lazy<ThreadDownloadManager>
 ) {
   private val mutex = Mutex()
 
   @GuardedBy("mutex")
   private val activeRequests = LruCache<String, ActiveRequest>(1024)
+
+  val imageLoader: ImageLoader
+    get() = _imageLoader.get()
+  val replyManager: ReplyManager
+    get() = _replyManager.get()
+  val themeEngine: ThemeEngine
+    get() = _themeEngine.get()
+  val cacheHandler: CacheHandler
+    get() = _cacheHandler.get()
+  val fileCacheV2: FileCacheV2
+    get() = _fileCacheV2.get()
+  val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper
+    get() = _imageLoaderFileManagerWrapper.get()
+  val siteResolver: SiteResolver
+    get() = _siteResolver.get()
+  val coilOkHttpClient: CoilOkHttpClient
+    get() = _coilOkHttpClient.get()
+  val threadDownloadManager: ThreadDownloadManager
+    get() = _threadDownloadManager.get()
 
   private val fileManager: FileManager
     get() = imageLoaderFileManagerWrapper.fileManager
@@ -87,8 +106,8 @@ class ImageLoaderV2(
 
   suspend fun isImageCachedLocally(url: String): Boolean {
     return withContext(Dispatchers.Default) {
-      val exists = cacheHandler.get().cacheFileExists(url)
-      val downloaded = cacheHandler.get().isAlreadyDownloaded(url)
+      val exists = cacheHandler.cacheFileExists(url)
+      val downloaded = cacheHandler.isAlreadyDownloaded(url)
 
       return@withContext exists && downloaded
     }
@@ -208,8 +227,6 @@ class ImageLoaderV2(
     @DrawableRes errorDrawableId: Int = R.drawable.ic_image_error_loading,
     @DrawableRes notFoundDrawableId: Int = R.drawable.ic_image_not_found
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
     return loadFromNetwork(
       context = context,
       url = url,
@@ -232,8 +249,6 @@ class ImageLoaderV2(
     listener: FailureAwareImageListener,
     postDescriptor: PostDescriptor? = null
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
-
     return loadFromNetwork(
       context = context,
       url = requestUrl,
@@ -254,7 +269,6 @@ class ImageLoaderV2(
     // threads files' first and if not found then attempt to load it from the network.
     postDescriptor: PostDescriptor? = null
   ): Disposable {
-    BackgroundUtils.ensureMainThread()
     val completableDeferred = CompletableDeferred<Unit>()
 
     val job = appScope.launch(Dispatchers.IO) {
@@ -433,7 +447,7 @@ class ImageLoaderV2(
           "fileLocation=${fileLocation}, error=${result.throwable.errorMessageOrClassName()}")
 
         if (!fileCacheV2.isRunning(url)) {
-          cacheHandler.get().deleteCacheFileByUrl(url)
+          cacheHandler.deleteCacheFileByUrl(url)
         }
 
         return null
@@ -563,9 +577,9 @@ class ImageLoaderV2(
   private suspend fun loadFromNetworkIntoFile(url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val cacheFile = cacheHandler.get().getOrCreateCacheFile(url)
+    val cacheFile = cacheHandler.getOrCreateCacheFile(url)
     if (cacheFile == null) {
-      Logger.e(TAG, "loadFromNetworkInternalIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
+      Logger.e(TAG, "loadFromNetworkIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
       return null
     }
 
@@ -573,11 +587,11 @@ class ImageLoaderV2(
       loadFromNetworkIntoFileInternal(url, cacheFile)
     } catch (error: Throwable) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.get().deleteCacheFile(cacheFile)
+        cacheHandler.deleteCacheFile(cacheFile)
       }
 
       if (error.isCoroutineCancellationException()) {
-        Logger.e(TAG, "loadFromNetworkInternalIntoFile() canceled '$url'")
+        Logger.e(TAG, "loadFromNetworkIntoFile() canceled '$url'")
         return null
       }
 
@@ -586,7 +600,7 @@ class ImageLoaderV2(
 
     if (!success) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.get().deleteCacheFile(cacheFile)
+        cacheHandler.deleteCacheFile(cacheFile)
       }
 
       return null
@@ -638,7 +652,7 @@ class ImageLoaderV2(
       }
     }
 
-    if (!cacheHandler.get().markFileDownloaded(cacheFile)) {
+    if (!cacheHandler.markFileDownloaded(cacheFile)) {
       throw IOException("Failed to mark file '${cacheFile.absolutePath}' as downloaded")
     }
 
@@ -647,7 +661,7 @@ class ImageLoaderV2(
       return false
     }
 
-    cacheHandler.get().fileWasAdded(fileLength)
+    cacheHandler.fileWasAdded(fileLength)
 
     return true
   }
@@ -669,7 +683,7 @@ class ImageLoaderV2(
       // fallthrough
     }
 
-    val cacheFile = cacheHandler.get().getCacheFileOrNull(url)
+    val cacheFile = cacheHandler.getCacheFileOrNull(url)
     if (cacheFile == null) {
       return null
     }

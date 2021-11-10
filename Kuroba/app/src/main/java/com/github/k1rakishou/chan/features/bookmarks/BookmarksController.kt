@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
+import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView
@@ -107,6 +108,8 @@ class BookmarksController(
   lateinit var threadDownloadManager: ThreadDownloadManager
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var filterWatcherCoordinator: FilterWatcherCoordinator
 
   private lateinit var epoxyRecyclerView: EpoxyRecyclerView
   private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
@@ -374,23 +377,34 @@ class BookmarksController(
       }
       .withOverflow(requireNavController())
       .withSubItem(
+        ACTION_RESTART_FILTER_WATCHER,
+        R.string.controller_bookmarks_restart_filter_watcher,
+        { restartFilterWatcherClicked() }
+      )
+      .withSubItem(
         ACTION_MARK_ALL_BOOKMARKS_AS_SEEN,
         R.string.controller_bookmarks_mark_all_bookmarks_as_seen,
         { bookmarksPresenter.markAllAsSeen() })
       .withSubItem(
         ACTION_PRUNE_NON_ACTIVE_BOOKMARKS,
         R.string.controller_bookmarks_prune_inactive_bookmarks,
-        { subItem -> onPruneNonActiveBookmarksClicked(subItem) })
+        { subItem -> onPruneNonActiveBookmarksClicked(subItem) }
+      )
       .withSubItem(
-        ACTION_CLEAR_ALL_BOOKMARKS,
-        R.string.controller_bookmarks_clear_all_bookmarks,
-        { subItem -> onClearAllBookmarksClicked(subItem) }
+        ACTION_BOOKMARK_GROUPS_SETTINGS,
+        R.string.controller_bookmarks_bookmark_groups_settings,
+        { bookmarkGroupsSettings() }
       )
       .withSubItem(
         ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH,
         R.string.controller_bookmarks_set_grid_bookmark_view_width,
         PersistableChanState.viewThreadBookmarksGridMode.get(),
         { onSetGridBookmarkViewWidthClicked() }
+      )
+      .withSubItem(
+        ACTION_CLEAR_ALL_BOOKMARKS,
+        R.string.controller_bookmarks_clear_all_bookmarks,
+        { subItem -> onClearAllBookmarksClicked(subItem) }
       )
       .build()
       .build()
@@ -432,6 +446,14 @@ class BookmarksController(
         } else {
           bookmarksPresenter.updateReorderingMode(enterReorderingMode = true)
         }
+      }
+      BookmarksSelectionHelper.BookmarksMenuItemType.MoveToGroup -> {
+        val controller = BookmarkGroupSettingsController(
+          context = context,
+          bookmarksToMove = selectedItems,
+          refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
+        )
+        presentController(controller)
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.Download -> {
         val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
@@ -593,6 +615,20 @@ class BookmarksController(
     }
   }
 
+  private fun bookmarkGroupsSettings() {
+    val controller = BookmarkGroupSettingsController(
+      context = context,
+      refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
+    )
+
+    presentController(controller)
+  }
+
+  private fun restartFilterWatcherClicked() {
+    filterWatcherCoordinator.restartFilterWatcherWithTinyDelay(isCalledBySwipeToRefresh = true)
+    showToast(R.string.controller_bookmarks_filter_watcher_restarted)
+  }
+
   private fun onSetGridBookmarkViewWidthClicked() {
     val rangeSettingUpdaterController = RangeSettingUpdaterController(
       context = context,
@@ -732,9 +768,7 @@ class BookmarksController(
           updateTitleWithStats(state)
 
           state.groupedBookmarks.forEach { bookmarkGroup ->
-            val hasBookmarksInGroup = bookmarkGroup.threadBookmarkItemViews.isNotEmpty()
-
-            if (!hasBookmarksInGroup) {
+            if (bookmarkGroup.threadBookmarkItemViews.isEmpty()) {
               return@forEach
             }
 
@@ -764,7 +798,7 @@ class BookmarksController(
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
-                  groupId(bookmark.groupId)
+                  groupId(bookmarkGroup.groupId)
                   reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
@@ -781,7 +815,7 @@ class BookmarksController(
                   threadBookmarkSelection(bookmark.selection)
                   highlightBookmark(bookmark.highlight)
                   isTablet(isTablet)
-                  groupId(bookmark.groupId)
+                  groupId(bookmarkGroup.groupId)
                   reorderingMode(state.isReorderingMode)
                   bookmarkClickListener { onBookmarkClicked(bookmark.threadDescriptor) }
                   bookmarkLongClickListener { onBookmarkLongClicked(bookmark) }
@@ -1074,5 +1108,7 @@ class BookmarksController(
     private const val ACTION_MARK_ALL_BOOKMARKS_AS_SEEN = 2001
     private const val ACTION_CLEAR_ALL_BOOKMARKS = 2002
     private const val ACTION_SET_GRID_BOOKMARK_VIEW_WIDTH = 2003
+    private const val ACTION_BOOKMARK_GROUPS_SETTINGS = 2004
+    private const val ACTION_RESTART_FILTER_WATCHER = 2005
   }
 }

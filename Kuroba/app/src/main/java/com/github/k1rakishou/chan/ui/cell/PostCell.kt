@@ -65,6 +65,7 @@ import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -159,7 +160,13 @@ class PostCell : ConstraintLayout,
     }
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
-      val selection = comment.text.subSequence(comment.selectionStartSafe(), comment.selectionEndSafe())
+      val selection = try {
+        comment.text.subSequence(comment.selectionStartSafe(), comment.selectionEndSafe())
+      } catch (error: Throwable) {
+        Logger.e(TAG, "onActionItemClicked text=${comment.text}, start=${comment.selectionStartSafe()}, end=${comment.selectionEndSafe()}")
+        ""
+      }
+
       if (selection.isEmpty()) {
         return false
       }

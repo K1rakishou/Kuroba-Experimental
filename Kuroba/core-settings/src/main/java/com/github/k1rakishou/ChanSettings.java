@@ -351,6 +351,8 @@ public class ChanSettings {
     public static IntegerSetting mediaViewerMaxOffscreenPages;
     public static BooleanSetting mediaViewerAutoSwipeAfterDownload;
     public static BooleanSetting mediaViewerDrawBehindNotch;
+    public static BooleanSetting mediaViewerSoundPostsEnabled;
+    public static BooleanSetting mediaViewerPausePlayersWhenInBackground;
 
     // Media loading
     public static OptionsSetting<NetworkContentAutoLoadMode> imageAutoLoadNetwork;
@@ -385,7 +387,6 @@ public class ChanSettings {
     public static BooleanSetting showPrefetchLoadingIndicator;
     public static BooleanSetting highResCells;
     public static BooleanSetting useMpvVideoPlayer;
-    public static BooleanSetting asyncPostCellDataCalculation;
     //endregion
 
     //region OTHER
@@ -459,7 +460,7 @@ public class ChanSettings {
             //endregion
 
             // region THREAD DOWNLOADER
-            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1), true);
+            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1));
             threadDownloaderDownloadMediaOnMeteredNetwork = new BooleanSetting(provider, "preference_thread_downloader_download_media_on_metered_network", false);
             //endregion
 
@@ -573,8 +574,10 @@ public class ChanSettings {
             headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
             videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
             mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", getMediaViewerOffscreenPagesDefault());
-            mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", true);
+            mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
             mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
+            mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
+            mediaViewerPausePlayersWhenInBackground = new BooleanSetting(provider, "preference_media_viewer_pause_players_when_in_background", true);
 
             // Media loading
             imageAutoLoadNetwork = new OptionsSetting<>(provider,
@@ -615,7 +618,6 @@ public class ChanSettings {
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
             useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
-            asyncPostCellDataCalculation = new BooleanSetting(provider, "async_post_cell_data_calculation", false);
             //endregion
 
             //region OTHER

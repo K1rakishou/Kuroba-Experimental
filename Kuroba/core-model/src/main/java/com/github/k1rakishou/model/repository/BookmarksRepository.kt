@@ -18,16 +18,12 @@ class BookmarksRepository(
   private val TAG = "BookmarksRepository"
 
   @OptIn(ExperimentalTime::class)
-  suspend fun initialize(allSiteNames: Set<String>): ModularResult<List<ThreadBookmark>> {
+  suspend fun initialize(): ModularResult<List<ThreadBookmark>> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
         ensureBackgroundThread()
 
-        val (bookmarks, duration) = measureTimedValue {
-          localSource.createDefaultBookmarkGroups(allSiteNames)
-
-          return@measureTimedValue localSource.selectAll()
-        }
+        val (bookmarks, duration) = measureTimedValue { localSource.selectAll() }
 
         Logger.d(TAG, "initialize() -> ${bookmarks.size} took $duration")
         return@tryWithTransaction bookmarks

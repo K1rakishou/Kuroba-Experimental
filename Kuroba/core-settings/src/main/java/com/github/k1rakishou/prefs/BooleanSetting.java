@@ -25,29 +25,27 @@ import io.reactivex.processors.BehaviorProcessor;
 
 public class BooleanSetting extends Setting<Boolean> {
     private volatile boolean hasCached = false;
+    private Boolean cached;
     private BehaviorProcessor<Boolean> settingState = BehaviorProcessor.create();
 
     public BooleanSetting(SettingProvider settingProvider, String key, Boolean def) {
         super(settingProvider, key, def);
-
-        settingState.onNext(settingProvider.getBoolean(key, def));
     }
 
     @Override
     public synchronized Boolean get() {
-        if (hasCached) {
-            return settingState.getValue();
-        } else {
-            boolean value = settingProvider.getBoolean(key, def);
-            settingState.onNext(value);
+        if (!hasCached) {
+            cached = settingProvider.getBoolean(key, def);
             hasCached = true;
-            return value;
         }
+
+        return cached;
     }
 
     @Override
     public synchronized void set(Boolean value) {
         if (!value.equals(get())) {
+            cached = value;
             settingProvider.putBoolean(key, value);
             settingState.onNext(value);
         }
@@ -55,6 +53,7 @@ public class BooleanSetting extends Setting<Boolean> {
 
     public synchronized void setSync(Boolean value) {
         if (!value.equals(get())) {
+            cached = value;
             settingProvider.putBooleanSync(key, value);
             settingState.onNext(value);
         }

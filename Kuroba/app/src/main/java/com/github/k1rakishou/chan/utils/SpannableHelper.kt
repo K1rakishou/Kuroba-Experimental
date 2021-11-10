@@ -3,11 +3,15 @@ package com.github.k1rakishou.chan.utils
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.Color
+import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
 import android.text.style.ImageSpan
+import android.text.style.StyleSpan
+import android.text.style.TypefaceSpan
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.text.getSpans
@@ -21,6 +25,7 @@ import com.github.k1rakishou.core_spannable.PostFilterHighlightBackgroundSpan
 import com.github.k1rakishou.core_spannable.PostFilterHighlightForegroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryBackgroundSpan
 import com.github.k1rakishou.core_spannable.PostSearchQueryForegroundSpan
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -32,6 +37,37 @@ import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 object SpannableHelper {
+
+  fun convertHtmlStringTagsIntoSpans(message: Spannable, chanTheme: ChanTheme): Spannable {
+    val typefaceSpans = message.getSpans(0, message.length, TypefaceSpan::class.java)
+
+    val spanBgColor = if (chanTheme.isBackColorDark) {
+      0x22aaaaaaL.toInt()
+    } else {
+      0x22000000L.toInt()
+    }
+
+    for (span in typefaceSpans) {
+      if (span.family.equals("monospace")) {
+        val start = message.getSpanStart(span)
+        val end = message.getSpanEnd(span)
+
+        message.setSpan(BackgroundColorSpan(spanBgColor), start, end, 0)
+      }
+    }
+
+    val styleSpans: Array<StyleSpan> = message.getSpans(0, message.length, StyleSpan::class.java)
+    for (span in styleSpans) {
+      if (span.style == Typeface.ITALIC) {
+        val start = message.getSpanStart(span)
+        val end = message.getSpanEnd(span)
+
+        message.setSpan(BackgroundColorSpan(spanBgColor), start, end, 0)
+      }
+    }
+
+    return message
+  }
 
   fun findAllFilterHighlightQueryEntriesInsideSpannableStringAndMarkThem(
     inputQueries: Collection<String>,

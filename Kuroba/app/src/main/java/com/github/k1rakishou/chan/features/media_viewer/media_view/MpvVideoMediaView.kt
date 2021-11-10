@@ -44,6 +44,7 @@ import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.google.android.exoplayer2.ui.DefaultTimeBar
 import com.google.android.exoplayer2.ui.TimeBar
+import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -56,6 +57,9 @@ class MpvVideoMediaView(
   private val viewModel: MediaViewerControllerViewModel,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  cachedHttpDataSourceFactory: DataSource.Factory,
+  fileDataSourceFactory: DataSource.Factory,
+  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
@@ -63,7 +67,10 @@ class MpvVideoMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
-  mediaViewState = initialMediaViewState
+  mediaViewState = initialMediaViewState,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
 ), WindowInsetsListener, MPVLib.EventObserver {
 
   private val thumbnailMediaView: ThumbnailMediaView
@@ -92,6 +99,7 @@ class MpvVideoMediaView(
   private var hideShowAnimation: ValueAnimator? = null
   private var showBufferingJob: Job? = null
   private var playJob: Job? = null
+  private var playing = false
 
   override val hasContent: Boolean
     get() = _hasContent
@@ -201,7 +209,7 @@ class MpvVideoMediaView(
         mediaViewContract = mediaViewContract,
         tryPreloadingFunc = {
           if (playJob == null) {
-            startPlayingVideo(isLifecycleChange = null)
+            startPlayingVideo(isLifecycleChange = false)
             true
           } else {
             false
@@ -293,11 +301,102 @@ class MpvVideoMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
     if (canAutoLoad()) {
-      startPlayingVideo(isLifecycleChange)
+      startPlayingVideo(isLifecycleChange = isLifecycleChange)
     }
   }
 
-  private fun startPlayingVideo(isLifecycleChange: Boolean? = null) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
+    destroyPlayer(isPausing = isPausing, isDestroying = false, isBecomingInactive = isBecomingInactive)
+
+    playJob?.cancel()
+    playJob = null
+
+    showBufferingJob?.cancel()
+    showBufferingJob = null
+
+    _firstLoadOccurred = false
+  }
+
+  override fun unbind() {
+    destroyPlayer(isPausing = false, isDestroying = true, isBecomingInactive = false)
+
+    thumbnailMediaView.unbind()
+    closeMediaActionHelper.onDestroy()
+
+    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
+    _hasContent = false
+  }
+
+  override fun eventProperty(property: String) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property) }
+  }
+
+  override fun eventProperty(property: String, value: Boolean) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun eventProperty(property: String, value: Long) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun eventProperty(property: String, value: String) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
+  }
+
+  override fun event(eventId: Int) {
+    if (!shown) {
+      return
+    }
+
+    BackgroundUtils.runOnMainThread { eventUi(eventId) }
+  }
+
+  private fun destroyPlayer(
+    isPausing: Boolean,
+    isDestroying: Boolean,
+    isBecomingInactive: Boolean
+  ) {
+    if (!MPVLib.librariesAreLoaded()) {
+      return
+    }
+
+    if (actualVideoPlayerView.initialized) {
+      mediaViewState.prevPosition = actualVideoPlayerView.timePos
+      mediaViewState.prevPaused = actualVideoPlayerView.paused
+    }
+
+    val needDestroy = playing && ((isPausing && pauseInBg) || isDestroying || isBecomingInactive)
+    if (!needDestroy) {
+      return
+    }
+
+    actualVideoPlayerView.destroy()
+    actualVideoPlayerView.removeObserver(this)
+
+    thumbnailMediaView.setVisibilityFast(View.VISIBLE)
+    actualVideoPlayerView.setVisibilityFast(GONE)
+
+    actualVideoPlayerViewContainer.removeAllViews()
+    playing = false
+  }
+
+  private fun startPlayingVideo(isLifecycleChange: Boolean) {
     playJob?.cancel()
     playJob = null
 
@@ -306,9 +405,15 @@ class MpvVideoMediaView(
 
     playJob = scope.launch {
       if (MPVLib.librariesAreLoaded()) {
+        if (playing && isLifecycleChange && !pauseInBg) {
+          playJob = null
+          return@launch
+        }
+
         showBufferingJob = scope.launch {
           delay(125L)
           bufferingProgressView.setVisibilityFast(View.VISIBLE)
+          showBufferingJob = null
         }
 
         mpvErrorMessage.setVisibilityFast(GONE)
@@ -325,98 +430,38 @@ class MpvVideoMediaView(
         actualVideoPlayerView.create(context.applicationContext, appConstants)
         actualVideoPlayerView.addObserver(this@MpvVideoMediaView)
 
-        if (isLifecycleChange == false && ChanSettings.videoAlwaysResetToStart.get()) {
+        if (!isLifecycleChange && ChanSettings.videoAlwaysResetToStart.get()) {
           mediaViewState.resetPosition()
         }
 
         setFileToPlay(context)
         actualVideoPlayerView.setVisibilityFast(VISIBLE)
-      } else {
-        hideVideoUi()
 
-        bufferingProgressView.setVisibilityFast(INVISIBLE)
-        thumbnailMediaView.setVisibilityFast(INVISIBLE)
+        playing = true
 
-        actualVideoPlayerViewContainer.removeAllViews()
-        actualVideoPlayerViewContainer.setVisibilityFast(GONE)
-
-        val lastError = MPVLib.getLastError()
-        if (lastError != null) {
-          mpvErrorMessage.setVisibilityFast(VISIBLE)
-          mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
-        } else {
-          mpvErrorMessage.setVisibilityFast(GONE)
-        }
+        playJob = null
+        return@launch
       }
 
-      playJob = null
-    }
-  }
+      hideVideoUi()
 
-  override fun hide(isLifecycleChange: Boolean) {
-    if (MPVLib.librariesAreLoaded()) {
-      mediaViewState.prevPosition = actualVideoPlayerView.timePos
-      mediaViewState.prevPaused = actualVideoPlayerView.paused
-
-      actualVideoPlayerView.destroy()
-      actualVideoPlayerView.removeObserver(this)
-
-      thumbnailMediaView.setVisibilityFast(View.VISIBLE)
-      actualVideoPlayerView.setVisibilityFast(GONE)
+      bufferingProgressView.setVisibilityFast(INVISIBLE)
+      thumbnailMediaView.setVisibilityFast(INVISIBLE)
 
       actualVideoPlayerViewContainer.removeAllViews()
+      actualVideoPlayerViewContainer.setVisibilityFast(GONE)
+
+      val lastError = MPVLib.getLastError()
+      if (lastError != null) {
+        mpvErrorMessage.setVisibilityFast(VISIBLE)
+        mpvErrorMessage.text = getString(R.string.mpv_library_load_error, lastError.errorMessageOrClassName())
+      } else {
+        mpvErrorMessage.setVisibilityFast(GONE)
+      }
+
+      playing = false
+      playJob = null
     }
-
-    playJob?.cancel()
-    playJob = null
-  }
-
-  override fun unbind() {
-    thumbnailMediaView.unbind()
-    closeMediaActionHelper.onDestroy()
-
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    _hasContent = false
-  }
-
-  override fun eventProperty(property: String) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property) }
-  }
-
-  override fun eventProperty(property: String, value: Boolean) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun eventProperty(property: String, value: Long) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun eventProperty(property: String, value: String) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventPropertyUi(property, value) }
-  }
-
-  override fun event(eventId: Int) {
-    if (!viewModel.activityInForeground || !shown) {
-      return
-    }
-
-    BackgroundUtils.runOnMainThread { eventUi(eventId) }
   }
 
   private fun eventUi(eventId: Int) {
@@ -530,14 +575,14 @@ class MpvVideoMediaView(
 
 
   private fun eventPropertyUi(property: String) {
-    if (!viewModel.activityInForeground || !shown) {
+    if (!shown) {
       return
     }
 
   }
 
   private fun eventPropertyUi(property: String, value: Long) {
-    if (!viewModel.activityInForeground || !shown) {
+    if (!shown) {
       return
     }
 
@@ -555,7 +600,7 @@ class MpvVideoMediaView(
   }
 
   private fun eventPropertyUi(property: String, value: String) {
-    if (!viewModel.activityInForeground || !shown) {
+    if (!shown) {
       return
     }
 
@@ -565,7 +610,7 @@ class MpvVideoMediaView(
   }
 
   private fun eventPropertyUi(property: String, value: Boolean) {
-    if (!viewModel.activityInForeground || !shown) {
+    if (!shown) {
       return
     }
 
@@ -800,9 +845,11 @@ class MpvVideoMediaView(
   class VideoMediaViewState(
     var prevPosition: Int? = null,
     var prevPaused: Boolean? = null
-  ) : MediaViewState {
+  ) : MediaViewState() {
 
-    fun resetPosition() {
+    override fun resetPosition() {
+      super.resetPosition()
+
       prevPosition = null
       prevPaused = null
     }

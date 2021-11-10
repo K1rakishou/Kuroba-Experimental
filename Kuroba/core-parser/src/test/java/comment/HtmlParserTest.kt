@@ -137,13 +137,13 @@ embed)
 
     val expected = """
 Тред обсуждения Oneplus, дочерней компании BBK.
-<br>
-<br>
+<br, style>
+<br, style>
 Особенности бренда: 
-<br>
-<br>
+<br, style>
+<br, style>
 1) смартфоны имеют одну из лучших оболочек на рынке — OxygenOS, тем не менее есть все возможности для её замены, очень много кастомов обычно;
-<br>
+<br, style>
 2) Разницы между "китайскими" и "некитайскими" версиями смартфонов нет, можно спокойно покупать смартфон на али. Китайские версии из коробки имеют прошивку HydrogenOS, но она очень легко меняется, нужно просто скачать OxygenOS с официального сайта и установить его через меню телефона.
 
     """.trimIndent().lines()
@@ -310,6 +310,29 @@ If with a simple question, and a suitable thread doesn't already exist, just pos
 <br>
 <br>
 Remember to do some research before asking a question. No one wants to answer a question that a simple search can already resolve.
+
+    """.trimIndent().lines()
+
+    val actual = htmlParser.debugConcatIntoString(nodes).lines()
+    assertEquals(expected.size, actual.size)
+
+    actual.forEachIndexed { index, actualLine ->
+      val expectedLine = expected[index]
+      assertEquals(expectedLine, actualLine)
+    }
+  }
+
+  @Test
+  fun html_parser_incorrect_iframe_tag_case() {
+    val html = """
+      <iframe width=\"560\" height=\"315\" src=\"https://www.youtube.com/embed/GjUrSjjUbVk?&amp;autoplay=1\" title=\"YouTube video player\" frameborder=\"0\" allowfullscreen></iframe>
+    """.trimIndent()
+
+    val htmlParser = HtmlParser()
+    val nodes = htmlParser.parse(html).nodes
+
+    val expected = """
+      <iframe, width=560, height=315, src=https://www.youtube.com/embed/GjUrSjjUbVk?&amp;autoplay=1, title=YouTube video player, frameborder=0, allowfullscreen>
 
     """.trimIndent().lines()
 

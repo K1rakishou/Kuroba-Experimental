@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.common.RegexPatternCompiler
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.model.data.filter.ChanFilter
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -33,16 +34,16 @@ object CreateOrUpdateFilterControllerHelper {
     }
 
     val regexMode = if (chanFilterMutable.applyToEmptyComments) {
-      FilterEngine.RegexMode.EmptyPattern
+      RegexPatternCompiler.RegexMode.EmptyPattern
     } else {
       when (val compilationResult = filterEngine.compile(chanFilterMutable.pattern, extraFlags)) {
-        is FilterEngine.PatternCompilationResult.Error -> {
+        is RegexPatternCompiler.PatternCompilationResult.Error -> {
           return FilterValidationResult.Error(compilationResult.errorMessage)
         }
-        FilterEngine.PatternCompilationResult.PatternIsEmpty -> {
+        RegexPatternCompiler.PatternCompilationResult.PatternIsEmpty -> {
           return FilterValidationResult.Error(getString(R.string.filter_cannot_compile_filter_pattern_it_is_empty))
         }
-        is FilterEngine.PatternCompilationResult.Success -> compilationResult.mode
+        is RegexPatternCompiler.PatternCompilationResult.Success -> compilationResult.mode
       }
     }
 
@@ -192,7 +193,7 @@ object CreateOrUpdateFilterControllerHelper {
 
 sealed class FilterValidationResult {
   object Undefined : FilterValidationResult()
-  data class Success(val mode: FilterEngine.RegexMode) : FilterValidationResult()
+  data class Success(val mode: RegexPatternCompiler.RegexMode) : FilterValidationResult()
   data class Error(val errorMessage: String) : FilterValidationResult()
 }
 

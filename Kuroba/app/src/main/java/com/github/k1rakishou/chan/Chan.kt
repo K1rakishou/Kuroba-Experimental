@@ -233,8 +233,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       append(getApplicationLabel())
       append(" ")
       append(BuildConfig.VERSION_NAME)
-      append(".")
-      append(BuildConfig.BUILD_NUMBER)
     }
 
     val appConstants = AppConstants(

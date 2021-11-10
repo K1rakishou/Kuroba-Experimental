@@ -102,7 +102,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
           closeMediaViewer = true
         }
       } else if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-        if (mediaViewerOpenThreadHelper.tryToOpenThread(chanDescriptor, postDescriptor)) {
+        if (mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)) {
           closeMediaViewer = true
         }
       }
@@ -209,7 +209,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
 
     hideShowAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
-      duration = 200
+      duration = ANIMATION_DURATION_MS
       addUpdateListener { animation ->
         alpha = animation.animatedValue as Float
       }
@@ -240,7 +240,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
 
     hideShowAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
-      duration = 200
+      duration = ANIMATION_DURATION_MS
       addUpdateListener { animation ->
         alpha = animation.animatedValue as Float
       }
@@ -373,6 +373,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
     suspend fun reloadMedia()
     suspend fun downloadMedia(isLongClick: Boolean): Boolean
     fun onOptionsButtonClick()
+  }
+
+  companion object {
+    const val ANIMATION_DURATION_MS = 200L
   }
 
 }

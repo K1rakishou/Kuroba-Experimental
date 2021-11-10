@@ -37,19 +37,26 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.google.android.exoplayer2.upstream.DataSource
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.runBlocking
 import okhttp3.HttpUrl
 import java.io.File
+import java.io.InputStream
 import javax.inject.Inject
 
 abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   context: Context,
   attributeSet: AttributeSet?,
   protected val mediaViewContract: MediaViewContract,
+  private val cachedHttpDataSourceFactory: DataSource.Factory,
+  private val fileDataSourceFactory: DataSource.Factory,
+  private val contentDataSourceFactory: DataSource.Factory,
   val mediaViewState: S
-) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0), MediaViewerToolbar.MediaViewerToolbarCallbacks {
+) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0),
+  MediaViewerToolbar.MediaViewerToolbarCallbacks,
+  AudioPlayerView.AudioPlayerCallbacks {
   abstract val viewableMedia: T
   abstract val pagerPosition: Int
   abstract val totalPageItemsCount: Int
@@ -85,6 +92,13 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   protected val cancellableToast by lazy { CancellableToast() }
   protected val scope = KurobaCoroutineScope()
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
+
+  protected val pauseInBg: Boolean
+    get() = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
+
+  protected val audioPlayerView: AudioPlayerView by lazy {
+    return@lazy findViewById<AudioPlayerView>(R.id.audio_player_view)
+  }
 
   val bound: Boolean
     get() = _bound
@@ -134,6 +148,21 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = true
     bind()
 
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.bind(
+        audioPlayerCallbacks = this,
+        viewableMedia = viewableMedia,
+        cacheHandler = cacheHandler.get(),
+        audioPlayerViewState = mediaViewState.audioPlayerViewState,
+        mediaViewContract = mediaViewContract,
+        globalWindowInsetsManager = globalWindowInsetsManager,
+        threadDownloadManager = threadDownloadManager,
+        cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+        fileDataSourceFactory = fileDataSourceFactory,
+        contentDataSourceFactory = contentDataSourceFactory
+      )
+    }
+
     Logger.d(TAG, "onBind(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
@@ -142,17 +171,33 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.show(isLifecycleChange)
+    }
+
     show(isLifecycleChange)
 
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
 
-  fun onHide(isLifecycleChange: Boolean) {
+  fun onHide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     _shown = false
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
-    hide(isLifecycleChange)
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.hide(
+        isLifecycleChange = isLifecycleChange,
+        isPausing = isPausing,
+        isBecomingInactive = isBecomingInactive
+      )
+    }
+
+    hide(
+      isLifecycleChange = isLifecycleChange,
+      isPausing = isPausing,
+      isBecomingInactive = isBecomingInactive
+    )
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
@@ -162,6 +207,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = false
     _preloadingCalled = false
     _mediaViewToolbar?.onDestroy()
+
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.unbind()
+    }
 
     cancellableToast.cancel()
     scope.cancelChildren()
@@ -173,8 +222,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract fun preload()
   abstract fun bind()
   abstract fun show(isLifecycleChange: Boolean)
-  abstract fun hide(isLifecycleChange: Boolean)
+  abstract fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean)
   abstract fun unbind()
+  abstract fun onInsetsChanged()
 
   protected open fun updateTransparency(backgroundColor: Int?) {
 
@@ -187,6 +237,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     } else {
       mediaViewToolbar?.showToolbar()
     }
+
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
+    }
   }
 
   @CallSuper
@@ -195,6 +249,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   override suspend fun reloadMedia() {
+
+  }
+
+  override fun onAudioPlayerPlaybackChanged(isNowPaused: Boolean) {
+
+  }
+
+  override fun onRewindPlayback() {
 
   }
 
@@ -265,9 +327,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   protected suspend fun startFullMediaPreloading(
+    forced: Boolean,
     loadingBar: CircularChunkedLoadingBar,
     mediaLocationRemote: MediaLocation.Remote,
-    fullMediaDeferred: CompletableDeferred<FilePath>,
+    fullMediaDeferred: CompletableDeferred<MediaPreloadResult>,
     onEndFunc: () -> Unit,
   ): CancelableDownload? {
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
@@ -281,7 +344,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       }
 
       if (filePath != null) {
-        fullMediaDeferred.complete(filePath)
+        fullMediaDeferred.complete(MediaPreloadResult(filePath, forced))
         onEndFunc()
         return null
       }
@@ -313,7 +376,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
         override fun onSuccess(file: File) {
           BackgroundUtils.ensureMainThread()
-          fullMediaDeferred.complete(FilePath.JavaPath(file.absolutePath))
+          fullMediaDeferred.complete(MediaPreloadResult(FilePath.JavaPath(file.absolutePath), forced))
         }
 
         override fun onNotFound() {
@@ -374,7 +437,23 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     return true
   }
 
+  data class MediaPreloadResult(val filePath: FilePath, val isForced: Boolean)
+
   sealed class FilePath {
+    fun inputStream(fileManager: FileManager): InputStream? {
+      when (this) {
+        is JavaPath -> {
+          return File(this.path).inputStream()
+        }
+        is UriPath -> {
+          val abstractFile = fileManager.fromUri(this.uri)
+            ?: return null
+
+          return fileManager.getInputStream(abstractFile)
+        }
+      }
+    }
+
     data class JavaPath(val path: String) : FilePath()
     data class UriPath(val uri: Uri) : FilePath()
   }

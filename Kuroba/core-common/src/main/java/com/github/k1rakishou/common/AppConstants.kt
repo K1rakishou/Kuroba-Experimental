@@ -30,6 +30,16 @@ open class AppConstants(
   val exoPlayerDiskCacheMaxSize = 128L * 1024 * 1024
   val mpvDemuxerCacheMaxSize: Int
 
+  val replyDraftsDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create reply drafts directory! replyDraftsDir=${field.absolutePath}" }
+      return field
+    }
+
   val attachFilesDir: File
     get() {
       if (field.exists()) {
@@ -160,6 +170,7 @@ open class AppConstants(
     processorsCount = Runtime.getRuntime().availableProcessors()
       .coerceAtLeast(2)
 
+    replyDraftsDir = File(context.filesDir, REPLY_DRAFTS_DIR_NAME)
     attachFilesDir = File(context.filesDir, ATTACH_FILES_DIR_NAME)
     attachFilesMetaDir = File(context.filesDir, ATTACH_FILES_META_DIR_NAME)
     mediaPreviewsDir = File(context.filesDir, MEDIA_PREVIEWS_DIR_NAME)
@@ -213,6 +224,7 @@ open class AppConstants(
       "Mozilla/5.0 (Linux; Android %s; %s) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/85.0.4183.127 Mobile Safari/537.36"
 
     private const val PROXIES_FILE_NAME = "kuroba_proxies.json"
+    private const val REPLY_DRAFTS_DIR_NAME = "reply_drafts"
     private const val ATTACH_FILES_DIR_NAME = "attach_files"
     private const val ATTACH_FILES_META_DIR_NAME = "attach_files_meta"
     private const val MEDIA_PREVIEWS_DIR_NAME = "media_previews"

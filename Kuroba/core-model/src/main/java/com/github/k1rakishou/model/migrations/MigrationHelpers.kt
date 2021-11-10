@@ -26,7 +26,9 @@ internal fun SupportSQLiteDatabase.doWithoutForeignKeys(func: () -> Unit) {
 
 internal fun getColumnIndexOrThrow(c: Cursor, name: String): Int {
   val index = c.getColumnIndex(name)
-  return if (index >= 0) {
-    index
-  } else c.getColumnIndexOrThrow("`$name`")
+  if (index >= 0) {
+    return index
+  }
+
+  return c.getColumnIndexOrThrow("`$name`")
 }

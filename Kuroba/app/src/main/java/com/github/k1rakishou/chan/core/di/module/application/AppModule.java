@@ -55,6 +55,7 @@ import javax.inject.Singleton;
 
 import coil.ImageLoader;
 import coil.request.CachePolicy;
+import dagger.Lazy;
 import dagger.Module;
 import dagger.Provides;
 import kotlinx.coroutines.CoroutineScope;
@@ -145,15 +146,15 @@ public class AppModule {
     @Singleton
     public ImageLoaderV2 provideImageLoaderV2(
             CoroutineScope appScope,
-            ImageLoader coilImageLoader,
-            ReplyManager replyManager,
-            ThemeEngine themeEngine,
-            dagger.Lazy<CacheHandler> cacheHandler,
-            FileCacheV2 fileCacheV2,
-            ImageLoaderFileManagerWrapper imageLoaderFileManagerWrapper,
-            SiteResolver siteResolver,
-            CoilOkHttpClient coilOkHttpClient,
-            ThreadDownloadManager threadDownloadManager
+            Lazy<ImageLoader> coilImageLoader,
+            Lazy<ReplyManager> replyManager,
+            Lazy<ThemeEngine> themeEngine,
+            Lazy<CacheHandler> cacheHandler,
+            Lazy<FileCacheV2> fileCacheV2,
+            Lazy<ImageLoaderFileManagerWrapper> imageLoaderFileManagerWrapper,
+            Lazy<SiteResolver> siteResolver,
+            Lazy<CoilOkHttpClient> coilOkHttpClient,
+            Lazy<ThreadDownloadManager> threadDownloadManager
     ) {
         Logger.deps("ImageLoaderV2");
 

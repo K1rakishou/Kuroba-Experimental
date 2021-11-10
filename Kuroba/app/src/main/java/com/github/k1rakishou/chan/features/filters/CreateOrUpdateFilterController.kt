@@ -1,12 +1,8 @@
 package com.github.k1rakishou.chan.features.filters
 
 import android.content.Context
-import android.graphics.Typeface
 import android.text.Html
 import android.text.SpannableStringBuilder
-import android.text.style.BackgroundColorSpan
-import android.text.style.StyleSpan
-import android.text.style.TypefaceSpan
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -40,8 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusManager
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
@@ -76,6 +74,7 @@ import com.github.k1rakishou.chan.ui.view.ColorPickerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -116,6 +115,8 @@ class CreateOrUpdateFilterController(
         .align(Alignment.Center)
     ) {
       KurobaComposeCardView {
+        val focusManager = LocalFocusManager.current
+
         Column(modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
@@ -125,8 +126,11 @@ class CreateOrUpdateFilterController(
         ) {
           BuildCreateOrUpdateFilterLayout(
             onHelpClicked = { showFiltersHelpDialog() },
-            onCancelClicked = { pop() },
-            onSaveClicked = { onSaveFilterClicked() },
+            onCancelClicked = {
+              focusManager.clearFocus(force = true)
+              pop()
+            },
+            onSaveClicked = { onSaveFilterClicked(focusManager = focusManager) },
             onChangeFilterTypesClicked = { showFilterTypeSelectionController() },
             onChangeFilterBoardsClicked = { showFilterBoardSelectorController() },
             onChangeFilterActionClicked = { showAvailableFilterActions() },
@@ -669,7 +673,7 @@ class CreateOrUpdateFilterController(
       .create()
   }
 
-  private fun onSaveFilterClicked() {
+  private fun onSaveFilterClicked(focusManager: FocusManager) {
     val chanFilterMutable = chanFilterMutableState.asChanFilterMutable()
 
     if (chanFilterMutable.allBoards() && chanFilterMutable.isWatchFilter()) {
@@ -689,6 +693,7 @@ class CreateOrUpdateFilterController(
         }
       }
 
+      focusManager.clearFocus(force = true)
       pop()
     }
   }
@@ -704,27 +709,10 @@ class CreateOrUpdateFilterController(
   }
 
   private fun showFiltersHelpDialog() {
-    val message = SpannableStringBuilder.valueOf(Html.fromHtml(getString(R.string.filter_help)))
-    val typefaceSpans = message.getSpans(0, message.length, TypefaceSpan::class.java)
-
-    for (span in typefaceSpans) {
-      if (span.family.equals("monospace")) {
-        val start = message.getSpanStart(span)
-        val end = message.getSpanEnd(span)
-
-        message.setSpan(BackgroundColorSpan(0x22000000), start, end, 0)
-      }
-    }
-
-    val styleSpans: Array<StyleSpan> = message.getSpans(0, message.length, StyleSpan::class.java)
-    for (span in styleSpans) {
-      if (span.style == Typeface.ITALIC) {
-        val start = message.getSpanStart(span)
-        val end = message.getSpanEnd(span)
-
-        message.setSpan(BackgroundColorSpan(0x22000000), start, end, 0)
-      }
-    }
+    val message = SpannableHelper.convertHtmlStringTagsIntoSpans(
+      message = SpannableStringBuilder.valueOf(Html.fromHtml(getString(R.string.filter_help))),
+      chanTheme = themeEngine.chanTheme
+    )
 
     DialogFactory.Builder.newBuilder(context, dialogFactory)
       .withTitle(R.string.filter_help_title)

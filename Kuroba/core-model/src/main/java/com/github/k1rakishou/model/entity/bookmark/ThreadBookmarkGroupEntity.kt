@@ -24,7 +24,9 @@ data class ThreadBookmarkGroupEntity(
   @ColumnInfo(name = IS_EXPANDED_COLUMN_NAME)
   val isExpanded: Boolean,
   @ColumnInfo(name = GROUP_ORDER_COLUMN_NAME)
-  val groupOrder: Int
+  val groupOrder: Int,
+  @ColumnInfo(name = GROUP_MATCHER_PATTERN_COLUMN_NAME)
+  val groupMatcherPattern: String? = null
 ) {
 
   companion object {
@@ -34,5 +36,6 @@ data class ThreadBookmarkGroupEntity(
     const val GROUP_NAME_COLUMN_NAME = "group_name"
     const val IS_EXPANDED_COLUMN_NAME = "is_expanded"
     const val GROUP_ORDER_COLUMN_NAME = "group_order"
+    const val GROUP_MATCHER_PATTERN_COLUMN_NAME = "group_matcher_pattern"
   }
 }

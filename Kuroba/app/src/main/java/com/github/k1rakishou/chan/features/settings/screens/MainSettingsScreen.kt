@@ -324,10 +324,9 @@ class MainSettingsScreen(
 
   private fun createAppVersionString(): String {
     return String.format(
-      "%s %s.%s %s (commit %s)",
+      "%s %s %s (commit %s)",
       getApplicationLabel().toString(),
       BuildConfig.VERSION_NAME,
-      BuildConfig.BUILD_NUMBER,
       getVerificationBadge(),
       BuildConfig.COMMIT_HASH.take(12)
     )

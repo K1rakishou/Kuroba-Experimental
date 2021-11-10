@@ -541,14 +541,14 @@ class ImageSaverV2Service : Service() {
       && !imageSaverDelegateResult.hasAnyErrors()
 
     if (canAutoDismiss) {
-      if (AndroidUtils.isAndroidO()) {
-        setTimeoutAfter(NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS)
-      } else {
-        imageSaverV2ServiceDelegate.get().enqueueDeleteNotification(
-          imageSaverDelegateResult.uniqueId,
-          NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS
-        )
-      }
+      imageSaverV2ServiceDelegate.get().enqueueDeleteNotification(
+        imageSaverDelegateResult.uniqueId,
+        NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS
+      )
+    } else {
+      imageSaverV2ServiceDelegate.get().cancelDeleteNotification(
+        imageSaverDelegateResult.uniqueId
+      )
     }
 
     return this

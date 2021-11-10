@@ -36,13 +36,18 @@ class FilterWatcherCoordinator(
 
     appScope.launch {
       chanFilterManager.listenForFiltersChanges()
-        .collect { filterEvent -> restartFilterWatcherWithTinyDelay(filterEvent = filterEvent) }
+        .collect { filterEvent ->
+          Logger.d(TAG, "chanFilterManager.listenForFiltersChanges() new filterEvent")
+          restartFilterWatcherWithTinyDelay(filterEvent = filterEvent)
+        }
     }
 
     appScope.launch {
       ChanSettings.filterWatchEnabled.listenForChanges()
         .asFlow()
         .collect { enabled ->
+          Logger.d(TAG, "filterWatchEnabled.listenForChanges() new event")
+
           if (enabled) {
             restartFilterWatcherWithTinyDelay()
           } else {
@@ -54,7 +59,10 @@ class FilterWatcherCoordinator(
     appScope.launch {
       ChanSettings.filterWatchInterval.listenForChanges()
         .asFlow()
-        .collect { restartFilterWatcherWithTinyDelay() }
+        .collect {
+          Logger.d(TAG, "filterWatchInterval.listenForChanges() new event")
+          restartFilterWatcherWithTinyDelay()
+        }
     }
   }
 

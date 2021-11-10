@@ -69,7 +69,6 @@ abstract class BaseFloatingComposeController(
 
             Box(
               modifier = Modifier
-                .fillMaxSize()
                 .padding(
                   start = currentPaddings.calculateStartPadding(LayoutDirection.Ltr) + horizPadding,
                   end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + horizPadding,

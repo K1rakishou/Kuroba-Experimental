@@ -126,8 +126,6 @@ class MediaViewerActivity : ControllerHostActivity(),
     if (::mediaViewerController.isInitialized) {
       mediaViewerController.onResume()
     }
-
-    viewModel.updateActivityIsInForeground(true)
   }
 
   override fun onPause() {
@@ -136,8 +134,6 @@ class MediaViewerActivity : ControllerHostActivity(),
     if (::mediaViewerController.isInitialized) {
       mediaViewerController.onPause()
     }
-
-    viewModel.updateActivityIsInForeground(false)
   }
 
   override fun onDestroy() {

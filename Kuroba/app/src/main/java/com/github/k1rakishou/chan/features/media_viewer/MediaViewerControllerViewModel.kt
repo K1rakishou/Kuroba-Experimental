@@ -59,10 +59,6 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = ChanSettings.videoDefaultMuted.get()
       && (ChanSettings.headsetDefaultMuted.get() || !AndroidUtils.getAudioManager().isWiredHeadsetOn)
 
-  private var _activityInForeground = false
-  val activityInForeground: Boolean
-    get() = _activityInForeground
-
   private var _isSoundMuted = defaultMuteState
   val isSoundMuted: Boolean
     get() = _isSoundMuted
@@ -75,10 +71,6 @@ class MediaViewerControllerViewModel : ViewModel() {
     get() = _mediaViewerOptions
   val chanDescriptor: ChanDescriptor?
     get() = mediaViewerState.value?.descriptor
-
-  fun updateActivityIsInForeground(inForeground: Boolean) {
-    _activityInForeground = inForeground
-  }
 
   fun toggleIsSoundMuted() {
     _isSoundMuted = _isSoundMuted.not()
@@ -244,7 +236,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = null,
-      loadedMedia = viewableMediaList,
+      loadedMedia = viewableMediaList.toMutableList(),
       initialPagerIndex = 0
     )
   }
@@ -335,7 +327,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = viewableMediaParcelableHolder.threadDescriptor,
-      loadedMedia = output.images,
+      loadedMedia = output.images.toMutableList(),
       initialPagerIndex = actualInitialPagerIndex
     )
   }
@@ -391,7 +383,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = catalogDescriptor as ChanDescriptor,
-      loadedMedia = output.images,
+      loadedMedia = output.images.toMutableList(),
       initialPagerIndex = actualInitialPagerIndex
     )
   }
@@ -412,7 +404,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     return MediaViewerControllerState(
       descriptor = null,
-      loadedMedia = viewableMediaList,
+      loadedMedia = viewableMediaList.toMutableList(),
       initialPagerIndex = 0
     )
   }
@@ -579,7 +571,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
   class MediaViewerControllerState(
     val descriptor: ChanDescriptor?,
-    val loadedMedia: List<ViewableMedia>,
+    val loadedMedia: MutableList<ViewableMedia>,
     val initialPagerIndex: Int = 0
   ) {
     fun isEmpty(): Boolean = loadedMedia.isEmpty()
@@ -608,6 +600,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       val imageType = when (viewableMedia) {
         is ViewableMedia.Gif -> ChanPostImageType.GIF
         is ViewableMedia.Image -> ChanPostImageType.STATIC
+        is ViewableMedia.Audio,
         is ViewableMedia.Video -> ChanPostImageType.MOVIE
         is ViewableMedia.Unsupported -> return false
       }

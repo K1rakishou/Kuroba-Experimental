@@ -197,7 +197,7 @@ class MediaLongClickMenuHelper(
   private suspend fun shareMediaContent(viewableMedia: ViewableMedia) {
     val remoteMediaLocation = viewableMedia.mediaLocation as? MediaLocation.Remote
       ?: return
-    val downloadFileName = viewableMedia.viewableMediaMeta.formatFullServerMediaName()
+    val downloadFileName = viewableMedia.viewableMediaMeta.fullServerMediaName
       ?: return
     val mediaUrl = remoteMediaLocation.url
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()

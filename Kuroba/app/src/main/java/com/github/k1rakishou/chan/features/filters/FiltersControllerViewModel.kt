@@ -260,7 +260,9 @@ class FiltersControllerViewModel : BaseViewModel() {
           SpanStyle(color = chanTheme.textColorSecondaryCompose))
       )
       append(" ")
+      append("\'")
       append(chanFilter.pattern ?: getString(R.string.filter_pattern_part_no_pattern))
+      append("\'")
       append("\n")
 
       val filterTypes = FilterType.forFlags(chanFilter.type)

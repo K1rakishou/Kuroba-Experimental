@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.ModularResult.Companion.value
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
@@ -66,7 +67,7 @@ class ReplyLayoutFilesAreaPresenter(
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
   private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
   private val fileChangeExecutor = SerializedCoroutineExecutor(scope)
-  private val state = MutableStateFlow(ReplyLayoutFilesState())
+  private val state = MutableStateFlow(ReplyLayoutFilesState(loading = true))
   private var boundChanDescriptor: ChanDescriptor? = null
 
   fun listenForStateUpdates(): Flow<ReplyLayoutFilesState> = state.asStateFlow()
@@ -519,7 +520,11 @@ class ReplyLayoutFilesAreaPresenter(
         val attachables = enumerateReplyAttachables(chanDescriptor).unwrap()
 
         val oldState = state.value
-        val newState = ReplyLayoutFilesState(isReplyLayoutExpanded, attachables)
+        val newState = ReplyLayoutFilesState(
+          isReplyLayoutExpanded = isReplyLayoutExpanded,
+          loading = false,
+          attachables = attachables
+        )
         state.value = newState
 
         if (oldState != newState) {
@@ -608,7 +613,11 @@ class ReplyLayoutFilesAreaPresenter(
 
   private suspend fun enumerateReplyAttachables(
     chanDescriptor: ChanDescriptor
-  ): ModularResult<MutableList<IReplyAttachable>> {
+  ): ModularResult<List<IReplyAttachable>> {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return value(listOf())
+    }
+
     return withContext(Dispatchers.IO) {
       return@withContext Try {
         val newAttachFiles = mutableListOf<IReplyAttachable>()
@@ -712,6 +721,10 @@ class ReplyLayoutFilesAreaPresenter(
     replyFileMeta: ReplyFileMeta,
     chanDescriptor: ChanDescriptor
   ): Boolean {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return false
+    }
+
     val chanBoard = boardManager.get().byBoardDescriptor(chanDescriptor.boardDescriptor())
       ?: return false
 

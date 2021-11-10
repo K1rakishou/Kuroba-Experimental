@@ -100,7 +100,15 @@ public class MPVLib {
         return lastError;
     }
 
+    public static boolean isCreated() {
+        return mpvCreated;
+    }
+
     public static void mpvCreate(Context appctx) {
+        if (mpvCreated) {
+            return;
+        }
+
         create(appctx);
         mpvCreated = true;
     }

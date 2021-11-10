@@ -81,6 +81,7 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
+import com.github.k1rakishou.chan.core.usecase.GetThreadBookmarkGroupIdsUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
@@ -115,6 +116,7 @@ import com.github.k1rakishou.model.repository.ThreadDownloadRepository;
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache;
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
+import com.squareup.moshi.Moshi;
 
 import java.util.HashSet;
 
@@ -174,11 +176,18 @@ public class ManagerModule {
     @Provides
     @Singleton
     public ReplyManager provideReplyManager(
+            ApplicationVisibilityManager applicationVisibilityManager,
             AppConstants appConstants,
+            Moshi moshi,
             Gson gson
     ) {
         Logger.deps("ReplyManager");
-        return new ReplyManager(appConstants, gson);
+        return new ReplyManager(
+                applicationVisibilityManager,
+                appConstants,
+                moshi,
+                gson
+        );
     }
 
     @Provides
@@ -455,10 +464,10 @@ public class ManagerModule {
     public ReplyNotificationsHelper provideReplyNotificationsHelper(
             Context appContext,
             CoroutineScope appScope,
-            BookmarksManager bookmarksManager,
-            ChanPostRepository chanPostRepository,
-            ImageLoaderV2 imageLoaderV2,
-            ThemeEngine themeEngine,
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<ChanPostRepository> chanPostRepository,
+            Lazy<ImageLoaderV2> imageLoaderV2,
+            Lazy<ThemeEngine> themeEngine,
             Lazy<SimpleCommentParser> simpleCommentParser
     ) {
         Logger.deps("ReplyNotificationsHelper");
@@ -584,14 +593,16 @@ public class ManagerModule {
     public ThreadBookmarkGroupManager provideThreadBookmarkGroupEntryManager(
             CoroutineScope appScope,
             Lazy<ThreadBookmarkGroupRepository> threadBookmarkGroupEntryRepository,
-            Lazy<BookmarksManager> bookmarksManager
+            Lazy<BookmarksManager> bookmarksManager,
+            Lazy<GetThreadBookmarkGroupIdsUseCase> getThreadBookmarkGroupIdsUseCase
     ) {
         Logger.deps("ThreadBookmarkGroupManager");
         return new ThreadBookmarkGroupManager(
                 appScope,
                 ChanSettings.verboseLogs.get(),
                 threadBookmarkGroupEntryRepository,
-                bookmarksManager
+                bookmarksManager,
+                getThreadBookmarkGroupIdsUseCase
         );
     }
 

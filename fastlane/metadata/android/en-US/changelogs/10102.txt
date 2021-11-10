@@ -1,0 +1,35 @@
+v1.1.2
+TLDR version:
+- Custom bookmark groups.
+- New tool to build KurobaEx themes.
+- Sound post support.
+- Unsent replies are now stored locally (up to 16, when more than 16 LRUs are deleted).
+
+Full version:
+- Some adjustments for sound posts. Wait up to 15 seconds max when trying to load sound post audio. Do not load sound post audio if the current media loading settings do not allow that.
+- Add ability to load sound post audio together with media when loading it forcibly by clicking the media thumbnail (this happens when media loading setting do not currently allow auto load, for example it's set to load only on WiFi connections and there is no currently available WiFi connection).
+- Always show audio player controls if there is sound post link in the media file name so that it's obvious that there is more content loading.
+- Add ability to continue playing video/audio (soundposts) when the app is in background or in split window mode.
+
+v1.1.1
+- A new tool to create/modify KurobaEx themes can be found here (https://github.com/K1rakishou/KurobaEx-theme-builder). You will have to build it manually because it uses native libraries for drawing stuff (skia). IntelliJ IDEA is recommended to build it, other IDEs may not work.
+- Add thread subject into album view cell when opening catalog albums.
+- Add menu item to open threads by long tapping catalog album view cell.
+- If there is only one reply in one thread, when clicking the notification scroll to the actual reply.
+- Fix a bug when clicking thread last page notification when inside of a thread (the slide controller would be switched to the browse controller instead of just opening the thread).
+- Add ability to open 1-frame gifs as images which allows zooming and other stuff.
+- Add soundpost support (separate audio file which is stored on some file hosting, downloaded and played together with the main media). Disabled by default, can be enabled in the media viewer settings (Enable sound posts). Only audio links are supported (sometimes you can find video links in the media file names). Videos will be ignored. Doesn't work with mpv (for now). May be dangerous to use, no checks (other than file extension) are made to verify what is being downloaded.
+- Add hot video player reload button (exoplayer -> mpv, mpv -> exoplayer) into the media viewer settings.
+- Show toast when marked post is not present in the ChanThread (deleted).
+- Fix thread FAB not being shown right away when opening threads from the bookmarks screen.
+- Use home made notification closing mechanism to close image saver's notifications instead of the setTimeoutAfter() because it's kinda buggy (sometimes it's triggered after a notification was updated without calling setTimeoutAfter()).
+- Other minor fixes.
+
+v1.1.0
+- Custom bookmark groups. It's now possible to create custom bookmark groups and move bookmarks into them. To access bookmark groups go to the bookmarks screen -> threedot menu -> Bookmark groups settings. Since moving bookmarks into groups manually may become really tedious it's now also possible to assign a bookmark group matcher (basically one or more regex patterns, 8 maximum) to a bookmark group and all bookmarks matching that pattern will be automatically moved into that group upon bookmark creation (the only exception is bookmarks created by filter watcher which will be moved into a group named by the filter pattern). The matchers work similarly to how filters work currently. The only difference is you can combine multiple patterns with AND or OR operators to create complex matchers. For example you can create a matcher that will be looking for "/vn/" pattern in thread subject OR thread comment and if it finds it there then the bookmark will be automatically moved into the group associated with those matchers. By default groups are pre-created for all sites (the matcher pattern is Site name), because that's how it's been in the previous versions (bookmark group == site name). Disabled sites will have no matcher and will be marked with "!" icon. You can safely delete them and other groups that you don't use. Additionally, FilterWatches screen has been removed since Bookmarks screen can now do exactly the same thing. To learn more about bookmark group matchers you can read the help message that can be found in the Bookmark groups settings screen.
+- Fix a bug in post highlight filter system where we would never highlight the actual keyword in the posts because of an incorrect check.
+- Make asyncPostCellDataCalculation enabled by default and remove the setting.
+- Add sys.4channel.org and find.4channel.org into respondsTo method. This fixes proxies not working for requests (more specific the reply request) on 4channel boards.
+- Fix some crashes caused by Jetpack Compose bug.
+- Fix iframe tag parsing, add support for parsing of escaped html tag attributes (stuff like <iframe width=\"560\"/> instead of <iframe width="560"/>).
+- Fix filter pattern compilation when it has an empty space at the end (and probably at the beginning) of it. Consider it an empty pattern if it only consists of whitespaces.

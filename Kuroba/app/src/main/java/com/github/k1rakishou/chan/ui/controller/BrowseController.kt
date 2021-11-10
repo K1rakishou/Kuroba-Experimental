@@ -586,11 +586,17 @@ class BrowseController(
 
   private fun openThreadByIdInternal(input: String) {
     mainScope.launch(Dispatchers.Main.immediate) {
+      val threadNo = input.toLong()
+      if (threadNo <= 0) {
+        showToast(getString(R.string.browse_controller_error_thread_id_negative_or_zero))
+        return@launch
+      }
+
       try {
         val threadDescriptor = ThreadDescriptor.create(
-          chanDescriptor!!.siteName(),
-          chanDescriptor!!.boardCode(),
-          input.toLong()
+          siteName = chanDescriptor!!.siteName(),
+          boardCode = chanDescriptor!!.boardCode(),
+          threadNo = input.toLong()
         )
 
         showThread(threadDescriptor, true)
@@ -738,11 +744,34 @@ class BrowseController(
     }
   }
 
+  override suspend fun showCatalogWithoutFocusing(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
+    mainScope.launch(Dispatchers.Main.immediate) {
+      Logger.d(TAG, "showCatalogWithoutFocusing($catalogDescriptor, $animated)")
+
+      showCatalogInternal(
+        catalogDescriptor = catalogDescriptor,
+        showCatalogOptions = ShowCatalogOptions(
+          switchToCatalogController = false,
+          withAnimation = animated
+        )
+      )
+
+      initialized = true
+    }
+  }
+
   override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
     mainScope.launch(Dispatchers.Main.immediate) {
       Logger.d(TAG, "showBoard($catalogDescriptor, $animated)")
 
-      showBoardInternal(catalogDescriptor, animated)
+      showCatalogInternal(
+        catalogDescriptor = catalogDescriptor,
+        showCatalogOptions = ShowCatalogOptions(
+          switchToCatalogController = true,
+          withAnimation = animated
+        )
+      )
+
       initialized = true
     }
   }
@@ -910,8 +939,11 @@ class BrowseController(
     }
   }
 
-  private suspend fun showBoardInternal(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
-    Logger.d(TAG, "showBoardInternal($catalogDescriptor, $animated)")
+  private suspend fun showCatalogInternal(
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor,
+    showCatalogOptions: ShowCatalogOptions
+  ) {
+    Logger.d(TAG, "showCatalogInternal($catalogDescriptor, $showCatalogOptions)")
 
     // The target ThreadViewController is in a split nav
     // (BrowseController -> ToolbarNavigationController -> SplitNavigationController)
@@ -933,12 +965,14 @@ class BrowseController(
     // so we don't need to switch between left and right controllers
     if (splitNav == null) {
       if (slideNav != null) {
-        slideNav.switchToController(true, animated)
+        if (showCatalogOptions.switchToCatalogController) {
+          slideNav.switchToController(true, showCatalogOptions.withAnimation)
+        }
       } else {
         if (navigationController != null) {
           // We wouldn't want to pop BrowseController when opening a board
           if (navigationController!!.top !is BrowseController) {
-            navigationController!!.popController(animated)
+            navigationController!!.popController(showCatalogOptions.withAnimation)
           }
         }
       }
@@ -1021,11 +1055,6 @@ class BrowseController(
 
     return chanDescriptor.siteDescriptor().is4chan()
   }
-
-  data class ShowThreadOptions(
-    val switchToThreadController: Boolean,
-    val pushControllerWithAnimation: Boolean
-  )
 
   companion object {
     private const val TAG = "BrowseController"

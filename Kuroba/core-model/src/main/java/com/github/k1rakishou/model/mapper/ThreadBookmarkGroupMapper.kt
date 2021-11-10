@@ -1,21 +1,28 @@
 package com.github.k1rakishou.model.mapper
 
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroup
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupEntry
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupEntryToCreate
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupMatchPattern
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.entity.bookmark.BookmarkThreadDescriptor
+import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntryEntity
-import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupWithEntries
-import java.util.concurrent.ConcurrentHashMap
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
 
 object ThreadBookmarkGroupMapper {
 
   fun fromEntity(
-    threadBookmarkGroupWithEntries: ThreadBookmarkGroupWithEntries,
+    moshi: Moshi,
+    groupOrder: Int,
+    threadBookmarkGroupEntity: ThreadBookmarkGroupEntity,
+    threadBookmarkGroupEntryEntities: List<ThreadBookmarkGroupEntryEntity>,
     bookmarkThreadDescriptorsMap: Map<Long, BookmarkThreadDescriptor>
-  ): ThreadBookmarkGroup? {
-    val threadBookmarkGroupEntries = threadBookmarkGroupWithEntries.threadBookmarkGroupEntryEntities
+  ): ThreadBookmarkGroup {
+    val threadBookmarkGroupEntries = threadBookmarkGroupEntryEntities
       .mapNotNull { threadBookmarkGroupEntryEntity ->
         val ownerBookmarkId = requireNotNull(threadBookmarkGroupEntryEntity.ownerBookmarkId) {
           "ownerBookmarkId must not be null here!"
@@ -36,23 +43,24 @@ object ThreadBookmarkGroupMapper {
           ownerBookmarkId = ownerBookmarkId,
           threadDescriptor = threadDescriptor
         )
-      }.associateBy { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.databaseId }
+      }
+      .associateBy { threadBookmarkGroupEntry -> threadBookmarkGroupEntry.databaseId }
 
-    if (threadBookmarkGroupEntries.isEmpty()) {
-      return null
-    }
-
-    val orders = threadBookmarkGroupWithEntries.threadBookmarkGroupEntryEntities
+    val orders = threadBookmarkGroupEntryEntities
       .sortedBy { threadBookmarkGroupEntryEntity -> threadBookmarkGroupEntryEntity.orderInGroup }
       .map { threadBookmarkGroupEntryEntity -> threadBookmarkGroupEntryEntity.id }
 
     return ThreadBookmarkGroup(
-      groupId = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupId,
-      groupName = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupName,
-      isExpanded = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.isExpanded,
-      groupOrder = threadBookmarkGroupWithEntries.threadBookmarkGroupEntity.groupOrder,
-      entries = ConcurrentHashMap(threadBookmarkGroupEntries),
-      orders = orders.toMutableList()
+      groupId = threadBookmarkGroupEntity.groupId,
+      groupName = threadBookmarkGroupEntity.groupName,
+      isExpanded = threadBookmarkGroupEntity.isExpanded,
+      groupOrder = groupOrder,
+      newEntries = threadBookmarkGroupEntries,
+      newOrders = orders,
+      newMatchingPattern = matchingPatternFromEntity(
+        moshi = moshi,
+        matchingPatternRaw = threadBookmarkGroupEntity.groupMatcherPattern
+      )
     )
   }
 
@@ -79,13 +87,12 @@ object ThreadBookmarkGroupMapper {
   fun toEntityList2(
     threadBookmarkGroupEntryToCreateList: List<ThreadBookmarkGroupEntryToCreate>
   ): List<ThreadBookmarkGroupEntryEntity> {
-    return threadBookmarkGroupEntryToCreateList.mapIndexed { index, threadBookmarkGroupEntryToCreate ->
-      toEntity2(index, threadBookmarkGroupEntryToCreate)
+    return threadBookmarkGroupEntryToCreateList.map { threadBookmarkGroupEntryToCreate ->
+      toEntity2(threadBookmarkGroupEntryToCreate)
     }
   }
 
   fun toEntity2(
-    order: Int,
     threadBookmarkGroupEntryToCreate: ThreadBookmarkGroupEntryToCreate
   ): ThreadBookmarkGroupEntryEntity {
     val ownerBookmarkId = threadBookmarkGroupEntryToCreate.ownerBookmarkId
@@ -98,8 +105,84 @@ object ThreadBookmarkGroupMapper {
       id = 0L,
       ownerBookmarkId = ownerBookmarkId,
       ownerGroupId = threadBookmarkGroupEntryToCreate.ownerGroupId,
-      orderInGroup = order
+      orderInGroup = threadBookmarkGroupEntryToCreate.orderInGroup
     )
   }
+
+  fun matchingPatternToEntity(
+    moshi: Moshi,
+    matchingPattern: ThreadBookmarkGroupMatchPattern?
+  ): String? {
+    if (matchingPattern == null) {
+      return null
+    }
+
+    val bookmarkGroupMatchFlagJsonList = matchingPattern.asList()
+      .map { bookmarkGroupMatchFlag ->
+        return@map BookmarkGroupMatchFlagJson(
+          rawPattern = bookmarkGroupMatchFlag.rawPattern,
+          matcherType = bookmarkGroupMatchFlag.type.rawType,
+          operator = bookmarkGroupMatchFlag.operator?.operatorId
+        )
+      }
+
+    if (bookmarkGroupMatchFlagJsonList.isEmpty()) {
+      return null
+    }
+
+    return moshi
+      .adapter(BookmarkGroupMatchFlagJsonList::class.java)
+      .toJson(BookmarkGroupMatchFlagJsonList(bookmarkGroupMatchFlagJsonList))
+  }
+
+  fun matchingPatternFromEntity(
+    moshi: Moshi,
+    matchingPatternRaw: String?
+  ): ThreadBookmarkGroupMatchPattern? {
+    if (matchingPatternRaw == null) {
+      return null
+    }
+
+    val bookmarkGroupMatchFlagList = try {
+      moshi
+        .adapter<BookmarkGroupMatchFlagJsonList>(BookmarkGroupMatchFlagJsonList::class.java)
+        .fromJson(matchingPatternRaw)
+        ?.list
+        ?.mapNotNull { bookmarkGroupMatchFlagJson ->
+          val matcherType = BookmarkGroupMatchFlag.Type.fromRawTypeOrNull(bookmarkGroupMatchFlagJson.matcherType)
+            ?: return@mapNotNull null
+          val operator = BookmarkGroupMatchFlag.Operator.fromOperatorIdOrNull(bookmarkGroupMatchFlagJson.operator)
+
+          return@mapNotNull BookmarkGroupMatchFlag(
+            rawPattern = bookmarkGroupMatchFlagJson.rawPattern,
+            type = matcherType,
+            nextGroupMatchFlag = null,
+            operator = operator
+          )
+        }
+    } catch (error: Throwable) {
+      Logger.e("ThreadBookmarkGroupMapper", "matchingPatternFromEntity() failed to convert " +
+        "json \'$matchingPatternRaw\' into BookmarkGroupMatchFlagJsonList")
+      return null
+    }
+
+    if (bookmarkGroupMatchFlagList == null || bookmarkGroupMatchFlagList.isEmpty()) {
+      return null
+    }
+
+    return ThreadBookmarkGroupMatchPattern.fromList(bookmarkGroupMatchFlagList)
+  }
+
+  @JsonClass(generateAdapter = true)
+  data class BookmarkGroupMatchFlagJsonList(
+    val list: List<BookmarkGroupMatchFlagJson>
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class BookmarkGroupMatchFlagJson(
+    val rawPattern: String,
+    val matcherType: Int,
+    var operator: Int?
+  )
 
 }

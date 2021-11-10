@@ -11,7 +11,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.id.ThreadBookmarkDBId
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkFull
-import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkGroupEntity
 import com.github.k1rakishou.model.mapper.ThreadBookmarkMapper
 import com.github.k1rakishou.model.mapper.ThreadBookmarkReplyMapper
 import com.github.k1rakishou.model.source.cache.ChanDescriptorCache
@@ -26,48 +25,6 @@ class ThreadBookmarkLocalSource(
   private val TAG = "ThreadBookmarkLocalSource"
   private val threadBookmarkDao = database.threadBookmarkDao()
   private val threadBookmarkReplyDao = database.threadBookmarkReplyDao()
-  private val threadBookmarkGroupDao = database.threadBookmarkGroupDao()
-
-  suspend fun createDefaultBookmarkGroups(allSiteNames: Set<String>) {
-    ensureInTransaction()
-
-    val siteNamesForNewGroups = mutableListOf<String>()
-
-    val bookmarkGroupsByGroupId = threadBookmarkGroupDao.selectAllGroups()
-      .associateBy { threadBookmarkGroupEntity -> threadBookmarkGroupEntity.groupId }
-    val maxOrder = bookmarkGroupsByGroupId.values
-      .maxByOrNull { threadBookmarkGroupEntity -> threadBookmarkGroupEntity.groupOrder }
-      ?.groupOrder?.plus(1) ?: 0
-
-    allSiteNames.forEach { siteName ->
-      if (!bookmarkGroupsByGroupId.containsKey(siteName)) {
-        siteNamesForNewGroups += siteName
-      }
-    }
-
-    Logger.d(TAG, "siteNamesForNewGroups=${siteNamesForNewGroups}, maxOrder=$maxOrder")
-
-    if (siteNamesForNewGroups.isEmpty()) {
-      return
-    }
-
-    val newBookmarkGroups = mutableListOf<ThreadBookmarkGroupEntity>()
-    var newOrder = maxOrder
-
-    siteNamesForNewGroups.forEach { siteName ->
-      newBookmarkGroups += ThreadBookmarkGroupEntity(
-        siteName,
-        siteName,
-        false,
-        newOrder
-      )
-
-      ++newOrder
-    }
-
-    Logger.d(TAG, "newBookmarkGroups=${newBookmarkGroups}")
-    threadBookmarkGroupDao.createGroups(newBookmarkGroups)
-  }
 
   suspend fun selectAll(): List<ThreadBookmark> {
     ensureInTransaction()

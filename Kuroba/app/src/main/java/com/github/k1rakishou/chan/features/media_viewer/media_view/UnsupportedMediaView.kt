@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.google.android.exoplayer2.upstream.DataSource
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class UnsupportedMediaView(
@@ -25,6 +26,9 @@ class UnsupportedMediaView(
   mediaViewContract: MediaViewContract,
   private val onThumbnailFullyLoadedFunc: () -> Unit,
   private val isSystemUiHidden: () -> Boolean,
+  cachedHttpDataSourceFactory: DataSource.Factory,
+  fileDataSourceFactory: DataSource.Factory,
+  contentDataSourceFactory: DataSource.Factory,
   override val viewableMedia: ViewableMedia.Unsupported,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int
@@ -32,7 +36,10 @@ class UnsupportedMediaView(
   context = context,
   attributeSet = null,
   mediaViewContract = mediaViewContract,
-  mediaViewState = initialMediaViewState
+  mediaViewState = initialMediaViewState,
+  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+  fileDataSourceFactory = fileDataSourceFactory,
+  contentDataSourceFactory = contentDataSourceFactory,
 ) {
   private val mediaViewNotSupportedMessage: TextView
   private val openInBrowserButton: ColorizableBarButton
@@ -113,12 +120,16 @@ class UnsupportedMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
   }
 
-  override fun hide(isLifecycleChange: Boolean) {
+  override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
     // no-op
   }
 
   override fun unbind() {
     closeMediaActionHelper.onDestroy()
+  }
+
+  override fun onInsetsChanged() {
+
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
@@ -142,7 +153,7 @@ class UnsupportedMediaView(
     closeMediaActionHelper.onDraw(canvas)
   }
 
-  class UnsupportedMediaViewState : MediaViewState {
+  class UnsupportedMediaViewState : MediaViewState() {
     override fun clone(): MediaViewState {
       return this
     }

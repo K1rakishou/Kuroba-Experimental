@@ -1,6 +1,16 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
-interface MediaViewState {
-  fun clone(): MediaViewState
-  fun updateFrom(other: MediaViewState?)
+import androidx.annotation.CallSuper
+
+abstract class MediaViewState(
+  val audioPlayerViewState: AudioPlayerView.AudioPlayerViewState? = null
+) {
+
+  @CallSuper
+  open fun resetPosition() {
+
+  }
+
+  abstract fun clone(): MediaViewState
+  abstract fun updateFrom(other: MediaViewState?)
 }

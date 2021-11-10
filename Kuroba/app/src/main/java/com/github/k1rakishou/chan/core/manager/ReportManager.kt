@@ -381,7 +381,7 @@ class ReportManager(
     return buildString(capacity = 512) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
-      appendLine("App Version: " + BuildConfig.VERSION_NAME + "." + BuildConfig.BUILD_NUMBER)
+      appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
       appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
       appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
@@ -390,11 +390,11 @@ class ReportManager(
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
+      appendLine("Bottom navigation enabled: ${ChanSettings.bottomNavigationViewEnabled.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.prefetchMedia.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
-      appendLine("asyncPostCellDataCalculation: ${ChanSettings.asyncPostCellDataCalculation.get()}")
       appendLine("userAgent: ${appConstants.userAgent}")
       appendLine("kurobaExCustomUserAgent: ${appConstants.kurobaExCustomUserAgent}")
 

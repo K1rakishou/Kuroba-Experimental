@@ -81,6 +81,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="unmark_as_my_post">Unmark as my post</string>
 
     <string name="bottom_menu_item_reorder">Reorder</string>
+    <string name="bottom_menu_item_move">Move</string>
     <string name="bottom_menu_item_download">Download</string>
     <string name="bottom_menu_item_read">Read</string>
     <string name="bottom_menu_item_delete">Delete</string>
@@ -191,6 +192,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_sort">Sort</string>
     <string name="action_browse_dev_menu">Dev menu</string>
     <string name="action_reply">Reply</string>
+    <string name="action_open_thread">Open thread</string>
     <string name="action_copy_image_full_url">Copy full image url</string>
     <string name="action_copy_image_thumbnail_url">Copy image thumbnail url</string>
     <string name="action_copy_image_original_name">Copy original file name</string>
@@ -244,6 +246,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_failed_gif_error">Failed to load gif (reason: %1$s)</string>
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
     <string name="image_not_found">Image not found</string>
+    <string name="media_viewer_error_loading_bg_audio">Failed to load image bg audio, error=\'%1$s\'</string>
+    <string name="media_viewer_error_cannot_load_bg_audio_because_of_settings">Cannot load BG audio (\'%1$s\') because current media load settings do not allow doing that</string>
     <string name="thread_load_failed_ssl">HTTPS error</string>
     <string name="thread_load_failed_ssl_with_reason">HTTPS error (reason: %1$s)</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
@@ -693,8 +697,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
-    <string name="setting_async_post_cell_data_calculation">Async post cell data calculation</string>
-    <string name="setting_async_post_cell_data_calculation_description">Turning this setting on improves catalog/thread opening performance (You should see less to none of the \'Diffing new and old posts, applying results\' loading step). This is achieved by doing the \'diffing\' step asynchronously with the other stuff instead of waiting until it\'s fully done. Diffing in this case means calculation of new posts\' intermediate post cell data (like post title, comment, etc. considering all the settings, since it depends on the settings) and then comparing it with already displayed data to figure out which post cells had changed since the last thread update. This setting is experimental because it\'s very hard to test all possible combinations that may accidentally break something. (⚠ May become the reason of weird catalog/thread post cell glitches and other unexpected bugs ⚠)</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -758,6 +760,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_headset_default_muted">Mute headset videos</string>
     <string name="setting_video_always_reset_to_start">Always reset videos to beginning</string>
     <string name="setting_auto_swipe_after_download">Automatically swipe to next media after downloading it</string>
+    <string name="setting_pause_players_when_in_bg">Pause players (video/audio) when app goes into background</string>
+    <string name="setting_enable_sound_posts">Enable sound posts</string>
 
     <!-- Save location group -->
     <string name="setting_save_location">Save location</string>
@@ -766,7 +770,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
 
     <!-- Media loading group -->
     <string name="setting_image_auto_load">Automatically load images</string>
-    <string name="setting_video_auto_load">Automatically load videos</string>
+    <string name="setting_video_auto_load">Automatically load videos/sound posts</string>
     <string name="settings_group_media_loading">Media loading</string>
     <string name="setting_image_auto_load_all">Always</string>
     <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
@@ -961,11 +965,15 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_bookmarks_set_grid_bookmark_view_width">Set grid bookmark view width</string>
     <string name="controller_bookmarks_clear_all_bookmarks_confirmation_message">Are you sure you want to clear ALL bookmarks?</string>
     <string name="controller_bookmarks_mark_all_bookmarks_as_seen">Mark all bookmarks as seen and clear all notifications</string>
+    <string name="controller_bookmarks_create_bookmark_group">Create bookmark group</string>
+    <string name="controller_bookmarks_bookmark_groups_settings">Bookmark groups settings</string>
+    <string name="controller_bookmarks_restart_filter_watcher">Restart filter watcher</string>
     <string name="controller_bookmarks_prune">Prune</string>
     <string name="controller_bookmarks_clear">Clear</string>
     <string name="controller_bookmarks_bookmark_of_archived_thread">(Archive)</string>
     <string name="controller_bookmarks_watcher_disabled">(Watcher disabled)</string>
     <string name="controller_bookmarks_delete_selected_bookmarks_title">Are you sure you want to delete %1$d bookmarks?</string>
+    <string name="controller_bookmarks_filter_watcher_restarted">Filter watcher restarted. Wait 5–10 seconds for the threads to get updated</string>
 
     <string name="controller_filter_watches">Filter watches</string>
 
@@ -1042,6 +1050,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_enter_media_url_error">Failed to convert \'%1$s\' to url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>
     <string name="browse_controller_error_parsing_thread_id">Error parsing thread id, it should only contain numbers</string>
+    <string name="browse_controller_error_thread_id_negative_or_zero">ThreadId must be positive and greater than 0</string>
     <string name="browse_controller_enter_page_number">Enter page number</string>
     <string name="browse_controller_failed_to_parse_page_number">Failed to convert \'%1$s\' into integer value</string>
     <string name="browse_controller_composite_catalog_subtitle_loading">…</string>
@@ -1297,7 +1306,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="saved_posts_tab_title">My posts</string>
     <string name="bookmarks_tab_title">Bookmarks</string>
-    <string name="filter_watches_tab_title">Filter watches</string>
 
     <string name="share_success_start">New media share intent, processing…</string>
     <string name="share_is_in_progress">Share is already in progress</string>
@@ -1352,6 +1360,81 @@ Actual error: \'%1$s\'</string>
 
     <string name="export_backup_options_export_thread_download_media_option">Export downloaded thread media (Might make the backup file very large)</string>
 
+    <string name="bookmark_groups_controller_title">Bookmark groups</string>
+    <string name="bookmark_groups_controller_no_groups_created">No groups created</string>
+    <string name="bookmark_groups_controller_select_bookmark_group">Select bookmark group to move selected bookmarks into</string>
+    <string name="bookmark_groups_controller_create_new_group">Create new group</string>
+    <string name="bookmark_groups_controller_group_has_no_matcher">Group \'%1$s\' has no matcher</string>
+    <string name="bookmark_groups_enter_new_group_name">Enter bookmark group name (must be unique)</string>
+    <string name="bookmark_groups_group_will_become_visible_after">Group will become visible after you add bookmarks into it</string>
+    <string name="bookmark_groups_group_already_exists">Group with name \'%1$s\' already exists (groupId=\'%2$s\')</string>
+
+    <string name="bookmark_group_settings_site_name_matcher">Site name</string>
+    <string name="bookmark_group_settings_board_code_matcher">Board code</string>
+    <string name="bookmark_group_settings_post_subject_matcher">Post subject</string>
+    <string name="bookmark_group_settings_post_comment_matcher">Post comment</string>
+    <string name="bookmark_group_settings_unknown_matcher">Unknown matcher type (%1$s)</string>
+    <string name="bookmark_group_settings_add_matcher">Add matcher</string>
+    <string name="bookmark_group_settings_select_matcher">Select matcher</string>
+    <string name="bookmark_group_settings_matcher_site_name">Site name</string>
+    <string name="bookmark_group_settings_matcher_board_code">Board code</string>
+    <string name="bookmark_group_settings_matcher_post_subject">Post subject</string>
+    <string name="bookmark_group_settings_matcher_post_comment">Post comment</string>
+    <string name="bookmark_group_settings_select_matcher_operator">Select matcher operator</string>
+    <string name="bookmark_group_settings_matcher_operator_and">AND</string>
+    <string name="bookmark_group_settings_matcher_operator_or">OR</string>
+    <string name="bookmark_group_settings_enter_matcher_pattern">Enter matcher pattern</string>
+
+    <string name="bookmark_group_settings_matcher_help_title">Bookmark group matcher help</string>
+    <string name="bookmark_group_settings_matcher_help">
+<![CDATA[
+    By default all new bookmarks are created in the <tt>Default group</tt>.
+    <br>
+    You can create new groups and move the bookmarks into them manually but there is also a new ability to automize this process: <tt>bookmark group matchers</tt>.
+    <br>
+    Note: only the newly created bookmarks are affected by the matchers. In other words, after a bookmark was created and moved into a group you can only
+    move it manually to another group or delete it and then create again to trigger the bookmark matchers.
+    <br>
+    They work similar to how filters work but instead of having only one regex pattern that is then matched against post comment/subject/etc you can create up to 8
+    separate regex patterns and combine them with two operators: <tt>AND</tt> or <tt>OR</tt>.
+    <br>
+    The matchers can be applied to 4 different parts of a thread original post:
+    <br>
+    <p>
+        1. Site name.
+        <br>
+        2. Board code.
+        <br>
+        3. OP subject.
+        <br>
+        4. OP comment.
+        <br>
+    </p>
+    The syntax is very similar to filter pattern syntax.
+    <br>
+    By combining the matchers together you can create the following example bookmark groups:
+    <br>
+    <p>
+        - If you create a group with site name matcher <tt>/4chan/i</tt>, board code matcher <tt>/g/i</tt> using the <tt>AND</tt>
+        operator then all bookmarks created on 4chan/g/ (and only there) will be moved into this group.<br>
+        - If you create a group with post subject matcher <tt>/mjg/i</tt>, post comment matcher <tt>/mjg/i</tt> using the <tt>OR</tt>
+        operator then all bookmarks with <tt>/mjg/</tt> in OP subject or comment will be moved into this group.<br>
+        - If you create a group with post subject matcher <tt>/vn/i</tt> with no other matchers then every bookmark on every site
+        (on every board) will be moved into this group if it contains <tt>/vn/i</tt> in the thread subject.<br>
+    </p>
+    The exception to this rule are the bookmarks created by filter watches. They will be moved into their own groups which are called by the matched filter\'s pattern.
+    <br>
+    When deleting a bookmark group all the bookmarks that are currently in that group will be moved into the <tt>Default group</tt>.
+    <br>
+    <br>
+    If you have multiple bookmark groups, when creating new bookmarks, they are processed by the bookmark group matchers in the order as seen in the <tt>Bookmark groups</tt>
+    screen except for the <tt>Default group</tt> which is always processed last and basically always matches all the remaining bookmarks not matched by other matchers. In other words,
+    the ordering matters. For example, if you create a matcher with the <tt>*</tt> regex and move it on the very top of the bookmark groups list, it will match all newly created bookmarks
+    and they all will be moved into that group. All the matchers after that <tt>global</tt> matcher won\'t even have a chance to match anything.
+    <br>
+]]>
+    </string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
@@ -1380,5 +1463,6 @@ Actual error: \'%1$s\'</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>
     <string name="catalog_end_reached">Catalog end reached</string>
+    <string name="failed_post_find_post_to_scroll_to">Failed to find post to scroll to (postNo=\'%1$d\')</string>
 
 </resources>
