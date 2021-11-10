@@ -361,7 +361,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
         append(viewableMediaMeta.mediaHeight)
       }
 
-      viewableMediaMeta.mediaSize?.let { mediaSize ->
+      val mediaSize = viewableMediaMeta.mediaSize
+        ?: viewableMediaMeta.mediaOnDiskSize
+
+      if (mediaSize != null) {
         append(", ")
         append(ChanPostUtils.getReadableFileSize(mediaSize))
       }

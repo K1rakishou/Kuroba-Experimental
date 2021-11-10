@@ -232,7 +232,10 @@ class GifMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
 
     scope.launch {
-      when (val fullGifDeferredResult = fullGifDeferred.awaitCatching()) {
+      val fullGifDeferredResult = fullGifDeferred.awaitCatching()
+      mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+
+      when (fullGifDeferredResult) {
         is ModularResult.Error -> {
           val error = fullGifDeferredResult.error
           Logger.e(TAG, "onFullGifLoadingError()", error)
@@ -247,10 +250,19 @@ class GifMediaView(
           actualGifView.setVisibilityFast(View.INVISIBLE)
         }
         is ModularResult.Value -> {
+          val mediaPreloadResult = fullGifDeferredResult.value
+
           if (!hasContent) {
-            val filePath = fullGifDeferredResult.value.filePath
+            val filePath = mediaPreloadResult.filePath
             if (!setBigGifFromFile(filePath)) {
               return@launch
+            }
+          }
+
+          withContext(Dispatchers.Default) {
+            val fileSize = mediaPreloadResult.filePath.fileSize(fileManager)
+            if (fileSize != null) {
+              viewableMedia.viewableMediaMeta.mediaOnDiskSize = fileSize
             }
           }
 

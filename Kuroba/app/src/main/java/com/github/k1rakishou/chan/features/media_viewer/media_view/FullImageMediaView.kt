@@ -271,6 +271,15 @@ class FullImageMediaView(
         is ModularResult.Value -> {
           val mediaPreloadResult = fullImageDeferredResult.value
           setBigImageFromFile(isLifecycleChange, mediaPreloadResult)
+
+          withContext(Dispatchers.Default) {
+            val fileSize = mediaPreloadResult.filePath.fileSize(fileManager)
+            if (fileSize != null) {
+              viewableMedia.viewableMediaMeta.mediaOnDiskSize = fileSize
+            }
+          }
+
+          mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
         }
       }
 

@@ -339,6 +339,9 @@ data class ViewableMediaMeta(
   val mediaHash: String?,
   val isSpoiler: Boolean
 ) {
+  @get:Synchronized
+  @set:Synchronized
+  var mediaOnDiskSize: Long? = null
 
   val fullServerMediaName by lazy {
     if (serverMediaName.isNullOrEmpty()) {

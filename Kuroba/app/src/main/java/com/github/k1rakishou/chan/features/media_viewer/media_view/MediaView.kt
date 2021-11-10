@@ -440,6 +440,31 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   data class MediaPreloadResult(val filePath: FilePath, val isForced: Boolean)
 
   sealed class FilePath {
+    private var fileSizeCached: Long? = null
+
+    fun fileSize(fileManager: FileManager): Long? {
+      synchronized(this) {
+        if (fileSizeCached != null) {
+          return fileSizeCached
+        }
+      }
+
+      val fileSize = when (this) {
+        is JavaPath -> {
+          File(this.path).length()
+        }
+        is UriPath -> {
+          val abstractFile = fileManager.fromUri(this.uri)
+            ?: return null
+
+          fileManager.getLength(abstractFile)
+        }
+      }
+
+      synchronized(this) { fileSizeCached = fileSize }
+      return fileSize
+    }
+
     fun inputStream(fileManager: FileManager): InputStream? {
       when (this) {
         is JavaPath -> {
