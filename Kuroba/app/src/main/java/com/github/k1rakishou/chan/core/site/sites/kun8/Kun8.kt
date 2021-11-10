@@ -35,7 +35,7 @@ class Kun8 : CommonSite() {
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://8kun.top/static/favicon.ico".toHttpUrl()))
+    setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://media.128ducks.com/static/favicon.ico".toHttpUrl()))
     setBoardsType(BoardsType.DYNAMIC)
     setResolvable(URL_HANDLER)
 
@@ -158,7 +158,10 @@ class Kun8 : CommonSite() {
     const val SITE_NAME = "8kun"
 
     val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      override val mediaHosts = arrayOf("https://media.8kun.top/".toHttpUrl())
+      override val mediaHosts = arrayOf(
+        "https://media.8kun.top/".toHttpUrl(),
+        "https://media.128ducks.com/".toHttpUrl()
+      )
 
       override fun getSiteClass(): Class<out Site?> {
         return Kun8::class.java
