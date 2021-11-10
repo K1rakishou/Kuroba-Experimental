@@ -171,7 +171,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
-    audioPlayerView.show(isLifecycleChange)
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.show(isLifecycleChange)
+    }
+
     show(isLifecycleChange)
 
     Logger.d(TAG, "onShow(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
@@ -182,8 +185,19 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
-    audioPlayerView.hide(isLifecycleChange = isLifecycleChange, isPausing = isPausing, isBecomingInactive = isBecomingInactive)
-    hide(isLifecycleChange = isLifecycleChange, isPausing = isPausing, isBecomingInactive = isBecomingInactive)
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.hide(
+        isLifecycleChange = isLifecycleChange,
+        isPausing = isPausing,
+        isBecomingInactive = isBecomingInactive
+      )
+    }
+
+    hide(
+      isLifecycleChange = isLifecycleChange,
+      isPausing = isPausing,
+      isBecomingInactive = isBecomingInactive
+    )
 
     Logger.d(TAG, "onHide(${pagerPosition}/${totalPageItemsCount}, ${viewableMedia.mediaLocation})")
   }
@@ -193,7 +207,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = false
     _preloadingCalled = false
     _mediaViewToolbar?.onDestroy()
-    audioPlayerView.unbind()
+
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.unbind()
+    }
 
     cancellableToast.cancel()
     scope.cancelChildren()
@@ -220,7 +237,9 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       mediaViewToolbar?.showToolbar()
     }
 
-    audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
+    if (mediaViewState.audioPlayerViewState != null) {
+      audioPlayerView.onSystemUiVisibilityChanged(systemUIHidden)
+    }
   }
 
   @CallSuper
