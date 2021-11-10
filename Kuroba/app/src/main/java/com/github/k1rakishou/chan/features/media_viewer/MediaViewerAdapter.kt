@@ -383,6 +383,12 @@ class MediaViewerAdapter(
     }
   }
 
+  fun onInsetsChanged() {
+    loadedViews.forEach { loadedView ->
+      loadedView.mediaView.onInsetsChanged()
+    }
+  }
+
   suspend fun reloadMedia(viewableMedia: ViewableMedia) {
     loadedViews.forEach { loadedView ->
       if (loadedView.mediaView.viewableMedia == viewableMedia) {

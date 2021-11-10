@@ -224,6 +224,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   abstract fun show(isLifecycleChange: Boolean)
   abstract fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean)
   abstract fun unbind()
+  abstract fun onInsetsChanged()
 
   protected open fun updateTransparency(backgroundColor: Int?) {
 

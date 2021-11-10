@@ -172,6 +172,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:name=".features.media_viewer.MediaViewerActivity"
             android:launchMode="singleTask"
             android:theme="@style/Chan.TranslucentActivityTheme"
+            android:configChanges="screenSize|smallestScreenSize|screenLayout|orientation"
             android:exported="true">
 
             <intent-filter>

@@ -162,6 +162,10 @@ class FullImageMediaView(
     return actualImageView.imageViewportTouchSide.isTouchingAllSides
   }
 
+  override fun onInsetsChanged() {
+
+  }
+
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
     if (ev != null && closeMediaActionHelper.onInterceptTouchEvent(ev)) {
       return true

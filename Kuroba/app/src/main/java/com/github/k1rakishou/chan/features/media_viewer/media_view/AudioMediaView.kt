@@ -126,6 +126,10 @@ class AudioMediaView(
     closeMediaActionHelper.onDestroy()
   }
 
+  override fun onInsetsChanged() {
+
+  }
+
   override fun onInterceptTouchEvent(ev: MotionEvent?): Boolean {
     if (ev != null && closeMediaActionHelper.onInterceptTouchEvent(ev)) {
       return true

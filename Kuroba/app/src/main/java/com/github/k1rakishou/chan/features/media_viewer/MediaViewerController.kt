@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.media_viewer
 
 import android.content.Context
+import android.content.res.Configuration
 import android.graphics.Color
 import android.graphics.drawable.Drawable
 import android.net.Uri
@@ -200,6 +201,13 @@ class MediaViewerController(
     pager.adapter = null
 
     ExoPlayerWrapper.releaseAll()
+  }
+
+  override fun onConfigurationChanged(newConfig: Configuration) {
+    super.onConfigurationChanged(newConfig)
+
+    mediaViewerAdapter?.onInsetsChanged()
+    onInsetsChanged()
   }
 
   override fun onInsetsChanged() {

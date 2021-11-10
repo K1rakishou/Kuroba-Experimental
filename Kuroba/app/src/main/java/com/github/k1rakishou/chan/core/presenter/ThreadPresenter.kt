@@ -1547,9 +1547,9 @@ class ThreadPresenter @Inject constructor(
       ?: return
 
     threadPresenterCallback?.showImages(
-      postCellData.chanDescriptor,
-      initialImageUrl,
-      transitionThumbnailUrl
+      chanDescriptor = postCellData.chanDescriptor,
+      initialImageUrl = initialImageUrl,
+      transitionThumbnailUrl = transitionThumbnailUrl
     )
   }
 
