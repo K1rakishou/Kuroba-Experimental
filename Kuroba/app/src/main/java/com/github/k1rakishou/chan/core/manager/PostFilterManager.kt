@@ -51,6 +51,22 @@ class PostFilterManager(
     }
   }
 
+  fun countMatchedPosts(filterDatabaseId: Long): Int {
+    return lock.read {
+      var postsCount = 0
+
+      for (postFilterMap in filterStorage.values) {
+        for ((_, postFilter) in postFilterMap) {
+          if (postFilter.ownerFilterId == filterDatabaseId) {
+            ++postsCount
+          }
+        }
+      }
+
+      return@read postsCount
+    }
+  }
+
   fun insert(postDescriptor: PostDescriptor, postFilter: PostFilter) {
     lock.write {
       val threadDescriptor = postDescriptor.threadDescriptor()

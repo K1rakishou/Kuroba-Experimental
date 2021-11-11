@@ -81,7 +81,8 @@ class MediaViewerActivity : ControllerHostActivity(),
       .also { component -> component.inject(viewModel) }
 
     contentView = findViewById(android.R.id.content)
-    AndroidUtils.getWindow(this).addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
+    AndroidUtils.getWindow(this)
+      .addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON)
 
     mediaViewerController = MediaViewerController(
       context = this,

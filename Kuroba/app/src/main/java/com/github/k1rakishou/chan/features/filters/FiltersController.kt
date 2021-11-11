@@ -51,8 +51,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
@@ -191,7 +193,11 @@ class FiltersController(
         }
     }
 
-    mainScope.launch { viewModel.reloadFilters() }
+    mainScope.launch {
+      viewModel.reloadFilters()
+
+      mainScope.launch { viewModel.reloadFilterMatchedPosts() }
+    }
 
     mainScope.launch {
       viewModel.updateEnableDisableAllFiltersButtonFlow
@@ -444,19 +450,15 @@ class FiltersController(
             .fillMaxWidth()
             .wrapContentHeight()
         ) {
+          val filterMatchedPostCountMap = viewModel.filterMatchedPostCountMap
+          val filterMatchedPostCount = filterMatchedPostCountMap[chanFilterInfo.chanFilter.getDatabaseId()]
+
           val squareDrawableInlineContent = remember(key1 = chanFilterInfo) {
-            getSquareDrawableContent(chanFilterInfo = chanFilterInfo)
+            getFilterInlineContentContent(chanFilterInfo = chanFilterInfo)
           }
 
-          val fullText = remember(key1 = chanFilterInfo.filterText) {
-            return@remember buildAnnotatedString {
-              append("#")
-              append((index + 1).toString())
-              append(" ")
-              append("\n")
-
-              append(chanFilterInfo.filterText)
-            }
+          val fullText = remember(key1 = chanFilterInfo.filterText, key2 = filterMatchedPostCount) {
+            return@remember formatFilterInfo(index, chanFilterInfo, filterMatchedPostCount, chanTheme)
           }
 
           KurobaComposeClickableText(
@@ -523,6 +525,36 @@ class FiltersController(
             thickness = 1.dp
           )
         }
+      }
+    }
+  }
+
+  private fun formatFilterInfo(
+    index: Int,
+    chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo,
+    filterMatchedPostCount: Int?,
+    chanTheme: ChanTheme
+  ): AnnotatedString {
+    return buildAnnotatedString {
+      append("#")
+      append((index + 1).toString())
+      append(" ")
+      append("\n")
+
+      append(chanFilterInfo.filterText)
+
+      if (filterMatchedPostCount != null) {
+        append("\n")
+
+        append(
+          AnnotatedString(
+            getString(R.string.filter_matched_posts),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose)
+          )
+        )
+
+        append(" ")
+        append(filterMatchedPostCount.toString())
       }
     }
   }
@@ -656,7 +688,7 @@ class FiltersController(
     presentController(createOrUpdateFilterController)
   }
 
-  private fun getSquareDrawableContent(
+  private fun getFilterInlineContentContent(
     chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo
   ): Map<String, InlineTextContent> {
     val placeholder = Placeholder(

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.filters
 
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -13,6 +14,7 @@ import com.github.k1rakishou.chan.core.base.ViewModelSelectionHelper
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.compose.reorder.move
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
@@ -43,6 +45,8 @@ class FiltersControllerViewModel : BaseViewModel() {
   @Inject
   lateinit var chanFilterManager: ChanFilterManager
   @Inject
+  lateinit var postFilterManager: PostFilterManager
+  @Inject
   lateinit var boardManager: BoardManager
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -52,6 +56,10 @@ class FiltersControllerViewModel : BaseViewModel() {
   private val _filters = mutableStateListOf<ChanFilterInfo>()
   val filters: List<ChanFilterInfo>
     get() = _filters
+
+  private val _filterMatchedPostCountMap = mutableStateMapOf<Long, Int>()
+  val filterMatchedPostCountMap: Map<Long, Int>
+    get() = _filterMatchedPostCountMap
 
   private val _activeBoardsCountForAllSites = AtomicInteger(0)
   val activeBoardsCountForAllSites: Int
@@ -221,6 +229,25 @@ class FiltersControllerViewModel : BaseViewModel() {
     _filters.addAll(allFilters)
 
     _updateEnableDisableAllFiltersButtonFlow.emit(Unit)
+  }
+
+  suspend fun reloadFilterMatchedPosts() {
+    awaitUntilDependenciesInitialized()
+
+    withContext(Dispatchers.Default) {
+      _filterMatchedPostCountMap.clear()
+
+      val chanFilters = chanFilterManager.getAllFilters()
+
+      for (chanFilter in chanFilters) {
+        if (!chanFilter.hasDatabaseId()) {
+          continue
+        }
+
+        val postsCount = postFilterManager.countMatchedPosts(chanFilter.getDatabaseId())
+        _filterMatchedPostCountMap[chanFilter.getDatabaseId()] = postsCount
+      }
+    }
   }
 
   private fun createChanFilterInfo(chanFilter: ChanFilter): ChanFilterInfo {

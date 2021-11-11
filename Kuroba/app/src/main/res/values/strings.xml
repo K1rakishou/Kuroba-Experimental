@@ -330,6 +330,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_only_apply_to_op_part">Only apply to OP:</string>
     <string name="filter_apply_to_own_posts_part">Apply to my own posts:</string>
     <string name="filter_note_part">Note:</string>
+    <string name="filter_matched_posts">Total matched posts:</string>
+    <string name="filter_show_more">(Show more)</string>
     <string name="filter_all_active_boards_part">All currently added boards (%1$s)</string>
     <string name="filter_n_boards_part">%1$d board(s)</string>
 
