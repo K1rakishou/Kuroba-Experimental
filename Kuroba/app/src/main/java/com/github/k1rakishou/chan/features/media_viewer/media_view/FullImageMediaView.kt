@@ -34,8 +34,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import pl.droidsonroids.gif.GifDrawable
-import java.io.BufferedInputStream
 
 @SuppressLint("ViewConstructor", "ClickableViewAccessibility")
 class FullImageMediaView(
@@ -401,42 +399,15 @@ class FullImageMediaView(
       })
 
       actualImageView.setOnClickListener(null)
-      val filePath = mediaPreloadResult.filePath
 
-      if (viewableMedia.viewableMediaMeta.isGif) {
-        val imageSource = withContext(Dispatchers.IO) {
-          val inputStream = filePath.inputStream(fileManager)
-          if (inputStream == null) {
-            return@withContext null
-          }
+      val tiling = !viewableMedia.viewableMediaMeta.isGif
 
-          val gifDrawable = inputStream.use { stream ->
-            BufferedInputStream(stream).use { bis -> GifDrawable(bis) }
-          }
-
-          return@withContext ImageSource
-            .bitmap(gifDrawable.seekToFrameAndGet(1))
-            .tiling(true)
-        }
-
-        if (imageSource == null) {
-          cancellableToast.showToast(
-            context,
-            getString(R.string.image_image_load_failed, "Failed to load 1-frame gif as a bitmap")
-          )
-
-          return@coroutineScope
-        }
-
-        actualImageView.setImage(imageSource)
-      } else {
-        val imageSource = when (filePath) {
-          is FilePath.JavaPath -> ImageSource.uri(filePath.path).tiling(true)
-          is FilePath.UriPath -> ImageSource.uri(filePath.uri).tiling(true)
-        }
-
-        actualImageView.setImage(imageSource)
+      val imageSource = when (val filePath = mediaPreloadResult.filePath) {
+        is FilePath.JavaPath -> ImageSource.uri(filePath.path).tiling(tiling)
+        is FilePath.UriPath -> ImageSource.uri(filePath.uri).tiling(tiling)
       }
+
+      actualImageView.setImage(imageSource)
 
       audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
         isLifecycleChange = isLifecycleChange,
