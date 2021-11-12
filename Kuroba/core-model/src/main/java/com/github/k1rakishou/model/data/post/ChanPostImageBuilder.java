@@ -23,9 +23,15 @@ public class ChanPostImageBuilder {
     private long size;
     @Nullable
     private String fileHash;
+    private boolean inlined;
+    @Nullable
     private PostDescriptor ownerPostDescriptor;
 
     public ChanPostImageBuilder() {
+    }
+
+    public ChanPostImageBuilder(@Nullable PostDescriptor postDescriptor) {
+        this.ownerPostDescriptor = postDescriptor;
     }
 
     public ChanPostImageBuilder serverFilename(String serverFilename) {
@@ -96,6 +102,11 @@ public class ChanPostImageBuilder {
         return this;
     }
 
+    public ChanPostImageBuilder inlined() {
+        this.inlined = true;
+        return this;
+    }
+
     public ChanPostImage build() {
         if (ChanSettings.removeImageSpoilers.get()) {
             spoiler = false;
@@ -111,7 +122,7 @@ public class ChanPostImageBuilder {
             filename = serverFilename;
         }
 
-        return new ChanPostImage(
+        ChanPostImage chanPostImage = new ChanPostImage(
                 serverFilename,
                 thumbnailUrl,
                 spoilerThumbnailUrl,
@@ -121,11 +132,17 @@ public class ChanPostImageBuilder {
                 imageWidth,
                 imageHeight,
                 spoiler,
-                false,
+                inlined,
                 size,
                 fileHash,
                 getImageType(extension)
         );
+
+        if (ownerPostDescriptor != null) {
+            chanPostImage.setPostDescriptor(ownerPostDescriptor);
+        }
+
+        return chanPostImage;
     }
 
     public static ChanPostImageType getImageType(@Nullable String extension) {

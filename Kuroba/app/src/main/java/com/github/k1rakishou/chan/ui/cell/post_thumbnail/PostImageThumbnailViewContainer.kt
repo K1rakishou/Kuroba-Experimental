@@ -27,7 +27,7 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor")
 class PostImageThumbnailViewContainer(
   context: Context,
-  val reversed: Boolean
+  val postAlignmentMode: ChanSettings.PostAlignmentMode
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
   val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
@@ -43,7 +43,7 @@ class PostImageThumbnailViewContainer(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    if (reversed) {
+    if (postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
       inflate(context, R.layout.layout_post_multiple_image_thumbnail_view_reversed, this)
     } else {
       inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)

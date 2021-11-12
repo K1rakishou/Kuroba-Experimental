@@ -37,7 +37,9 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule;
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.chan.utils.ConversionUtils;
+import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.common.CommentParserConstants;
+import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
@@ -46,6 +48,7 @@ import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
+import com.github.k1rakishou.model.data.post.ChanPostImageBuilder;
 
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
@@ -55,6 +58,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import okhttp3.HttpUrl;
 
 @AnyThread
 public class CommentParser implements ICommentParser, HasQuotePatterns {
@@ -82,6 +87,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     public CommentParser addDefaultRules() {
         rule(tagRule("a").action(this::handleAnchor));
         rule(tagRule("iframe").action(this::handleIframe));
+        rule(tagRule("img").action(this::handleImg));
         rule(tagRule("table").action(this::handleTable));
         rule(tagRule("span").withCssClass("deadlink").action(this::handleDeadlink));
         rule(tagRuleWithAttr("*", "style").action(this::handleAnyTagWithStyleAttr));
@@ -152,12 +158,17 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         List<StyleRule> wildcardRules = this.rules.get("*");
         if (wildcardRules != null) {
-            for (int i = 0; i < 2; i++) {
+            outer: for (int i = 0; i < 2; i++) {
                 boolean highPriority = i == 0;
 
                 for (StyleRule rule : wildcardRules) {
                     if (rule.highPriority() == highPriority && rule.applies(htmlTag, true)) {
-                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
+                        CharSequence result = rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
+                        if (!TextUtils.isEmpty(result)) {
+                            return result;
+                        }
+
+                        break outer;
                     }
                 }
             }
@@ -280,6 +291,54 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         return res;
     }
 
+    private CharSequence handleImg(
+            PostParser.Callback callback,
+            ChanPostBuilder post,
+            CharSequence text,
+            HtmlTag imgTag
+    ) {
+        String srcValue = imgTag.attrUnescapedOrNull("src");
+        if (srcValue == null || srcValue.isEmpty()) {
+            return "";
+        }
+
+        HtmlNode parentNode = imgTag.getParentNode();
+        if (parentNode instanceof HtmlNode.Tag) {
+            HtmlTag htmlTag = ((HtmlNode.Tag) parentNode).getHtmlTag();
+            String tagName = htmlTag.getTagName();
+
+            if ("a".equals(tagName)) {
+                return "";
+            }
+        }
+
+        HttpUrl httpUrl = HttpUrl.Companion.parse(srcValue);
+        if (httpUrl == null) {
+            return "";
+        }
+
+        String serverFileName = String.valueOf(System.currentTimeMillis());
+        String filename = imgTag.attrUnescapedOrNull("alt");
+        String extension = StringUtils.extractFileNameExtension(srcValue);
+
+        if (TextUtils.isEmpty(filename)) {
+            filename = serverFileName;
+        }
+
+        post.postImages.add(
+                new ChanPostImageBuilder(post.getPostDescriptor())
+                        .thumbnailUrl(AppConstants.INLINED_IMAGE_THUMBNAIL_URL)
+                        .imageUrl(httpUrl)
+                        .serverFilename(serverFileName)
+                        .filename(filename)
+                        .extension(extension)
+                        .inlined()
+                        .build()
+        );
+
+        return "";
+    }
+
     private CharSequence handleIframe(
             PostParser.Callback callback,
             ChanPostBuilder post,
@@ -290,7 +349,6 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         if (srcValue == null || srcValue.isEmpty()) {
             return "";
         }
-
 
         SpannableStringBuilder spannableStringBuilder = new SpannableStringBuilder();
         spannableStringBuilder.append(IFRAME_CONTENT_PREFIX);

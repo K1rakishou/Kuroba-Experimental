@@ -91,9 +91,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
-
     if (postCellData.postImages.isEmpty() || ChanSettings.textOnly.get()) {
+      cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
       unbindPostImages()
       return
     }
@@ -102,10 +101,11 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     if (postCellData.postImages.size <= 1 || postCellData.postMultipleImagesCompactMode) {
       bindZeroOrOneImage(postCellData)
+      cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
       return
     }
 
-    val postCellDataWidthNoPaddings = cachedThumbnailViewContainerInfoArray[BIND].postCellDataWidthNoPaddings
+    val postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
 
     // postCellDataWidthNoPaddings is the width of the recyclerview where the posts are displayed.
     // But each post has paddings and we need to account for them, otherwise when displaying multiple
@@ -119,6 +119,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     bindMoreThanOneImage(actualWidth, postCellData)
+    cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
   }
 
   fun unbindContainer() {
@@ -137,9 +138,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val prevChanPostImages = cachedThumbnailViewContainerInfoArray[BIND].prevChanPostImages
+    val prevPostAlignmentMode = cachedThumbnailViewContainerInfoArray[BIND].postAlignmentMode
 
-    if (thumbnailViews != null || (prevChanPostImages != null && imagesAreTheSame(childCount, prevChanPostImages))) {
-      // The post was unbound while we were waiting for the layout to happen
+    val alignmentChanged = prevPostAlignmentMode != postCellData.postAlignmentMode
+    val imagesNotChanged = prevChanPostImages != null && imagesAreTheSame(childCount, prevChanPostImages)
+
+    if (!alignmentChanged && thumbnailViews != null && imagesNotChanged) {
       return
     }
 
@@ -217,10 +221,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       val imageUrl = prevChanPostImages[index].imageUrl?.toString()
       val actualThumbnailUrl = prevChanPostImages[index].actualThumbnailUrl?.toString()
-      val spoilerThumbnailUrl = prevChanPostImages[index].spoilerThumbnailUrl?.toString()
       val cachedImageUrl = postImageThumbnailViewContainer.actualThumbnailView.imageUrl()
 
-      if (cachedImageUrl != imageUrl && cachedImageUrl != actualThumbnailUrl && cachedImageUrl != spoilerThumbnailUrl) {
+      if (cachedImageUrl != imageUrl && cachedImageUrl != actualThumbnailUrl) {
         return false
       }
     }
@@ -326,10 +329,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     index: Int,
     postAlignmentMode: ChanSettings.PostAlignmentMode
   ): Pair<PostImageThumbnailViewContainer, Boolean> {
-    val reversed = postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
     var view = getChildAt(index)
-    if (view != null && view is PostImageThumbnailViewContainer && view.reversed == reversed) {
+    if (view != null && view is PostImageThumbnailViewContainer && view.postAlignmentMode == postAlignmentMode) {
       return view to false
     }
 
@@ -337,7 +339,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       removeViewAt(index)
     }
 
-    view = PostImageThumbnailViewContainer(context, reversed)
+    view = PostImageThumbnailViewContainer(context, postAlignmentMode)
     return view to true
   }
 

@@ -24,6 +24,7 @@ object StringUtils {
     return String(result)
   }
 
+  @JvmStatic
   fun extractFileNameExtension(filename: String): String? {
     val index = filename.lastIndexOf('.')
     if (index == -1) {

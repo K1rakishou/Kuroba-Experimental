@@ -8,7 +8,6 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import okhttp3.HttpUrl
-import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.util.*
 
 class ChanPostImage(
@@ -21,7 +20,6 @@ class ChanPostImage(
   val imageWidth: Int = 0,
   val imageHeight: Int = 0,
   val spoiler: Boolean = false,
-  @Deprecated("remove me")
   val isInlined: Boolean = false,
   fileSize: Long = 0L,
   val fileHash: String? = null,
@@ -137,7 +135,7 @@ class ChanPostImage(
 
   fun getThumbnailUrl(): HttpUrl? {
     if (hidden) {
-      return (AppConstants.RESOURCES_ENDPOINT + "hide_thumb.png").toHttpUrl()
+      return AppConstants.HIDDEN_IMAGE_THUMBNAIL_URL
     }
 
     if (spoiler) {

@@ -240,7 +240,12 @@ open class AppConstants(
     const val MPV_CERTIFICATE_FILE_NAME = "cacert.pem"
 
     const val RESOURCES_ENDPOINT = "https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/docs/"
-    const val DEFAULT_THUMBNAIL = (RESOURCES_ENDPOINT + "internal_spoiler.png")
+
+    const val INLINED_IMAGE_THUMBNAIL = RESOURCES_ENDPOINT + "internal_spoiler.png"
+    @JvmField val INLINED_IMAGE_THUMBNAIL_URL = INLINED_IMAGE_THUMBNAIL.toHttpUrl()
+
+    const val HIDDEN_IMAGE_THUMBNAIL = RESOURCES_ENDPOINT + "hide_thumb.png"
+    @JvmField val HIDDEN_IMAGE_THUMBNAIL_URL = HIDDEN_IMAGE_THUMBNAIL.toHttpUrl()
 
     // This is a hack to be able to store into the database and load back an url to the composition
     // icon which we store in the resources

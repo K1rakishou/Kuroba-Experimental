@@ -523,7 +523,7 @@ class MediaViewerControllerViewModel : ViewModel() {
 
     val previewLocation = chanPostImage.actualThumbnailUrl
       ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl.toString()) }
-      ?: MediaLocation.Remote(AppConstants.DEFAULT_THUMBNAIL)
+      ?: MediaLocation.Remote(AppConstants.INLINED_IMAGE_THUMBNAIL)
 
     val spoilerLocation = if (chanPostImage.spoiler) {
       chanPostImage.spoilerThumbnailUrl
