@@ -58,11 +58,14 @@ class PageRequestManager(
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + SupervisorJob() + CoroutineName("PageRequestManager")
 
-  fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? {
-    return getPages(boardDescriptor)
+  fun getBoardPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean = true): BoardPages? {
+    return getPages(
+      boardDescriptor = boardDescriptor,
+      requestPagesIfNotCached = requestPagesIfNotCached
+    )
   }
 
-  fun getPage(originalPostDescriptor: PostDescriptor?): BoardPage? {
+  fun getPage(originalPostDescriptor: PostDescriptor?, requestPagesIfNotCached: Boolean = true): BoardPage? {
     if (originalPostDescriptor == null) {
       return null
     }
@@ -71,10 +74,14 @@ class PageRequestManager(
       return null
     }
 
-    return findPage(originalPostDescriptor.boardDescriptor(), originalPostDescriptor.postNo)
+    return findPage(
+      boardDescriptor = originalPostDescriptor.boardDescriptor(),
+      opNo = originalPostDescriptor.postNo,
+      requestPagesIfNotCached = requestPagesIfNotCached
+    )
   }
 
-  fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?): BoardPage? {
+  fun getPage(threadDescriptor: ChanDescriptor.ThreadDescriptor?, requestPagesIfNotCached: Boolean = true): BoardPage? {
     if (threadDescriptor == null || threadDescriptor.threadNo < 0) {
       return null
     }
@@ -83,7 +90,11 @@ class PageRequestManager(
       return null
     }
 
-    return findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
+    return findPage(
+      boardDescriptor = threadDescriptor.boardDescriptor,
+      opNo = threadDescriptor.threadNo,
+      requestPagesIfNotCached = requestPagesIfNotCached
+    )
   }
 
   fun getThreadNoTimeModPairList(
@@ -112,8 +123,11 @@ class PageRequestManager(
 
   @Synchronized
   fun canAlertAboutThreadBeingOnLastPage(threadDescriptor: ChanDescriptor.ThreadDescriptor): Boolean {
-    val boardPage = findPage(threadDescriptor.boardDescriptor, threadDescriptor.threadNo)
-      ?: return false
+    val boardPage = findPage(
+      boardDescriptor = threadDescriptor.boardDescriptor,
+      opNo = threadDescriptor.threadNo,
+      requestPagesIfNotCached = true
+    ) ?: return false
 
     if (!boardPage.isLastPage()) {
       return false
@@ -144,8 +158,8 @@ class PageRequestManager(
     launch { requestBoardInternal(boardDescriptor) }
   }
 
-  private fun findPage(boardDescriptor: BoardDescriptor, opNo: Long): BoardPage? {
-    val pages = getPages(boardDescriptor)
+  private fun findPage(boardDescriptor: BoardDescriptor, opNo: Long, requestPagesIfNotCached: Boolean): BoardPage? {
+    val pages = getPages(boardDescriptor, requestPagesIfNotCached)
       ?: return null
 
     for (page in pages.boardPages) {
@@ -159,16 +173,23 @@ class PageRequestManager(
     return null
   }
 
-  private fun getPages(boardDescriptor: BoardDescriptor): BoardPages? {
+  private fun getPages(boardDescriptor: BoardDescriptor, requestPagesIfNotCached: Boolean): BoardPages? {
     if (ChanSettings.neverShowPages.get()) {
       return null
     }
 
     if (savedBoards.contains(boardDescriptor)) {
-      // If we have it stored already, return the pages for it
-      // also issue a new request if 3 minutes have passed
-      shouldUpdate(boardDescriptor)
+      if (requestPagesIfNotCached) {
+        // If we have it stored already, return the pages for it
+        // also issue a new request if 3 minutes have passed
+        shouldUpdate(boardDescriptor)
+      }
+
       return boardPagesMap[boardDescriptor]
+    }
+
+    if (!requestPagesIfNotCached) {
+      return null
     }
 
     val alreadyRequested = synchronized(this) {

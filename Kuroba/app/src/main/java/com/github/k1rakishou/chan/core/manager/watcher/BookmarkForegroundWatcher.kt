@@ -155,6 +155,23 @@ class BookmarkForegroundWatcher(
         return
       }
 
+      val switchedToForegroundAt = applicationVisibilityManager.switchedToForegroundAt
+      val currentTime = System.currentTimeMillis()
+
+      if (switchedToForegroundAt == null || (currentTime - switchedToForegroundAt) < REQUIRED_FOREGROUND_TIME_MS) {
+        val foregroundTime = if (switchedToForegroundAt == null) {
+          null
+        } else {
+          currentTime - switchedToForegroundAt
+        }
+
+        Logger.d(TAG, "updateBookmarksWorkerLoop() app was not long enough in the foreground " +
+          "to start updating bookmarks (foregroundTime=${foregroundTime}ms)")
+
+        delay(APP_FOREGROUND_DELAY_MS)
+        continue
+      }
+
       if (!ChanSettings.watchEnabled.get()) {
         Logger.d(TAG, "updateBookmarksWorkerLoop() ChanSettings.watchEnabled() is false, exiting")
         return
@@ -246,6 +263,10 @@ class BookmarkForegroundWatcher(
 
   companion object {
     private const val TAG = "BookmarkForegroundWatcher"
+
+    private const val REQUIRED_FOREGROUND_TIME_MS = 15_000L
+    private const val APP_FOREGROUND_DELAY_MS = 5_000L
+
     const val ADDITIONAL_INTERVAL_INCREMENT_MS = 5L * 1000L
   }
 }

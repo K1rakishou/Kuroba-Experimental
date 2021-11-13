@@ -270,7 +270,10 @@ class MainControllerViewModel : BaseViewModel() {
       val threadDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
 
       bookmarksManager.mapBookmark(threadDescriptor) { threadBookmarkView ->
-        val boardPage = pageRequestManager.getPage(threadBookmarkView.threadDescriptor)
+        val boardPage = pageRequestManager.getPage(
+          threadDescriptor = threadBookmarkView.threadDescriptor,
+          requestPagesIfNotCached = false
+        )
 
         return@mapBookmark NavHistoryBookmarkAdditionalInfo(
           watching = threadBookmarkView.isWatching(),

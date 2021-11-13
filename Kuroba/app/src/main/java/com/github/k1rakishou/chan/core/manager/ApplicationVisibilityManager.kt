@@ -7,8 +7,12 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ApplicationVisibilityManager {
-  private var currentApplicationVisibility: ApplicationVisibility = ApplicationVisibility.Background
   private val listeners = CopyOnWriteArrayList<ApplicationVisibilityListener>()
+
+  private var currentApplicationVisibility: ApplicationVisibility = ApplicationVisibility.Background
+  private var _switchedToForegroundAt: Long? = null
+  val switchedToForegroundAt: Long?
+    get() = _switchedToForegroundAt
 
   fun addListener(listener: ApplicationVisibilityListener) {
     listeners += listener
@@ -22,6 +26,7 @@ class ApplicationVisibilityManager {
   fun onEnteredForeground() {
     BackgroundUtils.ensureMainThread()
 
+    _switchedToForegroundAt = System.currentTimeMillis()
     currentApplicationVisibility = ApplicationVisibility.Foreground
 
     val time = measureTime {
@@ -38,6 +43,7 @@ class ApplicationVisibilityManager {
   fun onEnteredBackground() {
     BackgroundUtils.ensureMainThread()
 
+    _switchedToForegroundAt = null
     currentApplicationVisibility = ApplicationVisibility.Background
 
     val time = measureTime {
