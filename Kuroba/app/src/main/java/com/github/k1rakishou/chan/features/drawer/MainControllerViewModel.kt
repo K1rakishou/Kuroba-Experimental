@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.indexedIteration
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.toHashSetBy
 import com.github.k1rakishou.core_logger.Logger
@@ -116,7 +117,7 @@ class MainControllerViewModel : BaseViewModel() {
           updateBadge()
 
           updateNavigationHistoryEntryListExecutor.post {
-            onBookmarkUpdated(bookmarkChange)
+            onBookmarksUpdated(bookmarkChange)
           }
         }
     }
@@ -216,18 +217,19 @@ class MainControllerViewModel : BaseViewModel() {
 
   suspend fun reloadNavigationHistory() {
     ModularResult.Try {
-      return@Try withContext(Dispatchers.Default) {
+      val navigationHistoryList = withContext(Dispatchers.Default) {
         _historyControllerState.value = HistoryControllerState.Loading
 
         siteManager.awaitUntilInitialized()
         bookmarksManager.awaitUntilInitialized()
 
-        val navHistoryList = historyNavigationManager.getAll()
+        return@withContext historyNavigationManager.getAll()
           .mapNotNull { navigationElement -> navHistoryElementToNavigationHistoryEntryOrNull(navigationElement) }
-
-        _navigationHistoryEntryList.clear()
-        _navigationHistoryEntryList.addAll(navHistoryList)
       }
+
+
+      _navigationHistoryEntryList.clear()
+      _navigationHistoryEntryList.addAll(navigationHistoryList)
     }
       .peekError { error ->
         Logger.e(TAG, "loadNavigationHistoryInitial() error", error)
@@ -355,7 +357,7 @@ class MainControllerViewModel : BaseViewModel() {
     }
   }
 
-  private suspend fun onBookmarkUpdated(bookmarkChange: BookmarksManager.BookmarkChange) {
+  private suspend fun onBookmarksUpdated(bookmarkChange: BookmarksManager.BookmarkChange) {
     BackgroundUtils.ensureMainThread()
 
     if (bookmarkChange is BookmarksManager.BookmarkChange.BookmarksInitialized) {
@@ -414,18 +416,19 @@ class MainControllerViewModel : BaseViewModel() {
 
     val toUpdate = mutableListOf<Pair<Int, NavigationHistoryEntry>>()
 
-    _navigationHistoryEntryList.forEachIndexed { index, navigationHistoryEntry ->
+    _navigationHistoryEntryList.indexedIteration { index, navigationHistoryEntry ->
       if (navigationHistoryEntry.descriptor !in chanDescriptorsSet) {
-        return@forEachIndexed
+        return@indexedIteration true
       }
 
       val navHistoryElement = historyNavigationManager.getNavHistoryElementByDescriptor(navigationHistoryEntry.descriptor)
-        ?: return@forEachIndexed
+        ?: return@indexedIteration true
 
       val updatedNavigationHistoryEntry = navHistoryElementToNavigationHistoryEntryOrNull(navHistoryElement)
-        ?: return@forEachIndexed
+        ?: return@indexedIteration true
 
       toUpdate += Pair(index, updatedNavigationHistoryEntry)
+      return@indexedIteration true
     }
 
     toUpdate.forEach { (index, navigationHistoryEntry) ->
