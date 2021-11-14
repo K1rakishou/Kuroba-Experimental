@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -20,6 +21,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.bookmark.BookmarkGroupMatchFlag
 import com.github.k1rakishou.model.data.bookmark.SimpleThreadBookmarkGroupToCreate
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmark
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupMatchPattern
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkGroupMatchPatternBuilder
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -172,6 +174,7 @@ class BookmarkFilterWatchableThreadsUseCase(
         bookmarksToCreate += BookmarksManager.SimpleThreadBookmark(
           threadDescriptor = bookmarkThreadDescriptor,
           title = createBookmarkSubject(filterWatchCatalogThreadInfoObject),
+          comment = filterWatchCatalogThreadInfoObject.comment(),
           thumbnailUrl = filterWatchCatalogThreadInfoObject.thumbnailUrl,
           initialFlags = filterWatchFlags
         )
@@ -219,28 +222,8 @@ class BookmarkFilterWatchableThreadsUseCase(
       Logger.d(TAG, "createOrUpdateBookmarks() createBookmarksForFilterWatcher() " +
         "createdThreadBookmarks=${createdThreadBookmarks.size}")
 
-      if (success && bookmarkGroupsToCreate.isNotEmpty()) {
-        // Create thread bookmark groups for each filter pattern where the bookmarks will be moved
-        // into
-        val simpleThreadBookmarkGroupsToCreate = bookmarkGroupsToCreate.entries
-          .map { (filterPattern, threadDescriptors) ->
-            return@map SimpleThreadBookmarkGroupToCreate(
-              groupName = filterPattern,
-              entries = threadDescriptors,
-              matchingPattern = ThreadBookmarkGroupMatchPatternBuilder
-                .newBuilder(filterPattern, BookmarkGroupMatchFlag.Type.PostSubject)
-                .or(filterPattern, BookmarkGroupMatchFlag.Type.PostComment)
-                .build()
-            )
-          }
-
-        Logger.d(TAG, "createOrUpdateBookmarks() createNewGroupEntries() " +
-          "groupsCount=${simpleThreadBookmarkGroupsToCreate.size}")
-        threadBookmarkGroupManager.createNewGroupEntriesFromFilterWatcher(simpleThreadBookmarkGroupsToCreate)
-
-        val createdThreadBookmarkDescriptors = createdThreadBookmarks
-          .map { simpleThreadBookmark -> simpleThreadBookmark.threadDescriptor }
-        bookmarksManager.emitBookmarksCreatedEventForFilterWatcher(createdThreadBookmarkDescriptors)
+      if (success) {
+        createOrUpdateBookmarkGroups(bookmarkGroupsToCreate, createdThreadBookmarks)
       }
 
       Logger.d(TAG, "createOrUpdateBookmarks() success=$success created ${createdThreadBookmarks.size} " +
@@ -264,6 +247,90 @@ class BookmarkFilterWatchableThreadsUseCase(
     }
 
     return createFilterWatchGroups(filterWatchGroupsToCreate)
+  }
+
+  private suspend fun createOrUpdateBookmarkGroups(
+    bookmarkGroupsToCreate: Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>,
+    createdThreadBookmarks: List<BookmarksManager.SimpleThreadBookmark>
+  ) {
+    if (ChanSettings.filterWatchUseFilterPatternForGroup.get()) {
+      // Filter pattern will be used as the bookmark group. It will be created if it doesn't exist
+        
+      if (bookmarkGroupsToCreate.isEmpty()) {
+        Logger.d(TAG, "createOrUpdateBookmarkGroups() filterWatchUseFilterPatternForGroup==true, " +
+          "bookmarkGroupsToCreate are empty")
+        return
+      }
+        
+      val simpleThreadBookmarkGroupsToCreate = bookmarkGroupsToCreate.entries
+        .map { (filterPattern, threadDescriptors) ->
+          return@map SimpleThreadBookmarkGroupToCreate(
+            groupName = filterPattern,
+            entries = threadDescriptors,
+            matchingPattern = ThreadBookmarkGroupMatchPatternBuilder
+              .newBuilder(filterPattern, BookmarkGroupMatchFlag.Type.PostSubject)
+              .or(filterPattern, BookmarkGroupMatchFlag.Type.PostComment)
+              .build()
+          )
+        }
+
+      Logger.d(TAG, "createOrUpdateBookmarkGroups() filterWatchUseFilterPatternForGroup==true, " +
+        "createNewGroupEntries() groupsCount=${simpleThreadBookmarkGroupsToCreate.size}")
+      threadBookmarkGroupManager.createNewGroupEntriesFromFilterWatcher(simpleThreadBookmarkGroupsToCreate)
+    } else {
+      // Bookmarked thread's subject/comment will be matched against existing bookmark group matchers.
+        
+      if (createdThreadBookmarks.isEmpty()) {
+        Logger.d(TAG, "createOrUpdateBookmarkGroups() filterWatchUseFilterPatternForGroup==false, " +
+          "createdThreadBookmarks are empty")
+        return
+      }
+
+      val groups = mutableSetOf<ThreadBookmarkGroupManager.GroupIdWithName>()
+      val threadDescriptorsGrouped = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
+      val groupMatchingPatterns = mutableMapOf<String, ThreadBookmarkGroupMatchPattern>()
+
+      createdThreadBookmarks.forEach { simpleThreadBookmark ->
+        val groupIdWithName = threadBookmarkGroupManager.getMatchingGroupIdWithName(
+          boardDescriptor = simpleThreadBookmark.threadDescriptor.boardDescriptor,
+          postSubject = simpleThreadBookmark.title ?: "",
+          postComment = simpleThreadBookmark.comment ?: ""
+        )
+
+        groups += groupIdWithName
+
+        val matchingPattern = threadBookmarkGroupManager.getMatchingPattern(groupIdWithName.groupId)
+          ?: return@forEach
+
+        if (!threadDescriptorsGrouped.containsKey(groupIdWithName.groupName)) {
+          threadDescriptorsGrouped[groupIdWithName.groupName] = mutableListOf()
+        }
+
+        threadDescriptorsGrouped[groupIdWithName.groupName]?.add(simpleThreadBookmark.threadDescriptor)
+        groupMatchingPatterns[groupIdWithName.groupName] = matchingPattern
+      }
+
+      val simpleThreadBookmarkGroupToCreateList = groups.mapNotNull { groupIdWithName ->
+        val groupThreadDescriptors = threadDescriptorsGrouped[groupIdWithName.groupName]
+          ?: return@mapNotNull null
+        val matchingPattern = groupMatchingPatterns[groupIdWithName.groupName]
+          ?: return@mapNotNull null
+
+        return@mapNotNull SimpleThreadBookmarkGroupToCreate(
+          groupName = groupIdWithName.groupName,
+          entries = groupThreadDescriptors,
+          matchingPattern = matchingPattern
+        )
+      }
+
+      Logger.d(TAG, "createOrUpdateBookmarkGroups() filterWatchUseFilterPatternForGroup==false, " +
+        "createNewGroupEntries() groupsCount=${simpleThreadBookmarkGroupToCreateList.size}")
+      threadBookmarkGroupManager.createNewGroupEntriesFromFilterWatcher(simpleThreadBookmarkGroupToCreateList.toList())
+    }
+
+    val createdThreadBookmarkDescriptors = createdThreadBookmarks
+      .map { simpleThreadBookmark -> simpleThreadBookmark.threadDescriptor }
+    bookmarksManager.emitBookmarksCreatedEventForFilterWatcher(createdThreadBookmarkDescriptors)
   }
 
   private suspend fun createFilterWatchGroups(

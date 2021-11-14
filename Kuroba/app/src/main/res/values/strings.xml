@@ -583,6 +583,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_filter_watcher_group">Filter watcher</string>
     <string name="setting_watch_enable_filter_watcher">Enable filter watcher</string>
     <string name="setting_watch_enable_filter_watcher_description">Automatically bookmark threads that match regex patterns. Enabling this setting will make the watcher work in both foreground/background due to huge update intervals.</string>
+    <string name="setting_watch_filter_watcher_use_filter_pattern_for_group">Group filter watcher bookmarks by filter pattern</string>
+    <string name="setting_watch_filter_watcher_use_filter_pattern_for_group_description">When enabled, bookmarks created by filter watcher will be moved into bookmark groups where the filter pattern will be used as bookmark group name (Default behavior). When disabled, the bookmark group will be decided the same way as the bookmarks created manually (Bookmarked thread subject/comment will be matched against existing group matchers. If there is no group with matchers that match a bookmark the default group will be used)</string>
     <string name="setting_filter_watcher_update_interval">Filter watcher update interval</string>
     <string name="setting_filter_watcher_update_interval_description">The interval between updates</string>
 

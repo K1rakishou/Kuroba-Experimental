@@ -355,7 +355,13 @@ class KurobaSettingsImportUseCase(
       threadNo = threadNo!!.toLong()
     )
 
-    func(BookmarksManager.SimpleThreadBookmark(threadDescriptor, title, thumbnailUrl))
+    val simpleThreadBookmark = BookmarksManager.SimpleThreadBookmark(
+      threadDescriptor = threadDescriptor,
+      title = title,
+      thumbnailUrl = thumbnailUrl
+    )
+
+    func(simpleThreadBookmark)
   }
 
   private fun JsonReader.readPostHides(siteIdMap: Map<Int, Int>, func: (ChanPostHide) -> Unit) {

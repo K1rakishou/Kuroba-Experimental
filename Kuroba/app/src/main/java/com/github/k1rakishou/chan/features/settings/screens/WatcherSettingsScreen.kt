@@ -116,6 +116,15 @@ class WatcherSettingsScreen(
           setting = ChanSettings.filterWatchEnabled
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = WatcherScreen.FilterWatcherGroup.FilterWatcherUseFilterPatternForGroup,
+          topDescriptionIdFunc = { R.string.setting_watch_filter_watcher_use_filter_pattern_for_group },
+          bottomDescriptionIdFunc = { R.string.setting_watch_filter_watcher_use_filter_pattern_for_group_description },
+          setting = ChanSettings.filterWatchUseFilterPatternForGroup,
+          dependsOnSetting = ChanSettings.filterWatchEnabled
+        )
+
         group += ListSettingV2.createBuilder<Int>(
           context = context,
           identifier = WatcherScreen.FilterWatcherGroup.FilterWatcherUpdateInterval,

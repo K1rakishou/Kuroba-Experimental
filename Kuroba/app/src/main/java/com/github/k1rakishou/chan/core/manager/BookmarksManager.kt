@@ -719,6 +719,7 @@ class BookmarksManager(
   data class SimpleThreadBookmark(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val title: String? = null,
+    val comment: String? = null,
     val thumbnailUrl: HttpUrl? = null,
     val initialFlags: BitSet? = null
   )

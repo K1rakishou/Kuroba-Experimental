@@ -267,6 +267,7 @@ sealed class WatcherScreen(
     WatcherScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object EnableFilterWatcher : FilterWatcherGroup("enable_filter_watcher")
+    object FilterWatcherUseFilterPatternForGroup : FilterWatcherGroup("filter_watcher_use_filter_pattern_for_group")
     object FilterWatcherUpdateInterval : FilterWatcherGroup("filter_watcher_update_interval")
 
     companion object : IGroupIdentifier() {

@@ -253,6 +253,7 @@ public class ChanSettings {
     //region FILTER WATCHER
     public static BooleanSetting filterWatchEnabled;
     public static IntegerSetting filterWatchInterval;
+    public static BooleanSetting filterWatchUseFilterPatternForGroup;
     //endregion
 
     //region THREAD DOWNLOADER
@@ -457,6 +458,7 @@ public class ChanSettings {
             //region FILTER WATCHER
             filterWatchEnabled = new BooleanSetting(provider, "preference_filter_watch_enabled", false);
             filterWatchInterval = new IntegerSetting(provider, "preference_filter_watch_interval", (int) HOURS.toMillis(12));
+            filterWatchUseFilterPatternForGroup = new BooleanSetting(provider, "preference_filter_use_filter_pattern_for_group", true);
             //endregion
 
             // region THREAD DOWNLOADER
