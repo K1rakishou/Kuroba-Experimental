@@ -2310,8 +2310,9 @@ class ThreadPresenter @Inject constructor(
       ?: return
 
     val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
+    val repliesFromCopy = post.repliesFromCopy
 
-    post.iterateRepliesFrom { replyPostDescriptor ->
+    repliesFromCopy.forEach { replyPostDescriptor ->
       val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
       if (replyPost != null) {
         posts.add(replyPost)

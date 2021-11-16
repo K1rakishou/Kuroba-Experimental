@@ -31,8 +31,6 @@ class ChanPostBackgroundColorStorage(
       nsfwColor = 0xFFDDDDDDL.toInt()
     )
 
-    // TODO: 6/5/2021 add colors for the rest of the sites
-
     return@lazy colorMap
   }
 

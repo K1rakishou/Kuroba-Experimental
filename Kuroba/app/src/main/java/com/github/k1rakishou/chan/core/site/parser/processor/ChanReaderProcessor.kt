@@ -30,6 +30,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 
 class ChanReaderProcessor(
+  override val page: Int?,
   private val chanPostRepository: ChanPostRepository,
   private val chanReadOptions: ChanReadOptions,
   private val chanLoadOptions: ChanLoadOptions,

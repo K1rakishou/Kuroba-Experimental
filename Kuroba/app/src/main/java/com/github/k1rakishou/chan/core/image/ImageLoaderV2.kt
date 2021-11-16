@@ -641,7 +641,7 @@ class ImageLoaderV2(
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video") {
+      if (contentMainType != "image" && contentMainType != "video" && !endchanFaviconUrl(url)) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 
@@ -664,6 +664,13 @@ class ImageLoaderV2(
     cacheHandler.fileWasAdded(fileLength)
 
     return true
+  }
+
+  // Super hack.
+  // Endchan sends it's favicon without the content type which breaks our content type checks so
+  // we have to check the url manually...
+  private fun endchanFaviconUrl(url: String): Boolean {
+    return url == "https://endchan.net/favicon.ico"
   }
 
   private suspend fun tryLoadFromDiskCacheOrNull(url: String, postDescriptor: PostDescriptor?): AbstractFile? {

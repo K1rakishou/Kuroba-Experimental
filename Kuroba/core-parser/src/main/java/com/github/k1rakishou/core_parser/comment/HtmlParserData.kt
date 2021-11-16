@@ -30,7 +30,7 @@ sealed class HtmlNode {
     }
   }
 
-  data class Text(val text: String) : HtmlNode()
+  data class Text(val text: String, val parentNode: HtmlNode?) : HtmlNode()
   data class Tag(val htmlTag: HtmlTag) : HtmlNode()
 }
 

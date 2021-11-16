@@ -880,8 +880,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
 
     <!-- Experimental settings -->
     <string name="experimental_settings_group">Experimental settings</string>
-    <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
-    <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
     <string name="setting_allow_okhttp_http2">Allow OkHttp to use HTTP/2 protocol</string>
     <string name="setting_allow_okhttp_ipv6">Allow OkHttp to use IPv6</string>
     <string name="setting_allow_okhttp_use_dns_over_https">Use DNS over HTTPS</string>
@@ -1439,6 +1437,13 @@ Actual error: \'%1$s\'</string>
 ]]>
     </string>
 
+    <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
+    <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
+    <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
+    <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
+    <string name="site_domain_setting">Change site domain</string>
+    <string name="site_domain_setting_description">If a site supports multiple domains you can enter any of them which will be used from then on. Requires application restart for the changes to take effect.</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>
@@ -1461,8 +1466,6 @@ Actual error: \'%1$s\'</string>
     <string name="post_subject_search_query_hint">Post subject search query</string>
     <string name="post_comment_search_query_hint">Post comment search query</string>
     <string name="no_boards_supporting_search_found">No boards supporting search found</string>
-    <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
-    <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="no_filter_watched_threads">You have no filter watched threads here yet (They may be in the update process)</string>
     <string name="the_app_will_be_restarted">The app will be restarted when exiting the settings screen</string>
     <string name="selected_text_is_empty">Selected text is empty</string>

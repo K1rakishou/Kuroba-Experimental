@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver;
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver;
 import com.github.k1rakishou.chan.core.site.SiteBase;
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite;
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2Service;
 import com.github.k1rakishou.chan.features.posting.PostingService;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingWorker;
@@ -67,7 +68,6 @@ public interface ApplicationComponent {
     void inject(BookmarkBackgroundWatcherWorker bookmarkBackgroundWatcherWorker);
     void inject(FilterWatcherWorker filterWatcherWorker);
     void inject(ThreadDownloadingWorker threadDownloadingWorker);
-    void inject(SiteBase siteBase);
     void inject(CompositeCatalogSite compositeCatalogSite);
     void inject(SnackbarWrapper snackbarWrapper);
     void inject(ReplyNotificationDeleteIntentBroadcastReceiver replyNotificationDeleteIntentBroadcastReceiver);
@@ -76,6 +76,9 @@ public interface ApplicationComponent {
     void inject(PostingService postingService);
     void inject(ImageSaverBroadcastReceiver imageSaverBroadcastReceiver);
     void inject(PostingServiceBroadcastReceiver postingServiceBroadcastReceiver);
+
+    void inject(SiteBase siteBase);
+    void inject(LynxchanSite lynxchanSite);
 
     @Component.Builder
     interface Builder {

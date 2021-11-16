@@ -198,6 +198,7 @@ class DvachApiV2(
   ) {
     val postsCount = posts.size
 
+    // TODO(KurobaEx): this seems to be incorrect when we are reading a catalog
     val threadDescriptor = posts.first().threadDescriptor(board.boardDescriptor)
     val posters = extraThreadInfoMap[threadDescriptor]?.posters
 

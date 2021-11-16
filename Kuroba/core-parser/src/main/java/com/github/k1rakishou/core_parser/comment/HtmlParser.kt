@@ -32,7 +32,7 @@ class HtmlParser {
           val text = String(currentBuffer.toCharArray())
           val textUnescaped = Parser.unescapeEntities(text, false)
 
-          addNewTextNode(outNodes, textUnescaped)
+          addNewTextNode(parentNode, outNodes, textUnescaped)
           currentBuffer.clear()
         }
 
@@ -72,20 +72,20 @@ class HtmlParser {
       val text = String(currentBuffer.toCharArray())
       val textUnescaped = Parser.unescapeEntities(text, false)
 
-      addNewTextNode(outNodes, textUnescaped)
+      addNewTextNode(parentNode, outNodes, textUnescaped)
       currentBuffer.clear()
     }
 
     return ParseResult(outNodes, localOffset)
   }
 
-  private fun addNewTextNode(outNodes: MutableList<HtmlNode>, textUnescaped: String) {
+  private fun addNewTextNode(parentNode: HtmlNode?, outNodes: MutableList<HtmlNode>, textUnescaped: String) {
     val lastNode = outNodes.lastOrNull()
     val isLastNodeVoid = (lastNode as? HtmlNode.Tag)?.htmlTag?.isVoidElement == true
     val emptyOrNewLineCharacter = textUnescaped.trim().let { text -> text.isEmpty() || (text.length == 1 && text[0] == '\n') }
 
     if (lastNode == null || !isLastNodeVoid || !emptyOrNewLineCharacter) {
-      outNodes.add(HtmlNode.Text(textUnescaped))
+      outNodes.add(HtmlNode.Text(textUnescaped, parentNode))
     }
   }
 

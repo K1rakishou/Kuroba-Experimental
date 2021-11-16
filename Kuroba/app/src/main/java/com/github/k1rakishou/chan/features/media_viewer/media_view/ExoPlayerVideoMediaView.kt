@@ -232,6 +232,7 @@ class ExoPlayerVideoMediaView(
 
     onSystemUiVisibilityChanged(isSystemUiHidden())
     updateMuteUnMuteState()
+    thumbnailMediaView.show()
 
     if (playJob != null) {
       return
@@ -272,6 +273,8 @@ class ExoPlayerVideoMediaView(
   }
 
   override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
+    thumbnailMediaView.hide()
+
     playJob?.cancel()
     playJob = null
 

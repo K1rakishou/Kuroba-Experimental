@@ -484,17 +484,28 @@ class ChanThread(
     postDescriptor: PostDescriptor,
     postsSet: MutableSet<ChanPost>
   ) {
+    val postsToCheck = mutableListOf<ChanPost>()
+
     lock.read {
       for (post in threadPosts) {
         if (post.postDescriptor != postDescriptor || postsSet.contains(post)) {
           continue
         }
 
-        postsSet.add(post)
+        postsToCheck.add(post)
+      }
+    }
 
-        post.iterateRepliesFrom { lookUpPostDescriptor ->
-          findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
-        }
+    for (post in postsToCheck) {
+      if (postsSet.contains(post)) {
+        continue
+      }
+
+      postsSet.add(post)
+      val repliesFromCopy = post.repliesFromCopy
+
+      repliesFromCopy.forEach { lookUpPostDescriptor ->
+        findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
       }
     }
   }
@@ -930,8 +941,6 @@ class ChanThread(
           "postsByPostDescriptors.size=${postsByPostDescriptors.size}"
       }
 
-      var prevPostNo = Long.MIN_VALUE
-
       threadPosts.forEach { chanPost1 ->
         val chanPost2 = postsByPostDescriptors[chanPost1.postDescriptor]
 
@@ -955,14 +964,6 @@ class ChanThread(
           "Only thread descriptors are allowed in the cache!" +
             "descriptor=${chanPost2.postDescriptor.descriptor}"
         }
-
-        // Lainchan allows OPs have postNo being greater than any other post in a thread. This must be
-        //  considered a bug. On our side we have no other choice than to hack around it.
-        if (!threadDescriptor.siteDescriptor().isLainchan()) {
-          check(chanPost1.postNo() > prevPostNo) { "Posts are not sorted!" }
-        }
-
-        prevPostNo = chanPost1.postNo()
       }
     }
   }

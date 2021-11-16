@@ -52,7 +52,7 @@ public class StyleRule {
     private String tag;
     private Set<String> expectedClasses;
     private Set<String> notExpectedClasses;
-    private List<Action> actions = new ArrayList<>();
+    private final List<Action> actions = new ArrayList<>();
     private ChanThemeColorId foregroundChanThemeColorId = null;
     private ChanThemeColorId backgroundChanThemeColorId = null;
     private boolean strikeThrough;
@@ -192,13 +192,13 @@ public class StyleRule {
 
     public boolean applies(HtmlTag htmlTag, boolean isWildcard) {
         if (notExpectedClasses != null && !notExpectedClasses.isEmpty()) {
-            for (String c : notExpectedClasses) {
+            for (String clazz : notExpectedClasses) {
                 if (isWildcard) {
-                    if (htmlTag.hasAttr(c)) {
+                    if (htmlTag.hasAttr(clazz)) {
                         return false;
                     }
                 } else {
-                    if (htmlTag.hasClass(c)) {
+                    if (htmlTag.hasClass(clazz)) {
                         return false;
                     }
                 }
@@ -209,13 +209,13 @@ public class StyleRule {
             return true;
         }
 
-        for (String c : expectedClasses) {
+        for (String clazz : expectedClasses) {
             if (isWildcard) {
-                if (htmlTag.hasAttr(c)) {
+                if (htmlTag.hasAttr(clazz)) {
                     return true;
                 }
             } else {
-                if (htmlTag.hasClass(c)) {
+                if (htmlTag.hasClass(clazz)) {
                     return true;
                 }
             }
@@ -343,11 +343,11 @@ public class StyleRule {
     }
 
     public interface Action {
-        CharSequence execute(
-                PostParser.Callback callback,
-                ChanPostBuilder post,
-                CharSequence text,
-                HtmlTag htmlTag
+        @NonNull CharSequence execute(
+                @NonNull PostParser.Callback callback,
+                @NonNull ChanPostBuilder post,
+                @NonNull CharSequence text,
+                @NonNull HtmlTag htmlTag
         );
     }
 }

@@ -100,6 +100,8 @@ abstract class SiteBase : Site, CoroutineScope {
     return@lazy SharedPreferencesSettingProvider(sharedPrefs)
   }
 
+  open val siteDomainSetting: StringSetting? = null
+
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookie: StringSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
@@ -207,19 +209,32 @@ abstract class SiteBase : Site, CoroutineScope {
   }
 
   override fun settings(): List<SiteSetting> {
-    return listOf<SiteSetting>(
-      SiteSetting.SiteOptionsSetting(
-        getString(R.string.settings_concurrent_file_downloading_name),
-        getString(R.string.settings_concurrent_file_downloading_description),
-        concurrentFileDownloadingChunks,
-        ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
-      ),
-      SiteSetting.SiteStringSetting(
-        getString(R.string.cloud_flare_cookie_setting_title),
-        getString(R.string.cloud_flare_cookie_setting_description),
-        cloudFlareClearanceCookie
-      )
+    val settings = mutableListOf<SiteSetting>()
+
+    settings += SiteSetting.SiteOptionsSetting(
+      getString(R.string.settings_concurrent_file_downloading_name),
+      getString(R.string.settings_concurrent_file_downloading_description),
+      concurrentFileDownloadingChunks,
+      ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
     )
+
+    settings += SiteSetting.SiteStringSetting(
+      getString(R.string.cloud_flare_cookie_setting_title),
+      getString(R.string.cloud_flare_cookie_setting_description),
+      cloudFlareClearanceCookie
+    )
+
+    if (siteDomainSetting != null) {
+      val siteName = siteDescriptor().siteName
+
+      settings += SiteSetting.SiteStringSetting(
+        getString(R.string.site_domain_setting, siteName),
+        getString(R.string.site_domain_setting_description),
+        siteDomainSetting!!
+      )
+    }
+
+    return settings
   }
 
   override suspend fun createBoard(boardName: String, boardCode: String): ModularResult<ChanBoard?> {

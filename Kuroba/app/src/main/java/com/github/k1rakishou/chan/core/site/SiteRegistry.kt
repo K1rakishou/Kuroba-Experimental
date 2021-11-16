@@ -16,12 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.site.sites.Chan370
-import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
-import com.github.k1rakishou.chan.core.site.sites.Lainchan
-import com.github.k1rakishou.chan.core.site.sites.Sushichan
-import com.github.k1rakishou.chan.core.site.sites.Wired7
 import com.github.k1rakishou.chan.core.site.sites.*
+import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
+import com.github.k1rakishou.chan.core.site.sites.Wired7
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -36,6 +33,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.TokyoChronos
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.WakarimasenMoe
 import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import java.util.*
 
@@ -66,6 +64,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
     siteClasses.addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
+    siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
 
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.

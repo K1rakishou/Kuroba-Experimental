@@ -47,7 +47,10 @@ class CreateBoardManuallyUseCase(
     val body = response.body
       ?: throw IOException("Response body is null")
 
-    val chanReaderProcessor = SimpleCountingChanReaderProcessor(catalogDescriptor)
+    val chanReaderProcessor = SimpleCountingChanReaderProcessor(
+      page = null,
+      chanDescriptor = catalogDescriptor
+    )
 
     try {
       body.byteStream().use { inputStream ->
@@ -66,6 +69,7 @@ class CreateBoardManuallyUseCase(
   }
 
   class SimpleCountingChanReaderProcessor(
+    override val page: Int? = null,
     override val chanDescriptor: ChanDescriptor
   ) : AbstractChanReaderProcessor() {
     private var threadsInCatalogCounter = 0

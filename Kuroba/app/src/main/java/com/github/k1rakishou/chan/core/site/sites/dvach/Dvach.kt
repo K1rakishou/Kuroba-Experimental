@@ -156,230 +156,7 @@ class Dvach : CommonSite() {
       }
     })
     setEndpoints(DvachEndpoints(this))
-    setActions(object : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
-      override fun setupPost(
-        replyChanDescriptor: ChanDescriptor,
-        call: MultipartHttpCall
-      ): ModularResult<Unit> {
-        return super.setupPost(replyChanDescriptor, call)
-          .mapValue {
-            if (replyChanDescriptor.isThreadDescriptor()) {
-              // "thread" is already added in VichanActions.
-              call.parameter("post", "New Reply")
-            } else {
-              call.parameter("post", "New Thread")
-              call.parameter("page", "1")
-            }
-
-            return@mapValue
-          }
-      }
-
-      override fun requirePrepare(): Boolean {
-        return false
-      }
-
-      override suspend fun post(
-        replyChanDescriptor: ChanDescriptor,
-        replyMode: ReplyMode
-      ): Flow<SiteActions.PostResult> {
-        val replyCall = DvachReplyCall(
-          site = this@Dvach,
-          replyChanDescriptor = replyChanDescriptor,
-          replyMode = replyMode,
-          replyManager = replyManager
-        )
-
-        return httpCallManager.get().makePostHttpCallWithProgress(replyCall)
-          .map { replyCallResult ->
-            when (replyCallResult) {
-              is HttpCall.HttpCallWithProgressResult.Success -> {
-                return@map SiteActions.PostResult.PostComplete(
-                  replyCallResult.httpCall.replyResponse
-                )
-              }
-              is HttpCall.HttpCallWithProgressResult.Progress -> {
-                return@map SiteActions.PostResult.UploadingProgress(
-                  replyCallResult.fileIndex,
-                  replyCallResult.totalFiles,
-                  replyCallResult.percent
-                )
-              }
-              is HttpCall.HttpCallWithProgressResult.Fail -> {
-                return@map SiteActions.PostResult.PostError(replyCallResult.error)
-              }
-            }
-          }
-      }
-
-      override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-        return super.delete(deleteRequest)
-      }
-
-      override suspend fun boards(): ModularResult<SiteBoards> {
-        val dvachEndpoints = endpoints() as DvachEndpoints
-
-        return DvachBoardsRequest(
-          siteDescriptor(),
-          boardManager,
-          proxiedOkHttpClient,
-          dvachEndpoints.boards(),
-          dvachEndpoints.dvachGetBoards()
-        ).execute()
-      }
-
-      @Suppress("MoveVariableDeclarationIntoWhen")
-      override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
-        val dvachLoginRequest = loginRequest as DvachLoginRequest
-        passCode.set(dvachLoginRequest.passcode)
-
-        val loginResult = httpCallManager.get().makeHttpCall(
-          DvachGetPassCookieHttpCall(this@Dvach, loginRequest)
-        )
-
-        when (loginResult) {
-          is HttpCall.HttpCallResult.Success -> {
-            val loginResponse =
-              requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
-
-            return when (loginResponse) {
-              is DvachLoginResponse.Success -> {
-                passCookie.set(loginResponse.authCookie)
-                SiteActions.LoginResult.LoginComplete(loginResponse)
-              }
-              is DvachLoginResponse.Failure -> {
-                SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
-              }
-              DvachLoginResponse.AntiSpamDetected -> {
-                SiteActions.LoginResult.AntiSpamDetected
-              }
-            }
-          }
-          is HttpCall.HttpCallResult.Fail -> {
-            return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
-          }
-        }
-      }
-
-      override suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): SiteActions.GetPasscodeInfoResult {
-        if (!isLoggedIn()) {
-          return SiteActions.GetPasscodeInfoResult.NotLoggedIn
-        }
-
-        if (!resetCached && passCodeInfo.isNotDefault()) {
-          val dvachPasscodeInfo = passCodeInfo.get()
-
-          val maxAttachedFilesPerPost = dvachPasscodeInfo.files
-          val maxTotalAttachablesSize = dvachPasscodeInfo.filesSize
-
-          if (maxAttachedFilesPerPost != null && maxTotalAttachablesSize != null) {
-            val passcodePostingLimitationsInfo = PasscodePostingLimitationsInfo(
-              maxAttachedFilesPerPost,
-              maxTotalAttachablesSize
-            )
-
-            return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
-          }
-
-          // fallthrough
-        }
-
-        val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)
-
-        val passcodeInfoCallResult = httpCallManager.get().makeHttpCall(passcodeInfoCall)
-        if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {
-          return SiteActions.GetPasscodeInfoResult.Failure(passcodeInfoCallResult.error)
-        }
-
-        val passcodePostingLimitationsInfoResult = (passcodeInfoCallResult as HttpCall.HttpCallResult.Success)
-          .httpCall.passcodePostingLimitationsInfoResult
-
-        if (passcodePostingLimitationsInfoResult is ModularResult.Error) {
-          return SiteActions.GetPasscodeInfoResult.Failure(passcodePostingLimitationsInfoResult.error)
-        }
-
-        val passcodePostingLimitationsInfo =
-          (passcodePostingLimitationsInfoResult as ModularResult.Value).value
-
-        val dvachPasscodeInfo = DvachPasscodeInfo(
-          files = passcodePostingLimitationsInfo.maxAttachedFilesPerPost,
-          filesSize = passcodePostingLimitationsInfo.maxTotalAttachablesSize
-        )
-
-        passCodeInfo.set(dvachPasscodeInfo)
-
-        return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
-      }
-
-      override fun postRequiresAuthentication(): Boolean {
-        return !isLoggedIn()
-      }
-
-      override fun postAuthenticate(): SiteAuthentication {
-        return when (captchaType.get()) {
-          CaptchaType.V2JS -> captchaV2Js
-          CaptchaType.V2NOJS -> captchaV2NoJs
-          CaptchaType.V2_INVISIBLE -> captchaV2Invisible
-          CaptchaType.DVACH_CAPTCHA -> dvachCaptcha
-          else -> throw IllegalArgumentException()
-        }
-      }
-
-      override fun logout() {
-        passCode.remove()
-        passCookie.remove()
-        passCodeInfo.reset()
-      }
-
-      override fun isLoggedIn(): Boolean {
-        return passCookie.get().isNotEmpty()
-      }
-
-      override fun loginDetails(): DvachLoginRequest {
-        return DvachLoginRequest(passCode.get())
-      }
-
-      override suspend fun pages(
-        board: ChanBoard
-      ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
-        val request = Request.Builder()
-          .url(endpoints().pages(board))
-          .get()
-          .build()
-
-        return DvachPagesRequest(
-          board,
-          request,
-          proxiedOkHttpClient
-        ).execute()
-      }
-
-      override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
-        val dvachSearchParams = searchParams as DvachSearchParams
-
-        // https://2ch.hk/makaba/makaba.fcgi?task=search&board=mobi&find=poco%20x3&json=1
-        val searchUrl = requireNotNull(endpoints().search())
-          .newBuilder()
-          .addQueryParameter("board", dvachSearchParams.boardCode)
-          .addQueryParameter("find", dvachSearchParams.query)
-          .addQueryParameter("json", "1")
-          .build()
-
-        val requestBuilder = Request.Builder()
-          .url(searchUrl)
-          .get()
-
-        this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
-
-        return DvachSearchRequest(
-          moshi,
-          requestBuilder.build(),
-          proxiedOkHttpClient,
-          dvachSearchParams,
-          siteManager
-        ).execute()
-      }
-    })
+    setActions(DvachActions())
     setRequestModifier(siteRequestModifier as SiteRequestModifier<Site>)
     setApi(DvachApiV2(moshi, siteManager, boardManager, this))
     setParser(DvachCommentParser())
@@ -641,6 +418,231 @@ class Dvach : CommonSite() {
       }
     }
 
+  }
+
+  private inner class DvachActions : VichanActions(this@Dvach, proxiedOkHttpClient, siteManager, replyManager) {
+    override fun setupPost(
+      replyChanDescriptor: ChanDescriptor,
+      call: MultipartHttpCall
+    ): ModularResult<Unit> {
+      return super.setupPost(replyChanDescriptor, call)
+        .mapValue {
+          if (replyChanDescriptor.isThreadDescriptor()) {
+            // "thread" is already added in VichanActions.
+            call.parameter("post", "New Reply")
+          } else {
+            call.parameter("post", "New Thread")
+            call.parameter("page", "1")
+          }
+
+          return@mapValue
+        }
+    }
+
+    override fun requirePrepare(): Boolean {
+      return false
+    }
+
+    override suspend fun post(
+      replyChanDescriptor: ChanDescriptor,
+      replyMode: ReplyMode
+    ): Flow<SiteActions.PostResult> {
+      val replyCall = DvachReplyCall(
+        site = this@Dvach,
+        replyChanDescriptor = replyChanDescriptor,
+        replyMode = replyMode,
+        replyManager = replyManager
+      )
+
+      return httpCallManager.get().makePostHttpCallWithProgress(replyCall)
+        .map { replyCallResult ->
+          when (replyCallResult) {
+            is HttpCall.HttpCallWithProgressResult.Success -> {
+              return@map SiteActions.PostResult.PostComplete(
+                replyCallResult.httpCall.replyResponse
+              )
+            }
+            is HttpCall.HttpCallWithProgressResult.Progress -> {
+              return@map SiteActions.PostResult.UploadingProgress(
+                replyCallResult.fileIndex,
+                replyCallResult.totalFiles,
+                replyCallResult.percent
+              )
+            }
+            is HttpCall.HttpCallWithProgressResult.Fail -> {
+              return@map SiteActions.PostResult.PostError(replyCallResult.error)
+            }
+          }
+        }
+    }
+
+    override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
+      return super.delete(deleteRequest)
+    }
+
+    override suspend fun boards(): ModularResult<SiteBoards> {
+      val dvachEndpoints = endpoints() as DvachEndpoints
+
+      return DvachBoardsRequest(
+        siteDescriptor(),
+        boardManager,
+        proxiedOkHttpClient,
+        dvachEndpoints.boards(),
+        dvachEndpoints.dvachGetBoards()
+      ).execute()
+    }
+
+    @Suppress("MoveVariableDeclarationIntoWhen")
+    override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
+      val dvachLoginRequest = loginRequest as DvachLoginRequest
+      passCode.set(dvachLoginRequest.passcode)
+
+      val loginResult = httpCallManager.get().makeHttpCall(
+        DvachGetPassCookieHttpCall(this@Dvach, loginRequest)
+      )
+
+      when (loginResult) {
+        is HttpCall.HttpCallResult.Success -> {
+          val loginResponse =
+            requireNotNull(loginResult.httpCall.loginResponse) { "loginResponse is null" }
+
+          return when (loginResponse) {
+            is DvachLoginResponse.Success -> {
+              passCookie.set(loginResponse.authCookie)
+              SiteActions.LoginResult.LoginComplete(loginResponse)
+            }
+            is DvachLoginResponse.Failure -> {
+              SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
+            }
+            DvachLoginResponse.AntiSpamDetected -> {
+              SiteActions.LoginResult.AntiSpamDetected
+            }
+          }
+        }
+        is HttpCall.HttpCallResult.Fail -> {
+          return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
+        }
+      }
+    }
+
+    override suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): SiteActions.GetPasscodeInfoResult {
+      if (!isLoggedIn()) {
+        return SiteActions.GetPasscodeInfoResult.NotLoggedIn
+      }
+
+      if (!resetCached && passCodeInfo.isNotDefault()) {
+        val dvachPasscodeInfo = passCodeInfo.get()
+
+        val maxAttachedFilesPerPost = dvachPasscodeInfo.files
+        val maxTotalAttachablesSize = dvachPasscodeInfo.filesSize
+
+        if (maxAttachedFilesPerPost != null && maxTotalAttachablesSize != null) {
+          val passcodePostingLimitationsInfo = PasscodePostingLimitationsInfo(
+            maxAttachedFilesPerPost,
+            maxTotalAttachablesSize
+          )
+
+          return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
+        }
+
+        // fallthrough
+      }
+
+      val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)
+
+      val passcodeInfoCallResult = httpCallManager.get().makeHttpCall(passcodeInfoCall)
+      if (passcodeInfoCallResult is HttpCall.HttpCallResult.Fail) {
+        return SiteActions.GetPasscodeInfoResult.Failure(passcodeInfoCallResult.error)
+      }
+
+      val passcodePostingLimitationsInfoResult = (passcodeInfoCallResult as HttpCall.HttpCallResult.Success)
+        .httpCall.passcodePostingLimitationsInfoResult
+
+      if (passcodePostingLimitationsInfoResult is ModularResult.Error) {
+        return SiteActions.GetPasscodeInfoResult.Failure(passcodePostingLimitationsInfoResult.error)
+      }
+
+      val passcodePostingLimitationsInfo =
+        (passcodePostingLimitationsInfoResult as ModularResult.Value).value
+
+      val dvachPasscodeInfo = DvachPasscodeInfo(
+        files = passcodePostingLimitationsInfo.maxAttachedFilesPerPost,
+        filesSize = passcodePostingLimitationsInfo.maxTotalAttachablesSize
+      )
+
+      passCodeInfo.set(dvachPasscodeInfo)
+
+      return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
+    }
+
+    override fun postRequiresAuthentication(): Boolean {
+      return !isLoggedIn()
+    }
+
+    override fun postAuthenticate(): SiteAuthentication {
+      return when (captchaType.get()) {
+        CaptchaType.V2JS -> captchaV2Js
+        CaptchaType.V2NOJS -> captchaV2NoJs
+        CaptchaType.V2_INVISIBLE -> captchaV2Invisible
+        CaptchaType.DVACH_CAPTCHA -> dvachCaptcha
+        else -> throw IllegalArgumentException()
+      }
+    }
+
+    override fun logout() {
+      passCode.remove()
+      passCookie.remove()
+      passCodeInfo.reset()
+    }
+
+    override fun isLoggedIn(): Boolean {
+      return passCookie.get().isNotEmpty()
+    }
+
+    override fun loginDetails(): DvachLoginRequest {
+      return DvachLoginRequest(passCode.get())
+    }
+
+    override suspend fun pages(
+      board: ChanBoard
+    ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
+      val request = Request.Builder()
+        .url(endpoints().pages(board))
+        .get()
+        .build()
+
+      return DvachPagesRequest(
+        board,
+        request,
+        proxiedOkHttpClient
+      ).execute()
+    }
+
+    override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
+      val dvachSearchParams = searchParams as DvachSearchParams
+
+      // https://2ch.hk/makaba/makaba.fcgi?task=search&board=mobi&find=poco%20x3&json=1
+      val searchUrl = requireNotNull(endpoints().search())
+        .newBuilder()
+        .addQueryParameter("board", dvachSearchParams.boardCode)
+        .addQueryParameter("find", dvachSearchParams.query)
+        .addQueryParameter("json", "1")
+        .build()
+
+      val requestBuilder = Request.Builder()
+        .url(searchUrl)
+        .get()
+
+      this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
+
+      return DvachSearchRequest(
+        moshi,
+        requestBuilder.build(),
+        proxiedOkHttpClient,
+        dvachSearchParams,
+        siteManager
+      ).execute()
+    }
   }
 
   @DoNotStrip

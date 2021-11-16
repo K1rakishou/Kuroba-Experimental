@@ -59,6 +59,18 @@ open class ChanLoaderException(
       }
     }
 
+  fun isRecoverableError(error: Throwable = exception): Boolean {
+    return when (error) {
+      is SocketTimeoutException,
+      is SocketException,
+      is UnknownHostException,
+      is SSLException,
+      is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> true
+      is ChanLoaderException -> isRecoverableError(error.exception)
+      else -> false
+    }
+  }
+
   fun isCloudFlareError(): Boolean =
     exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
 

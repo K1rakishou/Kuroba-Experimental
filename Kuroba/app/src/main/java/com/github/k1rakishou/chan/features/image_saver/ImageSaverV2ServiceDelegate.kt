@@ -755,11 +755,8 @@ class ImageSaverV2ServiceDelegate(
       var chanPostImage: ChanPostImage? = null
 
       if (postDescriptor != null) {
-        chanThreadManager.getPost(postDescriptor)?.iteratePostImages { cpi ->
-          if (cpi.imageUrl == imageFullUrl) {
-            chanPostImage = cpi
-          }
-        }
+        chanPostImage = chanThreadManager.getPost(postDescriptor)
+          ?.firstPostImageOrNull { cpi -> cpi.imageUrl == imageFullUrl }
       } else {
         val chanPostImageResult = chanPostImageRepository.selectPostImageByUrl(imageFullUrl)
         if (chanPostImageResult is ModularResult.Error) {

@@ -299,6 +299,7 @@ class MpvVideoMediaView(
   override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
+    thumbnailMediaView.show()
 
     if (canAutoLoad()) {
       startPlayingVideo(isLifecycleChange = isLifecycleChange)
@@ -306,6 +307,7 @@ class MpvVideoMediaView(
   }
 
   override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
+    thumbnailMediaView.hide()
     destroyPlayer(isPausing = isPausing, isDestroying = false, isBecomingInactive = isBecomingInactive)
 
     playJob?.cancel()

@@ -278,8 +278,9 @@ object ChanPostUtils {
     for (post in posts) {
       if (post.postDescriptor == postDescriptor && !postsSet.contains(post)) {
         postsSet.add(post)
+        val repliesFromCopy = post.repliesFromCopy
 
-        post.iterateRepliesFrom { replyId ->
+        repliesFromCopy.forEach { replyId ->
           findPostWithRepliesRecursive(replyId, posts, postsSet)
         }
       }

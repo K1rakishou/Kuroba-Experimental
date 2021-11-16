@@ -5,6 +5,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 
 abstract class AbstractChanReaderProcessor {
+  abstract val page: Int?
   abstract val chanDescriptor: ChanDescriptor
   abstract val canUseEmptyBoardIfBoardDoesNotExist: Boolean
 

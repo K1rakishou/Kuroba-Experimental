@@ -229,7 +229,7 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder comment(String comment) {
+    public ChanPostBuilder comment(@Nullable String comment) {
         if (comment == null) {
             this.postCommentBuilder.setUnparsedComment("");
         } else {
@@ -261,7 +261,11 @@ public class ChanPostBuilder {
         return this;
     }
 
-    public ChanPostBuilder posterId(String posterId) {
+    public ChanPostBuilder posterId(@Nullable String posterId) {
+        if (posterId == null) {
+            return this;
+        }
+
         this.posterId = posterId;
 
         // Stolen from the 4chan extension

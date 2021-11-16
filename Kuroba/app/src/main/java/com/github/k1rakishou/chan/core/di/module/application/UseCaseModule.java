@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator;
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase;
 import com.github.k1rakishou.chan.core.site.parser.ReplyParser;
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanGetBoardsUseCase;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
@@ -465,6 +466,22 @@ public class UseCaseModule {
         return new GetThreadBookmarkGroupIdsUseCase(
                 threadBookmarkGroupManager,
                 chanThreadManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public LynxchanGetBoardsUseCase provideLynxchanGetBoardsUseCase(
+            AppConstants appConstants,
+            Lazy<Moshi> moshi,
+            Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient
+    ) {
+        Logger.deps("LynxchanGetBoardsUseCase");
+
+        return new LynxchanGetBoardsUseCase(
+                appConstants,
+                moshi,
+                proxiedOkHttpClient
         );
     }
 

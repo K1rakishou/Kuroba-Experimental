@@ -230,6 +230,7 @@ class ChanThreadLoaderCoordinator(
 
           return@measureTimedValue body.byteStream().use { inputStream ->
             return@use readPostsFromResponse(
+              page = page,
               chanLoadUrl = chanLoadUrl,
               responseBodyStream = inputStream,
               chanDescriptor = chanDescriptor,
@@ -348,6 +349,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   suspend fun reloadAndReparseThreadPosts(
+    page: Int?,
     postParser: PostParser,
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
     cacheUpdateOptions: ChanCacheUpdateOptions,
@@ -377,6 +379,7 @@ class ChanThreadLoaderCoordinator(
         }
 
         val chanReaderProcessor = ChanReaderProcessor(
+          page = page,
           chanPostRepository = chanPostRepository,
           chanReadOptions = ChanReadOptions.default(),
           chanLoadOptions = chanLoadOptions,
@@ -407,6 +410,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   suspend fun reloadAndReparseCatalogPosts(
+    page: Int?,
     catalogDescriptor: ChanDescriptor.CatalogDescriptor,
     postParser: PostParser
   ): ModularResult<ThreadLoadResult> {
@@ -433,6 +437,7 @@ class ChanThreadLoaderCoordinator(
         }
 
         val chanReaderProcessor = ChanReaderProcessor(
+          page = page,
           chanPostRepository = chanPostRepository,
           chanReadOptions = ChanReadOptions.default(),
           chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts(),
@@ -573,6 +578,7 @@ class ChanThreadLoaderCoordinator(
   }
 
   suspend fun readPostsFromResponse(
+    page: Int?,
     chanLoadUrl: ChanLoadUrl,
     responseBodyStream: InputStream,
     chanDescriptor: ChanDescriptor,
@@ -585,6 +591,7 @@ class ChanThreadLoaderCoordinator(
 
     return Try {
       val chanReaderProcessor = ChanReaderProcessor(
+        page = page,
         chanPostRepository = chanPostRepository,
         chanReadOptions = chanReadOptions,
         chanLoadOptions = chanLoadOptions,

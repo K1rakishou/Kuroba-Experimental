@@ -346,7 +346,8 @@ public class DefaultPostParser implements PostParser {
             HtmlNode node
     ) {
         if (node instanceof HtmlNode.Text) {
-            String text = ((HtmlNode.Text) node).getText();
+            HtmlNode.Text textNode = (HtmlNode.Text) node;
+            String text = postProcessText(textNode, textNode.getText());
             boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
 
             return CommentParserHelper.detectLinks(
@@ -389,6 +390,10 @@ public class DefaultPostParser implements PostParser {
             Logger.e(TAG, "Unknown node instance: " + node.getClass().getName());
             return ""; // ?
         }
+    }
+
+    protected @NonNull String postProcessText(@NonNull HtmlNode.Text textNode, @NonNull String text) {
+        return text;
     }
 
     @Nullable

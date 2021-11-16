@@ -42,6 +42,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   protected val cancellableToast by lazy { CancellableToast() }
 
+  private var currentlyVisible = false
   private var requestDisposable: Disposable? = null
 
   @Inject
@@ -96,6 +97,14 @@ class ThumbnailMediaView @JvmOverloads constructor(
         null
       }
     }
+  }
+
+  fun show() {
+    currentlyVisible = true
+  }
+
+  fun hide() {
+    currentlyVisible = false
   }
 
   fun unbind() {
@@ -157,13 +166,16 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
   private fun onThumbnailImageNotFoundError() {
     Logger.e(TAG, "onThumbnailImageNotFoundError()")
-    cancellableToast.showToast(context, R.string.image_not_found)
+
+    if (currentlyVisible) {
+      cancellableToast.showToast(context, R.string.image_not_found)
+    }
   }
 
   private fun onThumbnailImageError(exception: Throwable) {
     Logger.e(TAG, "onThumbnailImageError()", exception)
 
-    if (exception.isExceptionImportant()) {
+    if (exception.isExceptionImportant() && currentlyVisible) {
       cancellableToast.showToast(
         context,
         getString(R.string.image_image_thumbnail_load_failed, exception.errorMessageOrClassName())

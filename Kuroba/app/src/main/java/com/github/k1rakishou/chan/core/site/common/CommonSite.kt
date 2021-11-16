@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site.common
 
 import android.text.TextUtils
-import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.net.AbstractRequest
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -70,7 +69,7 @@ abstract class CommonSite : SiteBase() {
   private var boardsType: Site.BoardsType? = null
   private var catalogType: Site.CatalogType = Site.CatalogType.STATIC
   private var commonConfig: CommonConfig? = null
-  private var resolvable: CommonSiteUrlHandler? = null
+  private var resolvable: Lazy<CommonSiteUrlHandler>? = null
   private var endpoints: CommonEndpoints? = null
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
@@ -79,6 +78,12 @@ abstract class CommonSite : SiteBase() {
   
   @JvmField
   var postParser: PostParser? = null
+
+  private val defaultRequestModifier by lazy {
+    object : SiteRequestModifier<Site>(this, appConstants) {
+      // Default implementation.
+    }
+  }
 
   private val staticBoards: MutableList<ChanBoard> = ArrayList()
   
@@ -114,9 +119,7 @@ abstract class CommonSite : SiteBase() {
       throw NullPointerException("setParser not called")
     }
     if (requestModifier == null) {
-      requestModifier = object : SiteRequestModifier<Site>(this, appConstants) {
-        // Default implementation.
-      }
+      requestModifier = defaultRequestModifier
     }
     if (postingLimitationInfo == null) {
       postingLimitationInfo = SitePostingLimitationInfo(
@@ -157,7 +160,11 @@ abstract class CommonSite : SiteBase() {
     this.commonConfig = commonConfig
   }
   
-  fun setResolvable(resolvable: CommonSiteUrlHandler?) {
+  fun setResolvable(resolvable: CommonSiteUrlHandler) {
+    this.resolvable = lazy { resolvable }
+  }
+
+  fun setLazyResolvable(resolvable: Lazy<CommonSiteUrlHandler>) {
     this.resolvable = resolvable
   }
   
@@ -213,7 +220,7 @@ abstract class CommonSite : SiteBase() {
   }
 
   override fun resolvable(): SiteUrlHandler {
-    return resolvable!!
+    return resolvable!!.value
   }
   
   override fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
@@ -244,9 +251,8 @@ abstract class CommonSite : SiteBase() {
     return postingLimitationInfo!!
   }
 
-  abstract inner class CommonConfig {
+  abstract class CommonConfig {
     
-    @CallSuper
     open fun siteFeature(siteFeature: Site.SiteFeature): Boolean {
       return siteFeature == Site.SiteFeature.IMAGE_FILE_HASH
     }
@@ -366,11 +372,7 @@ abstract class CommonSite : SiteBase() {
   abstract class CommonEndpoints(
     protected var site: CommonSite
   ) : SiteEndpoints {
-    
-    fun from(url: String): SimpleHttpUrl {
-      return SimpleHttpUrl(url)
-    }
-    
+
     override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }

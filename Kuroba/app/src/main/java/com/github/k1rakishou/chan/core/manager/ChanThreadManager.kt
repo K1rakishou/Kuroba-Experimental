@@ -490,6 +490,7 @@ class ChanThreadManager(
         "$chanCacheUpdateOptions) -> false")
 
       val result = tryRefreshCacheFromTheDatabase(
+        page = page,
         chanDescriptor = chanDescriptor,
         chanLoadOptions = chanLoadOptions,
         // To avoid using UpdateIfCacheIsOlderThan which is ambiguous
@@ -531,6 +532,7 @@ class ChanThreadManager(
   }
 
   private suspend fun tryRefreshCacheFromTheDatabase(
+    page: Int?,
     chanDescriptor: ChanDescriptor,
     chanLoadOptions: ChanLoadOptions,
     chanCacheUpdateOptions: ChanCacheUpdateOptions
@@ -568,6 +570,7 @@ class ChanThreadManager(
         }
 
         val result = chanThreadLoaderCoordinator.reloadAndReparseThreadPosts(
+          page = null,
           postParser = postParser,
           threadDescriptor = chanDescriptor,
           cacheUpdateOptions = chanCacheUpdateOptions,
@@ -602,6 +605,7 @@ class ChanThreadManager(
         }
 
         return chanThreadLoaderCoordinator.reloadAndReparseCatalogPosts(
+          page = page,
           postParser = postParser,
           catalogDescriptor = chanDescriptor
         )

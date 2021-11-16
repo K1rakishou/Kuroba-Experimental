@@ -80,7 +80,9 @@ class ChanCatalog(
     postDescriptor: PostDescriptor,
     postsSet: MutableSet<ChanPost>
   ): Boolean {
-    return lock.read {
+    val postsToCheck = mutableListOf<ChanPost>()
+
+    val found = lock.read {
       var found = false
 
       for (post in originalPosts) {
@@ -89,15 +91,26 @@ class ChanCatalog(
         }
 
         found = true
-        postsSet.add(post)
-
-        post.iterateRepliesFrom { lookUpPostDescriptor ->
-          findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
-        }
+        postsToCheck.add(post)
       }
 
       return@read found
     }
+
+    for (post in postsToCheck) {
+      if (postsSet.contains(post)) {
+        continue
+      }
+
+      postsSet.add(post)
+      val repliesFromCopy = post.repliesFromCopy
+
+      repliesFromCopy.forEach { lookUpPostDescriptor ->
+        findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
+      }
+    }
+
+    return found
   }
 
   fun getPost(postDescriptor: PostDescriptor): ChanOriginalPost? {

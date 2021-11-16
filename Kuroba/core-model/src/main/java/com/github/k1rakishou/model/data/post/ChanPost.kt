@@ -35,14 +35,15 @@ open class ChanPost(
   @get:Synchronized
   val repliesFrom = mutableSetOf<PostDescriptor>()
 
-  @Synchronized
+  @get:Synchronized
+  val repliesFromCopy: Set<PostDescriptor>
+    get() = repliesFrom.toSet()
+
   fun postNo(): Long = postDescriptor.postNo
-  @Synchronized
   fun postSubNo(): Long = postDescriptor.postSubNo
   @Synchronized
   fun firstImage(): ChanPostImage? = postImages.firstOrNull()
 
-  @Synchronized
   fun isOP(): Boolean = postDescriptor.isOP()
 
   @get:Synchronized
@@ -52,20 +53,16 @@ open class ChanPost(
   val postImagesCount: Int
     get() = postImages.size
 
-  @get:Synchronized
   open val catalogRepliesCount: Int
     get() = 0
-  @get:Synchronized
   open val catalogImagesCount: Int
     get() = 0
-  @get:Synchronized
   open val uniqueIps: Int
     get() = 0
 
   val boardDescriptor: BoardDescriptor
     get() = postDescriptor.boardDescriptor()
 
-  @get:Synchronized
   val actualTripcode: String? by lazy {
     val tripcodeString = if (fullTripcode.isNullOrEmpty()) {
       return@lazy null
@@ -172,13 +169,6 @@ open class ChanPost(
     }
 
     return false
-  }
-
-  @Synchronized
-  open fun iterateRepliesFrom(iterator: (PostDescriptor) -> Unit) {
-    for (replyNo in repliesFrom) {
-      iterator.invoke(replyNo)
-    }
   }
 
   @Synchronized

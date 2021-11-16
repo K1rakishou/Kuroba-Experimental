@@ -237,6 +237,7 @@ class FullImageMediaView(
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onUpdateTransparency()
+    thumbnailMediaView.show()
 
     scope.launch {
       if (hasContent) {
@@ -286,6 +287,7 @@ class FullImageMediaView(
   }
 
   override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
+    thumbnailMediaView.hide()
     actualImageView.resetScaleAndCenter()
   }
 

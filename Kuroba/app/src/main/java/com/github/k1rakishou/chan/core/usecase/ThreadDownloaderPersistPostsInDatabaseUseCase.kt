@@ -82,6 +82,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
 
     val chanReaderProcessor = body.byteStream().use { inputStream ->
       return@use chanThreadLoaderCoordinator.get().readPostsFromResponse(
+        page = null,
         chanLoadUrl = chanLoadUrl,
         responseBodyStream = inputStream,
         chanDescriptor = threadDescriptor,

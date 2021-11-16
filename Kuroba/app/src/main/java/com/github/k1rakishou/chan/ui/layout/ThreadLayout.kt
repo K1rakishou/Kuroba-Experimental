@@ -512,6 +512,12 @@ class ThreadLayout @JvmOverloads constructor(
     } else {
       switchVisible(Visible.ERROR)
       errorText.text = errorMessage
+
+      if (error.isRecoverableError()) {
+        errorRetryButton.setVisibilityFast(View.VISIBLE)
+      } else {
+        errorRetryButton.setVisibilityFast(View.GONE)
+      }
     }
 
     callback.onShowError()

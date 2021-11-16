@@ -230,6 +230,7 @@ class GifMediaView(
   override fun show(isLifecycleChange: Boolean) {
     mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
+    thumbnailMediaView.show()
 
     scope.launch {
       val fullGifDeferredResult = fullGifDeferred.awaitCatching()
@@ -297,6 +298,8 @@ class GifMediaView(
   }
 
   override fun hide(isLifecycleChange: Boolean, isPausing: Boolean, isBecomingInactive: Boolean) {
+    thumbnailMediaView.hide()
+
     val gifImageViewDrawable = actualGifView.drawable as? GifDrawable
     if (gifImageViewDrawable != null) {
       mediaViewState.prevFrameIndex = gifImageViewDrawable.currentFrameIndex

@@ -137,7 +137,10 @@ class SiteSettingsPresenter(
                       appendLine(siteSetting.settingDescription)
                     }
 
-                    appendLine(siteSetting.setting.get())
+                    val currentSetting = siteSetting.setting.get()
+                    if (currentSetting.isNotBlank()) {
+                      appendLine(currentSetting)
+                    }
                   }
                 }
               )

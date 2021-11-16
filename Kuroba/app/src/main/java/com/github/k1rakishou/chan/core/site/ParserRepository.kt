@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.sites.dvach.DvachCommentParser
 import com.github.k1rakishou.chan.core.site.sites.foolfuuka.FoolFuukaCommentParser
 import com.github.k1rakishou.chan.core.site.sites.fuuka.FuukaCommentParser
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanCommentParser
 
 class ParserRepository(
   private val archivesManager: ArchivesManager
@@ -22,6 +23,7 @@ class ParserRepository(
     parsers[CommentParserType.FoolFuukaParser] = FoolFuukaCommentParser(archivesManager)
     parsers[CommentParserType.TaimabaParser] = TaimabaCommentParser()
     parsers[CommentParserType.VichanParser] = VichanCommentParser()
+    parsers[CommentParserType.LynxchanParser] = LynxchanCommentParser()
   }
 
   @Synchronized
