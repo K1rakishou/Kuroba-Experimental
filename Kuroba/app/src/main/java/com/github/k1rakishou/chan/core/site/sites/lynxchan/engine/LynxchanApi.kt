@@ -14,7 +14,9 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
+import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
@@ -36,7 +38,6 @@ open class LynxchanApi(
   private val _boardManager: Lazy<BoardManager>,
   site: LynxchanSite
 ) : CommonSite.CommonApi(site) {
-
   private val moshi: Moshi
     get() = _moshi.get()
   private val siteManager: SiteManager
@@ -97,7 +98,7 @@ open class LynxchanApi(
 
     val endpoints = site.endpoints()
 
-    val lynxchanCatalogAdapter = moshi.adapter(LynxchanCatalog::class.java)
+    val lynxchanCatalogAdapter = moshi.adapter(LynxchanCatalogPage::class.java)
     val lynxchanCatalog = responseBodyStream
       .useBufferedSource { bufferedSource -> lynxchanCatalogAdapter.fromJson(bufferedSource) }
 
@@ -141,8 +142,57 @@ open class LynxchanApi(
     requestUrl: String,
     responseBodyStream: InputStream
   ): ModularResult<ThreadBookmarkInfoObject> {
-    // TODO(KurobaEx-lynxchan):
-    return ModularResult.error(NotImplementedError())
+    return ModularResult.Try {
+      val lynxchanBookmarkThreadInfoAdapter = moshi.adapter<LynxchanBookmarkThreadInfo>(LynxchanBookmarkThreadInfo::class.java)
+      val lynxchanBookmarkThreadInfo = responseBodyStream
+        .useBufferedSource { bufferedSource -> lynxchanBookmarkThreadInfoAdapter.fromJson(bufferedSource) }
+
+      if (lynxchanBookmarkThreadInfo == null) {
+        throw IllegalStateException("No posts parsed for '$requestUrl'")
+      }
+
+      val postObjects = mutableListWithCap<ThreadBookmarkInfoPostObject>(lynxchanBookmarkThreadInfo.postsCount)
+
+      lynxchanBookmarkThreadInfo.iterate { lynxchanCatalogThread ->
+        if (lynxchanCatalogThread.isOp) {
+          val threadId = lynxchanCatalogThread.threadId!!
+          val comment = lynxchanCatalogThread.message ?: ""
+          val sticky = lynxchanCatalogThread.pinned == true
+          val rollingSticky = lynxchanCatalogThread.cyclic == true
+          val closed = lynxchanCatalogThread.locked == true
+          var isBumpLimit = lynxchanCatalogThread.autoSage == true
+
+          val stickyPost = if (sticky && rollingSticky) {
+            StickyThread.StickyWithCap
+          } else if (sticky) {
+            StickyThread.StickyUnlimited
+          } else {
+            StickyThread.NotSticky
+          }
+
+          if (stickyPost !is StickyThread.NotSticky) {
+            isBumpLimit = false
+          }
+
+          postObjects += ThreadBookmarkInfoPostObject.OriginalPost(
+            postNo = threadId,
+            closed = closed,
+            archived = false,
+            isBumpLimit = isBumpLimit,
+            isImageLimit = false,
+            stickyThread = stickyPost,
+            comment = comment
+          )
+        } else {
+          val postId = lynxchanCatalogThread.postId!!
+          val comment = lynxchanCatalogThread.message ?: ""
+
+          postObjects += ThreadBookmarkInfoPostObject.RegularPost(postId, comment)
+        }
+      }
+
+      return@Try ThreadBookmarkInfoObject(threadDescriptor, postObjects)
+    }
   }
 
   override suspend fun readFilterWatchCatalogInfoObject(
@@ -251,7 +301,32 @@ open class LynxchanApi(
   }
 
   @JsonClass(generateAdapter = true)
-  data class LynxchanCatalog(
+  data class LynxchanBookmarkThreadInfo(
+    @Json(name = "threadId") val threadId: Long?,
+    @Json(name = "postId") val postId: Long?,
+    @Json(name = "message") val message: String?,
+    @Json(name = "subject") val subject: String?,
+    @Json(name = "locked") val locked: Boolean?,
+    @Json(name = "pinned") val pinned: Boolean?,
+    @Json(name = "cyclic") val cyclic: Boolean?,
+    @Json(name = "autoSage") val autoSage: Boolean?,
+    @Json(name = "lastBump") val lastBump: String?,
+    @Json(name = "posts") val morePosts: List<LynxchanBookmarkThreadInfo>?
+  ) {
+    val isOp: Boolean = threadId != null
+
+    val postsCount: Int
+      get() = 1 + (morePosts?.size ?: 0)
+
+    fun iterate(func: (LynxchanBookmarkThreadInfo) -> Unit) {
+      func(this)
+
+      morePosts?.forEach { lynxchanBookmarkThreadInfo -> func(lynxchanBookmarkThreadInfo) }
+    }
+  }
+
+  @JsonClass(generateAdapter = true)
+  data class LynxchanCatalogPage(
     @Json(name = "pageCount") val pageCount: Int,
     @Json(name = "maxMessageLength") val maxMessageLength: Int,
     @Json(name = "captchaMode") val captchaMode: Int,

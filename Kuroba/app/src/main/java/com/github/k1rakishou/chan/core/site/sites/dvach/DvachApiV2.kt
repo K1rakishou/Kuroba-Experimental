@@ -304,7 +304,7 @@ class DvachApiV2(
           var isBumpLimit = bumpLimitCount != null && bumpLimitCount > 0
 
           val stickyPost = if (sticky && rollingSticky && bumpLimitCount != null) {
-            StickyThread.StickyWithCap(bumpLimitCount)
+            StickyThread.StickyWithCap
           } else if (sticky) {
             StickyThread.StickyUnlimited
           } else {

@@ -81,13 +81,13 @@ sealed class StickyThread {
   object StickyUnlimited : StickyThread()
 
   // Rolling sticky thread
-  data class StickyWithCap(val cap: Int) : StickyThread()
+  object StickyWithCap : StickyThread()
 
   override fun toString(): String {
     return when (this) {
       NotSticky -> "NotSticky"
       StickyUnlimited -> "StickyUnlimited"
-      is StickyWithCap -> "StickyWithCap(cap=${cap})"
+      is StickyWithCap -> "StickyWithCap"
     }
   }
 
@@ -102,7 +102,7 @@ sealed class StickyThread {
       }
 
       if (isSticky && stickyCap > 0) {
-        return StickyWithCap(stickyCap)
+        return StickyWithCap
       }
 
       throw IllegalStateException("Bad StickyThread, isSticky: $isSticky, stickyCap: $stickyCap")

@@ -64,6 +64,7 @@ public class ChanPostBuilder {
     public ChanPostBuilder(ChanPostBuilder other) {
         this.boardDescriptor = other.boardDescriptor;
         this.id = other.id;
+        this.subId = other.subId;
         this.opId = other.opId;
         this.op = other.op;
         this.totalRepliesCount = other.totalRepliesCount;

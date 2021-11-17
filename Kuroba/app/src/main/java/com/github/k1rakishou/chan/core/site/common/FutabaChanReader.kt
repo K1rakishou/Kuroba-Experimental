@@ -390,13 +390,13 @@ class FutabaChanReader(
       val stickyPost = StickyThread.create(sticky, stickyCap)
 
       return ThreadBookmarkInfoPostObject.OriginalPost(
-        postNo,
-        closed,
-        archived,
-        bumpLimit,
-        imageLimit,
-        stickyPost,
-        comment
+        postNo = postNo,
+        closed = closed,
+        archived = archived,
+        isBumpLimit = bumpLimit,
+        isImageLimit = imageLimit,
+        stickyThread = stickyPost,
+        comment = comment
       )
     } else {
       if (postNo == null) {

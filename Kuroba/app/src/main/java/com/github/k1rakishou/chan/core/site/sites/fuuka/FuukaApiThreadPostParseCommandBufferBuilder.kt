@@ -536,14 +536,14 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
   companion object {
     private const val TAG = "FuukaApiThreadPostParseCommandBufferBuilder"
 
-    //    File: 1.32 MB, 2688x4096,   EsGgXsxUcAQV0_h.jpg
+//    File: 1.32 MB, 2688x4096,   EsGgXsxUcAQV0_h.jpg
 //    File:   694 KB, 2894x4093, EscP39vUUAEE9ol.jpg
 //    File: 694 B,   2894x4093,   EscP39vUUAEE9ol.png
 //    File: 694 B,   2894x4093,   EscP39vUUAEE9ol.webm
 //    File: 3.29 MB, 1920x1080, 【龍が如く極2】関西と関東の戦い！！？？止めるにぇ、桐生ちゃん！【ホロライブ_さくらみこ】※ネタバレあり 48-45 screenshot.png
     private val FILE_INFO_PATTERN = Pattern.compile("File:\\s+(\\d+(?:\\.\\d+)?)\\s+((?:[MK])?B),\\s+(\\d+x\\d+),\\s+(.*)\$")
 
-    //    https://warosu.org/jp/thread/32638291
+//    https://warosu.org/jp/thread/32638291
 //    https://warosu.org/jp/thread/32638291#p32638297
 //    https://warosu.org/jp/thread/32638291#p32638297_123
 //    https://warosu.org/jp/thread/S32638291#p32638297_123
