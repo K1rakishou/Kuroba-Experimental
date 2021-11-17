@@ -13,9 +13,13 @@ open class FoolFuukaEndpoints(
   protected val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
+  override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
+    throw IllegalStateException("Catalog is not supported by ${site.name()}")
+  }
+
   // https://archived.moe/a/
   // https://archived.moe/a/page/2/
-  override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+  override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
     val builder = rootUrl.newBuilder()
       .addPathSegment(boardDescriptor.boardCode)
 

@@ -373,10 +373,6 @@ abstract class CommonSite : SiteBase() {
     protected var site: CommonSite
   ) : SiteEndpoints {
 
-    override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
-    }
-    
     override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }

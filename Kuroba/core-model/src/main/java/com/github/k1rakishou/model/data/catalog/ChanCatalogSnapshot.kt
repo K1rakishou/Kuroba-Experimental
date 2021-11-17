@@ -48,6 +48,10 @@ data class ChanCatalogSnapshot(
   }
 
   override fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
+    if (catalogSnapshotEntries.isEmpty()) {
+      return
+    }
+
     lock.write {
       if (!isUnlimitedOrCompositeCatalog) {
         currentCatalogPage = getStartCatalogPage()

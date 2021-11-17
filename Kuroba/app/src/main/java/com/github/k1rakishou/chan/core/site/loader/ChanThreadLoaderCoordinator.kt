@@ -687,7 +687,12 @@ class ChanThreadLoaderCoordinator(
         site.endpoints().thread(chanDescriptor)
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        site.endpoints().catalog(chanDescriptor.boardDescriptor, page)
+        var catalog = site.endpoints().catalogPage(chanDescriptor.boardDescriptor, page)
+        if (catalog == null) {
+          catalog = site.endpoints().catalog(chanDescriptor.boardDescriptor)
+        }
+
+        catalog
       }
       is ChanDescriptor.CompositeCatalogDescriptor -> {
         error("Cannot use CompositeCatalogDescriptor here")
@@ -719,6 +724,8 @@ class ChanThreadLoaderCoordinator(
 
   data class ChanLoadUrl(
     val url: HttpUrl,
+    // Whether we load only a part of a thread (Like, give me all posts starting with postNo).
+    // For now only 2ch.hk supports this.
     val isIncremental: Boolean,
     val page: Int?
   ) {

@@ -2684,14 +2684,16 @@ class ThreadPresenter @Inject constructor(
 
     if (post.postIcons.isNotEmpty()) {
       for (icon in post.postIcons) {
+        val iconUrl = icon.iconUrl.toString()
+
         when {
-          icon.iconUrl.toString().contains("troll") -> {
+          iconUrl.contains("troll") -> {
             text.append("\nTroll Country: ").append(icon.iconName)
           }
-          icon.iconUrl.toString().contains("country") -> {
+          iconUrl.contains("country") -> {
             text.append("\nCountry: ").append(icon.iconName)
           }
-          icon.iconUrl.toString().contains("minileaf") -> {
+          iconUrl.contains("minileaf") -> {
             text.append("\n4chan Pass Year: ").append(icon.iconName)
           }
           else -> {

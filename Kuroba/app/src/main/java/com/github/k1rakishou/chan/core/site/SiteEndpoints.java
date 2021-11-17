@@ -35,7 +35,13 @@ import okhttp3.HttpUrl;
  */
 public interface SiteEndpoints {
 
-    HttpUrl catalog(BoardDescriptor boardDescriptor, @Nullable Integer page);
+    @Nullable
+    default HttpUrl catalogPage(BoardDescriptor boardDescriptor, @Nullable Integer page) {
+        return null;
+    }
+
+    @NonNull HttpUrl catalog(BoardDescriptor boardDescriptor);
+
     HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
     @Nullable

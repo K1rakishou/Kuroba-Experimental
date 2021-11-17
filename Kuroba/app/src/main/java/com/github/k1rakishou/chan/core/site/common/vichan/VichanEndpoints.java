@@ -16,6 +16,7 @@
  */
 package com.github.k1rakishou.chan.core.site.common.vichan;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.core.site.common.CommonSite;
@@ -39,8 +40,9 @@ public class VichanEndpoints extends CommonSite.CommonEndpoints {
         sys = new CommonSite.SimpleHttpUrl(sysUrl);
     }
 
+    @NonNull
     @Override
-    public HttpUrl catalog(BoardDescriptor boardDescriptor, @Nullable Integer page) {
+    public HttpUrl catalog(BoardDescriptor boardDescriptor) {
         return root.builder()
                 .s(boardDescriptor.getBoardCode())
                 .s("catalog.json").url();

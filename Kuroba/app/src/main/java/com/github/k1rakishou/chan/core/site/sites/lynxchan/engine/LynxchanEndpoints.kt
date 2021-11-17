@@ -17,7 +17,14 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
       .addQueryParameter("json", "1").build()
   }
 
-  override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+  override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
+    return lynxchanDomain.newBuilder()
+      .addPathSegment(boardDescriptor.boardCode)
+      .addPathSegment("catalog.json")
+      .build()
+  }
+
+  override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
     val currentPage = page ?: lynxchan.initialPageIndex
 
     return lynxchanDomain.newBuilder()

@@ -73,7 +73,11 @@ class CompositeCatalogSite : Site {
   }
 
   private val siteEndpoints = object : SiteEndpoints {
-    override fun catalog(boardDescriptor: BoardDescriptor?, page: Int?): HttpUrl {
+    override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
+      error("Cannot be used by this site")
+    }
+
+    override fun catalogPage(boardDescriptor: BoardDescriptor?, page: Int?): HttpUrl {
       error("Cannot be used by this site")
     }
 

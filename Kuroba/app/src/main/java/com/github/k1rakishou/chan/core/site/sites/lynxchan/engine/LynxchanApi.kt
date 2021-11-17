@@ -21,6 +21,7 @@ import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
+import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -28,6 +29,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.Types
 import dagger.Lazy
 import org.joda.time.format.ISODateTimeFormat
 import org.jsoup.parser.Parser
@@ -40,6 +42,8 @@ open class LynxchanApi(
   private val _boardManager: Lazy<BoardManager>,
   site: LynxchanSite
 ) : CommonSite.CommonApi(site) {
+  private val lynxchanCatalogList = Types.newParameterizedType(List::class.java, LynxchanCatalogThread::class.java)
+
   private val moshi: Moshi
     get() = _moshi.get()
   private val siteManager: SiteManager
@@ -202,8 +206,48 @@ open class LynxchanApi(
     requestUrl: String,
     responseBodyStream: InputStream
   ): ModularResult<FilterWatchCatalogInfoObject> {
-    // TODO(KurobaEx-lynxchan):
-    return ModularResult.error(NotImplementedError())
+
+    return ModularResult.Try {
+      val endpoints = site.endpoints()
+
+      val lynxchanCatalogAdapter = moshi.adapter<List<LynxchanCatalogThread>>(lynxchanCatalogList)
+      val lynxchanCatalogThreads = responseBodyStream
+        .useBufferedSource { bufferedSource -> lynxchanCatalogAdapter.fromJson(bufferedSource) }
+
+      if (lynxchanCatalogThreads == null) {
+        throw IllegalStateException("No posts parsed for '$requestUrl'")
+      }
+
+      if (lynxchanCatalogThreads.isEmpty()) {
+        return@Try FilterWatchCatalogInfoObject(boardDescriptor, emptyList())
+      }
+
+      val threadObjects = lynxchanCatalogThreads.map { lynxchanCatalogThread ->
+        val threadNo = lynxchanCatalogThread.threadId
+        val comment = lynxchanCatalogThread.message ?: ""
+        val subject = lynxchanCatalogThread.subject ?: ""
+
+        val fullThumbnailUrl = lynxchanCatalogThread.thumb?.let { thumb ->
+          val args = SiteEndpoints.makeArgument(
+            LynxchanEndpoints.THUMB_ARGUMENT_KEY, thumb.removePrefix("/")
+          )
+
+          return@let endpoints.thumbnailUrl(boardDescriptor, false, 0, args)
+        }
+
+        return@map FilterWatchCatalogThreadInfoObject(
+          threadDescriptor = ChanDescriptor.ThreadDescriptor.create(boardDescriptor, threadNo),
+          commentRaw = comment,
+          subjectRaw = subject,
+          thumbnailUrl = fullThumbnailUrl
+        )
+      }
+
+      return@Try FilterWatchCatalogInfoObject(
+        boardDescriptor,
+        threadObjects
+      )
+    }
   }
 
   private suspend fun processPostsInternal(
@@ -338,6 +382,20 @@ open class LynxchanApi(
       morePosts?.forEach { lynxchanBookmarkThreadInfo -> func(lynxchanBookmarkThreadInfo) }
     }
   }
+
+  @JsonClass(generateAdapter = true)
+  data class LynxchanCatalogThread(
+    @Json(name = "threadId") val threadId: Long,
+    @Json(name = "page") val page: Int,
+    @Json(name = "message") val message: String?,
+    @Json(name = "subject") val subject: String?,
+    @Json(name = "locked") val locked: Boolean?,
+    @Json(name = "pinned") val pinned: Boolean?,
+    @Json(name = "cyclic") val cyclic: Boolean?,
+    @Json(name = "autoSage") val autoSage: Boolean?,
+    @Json(name = "lastBump") val lastBump: String?,
+    @Json(name = "thumb") val thumb: String?
+  )
 
   @JsonClass(generateAdapter = true)
   data class LynxchanCatalogPage(

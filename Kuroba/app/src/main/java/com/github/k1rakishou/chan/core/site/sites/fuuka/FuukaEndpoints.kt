@@ -12,8 +12,12 @@ class FuukaEndpoints(
   private val rootUrl: HttpUrl
 ) : CommonSite.CommonEndpoints(site) {
 
-  override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+  override fun catalog(boardDescriptor: BoardDescriptor?): HttpUrl {
     throw IllegalStateException("Catalog is not supported by ${site.name()}")
+  }
+
+  override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+    throw IllegalStateException("CatalogPage is not supported by ${site.name()}")
   }
 
   // https://warosu.org/g/thread/72382313

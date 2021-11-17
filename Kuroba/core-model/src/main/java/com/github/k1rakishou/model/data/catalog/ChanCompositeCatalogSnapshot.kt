@@ -79,6 +79,10 @@ class ChanCompositeCatalogSnapshot(
   }
 
   override fun add(catalogSnapshotEntries: List<ChanDescriptor.ThreadDescriptor>) {
+    if (catalogSnapshotEntries.isEmpty()) {
+      return
+    }
+
     lock.write {
       catalogSnapshotEntries
         .groupBy { catalogSnapshotEntry -> catalogSnapshotEntry.catalogDescriptor() }

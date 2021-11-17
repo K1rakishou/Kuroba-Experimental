@@ -31,7 +31,7 @@ class CreateBoardManuallyUseCase(
     val site = siteManager.bySiteDescriptor(siteDescriptor)
       ?: return Result.FailedToFindSite(siteDescriptor)
 
-    val catalogUrl = site.endpoints().catalog(catalogDescriptor.boardDescriptor, null)
+    val catalogUrl = site.endpoints().catalog(catalogDescriptor.boardDescriptor)
 
     val request = Request.Builder()
       .url(catalogUrl)

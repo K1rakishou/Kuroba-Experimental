@@ -137,7 +137,7 @@ open class Chan4 : SiteBase() {
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
     private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
-    override fun catalog(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+    override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
       return a.newBuilder()
         .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment("catalog.json")
