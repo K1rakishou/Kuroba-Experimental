@@ -2694,6 +2694,9 @@ class ThreadPresenter @Inject constructor(
           icon.iconUrl.toString().contains("minileaf") -> {
             text.append("\n4chan Pass Year: ").append(icon.iconName)
           }
+          else -> {
+            text.append("\nIcon: ").append(icon.iconName)
+          }
         }
       }
     }
