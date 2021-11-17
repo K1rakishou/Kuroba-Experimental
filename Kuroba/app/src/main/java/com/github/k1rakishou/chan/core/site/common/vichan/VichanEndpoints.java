@@ -79,7 +79,7 @@ public class VichanEndpoints extends CommonSite.CommonEndpoints {
     }
 
     @Override
-    public HttpUrl icon(String icon, Map<String, String> arg) {
+    public HttpUrl icon(String icon, @Nullable Map<String, String> arg) {
         CommonSite.SimpleHttpUrl stat = root.builder().s("static");
 
         if (icon.equals("country")) {

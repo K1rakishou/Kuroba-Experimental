@@ -93,7 +93,7 @@ public class TaimabaEndpoints
     }
 
     @Override
-    public HttpUrl icon(String icon, Map<String, String> arg) {
+    public HttpUrl icon(String icon, @Nullable Map<String, String> arg) {
         CommonSite.SimpleHttpUrl stat = sys.builder().s("static");
 
         if (icon.equals("country")) {

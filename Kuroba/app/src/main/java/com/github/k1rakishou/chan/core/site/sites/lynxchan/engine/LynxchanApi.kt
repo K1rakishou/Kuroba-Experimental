@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.chan.utils.ConversionUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
@@ -21,6 +22,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
@@ -280,6 +282,18 @@ open class LynxchanApi(
       builder.comment(post.markdown)
       builder.posterId(post.posterId)
 
+      if (post.flag.isNotNullNorEmpty() && post.flagCode.isNotNullNorEmpty() && post.flagName.isNotNullNorEmpty()) {
+        val flag = post.flag.removePrefix("/")
+        val flagCode = post.flagCode.removePrefix("-")
+        val flagName = post.flagName
+
+        val countryUrl = endpoints.icon(
+          LynxchanEndpoints.COUNTRY_FLAG_ICON_KEY,
+          SiteEndpoints.makeArgument(LynxchanEndpoints.COUNTRY_FLAG_PATH_KEY, flag)
+        )
+        builder.addHttpIcon(ChanPostHttpIcon(countryUrl, "$flagName/$flagCode"))
+      }
+
       val timestampSeconds = if (post.creation != null) {
         LYNXCHAN_DATE_PARSER.parseMillis(post.creation) / 1000L
       } else {
@@ -350,6 +364,9 @@ open class LynxchanApi(
     @Json(name = "files") val files: List<LynxchanPostFile>?,
     @Json(name = "omittedFiles") val omittedFiles: Int?,
     @Json(name = "creation") val creation: String?,
+    @Json(name = "flag") val flag: String?,
+    @Json(name = "flagCode") val flagCode: String?,
+    @Json(name = "flagName") val flagName: String?,
     // Before Lynxchan 2.7.0
     @Json(name = "ommitedPosts") val ommitedPosts: Int?,
     // After Lynxchan 2.7.0
