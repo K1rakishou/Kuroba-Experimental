@@ -108,6 +108,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 - Sushichan
 - Wired-7 (thanks to @Wired-7)
 - 370chan.info (thanks to @alcharkov)
+- Endchan
 
 ##### Currently supported 4chan archives
 - ArchivedMoe
