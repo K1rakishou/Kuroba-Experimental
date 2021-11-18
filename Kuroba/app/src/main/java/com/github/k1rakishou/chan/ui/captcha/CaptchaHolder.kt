@@ -176,7 +176,7 @@ class CaptchaHolder {
     private const val TAG = "CaptchaHolder"
     private const val INTERVAL: Long = 5000
 
-    private val RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
+    val RECAPTCHA_TOKEN_LIVE_TIME = TimeUnit.MINUTES.toMillis(2)
   }
 }
 

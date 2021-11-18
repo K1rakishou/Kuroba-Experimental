@@ -100,6 +100,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout;
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout;
+import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayout;
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1;
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2;
 import com.github.k1rakishou.chan.ui.cell.AlbumViewCell;
@@ -401,6 +402,7 @@ public interface ActivityComponent {
     void inject(MediaViewerToolbar mediaViewerToolbar);
     void inject(DvachCaptchaLayout dvachCaptchaLayout);
     void inject(Chan4CaptchaLayout chan4CaptchaLayout);
+    void inject(LynxchanCaptchaLayout lynxchanCaptchaLayout);
     void inject(MrSkeletonLayout mrSkeletonLayout);
     void inject(KurobaComposeIconPanel kurobaComposeIconPanel);
     void inject(ArrowMenuDrawable arrowMenuDrawable);

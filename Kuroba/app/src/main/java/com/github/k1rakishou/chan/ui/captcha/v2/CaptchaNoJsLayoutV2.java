@@ -177,7 +177,7 @@ public class CaptchaNoJsLayoutV2
     ) {
         this.callback = callback;
 
-        if (authentication.type != CAPTCHA2_NOJS) {
+        if (authentication.getType() != CAPTCHA2_NOJS) {
             callback.onFallbackToV1CaptchaView();
             return;
         }

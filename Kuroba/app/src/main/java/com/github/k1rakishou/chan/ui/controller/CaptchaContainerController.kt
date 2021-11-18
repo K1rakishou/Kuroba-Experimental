@@ -17,6 +17,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.GenericWebViewAuthenticationLayout
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayout
+import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayout
 import com.github.k1rakishou.chan.ui.captcha.v1.CaptchaNojsLayoutV1
 import com.github.k1rakishou.chan.ui.captcha.v2.CaptchaNoJsLayoutV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -205,6 +206,32 @@ class CaptchaContainerController(
         )
 
         view.layoutParams = params
+        return view
+      }
+      SiteAuthentication.Type.CUSTOM_CAPTCHA -> {
+        val customCaptcha = checkNotNull(authentication.customCaptcha) { "Custom captcha is null!" }
+        return createViewForCustomCaptcha(customCaptcha)
+      }
+    }
+  }
+
+  private fun createViewForCustomCaptcha(
+    customCaptcha: SiteAuthentication.CustomCaptcha
+  ): AuthenticationLayoutInterface {
+    when (customCaptcha) {
+      is SiteAuthentication.CustomCaptcha.LynxchanCaptcha -> {
+        val view = LynxchanCaptchaLayout(
+          context = context,
+          chanDescriptor = chanDescriptor
+        )
+
+        val params = FrameLayout.LayoutParams(
+          ViewGroup.LayoutParams.MATCH_PARENT,
+          ViewGroup.LayoutParams.WRAP_CONTENT
+        )
+
+        view.layoutParams = params
+
         return view
       }
     }

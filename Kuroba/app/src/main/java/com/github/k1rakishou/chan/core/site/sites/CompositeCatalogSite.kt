@@ -186,8 +186,6 @@ class CompositeCatalogSite : Site {
       return SiteActions.LoginResult.LoginError("Not implemented")
     }
 
-    override fun postRequiresAuthentication(): Boolean = false
-
     override fun postAuthenticate(): SiteAuthentication = SiteAuthentication.fromNone()
 
     override fun logout() {

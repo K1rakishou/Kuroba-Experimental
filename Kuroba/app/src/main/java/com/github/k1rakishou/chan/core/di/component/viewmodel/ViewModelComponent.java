@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveViewMo
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsViewModel;
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel;
 import com.github.k1rakishou.chan.ui.captcha.dvach.DvachCaptchaLayoutViewModel;
+import com.github.k1rakishou.chan.ui.captcha.lynxchan.LynxchanCaptchaLayoutViewModel;
 
 import dagger.Subcomponent;
 
@@ -40,6 +41,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(FilterBoardSelectorControllerViewModel filterBoardSelectorControllerViewModel);
     public abstract void inject(BookmarkGroupSettingsControllerViewModel bookmarkGroupSettingsControllerViewModel);
     public abstract void inject(BookmarkGroupPatternSettingsControllerViewModel bookmarkGroupPatternSettingsControllerViewModel);
+    public abstract void inject(LynxchanCaptchaLayoutViewModel lynxchanCaptchaLayoutViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

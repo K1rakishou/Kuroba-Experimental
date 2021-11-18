@@ -288,7 +288,8 @@ fun KurobaComposeTextField(
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
   keyboardActions: KeyboardActions = KeyboardActions(),
   textStyle: TextStyle = LocalTextStyle.current,
-  label: @Composable (() -> Unit)? = null,
+  enabled: Boolean = true,
+  label: @Composable (() -> Unit)? = null
 ) {
   val chanTheme = LocalChanTheme.current
 
@@ -301,6 +302,7 @@ fun KurobaComposeTextField(
 
   CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
     TextField(
+      enabled = enabled,
       value = value,
       label = label,
       onValueChange = onValueChange,

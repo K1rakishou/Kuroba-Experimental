@@ -45,7 +45,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.JsonSetting
+import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
@@ -68,7 +68,7 @@ class Dvach : CommonSite() {
   private lateinit var userCodeCookie: StringSetting
   private lateinit var antiSpamCookie: StringSetting
   private lateinit var captchaType: OptionsSetting<CaptchaType>
-  private lateinit var passCodeInfo: JsonSetting<DvachPasscodeInfo>
+  private lateinit var passCodeInfo: GsonJsonSetting<DvachPasscodeInfo>
 
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
 
@@ -106,7 +106,7 @@ class Dvach : CommonSite() {
       CaptchaType.DVACH_CAPTCHA
     )
 
-    passCodeInfo = JsonSetting(
+    passCodeInfo = GsonJsonSetting(
       gson,
       DvachPasscodeInfo::class.java,
       prefs,
@@ -573,10 +573,6 @@ class Dvach : CommonSite() {
       passCodeInfo.set(dvachPasscodeInfo)
 
       return SiteActions.GetPasscodeInfoResult.Success(passcodePostingLimitationsInfo)
-    }
-
-    override fun postRequiresAuthentication(): Boolean {
-      return !isLoggedIn()
     }
 
     override fun postAuthenticate(): SiteAuthentication {

@@ -21,7 +21,7 @@ import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.prefs.JsonSetting
+import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
@@ -60,7 +60,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
   val chan4CaptchaSettingsJson by lazy {
     siteManager.bySiteDescriptor(Chan4.SITE_DESCRIPTOR)!!
-      .getSettingBySettingId<JsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
+      .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
   }
 
   private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)

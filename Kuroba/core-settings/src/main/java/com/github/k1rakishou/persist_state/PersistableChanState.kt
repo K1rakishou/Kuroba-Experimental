@@ -6,8 +6,8 @@ import com.github.k1rakishou.SharedPreferencesSettingProvider
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.BooleanSetting
+import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.IntegerSetting
-import com.github.k1rakishou.prefs.JsonSetting
 import com.github.k1rakishou.prefs.LongSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
@@ -57,15 +57,15 @@ object PersistableChanState {
   @JvmStatic
   lateinit var imageViewerImmersiveModeEnabled: BooleanSetting
   @JvmStatic
-  lateinit var imageSaverV2PersistedOptions: JsonSetting<ImageSaverV2Options>
+  lateinit var imageSaverV2PersistedOptions: GsonJsonSetting<ImageSaverV2Options>
   @JvmStatic
-  lateinit var reorderableBottomNavViewButtons: JsonSetting<ReorderableBottomNavViewButtons>
+  lateinit var reorderableBottomNavViewButtons: GsonJsonSetting<ReorderableBottomNavViewButtons>
   @JvmStatic
   lateinit var showAlbumViewsImageDetails: BooleanSetting
   @JvmStatic
   lateinit var boardSelectionGridMode: BooleanSetting
   @JvmStatic
-  lateinit var threadDownloaderOptions: JsonSetting<ThreadDownloaderOptions>
+  lateinit var threadDownloaderOptions: GsonJsonSetting<ThreadDownloaderOptions>
   @JvmStatic
   lateinit var threadDownloaderArchiveWarningShown: BooleanSetting
   @JvmStatic
@@ -116,7 +116,7 @@ object PersistableChanState {
       bookmarksLastOpenedTabPageIndex = IntegerSetting(provider, "bookmarks_last_opened_tab_page_index", -1)
       imageViewerImmersiveModeEnabled = BooleanSetting(provider, "image_viewer_immersive_mode_enabled", true)
 
-      imageSaverV2PersistedOptions = JsonSetting(
+      imageSaverV2PersistedOptions = GsonJsonSetting(
         gson,
         ImageSaverV2Options::class.java,
         provider,
@@ -124,7 +124,7 @@ object PersistableChanState {
         ImageSaverV2Options()
       )
 
-      reorderableBottomNavViewButtons = JsonSetting(
+      reorderableBottomNavViewButtons = GsonJsonSetting(
         gson,
         ReorderableBottomNavViewButtons::class.java,
         provider,
@@ -135,7 +135,7 @@ object PersistableChanState {
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
       boardSelectionGridMode = BooleanSetting(provider, "board_selection_grid_mode", false)
 
-      threadDownloaderOptions = JsonSetting(
+      threadDownloaderOptions = GsonJsonSetting(
         gson,
         ThreadDownloaderOptions::class.java,
         provider,

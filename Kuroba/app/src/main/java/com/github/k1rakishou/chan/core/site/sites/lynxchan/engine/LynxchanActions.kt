@@ -19,6 +19,7 @@ import com.squareup.moshi.Moshi
 import dagger.Lazy
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import okhttp3.HttpUrl.Companion.toHttpUrl
 
 open class LynxchanActions(
   private val replyManager: Lazy<ReplyManager>,
@@ -94,14 +95,15 @@ open class LynxchanActions(
     return SiteActions.LoginResult.LoginError("Not implemented")
   }
 
-  override fun postRequiresAuthentication(): Boolean {
-    // TODO(KurobaEx-lynxchan):
-    return true
-  }
-
   override fun postAuthenticate(): SiteAuthentication {
-    // TODO(KurobaEx-lynxchan):
-    return SiteAuthentication.fromNone()
+    val domain = lynxchanSite.domain.value
+
+    val customCaptcha = SiteAuthentication.CustomCaptcha.LynxchanCaptcha(
+      getCaptchaEndpoint = "${domain}captcha.js".toHttpUrl(),
+      verifyCaptchaEndpoint = "${domain}solveCaptcha.js".toHttpUrl()
+    )
+
+    return SiteAuthentication.customCaptcha(customCaptcha = customCaptcha)
   }
 
   override fun logout() {

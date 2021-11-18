@@ -14,90 +14,99 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site;
+package com.github.k1rakishou.chan.core.site
 
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.CAPTCHA2_NOJS;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.ENDPOINT_BASED_CAPTCHA;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.GENERIC_WEBVIEW;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.ID_BASED_CAPTCHA;
-import static com.github.k1rakishou.chan.core.site.SiteAuthentication.Type.NONE;
+import okhttp3.HttpUrl
 
-import androidx.annotation.Nullable;
+class SiteAuthentication private constructor(val type: Type) {
+  // captcha1 & captcha2
+  @JvmField
+  var siteKey: String? = null
+  @JvmField
+  var baseUrl: String? = null
 
-public class SiteAuthentication {
-    public enum Type {
-        NONE,
-        CAPTCHA2,
-        CAPTCHA2_NOJS,
-        CAPTCHA2_INVISIBLE,
-        GENERIC_WEBVIEW,
-        // Captcha that can be loaded by a specific url with an ID parameter
-        // (For now only 2ch.hk has this type of captcha)
-        ID_BASED_CAPTCHA,
-        // Captcha that can be loaded by a specific url with boardCode/threadId parameters
-        // (For now only 4chan.org has this type of captcha).
-        ENDPOINT_BASED_CAPTCHA
+  // generic webview
+  @JvmField
+  var url: String? = null
+  @JvmField
+  var retryText: String? = null
+  @JvmField
+  var successText: String? = null
+
+  @JvmField
+  var customCaptcha: CustomCaptcha? = null
+
+  enum class Type {
+    NONE,
+    CAPTCHA2,
+    CAPTCHA2_NOJS,
+    CAPTCHA2_INVISIBLE,
+    GENERIC_WEBVIEW,  // Captcha that can be loaded by a specific url with an ID parameter
+
+    // (For now only 2ch.hk has this type of captcha)
+    ID_BASED_CAPTCHA,  // Captcha that can be loaded by a specific url with boardCode/threadId parameters
+
+    // (For now only 4chan.org has this type of captcha).
+    ENDPOINT_BASED_CAPTCHA,
+
+    CUSTOM_CAPTCHA
+  }
+
+  sealed class CustomCaptcha {
+    data class LynxchanCaptcha(
+      val getCaptchaEndpoint: HttpUrl,
+      val verifyCaptchaEndpoint: HttpUrl
+    ) : CustomCaptcha()
+  }
+
+  companion object {
+    fun fromNone(): SiteAuthentication {
+      return SiteAuthentication(Type.NONE)
     }
 
-    public static SiteAuthentication fromNone() {
-        return new SiteAuthentication(NONE);
+    fun fromCaptcha2(siteKey: String?, baseUrl: String?): SiteAuthentication {
+      val a = SiteAuthentication(Type.CAPTCHA2)
+      a.siteKey = siteKey
+      a.baseUrl = baseUrl
+      return a
     }
 
-    public static SiteAuthentication fromCaptcha2(String siteKey, String baseUrl) {
-        SiteAuthentication a = new SiteAuthentication(CAPTCHA2);
-        a.siteKey = siteKey;
-        a.baseUrl = baseUrl;
-        return a;
+    fun fromCaptcha2nojs(siteKey: String?, baseUrl: String?): SiteAuthentication {
+      val a = SiteAuthentication(Type.CAPTCHA2_NOJS)
+      a.siteKey = siteKey
+      a.baseUrl = baseUrl
+      return a
     }
 
-    public static SiteAuthentication fromCaptcha2nojs(String siteKey, String baseUrl) {
-        SiteAuthentication a = new SiteAuthentication(CAPTCHA2_NOJS);
-        a.siteKey = siteKey;
-        a.baseUrl = baseUrl;
-        return a;
+    fun fromCaptcha2Invisible(siteKey: String?, baseUrl: String?): SiteAuthentication {
+      val a = SiteAuthentication(Type.CAPTCHA2_INVISIBLE)
+      a.siteKey = siteKey
+      a.baseUrl = baseUrl
+      return a
     }
 
-    public static SiteAuthentication fromCaptcha2Invisible(String siteKey, String baseUrl) {
-        SiteAuthentication a = new SiteAuthentication(CAPTCHA2_INVISIBLE);
-        a.siteKey = siteKey;
-        a.baseUrl = baseUrl;
-        return a;
+    fun fromUrl(url: String?, retryText: String?, successText: String?): SiteAuthentication {
+      val a = SiteAuthentication(Type.GENERIC_WEBVIEW)
+      a.url = url
+      a.retryText = retryText
+      a.successText = successText
+      return a
     }
 
-    public static SiteAuthentication fromUrl(String url, String retryText, String successText) {
-        SiteAuthentication a = new SiteAuthentication(GENERIC_WEBVIEW);
-        a.url = url;
-        a.retryText = retryText;
-        a.successText = successText;
-        return a;
+    fun idBased(idGetUrl: String?): SiteAuthentication {
+      val siteAuthentication = SiteAuthentication(Type.ID_BASED_CAPTCHA)
+      siteAuthentication.baseUrl = idGetUrl
+      return siteAuthentication
     }
 
-    public static SiteAuthentication idBased(String idGetUrl) {
-        SiteAuthentication siteAuthentication = new SiteAuthentication(ID_BASED_CAPTCHA);
-        siteAuthentication.baseUrl = idGetUrl;
-
-        return siteAuthentication;
+    fun endpointBased(): SiteAuthentication {
+      return SiteAuthentication(Type.ENDPOINT_BASED_CAPTCHA)
     }
 
-    public static SiteAuthentication endpointBased() {
-        SiteAuthentication siteAuthentication = new SiteAuthentication(ENDPOINT_BASED_CAPTCHA);
-        return siteAuthentication;
+    fun customCaptcha(customCaptcha: CustomCaptcha): SiteAuthentication  {
+      return SiteAuthentication(type = Type.CUSTOM_CAPTCHA)
+        .also { siteAuthentication -> siteAuthentication.customCaptcha = customCaptcha }
     }
 
-    public final Type type;
-
-    // captcha1 & captcha2
-    @Nullable public String siteKey;
-    @Nullable public String baseUrl;
-
-    // generic webview
-    @Nullable public String url;
-    @Nullable public String retryText;
-    @Nullable public String successText;
-
-    private SiteAuthentication(Type type) {
-        this.type = type;
-    }
+  }
 }

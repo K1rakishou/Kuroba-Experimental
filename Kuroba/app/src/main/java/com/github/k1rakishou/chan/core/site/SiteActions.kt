@@ -42,7 +42,6 @@ interface SiteActions {
   suspend fun post(replyChanDescriptor: ChanDescriptor, replyMode: ReplyMode): Flow<PostResult>
   suspend fun delete(deleteRequest: DeleteRequest): DeleteResult
   suspend fun <T : AbstractLoginRequest> login(loginRequest: T): LoginResult
-  fun postRequiresAuthentication(): Boolean
   fun postAuthenticate(): SiteAuthentication
   fun logout()
   fun isLoggedIn(): Boolean

@@ -104,7 +104,7 @@ public class CaptchaLayout
         this.callback = callback;
         this.siteKey = authentication.siteKey;
         this.baseUrl = authentication.baseUrl;
-        this.isInvisible = authentication.type == SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
+        this.isInvisible = authentication.getType() == SiteAuthentication.Type.CAPTCHA2_INVISIBLE;
 
         requestDisallowInterceptTouchEvent(true);
         hideKeyboard(this);

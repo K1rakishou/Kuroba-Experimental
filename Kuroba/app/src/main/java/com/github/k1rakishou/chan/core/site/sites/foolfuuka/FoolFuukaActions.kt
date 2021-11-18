@@ -38,10 +38,6 @@ class FoolFuukaActions(site: CommonSite) : CommonSite.CommonActions(site) {
     return ModularResult.error(error)
   }
 
-  override fun postRequiresAuthentication(): Boolean {
-    return false
-  }
-
   override fun postAuthenticate(): SiteAuthentication {
     return SiteAuthentication.fromNone()
   }

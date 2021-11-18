@@ -483,10 +483,6 @@ abstract class CommonSite : SiteBase() {
     
     }
     
-    override fun postRequiresAuthentication(): Boolean {
-      return false
-    }
-    
     override fun postAuthenticate(): SiteAuthentication {
       return SiteAuthentication.fromNone()
     }

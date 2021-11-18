@@ -31,6 +31,7 @@ abstract class LynxchanSite : CommonSite() {
   lateinit var _boardManager: Lazy<BoardManager>
 
   open val initialPageIndex: Int = 1
+
   abstract val domain: kotlin.Lazy<HttpUrl>
   abstract val siteName: String
   abstract val siteIcon: SiteIcon

@@ -48,7 +48,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.JsonSetting
+import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.InternalCoroutinesApi
@@ -74,7 +74,7 @@ open class Chan4 : SiteBase() {
   lateinit var lastUsedFlagPerBoard: StringSetting
   lateinit var chan4CaptchaCookie: StringSetting
   lateinit var channel4CaptchaCookie: StringSetting
-  lateinit var chan4CaptchaSettings: JsonSetting<Chan4CaptchaSettings>
+  lateinit var chan4CaptchaSettings: GsonJsonSetting<Chan4CaptchaSettings>
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -113,7 +113,7 @@ open class Chan4 : SiteBase() {
       ""
     )
 
-    chan4CaptchaSettings = JsonSetting(
+    chan4CaptchaSettings = GsonJsonSetting(
       gson,
       Chan4CaptchaSettings::class.java,
       prefs,
@@ -404,10 +404,6 @@ open class Chan4 : SiteBase() {
       }
     }
 
-    override fun postRequiresAuthentication(): Boolean {
-      return !isLoggedIn()
-    }
-
     @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
     override fun postAuthenticate(): SiteAuthentication {
       return when (captchaType.get()) {
@@ -640,7 +636,7 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
-      val rememberCaptchaCookies = site.getSettingBySettingId<JsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
+      val rememberCaptchaCookies = site.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
         ?.get()
         ?.rememberCaptchaCookies
         ?: false

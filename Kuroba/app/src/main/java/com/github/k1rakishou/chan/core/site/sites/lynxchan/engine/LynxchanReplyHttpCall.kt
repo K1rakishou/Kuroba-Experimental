@@ -102,6 +102,12 @@ class LynxchanReplyHttpCall(
         reply.postName
       }
 
+      val threadId = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        threadNo.toString()
+      } else {
+        null
+      }
+
       val lynxchanReplyData = LynxchanReplyData(
         captchaId = captcha,
         parameters = LynxchanReplyDataParameters(
@@ -112,7 +118,7 @@ class LynxchanReplyHttpCall(
           email = reply.options,
           files = files,
           boardUri = chanDescriptor.boardCode(),
-          threadId = threadNo.toString()
+          threadId = threadId
         ),
       )
 
@@ -280,7 +286,7 @@ class LynxchanReplyHttpCall(
     @Json(name = "email") val email: String,
     @Json(name = "files") val files: List<LynxchanReplyFile>?,
     @Json(name = "boardUri") val boardUri: String,
-    @Json(name = "threadId") val threadId: String,
+    @Json(name = "threadId") val threadId: String?,
   )
 
 
