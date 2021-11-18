@@ -15,6 +15,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.bookmark.StickyThread
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoObject
 import com.github.k1rakishou.model.data.bookmark.ThreadBookmarkInfoPostObject
@@ -136,8 +137,16 @@ open class LynxchanApi(
     val updatedChanBoard = board.copy(
       maxCommentChars = lynxchanCatalog.maxMessageLength,
       maxFileSize = maxAttachmentSize,
-      maxWebmSize = maxAttachmentSize
+      maxWebmSize = maxAttachmentSize,
+      pages = lynxchanCatalog.pageCount
     )
+
+    updatedChanBoard.updateChanBoardMeta<LynxchanBoardMeta> { lynxchanBoardMeta ->
+      val captchaType = LynxchanBoardMeta.CaptchaType.fromValue(lynxchanCatalog.captchaMode)
+
+      return@updateChanBoardMeta lynxchanBoardMeta?.copy(boardCaptchaType = captchaType)
+        ?: LynxchanBoardMeta(boardCaptchaType = captchaType)
+    }
 
     boardManager.createOrUpdateBoards(boards = listOf(updatedChanBoard))
   }

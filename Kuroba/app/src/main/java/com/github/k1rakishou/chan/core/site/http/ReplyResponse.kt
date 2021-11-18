@@ -23,28 +23,58 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 
 class ReplyResponse {
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var posted = false
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var errorMessage: String? = null
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var siteDescriptor: SiteDescriptor? = null
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var boardCode = ""
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var threadNo = 0L
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var postNo = 0L
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var password = ""
+
   @JvmField
+  @get:Synchronized
+  @set:Synchronized
   var probablyBanned = false
 
+  @get:Synchronized
+  @set:Synchronized
   var requireAuthentication = false
 
+  @get:Synchronized
+  @set:Synchronized
   var additionalResponseData: AdditionalResponseData? = null
 
+  @get:Synchronized
+  @set:Synchronized
   var rateLimitInfo: RateLimitInfo? = null
 
+  @get:Synchronized
   val postDescriptorOrNull: PostDescriptor?
     get() {
       if (probablyBanned || requireAuthentication || postNo <= 0L || threadNo <= 0) {

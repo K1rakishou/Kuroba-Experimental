@@ -33,6 +33,12 @@ data class ChanBoard(
   val isUnlimitedCatalog: Boolean = false
 ) {
 
+  // Do not persist on the disk!
+  @get:Synchronized
+  @set:Synchronized
+  var chanBoardMeta: ChanBoardMeta? = null
+    private set
+
   fun boardName(): String = name ?: ""
   fun siteName(): String =  boardDescriptor.siteName()
   fun boardCode(): String = boardDescriptor.boardCode
@@ -49,6 +55,11 @@ data class ChanBoard(
     }
 
     return false
+  }
+
+  @Synchronized
+  fun <T : ChanBoardMeta> updateChanBoardMeta(updater: (T?) -> T?) {
+    chanBoardMeta = updater(chanBoardMeta as T?)
   }
 
   companion object {

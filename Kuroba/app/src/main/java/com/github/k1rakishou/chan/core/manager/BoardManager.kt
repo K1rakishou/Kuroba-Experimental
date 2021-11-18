@@ -10,6 +10,7 @@ import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
+import com.github.k1rakishou.model.data.board.ChanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -659,7 +660,7 @@ class BoardManager(
       mathTags = newBoard.mathTags,
       archive = newBoard.archive,
       isUnlimitedCatalog = newBoard.isUnlimitedCatalog,
-    )
+    ).also { chanBoard -> chanBoard.updateChanBoardMeta<ChanBoardMeta> { newBoard.chanBoardMeta } }
   }
 
   enum class BoardViewMode {

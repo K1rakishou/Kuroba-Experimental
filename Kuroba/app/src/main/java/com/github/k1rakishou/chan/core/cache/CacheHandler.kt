@@ -1082,7 +1082,7 @@ class CacheHandler(
 
     private const val CURRENT_META_FILE_VERSION = 1
     private const val CACHE_FILE_META_HEADER_SIZE = 4
-    private const val MAX_TRIM_TIME_MS = 1500L
+    private const val MAX_TRIM_TIME_MS = 3000L
 
     // I don't think it will ever get this big but just in case don't forget to update it if it
     // ever gets
@@ -1096,7 +1096,7 @@ class CacheHandler(
     internal const val CHUNK_CACHE_EXTENSION = "chunk"
 
     private val MIN_CACHE_FILE_LIFE_TIME = TimeUnit.MINUTES.toMillis(1)
-    private val MIN_TRIM_INTERVAL = TimeUnit.SECONDS.toMillis(15)
+    private val MIN_TRIM_INTERVAL = TimeUnit.SECONDS.toMillis(5)
 
     private val CACHE_FILE_COMPARATOR = Comparator<CacheFile> { cacheFile1, cacheFile2 ->
       cacheFile1.createdOn.compareTo(cacheFile2.createdOn)

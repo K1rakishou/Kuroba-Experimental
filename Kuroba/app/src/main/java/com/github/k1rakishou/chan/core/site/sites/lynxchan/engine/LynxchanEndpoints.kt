@@ -75,6 +75,19 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
     return super.icon(icon, arg)
   }
 
+  override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
+    when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        // https://endchan.net/.api/newThread
+        return "${lynxchanDomain}.api/newThread".toHttpUrl()
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        // https://endchan.net/.api/replyThread
+        return "${lynxchanDomain}.api/replyThread".toHttpUrl()
+      }
+    }
+  }
+
   companion object {
     const val THUMB_ARGUMENT_KEY = "thumb"
     const val PATH_ARGUMENT_KEY = "path"

@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.utils
 
+import android.util.Base64
+import android.util.Base64OutputStream
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
 import okio.HashingSink
@@ -7,6 +9,7 @@ import okio.HashingSource
 import okio.blackholeSink
 import okio.buffer
 import okio.source
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.InputStream
 
@@ -18,6 +21,22 @@ object HashingUtil {
     }
 
     return inputStreamHash(inputFile.inputStream())
+  }
+
+  fun fileBase64(inputFile: File, flags: Int = Base64.DEFAULT): String? {
+    if (!inputFile.exists()) {
+      return null
+    }
+
+    return ByteArrayOutputStream().use { outputStream ->
+      Base64OutputStream(outputStream, flags).use { base64FilterStream ->
+        inputFile.inputStream().use { inputStream ->
+          inputStream.copyTo(base64FilterStream)
+        }
+      }
+
+      return@use outputStream.toString()
+    }
   }
 
   fun inputStreamHash(inputStream: InputStream): String {

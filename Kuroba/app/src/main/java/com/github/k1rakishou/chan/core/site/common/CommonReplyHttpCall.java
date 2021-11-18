@@ -23,11 +23,11 @@ import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.http.HttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse;
+import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.Random;
 
 import okhttp3.HttpUrl;
 import okhttp3.MultipartBody;
@@ -36,7 +36,6 @@ import okhttp3.Response;
 
 public abstract class CommonReplyHttpCall extends HttpCall {
     private static final String TAG = "CommonReplyHttpCall";
-    private static final Random RANDOM = new Random();
 
     public final ChanDescriptor replyChanDescriptor;
     public final ReplyResponse replyResponse = new ReplyResponse();
@@ -59,7 +58,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
             Request.Builder requestBuilder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) throws IOException {
-        replyResponse.password = Long.toHexString(RANDOM.nextLong());
+        replyResponse.password = StringUtils.generatePassword();
 
         MultipartBody.Builder formBuilder = new MultipartBody.Builder();
         formBuilder.setType(MultipartBody.FORM);
@@ -76,7 +75,7 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public abstract void process(Response response, String result);
 
     public abstract void addParameters(
-            MultipartBody.Builder builder,
+            @NonNull MultipartBody.Builder builder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) throws IOException;
 }
