@@ -166,6 +166,10 @@ class LynxchanReplyHttpCall(
       val status = lynxchanReplyResponse.status
       val errorMessage = lynxchanReplyResponse.dataAsString()
 
+      if (lynxchanReplyResponse.isStatusError() && errorMessage.contains("captcha", ignoreCase = true)) {
+        replyResponse.requireAuthentication = true
+      }
+
       replyResponse.errorMessage = "Failed to post. Status: ${status}, ErrorMessage: \'$errorMessage\'"
       return
     }
@@ -253,6 +257,7 @@ class LynxchanReplyHttpCall(
     val data: LynxchanReplyResponseData
   ) {
     fun isStatusOk(): Boolean = status == "ok"
+    fun isStatusError(): Boolean = status == "error"
 
     fun dataAsString(): String {
       return when (data) {
