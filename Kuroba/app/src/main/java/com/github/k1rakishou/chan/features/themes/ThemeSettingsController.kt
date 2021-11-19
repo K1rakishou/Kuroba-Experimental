@@ -25,7 +25,6 @@ import android.widget.LinearLayout
 import android.widget.TextView
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
-import androidx.core.view.doOnPreDraw
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -42,6 +41,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
@@ -128,7 +128,11 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
 
     updateCurrentThemeIndicator(true)
-    pager.doOnPreDraw { reload() }
+    mainScope.launch {
+      pager.awaitUntilGloballyLaidOut()
+
+      reload()
+    }
 
     if (AndroidUtils.isAndroid10()) {
       showIgnoreDayNightModeDialog()

@@ -48,7 +48,6 @@ open class LynxchanActions(
   }
 
   override suspend fun pages(board: ChanBoard): JsonReaderRequest.JsonReaderResponse<BoardPages>? {
-    // TODO(KurobaEx-lynxchan):
     return null
   }
 
@@ -86,12 +85,10 @@ open class LynxchanActions(
   }
 
   override suspend fun delete(deleteRequest: DeleteRequest): SiteActions.DeleteResult {
-    // TODO(KurobaEx-lynxchan):
     return SiteActions.DeleteResult.DeleteError(NotImplementedError())
   }
 
   override suspend fun <T : AbstractLoginRequest> login(loginRequest: T): SiteActions.LoginResult {
-    // TODO(KurobaEx-lynxchan):
     return SiteActions.LoginResult.LoginError("Not implemented")
   }
 
