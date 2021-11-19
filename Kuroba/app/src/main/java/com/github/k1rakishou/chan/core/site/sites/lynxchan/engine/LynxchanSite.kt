@@ -8,11 +8,12 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.SiteRequestModifier
 import com.github.k1rakishou.chan.core.site.common.CommonSite
-import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachablesCount
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.BoardDependantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.BoardDependantPostAttachablesMaxTotalSize
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.model.data.board.LynxchanBoardMeta
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.squareup.moshi.Moshi
 import dagger.Lazy
@@ -59,12 +60,18 @@ abstract class LynxchanSite : CommonSite() {
     setParser(LynxchanCommentParser())
 
     setPostingLimitationInfo(
-      SitePostingLimitationInfo(
-        postMaxAttachables = SiteDependantAttachablesCount(
-          siteManager = siteManager,
-          defaultMaxAttachablesPerPost = 4
+      SitePostingLimitation(
+        postMaxAttachables = BoardDependantAttachablesCount(
+          boardManager = boardManager,
+          defaultMaxAttachablesPerPost = 5,
+          selector = { chanBoard -> (chanBoard.chanBoardMeta as? LynxchanBoardMeta)?.maxFileCount }
         ),
-        postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(maxSize = 1)
+        postMaxAttachablesTotalSize = BoardDependantPostAttachablesMaxTotalSize(
+          boardManager = boardManager,
+          // Seems like most boards have 350MB limit but lets use more sane numbers by default
+          defaultMaxAttachablesSize = 64 * 1000 * 1000L,
+          selector = { chanBoard -> chanBoard.maxFileSize.toLong() }
+        )
       )
     )
   }

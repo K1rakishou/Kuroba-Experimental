@@ -10,7 +10,8 @@ data class LynxchanBoardMeta(
   // 0 means no captcha,
   // 1 means only for new threads,
   // 2 means for all posts on the board.
-  val boardCaptchaType: CaptchaType
+  val boardCaptchaType: CaptchaType,
+  val maxFileCount: Int
 ) : ChanBoardMeta() {
 
   enum class CaptchaType(val value: Int) {

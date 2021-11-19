@@ -26,7 +26,7 @@ import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaCommentParser
 import com.github.k1rakishou.chan.core.site.common.taimaba.TaimabaEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
@@ -93,7 +93,7 @@ class Chan420 : CommonSite() {
     setParser(TaimabaCommentParser())
 
     setPostingLimitationInfo(
-      SitePostingLimitationInfo(
+      SitePostingLimitation(
         postMaxAttachables = ConstantAttachablesCount(1),
         postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
           siteManager = siteManager

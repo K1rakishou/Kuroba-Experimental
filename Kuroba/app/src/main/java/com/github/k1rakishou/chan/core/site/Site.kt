@@ -17,7 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.SiteGlobalSearchType
@@ -183,7 +183,7 @@ interface Site {
    * */
   fun siteGlobalSearchType(): SiteGlobalSearchType = SiteGlobalSearchType.SearchNotSupported
 
-  fun postingLimitationInfo(): SitePostingLimitationInfo? = null
+  fun postingLimitationInfo(): SitePostingLimitation? = null
 
   fun redirectsToArchiveThread(): Boolean = false
 

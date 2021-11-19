@@ -22,10 +22,10 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
+import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
-import com.github.k1rakishou.chan.core.site.limitations.SiteDependantAttachablesCount
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
@@ -162,8 +162,8 @@ class Dvach : CommonSite() {
     setParser(DvachCommentParser())
 
     setPostingLimitationInfo(
-      SitePostingLimitationInfo(
-        postMaxAttachables = SiteDependantAttachablesCount(siteManager, 4),
+      SitePostingLimitation(
+        postMaxAttachables = PasscodeDependantAttachablesCount(siteManager, 4),
         postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
           siteManager = siteManager
         )

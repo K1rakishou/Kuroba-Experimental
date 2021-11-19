@@ -9,6 +9,16 @@ import java.util.regex.Pattern
 object ConversionUtils {
   private val FILE_SIZE_RAW_PATTERN = Pattern.compile("(\\d+).?(\\d+)?\\s+(\\w+)")
 
+  private val SIZES_TABLE = mapOf(
+    "GiB".uppercase(Locale.ENGLISH) to 1024 * 1024 * 1024L,
+    "MiB".uppercase(Locale.ENGLISH) to 1024 * 1024L,
+    "KiB".uppercase(Locale.ENGLISH) to 1024L,
+    "GB".uppercase(Locale.ENGLISH) to 1000 * 1000 * 1000L,
+    "MB".uppercase(Locale.ENGLISH) to 1000 * 1000L,
+    "KB".uppercase(Locale.ENGLISH) to 1000,
+    "B".uppercase(Locale.ENGLISH) to 1L,
+  )
+
   fun fileSizeRawToFileSizeInBytes(input: String): Long? {
     val matcher = FILE_SIZE_RAW_PATTERN.matcher(input)
     if (!matcher.find()) {
@@ -30,13 +40,8 @@ object ConversionUtils {
         ?.div(Math.pow(10.0, fractionString.length.toDouble()).toInt())
     } ?: 0f
 
-    val fileSizeMultiplier = when (fileSizeType) {
-      "GB" -> 1024 * 1024 * 1024
-      "MB" -> 1024 * 1024
-      "KB" -> 1024
-      "B" -> 1
-      else -> 1
-    }
+    val fileSizeMultiplier = SIZES_TABLE[fileSizeType]
+      ?: return null
 
     return ((value * fileSizeMultiplier).toFloat() + (fraction * fileSizeMultiplier.toFloat())).toLong()
   }

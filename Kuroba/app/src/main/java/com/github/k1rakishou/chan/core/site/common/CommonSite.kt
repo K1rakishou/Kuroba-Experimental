@@ -36,7 +36,7 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -74,7 +74,7 @@ abstract class CommonSite : SiteBase() {
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
   private var requestModifier: SiteRequestModifier<Site>? = null
-  private var postingLimitationInfo: SitePostingLimitationInfo? = null
+  private var postingLimitationInfo: SitePostingLimitation? = null
   
   @JvmField
   var postParser: PostParser? = null
@@ -122,7 +122,7 @@ abstract class CommonSite : SiteBase() {
       requestModifier = defaultRequestModifier
     }
     if (postingLimitationInfo == null) {
-      postingLimitationInfo = SitePostingLimitationInfo(
+      postingLimitationInfo = SitePostingLimitation(
         postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
         postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
       )
@@ -184,7 +184,7 @@ abstract class CommonSite : SiteBase() {
     this.requestModifier = requestModifier
   }
 
-  fun setPostingLimitationInfo(postingLimitationInfo: SitePostingLimitationInfo) {
+  fun setPostingLimitationInfo(postingLimitationInfo: SitePostingLimitation) {
     this.postingLimitationInfo = postingLimitationInfo
   }
 
@@ -247,7 +247,7 @@ abstract class CommonSite : SiteBase() {
     return api!!
   }
 
-  override fun postingLimitationInfo(): SitePostingLimitationInfo {
+  override fun postingLimitationInfo(): SitePostingLimitation {
     return postingLimitationInfo!!
   }
 

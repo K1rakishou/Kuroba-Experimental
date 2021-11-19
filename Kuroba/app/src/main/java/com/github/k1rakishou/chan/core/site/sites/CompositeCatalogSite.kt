@@ -17,7 +17,7 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.SiteUrlHandler
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
-import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitationInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -250,7 +250,7 @@ class CompositeCatalogSite : Site {
     return ChunkDownloaderSiteProperties(false, false)
   }
 
-  override fun postingLimitationInfo(): SitePostingLimitationInfo? = null
+  override fun postingLimitationInfo(): SitePostingLimitation? = null
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? = null
 

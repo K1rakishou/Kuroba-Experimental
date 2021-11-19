@@ -143,9 +143,11 @@ open class LynxchanApi(
 
     updatedChanBoard.updateChanBoardMeta<LynxchanBoardMeta> { lynxchanBoardMeta ->
       val captchaType = LynxchanBoardMeta.CaptchaType.fromValue(lynxchanCatalog.captchaMode)
+      val maxFileCount = lynxchanCatalog.maxFileCount
 
-      return@updateChanBoardMeta lynxchanBoardMeta?.copy(boardCaptchaType = captchaType)
-        ?: LynxchanBoardMeta(boardCaptchaType = captchaType)
+      return@updateChanBoardMeta lynxchanBoardMeta
+        ?.copy(boardCaptchaType = captchaType, maxFileCount = maxFileCount)
+        ?: LynxchanBoardMeta(boardCaptchaType = captchaType, maxFileCount = maxFileCount)
     }
 
     boardManager.createOrUpdateBoards(boards = listOf(updatedChanBoard))

@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.manager
 
 import com.github.k1rakishou.chan.core.site.SiteActions
-import com.github.k1rakishou.chan.core.site.limitations.PostAttachableLimitationInfo
-import com.github.k1rakishou.chan.core.site.limitations.PostAttachlesMaxTotalSizeInfo
+import com.github.k1rakishou.chan.core.site.limitations.PostAttachableLimitation
+import com.github.k1rakishou.chan.core.site.limitations.PostAttachlesMaxTotalSize
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -50,7 +50,7 @@ class PostingLimitationsInfoManager(
       return null
     }
 
-    val params = PostAttachableLimitationInfo.Params(boardDescriptor.siteDescriptor)
+    val params = PostAttachableLimitation.Params(boardDescriptor)
     return site.postingLimitationInfo()
       ?.postMaxAttachables
       ?.getMaxAllowedAttachablesPerPost(params)
@@ -62,7 +62,7 @@ class PostingLimitationsInfoManager(
       return null
     }
 
-    val params = PostAttachlesMaxTotalSizeInfo.Params(boardDescriptor)
+    val params = PostAttachlesMaxTotalSize.Params(boardDescriptor)
     return site.postingLimitationInfo()
       ?.postMaxAttachablesTotalSize
       ?.getMaxTotalAttachablesSize(params)
