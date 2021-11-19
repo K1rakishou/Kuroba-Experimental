@@ -165,11 +165,6 @@ class ReplyPresenter @Inject constructor(
     val thisBoard = getBoardByCurrentDescriptorOrNull()
     if (thisBoard != null) {
       callback.loadDraftIntoViews(chanDescriptor)
-
-      if (thisBoard.maxCommentChars > 0) {
-        callback.updateCommentCount(0, thisBoard.maxCommentChars, false)
-      }
-
       callback.showCommentCounter(thisBoard.maxCommentChars > 0)
     }
 

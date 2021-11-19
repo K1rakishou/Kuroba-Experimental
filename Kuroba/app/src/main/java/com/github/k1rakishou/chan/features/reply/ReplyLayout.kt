@@ -1012,6 +1012,7 @@ class ReplyLayout @JvmOverloads constructor(
         comment.setSelection(reply.comment.length)
       }
 
+      presenter.updateCommentCounter(comment.text)
       blockSelectionChange = false
     }
   }
