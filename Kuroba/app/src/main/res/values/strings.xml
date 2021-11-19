@@ -1443,6 +1443,8 @@ Actual error: \'%1$s\'</string>
     <string name="site_domain_setting">Change site domain</string>
     <string name="site_domain_setting_description">If a site supports multiple domains you can enter any of them which will be used from then on. Requires application restart for the changes to take effect.</string>
 
+    <string name="lynxchan_block_bypass_message">Lynxchan block bypass is required in order to post. This is usually required when Tor/VPN/proxy detected. Block bypass is not supported by the app because you need to solve a complex problem which requires a lot of time when solved on PC (~1 hour). You can do that on PC and then use the resulting cookies on the phone for posting.</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

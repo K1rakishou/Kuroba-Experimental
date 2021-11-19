@@ -54,8 +54,9 @@ class SiteAuthentication private constructor(val type: Type) {
 
   sealed class CustomCaptcha {
     data class LynxchanCaptcha(
-      val getCaptchaEndpoint: HttpUrl,
-      val verifyCaptchaEndpoint: HttpUrl
+      val captchaEndpoint: HttpUrl,
+      val verifyCaptchaEndpoint: HttpUrl,
+      val bypassEndpoint: HttpUrl,
     ) : CustomCaptcha()
   }
 

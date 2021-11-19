@@ -782,13 +782,13 @@ class ReplyPresenter @Inject constructor(
         getString(R.string.reply_error_message, additionalErrorMessage)
       }
       replyResponse.errorMessage != null -> {
-        getString(R.string.reply_error_message, replyResponse.errorMessage)
+        getString(R.string.reply_error_message, replyResponse.errorMessageShort)
       }
       replyResponse.requireAuthentication -> {
         val errorMessage = if (TextUtils.isEmpty(replyResponse.errorMessage)) {
           getString(R.string.reply_error_authentication_required)
         } else {
-          replyResponse.errorMessage
+          replyResponse.errorMessageShort
         }
 
         getString(R.string.reply_error_message, errorMessage)

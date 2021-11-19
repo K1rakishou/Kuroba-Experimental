@@ -96,8 +96,9 @@ open class LynxchanActions(
     val domain = lynxchanSite.domain.value
 
     val customCaptcha = SiteAuthentication.CustomCaptcha.LynxchanCaptcha(
-      getCaptchaEndpoint = "${domain}captcha.js".toHttpUrl(),
-      verifyCaptchaEndpoint = "${domain}solveCaptcha.js".toHttpUrl()
+      captchaEndpoint = "${domain}captcha.js".toHttpUrl(),
+      verifyCaptchaEndpoint = "${domain}solveCaptcha.js".toHttpUrl(),
+      bypassEndpoint = "${domain}blockBypass.js?json=1".toHttpUrl()
     )
 
     return SiteAuthentication.customCaptcha(customCaptcha = customCaptcha)

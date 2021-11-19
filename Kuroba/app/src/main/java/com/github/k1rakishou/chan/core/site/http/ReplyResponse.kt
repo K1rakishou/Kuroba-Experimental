@@ -74,6 +74,9 @@ class ReplyResponse {
   @set:Synchronized
   var rateLimitInfo: RateLimitInfo? = null
 
+  val errorMessageShort: String?
+    get() = errorMessage?.take(200)
+
   @get:Synchronized
   val postDescriptorOrNull: PostDescriptor?
     get() {
@@ -144,7 +147,7 @@ class ReplyResponse {
   override fun toString(): String {
     return "ReplyResponse{" +
       "posted=" + posted +
-      ", errorMessage='" + errorMessage + '\'' +
+      ", errorMessage='" + errorMessageShort + '\'' +
       ", siteDescriptor=" + siteDescriptor +
       ", boardCode='" + boardCode + '\'' +
       ", threadNo=" + threadNo +

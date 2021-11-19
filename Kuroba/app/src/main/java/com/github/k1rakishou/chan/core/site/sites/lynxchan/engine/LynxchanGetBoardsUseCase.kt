@@ -19,6 +19,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
+import java.util.*
 
 class LynxchanGetBoardsUseCase(
   private val appConstants: AppConstants,
@@ -64,13 +65,30 @@ class LynxchanGetBoardsUseCase(
       return SiteBoards(siteDescriptor = siteDescriptor, boards = emptyList())
     }
 
-    totalLynxchanBoards += lynxchanBoardsPage.boards
+    if (!lynxchanBoardsPage.isStatusOk) {
+      throw GetBoardsError("Response status is not ok. Status=\'${lynxchanBoardsPage.status}\'")
+    }
+
+    val boards = lynxchanBoardsPage.boards
+    val pageCount = lynxchanBoardsPage.pageCount
+
+    if (boards == null) {
+      Logger.d(TAG, "execute() \'boards\' not found")
+      throw GetBoardsError("\'boards\' not found in server response")
+    }
+
+    if (pageCount == null) {
+      Logger.d(TAG, "execute() \'pageCount\' not found")
+      throw GetBoardsError("\'pageCount\' not found in server response")
+    }
+
+    totalLynxchanBoards += boards
     Logger.d(TAG, "execute() site ${siteDescriptor.siteName} has ${lynxchanBoardsPage.pageCount} board pages")
 
-    if (lynxchanBoardsPage.pageCount > 1) {
+    if (pageCount > 1) {
       val restOfBoards = loadRestOfBoards(
         boardsEndpoint = boardsEndpoint,
-        pageCount = lynxchanBoardsPage.pageCount
+        pageCount = pageCount
       )
 
       totalLynxchanBoards.addAll(restOfBoards)
@@ -87,7 +105,7 @@ class LynxchanGetBoardsUseCase(
       return@map ChanBoard(
         boardDescriptor = boardDescriptor,
         name = lynxchanBoardsData.boardName,
-        description = lynxchanBoardsData.boardDescription,
+        description = lynxchanBoardsData.boardDescription ?: "",
         isUnlimitedCatalog = true
       )
     }
@@ -137,23 +155,47 @@ class LynxchanGetBoardsUseCase(
       .build()
   }
 
-
   data class Params(
     val siteDescriptor: SiteDescriptor,
     val getBoardsEndpoint: HttpUrl
   )
 
+  class GetBoardsError(message: String) : Exception(message)
+
   @JsonClass(generateAdapter = true)
   data class LynxchanBoardsPage(
-    @Json(name = "pageCount") val pageCount: Int,
-    @Json(name = "boards") val boards: List<LynxchanBoardsData>
-  )
+    @Json(name = "status") val status: String?,
+    @Json(name = "data") val data: LynxchanBoardsPage?,
+    @Json(name = "pageCount") val _pageCount: Int?,
+    @Json(name = "boards") val _boards: List<LynxchanBoardsData>?
+  ) {
+    val isStatusOk: Boolean
+      get() = status == null || status.equals("ok", ignoreCase = true)
+
+    val pageCount: Int?
+      get() {
+        if (data != null) {
+          return data.pageCount
+        }
+
+        return _pageCount
+      }
+
+    val boards: List<LynxchanBoardsData>?
+      get() {
+        if (data != null) {
+          return data.boards
+        }
+
+        return _boards
+      }
+  }
 
   @JsonClass(generateAdapter = true)
   data class LynxchanBoardsData(
     @Json(name = "boardUri") val boardUri: String,
     @Json(name = "boardName") val boardName: String,
-    @Json(name = "boardDescription") val boardDescription: String
+    @Json(name = "boardDescription") val boardDescription: String?
   )
 
   companion object {

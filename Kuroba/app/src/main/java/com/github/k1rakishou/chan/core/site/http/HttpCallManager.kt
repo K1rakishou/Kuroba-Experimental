@@ -103,7 +103,7 @@ class HttpCallManager @Inject constructor(
         return@withContext HttpCall.HttpCallResult.Fail(httpCall, error)
       }
 
-      Logger.d(TAG, "Request (${httpCall.javaClass.simpleName}) execution success, took $duration")
+      Logger.d(TAG, "Request (${httpCall.javaClass.simpleName}, ${request.url}) execution success, took $duration")
 
       val body = response.body
         ?: return@withContext HttpCall.HttpCallResult.Fail(

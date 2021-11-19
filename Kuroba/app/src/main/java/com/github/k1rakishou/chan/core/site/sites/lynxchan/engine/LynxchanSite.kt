@@ -38,6 +38,12 @@ abstract class LynxchanSite : CommonSite() {
   abstract val siteIcon: SiteIcon
   abstract val urlHandler: kotlin.Lazy<BaseLynxchanUrlHandler>
 
+  // When false, json payload will be used.
+  // When true, form data parameters will be used.
+  abstract val postingViaFormData: Boolean
+
+  abstract val supportsPosting: Boolean
+
   override fun initialize() {
     Chan.getComponent()
       .inject(this)
@@ -52,7 +58,7 @@ abstract class LynxchanSite : CommonSite() {
     setBoardsType(Site.BoardsType.DYNAMIC)
     setCatalogType(Site.CatalogType.DYNAMIC)
     setLazyResolvable(urlHandler)
-    setConfig(LynxchanConfig())
+    setConfig(LynxchanConfig(supportsPosting))
     setEndpoints(LynxchanEndpoints(this))
     setActions(LynxchanActions(replyManager, moshi, httpCallManager, _lynxchanGetBoardsUseCase, this))
     setRequestModifier(LynxchanRequestModifier(this, appConstants) as SiteRequestModifier<Site>)

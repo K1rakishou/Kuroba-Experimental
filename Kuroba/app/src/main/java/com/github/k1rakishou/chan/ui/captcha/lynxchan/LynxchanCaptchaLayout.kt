@@ -9,6 +9,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -47,6 +48,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayout
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -149,10 +151,15 @@ class LynxchanCaptchaLayout(
   }
 
   @Composable
-  private fun BuildCaptchaWindow() {
+  private fun ColumnScope.BuildCaptchaWindow() {
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val verifyingCaptchaState = remember { mutableStateOf(false) }
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+
+    if (captchaInfo?.needBlockBypass == true) {
+      BuildBlockBypassRequired()
+      return
+    }
 
     BuildCaptchaImageOrText(captchaInfoAsync)
     Spacer(modifier = Modifier.height(8.dp))
@@ -219,6 +226,34 @@ class LynxchanCaptchaLayout(
   }
 
   @Composable
+  private fun ColumnScope.BuildBlockBypassRequired() {
+    KurobaComposeText(
+      modifier = Modifier
+        .wrapContentHeight()
+        .fillMaxWidth(),
+      text = stringResource(id = R.string.lynxchan_block_bypass_message)
+    )
+
+    Row(
+      horizontalArrangement = Arrangement.End,
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+    ) {
+      Spacer(modifier = Modifier.weight(1f))
+
+      KurobaComposeTextBarButton(
+        onClick = { viewModel.requestCaptcha(lynxchanCaptcha, chanDescriptor) },
+        text = stringResource(id = R.string.close)
+      )
+
+      Spacer(modifier = Modifier.width(8.dp))
+    }
+
+    Spacer(modifier = Modifier.height(8.dp))
+  }
+
+  @Composable
   private fun BuildCaptchaImageOrText(
     captchaInfoAsync: AsyncData<LynxchanCaptchaLayoutViewModel.LynxchanCaptchaFull>
   ) {
@@ -249,7 +284,7 @@ class LynxchanCaptchaLayout(
         }
 
         if (captchaInfo != null) {
-          val imgBitmapPainter = captchaInfo.captchaImage
+          val imgBitmapPainter = captchaInfo.captchaImage!!
 
           val scale = Math.min(
             size.width.toFloat() / imgBitmapPainter.intrinsicSize.width,
@@ -283,9 +318,8 @@ class LynxchanCaptchaLayout(
       return
     }
 
-    val captchaId = captchaInfo.lynxchanCaptchaJson.captchaId
+    val captchaId = captchaInfo.lynxchanCaptchaJson?.captchaId
       ?: return
-
     scope.launch {
       verifyingCaptchaState.value = true
 

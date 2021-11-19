@@ -833,6 +833,22 @@ fun View.updateHeight(newHeight: Int) {
   layoutParams = updatedLayoutParams
 }
 
+fun String.removeAllAfterFirstInclusive(
+  delimiter: Char,
+  ignoreCase: Boolean = false
+): String {
+  var index = indexOfFirst { ch -> ch.equals(other = delimiter, ignoreCase = ignoreCase) }
+  if (index < 0) {
+    return this
+  }
+
+  if (index <= 0) {
+    return ""
+  }
+
+  return substring(startIndex = 0, endIndex = index)
+}
+
 fun String.ellipsizeMiddle(maxLength: Int): String {
   val minStringLength = 5
 

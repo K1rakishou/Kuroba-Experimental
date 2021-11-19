@@ -13,18 +13,22 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.removeAllAfterFirstInclusive
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import okhttp3.Headers
+import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
+import org.joda.time.Period
 import org.joda.time.format.DateTimeFormat
 import javax.inject.Inject
 
@@ -34,9 +38,11 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
   lateinit var proxiedOkHttpClient: RealProxiedOkHttpClient
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var moshi: Moshi
 
   var captchaInfoToShow = mutableStateOf<AsyncData<LynxchanCaptchaFull>>(AsyncData.NotInitialized)
-  private var activeJob: Job? = null
+  private var activeRequestCaptchaJob: Job? = null
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -51,8 +57,8 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
   }
 
   fun cleanup() {
-    activeJob?.cancel()
-    activeJob = null
+    activeRequestCaptchaJob?.cancel()
+    activeRequestCaptchaJob = null
   }
 
   fun requestCaptcha(
@@ -64,15 +70,24 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
       return
     }
 
-    activeJob?.cancel()
-    activeJob = mainScope.launch {
-      val lynxchanCaptchaResult = ModularResult.Try {
-        requestCaptchaInternal(lynxchanCaptcha, chanDescriptor)
-      }
+    activeRequestCaptchaJob?.cancel()
+    activeRequestCaptchaJob = mainScope.launch {
+      try {
+        val needBlockBypass = needBlockBypass(lynxchanCaptcha, chanDescriptor)
+        if (needBlockBypass) {
+          val lynxchanCaptchaFull = LynxchanCaptchaFull(
+            needBlockBypass = true,
+            lynxchanCaptchaJson = null,
+            captchaImage = null
+          )
 
-      captchaInfoToShow.value = when (lynxchanCaptchaResult) {
-        is ModularResult.Error -> AsyncData.Error(lynxchanCaptchaResult.error)
-        is ModularResult.Value -> AsyncData.Data(lynxchanCaptchaResult.value)
+          captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
+          return@launch
+        }
+
+        captchaInfoToShow.value = AsyncData.Data(requestCaptchaInternal(lynxchanCaptcha, chanDescriptor))
+      } catch (error: Throwable) {
+        captchaInfoToShow.value = AsyncData.Error(error)
       }
     }
   }
@@ -86,7 +101,7 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     return ModularResult.Try {
       val verifyCaptchaEndpoint = lynxchanCaptcha.verifyCaptchaEndpoint
 
-      val captchaId = captchaInfo.lynxchanCaptchaJson.captchaId
+      val captchaId = captchaInfo.lynxchanCaptchaJson?.captchaId
       if (captchaId.isNullOrEmpty()) {
         throw LynxchanCaptchaError("No captchaId provided")
       }
@@ -126,11 +141,55 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
+  private suspend fun needBlockBypass(
+    lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
+    chanDescriptor: ChanDescriptor
+  ): Boolean {
+    try {
+      val needBlockBypass = kotlin.run {
+        val requestBuilder = Request.Builder()
+          .url(lynxchanCaptcha.bypassEndpoint)
+          .get()
+
+        val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+        if (site != null) {
+          site.requestModifier().modifyCaptchaGetRequest(site = site, requestBuilder = requestBuilder)
+        }
+
+        val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())
+        if (!response.isSuccessful) {
+          return@run false
+        }
+
+        val type = response.body?.contentType()?.type
+        val subtype = response.body?.contentType()?.subtype
+
+        // Endchan doesn't support this thing with json mode
+        if (type != JSON_CONTENT_TYPE.type || subtype != JSON_CONTENT_TYPE.subtype) {
+          return@run false
+        }
+
+        val body = response.body?.string()
+          ?: throw EmptyBodyResponseException()
+
+        val blockBypassWithStatusJson = moshi.adapter(BlockBypassWithStatusJson::class.java).fromJson(body)
+          ?: return@run false
+
+        return@run blockBypassWithStatusJson.data.valid
+      }
+
+      return needBlockBypass
+    } catch (error: Throwable) {
+      Logger.e(TAG, "needBlockBypass() error", error)
+      return false
+    }
+  }
+
   private suspend fun requestCaptchaInternal(
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
     chanDescriptor: ChanDescriptor
   ): LynxchanCaptchaFull {
-    val captchaEndpoint = lynxchanCaptcha.getCaptchaEndpoint
+    val captchaEndpoint = lynxchanCaptcha.captchaEndpoint
 
     val requestBuilder = Request.Builder()
       .url(captchaEndpoint)
@@ -158,6 +217,7 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     )
 
     return LynxchanCaptchaFull(
+      needBlockBypass = false,
       lynxchanCaptchaJson = lynxchanCaptchaJson,
       captchaImage = imgImageBitmap
     )
@@ -170,30 +230,83 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
 
     Logger.d(TAG, "extractLynxchanCaptcha() captchaData=$captchaData")
 
-    val captchaId = captchaData
-      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaid=") }
+    val captchaDataSplit = captchaData
+      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaid=", ignoreCase = true) }
+      ?.split(';')
+
+    if (captchaDataSplit == null || captchaDataSplit.isNullOrEmpty()) {
+      Logger.d(TAG, "extractLynxchanCaptcha() captchaDataSplit is null")
+      return null
+    }
+
+    val containsMaxAge = captchaDataSplit
+      .any { splitParam -> splitParam.contains("Max-Age=", ignoreCase = true) }
+
+    if (containsMaxAge) {
+      return extractLynxchanCaptchaWithMaxAge(captchaDataSplit)
+    }
+
+    return extractLynxchanCaptchaWithCaptchaExpiration(captchaData)
+  }
+
+  private fun extractLynxchanCaptchaWithMaxAge(captchaDataSplit: List<String>): LynxchanCaptchaJson? {
+    val captchaId = captchaDataSplit
+      .firstOrNull { splitData -> splitData.startsWith("captchaid=", ignoreCase = true) }
       ?.removePrefix("captchaid=")
-      ?.removeSuffix("; path=/")
 
     if (captchaId.isNullOrEmpty()) {
-      Logger.d(TAG, "extractLynxchanCaptcha() captchaId not found")
+      Logger.d(TAG, "extractLynxchanCaptchaWithMaxAge() captchaId not found")
+      return null
+    }
+
+    val maxAge = captchaDataSplit
+      .firstOrNull { splitData -> splitData.startsWith("Max-Age=", ignoreCase = true) }
+
+    if (maxAge == null || maxAge.isNullOrEmpty()) {
+      Logger.d(TAG, "extractLynxchanCaptchaWithMaxAge() maxAge not found")
+      return null
+    }
+
+    val cookieLifetimeSeconds = maxAge.split('=').getOrNull(1)?.toIntOrNull()
+    if (cookieLifetimeSeconds == null) {
+      Logger.d(TAG, "extractLynxchanCaptchaWithMaxAge() failed to extract cookieLifetimeSeconds, maxAge=\'maxAge\'")
+      return null
+    }
+
+    val expiresAt = DateTime().plus(Period.seconds(cookieLifetimeSeconds))
+    val captchaExpirationString = LynxchanCaptchaJson.LYNXCHAN_CAPTCHA_DATE_PARSER.print(expiresAt)
+
+    return LynxchanCaptchaJson(
+      _captchaId = captchaId,
+      _expirationDate = captchaExpirationString
+    )
+  }
+
+  private fun extractLynxchanCaptchaWithCaptchaExpiration(captchaData: List<String>): LynxchanCaptchaJson? {
+    val captchaId = captchaData
+      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaid=", ignoreCase = true) }
+      ?.removePrefix("captchaid=")
+      ?.removeAllAfterFirstInclusive(delimiter = ';')
+
+    if (captchaId.isNullOrEmpty()) {
+      Logger.d(TAG, "extractLynxchanCaptchaWithCaptchaExpiration() captchaId not found")
       return null
     }
 
     val captchaExpirationString = captchaData
-      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaexpiration=") }
+      .firstOrNull { captchaCookie -> captchaCookie.startsWith("captchaexpiration=", ignoreCase = true) }
       ?.removePrefix("captchaexpiration=")
-      ?.removeSuffix("; path=/")
+      ?.removeAllAfterFirstInclusive(delimiter = ';')
 
     if (captchaExpirationString.isNullOrEmpty()) {
-      Logger.d(TAG, "extractLynxchanCaptcha() captchaExpirationString not found")
+      Logger.d(TAG, "extractLynxchanCaptchaWithCaptchaExpiration() captchaExpirationString not found")
       return null
     }
 
     try {
       LynxchanCaptchaJson.LYNXCHAN_CAPTCHA_DATE_PARSER.parseDateTime(captchaExpirationString)
     } catch (error: Throwable) {
-      Logger.e(TAG, "extractLynxchanCaptcha() parseDateTime(\'$captchaExpirationString\') error", error)
+      Logger.e(TAG, "extractLynxchanCaptchaWithCaptchaExpiration() parseDateTime(\'$captchaExpirationString\') error", error)
       return null
     }
 
@@ -206,11 +319,25 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
   class LynxchanCaptchaError(message: String) : Error(message)
 
   class LynxchanCaptchaFull(
-    val lynxchanCaptchaJson: LynxchanCaptchaJson,
-    val captchaImage: BitmapPainter
+    val needBlockBypass: Boolean,
+    val lynxchanCaptchaJson: LynxchanCaptchaJson?,
+    val captchaImage: BitmapPainter?
   ) {
     var currentInputValue = mutableStateOf<String>("")
   }
+
+  // {"status":"ok","data":{"valid":false,"mode":1}}
+  @JsonClass(generateAdapter = true)
+  data class BlockBypassWithStatusJson(
+    @Json(name = "status") val status: String,
+    @Json(name = "data") val data: BlockBypassJson
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class BlockBypassJson(
+    @Json(name = "valid") val valid: Boolean,
+    @Json(name = "mode") val mode: Int
+  )
 
   @JsonClass(generateAdapter = true)
   data class LynxchanCaptchaJson(
@@ -249,8 +376,9 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
 
   companion object {
     private const val TAG = "LynxchanCaptchaLayoutViewModel"
-
     private const val CAPTCHA_SOLVED_MSG = "<title>Captcha solved.</title>"
+
+    private val JSON_CONTENT_TYPE = "application/json".toMediaType()
   }
 
 }

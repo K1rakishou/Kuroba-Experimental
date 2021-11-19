@@ -1,17 +1,21 @@
 package com.github.k1rakishou.chan.core.site.sites.lynxchan.engine
 
+import android.text.TextUtils
 import android.util.Base64
 import android.webkit.MimeTypeMap
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
@@ -20,11 +24,14 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import dagger.Lazy
 import okhttp3.MediaType.Companion.toMediaType
+import okhttp3.MultipartBody
 import okhttp3.Request
 import okhttp3.RequestBody
+import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import java.io.IOException
 import java.util.*
+import java.util.regex.Pattern
 
 class LynxchanReplyHttpCall(
   site: LynxchanSite,
@@ -33,6 +40,9 @@ class LynxchanReplyHttpCall(
   private val replyManager: Lazy<ReplyManager>,
   private val moshi: Lazy<Moshi>
 ) : HttpCall(site) {
+  private val lynxchanSite: LynxchanSite
+    get() = site as LynxchanSite
+
   val replyResponse = ReplyResponse()
 
   override fun setup(
@@ -67,73 +77,183 @@ class LynxchanReplyHttpCall(
         null
       }
 
-      val files: MutableList<LynxchanReplyFile>? = if (reply.hasFiles()) {
-        val files = mutableListOf<LynxchanReplyFile>()
+      if (lynxchanSite.postingViaFormData) {
+        val formBuilder = postWithFormDataPayload(
+          reply = reply,
+          chanDescriptor = chanDescriptor,
+          threadNo = threadNo,
+          captcha = captcha,
+          subject = subject,
+          progressListener = progressListener
+        )
 
-        reply.iterateFilesOrThrowIfEmpty { _, replyFile ->
-          val replyFileMetaResult = replyFile.getReplyFileMeta()
-          if (replyFileMetaResult is ModularResult.Error<*>) {
-            throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
-          }
+        requestBuilder
+          .url(site.endpoints().reply(replyChanDescriptor))
+          .post(formBuilder.build())
+      } else {
+        val requestBody = postWithJsonPayload(
+          reply = reply,
+          chanDescriptor = chanDescriptor,
+          threadNo = threadNo,
+          captcha = captcha,
+          subject = subject
+        )
 
-          val replyFileMeta = (replyFileMetaResult as ModularResult.Value).value
+        requestBuilder
+          .url(site.endpoints().reply(replyChanDescriptor))
+          .post(requestBody)
+      }
+    }
+  }
 
-          val content = fileToLynxchanReplyFileContent(replyFile, replyFileMeta)
-          if (content == null) {
-            throw IOException("Failed to convert reply file into base64 string")
-          }
+  private fun postWithFormDataPayload(
+    reply: Reply,
+    chanDescriptor: ChanDescriptor,
+    threadNo: Long,
+    captcha: String?,
+    subject: String?,
+    progressListener: ProgressRequestBody.ProgressRequestListener?
+  ): MultipartBody.Builder {
+    val formBuilder = MultipartBody.Builder()
+    formBuilder.setType(MultipartBody.FORM)
 
-          files += LynxchanReplyFile(
-            name = replyFileMeta.fileName,
-            spoiler = replyFileMeta.spoiler,
-            content = content
-          )
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      formBuilder.addFormDataPart("threadId", threadNo.toString())
+    }
+
+    formBuilder.addFormDataPart("boardUri", chanDescriptor.boardCode())
+    formBuilder.addFormDataPart("message", reply.comment)
+    formBuilder.addFormDataPart("name", reply.postName)
+    formBuilder.addFormDataPart("email", reply.options)
+    formBuilder.addFormDataPart("password", reply.password)
+
+    if (captcha.isNotNullNorEmpty()) {
+      formBuilder.addFormDataPart("captchaId", captcha)
+    }
+
+    if (chanDescriptor is ChanDescriptor.CatalogDescriptor && !TextUtils.isEmpty(subject)) {
+      formBuilder.addFormDataPart("subject", subject!!)
+    }
+
+    if (reply.hasFiles()) {
+      val filesCount = reply.filesCount()
+
+      reply.iterateFilesOrThrowIfEmpty { fileIndex, replyFile ->
+        val replyFileMetaResult = replyFile.getReplyFileMeta()
+        if (replyFileMetaResult is ModularResult.Error<*>) {
+          throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
         }
 
-        files
-      } else {
-        null
+        val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
+
+        attachFile(
+          formBuilder = formBuilder,
+          fileIndex = fileIndex + 1,
+          totalFiles = filesCount,
+          progressListener = progressListener,
+          replyFile = replyFile,
+          replyFileMeta = replyFileMetaInfo
+        )
       }
-
-      val postName = if (reply.postName.isNullOrEmpty()) {
-        null
-      } else {
-        reply.postName
-      }
-
-      val threadId = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
-        threadNo.toString()
-      } else {
-        null
-      }
-
-      val lynxchanReplyData = LynxchanReplyData(
-        captchaId = captcha,
-        parameters = LynxchanReplyDataParameters(
-          name = postName,
-          subject = subject,
-          password = StringUtils.generatePassword(),
-          message = reply.comment,
-          email = reply.options,
-          files = files,
-          boardUri = chanDescriptor.boardCode(),
-          threadId = threadId
-        ),
-      )
-
-      val content = moshi.get()
-        .adapter(LynxchanReplyData::class.java)
-        .toJson(lynxchanReplyData)
-
-      val requestBody = RequestBody.create(
-        contentType = "application/json".toMediaType(),
-        content = content
-      )
-
-      requestBuilder
-        .url(site.endpoints().reply(replyChanDescriptor))
-        .post(requestBody)
     }
+
+    return formBuilder
+  }
+
+  private fun attachFile(
+    formBuilder: MultipartBody.Builder,
+    fileIndex: Int,
+    totalFiles: Int,
+    progressListener: ProgressRequestBody.ProgressRequestListener?,
+    replyFile: ReplyFile,
+    replyFileMeta: ReplyFileMeta
+  ) {
+    val mediaType = "application/octet-stream".toMediaType()
+    val fileOnDisk = replyFile.fileOnDisk
+
+    val requestBody = if (progressListener == null) {
+      replyFile.fileOnDisk.asRequestBody(mediaType)
+    } else {
+      ProgressRequestBody(
+        fileIndex,
+        totalFiles,
+        fileOnDisk.asRequestBody(mediaType),
+        progressListener
+      )
+    }
+
+    formBuilder.addFormDataPart("files", replyFileMeta.fileName, requestBody)
+  }
+
+  private fun postWithJsonPayload(
+    reply: Reply,
+    chanDescriptor: ChanDescriptor,
+    threadNo: Long,
+    captcha: String?,
+    subject: String?
+  ): RequestBody {
+    val files: MutableList<LynxchanReplyFile>? = if (reply.hasFiles()) {
+      val files = mutableListOf<LynxchanReplyFile>()
+
+      reply.iterateFilesOrThrowIfEmpty { _, replyFile ->
+        val replyFileMetaResult = replyFile.getReplyFileMeta()
+        if (replyFileMetaResult is ModularResult.Error<*>) {
+          throw IOException((replyFileMetaResult as ModularResult.Error<ReplyFileMeta>).error)
+        }
+
+        val replyFileMeta = (replyFileMetaResult as ModularResult.Value).value
+
+        val content = fileToLynxchanReplyFileContent(replyFile, replyFileMeta)
+        if (content == null) {
+          throw IOException("Failed to convert reply file into base64 string")
+        }
+
+        files += LynxchanReplyFile(
+          name = replyFileMeta.fileName,
+          spoiler = replyFileMeta.spoiler,
+          content = content
+        )
+      }
+
+      files
+    } else {
+      null
+    }
+
+    val postName = if (reply.postName.isNullOrEmpty()) {
+      null
+    } else {
+      reply.postName
+    }
+
+    val threadId = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      threadNo.toString()
+    } else {
+      null
+    }
+
+    val lynxchanReplyData = LynxchanReplyData(
+      captchaId = captcha,
+      parameters = LynxchanReplyDataParameters(
+        name = postName,
+        subject = subject,
+        password = StringUtils.generatePassword(),
+        message = reply.comment,
+        email = reply.options,
+        files = files,
+        boardUri = chanDescriptor.boardCode(),
+        threadId = threadId
+      ),
+    )
+
+    val content = moshi.get()
+      .adapter(LynxchanReplyData::class.java)
+      .toJson(lynxchanReplyData)
+
+    return RequestBody.create(
+      contentType = "application/json".toMediaType(),
+      content = content
+    )
   }
 
   private fun fileToLynxchanReplyFileContent(replyFile: ReplyFile, replyFileMeta: ReplyFileMeta): String? {
@@ -158,6 +278,15 @@ class LynxchanReplyHttpCall(
   override fun process(response: Response, result: String) {
     val lynxchanReplyResponse = convertToLynxchanReplyResponse(result)
     if (lynxchanReplyResponse == null) {
+      val matcher = GENERIC_ERROR_PATTERN.matcher(result)
+      if (matcher.find()) {
+        val errorText = matcher.groupOrNull(1)
+        if (errorText.isNotNullNorEmpty()) {
+          replyResponse.errorMessage = errorText
+          return
+        }
+      }
+
       replyResponse.errorMessage = "Failed to convert reply response (response=${result})"
       return
     }
@@ -303,5 +432,7 @@ class LynxchanReplyHttpCall(
 
   companion object {
     private const val TAG = "LynxchanReplyHttpCall"
+
+    private val GENERIC_ERROR_PATTERN = Pattern.compile("<\\w+>(Error:.*?)<\\/\\w+>")
   }
 }

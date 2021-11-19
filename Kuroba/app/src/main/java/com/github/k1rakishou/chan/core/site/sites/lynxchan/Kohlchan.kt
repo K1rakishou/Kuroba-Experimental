@@ -8,9 +8,9 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 
-class Endchan : LynxchanSite() {
-  private val defaultDomain = "https://endchan.net/".toHttpUrl()
-  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "https://${defaultDomain}favicon.ico".toHttpUrl()) }
+class Kohlchan : LynxchanSite() {
+  private val defaultDomain = "https://nocsp.kohlchan.net/".toHttpUrl()
+  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${defaultDomain}favicon.ico".toHttpUrl()) }
 
   override val domain: Lazy<HttpUrl> = lazy {
     val siteDomain = siteDomainSetting?.get()
@@ -31,7 +31,7 @@ class Endchan : LynxchanSite() {
   }
 
   private val mediaHostsLazy = lazy { arrayOf(domain.value) }
-  private val siteUrlHandler = lazy { EndchanUrlHandler(domain.value, mediaHostsLazy.value) }
+  private val siteUrlHandler = lazy { KohlchanUrlHandler(domain.value, mediaHostsLazy.value) }
 
   override val siteName: String
     get() = SITE_NAME
@@ -40,19 +40,23 @@ class Endchan : LynxchanSite() {
   override val urlHandler: Lazy<BaseLynxchanUrlHandler>
     get() = siteUrlHandler
   override val postingViaFormData: Boolean
-    get() = false
-  override val supportsPosting: Boolean
     get() = true
 
-  class EndchanUrlHandler(baseUrl: HttpUrl, mediaHosts: Array<HttpUrl>) : BaseLynxchanUrlHandler(
+  // Something weird is going on with posting on kohlchan, can't figure out why it doesn't work
+  // so it's disabled for now.
+  override val supportsPosting: Boolean
+    get() = false
+
+  class KohlchanUrlHandler(baseUrl: HttpUrl, mediaHosts: Array<HttpUrl>) : BaseLynxchanUrlHandler(
     url = baseUrl,
     mediaHosts = mediaHosts,
-    names = arrayOf("Endchan"),
-    siteClass = Endchan::class.java
+    names = arrayOf("Kohlchan"),
+    siteClass = Kohlchan::class.java
   )
 
   companion object {
-    private const val TAG = "Endchan"
-    const val SITE_NAME = "Endchan"
+    private const val TAG = "Kohlchan"
+    const val SITE_NAME = "Kohlchan"
   }
+
 }
