@@ -151,6 +151,7 @@ class Chan4ReplyCall(
       || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)
     ) {
       replyResponse.requireAuthentication = true
+      Logger.e(TAG, "process() requireAuthentication")
       return
     }
 
@@ -175,7 +176,7 @@ class Chan4ReplyCall(
 
     val threadNoMatcher = THREAD_NO_PATTERN.matcher(result)
     if (!threadNoMatcher.find()) {
-      Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+      Logger.e(TAG, "process() Couldn't handle server response! response = \"$result\"")
       return
     }
 
@@ -187,7 +188,7 @@ class Chan4ReplyCall(
         replyResponse.threadNo = replyResponse.postNo
       }
     } catch (error: NumberFormatException) {
-      Logger.e(TAG, "ReplyResponse parsing error", error)
+      Logger.e(TAG, "process() ReplyResponse parsing error", error)
     }
 
     if (replyResponse.threadNo > 0 && replyResponse.postNo > 0) {
@@ -195,7 +196,7 @@ class Chan4ReplyCall(
       return
     }
 
-    Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+    Logger.e(TAG, "process() Couldn't handle server response! response = \"$result\"")
   }
 
   private fun setChan4CaptchaHeader(headers: Headers) {
@@ -326,9 +327,6 @@ class Chan4ReplyCall(
     private const val SET_COOKIE_HEADER = "set-cookie"
     private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="
     private const val DOMAIN_PREFIX = "domain="
-
-    // Not used.
-    private const val NEW_THREAD_CREATION_RATE_LIMIT_TEXT = "Error: You must wait longer before posting a new thread"
 
     private val THREAD_NO_PATTERN = Pattern.compile("<!-- thread:([0-9]+),no:([0-9]+) -->")
     private val ERROR_MESSAGE_PATTERN = Pattern.compile("\"errmsg\"[^>]*>(.*?)</span")

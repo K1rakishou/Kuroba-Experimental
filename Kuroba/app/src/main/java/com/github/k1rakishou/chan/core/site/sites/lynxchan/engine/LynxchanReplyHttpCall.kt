@@ -60,12 +60,11 @@ class LynxchanReplyHttpCall(
 
       val captcha = (reply.captchaSolution as CaptchaSolution.SimpleTokenSolution?)
         ?.token
-        ?: ""
 
       val subject = if (chanDescriptor is ChanDescriptor.CatalogDescriptor) {
         reply.subject
       } else {
-        ""
+        null
       }
 
       val files: MutableList<LynxchanReplyFile>? = if (reply.hasFiles()) {
@@ -245,7 +244,7 @@ class LynxchanReplyHttpCall(
 
   @JsonClass(generateAdapter = true)
   data class LynxchanReplyData(
-    @Json(name = "captchaId") val captchaId: String,
+    @Json(name = "captchaId") val captchaId: String?,
     @Json(name = "parameters") val parameters: LynxchanReplyDataParameters
   )
 
@@ -279,7 +278,7 @@ class LynxchanReplyHttpCall(
   data class LynxchanReplyDataParameters(
     @Json(name = "name") val name: String? = null,
     @Json(name = "flag") val flag: String? = null,
-    @Json(name = "subject") val subject: String = "",
+    @Json(name = "subject") val subject: String? = null,
     @Json(name = "spoiler") val spoiler: Boolean = false,
     @Json(name = "password") val password: String,
     @Json(name = "message") val message: String,
