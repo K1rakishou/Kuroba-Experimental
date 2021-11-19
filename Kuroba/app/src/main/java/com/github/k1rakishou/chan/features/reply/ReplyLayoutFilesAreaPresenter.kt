@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.common.AppConstants
@@ -273,8 +272,6 @@ class ReplyLayoutFilesAreaPresenter(
             return@handleStateUpdate
           }
 
-        showSelectedFilesCountReplyLayoutMessage()
-
         refreshAttachedFiles(debounceTime = FILE_SELECTION_UPDATE_DEBOUNCE_TIME)
       }
     }
@@ -497,7 +494,6 @@ class ReplyLayoutFilesAreaPresenter(
         withView { hideLoadingView() }
 
         if (needRefresh) {
-          showSelectedFilesCountReplyLayoutMessage()
           refreshAttachedFiles()
         }
       }
@@ -532,10 +528,14 @@ class ReplyLayoutFilesAreaPresenter(
             val selectedFilesCount = state.value.attachables.count { replyAttachable ->
               replyAttachable is ReplyFileAttachable && replyAttachable.selected
             }
+            val totalFilesCount = state.value.attachables.count { replyAttachable ->
+              replyAttachable is ReplyFileAttachable
+            }
+            
             val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-
             if (maxAllowedFilesPerPost != null) {
               updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
+              updateSelectedFilesCounter(selectedFilesCount, maxAllowedFilesPerPost, totalFilesCount)
             }
           }
 
@@ -563,31 +563,6 @@ class ReplyLayoutFilesAreaPresenter(
       runtimePermissionsHelper.requestPermission(permission) { granted ->
         cancellableContinuation.resumeValueSafe(granted)
       }
-    }
-  }
-
-  private suspend fun showSelectedFilesCountReplyLayoutMessage() {
-    val chanDescriptor = boundChanDescriptor
-      ?: return
-
-    val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor) ?: -1
-
-    val (selectedFilesCount, totalFilesCount) = withContext(Dispatchers.Default) {
-      val selectedFilesCount = selectedFilesCount()
-      val totalFilesCount = totalFilesCount()
-
-      return@withContext selectedFilesCount to totalFilesCount
-    }
-
-    withView {
-      val message = getString(
-        R.string.layout_reply_files_area_selected_out_of_allowed,
-        selectedFilesCount,
-        maxAllowedFilesPerPost,
-        totalFilesCount
-      )
-
-      showReplyLayoutMessage(message, 1000)
     }
   }
 

@@ -120,7 +120,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             android:inputType="textMultiLine|textCapSentences|textAutoCorrect"
                             android:maxLines="6"
                             android:overScrollMode="always"
-                            android:paddingTop="14dp"
+                            android:paddingTop="18dp"
                             android:scrollbarStyle="insideInset"
                             android:scrollbars="vertical"
                             android:textSize="16sp"
@@ -129,6 +129,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             app:layout_constraintStart_toStartOf="parent"
                             app:layout_constraintTop_toTopOf="parent"
                             tools:text="@string/lorem_ipsum" />
+
+                        <TextView
+                            android:id="@+id/file_counter"
+                            android:layout_width="wrap_content"
+                            android:layout_height="24dp"
+                            android:layout_alignParentTop="true"
+                            android:layout_alignParentRight="true"
+                            android:gravity="center_vertical"
+                            android:paddingStart="8dp"
+                            android:paddingEnd="8dp"
+                            android:textSize="12sp"
+                            android:visibility="gone"
+                            app:layout_constraintEnd_toStartOf="@+id/comment_counter"
+                            app:layout_constraintTop_toTopOf="parent"
+                            tools:ignore="RelativeOverlap"
+                            tools:text="1/5"
+                            tools:visibility="visible"/>
 
                         <TextView
                             android:id="@+id/comment_counter"

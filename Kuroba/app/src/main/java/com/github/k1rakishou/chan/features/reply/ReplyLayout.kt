@@ -204,6 +204,7 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var commentSJISButton: ColorizableBarButton
   private lateinit var comment: ReplyInputEditText
   private lateinit var commentCounter: TextView
+  private lateinit var fileCounter: TextView
   private lateinit var commentRevertChangeButton: AppCompatImageView
   private lateinit var captchaButtonContainer: ConstraintLayout
   private lateinit var captchaView: AppCompatImageView
@@ -213,7 +214,8 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var moreDropdown: DropdownArrowDrawable
   private lateinit var replyLayoutFilesArea: ReplyLayoutFilesArea
 
-  private var isCounterOverflowed = false
+  private var isMessageCounterOverflowed = false
+  private var isFileCounterOverflowed = false
   private val textChangeListeners = mutableListOf<TextWatcher>()
 
   private val coroutineScope = KurobaCoroutineScope()
@@ -430,13 +432,21 @@ class ReplyLayout @JvmOverloads constructor(
       replyInputCloseErrorIcon.setImageDrawable(themeEngine.tintDrawable(replyInputCloseErrorIcon.drawable, tintColor))
     }
 
-    val textColor = if (isCounterOverflowed) {
-      themeEngine.chanTheme.errorColor
-    } else {
-      themeEngine.chanTheme.textColorSecondary
-    }
+    commentCounter.setTextColor(
+      if (isMessageCounterOverflowed) {
+        themeEngine.chanTheme.errorColor
+      } else {
+        themeEngine.chanTheme.textColorSecondary
+      }
+    )
 
-    commentCounter.setTextColor(textColor)
+    fileCounter.setTextColor(
+      if (isFileCounterOverflowed) {
+        themeEngine.chanTheme.errorColor
+      } else {
+        themeEngine.chanTheme.textColorSecondary
+      }
+    )
 
     validCaptchasCount.background = themeEngine.tintDrawable(
       context,
@@ -493,6 +503,7 @@ class ReplyLayout @JvmOverloads constructor(
     commentSJISButton = replyInputLayout.findViewById(R.id.comment_sjis)
     comment = replyInputLayout.findViewById(R.id.comment)
     commentCounter = replyInputLayout.findViewById(R.id.comment_counter)
+    fileCounter = replyInputLayout.findViewById(R.id.file_counter)
     commentRevertChangeButton = replyInputLayout.findViewById(R.id.comment_revert_change_button)
     captchaButtonContainer = replyInputLayout.findViewById(R.id.captcha_button_container)
     validCaptchasCount = replyInputLayout.findViewById(R.id.valid_captchas_count)
@@ -1281,7 +1292,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   @SuppressLint("SetTextI18n")
   override fun updateCommentCount(count: Int, maxCount: Int, over: Boolean) {
-    isCounterOverflowed = over
+    isMessageCounterOverflowed = over
     commentCounter.text = "$count/$maxCount"
 
     val textColor = if (over) {
@@ -1291,6 +1302,25 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     commentCounter.setTextColor(textColor)
+  }
+
+  override fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int) {
+    isFileCounterOverflowed = selectedCount > maxAllowedCount
+
+    if (totalCount <= 0) {
+      fileCounter.setVisibilityFast(View.GONE)
+      return
+    }
+
+    val textColor = if (isFileCounterOverflowed) {
+      themeEngine.chanTheme.errorColor
+    } else {
+      themeEngine.chanTheme.textColorSecondary
+    }
+
+    fileCounter.setVisibilityFast(View.VISIBLE)
+    fileCounter.text = "${selectedCount}/${maxAllowedCount} ($totalCount)"
+    fileCounter.setTextColor(textColor)
   }
 
   override fun focusComment() {

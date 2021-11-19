@@ -476,8 +476,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     replyLayoutCallbacks?.openMessage(message, hideDelayMs)
   }
 
-  override fun updateFilesStatusTextView(newStatus: String) {
-    replyLayoutCallbacks?.showReplyLayoutMessage(newStatus)
+  override fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int) {
+    replyLayoutCallbacks?.updateSelectedFilesCounter(selectedCount, maxAllowedCount, totalCount)
   }
 
   override fun showFileStatusMessage(fileStatusString: String) {
@@ -530,6 +530,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     fun disableSendButton()
     fun enableSendButton()
     fun openMessage(message: String?, hideDelayMs: Int)
+    fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int)
     fun showReplyLayoutMessage(message: String, duration: Int = 5000)
   }
 

@@ -1185,7 +1185,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="layout_reply_files_area_removing_metadata">Removing metadata</string>
     <string name="layout_reply_files_area_changing_checksum">Changing checksum</string>
     <string name="layout_reply_files_area_updating_selection">Updating selection</string>
-    <string name="layout_reply_files_area_selected_out_of_allowed">Selected %1$d out of %2$d allowed on this board (total files count: %3$d)</string>
 
     <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
     <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
