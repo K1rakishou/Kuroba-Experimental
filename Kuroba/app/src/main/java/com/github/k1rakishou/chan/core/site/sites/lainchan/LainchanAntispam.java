@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site.common.vichan;
+package com.github.k1rakishou.chan.core.site.sites.lainchan;
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.common.ModularResult;
@@ -42,34 +42,75 @@ import okhttp3.ResponseBody;
  * Vichan applies garbage looking fields to the post form, to combat bots.
  * Load up the normal html, parse the form, and get these fields for our post.
  * <p>
+ * Lainchan uses some additional (custom?) logic that effectively restricts which fields are allowed
+ * to be POSTed to post.php.
+ * <p>
  * {@link #get()} blocks, run it off the main thread.
+ *
+ * @see "https://github.com/lainchan/lainchan/blob/master/inc/anti-bot.php#checkSpam"
  */
-public class VichanAntispam {
+public class LainchanAntispam {
     private static final String TAG = "Antispam";
+    private final List<String> allowedFields = new ArrayList<>();
+    private final List<String> fakeFields = new ArrayList<>();
+    private final List<String> binFields = new ArrayList<>();
+    private final Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
+    private final HttpUrl url;
 
-    private Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient;
-
-    private HttpUrl url;
-    private List<String> fieldsToIgnore = new ArrayList<>();
-
-    public VichanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
+    public LainchanAntispam(Lazy<RealProxiedOkHttpClient> proxiedOkHttpClient, HttpUrl url) {
         this.proxiedOkHttpClient = proxiedOkHttpClient;
         this.url = url;
 
-        fieldsToIgnore.addAll(Arrays.asList(
+        allowedFields.addAll(Arrays.asList(
+                "hash",
                 "board",
                 "thread",
+                "mod",
                 "name",
                 "email",
                 "subject",
+                "post",
                 "body",
                 "password",
-                "file",
+                "sticky",
+                "lock",
+                "raw",
+                "embed",
+                "g-recaptcha-response",
                 "spoiler",
-                "json_response",
+                "page",
+                "file_url",
                 "file_url1",
                 "file_url2",
-                "file_url3"
+                "file_url3",
+                "file_url4",
+                "file_url5",
+                "file_url6",
+                "file_url7",
+                "file_url8",
+                "file_url9",
+                "json_response",
+                "user_flag",
+                "no_country",
+                "tag"));
+
+        fakeFields.addAll(Arrays.asList(
+                "user",
+                "username",
+                "login",
+                "search",
+                "q",
+                "url",
+                "firstname",
+                "lastname",
+                "text",
+                "message"
+        ));
+
+        binFields.addAll(Arrays.asList(
+                "file1",
+                "file2",
+                "file3"
         ));
     }
 
@@ -102,8 +143,16 @@ public class VichanAntispam {
                         String name = input.attr("name");
                         String value = input.val();
 
-                        if (!fieldsToIgnore.contains(name)) {
+                        if (allowedFields.contains(name)) {
                             res.put(name, value);
+                        } else {
+                            if (fakeFields.contains(name)) {
+                                res.put(name, value);
+                            } else {
+                                if (!binFields.contains(name)) {
+                                    res.put(name, value);
+                                }
+                            }
                         }
                     }
 

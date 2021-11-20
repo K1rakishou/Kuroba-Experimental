@@ -18,6 +18,8 @@ package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.chan.core.site.sites.*
 import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
+import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.Wired7
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
