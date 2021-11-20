@@ -170,37 +170,40 @@ internal class PostExtraContentLoader(
     postLinkablePostLinkableSpans.forEach { postLinkableSpan ->
       val postLinkable = postLinkableSpan.postLinkable
 
-      if (postLinkable.type == PostLinkable.Type.LINK) {
-        val originalUrl = postLinkable.key.toString()
-        val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
-          fetcher.linkMatchesToService(originalUrl)
-        }
-
-        if (fetcher == null) {
-          // No fetcher found for this link type
-          return@forEach
-        }
-
-        if (!fetcher.isEnabled()) {
-          // Fetcher may be disabled by some settings or some other conditions
-          return@forEach
-        }
-
-        val requestUrl = fetcher.formatRequestUrl(originalUrl)
-
-        newSpans.putIfNotContainsLazy(
-          key = requestUrl,
-          valueFunc = {
-            return@putIfNotContainsLazy LinkInfoRequest(
-              fetcher.extractLinkVideoId(originalUrl),
-              fetcher.mediaServiceType,
-              mutableListOf()
-            )
-          }
-        )
-
-        newSpans[requestUrl]!!.oldPostLinkableSpans.add(postLinkableSpan)
+      if (postLinkable.type != PostLinkable.Type.LINK) {
+        return@forEach
       }
+
+      val originalUrl = postLinkable.key.toString()
+      val fetcher = linkExtraInfoFetchers.firstOrNull { fetcher ->
+        fetcher.linkMatchesToService(originalUrl)
+      }
+
+      if (fetcher == null) {
+        // No fetcher found for this link type
+        Logger.d(TAG, "No fetcher found for url \'$originalUrl\'")
+        return@forEach
+      }
+
+      if (!fetcher.isEnabled()) {
+        // Fetcher may be disabled by some settings or some other conditions
+        return@forEach
+      }
+
+      val requestUrl = fetcher.formatRequestUrl(originalUrl)
+
+      newSpans.putIfNotContainsLazy(
+        key = requestUrl,
+        valueFunc = {
+          return@putIfNotContainsLazy LinkInfoRequest(
+            fetcher.extractLinkVideoId(originalUrl),
+            fetcher.mediaServiceType,
+            mutableListOf()
+          )
+        }
+      )
+
+      newSpans[requestUrl]!!.oldPostLinkableSpans.add(postLinkableSpan)
     }
 
     return newSpans

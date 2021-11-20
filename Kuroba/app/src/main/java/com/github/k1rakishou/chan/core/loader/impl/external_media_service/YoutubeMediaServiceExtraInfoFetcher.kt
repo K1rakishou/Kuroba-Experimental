@@ -90,7 +90,7 @@ internal class YoutubeMediaServiceExtraInfoFetcher(
     private const val TAG = "YoutubeMediaServiceExtraInfoFetcher"
 
     private val youtubeLinkPattern =
-      Pattern.compile("\\b\\w+://(?:youtu\\.be/|[\\w.]*youtube[\\w.]*/.*?(?:v=|\\bembed/|\\bv/))([\\w\\-]{11})(.*)\\b")
+      Pattern.compile("\\b\\w+://(?:youtu\\.be/|[\\w.]*youtube[\\w.]*/.*?(?:v=|\\bembed/|\\bv/))([\\w\\-]{5,11})(.*)\\b")
     private val youtubeIcon = BitmapFactory.decodeResource(getRes(), R.drawable.youtube_icon)
   }
 }

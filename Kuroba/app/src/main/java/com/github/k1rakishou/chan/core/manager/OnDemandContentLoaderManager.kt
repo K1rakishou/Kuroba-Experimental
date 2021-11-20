@@ -147,20 +147,18 @@ class OnDemandContentLoaderManager(
     }
 
     if (!isStillActive(postLoaderData)) {
+      removeFromActiveLoaders(postDescriptor)
       return null
     }
 
     val loaderResults = processDataCollectionConcurrently(loaders) { loader ->
       val result = withTimeoutOrNull(MAX_LOADER_LOADING_TIME_MS) { loader.startLoading(postLoaderData) }
       if (result == null) {
+        removeFromActiveLoaders(postDescriptor)
         return@processDataCollectionConcurrently LoaderResult.Failed(loader.loaderType)
       }
 
       return@processDataCollectionConcurrently result
-    }
-
-    if (!isStillActive(postLoaderData)) {
-      return null
     }
 
     return LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
