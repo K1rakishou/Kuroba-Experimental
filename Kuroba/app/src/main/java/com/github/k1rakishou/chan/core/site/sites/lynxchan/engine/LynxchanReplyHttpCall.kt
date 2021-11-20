@@ -128,7 +128,7 @@ class LynxchanReplyHttpCall(
     formBuilder.addFormDataPart("password", reply.password)
 
     if (captcha.isNotNullNorEmpty()) {
-      formBuilder.addFormDataPart("captchaId", captcha)
+      formBuilder.addFormDataPart("captcha", captcha)
     }
 
     if (chanDescriptor is ChanDescriptor.CatalogDescriptor && !TextUtils.isEmpty(subject)) {
@@ -295,11 +295,20 @@ class LynxchanReplyHttpCall(
       val status = lynxchanReplyResponse.status
       val errorMessage = lynxchanReplyResponse.dataAsString()
 
-      if (lynxchanReplyResponse.isStatusError() && errorMessage.contains("captcha", ignoreCase = true)) {
+      if (lynxchanReplyResponse.isStatusError() && errorMessage?.contains("captcha", ignoreCase = true) == true) {
+        replyResponse.requireAuthentication = true
+      } else if (lynxchanReplyResponse.isStatusBypassable()) {
         replyResponse.requireAuthentication = true
       }
 
-      replyResponse.errorMessage = "Failed to post. Status: ${status}, ErrorMessage: \'$errorMessage\'"
+      replyResponse.errorMessage = buildString {
+        append("Failed to post. Status: ${status}")
+
+        if (errorMessage.isNotNullNorEmpty()) {
+          append("ErrorMessage: \'$errorMessage\'")
+        }
+      }
+
       return
     }
 
@@ -349,24 +358,27 @@ class LynxchanReplyHttpCall(
       return null
     }
 
-    val data = map["data"]
-    if (data == null || data == "null") {
-      Logger.e(TAG, "convertToLynxchanReplyResponse() \'data\' not found")
-      return null
+    var data = map["data"]
+    if ("null".equals(data, ignoreCase = true)) {
+      data = null
     }
 
-    val isStringData = data.startsWith("\"") || data.endsWith("\"")
+    val lynxchanReplyResponseData = if (data != null) {
+      val isStringData = data.startsWith("\"") || data.endsWith("\"")
 
-    val lynxchanReplyResponseData = if (isStringData) {
-      LynxchanReplyResponseData.Message(data.removePrefix("\"").removeSuffix("\""))
-    } else {
-      val value = data.toLongOrNull()
-      if (value == null) {
-        Logger.e(TAG, "convertToLynxchanReplyResponse() Failed to convert \'$data\' to long")
-        return null
+      if (isStringData) {
+        LynxchanReplyResponseData.Message(data.removePrefix("\"").removeSuffix("\""))
+      } else {
+        val value = data.toLongOrNull()
+        if (value == null) {
+          Logger.e(TAG, "convertToLynxchanReplyResponse() Failed to convert \'$data\' to long")
+          return null
+        }
+
+        LynxchanReplyResponseData.Number(value)
       }
-
-      LynxchanReplyResponseData.Number(value)
+    } else {
+      null
     }
 
     return LynxchanReplyResponse(
@@ -383,15 +395,17 @@ class LynxchanReplyHttpCall(
 
   data class LynxchanReplyResponse(
     val status: String,
-    val data: LynxchanReplyResponseData
+    val data: LynxchanReplyResponseData?
   ) {
     fun isStatusOk(): Boolean = status == "ok"
     fun isStatusError(): Boolean = status == "error"
+    fun isStatusBypassable(): Boolean = status == "bypassable"
 
-    fun dataAsString(): String {
+    fun dataAsString(): String? {
       return when (data) {
         is LynxchanReplyResponseData.Message -> data.value
         is LynxchanReplyResponseData.Number -> data.value.toString()
+        null -> null
       }
     }
 
@@ -399,6 +413,7 @@ class LynxchanReplyHttpCall(
       return when (data) {
         is LynxchanReplyResponseData.Message -> null
         is LynxchanReplyResponseData.Number -> data.value
+        null -> null
       }
     }
   }

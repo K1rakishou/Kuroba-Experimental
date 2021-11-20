@@ -70,14 +70,21 @@ abstract class CommonSite : SiteBase() {
   private var catalogType: Site.CatalogType = Site.CatalogType.STATIC
   private var commonConfig: CommonConfig? = null
   private var resolvable: Lazy<CommonSiteUrlHandler>? = null
-  private var endpoints: CommonEndpoints? = null
+  private var endpoints: Lazy<CommonEndpoints>? = null
   private var actions: CommonActions? = null
   private var api: CommonApi? = null
   private var requestModifier: SiteRequestModifier<Site>? = null
-  private var postingLimitationInfo: SitePostingLimitation? = null
+  private var postingLimitationInfoLazy: Lazy<SitePostingLimitation>? = null
   
   @JvmField
   var postParser: PostParser? = null
+
+  private val defaultPostingLimitationInfo = lazy {
+    SitePostingLimitation(
+      postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
+      postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
+    )
+  }
 
   private val defaultRequestModifier by lazy {
     object : SiteRequestModifier<Site>(this, appConstants) {
@@ -121,11 +128,8 @@ abstract class CommonSite : SiteBase() {
     if (requestModifier == null) {
       requestModifier = defaultRequestModifier
     }
-    if (postingLimitationInfo == null) {
-      postingLimitationInfo = SitePostingLimitation(
-        postMaxAttachables = ConstantAttachablesCount(DEFAULT_ATTACHABLES_PER_POST_COUNT),
-        postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(DEFAULT_MAX_ATTACHABLES_SIZE)
-      )
+    if (postingLimitationInfoLazy == null) {
+      postingLimitationInfoLazy = defaultPostingLimitationInfo
     }
   }
   
@@ -168,7 +172,11 @@ abstract class CommonSite : SiteBase() {
     this.resolvable = resolvable
   }
   
-  fun setEndpoints(endpoints: CommonEndpoints?) {
+  fun setEndpoints(endpoints: CommonEndpoints) {
+    this.endpoints = lazy { endpoints }
+  }
+
+  fun setEndpointsLazy(endpoints: Lazy<CommonEndpoints>) {
     this.endpoints = endpoints
   }
   
@@ -184,8 +192,8 @@ abstract class CommonSite : SiteBase() {
     this.requestModifier = requestModifier
   }
 
-  fun setPostingLimitationInfo(postingLimitationInfo: SitePostingLimitation) {
-    this.postingLimitationInfo = postingLimitationInfo
+  fun setPostingLimitationInfo(postingLimitationInfoLazy: Lazy<SitePostingLimitation>) {
+    this.postingLimitationInfoLazy = postingLimitationInfoLazy
   }
 
   open fun setParser(commentParser: CommentParser) {
@@ -232,7 +240,7 @@ abstract class CommonSite : SiteBase() {
   }
   
   override fun endpoints(): SiteEndpoints {
-    return endpoints!!
+    return endpoints!!.value
   }
   
   override fun actions(): SiteActions {
@@ -248,7 +256,7 @@ abstract class CommonSite : SiteBase() {
   }
 
   override fun postingLimitationInfo(): SitePostingLimitation {
-    return postingLimitationInfo!!
+    return postingLimitationInfoLazy!!.value
   }
 
   abstract class CommonConfig {

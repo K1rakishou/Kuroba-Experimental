@@ -125,7 +125,7 @@ interface Site {
     // All catalog pages are available in the json/html, meaning they can be all loaded at once.
     STATIC,
 
-    // Used by sites which catalogs are very big (thousands of pages) so they can't be loaded all
+    // Used by sites which catalogs are only available by pages meaning they can't be loaded all
     // at once and need to be loaded incrementally
     DYNAMIC
   }

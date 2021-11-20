@@ -33,6 +33,7 @@ import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
@@ -55,8 +56,10 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -155,10 +158,28 @@ class LynxchanCaptchaLayout(
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val verifyingCaptchaState = remember { mutableStateOf(false) }
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
+    val needProofOfWork = captchaInfo?.needProofOfWork?.value == true
 
-    if (captchaInfo?.needBlockBypass == true) {
-      BuildBlockBypassRequired()
+    if (needProofOfWork) {
+      BuildProofOfWorkRequired()
       return
+    }
+
+    if (captchaInfo != null) {
+      val captchaTypeText = if (captchaInfo.needBlockBypass) {
+        stringResource(id = R.string.lynxchan_tor_proxy_vpv_detected_message)
+      } else {
+        stringResource(id = R.string.lynxchan_regular_captcha_message)
+      }
+
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .padding(horizontal = 8.dp, vertical = 4.dp),
+        text = captchaTypeText,
+        textAlign = TextAlign.Center
+      )
     }
 
     BuildCaptchaImageOrText(captchaInfoAsync)
@@ -173,7 +194,14 @@ class LynxchanCaptchaLayout(
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue },
         keyboardActions = KeyboardActions(
-          onDone = { verifyCaptcha(verifyingCaptchaState, captchaInfo, currentInputValue) }
+          onDone = {
+            verifyCaptcha(
+              needBlockBypass = captchaInfo.needBlockBypass,
+              verifyingCaptchaState = verifyingCaptchaState,
+              captchaInfo = captchaInfo,
+              answer = currentInputValue
+            )
+          }
         ),
         keyboardOptions = KeyboardOptions(
           autoCorrect = false,
@@ -213,7 +241,12 @@ class LynxchanCaptchaLayout(
           val currentInputValue = captchaInfo?.currentInputValue
             ?: return@KurobaComposeTextBarButton
 
-          verifyCaptcha(verifyingCaptchaState, captchaInfo, currentInputValue.value)
+          verifyCaptcha(
+            needBlockBypass = captchaInfo.needBlockBypass,
+            verifyingCaptchaState = verifyingCaptchaState,
+            captchaInfo = captchaInfo,
+            answer = currentInputValue.value
+          )
         },
         enabled = captchaInfo != null && captchaInfo.currentInputValue.value.isNotEmpty() && !verifyingCaptcha,
         text = stringResource(id = R.string.captcha_layout_verify)
@@ -226,12 +259,13 @@ class LynxchanCaptchaLayout(
   }
 
   @Composable
-  private fun ColumnScope.BuildBlockBypassRequired() {
+  private fun ColumnScope.BuildProofOfWorkRequired() {
     KurobaComposeText(
       modifier = Modifier
         .wrapContentHeight()
-        .fillMaxWidth(),
-      text = stringResource(id = R.string.lynxchan_block_bypass_message)
+        .fillMaxWidth()
+        .padding(4.dp),
+      text = stringResource(id = R.string.lynxchan_proof_of_work_message)
     )
 
     Row(
@@ -243,14 +277,12 @@ class LynxchanCaptchaLayout(
       Spacer(modifier = Modifier.weight(1f))
 
       KurobaComposeTextBarButton(
-        onClick = { viewModel.requestCaptcha(lynxchanCaptcha, chanDescriptor) },
+        onClick = { callback?.onAuthenticationFailed(LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError()) },
         text = stringResource(id = R.string.close)
       )
 
       Spacer(modifier = Modifier.width(8.dp))
     }
-
-    Spacer(modifier = Modifier.height(8.dp))
   }
 
   @Composable
@@ -284,7 +316,7 @@ class LynxchanCaptchaLayout(
         }
 
         if (captchaInfo != null) {
-          val imgBitmapPainter = captchaInfo.captchaImage!!
+          val imgBitmapPainter = captchaInfo.captchaImage
 
           val scale = Math.min(
             size.width.toFloat() / imgBitmapPainter.intrinsicSize.width,
@@ -307,6 +339,7 @@ class LynxchanCaptchaLayout(
 
   @Suppress("IfThenToElvis")
   private fun verifyCaptcha(
+    needBlockBypass: Boolean,
     verifyingCaptchaState: MutableState<Boolean>,
     captchaInfo: LynxchanCaptchaLayoutViewModel.LynxchanCaptchaFull?,
     answer: String
@@ -318,23 +351,41 @@ class LynxchanCaptchaLayout(
       return
     }
 
-    val captchaId = captchaInfo.lynxchanCaptchaJson?.captchaId
+    val captchaId = captchaInfo.lynxchanCaptchaJson.captchaId
       ?: return
     scope.launch {
       verifyingCaptchaState.value = true
 
       try {
-        val success = viewModel.verifyCaptcha(
+        val result = viewModel.verifyCaptcha(
+          needBlockBypass = needBlockBypass,
           chanDescriptor = chanDescriptor,
           lynxchanCaptcha = lynxchanCaptcha,
           captchaInfo = captchaInfo,
           answer = answer
         )
-          .peekError { error -> showToast(context, "Captcha verification error: \'${error.errorMessageOrClassName()}\'") }
-          .valueOrNull()
 
+        if (result is ModularResult.Error) {
+          if (result.error is LynxchanCaptchaLayoutViewModel.LynxchanCaptchaPOWError) {
+            showToast(context, result.error.errorMessageOrClassName())
+            return@launch
+          }
+
+          showToast(context, getString(R.string.lynxchan_captcha_verification_error, result.error.errorMessageOrClassName()))
+          reset()
+          return@launch
+        }
+
+        val success = result.valueOrNull()
         if (success != true) {
-          showToast(context, "Captcha verification was not successful")
+          showToast(context, getString(R.string.lynxchan_captcha_verification_not_successful))
+
+          reset()
+          return@launch
+        }
+
+        if (success && needBlockBypass) {
+          showToast(context, getString(R.string.lynxchan_captcha_verification_block_bypassed))
 
           reset()
           return@launch

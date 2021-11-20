@@ -162,12 +162,14 @@ class Dvach : CommonSite() {
     setParser(DvachCommentParser())
 
     setPostingLimitationInfo(
-      SitePostingLimitation(
-        postMaxAttachables = PasscodeDependantAttachablesCount(siteManager, 4),
-        postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
-          siteManager = siteManager
+      postingLimitationInfoLazy = lazy {
+        SitePostingLimitation(
+          postMaxAttachables = PasscodeDependantAttachablesCount(siteManager, 4),
+          postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+            siteManager = siteManager
+          )
         )
-      )
+      }
     )
   }
 

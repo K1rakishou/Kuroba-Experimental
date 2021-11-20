@@ -1440,10 +1440,18 @@ Actual error: \'%1$s\'</string>
     <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
     <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
     <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
-    <string name="site_domain_setting">Change site domain</string>
+    <string name="site_domain_setting">Site domain</string>
     <string name="site_domain_setting_description">If a site supports multiple domains you can enter any of them which will be used from then on. Requires application restart for the changes to take effect.</string>
+    <string name="site_captcha_id_cookie_description">Last used captchaId cookie</string>
+    <string name="site_block_bypass_cookie_description">Cookie issued by the server after bypassing Lynxchan block</string>
+    <string name="site_proof_of_work_cookie_description">Cookie issued by the server after solving Lynxchan Proof-of-work problem</string>
 
-    <string name="lynxchan_block_bypass_message">Lynxchan block bypass is required in order to post. This is usually required when Tor/VPN/proxy detected. Block bypass is not supported by the app because you need to solve a complex problem which requires a lot of time when solved on PC (~1 hour). You can do that on PC and then use the resulting cookies on the phone for posting.</string>
+    <string name="lynxchan_proof_of_work_message">Lynxchan Proof–of–work is required in order to post. This is an additional anti-spam check and is usually required when Tor/VPN/proxy detected. Proof-of-work is not supported by the application because you need to solve a complex problem which requires a lot of computation power and time when solved on PC (~30-40 minutes on Threadripper 2950X with 16 cores). You have to do that on PC and then use the resulting cookies on the phone for posting. To do that, open any thread and try to post. After solving the problem, you will need to copy the following 3 cookies: \'captchaid\', \'bypass\' and \'extraCookie\' into the current site settings.</string>
+    <string name="lynxchan_tor_proxy_vpv_detected_message">Tor / VPN / Proxy detected\nYou need a block bypass to post</string>
+    <string name="lynxchan_regular_captcha_message">Regular captcha</string>
+    <string name="lynxchan_captcha_verification_error">Captcha verification error: %1$s</string>
+    <string name="lynxchan_captcha_verification_not_successful">Captcha verification was not successful</string>
+    <string name="lynxchan_captcha_verification_block_bypassed">Block bypassed, now solve the regular captcha</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>

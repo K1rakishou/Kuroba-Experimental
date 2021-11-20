@@ -9,7 +9,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(site) {
   private val lynxchan: LynxchanSite
     get() = (site as LynxchanSite)
-  private val lynxchanDomain by lynxchan.domain
+  protected val lynxchanDomain by lynxchan.domain
 
   override fun boards(): HttpUrl {
     return lynxchanDomain.newBuilder()
@@ -78,11 +78,9 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        // https://endchan.net/.api/newThread
         return "${lynxchanDomain}.api/newThread".toHttpUrl()
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        // https://endchan.net/.api/replyThread
         return "${lynxchanDomain}.api/replyThread".toHttpUrl()
       }
     }

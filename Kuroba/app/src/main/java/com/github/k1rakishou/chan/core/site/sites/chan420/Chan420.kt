@@ -93,12 +93,14 @@ class Chan420 : CommonSite() {
     setParser(TaimabaCommentParser())
 
     setPostingLimitationInfo(
-      SitePostingLimitation(
-        postMaxAttachables = ConstantAttachablesCount(1),
-        postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
-          siteManager = siteManager
+      postingLimitationInfoLazy = lazy {
+        SitePostingLimitation(
+          postMaxAttachables = ConstantAttachablesCount(1),
+          postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
+            siteManager = siteManager
+          )
         )
-      )
+      }
     )
   }
 

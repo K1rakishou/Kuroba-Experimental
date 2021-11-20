@@ -10,9 +10,11 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanSite
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.removeAllAfterFirstInclusive
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -73,35 +75,67 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     activeRequestCaptchaJob?.cancel()
     activeRequestCaptchaJob = mainScope.launch {
       try {
-        val needBlockBypass = needBlockBypass(lynxchanCaptcha, chanDescriptor)
-        if (needBlockBypass) {
-          val lynxchanCaptchaFull = LynxchanCaptchaFull(
-            needBlockBypass = true,
-            lynxchanCaptchaJson = null,
-            captchaImage = null
-          )
+        captchaInfoToShow.value = AsyncData.Loading
 
-          captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
-          return@launch
-        }
+        val needBlockBypass = needBlockBypass(
+          lynxchanCaptcha = lynxchanCaptcha,
+          chanDescriptor = chanDescriptor
+        )
 
-        captchaInfoToShow.value = AsyncData.Data(requestCaptchaInternal(lynxchanCaptcha, chanDescriptor))
+        val lynxchanCaptchaFull = requestCaptchaInternal(
+          lynxchanCaptcha = lynxchanCaptcha,
+          chanDescriptor = chanDescriptor,
+          needBlockBypass = needBlockBypass
+        )
+
+        storeCaptchaIdCookie(
+          chanDescriptor = chanDescriptor,
+          captchaId = lynxchanCaptchaFull.lynxchanCaptchaJson.captchaId
+        )
+
+        captchaInfoToShow.value = AsyncData.Data(lynxchanCaptchaFull)
       } catch (error: Throwable) {
         captchaInfoToShow.value = AsyncData.Error(error)
       }
     }
   }
 
+  private fun storeCaptchaIdCookie(chanDescriptor: ChanDescriptor, captchaId: String?) {
+    if (captchaId.isNullOrEmpty()) {
+      return
+    }
+
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?: return
+
+    if (site !is LynxchanSite) {
+      return
+    }
+
+    if (site.captchaIdCookie.get().equals(captchaId, ignoreCase = true)) {
+      return
+    }
+
+    site.captchaIdCookie.set(captchaId)
+  }
+
   suspend fun verifyCaptcha(
+    needBlockBypass: Boolean,
     chanDescriptor: ChanDescriptor,
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
     captchaInfo: LynxchanCaptchaFull,
     answer: String
   ): ModularResult<Boolean> {
     return ModularResult.Try {
-      val verifyCaptchaEndpoint = lynxchanCaptcha.verifyCaptchaEndpoint
+      val verifyCaptchaEndpoint = if (needBlockBypass) {
+        lynxchanCaptcha.verifyBypassEndpoint
+      } else {
+        lynxchanCaptcha.verifyCaptchaEndpoint
+      }
 
-      val captchaId = captchaInfo.lynxchanCaptchaJson?.captchaId
+      Logger.d(TAG, "verifyCaptcha(needBlockBypass=${needBlockBypass}) verifyCaptchaEndpoint=$verifyCaptchaEndpoint")
+
+      val captchaId = captchaInfo.lynxchanCaptchaJson.captchaId
       if (captchaId.isNullOrEmpty()) {
         throw LynxchanCaptchaError("No captchaId provided")
       }
@@ -110,11 +144,18 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
         throw LynxchanCaptchaError("No answer provided")
       }
 
-      val requestBody = MultipartBody.Builder()
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("captchaId", captchaId)
-        .addFormDataPart("answer", answer)
-        .build()
+      val requestBody = if (needBlockBypass) {
+        MultipartBody.Builder()
+          .setType(MultipartBody.FORM)
+          .addFormDataPart("captcha", answer)
+          .build()
+      } else {
+        MultipartBody.Builder()
+          .setType(MultipartBody.FORM)
+          .addFormDataPart("captchaId", captchaId)
+          .addFormDataPart("answer", answer)
+          .build()
+      }
 
       val requestBuilder = Request.Builder()
         .url(verifyCaptchaEndpoint)
@@ -130,8 +171,38 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
         throw BadStatusResponseException(status = response.code)
       }
 
-      val responseString = response.body?.string()
+      val responseBody = response.body
         ?: throw EmptyBodyResponseException()
+
+      val responseString = responseBody.string()
+      val contentType = responseBody.contentType()
+
+      if (contentType != null && (contentType.type == JSON_CONTENT_TYPE.type && contentType.subtype == JSON_CONTENT_TYPE.subtype)) {
+        // {"status":"hashcash","data":null}
+        val blockBypassStatus = moshi.adapter(BlockBypassStatus::class.java).fromJson(responseString)
+        if (blockBypassStatus == null) {
+          throw LynxchanCaptchaError("Failed to extract BlockBypassStatus from '$responseString'")
+        }
+
+        if (blockBypassStatus.isHashcash) {
+          val lynxchanCaptchaFull = (captchaInfoToShow.value as? AsyncData.Data)?.data
+          if (lynxchanCaptchaFull == null) {
+            return@Try false
+          }
+
+          lynxchanCaptchaFull.needProofOfWork.value = true
+          throw LynxchanCaptchaPOWError()
+        }
+
+        if (blockBypassStatus.isError) {
+          val errorMessage = blockBypassStatus.data
+          if (errorMessage.isNotNullNorEmpty()) {
+            throw LynxchanCaptchaError("Error. Message=\'$errorMessage\'")
+          }
+        }
+
+        return@Try blockBypassStatus.isOk
+      }
 
       if (!responseString.contains(CAPTCHA_SOLVED_MSG, ignoreCase = true)) {
         return@Try false
@@ -175,7 +246,7 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
         val blockBypassWithStatusJson = moshi.adapter(BlockBypassWithStatusJson::class.java).fromJson(body)
           ?: return@run false
 
-        return@run blockBypassWithStatusJson.data.valid
+        return@run !blockBypassWithStatusJson.data.valid
       }
 
       return needBlockBypass
@@ -187,18 +258,14 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
 
   private suspend fun requestCaptchaInternal(
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
-    chanDescriptor: ChanDescriptor
+    chanDescriptor: ChanDescriptor,
+    needBlockBypass: Boolean
   ): LynxchanCaptchaFull {
     val captchaEndpoint = lynxchanCaptcha.captchaEndpoint
 
     val requestBuilder = Request.Builder()
       .url(captchaEndpoint)
       .get()
-
-    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-    if (site != null) {
-      site.requestModifier().modifyCaptchaGetRequest(site = site, requestBuilder = requestBuilder)
-    }
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(request = requestBuilder.build())
     if (!response.isSuccessful) {
@@ -217,7 +284,7 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     )
 
     return LynxchanCaptchaFull(
-      needBlockBypass = false,
+      needBlockBypass = needBlockBypass,
       lynxchanCaptchaJson = lynxchanCaptchaJson,
       captchaImage = imgImageBitmap
     )
@@ -317,13 +384,26 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
   }
 
   class LynxchanCaptchaError(message: String) : Error(message)
+  class LynxchanCaptchaPOWError : Error("Proof-of-work required to post")
 
   class LynxchanCaptchaFull(
     val needBlockBypass: Boolean,
-    val lynxchanCaptchaJson: LynxchanCaptchaJson?,
-    val captchaImage: BitmapPainter?
+    val lynxchanCaptchaJson: LynxchanCaptchaJson,
+    val captchaImage: BitmapPainter
   ) {
+    var needProofOfWork = mutableStateOf(false)
     var currentInputValue = mutableStateOf<String>("")
+  }
+
+  // {"status":"hashcash","data":null}
+  @JsonClass(generateAdapter = true)
+  data class BlockBypassStatus(
+    @Json(name = "status") val status: String,
+    @Json(name = "data") val data: String?
+  ) {
+    val isOk: Boolean = status.equals("ok", ignoreCase = true)
+    val isHashcash: Boolean = status.equals("hashcash", ignoreCase = true)
+    val isError: Boolean = status.equals("error", ignoreCase = true)
   }
 
   // {"status":"ok","data":{"valid":false,"mode":1}}
