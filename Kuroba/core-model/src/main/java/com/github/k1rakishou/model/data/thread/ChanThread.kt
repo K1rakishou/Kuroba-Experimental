@@ -793,8 +793,7 @@ class ChanThread(
       moderatorCapcode = newChanPost.moderatorCapcode,
       isSavedReply = newChanPost.isSavedReply,
       isSage = newChanPost.isSage,
-      deleted = oldChanPost.isDeleted
-        || (deletedPostsSet != null && deletedPostsSet.contains(oldChanPost.postDescriptor))
+      deleted = oldChanPost.isDeleted || (deletedPostsSet?.contains(oldChanPost.postDescriptor) == true)
     )
 
     handlePostContentLoadedMap(mergedPost, oldChanPost, postCommentsDiffer)
