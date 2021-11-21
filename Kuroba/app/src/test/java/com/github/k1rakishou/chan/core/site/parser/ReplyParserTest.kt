@@ -4,7 +4,7 @@ import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.ParserRepository
 import com.github.k1rakishou.chan.core.site.sites.Diochan
-import com.github.k1rakishou.chan.core.site.sites.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.common.AndroidUtils

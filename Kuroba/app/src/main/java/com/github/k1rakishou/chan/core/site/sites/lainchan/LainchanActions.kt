@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site.common.vichan
+package com.github.k1rakishou.chan.core.site.sites.lainchan
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
@@ -39,7 +39,7 @@ import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.regex.Pattern
 
-open class VichanActions(
+open class LainchanActions(
   commonSite: CommonSite,
   private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
   private val siteManager: SiteManager,
@@ -102,7 +102,7 @@ open class VichanActions(
     val desktopUrl = site.resolvable().desktopUrl(replyChanDescriptor, null)?.toHttpUrl()
       ?: return ModularResult.error(CommonClientException("Failed to get desktopUrl by chanDescriptor: $replyChanDescriptor"))
 
-    val antispam = VichanAntispam(proxiedOkHttpClient, desktopUrl)
+    val antispam = LainchanAntispam(proxiedOkHttpClient, desktopUrl)
 
     val antiSpamFieldsResult = antispam.get()
     if (antiSpamFieldsResult is ModularResult.Error) {

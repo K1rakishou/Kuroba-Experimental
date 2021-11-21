@@ -14,7 +14,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.chan.core.site.sites;
+package com.github.k1rakishou.chan.core.site.sites.lainchan;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -48,6 +48,7 @@ public class Lainchan extends CommonSite {
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
         private static final String ROOT = "https://lainchan.org/";
 
+        @NonNull
         @Override
         public Class<? extends Site> getSiteClass() {
             return Lainchan.class;
@@ -119,13 +120,13 @@ public class Lainchan extends CommonSite {
 
         setConfig(new CommonConfig() {
             @Override
-            public boolean siteFeature(SiteFeature siteFeature) {
+            public boolean siteFeature(@NonNull SiteFeature siteFeature) {
                 return super.siteFeature(siteFeature) || siteFeature == SiteFeature.POSTING;
             }
         });
 
         setEndpoints(new VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"));
-        setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
+        setActions(new LainchanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser());
     }
