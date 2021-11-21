@@ -34,6 +34,7 @@ public class ChanPostBuilder {
     public boolean closed;
     public boolean archived;
     public boolean deleted;
+    public boolean endless;
     private long lastModified;
     public String name = "";
     public PostCommentBuilder postCommentBuilder = PostCommentBuilder.create();
@@ -217,6 +218,11 @@ public class ChanPostBuilder {
 
     public ChanPostBuilder closed(boolean closed) {
         this.closed = closed;
+        return this;
+    }
+
+    public ChanPostBuilder endless(boolean endless) {
+        this.endless = endless;
         return this;
     }
 

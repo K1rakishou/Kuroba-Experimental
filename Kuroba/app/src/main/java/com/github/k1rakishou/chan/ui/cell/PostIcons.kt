@@ -207,6 +207,10 @@ class PostIcons @JvmOverloads constructor(
       offset += drawBitmapDrawable(canvas, archivedIcon, offset)
     }
 
+    if (get(CYCLIC)) {
+      offset += drawBitmapDrawable(canvas, cyclicIcon, offset)
+    }
+
     if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
       for (httpIcon in httpIcons) {
         if (httpIcon.drawable == null) {
@@ -246,6 +250,10 @@ class PostIcons @JvmOverloads constructor(
 
     if (get(ARCHIVED)) {
       totalWidth += getBitmapDrawableWidth(archivedIcon)
+    }
+
+    if (get(CYCLIC)) {
+      totalWidth += getBitmapDrawableWidth(cyclicIcon)
     }
 
     if (get(HTTP_ICONS) && httpIcons.isNotEmpty()) {
@@ -301,6 +309,7 @@ class PostIcons @JvmOverloads constructor(
     const val DELETED = 0x4
     const val ARCHIVED = 0x8
     const val HTTP_ICONS = 0x10
+    const val CYCLIC = 0x20
 
     private val stickyIcon = MediaUtils.bitmapToDrawable(
       BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.sticky_icon)
@@ -313,6 +322,9 @@ class PostIcons @JvmOverloads constructor(
     )
     private val archivedIcon = MediaUtils.bitmapToDrawable(
       BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.archived_icon)
+    )
+    private val cyclicIcon = MediaUtils.bitmapToDrawable(
+      BitmapFactory.decodeResource(AppModuleAndroidUtils.getRes(), R.drawable.cyclic_icon)
     )
   }
 

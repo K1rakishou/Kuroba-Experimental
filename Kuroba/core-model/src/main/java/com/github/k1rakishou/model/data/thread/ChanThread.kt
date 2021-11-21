@@ -839,6 +839,7 @@ class ChanThread(
       sticky = newChanOriginalPost.sticky,
       closed = newChanOriginalPost.closed,
       archived = newChanOriginalPost.archived,
+      endless = newChanOriginalPost.endless,
       deleted = oldChanOriginalPost.isDeleted
         || (deletedPostsSet != null && deletedPostsSet.contains(oldChanOriginalPost.postDescriptor))
     )

@@ -28,6 +28,9 @@ class ChanOriginalPost(
   @get:Synchronized
   @set:Synchronized
   var archived: Boolean = false,
+  @get:Synchronized
+  @set:Synchronized
+  var endless: Boolean = false,
   repliesFrom: Set<PostDescriptor>? = null,
   deleted: Boolean = false
 ) : ChanPost(
@@ -92,6 +95,7 @@ class ChanOriginalPost(
     if (closed != other.closed) return false
     if (archived != other.archived) return false
     if (isDeleted != other.isDeleted) return false
+    if (endless != other.endless) return false
 
     return true
   }
@@ -106,6 +110,7 @@ class ChanOriginalPost(
     result = 31 * result + closed.hashCode()
     result = 31 * result + archived.hashCode()
     result = 31 * result + isDeleted.hashCode()
+    result = 31 * result + endless.hashCode()
     return result
   }
 
@@ -121,6 +126,7 @@ class ChanOriginalPost(
       ", closed=" + closed +
       ", archived=" + archived +
       ", deleted=" + isDeleted +
+      ", endless=" + endless +
       ", postImages=" + postImages.size +
       ", subject='" + subject + '\'' +
       ", postComment=" + postComment.originalComment().take(64) +

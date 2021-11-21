@@ -219,6 +219,7 @@ class DvachApiV2(
       if (builder.op) {
         builder.sticky(threadPost.sticky > 0L)
         builder.closed(threadPost.closed == 1L)
+        builder.endless(threadPost.endless == 1L)
 
         if (posters != null) {
           builder.uniqueIps(posters)

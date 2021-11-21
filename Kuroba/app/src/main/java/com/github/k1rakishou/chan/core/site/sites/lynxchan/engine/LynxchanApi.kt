@@ -314,6 +314,10 @@ open class LynxchanApi(
           builder.closed(post.locked)
         }
 
+        if (post.cyclic != null) {
+          builder.endless(post.cyclic)
+        }
+
         if (isReadingCatalog) {
           val visiblePostsCount = post.morePosts?.size ?: 0
           val omittedPostsCount = post.omittedPostsCount ?: 0

@@ -1080,6 +1080,9 @@ class PostCell : ConstraintLayout,
     if (postCellData.isArchived) {
       icons.set(PostIcons.ARCHIVED, true)
     }
+    if (postCellData.isEndless) {
+      icons.set(PostIcons.CYCLIC, true)
+    }
 
     icons.set(PostIcons.HTTP_ICONS, postIcons.isNotEmpty())
 

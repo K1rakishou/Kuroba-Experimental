@@ -92,6 +92,7 @@ object ChanPostMapper {
         closed = chanPostBuilder.closed,
         archived = chanPostBuilder.archived,
         deleted = chanPostBuilder.deleted,
+        endless = chanPostBuilder.endless,
         isSavedReply = chanPostBuilder.isSavedReply
       )
     } else {

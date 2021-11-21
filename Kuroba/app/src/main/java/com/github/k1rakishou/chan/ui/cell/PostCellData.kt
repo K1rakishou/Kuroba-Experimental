@@ -107,6 +107,8 @@ data class PostCellData(
     get() = (post as? ChanOriginalPost)?.closed ?: false
   val isArchived: Boolean
     get() = (post as? ChanOriginalPost)?.archived ?: false
+  val isEndless: Boolean
+    get() = (post as? ChanOriginalPost)?.endless ?: false
   val catalogRepliesCount: Int
     get() = post.catalogRepliesCount
   val catalogImagesCount: Int
@@ -280,6 +282,10 @@ data class PostCellData(
     }
 
     if (isArchived) {
+      ++count
+    }
+
+    if (isEndless) {
       ++count
     }
 
