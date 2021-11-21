@@ -8,7 +8,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Endchan : LynxchanSite() {
-  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "https://${defaultDomain}favicon.ico".toHttpUrl()) }
+  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${defaultDomain}favicon.ico".toHttpUrl()) }
 
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", defaultDomain.toString())

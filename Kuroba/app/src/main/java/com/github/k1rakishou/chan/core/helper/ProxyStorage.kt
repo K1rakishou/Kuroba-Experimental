@@ -21,9 +21,9 @@ import com.google.gson.stream.JsonReader
 import com.google.gson.stream.JsonWriter
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.channels.ConflatedBroadcastChannel
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.asFlow
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.InetSocketAddress
@@ -56,11 +56,9 @@ class ProxyStorage(
   @GuardedBy("this")
   private val allProxiesMap = mutableMapOf<ProxyKey, KurobaProxy>()
 
-  private val proxyStorageUpdates = ConflatedBroadcastChannel<ProxyStorageUpdate>()
-
-  fun listenForProxyUpdates(): Flow<ProxyStorageUpdate> {
-    return proxyStorageUpdates.asFlow()
-  }
+  private val _proxyStorageUpdates = MutableSharedFlow<ProxyStorageUpdate>(extraBufferCapacity = 32)
+  val proxyStorageUpdates: SharedFlow<ProxyStorageUpdate>
+    get() = _proxyStorageUpdates.asSharedFlow()
 
   fun isDirty(): Boolean = isProxyStorageDirty.get()
 
@@ -297,7 +295,7 @@ class ProxyStorage(
       isProxyStorageDirty.set(true)
     }
 
-    proxyStorageUpdates.offer(proxyStorageUpdate)
+    _proxyStorageUpdates.tryEmit(proxyStorageUpdate)
   }
 
   private fun initGson(): Gson {

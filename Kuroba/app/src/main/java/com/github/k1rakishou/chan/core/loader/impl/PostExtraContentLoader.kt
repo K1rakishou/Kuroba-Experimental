@@ -181,7 +181,6 @@ internal class PostExtraContentLoader(
 
       if (fetcher == null) {
         // No fetcher found for this link type
-        Logger.d(TAG, "No fetcher found for url \'$originalUrl\'")
         return@forEach
       }
 
