@@ -5,6 +5,7 @@ import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
+import androidx.core.text.buildSpannedString
 import androidx.core.text.getSpans
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -109,6 +110,8 @@ data class PostCellData(
     get() = (post as? ChanOriginalPost)?.archived ?: false
   val isEndless: Boolean
     get() = (post as? ChanOriginalPost)?.endless ?: false
+  val isSage: Boolean
+    get() = post.isSage
   val catalogRepliesCount: Int
     get() = post.catalogRepliesCount
   val catalogImagesCount: Int
@@ -359,6 +362,17 @@ data class PostCellData(
       }
 
       titleParts.add(tripcodeFull)
+    }
+
+    if (isSage) {
+      val sageString = buildSpannedString {
+        append("SAGE", ForegroundColorSpanHashed(theme.accentColor), 0)
+        append(" ")
+
+        setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)
+      }
+
+      titleParts.add(sageString)
     }
 
     val postNoText = SpannableString.valueOf(

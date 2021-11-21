@@ -34,7 +34,9 @@ data class ChanPostEntity(
   @ColumnInfo(name = IS_OP_COLUMN_NAME)
   val isOp: Boolean = false,
   @ColumnInfo(name = IS_SAVED_REPLY_COLUMN_NAME)
-  val isSavedReply: Boolean = false
+  val isSavedReply: Boolean = false,
+  @ColumnInfo(name = IS_SAGE_COLUMN_NAME)
+  val isSage: Boolean = false
 ) {
   companion object {
     const val TABLE_NAME = "chan_post"
@@ -47,5 +49,6 @@ data class ChanPostEntity(
     const val MODERATOR_CAPCODE_COLUMN_NAME = "moderator_capcode"
     const val IS_OP_COLUMN_NAME = "is_op"
     const val IS_SAVED_REPLY_COLUMN_NAME = "is_saved_reply"
+    const val IS_SAGE_COLUMN_NAME = "is_sage"
   }
 }

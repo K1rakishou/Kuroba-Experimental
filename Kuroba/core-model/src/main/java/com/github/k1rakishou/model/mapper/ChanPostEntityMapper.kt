@@ -31,7 +31,8 @@ object ChanPostEntityMapper {
       posterId = chanPost.posterId,
       moderatorCapcode = chanPost.moderatorCapcode,
       isOp = chanPost is ChanOriginalPost,
-      isSavedReply = chanPost.isSavedReply
+      isSavedReply = chanPost.isSavedReply,
+      isSage = chanPost.isSage
     )
   }
 
@@ -119,6 +120,9 @@ object ChanPostEntityMapper {
         posterId = chanPostEntity.posterId,
         moderatorCapcode = chanPostEntity.moderatorCapcode,
         isSavedReply = chanPostEntity.isSavedReply,
+        isSage = chanPostEntity.isSage,
+        // Do not serialize/deserialize "endless" flag
+        endless = false
       )
     } else {
       ChanPost(
@@ -136,6 +140,7 @@ object ChanPostEntityMapper {
         moderatorCapcode = chanPostEntity.moderatorCapcode,
         isSavedReply = chanPostEntity.isSavedReply,
         deleted = chanPostEntity.deleted,
+        isSage = chanPostEntity.isSage
       )
     }
   }

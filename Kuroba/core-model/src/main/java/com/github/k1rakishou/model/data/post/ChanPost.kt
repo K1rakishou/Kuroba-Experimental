@@ -17,9 +17,10 @@ open class ChanPost(
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
-  val isSavedReply: Boolean = false,
+  val isSavedReply: Boolean,
+  val isSage: Boolean,
   repliesFrom: Set<PostDescriptor>? = null,
-  deleted: Boolean = false
+  deleted: Boolean,
 ) {
   /**
    * We use this array to avoid infinite loops when binding posts since after all post content
@@ -107,6 +108,7 @@ open class ChanPost(
       moderatorCapcode = moderatorCapcode,
       isSavedReply = isSavedReply,
       repliesFrom = repliesFrom,
+      isSage = isSage,
       deleted = overrideDeleted ?: isDeleted
     ).also { newPost ->
       newPost.replaceOnDemandContentLoadedArray(this.copyOnDemandContentLoadedArray())
@@ -259,6 +261,7 @@ open class ChanPost(
     result = 31 * result + (posterId?.hashCode() ?: 0)
     result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
     result = 31 * result + isSavedReply.hashCode()
+    result = 31 * result + isSage.hashCode()
     return result
   }
 

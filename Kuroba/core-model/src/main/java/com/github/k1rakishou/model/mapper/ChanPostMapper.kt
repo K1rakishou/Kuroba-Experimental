@@ -93,6 +93,7 @@ object ChanPostMapper {
         archived = chanPostBuilder.archived,
         deleted = chanPostBuilder.deleted,
         endless = chanPostBuilder.endless,
+        isSage = chanPostBuilder.sage,
         isSavedReply = chanPostBuilder.isSavedReply
       )
     } else {
@@ -111,6 +112,7 @@ object ChanPostMapper {
         moderatorCapcode = chanPostBuilder.moderatorCapcode,
         isSavedReply = chanPostBuilder.isSavedReply,
         deleted = chanPostBuilder.deleted,
+        isSage = chanPostBuilder.sage,
       )
     }
   }

@@ -792,6 +792,7 @@ class ChanThread(
       posterId = newChanPost.posterId,
       moderatorCapcode = newChanPost.moderatorCapcode,
       isSavedReply = newChanPost.isSavedReply,
+      isSage = newChanPost.isSage,
       deleted = oldChanPost.isDeleted
         || (deletedPostsSet != null && deletedPostsSet.contains(oldChanPost.postDescriptor))
     )
@@ -840,6 +841,7 @@ class ChanThread(
       closed = newChanOriginalPost.closed,
       archived = newChanOriginalPost.archived,
       endless = newChanOriginalPost.endless,
+      isSage = newChanOriginalPost.isSage,
       deleted = oldChanOriginalPost.isDeleted
         || (deletedPostsSet != null && deletedPostsSet.contains(oldChanOriginalPost.postDescriptor))
     )

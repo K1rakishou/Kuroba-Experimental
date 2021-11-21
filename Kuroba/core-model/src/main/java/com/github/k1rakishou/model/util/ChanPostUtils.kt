@@ -164,6 +164,9 @@ object ChanPostUtils {
     if (chanPostBuilder.op != (chanPostFromCache is ChanOriginalPost)) {
       return true
     }
+    if (chanPostBuilder.sage != chanPostFromCache.isSage) {
+      return true
+    }
 
     if (chanPostBuilder.op) {
       chanPostFromCache as ChanOriginalPost
@@ -193,6 +196,9 @@ object ChanPostUtils {
         return true
       }
       if (chanPostBuilder.deleted != chanPostFromCache.isDeleted) {
+        return true
+      }
+      if (chanPostBuilder.endless != chanPostFromCache.endless) {
         return true
       }
       if (chanPostBuilder.totalRepliesCount != chanPostFromCache.catalogRepliesCount) {

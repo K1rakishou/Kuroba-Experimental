@@ -16,23 +16,24 @@ class ChanOriginalPost(
   name: String? = null,
   posterId: String? = null,
   moderatorCapcode: String? = null,
-  isSavedReply: Boolean = false,
+  isSavedReply: Boolean,
   override val catalogRepliesCount: Int = -1,
   override val catalogImagesCount: Int = -1,
   override val uniqueIps: Int = -1,
   val lastModified: Long,
-  val sticky: Boolean = false,
+  val sticky: Boolean,
   @get:Synchronized
   @set:Synchronized
-  var closed: Boolean = false,
+  var closed: Boolean,
   @get:Synchronized
   @set:Synchronized
-  var archived: Boolean = false,
+  var archived: Boolean,
   @get:Synchronized
   @set:Synchronized
-  var endless: Boolean = false,
+  var endless: Boolean,
   repliesFrom: Set<PostDescriptor>? = null,
-  deleted: Boolean = false
+  isSage: Boolean,
+  deleted: Boolean
 ) : ChanPost(
   chanPostId,
   postDescriptor,
@@ -47,6 +48,7 @@ class ChanOriginalPost(
   posterId,
   moderatorCapcode,
   isSavedReply,
+  isSage,
   repliesFrom,
   deleted
 ) {
@@ -73,6 +75,8 @@ class ChanOriginalPost(
       sticky = sticky,
       closed = closed,
       archived = archived,
+      endless = endless,
+      isSage = isSage,
       repliesFrom = repliesFrom,
       deleted = overrideDeleted ?: isDeleted
     ).also { newPost ->
@@ -96,6 +100,7 @@ class ChanOriginalPost(
     if (archived != other.archived) return false
     if (isDeleted != other.isDeleted) return false
     if (endless != other.endless) return false
+    if (isSage != other.isSage) return false
 
     return true
   }
@@ -111,6 +116,7 @@ class ChanOriginalPost(
     result = 31 * result + archived.hashCode()
     result = 31 * result + isDeleted.hashCode()
     result = 31 * result + endless.hashCode()
+    result = 31 * result + isSage.hashCode()
     return result
   }
 
@@ -127,6 +133,7 @@ class ChanOriginalPost(
       ", archived=" + archived +
       ", deleted=" + isDeleted +
       ", endless=" + endless +
+      ", isSage=" + isSage +
       ", postImages=" + postImages.size +
       ", subject='" + subject + '\'' +
       ", postComment=" + postComment.originalComment().take(64) +

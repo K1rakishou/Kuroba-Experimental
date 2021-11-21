@@ -255,6 +255,7 @@ class DvachApiV2(
       builder.subject(threadPost.subject)
       builder.comment(threadPost.comment)
       builder.setUnixTimestampSeconds(threadPost.timestamp)
+      builder.sage(threadPost.isSage())
 
       val postImages = threadPost.files
         ?.mapNotNull { postFile -> postFile.toChanPostImage(board, endpoints) }
@@ -532,6 +533,10 @@ class DvachApiV2(
         boardDescriptor.boardCode,
         originalPostNo
       )
+    }
+
+    fun isSage(): Boolean {
+      return email.contains("mailto:sage")
     }
   }
 

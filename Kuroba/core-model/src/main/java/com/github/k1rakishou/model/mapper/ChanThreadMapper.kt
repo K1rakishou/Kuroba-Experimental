@@ -89,7 +89,10 @@ object ChanThreadMapper {
       tripcode = ChanPostEntityMapper.mapTripcode(gson, chanTextSpanEntityList),
       posterId = chanPostFull.chanPostEntity.posterId,
       moderatorCapcode = chanPostFull.chanPostEntity.moderatorCapcode,
-      isSavedReply = chanPostFull.chanPostEntity.isSavedReply
+      isSavedReply = chanPostFull.chanPostEntity.isSavedReply,
+      isSage = chanPostFull.chanPostEntity.isSage,
+      // Do not serialize/deserialize "endless" flag
+      endless = false
     )
   }
 
