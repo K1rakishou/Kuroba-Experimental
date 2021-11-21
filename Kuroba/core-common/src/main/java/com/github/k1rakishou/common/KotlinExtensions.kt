@@ -620,6 +620,10 @@ fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
 }
 
 fun Throwable.errorMessageOrClassName(): String {
+  if (!isExceptionImportant()) {
+    return this::class.java.name
+  }
+
   val actualMessage = if (cause?.message?.isNotNullNorBlank() == true) {
     cause!!.message
   } else {
@@ -635,8 +639,9 @@ fun Throwable.errorMessageOrClassName(): String {
 
 fun Throwable.isExceptionImportant(): Boolean {
   return when (this) {
-    is CancellationException -> false
-    is InterruptedIOException -> false
+    is CancellationException,
+    is InterruptedIOException,
+    is InterruptedException,
     is SSLException -> false
     else -> true
   }

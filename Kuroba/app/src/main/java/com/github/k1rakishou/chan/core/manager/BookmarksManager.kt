@@ -320,9 +320,10 @@ class BookmarksManager(
    * */
   fun updateBookmarkNoPersist(
     threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    notifyListeners: Boolean = true,
     mutator: (ThreadBookmark) -> Unit
   ): ChanDescriptor.ThreadDescriptor? {
-    return updateBookmarksNoPersist(listOf(threadDescriptor), mutator).firstOrNull()
+    return updateBookmarksNoPersist(listOf(threadDescriptor), notifyListeners, mutator).firstOrNull()
   }
 
   /**
@@ -332,6 +333,7 @@ class BookmarksManager(
    * */
   fun updateBookmarksNoPersist(
     threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    notifyListeners: Boolean = true,
     mutator: (ThreadBookmark) -> Unit
   ): Set<ChanDescriptor.ThreadDescriptor> {
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
@@ -360,7 +362,7 @@ class BookmarksManager(
       return@write
     }
 
-    if (updatedBookmarks.isNotEmpty()) {
+    if (notifyListeners && updatedBookmarks.isNotEmpty()) {
       bookmarksChangeFlow.tryEmit(BookmarkChange.BookmarksUpdated(updatedBookmarks))
     }
 
@@ -597,7 +599,13 @@ class BookmarksManager(
       return
     }
 
-    updateBookmarkNoPersist(threadDescriptor) { threadBookmark ->
+    updateBookmarkNoPersist(
+      threadDescriptor = threadDescriptor,
+      // This method may get called a lot of times quickly and every time a notification event will
+      // be emitted which may become a cause of performance degradation, so we don't want to emit it
+      // here but rather further down after debouncing.
+      notifyListeners = false
+    ) { threadBookmark ->
       threadBookmark.updateSeenPostsCount(unseenPostsCount)
       threadBookmark.updateLastViewedPostNo(postNo)
       threadBookmark.readRepliesUpTo(postNo)
@@ -614,10 +622,6 @@ class BookmarksManager(
           })
       }
     )
-  }
-
-  fun refreshBookmarks() {
-    bookmarksChanged(BookmarkChange.BookmarksUpdated(null))
   }
 
   suspend fun persistBookmarkManually(threadDescriptor: ChanDescriptor.ThreadDescriptor) {

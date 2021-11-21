@@ -412,12 +412,8 @@ class BookmarkWatcherDelegate(
     threadBookmarkFetchResults.forEach { fetchResult ->
       when (fetchResult) {
         is ThreadBookmarkFetchResult.Error -> {
-          if (verboseLogsEnabled) {
-            Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}", fetchResult.error)
-          } else {
-            Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}, " +
-              "error: ${fetchResult.error.errorMessageOrClassName()}")
-          }
+          Logger.e(TAG, "FetchResult.Error: descriptor=${fetchResult.threadDescriptor}, " +
+            "error: ${fetchResult.error.errorMessageOrClassName()}")
 
           ++errorsCount
         }
