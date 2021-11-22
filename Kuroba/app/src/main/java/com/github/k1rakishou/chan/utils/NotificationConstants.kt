@@ -18,10 +18,13 @@ object NotificationConstants {
   const val LAST_PAGE_NOTIFICATION_ID = 2
   const val IMAGE_SAVER_WORKER_NOTIFICATION_ID = 3
   const val POSTING_SERVICE_NOTIFICATION_ID = 4
+  const val FILTER_SUMMARY_NOTIFICATION_ID = 5
+  const val FILTER_WATCHER_NOTIFICATION_ID = 6
 
   const val REPLY_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_reply_notification_action"
   const val LAST_PAGE_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_last_page_notification_action"
   const val POSTING_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_posting_notification_action"
+  const val FILTER_WATCHER_NOTIFICATION_ACTION = "${BuildConfig.APPLICATION_ID}_filter_watcher_notification_action"
 
   object ReplyNotifications {
     val notificationIdCounter = AtomicInteger(1000000)
@@ -110,6 +113,34 @@ object NotificationConstants {
     const val CHILD_NOTIFICATION_NAME = "Notification channel for posting updates"
 
     const val NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY = "posting_service_child_notification_click_chan_descriptor"
+  }
+
+  object FilterWatcherNotifications {
+    private val notificationIdCounter = AtomicInteger(4000000)
+    private val notificationIdMap = mutableMapOf<String, Int>()
+
+    fun notificationId(pattern: String): Int {
+      val prevNotificationId = notificationIdMap[pattern]
+      if (prevNotificationId != null) {
+        return prevNotificationId
+      }
+
+      val newNotificationId = notificationIdCounter.incrementAndGet()
+      notificationIdMap[pattern] = newNotificationId
+
+      return newNotificationId
+    }
+
+    const val NOTIFICATION_TAG = "filter_watcher_notification"
+    const val SUMMARY_NOTIFICATION_TAG = "filter_watcher_summary_notification"
+
+    const val FW_SUMMARY_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_filter_watcher_summary_notifications_channel"
+    const val FW_SUMMARY_NOTIFICATION_CHANNEL_NAME = "Notification channel for filter watcher summary"
+
+    const val FW_NOTIFICATION_CHANNEL_ID = "${BuildConfig.APPLICATION_ID}_filter_watcher_notifications_channel"
+    const val FW_NOTIFICATION_CHANNEL_NAME = "Notification channel for filter watcher"
+
+    const val FW_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY = "filter_watcher_notification_click_thread_descriptors"
   }
 
 }

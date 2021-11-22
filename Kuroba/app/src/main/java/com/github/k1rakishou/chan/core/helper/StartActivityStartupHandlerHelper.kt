@@ -316,6 +316,9 @@ class StartActivityStartupHandlerHelper(
       intent.hasExtra(NotificationConstants.PostingServiceNotifications.NOTIFICATION_CLICK_CHAN_DESCRIPTOR_KEY) -> {
         return postingNotificationClicked(intent)
       }
+      intent.hasExtra(NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY) -> {
+        return filterWatcherNotificationClicked(intent)
+      }
       action == Intent.ACTION_VIEW -> {
         return restoreFromUrl(intent)
       }
@@ -504,6 +507,7 @@ class StartActivityStartupHandlerHelper(
       NotificationConstants.LAST_PAGE_NOTIFICATION_ACTION -> true
       NotificationConstants.REPLY_NOTIFICATION_ACTION -> true
       NotificationConstants.POSTING_NOTIFICATION_ACTION -> true
+      NotificationConstants.FILTER_WATCHER_NOTIFICATION_ACTION -> true
       ImageSaverV2Service.ACTION_TYPE_NAVIGATE -> true
       ImageSaverV2Service.ACTION_TYPE_RESOLVE_DUPLICATES -> true
       ImageSaverV2Service.ACTION_TYPE_RETRY_FAILED -> true
@@ -511,6 +515,35 @@ class StartActivityStartupHandlerHelper(
       Intent.ACTION_VIEW -> true
       else -> false
     }
+  }
+
+
+  private suspend fun filterWatcherNotificationClicked(intent: Intent): Boolean {
+    val extras = intent.extras
+      ?: return false
+
+    val descriptorParcelableList = extras.getParcelableArrayList<DescriptorParcelable>(
+      NotificationConstants.FilterWatcherNotifications.FW_NOTIFICATION_CLICK_THREAD_DESCRIPTORS_KEY
+    )
+
+    if (descriptorParcelableList == null || descriptorParcelableList.isEmpty()) {
+      return false
+    }
+
+    val bookmarkThreadDescriptors = descriptorParcelableList
+      .mapNotNull { it.toChanDescriptor().threadDescriptorOrNull() }
+
+    Logger.d(TAG, "filterWatcherNotificationClicked() bookmarkThreadDescriptors=${bookmarkThreadDescriptors.size}")
+
+    loadBoardIfNeeded(tag = "filterWatcherNotificationClicked()")
+
+    if (bookmarkThreadDescriptors.isNotEmpty()) {
+      Logger.d(TAG, "filterWatcherNotificationClicked() -> openBookmarksController()")
+      mainController?.openBookmarksController(bookmarkThreadDescriptors)
+      return true
+    }
+
+    return false
   }
 
   private suspend fun postingNotificationClicked(intent: Intent): Boolean {
@@ -613,16 +646,7 @@ class StartActivityStartupHandlerHelper(
     Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() " +
       "threadDescriptorsCount=${threadDescriptors.size}, postDescriptorsCount=${postDescriptors.size}")
 
-    if (needToLoadBoard) {
-      val catalogToOpen = getCatalogToOpen()
-      if (catalogToOpen != null) {
-        Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> showCatalogWithoutFocusing()")
-        browseController?.showCatalogWithoutFocusing(catalogToOpen, false)
-      } else {
-        Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> loadWithDefaultBoard()")
-        browseController?.loadWithDefaultBoard()
-      }
-    }
+    loadBoardIfNeeded(tag = "openThreadFromNotificationOrBookmarksController()")
 
     if (threadDescriptors.size != 1) {
       Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> openBookmarksController()")
@@ -636,6 +660,19 @@ class StartActivityStartupHandlerHelper(
     } else {
       Logger.d(TAG, "openThreadFromNotificationOrBookmarksController() -> loadThread()")
       startActivityCallbacks?.loadThread(threadDescriptors.first(), animated = false)
+    }
+  }
+
+  private suspend fun loadBoardIfNeeded(tag: String) {
+    if (needToLoadBoard) {
+      val catalogToOpen = getCatalogToOpen()
+      if (catalogToOpen != null) {
+        Logger.d(TAG, "$tag -> showCatalogWithoutFocusing()")
+        browseController?.showCatalogWithoutFocusing(catalogToOpen, false)
+      } else {
+        Logger.d(TAG, "$tag -> loadWithDefaultBoard()")
+        browseController?.loadWithDefaultBoard()
+      }
     }
   }
 

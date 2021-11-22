@@ -215,6 +215,7 @@ class CreateOrUpdateFilterController(
     var onlyOnOP by remember { chanFilterMutableState.onlyOnOP }
     var applyToSaved by remember { chanFilterMutableState.applyToSaved }
     var applyToEmptyComments by remember { chanFilterMutableState.applyToEmptyComments }
+    var filterWatchNotify by remember { chanFilterMutableState.filterWatchNotify }
     val arrowDropDownDrawable = remember { getTextDrawableContent() }
 
     if (action == FilterAction.WATCH.id) {
@@ -369,15 +370,16 @@ class CreateOrUpdateFilterController(
 
     }
 
-    KurobaComposeCheckbox(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight(),
-      text = stringResource(id = R.string.filter_apply_to_replies),
-      enabled = action != FilterAction.WATCH.id,
-      currentlyChecked = applyToReplies,
-      onCheckChanged = { checked -> applyToReplies = checked }
-    )
+    if (action != FilterAction.WATCH.id) {
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_apply_to_replies),
+        currentlyChecked = applyToReplies,
+        onCheckChanged = { checked -> applyToReplies = checked }
+      )
+    }
 
     KurobaComposeCheckbox(
       modifier = Modifier
@@ -389,25 +391,37 @@ class CreateOrUpdateFilterController(
       onCheckChanged = { checked -> onlyOnOP = checked }
     )
 
-    KurobaComposeCheckbox(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight(),
-      text = stringResource(id = R.string.filter_apply_to_own_posts),
-      enabled = action != FilterAction.WATCH.id,
-      currentlyChecked = applyToSaved,
-      onCheckChanged = { checked -> applyToSaved = checked }
-    )
+    if (action == FilterAction.WATCH.id) {
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_watcher_notify),
+        enabled = true,
+        currentlyChecked = filterWatchNotify,
+        onCheckChanged = { checked -> filterWatchNotify = checked }
+      )
+    }
 
-    KurobaComposeCheckbox(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight(),
-      text = stringResource(id = R.string.filter_apply_to_post_with_empty_comment),
-      enabled = action != FilterAction.WATCH.id,
-      currentlyChecked = applyToEmptyComments,
-      onCheckChanged = { checked -> applyToEmptyComments = checked }
-    )
+    if (action != FilterAction.WATCH.id) {
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_apply_to_own_posts),
+        currentlyChecked = applyToSaved,
+        onCheckChanged = { checked -> applyToSaved = checked }
+      )
+
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_apply_to_post_with_empty_comment),
+        currentlyChecked = applyToEmptyComments,
+        onCheckChanged = { checked -> applyToEmptyComments = checked }
+      )
+    }
   }
 
   @Composable
@@ -766,6 +780,7 @@ class CreateOrUpdateFilterController(
     val onlyOnOP: MutableState<Boolean> = mutableStateOf(false),
     val applyToSaved: MutableState<Boolean> = mutableStateOf(false),
     val applyToEmptyComments: MutableState<Boolean> = mutableStateOf(false),
+    val filterWatchNotify: MutableState<Boolean> = mutableStateOf(false),
 
     val testPattern: MutableState<String> = mutableStateOf(""),
     val filterValidationResult: MutableState<FilterValidationResult> = mutableStateOf(FilterValidationResult.Undefined)
@@ -786,6 +801,7 @@ class CreateOrUpdateFilterController(
         onlyOnOP = onlyOnOP.value,
         applyToSaved = applyToSaved.value,
         applyToEmptyComments = applyToEmptyComments.value,
+        filterWatchNotify = filterWatchNotify.value,
       )
     }
 
@@ -805,6 +821,7 @@ class CreateOrUpdateFilterController(
           chanFilterMutableState.onlyOnOP.value = chanFilterMutable.onlyOnOP
           chanFilterMutableState.applyToSaved.value = chanFilterMutable.applyToSaved
           chanFilterMutableState.applyToEmptyComments.value = chanFilterMutable.applyToEmptyComments
+          chanFilterMutableState.filterWatchNotify.value = chanFilterMutable.filterWatchNotify
 
           chanFilterMutableState.color.value = if (chanFilterMutable.color != 0) {
             chanFilterMutable.color

@@ -541,6 +541,7 @@ class ChanFilterManager(
       onlyOnOP = newChanFilter.onlyOnOP,
       applyToSaved = newChanFilter.applyToSaved,
       applyToEmptyComments = newChanFilter.applyToEmptyComments,
+      filterWatchNotify = newChanFilter.filterWatchNotify,
     )
   }
 

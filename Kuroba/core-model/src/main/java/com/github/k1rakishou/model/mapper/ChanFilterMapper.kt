@@ -29,6 +29,7 @@ object ChanFilterMapper {
       onlyOnOP = chanFilterFull.chanFilterEntity.onlyOnOP,
       applyToSaved = chanFilterFull.chanFilterEntity.applyToSaved,
       applyToEmptyComments = chanFilterFull.chanFilterEntity.applyToEmptyComments,
+      filterWatchNotify = chanFilterFull.chanFilterEntity.filterWatchNotify,
     )
   }
 
@@ -47,6 +48,7 @@ object ChanFilterMapper {
         onlyOnOP = chanFilter.onlyOnOP,
         applyToSaved = chanFilter.applyToSaved,
         applyToEmptyComments = chanFilter.applyToEmptyComments,
+        filterWatchNotify = chanFilter.filterWatchNotify,
       ),
       chanFilterBoardConstraintEntityList = chanFilter.boards.map { boardDescriptor ->
         ChanFilterBoardConstraintEntity(

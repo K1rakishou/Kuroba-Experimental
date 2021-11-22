@@ -288,8 +288,10 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_note">Enter a note (Links will be clickable)</string>
     <string name="filter_apply_to_replies">Apply to replies</string>
     <string name="filter_only_on_op">Only apply to OP</string>
+    <string name="filter_watcher_notify">Notify when bookmarks created</string>
     <string name="filter_apply_to_own_posts">Apply to my own posts</string>
     <string name="filter_apply_to_post_with_empty_comment">Apply to posts with empty comment</string>
+    <string name="filter_filter_watch_notify">Notify on new matched threads</string>
     <string name="filter_filter_type_group">Filter type:</string>
     <string name="filter_boards_group">Boards:</string>
     <string name="filter_action_group">Action:</string>
@@ -1194,6 +1196,9 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
     <string name="reply_notifications_reply_format">Reply from %1$d to post %2$d</string>
     <string name="last_page_notification_threads_hit_last_page_format">%1$d thread(s) hit last page</string>
+
+    <string name="filter_watcher_new_bookmarks_total">Filter watcher matched %1$d filters with %2$d threads</string>
+    <string name="filter_watcher_new_bookmarks_per_pattern">Filter watcher matched %1$d threads for pattern \'%2$s\'</string>
 
     <string name="hsid_cookie_text">HSID</string>
     <string name="ssid_cookie_text">SSID</string>

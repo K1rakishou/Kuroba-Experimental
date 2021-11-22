@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.manager.watcher
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
@@ -14,10 +15,6 @@ import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlin.time.ExperimentalTime
@@ -31,22 +28,15 @@ class FilterWatcherDelegate(
   private val chanFilterManager: ChanFilterManager,
   private val chanPostRepository: ChanPostRepository,
   private val siteManager: SiteManager,
-  private val bookmarkFilterWatchableThreadsUseCase: BookmarkFilterWatchableThreadsUseCase
+  private val bookmarkFilterWatchableThreadsUseCase: BookmarkFilterWatchableThreadsUseCase,
+  private val filterWatcherNotificationHelper: FilterWatcherNotificationHelper
 ) {
-  private val bookmarkFilterWatchGroupsUpdatedFlow = MutableSharedFlow<Unit>(
-    extraBufferCapacity = 1,
-    onBufferOverflow = BufferOverflow.SUSPEND
-  )
 
   init {
     appScope.launch {
       chanFilterManager.listenForFilterGroupDeletions()
         .collect { filterDeletionEvent -> onFilterDeleted(filterDeletionEvent) }
     }
-  }
-
-  fun listenForBookmarkFilterWatchGroupsUpdatedFlowUpdates(): SharedFlow<Unit> {
-    return bookmarkFilterWatchGroupsUpdatedFlow.asSharedFlow()
   }
 
   @OptIn(ExperimentalTime::class)
@@ -75,10 +65,12 @@ class FilterWatcherDelegate(
           "error: ${result.error.errorMessageOrClassName()}")
       }
     } else {
-      result as ModularResult.Value
+      val createdBookmarks = (result as ModularResult.Value).value
+      if (createdBookmarks.isNotEmpty()) {
+        val totalCreatedBookmarksCount = createdBookmarks.values.sumOf { it.size }
 
-      if (result.value) {
-        bookmarkFilterWatchGroupsUpdatedFlow.tryEmit(Unit)
+        Logger.d(TAG, "showBookmarksCreatedNotification(totalCreatedBookmarksCount=${totalCreatedBookmarksCount})")
+        filterWatcherNotificationHelper.showBookmarksCreatedNotification(createdBookmarks)
       }
     }
 
@@ -108,10 +100,10 @@ class FilterWatcherDelegate(
   }
 
   private suspend fun awaitUntilAllDependenciesAreReady() {
+    siteManager.awaitUntilInitialized()
     boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
     chanFilterManager.awaitUntilInitialized()
-    siteManager.awaitUntilInitialized()
     chanPostRepository.awaitUntilInitialized()
   }
 

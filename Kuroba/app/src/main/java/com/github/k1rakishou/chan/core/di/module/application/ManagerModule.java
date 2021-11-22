@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
+import com.github.k1rakishou.chan.core.helper.FilterWatcherNotificationHelper;
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper;
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper;
 import com.github.k1rakishou.chan.core.helper.LastViewedPostNoInfoHolder;
@@ -488,6 +489,20 @@ public class ManagerModule {
 
     @Provides
     @Singleton
+    public FilterWatcherNotificationHelper provideFilterWatcherNotificationHelper(
+            Context appContext,
+            Lazy<ThemeEngine> themeEngine
+    ) {
+        Logger.deps("FilterWatcherNotificationHelper");
+        return new FilterWatcherNotificationHelper(
+                appContext,
+                getNotificationManagerCompat(),
+                themeEngine
+        );
+    }
+
+    @Provides
+    @Singleton
     public LastPageNotificationsHelper provideLastPageNotificationsHelper(
             Context appContext,
             Lazy<PageRequestManager> pageRequestManager,
@@ -686,7 +701,8 @@ public class ManagerModule {
             ChanFilterManager chanFilterManager,
             ChanPostRepository chanPostRepository,
             SiteManager siteManager,
-            BookmarkFilterWatchableThreadsUseCase bookmarkFilterWatchableThreadsUseCase
+            BookmarkFilterWatchableThreadsUseCase bookmarkFilterWatchableThreadsUseCase,
+            FilterWatcherNotificationHelper filterWatcherNotificationHelper
     ) {
         Logger.deps("FilterWatcherDelegate");
         return new FilterWatcherDelegate(
@@ -697,7 +713,8 @@ public class ManagerModule {
                 chanFilterManager,
                 chanPostRepository,
                 siteManager,
-                bookmarkFilterWatchableThreadsUseCase
+                bookmarkFilterWatchableThreadsUseCase,
+                filterWatcherNotificationHelper
         );
     }
 

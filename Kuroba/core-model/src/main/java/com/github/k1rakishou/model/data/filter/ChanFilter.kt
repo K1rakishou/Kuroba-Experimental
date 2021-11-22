@@ -14,7 +14,8 @@ class ChanFilter(
   val applyToReplies: Boolean = false,
   val onlyOnOP: Boolean = false,
   val applyToSaved: Boolean = false,
-  val applyToEmptyComments: Boolean = false
+  val applyToEmptyComments: Boolean = false,
+  val filterWatchNotify: Boolean = false
 ) {
 
   @Synchronized
@@ -27,6 +28,14 @@ class ChanFilter(
 
   @Synchronized
   fun getDatabaseId(): Long = filterDatabaseId
+
+  fun filterWatcherUseNotifications(): Boolean {
+    if (action != FilterAction.WATCH.id) {
+      return false
+    }
+
+    return filterWatchNotify
+  }
 
   fun isEnabledWatchFilter(): Boolean {
     return enabled && isWatchFilter()
@@ -68,6 +77,7 @@ class ChanFilter(
       onlyOnOP = onlyOnOP,
       applyToSaved = applyToSaved,
       applyToEmptyComments = applyToEmptyComments,
+      filterWatchNotify = filterWatchNotify,
     )
   }
 
@@ -89,6 +99,7 @@ class ChanFilter(
     if (onlyOnOP != other.onlyOnOP) return false
     if (applyToSaved != other.applyToSaved) return false
     if (applyToEmptyComments != other.applyToEmptyComments) return false
+    if (filterWatchNotify != other.filterWatchNotify) return false
 
     return true
   }
@@ -106,6 +117,7 @@ class ChanFilter(
     result = 31 * result + onlyOnOP.hashCode()
     result = 31 * result + applyToSaved.hashCode()
     result = 31 * result + applyToEmptyComments.hashCode()
+    result = 31 * result + filterWatchNotify.hashCode()
     return result
   }
 
@@ -113,7 +125,7 @@ class ChanFilter(
     return "ChanFilter(filterDatabaseId=$filterDatabaseId, enabled=$enabled, type=$type, " +
       "pattern=$pattern, boards=$boards, action=$action, color=$color, note=$note" +
       "applyToReplies=$applyToReplies, onlyOnOP=$onlyOnOP, applyToSaved=$applyToSaved, " +
-      "applyToEmptyComments=$applyToEmptyComments)"
+      "applyToEmptyComments=$applyToEmptyComments, filterWatchNotify=$filterWatchNotify)"
   }
 
 }

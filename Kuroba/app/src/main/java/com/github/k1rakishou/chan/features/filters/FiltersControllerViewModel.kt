@@ -379,6 +379,16 @@ class FiltersControllerViewModel : BaseViewModel() {
         append(chanFilter.applyToEmptyComments.toString())
       }
 
+      if (chanFilter.isWatchFilter() && chanFilter.filterWatchNotify) {
+        append("\n")
+        append(
+          AnnotatedString(getString(R.string.filter_filter_watch_notify),
+            SpanStyle(color = chanTheme.textColorSecondaryCompose))
+        )
+        append(" ")
+        append(chanFilter.filterWatchNotify.toString())
+      }
+
       val filterNote = chanFilter.note
       if (filterNote.isNotNullNorBlank()) {
         append("\n")

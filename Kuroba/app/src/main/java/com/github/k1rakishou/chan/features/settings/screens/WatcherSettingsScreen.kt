@@ -141,7 +141,8 @@ class WatcherSettingsScreen(
           },
           itemNameMapper = { timeout ->
             return@createBuilder kotlin.run {
-              if (AppModuleAndroidUtils.isDevBuild() && timeout == FILTER_WATCHER_INTERVALS.first()) {
+              val timeoutShouldBeInMinutes = TimeUnit.MILLISECONDS.toHours(timeout.toLong()).toInt() <= 0
+              if (timeoutShouldBeInMinutes) {
                 return@run getString(
                   R.string.minutes,
                   TimeUnit.MILLISECONDS.toMinutes(timeout.toLong()).toInt()
@@ -381,6 +382,7 @@ class WatcherSettingsScreen(
 
     private val FILTER_WATCHER_INTERVALS = listOf(
       TimeUnit.MINUTES.toMillis(1).toInt(),
+      TimeUnit.MINUTES.toMillis(30).toInt(),
       TimeUnit.HOURS.toMillis(1).toInt(),
       TimeUnit.HOURS.toMillis(2).toInt(),
       TimeUnit.HOURS.toMillis(4).toInt(),

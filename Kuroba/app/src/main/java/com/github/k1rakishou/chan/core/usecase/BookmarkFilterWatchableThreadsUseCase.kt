@@ -58,18 +58,18 @@ class BookmarkFilterWatchableThreadsUseCase(
   private val filterEngine: FilterEngine,
   private val chanPostRepository: ChanPostRepository,
   private val chanFilterWatchRepository: ChanFilterWatchRepository
-) : ISuspendUseCase<Unit, ModularResult<Boolean>> {
+) : ISuspendUseCase<Unit, ModularResult<Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>>> {
 
   /**
    * Returns true is we successfully fetched catalog threads, matched at least one filter with at
    * least one thread and successfully created at least one watch filter group.
    * */
-  override suspend fun execute(parameter: Unit): ModularResult<Boolean> {
+  override suspend fun execute(parameter: Unit): ModularResult<Map<String, MutableList<ChanDescriptor.ThreadDescriptor>>> {
     return ModularResult.Try { doWorkInternal() }
   }
 
   @Suppress("UnnecessaryVariable")
-  private suspend fun doWorkInternal(): Boolean {
+  private suspend fun doWorkInternal(): Map<String, MutableList<ChanDescriptor.ThreadDescriptor>> {
     boardManager.awaitUntilInitialized()
     bookmarksManager.awaitUntilInitialized()
     chanFilterManager.awaitUntilInitialized()
@@ -79,13 +79,13 @@ class BookmarkFilterWatchableThreadsUseCase(
     val enabledWatchFilters = chanFilterManager.getEnabledWatchFilters()
     if (enabledWatchFilters.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() enabledWatchFilters is empty")
-      return true
+      return emptyMap()
     }
 
     val boardDescriptorsToCheck = collectBoardDescriptorsToCheck()
     if (boardDescriptorsToCheck.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() boardDescriptorsToCheck is empty")
-      return true
+      return emptyMap()
     }
 
     Logger.d(TAG, "doWorkInternal() enabledWatchFilters=${enabledWatchFilters.size}")
@@ -102,7 +102,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     val filterWatchCatalogInfoObjects = filterOutNonSuccessResults(catalogFetchResults)
     if (filterWatchCatalogInfoObjects.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out error results")
-      return true
+      return emptyMap()
     }
 
     val matchedCatalogThreads = filterOutThreadsThatDoNotMatchWatchFilters(
@@ -133,23 +133,27 @@ class BookmarkFilterWatchableThreadsUseCase(
 
     if (matchedCatalogThreads.isEmpty()) {
       Logger.d(TAG, "doWorkInternal() Nothing has left after filtering out non-matching catalog threads")
-      return true
+      return emptyMap()
     }
 
     Logger.d(TAG, "doWorkInternal() matchedCatalogThreads=${matchedCatalogThreads.size}")
 
-    val result = withContext(NonCancellable) { createOrUpdateBookmarks(matchedCatalogThreads) }
-    Logger.d(TAG, "doWorkInternal() Success: $result")
+    val createdBookmarks = withContext(NonCancellable) { createOrUpdateBookmarks(matchedCatalogThreads) }
 
-    return result
+    createdBookmarks.entries.forEach { (pattern, bookmarkDescriptors) ->
+      Logger.d(TAG, "doWorkInternal() pattern=\'${pattern}\', bookmarkDescriptors: ${bookmarkDescriptors.size}")
+    }
+
+    return createdBookmarks
   }
 
   private suspend fun createOrUpdateBookmarks(
     matchedCatalogThreads: List<FilterWatchCatalogThreadInfoObject>
-  ): Boolean {
+  ): Map<String, MutableList<ChanDescriptor.ThreadDescriptor>> {
     val filterWatchGroupsToCreate = mutableListOf<ChanFilterWatchGroup>()
     val bookmarksToCreate = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
     val bookmarksToUpdate = mutableListOf<ChanDescriptor.ThreadDescriptor>()
+    val bookmarksToNotify = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
     val bookmarkGroupsToCreate = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
 
     matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
@@ -181,12 +185,21 @@ class BookmarkFilterWatchableThreadsUseCase(
 
         val filterPatter = filterWatchCatalogThreadInfoObject.matchedFilter().pattern
         if (filterPatter.isNotNullNorEmpty()) {
-          val bookmarkDescriptors = bookmarkGroupsToCreate.getOrPut(
+          val bookmarkDescriptorsToCreate = bookmarkGroupsToCreate.getOrPut(
             key = filterPatter,
             defaultValue = { mutableListOf() }
           )
 
-          bookmarkDescriptors.add(bookmarkThreadDescriptor)
+          bookmarkDescriptorsToCreate.add(bookmarkThreadDescriptor)
+
+          if (filterWatchCatalogThreadInfoObject.matchedFilter().filterWatcherUseNotifications()) {
+            val bookmarkDescriptorsToNotify = bookmarksToNotify.getOrPut(
+              key = filterPatter,
+              defaultValue = { mutableListOf() }
+            )
+
+            bookmarkDescriptorsToNotify.add(bookmarkThreadDescriptor)
+          }
         }
 
         return@forEach
@@ -246,7 +259,11 @@ class BookmarkFilterWatchableThreadsUseCase(
       Logger.d(TAG, "createOrUpdateBookmarks() nothing to create, nothing to update")
     }
 
-    return createFilterWatchGroups(filterWatchGroupsToCreate)
+    if (!createFilterWatchGroups(filterWatchGroupsToCreate)) {
+      return emptyMap()
+    }
+
+    return bookmarksToNotify
   }
 
   private suspend fun createOrUpdateBookmarkGroups(
