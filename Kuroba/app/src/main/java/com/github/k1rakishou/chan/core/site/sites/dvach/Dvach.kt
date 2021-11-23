@@ -4,6 +4,7 @@ import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
+import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.BoardsType
 import com.github.k1rakishou.chan.core.site.Site.SiteFeature
@@ -37,6 +38,7 @@ import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -54,6 +56,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.util.*
+import java.util.regex.Pattern
 
 @DoNotStrip
 class Dvach : CommonSite() {
@@ -717,7 +720,35 @@ class Dvach : CommonSite() {
           else -> return null
         }
       }
+
+      // https://2ch.hk/b/arch/2020-09-16/res/11223344.html#11223345
+      override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
+        val threadArchivePattern = ARCHIVE_THREAD_PATTERN.matcher(url.toString())
+
+        if (!threadArchivePattern.find()) {
+          return super.resolveChanDescriptor(site, url)
+        }
+
+        val boardCode = threadArchivePattern.groupOrNull(1)
+          ?: return null
+        val threadNo = threadArchivePattern.groupOrNull(2)?.toLongOrNull()
+          ?: return null
+        val markedPostNo = threadArchivePattern.groupOrNull(3)?.toLongOrNull()
+
+        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+          site.name(),
+          boardCode,
+          threadNo
+        )
+
+        return ResolvedChanDescriptor(
+          chanDescriptor = threadDescriptor,
+          markedPostNo = markedPostNo
+        )
+      }
     }
+
+    private val ARCHIVE_THREAD_PATTERN = Pattern.compile("\\/(\\w+)\\/arch\\/\\d+-\\d+-\\d+\\/res\\/(\\d+)\\.html(?:#(\\d+))?")
   }
 
 }
