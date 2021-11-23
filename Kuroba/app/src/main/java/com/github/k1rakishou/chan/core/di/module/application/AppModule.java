@@ -133,7 +133,7 @@ public class AppModule {
     }
 
     private double getDefaultAvailableMemoryPercentage() {
-        double defaultMemoryPercentage = 0.15;
+        double defaultMemoryPercentage = 0.1;
 
         if (ChanSettings.isLowRamDevice()) {
             defaultMemoryPercentage = defaultMemoryPercentage / 2.0;
