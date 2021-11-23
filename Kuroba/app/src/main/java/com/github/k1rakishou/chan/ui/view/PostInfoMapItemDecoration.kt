@@ -44,6 +44,11 @@ class PostInfoMapItemDecoration(
     alpha = DEFAULT_ALPHA
   }
 
+  private val hotPostsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = context.resources.getColor(R.color.hot_post_color)
+    alpha = DEFAULT_ALPHA
+  }
+
   private val testPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = Color.MAGENTA
     alpha = DEFAULT_ALPHA
@@ -103,6 +108,13 @@ class PostInfoMapItemDecoration(
       postInfoHolder.deletedPostsPositionRanges,
       deletedPostsPaint
     )
+
+    drawRanges(
+      canvas,
+      recyclerView,
+      postInfoHolder.hotPostsPositionRanges,
+      hotPostsPaint
+    )
   }
 
   private fun drawRanges(
@@ -143,7 +155,7 @@ class PostInfoMapItemDecoration(
           bottom += MIN_LABEL_HEIGHT / 2f
         }
 
-        if (color != 0) {
+        if (color != 0 && color != paint.color) {
           paint.color = ColorUtils.setAlphaComponent(color, alpha)
         }
 

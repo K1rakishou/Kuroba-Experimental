@@ -270,6 +270,13 @@ open class ViewThreadController(
         ChanSettings.markDeletedPostsOnScrollbar.get(),
         ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR
       ) { item -> onScrollbarLabelingOptionClicked(item) }
+      .addNestedCheckableItem(
+        ACTION_MARK_HOT_POSTS_ON_SCROLLBAR,
+        R.string.action_mark_hot_posts_on_scrollbar,
+        true,
+        ChanSettings.markHotPostsOnScrollbar.get(),
+        ACTION_MARK_HOT_POSTS_ON_SCROLLBAR
+      ) { item -> onScrollbarLabelingOptionClicked(item) }
       .build()
   }
 
@@ -448,6 +455,10 @@ open class ViewThreadController(
       ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR -> {
         item as CheckableToolbarMenuSubItem
         item.isChecked = ChanSettings.markDeletedPostsOnScrollbar.toggle()
+      }
+      ACTION_MARK_HOT_POSTS_ON_SCROLLBAR -> {
+        item as CheckableToolbarMenuSubItem
+        item.isChecked = ChanSettings.markHotPostsOnScrollbar.toggle()
       }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
@@ -802,5 +813,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_REPLIES_TO_YOU_ON_SCROLLBAR = 9102
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
     private const val ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR = 9104
+    private const val ACTION_MARK_HOT_POSTS_ON_SCROLLBAR = 9105
   }
 }

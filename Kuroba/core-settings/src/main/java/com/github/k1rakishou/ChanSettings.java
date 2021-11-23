@@ -294,6 +294,7 @@ public class ChanSettings {
     public static BooleanSetting markRepliesToYourPostOnScrollbar;
     public static BooleanSetting markCrossThreadQuotesOnScrollbar;
     public static BooleanSetting markDeletedPostsOnScrollbar;
+    public static BooleanSetting markHotPostsOnScrollbar;
     public static BooleanSetting shiftPostComment;
     public static BooleanSetting forceShiftPostComment;
     public static BooleanSetting postMultipleImagesCompactMode;
@@ -504,6 +505,7 @@ public class ChanSettings {
             markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
             markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
             markDeletedPostsOnScrollbar = new BooleanSetting(provider, "mark_deleted_on_scrollbar", true);
+            markHotPostsOnScrollbar = new BooleanSetting(provider, "mark_hot_posts_on_scrollbar", false);
             markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
             shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
             forceShiftPostComment = new BooleanSetting(provider, "force_shift_post_comment", false);

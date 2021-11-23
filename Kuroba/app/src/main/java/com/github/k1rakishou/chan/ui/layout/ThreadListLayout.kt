@@ -95,6 +95,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.runBlocking
 import java.util.*
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
@@ -453,7 +454,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.addOnScrollListener(scrollListener)
     recyclerView.addItemDecoration(gridModeSpaceItemDecoration)
 
-    setFastScroll(false)
+    runBlocking { setFastScroll(false) }
     attachToolbarScroll(true)
 
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
@@ -465,7 +466,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
     replyLayout.onDestroy()
-    setFastScroll(false)
+    runBlocking { setFastScroll(false) }
 
     forceRecycleAllPostViews()
     recyclerView.removeItemDecoration(gridModeSpaceItemDecoration)
@@ -1087,7 +1088,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  private fun setFastScroll(enable: Boolean) {
+  private suspend fun setFastScroll(enable: Boolean) {
     val enabledInSettings = ChanSettings.draggableScrollbars.get().isEnabled
 
     if (!enable || !enabledInSettings) {

@@ -6,9 +6,12 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.FilterAction
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.util.*
 
 class ExtractPostMapInfoHolderUseCase(
@@ -17,19 +20,88 @@ class ExtractPostMapInfoHolderUseCase(
   private val chanThreadManager: ChanThreadManager,
   private val postFilterManager: PostFilterManager,
   private val chanFilterManager: ChanFilterManager
-) : IUseCase<ExtractPostMapInfoHolderUseCase.Params, PostMapInfoHolder> {
+) : ISuspendUseCase<ExtractPostMapInfoHolderUseCase.Params, PostMapInfoHolder> {
 
-  override fun execute(parameter: Params): PostMapInfoHolder {
-    return PostMapInfoHolder(
-      myPostsPositionRanges = extractMyPostsPositionsFromPostList(parameter),
-      replyPositionRanges = extractReplyPositionsFromPostList(parameter),
-      crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter),
-      postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter),
-      deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter)
-    )
+  override suspend fun execute(parameter: Params): PostMapInfoHolder {
+    return withContext(Dispatchers.Default) {
+      return@withContext PostMapInfoHolder(
+        myPostsPositionRanges = extractMyPostsPositionsFromPostList(parameter),
+        replyPositionRanges = extractReplyPositionsFromPostList(parameter),
+        crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter),
+        postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter),
+        deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter),
+        hotPostsPositionRanges = extractHotPostsPositionsFromPostList(parameter),
+      )
+    }
+  }
+
+  private fun extractHotPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
+    if (!ChanSettings.markHotPostsOnScrollbar.get()) {
+      return emptyList()
+    }
+
+    val postDescriptors = params.postDescriptors
+    if (postDescriptors.isEmpty()) {
+      return emptyList()
+    }
+
+    val posts = chanThreadManager.getPosts(postDescriptors)
+
+    var totalPostsWithRepliesCount = 0
+    var totalReplyCount = 0
+
+    posts.forEach { chanPost ->
+      if (chanPost.isOP()) {
+        // Ignore the OP here
+        return@forEach
+      }
+
+      val repliesFromCount = chanPost.repliesFromCount
+      if (repliesFromCount <= 0) {
+        // Do not include posts with 0 replies
+        return@forEach
+      }
+
+      totalReplyCount += repliesFromCount
+      ++totalPostsWithRepliesCount
+    }
+
+    if (totalReplyCount <= 0 || totalPostsWithRepliesCount <= 0) {
+      return emptyList()
+    }
+
+    val medianRepliesCount = totalReplyCount.toFloat() / totalPostsWithRepliesCount.toFloat()
+    if (medianRepliesCount <= 1f) {
+      return emptyList()
+    }
+
+    // We consider posts HOT if their reply count is 5x higher than the median reply count in the thread
+    val targetRepliesCount = medianRepliesCount + (medianRepliesCount * 5f)
+
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
+    val duplicateChecker: MutableSet<Int> = HashSet()
+    var prevIndex = 0
+
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      val post = chanThreadManager.getPost(postDescriptor)
+        ?: continue
+
+      if (post.isOP() || post.repliesFromCount <= targetRepliesCount || !duplicateChecker.add(index)) {
+        continue
+      }
+
+      connectRangesIfContiguous(prevIndex, index, replyRanges)
+      prevIndex = index
+    }
+
+    return replyRanges
   }
 
   private fun extractDeletedPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
     if (!ChanSettings.markDeletedPostsOnScrollbar.get()) {
       return emptyList()
     }
@@ -59,6 +131,8 @@ class ExtractPostMapInfoHolderUseCase(
   }
 
   private fun extractPostFilterHighlightsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
     val postDescriptors = params.postDescriptors
     if (postDescriptors.isEmpty()) {
       return emptyList()
@@ -103,6 +177,8 @@ class ExtractPostMapInfoHolderUseCase(
   }
 
   private fun extractMyPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
     if (!ChanSettings.markYourPostsOnScrollbar.get()) {
       return emptyList()
     }
@@ -145,6 +221,8 @@ class ExtractPostMapInfoHolderUseCase(
   }
 
   private fun extractReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
     if (!ChanSettings.markRepliesToYourPostOnScrollbar.get()) {
       return emptyList()
     }
@@ -193,6 +271,8 @@ class ExtractPostMapInfoHolderUseCase(
   }
 
   private fun extractCrossThreadReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
     if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
       return emptyList()
     }
@@ -268,7 +348,8 @@ data class PostMapInfoHolder(
   val replyPositionRanges: List<PostMapInfoEntry> = emptyList(),
   val crossThreadQuotePositionRanges: List<PostMapInfoEntry> = emptyList(),
   val postFilterHighlightRanges: List<PostMapInfoEntry> = emptyList(),
-  val deletedPostsPositionRanges: List<PostMapInfoEntry> = emptyList()
+  val deletedPostsPositionRanges: List<PostMapInfoEntry> = emptyList(),
+  val hotPostsPositionRanges: List<PostMapInfoEntry> = emptyList()
 ) {
 
   fun isEmpty(): Boolean {
@@ -277,6 +358,7 @@ data class PostMapInfoHolder(
       && crossThreadQuotePositionRanges.isEmpty()
       && postFilterHighlightRanges.isEmpty()
       && deletedPostsPositionRanges.isEmpty()
+      && hotPostsPositionRanges.isEmpty()
   }
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
@@ -297,6 +379,10 @@ data class PostMapInfoHolder(
     }
 
     if (!rangesTheSame(deletedPostsPositionRanges, otherPostMapInfoHolder.deletedPostsPositionRanges)) {
+      return false
+    }
+
+    if (!rangesTheSame(hotPostsPositionRanges, otherPostMapInfoHolder.hotPostsPositionRanges)) {
       return false
     }
 
