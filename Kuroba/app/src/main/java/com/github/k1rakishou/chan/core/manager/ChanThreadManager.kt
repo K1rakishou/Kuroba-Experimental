@@ -337,7 +337,8 @@ class ChanThreadManager(
   }
 
   fun getPosts(postDescriptors: Collection<PostDescriptor>): List<ChanPost> {
-    val postGroups = postDescriptors.groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
+    val postGroups = postDescriptors
+      .groupBy { postDescriptor -> postDescriptor.threadDescriptor() }
 
     return postGroups.entries.flatMapNotNull { (threadDescriptor, postDescriptors) ->
       chanThreadsCache.getThread(threadDescriptor)?.getPosts(postDescriptors)

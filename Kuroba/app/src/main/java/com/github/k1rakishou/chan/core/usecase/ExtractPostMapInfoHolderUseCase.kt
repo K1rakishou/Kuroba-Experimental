@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.FilterAction
+import com.github.k1rakishou.model.data.post.ChanPost
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.util.*
@@ -24,18 +25,26 @@ class ExtractPostMapInfoHolderUseCase(
 
   override suspend fun execute(parameter: Params): PostMapInfoHolder {
     return withContext(Dispatchers.Default) {
+      val postDescriptors = parameter.postDescriptors
+
+      val postsMap = chanThreadManager.getPosts(postDescriptors)
+        .associateBy { it.postDescriptor }
+
       return@withContext PostMapInfoHolder(
         myPostsPositionRanges = extractMyPostsPositionsFromPostList(parameter),
-        replyPositionRanges = extractReplyPositionsFromPostList(parameter),
-        crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter),
+        replyPositionRanges = extractReplyPositionsFromPostList(parameter, postsMap),
+        crossThreadQuotePositionRanges = extractCrossThreadReplyPositionsFromPostList(parameter, postsMap),
         postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter),
-        deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter),
-        hotPostsPositionRanges = extractHotPostsPositionsFromPostList(parameter),
+        deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter, postsMap),
+        hotPostsPositionRanges = extractHotPostsPositionsFromPostList(parameter, postsMap),
       )
     }
   }
 
-  private fun extractHotPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+  private fun extractHotPostsPositionsFromPostList(
+    params: Params,
+    postsMap: Map<PostDescriptor, ChanPost>
+  ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
     if (!ChanSettings.markHotPostsOnScrollbar.get()) {
@@ -47,12 +56,10 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    val posts = chanThreadManager.getPosts(postDescriptors)
-
     var totalPostsWithRepliesCount = 0
     var totalReplyCount = 0
 
-    posts.forEach { chanPost ->
+    postsMap.values.forEach { chanPost ->
       if (chanPost.isOP()) {
         // Ignore the OP here
         return@forEach
@@ -85,7 +92,7 @@ class ExtractPostMapInfoHolderUseCase(
     var prevIndex = 0
 
     for ((index, postDescriptor) in postDescriptors.withIndex()) {
-      val post = chanThreadManager.getPost(postDescriptor)
+      val post = postsMap[postDescriptor]
         ?: continue
 
       if (post.isOP() || post.repliesFromCount <= targetRepliesCount || !duplicateChecker.add(index)) {
@@ -99,7 +106,10 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractDeletedPostsPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+  private fun extractDeletedPostsPositionsFromPostList(
+    params: Params,
+    postsMap: Map<PostDescriptor, ChanPost>
+  ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
     if (!ChanSettings.markDeletedPostsOnScrollbar.get()) {
@@ -116,7 +126,7 @@ class ExtractPostMapInfoHolderUseCase(
     var prevIndex = 0
 
     for ((index, postDescriptor) in postDescriptors.withIndex()) {
-      val post = chanThreadManager.getPost(postDescriptor)
+      val post = postsMap[postDescriptor]
         ?: continue
 
       if (!post.isDeleted || !duplicateChecker.add(index)) {
@@ -220,7 +230,10 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+  private fun extractReplyPositionsFromPostList(
+    params: Params,
+    postsMap: Map<PostDescriptor, ChanPost>
+  ): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
     if (!ChanSettings.markRepliesToYourPostOnScrollbar.get()) {
@@ -253,7 +266,7 @@ class ExtractPostMapInfoHolderUseCase(
     var prevIndex = 0
 
     for ((index, postDescriptor) in postDescriptors.withIndex()) {
-      val post = chanThreadManager.getPost(postDescriptor)
+      val post = postsMap[postDescriptor]
         ?: continue
 
       for (replyTo in post.repliesTo) {
@@ -270,7 +283,7 @@ class ExtractPostMapInfoHolderUseCase(
     return replyRanges
   }
 
-  private fun extractCrossThreadReplyPositionsFromPostList(params: Params): List<PostMapInfoEntry> {
+  private fun extractCrossThreadReplyPositionsFromPostList(params: Params, postsMap: Map<PostDescriptor, ChanPost>): List<PostMapInfoEntry> {
     BackgroundUtils.ensureBackgroundThread()
 
     if (!ChanSettings.markCrossThreadQuotesOnScrollbar.get()) {
@@ -289,7 +302,7 @@ class ExtractPostMapInfoHolderUseCase(
     var prevIndex = 0
 
     for ((index, postDescriptor) in postDescriptors.withIndex()) {
-      val post = chanThreadManager.getPost(postDescriptor)
+      val post = postsMap[postDescriptor]
         ?: continue
 
       for (postLinkable in post.postComment.linkables) {
