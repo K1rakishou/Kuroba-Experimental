@@ -60,7 +60,6 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
   private suspend fun requestCaptchaIdInternal(captchaIdUrl: String): CaptchaInfo {
     Logger.d(TAG, "requestCaptchaInternal() requesting $captchaIdUrl")
 
-
     val requestBuilder = Request.Builder()
       .url(captchaIdUrl)
       .get()
@@ -108,12 +107,15 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
       return id.isNotNullNorEmpty() && type == "2chcaptcha"
     }
 
-    fun fullRequestUrl(): HttpUrl? {
+    fun fullRequestUrl(siteManager: SiteManager): HttpUrl? {
       if (id == null) {
         return null
       }
 
-      return "https://2ch.hk/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
+      val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
+        ?: return null
+
+      return "${dvach.domainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
     }
   }
 

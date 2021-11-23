@@ -152,6 +152,7 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     // https://2ch.hk/mobi/
     // https://2-ch.hk/mobi
     // https://2-ch.so/mobi
+    // https://2ch.life/mobi
     // /mobi/
     private val BOARD_LINK_PATTERN = Pattern.compile("(?:^|2-?ch\\..*)\\/(\\w+)\\/?\$")
 

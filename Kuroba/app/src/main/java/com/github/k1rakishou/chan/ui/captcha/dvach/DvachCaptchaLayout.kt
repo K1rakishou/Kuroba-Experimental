@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
@@ -59,6 +60,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
   lateinit var captchaHolder: CaptchaHolder
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private val viewModel by lazy { (context as ComponentActivity).viewModelByKey<DvachCaptchaLayoutViewModel>() }
   private val scope = KurobaCoroutineScope()
@@ -260,7 +263,10 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           }
         }
         is AsyncData.Data -> {
-          val requestFullUrl = (captchaInfoAsync as AsyncData.Data).data.fullRequestUrl()
+          val requestFullUrl = remember {
+            (captchaInfoAsync as AsyncData.Data).data.fullRequestUrl(siteManager = siteManager)
+          }
+
           if (requestFullUrl == null) {
             return@Box
           }

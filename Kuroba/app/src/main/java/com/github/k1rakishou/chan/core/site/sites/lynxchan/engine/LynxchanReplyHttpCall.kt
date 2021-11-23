@@ -77,6 +77,9 @@ class LynxchanReplyHttpCall(
         null
       }
 
+      val replyUrl = site.endpoints().reply(replyChanDescriptor)
+      Logger.d(TAG, "setup() replyUrl=${replyUrl}")
+
       if (lynxchanSite.postingViaFormData) {
         val formBuilder = postWithFormDataPayload(
           reply = reply,
@@ -88,7 +91,7 @@ class LynxchanReplyHttpCall(
         )
 
         requestBuilder
-          .url(site.endpoints().reply(replyChanDescriptor))
+          .url(replyUrl)
           .post(formBuilder.build())
       } else {
         val requestBody = postWithJsonPayload(
@@ -100,7 +103,7 @@ class LynxchanReplyHttpCall(
         )
 
         requestBuilder
-          .url(site.endpoints().reply(replyChanDescriptor))
+          .url(replyUrl)
           .post(requestBody)
       }
     }

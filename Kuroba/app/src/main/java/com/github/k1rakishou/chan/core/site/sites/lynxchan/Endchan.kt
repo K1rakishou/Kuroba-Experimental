@@ -8,14 +8,14 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Endchan : LynxchanSite() {
-  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${defaultDomain}favicon.ico".toHttpUrl()) }
+  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
 
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", defaultDomain.toString())
   }
 
-  private val mediaHostsLazy = lazy { arrayOf(domain.value) }
-  private val siteUrlHandler = lazy { EndchanUrlHandler(domain.value, mediaHostsLazy.value) }
+  private val mediaHostsLazy = lazy { arrayOf(domainUrl.value) }
+  private val siteUrlHandler = lazy { EndchanUrlHandler(domainUrl.value, mediaHostsLazy.value) }
 
   override val defaultDomain: HttpUrl
     get() = DEFAULT_DOMAIN
@@ -41,6 +41,6 @@ class Endchan : LynxchanSite() {
     private const val TAG = "Endchan"
     const val SITE_NAME = "Endchan"
 
-    private val DEFAULT_DOMAIN = "https://endchan.net/".toHttpUrl()
+    private val DEFAULT_DOMAIN = "https://endchan.net".toHttpUrl()
   }
 }

@@ -8,15 +8,15 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class Kohlchan : LynxchanSite() {
-  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${defaultDomain}favicon.ico".toHttpUrl()) }
+  private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
   private val kohlchanEndpoints = lazy { KohlchanEndpoints(this) }
 
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", defaultDomain.toString())
   }
 
-  private val mediaHostsLazy = lazy { arrayOf(domain.value) }
-  private val siteUrlHandler = lazy { KohlchanUrlHandler(domain.value, mediaHostsLazy.value) }
+  private val mediaHostsLazy = lazy { arrayOf(domainUrl.value) }
+  private val siteUrlHandler = lazy { KohlchanUrlHandler(domainUrl.value, mediaHostsLazy.value) }
 
   override val defaultDomain: HttpUrl
     get() = DEFAULT_DOMAIN
@@ -42,7 +42,7 @@ class Kohlchan : LynxchanSite() {
     private const val TAG = "Kohlchan"
     const val SITE_NAME = "Kohlchan"
 
-    private val DEFAULT_DOMAIN = "https://kohlchan.net/".toHttpUrl()
+    private val DEFAULT_DOMAIN = "https://kohlchan.net".toHttpUrl()
   }
 
 }

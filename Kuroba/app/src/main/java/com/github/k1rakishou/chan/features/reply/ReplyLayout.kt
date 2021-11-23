@@ -705,11 +705,15 @@ class ReplyLayout @JvmOverloads constructor(
     val callbacks = threadListLayoutCallbacks
       ?: return CookieResult.Canceled
 
+    val antiSpamChallengeEndpoint = (siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach)
+      ?.antiSpamChallengeEndpoint
+      ?: return CookieResult.Canceled
+
     return suspendCancellableCoroutine { continuation ->
       val controller = SiteFirewallBypassController(
         context = context,
         firewallType = FirewallType.DvachAntiSpam,
-        urlToOpen = Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT,
+        urlToOpen = antiSpamChallengeEndpoint,
         onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
       )
 

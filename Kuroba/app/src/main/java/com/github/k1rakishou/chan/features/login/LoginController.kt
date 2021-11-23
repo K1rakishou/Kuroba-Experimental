@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
@@ -57,6 +58,8 @@ class LoginController(
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var postingLimitationsInfoManager: PostingLimitationsInfoManager
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private lateinit var crossfadeView: CrossfadeView
   private lateinit var errors: TextView
@@ -250,10 +253,16 @@ class LoginController(
     val siteDescriptor = site.siteDescriptor()
 
     if (siteDescriptor.isDvach()) {
+      val urlToOpen = (siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach)
+        ?.domainUrl
+        ?.value
+        ?.toString()
+        ?: return
+
       val controller = SiteFirewallBypassController(
         context = context,
         firewallType = FirewallType.DvachAntiSpam,
-        urlToOpen = Dvach.URL_HANDLER.url!!.toString(),
+        urlToOpen = urlToOpen,
         onResult = { cookieResult ->
           if (cookieResult is CookieResult.CookieValue) {
             mainScope.launch { auth(retrying = true) }

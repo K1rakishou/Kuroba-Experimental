@@ -93,13 +93,13 @@ open class LynxchanActions(
   }
 
   override fun postAuthenticate(): SiteAuthentication {
-    val domain = lynxchanSite.domain.value
+    val domain = lynxchanSite.domainString
 
     val customCaptcha = SiteAuthentication.CustomCaptcha.LynxchanCaptcha(
-      captchaEndpoint = "${domain}captcha.js".toHttpUrl(),
-      verifyCaptchaEndpoint = "${domain}solveCaptcha.js".toHttpUrl(),
-      bypassEndpoint = "${domain}blockBypass.js?json=1".toHttpUrl(),
-      verifyBypassEndpoint = "${domain}renewBypass.js?json=1".toHttpUrl()
+      captchaEndpoint = "${domain}/captcha.js".toHttpUrl(),
+      verifyCaptchaEndpoint = "${domain}/solveCaptcha.js".toHttpUrl(),
+      bypassEndpoint = "${domain}/blockBypass.js?json=1".toHttpUrl(),
+      verifyBypassEndpoint = "${domain}/renewBypass.js?json=1".toHttpUrl()
     )
 
     return SiteAuthentication.customCaptcha(customCaptcha = customCaptcha)

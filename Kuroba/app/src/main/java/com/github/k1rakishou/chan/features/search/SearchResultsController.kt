@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
 import com.github.k1rakishou.chan.features.bypass.CookieResult
@@ -149,7 +148,12 @@ class SearchResultsController(
           .toString()
       }
       FirewallType.DvachAntiSpam -> {
-        Dvach.ANTI_SPAM_CHALLENGE_ENDPOINT
+        HttpUrl.Builder()
+          .scheme("https")
+          .host(requestUrl.host)
+          .addPathSegment("challenge")
+          .build()
+          .toString()
       }
     }
 

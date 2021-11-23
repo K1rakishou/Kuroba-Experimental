@@ -39,6 +39,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
@@ -54,6 +55,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.util.*
 import java.util.regex.Pattern
@@ -73,26 +75,67 @@ class Dvach : CommonSite() {
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   private lateinit var passCodeInfo: GsonJsonSetting<DvachPasscodeInfo>
 
+  val domainUrl: Lazy<HttpUrl> = lazy {
+    val siteDomain = siteDomainSetting?.get()
+    if (siteDomain != null) {
+      val siteDomainUrl = siteDomain.toHttpUrlOrNull()
+      if (siteDomainUrl != null) {
+        Logger.d(TAG, "Using domain: \'${siteDomainUrl}\'")
+        return@lazy siteDomainUrl
+      }
+    }
+
+    Logger.d(TAG, "Using default domain: \'${DEFAULT_DOMAIN}\' since custom domain seems to be incorrect: \'$siteDomain\'")
+    return@lazy DEFAULT_DOMAIN
+  }
+
+  val domainString by lazy {
+    return@lazy domainUrl.value.toString().removeSuffix("/")
+  }
+
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
+  private val urlHandlerLazy = lazy { DvachSiteUrlHandler(domainUrl) }
+  private val siteIconLazy = lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
 
-  val captchaV2NoJs = SiteAuthentication.fromCaptcha2nojs(
-    NORMAL_CAPTCHA_KEY,
-    "https://2ch.hk/api/captcha/recaptcha/mobile"
-  )
+  val antiSpamChallengeEndpoint by lazy {
 
-  val captchaV2Js = SiteAuthentication.fromCaptcha2(
-    NORMAL_CAPTCHA_KEY,
-    "https://2ch.hk/api/captcha/recaptcha/mobile"
-  )
+    // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
+    // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
+    // https://2ch.hk doesn't trigger anti-spam script.
 
-  val captchaV2Invisible = SiteAuthentication.fromCaptcha2Invisible(
-    INVISIBLE_CAPTCHA_KEY,
-    "https://2ch.hk/api/captcha/invisible_recaptcha/mobile"
-  )
+    return@lazy "https://2ch.hk/challenge/"
+  }
 
-  val dvachCaptcha = SiteAuthentication.idBased(
-    "https://2ch.hk/api/captcha/2chcaptcha/id"
-  )
+  val captchaV2NoJs by lazy {
+    SiteAuthentication.fromCaptcha2nojs(
+      NORMAL_CAPTCHA_KEY,
+      "${domainString}/api/captcha/recaptcha/mobile"
+    )
+  }
+
+  val captchaV2Js by lazy {
+    SiteAuthentication.fromCaptcha2(
+      NORMAL_CAPTCHA_KEY,
+      "${domainString}/api/captcha/recaptcha/mobile"
+    )
+  }
+
+  val captchaV2Invisible by lazy {
+    SiteAuthentication.fromCaptcha2Invisible(
+      INVISIBLE_CAPTCHA_KEY,
+      "${domainString}/api/captcha/invisible_recaptcha/mobile"
+    )
+  }
+
+  val dvachCaptcha by lazy {
+    SiteAuthentication.idBased(
+      "${domainString}/api/captcha/2chcaptcha/id"
+    )
+  }
+
+  override val siteDomainSetting: StringSetting? by lazy {
+    StringSetting(prefs, "site_domain", DEFAULT_DOMAIN.toString())
+  }
 
   override fun initialize() {
     super.initialize()
@@ -148,9 +191,9 @@ class Dvach : CommonSite() {
   override fun setup() {
     setEnabled(true)
     setName(SITE_NAME)
-    setIcon(SiteIcon.fromFavicon(imageLoaderV2, "https://2ch.hk/favicon.ico".toHttpUrl()))
+    setIcon(siteIconLazy.value)
     setBoardsType(BoardsType.DYNAMIC)
-    setResolvable(URL_HANDLER)
+    setLazyResolvable(urlHandlerLazy)
     setConfig(object : CommonConfig() {
       override fun siteFeature(siteFeature: SiteFeature): Boolean {
         return super.siteFeature(siteFeature)
@@ -186,11 +229,16 @@ class Dvach : CommonSite() {
 
   override fun redirectsToArchiveThread(): Boolean = true
 
-  inner class DvachEndpoints(commonSite: CommonSite) : VichanEndpoints(
-    commonSite,
-    URL_HANDLER.url!!.toString(),
-    URL_HANDLER.url!!.toString()
+  inner class DvachEndpoints(
+    private val dvach: Dvach
+  ) : VichanEndpoints(
+    dvach,
+    domainString,
+    domainString
   ) {
+    private val siteHost: String
+      get() = dvach.domainUrl.value.host
+
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
       val path = requireNotNull(arg["path"]) { "\"path\" parameter not found" }
 
@@ -211,7 +259,7 @@ class Dvach : CommonSite() {
     fun dvachGetBoards(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("makaba")
         .addPathSegment("mobile.fcgi")
         .addQueryParameter("task", "get_boards")
@@ -221,7 +269,7 @@ class Dvach : CommonSite() {
     override fun boards(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("boards.json")
         .build()
     }
@@ -230,7 +278,7 @@ class Dvach : CommonSite() {
     override fun threadPartial(fromPostDescriptor: PostDescriptor): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("api")
         .addPathSegment("mobile")
         .addPathSegment("v2")
@@ -245,7 +293,7 @@ class Dvach : CommonSite() {
     override fun threadArchive(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment(threadDescriptor.boardCode())
         .addPathSegment("arch")
         .addPathSegment("res")
@@ -256,7 +304,7 @@ class Dvach : CommonSite() {
     override fun pages(board: ChanBoard): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment(board.boardCode())
         .addPathSegment("catalog.json")
         .build()
@@ -265,7 +313,7 @@ class Dvach : CommonSite() {
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("makaba")
         .addPathSegment("posting.fcgi")
         .addQueryParameter("json", "1")
@@ -275,7 +323,7 @@ class Dvach : CommonSite() {
     override fun login(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("makaba")
         .addPathSegment("makaba.fcgi")
         .build()
@@ -293,7 +341,7 @@ class Dvach : CommonSite() {
 
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("makaba")
         .addPathSegment("makaba.fcgi")
         .addQueryParameter("task", "auth")
@@ -305,7 +353,7 @@ class Dvach : CommonSite() {
     override fun search(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
-        .host(URL_HANDLER.url!!.host)
+        .host(siteHost)
         .addPathSegment("makaba")
         .addPathSegment("makaba.fcgi")
         .addQueryParameter("task", "search")
@@ -659,94 +707,92 @@ class Dvach : CommonSite() {
 
   }
 
+  class DvachSiteUrlHandler(
+    val domainLazy: Lazy<HttpUrl>
+  ) : CommonSiteUrlHandler() {
+
+    override fun getSiteClass(): Class<out Site?> {
+      return Dvach::class.java
+    }
+
+    override val url: HttpUrl
+      get() = domainLazy.value
+
+    override val mediaHosts: Array<HttpUrl>
+      get() = arrayOf(url)
+
+    override val names: Array<String>
+      get() = arrayOf("dvach", "2ch")
+
+    override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
+      when (chanDescriptor) {
+        is ChanDescriptor.CatalogDescriptor -> {
+          val builtUrl = url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .toString()
+
+          if (postNo == null) {
+            return builtUrl
+          }
+
+          return "${builtUrl}/res/${postNo}.html"
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          val builtUrl = url.newBuilder()
+            .addPathSegment(chanDescriptor.boardCode())
+            .addPathSegment("res")
+            .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
+            .toString()
+
+          if (postNo == null) {
+            return builtUrl
+          }
+
+          return "${builtUrl}#${postNo}"
+        }
+        else -> return null
+      }
+    }
+
+    // https://2ch.hk/b/arch/2020-09-16/res/11223344.html#11223345
+    override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
+      val threadArchivePattern = ARCHIVE_THREAD_PATTERN.matcher(url.toString())
+
+      if (!threadArchivePattern.find()) {
+        return super.resolveChanDescriptor(site, url)
+      }
+
+      val boardCode = threadArchivePattern.groupOrNull(1)
+        ?: return null
+      val threadNo = threadArchivePattern.groupOrNull(2)?.toLongOrNull()
+        ?: return null
+      val markedPostNo = threadArchivePattern.groupOrNull(3)?.toLongOrNull()
+
+      val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
+        site.name(),
+        boardCode,
+        threadNo
+      )
+
+      return ResolvedChanDescriptor(
+        chanDescriptor = threadDescriptor,
+        markedPostNo = markedPostNo
+      )
+    }
+  }
+
   companion object {
     private const val TAG = "Dvach"
+    private val DEFAULT_DOMAIN = "https://2ch.hk".toHttpUrl()
+
     const val SITE_NAME = "2ch.hk"
+
     val SITE_DESCRIPTOR = SiteDescriptor.create(SITE_NAME)
     const val NORMAL_CAPTCHA_KEY = "6LeQYz4UAAAAAL8JCk35wHSv6cuEV5PyLhI6IxsM"
     const val INVISIBLE_CAPTCHA_KEY = "6LdwXD4UAAAAAHxyTiwSMuge1-pf1ZiEL4qva_xu"
     const val DEFAULT_MAX_FILE_SIZE = 20480 * 1024 // 20MB
 
     const val USER_CODE_COOKIE_KEY = "usercode_auth"
-
-    // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
-    // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
-    // https://2ch.hk doesn't trigger anti-spam script.
-    const val ANTI_SPAM_CHALLENGE_ENDPOINT = "https://2ch.hk/challenge/"
-
-    @JvmField
-    val URL_HANDLER: CommonSiteUrlHandler = object : CommonSiteUrlHandler() {
-      val ROOT = "https://2ch.hk/"
-
-      override fun getSiteClass(): Class<out Site?> {
-        return Dvach::class.java
-      }
-
-      override val url: HttpUrl
-        get() = ROOT.toHttpUrl()
-
-      override val mediaHosts: Array<HttpUrl>
-        get() = arrayOf(url)
-
-      override val names: Array<String>
-        get() = arrayOf("dvach", "2ch")
-
-      override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
-        when (chanDescriptor) {
-          is ChanDescriptor.CatalogDescriptor -> {
-            val builtUrl = url.newBuilder()
-              .addPathSegment(chanDescriptor.boardCode())
-              .toString()
-
-            if (postNo == null) {
-              return builtUrl
-            }
-
-            return "${builtUrl}/res/${postNo}.html"
-          }
-          is ChanDescriptor.ThreadDescriptor -> {
-            val builtUrl = url.newBuilder()
-              .addPathSegment(chanDescriptor.boardCode())
-              .addPathSegment("res")
-              .addPathSegment(chanDescriptor.threadNo.toString() + ".html")
-              .toString()
-
-            if (postNo == null) {
-              return builtUrl
-            }
-
-            return "${builtUrl}#${postNo}"
-          }
-          else -> return null
-        }
-      }
-
-      // https://2ch.hk/b/arch/2020-09-16/res/11223344.html#11223345
-      override fun resolveChanDescriptor(site: Site, url: HttpUrl): ResolvedChanDescriptor? {
-        val threadArchivePattern = ARCHIVE_THREAD_PATTERN.matcher(url.toString())
-
-        if (!threadArchivePattern.find()) {
-          return super.resolveChanDescriptor(site, url)
-        }
-
-        val boardCode = threadArchivePattern.groupOrNull(1)
-          ?: return null
-        val threadNo = threadArchivePattern.groupOrNull(2)?.toLongOrNull()
-          ?: return null
-        val markedPostNo = threadArchivePattern.groupOrNull(3)?.toLongOrNull()
-
-        val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(
-          site.name(),
-          boardCode,
-          threadNo
-        )
-
-        return ResolvedChanDescriptor(
-          chanDescriptor = threadDescriptor,
-          markedPostNo = markedPostNo
-        )
-      }
-    }
 
     private val ARCHIVE_THREAD_PATTERN = Pattern.compile("\\/(\\w+)\\/arch\\/\\d+-\\d+-\\d+\\/res\\/(\\d+)\\.html(?:#(\\d+))?")
   }

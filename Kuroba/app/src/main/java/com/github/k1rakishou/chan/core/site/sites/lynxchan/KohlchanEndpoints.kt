@@ -11,10 +11,10 @@ class KohlchanEndpoints(lynxchanSite: LynxchanSite) : LynxchanEndpoints(lynxchan
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        return "${lynxchanDomain}newThread.js?json=1".toHttpUrl()
+        return "${lynxchanDomain}/newThread.js?json=1".toHttpUrl()
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        return "${lynxchanDomain}replyThread.js?json=1".toHttpUrl()
+        return "${lynxchanDomain}/replyThread.js?json=1".toHttpUrl()
       }
     }
   }

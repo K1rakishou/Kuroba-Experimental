@@ -9,16 +9,17 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(site) {
   private val lynxchan: LynxchanSite
     get() = (site as LynxchanSite)
-  protected val lynxchanDomain by lynxchan.domain
+  protected val lynxchanDomainUrl by lynxchan.domainUrl
+  protected val lynxchanDomain = lynxchan.domainString
 
   override fun boards(): HttpUrl {
-    return lynxchanDomain.newBuilder()
+    return lynxchanDomainUrl.newBuilder()
       .addPathSegment("boards.js")
       .addQueryParameter("json", "1").build()
   }
 
   override fun catalog(boardDescriptor: BoardDescriptor): HttpUrl {
-    return lynxchanDomain.newBuilder()
+    return lynxchanDomainUrl.newBuilder()
       .addPathSegment(boardDescriptor.boardCode)
       .addPathSegment("catalog.json")
       .build()
@@ -27,14 +28,14 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   override fun catalogPage(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
     val currentPage = page ?: lynxchan.initialPageIndex
 
-    return lynxchanDomain.newBuilder()
+    return lynxchanDomainUrl.newBuilder()
       .addPathSegment(boardDescriptor.boardCode)
       .addPathSegment("${currentPage}.json")
       .build()
   }
 
   override fun thread(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
-    return lynxchanDomain.newBuilder()
+    return lynxchanDomainUrl.newBuilder()
       .addPathSegment(threadDescriptor.boardCode())
       .addPathSegment("res")
       .addPathSegment("${threadDescriptor.threadNo}.json")
@@ -47,7 +48,7 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   ): HttpUrl {
     val path = arg[PATH_ARGUMENT_KEY]!!
 
-    return "${lynxchanDomain}${path}".toHttpUrl()
+    return "${lynxchanDomain}/${path}".toHttpUrl()
   }
 
   override fun thumbnailUrl(
@@ -58,7 +59,7 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   ): HttpUrl {
     val thumb = arg[THUMB_ARGUMENT_KEY]!!
 
-    return "${lynxchanDomain}${thumb}".toHttpUrl()
+    return "${lynxchanDomain}/${thumb}".toHttpUrl()
   }
 
   override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
@@ -69,7 +70,7 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
       // .static/flags/de.png
       val countryCodeFlagPath = arg[COUNTRY_FLAG_PATH_KEY]!!
 
-      return "${lynxchanDomain}${countryCodeFlagPath}".toHttpUrl()
+      return "${lynxchanDomain}/${countryCodeFlagPath}".toHttpUrl()
     }
 
     return super.icon(icon, arg)
@@ -78,10 +79,10 @@ open class LynxchanEndpoints(site: LynxchanSite) : CommonSite.CommonEndpoints(si
   override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        return "${lynxchanDomain}.api/newThread".toHttpUrl()
+        return "${lynxchanDomain}/.api/newThread".toHttpUrl()
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        return "${lynxchanDomain}.api/replyThread".toHttpUrl()
+        return "${lynxchanDomain}/.api/replyThread".toHttpUrl()
       }
     }
   }

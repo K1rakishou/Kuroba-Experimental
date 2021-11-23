@@ -55,7 +55,7 @@ abstract class LynxchanSite : CommonSite() {
   val bypassCookie by lazy { StringSetting(prefs, "bypass_cookie", "") }
   val extraCookie by lazy { StringSetting(prefs, "extra_cookie", "") }
 
-  val domain: kotlin.Lazy<HttpUrl> = lazy {
+  val domainUrl: kotlin.Lazy<HttpUrl> = lazy {
     val siteDomain = siteDomainSetting?.get()
     if (siteDomain != null) {
       val siteDomainUrl = siteDomain.toHttpUrlOrNull()
@@ -67,6 +67,10 @@ abstract class LynxchanSite : CommonSite() {
 
     Logger.d(TAG, "Using default domain: \'${defaultDomain}\' since custom domain seems to be incorrect: \'$siteDomain\'")
     return@lazy defaultDomain
+  }
+
+  val domainString by lazy {
+    return@lazy domainUrl.value.toString().removeSuffix("/")
   }
 
   override fun initialize() {
@@ -142,21 +146,21 @@ abstract class LynxchanSite : CommonSite() {
   ) : CommonSiteUrlHandler() {
 
     override fun desktopUrl(chanDescriptor: ChanDescriptor, postNo: Long?): String? {
-      // https://endchan.net/
-      val baseUrl = url.toString()
+      // https://endchan.net
+      val baseUrl = url.toString().removeSuffix("/")
 
       return when (chanDescriptor) {
         is ChanDescriptor.CompositeCatalogDescriptor -> null
         is ChanDescriptor.CatalogDescriptor -> {
-          "${baseUrl}${chanDescriptor.boardCode()}"
+          "${baseUrl}/${chanDescriptor.boardCode()}"
         }
         is ChanDescriptor.ThreadDescriptor -> {
           if (postNo == null) {
             // https://endchan.net/tech/res/14633.html
-            "${baseUrl}${chanDescriptor.boardCode()}/res/${chanDescriptor.threadNo}.html"
+            "${baseUrl}/${chanDescriptor.boardCode()}/res/${chanDescriptor.threadNo}.html"
           } else {
             // https://endchan.net/tech/res/14633.html#14634
-            "${baseUrl}${chanDescriptor.boardCode()}/res/${chanDescriptor.threadNo}.html#${postNo}"
+            "${baseUrl}/${chanDescriptor.boardCode()}/res/${chanDescriptor.threadNo}.html#${postNo}"
           }
         }
       }

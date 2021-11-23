@@ -671,6 +671,7 @@ class ImageLoaderV2(
   // we have to check the url manually...
   private fun endchanFaviconUrl(url: String): Boolean {
     return url == "https://endchan.net/favicon.ico"
+      || url == "https://endchan.org/favicon.ico"
   }
 
   private suspend fun tryLoadFromDiskCacheOrNull(url: String, postDescriptor: PostDescriptor?): AbstractFile? {
