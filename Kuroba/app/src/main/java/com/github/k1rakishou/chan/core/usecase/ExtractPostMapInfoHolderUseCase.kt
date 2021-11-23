@@ -84,8 +84,8 @@ class ExtractPostMapInfoHolderUseCase(
       return emptyList()
     }
 
-    // We consider posts HOT if their reply count is 5x higher than the median reply count in the thread
-    val targetRepliesCount = medianRepliesCount + (medianRepliesCount * 5f)
+    // We consider posts HOT if their reply count is 3x higher than the median reply count in the thread
+    val targetRepliesCount = medianRepliesCount + (medianRepliesCount * 3f)
 
     val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
     val duplicateChecker: MutableSet<Int> = HashSet()
