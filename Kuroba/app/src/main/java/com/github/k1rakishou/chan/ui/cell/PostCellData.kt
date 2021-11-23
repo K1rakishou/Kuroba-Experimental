@@ -333,6 +333,17 @@ data class PostCellData(
         minQueryLength = searchQuery.queryMinValidLength
       )
 
+      if (keywordsToHighlight.isNotEmpty()) {
+        val keywordsToHighlightMap = keywordsToHighlight.associateBy { it.keyword }
+
+        SpannableHelper.findAllFilterHighlightQueryEntriesInsideSpannableStringAndMarkThem(
+          inputQueries = keywordsToHighlight.map { it.keyword },
+          spannableString = postSubject,
+          minQueryLength = 2,
+          keywordsToHighlightMap = keywordsToHighlightMap
+        )
+      }
+
       titleParts.add(postSubject)
       titleParts.add("\n")
     }
@@ -462,7 +473,7 @@ data class PostCellData(
       SpannableHelper.findAllFilterHighlightQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = keywordsToHighlight.map { it.keyword },
         spannableString = commentText,
-        minQueryLength = searchQuery.queryMinValidLength,
+        minQueryLength = 2,
         keywordsToHighlightMap = keywordsToHighlightMap
       )
     }
