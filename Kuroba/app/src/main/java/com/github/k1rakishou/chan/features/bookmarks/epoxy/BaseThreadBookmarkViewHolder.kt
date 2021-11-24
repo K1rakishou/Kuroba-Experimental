@@ -146,7 +146,9 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
     if (isGridMode && !threadBookmarkStats.isFirstFetch) {
       bookmarkAdditionalStats?.visibility = View.VISIBLE
 
-      if (threadBookmarkStats.watching) {
+      if (threadBookmarkStats.watching && threadBookmarkStats.isError) {
+        bookmarkAdditionalStats?.setTextColor(themeEngine.chanTheme.errorColor)
+      } else if (threadBookmarkStats.watching) {
         bookmarkAdditionalStats?.setTextColor(themeEngine.chanTheme.bookmarkCounterNormalColor)
       } else {
         bookmarkAdditionalStats?.setTextColor(themeEngine.chanTheme.bookmarkCounterNotWatchingColor)
