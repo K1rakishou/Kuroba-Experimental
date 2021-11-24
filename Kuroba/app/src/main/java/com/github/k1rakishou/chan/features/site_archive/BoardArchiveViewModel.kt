@@ -1,22 +1,21 @@
 package com.github.k1rakishou.chan.features.site_archive
 
 import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
-import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SeenPostsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -32,10 +31,19 @@ class BoardArchiveViewModel(
   @Inject
   lateinit var seenPostsManager: SeenPostsManager
 
-  private val _state = MutableStateFlow(ViewModelState())
-  private val searchDebouncer = Debouncer(false)
-  private var _searchQuery = mutableStateOf<String?>(null)
-  private var _archiveThreadsAsync: AsyncData<List<ArchiveThread>> = AsyncData.NotInitialized
+  private var _state = mutableStateOf<AsyncData<Unit>>(AsyncData.NotInitialized)
+  private var _archiveThreads = mutableStateListOf<ArchiveThread>()
+  private var _endReached = mutableStateOf(false)
+  private var _page = mutableStateOf<Int?>(null)
+
+  val state: State<AsyncData<Unit>>
+    get() = _state
+  val archiveThreads: List<ArchiveThread>
+    get() = _archiveThreads
+  val endReached: State<Boolean>
+    get() = _endReached
+  val page: State<Int?>
+    get() = _page
 
   var currentlySelectedThreadNo = mutableStateOf<Long?>(null)
 
@@ -49,17 +57,12 @@ class BoardArchiveViewModel(
 
   val alreadyVisitedThreads = mutableStateMapOf<ChanDescriptor.ThreadDescriptor, Unit>()
 
-  val state: StateFlow<ViewModelState>
-    get() = _state.asStateFlow()
-  val searchQuery: State<String?>
-    get() = _searchQuery
-
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
   override suspend fun onViewModelReady() {
-    _state.updateState { copy(archiveThreadsAsync = AsyncData.Loading) }
+    alreadyVisitedThreads.clear()
 
     mainScope.launch {
       seenPostsManager.seenThreadUpdatesFlow.collect { seenThread ->
@@ -67,13 +70,28 @@ class BoardArchiveViewModel(
       }
     }
 
+    loadPageOfArchiveThreads()
+  }
+
+  fun loadNextPageOfArchiveThreads() {
+    mainScope.launch { loadPageOfArchiveThreads() }
+  }
+
+  private suspend fun loadPageOfArchiveThreads() {
+    if (_endReached.value) {
+      return
+    }
+
+    _state.value = AsyncData.Loading
+    Logger.d(TAG, "loadPageOfArchiveThreads() page=${page.value}")
+
     val nativeArchivePostListResult = siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
       ?.actions()
-      ?.archive(catalogDescriptor.boardDescriptor)
+      ?.archive(catalogDescriptor.boardDescriptor, page.value)
 
-    if (nativeArchivePostListResult == null) {
+    if (_archiveThreads.isEmpty() && nativeArchivePostListResult == null) {
       val exception = ArchiveNotSupportedException(catalogDescriptor.boardCode())
-      _state.updateState { copy(archiveThreadsAsync = AsyncData.Error(exception)) }
+      _state.value = AsyncData.Error(exception)
       return
     }
 
@@ -82,20 +100,26 @@ class BoardArchiveViewModel(
 
       if (error is BadStatusResponseException && error.status == 404) {
         val exception = ArchiveNotSupportedException(catalogDescriptor.boardCode())
-        _state.updateState { copy(archiveThreadsAsync = AsyncData.Error(exception)) }
+        _state.value = AsyncData.Error(exception)
         return
       }
 
-      _state.updateState { copy(archiveThreadsAsync = AsyncData.Error(error)) }
+      _state.value = AsyncData.Error(error)
       return
     } else {
-      nativeArchivePostListResult.valueOrNull()!!
+      nativeArchivePostListResult?.valueOrNull() ?: NativeArchivePostList()
     }
 
-    val threadDescriptors = nativeArchivePostList.map { nativeArchivePost ->
+    val threadDescriptors = nativeArchivePostList.posts.map { nativeArchivePost ->
       when (nativeArchivePost) {
         is NativeArchivePost.Chan4NativeArchivePost -> {
-          return@map ChanDescriptor.ThreadDescriptor.Companion.create(
+          return@map ChanDescriptor.ThreadDescriptor.create(
+            chanDescriptor = catalogDescriptor,
+            threadNo = nativeArchivePost.threadNo
+          )
+        }
+        is NativeArchivePost.DvachNativeArchivePost -> {
+          return@map ChanDescriptor.ThreadDescriptor.create(
             chanDescriptor = catalogDescriptor,
             threadNo = nativeArchivePost.threadNo
           )
@@ -104,7 +128,6 @@ class BoardArchiveViewModel(
     }
 
     seenPostsManager.loadForCatalog(catalogDescriptor, threadDescriptors)
-    alreadyVisitedThreads.clear()
 
     threadDescriptors.forEach { threadDescriptor ->
       if (seenPostsManager.isThreadAlreadySeen(threadDescriptor)) {
@@ -112,9 +135,17 @@ class BoardArchiveViewModel(
       }
     }
 
-    val archiveThreads = nativeArchivePostList.mapIndexed { index, nativeArchivePost ->
+    val archiveThreads = nativeArchivePostList.posts.mapIndexed { index, nativeArchivePost ->
       when (nativeArchivePost) {
         is NativeArchivePost.Chan4NativeArchivePost -> {
+          val threadDescriptor = threadDescriptors[index]
+
+          return@mapIndexed ArchiveThread(
+            threadDescriptor = threadDescriptor,
+            comment = nativeArchivePost.comment.toString()
+          )
+        }
+        is NativeArchivePost.DvachNativeArchivePost -> {
           val threadDescriptor = threadDescriptors[index]
 
           return@mapIndexed ArchiveThread(
@@ -125,57 +156,26 @@ class BoardArchiveViewModel(
       }
     }
 
-    _archiveThreadsAsync = AsyncData.Data(archiveThreads)
-    _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(archiveThreads)) }
+    val noResultsOrBadPage = nativeArchivePostList.nextPage == null
+      || nativeArchivePostList.nextPage < 0
+      || archiveThreads.isEmpty()
+
+    if (noResultsOrBadPage) {
+      _endReached.value = true
+    }
+
+    Logger.d(TAG, "loadPageOfArchiveThreads() page=${page.value} done, " +
+      "loaded ${archiveThreads.size} threads, endReached=${_endReached.value}")
+
+    _page.value = nativeArchivePostList.nextPage
+    _archiveThreads.addAll(archiveThreads)
+    _state.value = AsyncData.Data(Unit)
   }
 
   fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
     _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
     _rememberedFirstVisibleItemScrollOffset = firstVisibleItemScrollOffset
   }
-
-  fun updateQueryAndReload(query: String?) {
-    _searchQuery.value = query
-
-    searchDebouncer.post({ reloadArchiveThreads(query) }, 125L)
-  }
-
-  private fun reloadArchiveThreads(query: String?) {
-    if (query.isNullOrEmpty()) {
-      if (_archiveThreadsAsync is AsyncData.Data) {
-        _state.updateState { copy(archiveThreadsAsync = _archiveThreadsAsync) }
-      }
-
-      _searchQuery.value = null
-      return
-    }
-
-    val archiveThreadsAsync = _archiveThreadsAsync
-    if (archiveThreadsAsync !is AsyncData.Data) {
-      _searchQuery.value = null
-      return
-    }
-
-    val filteredArchiveThreads = archiveThreadsAsync.data.filter { archiveThread ->
-      val threadNoStr = archiveThread.threadDescriptor.threadNo.toString()
-      if (threadNoStr.contains(query, ignoreCase = true)) {
-        return@filter true
-      }
-
-      if (archiveThread.comment.contains(query, ignoreCase = true)) {
-        return@filter true
-      }
-
-      return@filter false
-    }
-
-    _searchQuery.value = query
-    _state.updateState { copy(archiveThreadsAsync = AsyncData.Data(filteredArchiveThreads)) }
-  }
-
-  data class ViewModelState(
-    val archiveThreadsAsync: AsyncData<List<ArchiveThread>> = AsyncData.NotInitialized
-  )
 
   data class ArchiveThread(
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,

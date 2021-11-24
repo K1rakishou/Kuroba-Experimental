@@ -80,7 +80,7 @@ public interface SiteEndpoints {
     }
 
     @Nullable
-    default HttpUrl boardArchive(BoardDescriptor boardDescriptor) {
+    default HttpUrl boardArchive(BoardDescriptor boardDescriptor, @Nullable Integer page) {
         return null;
     }
 

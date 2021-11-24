@@ -15,15 +15,17 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.ChanSettings
@@ -39,6 +41,7 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.compose.search.rememberSimpleSearchStateNullable
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -46,6 +49,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 class BoardArchiveController(
@@ -60,6 +65,7 @@ class BoardArchiveController(
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private var blockClicking = false
+  private var toolbarSearchQuery = mutableStateOf<String?>(null)
   private val topPadding = mutableStateOf(0)
   private val bottomPadding = mutableStateOf(0)
 
@@ -103,7 +109,6 @@ class BoardArchiveController(
   override fun onDestroy() {
     super.onDestroy()
 
-    viewModel.updateQueryAndReload(null)
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
   }
 
@@ -116,38 +121,33 @@ class BoardArchiveController(
     bottomPadding.value = when {
       ChanSettings.isSplitLayoutMode() -> 0
       globalWindowInsetsManager.isKeyboardOpened -> pxToDp(globalWindowInsetsManager.keyboardHeight)
-      else -> pxToDp(globalWindowInsetsManager.bottom())
+      else -> {
+        val bottomNavViewHeight = if (ChanSettings.bottomNavigationViewEnabled.get()) {
+          getDimen(R.dimen.navigation_view_size)
+        } else {
+          0
+        }
+
+        pxToDp(bottomNavViewHeight + globalWindowInsetsManager.bottom())
+      }
     }
   }
 
   override fun onSearchVisibilityChanged(visible: Boolean) {
-    if (!visible) {
-      viewModel.updateQueryAndReload(null)
+    if (visible) {
+      toolbarSearchQuery.value = ""
+    } else {
+      toolbarSearchQuery.value = null
     }
   }
 
   override fun onSearchEntered(entered: String) {
-    viewModel.updateQueryAndReload(entered)
+    toolbarSearchQuery.value = entered
   }
 
   @Composable
   private fun BuildContent() {
-    val boardArchiveControllerState = viewModel.state.collectAsState()
-
-    val archiveThreads = when (val archiveThreadsAsync = boardArchiveControllerState.value.archiveThreadsAsync) {
-      is AsyncData.NotInitialized -> {
-        return
-      }
-      is AsyncData.Loading -> {
-        KurobaComposeProgressIndicator()
-        return
-      }
-      is AsyncData.Error -> {
-        KurobaComposeErrorMessage(archiveThreadsAsync.throwable)
-        return
-      }
-      is AsyncData.Data -> archiveThreadsAsync.data
-    }
+    val archiveThreads = viewModel.archiveThreads
 
     BuildListOfArchiveThreads(
       archiveThreads = archiveThreads,
@@ -175,23 +175,44 @@ class BoardArchiveController(
     onThreadClicked: (Long) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
+    val boardArchiveControllerState by viewModel.state
+    val page by viewModel.page
+    val endReached by viewModel.endReached
+
+    val searchState = rememberSimpleSearchStateNullable<BoardArchiveViewModel.ArchiveThread>(
+      searchQueryState = toolbarSearchQuery
+    )
+    val searchQuery = searchState.query
+
+    val searchResultsPair by produceState(
+      initialValue = searchState.isUsingSearch() to archiveThreads,
+      key1 = searchState.query,
+      key2 = page,
+      producer = {
+        withContext(Dispatchers.Default) {
+          value = processSearchQuery(searchQuery, archiveThreads)
+        }
+      })
+
+    val resultsFromSearch = searchResultsPair.first
+    val searchResults = searchResultsPair.second
+
     val state = rememberLazyListState(
       initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
       initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
     )
 
-    DisposableEffect(key1 = Unit, effect = {
-      onDispose {
-        viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
-      }
-    })
+    if (!searchState.isUsingSearch()) {
+      DisposableEffect(key1 = Unit, effect = {
+        onDispose {
+          viewModel.updatePrevLazyListState(state.firstVisibleItemIndex, state.firstVisibleItemScrollOffset)
+        }
+      })
+    }
 
     val topPd by topPadding
     val bottomPd by bottomPadding
-
-    val contentPadding = remember(key1 = topPd, key2 = bottomPd) {
-      PaddingValues(top = topPd.dp, bottom = bottomPd.dp)
-    }
+    val contentPadding = PaddingValues(top = topPd.dp, bottom = bottomPd.dp)
 
     LazyColumn(
       state = state,
@@ -200,35 +221,110 @@ class BoardArchiveController(
         .fillMaxSize()
         .simpleVerticalScrollbar(state, chanTheme, contentPadding)
     ) {
-      if (archiveThreads.isEmpty()) {
-        val searchQuery by viewModel.searchQuery
-        if (searchQuery.isNullOrEmpty()) {
-          item(key = "nothing_found_message") {
-            KurobaComposeErrorMessage(
-              errorMessage = stringResource(id = R.string.search_nothing_found)
-            )
-          }
-        } else {
-          item(key = "nothing_found_by_query_message_$searchQuery") {
-            KurobaComposeErrorMessage(
-              errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery!!)
-            )
-          }
-        }
-      } else {
-        items(count = archiveThreads.size) { index ->
-          ArchiveThreadItem(index, archiveThreads[index], onThreadClicked)
+      items(count = searchResults.size + 1) { index ->
+        val archiveThreadItem = searchResults.getOrNull(index)
+        if (archiveThreadItem != null) {
+          ArchiveThreadItem(index, searchResults[index], onThreadClicked)
 
-          if (index >= 0 && index < archiveThreads.size) {
+          if (index >= 0 && index < searchResults.size) {
             Divider(
               modifier = Modifier.padding(horizontal = 2.dp),
               color = chanTheme.dividerColorCompose,
               thickness = 1.dp
             )
           }
+        } else {
+          ListFooter(
+            resultsFromSearch = resultsFromSearch,
+            searchQuery = searchQuery,
+            hasResults = searchResults.isNotEmpty(),
+            endReached = endReached,
+            page = page,
+            boardArchiveControllerState = boardArchiveControllerState,
+            viewModel = viewModel
+          )
         }
       }
     }
+  }
+
+  @Composable
+  private fun ListFooter(
+    resultsFromSearch: Boolean,
+    searchQuery: String?,
+    hasResults: Boolean,
+    endReached: Boolean,
+    page: Int?,
+    boardArchiveControllerState: AsyncData<Unit>,
+    viewModel: BoardArchiveViewModel
+  ) {
+    if (boardArchiveControllerState is AsyncData.NotInitialized) {
+      return
+    }
+
+    val modifier = Modifier
+      .fillMaxWidth()
+      .wrapContentHeight()
+      .padding(horizontal = 8.dp, vertical = 12.dp)
+
+    if (boardArchiveControllerState is AsyncData.Error) {
+      KurobaComposeErrorMessage(modifier = modifier, error = boardArchiveControllerState.throwable)
+      return
+    }
+
+    if (boardArchiveControllerState is AsyncData.Loading) {
+      KurobaComposeProgressIndicator(modifier = modifier)
+      return
+    }
+
+    boardArchiveControllerState as AsyncData.Data
+
+    if (endReached) {
+      KurobaComposeText(
+        modifier = modifier,
+        text = stringResource(id = R.string.archives_end_reached),
+        textAlign = TextAlign.Center
+      )
+      return
+    }
+
+    if (!hasResults) {
+      if (!resultsFromSearch || searchQuery == null) {
+        KurobaComposeErrorMessage(
+          modifier = modifier,
+          errorMessage = stringResource(id = R.string.search_nothing_found)
+        )
+      } else {
+        KurobaComposeErrorMessage(
+          modifier = modifier,
+          errorMessage = stringResource(id = R.string.search_nothing_found_with_query, searchQuery)
+        )
+      }
+
+      return
+    }
+
+    // Do not trigger the next page load when we are searching for something
+    if (page != null && !resultsFromSearch) {
+      LaunchedEffect(
+        key1 = page,
+        block = { viewModel.loadNextPageOfArchiveThreads() }
+      )
+    }
+  }
+
+  private fun processSearchQuery(
+    searchQuery: String?,
+    archiveThreads: List<BoardArchiveViewModel.ArchiveThread>
+  ): Pair<Boolean, List<BoardArchiveViewModel.ArchiveThread>> {
+    if (searchQuery == null || searchQuery.isEmpty()) {
+      return false to archiveThreads
+    }
+
+    val results = archiveThreads
+      .filter { archiveThread -> archiveThread.comment.contains(other = searchQuery, ignoreCase = true) }
+
+    return true to results
   }
 
   @Composable

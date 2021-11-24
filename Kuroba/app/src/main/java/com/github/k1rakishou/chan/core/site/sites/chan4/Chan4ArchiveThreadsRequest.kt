@@ -1,8 +1,8 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
-import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
@@ -19,11 +19,10 @@ import java.nio.charset.StandardCharsets
 
 class Chan4ArchiveThreadsRequest(
   private val request: Request,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
-  private val simpleCommentParser: Lazy<SimpleCommentParser>
+  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>
 ) {
 
-  suspend fun execute(): ModularResult<List<NativeArchivePost>> {
+  suspend fun execute(): ModularResult<NativeArchivePostList> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
         val response = proxiedOkHttpClient.get().okHttpClient().suspendCall(request)
@@ -48,14 +47,14 @@ class Chan4ArchiveThreadsRequest(
     }
   }
 
-  private fun readHtml(document: Document): List<NativeArchivePost> {
+  private fun readHtml(document: Document): NativeArchivePostList {
     val table = document.getElementById("arc-list")
-      ?: return emptyList()
+      ?: return NativeArchivePostList()
     val tableBody = table.getElementsByTag("tbody").firstOrNull()
-      ?: return emptyList()
+      ?: return NativeArchivePostList()
     val trs = tableBody.getElementsByTag("tr")
 
-    val items = mutableListWithCap<NativeArchivePost>(32)
+    val posts = mutableListWithCap<NativeArchivePost>(32)
 
     for (tr in trs) {
       val dataElements = tr.getElementsByTag("td")
@@ -65,15 +64,13 @@ class Chan4ArchiveThreadsRequest(
       val comment = dataElements.getOrNull(1)?.text()
         ?: continue
 
-      val postComment = simpleCommentParser.get().parseComment(comment)
-      if (postComment == null) {
-        continue
-      }
-
-      items.add(NativeArchivePost.Chan4NativeArchivePost(threadNo, postComment))
+      posts.add(NativeArchivePost.Chan4NativeArchivePost(threadNo, comment))
     }
 
-    return items
+    return NativeArchivePostList(
+      nextPage = null,
+      posts = posts
+    )
   }
 
 }

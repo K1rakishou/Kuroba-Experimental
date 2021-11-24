@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAtta
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
-import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -267,7 +267,7 @@ open class Chan4 : SiteBase() {
       return search
     }
 
-    override fun boardArchive(boardDescriptor: BoardDescriptor): HttpUrl {
+    override fun boardArchive(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
       return b.newBuilder()
         .addPathSegment(boardDescriptor.boardCode)
         .addPathSegment("archive")
@@ -456,8 +456,8 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
-    override suspend fun archive(boardDescriptor: BoardDescriptor): ModularResult<List<NativeArchivePost>> {
-      val archiveUrl = requireNotNull(endpoints().boardArchive(boardDescriptor))
+    override suspend fun archive(boardDescriptor: BoardDescriptor, page: Int?): ModularResult<NativeArchivePostList> {
+      val archiveUrl = requireNotNull(endpoints().boardArchive(boardDescriptor, page))
 
       val requestBuilder = Request.Builder()
         .url(archiveUrl)
@@ -466,9 +466,8 @@ open class Chan4 : SiteBase() {
       this@Chan4.requestModifier().modifyArchiveGetRequest(this@Chan4, requestBuilder)
 
       return Chan4ArchiveThreadsRequest(
-        requestBuilder.build(),
-        proxiedOkHttpClient,
-        simpleCommentParser
+        request = requestBuilder.build(),
+        proxiedOkHttpClient = proxiedOkHttpClient
       ).execute()
     }
 

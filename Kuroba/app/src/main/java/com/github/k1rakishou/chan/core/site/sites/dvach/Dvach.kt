@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitatio
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.search.DvachSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -359,6 +360,21 @@ class Dvach : CommonSite() {
         .addQueryParameter("task", "search")
         .build()
     }
+
+    override fun boardArchive(boardDescriptor: BoardDescriptor, page: Int?): HttpUrl {
+      val builder = HttpUrl.Builder()
+        .scheme("https")
+        .host(siteHost)
+        .addPathSegment(boardDescriptor.boardCode)
+        .addPathSegment("arch")
+
+      if (page != null) {
+        builder.addPathSegment("${page}.html")
+      }
+
+      return builder.build()
+    }
+
   }
 
   class DvachSiteRequestModifier(
@@ -690,6 +706,21 @@ class Dvach : CommonSite() {
         proxiedOkHttpClient,
         dvachSearchParams,
         siteManager
+      ).execute()
+    }
+
+    override suspend fun archive(boardDescriptor: BoardDescriptor, page: Int?): ModularResult<NativeArchivePostList> {
+      val archiveUrl = requireNotNull(endpoints().boardArchive(boardDescriptor, page))
+
+      val requestBuilder = Request.Builder()
+        .url(archiveUrl)
+        .get()
+
+      this@Dvach.requestModifier().modifyArchiveGetRequest(this@Dvach, requestBuilder)
+
+      return DvachArchiveThreadsRequest(
+        request = requestBuilder.build(),
+        proxiedOkHttpClient = proxiedOkHttpClient
       ).execute()
     }
   }

@@ -23,7 +23,7 @@ import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
-import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePost
+import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
@@ -50,8 +50,8 @@ interface SiteActions {
   suspend fun <T : SearchParams> search(searchParams: T): SearchResult =
     SearchResult.Failure(SearchError.NotImplemented)
 
-  suspend fun archive(boardDescriptor: BoardDescriptor): ModularResult<List<NativeArchivePost>> =
-    ModularResult.value(emptyList())
+  suspend fun archive(boardDescriptor: BoardDescriptor, page: Int?): ModularResult<NativeArchivePostList> =
+    ModularResult.value(NativeArchivePostList())
 
   suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null
 

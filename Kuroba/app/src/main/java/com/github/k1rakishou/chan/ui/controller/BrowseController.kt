@@ -272,7 +272,7 @@ class BrowseController(
       BoardPostViewMode.STAGGER -> R.string.action_switch_board
     }
 
-    val is4chan = isCurrentCatalogSiteDescriptor4chan()
+    val supportsArchive = siteSupportsBuiltInBoardArchive()
     val isCompositeCatalog = threadLayout.presenter.currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
     val isUnlimitedCatalog = threadLayout.presenter.isUnlimitedCatalog && !isCompositeCatalog
 
@@ -293,7 +293,7 @@ class BrowseController(
       .withSubItem(ACTION_OPEN_MEDIA_BY_URL, R.string.action_open_media_by_url, { item -> openMediaByUrl(item) })
       .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
-      .withSubItem(ACTION_CHAN4_ARCHIVE, R.string.action_chan4_archive, is4chan, { chan4ArchiveClicked() })
+      .withSubItem(ACTION_BOARD_ARCHIVE, R.string.action_board_archive, supportsArchive, { viewBoardArchiveClicked() })
       .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, { item -> upClicked(item) })
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
       .build()
@@ -610,7 +610,7 @@ class BrowseController(
     handleShareOrOpenInBrowser(true)
   }
 
-  private fun chan4ArchiveClicked() {
+  private fun viewBoardArchiveClicked() {
     val boardArchiveController = BoardArchiveController(
       context = context,
       catalogDescriptor = chanDescriptor!! as CatalogDescriptor,
@@ -982,9 +982,9 @@ class BrowseController(
   }
 
   private fun updateMenuItems() {
-    navigation.findSubItem(ACTION_CHAN4_ARCHIVE)?.let { menuItem ->
-      val is4chan = isCurrentCatalogSiteDescriptor4chan()
-      menuItem.visible = is4chan
+    navigation.findSubItem(ACTION_BOARD_ARCHIVE)?.let { menuItem ->
+      val supportsArchive = siteSupportsBuiltInBoardArchive()
+      menuItem.visible = supportsArchive
     }
 
     navigation.findSubItem(ACTION_OPEN_THREAD_BY_ID)?.let { menuItem ->
@@ -1043,7 +1043,7 @@ class BrowseController(
     )
   }
 
-  private fun isCurrentCatalogSiteDescriptor4chan(): Boolean {
+  private fun siteSupportsBuiltInBoardArchive(): Boolean {
     val chanDescriptor = threadLayout.presenter.currentChanDescriptor
     if (chanDescriptor == null) {
       return false
@@ -1053,7 +1053,7 @@ class BrowseController(
       return false
     }
 
-    return chanDescriptor.siteDescriptor().is4chan()
+    return chanDescriptor.siteDescriptor().is4chan() || chanDescriptor.siteDescriptor().isDvach()
   }
 
   companion object {
@@ -1071,7 +1071,7 @@ class BrowseController(
     private const val ACTION_OPEN_THREAD_BY_URL = 910
     private const val ACTION_OPEN_MEDIA_BY_URL = 911
     private const val ACTION_CATALOG_ALBUM = 912
-    private const val ACTION_CHAN4_ARCHIVE = 913
+    private const val ACTION_BOARD_ARCHIVE = 913
     private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 914
     private const val ACTION_LOAD_WHOLE_COMPOSITE_CATALOG = 915
 
