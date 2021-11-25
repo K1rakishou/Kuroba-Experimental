@@ -175,9 +175,9 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
           Logger.d(TAG, "requestCaptcha() success")
 
           captchaInfoCache[chanDescriptor] = result.value
-          startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
-
           captchaInfoToShow.value = AsyncData.Data(result.value)
+
+          startOrRestartCaptchaTtlUpdateTask(chanDescriptor)
         }
       }
 
@@ -210,7 +210,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
         val captchaInfo = if (captchaInfoAsyncData !is AsyncData.Data) {
           resetCaptchaForced(chanDescriptor)
-          return@launch
+          break
         } else {
           captchaInfoAsyncData.data
         }
@@ -219,7 +219,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         _captchaTtlMillisFlow.value = captchaTtlMillis
 
         if (captchaTtlMillis <= 0) {
-          return@launch
+          break
         }
 
         delay(1000L)
