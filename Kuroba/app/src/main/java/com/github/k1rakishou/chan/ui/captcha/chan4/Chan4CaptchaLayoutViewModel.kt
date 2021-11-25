@@ -37,6 +37,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
@@ -164,7 +165,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
           if (error is CaptchaRateLimitError) {
             waitUntilCaptchaRateLimitPassed(error.cooldownMs)
 
-            requestCaptcha(chanDescriptor, forced = true)
+            withContext(Dispatchers.Main) { requestCaptcha(chanDescriptor, forced = true) }
             return@launch
           }
 
@@ -203,7 +204,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     captchaTtlUpdateJob?.cancel()
     captchaTtlUpdateJob = null
 
-    captchaTtlUpdateJob = mainScope.launch {
+    captchaTtlUpdateJob = mainScope.launch(Dispatchers.Main) {
       while (isActive) {
         val captchaInfoAsyncData = captchaInfoToShow.value
 
