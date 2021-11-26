@@ -4,7 +4,6 @@ import android.text.TextUtils
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.parser.ICommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
-import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.common.CommentParserConstants
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_parser.comment.HtmlTag
@@ -15,11 +14,8 @@ import java.util.regex.Pattern
 
 class DvachCommentParser : VichanCommentParser(), ICommentParser {
 
-  override fun addDefaultRules(): DvachCommentParser {
-    super.addDefaultRules()
-    rule(StyleRule.tagRule("span").withCssClass("s").strikeThrough())
-    rule(StyleRule.tagRule("span").withCssClass("u").underline())
-    return this
+  init {
+    addDefaultRules()
   }
 
   override fun matchAnchor(

@@ -99,6 +99,9 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         rule(tagRule("b").bold());
         rule(tagRule("i").italic());
         rule(tagRule("em").italic());
+        rule(tagRule("u").underline());
+        rule(tagRule("span").withCssClass("s").strikeThrough());
+        rule(tagRule("span").withCssClass("u").underline());
 
         rule(tagRule("pre")
                 .withCssClass("prettyprint")
@@ -313,6 +316,12 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             if ("a".equals(tagName)) {
                 return "";
             }
+        }
+
+        // Local images (located on 4chan) may be displayed without the "http(s)" scheme.
+        // Like "//s.4cdn.org/image/temp/danger.gif"
+        if (srcValue.startsWith("//")) {
+            srcValue = "https:" + srcValue;
         }
 
         HttpUrl httpUrl = HttpUrl.Companion.parse(srcValue);
