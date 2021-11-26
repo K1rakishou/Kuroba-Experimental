@@ -159,7 +159,10 @@ class FutabaChanReader(
         "sticky" -> builder.sticky(reader.nextInt() == 1)
         "closed" -> builder.closed(reader.nextInt() == 1)
         "archived" -> builder.archived(reader.nextInt() == 1)
-        "sticky_cap" -> builder.endless(true)
+        "sticky_cap" -> {
+          reader.nextInt()
+          builder.endless(true)
+        }
         "replies" -> builder.replies(reader.nextInt())
         "images" -> builder.threadImagesCount(reader.nextInt())
         "unique_ips" -> builder.uniqueIps(reader.nextInt())
