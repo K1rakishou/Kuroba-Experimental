@@ -34,7 +34,7 @@ class AnrException(thread: Thread) : Exception("ANR detected") {
       mainThread = actualMainThread
     }
 
-    // Sometimes ANR detection is triggered the main thread is not actually blocked
+    // Sometimes when ANR detection is triggered the main thread is not actually blocked
     // (because of coroutines or some other shit) so we need to check that the main thread is actually
     // blocked or is waiting for something.
     val continueDump = when (mainThread.state) {
