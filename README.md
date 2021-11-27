@@ -42,6 +42,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Mpv video player (downloadable).
 
+- Bookmark groups with ability to setup regex matchers to automatically move newly created bookmarks into them.
+
 - Lots of other tiny improvements.
 
 ### Screenshots:
