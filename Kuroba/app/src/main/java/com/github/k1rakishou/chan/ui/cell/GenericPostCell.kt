@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
 import android.view.View
-import androidx.constraintlayout.widget.ConstraintLayout
+import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
@@ -14,15 +14,15 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInterface {
+class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterface {
   private var layoutId: Int? = null
 
   private val gridModeMargins = context.resources.getDimension(R.dimen.grid_card_margin).toInt()
 
   init {
-    layoutParams = ConstraintLayout.LayoutParams(
-      ConstraintLayout.LayoutParams.MATCH_PARENT,
-      ConstraintLayout.LayoutParams.WRAP_CONTENT
+    layoutParams = LayoutParams(
+      LayoutParams.MATCH_PARENT,
+      LayoutParams.WRAP_CONTENT
     )
   }
 
@@ -67,14 +67,12 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
 
       val postCellView = when (newLayoutId) {
         R.layout.cell_post_stub -> PostStubCell(context)
-        R.layout.cell_post_multiple_thumbnails,
-        R.layout.cell_post_zero_or_single_thumbnails_left_alignment,
-        R.layout.cell_post_zero_or_single_thumbnails_right_alignment -> PostCell(context)
+        R.layout.cell_post_generic -> PostCell(context)
         R.layout.cell_post_card -> CardPostCell(context)
         else -> throw IllegalStateException("Unknown layoutId: $newLayoutId")
       }
 
-      addView(postCellView, ConstraintLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
+      addView(postCellView, LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT))
       AppModuleAndroidUtils.inflate(context, newLayoutId, postCellView, true)
       this.layoutId = newLayoutId
     }
@@ -84,10 +82,6 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
 
   private fun getLayoutId(postCellData: PostCellData): Int {
     val stub = postCellData.stub
-    val postViewMode = postCellData.boardPostViewMode
-    val post = postCellData.post
-    val postMultipleImagesCompactMode = postCellData.postMultipleImagesCompactMode
-
     if (stub) {
       return R.layout.cell_post_stub
     }
@@ -100,20 +94,9 @@ class GenericPostCell(context: Context) : ConstraintLayout(context), PostCellInt
 
     checkNotNull(postAlignmentMode) { "postAlignmentMode is null" }
 
-    when (postViewMode) {
+    when (postCellData.boardPostViewMode) {
       BoardPostViewMode.LIST -> {
-        if (post.postImages.size <= 1 || postMultipleImagesCompactMode) {
-          when (postAlignmentMode) {
-            ChanSettings.PostAlignmentMode.AlignLeft -> {
-              return R.layout.cell_post_zero_or_single_thumbnails_left_alignment
-            }
-            ChanSettings.PostAlignmentMode.AlignRight -> {
-              return R.layout.cell_post_zero_or_single_thumbnails_right_alignment
-            }
-          }
-        } else {
-          return R.layout.cell_post_multiple_thumbnails
-        }
+        return R.layout.cell_post_generic
       }
       BoardPostViewMode.GRID,
       BoardPostViewMode.STAGGER -> {
