@@ -1326,12 +1326,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       state: RecyclerView.State
     ) {
       if (view is GenericPostCell) {
-        val margins = view.getMargins()
+        val postCellMargins = view.getMargins()
 
-        outRect.left = margins
-        outRect.right = margins
-        outRect.top = margins
-        outRect.bottom = margins
+        outRect.left = postCellMargins.left
+        outRect.right = postCellMargins.right
+        outRect.top = postCellMargins.top
+        outRect.bottom = postCellMargins.bottom
       }
     }
   }

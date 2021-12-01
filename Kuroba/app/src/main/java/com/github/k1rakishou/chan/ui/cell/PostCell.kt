@@ -56,7 +56,6 @@ import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
 import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.*
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -261,7 +260,6 @@ class PostCell @JvmOverloads constructor(
       return
     }
 
-    postCellData(postCellData)
     preBindPost(postCellData)
 
     this.postCellData = postCellData.fullCopy()
@@ -310,6 +308,19 @@ class PostCell @JvmOverloads constructor(
     }
 
     bindPost(postCellData)
+
+    postCellData(
+      postCellData,
+      postImageThumbnailViewsContainer,
+      title,
+      icons,
+      comment,
+      replies,
+      goToPostButton,
+      divider,
+      postAttentionLabel,
+    )
+
     onThemeChanged()
   }
 
@@ -405,17 +416,6 @@ class PostCell @JvmOverloads constructor(
 //        width = ConstraintLayout.LayoutParams.WRAP_CONTENT
 //      }
 //    }
-
-    title.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = 0)
-    icons.updatePaddings(left = horizPaddingPx, top = vertPaddingPx, right = horizPaddingPx, bottom = 0)
-    comment.updatePaddings(left = horizPaddingPx, top = commentVertPaddingPx, right = horizPaddingPx, bottom = commentVertPaddingPx)
-
-    if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = 0)
-    }
-
-    // replies view always has horizPaddingPx padding since we never shift it.
-    replies.updatePaddings(left = horizPaddingPx, top = 0, right = horizPaddingPx, bottom = 0)
 
     postCommentLongtapDetector.postCellContainer = this
     postCommentLongtapDetector.commentView = comment
@@ -1498,9 +1498,6 @@ class PostCell @JvmOverloads constructor(
     const val POST_CELL_ROOT_CLICK_TOKEN = "POST_CELL_ROOT_CLICK"
     const val POST_CELL_ROOT_LONG_CLICK_TOKEN = "POST_CELL_ROOT_LONG_CLICK"
 
-    val horizPaddingPx = dp(4f)
-    val vertPaddingPx = dp(4f)
-    val commentVertPaddingPx = dp(6f)
     val iconsSpacing = dp(4f)
   }
 }

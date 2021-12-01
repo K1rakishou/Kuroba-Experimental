@@ -25,8 +25,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/post_attention_label"
         android:layout_width="@dimen/post_attention_label_width"
         android:layout_height="0dp"
-        android:layout_marginTop="2dp"
-        android:layout_marginBottom="2dp"
         android:visibility="invisible"
         tools:background="#800000"
         tools:visibility="visible" />
@@ -72,10 +70,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:gravity="center_vertical"
-        android:paddingLeft="8dp"
-        android:paddingTop="4dp"
-        android:paddingRight="8dp"
-        android:paddingBottom="4dp"
         app:singleLine="true"
         tools:text="234 replies, 123 image " />
 

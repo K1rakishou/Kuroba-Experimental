@@ -146,8 +146,8 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
     title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
 
     val dividerParams = divider.layoutParams as LayoutParams
-    dividerParams.leftMargin = PostCell.horizPaddingPx
-    dividerParams.rightMargin = PostCell.horizPaddingPx
+    dividerParams.leftMargin = PostCellLayout.horizPaddingPx
+    dividerParams.rightMargin = PostCellLayout.horizPaddingPx
     divider.layoutParams = dividerParams
 
     setBackgroundResource(R.drawable.item_background)

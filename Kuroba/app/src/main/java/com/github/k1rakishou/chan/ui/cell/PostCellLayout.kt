@@ -8,16 +8,16 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.helper.MeasurementHelper
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewsContainer
 import com.github.k1rakishou.chan.ui.view.DashedLineView
 import com.github.k1rakishou.chan.ui.view.FastScrollerHelper
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.common.TextBounds
 import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
+import com.github.k1rakishou.common.updatePaddings
 
 open class PostCellLayout @JvmOverloads constructor(
   context: Context,
@@ -36,7 +36,8 @@ open class PostCellLayout @JvmOverloads constructor(
   private var imageFileName: TextView? = null
   private var _postCellData: PostCellData? = null
 
-  private val measurementHelper = MeasurementHelper()
+  private val measureResult = MeasureResult()
+  private val layoutResult = LayoutResult()
 
   private val postAlignmentMode: ChanSettings.PostAlignmentMode
     get() {
@@ -46,18 +47,50 @@ open class PostCellLayout @JvmOverloads constructor(
   private val imagesCount: Int
     get() = _postCellData?.postImages?.size ?: 0
 
-  fun postCellData(postCellData: PostCellData) {
+  private val postAttentionLabelWidth = getDimen(R.dimen.post_attention_label_width)
+  private val goToPostButtonWidth = getDimen(R.dimen.go_to_post_button_width)
+  private val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
+
+  fun postCellData(
+    postCellData: PostCellData,
+    postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer,
+    title: TextView,
+    icons: PostIcons,
+    comment: PostCommentTextView,
+    replies: TextView,
+    goToPostButton: AppCompatImageView,
+    divider: View,
+    postAttentionLabel: DashedLineView,
+  ) {
     this._postCellData = postCellData
 
-    postImageThumbnailViewsContainer = findViewById(R.id.thumbnails_container)
-    title = findViewById(R.id.title)
-    imageFileName = findViewById(R.id.image_filename)
-    icons = findViewById(R.id.icons)
-    comment = findViewById(R.id.comment)
-    replies = findViewById(R.id.replies)
-    divider = findViewById(R.id.divider)
-    postAttentionLabel = findViewById(R.id.post_attention_label)
-    goToPostButton = findViewById(R.id.go_to_post_button)
+    this.postImageThumbnailViewsContainer = postImageThumbnailViewsContainer
+    this.title = title
+    this.icons = icons
+    this.comment = comment
+    this.replies = replies
+    this.goToPostButton = goToPostButton
+    this.divider = divider
+    this.postAttentionLabel = postAttentionLabel
+
+    icons.updatePaddings(top = vertPaddingPx)
+    comment.updatePaddings(top = commentVertPaddingPx, bottom = commentVertPaddingPx)
+
+    // replies view always has horizPaddingPx padding since we never shift it.
+    replies.updatePaddings(top = vertPaddingPx, bottom = vertPaddingPx)
+
+    if (imagesCount == 1 || postMultipleImagesCompactMode) {
+      when (postCellData.postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> {
+          postImageThumbnailViewsContainer.updatePaddings(left = horizPaddingPx, right = 0)
+        }
+        ChanSettings.PostAlignmentMode.AlignRight -> {
+          postImageThumbnailViewsContainer.updatePaddings(left = 0, right = horizPaddingPx)
+        }
+      }
+    } else {
+      title.updatePaddings(bottom = vertPaddingPx)
+    }
   }
 
   fun clear() {
@@ -65,125 +98,277 @@ open class PostCellLayout @JvmOverloads constructor(
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
-    postImageThumbnailViewsContainer.measure(mspec(0, MeasureSpec.UNSPECIFIED), mspec(0, MeasureSpec.UNSPECIFIED))
+    if (_postCellData == null) {
+      return
+    }
 
     val parentWidth = MeasureSpec.getSize(widthMeasureSpec)
 
-    val (resultWidth, resultHeight) = measurementHelper.measure(
-      initialWidth = parentWidth
-    ) {
-      val titleAndIconsWidth = if (imagesCount != 1) {
-        parentWidth
-      } else {
-        parentWidth - postImageThumbnailViewsContainer.measuredWidth
+    measureResult.reset()
+    measureResult.addHorizontal(parentWidth)
+
+    var titleAndIconsWidth = if (imagesCount != 1) {
+      if (imagesCount > 0) {
+        measure(postImageThumbnailViewsContainer, widthMeasureSpec, unspecified())
       }
 
-      vertical {
-        if (imagesCount == 0) {
-          view(title, mspec(titleAndIconsWidth, MeasureSpec.EXACTLY), heightMeasureSpec)
-          view(icons, mspec(titleAndIconsWidth, MeasureSpec.EXACTLY), heightMeasureSpec)
-        } else {
-          val titleWithIconsHeight = vertical(accumulate = false) {
-            view(title, mspec(titleAndIconsWidth, MeasureSpec.EXACTLY), heightMeasureSpec)
-            view(icons, mspec(titleAndIconsWidth, MeasureSpec.EXACTLY), heightMeasureSpec)
-          }
+      parentWidth
+    } else {
+      measure(postImageThumbnailViewsContainer, unspecified(), unspecified())
+      parentWidth - postImageThumbnailViewsContainer.measuredWidth
+    }
 
-          maxOfVertical {
-            element { titleWithIconsHeight }
-            element { postImageThumbnailViewsContainer.measuredHeight }
-          }
-        }
+    titleAndIconsWidth -= postAttentionLabelWidth
 
-        view(comment, widthMeasureSpec, heightMeasureSpec)
-        view(replies, widthMeasureSpec, heightMeasureSpec)
-        view(divider, widthMeasureSpec, mspec(DIVIDER_HEIGHT, MeasureSpec.EXACTLY))
+    if (goToPostButton.visibility != View.GONE) {
+      titleAndIconsWidth -= goToPostButtonWidth
+    }
 
-        element { POST_CELL_PADDING_VERTICAL * 2 }
+    if (imagesCount == 0) {
+      measureResult.addVertical(measure(title, exactly(titleAndIconsWidth), heightMeasureSpec))
+      measureResult.addVertical(measure(icons, exactly(titleAndIconsWidth), heightMeasureSpec))
+    } else {
+      val (_, titleWithIconsHeight) = measureVertical(
+        measure(title, exactly(titleAndIconsWidth), heightMeasureSpec),
+        measure(icons, exactly(titleAndIconsWidth), heightMeasureSpec)
+      )
+
+      if (imagesCount == 1 || postMultipleImagesCompactMode) {
+        measureResult.addVertical((Math.max(titleWithIconsHeight, postImageThumbnailViewsContainer.measuredHeight)))
+      } else {
+        measureResult.addVertical((titleWithIconsHeight + postImageThumbnailViewsContainer.measuredHeight))
       }
     }
 
-    setMeasuredDimension(resultWidth, resultHeight)
+    kotlin.run {
+      var availableWidth = MeasureSpec.getSize(widthMeasureSpec)
+
+      if (goToPostButton.visibility != View.GONE) {
+        availableWidth -= goToPostButtonWidth
+      }
+
+      availableWidth -= postAttentionLabelWidth
+
+      measureResult.addVertical(measure(comment, exactly(availableWidth), heightMeasureSpec))
+      measureResult.addVertical(measure(replies, exactly(availableWidth), heightMeasureSpec))
+    }
+
+    measureResult.addVertical(measure(divider, widthMeasureSpec, exactly(DIVIDER_HEIGHT)))
+
+    measure(
+      postAttentionLabel,
+      exactly(postAttentionLabelWidth),
+      exactly(measureResult.takenHeight)
+    )
+
+    if (goToPostButton.visibility != View.GONE) {
+      measure(
+        goToPostButton,
+        exactly(goToPostButtonWidth),
+        exactly(measureResult.takenHeight)
+      )
+    }
+
+    setMeasuredDimension(measureResult.takenWidth, measureResult.takenHeight)
   }
 
   override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
-    val top = 0
-    var takenHeight = top
+    if (_postCellData == null) {
+      return
+    }
 
-    takenHeight = layoutTitleAndThumbnailContainer(l, top, r, takenHeight)
+    layoutResult.reset(newLeft = l, newTop = t)
+    layoutResult.horizontal(postAttentionLabel)
+    layoutResult.offset(horizontal = horizPaddingPx)
 
-    comment.layout(l, takenHeight, r, takenHeight + comment.measuredHeight)
-    takenHeight += comment.measuredHeight
+    val widthTaken = layoutTitleIconsAndThumbnailsContainer() + postAttentionLabel.measuredWidth
 
-    replies.layout(l, takenHeight, r, takenHeight + replies.measuredHeight)
-    takenHeight += replies.measuredHeight
+    layoutResult.vertical(comment, replies)
+    layoutResult.vertical(divider)
 
-    divider.layout(l, takenHeight, r, takenHeight + divider.measuredHeight)
-    takenHeight += divider.measuredHeight
+    layoutResult.top = t
+    layoutResult.left = widthTaken
+    layoutResult.horizontal(goToPostButton)
   }
 
-  private fun layoutTitleAndThumbnailContainer(l: Int, top: Int, r: Int, inputTakenHeight: Int): Int {
-    var takenHeight = inputTakenHeight
-    val thumbnailsContainerWidth = postImageThumbnailViewsContainer.measuredWidth
+  private fun layoutTitleIconsAndThumbnailsContainer(): Int {
+    var widthTaken = 0
 
     if (imagesCount != 1) {
-      title.layout(l, top, r, title.measuredHeight)
-      takenHeight += title.measuredHeight
-
-      icons.layout(l, takenHeight, r, takenHeight + icons.measuredHeight)
-      takenHeight += icons.measuredHeight
+      layoutResult.vertical(title, icons)
+      widthTaken += Math.max(title.measuredWidth, icons.measuredWidth)
 
       if (imagesCount != 0) {
-        postImageThumbnailViewsContainer.layout(
-          l,
-          takenHeight,
-          r,
-          takenHeight + thumbnailsContainerWidth
-        )
-        takenHeight += thumbnailsContainerWidth
+        layoutResult.vertical(postImageThumbnailViewsContainer)
+        widthTaken = Math.max(widthTaken, postImageThumbnailViewsContainer.measuredWidth)
       }
+    } else {
+      when (postAlignmentMode) {
+        ChanSettings.PostAlignmentMode.AlignLeft -> {
+          val rememberedTop = layoutResult.top
+          val rememberedLeft = layoutResult.left
+          var titleAndIconsHeight = 0
 
-      return takenHeight
+          layoutResult.layout(title)
+          layoutResult.offset(vertical = title.measuredHeight)
+          titleAndIconsHeight += title.measuredHeight
+
+          layoutResult.layout(icons)
+          layoutResult.offset(vertical = icons.measuredHeight)
+          titleAndIconsHeight += icons.measuredHeight
+
+          layoutResult.top = rememberedTop
+          layoutResult.offset(horizontal = Math.max(title.measuredWidth, icons.measuredWidth))
+          layoutResult.layout(postImageThumbnailViewsContainer)
+
+          widthTaken = Math.max(title.measuredWidth, icons.measuredWidth) +
+            postImageThumbnailViewsContainer.measuredWidth
+
+          layoutResult.top = rememberedTop + Math.max(
+            title.measuredHeight + icons.measuredHeight,
+            postImageThumbnailViewsContainer.measuredHeight
+          )
+          layoutResult.left = rememberedLeft
+        }
+        ChanSettings.PostAlignmentMode.AlignRight -> {
+          val rememberedTop = layoutResult.top
+          val rememberedLeft = layoutResult.left
+          var titleAndIconsHeight = 0
+
+          layoutResult.layout(postImageThumbnailViewsContainer)
+          layoutResult.offset(horizontal = postImageThumbnailViewsContainer.measuredWidth)
+
+          layoutResult.top = rememberedTop
+          layoutResult.layout(title)
+          layoutResult.offset(vertical = title.measuredHeight)
+          titleAndIconsHeight += title.measuredHeight
+
+          layoutResult.layout(icons)
+          layoutResult.offset(vertical = icons.measuredHeight)
+          titleAndIconsHeight += icons.measuredHeight
+
+          widthTaken = Math.max(title.measuredWidth, icons.measuredWidth) +
+            postImageThumbnailViewsContainer.measuredWidth
+
+          layoutResult.top = rememberedTop + Math.max(
+            title.measuredHeight + icons.measuredHeight,
+            postImageThumbnailViewsContainer.measuredHeight
+          )
+          layoutResult.left = rememberedLeft
+        }
+      }
     }
 
-    val titleAndIconsWidth = r - thumbnailsContainerWidth
-
-    when (postAlignmentMode) {
-      ChanSettings.PostAlignmentMode.AlignLeft -> {
-        title.layout(l, top, titleAndIconsWidth, title.measuredHeight)
-        icons.layout(l, takenHeight + title.measuredHeight, titleAndIconsWidth, title.measuredHeight + icons.measuredHeight)
-
-        postImageThumbnailViewsContainer.layout(
-          titleAndIconsWidth,
-          0,
-          titleAndIconsWidth + thumbnailsContainerWidth,
-          takenHeight + thumbnailsContainerWidth
-        )
-        takenHeight += Math.max(title.measuredHeight + icons.measuredHeight, postImageThumbnailViewsContainer.measuredHeight)
-
-        return takenHeight
-      }
-      ChanSettings.PostAlignmentMode.AlignRight -> {
-        postImageThumbnailViewsContainer.layout(
-          l,
-          takenHeight,
-          titleAndIconsWidth,
-          takenHeight + thumbnailsContainerWidth
-        )
-        takenHeight += thumbnailsContainerWidth
-
-        title.layout(titleAndIconsWidth, top, thumbnailsContainerWidth, title.measuredHeight)
-        takenHeight += title.measuredHeight
-
-        icons.layout(titleAndIconsWidth, takenHeight, thumbnailsContainerWidth, takenHeight + icons.measuredHeight)
-        takenHeight += icons.measuredHeight
-
-        return takenHeight
-      }
-    }
+    return widthTaken
   }
 
   private fun mspec(size: Int, mode: Int): Int {
     return MeasureSpec.makeMeasureSpec(size, mode)
+  }
+
+  private fun unspecified(): Int = mspec(0, MeasureSpec.UNSPECIFIED)
+  private fun exactly(size: Int): Int = mspec(size, MeasureSpec.EXACTLY)
+
+  private fun measureHorizontal(vararg measureResults: MeasureResult): MeasureResult {
+    return MeasureResult(
+      takenWidth = measureResults.sumOf { it.takenWidth },
+      takenHeight = measureResults.maxOf { it.takenHeight }
+    )
+  }
+
+  private fun measureVertical(vararg measureResults: MeasureResult): MeasureResult {
+    return MeasureResult(
+      takenWidth = measureResults.maxOf { it.takenWidth },
+      takenHeight = measureResults.sumOf { it.takenHeight }
+    )
+  }
+
+  private fun measure(view: View, widthSpec: Int, heightSpec: Int): MeasureResult {
+    if (view.visibility == View.GONE) {
+      return MeasureResult(0, 0)
+    }
+
+    view.measure(widthSpec, heightSpec)
+
+    return MeasureResult(
+      takenWidth = view.measuredWidth,
+      takenHeight = view.measuredHeight
+    )
+  }
+
+  private data class LayoutResult(
+    var left: Int = 0,
+    var top: Int = 0
+  ) {
+
+    fun reset(newLeft: Int = 0, newTop: Int = 0) {
+      left = newLeft
+      top = newTop
+    }
+
+    fun vertical(vararg views: View) {
+      for (view in views) {
+        if (view.visibility == View.GONE) {
+          continue
+        }
+
+        view.layout(left, top, left + view.measuredWidth, top + view.measuredHeight)
+        top += view.measuredHeight
+      }
+    }
+
+    fun horizontal(vararg views: View) {
+      for (view in views) {
+        if (view.visibility == View.GONE) {
+          continue
+        }
+
+        view.layout(left, top, left + view.measuredWidth, top + view.measuredHeight)
+        left += view.measuredWidth
+      }
+    }
+
+    fun layout(view: View) {
+      if (view.visibility == View.GONE) {
+        return
+      }
+
+      view.layout(left, top, left + view.measuredWidth, top + view.measuredHeight)
+    }
+
+    fun offset(vertical: Int = 0, horizontal: Int = 0) {
+      left += horizontal
+      top += vertical
+    }
+
+  }
+
+  private data class MeasureResult(
+    var takenWidth: Int = 0,
+    var takenHeight: Int = 0
+  ) {
+
+    fun reset() {
+      takenWidth = 0
+      takenHeight = 0
+    }
+
+    fun addVertical(measureResult: MeasureResult) {
+      this.takenHeight += measureResult.takenHeight
+    }
+
+    fun addVertical(size: Int) {
+      this.takenHeight += size
+    }
+
+    fun addHorizontal(size: Int) {
+      this.takenWidth += size
+    }
+
+    fun addHorizontal(measureResult: MeasureResult) {
+      this.takenWidth += measureResult.takenWidth
+    }
+
   }
 
 
@@ -219,7 +404,7 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     val goToPostButtonWidth = if (postCellData.postViewMode.canShowGoToPostButton()) {
-      AppModuleAndroidUtils.getDimen(R.dimen.go_to_post_button_width)
+      this.goToPostButtonWidth
     } else {
       0
     }
@@ -236,8 +421,8 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     var totalAvailableWidth = postCellData.postCellDataWidthNoPaddings
-    totalAvailableWidth -= AppModuleAndroidUtils.getDimen(R.dimen.post_attention_label_width)
-    totalAvailableWidth -= (PostCell.horizPaddingPx * 2)
+    totalAvailableWidth -= this.postAttentionLabelWidth
+    totalAvailableWidth -= (horizPaddingPx * 2)
     totalAvailableWidth -= fastScrollerWidth
 
     if (totalAvailableWidth <= 0) {
@@ -314,11 +499,12 @@ open class PostCellLayout @JvmOverloads constructor(
     private const val TAG = "PostCellLayout"
     private val DIVIDER_HEIGHT = dp(1f)
 
-    private val DIVIDER_PADDING_HORIZONTAL = dp(4f)
-    private val POST_CELL_PADDING_VERTICAL = dp(6f)
-
     // Empty comment or comment with only a quote or something like that
     private const val SUPER_SHORT_COMMENT_LENGTH = 16
+
+    val horizPaddingPx = dp(4f)
+    val vertPaddingPx = dp(4f)
+    val commentVertPaddingPx = dp(8f)
   }
 
 }
