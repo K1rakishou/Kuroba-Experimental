@@ -148,6 +148,7 @@ open class PostCellLayout @JvmOverloads constructor(
       }
 
       availableWidth -= postAttentionLabelWidth
+      availableWidth -= (horizPaddingPx / 2)
 
       measureResult.addVertical(measure(comment, exactly(availableWidth), heightMeasureSpec))
       measureResult.addVertical(measure(replies, exactly(availableWidth), heightMeasureSpec))
