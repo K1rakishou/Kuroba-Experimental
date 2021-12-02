@@ -51,6 +51,9 @@ open class PostCellLayout @JvmOverloads constructor(
   private val goToPostButtonWidth = getDimen(R.dimen.go_to_post_button_width)
   private val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
 
+  private val postCellTopPadding = (vertPaddingPx * 2)
+  private val postAttentionLabelPaddings = (horizPaddingPx * 2)
+
   fun postCellData(
     postCellData: PostCellData,
     postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer,
@@ -73,24 +76,55 @@ open class PostCellLayout @JvmOverloads constructor(
     this.divider = divider
     this.postAttentionLabel = postAttentionLabel
 
-    icons.updatePaddings(top = vertPaddingPx)
-    comment.updatePaddings(top = commentVertPaddingPx, bottom = commentVertPaddingPx)
+    val commentBottomPadding = if (replies.visibility == View.GONE) {
+      vertPaddingPx
+    } else {
+      vertPaddingPx * 2
+    }
 
-    // replies view always has horizPaddingPx padding since we never shift it.
-    replies.updatePaddings(top = vertPaddingPx, bottom = vertPaddingPx)
+    val thumbnailsContainerBottomPadding = if (replies.visibility == View.GONE && comment.visibility == View.GONE) {
+      vertPaddingPx * 2
+    } else {
+      0
+    }
+
+    icons.updatePaddings(top = vertPaddingPx)
+    comment.updatePaddings(top = (vertPaddingPx * 2), bottom = commentBottomPadding)
+
+    if (replies.visibility != View.GONE) {
+      // replies view always has horizPaddingPx padding since we never shift it.
+      replies.updatePaddings(top = vertPaddingPx, bottom = vertPaddingPx)
+    }
 
     if (imagesCount == 1 || postMultipleImagesCompactMode) {
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
-          postImageThumbnailViewsContainer.updatePaddings(left = horizPaddingPx, right = 0)
+          postImageThumbnailViewsContainer.updatePaddings(
+            top = 0,
+            left = horizPaddingPx,
+            right = 0,
+            bottom = thumbnailsContainerBottomPadding
+          )
         }
         ChanSettings.PostAlignmentMode.AlignRight -> {
-          postImageThumbnailViewsContainer.updatePaddings(left = 0, right = horizPaddingPx)
+          postImageThumbnailViewsContainer.updatePaddings(
+            top = 0,
+            left = 0,
+            right = horizPaddingPx,
+            bottom = thumbnailsContainerBottomPadding
+          )
         }
       }
     } else {
-      title.updatePaddings(bottom = vertPaddingPx)
+      postImageThumbnailViewsContainer.updatePaddings(
+        top = vertPaddingPx,
+        left = 0,
+        right = 0,
+        bottom = thumbnailsContainerBottomPadding
+      )
     }
+
+    updatePaddings(top = postCellTopPadding, left = horizPaddingPx, right = horizPaddingPx)
   }
 
   fun clear() {
@@ -107,21 +141,21 @@ open class PostCellLayout @JvmOverloads constructor(
     measureResult.reset()
     measureResult.addHorizontal(parentWidth)
 
-    var titleAndIconsWidth = if (imagesCount != 1) {
-      if (imagesCount > 0) {
-        measure(postImageThumbnailViewsContainer, widthMeasureSpec, unspecified())
-      }
-
-      parentWidth
-    } else {
-      measure(postImageThumbnailViewsContainer, unspecified(), unspecified())
-      parentWidth - postImageThumbnailViewsContainer.measuredWidth
-    }
+    var titleAndIconsWidth = parentWidth
 
     titleAndIconsWidth -= postAttentionLabelWidth
+    titleAndIconsWidth -= (paddingLeft + paddingRight) // Paddings of the whole view (PostCell)
+    titleAndIconsWidth -= postAttentionLabelPaddings // Paddings related to postAttentionLabel
 
     if (goToPostButton.visibility != View.GONE) {
       titleAndIconsWidth -= goToPostButtonWidth
+    }
+
+    if (imagesCount == 1) {
+      titleAndIconsWidth -= postImageThumbnailViewsContainer.measuredWidth
+      measure(postImageThumbnailViewsContainer, unspecified(), unspecified())
+    } else if (imagesCount > 1) {
+      measure(postImageThumbnailViewsContainer, titleAndIconsWidth, unspecified())
     }
 
     if (imagesCount == 0) {
@@ -148,7 +182,8 @@ open class PostCellLayout @JvmOverloads constructor(
       }
 
       availableWidth -= postAttentionLabelWidth
-      availableWidth -= horizPaddingPx
+      availableWidth -= (paddingLeft + paddingRight) // Paddings of the whole view (PostCell)
+      availableWidth -= postAttentionLabelPaddings // Paddings related to postAttentionLabel
 
       measureResult.addVertical(measure(comment, exactly(availableWidth), heightMeasureSpec))
       measureResult.addVertical(measure(replies, exactly(availableWidth), heightMeasureSpec))
@@ -170,6 +205,8 @@ open class PostCellLayout @JvmOverloads constructor(
       )
     }
 
+    measureResult.addVertical(postCellTopPadding)
+
     setMeasuredDimension(measureResult.takenWidth, measureResult.takenHeight)
   }
 
@@ -178,17 +215,20 @@ open class PostCellLayout @JvmOverloads constructor(
       return
     }
 
-    layoutResult.reset(newLeft = l, newTop = t)
+    val left = l + horizPaddingPx
+    val top = t + postCellTopPadding
+
+    layoutResult.reset(newLeft = left, newTop = top)
     layoutResult.horizontal(postAttentionLabel)
     layoutResult.offset(horizontal = horizPaddingPx)
 
-    val widthTaken = layoutTitleIconsAndThumbnailsContainer() + postAttentionLabel.measuredWidth
+    val widthTaken = layoutTitleIconsAndThumbnailsContainer()
 
     layoutResult.vertical(comment, replies)
     layoutResult.vertical(divider)
 
-    layoutResult.top = t
-    layoutResult.left = widthTaken
+    layoutResult.top = top
+    layoutResult.left = left + postAttentionLabel.measuredWidth + horizPaddingPx + widthTaken
     layoutResult.horizontal(goToPostButton)
   }
 
@@ -505,7 +545,6 @@ open class PostCellLayout @JvmOverloads constructor(
 
     val horizPaddingPx = dp(4f)
     val vertPaddingPx = dp(4f)
-    val commentVertPaddingPx = dp(8f)
   }
 
 }

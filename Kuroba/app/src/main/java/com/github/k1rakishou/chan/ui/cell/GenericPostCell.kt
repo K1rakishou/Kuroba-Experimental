@@ -26,33 +26,15 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     )
   }
 
-  fun getMargins(): PostCellMargins {
+  fun getMargins(): Int {
     val childPostCell = getChildPostCell()
-      ?: return PostCellMargins.DEFAULT
+      ?: return 0
 
-    when (childPostCell) {
-      is PostCell -> {
-        return PostCellMargins(
-          left = (PostCellLayout.horizPaddingPx / 2),
-          right = PostCellLayout.horizPaddingPx,
-          top = PostCellLayout.vertPaddingPx,
-          bottom = PostCellLayout.vertPaddingPx
-        )
-      }
-      is PostStubCell -> {
-        return PostCellMargins.DEFAULT
-      }
-      is CardPostCell -> {
-        return PostCellMargins(
-          left = gridModeMargins,
-          right = gridModeMargins,
-          top = gridModeMargins,
-          bottom = gridModeMargins
-        )
-      }
-      else -> {
-        throw IllegalStateException("Unknown childPostCell: ${childPostCell.javaClass.simpleName}")
-      }
+    return when (childPostCell) {
+      is PostCell,
+      is PostStubCell -> 0
+      is CardPostCell -> gridModeMargins
+      else -> throw IllegalStateException("Unknown childPostCell: ${childPostCell.javaClass.simpleName}")
     }
   }
 
@@ -155,18 +137,6 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
     }
 
     return null
-  }
-
-  class PostCellMargins(
-    val left: Int = 0,
-    val right: Int = 0,
-    val top: Int = 0,
-    val bottom: Int = 0
-  ) {
-
-    companion object {
-      val DEFAULT = PostCellMargins()
-    }
   }
 
   companion object {
