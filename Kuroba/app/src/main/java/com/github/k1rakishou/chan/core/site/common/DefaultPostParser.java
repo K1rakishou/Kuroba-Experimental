@@ -18,7 +18,6 @@ package com.github.k1rakishou.chan.core.site.common;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp;
 
-import android.graphics.Color;
 import android.text.Spannable;
 import android.text.SpannableString;
 import android.text.SpannableStringBuilder;
@@ -41,7 +40,6 @@ import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlParser;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
-import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
@@ -49,7 +47,6 @@ import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan;
 import com.github.k1rakishou.core_spannable.PosterNameMarkerSpan;
 import com.github.k1rakishou.core_spannable.PosterTripcodeMarkerSpan;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
-import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.post.ChanPost;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 
@@ -148,7 +145,7 @@ public class DefaultPostParser implements PostParser {
         SpannableString idSpan = null;
         SpannableString capcodeSpan = null;
 
-        int detailsSizePx = sp(Integer.parseInt(ChanSettings.fontSize.get()) - 4);
+        int detailsSizePx = sp(ChanSettings.detailsSizeSp());
         if (!TextUtils.isEmpty(builder.subject)) {
             SpannableString subjectSpan = new SpannableString(builder.subject);
 
@@ -181,21 +178,14 @@ public class DefaultPostParser implements PostParser {
         }
 
         if (!TextUtils.isEmpty(builder.posterId)) {
-            idSpan = new SpannableString(formatPosterId(builder));
-
-            int backgroundColor = Color.BLACK;
-            if (ThemeEngine.isDarkColor(builder.idColor)) {
-                backgroundColor = Color.WHITE;
-            }
-
-            idSpan.setSpan(new ForegroundColorSpanHashed(backgroundColor), 0, idSpan.length(), 0);
-            idSpan.setSpan(new BackgroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
+            idSpan = new SpannableString(builder.posterId);
+            idSpan.setSpan(new ForegroundColorSpanHashed(builder.idColor), 0, idSpan.length(), 0);
             idSpan.setSpan(new AbsoluteSizeSpanHashed(detailsSizePx), 0, idSpan.length(), 0);
             idSpan.setSpan(new PosterIdMarkerSpan(), 0, idSpan.length(), 0);
         }
 
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
-            capcodeSpan = new SpannableString(formatCapcode(builder));
+            capcodeSpan = new SpannableString(builder.moderatorCapcode);
             capcodeSpan.setSpan(
                     new ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
                     0,
@@ -248,10 +238,10 @@ public class DefaultPostParser implements PostParser {
         String name = "";
 
         if (!TextUtils.isEmpty(builder.moderatorCapcode)) {
-            formattedCapcode = formatCapcode(builder);
+            formattedCapcode = builder.moderatorCapcode;
         }
         if (!TextUtils.isEmpty(builder.posterId)) {
-            formattedPosterId = formatPosterId(builder);
+            formattedPosterId = builder.posterId;
         }
         if (!TextUtils.isEmpty(builder.name)) {
             name = builder.name;
@@ -285,16 +275,6 @@ public class DefaultPostParser implements PostParser {
         }
 
         return tripcodeStringBuilder.toString().trim();
-    }
-
-    @NonNull
-    private String formatCapcode(ChanPostBuilder builder) {
-        return "Capcode: " + builder.moderatorCapcode;
-    }
-
-    @NonNull
-    private String formatPosterId(ChanPostBuilder builder) {
-        return "  ID: " + builder.posterId + "  ";
     }
 
     @Override

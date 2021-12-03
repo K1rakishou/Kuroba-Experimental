@@ -106,7 +106,6 @@ class PostCell @JvmOverloads constructor(
   private var postCellCallback: PostCellCallback? = null
   private var needAllowParentToInterceptTouchEvents = false
   private var needAllowParentToInterceptTouchEventsDownEventEnded = false
-  private var iconSizePx = 0
   private var postCellHighlight: PostHighlightManager.PostHighlight? = null
   private var postTimeUpdaterJob: Job? = null
   private var blinkExecuted = false
@@ -319,6 +318,7 @@ class PostCell @JvmOverloads constructor(
       goToPostButton,
       divider,
       postAttentionLabel,
+      imageFileName
     )
 
     onThemeChanged()
@@ -395,7 +395,6 @@ class PostCell @JvmOverloads constructor(
     title.textSize = textSizeSp.toFloat()
     title.gravity = GravityCompat.START
 
-    iconSizePx = sp(textSizeSp - 3.toFloat())
     icons.setSpacing(iconsSpacing)
     icons.height = sp(textSizeSp.toFloat())
     icons.rtl(false)
@@ -404,18 +403,6 @@ class PostCell @JvmOverloads constructor(
     replies.textSize = textSizeSp.toFloat()
 
     updatePostCellFileName(postCellData)
-
-    // TODO(KurobaEx): post-cell-layout
-//    if (postCellData.isViewingThread) {
-//      replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
-//        width = 0
-//        horizontalWeight = 1f
-//      }
-//    } else {
-//      replies.updateLayoutParams<ConstraintLayout.LayoutParams> {
-//        width = ConstraintLayout.LayoutParams.WRAP_CONTENT
-//      }
-//    }
 
     postCommentLongtapDetector.postCellContainer = this
     postCommentLongtapDetector.commentView = comment
@@ -853,7 +840,7 @@ class PostCell @JvmOverloads constructor(
     icons.set(PostIcons.HTTP_ICONS, postIcons.isNotEmpty())
 
     if (postIcons.isNotEmpty()) {
-      icons.setHttpIcons(imageLoaderV2, postIcons, theme, iconSizePx)
+      icons.setHttpIcons(imageLoaderV2, postIcons, theme, postCellData.iconSizePx)
     }
 
     icons.apply()

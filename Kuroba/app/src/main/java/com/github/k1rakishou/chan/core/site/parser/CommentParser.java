@@ -85,8 +85,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     }
 
     public CommentParser addDefaultRules() {
-        int fontSize = Integer.parseInt(ChanSettings.fontSize.get());
-        int codeTagFontSize = fontSize - 2;
+        int codeTagFontSize = sp(ChanSettings.codeTagFontSizePx());
 
         rule(tagRule("a").action(this::handleAnchor));
         rule(tagRule("iframe").action(this::handleIframe));
@@ -106,7 +105,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         rule(tagRule("pre")
                 .withCssClass("prettyprint")
                 .monospace()
-                .size(sp(codeTagFontSize))
+                .size(codeTagFontSize)
                 .backgroundColorId(ChanThemeColorId.BackColorSecondary)
                 .foregroundColorId(ChanThemeColorId.TextColorPrimary)
         );

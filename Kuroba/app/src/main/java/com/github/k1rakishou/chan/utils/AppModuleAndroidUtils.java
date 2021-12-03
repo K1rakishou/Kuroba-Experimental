@@ -325,6 +325,10 @@ public class AppModuleAndroidUtils {
         return (int) (dp * context.getResources().getDisplayMetrics().density);
     }
 
+    public static int sp(int sp) {
+        return sp((float) sp);
+    }
+
     public static int sp(float sp) {
         return (int) (sp * getRes().getDisplayMetrics().scaledDensity);
     }

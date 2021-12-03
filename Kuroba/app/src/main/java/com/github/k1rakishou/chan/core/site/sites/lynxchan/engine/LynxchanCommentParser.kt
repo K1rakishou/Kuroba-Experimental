@@ -10,15 +10,14 @@ import java.util.regex.Pattern
 class LynxchanCommentParser : CommentParser() {
 
   init {
-    val fontSize = ChanSettings.fontSize.get().toInt()
-    val redTextFontSize = fontSize + 2
+    val redTextFontSize = sp(ChanSettings.redTextFontSizePx())
 
     addDefaultRules()
 
     rule(
       tagRule("span")
         .withCssClass("redText")
-        .size(sp(redTextFontSize.toFloat()))
+        .size(redTextFontSize)
         .bold()
         .foregroundColorId(ChanThemeColorId.AccentColor)
     )

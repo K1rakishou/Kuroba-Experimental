@@ -140,8 +140,12 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
     val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
 
-    val paddingPx = dp((textSizeSp - 6).toFloat())
-    title.setPadding(paddingPx, VERTICAL_PADDING, paddingPx, VERTICAL_PADDING)
+    title.setPadding(
+      postCellData.postStubCellTitlePaddingPx,
+      VERTICAL_PADDING,
+      postCellData.postStubCellTitlePaddingPx,
+      VERTICAL_PADDING
+    )
 
     title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
 
