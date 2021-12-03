@@ -189,6 +189,8 @@ open class PostCellLayout @JvmOverloads constructor(
       return
     }
 
+    val iconsMeasureResult = measure(icons, exactly(titleAndIconsWidth), unspecified())
+
     val shiftResult = canShiftPostComment(_postCellData!!, parentWidth)
     postCommentShiftResult = shiftResult
 
@@ -198,7 +200,7 @@ open class PostCellLayout @JvmOverloads constructor(
         imageFileName
           ?.let { textView -> measure(textView, exactly(titleAndIconsWidth), unspecified()) }
           ?: MeasureResult.EMPTY,
-        measure(icons, exactly(titleAndIconsWidth), unspecified())
+        iconsMeasureResult
       )
 
       val maxHeight = maxOf(titleWithIconsHeight, postImageThumbnailViewsContainer.measuredHeight)
@@ -658,7 +660,15 @@ open class PostCellLayout @JvmOverloads constructor(
     val commentTextBounds = comment.getTextBounds(postCellData.commentText, availableWidthWithoutThumbnail)
     val commentHeight = commentTextBounds.textHeight
 
-    if ((resultTitleTextBounds.textHeight * 1.5f) > commentHeight) {
+    val multiplier = when (postCellData.postAlignmentMode) {
+      ChanSettings.PostAlignmentMode.AlignLeft -> 1.6f
+      ChanSettings.PostAlignmentMode.AlignRight -> 1.33f
+    }
+
+    val commentFitsIntoThumbnailViewSide = (postImageThumbnailViewsContainer.measuredHeight * multiplier) >
+      (commentHeight + icons.measuredHeight + resultTitleTextBounds.textHeight)
+
+    if (commentFitsIntoThumbnailViewSide) {
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
