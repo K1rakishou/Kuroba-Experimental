@@ -556,9 +556,9 @@ data class PostCellData(
       val spanCount = postCellCallback!!.currentSpanCount()
 
       // The higher the spanCount the lower the commentMaxLength
-      // (but COMMENT_MAX_LENGTH_GRID is the minimum)
-      commentMaxLength = COMMENT_MAX_LENGTH_GRID +
-        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_GRID) / spanCount)
+      // (but COMMENT_MAX_LENGTH_STAGGER_MIN is the minimum)
+      commentMaxLength = COMMENT_MAX_LENGTH_STAGGER_MIN +
+        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_STAGGER_MIN) / spanCount)
     }
 
     if (commentText.length <= commentMaxLength) {
@@ -740,7 +740,8 @@ data class PostCellData(
   companion object {
     private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
-    private const val COMMENT_MAX_LENGTH_STAGGER = 400
+    private const val COMMENT_MAX_LENGTH_STAGGER_MIN = 100
+    private const val COMMENT_MAX_LENGTH_STAGGER = 300
     private const val POST_STUB_TITLE_MAX_LENGTH = 100
 
     // vvv When updating any of these don't forget to update PostCellItemViewType !!! vvv

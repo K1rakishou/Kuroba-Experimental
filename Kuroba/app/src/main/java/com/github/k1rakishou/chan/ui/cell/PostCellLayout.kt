@@ -18,6 +18,17 @@ import com.github.k1rakishou.common.countLines
 import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
 
+/**
+ * God forbid you to ever have to change this class because this shit is very complex.
+ *
+ * This is custom layout for PostCell (when LIST mode is used). The only point of this class existing
+ * is that it's way faster than the previous implementation (which was using ConstraintLayout).
+ * The complexity of this class comes from lots of different settings changing the structure of
+ * PostCell view such as post comment shift and post alignment. In the previous implementation post
+ * shift comment setting was implemented using ConstraintLayout barriers and post alignment was
+ * implemented by using 3 different existing xml files.
+ * Now everything is done programmatically, manually. So it's very fast, but also very complex.
+ * */
 open class PostCellLayout @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
@@ -55,6 +66,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
   private val postCellTopPadding = (vertPaddingPx * 2)
   private val postAttentionLabelPaddings = (horizPaddingPx * 2)
+  private val commentTopPadding = (vertPaddingPx * 2)
 
   fun postCellData(
     postCellData: PostCellData,
@@ -81,7 +93,6 @@ open class PostCellLayout @JvmOverloads constructor(
     this.imageFileName = imageFileName
 
     val commentBottomPadding = vertPaddingPx * 2
-    val commentTopPadding = vertPaddingPx * 2
     val thumbnailsContainerBottomPadding = vertPaddingPx * 2
     val thumbnailsContainerHorizPadding = horizPaddingPx * 2
 
@@ -211,7 +222,7 @@ open class PostCellLayout @JvmOverloads constructor(
       return
     }
 
-    measureCommentRepliesDividerWithCommentShift(widthMeasureSpec)
+    measureCommentRepliesDividerWithCommentShift(widthMeasureSpec, shiftResult)
     setMeasuredDimension(measureResult.takenWidth, measureResult.takenHeight)
   }
 
@@ -254,7 +265,10 @@ open class PostCellLayout @JvmOverloads constructor(
     measureResult.addVertical(postCellTopPadding)
   }
 
-  private fun measureCommentRepliesDividerWithCommentShift(widthMeasureSpec: Int) {
+  private fun measureCommentRepliesDividerWithCommentShift(
+    widthMeasureSpec: Int,
+    shiftResult: PostCommentShiftResult
+  ) {
     var availableWidth = MeasureSpec.getSize(widthMeasureSpec)
 
     if (goToPostButton.visibility != GONE) {
@@ -271,17 +285,39 @@ open class PostCellLayout @JvmOverloads constructor(
       availableWidth -= postImageThumbnailViewsContainer.measuredWidth
     }
 
-    val (_, takenHeight) = measureVertical(
-      measure(title, exactly(availableWidth), unspecified()),
-      imageFileName
-        ?.let { textView -> measure(textView, exactly(availableWidth), unspecified()) }
-        ?: MeasureResult.EMPTY,
-      measure(icons, exactly(availableWidth), unspecified()),
-      measure(comment, exactly(availableWidth), unspecified())
-    )
+    if (shiftResult is PostCommentShiftResult.ShiftWithTopMargin) {
+      val commentWidthSpec = exactly(availableWidth + postImageThumbnailViewsContainer.measuredWidth)
 
-    val maxHeight = maxOf(takenHeight, postImageThumbnailViewsContainer.measuredHeight)
-    measureResult.addVertical(maxHeight)
+      val (_, takenHeight) = measureVertical(
+        measure(title, exactly(availableWidth), unspecified()),
+        imageFileName
+          ?.let { textView -> measure(textView, exactly(availableWidth), unspecified()) }
+          ?: MeasureResult.EMPTY,
+        measure(icons, exactly(availableWidth), unspecified()),
+      )
+
+      val maxHeight = maxOf(takenHeight, postImageThumbnailViewsContainer.measuredHeight)
+      measureResult.addVertical(maxHeight)
+
+      val commentHeight = measure(comment, commentWidthSpec, unspecified()).takenHeight
+      measureResult.addVertical(commentHeight)
+
+      measureResult.subVertical(shiftResult.topOffset)
+    } else {
+      val commentWidthSpec = exactly(availableWidth)
+
+      val (_, takenHeight) = measureVertical(
+        measure(title, exactly(availableWidth), unspecified()),
+        imageFileName
+          ?.let { textView -> measure(textView, exactly(availableWidth), unspecified()) }
+          ?: MeasureResult.EMPTY,
+        measure(icons, exactly(availableWidth), unspecified()),
+        measure(comment, commentWidthSpec, unspecified())
+      )
+
+      val maxHeight = maxOf(takenHeight, postImageThumbnailViewsContainer.measuredHeight)
+      measureResult.addVertical(maxHeight)
+    }
 
     val repliesWidthSpec = if (_postCellData?.isViewingThread == true) {
       exactly(MeasureSpec.getSize(widthMeasureSpec) - totalSidePaddings)
@@ -317,7 +353,6 @@ open class PostCellLayout @JvmOverloads constructor(
     layoutResult.offset(horizontal = horizPaddingPx)
 
     val shiftResult = postCommentShiftResult!!
-
     layoutTitleIconsAndThumbnailsContainer(shiftResult, postTopPartLayoutResult)
 
     when (shiftResult) {
@@ -326,16 +361,29 @@ open class PostCellLayout @JvmOverloads constructor(
       }
       PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail,
       is PostCommentShiftResult.ShiftWithTopMargin -> {
-        layoutResult.withOffset(horizontal = postTopPartLayoutResult.commentLeftOffset, vertical = 0) {
+        if (shiftResult is PostCommentShiftResult.ShiftWithTopMargin) {
+          layoutResult.top -= shiftResult.topOffset
+          layoutResult.top -= commentTopPadding
+        }
+
+        layoutResult.withOffset(horizontal = postTopPartLayoutResult.commentLeftOffset) {
           layoutResult.vertical(comment)
         }
 
-        val takenHeight = maxOf(
-          title.measuredHeight + (imageFileName?.measuredHeight ?: 0) + icons.measuredHeight + comment.measuredHeight,
-          postImageThumbnailViewsContainer.measuredHeight
-        )
+        if (shiftResult is PostCommentShiftResult.ShiftWithTopMargin) {
+          layoutResult.top = top + comment.measuredHeight + maxOf(
+            title.measuredHeight + (imageFileName?.measuredHeight ?: 0) + icons.measuredHeight,
+            postImageThumbnailViewsContainer.measuredHeight
+          )
 
-        layoutResult.top = top + takenHeight
+          layoutResult.top -= shiftResult.topOffset
+        } else {
+          layoutResult.top = top + maxOf(
+            title.measuredHeight + (imageFileName?.measuredHeight ?: 0) + icons.measuredHeight + comment.measuredHeight,
+            postImageThumbnailViewsContainer.measuredHeight
+          )
+        }
+
         layoutResult.vertical(replies, divider)
       }
     }
@@ -412,7 +460,10 @@ open class PostCellLayout @JvmOverloads constructor(
               )
             }
             is PostCommentShiftResult.ShiftWithTopMargin -> {
-              layoutResult.top = rememberedTop + title.measuredHeight + imageFileNameHeight + icons.measuredHeight
+              layoutResult.top = rememberedTop + maxOf(
+                title.measuredHeight + imageFileNameHeight + icons.measuredHeight,
+                postImageThumbnailViewsContainer.measuredHeight
+              )
             }
           }
 
@@ -643,7 +694,9 @@ open class PostCellLayout @JvmOverloads constructor(
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
-    if (postCellData.commentText.length < SUPER_SHORT_COMMENT_LENGTH && postCellData.commentText.countLines() <= 1) {
+    val commentLinesCount = postCellData.commentText.countLines()
+
+    if (postCellData.commentText.length < SUPER_SHORT_COMMENT_LENGTH && commentLinesCount <= 1) {
       // Fast path for very short comments.
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
@@ -679,8 +732,10 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     val availableHeight = resultTitleTextBounds.textHeight - iconsHeight
+    val specialModeCanBeUsed = availableHeight > 0
+      && postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
-    if (availableHeight > 0 && postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
+    if (specialModeCanBeUsed) {
       // Special case for when thumbnails are on the right side of a post and the post comment's
       // lines are all formatted in such way that first N of them are all less than availableWidth.
       // N in this case is first number lines which height sum is greater than or equal to availableHeight.
@@ -703,11 +758,11 @@ open class PostCellLayout @JvmOverloads constructor(
         }
       }
 
-      if (textOffset <= 0) {
-        return PostCommentShiftResult.CannotShiftComment
+      if (textOffset > 0) {
+        return PostCommentShiftResult.ShiftWithTopMargin(textOffset.coerceIn(0, availableHeight))
       }
 
-      return PostCommentShiftResult.ShiftWithTopMargin(textOffset.coerceIn(0, availableHeight))
+      // fallthrough
     }
 
     return PostCommentShiftResult.CannotShiftComment
