@@ -23,7 +23,6 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 ) : ViewGroup(context, attributeSet, defAttrStyle) {
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
-  private var horizPaddingPx = 0
 
   private val cachedThumbnailViewContainerInfoArray = arrayOf(
     // PRE_BIND
@@ -47,9 +46,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   fun preBind(
     postCellThumbnailCallbacks: PostCellThumbnailCallbacks,
-    postCellData: PostCellData,
-    horizPaddingPx: Int,
-    vertPaddingPx: Int
+    postCellData: PostCellData
   ) {
     if (thumbnailViews != null && postCellDataIsTheSame(PRE_BIND, postCellData)) {
       // Images are already bound and haven't changed since the last bind, do nothing
@@ -57,31 +54,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
-    this.horizPaddingPx = horizPaddingPx
     cachedThumbnailViewContainerInfoArray[PRE_BIND].updateFrom(postCellData)
 
-    when {
-      postCellData.post.postImages.size == 1 -> {
-        this.setVisibilityFast(View.VISIBLE)
-        this.updatePadding(
-          left = horizPaddingPx,
-          right = horizPaddingPx,
-          top = vertPaddingPx,
-          bottom = vertPaddingPx
-        )
-      }
-      postCellData.post.postImages.size > 1 -> {
-        this.setVisibilityFast(View.VISIBLE)
-        this.updatePadding(
-          left = horizPaddingPx,
-          right = horizPaddingPx,
-          top = MULTIPLE_THUMBNAILS_VERTICAL_PADDING,
-          bottom = MULTIPLE_THUMBNAILS_VERTICAL_PADDING
-        )
-      }
-      else -> {
-        this.setVisibilityFast(View.GONE)
-      }
+    if (postCellData.post.postImages.isNotEmpty()) {
+      this.setVisibilityFast(View.VISIBLE)
+    } else {
+      this.setVisibilityFast(View.GONE)
     }
   }
 

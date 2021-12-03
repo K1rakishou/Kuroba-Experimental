@@ -219,7 +219,8 @@ class ThreadCellData(
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
 
-    val fontSize = ChanSettings.fontSize.get().toInt()
+    val textSizeSp = ChanSettings.fontSize.get().toInt()
+    val detailsSizeSp = ChanSettings.detailsSizeSp()
     val boardPostsSortOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
     val neverShowPages = ChanSettings.neverShowPages.get()
     val tapNoReply = ChanSettings.tapNoReply.get()
@@ -270,7 +271,8 @@ class ThreadCellData(
           post = postIndexed.post,
           postIndex = postIndexed.postIndex,
           postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
-          textSizeSp = fontSize,
+          textSizeSp = textSizeSp,
+          detailsSizeSp = detailsSizeSp,
           theme = chanTheme,
           postViewMode = postViewMode,
           markedPostNo = defaultMarkedNo,

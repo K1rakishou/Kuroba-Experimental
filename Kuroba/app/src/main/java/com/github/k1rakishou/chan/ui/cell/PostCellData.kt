@@ -44,11 +44,12 @@ data class PostCellData(
   val post: ChanPost,
   val postIndex: Int,
   val postCellDataWidthNoPaddings: Int,
-  var textSizeSp: Int,
+  val textSizeSp: Int,
+  val detailsSizeSp: Int,
   private val markedPostNo: Long?,
   var showDivider: Boolean,
   var boardPostViewMode: ChanSettings.BoardPostViewMode,
-  var boardPostsSortOrder: PostsFilter.Order,
+  val boardPostsSortOrder: PostsFilter.Order,
   val boardPage: BoardPage?,
   val neverShowPages: Boolean,
   val tapNoReply: Boolean,
@@ -61,11 +62,11 @@ data class PostCellData(
   val markUnseenPosts: Boolean,
   val markSeenThreads: Boolean,
   var compact: Boolean,
-  var stub: Boolean,
+  val stub: Boolean,
   val theme: ChanTheme,
-  var filterHash: Int,
-  var postViewMode: PostViewMode,
-  var searchQuery: SearchQuery,
+  val filterHash: Int,
+  val postViewMode: PostViewMode,
+  val searchQuery: SearchQuery,
   val keywordsToHighlight: Set<HighlightFilterKeyword>,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
@@ -81,6 +82,9 @@ data class PostCellData(
   private var postFileInfoHashPrecalculated: MurmurHashUtils.Murmur3Hash? = null
   private var commentTextPrecalculated: CharSequence? = null
   private var catalogRepliesTextPrecalculated: CharSequence? = null
+
+  val iconSizePx = sp(textSizeSp - 2.toFloat())
+  val postStubCellTitlePaddingPx = sp((textSizeSp - 6).toFloat())
 
   val postNo: Long
     get() = post.postNo()
@@ -136,7 +140,7 @@ data class PostCellData(
   val showImageFileNameForSingleImage: Boolean
     get() = singleImageMode && postFileInfo
 
-  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(textSizeSp - 4.toFloat()) }
+  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(ChanSettings.detailsSizeSp()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
@@ -229,6 +233,7 @@ data class PostCellData(
       postIndex = postIndex,
       postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
       textSizeSp = textSizeSp,
+      detailsSizeSp = detailsSizeSp,
       markedPostNo = markedPostNo,
       showDivider = showDivider,
       boardPostViewMode = boardPostViewMode,
@@ -502,7 +507,7 @@ data class PostCellData(
     }
 
     val resultMap = mutableMapOf<ChanPostImage, SpannableString>()
-    val detailsSizePx = sp(textSizeSp - 4.toFloat())
+    val detailsSizePx = sp(detailsSizeSp)
 
     if (postImages.size > 1 && postMultipleImagesCompactMode) {
       val postImage = postImages.first()
@@ -551,9 +556,9 @@ data class PostCellData(
       val spanCount = postCellCallback!!.currentSpanCount()
 
       // The higher the spanCount the lower the commentMaxLength
-      // (but COMMENT_MAX_LENGTH_GRID is the minimum)
-      commentMaxLength = COMMENT_MAX_LENGTH_GRID +
-        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_GRID) / spanCount)
+      // (but COMMENT_MAX_LENGTH_STAGGER_MIN is the minimum)
+      commentMaxLength = COMMENT_MAX_LENGTH_STAGGER_MIN +
+        ((COMMENT_MAX_LENGTH_STAGGER - COMMENT_MAX_LENGTH_STAGGER_MIN) / spanCount)
     }
 
     if (commentText.length <= commentMaxLength) {
@@ -735,7 +740,8 @@ data class PostCellData(
   companion object {
     private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
-    private const val COMMENT_MAX_LENGTH_STAGGER = 400
+    private const val COMMENT_MAX_LENGTH_STAGGER_MIN = 100
+    private const val COMMENT_MAX_LENGTH_STAGGER = 300
     private const val POST_STUB_TITLE_MAX_LENGTH = 100
 
     // vvv When updating any of these don't forget to update PostCellItemViewType !!! vvv

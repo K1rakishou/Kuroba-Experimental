@@ -10,9 +10,9 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
-import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.cell.PostCellLayout
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.SearchLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
@@ -114,7 +114,7 @@ class PostSearchPopupController(
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_search)
     dataView.id = R.id.post_popup_search_view_id
 
-    val horizPadding = PostCell.horizPaddingPx
+    val horizPadding = PostCellLayout.horizPaddingPx
     val searchLayoutContainer = dataView.findViewById<LinearLayout>(R.id.search_layout_container)
     searchLayoutContainer.updatePaddings(left = horizPadding, right = horizPadding)
 

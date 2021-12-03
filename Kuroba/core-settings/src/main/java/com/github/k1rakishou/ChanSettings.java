@@ -829,6 +829,18 @@ public class ChanSettings {
         return new File(getAppDir(), sharedPrefsFile.getValue());
     }
 
+    public static int detailsSizeSp() {
+        return Integer.parseInt(ChanSettings.fontSize.get()) - 2;
+    }
+
+    public static int codeTagFontSizePx() {
+        return Integer.parseInt(ChanSettings.fontSize.get()) - 2;
+    }
+
+    public static int redTextFontSizePx() {
+        return Integer.parseInt(ChanSettings.fontSize.get()) + 2;
+    }
+
     public static boolean isSlideLayoutMode() {
         return getCurrentLayoutMode() == LayoutMode.SLIDE;
     }

@@ -84,8 +84,6 @@ class CardPostCell : ConstraintLayout,
   private lateinit var replies: TextView
   private lateinit var icons: PostIcons
 
-  private var iconSizePx = 0
-
   private val scope = KurobaCoroutineScope()
 
   private val postBackgroundBlinkAnimation = lazy(LazyThreadSafetyMode.NONE) {
@@ -269,7 +267,6 @@ class CardPostCell : ConstraintLayout,
     replies = findViewById(R.id.replies)
 
     val textSizeSp = postCellData.textSizeSp
-    iconSizePx = AppModuleAndroidUtils.sp(textSizeSp - 3.toFloat())
     icons.setSpacing(PostCell.iconsSpacing)
     icons.height = AppModuleAndroidUtils.sp(textSizeSp.toFloat())
     icons.rtl(false)
@@ -510,7 +507,7 @@ class CardPostCell : ConstraintLayout,
     icons.set(PostIcons.HTTP_ICONS, postIcons.isNotEmpty())
 
     if (postIcons.isNotEmpty()) {
-      icons.setHttpIcons(imageLoaderV2, postIcons, theme, iconSizePx)
+      icons.setHttpIcons(imageLoaderV2, postIcons, theme, postCellData.iconSizePx)
     }
 
     icons.apply()
