@@ -47,10 +47,11 @@ open class PostCellLayout @JvmOverloads constructor(
     }
   private val imagesCount: Int
     get() = _postCellData?.postImages?.size ?: 0
+  private val singleImageMode: Boolean
+    get() = _postCellData?.singleImageMode == true
 
   private val postAttentionLabelWidth = getDimen(R.dimen.post_attention_label_width)
   private val goToPostButtonWidth = getDimen(R.dimen.go_to_post_button_width)
-  private val postMultipleImagesCompactMode = ChanSettings.postMultipleImagesCompactMode.get()
 
   private val postCellTopPadding = (vertPaddingPx * 2)
   private val postAttentionLabelPaddings = (horizPaddingPx * 2)
@@ -91,7 +92,7 @@ open class PostCellLayout @JvmOverloads constructor(
       replies.updatePaddings(top = vertPaddingPx, bottom = (vertPaddingPx * 2))
     }
 
-    if (imagesCount == 1 || postMultipleImagesCompactMode) {
+    if (singleImageMode) {
       when (postCellData.postAlignmentMode) {
         ChanSettings.PostAlignmentMode.AlignLeft -> {
           postImageThumbnailViewsContainer.updatePaddings(
@@ -148,7 +149,7 @@ open class PostCellLayout @JvmOverloads constructor(
       titleAndIconsWidth -= goToPostButtonWidth
     }
 
-    if (imagesCount == 1) {
+    if (singleImageMode) {
       measure(postImageThumbnailViewsContainer, unspecified(), unspecified())
       titleAndIconsWidth -= postImageThumbnailViewsContainer.measuredWidth
     } else if (imagesCount > 1) {
@@ -170,7 +171,7 @@ open class PostCellLayout @JvmOverloads constructor(
       return
     }
 
-    if (imagesCount != 1 && !postMultipleImagesCompactMode) {
+    if (!singleImageMode) {
       postCommentShiftResult = PostCommentShiftResult.CannotShiftComment
 
       val (_, titleWithIconsHeight) = measureVertical(
@@ -264,7 +265,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
     availableWidth -= totalSidePaddings
 
-    if (imagesCount == 1) {
+    if (singleImageMode) {
       availableWidth -= postImageThumbnailViewsContainer.measuredWidth
     }
 
@@ -351,7 +352,7 @@ open class PostCellLayout @JvmOverloads constructor(
     val imageFileNameHeight = imageFileName?.measuredHeight ?: 0
     val imageFileNameWidth = imageFileName?.measuredWidth ?: 0
 
-    if (imagesCount != 1) {
+    if (!singleImageMode || imagesCount == 0) {
       layoutResult.vertical(title)
       imageFileName?.let { textView -> layoutResult.vertical(textView) }
       layoutResult.vertical(icons)
@@ -617,7 +618,7 @@ open class PostCellLayout @JvmOverloads constructor(
       availableWidthWithThumbnails -= goToPostButtonWidth
     }
 
-    if (imagesCount == 1) {
+    if (singleImageMode) {
       availableWidthWithoutThumbnail = availableWidthWithThumbnails
       availableWidthWithThumbnails -= postImageThumbnailViewsContainer.measuredWidth
     }
