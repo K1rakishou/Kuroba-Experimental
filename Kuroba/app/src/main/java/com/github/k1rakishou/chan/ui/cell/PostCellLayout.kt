@@ -19,7 +19,7 @@ import com.github.k1rakishou.common.getTextBounds
 import com.github.k1rakishou.common.updatePaddings
 
 /**
- * God forbid you to ever have to change this class because this shit is very complex.
+ * God forbid you to ever have to change this class because this shit is complex as fuck.
  *
  * This is custom layout for PostCell (when LIST mode is used). The only point of this class existing
  * is that it's way faster than the previous implementation (which was using ConstraintLayout).
@@ -363,7 +363,6 @@ open class PostCellLayout @JvmOverloads constructor(
       is PostCommentShiftResult.ShiftWithTopMargin -> {
         if (shiftResult is PostCommentShiftResult.ShiftWithTopMargin) {
           layoutResult.top -= shiftResult.topOffset
-          layoutResult.top -= commentTopPadding
         }
 
         layoutResult.withOffset(horizontal = postTopPartLayoutResult.commentLeftOffset) {
