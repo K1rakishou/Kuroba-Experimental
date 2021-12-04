@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface.PostCellCallback
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
@@ -537,6 +538,10 @@ class ThreadPresenter @Inject constructor(
     }
 
     return catalogSnapshot.getNextCatalogPage()
+  }
+
+  override fun onPostCellBound(postCell: GenericPostCell) {
+    // no-op
   }
 
   suspend fun loadWholeCompositeCatalog() {

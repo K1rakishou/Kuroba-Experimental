@@ -11,6 +11,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.EdgeEffect
 import android.widget.LinearLayout
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatButton
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.content.ContextCompat
@@ -25,6 +26,8 @@ import com.github.k1rakishou.chan.core.site.common.DefaultPostParser
 import com.github.k1rakishou.chan.core.site.parser.CommentParser
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
+import com.github.k1rakishou.chan.ui.cell.GenericPostCell
+import com.github.k1rakishou.chan.ui.cell.PostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell
@@ -36,6 +39,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.findChild
 import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
 import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_spannable.PostLinkable
@@ -181,14 +185,6 @@ class ThemeControllerHelper(
     posts.add(post1)
     posts.add(post2)
 
-    hackSpanColors(post1.subject, theme)
-    hackSpanColors(post1.tripcode, theme)
-    hackSpanColors(post1.postComment.comment(), theme)
-
-    hackSpanColors(post2.subject, theme)
-    hackSpanColors(post2.tripcode, theme)
-    hackSpanColors(post2.postComment.comment(), theme)
-
     val linearLayout = LinearLayout(context)
     linearLayout.layoutParams = LinearLayout.LayoutParams(
       LinearLayout.LayoutParams.MATCH_PARENT,
@@ -228,6 +224,19 @@ class ThemeControllerHelper(
 
         override fun getNextPage(): Int? {
           return null
+        }
+
+        override fun onPostCellBound(postCell: GenericPostCell) {
+          val postCellView = postCell.findChild { it is PostCell } as? PostCell
+            ?: return
+
+          (postCellView.findChild { it.id == R.id.title } as? TextView)?.let { title ->
+            hackSpanColors(title.text, theme)
+          }
+
+          (postCellView.findChild { it.id == R.id.comment } as? TextView)?.let { comment ->
+            hackSpanColors(comment.text, theme)
+          }
         }
       },
       dummyPostCallback,

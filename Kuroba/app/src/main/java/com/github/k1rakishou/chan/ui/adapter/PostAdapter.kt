@@ -204,6 +204,8 @@ class PostAdapter(
         val postCellData = threadCellData.getPostCellData(position)
         val postCell = postViewHolder.itemView as GenericPostCell
         postCell.setPost(postCellData)
+
+        postAdapterCallback.onPostCellBound(postCell)
       }
       PostCellData.TYPE_LAST_SEEN -> (holder as LastSeenViewHolder).updateLabelColor()
       PostCellData.TYPE_LOADING_MORE -> {
@@ -598,6 +600,7 @@ class PostAdapter(
 
     fun loadCatalogPage(overridePage: Int? = null)
     fun getNextPage(): Int?
+    fun onPostCellBound(postCell: GenericPostCell)
   }
 
   companion object {
