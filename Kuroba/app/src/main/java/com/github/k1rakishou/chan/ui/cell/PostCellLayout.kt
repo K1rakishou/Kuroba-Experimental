@@ -665,6 +665,7 @@ open class PostCellLayout @JvmOverloads constructor(
     parentWidth: Int
   ): PostCommentShiftResult {
     var availableWidth = parentWidth
+    var availableWidthIncludingThumbnail = 0
 
     availableWidth -= postAttentionLabelWidth
     availableWidth -= (paddingLeft + paddingRight) // Paddings of the whole view (PostCell)
@@ -674,6 +675,7 @@ open class PostCellLayout @JvmOverloads constructor(
       availableWidth -= goToPostButtonWidth
     }
 
+    availableWidthIncludingThumbnail = availableWidth
     if (singleImageMode) {
       availableWidth -= postImageThumbnailViewsContainer.measuredWidth
     }
@@ -712,7 +714,7 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
-    val commentTextBounds = getCommentTextBounds(availableWidth)
+    val commentTextBounds = getCommentTextBounds(availableWidthIncludingThumbnail)
     val commentHeight = commentTextBounds.textHeight
 
     val multiplier = when (postCellData.postAlignmentMode) {
