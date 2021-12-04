@@ -664,6 +664,14 @@ open class PostCellLayout @JvmOverloads constructor(
     postCellData: PostCellData,
     parentWidth: Int
   ): PostCommentShiftResult {
+    if (!postCellData.shiftPostComment || !postCellData.singleImageMode) {
+      return PostCommentShiftResult.CannotShiftComment
+    }
+
+    if (postCellData.commentText.isEmpty()) {
+      return PostCommentShiftResult.CannotShiftComment
+    }
+
     var availableWidth = parentWidth
     var availableWidthIncludingThumbnail = 0
 
@@ -678,10 +686,6 @@ open class PostCellLayout @JvmOverloads constructor(
     availableWidthIncludingThumbnail = availableWidth
     if (singleImageMode) {
       availableWidth -= postImageThumbnailViewsContainer.measuredWidth
-    }
-
-    if (!postCellData.shiftPostComment || !postCellData.singleImageMode) {
-      return PostCommentShiftResult.CannotShiftComment
     }
 
     if (availableWidth <= 0) {
