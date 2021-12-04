@@ -63,6 +63,8 @@ abstract class ChanTheme {
 
   val isBackColorDark: Boolean
     get() = ThemeEngine.isDarkColor(backColor)
+  val isBackColorLight: Boolean
+    get() = !isBackColorDark
 
   val accentColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(accentColor) }
   val primaryColorCompose by lazy(LazyThreadSafetyMode.NONE) { Color(primaryColor) }

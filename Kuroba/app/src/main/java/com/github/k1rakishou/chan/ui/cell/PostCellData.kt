@@ -25,6 +25,7 @@ import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -488,8 +489,20 @@ data class PostCellData(
       return SpannableString.valueOf("")
     }
 
+    val posterIdColorHSL = ThemeEngine.colorToHsl(post.posterIdColor)
+
+    // Make the posterId text color darker if it's too light and the current theme's back color is
+    // also light and vice versa
+    if (theme.isBackColorDark && posterIdColorHSL.lightness < 0.5) {
+      posterIdColorHSL.lightness = .7f
+    } else if (theme.isBackColorLight && posterIdColorHSL.lightness > 0.5) {
+      posterIdColorHSL.lightness = .3f
+    }
+
+    val updatedPosterIdColor = ThemeEngine.hslToColor(posterIdColorHSL)
+
     val posterIdSpan = SpannableString.valueOf(posterId)
-    posterIdSpan.setSpan(ForegroundColorSpanHashed(post.posterIdColor), 0, posterIdSpan.length, 0)
+    posterIdSpan.setSpan(ForegroundColorSpanHashed(updatedPosterIdColor), 0, posterIdSpan.length, 0)
     posterIdSpan.setSpan(PostCell.PosterIdClickableSpan(postCellCallback, post), 0, posterIdSpan.length, 0)
 
     return posterIdSpan

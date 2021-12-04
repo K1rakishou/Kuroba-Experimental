@@ -17,6 +17,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.colors.HSL
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
@@ -437,5 +438,30 @@ open class ThemeEngine(
       return ColorUtils.calculateLuminance(color) < 0.01f
     }
 
+    private val array = FloatArray(3)
+
+    @JvmStatic
+    @Synchronized
+    fun colorToHsl(color: Int): HSL {
+      ColorUtils.colorToHSL(color, array)
+
+      return HSL(
+        hue = array[0],
+        saturation = array[1],
+        lightness = array[2]
+      )
+    }
+
+    @JvmStatic
+    @Synchronized
+    fun hslToColor(hsl: HSL): Int {
+      array[0] = hsl.hue
+      array[1] = hsl.saturation
+      array[2] = hsl.lightness
+
+      return ColorUtils.HSLToColor(array)
+    }
+
   }
+
 }
