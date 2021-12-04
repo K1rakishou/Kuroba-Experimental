@@ -1294,7 +1294,7 @@ data class TextBounds(
 
 }
 
-fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds {
+fun TextView.getTextBounds(availableWidth: Int): TextBounds {
   if (paint == null) {
     return TextBounds.EMPTY
   }

@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
@@ -663,34 +664,32 @@ open class PostCellLayout @JvmOverloads constructor(
     postCellData: PostCellData,
     parentWidth: Int
   ): PostCommentShiftResult {
-    var availableWidthWithThumbnails = parentWidth
-    var availableWidthWithoutThumbnail = parentWidth
+    var availableWidth = parentWidth
 
-    availableWidthWithThumbnails -= postAttentionLabelWidth
-    availableWidthWithThumbnails -= (paddingLeft + paddingRight) // Paddings of the whole view (PostCell)
-    availableWidthWithThumbnails -= postAttentionLabelPaddings // Paddings related to postAttentionLabel
+    availableWidth -= postAttentionLabelWidth
+    availableWidth -= (paddingLeft + paddingRight) // Paddings of the whole view (PostCell)
+    availableWidth -= postAttentionLabelPaddings // Paddings related to postAttentionLabel
 
     if (goToPostButton.visibility != View.GONE) {
-      availableWidthWithThumbnails -= goToPostButtonWidth
+      availableWidth -= goToPostButtonWidth
     }
 
     if (singleImageMode) {
-      availableWidthWithoutThumbnail = availableWidthWithThumbnails
-      availableWidthWithThumbnails -= postImageThumbnailViewsContainer.measuredWidth
+      availableWidth -= postImageThumbnailViewsContainer.measuredWidth
     }
 
     if (!postCellData.shiftPostComment || !postCellData.singleImageMode) {
       return PostCommentShiftResult.CannotShiftComment
     }
 
-    if (availableWidthWithThumbnails <= 0) {
+    if (availableWidth <= 0) {
       return PostCommentShiftResult.CannotShiftComment
     }
 
     val firstImage = postCellData.firstImage
       ?: return PostCommentShiftResult.CannotShiftComment
 
-    val postFileInfo = postCellData.postFileInfoMap[firstImage]
+    postCellData.postFileInfoMap[firstImage]
       ?: return PostCommentShiftResult.CannotShiftComment
 
     if (postCellData.forceShiftPostComment) {
@@ -704,16 +703,16 @@ open class PostCellLayout @JvmOverloads constructor(
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
-    val titleTextBounds = title.getTextBounds(postCellData.postTitle, availableWidthWithThumbnails)
+    val titleTextBounds = title.getTextBounds(availableWidth)
 
     val imageFileNameTextBounds = if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.getTextBounds(postFileInfo, availableWidthWithThumbnails)
+      imageFileName!!.getTextBounds(availableWidth)
     } else {
       TextBounds.EMPTY
     }
 
     val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
-    val commentTextBounds = comment.getTextBounds(postCellData.commentText, availableWidthWithoutThumbnail)
+    val commentTextBounds = getCommentTextBounds(availableWidth)
     val commentHeight = commentTextBounds.textHeight
 
     val multiplier = when (postCellData.postAlignmentMode) {
@@ -734,7 +733,8 @@ open class PostCellLayout @JvmOverloads constructor(
       0
     }
 
-    val availableHeight = resultTitleTextBounds.textHeight - iconsHeight
+    val availableHeight =
+      postImageThumbnailViewsContainer.measuredHeight - (resultTitleTextBounds.textHeight + iconsHeight)
     val specialModeCanBeUsed = availableHeight > 0
       && postCellData.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
@@ -750,7 +750,7 @@ open class PostCellLayout @JvmOverloads constructor(
         val lineHeight = lineBound.height()
         val lineWidth = lineBound.width()
 
-        if (lineWidth > availableWidthWithThumbnails) {
+        if (lineWidth > availableWidth) {
           break
         }
 
@@ -769,6 +769,29 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     return PostCommentShiftResult.CannotShiftComment
+  }
+
+  // Special case for comment because we need to layout it explicitly
+  private fun getCommentTextBounds(availableWidth: Int): TextBounds {
+    comment.measure(exactly(availableWidth), unspecified())
+
+    val layout = comment.layout
+
+    val lineBounds = (0 until layout.lineCount)
+      .map { line ->
+        return@map RectF(
+          layout.getLineLeft(line),
+          layout.getLineTop(line).toFloat(),
+          layout.getLineRight(line),
+          layout.getLineBottom(line).toFloat()
+        )
+      }
+
+    return TextBounds(
+      layout.width,
+      layout.height,
+      lineBounds
+    )
   }
 
   private class PostTopPartLayoutResult(
