@@ -26,7 +26,7 @@ import com.github.k1rakishou.common.updatePaddings
  * The complexity of this class comes from lots of different settings changing the structure of
  * PostCell view such as post comment shift and post alignment. In the previous implementation post
  * shift comment setting was implemented using ConstraintLayout barriers and post alignment was
- * implemented by using 3 different existing xml files.
+ * implemented by using 3 different xml files.
  * Now everything is done programmatically, manually. So it's very fast, but also very complex.
  * */
 open class PostCellLayout @JvmOverloads constructor(
@@ -138,6 +138,10 @@ open class PostCellLayout @JvmOverloads constructor(
   fun clear() {
     this._postCellData = null
     this.postCommentShiftResult = null
+    this.title.text = null
+    this.comment.text = null
+    this.replies.text = null
+    this.imageFileName?.text = null
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {

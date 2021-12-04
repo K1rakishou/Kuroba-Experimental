@@ -60,6 +60,7 @@ open class PostLinkable(
 
   override fun updateDrawState(ds: TextPaint) {
     val theme = getTheme()
+    var needResetTypeFace = true
 
     when (type) {
       Type.QUOTE,
@@ -78,6 +79,8 @@ open class PostLinkable(
           if (value == markedNo) {
             ds.color = theme.postHighlightQuoteColor
             ds.typeface = theme.defaultBoldTypeface
+
+            needResetTypeFace = false
           } else {
             ds.color = theme.postQuoteColor
           }
@@ -103,6 +106,10 @@ open class PostLinkable(
           ds.color = theme.postSpoilerRevealTextColor
         }
       }
+    }
+
+    if (needResetTypeFace && ds.typeface != null) {
+      ds.typeface = null
     }
   }
 

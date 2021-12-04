@@ -153,7 +153,7 @@ class ExportDownloadedThreadAsHtmlUseCase(
           chanPost.subject ?: ""
         }
         "POSTER_NAME" -> {
-          chanPost.fullTripcode ?: ""
+          chanPost.tripcode ?: ""
         }
         "DATE_TIME_FORMATTED" -> {
           DATE_TIME_PRINTER.print(chanPost.timestamp * 1000L)

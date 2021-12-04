@@ -308,7 +308,7 @@ class PostCell @JvmOverloads constructor(
 
     bindPost(postCellData)
 
-    postCellData(
+    super.postCellData(
       postCellData,
       postImageThumbnailViewsContainer,
       title,
@@ -329,7 +329,7 @@ class PostCell @JvmOverloads constructor(
     icons.cancelRequests()
     scope.cancelChildren()
 
-    clear()
+    super.clear()
     postImageThumbnailViewsContainer.unbindContainer()
 
     if (postCellData != null) {

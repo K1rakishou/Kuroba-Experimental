@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.bidirectionalSequenceIndexed
 import com.github.k1rakishou.common.mutableListWithCap
@@ -234,6 +235,8 @@ class ThreadCellData(
     val chanTheme = theme.fullCopy()
     val postCellThumbnailSizePercents = ChanSettings.postCellThumbnailSizePercents.get()
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
+    val isTablet = isTablet()
+    val isSplitLayout = ChanSettings.isSplitLayoutMode()
 
     val postAlignmentMode = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor,
@@ -299,7 +302,9 @@ class ThreadCellData(
           postCellThumbnailSizePercents = postCellThumbnailSizePercents,
           isSavedReply = postIndexed.post.isSavedReply,
           isReplyToSavedReply = postIndexed.post.repliesTo
-            .any { replyTo -> threadPostReplyMap[replyTo] == true }
+            .any { replyTo -> threadPostReplyMap[replyTo] == true },
+          isTablet = isTablet,
+          isSplitLayout = isSplitLayout,
         )
 
         postCellData.postCellCallback = postCellCallback

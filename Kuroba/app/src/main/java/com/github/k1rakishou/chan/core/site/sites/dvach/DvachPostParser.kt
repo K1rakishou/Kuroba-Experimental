@@ -65,7 +65,7 @@ class DvachPostParser(
             val r = matcher.group(1).toInt()
             val g = matcher.group(2).toInt()
             val b = matcher.group(3).toInt()
-            builder.idColor = Color.rgb(r, g, b)
+            builder.posterIdColor(Color.rgb(r, g, b))
           }
         }
       }

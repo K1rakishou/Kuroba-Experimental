@@ -6,7 +6,6 @@ import android.text.TextUtils
 import android.text.format.DateUtils
 import android.text.style.UnderlineSpan
 import androidx.core.text.buildSpannedString
-import androidx.core.text.getSpans
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
@@ -17,15 +16,15 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
+import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
-import com.github.k1rakishou.core_spannable.PosterIdMarkerSpan
-import com.github.k1rakishou.core_spannable.PosterNameMarkerSpan
-import com.github.k1rakishou.core_spannable.PosterTripcodeMarkerSpan
 import com.github.k1rakishou.core_themes.ChanTheme
+import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.model.data.board.pages.BoardPage
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -71,7 +70,9 @@ data class PostCellData(
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
   val isSavedReply: Boolean,
-  val isReplyToSavedReply: Boolean
+  val isReplyToSavedReply: Boolean,
+  val isTablet: Boolean,
+  val isSplitLayout: Boolean
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
@@ -260,6 +261,8 @@ data class PostCellData(
       postCellThumbnailSizePercents = postCellThumbnailSizePercents,
       isSavedReply = isSavedReply,
       isReplyToSavedReply = isReplyToSavedReply,
+      isTablet = isTablet,
+      isSplitLayout = isSplitLayout
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
       newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
@@ -302,35 +305,27 @@ data class PostCellData(
   }
 
   private fun calculatePostTitleStub(): CharSequence {
-    if (stub) {
-      return if (!TextUtils.isEmpty(post.subject)) {
-        post.subject ?: ""
-      } else {
-        getPostStubTitle()
-      }
+    if (!stub) {
+      return ""
     }
 
-    return ""
+    var postSubject = formatPostSubjectSpannable()
+
+    if (postSubject.isNullOrEmpty()) {
+      postSubject = SpannableString.valueOf(getPostStubTitle())
+    }
+
+    postSubject.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, postSubject.length, 0)
+
+    return postSubject
   }
 
   private fun calculatePostTitle(): CharSequence {
-    val titleParts: MutableList<CharSequence> = ArrayList(5)
+    val fullTitle = SpannableStringBuilder()
+    var appendedPartsCount = 0
 
-    val postIndexText = if (chanDescriptor.isThreadDescriptor() && postIndex >= 0) {
-      String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
-    } else {
-      ""
-    }
-
-    val siteBoardIndicator = if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      "${post.postDescriptor.siteDescriptor().siteName}/${post.postDescriptor.boardDescriptor().boardCode}/ "
-    } else {
-      ""
-    }
-
-    if (post.subject.isNotNullNorBlank()) {
-      val postSubject = SpannableString.valueOf(post.subject!!)
-
+    val postSubject = formatPostSubjectSpannable()
+    if (postSubject.isNotNullNorBlank()) {
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(searchQuery.query),
         spannableString = postSubject,
@@ -349,53 +344,71 @@ data class PostCellData(
         )
       }
 
-      titleParts.add(postSubject)
-      titleParts.add("\n")
-    }
+      fullTitle.append(postSubject)
+      fullTitle.append("\n")
 
-    if (post.fullTripcode.isNotNullNorBlank()) {
-      val tripcodeFull = SpannableStringBuilder.valueOf(post.fullTripcode!!)
-
-      tripcodeFull.getSpans<PosterIdMarkerSpan>().forEach { posterIdMarkerSpan ->
-        val start = tripcodeFull.getSpanStart(posterIdMarkerSpan)
-        val end = tripcodeFull.getSpanEnd(posterIdMarkerSpan)
-
-        tripcodeFull.setSpanSafe(PostCell.PosterIdClickableSpan(postCellCallback, post), start, end, 0)
-      }
-
-      tripcodeFull.getSpans<PosterNameMarkerSpan>().forEach { posterNameMarkerSpan ->
-        val start = tripcodeFull.getSpanStart(posterNameMarkerSpan)
-        val end = tripcodeFull.getSpanEnd(posterNameMarkerSpan)
-
-        tripcodeFull.setSpanSafe(PostCell.PosterNameClickableSpan(postCellCallback, post), start, end, 0)
-      }
-
-      tripcodeFull.getSpans<PosterTripcodeMarkerSpan>().forEach { posterTripcodeMarkerSpan ->
-        val start = tripcodeFull.getSpanStart(posterTripcodeMarkerSpan)
-        val end = tripcodeFull.getSpanEnd(posterTripcodeMarkerSpan)
-
-        tripcodeFull.setSpanSafe(PostCell.PosterTripcodeClickableSpan(postCellCallback, post), start, end, 0)
-      }
-
-      titleParts.add(tripcodeFull)
+      ++appendedPartsCount
     }
 
     if (isSage) {
-      val sageString = buildSpannedString {
+      val sageString = buildSpannableString {
         append("SAGE", ForegroundColorSpanHashed(theme.accentColor), 0)
         append(" ")
-
-        setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)
       }
 
-      titleParts.add(sageString)
+      fullTitle.append(sageString)
+      ++appendedPartsCount
     }
 
-    val postNoText = SpannableString.valueOf(
-      String
+    val name = formatPostNameSpannable()
+    if (name.isNotNullNorBlank()) {
+      fullTitle.append(name).append(" ")
+      ++appendedPartsCount
+    }
+
+    val tripcode = formatPostTripcodeSpannable()
+    if (tripcode.isNotNullNorBlank()) {
+      fullTitle.append(tripcode).append(" ")
+      ++appendedPartsCount
+    }
+
+    val posterId = formatPostPosterIdSpannable()
+    if (posterId.isNotNullNorBlank()) {
+      fullTitle.append(posterId).append(" ")
+      ++appendedPartsCount
+    }
+
+    val modCapcode = formatPostModCapcodeSpannable()
+    if (modCapcode.isNotNullNorBlank()) {
+      fullTitle.append(modCapcode).append(" ")
+      ++appendedPartsCount
+    }
+
+    val postNoText = buildSpannableString {
+      val postIndexText = if (chanDescriptor.isThreadDescriptor() && postIndex >= 0) {
+        String.format(Locale.ENGLISH, "#%d, ", postIndex + 1)
+      } else {
+        ""
+      }
+
+      val siteBoardIndicator = if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+        "${post.postDescriptor.siteDescriptor().siteName}/${post.postDescriptor.boardDescriptor().boardCode}/ "
+      } else {
+        ""
+      }
+
+      val postNoTextFull = String
         .format(Locale.ENGLISH, "%s%sNo. %d", siteBoardIndicator, postIndexText, post.postNo())
         .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-    )
+
+      append(postNoTextFull)
+
+      if (tapNoReply) {
+        setSpan(PostCell.PostNumberClickableSpan(postCellCallback, post), 0, this.length, 0)
+      }
+
+      setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
+    }
 
     SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
       inputQueries = listOf(searchQuery.query),
@@ -404,20 +417,99 @@ data class PostCellData(
       minQueryLength = searchQuery.queryMinValidLength
     )
 
-    val date = SpannableStringBuilder()
-      .append(postNoText)
-      .append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-      .append(calculatePostTime(post))
+    val needAddNewLine = (!isTablet || (isTablet && !isSplitLayout))
+      && (appendedPartsCount >= 2 || fullTitle.length > 24)
 
-    date.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, date.length, 0)
-    date.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, date.length, 0)
-
-    if (tapNoReply) {
-      date.setSpan(PostCell.PostNumberClickableSpan(postCellCallback, post), 0, postNoText.length, 0)
+    if (needAddNewLine) {
+      fullTitle.appendLine()
     }
 
-    titleParts.add(date)
-    return TextUtils.concat(*titleParts.toTypedArray())
+    val date = buildSpannedString {
+      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+      append(calculatePostTime(post))
+
+      setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
+    }
+
+    fullTitle.append(postNoText)
+    fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+    fullTitle.append(date)
+    fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
+
+    return fullTitle
+  }
+
+  private fun formatPostSubjectSpannable(): SpannableString {
+    val subject = post.subject
+    if (subject.isNullOrEmpty()) {
+      return SpannableString.valueOf("")
+    }
+
+    val subjectSpan = SpannableString.valueOf(subject)
+    subjectSpan.setSpan(
+      ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
+      0,
+      subjectSpan.length,
+      0
+    )
+
+    return subjectSpan
+  }
+
+  private fun formatPostNameSpannable(): SpannableString {
+    val name = post.name
+    if (name.isNullOrEmpty()) {
+      return SpannableString.valueOf("")
+    }
+
+    val nameSpan = SpannableString.valueOf(name)
+    nameSpan.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, nameSpan.length, 0)
+    nameSpan.setSpan(PostCell.PosterNameClickableSpan(postCellCallback, post), 0, nameSpan.length, 0)
+
+    return nameSpan
+  }
+
+  private fun formatPostTripcodeSpannable(): SpannableString {
+    val tripcode = post.tripcode
+    if (tripcode.isNullOrEmpty()) {
+      return SpannableString.valueOf("")
+    }
+
+    val tripcodeSpan = SpannableString.valueOf(tripcode)
+    tripcodeSpan.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, tripcodeSpan.length, 0)
+    tripcodeSpan.setSpan(PostCell.PosterTripcodeClickableSpan(postCellCallback, post), 0, tripcodeSpan.length, 0)
+
+    return tripcodeSpan
+  }
+
+  private fun formatPostPosterIdSpannable(): SpannableString {
+    val posterId = post.posterId
+    if (posterId.isNullOrEmpty()) {
+      return SpannableString.valueOf("")
+    }
+
+    val posterIdSpan = SpannableString.valueOf(posterId)
+    posterIdSpan.setSpan(ForegroundColorSpanHashed(post.posterIdColor), 0, posterIdSpan.length, 0)
+    posterIdSpan.setSpan(PostCell.PosterIdClickableSpan(postCellCallback, post), 0, posterIdSpan.length, 0)
+
+    return posterIdSpan
+  }
+
+  private fun formatPostModCapcodeSpannable(): SpannableString {
+    val moderatorCapcode = post.moderatorCapcode
+    if (moderatorCapcode.isNullOrEmpty()) {
+      return SpannableString.valueOf("")
+    }
+
+    val capcodeSpan = SpannableString.valueOf(moderatorCapcode)
+    capcodeSpan.setSpan(
+      ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
+      0,
+      capcodeSpan.length,
+      0
+    )
+
+    return capcodeSpan
   }
 
   private fun getPostStubTitle(): CharSequence {
@@ -531,7 +623,10 @@ data class PostCellData(
         }
 
         fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
-        fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
+
+        if (postImages.size == 1 || postMultipleImagesCompactMode) {
+          fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
+        }
 
         resultMap[postImage] = SpannableString.valueOf(fileInfoText)
       }

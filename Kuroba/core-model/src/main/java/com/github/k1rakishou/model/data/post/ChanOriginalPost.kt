@@ -33,7 +33,8 @@ class ChanOriginalPost(
   var endless: Boolean,
   repliesFrom: Set<PostDescriptor>? = null,
   isSage: Boolean,
-  deleted: Boolean
+  deleted: Boolean,
+  posterIdColor: Int
 ) : ChanPost(
   chanPostId,
   postDescriptor,
@@ -50,7 +51,8 @@ class ChanOriginalPost(
   isSavedReply,
   isSage,
   repliesFrom,
-  deleted
+  deleted,
+  posterIdColor
 ) {
 
   override fun deepCopy(overrideDeleted: Boolean?): ChanPost {
@@ -63,9 +65,10 @@ class ChanOriginalPost(
       timestamp = timestamp,
       postComment = postComment.copy(),
       subject = subject.copy(),
-      tripcode = fullTripcode.copy(),
+      tripcode = tripcode.copy(),
       name = name,
       posterId = posterId,
+      posterIdColor = posterIdColor,
       moderatorCapcode = moderatorCapcode,
       isSavedReply = isSavedReply,
       catalogRepliesCount = catalogRepliesCount,

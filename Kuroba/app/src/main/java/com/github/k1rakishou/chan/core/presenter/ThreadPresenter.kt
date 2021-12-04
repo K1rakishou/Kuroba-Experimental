@@ -1610,7 +1610,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (chanDescriptor.isThreadDescriptor()) {
-      if (!TextUtils.isEmpty(post.actualTripcode)) {
+      if (!TextUtils.isEmpty(post.tripcode)) {
         menu.add(createMenuItem(POST_OPTION_FILTER_TRIPCODE, R.string.post_filter_tripcode))
       }
 
@@ -1738,7 +1738,7 @@ class ThreadPresenter @Inject constructor(
           }
         }
         POST_OPTION_FILTER_TRIPCODE -> {
-          val tripcode = post.actualTripcode
+          val tripcode = post.tripcode
             ?: return@post
 
           threadPresenterCallback?.filterPostTripcode(tripcode)
@@ -2358,13 +2358,13 @@ class ThreadPresenter @Inject constructor(
   }
 
   override fun onPostPosterTripcodeClicked(post: ChanPost) {
-    if (!isBound || currentChanDescriptor == null || post.actualTripcode.isNullOrEmpty()) {
+    if (!isBound || currentChanDescriptor == null || post.tripcode.isNullOrEmpty()) {
       return
     }
 
     onMarkerSpanClicked(
       post = post,
-      filterFunc = { chanPost -> chanPost.actualTripcode == post.actualTripcode }
+      filterFunc = { chanPost -> chanPost.tripcode == post.tripcode }
     )
   }
 
@@ -2676,10 +2676,10 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    if (!TextUtils.isEmpty(post.fullTripcode)) {
+    if (!TextUtils.isEmpty(post.tripcode)) {
       text
         .append("\nTripcode: ")
-        .append(post.fullTripcode)
+        .append(post.tripcode)
     }
 
     if (post.postIcons.isNotEmpty()) {

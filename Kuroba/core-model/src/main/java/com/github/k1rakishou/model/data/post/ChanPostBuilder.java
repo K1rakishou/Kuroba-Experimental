@@ -46,7 +46,7 @@ public class ChanPostBuilder {
     public List<ChanPostHttpIcon> httpIcons = new ArrayList<>();
     public String posterId = "";
     public String moderatorCapcode = "";
-    public int idColor;
+    public int idColor = 0;
     public boolean isSavedReply;
     public Set<PostDescriptor> repliesToIds = new HashSet<>();
     @Nullable
@@ -281,14 +281,23 @@ public class ChanPostBuilder {
 
         this.posterId = posterId;
 
-        // Stolen from the 4chan extension
-        int hash = this.posterId.hashCode();
+        // Only set the color if it's 0 to avoid overwriting it
+        if (idColor == 0) {
+            // Stolen from the 4chan extension
+            int hash = this.posterId.hashCode();
 
-        int r = (hash >> 24) & 0xff;
-        int g = (hash >> 16) & 0xff;
-        int b = (hash >> 8) & 0xff;
+            int r = (hash >> 24) & 0xff;
+            int g = (hash >> 16) & 0xff;
+            int b = (hash >> 8) & 0xff;
 
-        this.idColor = (0xff << 24) + (r << 16) + (g << 8) + b;
+            this.idColor = (0xff << 24) + (r << 16) + (g << 8) + b;
+        }
+
+        return this;
+    }
+
+    public ChanPostBuilder posterIdColor(int color) {
+        this.idColor = color;
         return this;
     }
 

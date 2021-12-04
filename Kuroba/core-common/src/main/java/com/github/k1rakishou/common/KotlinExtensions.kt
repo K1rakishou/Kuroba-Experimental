@@ -1457,3 +1457,11 @@ fun Thread.callStack(tag: String = ""): String {
 
   return resultString.toString()
 }
+
+public inline fun buildSpannableString(
+  builderAction: SpannableStringBuilder.() -> Unit
+): SpannableString {
+  val builder = SpannableStringBuilder()
+  builder.builderAction()
+  return SpannableString.valueOf(builder)
+}

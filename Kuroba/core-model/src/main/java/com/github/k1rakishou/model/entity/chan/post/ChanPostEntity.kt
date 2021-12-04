@@ -29,6 +29,8 @@ data class ChanPostEntity(
   val name: String? = null,
   @ColumnInfo(name = POSTER_ID_COLUMN_NAME)
   val posterId: String? = null,
+  @ColumnInfo(name = POSTER_ID_COLOR_COLUMN_NAME)
+  val posterIdColor: Int = 0,
   @ColumnInfo(name = MODERATOR_CAPCODE_COLUMN_NAME)
   val moderatorCapcode: String? = null,
   @ColumnInfo(name = IS_OP_COLUMN_NAME)
@@ -46,6 +48,7 @@ data class ChanPostEntity(
     const val TIMESTAMP_SECONDS_COLUMN_NAME = "timestamp_seconds"
     const val NAME_COLUMN_NAME = "name"
     const val POSTER_ID_COLUMN_NAME = "poster_id"
+    const val POSTER_ID_COLOR_COLUMN_NAME = "poster_id_color"
     const val MODERATOR_CAPCODE_COLUMN_NAME = "moderator_capcode"
     const val IS_OP_COLUMN_NAME = "is_op"
     const val IS_SAVED_REPLY_COLUMN_NAME = "is_saved_reply"

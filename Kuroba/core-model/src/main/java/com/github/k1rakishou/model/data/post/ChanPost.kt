@@ -13,7 +13,7 @@ open class ChanPost(
   val timestamp: Long = -1L,
   val postComment: PostComment,
   val subject: CharSequence?,
-  val fullTripcode: CharSequence?,
+  val tripcode: CharSequence?,
   val name: String? = null,
   val posterId: String? = null,
   val moderatorCapcode: String? = null,
@@ -21,6 +21,7 @@ open class ChanPost(
   val isSage: Boolean,
   repliesFrom: Set<PostDescriptor>? = null,
   deleted: Boolean,
+  posterIdColor: Int
 ) {
   /**
    * We use this array to avoid infinite loops when binding posts since after all post content
@@ -32,6 +33,10 @@ open class ChanPost(
   @get:Synchronized
   @set:Synchronized
   var isDeleted: Boolean = deleted
+
+  @get:Synchronized
+  @set:Synchronized
+  var posterIdColor: Int = 0
 
   @get:Synchronized
   val repliesFrom = mutableSetOf<PostDescriptor>()
@@ -64,27 +69,9 @@ open class ChanPost(
   val boardDescriptor: BoardDescriptor
     get() = postDescriptor.boardDescriptor()
 
-  val actualTripcode: String? by lazy {
-    val tripcodeString = if (fullTripcode.isNullOrEmpty()) {
-      return@lazy null
-    } else {
-      fullTripcode.trim()
-    }
-
-    val index = tripcodeString.lastIndexOf(" ")
-    if (index < 0) {
-      return@lazy null
-    }
-
-    val actualTripcodeMaybe = tripcodeString.substring(startIndex = index + 1)
-    if (!actualTripcodeMaybe.startsWith("!")) {
-      return@lazy null
-    }
-
-    return@lazy actualTripcodeMaybe
-  }
-
   init {
+    this.posterIdColor = posterIdColor
+
     for (loaderType in LoaderType.values()) {
       onDemandContentLoadedArray[loaderType.arrayIndex] = false
     }
@@ -102,9 +89,10 @@ open class ChanPost(
       timestamp = timestamp,
       postComment = postComment.copy(),
       subject = subject.copy(),
-      fullTripcode = fullTripcode.copy(),
+      tripcode = tripcode.copy(),
       name = name,
       posterId = posterId,
+      posterIdColor = posterIdColor,
       moderatorCapcode = moderatorCapcode,
       isSavedReply = isSavedReply,
       repliesFrom = repliesFrom,
@@ -213,10 +201,13 @@ open class ChanPost(
     if (name != other.name) {
       return false
     }
-    if (fullTripcode != other.fullTripcode) {
+    if (tripcode != other.tripcode) {
       return false
     }
     if (posterId != other.posterId) {
+      return false
+    }
+    if (posterIdColor != other.posterIdColor) {
       return false
     }
     if (moderatorCapcode != other.moderatorCapcode) {
@@ -257,8 +248,9 @@ open class ChanPost(
     result = 31 * result + postComment.hashCode()
     result = 31 * result + subject.hashCode()
     result = 31 * result + (name?.hashCode() ?: 0)
-    result = 31 * result + fullTripcode.hashCode()
+    result = 31 * result + tripcode.hashCode()
     result = 31 * result + (posterId?.hashCode() ?: 0)
+    result = 31 * result + posterIdColor.hashCode()
     result = 31 * result + (moderatorCapcode?.hashCode() ?: 0)
     result = 31 * result + isSavedReply.hashCode()
     result = 31 * result + isSage.hashCode()

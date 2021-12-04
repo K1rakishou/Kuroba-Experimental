@@ -88,6 +88,7 @@ object ChanThreadMapper {
       subject = ChanPostEntityMapper.mapSubject(gson, chanTextSpanEntityList),
       tripcode = ChanPostEntityMapper.mapTripcode(gson, chanTextSpanEntityList),
       posterId = chanPostFull.chanPostEntity.posterId,
+      posterIdColor = chanPostFull.chanPostEntity.posterIdColor,
       moderatorCapcode = chanPostFull.chanPostEntity.moderatorCapcode,
       isSavedReply = chanPostFull.chanPostEntity.isSavedReply,
       isSage = chanPostFull.chanPostEntity.isSage,
