@@ -837,6 +837,10 @@ public class ChanSettings {
         return Integer.parseInt(ChanSettings.fontSize.get()) - 2;
     }
 
+    public static int sjisTagFontSizePx() {
+        return 8;
+    }
+
     public static int redTextFontSizePx() {
         return Integer.parseInt(ChanSettings.fontSize.get()) + 2;
     }
