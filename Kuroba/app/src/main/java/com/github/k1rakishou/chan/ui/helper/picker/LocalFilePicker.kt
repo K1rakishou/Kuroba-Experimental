@@ -148,25 +148,31 @@ class LocalFilePicker(
       return
     }
 
-    val uri = getUriOrNull(data)
-    if (uri == null) {
+    val uris = extractUris(data)
+    if (uris.isEmpty()) {
       finishWithError(requestCode, FilePickerError.FailedToExtractUri())
       return
     }
 
-    val copyResult = copyExternalFileToReplyFileStorage(
-      attachedActivity,
-      uri,
-      System.currentTimeMillis()
-    )
+    val copyResults = uris.map { uri ->
+      copyExternalFileToReplyFileStorage(
+        attachedActivity,
+        uri,
+        System.currentTimeMillis()
+      )
+    }
 
-    if (copyResult is ModularResult.Error) {
-      finishWithError(requestCode, FilePickerError.UnknownError(copyResult.error))
+    val allFailed = copyResults.all { result -> result is ModularResult.Error }
+    if (allFailed) {
+      val firstErrorResult = copyResults.first { result -> result is ModularResult.Error }
+      finishWithError(requestCode, FilePickerError.UnknownError(firstErrorResult.unwrapError()))
       return
     }
 
-    val pickedFile = (copyResult as ModularResult.Value).value
-    finishWithResult(requestCode, PickedFile.Result(listOf(pickedFile)))
+    val pickedFiles = copyResults
+      .mapNotNull { result -> result.valueOrNull() }
+
+    finishWithResult(requestCode, PickedFile.Result(pickedFiles))
   }
 
   private fun finishWithResult(requestCode: Int, value: PickedFile.Result) {
@@ -181,17 +187,18 @@ class LocalFilePicker(
     activeRequests[requestCode]?.completableDeferred?.complete(PickedFile.Failure(error))
   }
 
-  private fun getUriOrNull(intent: Intent): Uri? {
+  private fun extractUris(intent: Intent): List<Uri> {
     if (intent.data != null) {
-      return intent.data!!
+      return listOf(intent.data!!)
     }
 
     val clipData = intent.clipData
     if (clipData != null && clipData.itemCount > 0) {
-      return clipData.getItemAt(0).uri
+      return (0 until clipData.itemCount)
+        .map { index -> clipData.getItemAt(index).uri }
     }
 
-    return null
+    return emptyList()
   }
 
   private fun collectIntents(): List<Intent> {
@@ -214,6 +221,7 @@ class LocalFilePicker(
         newIntent.addCategory(Intent.CATEGORY_OPENABLE)
         newIntent.setPackage(lastRememberedFilePickerInfo.activityInfo.packageName)
         newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+        newIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
         newIntent.type = "*/*"
 
         return listOf(newIntent)
@@ -225,6 +233,7 @@ class LocalFilePicker(
       newIntent.addCategory(Intent.CATEGORY_OPENABLE)
       newIntent.setPackage(info.activityInfo.packageName)
       newIntent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+      newIntent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true)
       newIntent.type = "*/*"
 
       intents.add(newIntent)

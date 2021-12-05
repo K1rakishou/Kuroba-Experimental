@@ -14,6 +14,7 @@ import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
@@ -65,13 +66,19 @@ abstract class AbstractFilePicker<T>(
   }
 
   private fun tryExtractFileNameOrDefault(uri: Uri, appContext: Context): String {
-    var fileName = appContext.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
-      val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
-      if (nameIndex > -1 && cursor.moveToFirst()) {
-        return@use cursor.getString(nameIndex)
-      }
+    var fileName: String? = null
 
-      return@use null
+    try {
+      fileName = appContext.contentResolver.query(uri, null, null, null, null)?.use { cursor ->
+        val nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME)
+        if (nameIndex > -1 && cursor.moveToFirst()) {
+          return@use cursor.getString(nameIndex)
+        }
+
+        return@use null
+      }
+    } catch (error: Throwable) {
+      Logger.e(TAG, "tryExtractFileNameOrDefault() contentResolver.query failed(url='$uri')", error)
     }
 
     if (ChanSettings.alwaysRandomizePickedFilesNames.get()) {
@@ -179,6 +186,7 @@ abstract class AbstractFilePicker<T>(
   }
 
   companion object {
+    private const val TAG = "AbstractFilePicker"
     const val MAX_FILE_SIZE = 50 * 1024 * 1024.toLong()
   }
 }
