@@ -1188,6 +1188,9 @@ suspend fun <T, R> processDataCollectionConcurrently(
   }
 }
 
+/**
+ * @note: indexed doesn't mean ordered!
+ * */
 suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
   dataList: Collection<T>,
   batchCount: Int = Runtime.getRuntime().availableProcessors(),

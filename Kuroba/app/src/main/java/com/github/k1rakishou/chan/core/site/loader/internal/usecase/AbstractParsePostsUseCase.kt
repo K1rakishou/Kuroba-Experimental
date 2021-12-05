@@ -16,11 +16,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import kotlinx.coroutines.CoroutineDispatcher
-import kotlinx.coroutines.asCoroutineDispatcher
+import kotlinx.coroutines.Dispatchers
 import java.util.*
-import java.util.concurrent.Executors
-import java.util.concurrent.atomic.AtomicInteger
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
@@ -41,7 +38,11 @@ abstract class AbstractParsePostsUseCase(
   ): ParsingResult
 
   protected suspend fun processSavedReplies(postBuildersToParse: List<ChanPostBuilder>) {
-    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
+    if (postBuildersToParse.isEmpty()) {
+      return
+    }
+
+    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, Dispatchers.IO) { postToParse ->
       // needed for "Apply to own posts" to work correctly
       postToParse.isSavedReply(savedReplyManager.isSaved(postToParse.postDescriptor))
     }
@@ -51,11 +52,11 @@ abstract class AbstractParsePostsUseCase(
     postBuildersToParse: List<ChanPostBuilder>,
     filters: List<ChanFilter>
   ) {
-    if (postBuildersToParse.isEmpty() && filters.isEmpty()) {
+    if (postBuildersToParse.isEmpty() || filters.isEmpty()) {
       return
     }
 
-    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, dispatcher) { postToParse ->
+    processDataCollectionConcurrently(postBuildersToParse, THREAD_COUNT * 2, Dispatchers.IO) { postToParse ->
       if (filters.isNotEmpty()) {
         processFilters(postToParse, filters)
       }
@@ -170,26 +171,6 @@ abstract class AbstractParsePostsUseCase(
 
   companion object {
     private const val TAG = "AbstractParsePostsUseCase"
-    private const val threadFactoryName = "post_parser_%d"
-
-    private val threadIndex = AtomicInteger(0)
     val THREAD_COUNT = Runtime.getRuntime().availableProcessors()
-    val dispatcher: CoroutineDispatcher
-
-    init {
-      Logger.d(TAG, "Thread count: $THREAD_COUNT")
-
-      val executor = Executors.newFixedThreadPool(THREAD_COUNT) { runnable ->
-        val threadName = String.format(
-          Locale.ENGLISH,
-          threadFactoryName,
-          threadIndex.getAndIncrement()
-        )
-
-        return@newFixedThreadPool Thread(runnable, threadName)
-      }
-
-      dispatcher = executor.asCoroutineDispatcher()
-    }
   }
 }

@@ -14,6 +14,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
+import kotlinx.coroutines.Dispatchers
 import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
@@ -63,7 +64,7 @@ class ParsePostsV1UseCase(
       return@measureTimedValue processDataCollectionConcurrently(
         dataList = postBuildersToParse,
         batchCount = THREAD_COUNT * 2,
-        dispatcher = dispatcher
+        dispatcher = Dispatchers.IO
       ) { postToParse ->
         return@processDataCollectionConcurrently PostParseWorker(
           savedReplyManager = savedReplyManager,
