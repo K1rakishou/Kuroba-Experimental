@@ -418,7 +418,8 @@ data class PostCellData(
       minQueryLength = searchQuery.queryMinValidLength
     )
 
-    val needAddNewLine = (!isTablet || (isTablet && !isSplitLayout))
+    val needAddNewLine = (fullTitle.lastOrNull() != '\n')
+      && (!isTablet || !isSplitLayout)
       && (appendedPartsCount >= 2 || fullTitle.length > 24)
 
     if (needAddNewLine) {
