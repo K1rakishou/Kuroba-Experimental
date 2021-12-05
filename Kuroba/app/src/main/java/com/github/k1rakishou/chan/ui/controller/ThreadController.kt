@@ -493,6 +493,11 @@ abstract class ThreadController(
       return
     }
 
+    if (supportedArchiveDescriptors.size == 1) {
+      mainScope.launch { onArchiveSelected(supportedArchiveDescriptors.first(), postDescriptor, preview) }
+      return
+    }
+
     val items = mutableListOf<FloatingListMenuItem>()
 
     supportedArchiveDescriptors.forEach { archiveDescriptor ->
@@ -516,26 +521,34 @@ abstract class ThreadController(
           val archiveDescriptor = (clickedItem.key as? ArchiveDescriptor)
             ?: return@launch
 
-          val externalArchivePostDescriptor = PostDescriptor.create(
-            archiveDescriptor.domain,
-            postDescriptor.descriptor.boardCode(),
-            postDescriptor.getThreadNo(),
-            postDescriptor.postNo
-          )
-
-          if (preview) {
-            showPostsInExternalThread(
-              postDescriptor = externalArchivePostDescriptor,
-              isPreviewingCatalogThread = false
-            )
-          } else {
-            openExternalThread(externalArchivePostDescriptor)
-          }
+          onArchiveSelected(archiveDescriptor, postDescriptor, preview)
         }
       }
     )
 
     presentController(floatingListMenuController)
+  }
+
+  private suspend fun onArchiveSelected(
+    archiveDescriptor: ArchiveDescriptor,
+    postDescriptor: PostDescriptor,
+    preview: Boolean
+  ) {
+    val externalArchivePostDescriptor = PostDescriptor.create(
+      archiveDescriptor.domain,
+      postDescriptor.descriptor.boardCode(),
+      postDescriptor.getThreadNo(),
+      postDescriptor.postNo
+    )
+
+    if (preview) {
+      showPostsInExternalThread(
+        postDescriptor = externalArchivePostDescriptor,
+        isPreviewingCatalogThread = false
+      )
+    } else {
+      openExternalThread(externalArchivePostDescriptor)
+    }
   }
 
   data class ShowThreadOptions(
