@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.cell
 
 import android.content.Context
-import android.graphics.RectF
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
@@ -695,7 +694,7 @@ open class PostCellLayout @JvmOverloads constructor(
     val firstImage = postCellData.firstImage
       ?: return PostCommentShiftResult.CannotShiftComment
 
-    postCellData.postFileInfoMap[firstImage]
+    val postFileInfo = postCellData.postFileInfoMap[firstImage]
       ?: return PostCommentShiftResult.CannotShiftComment
 
     if (postCellData.forceShiftPostComment) {
@@ -709,16 +708,16 @@ open class PostCellLayout @JvmOverloads constructor(
       return PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail
     }
 
-    val titleTextBounds = title.getTextBounds(availableWidth)
+    val titleTextBounds = title.getTextBounds(postCellData.postTitle, availableWidth)
 
     val imageFileNameTextBounds = if (imageFileName != null && imageFileName!!.visibility == View.VISIBLE) {
-      imageFileName!!.getTextBounds(availableWidth)
+      imageFileName!!.getTextBounds(postFileInfo, availableWidth)
     } else {
       TextBounds.EMPTY
     }
 
     val resultTitleTextBounds = titleTextBounds.mergeWith(imageFileNameTextBounds)
-    val commentTextBounds = getCommentTextBounds(availableWidthIncludingThumbnail)
+    val commentTextBounds = comment.getTextBounds(postCellData.commentText, (availableWidthIncludingThumbnail))
     val commentHeight = commentTextBounds.textHeight
 
     val multiplier = when (postCellData.postAlignmentMode) {
@@ -775,29 +774,6 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     return PostCommentShiftResult.CannotShiftComment
-  }
-
-  // Special case for comment because we need to layout it explicitly
-  private fun getCommentTextBounds(availableWidth: Int): TextBounds {
-    comment.measure(exactly(availableWidth), unspecified())
-
-    val layout = comment.layout
-
-    val lineBounds = (0 until layout.lineCount)
-      .map { line ->
-        return@map RectF(
-          layout.getLineLeft(line),
-          layout.getLineTop(line).toFloat(),
-          layout.getLineRight(line),
-          layout.getLineBottom(line).toFloat()
-        )
-      }
-
-    return TextBounds(
-      layout.width,
-      layout.height,
-      lineBounds
-    )
   }
 
   private class PostTopPartLayoutResult(
