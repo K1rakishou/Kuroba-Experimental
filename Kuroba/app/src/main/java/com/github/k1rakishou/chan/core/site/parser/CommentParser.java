@@ -68,7 +68,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
     private final Map<String, List<StyleRule>> rules = new HashMap<>();
 
-    private final String defaultQuoteRegex = "//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)";
+    private final Pattern defaultQuoteRegex = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/thread/(\\d*?)#p(\\d*)");
     private final Pattern deadQuotePattern = Pattern.compile(">>(\\d+)");
     private final Pattern fullQuotePattern = Pattern.compile("/(\\w+)/\\w+/(\\d+)#p(\\d+)");
     private final Pattern quotePattern = Pattern.compile("#p(\\d+)");
@@ -694,7 +694,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             return "";
         }
 
-        if (href.matches(defaultQuoteRegex)) {
+        if (defaultQuoteRegex.matcher(href).matches()) {
             // gets us something like /board/ or /thread/postno#quoteno
             // hacky fix for 4chan having two domains but the same API
             return href.substring(2).substring(href.indexOf('/'));
