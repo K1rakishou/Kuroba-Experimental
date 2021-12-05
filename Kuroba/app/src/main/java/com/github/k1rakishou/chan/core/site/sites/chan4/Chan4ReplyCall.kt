@@ -232,7 +232,7 @@ class Chan4ReplyCall(
 
     val oldCookie = when {
       domain.contains("4channel") -> chan4.channel4CaptchaCookie.get()
-      domain.contains("4chain") -> chan4.chan4CaptchaCookie.get()
+      domain.contains("4chan") -> chan4.chan4CaptchaCookie.get()
       else -> {
         Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
         null
