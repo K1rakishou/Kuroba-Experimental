@@ -156,8 +156,6 @@ class PostImageThumbnailViewContainer(
       && (postCellData.searchMode || postCellData.postFileInfo)
       && postFileInfo.isNotNullNorBlank()
     ) {
-      setBackgroundResource(R.drawable.item_background)
-
       thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
       thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
       thumbnailFileSize.setVisibilityFast(View.VISIBLE)
@@ -174,13 +172,19 @@ class PostImageThumbnailViewContainer(
         ChanSettings.PostAlignmentMode.AlignRight -> GravityCompat.START
       }
     } else {
-      setBackgroundResource(0)
-
       thumbnailFileExtension.setVisibilityFast(View.GONE)
       thumbnailFileDimens.setVisibilityFast(View.GONE)
       thumbnailFileSize.setVisibilityFast(View.GONE)
       postFileNameInfoTextView.setVisibilityFast(View.GONE)
       fileInfoContainerGroup.setVisibilityFast(View.GONE)
+    }
+
+    if (imagesCount > 1) {
+      setBackgroundResource(R.drawable.item_background)
+    } else {
+      // If there is only one image then we use custom ripple drawable which is located in
+      // ThumbnailView class
+      setBackgroundResource(0)
     }
 
     actualThumbnailView.bindOmittedFilesInfo(postCellData)

@@ -547,8 +547,8 @@ open class PostCellLayout @JvmOverloads constructor(
 
   private fun measure(view: View, widthSpec: Int, heightSpec: Int): MeasureResult {
     if (view.visibility == View.GONE) {
-      view.measure(0, 0)
-      return MeasureResult(0, 0)
+      view.measure(exactly(0), exactly(0))
+      return MeasureResult.EMPTY
     }
 
     view.measure(widthSpec, heightSpec)

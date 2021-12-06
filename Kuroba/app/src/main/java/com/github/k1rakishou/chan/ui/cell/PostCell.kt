@@ -806,8 +806,7 @@ class PostCell @JvmOverloads constructor(
     val fullPostComment = postCellData.fullPostComment
     comment.typeface = Typeface.DEFAULT
 
-    val newVisibility = if (fullPostComment.isEmpty()
-      && (postCellData.singleImageMode || postCellData.postImages.isEmpty())) {
+    val newVisibility = if (fullPostComment.isEmpty()) {
       View.GONE
     } else {
       View.VISIBLE

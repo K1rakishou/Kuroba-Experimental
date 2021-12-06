@@ -138,7 +138,6 @@ data class PostCellData(
     get() = postViewMode == PostViewMode.Search
   val markedNo: Long
     get() = markedPostNo ?: -1
-
   val showImageFileNameForSingleImage: Boolean
     get() = singleImageMode && postFileInfo
 
@@ -323,7 +322,6 @@ data class PostCellData(
 
   private fun calculatePostTitle(): CharSequence {
     val fullTitle = SpannableStringBuilder()
-    var appendedPartsCount = 0
 
     val postSubject = formatPostSubjectSpannable()
     if (postSubject.isNotNullNorBlank()) {
@@ -347,8 +345,6 @@ data class PostCellData(
 
       fullTitle.append(postSubject)
       fullTitle.append("\n")
-
-      ++appendedPartsCount
     }
 
     if (isSage) {
@@ -358,31 +354,26 @@ data class PostCellData(
       }
 
       fullTitle.append(sageString)
-      ++appendedPartsCount
     }
 
     val name = formatPostNameSpannable()
     if (name.isNotNullNorBlank()) {
       fullTitle.append(name).append(" ")
-      ++appendedPartsCount
     }
 
     val tripcode = formatPostTripcodeSpannable()
     if (tripcode.isNotNullNorBlank()) {
       fullTitle.append(tripcode).append(" ")
-      ++appendedPartsCount
     }
 
     val posterId = formatPostPosterIdSpannable()
     if (posterId.isNotNullNorBlank()) {
       fullTitle.append(posterId).append(" ")
-      ++appendedPartsCount
     }
 
     val modCapcode = formatPostModCapcodeSpannable()
     if (modCapcode.isNotNullNorBlank()) {
       fullTitle.append(modCapcode).append(" ")
-      ++appendedPartsCount
     }
 
     val postNoText = buildSpannableString {
@@ -417,14 +408,6 @@ data class PostCellData(
       bgColor = theme.accentColor,
       minQueryLength = searchQuery.queryMinValidLength
     )
-
-    val needAddNewLine = (fullTitle.lastOrNull() != '\n')
-      && (!isTablet || !isSplitLayout)
-      && (appendedPartsCount >= 2 || fullTitle.length > 24)
-
-    if (needAddNewLine) {
-      fullTitle.appendLine()
-    }
 
     val date = buildSpannedString {
       append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
