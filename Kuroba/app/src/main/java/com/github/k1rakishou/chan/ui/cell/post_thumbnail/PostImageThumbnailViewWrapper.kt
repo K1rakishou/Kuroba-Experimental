@@ -8,7 +8,6 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Group
 import androidx.core.view.updateLayoutParams
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
@@ -25,8 +24,7 @@ import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
 class PostImageThumbnailViewWrapper(
-  context: Context,
-  val postAlignmentMode: ChanSettings.PostAlignmentMode
+  context: Context
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
   val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
@@ -41,11 +39,7 @@ class PostImageThumbnailViewWrapper(
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
 
-    if (postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft) {
-      inflate(context, R.layout.layout_post_multiple_image_thumbnail_view_reversed, this)
-    } else {
-      inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
-    }
+    inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
 
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
     fileInfoContainerGroup = findViewById(R.id.file_info_container_group)
