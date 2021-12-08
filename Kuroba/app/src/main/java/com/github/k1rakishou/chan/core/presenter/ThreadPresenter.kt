@@ -1527,10 +1527,6 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    if (!postCellData.postMultipleImagesCompactMode) {
-      return
-    }
-
     val postOmittedImagesController = PostOmittedImagesController(
       postImages = postCellData.postImages,
       onImageClicked = { clickedPostImage -> onThumbnailClickedInternal(postCellData, clickedPostImage) },

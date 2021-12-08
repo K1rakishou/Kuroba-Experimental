@@ -213,7 +213,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
       bottom = totalPadding
     )
 
-    if (postCellData.postMultipleImagesCompactMode && postCellData.postImages.size > 1) {
+    val showOmittedFilesCountContainer = postCellData.postImages.size > 1
+      && (postCellData.postMultipleImagesCompactMode || postCellData.boardPostViewMode != ChanSettings.BoardPostViewMode.LIST)
+
+    if (showOmittedFilesCountContainer) {
       val imagesCount = postCellData.postImages.size - 1
       thumbnailOmittedFilesCountContainer.visibility = VISIBLE
       thumbnailOmittedFilesCount.text = getString(R.string.thumbnail_omitted_files_indicator_text, imagesCount)

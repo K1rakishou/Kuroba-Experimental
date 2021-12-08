@@ -305,9 +305,9 @@ class CardPostCell : ConstraintLayout,
   private fun bindPost(postCellData: PostCellData) {
     bindPostThumbnails(postCellData)
 
-    if (!TextUtils.isEmpty(postCellData.post.subject)) {
+    if (!TextUtils.isEmpty(postCellData.postTitle)) {
       title.visibility = VISIBLE
-      ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.post.subject, title)
+      ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitle, title)
     } else {
       title.visibility = GONE
       title.text = null
@@ -375,6 +375,7 @@ class CardPostCell : ConstraintLayout,
   }
 
   override fun onThemeChanged() {
+    title.setTextColor(themeEngine.chanTheme.postSubjectColor)
     comment.setTextColor(themeEngine.chanTheme.textColorPrimary)
     replies.setTextColor(themeEngine.chanTheme.textColorSecondary)
 
