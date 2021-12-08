@@ -11,6 +11,7 @@ import androidx.activity.viewModels
 import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
@@ -27,7 +28,6 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHe
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
-import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -67,7 +67,7 @@ import javax.inject.Inject
 class MediaViewerController(
   context: Context,
   private val mediaViewerCallbacks: MediaViewerCallbacks
-) : NavigationController(context), ViewPager.OnPageChangeListener, MediaViewContract, WindowInsetsListener {
+) : Controller(context), ViewPager.OnPageChangeListener, MediaViewContract, WindowInsetsListener {
 
   @Inject
   lateinit var appConstants: AppConstants

@@ -7,7 +7,6 @@ import android.view.ViewGroup
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.constraintlayout.widget.Group
-import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -25,13 +24,12 @@ import java.util.*
 import javax.inject.Inject
 
 @SuppressLint("ViewConstructor")
-class PostImageThumbnailViewContainer(
+class PostImageThumbnailViewWrapper(
   context: Context,
   val postAlignmentMode: ChanSettings.PostAlignmentMode
 ) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
   val actualThumbnailView: PostImageThumbnailView
   private val fileInfoContainerGroup: Group
-  private val postFileNameInfoTextView: TextView
   private val thumbnailFileExtension: TextView
   private val thumbnailFileDimens: TextView
   private val thumbnailFileSize: TextView
@@ -51,7 +49,6 @@ class PostImageThumbnailViewContainer(
 
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
     fileInfoContainerGroup = findViewById(R.id.file_info_container_group)
-    postFileNameInfoTextView = findViewById(R.id.post_file_name_info)
     thumbnailFileExtension = findViewById(R.id.thumbnail_file_extension)
     thumbnailFileDimens = findViewById(R.id.thumbnail_file_dimens)
     thumbnailFileSize = findViewById(R.id.thumbnail_file_size)
@@ -134,10 +131,10 @@ class PostImageThumbnailViewContainer(
     actualThumbnailView.unbindPostImage()
   }
 
-  fun bindActualThumbnailSizes(cellPostThumbnailSize: Int) {
+  fun bindActualThumbnailSizes(thumbnailWidth: Int, thumbnailHeight: Int) {
     actualThumbnailView.updateLayoutParams<ViewGroup.LayoutParams> {
-      width = cellPostThumbnailSize
-      height = cellPostThumbnailSize
+      width = thumbnailWidth
+      height = thumbnailHeight
     }
   }
 
@@ -148,7 +145,6 @@ class PostImageThumbnailViewContainer(
   ) {
     val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
     val imagesCount = postCellData.postImages.size
-    val postAlignmentMode = postCellData.postAlignmentMode
 
     if (
       imagesCount > 1
@@ -159,23 +155,15 @@ class PostImageThumbnailViewContainer(
       thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
       thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
       thumbnailFileSize.setVisibilityFast(View.VISIBLE)
-      postFileNameInfoTextView.setVisibilityFast(View.VISIBLE)
       fileInfoContainerGroup.setVisibilityFast(View.VISIBLE)
 
       thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
       thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
       thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
-      postFileNameInfoTextView.setText(postFileInfo, TextView.BufferType.SPANNABLE)
-
-      postFileNameInfoTextView.gravity = when (postAlignmentMode) {
-        ChanSettings.PostAlignmentMode.AlignLeft -> GravityCompat.END
-        ChanSettings.PostAlignmentMode.AlignRight -> GravityCompat.START
-      }
     } else {
       thumbnailFileExtension.setVisibilityFast(View.GONE)
       thumbnailFileDimens.setVisibilityFast(View.GONE)
       thumbnailFileSize.setVisibilityFast(View.GONE)
-      postFileNameInfoTextView.setVisibilityFast(View.GONE)
       fileInfoContainerGroup.setVisibilityFast(View.GONE)
     }
 
@@ -195,5 +183,4 @@ class PostImageThumbnailViewContainer(
     thumbnailFileDimens.setTextColor(themeEngine.chanTheme.postDetailsColor)
     thumbnailFileSize.setTextColor(themeEngine.chanTheme.postDetailsColor)
   }
-
 }

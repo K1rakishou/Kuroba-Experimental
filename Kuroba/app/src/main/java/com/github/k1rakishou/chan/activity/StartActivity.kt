@@ -226,7 +226,7 @@ class StartActivity : ControllerHostActivity(),
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, mainRootLayoutMargins)
 
     mainNavigationController = StyledToolbarNavigationController(this)
-    dialogFactory.navigationController = mainNavigationController
+    dialogFactory.containerController = mainNavigationController
 
     setupLayout()
 

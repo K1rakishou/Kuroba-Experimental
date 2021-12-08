@@ -94,7 +94,7 @@ class MediaViewerActivity : ControllerHostActivity(),
       onCreate()
       onShow()
     }
-    dialogFactory.navigationController = mediaViewerController
+    dialogFactory.containerController = mediaViewerController
 
     themeEngine.setRootView(this, mediaViewerController.view)
     themeEngine.addListener(this)

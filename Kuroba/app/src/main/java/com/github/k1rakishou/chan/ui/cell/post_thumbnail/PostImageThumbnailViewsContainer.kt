@@ -4,15 +4,16 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.view.updatePadding
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.helper.KurobaViewGroup
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.MurmurHashUtils
+import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import java.util.*
 
@@ -20,7 +21,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
-) : ViewGroup(context, attributeSet, defAttrStyle) {
+) : KurobaViewGroup(context, attributeSet, defAttrStyle) {
   private var thumbnailViews: MutableList<PostImageThumbnailViewContract>? = null
   private var postCellThumbnailCallbacks: PostCellThumbnailCallbacks? = null
 
@@ -83,20 +84,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       return
     }
 
-    val postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
-
-    // postCellDataWidthNoPaddings is the width of the recyclerview where the posts are displayed.
-    // But each post has paddings and we need to account for them, otherwise when displaying multiple
-    // thumbnails that may not fit into the container.
-    var actualWidth = postCellDataWidthNoPaddings - this.paddingLeft - this.paddingRight
-
-    // Don't forget to account for the "go to post" button which is shown when opening post replies
-    // or search.
-    if (postCellData.postViewMode.canShowGoToPostButton()) {
-      actualWidth -= GO_TO_POST_BUTTON_WIDTH
-    }
-
-    bindMoreThanOneImage(actualWidth, postCellData)
+    bindMoreThanOneImage(postCellData)
     cachedThumbnailViewContainerInfoArray[BIND].updateFrom(postCellData)
   }
 
@@ -108,9 +96,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   }
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
-  private fun bindMoreThanOneImage(postCellWidth: Int, postCellData: PostCellData) {
-    check(postCellWidth > 0) { "Bad postCellWidth: ${postCellWidth}" }
-
+  private fun bindMoreThanOneImage(postCellData: PostCellData) {
     check(postCellData.post.postImages.size > 1) {
       "Bad post images count: ${postCellData.post.postImages.size}"
     }
@@ -137,8 +123,14 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(index, postAlignmentMode)
 
+      thumbnailView.updatePaddings(
+        left = MULTIPLE_THUMBNAILS_PADDING,
+        right = MULTIPLE_THUMBNAILS_PADDING,
+        top = MULTIPLE_THUMBNAILS_PADDING,
+        bottom = MULTIPLE_THUMBNAILS_PADDING
+      )
       thumbnailView.setViewId(View.generateViewId())
-      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
+      thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize, cellPostThumbnailSize)
 
       thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions(drawRipple = false))
       thumbnailView.bindPostInfo(postCellData, postImage)
@@ -194,7 +186,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     for (index in 0 until childCount) {
-      val postImageThumbnailViewContainer = getChildAt(index) as? PostImageThumbnailViewContainer
+      val postImageThumbnailViewContainer = getChildAt(index) as? PostImageThumbnailViewWrapper
         ?: return false
 
       val imageUrl = prevChanPostImages[index].imageUrl?.toString()
@@ -229,7 +221,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     val (thumbnailView, needAddToParent) = getOrCreateThumbnailView(0, postAlignmentMode)
 
-    thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize)
+    thumbnailView.bindActualThumbnailSizes(cellPostThumbnailSize, cellPostThumbnailSize)
     thumbnailView.setViewId(View.generateViewId())
     thumbnailView.bindPostImage(postImage, true, ThumbnailView.ThumbnailViewOptions())
     thumbnailView.bindPostInfo(postCellData, postImage)
@@ -306,10 +298,10 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   private fun getOrCreateThumbnailView(
     index: Int,
     postAlignmentMode: ChanSettings.PostAlignmentMode
-  ): Pair<PostImageThumbnailViewContainer, Boolean> {
+  ): Pair<PostImageThumbnailViewWrapper, Boolean> {
 
     var view = getChildAt(index)
-    if (view != null && view is PostImageThumbnailViewContainer && view.postAlignmentMode == postAlignmentMode) {
+    if (view != null && view is PostImageThumbnailViewWrapper && view.postAlignmentMode == postAlignmentMode) {
       return view to false
     }
 
@@ -317,7 +309,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       removeViewAt(index)
     }
 
-    view = PostImageThumbnailViewContainer(context, postAlignmentMode)
+    view = PostImageThumbnailViewWrapper(context, postAlignmentMode)
     return view to true
   }
 
@@ -336,69 +328,63 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
     val imagesCount = childCount
-    val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
 
     if (imagesCount <= 1) {
       if (imagesCount == 0) {
         setMeasuredDimension(0, 0)
       } else {
         val child = getChildAt(0)
+        val childWidth = calculatePostCellSingleThumbnailSize()
 
         child.measure(
-          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize, MeasureSpec.EXACTLY),
-          MeasureSpec.makeMeasureSpec(cellPostThumbnailSize, MeasureSpec.EXACTLY),
+          exactly(childWidth + paddingLeft + paddingRight),
+          exactly(childWidth + paddingTop + paddingBottom)
         )
 
-        setMeasuredDimension(
-          cellPostThumbnailSize + paddingLeft + paddingRight,
-          cellPostThumbnailSize + paddingTop + paddingBottom
-        )
+        setMeasuredDimension(child.measuredWidth, child.measuredHeight)
       }
 
       return
     }
 
-    val isMirrored = cachedThumbnailViewContainerInfoArray.get(BIND)
-      .postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
+    val thumbnailInfo = cachedThumbnailViewContainerInfoArray[BIND]
+    val postNo = thumbnailInfo.postNo
+    val availableWidth = MeasureSpec.getSize(widthMeasureSpec)
+    var highestChild = 0
 
-    val viewWidth = MeasureSpec.getSize(widthMeasureSpec)
-    val neededWidthPerImage = cellPostThumbnailSize + POST_THUMBNAIL_FILE_INFO_SIZE
-    val columnsPerRow = (viewWidth / neededWidthPerImage).coerceAtLeast(1)
-    val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
-    val actualImageWidth = viewWidth / columnsPerRow
-    var totalHeight = paddingTop + paddingBottom
+    for (index in 0 until childCount) {
+      val thumbnailView = getChildAt(index)
+      thumbnailView.measure(unspecified(), unspecified())
 
-    for (rowIndex in 0 until rowsCount) {
-      var highestChildOfRow = 0
+      highestChild = Math.max(highestChild, thumbnailView.measuredHeight)
+    }
 
-      for (columnIndex in 0 until columnsPerRow) {
-        val actualChildIndex = (rowIndex * columnsPerRow) + columnIndex
-        val child: View? = getChildAt(actualChildIndex)
+    var totalTakenHeight = highestChild
+    var currentLeft = 0
+    var childIndex = 0
 
-        if (child == null) {
-          break
-        }
-
-        if (isMirrored) {
-          child.updatePadding(left = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
-        } else {
-          child.updatePadding(right = MULTIPLE_THUMBNAILS_INTERNAL_PADDING, bottom = MULTIPLE_THUMBNAILS_INTERNAL_PADDING)
-        }
-
-        child.measure(
-          MeasureSpec.makeMeasureSpec(actualImageWidth - MULTIPLE_THUMBNAILS_INTERNAL_PADDING, MeasureSpec.EXACTLY),
-          MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-        )
-
-        highestChildOfRow = Math.max(highestChildOfRow, (child.measuredHeight + MULTIPLE_THUMBNAILS_INTERNAL_PADDING))
+    while (true) {
+      val thumbnailView = getChildAt(childIndex) as? PostImageThumbnailViewWrapper
+      if (thumbnailView == null) {
+        break
       }
 
-      totalHeight += highestChildOfRow
+      val thumbnailViewWidth = thumbnailView.measuredWidth
+
+      if (currentLeft + thumbnailViewWidth > availableWidth) {
+        currentLeft = 0
+        totalTakenHeight += highestChild
+
+        continue
+      }
+
+      ++childIndex
+      currentLeft += thumbnailViewWidth
     }
 
     setMeasuredDimension(
-      MeasureSpec.makeMeasureSpec(viewWidth, MeasureSpec.EXACTLY),
-      MeasureSpec.makeMeasureSpec(totalHeight, MeasureSpec.EXACTLY)
+      exactly(availableWidth + paddingLeft + paddingRight),
+      exactly(totalTakenHeight + paddingTop + paddingBottom)
     )
   }
 
@@ -410,98 +396,73 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     if (imagesCount == 1) {
       val child = getChildAt(0)
-      child.layout(paddingLeft, paddingTop, measuredWidth - paddingRight, measuredHeight - paddingBottom)
+      child.layout(0, 0, child.measuredWidth, child.measuredHeight)
       return
     }
 
-    val isMirrored = cachedThumbnailViewContainerInfoArray.get(BIND)
-      .postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
+    val thumbnailInfo = cachedThumbnailViewContainerInfoArray[BIND]
+    val postNo = thumbnailInfo.postNo
+    val isMirrored = thumbnailInfo.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
-    val cellPostThumbnailSize = calculatePostCellSingleThumbnailSize()
-    val neededWidthPerImage = if (imagesCount == 1) {
-      cellPostThumbnailSize
-    } else {
-      cellPostThumbnailSize + POST_THUMBNAIL_FILE_INFO_SIZE
-    }
-    val columnsPerRow = (this.measuredWidth / neededWidthPerImage).coerceAtLeast(1)
-    val rowsCount = Math.ceil(imagesCount.toDouble() / columnsPerRow.toDouble()).toInt()
-    val actualImageWidth = this.measuredWidth / columnsPerRow
+    val availableWidth = r - l
+    val left = paddingLeft
+    val top = paddingTop
 
-    var curTop = 0
-    var curWidth = 0
-    var curHeight = 0
+    var highestChild = 0
 
-    val horizPadding = if (imagesCount > 1) {
-      MULTIPLE_THUMBNAILS_INTERNAL_PADDING
-    } else {
-      0
+    for (index in 0 until childCount) {
+      val thumbnailView = getChildAt(index)
+      highestChild = Math.max(highestChild, thumbnailView.measuredHeight)
     }
 
-    for (rowIndex in 0 until rowsCount) {
-      var highestChildOfRow = 0
+    var currLeft = if (isMirrored) availableWidth else left
+    var currTop = top
+    var childIndex = 0
 
-      // Measure children of this row and calculate the highest child which will be the row's height
-      for (columnIndex in 0 until columnsPerRow) {
-        val actualChildIndex = (rowIndex * columnsPerRow) + columnIndex
-        val child: View? = getChildAt(actualChildIndex)
-
-        if (child == null) {
-          break
-        }
-
-        if (child.visibility == GONE) {
-          continue
-        }
-
-        if (imagesCount > 1) {
-          if (isMirrored) {
-            child.updatePadding(left = horizPadding, bottom = horizPadding)
-          } else {
-            child.updatePadding(right = horizPadding, bottom = horizPadding)
-          }
-        }
-
-        child.measure(
-          MeasureSpec.makeMeasureSpec(actualImageWidth - horizPadding, MeasureSpec.EXACTLY),
-          MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
-        )
-
-        highestChildOfRow = Math.max(highestChildOfRow, child.measuredHeight)
+    while (true) {
+      val thumbnailView = getChildAt(childIndex) as? PostImageThumbnailViewWrapper
+      if (thumbnailView == null) {
+        break
       }
 
-      var curLeft = if (isMirrored) {
-        val thumbnailsWidthSum = (0 until columnsPerRow)
-          .sumOf { index -> getChildAt(index)?.measuredWidth ?: 0 }
+      val thumbnailViewWidth = thumbnailView.measuredWidth
+      val thumbnailViewHeight = thumbnailView.measuredHeight
 
-        this.measuredWidth - thumbnailsWidthSum - horizPadding
+      val shouldWrap = if (isMirrored) {
+        currLeft - thumbnailViewWidth < left
       } else {
-        0
+        currLeft + thumbnailViewWidth > availableWidth
       }
 
-      // Layout the children
-      for (columnIndex in 0 until columnsPerRow) {
-        val actualChildIndex = (rowIndex * columnsPerRow) + columnIndex
-        val child: View? = getChildAt(actualChildIndex)
+      if (shouldWrap) {
+        currLeft = if (isMirrored) availableWidth else left
+        currTop += highestChild
 
-        if (child == null) {
-          break
-        }
-
-        if (child.visibility == GONE) {
-          continue
-        }
-
-        curWidth = child.measuredWidth
-        curHeight = highestChildOfRow
-
-        child.layout(curLeft, curTop, curLeft + curWidth, curTop + curHeight)
-        curLeft += curWidth
+        continue
       }
 
       if (isMirrored) {
-        curTop += highestChildOfRow
+        thumbnailView.layout(
+          currLeft - thumbnailViewWidth,
+          currTop,
+          currLeft,
+          currTop + thumbnailViewHeight
+        )
       } else {
-        curTop += highestChildOfRow
+        thumbnailView.layout(
+          currLeft,
+          currTop,
+          currLeft + thumbnailViewWidth,
+          currTop + thumbnailViewHeight
+        )
+      }
+
+      ++childIndex
+
+      if (isMirrored) {
+        currLeft -= thumbnailViewWidth
+      } else {
+        currLeft += thumbnailViewWidth
       }
     }
   }
@@ -514,6 +475,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     var postCellDataWidthNoPaddings: Int = 0,
     var postCellThumbnailSizePercents: Int = 0,
     var canShowGoToPostButton: Boolean = false,
+    var postNo: Long = 0
   ) {
 
     fun updateFrom(postCellData: PostCellData) {
@@ -524,6 +486,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       this.postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
       this.postCellThumbnailSizePercents = postCellData.postCellThumbnailSizePercents
       this.canShowGoToPostButton = postCellData.postViewMode.canShowGoToPostButton()
+      this.postNo = postCellData.postNo
     }
 
     fun isTheSame(postCellData: PostCellData): Boolean {
@@ -535,6 +498,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
         && this.postCellDataWidthNoPaddings == postCellData.postCellDataWidthNoPaddings
         && this.postCellThumbnailSizePercents == postCellData.postCellThumbnailSizePercents
         && this.canShowGoToPostButton == postCellData.postViewMode.canShowGoToPostButton()
+        && this.postNo == postCellData.postNo
     }
 
     fun unbindEverything() {
@@ -545,6 +509,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       postCellDataWidthNoPaddings = 0
       postCellThumbnailSizePercents = 0
       canShowGoToPostButton = false
+      postNo = 0L
     }
   }
 
@@ -553,10 +518,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
   }
 
   companion object {
-    private val MULTIPLE_THUMBNAILS_VERTICAL_PADDING = dp(4f)
-    private val MULTIPLE_THUMBNAILS_INTERNAL_PADDING = dp(6f)
-    private val GO_TO_POST_BUTTON_WIDTH = getDimen(R.dimen.go_to_post_button_width)
-    private val POST_THUMBNAIL_FILE_INFO_SIZE = getDimen(R.dimen.cell_post_thumbnail_container_file_info_size)
+    private val MULTIPLE_THUMBNAILS_PADDING = dp(6f)
     private val CELL_POST_THUMBNAIL_SIZE_MAX = getDimen(R.dimen.cell_post_thumbnail_size_max).toFloat()
 
     const val THUMBNAIL_CLICK_TOKEN = "POST_THUMBNAIL_VIEW_CLICK"

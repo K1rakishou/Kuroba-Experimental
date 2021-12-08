@@ -109,7 +109,7 @@ import com.github.k1rakishou.chan.ui.cell.PostCell;
 import com.github.k1rakishou.chan.ui.cell.PostStubCell;
 import com.github.k1rakishou.chan.ui.cell.ThreadStatusCell;
 import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailView;
-import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewContainer;
+import com.github.k1rakishou.chan.ui.cell.post_thumbnail.PostImageThumbnailViewWrapper;
 import com.github.k1rakishou.chan.ui.compose.bottom_panel.KurobaComposeIconPanel;
 import com.github.k1rakishou.chan.ui.controller.AlbumDownloadController;
 import com.github.k1rakishou.chan.ui.controller.AlbumViewController;
@@ -391,7 +391,7 @@ public interface ActivityComponent {
     void inject(OptionalSwipeViewPager optionalSwipeViewPager);
     void inject(FastScroller fastScroller);
     void inject(ToolbarMenuItem toolbarMenuItem);
-    void inject(PostImageThumbnailViewContainer postImageThumbnailViewContainer);
+    void inject(PostImageThumbnailViewWrapper postImageThumbnailViewWrapper);
     void inject(ThumbnailMediaView thumbnailMediaView);
     void inject(FullImageMediaView fullImageMediaView);
     void inject(AudioMediaView audioMediaView);

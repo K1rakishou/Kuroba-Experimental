@@ -13,10 +13,10 @@ import android.widget.Button
 import android.widget.LinearLayout
 import android.widget.TextView
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
-import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
@@ -36,7 +36,7 @@ class DialogFactory(
   private val themeEngine: ThemeEngine
     get() = _themeEngine.get()
 
-  lateinit var navigationController: NavigationController
+  lateinit var containerController: Controller
 
   @JvmOverloads
   fun createSimpleInformationDialog(
@@ -258,7 +258,7 @@ class DialogFactory(
     onDismissListener: () -> Unit,
     onViewReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
   ) {
-    navigationController.presentController(
+    containerController.presentController(
       KurobaAlertDialogHostController(
         context = context,
         cancelable = cancelable,
