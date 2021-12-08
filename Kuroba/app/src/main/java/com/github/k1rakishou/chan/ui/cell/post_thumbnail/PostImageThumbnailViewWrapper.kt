@@ -59,6 +59,53 @@ class PostImageThumbnailViewWrapper(
     onThemeChanged()
   }
 
+  fun bindActualThumbnailSizes(thumbnailWidth: Int, thumbnailHeight: Int) {
+    actualThumbnailView.updateLayoutParams<ViewGroup.LayoutParams> {
+      width = thumbnailWidth
+      height = thumbnailHeight
+    }
+  }
+
+  @SuppressLint("SetTextI18n")
+  fun bindPostInfo(
+    postCellData: PostCellData,
+    chanPostImage: ChanPostImage
+  ) {
+    val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
+    val imagesCount = postCellData.postImages.size
+
+    if (
+      imagesCount > 1
+      && !postCellData.postMultipleImagesCompactMode
+      && (postCellData.searchMode || postCellData.postFileInfo)
+      && postFileInfo.isNotNullNorBlank()
+    ) {
+      thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
+      thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
+      thumbnailFileSize.setVisibilityFast(View.VISIBLE)
+      fileInfoContainerGroup.setVisibilityFast(View.VISIBLE)
+
+      thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
+      thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
+      thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
+    } else {
+      thumbnailFileExtension.setVisibilityFast(View.GONE)
+      thumbnailFileDimens.setVisibilityFast(View.GONE)
+      thumbnailFileSize.setVisibilityFast(View.GONE)
+      fileInfoContainerGroup.setVisibilityFast(View.GONE)
+    }
+
+    if (imagesCount > 1) {
+      setBackgroundResource(R.drawable.item_background)
+    } else {
+      // If there is only one image then we use custom ripple drawable which is located in
+      // ThumbnailView class
+      setBackgroundResource(0)
+    }
+
+    actualThumbnailView.bindOmittedFilesInfo(postCellData)
+  }
+
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
     themeEngine.addListener(this)
@@ -129,53 +176,6 @@ class PostImageThumbnailViewWrapper(
 
   override fun unbindPostImage() {
     actualThumbnailView.unbindPostImage()
-  }
-
-  fun bindActualThumbnailSizes(thumbnailWidth: Int, thumbnailHeight: Int) {
-    actualThumbnailView.updateLayoutParams<ViewGroup.LayoutParams> {
-      width = thumbnailWidth
-      height = thumbnailHeight
-    }
-  }
-
-  @SuppressLint("SetTextI18n")
-  fun bindPostInfo(
-    postCellData: PostCellData,
-    chanPostImage: ChanPostImage
-  ) {
-    val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
-    val imagesCount = postCellData.postImages.size
-
-    if (
-      imagesCount > 1
-      && !postCellData.postMultipleImagesCompactMode
-      && (postCellData.searchMode || postCellData.postFileInfo)
-      && postFileInfo.isNotNullNorBlank()
-    ) {
-      thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
-      thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
-      thumbnailFileSize.setVisibilityFast(View.VISIBLE)
-      fileInfoContainerGroup.setVisibilityFast(View.VISIBLE)
-
-      thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
-      thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
-      thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
-    } else {
-      thumbnailFileExtension.setVisibilityFast(View.GONE)
-      thumbnailFileDimens.setVisibilityFast(View.GONE)
-      thumbnailFileSize.setVisibilityFast(View.GONE)
-      fileInfoContainerGroup.setVisibilityFast(View.GONE)
-    }
-
-    if (imagesCount > 1) {
-      setBackgroundResource(R.drawable.item_background)
-    } else {
-      // If there is only one image then we use custom ripple drawable which is located in
-      // ThumbnailView class
-      setBackgroundResource(0)
-    }
-
-    actualThumbnailView.bindOmittedFilesInfo(postCellData)
   }
 
   override fun onThemeChanged() {

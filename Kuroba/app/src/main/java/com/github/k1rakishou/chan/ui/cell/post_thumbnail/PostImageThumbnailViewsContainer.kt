@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.view.ViewGroup
+import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -169,7 +170,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       }
 
       if (needAddToParent) {
-        val layoutParams = LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT)
+        val layoutParams = LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT)
         this.addView(thumbnailView, layoutParams)
       }
 
@@ -266,7 +267,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     if (needAddToParent) {
-      val layoutParams = ViewGroup.LayoutParams(
+      val layoutParams = LayoutParams(
         ViewGroup.LayoutParams.WRAP_CONTENT,
         ViewGroup.LayoutParams.WRAP_CONTENT
       )
@@ -363,6 +364,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     var currentLeft = 0
     var childIndex = 0
 
+    var currentRow = 0
+    var currentColumn = 0
+
+    var totalRows = 1
+    var totalColumns = 1
+
     while (true) {
       val thumbnailView = getChildAt(childIndex) as? PostImageThumbnailViewWrapper
       if (thumbnailView == null) {
@@ -372,14 +379,35 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       val thumbnailViewWidth = thumbnailView.measuredWidth
 
       if (currentLeft + thumbnailViewWidth > availableWidth) {
+        totalColumns = Math.max(totalColumns, currentColumn)
+
         currentLeft = 0
+        currentColumn = 0
         totalTakenHeight += highestChild
+
+        ++currentRow
+        ++totalRows
 
         continue
       }
 
+      thumbnailView.updateLayoutParams<LayoutParams> { this.row = currentRow }
+
       ++childIndex
+      ++currentColumn
       currentLeft += thumbnailViewWidth
+    }
+
+    totalColumns = Math.max(totalColumns, currentColumn)
+
+    for (index in 0 until childCount) {
+      val thumbnailView = getChildAt(index) as? PostImageThumbnailViewWrapper
+        ?: break
+
+      thumbnailView.updateLayoutParams<LayoutParams> {
+        this.totalRowsCount = totalRows
+        this.totalColumnsCount = totalColumns
+      }
     }
 
     setMeasuredDimension(
@@ -401,13 +429,9 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     }
 
     val thumbnailInfo = cachedThumbnailViewContainerInfoArray[BIND]
-    val postNo = thumbnailInfo.postNo
     val isMirrored = thumbnailInfo.postAlignmentMode == ChanSettings.PostAlignmentMode.AlignLeft
 
     val availableWidth = r - l
-    val left = paddingLeft
-    val top = paddingTop
-
     var highestChild = 0
 
     for (index in 0 until childCount) {
@@ -415,9 +439,23 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       highestChild = Math.max(highestChild, thumbnailView.measuredHeight)
     }
 
-    var currLeft = if (isMirrored) availableWidth else left
+    if (isMirrored) {
+      layoutMirrored(availableWidth, highestChild)
+    } else {
+      layoutNormal(availableWidth, highestChild)
+    }
+  }
+
+  private fun layoutNormal(availableWidth: Int, highestChild: Int) {
+    val left = paddingLeft
+    val top = paddingTop
+
+    var currLeft = left
     var currTop = top
     var childIndex = 0
+
+    val thumbnailInfo = cachedThumbnailViewContainerInfoArray[BIND]
+    val postNo = thumbnailInfo.postNo
 
     while (true) {
       val thumbnailView = getChildAt(childIndex) as? PostImageThumbnailViewWrapper
@@ -427,43 +465,64 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
       val thumbnailViewWidth = thumbnailView.measuredWidth
       val thumbnailViewHeight = thumbnailView.measuredHeight
-
-      val shouldWrap = if (isMirrored) {
-        currLeft - thumbnailViewWidth < left
-      } else {
-        currLeft + thumbnailViewWidth > availableWidth
-      }
+      val shouldWrap = currLeft + thumbnailViewWidth > availableWidth
 
       if (shouldWrap) {
-        currLeft = if (isMirrored) availableWidth else left
+        currLeft = left
         currTop += highestChild
 
         continue
       }
 
-      if (isMirrored) {
+      thumbnailView.layout(
+        currLeft,
+        currTop,
+        currLeft + thumbnailViewWidth,
+        currTop + thumbnailViewHeight
+      )
+
+      ++childIndex
+      currLeft += thumbnailViewWidth
+    }
+  }
+
+  private fun layoutMirrored(availableWidth: Int, highestChild: Int) {
+    val thumbnailInfo = cachedThumbnailViewContainerInfoArray[BIND]
+    val postNo = thumbnailInfo.postNo
+
+    val totalRowsCount = ((getChildAt(0) as PostImageThumbnailViewWrapper).layoutParams as LayoutParams).totalRowsCount
+    val totalColumnsCount = ((getChildAt(0) as PostImageThumbnailViewWrapper).layoutParams as LayoutParams).totalColumnsCount
+
+    val left = availableWidth
+    val top = paddingTop
+
+    var currLeft = left
+    var currTop = top
+
+    for (row in 0 until totalRowsCount) {
+      for (column in (totalColumnsCount - 1) downTo 0) {
+        val childIndex = (row * totalColumnsCount) + column
+
+        val thumbnailView = getChildAt(childIndex) as? PostImageThumbnailViewWrapper
+        if (thumbnailView == null) {
+          continue
+        }
+
+        val thumbnailViewWidth = thumbnailView.measuredWidth
+        val thumbnailViewHeight = thumbnailView.measuredHeight
+
         thumbnailView.layout(
           currLeft - thumbnailViewWidth,
           currTop,
           currLeft,
           currTop + thumbnailViewHeight
         )
-      } else {
-        thumbnailView.layout(
-          currLeft,
-          currTop,
-          currLeft + thumbnailViewWidth,
-          currTop + thumbnailViewHeight
-        )
-      }
 
-      ++childIndex
-
-      if (isMirrored) {
         currLeft -= thumbnailViewWidth
-      } else {
-        currLeft += thumbnailViewWidth
       }
+
+      currLeft = left
+      currTop += highestChild
     }
   }
 
@@ -511,6 +570,12 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
       canShowGoToPostButton = false
       postNo = 0L
     }
+  }
+
+  class LayoutParams(width: Int, height: Int) : ViewGroup.LayoutParams(width, height) {
+    var row: Int = 0
+    var totalRowsCount: Int = 0
+    var totalColumnsCount: Int = 0
   }
 
   interface PostCellThumbnailCallbacks {
