@@ -122,10 +122,10 @@ open class PostCellLayout @JvmOverloads constructor(
       }
     } else {
       postImageThumbnailViewsContainer.updatePaddings(
-        top = vertPaddingPx,
+        top = 0,
         left = 0,
         right = 0,
-        bottom = thumbnailsContainerBottomPadding
+        bottom = 0
       )
     }
 

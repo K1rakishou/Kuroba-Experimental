@@ -4,9 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.View
 import android.view.ViewGroup
+import android.widget.RelativeLayout
 import android.widget.TextView
-import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.constraintlayout.widget.Group
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -15,6 +14,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.chan.utils.setVisibilityFast
+import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -25,12 +25,9 @@ import javax.inject.Inject
 @SuppressLint("ViewConstructor")
 class PostImageThumbnailViewWrapper(
   context: Context
-) : ConstraintLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
+) : RelativeLayout(context), PostImageThumbnailViewContract, ThemeEngine.ThemeChangesListener {
   val actualThumbnailView: PostImageThumbnailView
-  private val fileInfoContainerGroup: Group
-  private val thumbnailFileExtension: TextView
-  private val thumbnailFileDimens: TextView
-  private val thumbnailFileSize: TextView
+  private val thumbnailFileInfo: TextView
 
   @Inject
   lateinit var themeEngine: ThemeEngine
@@ -42,10 +39,7 @@ class PostImageThumbnailViewWrapper(
     inflate(context, R.layout.layout_post_multiple_image_thumbnail_view, this)
 
     actualThumbnailView = findViewById(R.id.actual_thumbnail)
-    fileInfoContainerGroup = findViewById(R.id.file_info_container_group)
-    thumbnailFileExtension = findViewById(R.id.thumbnail_file_extension)
-    thumbnailFileDimens = findViewById(R.id.thumbnail_file_dimens)
-    thumbnailFileSize = findViewById(R.id.thumbnail_file_size)
+    thumbnailFileInfo = findViewById(R.id.thumbnail_file_info)
 
     actualThumbnailView.isClickable = false
     actualThumbnailView.isFocusable = false
@@ -74,19 +68,23 @@ class PostImageThumbnailViewWrapper(
       && (postCellData.searchMode || postCellData.postFileInfo)
       && postFileInfo.isNotNullNorBlank()
     ) {
-      thumbnailFileExtension.setVisibilityFast(View.VISIBLE)
-      thumbnailFileDimens.setVisibilityFast(View.VISIBLE)
-      thumbnailFileSize.setVisibilityFast(View.VISIBLE)
-      fileInfoContainerGroup.setVisibilityFast(View.VISIBLE)
+      thumbnailFileInfo.setVisibilityFast(View.VISIBLE)
 
-      thumbnailFileExtension.text = (chanPostImage.extension ?: "unk").toUpperCase(Locale.ENGLISH)
-      thumbnailFileDimens.text = "${chanPostImage.imageWidth}x${chanPostImage.imageHeight}"
-      thumbnailFileSize.text = ChanPostUtils.getReadableFileSize(chanPostImage.size)
+      thumbnailFileInfo.text = buildString {
+        if (chanPostImage.extension.isNotNullNorBlank()) {
+          append(chanPostImage.extension!!.uppercase(Locale.ENGLISH))
+          append(" ")
+        }
+
+        append("${chanPostImage.imageWidth}x${chanPostImage.imageHeight}")
+        append(" ")
+
+        val readableFileSize = ChanPostUtils.getReadableFileSize(chanPostImage.size)
+          .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+        append(readableFileSize)
+      }
     } else {
-      thumbnailFileExtension.setVisibilityFast(View.GONE)
-      thumbnailFileDimens.setVisibilityFast(View.GONE)
-      thumbnailFileSize.setVisibilityFast(View.GONE)
-      fileInfoContainerGroup.setVisibilityFast(View.GONE)
+      thumbnailFileInfo.setVisibilityFast(View.GONE)
     }
 
     if (imagesCount > 1) {
@@ -173,8 +171,6 @@ class PostImageThumbnailViewWrapper(
   }
 
   override fun onThemeChanged() {
-    thumbnailFileExtension.setTextColor(themeEngine.chanTheme.postDetailsColor)
-    thumbnailFileDimens.setTextColor(themeEngine.chanTheme.postDetailsColor)
-    thumbnailFileSize.setTextColor(themeEngine.chanTheme.postDetailsColor)
+    thumbnailFileInfo.setTextColor(themeEngine.chanTheme.postDetailsColor)
   }
 }

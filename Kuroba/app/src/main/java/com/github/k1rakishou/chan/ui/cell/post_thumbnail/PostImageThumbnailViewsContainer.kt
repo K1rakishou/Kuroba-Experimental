@@ -415,7 +415,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
     if (imagesCount == 1) {
       val child = getChildAt(0)
-      child.layout(0, 0, child.measuredWidth, child.measuredHeight)
+      child.layout(paddingLeft, paddingTop, child.measuredWidth, child.measuredHeight)
       return
     }
 
