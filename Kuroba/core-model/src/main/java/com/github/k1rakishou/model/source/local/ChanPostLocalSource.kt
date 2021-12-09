@@ -3,7 +3,7 @@ package com.github.k1rakishou.model.source.local
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_spannable.SpannableStringMapper
+import com.github.k1rakishou.core_spannable.parcelable_spannable_string.ParcelableSpannableStringMapper
 import com.github.k1rakishou.model.KurobaDatabase
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -24,12 +24,10 @@ import com.github.k1rakishou.model.mapper.ChanPostHttpIconMapper
 import com.github.k1rakishou.model.mapper.ChanPostImageMapper
 import com.github.k1rakishou.model.mapper.ChanThreadMapper
 import com.github.k1rakishou.model.mapper.TextSpanMapper
-import com.google.gson.Gson
 import java.util.concurrent.TimeUnit
 
 class ChanPostLocalSource(
-  database: KurobaDatabase,
-  private val gson: Gson
+  database: KurobaDatabase
 ) : AbstractLocalSource(database) {
   private val TAG = "ChanPostLocalSource"
   private val chanBoardDao = database.chanBoardDao()
@@ -228,15 +226,13 @@ class ChanPostLocalSource(
     val postCommentWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
-      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
-        gson,
-        chanPost.postComment.originalComment()
-      ) ?: return@mapIndexedNotNull null
+      val parcelableSpannableString = ParcelableSpannableStringMapper
+        .toParcelableSpannableString(chanPost.postComment.originalComment())
+        ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson = gson,
         ownerPostId = chanPostEntityId.postId,
-        serializableSpannableString = serializeSpannableString,
+        parcelableSpannableString = parcelableSpannableString,
         originalUnparsedComment = chanPost.postComment.originalUnparsedComment,
         chanTextType = ChanTextSpanEntity.TextType.PostComment
       )
@@ -249,15 +245,13 @@ class ChanPostLocalSource(
     val subjectWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
-      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
-        gson,
-        chanPost.subject
-      ) ?: return@mapIndexedNotNull null
+      val parcelableSpannableString = ParcelableSpannableStringMapper
+        .toParcelableSpannableString(chanPost.subject)
+        ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson = gson,
         ownerPostId = chanPostEntityId.postId,
-        serializableSpannableString = serializeSpannableString,
+        parcelableSpannableString = parcelableSpannableString,
         originalUnparsedComment = null,
         chanTextType = ChanTextSpanEntity.TextType.Subject
       )
@@ -270,15 +264,13 @@ class ChanPostLocalSource(
     val tripcodeWithSpansJsonList = chanPostEntityIdList.mapIndexedNotNull { index, chanPostEntityId ->
       val chanPost = chanPostList[index]
 
-      val serializeSpannableString = SpannableStringMapper.serializeSpannableString(
-        gson,
-        chanPost.tripcode
-      ) ?: return@mapIndexedNotNull null
+      val parcelableSpannableString = ParcelableSpannableStringMapper
+        .toParcelableSpannableString(chanPost.tripcode)
+        ?: return@mapIndexedNotNull null
 
       return@mapIndexedNotNull TextSpanMapper.toEntity(
-        gson = gson,
         ownerPostId = chanPostEntityId.postId,
-        serializableSpannableString = serializeSpannableString,
+        parcelableSpannableString = parcelableSpannableString,
         originalUnparsedComment = null,
         chanTextType = ChanTextSpanEntity.TextType.Tripcode
       )
@@ -426,7 +418,6 @@ class ChanPostLocalSource(
       )
 
       return@mapNotNull ChanThreadMapper.fromEntity(
-        gson = gson,
         threadDescriptor = threadDescriptor,
         chanThreadEntity = chanThreadEntity,
         chanPostFull = chanPostEntity,
@@ -497,7 +488,6 @@ class ChanPostLocalSource(
           textSpansGroupedByPostId[chanPostFull.chanPostIdEntity.postId]
 
         return@mapNotNull ChanPostEntityMapper.fromEntity(
-          gson,
           descriptor,
           chanThreadEntity,
           chanPostFull.chanPostIdEntity,
@@ -609,7 +599,6 @@ class ChanPostLocalSource(
         require(chanPostFull.chanPostEntity.isOp) { "Must be original post" }
 
         return@mapNotNull ChanPostEntityMapper.fromEntity(
-          gson,
           threadDescriptor,
           chanThreadEntity,
           chanPostFull.chanPostIdEntity,

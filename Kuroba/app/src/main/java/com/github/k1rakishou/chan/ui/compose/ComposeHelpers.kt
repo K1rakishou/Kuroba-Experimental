@@ -33,8 +33,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.text.getSpans
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
+import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -128,14 +128,14 @@ object ComposeHelpers {
         is BackgroundColorSpan -> {
           SpanStyle(background = Color(characterStyle.backgroundColor))
         }
-        is ColorizableBackgroundColorSpan -> {
+        is BackgroundColorIdSpan -> {
           val color = getColorByColorId(themeEngine, characterStyle.chanThemeColorId, characterStyle.colorModificationFactor)
           SpanStyle(background = color)
         }
         is ForegroundColorSpan -> {
           SpanStyle(color = Color(characterStyle.foregroundColor))
         }
-        is ColorizableForegroundColorSpan -> {
+        is ForegroundColorIdSpan -> {
           SpanStyle(color = getColorByColorId(themeEngine, characterStyle.chanThemeColorId, null))
         }
         is PostLinkable -> {

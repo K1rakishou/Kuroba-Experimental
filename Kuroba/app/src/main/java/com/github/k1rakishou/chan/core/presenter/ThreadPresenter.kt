@@ -1877,7 +1877,7 @@ class ThreadPresenter @Inject constructor(
       }
 
       if (linkable.type == PostLinkable.Type.QUOTE) {
-        val postId = linkable.linkableValue.extractLongOrNull()
+        val postId = linkable.linkableValue.extractValueOrNull()
         if (postId == null) {
           Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
           return@post
@@ -1980,7 +1980,7 @@ class ThreadPresenter @Inject constructor(
       if (linkable.type == PostLinkable.Type.DEAD) {
         when (val postLinkableValue = linkable.linkableValue) {
           is PostLinkable.Value.LongValue -> {
-            val postNo = postLinkableValue.extractLongOrNull()
+            val postNo = postLinkableValue.extractValueOrNull()
             if (postNo == null || postNo <= 0L) {
               Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
               return@post
@@ -2093,7 +2093,7 @@ class ThreadPresenter @Inject constructor(
 
           when (val postLinkableValue = linkable.linkableValue) {
             is PostLinkable.Value.LongValue -> {
-              val postNo = postLinkableValue.extractLongOrNull()
+              val postNo = postLinkableValue.extractValueOrNull()
               if (postNo != null) {
                 val desktopUrl = site.resolvable().desktopUrl(postChanDescriptor, postNo)
                 floatingListMenuItems += createMenuItem(

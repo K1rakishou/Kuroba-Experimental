@@ -40,11 +40,37 @@ data class ChanTextSpanEntity(
   val parsedText: String,
   @ColumnInfo(name = UNPARSED_TEXT_COLUMN_NAME, defaultValue = "NULL")
   val unparsedText: String?,
-  @ColumnInfo(name = SPAN_INFO_JSON_COLUMN_NAME)
-  val spanInfoJson: String,
+  @ColumnInfo(name = SPAN_INFO_BYTES_COLUMN_NAME, typeAffinity = ColumnInfo.BLOB)
+  val spanInfoBytes: ByteArray,
   @ColumnInfo(name = TEXT_TYPE_COLUMN_NAME)
   val textType: TextType
 ) {
+
+  override fun equals(other: Any?): Boolean {
+    if (this === other) return true
+    if (javaClass != other?.javaClass) return false
+
+    other as ChanTextSpanEntity
+
+    if (textSpanId != other.textSpanId) return false
+    if (ownerPostId != other.ownerPostId) return false
+    if (parsedText != other.parsedText) return false
+    if (unparsedText != other.unparsedText) return false
+    if (!spanInfoBytes.contentEquals(other.spanInfoBytes)) return false
+    if (textType != other.textType) return false
+
+    return true
+  }
+
+  override fun hashCode(): Int {
+    var result = textSpanId.hashCode()
+    result = 31 * result + ownerPostId.hashCode()
+    result = 31 * result + parsedText.hashCode()
+    result = 31 * result + (unparsedText?.hashCode() ?: 0)
+    result = 31 * result + spanInfoBytes.contentHashCode()
+    result = 31 * result + textType.hashCode()
+    return result
+  }
 
   enum class TextType(val value: Int) {
     PostComment(0),
@@ -67,7 +93,8 @@ data class ChanTextSpanEntity(
     const val OWNER_POST_ID_COLUMN_NAME = "owner_post_id"
     const val PARSED_TEXT_COLUMN_NAME = "parsed_text"
     const val UNPARSED_TEXT_COLUMN_NAME = "unparsed_text"
-    const val SPAN_INFO_JSON_COLUMN_NAME = "span_info_json"
+    const val SPAN_INFO_BYTES_COLUMN_NAME = "span_info_bytes"
     const val TEXT_TYPE_COLUMN_NAME = "text_type"
   }
+
 }

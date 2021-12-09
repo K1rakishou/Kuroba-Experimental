@@ -1,42 +1,40 @@
 package com.github.k1rakishou.model.mapper
 
-import com.github.k1rakishou.core_spannable.serializable.SerializableSpanInfoList
-import com.github.k1rakishou.core_spannable.serializable.SerializableSpannableString
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.marshall
+import com.github.k1rakishou.common.unmarshall
+import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.ParcelableSpannableString
+import com.github.k1rakishou.core_spannable.ParcelableSpans
 import com.github.k1rakishou.model.entity.chan.post.ChanTextSpanEntity
-import com.google.gson.Gson
 
 object TextSpanMapper {
+  private const val TAG = "TextSpanMapper"
 
   fun toEntity(
-    gson: Gson,
     ownerPostId: Long,
-    serializableSpannableString: SerializableSpannableString,
+    parcelableSpannableString: ParcelableSpannableString,
     originalUnparsedComment: String?,
     chanTextType: ChanTextSpanEntity.TextType
   ): ChanTextSpanEntity? {
-    if (serializableSpannableString.isEmpty) {
+    if (parcelableSpannableString.isEmpty()) {
       return null
     }
-
-    val spanInfoJson = gson.toJson(
-      SerializableSpanInfoList(serializableSpannableString.spanInfoList)
-    )
 
     return ChanTextSpanEntity(
       textSpanId = 0L,
       ownerPostId = ownerPostId,
-      parsedText = serializableSpannableString.text,
+      parsedText = parcelableSpannableString.text,
       unparsedText = originalUnparsedComment,
-      spanInfoJson = spanInfoJson,
+      spanInfoBytes = parcelableSpannableString.parcelableSpans.marshall(),
       textType = chanTextType
     )
   }
 
   fun fromEntity(
-    gson: Gson,
     chanTextSpanEntityList: List<ChanTextSpanEntity>?,
     chanTextType: ChanTextSpanEntity.TextType
-  ): SerializableSpannableString? {
+  ): ParcelableSpannableString? {
     if (chanTextSpanEntityList == null || chanTextSpanEntityList.isEmpty()) {
       return null
     }
@@ -56,13 +54,13 @@ object TextSpanMapper {
 
     val textSpanEntity = filteredTextSpanEntityList.first()
 
-    val serializableSpanInfoList = gson.fromJson(
-      textSpanEntity.spanInfoJson,
-      SerializableSpanInfoList::class.java
-    )
+    val parcelableSpans = textSpanEntity.spanInfoBytes.unmarshall(ParcelableSpans.CREATOR)
+      .peekError { error -> Logger.e(TAG, "fromEntity() error: ${error.errorMessageOrClassName()}") }
+      .valueOrNull()
+      ?: ParcelableSpans()
 
-    return SerializableSpannableString(
-      serializableSpanInfoList.spanInfoList,
+    return ParcelableSpannableString(
+      parcelableSpans,
       textSpanEntity.parsedText
     )
   }

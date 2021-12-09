@@ -21,7 +21,7 @@ import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
@@ -432,7 +432,7 @@ data class PostCellData(
 
     val subjectSpan = SpannableString.valueOf(subject)
     subjectSpan.setSpan(
-      ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
+      ForegroundColorIdSpan(ChanThemeColorId.PostSubjectColor),
       0,
       subjectSpan.length,
       0
@@ -448,7 +448,7 @@ data class PostCellData(
     }
 
     val nameSpan = SpannableString.valueOf(name)
-    nameSpan.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, nameSpan.length, 0)
+    nameSpan.setSpan(ForegroundColorIdSpan(ChanThemeColorId.PostNameColor), 0, nameSpan.length, 0)
     nameSpan.setSpan(PostCell.PosterNameClickableSpan(postCellCallback, post), 0, nameSpan.length, 0)
 
     return nameSpan
@@ -461,7 +461,7 @@ data class PostCellData(
     }
 
     val tripcodeSpan = SpannableString.valueOf(tripcode)
-    tripcodeSpan.setSpan(ColorizableForegroundColorSpan(ChanThemeColorId.PostNameColor), 0, tripcodeSpan.length, 0)
+    tripcodeSpan.setSpan(ForegroundColorIdSpan(ChanThemeColorId.PostNameColor), 0, tripcodeSpan.length, 0)
     tripcodeSpan.setSpan(PostCell.PosterTripcodeClickableSpan(postCellCallback, post), 0, tripcodeSpan.length, 0)
 
     return tripcodeSpan
@@ -500,7 +500,7 @@ data class PostCellData(
 
     val capcodeSpan = SpannableString.valueOf(moderatorCapcode)
     capcodeSpan.setSpan(
-      ColorizableForegroundColorSpan(ChanThemeColorId.AccentColor),
+      ForegroundColorIdSpan(ChanThemeColorId.AccentColor),
       0,
       capcodeSpan.length,
       0

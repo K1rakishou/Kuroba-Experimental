@@ -259,7 +259,8 @@ public class DefaultPostParser implements PostParser {
                 archiveType,
                 boardCode,
                 threadNo,
-                postNo
+                postNo,
+                0L
         );
 
         return new PostLinkable(

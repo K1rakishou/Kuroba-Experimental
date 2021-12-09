@@ -2,6 +2,8 @@ package com.github.k1rakishou.common
 
 import android.graphics.Bitmap
 import android.graphics.RectF
+import android.os.Parcel
+import android.os.Parcelable
 import android.system.ErrnoException
 import android.system.OsConstants
 import android.text.Layout
@@ -1467,4 +1469,29 @@ public inline fun buildSpannableString(
   val builder = SpannableStringBuilder()
   builder.builderAction()
   return SpannableString.valueOf(builder)
+}
+
+fun Parcelable.marshall(): ByteArray {
+  val parcel = Parcel.obtain()
+
+  try {
+    this.writeToParcel(parcel, 0)
+    return parcel.marshall()
+  } finally {
+    parcel.recycle()
+  }
+}
+
+fun <T : Parcelable> ByteArray.unmarshall(creator: Parcelable.Creator<T>): ModularResult<T> {
+  return Try {
+    val parcel = unmarshall(this)
+    return@Try creator.createFromParcel(parcel)
+  }
+}
+
+private fun unmarshall(bytes: ByteArray): Parcel {
+  val parcel = Parcel.obtain()
+  parcel.unmarshall(bytes, 0, bytes.size)
+  parcel.setDataPosition(0)
+  return parcel
 }

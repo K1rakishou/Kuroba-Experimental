@@ -40,8 +40,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.findChild
-import com.github.k1rakishou.core_spannable.ColorizableBackgroundColorSpan
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
+import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_spannable.ThemeEditorPostLinkable
 import com.github.k1rakishou.core_themes.ChanTheme
@@ -378,14 +378,14 @@ class ThemeControllerHelper(
     val spans = input.getSpans<CharacterStyle>()
 
     for (span in spans) {
-      if (span is ColorizableBackgroundColorSpan || span is ColorizableForegroundColorSpan) {
+      if (span is BackgroundColorIdSpan || span is ForegroundColorIdSpan) {
         val start = input.getSpanStart(span)
         val end = input.getSpanEnd(span)
         val flags = input.getSpanFlags(span)
 
         val newColor = when (span) {
-          is ColorizableForegroundColorSpan -> span.chanThemeColorId
-          is ColorizableBackgroundColorSpan -> span.chanThemeColorId
+          is ForegroundColorIdSpan -> span.chanThemeColorId
+          is BackgroundColorIdSpan -> span.chanThemeColorId
           else -> throw IllegalStateException("Unknown span: ${span::class.java.simpleName}")
         }
 

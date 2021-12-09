@@ -43,7 +43,7 @@ import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan;
+import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
@@ -272,7 +272,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             value = new PostLinkable.Value.ThreadOrPostLink(
                     post.boardDescriptor.getBoardCode(),
                     post.getOpId(),
-                    postId
+                    postId,
+                    0L
             );
         }
 
@@ -426,7 +427,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE
                 || handlerLink.getType() == PostLinkable.Type.DEAD) {
-            Long postNo = handlerLink.getLinkValue().extractLongOrNull();
+            Long postNo = handlerLink.getLinkValue().extractValueOrNull();
 
             // TODO(KurobaEx / @GhostPosts): archive ghost posts
             Long postSubNo = 0L;
@@ -582,7 +583,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         // Overrides the text (possibly) parsed by child nodes.
         return span(
                 TextUtils.concat(parts.toArray(new CharSequence[0])),
-                new ColorizableForegroundColorSpan(ChanThemeColorId.PostInlineQuoteColor),
+                new ForegroundColorIdSpan(ChanThemeColorId.PostInlineQuoteColor),
                 new AbsoluteSizeSpanHashed(sp(12f))
         );
     }
@@ -615,7 +616,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             } else {
                 // link to post not in same thread with post number (>>post or >>>/board/post)
                 type = PostLinkable.Type.THREAD;
-                value = new PostLinkable.Value.ThreadOrPostLink(board, threadId, postId);
+                value = new PostLinkable.Value.ThreadOrPostLink(board, threadId, postId, 0L);
             }
         } else {
             Matcher quoteMatcher = matchInternalQuote(href, post);

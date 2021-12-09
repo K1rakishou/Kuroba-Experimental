@@ -166,12 +166,10 @@ class ModelModule {
   @Singleton
   @Provides
   fun provideChanPostLocalSource(
-    database: KurobaDatabase,
-    gson: Gson
+    database: KurobaDatabase
   ): ChanPostLocalSource {
     return ChanPostLocalSource(
-      database,
-      gson
+      database
     )
   }
 

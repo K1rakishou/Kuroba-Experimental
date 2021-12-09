@@ -12,7 +12,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_spannable.ColorizableForegroundColorSpan
+import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -359,7 +359,7 @@ internal class SearchResultsPresenter(
     val spannedSubject = SpannableString(text)
 
     spannedSubject.setSpan(
-      ColorizableForegroundColorSpan(ChanThemeColorId.PostSubjectColor),
+      ForegroundColorIdSpan(ChanThemeColorId.PostSubjectColor),
       0,
       spannedSubject.length,
       0

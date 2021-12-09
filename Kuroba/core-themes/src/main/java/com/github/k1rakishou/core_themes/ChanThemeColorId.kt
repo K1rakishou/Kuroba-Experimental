@@ -1,5 +1,8 @@
 package com.github.k1rakishou.core_themes
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
 /**
  * Ids must be unique!
  * Do not change the ids!
@@ -7,7 +10,8 @@ package com.github.k1rakishou.core_themes
  * Only add new ids!
  * This thing is serialized in the DB, changing it may cause unexpected results!
  * */
-enum class ChanThemeColorId(val id: Int) {
+@Parcelize
+enum class ChanThemeColorId(val id: Int) : Parcelable {
   PostSubjectColor(0),
   PostNameColor(1),
   AccentColor(2),

@@ -110,8 +110,8 @@ class PostCell @JvmOverloads constructor(
   private var postTimeUpdaterJob: Job? = null
   private var blinkExecuted = false
 
-  private val linkClickSpan: ColorizableBackgroundColorSpan
-  private val quoteClickSpan: ColorizableBackgroundColorSpan
+  private val linkClickSpan: BackgroundColorIdSpan
+  private val quoteClickSpan: BackgroundColorIdSpan
   private val spoilerClickSpan: BackgroundColorSpan
 
   private val scope = KurobaCoroutineScope()
@@ -200,8 +200,8 @@ class PostCell @JvmOverloads constructor(
     extractActivityComponent(context)
       .inject(this)
 
-    linkClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostLinkColor, 1.3f)
-    quoteClickSpan = ColorizableBackgroundColorSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
+    linkClickSpan = BackgroundColorIdSpan(ChanThemeColorId.PostLinkColor, 1.3f)
+    quoteClickSpan = BackgroundColorIdSpan(ChanThemeColorId.PostQuoteColor, 1.3f)
     spoilerClickSpan = BackgroundColorSpan(themeEngine.chanTheme.postSpoilerColor)
   }
 
