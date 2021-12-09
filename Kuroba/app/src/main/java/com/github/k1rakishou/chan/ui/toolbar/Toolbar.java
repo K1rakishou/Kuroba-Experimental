@@ -721,7 +721,8 @@ public class Toolbar
         } else if (layoutManager instanceof StaggeredGridLayoutManager) {
             int[] array = ((StaggeredGridLayoutManager) layoutManager).findFirstCompletelyVisibleItemPositions(null);
             if (array.length > 0) {
-                firstVisibleElement = ArraysKt.min(array);
+                //noinspection ConstantConditions
+                firstVisibleElement = ArraysKt.minOrNull(array);
             }
         } else {
             throw new IllegalStateException("Not implemented for " + layoutManager.getClass().getName());
