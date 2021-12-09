@@ -1,7 +1,5 @@
 package com.github.k1rakishou.model.migrations
 
-import android.content.ContentValues
-import android.database.sqlite.SQLiteDatabase
 import android.os.Parcel
 import android.os.Parcelable
 import android.util.Log
@@ -17,6 +15,8 @@ import com.google.gson.Gson
 class Migration_v38_to_v39 : Migration(38, 39) {
   private val TAG = "KurobaEx | v38->v39"
   private val gson = Gson().newBuilder().create()
+
+  private val insertQuery = "INSERT INTO chan_text_span_temp (text_span_id, owner_post_id, parsed_text, unparsed_text, span_info_bytes, text_type) VALUES(?, ?, ?, ?, ?, ?)"
 
   override fun migrate(database: SupportSQLiteDatabase) {
     database.doWithoutForeignKeys {
@@ -102,28 +102,36 @@ class Migration_v38_to_v39 : Migration(38, 39) {
     database: SupportSQLiteDatabase,
     oldChanTextSpanEntities: MutableList<OldChanTextSpanEntity>
   ) {
-    Log.d(TAG, "insertChunkIntoTempTable() oldChanTextSpanEntitiesSize=${oldChanTextSpanEntities.size}")
-    val contentValues = ContentValues()
+    database.beginTransaction()
+    val statement = database.compileStatement(insertQuery)
 
-    oldChanTextSpanEntities.forEach { oldChanTextSpanEntity ->
-      val spanInfoJsonToParcelableBytes = spanInfoJsonToParcelableBytes(
-        parsedText = oldChanTextSpanEntity.parsedText,
-        spanInfoJson = oldChanTextSpanEntity.spanInfoJson
-      )
+    try {
+      oldChanTextSpanEntities.forEach { oldChanTextSpanEntity ->
+        val spanInfoJsonToParcelableBytes = spanInfoJsonToParcelableBytes(
+          parsedText = oldChanTextSpanEntity.parsedText,
+          spanInfoJson = oldChanTextSpanEntity.spanInfoJson
+        )
 
-      if (spanInfoJsonToParcelableBytes == null) {
-        return@forEach
+        if (spanInfoJsonToParcelableBytes == null) {
+          return@forEach
+        }
+
+        statement.bindLong(1, oldChanTextSpanEntity.textSpanId)
+        statement.bindLong(2, oldChanTextSpanEntity.ownerPostId)
+        statement.bindString(3, oldChanTextSpanEntity.parsedText)
+        statement.bindString(4, oldChanTextSpanEntity.unparsedText)
+        statement.bindBlob(5, spanInfoJsonToParcelableBytes)
+        statement.bindLong(6, oldChanTextSpanEntity.textType.toLong())
+
+        statement.executeInsert()
+        statement.clearBindings()
       }
 
-      contentValues.put("text_span_id", oldChanTextSpanEntity.textSpanId)
-      contentValues.put("owner_post_id", oldChanTextSpanEntity.ownerPostId)
-      contentValues.put("parsed_text", oldChanTextSpanEntity.parsedText)
-      contentValues.put("unparsed_text", oldChanTextSpanEntity.unparsedText)
-      contentValues.put("text_type", oldChanTextSpanEntity.textType)
-      contentValues.put("span_info_bytes", spanInfoJsonToParcelableBytes)
+      database.setTransactionSuccessful()
+    } finally {
+      database.endTransaction()
+      statement.close()
     }
-
-    database.insert("chan_text_span_temp", SQLiteDatabase.CONFLICT_ROLLBACK, contentValues)
   }
 
   private fun spanInfoJsonToParcelableBytes(
