@@ -29,7 +29,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -64,8 +63,6 @@ class SettingsCoordinator(
   lateinit var seenPostRepository: SeenPostRepository
   @Inject
   lateinit var mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository
-  @Inject
-  lateinit var inlinedFileInfoRepository: InlinedFileInfoRepository
   @Inject
   lateinit var reportManager: ReportManager
   @Inject
@@ -185,7 +182,6 @@ class SettingsCoordinator(
     DatabaseSettingsSummaryScreen(
       context,
       appConstants,
-      inlinedFileInfoRepository,
       mediaServiceLinkExtraContentRepository,
       seenPostRepository,
       chanPostRepository

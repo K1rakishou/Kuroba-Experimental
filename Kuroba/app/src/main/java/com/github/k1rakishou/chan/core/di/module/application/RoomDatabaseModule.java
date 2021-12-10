@@ -16,7 +16,6 @@ import com.github.k1rakishou.model.repository.CompositeCatalogRepository;
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository;
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository;
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository;
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 import com.github.k1rakishou.model.repository.SeenPostRepository;
 import com.github.k1rakishou.model.repository.SiteRepository;
@@ -58,15 +57,6 @@ public class RoomDatabaseModule {
     ) {
         Logger.deps("SeenPostRepository");
         return modelComponent.getSeenPostRepository();
-    }
-
-    @Provides
-    @Singleton
-    public InlinedFileInfoRepository provideInlinedFileInfoRepository(
-            ModelComponent modelComponent
-    ) {
-        Logger.deps("InlinedFileInfoRepository");
-        return modelComponent.getInlinedFileInfoRepository();
     }
 
     @Provides

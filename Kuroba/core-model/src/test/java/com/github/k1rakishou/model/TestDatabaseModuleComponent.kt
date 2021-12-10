@@ -3,10 +3,7 @@ package com.github.k1rakishou.model
 import android.app.Application
 import androidx.room.Room
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.model.source.local.ChanPostLocalSource
-import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
-import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
 import okhttp3.OkHttpClient
@@ -77,19 +74,6 @@ class TestDatabaseModuleComponent(
    * Local source
    * */
 
-  fun provideInlinedFileInfoLocalSource(): InlinedFileInfoLocalSource {
-    return InlinedFileInfoLocalSource(
-      provideInMemoryKurobaDatabase()
-    )
-  }
-
-  fun provideChanPostLocalSource(database: KurobaDatabase = provideInMemoryKurobaDatabase()): ChanPostLocalSource {
-    return ChanPostLocalSource(
-      database,
-      provideGson()
-    )
-  }
-
   fun provideMediaServiceLinkExtraContentLocalSource(): MediaServiceLinkExtraContentLocalSource {
     return MediaServiceLinkExtraContentLocalSource(
       provideInMemoryKurobaDatabase()
@@ -99,12 +83,6 @@ class TestDatabaseModuleComponent(
   /**
    * Remote source
    * */
-
-  fun provideInlinedFileInfoRemoteSource(): InlinedFileInfoRemoteSource {
-    return InlinedFileInfoRemoteSource(
-      provideOkHttpClient()
-    )
-  }
 
   fun provideMediaServiceLinkExtraContentRemoteSource(): MediaServiceLinkExtraContentRemoteSource {
     return MediaServiceLinkExtraContentRemoteSource(

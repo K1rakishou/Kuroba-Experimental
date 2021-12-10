@@ -33,7 +33,6 @@ import com.github.k1rakishou.model.dao.ChanThreadViewableInfoDao
 import com.github.k1rakishou.model.dao.CompositeCatalogDao
 import com.github.k1rakishou.model.dao.DatabaseMetaDao
 import com.github.k1rakishou.model.dao.ImageDownloadRequestDao
-import com.github.k1rakishou.model.dao.InlinedFileInfoDao
 import com.github.k1rakishou.model.dao.MediaServiceLinkExtraContentDao
 import com.github.k1rakishou.model.dao.NavHistoryDao
 import com.github.k1rakishou.model.dao.SeenPostDao
@@ -41,7 +40,6 @@ import com.github.k1rakishou.model.dao.ThreadBookmarkDao
 import com.github.k1rakishou.model.dao.ThreadBookmarkGroupDao
 import com.github.k1rakishou.model.dao.ThreadBookmarkReplyDao
 import com.github.k1rakishou.model.dao.ThreadDownloadDao
-import com.github.k1rakishou.model.entity.InlinedFileInfoEntity
 import com.github.k1rakishou.model.entity.MediaServiceLinkExtraContentEntity
 import com.github.k1rakishou.model.entity.SeenPostEntity
 import com.github.k1rakishou.model.entity.bookmark.ThreadBookmarkEntity
@@ -104,6 +102,7 @@ import com.github.k1rakishou.model.migrations.Migration_v35_to_v36
 import com.github.k1rakishou.model.migrations.Migration_v36_to_v37
 import com.github.k1rakishou.model.migrations.Migration_v37_to_v38
 import com.github.k1rakishou.model.migrations.Migration_v38_to_v39
+import com.github.k1rakishou.model.migrations.Migration_v39_to_v40
 import com.github.k1rakishou.model.migrations.Migration_v3_to_v4
 import com.github.k1rakishou.model.migrations.Migration_v4_to_v5
 import com.github.k1rakishou.model.migrations.Migration_v5_to_v6
@@ -138,7 +137,6 @@ import java.util.concurrent.atomic.AtomicInteger
     ChanCatalogSnapshotEntity::class,
     MediaServiceLinkExtraContentEntity::class,
     SeenPostEntity::class,
-    InlinedFileInfoEntity::class,
     NavHistoryElementIdEntity::class,
     NavHistoryElementInfoEntity::class,
     ThreadBookmarkEntity::class,
@@ -153,7 +151,7 @@ import java.util.concurrent.atomic.AtomicInteger
     ChanThreadsWithPosts::class,
     OldChanPostThread::class
   ],
-  version = 39,
+  version = 40,
   exportSchema = true
 )
 @TypeConverters(
@@ -174,7 +172,6 @@ abstract class KurobaDatabase : RoomDatabase() {
   abstract fun databaseMetaDao(): DatabaseMetaDao
   abstract fun mediaServiceLinkExtraContentDao(): MediaServiceLinkExtraContentDao
   abstract fun seenPostDao(): SeenPostDao
-  abstract fun inlinedFileDao(): InlinedFileInfoDao
   abstract fun chanBoardDao(): ChanBoardDao
   abstract fun chanThreadDao(): ChanThreadDao
   abstract fun chanPostDao(): ChanPostDao
@@ -285,6 +282,7 @@ abstract class KurobaDatabase : RoomDatabase() {
           Migration_v36_to_v37(),
           Migration_v37_to_v38(),
           Migration_v38_to_v39(),
+          Migration_v39_to_v40(),
         )
         .fallbackToDestructiveMigrationOnDowngrade()
         .build()

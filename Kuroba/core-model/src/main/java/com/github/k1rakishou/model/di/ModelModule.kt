@@ -21,7 +21,6 @@ import com.github.k1rakishou.model.repository.CompositeCatalogRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.repository.SiteRepository
@@ -44,7 +43,6 @@ import com.github.k1rakishou.model.source.local.ChanThreadViewableInfoLocalSourc
 import com.github.k1rakishou.model.source.local.CompositeCatalogLocalSource
 import com.github.k1rakishou.model.source.local.DatabaseMetaLocalSource
 import com.github.k1rakishou.model.source.local.ImageDownloadRequestLocalSource
-import com.github.k1rakishou.model.source.local.InlinedFileInfoLocalSource
 import com.github.k1rakishou.model.source.local.MediaServiceLinkExtraContentLocalSource
 import com.github.k1rakishou.model.source.local.NavHistoryLocalSource
 import com.github.k1rakishou.model.source.local.SeenPostLocalSource
@@ -52,7 +50,6 @@ import com.github.k1rakishou.model.source.local.SiteLocalSource
 import com.github.k1rakishou.model.source.local.ThreadBookmarkGroupLocalSource
 import com.github.k1rakishou.model.source.local.ThreadBookmarkLocalSource
 import com.github.k1rakishou.model.source.local.ThreadDownloadLocalSource
-import com.github.k1rakishou.model.source.remote.InlinedFileInfoRemoteSource
 import com.github.k1rakishou.model.source.remote.MediaServiceLinkExtraContentRemoteSource
 import com.google.gson.Gson
 import com.squareup.moshi.Moshi
@@ -149,16 +146,6 @@ class ModelModule {
     database: KurobaDatabase
   ): SeenPostLocalSource {
     return SeenPostLocalSource(
-      database
-    )
-  }
-
-  @Singleton
-  @Provides
-  fun provideInlinedFileInfoLocalSource(
-    database: KurobaDatabase
-  ): InlinedFileInfoLocalSource {
-    return InlinedFileInfoLocalSource(
       database
     )
   }
@@ -375,14 +362,6 @@ class ModelModule {
     return MediaServiceLinkExtraContentRemoteSource(okHttpClient)
   }
 
-  @Singleton
-  @Provides
-  fun provideInlinedFileInfoRemoteSource(
-    okHttpClient: OkHttpClient,
-  ): InlinedFileInfoRemoteSource {
-    return InlinedFileInfoRemoteSource(okHttpClient)
-  }
-
   /**
    * Repositories
    * */
@@ -415,23 +394,6 @@ class ModelModule {
       database,
       dependencies.coroutineScope,
       seenPostLocalSource
-    )
-  }
-
-  @Singleton
-  @Provides
-  fun provideInlinedFileInfoRepository(
-    dependencies: ModelComponent.Dependencies,
-    database: KurobaDatabase,
-    inlinedFileInfoLocalSource: InlinedFileInfoLocalSource,
-    inlinedFileInfoRemoteSource: InlinedFileInfoRemoteSource,
-  ): InlinedFileInfoRepository {
-    return InlinedFileInfoRepository(
-      database,
-      dependencies.coroutineScope,
-      GenericSuspendableCacheSource(),
-      inlinedFileInfoLocalSource,
-      inlinedFileInfoRemoteSource
     )
   }
 

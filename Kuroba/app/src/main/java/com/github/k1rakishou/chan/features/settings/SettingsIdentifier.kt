@@ -209,7 +209,6 @@ sealed class DatabaseSummaryScreen(
     IGroup,
     DatabaseSummaryScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
-    object ClearInlinedFilesTable : MainGroup("clear_inlined_files_table")
     object ClearLinkExtraInfoTable : MainGroup("clear_link_info_table")
     object ClearSeenPostsTable : MainGroup("clear_seen_posts_table")
     object ThreadsTable : MainGroup("threads_table")

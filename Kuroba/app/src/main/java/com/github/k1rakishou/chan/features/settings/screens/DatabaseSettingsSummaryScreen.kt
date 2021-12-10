@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.model.repository.ChanPostRepository
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import java.util.*
@@ -16,7 +15,6 @@ import java.util.*
 class DatabaseSettingsSummaryScreen(
   context: Context,
   private val appConstants: AppConstants,
-  private val inlinedFileInfoRepository: InlinedFileInfoRepository,
   private val mediaServiceLinkExtraContentRepository: MediaServiceLinkExtraContentRepository,
   private val seenPostRepository: SeenPostRepository,
   private val chanPostRepository: ChanPostRepository
@@ -40,21 +38,6 @@ class DatabaseSettingsSummaryScreen(
       buildFunction = {
         val group = SettingsGroup(
           groupIdentifier = identifier
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DatabaseSummaryScreen.MainGroup.ClearInlinedFilesTable,
-          topDescriptionIdFunc = { R.string.settings_clear_inlined_files_table },
-          bottomDescriptionStringFunc = {
-            val count = inlinedFileInfoRepository.count().unwrap()
-            String.format(Locale.ENGLISH, "This table stores file size info for inlined files.\n\n" +
-              "Inlined files info table rows count: $count")
-          },
-          callback = {
-            val deleted = inlinedFileInfoRepository.deleteAll().unwrap()
-            showToast(context, "Done, deleted $deleted inlined file info rows")
-          }
         )
 
         group += LinkSettingV2.createBuilder(

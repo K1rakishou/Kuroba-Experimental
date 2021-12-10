@@ -17,7 +17,6 @@ import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
@@ -280,22 +279,19 @@ class DeveloperSettingsScreen(
           }
         )
 
-        if (isDevBuild()) {
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
-            topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
-            setting = ChanSettings.force4chanBirthdayMode,
-          )
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
+          topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
+          setting = ChanSettings.force4chanBirthdayMode,
+        )
 
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.ForceHalloween,
-            topDescriptionIdFunc = { R.string.settings_force_halloween },
-            setting = ChanSettings.forceHalloweenMode,
-          )
-
-        }
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ForceHalloween,
+          topDescriptionIdFunc = { R.string.settings_force_halloween },
+          setting = ChanSettings.forceHalloweenMode,
+        )
 
         group
       }

@@ -18,7 +18,6 @@ import com.github.k1rakishou.model.repository.CompositeCatalogRepository
 import com.github.k1rakishou.model.repository.DatabaseMetaRepository
 import com.github.k1rakishou.model.repository.HistoryNavigationRepository
 import com.github.k1rakishou.model.repository.ImageDownloadRequestRepository
-import com.github.k1rakishou.model.repository.InlinedFileInfoRepository
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository
 import com.github.k1rakishou.model.repository.SeenPostRepository
 import com.github.k1rakishou.model.repository.SiteRepository
@@ -44,7 +43,6 @@ interface ModelComponent {
   fun getDatabaseMetaRepository(): DatabaseMetaRepository
   fun getMediaServiceLinkExtraContentRepository(): MediaServiceLinkExtraContentRepository
   fun getSeenPostRepository(): SeenPostRepository
-  fun getInlinedFileInfoRepository(): InlinedFileInfoRepository
   fun getChanPostRepository(): ChanPostRepository
   fun getHistoryNavigationRepository(): HistoryNavigationRepository
   fun getBookmarksRepository(): BookmarksRepository

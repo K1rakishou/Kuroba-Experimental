@@ -819,7 +819,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
 
     <!-- Database summary settings -->
     <string name="settings_database_summary">Database summary</string>
-    <string name="settings_clear_inlined_files_table">Clear inlined files info table</string>
     <string name="settings_clear_link_info_table">Clear external link extra info table</string>
     <string name="settings_clear_seen_posts_table">Clear seen posts table</string>
     <string name="settings_trigger_thread_cleanup">Trigger thread cleanup</string>
