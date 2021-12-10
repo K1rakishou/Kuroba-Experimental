@@ -12,7 +12,7 @@ enum class SerializableSpanType(val spanTypeValue: Int) {
   ColorizableForegroundColorSpan(8);
 
   companion object {
-    fun from(value: Int): SerializableSpanType {
+    fun from(value: Int): SerializableSpanType? {
       return when (value) {
         0 -> ForegroundColorSpanHashedType
         1 -> BackgroundColorSpanHashedType
@@ -23,7 +23,7 @@ enum class SerializableSpanType(val spanTypeValue: Int) {
         6 -> PostLinkable
         7 -> ColorizableBackgroundColorSpan
         8 -> ColorizableForegroundColorSpan
-        else -> throw IllegalArgumentException("Not implemented for value = $value")
+        else -> null
       }
     }
   }

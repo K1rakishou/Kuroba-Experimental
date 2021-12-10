@@ -27,5 +27,10 @@ enum class ChanThemeColorId(val id: Int) : Parcelable {
         .firstOrNull { chanThemeColorId -> chanThemeColorId.id == id }
         ?: throw IllegalAccessException("Failed to find color by id: $id")
     }
+
+    fun byName(name: String): ChanThemeColorId? {
+      return values()
+        .firstOrNull { chanThemeColorId -> chanThemeColorId.name.equals(other = name, ignoreCase = true) }
+    }
   }
 }

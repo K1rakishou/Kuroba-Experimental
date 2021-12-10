@@ -5,6 +5,7 @@ import android.os.Parcelable
 import android.util.Log
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_spannable.parcelable_spannable_string.ParcelableSpannableStringMapper
 import com.github.k1rakishou.model.migrations.migration_v38_to_v39_helpers.SerializableSpanInfoList
@@ -104,13 +105,25 @@ class Migration_v38_to_v39 : Migration(38, 39) {
   ) {
     database.beginTransaction()
     val statement = database.compileStatement(insertQuery)
+    var printFullStackTrace = true
 
     try {
       oldChanTextSpanEntities.forEach { oldChanTextSpanEntity ->
-        val spanInfoJsonToParcelableBytes = spanInfoJsonToParcelableBytes(
-          parsedText = oldChanTextSpanEntity.parsedText,
-          spanInfoJson = oldChanTextSpanEntity.spanInfoJson
-        )
+        val spanInfoJsonToParcelableBytes = try {
+          spanInfoJsonToParcelableBytes(
+            parsedText = oldChanTextSpanEntity.parsedText,
+            spanInfoJson = oldChanTextSpanEntity.spanInfoJson
+          )
+        } catch (error: Throwable) {
+          if (printFullStackTrace) {
+            Log.e(TAG, "insertChunkIntoTempTable() -> spanInfoJsonToParcelableBytes() error", error)
+            printFullStackTrace = false
+          } else {
+            Log.e(TAG, "insertChunkIntoTempTable() -> spanInfoJsonToParcelableBytes() error: ${error.errorMessageOrClassName()}")
+          }
+
+          return@forEach
+        }
 
         if (spanInfoJsonToParcelableBytes == null) {
           return@forEach
