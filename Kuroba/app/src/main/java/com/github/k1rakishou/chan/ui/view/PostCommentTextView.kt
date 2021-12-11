@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.ui.view
 
 import android.content.Context
+import android.graphics.Rect
 import android.os.SystemClock
 import android.text.Spannable
 import android.text.SpannableString
@@ -141,6 +142,14 @@ class PostCommentTextView @JvmOverloads constructor(
     touchEventListener?.onTouch(this, event)
 
     return true
+  }
+
+  override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
+    try {
+      super.onFocusChanged(focused, direction, previouslyFocusedRect)
+    } catch (error: IndexOutOfBoundsException) {
+      // java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0
+    }
   }
 
   companion object {
