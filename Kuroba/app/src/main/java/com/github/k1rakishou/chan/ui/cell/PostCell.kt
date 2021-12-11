@@ -459,7 +459,7 @@ class PostCell @JvmOverloads constructor(
       return
     }
 
-    if (!postCellData.showImageFileNameForSingleImage) {
+    if (!postCellData.showImageFileName) {
       imgFilename.setVisibilityFast(GONE)
       return
     }

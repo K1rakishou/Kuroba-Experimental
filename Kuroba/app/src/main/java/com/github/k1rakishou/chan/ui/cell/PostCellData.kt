@@ -58,7 +58,7 @@ data class PostCellData(
   val forceShiftPostComment: Boolean,
   val postMultipleImagesCompactMode: Boolean,
   val textOnly: Boolean,
-  val postFileInfo: Boolean,
+  val showPostFileInfo: Boolean,
   val markUnseenPosts: Boolean,
   val markSeenThreads: Boolean,
   var compact: Boolean,
@@ -138,8 +138,8 @@ data class PostCellData(
     get() = postViewMode == PostViewMode.Search
   val markedNo: Long
     get() = markedPostNo ?: -1
-  val showImageFileNameForSingleImage: Boolean
-    get() = (singleImageMode || (postImages.size > 1 && searchMode)) && postFileInfo
+  val showImageFileName: Boolean
+    get() = (singleImageMode || (postImages.size > 1 && searchMode)) && showPostFileInfo
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(ChanSettings.detailsSizeSp()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
@@ -247,7 +247,7 @@ data class PostCellData(
       forceShiftPostComment = forceShiftPostComment,
       postMultipleImagesCompactMode = postMultipleImagesCompactMode,
       textOnly = textOnly,
-      postFileInfo = postFileInfo,
+      showPostFileInfo = showPostFileInfo,
       markUnseenPosts = markUnseenPosts,
       markSeenThreads = markSeenThreads,
       compact = compact,

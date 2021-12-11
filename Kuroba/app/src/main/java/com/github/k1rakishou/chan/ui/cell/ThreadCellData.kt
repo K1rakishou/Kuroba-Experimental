@@ -229,7 +229,7 @@ class ThreadCellData(
     val shiftPostComment = ChanSettings.shiftPostComment.get()
     val forceShiftPostComment = ChanSettings.forceShiftPostComment.get()
     val textOnly = ChanSettings.textOnly.get()
-    val postFileInfo = ChanSettings.postFileInfo.get()
+    val showPostFileInfo = ChanSettings.postFileInfo.get()
     val markUnseenPosts = ChanSettings.markUnseenPosts.get() && chanDescriptor.isThreadDescriptor()
     val markSeenThreads = ChanSettings.markSeenThreads.get() && chanDescriptor.isCatalogDescriptor()
     val chanTheme = theme.fullCopy()
@@ -291,7 +291,7 @@ class ThreadCellData(
           forceShiftPostComment = forceShiftPostComment,
           postMultipleImagesCompactMode = postMultipleImagesCompactMode,
           textOnly = textOnly,
-          postFileInfo = postFileInfo,
+          showPostFileInfo = showPostFileInfo,
           markUnseenPosts = markUnseenPosts,
           markSeenThreads = markSeenThreads,
           stub = filterStubMap[postDescriptor] ?: false,

@@ -65,7 +65,7 @@ class PostImageThumbnailViewWrapper(
     if (
       imagesCount > 1
       && !postCellData.postMultipleImagesCompactMode
-      && (postCellData.searchMode || postCellData.postFileInfo)
+      && (postCellData.searchMode || postCellData.showPostFileInfo)
       && postFileInfo.isNotNullNorBlank()
     ) {
       thumbnailFileInfo.setVisibilityFast(View.VISIBLE)
