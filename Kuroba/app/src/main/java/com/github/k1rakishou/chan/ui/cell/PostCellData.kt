@@ -139,7 +139,7 @@ data class PostCellData(
   val markedNo: Long
     get() = markedPostNo ?: -1
   val showImageFileNameForSingleImage: Boolean
-    get() = singleImageMode && postFileInfo
+    get() = (singleImageMode || (postImages.size > 1 && searchMode)) && postFileInfo
 
   private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(ChanSettings.detailsSizeSp()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
@@ -609,21 +609,18 @@ data class PostCellData(
       fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
 
       resultMap[postImage] = fileInfoText
-    } else {
+    } else if (postImages.isNotEmpty()) {
       postImages.forEach { postImage ->
         val fileInfoText = SpannableStringBuilder()
-        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
+        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = true))
         fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
 
-        if (postImages.size == 1) {
+        if (postImages.size == 1 || searchMode) {
           fileInfoText.append(postImage.formatImageInfo())
         }
 
         fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
-
-        if (postImages.size == 1 || postMultipleImagesCompactMode) {
-          fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
-        }
+        fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
 
         resultMap[postImage] = SpannableString.valueOf(fileInfoText)
       }

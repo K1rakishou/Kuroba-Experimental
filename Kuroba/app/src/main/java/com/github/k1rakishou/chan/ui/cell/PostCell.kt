@@ -53,6 +53,7 @@ import com.github.k1rakishou.chan.utils.*
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
+import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
@@ -454,28 +455,43 @@ class PostCell @JvmOverloads constructor(
 
   private fun updatePostCellFileName(postCellData: PostCellData) {
     val imgFilename = imageFileName
-      ?: return
+    if (imgFilename == null) {
+      return
+    }
 
     if (!postCellData.showImageFileNameForSingleImage) {
       imgFilename.setVisibilityFast(GONE)
       return
     }
 
-    val image = postCellData.firstImage
-    if (image == null) {
+    val postImages = postCellData.postImages
+    if (postImages.isEmpty()) {
       imgFilename.setVisibilityFast(GONE)
       return
     }
 
-    val postFileInfo = postCellData.postFileInfoMap[image]
-    if (postFileInfo == null) {
+    val postFileInfoFull = buildSpannableString {
+      for ((index, postImage) in postImages.withIndex()) {
+        val postFileInfo = postCellData.postFileInfoMap[postImage]
+        if (postFileInfo == null) {
+          continue
+        }
+
+        if (index > 0) {
+          appendLine()
+        }
+
+        append(postFileInfo)
+      }
+    }
+
+    if (postFileInfoFull.isBlank()) {
       imgFilename.setVisibilityFast(GONE)
       return
     }
 
     imgFilename.setVisibilityFast(VISIBLE)
-    imgFilename.setText(postFileInfo, TextView.BufferType.SPANNABLE)
-    imgFilename.gravity = GravityCompat.START
+    imgFilename.setText(postFileInfoFull, TextView.BufferType.SPANNABLE)
   }
 
   override fun onInterceptTouchEvent(ev: MotionEvent): Boolean {
