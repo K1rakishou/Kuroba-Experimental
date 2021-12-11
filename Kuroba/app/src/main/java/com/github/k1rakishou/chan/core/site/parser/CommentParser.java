@@ -39,10 +39,12 @@ import com.github.k1rakishou.chan.core.site.parser.style.StyleRulesParams;
 import com.github.k1rakishou.chan.utils.ConversionUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.common.CommentParserConstants;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.core_parser.comment.HtmlNode;
 import com.github.k1rakishou.core_parser.comment.HtmlTag;
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
+import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed;
 import com.github.k1rakishou.core_spannable.PostLinkable;
@@ -76,6 +78,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
     private final Pattern boardLinkPattern8Chan = Pattern.compile("/(.*?)/index.html");
     private final Pattern boardSearchPattern = Pattern.compile("//boards\\.4chan.*?\\.org/(.*?)/catalog#s=(.*)");
     private final Pattern colorPattern = Pattern.compile("color:#?(\\w+)");
+    private final Pattern colorRgbFgBgPattern = Pattern.compile("color:rgb\\((\\d+),(\\d+),(\\d+)\\)\\;background\\-color\\:rgb\\((\\d+),(\\d+),(\\d+)\\)");
 
     public CommentParser() {
         // Required tags.
@@ -205,6 +208,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
     // <span style="color:#0893e1">Test</span>
     // <span style="color:red">Test</span>
+    // <span style=\"color:rgb(77,100,77);background-color:rgb(241,140,31)\"
     private CharSequence handleAnyTagWithStyleAttr(
             PostParser.Callback callback,
             ChanPostBuilder post,
@@ -212,27 +216,67 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             HtmlTag tag
     ) {
         String style = tag.attrOrNull("style");
-        if (style != null && !TextUtils.isEmpty(style)) {
-            style = style.replace(" ", "");
+        if (style == null || TextUtils.isEmpty(style)) {
+            return text;
+        }
 
-            Matcher matcher = colorPattern.matcher(style);
-            if (matcher.find()) {
-                String colorRaw = matcher.group(1);
-                if (colorRaw != null) {
-                    Integer colorByName = StaticHtmlColorRepository.getColorValueByHtmlColorName(colorRaw);
+        style = style.replace(" ", "");
 
-                    if (colorByName == null) {
-                        colorByName = ConversionUtils.toIntOrNull(colorRaw);
-                    }
+        if (style.contains("rgb")) {
+            Matcher matcher = colorRgbFgBgPattern.matcher(style);
 
-                    if (colorByName != null) {
-                        text = span(
-                                text,
-                                new ForegroundColorSpanHashed(ColorUtils.setAlphaComponent(colorByName, 255)),
-                                new StyleSpan(Typeface.BOLD)
-                        );
-                    }
-                }
+            if (!matcher.find()) {
+                return text;
+            }
+
+            @Nullable String fgR = KotlinExtensionsKt.groupOrNull(matcher, 1);
+            @Nullable String fgG = KotlinExtensionsKt.groupOrNull(matcher, 2);
+            @Nullable String fgB = KotlinExtensionsKt.groupOrNull(matcher, 3);
+            @Nullable Integer foregroundColor = KotlinExtensionsKt.colorFromArgb(255, fgR, fgG, fgB);
+
+            @Nullable String bgR = KotlinExtensionsKt.groupOrNull(matcher, 4);
+            @Nullable String bgG = KotlinExtensionsKt.groupOrNull(matcher, 5);
+            @Nullable String bgB = KotlinExtensionsKt.groupOrNull(matcher, 6);
+            @Nullable Integer backgroundColor = KotlinExtensionsKt.colorFromArgb(255, bgR, bgG, bgB);
+
+            ForegroundColorSpanHashed foregroundColorSpanHashed = null;
+            if (foregroundColor != null) {
+                foregroundColorSpanHashed = new ForegroundColorSpanHashed(foregroundColor);
+            }
+
+            BackgroundColorSpanHashed backgroundColorSpanHashed = null;
+            if (backgroundColor != null) {
+                backgroundColorSpanHashed = new BackgroundColorSpanHashed(backgroundColor);
+            }
+
+            return span(
+                    text,
+                    foregroundColorSpanHashed,
+                    backgroundColorSpanHashed,
+                    new StyleSpan(Typeface.BOLD)
+            );
+
+        }
+
+        Matcher matcher = colorPattern.matcher(style);
+        if (!matcher.find()) {
+            return text;
+        }
+
+        String colorRaw = matcher.group(1);
+        if (colorRaw != null) {
+            Integer colorByName = StaticHtmlColorRepository.getColorValueByHtmlColorName(colorRaw);
+
+            if (colorByName == null) {
+                colorByName = ConversionUtils.toIntOrNull(colorRaw);
+            }
+
+            if (colorByName != null) {
+                return span(
+                        text,
+                        new ForegroundColorSpanHashed(ColorUtils.setAlphaComponent(colorByName, 255)),
+                        new StyleSpan(Typeface.BOLD)
+                );
             }
         }
 
@@ -704,8 +748,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         return href;
     }
 
-    public SpannableString span(CharSequence text, Object... additionalSpans) {
-        SpannableString result = new SpannableString(text);
+    public SpannableString span(CharSequence text, @Nullable Object... additionalSpans) {
+        SpannableString result = SpannableString.valueOf(text);
         int l = result.length();
 
         if (additionalSpans != null && additionalSpans.length > 0) {
