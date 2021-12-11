@@ -225,6 +225,9 @@ class Chan4ReplyCall(
       ?.substringAfter(DOMAIN_PREFIX)
       ?.substringBefore(';')
 
+    Logger.d(TAG, "setChan4CaptchaHeader() newCookie='${newCookie}', " +
+      "domain='${domain}', wholeCookieHeader='${wholeCookieHeader}'")
+
     if (domain == null) {
       Logger.d(TAG, "setChan4CaptchaHeader() domain is null")
       return

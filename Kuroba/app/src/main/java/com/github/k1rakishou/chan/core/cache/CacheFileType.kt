@@ -19,10 +19,16 @@ enum class CacheFileType(
   companion object {
 
     fun checkValid() {
-      val totalPercent = CacheFileType.values().map { it.diskSizePercent }.sum()
+      val totalPercent = values().map { it.diskSizePercent }.sum()
       val diff = Math.abs(1f - totalPercent)
 
-      check(diff < 0.001f) { "Bad totalPercent! diff=${diff}, totalPercent=${totalPercent}. Must be close to 0.0!" }
+      check(diff < 0.001f) {
+        "Bad totalPercent! diff=${diff}, totalPercent=${totalPercent}. Must be close to 0.0!"
+      }
+
+      check(values().size == values().distinctBy { it.id }.size) {
+        "All ids must be unique!"
+      }
     }
 
   }

@@ -16,6 +16,7 @@ import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
@@ -30,11 +31,13 @@ class ThumbnailLongtapOptionsHelper(
 
   fun onThumbnailLongTapped(
     context: Context,
+    chanDescriptor: ChanDescriptor,
     isCurrentlyInAlbum: Boolean,
     postImage: ChanPostImage,
     presentControllerFunc: (Controller) -> Unit,
     showFiltersControllerFunc: (ChanFilterMutable) -> Unit,
-    openThreadFunc: (PostDescriptor) -> Unit
+    openThreadFunc: (PostDescriptor) -> Unit,
+    goToPostFunc: (PostDescriptor) -> Unit,
   ) {
     val fullImageName = buildString {
       append((postImage.filename ?: postImage.serverFilename))
@@ -49,7 +52,11 @@ class ThumbnailLongtapOptionsHelper(
     items += HeaderFloatingListMenuItem(THUMBNAIL_LONG_CLICK_MENU_HEADER, fullImageName)
 
     if (isCurrentlyInAlbum) {
-      items += createMenuItem(context, OPEN_THREAD, R.string.action_open_thread)
+      if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        items += createMenuItem(context, OPEN_THREAD, R.string.action_open_thread)
+      } else if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        items += createMenuItem(context, GO_TO_POST, R.string.action_go_to_post)
+      }
     }
 
     items += createMenuItem(context, IMAGE_COPY_FULL_URL, R.string.action_copy_image_full_url)
@@ -87,7 +94,8 @@ class ThumbnailLongtapOptionsHelper(
           postImage = postImage,
           presentControllerFunc = presentControllerFunc,
           showFiltersControllerFunc = showFiltersControllerFunc,
-          openThreadFunc
+          openThreadFunc = openThreadFunc,
+          goToPostFunc = goToPostFunc
         )
       }
     )
@@ -101,11 +109,15 @@ class ThumbnailLongtapOptionsHelper(
     postImage: ChanPostImage,
     presentControllerFunc: (Controller) -> Unit,
     showFiltersControllerFunc: (ChanFilterMutable) -> Unit,
-    openThreadFunc: (PostDescriptor) -> Unit
+    openThreadFunc: (PostDescriptor) -> Unit,
+    goToPostFunc: (PostDescriptor) -> Unit,
   ) {
     when (id) {
       OPEN_THREAD -> {
         openThreadFunc(postImage.ownerPostDescriptor)
+      }
+      GO_TO_POST -> {
+        goToPostFunc(postImage.ownerPostDescriptor)
       }
       IMAGE_COPY_FULL_URL -> {
         if (postImage.imageUrl == null) {
@@ -225,6 +237,7 @@ class ThumbnailLongtapOptionsHelper(
     private const val FILTER_POSTS_WITH_THIS_IMAGE_HASH = 1008
     private const val OPEN_IN_EXTERNAL_APP = 1009
     private const val OPEN_THREAD = 1010
+    private const val GO_TO_POST = 1011
 
     private const val THUMBNAIL_LONG_CLICK_MENU_HEADER = "thumbnail_copy_menu_header"
   }

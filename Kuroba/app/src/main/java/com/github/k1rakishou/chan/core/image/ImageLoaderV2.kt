@@ -107,10 +107,12 @@ class ImageLoaderV2(
 
   suspend fun isImageCachedLocally(cacheFileType: CacheFileType, url: String): Boolean {
     return withContext(Dispatchers.Default) {
-      val exists = cacheHandler.cacheFileExists(cacheFileType, url)
-      val downloaded = cacheHandler.isAlreadyDownloaded(cacheFileType, url)
+      return@withContext runInterruptible {
+        val exists = cacheHandler.cacheFileExists(cacheFileType, url)
+        val downloaded = cacheHandler.isAlreadyDownloaded(cacheFileType, url)
 
-      return@withContext exists && downloaded
+        return@runInterruptible exists && downloaded
+      }
     }
   }
 

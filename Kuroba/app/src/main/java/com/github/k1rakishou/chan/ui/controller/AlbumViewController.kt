@@ -455,16 +455,19 @@ class AlbumViewController(
   private fun showImageLongClickOptions(postImage: ChanPostImage) {
     thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
       context = context,
+      chanDescriptor = chanDescriptor,
       isCurrentlyInAlbum = true,
       postImage = postImage,
       presentControllerFunc = { controller -> presentController(controller) },
       showFiltersControllerFunc = { },
       openThreadFunc = { postDescriptor ->
-        popFromNavControllerWithAction(chanDescriptor) {
-          // no-op
-        }
-
+        popFromNavController(chanDescriptor)
         mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)
+      },
+      goToPostFunc = {
+        popFromNavControllerWithAction(chanDescriptor) { threadController ->
+          threadController.selectPostImage(postImage)
+        }
       }
     )
   }

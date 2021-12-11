@@ -19,6 +19,7 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.common.DoNotStrip;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_logger.Logger;
 
 import java.io.File;
@@ -82,12 +83,15 @@ public class MPVLib {
             }
 
             librariesLoaded = true;
+        } catch (UnsatisfiedLinkError error) {
+            lastError = error;
+            Logger.e(TAG, "loadLibraries() error: " + KotlinExtensionsKt.errorMessageOrClassName(error));
         } catch (LinkageError error) {
             lastError = error;
-            Logger.e(TAG, "loadLibraries() error", error);
+            Logger.e(TAG, "loadLibraries() error: " + KotlinExtensionsKt.errorMessageOrClassName(error));
         } catch (Throwable error) {
             lastError = error;
-            Logger.e(TAG, "loadLibraries() error", error);
+            Logger.e(TAG, "loadLibraries() error: " + KotlinExtensionsKt.errorMessageOrClassName(error));
         }
     }
 

@@ -457,6 +457,10 @@ abstract class Controller(@JvmField var context: Context) {
     parentView.addView(view, view.layoutParams)
   }
 
+  fun popFromNavController(chanDescriptor: ChanDescriptor) {
+    popFromNavControllerWithAction(chanDescriptor = chanDescriptor, action = {  })
+  }
+
   fun popFromNavControllerWithAction(chanDescriptor: ChanDescriptor, action: (ThreadController) -> Unit) {
     var threadController: ThreadController? = null
 

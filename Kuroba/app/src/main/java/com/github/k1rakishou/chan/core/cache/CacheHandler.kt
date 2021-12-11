@@ -113,7 +113,7 @@ class CacheHandler(
     val file = innerCache.getCacheFileOrNull(url)
 
     if (verboseLogs) {
-      Logger.d(TAG, "getCacheFileOrNull($cacheFileType, $url) -> ${file?.absolutePath}")
+      Logger.d(TAG, "getCacheFileOrNull($cacheFileType, $url) -> ${file?.name}")
     }
 
     return file
@@ -129,7 +129,7 @@ class CacheHandler(
     val file = innerCache.getOrCreateCacheFile(url)
 
     if (verboseLogs) {
-      Logger.d(TAG, "getOrCreateCacheFile($cacheFileType, $url) -> ${file?.absolutePath}")
+      Logger.d(TAG, "getOrCreateCacheFile($cacheFileType, $url) -> ${file?.name}")
     }
 
     return file
@@ -260,10 +260,11 @@ class CacheHandler(
     val totalSize = getInnerCacheByFileType(cacheFileType).fileWasAdded(fileLen)
 
     if (verboseLogs) {
+      val maxSizeFormatted = ChanPostUtils.getReadableFileSize(getInnerCacheByFileType(cacheFileType).getMaxSize())
       val fileLenFormatted = ChanPostUtils.getReadableFileSize(fileLen)
       val totalSizeFormatted = ChanPostUtils.getReadableFileSize(totalSize)
 
-      Logger.d(TAG, "fileWasAdded($cacheFileType, ${fileLenFormatted}) -> ${totalSizeFormatted}")
+      Logger.d(TAG, "fileWasAdded($cacheFileType, ${fileLenFormatted}) -> (${totalSizeFormatted} / ${maxSizeFormatted})")
     }
   }
 

@@ -1561,6 +1561,7 @@ class ThreadPresenter @Inject constructor(
 
     thumbnailLongtapOptionsHelper.onThumbnailLongTapped(
       context = context,
+      chanDescriptor = chanDescriptor,
       isCurrentlyInAlbum = false,
       postImage = postImage,
       presentControllerFunc = { controller ->
@@ -1569,7 +1570,8 @@ class ThreadPresenter @Inject constructor(
       showFiltersControllerFunc = { chanFilterMutable ->
         threadPresenterCallback?.openFiltersController(chanFilterMutable)
       },
-      openThreadFunc = { }
+      openThreadFunc = { },
+      goToPostFunc = { }
     )
 
   }
