@@ -10,6 +10,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -89,6 +90,7 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
       requestDisposable = imageLoaderV2.loadFromNetwork(
         context = context,
         url = iconUrl.toString(),
+        cacheFileType = CacheFileType.SiteIcon,
         imageSize = ImageLoaderV2.ImageSize.FixedImageSize(
           width = SiteIcon.FAVICON_SIZE,
           height = SiteIcon.FAVICON_SIZE,

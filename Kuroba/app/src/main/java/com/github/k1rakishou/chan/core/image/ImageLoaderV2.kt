@@ -25,6 +25,7 @@ import coil.transform.Transformation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
@@ -104,10 +105,10 @@ class ImageLoaderV2(
   private var imageNotFoundDrawable: CachedTintedErrorDrawable? = null
   private var imageErrorLoadingDrawable: CachedTintedErrorDrawable? = null
 
-  suspend fun isImageCachedLocally(url: String): Boolean {
+  suspend fun isImageCachedLocally(cacheFileType: CacheFileType, url: String): Boolean {
     return withContext(Dispatchers.Default) {
-      val exists = cacheHandler.cacheFileExists(url)
-      val downloaded = cacheHandler.isAlreadyDownloaded(url)
+      val exists = cacheHandler.cacheFileExists(cacheFileType, url)
+      val downloaded = cacheHandler.isAlreadyDownloaded(cacheFileType, url)
 
       return@withContext exists && downloaded
     }
@@ -143,6 +144,7 @@ class ImageLoaderV2(
   suspend fun loadFromNetworkSuspend(
     context: Context,
     url: String,
+    cacheFileType: CacheFileType,
     imageSize: ImageSize,
     transformations: List<Transformation> = emptyList()
   ): ModularResult<BitmapDrawable> {
@@ -150,6 +152,7 @@ class ImageLoaderV2(
       val disposable = loadFromNetwork(
         context = context,
         requestUrl = url,
+        cacheFileType = cacheFileType,
         imageSize = imageSize,
         transformations = transformations,
         listener = object : FailureAwareImageListener {
@@ -221,6 +224,7 @@ class ImageLoaderV2(
   fun loadFromNetwork(
     context: Context,
     url: String,
+    cacheFileType: CacheFileType,
     imageSize: ImageSize,
     transformations: List<Transformation>,
     listener: SimpleImageListener,
@@ -230,6 +234,7 @@ class ImageLoaderV2(
     return loadFromNetwork(
       context = context,
       url = url,
+      cacheFileType = cacheFileType,
       imageSize = imageSize,
       inputTransformations = transformations,
       imageListenerParam = ImageListenerParam.SimpleImageListener(
@@ -244,6 +249,7 @@ class ImageLoaderV2(
   fun loadFromNetwork(
     context: Context,
     requestUrl: String,
+    cacheFileType: CacheFileType,
     imageSize: ImageSize,
     transformations: List<Transformation>,
     listener: FailureAwareImageListener,
@@ -252,6 +258,7 @@ class ImageLoaderV2(
     return loadFromNetwork(
       context = context,
       url = requestUrl,
+      cacheFileType = cacheFileType,
       imageSize = imageSize,
       inputTransformations = transformations,
       imageListenerParam = ImageListenerParam.FailureAwareImageListener(listener),
@@ -262,6 +269,7 @@ class ImageLoaderV2(
   private fun loadFromNetwork(
     context: Context,
     url: String,
+    cacheFileType: CacheFileType,
     imageSize: ImageSize,
     inputTransformations: List<Transformation>,
     imageListenerParam: ImageListenerParam,
@@ -302,7 +310,7 @@ class ImageLoaderV2(
         }
 
         // 2. Check whether we have this bitmap cached on the disk
-        var imageFile = tryLoadFromDiskCacheOrNull(url, postDescriptor)
+        var imageFile = tryLoadFromDiskCacheOrNull(url, cacheFileType, postDescriptor)
 
         // 3. Failed to find this bitmap in the disk cache. Load it from the network.
         if (imageFile == null) {
@@ -311,6 +319,7 @@ class ImageLoaderV2(
           imageFile = loadFromNetworkInternal(
             context = context,
             url = url,
+            cacheFileType = cacheFileType,
             imageSize = imageSize
           )
 
@@ -348,7 +357,8 @@ class ImageLoaderV2(
               lifecycle = context.getLifecycleFromContext(),
               imageFile = imageFile,
               activeListener = activeListener,
-              url = url
+              url = url,
+              cacheFileType = cacheFileType
             )
 
             mutex.withLockNonCancellable {
@@ -416,7 +426,8 @@ class ImageLoaderV2(
     lifecycle: Lifecycle?,
     imageFile: AbstractFile?,
     activeListener: ActiveListener,
-    url: String
+    url: String,
+    cacheFileType: CacheFileType
   ): BitmapDrawable? {
     val fileLocation = when (imageFile) {
       is RawFile -> File(imageFile.getFullPath())
@@ -447,7 +458,7 @@ class ImageLoaderV2(
           "fileLocation=${fileLocation}, error=${result.throwable.errorMessageOrClassName()}")
 
         if (!fileCacheV2.isRunning(url)) {
-          cacheHandler.deleteCacheFileByUrl(url)
+          cacheHandler.deleteCacheFileByUrl(cacheFileType, url)
         }
 
         return null
@@ -479,12 +490,13 @@ class ImageLoaderV2(
   private suspend fun loadFromNetworkInternal(
     context: Context,
     url: String,
+    cacheFileType: CacheFileType,
     imageSize: ImageSize,
   ): AbstractFile? {
     BackgroundUtils.ensureBackgroundThread()
 
     try {
-      val resultFile = loadFromNetworkIntoFile(url)
+      val resultFile = loadFromNetworkIntoFile(cacheFileType, url)
       if (resultFile == null) {
         return null
       }
@@ -574,20 +586,20 @@ class ImageLoaderV2(
   }
 
   @Throws(HttpException::class)
-  private suspend fun loadFromNetworkIntoFile(url: String): File? {
+  private suspend fun loadFromNetworkIntoFile(cacheFileType: CacheFileType, url: String): File? {
     BackgroundUtils.ensureBackgroundThread()
 
-    val cacheFile = cacheHandler.getOrCreateCacheFile(url)
+    val cacheFile = cacheHandler.getOrCreateCacheFile(cacheFileType, url)
     if (cacheFile == null) {
       Logger.e(TAG, "loadFromNetworkIntoFile() cacheHandler.getOrCreateCacheFile('$url') -> null")
       return null
     }
 
     val success = try {
-      loadFromNetworkIntoFileInternal(url, cacheFile)
+      loadFromNetworkIntoFileInternal(url, cacheFileType, cacheFile)
     } catch (error: Throwable) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.deleteCacheFile(cacheFile)
+        cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
       }
 
       if (error.isCoroutineCancellationException()) {
@@ -600,7 +612,7 @@ class ImageLoaderV2(
 
     if (!success) {
       if (!fileCacheV2.isRunning(url)) {
-        cacheHandler.deleteCacheFile(cacheFile)
+        cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
       }
 
       return null
@@ -609,7 +621,11 @@ class ImageLoaderV2(
     return cacheFile
   }
 
-  private suspend fun loadFromNetworkIntoFileInternal(url: String, cacheFile: File): Boolean {
+  private suspend fun loadFromNetworkIntoFileInternal(
+    url: String,
+    cacheFileType: CacheFileType,
+    cacheFile: File
+  ): Boolean {
     BackgroundUtils.ensureBackgroundThread()
 
     val site = siteResolver.findSiteForUrl(url)
@@ -652,7 +668,7 @@ class ImageLoaderV2(
       }
     }
 
-    if (!cacheHandler.markFileDownloaded(cacheFile)) {
+    if (!cacheHandler.markFileDownloaded(cacheFileType, cacheFile)) {
       throw IOException("Failed to mark file '${cacheFile.absolutePath}' as downloaded")
     }
 
@@ -661,7 +677,7 @@ class ImageLoaderV2(
       return false
     }
 
-    cacheHandler.fileWasAdded(fileLength)
+    cacheHandler.fileWasAdded(cacheFileType, fileLength)
 
     return true
   }
@@ -674,7 +690,11 @@ class ImageLoaderV2(
       || url == "https://endchan.org/favicon.ico"
   }
 
-  private suspend fun tryLoadFromDiskCacheOrNull(url: String, postDescriptor: PostDescriptor?): AbstractFile? {
+  private suspend fun tryLoadFromDiskCacheOrNull(
+    url: String,
+    cacheFileType: CacheFileType,
+    postDescriptor: PostDescriptor?
+  ): AbstractFile? {
     BackgroundUtils.ensureBackgroundThread()
 
     val httpUrl = url.toHttpUrlOrNull()
@@ -691,7 +711,7 @@ class ImageLoaderV2(
       // fallthrough
     }
 
-    val cacheFile = cacheHandler.getCacheFileOrNull(url)
+    val cacheFile = cacheHandler.getCacheFileOrNull(cacheFileType, url)
     if (cacheFile == null) {
       return null
     }

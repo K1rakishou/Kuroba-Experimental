@@ -93,7 +93,7 @@ internal class ChunkMerger(
     check(actualOutput.exists()) { "actualOutput does not exist! actualOutput=${actualOutput.absolutePath}" }
     check(requestOutputFile.exists()) { "requestOutputFile does not exist! actualOutput=${requestOutputFile.absolutePath}" }
 
-    if (!cacheHandler.get().markFileDownloaded(requestOutputFile)) {
+    if (!cacheHandler.get().markFileDownloaded(request.cacheFileType, requestOutputFile)) {
       if (!request.cancelableDownload.isRunning()) {
         activeDownloads.throwCancellationException(url)
       }

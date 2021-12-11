@@ -21,6 +21,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.image_saver.DupImage
@@ -157,20 +158,21 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
 
     if (serverImage == null) {
       serverImageRequestDisposable = imageLoaderV2.loadFromResources(
-        context,
-        R.drawable.ic_image_not_found,
-        imageSize,
-        Scale.FIT,
-        transformation,
-        { bitmapDrawable -> serverImageView.setImageDrawable(bitmapDrawable) }
+        context = context,
+        drawableId = R.drawable.ic_image_not_found,
+        imageSize = imageSize,
+        scale = Scale.FIT,
+        transformations = transformation,
+        listener = { bitmapDrawable -> serverImageView.setImageDrawable(bitmapDrawable) }
       )
     } else {
       serverImageRequestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        serverImage!!.url.toString(),
-        imageSize,
-        transformation,
-        { bitmapDrawable -> serverImageView.setImageDrawable(bitmapDrawable) }
+        context = context,
+        url = serverImage!!.url.toString(),
+        cacheFileType = CacheFileType.PostMediaThumbnail,
+        imageSize = imageSize,
+        transformations = transformation,
+        listener = { bitmapDrawable -> serverImageView.setImageDrawable(bitmapDrawable) }
       )
     }
   }

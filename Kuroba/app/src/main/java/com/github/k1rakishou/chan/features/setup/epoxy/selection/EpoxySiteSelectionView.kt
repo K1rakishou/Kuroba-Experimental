@@ -11,6 +11,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -79,12 +80,13 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
 
     if (siteIcon.url != null) {
       requestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        siteIcon.url!!.toString(),
-        ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIconView),
-        listOf(),
-        { drawable -> siteIconView.setImageBitmap(drawable.bitmap) },
-        R.drawable.error_icon
+        context = context,
+        url = siteIcon.url!!.toString(),
+        cacheFileType = CacheFileType.SiteIcon,
+        imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteIconView),
+        transformations = listOf(),
+        listener = { drawable -> siteIconView.setImageBitmap(drawable.bitmap) },
+        errorDrawableId = R.drawable.error_icon
       )
     } else if (siteIcon.drawable != null) {
       siteIconView.setImageBitmap(siteIcon.drawable!!.bitmap)

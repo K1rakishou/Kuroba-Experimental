@@ -25,6 +25,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import coil.transform.Transformation
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.common.BadStatusResponseException
@@ -160,6 +161,7 @@ private suspend fun ProduceStateScope<ImageLoaderResult>.loadImage(
       imageLoaderV2.loadFromNetworkSuspend(
         context = context,
         url = data.httpUrl.toString(),
+        cacheFileType = data.cacheFileType,
         imageSize = ImageLoaderV2.ImageSize.FixedImageSize(size.width, size.height),
         transformations = request.transformations
       )
@@ -195,6 +197,6 @@ data class ImageLoaderRequest(
 sealed class ImageLoaderRequestData {
   data class File(val file: java.io.File) : ImageLoaderRequestData()
   data class Uri(val uri: android.net.Uri) : ImageLoaderRequestData()
-  data class Url(val httpUrl: HttpUrl) : ImageLoaderRequestData()
+  data class Url(val httpUrl: HttpUrl, val cacheFileType: CacheFileType) : ImageLoaderRequestData()
   data class DrawableResource(@DrawableRes val drawableId: Int) : ImageLoaderRequestData()
 }

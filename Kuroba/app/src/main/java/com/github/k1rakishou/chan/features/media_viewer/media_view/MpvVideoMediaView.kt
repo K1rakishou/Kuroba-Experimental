@@ -17,6 +17,7 @@ import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.mpv.MPVView
@@ -301,7 +302,7 @@ class MpvVideoMediaView(
     onSystemUiVisibilityChanged(isSystemUiHidden())
     thumbnailMediaView.show()
 
-    if (canAutoLoad()) {
+    if (canAutoLoad(cacheFileType = CacheFileType.PostMediaFull)) {
       startPlayingVideo(isLifecycleChange = isLifecycleChange)
     }
   }

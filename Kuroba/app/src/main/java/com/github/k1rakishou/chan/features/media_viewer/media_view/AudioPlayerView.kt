@@ -13,6 +13,7 @@ import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -275,7 +276,8 @@ class AudioPlayerView @JvmOverloads constructor(
     if (soundPostActualSoundMedia != null) {
       val canAutoLoad = MediaViewerControllerViewModel.canAutoLoad(
         cacheHandler = cacheHandler,
-        viewableMedia = soundPostActualSoundMedia
+        viewableMedia = soundPostActualSoundMedia,
+        cacheFileType = CacheFileType.PostMediaFull,
       )
 
       Logger.d(TAG, "loadAndPlaySoundPostAudioIfPossible() canAutoLoad: ${canAutoLoad}, isForceLoad: ${isForceLoad}, " +

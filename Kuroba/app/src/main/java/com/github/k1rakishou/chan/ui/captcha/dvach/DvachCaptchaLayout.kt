@@ -28,6 +28,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -272,7 +273,12 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           }
 
           val request = remember(key1 = requestFullUrl) {
-            ImageLoaderRequest(data = ImageLoaderRequestData.Url(requestFullUrl) )
+            val data = ImageLoaderRequestData.Url(
+              httpUrl = requestFullUrl,
+              cacheFileType = CacheFileType.Other
+            )
+
+            ImageLoaderRequest(data = data)
           }
 
           KurobaComposeImage(

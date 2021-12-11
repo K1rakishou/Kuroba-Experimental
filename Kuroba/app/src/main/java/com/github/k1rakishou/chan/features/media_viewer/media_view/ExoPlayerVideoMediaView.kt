@@ -14,6 +14,7 @@ import android.widget.LinearLayout
 import android.widget.ProgressBar
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
@@ -328,7 +329,10 @@ class ExoPlayerVideoMediaView(
       return
     }
 
-    cacheHandler.get().deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
+    cacheHandler.get().deleteCacheFileByUrlSuspend(
+      cacheFileType = CacheFileType.PostMediaFull,
+      url = mediaLocation.url.toString()
+    )
 
     fullVideoDeferred.cancel()
     fullVideoDeferred = CompletableDeferred<Unit>()
@@ -500,7 +504,7 @@ class ExoPlayerVideoMediaView(
         && (preloadingJob == null || preloadingJob?.isActive == false)
     }
 
-    return canAutoLoad()
+    return canAutoLoad(cacheFileType = CacheFileType.PostMediaFull)
       && !fullVideoDeferred.isCompleted
       && (preloadingJob == null || preloadingJob?.isActive == false)
   }

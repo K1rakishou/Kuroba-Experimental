@@ -21,6 +21,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.drawer.data.ImagesLoaderRequestData
 import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
@@ -202,26 +203,24 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
       }
 
       threadImageRequestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        threadThumbnailUrl.toString(),
-        ImageLoaderV2.ImageSize.MeasurableImageSize.create(threadThumbnailImage),
-        listOf(transformation),
-        { drawable ->
-          threadThumbnailImage.setImageBitmap(drawable.bitmap)
-        }
+        context = context,
+        url = threadThumbnailUrl.toString(),
+        cacheFileType = CacheFileType.BookmarkThumbnail,
+        imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(threadThumbnailImage),
+        transformations = listOf(transformation),
+        listener = { drawable -> threadThumbnailImage.setImageBitmap(drawable.bitmap) }
       )
     }
 
     val siteThumbnailUrl = imagesLoaderRequestData?.siteThumbnailUrl
     if (siteThumbnailUrl != null) {
       siteImageRequestDisposable = imageLoaderV2.loadFromNetwork(
-        context,
-        siteThumbnailUrl.toString(),
-        ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteThumbnailImage),
-        listOf(CIRCLE_CROP),
-        { drawable ->
-          siteThumbnailImage.setImageBitmap(drawable.bitmap)
-        }
+        context = context,
+        url = siteThumbnailUrl.toString(),
+        cacheFileType = CacheFileType.BookmarkThumbnail,
+        imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(siteThumbnailImage),
+        transformations = listOf(CIRCLE_CROP),
+        listener = { drawable -> siteThumbnailImage.setImageBitmap(drawable.bitmap) }
       )
     }
   }

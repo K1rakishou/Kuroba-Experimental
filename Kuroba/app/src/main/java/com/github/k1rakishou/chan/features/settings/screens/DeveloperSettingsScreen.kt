@@ -5,6 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -22,6 +23,7 @@ import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState
 import com.google.android.exoplayer2.upstream.cache.SimpleCache
 import dagger.Lazy
@@ -44,8 +46,101 @@ class DeveloperSettingsScreen(
 
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
-      buildMainSettingsGroup()
+      buildMainSettingsGroup(),
+      buildCacheSettingsGroup()
     )
+  }
+
+  private fun buildCacheSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
+    val identifier = DeveloperScreen.CacheGroup
+
+    return SettingsGroup.SettingsGroupBuilder(
+      groupIdentifier = identifier,
+      buildFunction = {
+        val group = SettingsGroup(
+          groupIdentifier = identifier,
+          groupTitle = "Caches"
+        )
+
+        for (cacheFileType in CacheFileType.values()) {
+          group += LinkSettingV2.createBuilder(
+            context = context,
+            identifier = DeveloperScreen.CacheGroup.ClearFileCache(cacheFileType.name),
+            topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache, cacheFileType.name) },
+            bottomDescriptionStringFunc = {
+              val internalCacheSizeBytes = cacheHandler.get().getSize(cacheFileType)
+              val internalCacheMaxSizeBytes = cacheHandler.get().getMaxSize(cacheFileType)
+
+              context.getString(
+                R.string.settings_clear_file_cache_bottom_description,
+                cacheFileType.name,
+                ChanPostUtils.getReadableFileSize(internalCacheSizeBytes),
+                ChanPostUtils.getReadableFileSize(internalCacheMaxSizeBytes),
+              )
+            },
+            callback = {
+              fileCacheV2.clearCache(cacheFileType)
+              showToast(context, "Cleared ${cacheFileType.name} disk cache")
+            }
+          )
+        }
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.CacheGroup.ClearExoPlayerCache,
+          topDescriptionStringFunc = { context.getString(R.string.settings_clear_exo_player_file_cache) },
+          bottomDescriptionStringFunc = {
+            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
+              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir)
+            }
+
+            context.getString(
+              R.string.settings_clear_exo_player_cache_bottom_description,
+              ChanPostUtils.getReadableFileSize(exoPlayerCacheSizeBytes)
+            )
+          },
+          callback = {
+            SimpleCache.delete(appConstants.exoPlayerCacheDir, null)
+            showToast(context, "Cleared exoplayer cache")
+          }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.CacheGroup.ThreadDownloadCacheSize,
+          topDescriptionStringFunc = { context.getString(R.string.settings_clear_thread_downloader_disk_cache) },
+          bottomDescriptionStringFunc = {
+            val threadDownloadCacheSize = withContext(Dispatchers.Default) {
+              IOUtils.calculateDirectoryFilesFullSize(appConstants.threadDownloaderCacheDir)
+            }
+
+            context.getString(
+              R.string.settings_thread_download_cache_bottom_description,
+              ChanPostUtils.getReadableFileSize(threadDownloadCacheSize)
+            )
+          },
+          callback = {
+            dialogFactory.createSimpleConfirmationDialog(
+              context = context,
+              titleText = getString(R.string.settings_thread_downloader_clear_disk_cache_title),
+              descriptionText = getString(R.string.settings_thread_downloader_clear_disk_cache_description),
+              positiveButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_clear),
+              negativeButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_do_not_clear),
+              onPositiveButtonClickListener = {
+                for (file in appConstants.threadDownloaderCacheDir.listFiles() ?: emptyArray()) {
+                  if (!file.deleteRecursively()) {
+                    Logger.d(TAG, "Failed to delete ${file.absolutePath}")
+                  }
+                }
+
+                showToast(context, "Thread downloader cached cleared")
+              }
+            )
+          }
+        )
+
+        group
+      })
   }
 
   private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
@@ -119,82 +214,10 @@ class DeveloperSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
-          identifier = DeveloperScreen.MainGroup.ClearFileCache,
-          topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache) },
-          bottomDescriptionStringFunc = {
-            val oneMb = 1024L * 1024L
-
-            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
-              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir) / oneMb
-            }
-            val internalCacheSizeBytes = cacheHandler.get().getSize() / oneMb
-
-            context.getString(
-              R.string.settings_clear_file_cache_bottom_description,
-              internalCacheSizeBytes,
-              exoPlayerCacheSizeBytes
-            )
-          },
-          callback = {
-            fileCacheV2.clearCache()
-            SimpleCache.delete(appConstants.exoPlayerCacheDir, null)
-
-            showToast(context, "Cleared media/exoplayer caches")
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DeveloperScreen.MainGroup.ThreadDownloadCacheSize,
-          topDescriptionStringFunc = { context.getString(R.string.settings_clear_thread_downloader_disk_cache) },
-          bottomDescriptionStringFunc = {
-            val oneMb = 1024L * 1024L
-
-            val threadDownloadCacheSize = withContext(Dispatchers.Default) {
-              IOUtils.calculateDirectoryFilesFullSize(appConstants.threadDownloaderCacheDir) / oneMb
-            }
-
-            context.getString(
-              R.string.settings_thread_download_cache_bottom_description,
-              threadDownloadCacheSize
-            )
-          },
-          callback = {
-            dialogFactory.createSimpleConfirmationDialog(
-              context = context,
-              titleText = getString(R.string.settings_thread_downloader_clear_disk_cache_title),
-              descriptionText = getString(R.string.settings_thread_downloader_clear_disk_cache_description),
-              positiveButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_clear),
-              negativeButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_do_not_clear),
-              onPositiveButtonClickListener = {
-                for (file in appConstants.threadDownloaderCacheDir.listFiles() ?: emptyArray()) {
-                  if (!file.deleteRecursively()) {
-                    Logger.d(TAG, "Failed to delete ${file.absolutePath}")
-                  }
-                }
-
-                showToast(context, "Thread downloader cached cleared")
-              }
-            )
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
           identifier = DeveloperScreen.MainGroup.ShowDatabaseSummary,
           topDescriptionIdFunc = { R.string.settings_database_summary },
           callbackWithClickAction = {
             SettingClickAction.OpenScreen(DatabaseSummaryScreen)
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DeveloperScreen.MainGroup.DumpThreadStack,
-          topDescriptionIdFunc = { R.string.settings_dump_thread_stack },
-          callback = {
-            dumpThreadStack()
-            showToast(context, "Thread stack dumped")
           }
         )
 
@@ -296,38 +319,6 @@ class DeveloperSettingsScreen(
         group
       }
     )
-  }
-
-  private fun dumpThreadStack() {
-    val activeThreads: Set<Thread> = Thread.getAllStackTraces().keys
-    Logger.i("STACKDUMP-COUNT", activeThreads.size.toString())
-
-    for (t in activeThreads) {
-      // ignore these threads as they aren't relevant (main will always be this button press)
-      if (t.name.equals("main", ignoreCase = true)
-        || t.name.contains("Daemon")
-        || t.name.equals("Signal Catcher", ignoreCase = true)
-        || t.name.contains("hwuiTask")
-        || t.name.contains("Binder:")
-        || t.name.equals("RenderThread", ignoreCase = true)
-        || t.name.contains("maginfier pixel")
-        || t.name.contains("Jit thread")
-        || t.name.equals("Profile Saver", ignoreCase = true)
-        || t.name.contains("Okio")
-        || t.name.contains("AsyncTask")
-      ) {
-        continue
-      }
-
-      val elements = t.stackTrace
-      Logger.i("STACKDUMP-HEADER", "Thread: " + t.name)
-
-      for (e in elements) {
-        Logger.i("STACKDUMP", e.toString())
-      }
-
-      Logger.i("STACKDUMP-FOOTER", "----------------")
-    }
   }
 
   companion object {

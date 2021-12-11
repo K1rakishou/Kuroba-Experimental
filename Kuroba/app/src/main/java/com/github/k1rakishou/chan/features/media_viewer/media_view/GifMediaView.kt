@@ -10,6 +10,7 @@ import android.view.View
 import android.widget.FrameLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
@@ -335,7 +336,10 @@ class GifMediaView(
       return
     }
 
-    cacheHandler.get().deleteCacheFileByUrlSuspend(mediaLocation.url.toString())
+    cacheHandler.get().deleteCacheFileByUrlSuspend(
+      cacheFileType = CacheFileType.PostMediaFull,
+      url = mediaLocation.url.toString()
+    )
 
     fullGifDeferred.cancel()
     fullGifDeferred = CompletableDeferred<MediaPreloadResult>()
@@ -471,7 +475,7 @@ class GifMediaView(
         && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
     }
 
-    return canAutoLoad()
+    return canAutoLoad(cacheFileType = CacheFileType.PostMediaFull)
       && !fullGifDeferred.isCompleted
       && (preloadCancelableDownload == null || preloadCancelableDownload?.isRunning() == false)
   }

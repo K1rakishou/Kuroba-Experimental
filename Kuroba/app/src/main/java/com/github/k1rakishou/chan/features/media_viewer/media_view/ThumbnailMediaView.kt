@@ -12,6 +12,7 @@ import android.widget.TextView
 import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -157,6 +158,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
     return imageLoaderV2.get().loadFromNetwork(
       context = context,
       requestUrl = url.toString(),
+      cacheFileType = CacheFileType.PostMediaThumbnail,
       imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(this),
       transformations = emptyList(),
       listener = listener,
@@ -184,7 +186,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
   }
 
   private fun extractThumbnailLocation(parameters: ThumbnailMediaViewParameters): MediaLocation? {
-    if (ChanSettings.revealImageSpoilers.get()) {
+    if (ChanSettings.mediaViewerRevealImageSpoilers.get()) {
       return parameters.viewableMedia.previewLocation
     }
 
@@ -195,7 +197,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
 
       val remoteLocation = parameters.viewableMedia.mediaLocation as MediaLocation.Remote
 
-      if (cacheHandler.get().cacheFileExists(remoteLocation.url.toString())) {
+      if (cacheHandler.get().cacheFileExists(CacheFileType.PostMediaThumbnail, remoteLocation.url.toString())) {
         return parameters.viewableMedia.previewLocation
       }
 

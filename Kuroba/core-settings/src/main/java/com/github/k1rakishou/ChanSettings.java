@@ -307,8 +307,8 @@ public class ChanSettings {
 
     // Images
     public static BooleanSetting hideImages;
-    public static BooleanSetting removeImageSpoilers;
-    public static BooleanSetting revealImageSpoilers;
+    public static BooleanSetting postThumbnailRemoveImageSpoilers;
+    public static BooleanSetting mediaViewerRevealImageSpoilers;
     public static BooleanSetting transparencyOn;
 
     // Set elsewhere in the application
@@ -534,8 +534,8 @@ public class ChanSettings {
 
             // Images
             hideImages = new BooleanSetting(provider, "preference_hide_images", false);
-            removeImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
-            revealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
+            postThumbnailRemoveImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
+            mediaViewerRevealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
             transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
             //Elsewhere

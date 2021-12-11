@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.receiver.ReplyNotificationDeleteIntentBroadcastReceiver
@@ -536,14 +537,15 @@ class ReplyNotificationsHelper(
   ): BitmapDrawable? {
     return suspendCancellableCoroutine { cancellableContinuation ->
       val disposable = imageLoaderV2.loadFromNetwork(
-        appContext,
-        thumbnailUrl.toString(),
-        ImageLoaderV2.ImageSize.FixedImageSize(
+        context = appContext,
+        requestUrl = thumbnailUrl.toString(),
+        cacheFileType = CacheFileType.PostMediaThumbnail,
+        imageSize = ImageLoaderV2.ImageSize.FixedImageSize(
           NOTIFICATION_THUMBNAIL_SIZE,
           NOTIFICATION_THUMBNAIL_SIZE,
         ),
-        CIRCLE_CROP,
-        object : ImageLoaderV2.FailureAwareImageListener {
+        transformations = CIRCLE_CROP,
+        listener = object : ImageLoaderV2.FailureAwareImageListener {
           override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
             cancellableContinuation.resumeValueSafe(drawable)
           }

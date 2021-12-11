@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
@@ -93,11 +94,11 @@ class UpdateManager(
   private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
   private val dialogFactory: Lazy<DialogFactory>
 ) : CoroutineScope {
-
   private var updateDownloadDialog: ProgressDialog? = null
   private var cancelableDownload: CancelableDownload? = null
 
   private val job = SupervisorJob()
+  private val cacheFileType = CacheFileType.Other
 
   override val coroutineContext: CoroutineContext
     get() = Dispatchers.Default + job + CoroutineName("UpdateManager")
@@ -404,11 +405,12 @@ class UpdateManager(
     cancelableDownload = null
 
     val apkUrl = responseRelease.apkURL.toString()
-    cacheHandler.get().deleteCacheFileByUrl(apkUrl)
+    cacheHandler.get().deleteCacheFileByUrl(cacheFileType, apkUrl)
 
     cancelableDownload = fileCacheV2.get().enqueueDownloadFileRequest(
-      apkUrl,
-      object : FileCacheListener() {
+      url = apkUrl,
+      cacheFileType = cacheFileType,
+      callback = object : FileCacheListener() {
         override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
           BackgroundUtils.ensureMainThread()
 

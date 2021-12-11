@@ -8,6 +8,7 @@ import androidx.core.view.GravityCompat
 import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -79,10 +80,11 @@ class MrSkeletonLayout @JvmOverloads constructor(
     val skeletonUrl = skeletons.random(random)
 
     val result = imageLoaderV2.loadFromNetworkSuspend(
-      context,
-      skeletonUrl,
-      ImageLoaderV2.ImageSize.Unspecified,
-      emptyList()
+      context = context,
+      url = skeletonUrl,
+      cacheFileType = CacheFileType.PostMediaFull,
+      imageSize = ImageLoaderV2.ImageSize.Unspecified,
+      transformations = emptyList()
     )
 
     if (result is ModularResult.Error) {
@@ -91,7 +93,12 @@ class MrSkeletonLayout @JvmOverloads constructor(
       return
     }
 
-    val downloadedGifFile = withContext(Dispatchers.IO) { cacheHandler.getCacheFileOrNull(skeletonUrl) }
+    val downloadedGifFile = withContext(Dispatchers.IO) {
+      return@withContext cacheHandler.getCacheFileOrNull(
+        cacheFileType = CacheFileType.PostMediaFull,
+        url = skeletonUrl
+      )
+    }
     if (downloadedGifFile == null) {
       Logger.e(TAG, "attachGifViewIfNeeded() downloadedGifFile == null, skeletonUrl=${skeletonUrl}")
 

@@ -19,6 +19,7 @@ import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
@@ -382,11 +383,12 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
     requestDisposable = null
 
     requestDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      url.toString(),
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(bookmarkImage),
-      transformations,
-      { drawable -> bookmarkImage.setImageBitmap(drawable.bitmap) }
+      context = context,
+      url = url.toString(),
+      cacheFileType = CacheFileType.BookmarkThumbnail,
+      imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(bookmarkImage),
+      transformations = transformations,
+      listener = { drawable -> bookmarkImage.setImageBitmap(drawable.bitmap) }
     )
   }
 

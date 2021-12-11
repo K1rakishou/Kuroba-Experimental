@@ -37,6 +37,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
@@ -87,6 +88,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   private var postDescriptor: PostDescriptor? = null
   private var imageSize: ImageLoaderV2.ImageSize? = null
+  private var cacheFileType: CacheFileType = CacheFileType.PostMediaThumbnail
 
   @Inject
   lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
@@ -172,6 +174,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   fun bindImageUrl(
     url: String,
+    cacheFileType: CacheFileType,
     postDescriptor: PostDescriptor,
     imageSize: ImageLoaderV2.ImageSize,
     thumbnailViewOptions: ThumbnailViewOptions
@@ -195,6 +198,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     this._imageUrl = url
     this.postDescriptor = postDescriptor
     this.imageSize = imageSize
+    this.cacheFileType = cacheFileType
     this._thumbnailViewOptions = thumbnailViewOptions
 
     kurobaScope!!.launch { setUrlInternal(url, postDescriptor, imageSize, thumbnailViewOptions) }
@@ -244,8 +248,22 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
     if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
-      bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
+      cacheHandler.get().deleteCacheFileByUrl(
+        cacheFileType = CacheFileType.PostMediaThumbnail,
+        url = _imageUrl!!
+      )
+      cacheHandler.get().deleteCacheFileByUrl(
+        cacheFileType = CacheFileType.PostMediaFull,
+        url = _imageUrl!!
+      )
+
+      bindImageUrl(
+        url = _imageUrl!!,
+        cacheFileType = cacheFileType,
+        postDescriptor = postDescriptor!!,
+        imageSize = imageSize!!,
+        thumbnailViewOptions = _thumbnailViewOptions!!
+      )
       return
     }
 
@@ -254,8 +272,22 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
   fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
     if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.get().deleteCacheFileByUrl(_imageUrl!!)
-      bindImageUrl(_imageUrl!!, postDescriptor!!, imageSize!!, _thumbnailViewOptions!!)
+      cacheHandler.get().deleteCacheFileByUrl(
+        cacheFileType = CacheFileType.PostMediaThumbnail,
+        url = _imageUrl!!
+      )
+      cacheHandler.get().deleteCacheFileByUrl(
+        cacheFileType = CacheFileType.PostMediaFull,
+        url = _imageUrl!!
+      )
+
+      bindImageUrl(
+        url = _imageUrl!!,
+        cacheFileType = cacheFileType,
+        postDescriptor = postDescriptor!!,
+        imageSize = imageSize!!,
+        thumbnailViewOptions = _thumbnailViewOptions!!
+      )
       return true
     }
 
@@ -371,7 +403,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
         }
 
         if (isIoError && ioErrorAttempts.decrementAndGet() > 0 && isScopeActive) {
-          bindImageUrl(url, postDescriptor, imageSize, thumbnailViewOptions)
+          bindImageUrl(url, cacheFileType, postDescriptor, imageSize, thumbnailViewOptions)
           return
         }
 
@@ -393,6 +425,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
 
       requestDisposable = imageLoaderV2.get().loadFromNetwork(
         context = context,
+        cacheFileType = cacheFileType,
         requestUrl = url,
         imageSize = imageSize,
         transformations = emptyList(),
@@ -401,7 +434,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       )
     }
 
-    val isCached = imageLoaderV2.get().isImageCachedLocally(url)
+    val isCached = imageLoaderV2.get().isImageCachedLocally(
+      cacheFileType = cacheFileType,
+      url = url
+    )
 
     val isDraggingCatalogScroller =
       globalViewStateManager.isDraggingFastScroller(FastScroller.FastScrollerControllerType.Catalog)

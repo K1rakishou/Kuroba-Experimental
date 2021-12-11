@@ -38,6 +38,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -267,7 +268,10 @@ class SearxImageSearchController(
     val chanTheme = LocalChanTheme.current
 
     val request = ImageLoaderRequest(
-      data = ImageLoaderRequestData.Url(searxImage.thumbnailUrl)
+      data = ImageLoaderRequestData.Url(
+        httpUrl = searxImage.thumbnailUrl,
+        cacheFileType = CacheFileType.Other
+      )
     )
 
     Box(

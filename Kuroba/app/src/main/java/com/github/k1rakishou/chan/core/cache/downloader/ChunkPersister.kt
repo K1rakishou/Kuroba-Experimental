@@ -36,6 +36,8 @@ internal class ChunkPersister(
 
       val serializedEmitter = emitter.serialize()
       val chunk = chunkResponse.chunk
+      val request = activeDownloads.get(url)
+        ?: activeDownloads.throwCancellationException(url)
 
       try {
         if (verboseLogs) {
@@ -56,9 +58,10 @@ internal class ChunkPersister(
         }
 
         val chunkCacheFile = cacheHandler.get().getOrCreateChunkCacheFile(
-          chunk.start,
-          chunk.end,
-          url
+          cacheFileType = request.cacheFileType,
+          chunkStart = chunk.start,
+          chunkEnd = chunk.end,
+          url = url
         ) ?: throw IOException("Couldn't create chunk cache file")
 
         try {

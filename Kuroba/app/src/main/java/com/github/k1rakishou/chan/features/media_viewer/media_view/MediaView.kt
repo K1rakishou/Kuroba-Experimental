@@ -10,6 +10,7 @@ import androidx.annotation.CallSuper
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
@@ -356,9 +357,10 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     )
 
     return fileCacheV2.enqueueDownloadFileRequest(
-      mediaLocationRemote.url,
-      extraInfo,
-      object : FileCacheListener() {
+      url = mediaLocationRemote.url,
+      cacheFileType = CacheFileType.PostMediaFull,
+      extraInfo = extraInfo,
+      callback = object : FileCacheListener() {
         override fun onStart(chunksCount: Int) {
           super.onStart(chunksCount)
           BackgroundUtils.ensureMainThread()
@@ -403,7 +405,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     )
   }
 
-  protected fun canAutoLoad(): Boolean {
+  protected fun canAutoLoad(cacheFileType: CacheFileType): Boolean {
     val threadDescriptor = viewableMedia.viewableMediaMeta.ownerPostDescriptor?.threadDescriptor()
     if (threadDescriptor != null) {
       val canUseThreadDownloaderCache = runBlocking { threadDownloadManager.canUseThreadDownloaderCache(threadDescriptor) }
@@ -414,7 +416,11 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       // fallthrough
     }
 
-    return MediaViewerControllerViewModel.canAutoLoad(cacheHandler.get(), viewableMedia)
+    return MediaViewerControllerViewModel.canAutoLoad(
+      cacheHandler = cacheHandler.get(),
+      viewableMedia = viewableMedia,
+      cacheFileType = cacheFileType
+    )
   }
 
   private suspend fun tryLoadFromExternalDiskCache(

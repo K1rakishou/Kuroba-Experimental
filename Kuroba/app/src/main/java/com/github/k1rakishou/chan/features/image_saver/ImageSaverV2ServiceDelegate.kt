@@ -5,6 +5,7 @@ import androidx.annotation.GuardedBy
 import androidx.core.app.NotificationManagerCompat
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -879,11 +880,12 @@ class ImageSaverV2ServiceDelegate(
     BackgroundUtils.ensureBackgroundThread()
 
     val fileUrl = imageUrl.toString()
+    val cacheFileType = CacheFileType.PostMediaFull
     var localInputStream: InputStream? = null
 
     try {
-      if (cacheHandler.get().cacheFileExists(fileUrl)) {
-        val cachedFile = cacheHandler.get().getCacheFileOrNull(fileUrl)
+      if (cacheHandler.get().cacheFileExists(cacheFileType, fileUrl)) {
+        val cachedFile = cacheHandler.get().getCacheFileOrNull(cacheFileType, fileUrl)
         if (cachedFile != null && cachedFile.canRead() && cachedFile.length() > 0) {
           localInputStream = cachedFile.inputStream()
         }

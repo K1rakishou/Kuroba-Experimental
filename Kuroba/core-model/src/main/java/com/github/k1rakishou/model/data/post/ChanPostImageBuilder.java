@@ -108,7 +108,7 @@ public class ChanPostImageBuilder {
     }
 
     public ChanPostImage build() {
-        if (ChanSettings.removeImageSpoilers.get()) {
+        if (ChanSettings.postThumbnailRemoveImageSpoilers.get()) {
             spoiler = false;
         }
 

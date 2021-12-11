@@ -5,6 +5,7 @@ import android.util.LruCache
 import android.webkit.MimeTypeMap
 import androidx.lifecycle.ViewModel
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -585,11 +586,24 @@ class MediaViewerControllerViewModel : ViewModel() {
     }
 
     @JvmStatic
-    fun canAutoLoad(cacheHandler: CacheHandler, postImage: ChanPostImage): Boolean {
-      return canAutoLoad(cacheHandler, postImage.imageUrl, postImage.type, postImage.spoiler)
+    fun canAutoLoad(
+      cacheHandler: CacheHandler,
+      postImage: ChanPostImage
+    ): Boolean {
+      return canAutoLoad(
+        cacheHandler = cacheHandler,
+        url = postImage.imageUrl,
+        imageType = postImage.type,
+        isSpoiler = postImage.spoiler,
+        cacheFileType = CacheFileType.PostMediaFull
+      )
     }
 
-    fun canAutoLoad(cacheHandler: CacheHandler, viewableMedia: ViewableMedia): Boolean {
+    fun canAutoLoad(
+      cacheHandler: CacheHandler,
+      viewableMedia: ViewableMedia,
+      cacheFileType: CacheFileType
+    ): Boolean {
       val mediaLocation = viewableMedia.mediaLocation
       if (mediaLocation !is MediaLocation.Remote) {
         return false
@@ -605,24 +619,31 @@ class MediaViewerControllerViewModel : ViewModel() {
         is ViewableMedia.Unsupported -> return false
       }
 
-      return canAutoLoad(cacheHandler, url, imageType, viewableMedia.viewableMediaMeta.isSpoiler)
+      return canAutoLoad(
+        cacheHandler = cacheHandler,
+        url = url,
+        imageType = imageType,
+        isSpoiler = viewableMedia.viewableMediaMeta.isSpoiler,
+        cacheFileType = cacheFileType
+      )
     }
 
     private fun canAutoLoad(
       cacheHandler: CacheHandler,
       url: HttpUrl?,
       imageType: ChanPostImageType?,
-      isSpoiler: Boolean
+      isSpoiler: Boolean,
+      cacheFileType: CacheFileType
     ): Boolean {
       val imageUrl = url ?: return false
       val postImageType = imageType ?: return false
 
-      if (cacheHandler.cacheFileExists(imageUrl.toString())) {
+      if (cacheHandler.cacheFileExists(cacheFileType, imageUrl.toString())) {
         // Auto load the image when it is cached
         return true
       }
 
-      if (isSpoiler && !ChanSettings.revealImageSpoilers.get()) {
+      if (isSpoiler && !ChanSettings.mediaViewerRevealImageSpoilers.get()) {
         return false
       }
 

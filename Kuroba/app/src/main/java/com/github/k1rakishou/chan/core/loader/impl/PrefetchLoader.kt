@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.loader.impl
 
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
@@ -29,6 +30,7 @@ class PrefetchLoader(
   private val prefetchStateManager: PrefetchStateManager,
   private val threadDownloadManager: Lazy<ThreadDownloadManager>
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
+  private val cacheFileType = CacheFileType.PostMediaFull
 
   override suspend fun isCached(postLoaderData: PostLoaderData): Boolean {
     BackgroundUtils.ensureBackgroundThread()
@@ -44,7 +46,10 @@ class PrefetchLoader(
         val fileUrl = postImage.imageUrl?.toString()
           ?: return@all true
 
-        return@all cacheHandler.get().isAlreadyDownloaded(fileUrl)
+        return@all cacheHandler.get().isAlreadyDownloaded(
+          cacheFileType = cacheFileType,
+          fileUrl = fileUrl
+        )
       }
   }
 
@@ -73,7 +78,11 @@ class PrefetchLoader(
     }
 
     prefetchList.forEach { prefetch ->
-      val cancelableDownload = fileCacheV2.get().enqueueMediaPrefetchRequest(prefetch.postImage)
+      val cancelableDownload = fileCacheV2.get().enqueueMediaPrefetchRequest(
+        cacheFileType = cacheFileType,
+        postImage = prefetch.postImage
+      )
+
       if (cancelableDownload == null) {
         // Already cached or something like that
         onPrefetchCompleted(prefetch.postImage)

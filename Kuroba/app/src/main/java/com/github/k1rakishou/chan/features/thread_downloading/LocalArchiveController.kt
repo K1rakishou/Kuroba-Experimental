@@ -60,6 +60,7 @@ import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.BaseSelectionHelper
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -531,7 +532,10 @@ class LocalArchiveController(
                     ImageLoaderRequestData.File(thumbnailLocation.file)
                   }
                   is LocalArchiveViewModel.ThreadDownloadThumbnailLocation.Remote -> {
-                    ImageLoaderRequestData.Url(thumbnailLocation.url)
+                    ImageLoaderRequestData.Url(
+                      httpUrl = thumbnailLocation.url,
+                      cacheFileType = CacheFileType.ThreadDownloaderThumbnail
+                    )
                   }
                 }
 

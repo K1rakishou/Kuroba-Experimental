@@ -64,7 +64,7 @@ class AppearanceSettingsScreen(
           identifier = AppearanceScreen.ImagesGroup.RemoveImageSpoilers,
           topDescriptionIdFunc = { R.string.settings_remove_image_spoilers },
           bottomDescriptionIdFunc = { R.string.settings_remove_image_spoilers_description },
-          setting = ChanSettings.removeImageSpoilers
+          setting = ChanSettings.postThumbnailRemoveImageSpoilers
         )
 
         group

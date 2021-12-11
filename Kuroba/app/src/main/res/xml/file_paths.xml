@@ -1,13 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
 
-    <!-- This one is so that we are able to share stuff from the file cache into other apps/install apks -->
+    <!--  Old disk cache directories are left here for compatibility  -->
     <files-path
         name="fc"
         path="filecache/" />
     <external-files-path
         name="exfc"
         path="filecache/" />
+
+    <!-- This one is so that we are able to share stuff from the file cache into other apps/install apks -->
+    <files-path
+        name="dc"
+        path="disk_cache/" />
+    <external-files-path
+        name="exdc"
+        path="disk_cache/" />
 
     <!-- This one is for file sharing into other apps -->
     <cache-path

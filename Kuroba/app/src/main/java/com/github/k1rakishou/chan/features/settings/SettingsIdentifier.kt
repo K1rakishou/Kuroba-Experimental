@@ -167,10 +167,7 @@ sealed class DeveloperScreen(
     object ViewLogs : MainGroup("view_logs")
     object EnableDisableVerboseLogs : MainGroup("enable_disable_verbose_logs")
     object CrashApp : MainGroup("crash_the_app")
-    object ClearFileCache : MainGroup("clear_file_cache")
-    object ThreadDownloadCacheSize : MainGroup("thread_download_cache_size")
     object ShowDatabaseSummary : MainGroup("show_database_summary")
-    object DumpThreadStack : MainGroup("dump_thread_stack")
     object ResetThreadOpenCounter : MainGroup("reset_thread_open_counter")
     object CrashOnSafeThrow : MainGroup("crash_on_safe_throw")
     object SimulateAppUpdated : MainGroup("simulate_app_updated")
@@ -182,6 +179,22 @@ sealed class DeveloperScreen(
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
       override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("main_group")
+    }
+  }
+
+  sealed class CacheGroup(
+    settingsId: String,
+    groupIdentifier: GroupIdentifier = CacheGroup.getGroupIdentifier()
+  ) : IGroup,
+    DeveloperScreen(groupIdentifier, SettingIdentifier(settingsId)) {
+
+    data class ClearFileCache(val cacheFileTypeName: String) : CacheGroup("clear_file_cache_${cacheFileTypeName}")
+    object ClearExoPlayerCache : CacheGroup("clear_exo_player_cache")
+    object ThreadDownloadCacheSize : CacheGroup("thread_download_cache_size")
+
+    companion object : IGroupIdentifier() {
+      override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()
+      override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("cache_group")
     }
   }
 

@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.CacheHandlerSynchronizer;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
@@ -80,10 +79,7 @@ public class NetModule {
     public CacheHandler provideCacheHandler(AppConstants appConstants) {
         Logger.deps("CacheHandler");
 
-        CacheHandlerSynchronizer cacheHandlerSynchronizer = new CacheHandlerSynchronizer();
-
         return new CacheHandler(
-                cacheHandlerSynchronizer,
                 ChanSettings.verboseLogs.get(),
                 ChanSettings.prefetchMedia.get(),
                 appConstants

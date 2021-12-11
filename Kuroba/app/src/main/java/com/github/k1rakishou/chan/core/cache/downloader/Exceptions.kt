@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.fsaf.file.AbstractFile
 import io.reactivex.exceptions.CompositeException
 import javax.net.ssl.SSLException
@@ -35,8 +36,9 @@ internal sealed class FileCacheException(message: String) : Exception(message) {
     val path: String,
     val exists: Boolean,
     val isFile: Boolean,
-    val canWrite: Boolean
-  ) : FileCacheException("Bad output file, exists = $exists, isFile = $isFile, canWrite = $canWrite, path = $path")
+    val canWrite: Boolean,
+    val cacheFileType: CacheFileType,
+  ) : FileCacheException("Bad output file, exists=$exists, isFile=$isFile, canWrite=$canWrite, cacheFileType=$cacheFileType, path=$path")
 }
 
 internal fun logErrorsAndExtractErrorMessage(tag: String, prefix: String, error: Throwable): String {

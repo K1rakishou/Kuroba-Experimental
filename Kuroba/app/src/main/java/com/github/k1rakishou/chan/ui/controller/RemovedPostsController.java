@@ -19,6 +19,7 @@ import androidx.appcompat.widget.AppCompatTextView;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.github.k1rakishou.chan.R;
+import com.github.k1rakishou.chan.core.cache.CacheFileType;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
@@ -297,6 +298,7 @@ public class RemovedPostsController
             imageLoaderV2.loadFromNetwork(
                     getContext(),
                     thumbnailUrl.toString(),
+                    CacheFileType.PostMediaThumbnail,
                     new ImageLoaderV2.ImageSize.FixedImageSize(
                             postImage.getWidth(),
                             postImage.getHeight()

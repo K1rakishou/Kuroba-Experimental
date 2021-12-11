@@ -58,7 +58,7 @@ class MediaViewerMenuHelper(
     options += CheckableFloatingListMenuItem(
       key = ACTION_AUTO_REVEAL_SPOILERS,
       name = AppModuleAndroidUtils.getString(R.string.settings_reveal_image_spoilers),
-      isCurrentlySelected = ChanSettings.revealImageSpoilers.get()
+      isCurrentlySelected = ChanSettings.mediaViewerRevealImageSpoilers.get()
     )
 
     options += CheckableFloatingListMenuItem(
@@ -142,7 +142,7 @@ class MediaViewerMenuHelper(
         mediaViewerAdapter.updateTransparency()
       }
       ACTION_AUTO_REVEAL_SPOILERS -> {
-        ChanSettings.revealImageSpoilers.toggle()
+        ChanSettings.mediaViewerRevealImageSpoilers.toggle()
       }
       ACTION_VIDEO_AUTO_LOOP -> {
         ChanSettings.videoAutoLoop.toggle()

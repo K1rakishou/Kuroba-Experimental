@@ -146,9 +146,9 @@ class FileCacheV2(
   }
 
   // For now it is only used in the developer settings so it's okay to block the UI
-  fun clearCache() {
+  fun clearCache(cacheFileType: CacheFileType) {
     activeDownloads.clear()
-    cacheHandler.get().clearCache()
+    cacheHandler.get().clearCache(cacheFileType)
   }
 
   fun isRunning(url: String): Boolean {
@@ -157,7 +157,10 @@ class FileCacheV2(
     }
   }
 
-  fun enqueueMediaPrefetchRequest(postImage: ChanPostImage): CancelableDownload? {
+  fun enqueueMediaPrefetchRequest(
+    cacheFileType: CacheFileType,
+    postImage: ChanPostImage
+  ): CancelableDownload? {
     val imageUrl = postImage.imageUrl
       ?: return null
 
@@ -173,7 +176,8 @@ class FileCacheV2(
       isGalleryBatchDownload = true,
       isPrefetchDownload = true,
       // Prefetch downloads always have default extra info (no file size, no file hash)
-      extraInfo = DownloadRequestExtraInfo()
+      extraInfo = DownloadRequestExtraInfo(),
+      cacheFileType = cacheFileType
     )
 
     if (alreadyActive) {
@@ -187,18 +191,21 @@ class FileCacheV2(
   @SuppressLint("CheckResult")
   fun enqueueDownloadFileRequest(
     url: HttpUrl,
+    cacheFileType: CacheFileType,
     extraInfo: DownloadRequestExtraInfo,
-    callback: FileCacheListener?
+    callback: FileCacheListener?,
   ): CancelableDownload {
     return enqueueDownloadFileRequest(
       url = url.toString(),
       extraInfo = extraInfo,
+      cacheFileType = cacheFileType,
       callback = callback
     )
   }
 
   fun enqueueDownloadFileRequest(
     url: String,
+    cacheFileType: CacheFileType,
     callback: FileCacheListener?,
     extraInfo: DownloadRequestExtraInfo = DownloadRequestExtraInfo()
   ): CancelableDownload {
@@ -207,7 +214,8 @@ class FileCacheV2(
       callback = callback,
       isGalleryBatchDownload = false,
       isPrefetchDownload = false,
-      extraInfo = extraInfo
+      extraInfo = extraInfo,
+      cacheFileType = cacheFileType
     )
 
     if (alreadyActive) {
@@ -225,7 +233,8 @@ class FileCacheV2(
     callback: FileCacheListener?,
     isGalleryBatchDownload: Boolean,
     isPrefetchDownload: Boolean,
-    extraInfo: DownloadRequestExtraInfo
+    extraInfo: DownloadRequestExtraInfo,
+    cacheFileType: CacheFileType
   ): Pair<Boolean, CancelableDownload> {
     return synchronized(activeDownloads) {
       val prevRequest = activeDownloads.get(url)
@@ -261,7 +270,8 @@ class FileCacheV2(
         downloaded = AtomicLong(0L),
         total = AtomicLong(0L),
         cancelableDownload = cancelableDownload,
-        extraInfo = extraInfo
+        extraInfo = extraInfo,
+        cacheFileType = cacheFileType
       )
 
       activeDownloads.put(url, request)
@@ -304,16 +314,17 @@ class FileCacheV2(
 
         // Success
         is FileDownloadResult.Success -> {
-          val (downloaded, total) = synchronized(activeDownloads) {
+          val (downloaded, total, cacheFileType) = synchronized(activeDownloads) {
             val activeDownload = activeDownloads.get(url)
 
             val downloaded = activeDownload?.downloaded?.get()
             val total = activeDownload?.total?.get()
+            val cacheFileType = activeDownload?.cacheFileType
 
-            Pair(downloaded, total)
+            Triple(downloaded, total, cacheFileType)
           }
 
-          if (downloaded == null || total == null) {
+          if (downloaded == null || total == null || cacheFileType == null) {
             return
           }
 
@@ -321,6 +332,7 @@ class FileCacheV2(
           val totalString = ChanPostUtils.getReadableFileSize(total)
 
           log(TAG, "Success (" +
+            "cacheFileType = cacheFileType, " +
             "downloaded = ${downloadedString} ($downloaded B), " +
             "total = ${totalString} ($total B), " +
             "took ${result.requestTime}ms, " +
@@ -330,7 +342,10 @@ class FileCacheV2(
           )
 
           // Trigger cache trimmer after a file has been successfully downloaded
-          cacheHandler.get().fileWasAdded(total)
+          cacheHandler.get().fileWasAdded(
+            cacheFileType = cacheFileType,
+            fileLen = total
+          )
 
           resultHandler(url, request, true) {
             onSuccess(result.file)
@@ -508,10 +523,14 @@ class FileCacheV2(
       return Flowable.error(FileCacheException.CancellationException(state, url))
     }
 
-    val outputFile = cacheHandler.get().getOrCreateCacheFile(url)
-      ?: return Flowable.error(FileCacheException.CouldNotCreateOutputCacheFile(url))
+    val cacheFileType = request.cacheFileType
 
-    if (cacheHandler.get().isAlreadyDownloaded(outputFile)) {
+    val outputFile = cacheHandler.get().getOrCreateCacheFile(
+      cacheFileType = cacheFileType,
+      url = url
+    ) ?: return Flowable.error(FileCacheException.CouldNotCreateOutputCacheFile(url))
+
+    if (cacheHandler.get().isAlreadyDownloaded(cacheFileType, outputFile)) {
       return Flowable.just(FileDownloadResult.Success(outputFile, 0L))
     }
 
@@ -522,7 +541,7 @@ class FileCacheV2(
 
     if (!exists || !isFile || !canWrite) {
       return Flowable.error(
-        FileCacheException.BadOutputFileException(fullPath, exists, isFile, canWrite)
+        FileCacheException.BadOutputFileException(fullPath, exists, isFile, canWrite, cacheFileType)
       )
     }
 
@@ -562,7 +581,7 @@ class FileCacheV2(
 
     log(TAG, "Purging url=${url}, file=${output.absolutePath}")
 
-    if (!cacheHandler.get().deleteCacheFile(output)) {
+    if (!cacheHandler.get().deleteCacheFile(request.cacheFileType, output)) {
       logError(TAG, "Could not delete the file in purgeOutput, output = ${output.absolutePath}")
     }
   }

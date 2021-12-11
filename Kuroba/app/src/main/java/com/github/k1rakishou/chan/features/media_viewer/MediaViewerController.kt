@@ -12,6 +12,7 @@ import androidx.viewpager.widget.ViewPager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
@@ -413,10 +414,11 @@ class MediaViewerController(
 
   override suspend fun defaultArtworkDrawable(): Drawable? {
     return imageLoaderV2.loadFromNetworkSuspend(
-      context,
-      AppConstants.RESOURCES_ENDPOINT + AUDIO_THUMB_FILE_NAME,
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage),
-      emptyList()
+      context = context,
+      url = AppConstants.RESOURCES_ENDPOINT + AUDIO_THUMB_FILE_NAME,
+      cacheFileType = CacheFileType.PostMediaFull,
+      imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage),
+      transformations = emptyList()
     ).valueOrNull()
   }
 
@@ -561,10 +563,11 @@ class MediaViewerController(
     }
 
     val resultBitmap = withTimeoutOrNull(MAX_WAIT_TIME_MS) {
-      imageLoaderV2.loadFromNetworkSuspend(
-        context,
-        transitionInfo.transitionThumbnailUrl,
-        ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
+      return@withTimeoutOrNull imageLoaderV2.loadFromNetworkSuspend(
+        context = context,
+        url = transitionInfo.transitionThumbnailUrl,
+        cacheFileType = CacheFileType.PostMediaThumbnail,
+        imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(appearPreviewImage)
       ).valueOrNull()?.bitmap
     }
 

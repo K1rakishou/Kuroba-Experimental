@@ -60,26 +60,14 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
 
     return Flowable.concat(
       Flowable.just(FileDownloadResult.Start(chunksCount)),
-      Flowable.defer {
-        return@defer downloadInternal(
-          url,
-          chunks,
-          partialContentCheckResult,
-          output
-        )
-      }
+      Flowable.defer { downloadInternal(url, chunks, partialContentCheckResult, output) }
         .doOnSubscribe { log(TAG, "Starting downloading ($url)") }
         .doOnComplete {
           log(TAG, "Completed downloading ($url)")
           removeChunksFromDisk(url)
         }
         .doOnError { error ->
-          logErrorsAndExtractErrorMessage(
-            TAG,
-            "Error while trying to download",
-            error
-          )
-
+          logErrorsAndExtractErrorMessage(TAG, "Error while trying to download", error)
           removeChunksFromDisk(url)
         }
         .subscribeOn(workerScheduler)
@@ -129,9 +117,16 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
       return
     }
 
+    val request = activeDownloads.get(url)
+      ?: activeDownloads.throwCancellationException(url)
+
     for (chunk in chunks) {
-      val chunkFile = cacheHandler.get().getChunkCacheFileOrNull(chunk.start, chunk.end, url)
-        ?: continue
+      val chunkFile = cacheHandler.get().getChunkCacheFileOrNull(
+        cacheFileType = request.cacheFileType,
+        chunkStart = chunk.start,
+        chunkEnd = chunk.end,
+        url = url
+      ) ?: continue
 
       if (chunkFile.delete()) {
         log(TAG, "Deleted chunk file ${chunkFile.absolutePath}")

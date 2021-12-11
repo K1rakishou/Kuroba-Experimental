@@ -40,6 +40,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
@@ -334,7 +335,12 @@ class FilterBoardSelectorController(
           .padding(4.dp)
 
         if (siteIcon.url != null) {
-          val request = ImageLoaderRequest(ImageLoaderRequestData.Url(siteIcon.url!!))
+          val data = ImageLoaderRequestData.Url(
+            httpUrl = siteIcon.url!!,
+            cacheFileType = CacheFileType.SiteIcon
+          )
+
+          val request = ImageLoaderRequest(data)
 
           KurobaComposeImage(
             modifier = siteIconModifier,

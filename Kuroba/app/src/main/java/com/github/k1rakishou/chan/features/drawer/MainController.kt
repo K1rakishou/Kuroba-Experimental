@@ -69,6 +69,7 @@ import coil.transform.CircleCropTransformation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
@@ -1159,7 +1160,10 @@ class MainController(
             )
           } else {
             ImageLoaderRequest(
-              data = ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl),
+              data = ImageLoaderRequestData.Url(
+                httpUrl = navHistoryEntry.threadThumbnailUrl,
+                cacheFileType = CacheFileType.NavHistoryThumbnail
+              ),
               transformations = circleCropTransformation
             )
           }
@@ -1204,7 +1208,12 @@ class MainController(
         ) {
           val siteIconRequest = remember(key1 = chanDescriptor) {
             if (navHistoryEntry.siteThumbnailUrl != null) {
-              ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.siteThumbnailUrl))
+              val data = ImageLoaderRequestData.Url(
+                httpUrl = navHistoryEntry.siteThumbnailUrl,
+                cacheFileType = CacheFileType.SiteIcon
+              )
+
+              ImageLoaderRequest(data = data)
             } else {
               null
             }
@@ -1282,7 +1291,12 @@ class MainController(
 
     val siteIconRequest = remember(key1 = chanDescriptor) {
       if (navHistoryEntry.siteThumbnailUrl != null) {
-        ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.siteThumbnailUrl))
+        val data = ImageLoaderRequestData.Url(
+          httpUrl = navHistoryEntry.siteThumbnailUrl,
+          cacheFileType = CacheFileType.SiteIcon
+        )
+
+        ImageLoaderRequest(data)
       } else {
         null
       }
@@ -1292,7 +1306,12 @@ class MainController(
       if (navHistoryEntry.isCompositeIconUrl) {
         ImageLoaderRequest(ImageLoaderRequestData.DrawableResource(R.drawable.composition_icon))
       } else {
-        ImageLoaderRequest(ImageLoaderRequestData.Url(navHistoryEntry.threadThumbnailUrl))
+        val data = ImageLoaderRequestData.Url(
+          httpUrl = navHistoryEntry.threadThumbnailUrl,
+          cacheFileType = CacheFileType.NavHistoryThumbnail
+        )
+
+        ImageLoaderRequest(data)
       }
     }
 

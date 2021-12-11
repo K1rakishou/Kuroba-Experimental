@@ -11,6 +11,7 @@ import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.search.data.ThumbnailInfo
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -141,11 +142,12 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
     searchPostImagesContainer.setVisibilityFast(View.VISIBLE)
 
     imageDisposable = imageLoaderV2.loadFromNetwork(
-      context,
-      thumbnailUrl.toString(),
-      ImageLoaderV2.ImageSize.MeasurableImageSize.create(searchPostThumbnail),
-      listOf(),
-      { drawable -> searchPostThumbnail.setImageBitmap(drawable.bitmap) }
+      context = context,
+      url = thumbnailUrl.toString(),
+      cacheFileType = CacheFileType.PostMediaThumbnail,
+      imageSize = ImageLoaderV2.ImageSize.MeasurableImageSize.create(searchPostThumbnail),
+      transformations = listOf(),
+      listener = { drawable -> searchPostThumbnail.setImageBitmap(drawable.bitmap) }
     )
   }
 

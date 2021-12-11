@@ -31,6 +31,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -307,7 +308,12 @@ class ComposeBoardsController(
                   val siteDescriptor = catalogCompositionSlot.catalogDescriptor.siteDescriptor()
                   val iconUrl = siteManager.bySiteDescriptor(siteDescriptor)?.icon()?.url!!
 
-                  return@remember ImageLoaderRequest(ImageLoaderRequestData.Url(iconUrl))
+                  val data = ImageLoaderRequestData.Url(
+                    httpUrl = iconUrl,
+                    cacheFileType = CacheFileType.SiteIcon
+                  )
+
+                  return@remember ImageLoaderRequest(data)
                 }
 
                 KurobaComposeImage(

@@ -25,6 +25,7 @@ import android.widget.FrameLayout
 import android.widget.TextView
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2.ImageSize.MeasurableImageSize.Companion.create
 import com.github.k1rakishou.chan.core.manager.PrefetchState
@@ -187,17 +188,18 @@ class PostImageThumbnailView @JvmOverloads constructor(
     this.postImage = postImage
     this.canUseHighResCells = canUseHighResCells
 
-    val url = getUrl(postImage, canUseHighResCells)
-    if (url == null || TextUtils.isEmpty(url)) {
+    val (url, cacheFileType) = getUrl(postImage, canUseHighResCells)
+    if (url == null || cacheFileType == null || TextUtils.isEmpty(url)) {
       unbindPostImage()
       return
     }
 
     thumbnail.bindImageUrl(
-      url,
-      postImage.ownerPostDescriptor,
-      create(this),
-      thumbnailViewOptions
+      url = url,
+      cacheFileType = cacheFileType,
+      postDescriptor = postImage.ownerPostDescriptor,
+      imageSize = create(this),
+      thumbnailViewOptions = thumbnailViewOptions
     )
   }
 
@@ -262,7 +264,9 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
       if (postImage != null && canUseHighResCells) {
         val thumbnailViewOptions = thumbnail.thumbnailViewOptions
-        if (thumbnailViewOptions != null) {
+        val canSwapThumbnailToFullImage = postImage?.spoiler == false || ChanSettings.postThumbnailRemoveImageSpoilers.get()
+
+        if (canSwapThumbnailToFullImage && thumbnailViewOptions != null) {
           bindPostImage(
             postImage = postImage!!,
             canUseHighResCells = canUseHighResCells,
@@ -274,14 +278,15 @@ class PostImageThumbnailView @JvmOverloads constructor(
     }
   }
 
-  private fun getUrl(postImage: ChanPostImage, canUseHighResCells: Boolean): String? {
+  private fun getUrl(postImage: ChanPostImage, canUseHighResCells: Boolean): Pair<String?, CacheFileType?> {
     val thumbnailUrl = postImage.getThumbnailUrl()
     if (thumbnailUrl == null) {
       Logger.e(TAG, "getUrl() postImage: $postImage, has no thumbnail url")
-      return null
+      return null to null
     }
 
     var url: String? = postImage.getThumbnailUrl()?.toString()
+    var cacheFileType = CacheFileType.PostMediaThumbnail
 
     val highRes = canUseHighResCells
       && ChanSettings.highResCells.get()
@@ -297,9 +302,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
       && postImage.type == ChanPostImageType.STATIC
     ) {
       url = postImage.imageUrl?.toString()
+      cacheFileType = CacheFileType.PostMediaFull
     }
 
-    return url
+    return url to cacheFileType
   }
 
   fun setRatio(ratio: Float) {
