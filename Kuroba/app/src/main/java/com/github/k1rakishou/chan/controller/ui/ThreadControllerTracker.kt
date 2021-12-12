@@ -17,13 +17,12 @@ import kotlin.math.max
 import kotlin.math.min
 
 class ThreadControllerTracker(
-  private val swipeEnabled: Boolean = true,
+  context: Context,
   private val getWidthFunc: () -> Int,
   private val getHeightFunc: () -> Int,
   private val invalidateFunc: () -> Unit,
   private val postOnAnimationFunc: (Runnable) -> Unit,
-  private val navigationController: NavigationController,
-  context: Context
+  private val navigationController: NavigationController
 ) : ControllerTracker(context) {
   // Paint, draw rect and position for drawing the shadow
   // The shadow is only drawn when tracking is true
@@ -56,8 +55,7 @@ class ThreadControllerTracker(
       return false
     }
 
-    val shouldNotInterceptTouchEvent = !swipeEnabled
-      || tracking
+    val shouldNotInterceptTouchEvent = tracking
       || navController.isBlockingInput
       || !navController.top!!.navigation.swipeable
       || getBelowTop() == null

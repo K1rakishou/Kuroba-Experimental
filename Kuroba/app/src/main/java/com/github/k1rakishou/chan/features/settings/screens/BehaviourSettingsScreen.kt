@@ -238,7 +238,17 @@ class BehaviourSettingsScreen(
           context = context,
           identifier = BehaviorScreen.GeneralGroup.ControllerSwipeable,
           topDescriptionIdFunc = { R.string.setting_controller_swipeable },
+          bottomDescriptionIdFunc = { R.string.setting_controller_swipeable_description },
           setting = ChanSettings.controllerSwipeable,
+          requiresRestart = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = BehaviorScreen.GeneralGroup.ViewThreadControllerSwipeable,
+          topDescriptionIdFunc = { R.string.setting_view_thread_controller_swipeable },
+          bottomDescriptionIdFunc = { R.string.setting_view_thread_controller_swipeable_description },
+          setting = ChanSettings.viewThreadControllerSwipeable,
           requiresRestart = true
         )
 

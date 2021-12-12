@@ -91,6 +91,7 @@ public class ThreadSlideController
         slidingPaneLayout.setThreadSlideController(this);
         slidingPaneLayout.setPanelSlideListener(this);
         slidingPaneLayout.setParallaxDistance(dp(100));
+        slidingPaneLayout.allowedToSlide(ChanSettings.viewThreadControllerSwipeable.get());
 
         if (ChanSettings.isSlideLayoutMode()) {
             slidingPaneLayout.setShadowResourceLeft(R.drawable.panel_shadow);

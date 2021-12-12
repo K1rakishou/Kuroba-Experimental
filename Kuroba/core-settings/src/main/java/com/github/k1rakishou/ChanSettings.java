@@ -320,6 +320,7 @@ public class ChanSettings {
     // General
     public static BooleanSetting autoRefreshThread;
     public static BooleanSetting controllerSwipeable;
+    public static BooleanSetting viewThreadControllerSwipeable;
     public static BooleanSetting replyLayoutOpenCloseGestures;
     public static BooleanSetting openLinkConfirmation;
     public static StringSetting jsCaptchaCookies;
@@ -547,6 +548,7 @@ public class ChanSettings {
             // General
             autoRefreshThread = new BooleanSetting(provider, "preference_auto_refresh_thread", true);
             controllerSwipeable = new BooleanSetting(provider, "preference_controller_swipeable", true);
+            viewThreadControllerSwipeable = new BooleanSetting(provider, "preference_view_thread_controller_swipeable", true);
             replyLayoutOpenCloseGestures = new BooleanSetting(provider, "reply_layout_open_close_gestures", true);
             openLinkConfirmation = new BooleanSetting(provider, "preference_open_link_confirmation", false);
             jsCaptchaCookies = new StringSetting(provider, "js_captcha_cookies", EMPTY_JSON);

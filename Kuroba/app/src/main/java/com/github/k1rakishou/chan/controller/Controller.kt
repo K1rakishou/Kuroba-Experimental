@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.ui.controller.navigation.BottomNavBarAwareNavi
 import com.github.k1rakishou.chan.ui.controller.navigation.DoubleNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
+import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
@@ -262,6 +263,10 @@ abstract class Controller(@JvmField var context: Context) {
     }
 
     controller.onCreate()
+
+    if (controller.navigationController is StyledToolbarNavigationController) {
+      (controller.navigationController as StyledToolbarNavigationController).onChildControllerPushed(controller)
+    }
   }
 
   fun addChildControllerOrMoveToTop(container: ViewGroup, newController: Controller) {
@@ -321,6 +326,10 @@ abstract class Controller(@JvmField var context: Context) {
   fun removeChildController(controller: Controller) {
     controller.onDestroy()
     childControllers.remove(controller)
+
+    if (controller.navigationController is StyledToolbarNavigationController) {
+      (controller.navigationController as StyledToolbarNavigationController).onChildControllerPopped(controller)
+    }
   }
 
   fun attachToParentView(parentView: ViewGroup?) {

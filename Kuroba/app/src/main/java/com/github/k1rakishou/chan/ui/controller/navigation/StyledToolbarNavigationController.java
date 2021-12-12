@@ -28,8 +28,11 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.drawer.MainController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
+import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
+import com.github.k1rakishou.chan.ui.controller.ViewThreadController;
 
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class StyledToolbarNavigationController extends ToolbarNavigationController {
 
@@ -47,13 +50,9 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
         super.onCreate();
 
         view = inflate(context, R.layout.controller_navigation_toolbar);
-        container = (NavigationControllerContainerLayout) view.findViewById(R.id.toolbar_navigation_controller_container);
+        container = view.findViewById(R.id.toolbar_navigation_controller_container);
 
-        NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
-        nav.initThreadControllerTracking(
-                ChanSettings.controllerSwipeable.get(),
-                this
-        );
+        reloadControllerTracking();
 
         setToolbar(view.findViewById(R.id.toolbar));
         requireToolbar().setCallback(this);
@@ -68,12 +67,81 @@ public class StyledToolbarNavigationController extends ToolbarNavigationControll
 
     @Override
     public boolean popController(ControllerTransition controllerTransition) {
-        return !requireToolbar().isTransitioning() && super.popController(controllerTransition);
+        boolean result = !requireToolbar().isTransitioning()
+                && super.popController(controllerTransition);
+
+        reloadControllerTracking();
+        return result;
     }
 
     @Override
     public boolean pushController(Controller to, ControllerTransition controllerTransition) {
-        return !requireToolbar().isTransitioning() && super.pushController(to, controllerTransition);
+        boolean result = !requireToolbar().isTransitioning()
+                && super.pushController(to, controllerTransition);
+
+        reloadControllerTracking();
+        return result;
+    }
+
+    public void onChildControllerPushed(Controller controller) {
+        reloadControllerTracking();
+    }
+
+    public void onChildControllerPopped(Controller controller) {
+        reloadControllerTracking();
+    }
+
+    private void reloadControllerTracking() {
+        if (container == null) {
+            return;
+        }
+
+        NavigationControllerContainerLayout nav = (NavigationControllerContainerLayout) container;
+        @Nullable ThreadSlideController threadSlideController = threadSlideControllerOrNull();
+
+        if (this.getTop() == null || threadSlideController != null) {
+            ViewThreadController viewThreadController =
+                    viewThreadControllerOrNull(threadSlideController);
+
+            if (viewThreadController != null) {
+                if (ChanSettings.viewThreadControllerSwipeable.get()) {
+                    nav.initThreadControllerTracking(this);
+                } else {
+                    nav.initThreadDrawerOpenGestureControllerTracker(this);
+                }
+
+                return;
+            }
+
+            // fallthrough
+        }
+
+        if (ChanSettings.controllerSwipeable.get()) {
+            nav.initThreadControllerTracking(this);
+        } else {
+            nav.initThreadDrawerOpenGestureControllerTracker(this);
+        }
+    }
+
+    @Nullable
+    private ViewThreadController viewThreadControllerOrNull(
+            @Nullable ThreadSlideController threadSlideController
+    ) {
+        if (threadSlideController == null) {
+            return null;
+        }
+
+        return threadSlideController.rightController;
+    }
+
+    @Nullable
+    private ThreadSlideController threadSlideControllerOrNull() {
+        Controller top = this.getTop();
+        if (top instanceof ThreadSlideController) {
+            return (ThreadSlideController) top;
+        }
+
+        return null;
     }
 
     @Override

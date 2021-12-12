@@ -30,9 +30,12 @@ import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
 import com.github.k1rakishou.chan.features.gesture_editor.ExclusionZone
 import com.github.k1rakishou.chan.ui.controller.BrowseController
+import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import java.util.*
 import javax.inject.Inject
 
@@ -68,17 +71,41 @@ class NavigationControllerContainerLayout : FrameLayout {
   }
 
   fun initThreadControllerTracking(
-    swipeEnabled: Boolean,
     navigationController: NavigationController
   ) {
+    Logger.d(TAG, "initThreadControllerTracking()")
+
+    if (controllerTracker is ThreadControllerTracker) {
+      return
+    }
+
     controllerTracker = ThreadControllerTracker(
-      swipeEnabled,
-      { this.width },
-      { this.height },
-      { invalidate() },
-      { runnable -> ViewCompat.postOnAnimation(this, runnable) },
-      navigationController,
-      context
+      context = context,
+      getWidthFunc = { this.width },
+      getHeightFunc = { this.height },
+      invalidateFunc = { invalidate() },
+      postOnAnimationFunc = { runnable -> ViewCompat.postOnAnimation(this, runnable) },
+      navigationController = navigationController
+    )
+  }
+
+  fun initThreadDrawerOpenGestureControllerTracker(
+    navigationController: NavigationController
+  ) {
+    Logger.d(TAG, "initThreadDrawerOpenGestureControllerTracker()")
+
+    if (controllerTracker is ThreadDrawerOpenGestureControllerTracker) {
+      return
+    }
+
+    controllerTracker = ThreadDrawerOpenGestureControllerTracker(
+      context = context,
+      globalViewStateManager = globalViewStateManager,
+      findViewThreadControllerFunc = {
+        return@ThreadDrawerOpenGestureControllerTracker navigationController
+          .findControllerOrNull { c -> c is ViewThreadController } as? ViewThreadController
+      },
+      navigationController = navigationController
     )
   }
 
@@ -156,4 +183,9 @@ class NavigationControllerContainerLayout : FrameLayout {
       systemGestureExclusionRects = rects
     }
   }
+
+  companion object {
+    private const val TAG = "NavigationControllerContainerLayout"
+  }
+
 }
