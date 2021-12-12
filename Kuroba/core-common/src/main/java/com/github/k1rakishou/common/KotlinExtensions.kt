@@ -1,7 +1,6 @@
 package com.github.k1rakishou.common
 
 import android.graphics.Bitmap
-import android.graphics.Color
 import android.graphics.RectF
 import android.os.Parcel
 import android.os.Parcelable
@@ -1495,20 +1494,4 @@ private fun unmarshall(bytes: ByteArray): Parcel {
   parcel.unmarshall(bytes, 0, bytes.size)
   parcel.setDataPosition(0)
   return parcel
-}
-
-fun String.asColorOrNull(): Int? {
-  return try {
-    Color.parseColor(this)
-  } catch (error: Throwable) {
-    null
-  }
-}
-
-fun colorFromArgb(alpha: Int, r: String?, g: String?, b: String?): Int? {
-  val red = r?.toIntOrNull(radix = 10) ?: return null
-  val green = g?.toIntOrNull(radix = 10) ?: return null
-  val blue = b?.toIntOrNull(radix = 10) ?: return null
-
-  return Color.argb(alpha, red, green, blue)
 }

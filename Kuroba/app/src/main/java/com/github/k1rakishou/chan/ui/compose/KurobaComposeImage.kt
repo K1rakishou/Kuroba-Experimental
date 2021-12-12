@@ -21,17 +21,19 @@ import androidx.compose.ui.graphics.painter.BitmapPainter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.sp
 import coil.transform.Transformation
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
-import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.ExceptionWithShortErrorMessage
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.errorMessageOrClassName
 import okhttp3.HttpUrl
+import javax.net.ssl.SSLException
 
 @Suppress("UnnecessaryVariable")
 @Composable
@@ -59,17 +61,22 @@ fun KurobaComposeImage(
 
 @Composable
 private fun BoxScope.DefaultErrorHandler(throwable: Throwable) {
-  val errorMsg = if (throwable is BadStatusResponseException) {
-    "Bad status: ${throwable.status}"
-  } else {
-    throwable.errorMessageOrClassName()
+  val errorMsg = when (throwable) {
+    is ExceptionWithShortErrorMessage -> throwable.shortErrorMessage()
+    is SSLException -> stringResource(id = R.string.ssl_error)
+    else -> throwable::class.java.simpleName
   }
 
+  val chanTheme = LocalChanTheme.current
+  val textColor = chanTheme.textColorSecondaryCompose
+
   KurobaComposeText(
+    modifier = Modifier.align(Alignment.Center),
     text = errorMsg,
-    fontSize = 13.sp,
-    textAlign = TextAlign.Center,
-    modifier = Modifier.align(Alignment.Center)
+    color = textColor,
+    fontSize = 11.sp,
+    maxLines = 3,
+    textAlign = TextAlign.Center
   )
 }
 
@@ -92,9 +99,8 @@ private fun BuildInnerImage(
   val imageLoaderResult by produceState<ImageLoaderResult>(
     initialValue = ImageLoaderResult.NotInitialized,
     key1 = request,
-    producer = {
-      loadImage(context, request, size, imageLoaderV2)
-    })
+    producer = { loadImage(context, request, size, imageLoaderV2) }
+  )
 
   when (val result = imageLoaderResult) {
     ImageLoaderResult.NotInitialized -> {

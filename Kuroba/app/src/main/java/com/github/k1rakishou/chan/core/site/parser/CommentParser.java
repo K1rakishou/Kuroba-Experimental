@@ -229,15 +229,19 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 return text;
             }
 
-            @Nullable String fgR = KotlinExtensionsKt.groupOrNull(matcher, 1);
-            @Nullable String fgG = KotlinExtensionsKt.groupOrNull(matcher, 2);
-            @Nullable String fgB = KotlinExtensionsKt.groupOrNull(matcher, 3);
-            @Nullable Integer foregroundColor = KotlinExtensionsKt.colorFromArgb(255, fgR, fgG, fgB);
+            @Nullable Integer foregroundColor = ConversionUtils.colorFromArgb(
+                    255,
+                    KotlinExtensionsKt.groupOrNull(matcher, 1),
+                    KotlinExtensionsKt.groupOrNull(matcher, 2),
+                    KotlinExtensionsKt.groupOrNull(matcher, 3)
+            );
 
-            @Nullable String bgR = KotlinExtensionsKt.groupOrNull(matcher, 4);
-            @Nullable String bgG = KotlinExtensionsKt.groupOrNull(matcher, 5);
-            @Nullable String bgB = KotlinExtensionsKt.groupOrNull(matcher, 6);
-            @Nullable Integer backgroundColor = KotlinExtensionsKt.colorFromArgb(255, bgR, bgG, bgB);
+            @Nullable Integer backgroundColor = ConversionUtils.colorFromArgb(
+                    255,
+                    KotlinExtensionsKt.groupOrNull(matcher, 4),
+                    KotlinExtensionsKt.groupOrNull(matcher, 5),
+                    KotlinExtensionsKt.groupOrNull(matcher, 6)
+            );
 
             ForegroundColorSpanHashed foregroundColorSpanHashed = null;
             if (foregroundColor != null) {

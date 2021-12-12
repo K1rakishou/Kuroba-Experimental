@@ -1487,5 +1487,6 @@ Actual error: \'%1$s\'</string>
     <string name="catalog_end_reached">Catalog end reached</string>
     <string name="archives_end_reached">End reached</string>
     <string name="failed_post_find_post_to_scroll_to">Failed to find post to scroll to (postNo=\'%1$d\')</string>
+    <string name="ssl_error">SSL error</string>
 
 </resources>

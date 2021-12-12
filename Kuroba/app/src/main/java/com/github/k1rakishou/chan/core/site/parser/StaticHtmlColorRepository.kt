@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.site.parser
 
+import java.util.*
+
 object StaticHtmlColorRepository {
   private val map = mutableMapOf<String, Int>()
 
@@ -156,7 +158,7 @@ object StaticHtmlColorRepository {
 
   @JvmStatic
   fun getColorValueByHtmlColorName(colorName: String): Int? {
-    return map[colorName]
+    return map[colorName.lowercase(Locale.ENGLISH)]
   }
 
 }

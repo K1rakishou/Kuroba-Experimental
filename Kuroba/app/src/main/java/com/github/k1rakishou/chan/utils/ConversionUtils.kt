@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.utils
 
+import android.graphics.Color
 import com.github.k1rakishou.common.groupOrNull
 import okhttp3.internal.and
 import java.util.*
@@ -86,6 +87,15 @@ object ConversionUtils {
   @JvmStatic
   fun toIntOrNull(maybeInt: String, radix: Int = 16): Int? {
     return maybeInt.toIntOrNull(radix)
+  }
+
+  @JvmStatic
+  fun colorFromArgb(alpha: Int, r: String?, g: String?, b: String?): Int? {
+    val red = r?.toIntOrNull(radix = 10) ?: return null
+    val green = g?.toIntOrNull(radix = 10) ?: return null
+    val blue = b?.toIntOrNull(radix = 10) ?: return null
+
+    return Color.argb(alpha, red, green, blue)
   }
 
 }
