@@ -206,6 +206,15 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:name=".core.receiver.PostingServiceBroadcastReceiver"
             android:exported="false" />
 
+        <receiver
+            android:name=".core.receiver.DiagnosticsBroadcastReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.github.k1rakishou.chan.perform_thread_stack_dump"/>
+            </intent-filter>
+
+        </receiver>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${fileProviderAuthority}"
