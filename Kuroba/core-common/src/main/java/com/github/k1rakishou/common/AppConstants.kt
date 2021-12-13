@@ -28,7 +28,7 @@ open class AppConstants(
 
   // 128MB
   val exoPlayerDiskCacheMaxSize = 128L * 1024 * 1024
-  val mpvDemuxerCacheMaxSize: Int
+  val mpvDemuxerCacheMaxSize: Long
 
   val replyDraftsDir: File
     get() {
@@ -145,7 +145,7 @@ open class AppConstants(
   init {
     val activityManager = context.getSystemService(Context.ACTIVITY_SERVICE) as? ActivityManager
 
-    mpvDemuxerCacheMaxSize = calculateMpvDemuxerCacheSize(activityManager).toInt()
+    mpvDemuxerCacheMaxSize = calculateMpvDemuxerCacheSize(activityManager)
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager).toInt()
 
     userAgent = try {

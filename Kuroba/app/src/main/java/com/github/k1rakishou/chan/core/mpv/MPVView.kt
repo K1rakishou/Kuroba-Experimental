@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.mpv.MPVLib.mpvFormat.MPV_FORMAT_STRING
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.util.ChanPostUtils
 import java.io.File
 import kotlin.reflect.KProperty
 
@@ -91,7 +92,7 @@ class MPVView(
 
         MPVLib.mpvSetOptionString("input-default-bindings", "yes")
 
-        Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${appConstants.mpvDemuxerCacheMaxSize}")
+        Logger.d(TAG, "initOptions() mpvDemuxerCacheMaxSize: ${ChanPostUtils.getReadableFileSize(appConstants.mpvDemuxerCacheMaxSize)}")
         MPVLib.mpvSetOptionString("demuxer-max-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
         MPVLib.mpvSetOptionString("demuxer-max-back-bytes", "${appConstants.mpvDemuxerCacheMaxSize}")
 

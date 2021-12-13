@@ -253,7 +253,7 @@ open class PostCellLayout @JvmOverloads constructor(
     measureResult.addVertical(measure(replies, repliesWidthSpec, unspecified()))
     measureResult.addVertical(measure(divider, widthMeasureSpec, exactly(DIVIDER_HEIGHT)))
 
-    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight))
+    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - postCellTopPadding))
 
     if (goToPostButton.visibility != GONE) {
       measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - postCellTopPadding))
@@ -328,7 +328,7 @@ open class PostCellLayout @JvmOverloads constructor(
     measureResult.addVertical(measure(replies, repliesWidthSpec, unspecified()))
     measureResult.addVertical(measure(divider, dividerWidthSpec, exactly(DIVIDER_HEIGHT)))
 
-    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight))
+    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - postCellTopPadding))
 
     if (goToPostButton.visibility != GONE) {
       measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - postCellTopPadding))
