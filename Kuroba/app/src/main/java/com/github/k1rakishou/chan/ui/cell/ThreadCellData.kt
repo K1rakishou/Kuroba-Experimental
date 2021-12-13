@@ -396,6 +396,7 @@ class ThreadCellData(
 
         if (boardPostViewModeChanged) {
           postCellData.resetCommentTextCache()
+          postCellData.resetPostTitleCache()
         }
 
         if (compactChanged) {

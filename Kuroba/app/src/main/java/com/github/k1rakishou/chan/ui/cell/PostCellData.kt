@@ -410,14 +410,18 @@ data class PostCellData(
     )
 
     val date = buildSpannedString {
-      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
       append(calculatePostTime(post))
-
       setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
     }
 
     fullTitle.append(postNoText)
-    fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+
+    if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
+      fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+    } else {
+      fullTitle.append(" ")
+    }
+
     fullTitle.append(date)
     fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
 
