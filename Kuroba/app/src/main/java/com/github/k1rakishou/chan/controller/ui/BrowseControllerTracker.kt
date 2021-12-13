@@ -3,9 +3,7 @@ package com.github.k1rakishou.chan.controller.ui
 import android.content.Context
 import android.view.MotionEvent
 import android.view.ViewParent
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.ui.controller.BrowseController
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import kotlin.math.abs
@@ -13,7 +11,6 @@ import kotlin.math.max
 
 class BrowseControllerTracker(
   context: Context,
-  private val globalViewStateManager: GlobalViewStateManager,
   private val browseController: BrowseController,
   private val navigationController: NavigationController
 ) : ControllerTracker(context) {
@@ -23,10 +20,6 @@ class BrowseControllerTracker(
 
   override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     if (event.pointerCount != 1) {
-      return false
-    }
-
-    if (globalViewStateManager.isReplyLayoutOpened(ThreadSlideController.ThreadControllerType.Catalog)) {
       return false
     }
 

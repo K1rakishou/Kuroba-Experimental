@@ -100,7 +100,6 @@ class NavigationControllerContainerLayout : FrameLayout {
 
     controllerTracker = ThreadDrawerOpenGestureControllerTracker(
       context = context,
-      globalViewStateManager = globalViewStateManager,
       findViewThreadControllerFunc = {
         return@ThreadDrawerOpenGestureControllerTracker navigationController
           .findControllerOrNull { c -> c is ViewThreadController } as? ViewThreadController
@@ -113,11 +112,16 @@ class NavigationControllerContainerLayout : FrameLayout {
     browseController: BrowseController,
     navigationController: NavigationController
   ) {
+    Logger.d(TAG, "initBrowseControllerTracker()")
+
+    if (controllerTracker is BrowseControllerTracker) {
+      return
+    }
+
     controllerTracker = BrowseControllerTracker(
-      context,
-      globalViewStateManager,
-      browseController,
-      navigationController
+      context = context,
+      browseController = browseController,
+      navigationController = navigationController
     )
   }
 

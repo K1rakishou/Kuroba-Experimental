@@ -3,8 +3,6 @@ package com.github.k1rakishou.chan.controller.ui
 import android.content.Context
 import android.view.MotionEvent
 import android.view.ViewParent
-import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
-import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -13,7 +11,6 @@ import kotlin.math.max
 
 class ThreadDrawerOpenGestureControllerTracker(
   context: Context,
-  private val globalViewStateManager: GlobalViewStateManager,
   private val findViewThreadControllerFunc: () -> ViewThreadController?,
   private val navigationController: NavigationController
 ) : ControllerTracker(context) {
@@ -37,10 +34,6 @@ class ThreadDrawerOpenGestureControllerTracker(
 
   override fun onInterceptTouchEvent(event: MotionEvent): Boolean {
     if (event.pointerCount != 1) {
-      return false
-    }
-
-    if (globalViewStateManager.isReplyLayoutOpened(ThreadSlideController.ThreadControllerType.Thread)) {
       return false
     }
 

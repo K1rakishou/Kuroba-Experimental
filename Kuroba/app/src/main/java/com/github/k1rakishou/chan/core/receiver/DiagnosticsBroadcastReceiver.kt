@@ -4,9 +4,6 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import com.github.k1rakishou.core_logger.Logger
-import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormatterBuilder
-import org.joda.time.format.ISODateTimeFormat
 import java.io.File
 
 class DiagnosticsBroadcastReceiver : BroadcastReceiver() {
@@ -43,19 +40,17 @@ class DiagnosticsBroadcastReceiver : BroadcastReceiver() {
       }
     }
 
-    val dateString = DATE_FORMATTER.print(DateTime.now())
+    val outFile = File(context.filesDir, "thread_stack_dump.txt")
+    if (outFile.exists()) {
+      outFile.delete()
+    }
 
-    val outFile = File(context.filesDir, "thread_stack_dump_${dateString}")
     outFile.writeText(threadStackDump)
   }
 
   companion object {
     private const val TAG = "DiagnosticsBroadcastReceiver"
     private const val THREAD_STACK_DUMP_ACTION = "com.github.k1rakishou.chan.perform_thread_stack_dump"
-
-    private val DATE_FORMATTER = DateTimeFormatterBuilder()
-      .append(ISODateTimeFormat.date())
-      .toFormatter()
   }
 
 }
