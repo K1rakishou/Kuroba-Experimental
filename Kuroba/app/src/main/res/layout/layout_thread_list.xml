@@ -36,4 +36,9 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:visibility="gone"
         tools:ignore="UnusedAttribute" />
 
+    <com.github.k1rakishou.chan.ui.layout.SnowLayout
+        android:id="@+id/snow_layout"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
+
 </com.github.k1rakishou.chan.ui.layout.ThreadListLayout>

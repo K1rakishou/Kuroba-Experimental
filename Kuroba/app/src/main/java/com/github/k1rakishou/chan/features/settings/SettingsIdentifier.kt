@@ -175,6 +175,7 @@ sealed class DeveloperScreen(
     object AutoThemeSwitcher : MainGroup("auto_theme_switcher")
     object Force4chanBirthday : MainGroup("force_4chan_birthday")
     object ForceHalloween : MainGroup("force_halloween")
+    object ForceSnow : MainGroup("force_snow")
 
     companion object : IGroupIdentifier() {
       override fun getScreenIdentifier(): ScreenIdentifier = DeveloperScreen.getScreenIdentifier()

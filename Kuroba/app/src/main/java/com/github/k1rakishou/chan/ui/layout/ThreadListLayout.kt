@@ -334,6 +334,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   private val gridModeSpaceItemDecoration = GridModeSpaceItemDecoration()
 
   private lateinit var replyLayout: ReplyLayout
+  private lateinit var snowLayout: SnowLayout
   private lateinit var recyclerView: RecyclerView
   private lateinit var postAdapter: PostAdapter
 
@@ -407,6 +408,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     // View binding
     replyLayout = findViewById(R.id.reply)
     recyclerView = findViewById(R.id.recycler_view)
+    snowLayout = findViewById(R.id.snow_layout)
     recyclerView.hackMaxFlingVelocity()
 
     val params = replyLayout.layoutParams as LayoutParams
@@ -829,6 +831,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun lostFocus(wasFocused: ThreadSlideController.ThreadControllerType) {
     threadPresenter?.lostFocus(wasFocused)
+    snowLayout.lostFocus()
   }
 
   fun gainedFocus(
@@ -836,6 +839,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     isThreadVisible: Boolean
   ) {
     threadPresenter?.gainedFocus(nowFocused)
+    snowLayout.gainedFocus()
 
     if (isThreadVisible) {
       showToolbarIfNeeded()
@@ -846,6 +850,12 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     if (nowFocused == ThreadSlideController.ThreadControllerType.Thread && isThreadVisible) {
       threadPresenter?.handleMarkedPost()
     }
+
+    snowLayout.onShown()
+  }
+
+  fun onHidden(nowFocused: ThreadSlideController.ThreadControllerType, isThreadVisible: Boolean) {
+    snowLayout.onHidden()
   }
 
   override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {

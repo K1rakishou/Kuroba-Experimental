@@ -48,10 +48,6 @@ object TimeUtils {
       return day in 30..31
     }
 
-    if (calendar[Calendar.MONTH] == Calendar.NOVEMBER) {
-      return day == 1
-    }
-
     return false
   }
 
@@ -63,6 +59,37 @@ object TimeUtils {
 
     return calendar[Calendar.MONTH] == Calendar.OCTOBER
       && calendar[Calendar.DAY_OF_MONTH] == 1
+  }
+
+  @JvmStatic
+  fun isSnowTimeToday(): Boolean {
+    if (ChanSettings.forceSnowMode.get()) {
+      return true
+    }
+
+    if (isChristmasToday()) {
+      return true
+    }
+
+    val day = calendar[Calendar.DAY_OF_MONTH]
+
+    if (calendar[Calendar.MONTH] == Calendar.DECEMBER) {
+      return day == 31
+    }
+
+    return false
+  }
+
+  @JvmStatic
+  fun isChristmasToday(): Boolean {
+    val day = calendar[Calendar.DAY_OF_MONTH]
+
+    val isDecember = calendar[Calendar.MONTH] == Calendar.DECEMBER
+    if (isDecember) {
+      return day in 24..25
+    }
+
+    return false
   }
 
 }

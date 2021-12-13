@@ -845,7 +845,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_enable_verbose_logs">Enable verbose logs</string>
     <string name="settings_disable_verbose_logs">Disable verbose logs</string>
     <string name="settings_crash_app">Crash the app</string>
-    <string name="settings_clear_file_cache">Clear %1$s disk cache</string>
+    <string name="settings_clear_file_cache">Clear \'%1$s\' disk cache</string>
     <string name="settings_clear_file_cache_bottom_description">%1$s cache: %2$s / %3$s</string>
     <string name="settings_clear_exo_player_file_cache">Clear exoplayer cache</string>
     <string name="settings_clear_exo_player_cache_bottom_description">Exoplayer cache: %1$s</string>
@@ -866,6 +866,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_auto_theme_switcher_bottom">Toggles light/dark theme with a slight delay (5 seconds) ad infinitum (Or until app restart). Is used for dynamic themes testing. \n\nCurrent status: %1$s</string>
     <string name="settings_force_4chan_birthday">Force 4chan birthday</string>
     <string name="settings_force_halloween">Force halloween</string>
+    <string name="settings_force_snow">Force snow</string>
 
     <!-- Security settings -->
     <string name="settings_screen_security">Security</string>
