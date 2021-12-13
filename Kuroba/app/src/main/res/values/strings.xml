@@ -731,7 +731,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <!-- Behavior post group -->
     <string name="settings_group_post">Post</string>
     <string name="setting_volume_key_scrolling">Volume keys scroll content</string>
-    <string name="setting_tap_no_reply">Tap the post number to reply</string>
+    <string name="setting_tappable_post_title">Tappable post title</string>
+    <string name="setting_tappable_post_title_description">When enabled allows tapping post number (to reply) as well as tapping poster id/name/tripcode (to display posts by that id/name/tripcode)</string>
     <string name="setting_post_links_take_whole_horiz_space">Make post links take whole available horizontal space</string>
     <string name="setting_post_links_take_whole_horiz_space_descriptor">When enabled makes clicking any kind of post link (including post replies) easier by extending it\'s area to take the whole available horizontal space. Disabling this setting will stop triggering link clicks when clicking seemingly empty post comment space.</string>
     <string name="setting_mark_unseen_posts_title">Mark unseen posts</string>

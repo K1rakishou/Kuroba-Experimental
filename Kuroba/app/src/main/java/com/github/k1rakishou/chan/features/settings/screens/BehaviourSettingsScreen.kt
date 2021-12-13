@@ -147,7 +147,8 @@ class BehaviourSettingsScreen(
         group += BooleanSettingV2.createBuilder(
           context = context,
           identifier = BehaviorScreen.PostGroup.TapNoReply,
-          topDescriptionIdFunc = { R.string.setting_tap_no_reply },
+          topDescriptionIdFunc = { R.string.setting_tappable_post_title },
+          bottomDescriptionIdFunc = { R.string.setting_tappable_post_title_description },
           setting = ChanSettings.tapNoReply,
           requiresUiRefresh = true
         )
