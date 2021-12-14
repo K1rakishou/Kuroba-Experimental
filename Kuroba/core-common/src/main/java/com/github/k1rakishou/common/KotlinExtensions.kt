@@ -1306,7 +1306,7 @@ fun TextView.getTextBounds(text: CharSequence, availableWidth: Int): TextBounds 
 
   val staticLayout = if (AndroidUtils.isAndroidM()) {
     StaticLayout.Builder
-      .obtain(text, 0, length(), paint, availableWidth)
+      .obtain(text, 0, text.length, paint, availableWidth)
       .setBreakStrategy(breakStrategy)
       .justificationModeTextView(this)
       .setHyphenationFrequency(hyphenationFrequency)
