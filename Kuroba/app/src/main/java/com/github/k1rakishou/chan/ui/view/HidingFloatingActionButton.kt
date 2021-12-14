@@ -19,8 +19,10 @@ package com.github.k1rakishou.chan.ui.view
 import android.animation.AnimatorSet
 import android.animation.ValueAnimator
 import android.content.Context
+import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Outline
+import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -31,6 +33,10 @@ import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.animation.doOnCancel
 import androidx.core.animation.doOnEnd
 import androidx.core.animation.doOnStart
+import androidx.core.graphics.withSave
+import androidx.core.graphics.withScale
+import androidx.core.graphics.withTranslation
+import androidx.core.view.updatePadding
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -41,7 +47,9 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar.ToolbarCollapseCallback
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
+import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.updateMargins
@@ -68,13 +76,31 @@ class HidingFloatingActionButton
   private var threadControllerType: ThreadSlideController.ThreadControllerType? = null
   private var animatorSet: AnimatorSet? = null
 
+  private val padding = dp(12f)
+  private val additionalPadding = dp(17f)
+  private val hatOffsetX = dp(7f).toFloat()
+  private val isChristmasToday = TimeUtils.isChristmasToday()
+
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var themeEngine: ThemeEngine
 
+  private val hat by lazy { BitmapFactory.decodeResource(resources, R.drawable.christmashat)!! }
+  private val paint by lazy { Paint(Paint.ANTI_ALIAS_FLAG) }
   private val outlinePath = Path()
   private val fabOutlineProvider = FabOutlineProvider(outlinePath)
+
+  private val paddingL = if (isChristmasToday) {
+    additionalPadding + padding
+  } else {
+    padding
+  }
+  private val paddingT = if (isChristmasToday) {
+    additionalPadding + padding
+  } else {
+    padding
+  }
 
   private val isSnackbarShowing: Boolean
     get() {
@@ -108,6 +134,8 @@ class HidingFloatingActionButton
 
   private fun init() {
     setWillNotDraw(false)
+
+    updatePadding(left = paddingL, top = paddingT, right = padding, bottom = padding)
 
     if (!isInEditMode) {
       AppModuleAndroidUtils.extractActivityComponent(context)
@@ -237,13 +265,38 @@ class HidingFloatingActionButton
   }
 
   override fun draw(canvas: Canvas) {
-    canvas.clipPath(outlinePath)
-    super.draw(canvas)
+    canvas.withSave {
+      canvas.clipPath(outlinePath)
+      super.draw(canvas)
+    }
+
+    if (isChristmasToday) {
+      canvas.withScale(x = 0.5f, y = 0.5f, pivotX = 0.5f, pivotY = 0.5f) {
+        canvas.withTranslation(x = hatOffsetX) {
+          canvas.drawBitmap(hat, 0f, 0f, paint)
+        }
+      }
+    }
   }
 
-  private fun updatePath(widthPx: Int, heightPx: Int) {
-    val centerX = widthPx / 2f
-    val centerY = heightPx / 2f
+  private fun updatePath(inputWidthPx: Int, inputHeightPx: Int) {
+    val widthPx = if (isChristmasToday) {
+      inputWidthPx - additionalPadding
+    } else {
+      inputWidthPx
+    }
+
+    val heightPx = if (isChristmasToday) {
+      inputHeightPx - additionalPadding
+    } else {
+      inputHeightPx
+    }
+
+    val offsetX = if (isChristmasToday) additionalPadding else 0
+    val offsetY = if (isChristmasToday) additionalPadding else 0
+
+    val centerX = offsetX + (widthPx / 2f)
+    val centerY = offsetY + (heightPx / 2f)
 
     outlinePath.reset()
     outlinePath.addCircle(centerX, centerY, widthPx / 2f, Path.Direction.CW)

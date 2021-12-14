@@ -134,7 +134,7 @@ class SnowLayout @JvmOverloads constructor(
   ) {
 
     init {
-      this.delayTillNextSpawnMs = random.nextInt(3000, 8000)
+      this.delayTillNextSpawnMs = random.nextInt(1000, 10000)
     }
 
     fun update(dt: Int, viewWidth: Int, viewHeight: Int) {

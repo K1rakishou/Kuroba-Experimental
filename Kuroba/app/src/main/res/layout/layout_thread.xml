@@ -30,7 +30,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_margin="@dimen/hiding_fab_margin"
-        android:padding="12dp"
         android:clickable="true"
         android:focusable="true"
         android:elevation="4dp"

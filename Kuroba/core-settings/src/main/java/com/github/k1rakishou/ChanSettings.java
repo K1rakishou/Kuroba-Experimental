@@ -406,6 +406,7 @@ public class ChanSettings {
     public static BooleanSetting force4chanBirthdayMode;
     public static BooleanSetting forceHalloweenMode;
     public static BooleanSetting forceSnowMode;
+    public static BooleanSetting forceChristmasMode;
     //endregion
 
     //region DATA
@@ -651,6 +652,7 @@ public class ChanSettings {
             force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
             forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
             forceSnowMode = new BooleanSetting(provider, "force_snow_mode", false);
+            forceChristmasMode = new BooleanSetting(provider, "force_christmas_mode", false);
             //endregion
 
             //region DATA

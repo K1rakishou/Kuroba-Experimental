@@ -303,26 +303,33 @@ class DeveloperSettingsScreen(
           }
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
+          topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
+          setting = ChanSettings.force4chanBirthdayMode,
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ForceHalloween,
+          topDescriptionIdFunc = { R.string.settings_force_halloween },
+          setting = ChanSettings.forceHalloweenMode,
+        )
+
         if (AppModuleAndroidUtils.isDevBuild()) {
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
-            topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
-            setting = ChanSettings.force4chanBirthdayMode,
-          )
-
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.ForceHalloween,
-            topDescriptionIdFunc = { R.string.settings_force_halloween },
-            setting = ChanSettings.forceHalloweenMode,
-          )
-
           group += BooleanSettingV2.createBuilder(
             context = context,
             identifier = DeveloperScreen.MainGroup.ForceSnow,
             topDescriptionIdFunc = { R.string.settings_force_snow },
             setting = ChanSettings.forceSnowMode,
+          )
+
+          group += BooleanSettingV2.createBuilder(
+            context = context,
+            identifier = DeveloperScreen.MainGroup.ForceChristmas,
+            topDescriptionIdFunc = { R.string.settings_force_christmas },
+            setting = ChanSettings.forceChristmasMode,
           )
         }
 

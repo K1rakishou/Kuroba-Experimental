@@ -82,6 +82,10 @@ object TimeUtils {
 
   @JvmStatic
   fun isChristmasToday(): Boolean {
+    if (ChanSettings.forceChristmasMode.get()) {
+      return true
+    }
+
     val day = calendar[Calendar.DAY_OF_MONTH]
 
     val isDecember = calendar[Calendar.MONTH] == Calendar.DECEMBER

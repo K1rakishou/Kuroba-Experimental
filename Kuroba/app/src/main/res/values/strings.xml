@@ -867,6 +867,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_force_4chan_birthday">Force 4chan birthday</string>
     <string name="settings_force_halloween">Force halloween</string>
     <string name="settings_force_snow">Force snow</string>
+    <string name="settings_force_christmas">Force Christmas</string>
 
     <!-- Security settings -->
     <string name="settings_screen_security">Security</string>
