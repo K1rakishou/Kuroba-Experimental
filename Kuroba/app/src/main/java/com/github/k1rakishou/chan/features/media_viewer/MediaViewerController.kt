@@ -213,10 +213,12 @@ class MediaViewerController(
 
   override fun onInsetsChanged() {
     if (ChanSettings.mediaViewerDrawBehindNotch.get()) {
-      mediaViewerRootLayout.updatePaddings(top = 0, bottom = 0)
+      mediaViewerRootLayout.updatePaddings(top = 0, left = 0, right = 0, bottom = 0)
     } else {
       mediaViewerRootLayout.updatePaddings(
         top = globalWindowInsetsManager.top(),
+        left = globalWindowInsetsManager.left(),
+        right = globalWindowInsetsManager.right(),
         bottom = globalWindowInsetsManager.bottom()
       )
     }
