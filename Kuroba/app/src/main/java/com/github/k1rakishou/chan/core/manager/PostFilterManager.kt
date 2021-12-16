@@ -159,6 +159,25 @@ class PostFilterManager(
     return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor) }
   }
 
+  fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
+    if (postDescriptors.isEmpty()) {
+      return emptyMap()
+    }
+
+    return lock.read {
+      val postFilterMap = mutableMapWithCap<PostDescriptor, PostFilter>(postDescriptors.size)
+
+      for (postDescriptor in postDescriptors) {
+        val postFilter = filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor)
+        if (postFilter != null && postFilter.enabled) {
+          postFilterMap[postDescriptor] = postFilter
+        }
+      }
+
+      return@read postFilterMap
+    }
+  }
+
   fun getManyFilterHashes(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, Int> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
@@ -177,19 +196,6 @@ class PostFilterManager(
       }
 
       return@read resultMap
-    }
-  }
-
-  fun getFilterHighlightedColor(postDescriptor: PostDescriptor): Int {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read 0
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterHighlightedColor ?: 0
     }
   }
 
@@ -231,11 +237,11 @@ class PostFilterManager(
         return@read false
       }
 
-      if (filterStorage[threadDescriptor]?.get(postDescriptor)?.filterStub == true) {
+      if (filterStorage[threadDescriptor]?.get(postDescriptor)?.stub == true) {
         return@read true
       }
 
-      if (filterStorage[threadDescriptor]?.get(postDescriptor)?.filterRemove == true) {
+      if (filterStorage[threadDescriptor]?.get(postDescriptor)?.remove == true) {
         return@read true
       }
 
@@ -252,7 +258,7 @@ class PostFilterManager(
         return@read false
       }
 
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterStub ?: false
+      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.stub ?: false
     }
   }
 
@@ -271,7 +277,7 @@ class PostFilterManager(
         val filterStub = if (!enabled) {
           false
         } else {
-          filterStorage[threadDescriptor]?.get(postDescriptor)?.filterStub ?: false
+          filterStorage[threadDescriptor]?.get(postDescriptor)?.stub ?: false
         }
 
         resultMap[postDescriptor] = filterStub
@@ -279,89 +285,6 @@ class PostFilterManager(
 
       return@read resultMap
     }
-  }
-
-  fun getFilterRemove(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read false
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterRemove ?: false
-    }
-  }
-
-  fun getFilterWatch(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read false
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterWatch ?: false
-    }
-  }
-
-  fun getFilterReplies(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read false
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterReplies ?: false
-    }
-  }
-
-  fun getFilterOnlyOP(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read false
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterOnlyOP ?: false
-    }
-  }
-
-  fun getFilterSaved(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val enabled = filterStorage[threadDescriptor]?.get(postDescriptor)?.enabled ?: false
-      if (!enabled) {
-        return@read false
-      }
-
-      return@read filterStorage[threadDescriptor]?.get(postDescriptor)?.filterSaved ?: false
-    }
-  }
-
-  fun hasFilterParameters(postDescriptor: PostDescriptor): Boolean {
-    return lock.read {
-      val threadDescriptor = postDescriptor.threadDescriptor()
-
-      val postFilter = filterStorage[threadDescriptor]?.get(postDescriptor)
-        ?: return@read false
-
-      return@read postFilter.filterHighlightedColor != 0
-        || postFilter.filterStub
-        || postFilter.filterSaved
-        || postFilter.filterReplies
-    }
-  }
-
-  fun getOwnerFilterId(postDescriptor: PostDescriptor): Long? {
-    return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor)?.ownerFilterId }
   }
 
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {

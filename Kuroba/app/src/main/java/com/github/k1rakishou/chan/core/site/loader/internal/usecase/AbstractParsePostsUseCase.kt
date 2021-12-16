@@ -107,7 +107,7 @@ abstract class AbstractParsePostsUseCase(
       FilterAction.COLOR -> {
         PostFilter(
           ownerFilterId = filter.getDatabaseId(),
-          enabled = filter.enabled,
+          filterEnabled = filter.enabled,
           filterHighlightedColor = filter.color,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP,
@@ -117,7 +117,7 @@ abstract class AbstractParsePostsUseCase(
       FilterAction.HIDE -> {
         PostFilter(
           ownerFilterId = filter.getDatabaseId(),
-          enabled = filter.enabled,
+          filterEnabled = filter.enabled,
           filterStub = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP
@@ -126,7 +126,7 @@ abstract class AbstractParsePostsUseCase(
       FilterAction.REMOVE -> {
         PostFilter(
           ownerFilterId = filter.getDatabaseId(),
-          enabled = filter.enabled,
+          filterEnabled = filter.enabled,
           filterRemove = true,
           filterReplies = filter.applyToReplies,
           filterOnlyOP = filter.onlyOnOP

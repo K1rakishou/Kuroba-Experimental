@@ -2,19 +2,72 @@ package com.github.k1rakishou.model.data.post
 
 data class PostFilter(
   val ownerFilterId: Long?,
-  var enabled: Boolean = false,
-  var filterHighlightedColor: Int = 0,
-  var filterStub: Boolean = false,
-  var filterRemove: Boolean = false,
-  var filterWatch: Boolean = false,
-  var filterReplies: Boolean = false,
-  var filterOnlyOP: Boolean = false,
-  var filterSaved: Boolean = false
+  private var filterEnabled: Boolean = false,
+  private var filterHighlightedColor: Int = 0,
+  private var filterStub: Boolean = false,
+  private var filterRemove: Boolean = false,
+  private var filterWatch: Boolean = false,
+  private var filterReplies: Boolean = false,
+  private var filterOnlyOP: Boolean = false,
+  private var filterSaved: Boolean = false
 ) {
+
+  fun update(
+    enable: Boolean? = null,
+    highlightColor: Int? = null,
+    stub: Boolean? = null,
+    remove: Boolean? = null,
+    watch: Boolean? = null,
+    replies: Boolean? = null,
+    onlyOP: Boolean? = null,
+    saved: Boolean? = null
+  ) {
+    if (enable != null) {
+      filterEnabled = enable
+    }
+
+    if (highlightColor != null) {
+      filterHighlightedColor = highlightColor
+    }
+
+    if (stub != null) {
+      filterStub = stub
+    }
+
+    if (remove != null) {
+      filterRemove = remove
+    }
+
+    if (watch != null) {
+      filterWatch = watch
+    }
+
+    if (replies != null) {
+      filterReplies = replies
+    }
+
+    if (onlyOP != null) {
+      filterOnlyOP = onlyOP
+    }
+
+    if (saved != null) {
+      filterSaved = saved
+    }
+  }
+
+  fun hasFilterParameters(): Boolean {
+    return filterHighlightedColor != 0
+      || filterStub
+      || filterSaved
+      || filterReplies
+  }
+
+  val enabled: Boolean
+    get() = filterEnabled
 
   val highlightedColor: Int
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return 0
       }
 
@@ -23,7 +76,7 @@ data class PostFilter(
 
   val stub: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 
@@ -32,7 +85,7 @@ data class PostFilter(
 
   val remove: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 
@@ -41,7 +94,7 @@ data class PostFilter(
 
   val watch: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 
@@ -50,7 +103,7 @@ data class PostFilter(
 
   val replies: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 
@@ -59,7 +112,7 @@ data class PostFilter(
 
   val onlyOP: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 
@@ -68,7 +121,7 @@ data class PostFilter(
 
   val saved: Boolean
     get() {
-      if (!enabled) {
+      if (!filterEnabled) {
         return false
       }
 

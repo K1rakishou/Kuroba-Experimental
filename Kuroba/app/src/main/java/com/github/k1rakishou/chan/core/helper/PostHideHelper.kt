@@ -8,6 +8,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
+import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 
@@ -38,17 +39,32 @@ class PostHideHelper(
         postsFastLookupMap[post.postDescriptor] = post
       }
 
-      applyFiltersToReplies(posts, postsFastLookupMap)
+      val postFilterMap = postFilterManager.getManyPostFilters(postDescriptorSet)
+
+      applyFiltersToReplies(
+        posts = posts,
+        postFilterMap = postFilterMap,
+        postsFastLookupMap = postsFastLookupMap
+      )
+
       val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
 
       // find replies to hidden posts and add them to the PostHide table in the database
       // and to the hiddenPostsLookupMap
-      hideRepliesToAlreadyHiddenPosts(postsFastLookupMap, hiddenPostsLookupMap)
+      hideRepliesToAlreadyHiddenPosts(
+        postsFastLookupMap = postsFastLookupMap,
+        hiddenPostsLookupMap = hiddenPostsLookupMap,
+        postFilterMap = postFilterMap
+      )
+
       val resultList: MutableList<ChanPost> = ArrayList()
 
       // filter out hidden posts
       for (post in postsFastLookupMap.values) {
-        if (postFilterManager.getFilterRemove(post.postDescriptor)) {
+        val filterRemove = postFilterMap[post.postDescriptor]?.remove
+          ?: false
+
+        if (filterRemove) {
           // this post is already filtered by some custom filter
           continue
         }
@@ -56,7 +72,7 @@ class PostHideHelper(
         val hiddenPost = hiddenPostsLookupMap[post.postDescriptor]
         if (hiddenPost != null) {
           if (hiddenPost.onlyHide) {
-            val ownerFilterId = postFilterManager.getOwnerFilterId(hiddenPost.postDescriptor)
+            val ownerFilterId = postFilterMap[post.postDescriptor]?.ownerFilterId
 
             // hide post
             updatePostWithCustomFilter(
@@ -94,7 +110,8 @@ class PostHideHelper(
 
   private fun hideRepliesToAlreadyHiddenPosts(
     postsFastLookupMap: Map<PostDescriptor, ChanPost>,
-    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>
+    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>,
+    postFilterMap: Map<PostDescriptor, PostFilter>,
   ) {
     val newHiddenPosts: MutableList<ChanPostHide> = ArrayList()
 
@@ -110,9 +127,8 @@ class PostHideHelper(
           val parentHiddenPost = hiddenPostsLookupMap[replyPostDescriptor]
             ?: continue
 
-          val filterRemove: Boolean = postFilterManager.getFilterRemove(
-            parentPost.postDescriptor
-          )
+          val filterRemove = postFilterMap[parentPost.postDescriptor]?.remove
+            ?: false
 
           if (!filterRemove || !parentHiddenPost.applyToReplies) {
             continue
@@ -141,19 +157,26 @@ class PostHideHelper(
     postHideManager.createMany(newHiddenPosts)
   }
 
-  private fun applyFiltersToReplies(posts: List<ChanPost>, postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>) {
+  private fun applyFiltersToReplies(
+    posts: List<ChanPost>,
+    postFilterMap: Map<PostDescriptor, PostFilter>,
+    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
+  ) {
     for (post in posts) {
       if (post.postDescriptor.isOP()) {
         // skip the OP
         continue
       }
 
-      if (!postFilterManager.hasFilterParameters(post.postDescriptor)) {
+      val hasFilterParameters = postFilterMap[post.postDescriptor]?.hasFilterParameters()
+        ?: false
+
+      if (!hasFilterParameters) {
         continue
       }
 
-      val filterRemove: Boolean = postFilterManager.getFilterRemove(post.postDescriptor)
-      val filterStub: Boolean = postFilterManager.getFilterStub(post.postDescriptor)
+      val filterRemove = postFilterMap[post.postDescriptor]?.remove ?: false
+      val filterStub = postFilterMap[post.postDescriptor]?.stub ?: false
 
       if (!filterRemove && !filterStub) {
         continue
@@ -168,6 +191,7 @@ class PostHideHelper(
         parentPost = post,
         filterRemove = filterRemove,
         filterStub = filterStub,
+        postFilterMap = postFilterMap,
         postsFastLookupMap = postsFastLookupMap
       )
     }
@@ -182,10 +206,17 @@ class PostHideHelper(
     parentPost: ChanPost,
     filterRemove: Boolean,
     filterStub: Boolean,
+    postFilterMap: Map<PostDescriptor, PostFilter>,
     postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
   ) {
-    if (postsFastLookupMap.isEmpty()
-      || !postFilterManager.getFilterReplies(parentPost.postDescriptor)) {
+    if (postsFastLookupMap.isEmpty()) {
+      return
+    }
+
+    val filterReplies = postFilterMap[parentPost.postDescriptor]?.replies
+      ?: false
+
+    if (!filterReplies) {
       // do nothing with replies if filtering is disabled for replies
       return
     }
@@ -211,13 +242,15 @@ class PostHideHelper(
         continue
       }
 
-      val hasFilterParameters = postFilterManager.hasFilterParameters(childPost.postDescriptor)
+      val hasFilterParameters = postFilterMap[postDescriptor]?.hasFilterParameters()
+        ?: false
+
       if (hasFilterParameters) {
         // do not overwrite filter parameters from another filter
         continue
       }
 
-      val postFilter = postFilterManager.getPostFilter(childPost.postDescriptor)
+      val postFilter = postFilterManager.getPostFilter(postDescriptor)
 
       updatePostWithCustomFilter(
         childPost = childPost,
@@ -254,13 +287,15 @@ class PostHideHelper(
       postDescriptor = childPost.postDescriptor,
       ownerFilterId = ownerFilterId
     ) { postFilter ->
-      postFilter.enabled = true
-      postFilter.filterHighlightedColor = filterHighlightedColor
-      postFilter.filterStub = filterStub
-      postFilter.filterRemove = filterRemove
-      postFilter.filterWatch = filterWatch
-      postFilter.filterReplies = filterReplies
-      postFilter.filterSaved = filterSaved
+      postFilter.update(
+        enable = true,
+        highlightColor = filterHighlightedColor,
+        stub = filterStub,
+        remove = filterRemove,
+        watch = filterWatch,
+        replies = filterReplies,
+        saved = filterSaved,
+      )
     }
   }
 

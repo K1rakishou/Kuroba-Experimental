@@ -168,7 +168,7 @@ class ExtractPostMapInfoHolderUseCase(
         ?: continue
 
       if (filterHighlight.ownerFilterId == null
-        || filterHighlight.filterHighlightedColor == 0
+        || filterHighlight.highlightedColor == 0
         || !duplicateChecker.add(index)
       ) {
         continue
