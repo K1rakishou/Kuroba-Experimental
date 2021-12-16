@@ -1,0 +1,35 @@
+v1.2.1
+TLDR version:
+!!! The first application start time after the update make take 15-60 seconds because of multiple migrations that need to be executed. !!!
+- Post cell UI + performance updates.
+- Split disk media cache.
+
+Full version:
+- Quick fix for the crash when trying to calculate post title text bounds on Android M and above.
+- Apply inset paddings on the left/right sides of media viewer controller view as well.
+- Fix post filters incorrectly processing post replies when "Apply to replies" option is selected for filter.
+- Load all post filters at once to avoid unnecessary postFilterManager access which involves lots of synchronization.
+- Only show "Apply to replies" filter option when filter action is HIDE or REMOVE.
+
+v1.2.0
+- Post cell UI has been reworked. Measure/Layout routines were rewritten from scratch and now calculate all the stuff manually instead of using ConstraintLayout which improves Post cell measure/layout performance. When post has multiple images they are now displayed slightly differently.
+- Database SpannableString serialization reworked. Now it stores the SpannableString span info as a byte array created from a Parcelable instead of json string which improves SpannableString database store/load operations performance (used when loading catalogs or by thread downloader).
+- Split media disk cache into multiple disk caches. The idea here is to store media displayed on different screens separately so that it's not evicted from the cache because it's filled with other media. For example, let's take the bookmarked threads' thumbnails. Before this change they were stored together with the other media, like post full images. So it would be evicted from the cache just because you viewed lots of images. Now lets say the bookmarked thread got deleted from the server. Now the bookmark thumbnails shows "Not found" which is not desired. With the new cache implementation bookmark thumbnails won't be evicted from the cached because it's filled with too many post images. It will only be evicted if it's filled with too many other bookmark thumbnails. So the cached thumbnail will stay cached for much longer so you will be seeing "Not found" way less frequently.
+There are 7 types of media caches now, each existing in it's own separate directory:
+1) ThreadDownloaderThumbnail (local archive screen thread thumbnails).
+2) BookmarkThumbnail (bookmarks screen thread thumbnails).
+3) NavHistoryThumbnail (navigation history screen thread thumbnails).
+4) SiteIcon (all sites icons, like favicons or site flags).
+5) PostMediaThumbnail (post thumbnails).
+6) PostMediaFull (full size post media).
+7) Other (stuff like apk updates, media downloaded when importing it from external url, searx image cache, etc.)
+They all take their own percent of the total allowed disk cache size. Most of them take 5% of the disk cache size, exceptions are: PostMediaFull which takes 65% and Other which takes 10%. The percent values will probably be adjusted in the future. For now you can't change them by yourself they are hardcoded. The ability to change them may get added in the future.
+This should also increase the disk cache access speed since files are now located in separate directories the directory query should take less time due to having to query less files at a time. You can clear all the disk caches separately now on the Developer settings screen.
+- Remove inlined_file_info_entity table and everything related to it since it's not used anymore.
+- Decrease maxPostsInDatabaseSettingValue since we don't store thread posts in the database anymore so there is no reason to store this many posts.
+- Add go to post button to album view cell thumbnail longtap menu.
+- [2ch.hk] Add support for color:rgb() span attribute.
+- Do not crash when TextView crashes with `java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0` exception internally in Editor class.
+- Add ability to open drawer by dragging from left to right on the thread screen. A new setting was added: viewThreadControllerSwipeable. Enabled by default it controls whether the
+thread screen can be swiped away. If it's disabled then instead of the thread screen being swipeable you will be able to open the drawer by performing the drag from left to right gesture from any point of the screen (similar to how you can open the drawer from the catalog). If it's enabled then you can open the drawer the same was as before - by longtapping the left screen edge and pulling it to the right. viewThreadControllerSwipeable setting doesn't work in SPLIT layout mode.
+- Add ability to dump thread stack by sending a broadcast intent.
