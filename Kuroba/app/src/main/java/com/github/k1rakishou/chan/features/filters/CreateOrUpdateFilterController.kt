@@ -370,7 +370,7 @@ class CreateOrUpdateFilterController(
 
     }
 
-    if (action != FilterAction.WATCH.id) {
+    if (action == FilterAction.HIDE.id || action == FilterAction.REMOVE.id) {
       KurobaComposeCheckbox(
         modifier = Modifier
           .fillMaxWidth()
