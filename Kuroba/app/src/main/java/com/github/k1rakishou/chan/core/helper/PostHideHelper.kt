@@ -53,7 +53,7 @@ class PostHideHelper(
           continue
         }
 
-        val hiddenPost = findHiddenPost(hiddenPostsLookupMap, post)
+        val hiddenPost = hiddenPostsLookupMap[post.postDescriptor]
         if (hiddenPost != null) {
           if (hiddenPost.onlyHide) {
             val ownerFilterId = postFilterManager.getOwnerFilterId(hiddenPost.postDescriptor)
@@ -155,12 +155,21 @@ class PostHideHelper(
       val filterRemove: Boolean = postFilterManager.getFilterRemove(post.postDescriptor)
       val filterStub: Boolean = postFilterManager.getFilterStub(post.postDescriptor)
 
+      if (!filterRemove && !filterStub) {
+        continue
+      }
+
       if (filterRemove && filterStub) {
         Logger.e(TAG, "Post has both filterRemove and filterStub flags")
         continue
       }
 
-      applyPostFilterActionToChildPosts(post, postsFastLookupMap)
+      applyPostFilterActionToChildPosts(
+        parentPost = post,
+        filterRemove = filterRemove,
+        filterStub = filterStub,
+        postsFastLookupMap = postsFastLookupMap
+      )
     }
   }
 
@@ -171,6 +180,8 @@ class PostHideHelper(
    */
   private fun applyPostFilterActionToChildPosts(
     parentPost: ChanPost,
+    filterRemove: Boolean,
+    filterStub: Boolean,
     postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
   ) {
     if (postsFastLookupMap.isEmpty()
@@ -182,7 +193,7 @@ class PostHideHelper(
     // find all replies to the post recursively
     val postWithAllReplies = ChanPostUtils.findPostWithReplies(
       parentPost.postDescriptor,
-      postsFastLookupMap.values.toList()
+      postsFastLookupMap.values
     )
 
     val postDescriptorWithAllReplies: MutableSet<PostDescriptor> = HashSet(postWithAllReplies.size)
@@ -195,8 +206,10 @@ class PostHideHelper(
       }
 
       val childPost = postsFastLookupMap[postDescriptor]
+      if (childPost == null) {
         // cross-thread post
-        ?: continue
+        continue
+      }
 
       val hasFilterParameters = postFilterManager.hasFilterParameters(childPost.postDescriptor)
       if (hasFilterParameters) {
@@ -210,9 +223,9 @@ class PostHideHelper(
         childPost = childPost,
         ownerFilterId = postFilter?.ownerFilterId,
         filterHighlightedColor = postFilter?.highlightedColor ?: 0,
-        filterStub = postFilter?.stub ?: false,
-        filterRemove = postFilter?.remove ?: false,
-        filterWatch = postFilter?.watch ?: false,
+        filterStub = postFilter?.stub ?: filterStub,
+        filterRemove = postFilter?.remove ?: filterRemove,
+        filterWatch = false,
         filterReplies = true,
         filterSaved = postFilter?.saved ?: false
       )
@@ -249,17 +262,6 @@ class PostHideHelper(
       postFilter.filterReplies = filterReplies
       postFilter.filterSaved = filterSaved
     }
-  }
-
-  private fun findHiddenPost(
-    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
-    post: ChanPost
-  ): ChanPostHide? {
-    if (hiddenPostsLookupMap.isEmpty()) {
-      return null
-    }
-
-    return hiddenPostsLookupMap[post.postDescriptor]
   }
 
   companion object {

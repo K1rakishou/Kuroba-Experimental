@@ -267,7 +267,7 @@ object ChanPostUtils {
   }
 
   @JvmStatic
-  fun findPostWithReplies(postDescriptor: PostDescriptor, posts: List<ChanPost>): HashSet<ChanPost> {
+  fun findPostWithReplies(postDescriptor: PostDescriptor, posts: Collection<ChanPost>): HashSet<ChanPost> {
     val postsSet = HashSet<ChanPost>()
     findPostWithRepliesRecursive(postDescriptor, posts, postsSet)
     return postsSet
@@ -278,7 +278,7 @@ object ChanPostUtils {
    */
   private fun findPostWithRepliesRecursive(
     postDescriptor: PostDescriptor,
-    posts: List<ChanPost>,
+    posts: Collection<ChanPost>,
     postsSet: MutableSet<ChanPost>
   ) {
     for (post in posts) {
