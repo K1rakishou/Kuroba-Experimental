@@ -31,7 +31,7 @@ internal class InnerCache(
   chunksCacheDirFile: File,
   private val fileCacheDiskSizeBytes: Long,
   private val cacheFileType: CacheFileType,
-  private val verboseLogs: Boolean
+  private val isDevBuild: Boolean
 ) {
   private val TAG = "InnerCache{${cacheFileType.id}}"
 
@@ -414,9 +414,8 @@ internal class InnerCache(
             size.set(0L)
           }
 
-          if (verboseLogs) {
-            Logger.d(
-              TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
+          if (isDevBuild) {
+            Logger.d(TAG, "Deleted $cacheFileName and it's meta $cacheMetaFileName, " +
               "fileSize = ${ChanPostUtils.getReadableFileSize(fileSize)}, " +
               "cache size = ${ChanPostUtils.getReadableFileSize(size.get())}")
           }

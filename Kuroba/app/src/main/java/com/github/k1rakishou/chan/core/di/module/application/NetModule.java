@@ -80,7 +80,6 @@ public class NetModule {
         Logger.deps("CacheHandler");
 
         return new CacheHandler(
-                ChanSettings.verboseLogs.get(),
                 ChanSettings.prefetchMedia.get(),
                 appConstants
         );
