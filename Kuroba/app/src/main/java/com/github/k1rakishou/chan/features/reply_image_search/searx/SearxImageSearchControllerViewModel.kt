@@ -44,7 +44,9 @@ class SearxImageSearchControllerViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-
+    if (baseSearchUrl.value.isNullOrEmpty()) {
+      baseSearchUrl.value = HINT_URL.toString()
+    }
   }
 
   override fun onCleared() {
