@@ -6,6 +6,8 @@ import android.view.HapticFeedbackConstants
 import android.widget.Toast
 import androidx.compose.animation.graphics.ExperimentalAnimationGraphicsApi
 import androidx.compose.animation.graphics.res.animatedVectorResource
+import androidx.compose.animation.graphics.res.rememberAnimatedVectorPainter
+import androidx.compose.animation.graphics.vector.AnimatedImageVector
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -697,8 +699,10 @@ class LocalArchiveController(
 
     val painter = when (threadDownloadView.status) {
       ThreadDownload.Status.Running -> {
-        animatedVectorResource(id = R.drawable.ic_download_anim)
-          .painterFor(atEnd = animationAtEnd)
+        rememberAnimatedVectorPainter(
+          animatedImageVector = AnimatedImageVector.animatedVectorResource(id = R.drawable.ic_download_anim),
+          atEnd = animationAtEnd
+        )
       }
       ThreadDownload.Status.Stopped -> {
         painterResource(id = R.drawable.ic_download_anim0)

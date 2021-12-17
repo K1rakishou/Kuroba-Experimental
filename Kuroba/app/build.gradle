@@ -249,7 +249,7 @@ android {
         compose = true
     }
     composeOptions {
-        kotlinCompilerExtensionVersion = versions.compose_version
+        kotlinCompilerExtensionVersion = versions.compose_compiler_version
     }
 
     lintOptions {
