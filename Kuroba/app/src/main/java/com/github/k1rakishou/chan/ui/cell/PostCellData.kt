@@ -616,7 +616,7 @@ data class PostCellData(
     } else if (postImages.isNotEmpty()) {
       postImages.forEach { postImage ->
         val fileInfoText = SpannableStringBuilder()
-        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = true))
+        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
         fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
 
         if (postImages.size == 1 || searchMode) {
