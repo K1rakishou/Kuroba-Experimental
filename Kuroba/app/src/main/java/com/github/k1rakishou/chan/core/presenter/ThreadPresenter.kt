@@ -1852,7 +1852,7 @@ class ThreadPresenter @Inject constructor(
         is ThemeParser.ThemeParseResult.BadName,
         is ThemeParser.ThemeParseResult.Error,
         is ThemeParser.ThemeParseResult.FailedToParseSomeFields -> {
-          showToast(context, "Failed to apply theme")
+          showToast(context, "Failed to apply theme \'$themeName\'")
           return@launch
         }
         is ThemeParser.ThemeParseResult.Success -> {
@@ -1873,10 +1873,7 @@ class ThreadPresenter @Inject constructor(
 
       val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
       val siteName = currentThreadDescriptor.siteName()
-
-      if (ChanSettings.verboseLogs.get()) {
-        Logger.d(TAG, "onPostLinkableClicked, linkable=${linkable}")
-      }
+      Logger.d(TAG, "onPostLinkableClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
 
       if (linkable.type == PostLinkable.Type.QUOTE) {
         val postId = linkable.linkableValue.extractValueOrNull()
