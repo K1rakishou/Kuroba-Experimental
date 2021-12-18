@@ -1131,15 +1131,18 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_show_in_bookmarks">Show in bookmarks</string>
     <string name="drawer_controller_pin_unpin_selected">Pin/unpin selected</string>
     <string name="drawer_controller_move_last_accessed_thread_to_top">Move last accessed thread/catalog to top</string>
-    <string name="drawer_controller_show_bookmarks">Show bookmarked threads</string>
-    <string name="drawer_controller_show_navigation_history">Show navigation history</string>
-    <string name="drawer_controller_delete_shortcut">Show delete navigation history shortcut</string>
+    <string name="drawer_controller_show_bookmarks">Display bookmarked threads</string>
+    <string name="drawer_controller_show_navigation_history">Track and display navigation history</string>
+    <string name="drawer_controller_delete_shortcut">Show delete navigation history button</string>
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
-    <string name="drawer_controller_navigation_entry_pinned">Pinned</string>
-    <string name="drawer_controller_navigation_entry_unpinned">Unpinned</string>
+    <string name="drawer_controller_navigation_entry_pinned_one">Pinned \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_pinned_many">Pinned %1$d items</string>
+    <string name="drawer_controller_navigation_entry_unpinned_one">Unpinned \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_unpinned_many">Unpinned %1$d  items</string>
+    <string name="drawer_controller_navigation_entry_deleted_one">Deleted \'%1$s\'</string>
+    <string name="drawer_controller_navigation_entry_deleted_many">Deleted %1$d items</string>
     <string name="drawer_controller_navigation_entry_failed_to_pin_unpin">Failed to pin or unpin</string>
-    <string name="drawer_controller_navigation_entry_deleted">Deleted</string>
     <string name="drawer_controller_grid_mode">Grid mode</string>
 
     <string name="board_selection_controller_grid_layout_mode">Grid mode</string>

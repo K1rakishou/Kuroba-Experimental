@@ -1626,7 +1626,7 @@ class MainController(
               drawerViewModel.clearSelection()
             }
             ACTION_DELETE_SELECTED -> {
-              drawerViewModel.deleteNavElementsByDescriptors(drawerViewModel.getSelectedDescriptors())
+              onNavHistoryDeleteSelectedClicked(drawerViewModel.getSelectedDescriptors())
               drawerViewModel.clearSelection()
             }
             ACTION_DELETE -> {
@@ -1650,12 +1650,28 @@ class MainController(
   }
 
   private suspend fun pinUnpin(descriptors: Collection<ChanDescriptor>) {
+    if (descriptors.isEmpty()) {
+      return
+    }
+
     when (drawerViewModel.pinOrUnpin(descriptors)) {
       HistoryNavigationManager.PinResult.Pinned -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_pinned))
+        val text = if (descriptors.size == 1) {
+          getString(R.string.drawer_controller_navigation_entry_pinned_one, descriptors.first().userReadableString())
+        } else {
+          getString(R.string.drawer_controller_navigation_entry_pinned_many, descriptors.size)
+        }
+
+        showToast(text)
       }
       HistoryNavigationManager.PinResult.Unpinned -> {
-        showToast(getString(R.string.drawer_controller_navigation_entry_unpinned))
+        val text = if (descriptors.size == 1) {
+          getString(R.string.drawer_controller_navigation_entry_unpinned_one, descriptors.first().userReadableString())
+        } else {
+          getString(R.string.drawer_controller_navigation_entry_unpinned_many, descriptors.size)
+        }
+
+        showToast(text)
       }
       HistoryNavigationManager.PinResult.Failure -> {
         showToast(getString(R.string.drawer_controller_navigation_entry_failed_to_pin_unpin))
@@ -1666,7 +1682,30 @@ class MainController(
   private fun onNavHistoryDeleteClicked(navHistoryEntry: NavigationHistoryEntry) {
     mainScope.launch {
       drawerViewModel.deleteNavElement(navHistoryEntry)
-      showToast(getString(R.string.drawer_controller_navigation_entry_deleted))
+
+      val text = getString(
+        R.string.drawer_controller_navigation_entry_deleted_one,
+        navHistoryEntry.descriptor.userReadableString()
+      )
+
+      showToast(text)
+    }
+  }
+
+  private fun onNavHistoryDeleteSelectedClicked(selected: List<ChanDescriptor>) {
+    if (selected.isEmpty()) {
+      return
+    }
+
+    mainScope.launch {
+      drawerViewModel.deleteNavElementsByDescriptors(selected)
+
+      val text = getString(
+        R.string.drawer_controller_navigation_entry_deleted_many,
+        selected.size
+      )
+
+      showToast(text)
     }
   }
 
