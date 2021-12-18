@@ -58,8 +58,12 @@ class FilterEngine @Inject constructor(
 
   fun extractMatchedKeywords(
     chanFilter: ChanFilter,
-    text: CharSequence
+    text: CharSequence?
   ): Set<String> {
+    if (text == null) {
+      return emptySet()
+    }
+
     val pattern = synchronized(patternCache) { patternCache[chanFilter.pattern] }
     if (pattern == null) {
       return emptySet()

@@ -37,7 +37,7 @@ import kotlin.time.measureTime
  * lastModified file flag which doesn't work on some Android versions/different phones. It was decided
  * to instead use a meta file for every cache file which will contain the following information:
  * 1. Time of creation of the cache file (in millis).
- * 2. A flag that indicates whether the download has been completed or not.
+ * 2. A flag that indicates whether a download has been completed or not.
  *
  * We need creation time to not delete cache file for active downloads or for downloads that has
  * just been completed (otherwise the user may see a black screen instead of an image/webm). The

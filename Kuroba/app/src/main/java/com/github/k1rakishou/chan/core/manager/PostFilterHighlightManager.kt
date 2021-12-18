@@ -41,9 +41,12 @@ class PostFilterHighlightManager {
       val map = mutableMapWithCap<PostDescriptor, Set<HighlightFilterKeyword>>(postDescriptors.size)
 
       postDescriptors.forEach { postDescriptor ->
-        map[postDescriptor] = currentHighlights[postDescriptor]
+        val highlights = currentHighlights[postDescriptor]
           ?.toSet()
-          ?: emptySet()
+
+        if (highlights != null && highlights.isNotEmpty()) {
+          map[postDescriptor] = highlights
+        }
       }
 
       return@read map

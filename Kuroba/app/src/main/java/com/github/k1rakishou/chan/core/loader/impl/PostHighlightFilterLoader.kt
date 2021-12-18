@@ -46,14 +46,27 @@ class PostHighlightFilterLoader(
     }
 
     val matchedKeywords = highlightFilters.flatMapNotNull { chanFilter ->
+      val keywordsSet = mutableSetOf<HighlightFilterKeyword>()
+
       if (filterEngine.matches(chanFilter, chanPost.postComment.comment(), false)) {
         val keywords = filterEngine.extractMatchedKeywords(chanFilter, chanPost.postComment.comment())
         if (keywords.isNotEmpty()) {
-          return@flatMapNotNull keywords.toHashSetBy { keyword -> HighlightFilterKeyword(keyword, chanFilter.color) }
+          keywordsSet += keywords.toHashSetBy { keyword -> HighlightFilterKeyword(keyword, chanFilter.color) }
         }
       }
 
-      return@flatMapNotNull null
+      if (filterEngine.matches(chanFilter, chanPost.subject, false)) {
+        val keywords = filterEngine.extractMatchedKeywords(chanFilter, chanPost.subject)
+        if (keywords.isNotEmpty()) {
+          keywordsSet += keywords.toHashSetBy { keyword -> HighlightFilterKeyword(keyword, chanFilter.color) }
+        }
+      }
+
+      if (keywordsSet.isEmpty()) {
+        return@flatMapNotNull null
+      }
+
+      return@flatMapNotNull keywordsSet
     }.toSet()
 
     if (matchedKeywords.isEmpty()) {
