@@ -168,8 +168,10 @@ class ChanPostImage(
         append(extension.toUpperCase(Locale.ENGLISH))
       }
 
-      append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-      append("${imageWidth}x${imageHeight}")
+      if (imageWidth > 0 || imageHeight > 0) {
+        append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+        append("${imageWidth}x${imageHeight}")
+      }
 
       append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
       append(ChanPostUtils.getReadableFileSize(size).replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL))

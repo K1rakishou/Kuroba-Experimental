@@ -492,11 +492,16 @@ open class LynxchanApi(
         LynxchanEndpoints.THUMB_ARGUMENT_KEY, thumb.removePrefix("/")
       )
 
+      var originalNameUnescaped = Parser.unescapeEntities(originalName, false)
+      if (extension.isNotNullNorEmpty() && originalNameUnescaped.endsWith(".$extension")) {
+        originalNameUnescaped = originalNameUnescaped.removeSuffix(".$extension")
+      }
+
       return ChanPostImageBuilder()
         .serverFilename(fileHash)
         .thumbnailUrl(endpoints.thumbnailUrl(board.boardDescriptor, false, board.customSpoilers, args))
         .imageUrl(endpoints.imageUrl(board.boardDescriptor, args))
-        .filename(Parser.unescapeEntities(originalName, false))
+        .filename(originalNameUnescaped)
         .extension(extension)
         .imageWidth(width ?: 0)
         .imageHeight(height ?: 0)

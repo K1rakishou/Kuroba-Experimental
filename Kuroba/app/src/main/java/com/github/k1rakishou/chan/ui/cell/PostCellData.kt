@@ -613,20 +613,40 @@ data class PostCellData(
       fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
 
       resultMap[postImage] = fileInfoText
-    } else if (postImages.isNotEmpty()) {
+    } else if (postImages.size > 1) {
       postImages.forEach { postImage ->
-        val fileInfoText = SpannableStringBuilder()
-        fileInfoText.append(postImage.formatFullAvailableFileName(appendExtension = false))
-        fileInfoText.setSpan(UnderlineSpan(), 0, fileInfoText.length, 0)
+        resultMap[postImage] = buildSpannableString {
+          if (postImage.extension.isNotNullNorBlank()) {
+            append(postImage.extension!!.uppercase(Locale.ENGLISH))
+            append(" ")
+          }
+
+          if (postImage.imageWidth > 0 || postImage.imageHeight > 0) {
+            append("${postImage.imageWidth}x${postImage.imageHeight}")
+            append(" ")
+          }
+
+          val readableFileSize = ChanPostUtils.getReadableFileSize(postImage.size)
+            .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+          append(readableFileSize)
+
+          setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
+          setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)
+        }
+      }
+    } else if (postImages.size == 1) {
+      val postImage = postImages.first()
+
+      resultMap[postImage] = buildSpannableString {
+        append(postImage.formatFullAvailableFileName(appendExtension = false))
+        setSpan(UnderlineSpan(), 0, this.length, 0)
 
         if (postImages.size == 1 || searchMode) {
-          fileInfoText.append(postImage.formatImageInfo())
+          append(postImage.formatImageInfo())
         }
 
-        fileInfoText.setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, fileInfoText.length, 0)
-        fileInfoText.setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, fileInfoText.length, 0)
-
-        resultMap[postImage] = SpannableString.valueOf(fileInfoText)
+        setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
+        setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)
       }
     }
 

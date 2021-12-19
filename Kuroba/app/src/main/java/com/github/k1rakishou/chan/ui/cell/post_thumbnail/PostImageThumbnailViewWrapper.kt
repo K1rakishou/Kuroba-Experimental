@@ -14,11 +14,9 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
 import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
 import com.github.k1rakishou.chan.utils.setVisibilityFast
-import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.util.ChanPostUtils
 import java.util.*
 import javax.inject.Inject
 
@@ -69,20 +67,7 @@ class PostImageThumbnailViewWrapper(
       && postFileInfo.isNotNullNorBlank()
     ) {
       thumbnailFileInfo.setVisibilityFast(View.VISIBLE)
-
-      thumbnailFileInfo.text = buildString {
-        if (chanPostImage.extension.isNotNullNorBlank()) {
-          append(chanPostImage.extension!!.uppercase(Locale.ENGLISH))
-          append(" ")
-        }
-
-        append("${chanPostImage.imageWidth}x${chanPostImage.imageHeight}")
-        append(" ")
-
-        val readableFileSize = ChanPostUtils.getReadableFileSize(chanPostImage.size)
-          .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-        append(readableFileSize)
-      }
+      thumbnailFileInfo.text = postFileInfo.toString()
     } else {
       thumbnailFileInfo.setVisibilityFast(View.GONE)
     }

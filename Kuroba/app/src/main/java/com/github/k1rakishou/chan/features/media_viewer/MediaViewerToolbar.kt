@@ -353,7 +353,10 @@ class MediaViewerToolbar @JvmOverloads constructor(
         append(viewableMediaMeta.extension.uppercase(Locale.ENGLISH))
       }
 
-      if (viewableMediaMeta.mediaWidth != null && viewableMediaMeta.mediaHeight != null) {
+      val mediaWidth = viewableMediaMeta.mediaWidth
+      val mediaHeight = viewableMediaMeta.mediaHeight
+
+      if (mediaWidth != null && mediaHeight != null && (mediaWidth > 0 || mediaHeight > 0)) {
         append(", ")
 
         append(viewableMediaMeta.mediaWidth)
