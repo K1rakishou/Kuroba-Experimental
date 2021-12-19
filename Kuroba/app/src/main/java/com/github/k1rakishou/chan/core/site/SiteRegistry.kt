@@ -69,6 +69,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
     siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
+    siteClasses.addSiteToSiteClassesMap(Soyjakparty.SITE_NAME, Soyjakparty::class.java)
 
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.
