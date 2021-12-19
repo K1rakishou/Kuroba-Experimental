@@ -1015,6 +1015,14 @@ inline fun <T> Iterable<T>.sumByLong(selector: (T) -> Long): Long {
   return sum
 }
 
+inline fun <T, R> Iterable<T>.chunkedMap(chunkSize: Int, mapper: (List<T>) -> List<R>): List<R> {
+  require(chunkSize > 0) { "Bad chunkSize: $chunkSize" }
+
+  return this
+    .chunked(chunkSize)
+    .flatMap { element -> mapper(element) }
+}
+
 fun SpannableStringBuilder.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
   setSpan(
     span,
