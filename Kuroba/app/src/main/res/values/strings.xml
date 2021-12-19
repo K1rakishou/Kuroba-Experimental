@@ -866,8 +866,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_auto_theme_switcher_bottom">Toggles light/dark theme with a slight delay (5 seconds) ad infinitum (Or until app restart). Is used for dynamic themes testing. \n\nCurrent status: %1$s</string>
     <string name="settings_force_4chan_birthday">Force 4chan birthday</string>
     <string name="settings_force_halloween">Force halloween</string>
-    <string name="settings_force_snow">Force snow</string>
     <string name="settings_force_christmas">Force Christmas</string>
+    <string name="settings_force_new_year">Force New Year</string>
 
     <!-- Security settings -->
     <string name="settings_screen_security">Security</string>

@@ -308,6 +308,7 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
           topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
           setting = ChanSettings.force4chanBirthdayMode,
+          requiresRestart = true
         )
 
         group += BooleanSettingV2.createBuilder(
@@ -315,21 +316,24 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.ForceHalloween,
           topDescriptionIdFunc = { R.string.settings_force_halloween },
           setting = ChanSettings.forceHalloweenMode,
+          requiresRestart = true
         )
 
         if (AppModuleAndroidUtils.isDevBuild()) {
           group += BooleanSettingV2.createBuilder(
             context = context,
-            identifier = DeveloperScreen.MainGroup.ForceSnow,
-            topDescriptionIdFunc = { R.string.settings_force_snow },
-            setting = ChanSettings.forceSnowMode,
+            identifier = DeveloperScreen.MainGroup.ForceChristmas,
+            topDescriptionIdFunc = { R.string.settings_force_christmas },
+            setting = ChanSettings.forceChristmasMode,
+            requiresRestart = true
           )
 
           group += BooleanSettingV2.createBuilder(
             context = context,
-            identifier = DeveloperScreen.MainGroup.ForceChristmas,
-            topDescriptionIdFunc = { R.string.settings_force_christmas },
-            setting = ChanSettings.forceChristmasMode,
+            identifier = DeveloperScreen.MainGroup.ForceNewYear,
+            topDescriptionIdFunc = { R.string.settings_force_new_year },
+            setting = ChanSettings.forceNewYearMode,
+            requiresRestart = true
           )
         }
 

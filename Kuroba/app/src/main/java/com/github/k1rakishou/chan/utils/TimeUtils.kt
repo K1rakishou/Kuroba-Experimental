@@ -62,25 +62,6 @@ object TimeUtils {
   }
 
   @JvmStatic
-  fun isSnowTimeToday(): Boolean {
-    if (ChanSettings.forceSnowMode.get()) {
-      return true
-    }
-
-    if (isChristmasToday()) {
-      return true
-    }
-
-    val day = calendar[Calendar.DAY_OF_MONTH]
-
-    if (calendar[Calendar.MONTH] == Calendar.DECEMBER) {
-      return day == 31
-    }
-
-    return false
-  }
-
-  @JvmStatic
   fun isChristmasToday(): Boolean {
     if (ChanSettings.forceChristmasMode.get()) {
       return true
@@ -94,6 +75,16 @@ object TimeUtils {
     }
 
     return false
+  }
+
+  @JvmStatic
+  fun isNewYearToday(): Boolean {
+    if (ChanSettings.forceNewYearMode.get()) {
+      return true
+    }
+
+    val day = calendar[Calendar.DAY_OF_MONTH]
+    return calendar[Calendar.MONTH] == Calendar.DECEMBER && day == 31
   }
 
 }

@@ -405,8 +405,8 @@ public class ChanSettings {
     public static BooleanSetting showMpvInternalLogs;
     public static BooleanSetting force4chanBirthdayMode;
     public static BooleanSetting forceHalloweenMode;
-    public static BooleanSetting forceSnowMode;
     public static BooleanSetting forceChristmasMode;
+    public static BooleanSetting forceNewYearMode;
     //endregion
 
     //region DATA
@@ -651,8 +651,8 @@ public class ChanSettings {
             showMpvInternalLogs = new BooleanSetting(provider, "show_mpv_internal_logs", chanSettingsInfo.isDevBuild());
             force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
             forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
-            forceSnowMode = new BooleanSetting(provider, "force_snow_mode", false);
             forceChristmasMode = new BooleanSetting(provider, "force_christmas_mode", false);
+            forceNewYearMode = new BooleanSetting(provider, "force_new_year_mode", false);
             //endregion
 
             //region DATA
