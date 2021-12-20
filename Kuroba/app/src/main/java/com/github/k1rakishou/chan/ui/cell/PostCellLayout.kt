@@ -582,10 +582,19 @@ open class PostCellLayout @JvmOverloads constructor(
 
     val multiplier = when (postCellData.postAlignmentMode) {
       ChanSettings.PostAlignmentMode.AlignLeft -> 1.6f
-      ChanSettings.PostAlignmentMode.AlignRight -> 1.33f
+      ChanSettings.PostAlignmentMode.AlignRight -> {
+        if (commentTextBounds.lineBounds.size <= 1) {
+          1f
+        } else {
+          1.33f
+        }
+      }
     }
 
-    val commentFitsIntoThumbnailViewSide = (postImageThumbnailViewsContainer.measuredHeight * multiplier) >
+    val thumbnailsContainerHeight = postImageThumbnailViewsContainer.measuredHeight -
+      postImageThumbnailViewsContainer.paddingTop - postImageThumbnailViewsContainer.paddingBottom
+
+    val commentFitsIntoThumbnailViewSide = (thumbnailsContainerHeight * multiplier) >
       (commentHeight + icons.measuredHeight + resultTitleTextBounds.textHeight)
 
     if (commentFitsIntoThumbnailViewSide) {
