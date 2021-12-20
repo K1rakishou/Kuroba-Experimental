@@ -12,6 +12,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.TimeUtils
 import kotlin.random.Random
 
@@ -217,7 +218,13 @@ class SnowLayout @JvmOverloads constructor(
       this.delayTillNextSpawnMs = nextRespawnTime()
     }
 
-    private fun nextRespawnTime() = random.nextInt(10000, 45000)
+    private fun nextRespawnTime(): Int {
+      if (isDevBuild()) {
+        return random.nextInt(1000, 4500)
+      }
+
+      return random.nextInt(10000, 45000)
+    }
 
     fun update(dt: Int, viewWidth: Int, viewHeight: Int) {
       when (state) {
@@ -241,7 +248,8 @@ class SnowLayout @JvmOverloads constructor(
             startX = x.toFloat(),
             startY = y.toFloat() - launchTrailHeight,
             minRadius = explosionMinRadius,
-            maxRadius = explosionMaxRadius
+            maxRadius = explosionMaxRadius,
+            trailColor = this.launchTrailPaint.color
           )
 
           if (fireworkExplosionAnimation.allDead()) {
@@ -311,10 +319,17 @@ class SnowLayout @JvmOverloads constructor(
   private class FireworkExplosionAnimation(
     private val random: Random
   ) {
-    private var time = 0
+    private var explosionFlashLifetime = 0
     private var explosionRadius = 0
+    private var startX = 0f
+    private var startY = 0f
     private var particles: Array<FireworkExplosionParticle> = emptyArray()
     private var initialized = false
+
+    private val explosionFlashPaint = Paint(Paint.ANTI_ALIAS_FLAG).also { paint ->
+      paint.color = ColorUtils.setAlphaComponent(Color.TRANSPARENT, 255)
+      paint.style = Paint.Style.FILL
+    }
 
     fun allDead(): Boolean {
       for (particle in particles) {
@@ -334,16 +349,24 @@ class SnowLayout @JvmOverloads constructor(
       initialized = false
     }
 
-    fun update(dt: Int, startX: Float, startY: Float, minRadius: Int, maxRadius: Int) {
+    fun update(dt: Int, startX: Float, startY: Float, minRadius: Int, maxRadius: Int, trailColor: Int) {
       if (!initialized) {
-        explosionRadius = random.nextInt(minRadius, maxRadius)
-        time = 0
-        particles = Array(random.nextInt(10, 40)) { FireworkExplosionParticle(random) }
+        this.startX = startX
+        this.startY = startY
+        this.explosionRadius = random.nextInt(minRadius, maxRadius)
+        this.explosionFlashLifetime = 255
+        this.explosionFlashPaint.color = trailColor
+        this.explosionFlashPaint.alpha = 255
+        this.particles = Array(random.nextInt(10, 40)) { FireworkExplosionParticle(random) }
 
-        initialized = true
+        this.initialized = true
       }
 
-      time += dt
+      explosionFlashLifetime -= dt
+
+      if (explosionFlashPaint.alpha > 0) {
+        explosionFlashPaint.alpha = explosionFlashPaint.alpha - dt
+      }
 
       for (particle in particles) {
         particle.start(startX, startY)
@@ -355,8 +378,15 @@ class SnowLayout @JvmOverloads constructor(
       for (particle in particles) {
         particle.draw(canvas)
       }
+
+      if (explosionFlashLifetime > 0) {
+        canvas.drawCircle(startX, startY, EXPLOSION_FLASH_RADIUS, explosionFlashPaint)
+      }
     }
 
+    companion object {
+      private val EXPLOSION_FLASH_RADIUS = dp(32f).toFloat()
+    }
   }
 
   private class FireworkExplosionParticle(
