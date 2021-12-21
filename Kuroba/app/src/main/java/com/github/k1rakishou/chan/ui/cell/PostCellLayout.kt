@@ -46,6 +46,7 @@ open class PostCellLayout @JvmOverloads constructor(
   private var imageFileName: TextView? = null
   private var _postCellData: PostCellData? = null
   private var postCommentShiftResult: PostCommentShiftResult? = null
+  private var completelyEmptyPost = false
 
   private val measureResult = MeasureResult()
   private val layoutResult = LayoutResult()
@@ -64,7 +65,7 @@ open class PostCellLayout @JvmOverloads constructor(
   private val postAttentionLabelWidth = getDimen(R.dimen.post_attention_label_width)
   private val goToPostButtonWidth = getDimen(R.dimen.go_to_post_button_width)
 
-  private val postCellTopPadding = (vertPaddingPx * 2)
+  private val postCellVerticalPadding = (vertPaddingPx * 2)
   private val postAttentionLabelPaddings = (horizPaddingPx * 2)
   private val commentTopPadding = (vertPaddingPx * 2)
 
@@ -129,7 +130,21 @@ open class PostCellLayout @JvmOverloads constructor(
       )
     }
 
-    updatePaddings(top = postCellTopPadding, left = horizPaddingPx, right = horizPaddingPx)
+    if (
+      postImageThumbnailViewsContainer.visibility == View.GONE
+      && icons.visibility == View.GONE
+      && comment.visibility == View.GONE
+      && replies.visibility == View.GONE
+    ) {
+      completelyEmptyPost = true
+    }
+
+    updatePaddings(
+      top = postCellVerticalPadding,
+      left = horizPaddingPx,
+      right = horizPaddingPx
+    )
+
     requestLayout()
   }
 
@@ -140,6 +155,7 @@ open class PostCellLayout @JvmOverloads constructor(
     this.comment.text = null
     this.replies.text = null
     this.imageFileName?.text = null
+    this.completelyEmptyPost = false
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -253,13 +269,26 @@ open class PostCellLayout @JvmOverloads constructor(
     measureResult.addVertical(measure(replies, repliesWidthSpec, unspecified()))
     measureResult.addVertical(measure(divider, widthMeasureSpec, exactly(DIVIDER_HEIGHT)))
 
-    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - postCellTopPadding))
-
-    if (goToPostButton.visibility != GONE) {
-      measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - postCellTopPadding))
+    if (
+      completelyEmptyPost
+      && goToPostButton.visibility != GONE
+      && measureResult.takenHeight < goToPostButtonMinHeight
+    ) {
+      measureResult.takenHeight = goToPostButtonMinHeight
     }
 
-    measureResult.addVertical(postCellTopPadding)
+    val topPadding = if (completelyEmptyPost) 0 else postCellVerticalPadding
+    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - topPadding))
+
+    if (goToPostButton.visibility != GONE) {
+      measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - topPadding))
+    }
+
+    measureResult.addVertical(postCellVerticalPadding)
+
+    if (completelyEmptyPost) {
+      measureResult.addVertical(postCellVerticalPadding)
+    }
   }
 
   private fun measureCommentRepliesDividerWithCommentShift(
@@ -325,16 +354,18 @@ open class PostCellLayout @JvmOverloads constructor(
 
     val dividerWidthSpec = exactly(MeasureSpec.getSize(widthMeasureSpec) - totalSidePaddings)
 
+    // We don't need to handle completelyEmptyPost here because when completelyEmptyPost is true
+    // that means post has no images so we never use post comment shift option
     measureResult.addVertical(measure(replies, repliesWidthSpec, unspecified()))
     measureResult.addVertical(measure(divider, dividerWidthSpec, exactly(DIVIDER_HEIGHT)))
 
-    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - postCellTopPadding))
+    measure(postAttentionLabel, exactly(postAttentionLabelWidth), exactly(measureResult.takenHeight - postCellVerticalPadding))
 
     if (goToPostButton.visibility != GONE) {
-      measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - postCellTopPadding))
+      measure(goToPostButton, exactly(goToPostButtonWidth), exactly(measureResult.takenHeight - postCellVerticalPadding))
     }
 
-    measureResult.addVertical(postCellTopPadding)
+    measureResult.addVertical(postCellVerticalPadding)
   }
 
   override fun onLayout(changed: Boolean, l: Int, t: Int, r: Int, b: Int) {
@@ -343,7 +374,7 @@ open class PostCellLayout @JvmOverloads constructor(
     }
 
     val left = l + horizPaddingPx
-    val top = t + postCellTopPadding
+    val top = t + postCellVerticalPadding
 
     postTopPartLayoutResult.reset()
     layoutResult.reset(newLeft = left, newTop = top)
@@ -355,7 +386,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
     when (shiftResult) {
       PostCommentShiftResult.CannotShiftComment -> {
-        layoutResult.vertical(comment, replies, divider)
+        layoutResult.vertical(comment, replies)
       }
       PostCommentShiftResult.ShiftAndAttachToTheSideOfThumbnail,
       is PostCommentShiftResult.ShiftWithTopMargin -> {
@@ -381,9 +412,15 @@ open class PostCellLayout @JvmOverloads constructor(
           )
         }
 
-        layoutResult.vertical(replies, divider)
+        layoutResult.vertical(replies)
       }
     }
+
+    if (completelyEmptyPost) {
+      layoutResult.offset(vertical = (postCellVerticalPadding - divider.measuredHeight))
+    }
+
+    layoutResult.vertical(divider)
 
     layoutResult.top = top
     layoutResult.left = left + postAttentionLabel.measuredWidth +
@@ -679,6 +716,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
     val horizPaddingPx = dp(4f)
     val vertPaddingPx = dp(4f)
+    private val goToPostButtonMinHeight = dp(40f)
 
     val thumbnailsContainerBottomPadding = vertPaddingPx * 2
     val thumbnailsContainerHorizPadding = horizPaddingPx * 2
