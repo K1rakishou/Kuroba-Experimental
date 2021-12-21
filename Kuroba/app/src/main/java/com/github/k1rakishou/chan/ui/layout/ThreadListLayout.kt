@@ -88,6 +88,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineName
@@ -856,6 +857,15 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
   fun onHidden(nowFocused: ThreadSlideController.ThreadControllerType, isThreadVisible: Boolean) {
     snowLayout.onHidden()
+  }
+
+  fun showCaptcha(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    autoReply: Boolean,
+    afterPostingAttempt: Boolean
+  ) {
+    replyLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
   }
 
   override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {

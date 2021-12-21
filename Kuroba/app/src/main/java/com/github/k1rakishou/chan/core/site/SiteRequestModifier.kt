@@ -116,4 +116,10 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
   }
 
+  @CallSuper
+  open fun modifyPostReportRequest(site: T, requestBuilder: Request.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+  }
+
 }

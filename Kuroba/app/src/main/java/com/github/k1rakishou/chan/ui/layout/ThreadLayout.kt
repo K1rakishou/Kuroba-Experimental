@@ -95,6 +95,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.persist_state.ReplyMode
 import com.google.android.material.snackbar.Snackbar
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
@@ -1245,6 +1246,15 @@ class ThreadLayout @JvmOverloads constructor(
 
   fun openReply(open: Boolean) {
     openReplyInternal(open)
+  }
+
+  fun showCaptchaController(
+    chanDescriptor: ChanDescriptor,
+    replyMode: ReplyMode,
+    autoReply: Boolean,
+    afterPostingAttempt: Boolean
+  ) {
+    threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
   }
 
   override fun showReplyButton(show: Boolean) {

@@ -634,6 +634,12 @@ open class Chan4 : SiteBase() {
       addChan4CookieHeader(site, requestBuilder)
     }
 
+    override fun modifyPostReportRequest(site: Chan4, requestBuilder: Request.Builder) {
+      super.modifyPostReportRequest(site, requestBuilder)
+
+      addChan4CookieHeader(site, requestBuilder)
+    }
+
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
       val rememberCaptchaCookies = site.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
         ?.get()

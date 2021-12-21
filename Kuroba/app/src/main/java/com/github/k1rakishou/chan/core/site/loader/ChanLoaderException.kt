@@ -13,7 +13,6 @@ import okhttp3.HttpUrl
 import java.net.SocketException
 import java.net.SocketTimeoutException
 import java.net.UnknownHostException
-import java.util.concurrent.CancellationException
 import javax.net.ssl.SSLException
 
 
@@ -89,7 +88,7 @@ open class ChanLoaderException(
   }
 
   fun isCoroutineCancellationError(): Boolean {
-    return exception is CancellationException
+    return exception is kotlinx.coroutines.CancellationException
   }
 
   fun isCacheEmptyException(): Boolean = exception is CacheIsEmptyException

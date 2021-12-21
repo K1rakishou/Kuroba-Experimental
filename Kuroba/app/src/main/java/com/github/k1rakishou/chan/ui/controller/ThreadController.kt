@@ -35,6 +35,7 @@ import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManag
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadFollowHistoryManager
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -42,6 +43,7 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.report.Chan4ReportPostController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
@@ -65,6 +67,7 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
@@ -306,13 +309,42 @@ abstract class ThreadController(
 
   override fun openReportController(post: ChanPost) {
     val site = siteManager.bySiteDescriptor(post.boardDescriptor.siteDescriptor)
-    if (site != null) {
-      val toolbarHeight = toolbar?.toolbarHeight
-        ?: return
-
-      val reportController = ReportController(context, post, site, toolbarHeight)
-      navigationController!!.pushController(reportController)
+    if (site == null || navigationController == null) {
+      return
     }
+
+    if (site.siteDescriptor().is4chan()) {
+      val chan4ReportPostController = Chan4ReportPostController(
+        context = context,
+        postDescriptor = post.postDescriptor,
+        onCaptchaRequired = {
+          val threadDescriptor = ChanDescriptor.ThreadDescriptor.create(post.boardDescriptor, 1L)
+
+          threadLayout.showCaptchaController(
+            chanDescriptor = threadDescriptor,
+            replyMode = ReplyMode.ReplyModeSendWithoutCaptcha,
+            autoReply = false,
+            afterPostingAttempt = true
+          )
+        },
+        onOpenInWebView = {
+          openWebViewReportController(post, site)
+        }
+      )
+
+      requireNavController().presentController(chan4ReportPostController)
+      return
+    }
+
+    openWebViewReportController(post, site)
+  }
+
+  private fun openWebViewReportController(post: ChanPost, site: Site) {
+    val toolbarHeight = toolbar?.toolbarHeight
+      ?: return
+
+    val reportController = WebViewReportController(context, post, site, toolbarHeight)
+    requireNavController().pushController(reportController)
   }
 
   fun selectPostImage(postImage: ChanPostImage) {

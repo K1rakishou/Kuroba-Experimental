@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.controller;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AndroidRuntimeException;
@@ -39,10 +42,7 @@ import org.jetbrains.annotations.NotNull;
 
 import okhttp3.HttpUrl;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
-
-public class ReportController extends Controller implements RequiresNoBottomNavBar {
+public class WebViewReportController extends Controller implements RequiresNoBottomNavBar {
     private ChanPost post;
     private Site site;
     private int toolbarHeight = 0;
@@ -52,7 +52,7 @@ public class ReportController extends Controller implements RequiresNoBottomNavB
         component.inject(this);
     }
 
-    public ReportController(Context context, ChanPost post, Site site, int toolbarHeight) {
+    public WebViewReportController(Context context, ChanPost post, Site site, int toolbarHeight) {
         super(context);
         this.post = post;
         this.site = site;

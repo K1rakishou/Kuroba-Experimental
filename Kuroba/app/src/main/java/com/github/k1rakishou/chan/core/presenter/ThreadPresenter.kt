@@ -1031,7 +1031,7 @@ class ThreadPresenter @Inject constructor(
   private suspend fun onChanLoaderError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
     BackgroundUtils.ensureMainThread()
 
-    if (error is CancellationException) {
+    if (error.isCoroutineCancellationError()) {
       return
     }
 

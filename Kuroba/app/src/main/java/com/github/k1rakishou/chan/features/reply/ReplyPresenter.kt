@@ -389,7 +389,7 @@ class ReplyPresenter @Inject constructor(
     )
   }
 
-  private fun showCaptcha(
+  fun showCaptcha(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,

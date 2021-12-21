@@ -106,10 +106,11 @@ class ThreadDownloadingDelegate(
 
     val outOfDiskSpaceError = AtomicBoolean(false)
     val outputDirError = AtomicBoolean(false)
+    val canceled = AtomicBoolean(false)
 
     threadDownloads.forEachIndexed { index, threadDownload ->
       try {
-        if (outOfDiskSpaceError.get()) {
+        if (outOfDiskSpaceError.get() || canceled.get()) {
           return@forEachIndexed
         }
 
@@ -137,6 +138,7 @@ class ThreadDownloadingDelegate(
         )
       } catch (error: CancellationException) {
         Logger.e(TAG, "doWorkInternal() ${threadDownload.threadDescriptor} canceled")
+        canceled.set(true)
       }
     }
 

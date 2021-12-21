@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import kotlinx.coroutines.CancellationException
 import java.util.*
 import java.util.concurrent.Callable
 import javax.annotation.CheckReturnValue
@@ -166,6 +167,10 @@ sealed class ModularResult<V : Any?> {
       return try {
         value(func())
       } catch (error: Throwable) {
+        if (error is CancellationException) {
+          throw error
+        }
+
         error(error)
       }
     }
@@ -177,6 +182,10 @@ sealed class ModularResult<V : Any?> {
       return try {
         value(func.call())
       } catch (error: Throwable) {
+        if (error is CancellationException) {
+          throw error
+        }
+
         error(error)
       }
     }

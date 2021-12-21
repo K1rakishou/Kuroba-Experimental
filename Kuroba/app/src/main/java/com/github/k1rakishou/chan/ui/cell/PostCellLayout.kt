@@ -614,7 +614,7 @@ open class PostCellLayout @JvmOverloads constructor(
 
     if (specialModeCanBeUsed) {
       // Special case for when thumbnails are on the right side of a post and the post comment's
-      // lines are all formatted in such way that first N of them are all less than availableWidth.
+      // lines are all formatted in such way that first N of them have width that is less than availableWidth.
       // N in this case is first number lines which height sum is greater than or equal to availableHeight.
       // This is very useful for tablets with postAlignmentMode == AlignLeft.
 

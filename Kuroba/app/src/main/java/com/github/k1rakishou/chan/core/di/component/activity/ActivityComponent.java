@@ -58,6 +58,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonV
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController;
+import com.github.k1rakishou.chan.features.report.Chan4ReportPostController;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
 import com.github.k1rakishou.chan.features.search.SelectBoardForSearchController;
@@ -123,10 +124,10 @@ import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.controller.PostLinksController;
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController;
 import com.github.k1rakishou.chan.ui.controller.RemovedPostsController;
-import com.github.k1rakishou.chan.ui.controller.ReportController;
 import com.github.k1rakishou.chan.ui.controller.ReportProblemController;
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController;
 import com.github.k1rakishou.chan.ui.controller.ViewThreadController;
+import com.github.k1rakishou.chan.ui.controller.WebViewReportController;
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewReportFilesController;
 import com.github.k1rakishou.chan.ui.controller.crashlogs.ViewFullCrashLogController;
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController;
@@ -225,7 +226,7 @@ public interface ActivityComponent {
     void inject(PostRepliesPopupController postRepliesPopupController);
     void inject(PostSearchPopupController postSearchPopupController);
     void inject(RemovedPostsController removedPostsController);
-    void inject(ReportController reportController);
+    void inject(WebViewReportController webViewReportController);
     void inject(SitesSetupController sitesSetupController);
     void inject(SplitNavigationController splitNavigationController);
     void inject(StyledToolbarNavigationController styledToolbarNavigationController);
@@ -281,6 +282,7 @@ public interface ActivityComponent {
     void inject(BookmarkGroupSettingsController bookmarkGroupSettingsController);
     void inject(BookmarkGroupPatternSettingsController bookmarkGroupPatternSettingsController);
     void inject(KurobaAlertController kurobaAlertController);
+    void inject(Chan4ReportPostController chan4ReportPostController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

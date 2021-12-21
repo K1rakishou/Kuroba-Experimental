@@ -105,12 +105,11 @@ import kotlinx.coroutines.flow.collect
 import java.util.*
 import kotlin.math.roundToInt
 
-@Composable
-fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier, overrideColor: Color? = null) {
-  Box(modifier = Modifier
-    .fillMaxSize()
-    .then(modifier)) {
+private val DefaultFillMaxSizeModifier: Modifier = Modifier.fillMaxSize()
 
+@Composable
+fun KurobaComposeProgressIndicator(modifier: Modifier = DefaultFillMaxSizeModifier, overrideColor: Color? = null) {
+  Box(modifier = modifier) {
     val color = if (overrideColor == null) {
       val chanTheme = LocalChanTheme.current
       remember(key1 = chanTheme.accentColor) { Color(chanTheme.accentColor) }
@@ -128,14 +127,13 @@ fun KurobaComposeProgressIndicator(modifier: Modifier = Modifier, overrideColor:
 }
 
 @Composable
-fun KurobaComposeErrorMessage(error: Throwable, modifier: Modifier = Modifier) {
+fun KurobaComposeErrorMessage(error: Throwable, modifier: Modifier = DefaultFillMaxSizeModifier) {
   KurobaComposeErrorMessage(error.errorMessageOrClassName(), modifier)
 }
 
 @Composable
-fun KurobaComposeErrorMessage(errorMessage: String, modifier: Modifier = Modifier) {
+fun KurobaComposeErrorMessage(errorMessage: String, modifier: Modifier = DefaultFillMaxSizeModifier) {
   Box(modifier = Modifier
-    .fillMaxSize()
     .padding(8.dp)
     .then(modifier)
   ) {

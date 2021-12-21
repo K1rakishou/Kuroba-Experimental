@@ -10,6 +10,7 @@ import com.github.k1rakishou.chan.features.filters.FiltersControllerViewModel;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchControllerViewModel;
+import com.github.k1rakishou.chan.features.report.Chan4ReportPostControllerViewModel;
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsControllerViewModel;
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorControllerViewModel;
 import com.github.k1rakishou.chan.features.setup.CompositeCatalogsSetupControllerViewModel;
@@ -42,6 +43,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(BookmarkGroupSettingsControllerViewModel bookmarkGroupSettingsControllerViewModel);
     public abstract void inject(BookmarkGroupPatternSettingsControllerViewModel bookmarkGroupPatternSettingsControllerViewModel);
     public abstract void inject(LynxchanCaptchaLayoutViewModel lynxchanCaptchaLayoutViewModel);
+    public abstract void inject(Chan4ReportPostControllerViewModel chan4ReportPostControllerViewModel);
 
     @Subcomponent.Builder
     public interface Builder {
