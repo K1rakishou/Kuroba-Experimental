@@ -26,7 +26,7 @@ class PostCommentTextView @JvmOverloads constructor(
   defAttrStyle: Int = 0
 ) : AppCompatTextView(context, attributeSet, defAttrStyle) {
   private var selectionMode = false
-  private var needToCanOtherEvents = false
+  private var needToCancelOtherEvents = false
   private var emulatingDoubleTap = false
   private var linkConsumesEvents = false
 
@@ -86,7 +86,7 @@ class PostCommentTextView @JvmOverloads constructor(
       val x = clickX
       val y = clickY
 
-      needToCanOtherEvents = true
+      needToCancelOtherEvents = true
 
       emulatingDoubleTap = true
       emulateMotionEvent(DOWN_TIME_TAGGED, MotionEvent.ACTION_DOWN, x, y)
@@ -111,8 +111,8 @@ class PostCommentTextView @JvmOverloads constructor(
   override fun onTouchEvent(event: MotionEvent): Boolean {
     val action = event.actionMasked
 
-    if (needToCanOtherEvents) {
-      needToCanOtherEvents = false
+    if (needToCancelOtherEvents) {
+      needToCancelOtherEvents = false
 
       val motionEvent = MotionEvent.obtain(0, SystemClock.uptimeMillis(), MotionEvent.ACTION_CANCEL, event.x, event.y, 0)
       touchEventListener?.onTouch(this, motionEvent)

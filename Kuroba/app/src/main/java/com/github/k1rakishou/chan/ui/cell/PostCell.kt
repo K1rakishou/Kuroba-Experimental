@@ -1380,14 +1380,11 @@ class PostCell @JvmOverloads constructor(
    * A MovementMethod that searches for PostLinkables.<br></br>
    * See [PostLinkable] for more information.
    */
-  private class PostViewFastMovementMethod : LinkMovementMethod() {
+  private inner class PostViewFastMovementMethod : LinkMovementMethod() {
+    private var intercept = false
 
     override fun onTouchEvent(widget: TextView, buffer: Spannable, event: MotionEvent): Boolean {
       val action = event.actionMasked
-
-      if (action != MotionEvent.ACTION_UP) {
-        return false
-      }
 
       var x = event.x.toInt()
       var y = event.y.toInt()
@@ -1401,9 +1398,23 @@ class PostCell @JvmOverloads constructor(
       val line = layout.getLineForVertical(y)
       val off = layout.getOffsetForHorizontal(line, x.toFloat())
       val link = buffer.getSpans(off, off, ClickableSpan::class.java)
+      val clickIsExactlyWithinBounds = (x >= layout.getLineLeft(line)) && (x < layout.getLineRight(line))
+      val clickingSpans = link.isNotEmpty() && clickIsExactlyWithinBounds
 
-      if (link.isNotEmpty()) {
-        link[0].onClick(widget)
+      if (!intercept && action == MotionEvent.ACTION_UP) {
+        if (clickingSpans) {
+          link[0].onClick(widget)
+          return true
+        }
+      }
+
+      if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+        intercept = false
+      }
+
+      if (!clickingSpans) {
+        intercept = true
+        postCommentLongtapDetector.passTouchEvent(event)
         return true
       }
 
