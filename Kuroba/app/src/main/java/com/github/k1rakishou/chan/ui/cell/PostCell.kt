@@ -1401,11 +1401,9 @@ class PostCell @JvmOverloads constructor(
       val clickIsExactlyWithinBounds = (x >= layout.getLineLeft(line)) && (x < layout.getLineRight(line))
       val clickingSpans = link.isNotEmpty() && clickIsExactlyWithinBounds
 
-      if (!intercept && action == MotionEvent.ACTION_UP) {
-        if (clickingSpans) {
-          link[0].onClick(widget)
-          return true
-        }
+      if (!intercept && action == MotionEvent.ACTION_UP && clickingSpans) {
+        link[0].onClick(widget)
+        return true
       }
 
       if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
