@@ -7,6 +7,9 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4ReportPostRequest
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
@@ -14,7 +17,6 @@ import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import okhttp3.MultipartBody
 import okhttp3.Request
 import org.jsoup.nodes.Node
 import java.util.*
@@ -67,7 +69,7 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
 
       val reportCategoriesEndpoint = String.format(
         Locale.ENGLISH,
-        REPORT_POST_ENDPOINT_FORMAT,
+        Chan4ReportPostRequest.REPORT_POST_ENDPOINT_FORMAT,
         postDescriptor.boardDescriptor().boardCode,
         postDescriptor.postNo
       )
@@ -130,63 +132,21 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
     postDescriptor: PostDescriptor,
     captchaSolution: CaptchaSolution.ChallengeWithSolution,
     selectedCategoryId: Int
-  ): ModularResult<ReportPostResult> {
+  ): ModularResult<PostReportResult> {
     _reporting.value = true
 
     return ModularResult.Try {
-      val reportPostEndpoint = String.format(
-        Locale.ENGLISH,
-        REPORT_POST_ENDPOINT_FORMAT,
-        postDescriptor.boardDescriptor().boardCode,
-        postDescriptor.postNo
+      val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+        ?: return@Try PostReportResult.NotSupported
+
+      return@Try site.actions().reportPost(
+        postReportData = PostReportData.Chan4(
+          postDescriptor = postDescriptor,
+          captchaSolution = captchaSolution,
+          catId = selectedCategoryId
+        )
       )
-
-      Logger.d(TAG, "reportPost($postDescriptor, $selectedCategoryId) reportPostEndpoint=$reportPostEndpoint")
-
-      val body = MultipartBody.Builder()
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("cat_id", selectedCategoryId.toString())
-        .addFormDataPart("t-challenge", captchaSolution.challenge)
-        .addFormDataPart("t-response", captchaSolution.solution)
-        .addFormDataPart("board", postDescriptor.boardDescriptor().boardCode)
-        .addFormDataPart("no", postDescriptor.postNo.toString())
-        .build()
-
-      val requestBuilder = Request.Builder()
-        .url(reportPostEndpoint)
-        .post(body)
-
-      siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())?.let { site ->
-        site.requestModifier().modifyPostReportRequest(site, requestBuilder)
-      }
-
-      val document = okHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(requestBuilder.build())
-        .unwrap()
-
-      val bodyElement = document.getElementsByTag("body").firstOrNull()
-        ?: throw CommonClientException("<body> not found in response")
-
-      val errorText = bodyElement.getElementsByTag("font").firstOrNull()?.wholeText()
-        ?: throw CommonClientException("<font> not found inside of <body> tag")
-
-      Logger.d(TAG, "reportPost($postDescriptor, $selectedCategoryId) errorText='$errorText'")
-
-      if (errorText.contains(SUCCESS_TEXT, ignoreCase = true)) {
-        return@Try ReportPostResult.Success
-      }
-
-      if (errorText.contains(CAPTCHA_REQUIRED_ERROR_TEXT, ignoreCase = true)) {
-        return@Try ReportPostResult.CaptchaRequired
-      }
-
-      return@Try ReportPostResult.Error(errorMessage = errorText)
     }.finally { _reporting.value = false }
-  }
-
-  sealed class ReportPostResult {
-    object Success : ReportPostResult()
-    object CaptchaRequired : ReportPostResult()
-    data class Error(val errorMessage: String) : ReportPostResult()
   }
 
   internal data class ReportCategory(
@@ -196,11 +156,8 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
 
   companion object {
     private const val TAG = "Chan4ReportPostControllerViewModel"
-    private const val REPORT_POST_ENDPOINT_FORMAT = "https://sys.4chan.org/%s/imgboard.php?mode=report&no=%d"
 
     private val REPORT_CATEGORY_PATTERN = Pattern.compile("<option\\s+value=\\\"(\\d+)\\\">(.*?)<\\/option>")
 
-    private const val SUCCESS_TEXT = "Report submitted"
-    private const val CAPTCHA_REQUIRED_ERROR_TEXT = "You seem to have mistyped the CAPTCHA"
   }
 }

@@ -23,6 +23,8 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginResponse
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
@@ -200,6 +202,7 @@ class Dvach : CommonSite() {
         return super.siteFeature(siteFeature)
           || siteFeature == SiteFeature.POSTING
           || siteFeature == SiteFeature.LOGIN
+          || siteFeature == SiteFeature.POST_REPORT
       }
     })
     setEndpoints(DvachEndpoints(this))
@@ -237,7 +240,7 @@ class Dvach : CommonSite() {
     domainString,
     domainString
   ) {
-    private val siteHost: String
+    val siteHost: String
       get() = dvach.domainUrl.value.host
 
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
@@ -463,6 +466,13 @@ class Dvach : CommonSite() {
 
     override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyCaptchaGetRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyPostReportRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyPostReportRequest(site, requestBuilder)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)
@@ -721,6 +731,17 @@ class Dvach : CommonSite() {
       return DvachArchiveThreadsRequest(
         request = requestBuilder.build(),
         proxiedOkHttpClient = proxiedOkHttpClient
+      ).execute()
+    }
+
+    override suspend fun <T : PostReportData> reportPost(postReportData: T): PostReportResult {
+      postReportData as PostReportData.Dvach
+
+      return DvachReportPostRequest(
+        site = this@Dvach,
+        _moshi = moshi,
+        _proxiedOkHttpClient = proxiedOkHttpClient,
+        postReportData = postReportData
       ).execute()
     }
   }

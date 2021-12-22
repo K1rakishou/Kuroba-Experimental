@@ -23,6 +23,8 @@ import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginResponse
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.PasscodeDependantMaxAttachablesTotalSize
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
@@ -468,6 +470,18 @@ open class Chan4 : SiteBase() {
       return Chan4ArchiveThreadsRequest(
         request = requestBuilder.build(),
         proxiedOkHttpClient = proxiedOkHttpClient
+      ).execute()
+    }
+
+    override suspend fun <T : PostReportData> reportPost(
+      postReportData: T
+    ): PostReportResult {
+      postReportData as PostReportData.Chan4
+
+      return Chan4ReportPostRequest(
+        siteManager = siteManager,
+        _proxiedOkHttpClient = proxiedOkHttpClient,
+        postReportData = postReportData
       ).execute()
     }
 

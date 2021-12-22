@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
@@ -224,20 +225,24 @@ class Chan4ReportPostController(
               .valueOrNull()
 
             when (reportPostResult) {
-              Chan4ReportPostControllerViewModel.ReportPostResult.Success -> {
+              PostReportResult.Success -> {
                 showToast(
-                  getString(R.string.report_controller_post_reported, postDescriptor.userReadableString()),
+                  getString(R.string.post_reported, postDescriptor.userReadableString()),
                   Toast.LENGTH_LONG
                 )
 
                 pop()
               }
-              Chan4ReportPostControllerViewModel.ReportPostResult.CaptchaRequired -> {
+              PostReportResult.CaptchaRequired -> {
                 onCaptchaRequired()
               }
-              is Chan4ReportPostControllerViewModel.ReportPostResult.Error -> {
+              is PostReportResult.Error -> {
                 showToast(reportPostResult.errorMessage, Toast.LENGTH_LONG)
               }
+              PostReportResult.NotSupported -> {
+                showToast(R.string.post_report_not_supported, Toast.LENGTH_LONG)
+              }
+              PostReportResult.AuthRequired,
               null -> {
                 // no-op
               }

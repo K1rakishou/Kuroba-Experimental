@@ -677,9 +677,10 @@ class ReplyLayout @JvmOverloads constructor(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean
+    afterPostingAttempt: Boolean,
+    onFinished: ((Boolean) -> Unit)? = null
   ) {
-    presenter.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
+    presenter.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
   }
 
   suspend fun bindChanDescriptor(chanDescriptor: ChanDescriptor) {

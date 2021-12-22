@@ -6,7 +6,6 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import okhttp3.HttpUrl
-import java.util.regex.Pattern
 
 open class FoolFuukaEndpoints(
   site: CommonSite,
@@ -81,17 +80,11 @@ open class FoolFuukaEndpoints(
     throw NotImplementedError("delete")
   }
 
-  override fun report(post: ChanPost): HttpUrl {
-    throw NotImplementedError("report")
-  }
-
   override fun login(): HttpUrl {
     throw NotImplementedError("login")
   }
 
   companion object {
-    val THUMBNAIL_PARAMS_PATTERN = Pattern.compile("thumb/(\\d+)/(\\d+)/\\d+s.")
-
     const val THUMBNAIL_PARAM_1 = "param1"
     const val THUMBNAIL_PARAM_2 = "param2"
     const val THUMBNAIL_FILE_ID = "file_id"

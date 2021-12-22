@@ -393,7 +393,8 @@ class ReplyPresenter @Inject constructor(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean
+    afterPostingAttempt: Boolean,
+    onFinished: ((Boolean) -> Unit)? = null
   ) {
     val controller = CaptchaContainerController(
       context = context,
@@ -407,7 +408,12 @@ class ReplyPresenter @Inject constructor(
           dialogFactory.createSimpleInformationDialog(
             context = context,
             titleText = getString(R.string.reply_captcha_failure),
-            descriptionText = authenticationResult.throwable.errorMessageOrClassName()
+            descriptionText = authenticationResult.throwable.errorMessageOrClassName(),
+            onDismissListener = {
+              if (!autoReply) {
+                onFinished?.invoke(false)
+              }
+            }
           )
         }
         is CaptchaContainerController.AuthenticationResult.Success -> {
@@ -415,11 +421,14 @@ class ReplyPresenter @Inject constructor(
 
           if (autoReply) {
             makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode)
+          } else {
+            onFinished?.invoke(true)
           }
         }
         is CaptchaContainerController.AuthenticationResult.SiteRequiresAdditionalAuth -> {
           launch {
-            when (val cookieResult = callback.show2chAntiSpamCheckSolverController()) {
+            val cookieResult = callback.show2chAntiSpamCheckSolverController()
+            when (cookieResult) {
               CookieResult.Canceled -> {
                 showToast(context, R.string.dvach_antispam_result_canceled)
               }
@@ -430,6 +439,11 @@ class ReplyPresenter @Inject constructor(
               is CookieResult.CookieValue -> {
                 showToast(context, getString(R.string.dvach_antispam_result_success))
               }
+            }
+
+            if (!autoReply) {
+              val success = cookieResult is CookieResult.CookieValue
+              onFinished?.invoke(success)
             }
           }
         }

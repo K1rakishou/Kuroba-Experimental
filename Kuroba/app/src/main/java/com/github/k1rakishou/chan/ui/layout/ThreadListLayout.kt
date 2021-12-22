@@ -863,9 +863,10 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean
+    afterPostingAttempt: Boolean,
+    onFinished: ((Boolean) -> Unit)? = null
   ) {
-    replyLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
+    replyLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
   }
 
   override fun currentFocusedController(): ThreadPresenter.CurrentFocusedController {

@@ -22,6 +22,8 @@ import com.github.k1rakishou.chan.core.site.http.DeleteResponse
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.limitations.PasscodePostingLimitationsInfo
 import com.github.k1rakishou.chan.core.site.sites.archive.NativeArchivePostList
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
@@ -50,10 +52,16 @@ interface SiteActions {
   suspend fun <T : SearchParams> search(searchParams: T): SearchResult =
     SearchResult.Failure(SearchError.NotImplemented)
 
-  suspend fun archive(boardDescriptor: BoardDescriptor, page: Int?): ModularResult<NativeArchivePostList> =
-    ModularResult.value(NativeArchivePostList())
+  suspend fun archive(
+    boardDescriptor: BoardDescriptor,
+    page: Int?
+  ): ModularResult<NativeArchivePostList> = ModularResult.value(NativeArchivePostList())
 
   suspend fun getOrRefreshPasscodeInfo(resetCached: Boolean): GetPasscodeInfoResult? = null
+
+  suspend fun <T : PostReportData> reportPost(
+    postReportData: T
+  ): PostReportResult = PostReportResult.NotSupported
 
   enum class LoginType {
     Passcode,

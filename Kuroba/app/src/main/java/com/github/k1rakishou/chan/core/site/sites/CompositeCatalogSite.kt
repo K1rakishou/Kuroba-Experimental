@@ -114,10 +114,6 @@ class CompositeCatalogSite : Site {
       error("Cannot be used by this site")
     }
 
-    override fun report(post: ChanPost?): HttpUrl {
-      error("Cannot be used by this site")
-    }
-
     override fun login(): HttpUrl {
       error("Cannot be used by this site")
     }

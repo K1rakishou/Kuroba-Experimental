@@ -66,7 +66,12 @@ public interface SiteEndpoints {
     HttpUrl pages(ChanBoard board);
     HttpUrl reply(ChanDescriptor chanDescriptor);
     HttpUrl delete(ChanPost post);
-    HttpUrl report(ChanPost post);
+
+    @Nullable
+    default HttpUrl report(ChanPost post) {
+        return null;
+    }
+
     HttpUrl login();
 
     @Nullable

@@ -408,11 +408,7 @@ abstract class CommonSite : SiteBase() {
     override fun delete(post: ChanPost): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }
-    
-    override fun report(post: ChanPost): HttpUrl {
-      throw IllegalStateException("Attempt to call abstract method")
-    }
-    
+
     override fun login(): HttpUrl {
       throw IllegalStateException("Attempt to call abstract method")
     }

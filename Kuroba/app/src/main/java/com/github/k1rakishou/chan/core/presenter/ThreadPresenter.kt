@@ -38,6 +38,8 @@ import com.github.k1rakishou.chan.core.manager.*
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.http.DeleteRequest
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
+import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
@@ -83,6 +85,7 @@ import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
+import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
@@ -2819,6 +2822,51 @@ class ThreadPresenter @Inject constructor(
     return currentFocusedController
   }
 
+  fun processDvachPostReport(reason: String, post: ChanPost, site: Site, retrying: Boolean = false) {
+    if (reason.isEmpty()) {
+      showToast(context, R.string.dvach_report_post_reason_cannot_be_empty)
+      return
+    }
+
+    launch {
+      val postReportData = PostReportData.Dvach(post.postDescriptor, reason)
+      showToast(context, R.string.dvach_report_post_sending)
+
+      when (val postReportResult = site.actions().reportPost(postReportData)) {
+        is PostReportResult.NotSupported -> {
+          showToast(context, R.string.post_report_not_supported)
+        }
+        is PostReportResult.Success -> {
+          showToast(context, getString(R.string.post_reported, post.postDescriptor.userReadableString()))
+        }
+        is PostReportResult.CaptchaRequired -> {
+          // 2ch.hk does not require captcha?
+        }
+        is PostReportResult.AuthRequired -> {
+          threadPresenterCallback?.showCaptchaController(
+            chanDescriptor = post.postDescriptor.descriptor,
+            replyMode = ReplyMode.ReplyModeSendWithoutCaptcha,
+            autoReply = false,
+            afterPostingAttempt = true,
+            onFinished = { success ->
+              if (success && !retrying) {
+                processDvachPostReport(
+                  reason = reason,
+                  post = post,
+                  site = site,
+                  retrying = true
+                )
+              }
+            }
+          )
+        }
+        is PostReportResult.Error -> {
+          showToast(context, getString(R.string.dvach_report_post_error, postReportResult.errorMessage))
+        }
+      }
+    }
+  }
+
   enum class CurrentFocusedController {
     Catalog,
     Thread,
@@ -2924,6 +2972,14 @@ class ThreadPresenter @Inject constructor(
     fun currentSpanCount(): Int
     fun getTopPostRepliesDataOrNull(): PostPopupHelper.PostPopupData?
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
+
+    fun showCaptchaController(
+      chanDescriptor: ChanDescriptor,
+      replyMode: ReplyMode,
+      autoReply: Boolean,
+      afterPostingAttempt: Boolean,
+      onFinished: ((Boolean) -> Unit)? = null
+    )
   }
 
   companion object {

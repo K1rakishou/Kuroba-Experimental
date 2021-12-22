@@ -62,10 +62,6 @@ class FuukaEndpoints(
     throw NotImplementedError("delete")
   }
 
-  override fun report(post: ChanPost): HttpUrl {
-    throw NotImplementedError("report")
-  }
-
   override fun login(): HttpUrl {
     throw NotImplementedError("login")
   }

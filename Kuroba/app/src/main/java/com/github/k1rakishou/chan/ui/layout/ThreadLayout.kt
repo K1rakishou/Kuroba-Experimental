@@ -1248,13 +1248,14 @@ class ThreadLayout @JvmOverloads constructor(
     openReplyInternal(open)
   }
 
-  fun showCaptchaController(
+  override fun showCaptchaController(
     chanDescriptor: ChanDescriptor,
     replyMode: ReplyMode,
     autoReply: Boolean,
-    afterPostingAttempt: Boolean
+    afterPostingAttempt: Boolean,
+    onFinished: ((Boolean) -> Unit)?
   ) {
-    threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt)
+    threadListLayout.showCaptcha(chanDescriptor, replyMode, autoReply, afterPostingAttempt, onFinished)
   }
 
   override fun showReplyButton(show: Boolean) {

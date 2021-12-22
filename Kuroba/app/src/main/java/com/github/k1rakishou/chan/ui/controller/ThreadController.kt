@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.core_logger.Logger
@@ -334,6 +335,15 @@ abstract class ThreadController(
 
       requireNavController().presentController(chan4ReportPostController)
       return
+    } else if (site.siteDescriptor().isDvach()) {
+      dialogFactory.createSimpleDialogWithInput(
+        context = context,
+        titleText = getString(R.string.dvach_report_post_title, post.postDescriptor.userReadableString()),
+        descriptionText = getString(R.string.dvach_report_post_description),
+        inputType = DialogFactory.DialogInputType.String,
+        onValueEntered = { reason -> threadLayout.presenter.processDvachPostReport(reason, post, site) }
+      )
+      return
     }
 
     openWebViewReportController(post, site)
@@ -342,6 +352,14 @@ abstract class ThreadController(
   private fun openWebViewReportController(post: ChanPost, site: Site) {
     val toolbarHeight = toolbar?.toolbarHeight
       ?: return
+
+    if (!site.siteFeature(Site.SiteFeature.POST_REPORT)) {
+      return
+    }
+
+    if (site.endpoints().report(post) == null) {
+      return
+    }
 
     val reportController = WebViewReportController(context, post, site, toolbarHeight)
     requireNavController().pushController(reportController)
