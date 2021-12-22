@@ -264,7 +264,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
       if (postImage != null && canUseHighResCells) {
         val thumbnailViewOptions = thumbnail.thumbnailViewOptions
-        val canSwapThumbnailToFullImage = postImage?.spoiler == false || ChanSettings.postThumbnailRemoveImageSpoilers.get()
+        val canSwapThumbnailToFullImage = postImage?.imageSpoilered == false || ChanSettings.postThumbnailRemoveImageSpoilers.get()
 
         if (canSwapThumbnailToFullImage && thumbnailViewOptions != null) {
           bindPostImage(

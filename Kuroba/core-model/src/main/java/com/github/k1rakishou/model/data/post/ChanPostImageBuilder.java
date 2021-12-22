@@ -4,7 +4,6 @@ import android.text.TextUtils;
 
 import androidx.annotation.Nullable;
 
-import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.common.StringUtils;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 
@@ -108,10 +107,6 @@ public class ChanPostImageBuilder {
     }
 
     public ChanPostImage build() {
-        if (ChanSettings.postThumbnailRemoveImageSpoilers.get()) {
-            spoiler = false;
-        }
-
         if (serverFilename == null || serverFilename.isEmpty()) {
             throw new IllegalStateException("Bad serverFilename, null or empty");
         }

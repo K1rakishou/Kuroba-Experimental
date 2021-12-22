@@ -31,6 +31,15 @@ class ChanPostImage(
   val size: Long = fileSize
     get() = _loadedFileSize ?: field
 
+  val imageSpoilered: Boolean
+    get() {
+      if (ChanSettings.postThumbnailRemoveImageSpoilers.get()) {
+        return false
+      }
+
+      return spoiler
+    }
+
   @get:Synchronized
   @set:Synchronized
   lateinit var ownerPostDescriptor: PostDescriptor
@@ -138,7 +147,7 @@ class ChanPostImage(
       return AppConstants.HIDDEN_IMAGE_THUMBNAIL_URL
     }
 
-    if (spoiler) {
+    if (imageSpoilered) {
       return spoilerThumbnailUrl
     }
 

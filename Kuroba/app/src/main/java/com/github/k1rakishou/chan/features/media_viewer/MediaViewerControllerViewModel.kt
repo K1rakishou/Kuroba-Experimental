@@ -526,7 +526,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       ?.let { thumbnailUrl -> MediaLocation.Remote(thumbnailUrl.toString()) }
       ?: MediaLocation.Remote(AppConstants.INLINED_IMAGE_THUMBNAIL)
 
-    val spoilerLocation = if (chanPostImage.spoiler) {
+    val spoilerLocation = if (chanPostImage.imageSpoilered) {
       chanPostImage.spoilerThumbnailUrl
         ?.let { spoilerUrl -> MediaLocation.Remote(spoilerUrl.toString()) }
     } else {
@@ -542,7 +542,7 @@ class MediaViewerControllerViewModel : ViewModel() {
       mediaHeight = chanPostImage.imageHeight,
       mediaSize = chanPostImage.size,
       mediaHash = chanPostImage.fileHash,
-      isSpoiler = chanPostImage.spoiler
+      isSpoiler = chanPostImage.imageSpoilered
     )
 
     val viewableMedia = when (chanPostImage.type) {
@@ -594,7 +594,7 @@ class MediaViewerControllerViewModel : ViewModel() {
         cacheHandler = cacheHandler,
         url = postImage.imageUrl,
         imageType = postImage.type,
-        isSpoiler = postImage.spoiler,
+        isSpoiler = postImage.imageSpoilered,
         cacheFileType = CacheFileType.PostMediaFull
       )
     }

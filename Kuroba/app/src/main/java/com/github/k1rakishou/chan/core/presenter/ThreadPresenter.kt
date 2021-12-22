@@ -2638,7 +2638,7 @@ class ThreadPresenter @Inject constructor(
         .append("Size: ")
         .append(getReadableFileSize(image.size))
 
-      if (image.spoiler && image.isInlined) {
+      if (image.imageSpoilered && image.isInlined) {
         // all linked files are spoilered, don't say that
         text.append("\nSpoilered")
       }
