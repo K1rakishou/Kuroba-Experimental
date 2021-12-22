@@ -526,9 +526,19 @@ class ChanThreadManager(
       chanLoadOptions = chanLoadOptions
     )
 
-    return when (result) {
-      is ModularResult.Error -> ThreadLoadResult.Error(chanDescriptor, ChanLoaderException(result.error))
-      is ModularResult.Value -> result.value
+    when (result) {
+      is ModularResult.Error -> {
+        val error = if (result.error is ChanLoaderException) {
+          result.error as ChanLoaderException
+        } else {
+          ChanLoaderException(result.error)
+        }
+
+        return ThreadLoadResult.Error(chanDescriptor, error)
+      }
+      is ModularResult.Value -> {
+        return result.value
+      }
     }
   }
 
