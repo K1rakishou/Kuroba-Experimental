@@ -1074,7 +1074,7 @@ class MainController(
               chanTheme = chanTheme,
               themeEngine = themeEngine,
               onBackgroundColor = backgroundColor,
-              searchQuery = searchQuery,
+              searchQueryState = searchQuery,
               onSearchQueryChanged = onSearchQueryChanged
             )
           }

@@ -1473,6 +1473,9 @@ Actual error: \'%1$s\'</string>
     <string name="report_controller_open_in_webview">Open in WebView</string>
     <string name="report_controller_post_reported">Reported post \'%1$s\'</string>
 
+    <string name="select_board_for_search_controller_no_boards_found">No boards supporting search found for site \'%1$s\'</string>
+    <string name="select_board_for_search_controller_no_boards_found_with_query">No boards supporting search found for site \'%1$s\' with query \'%2$s\'</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

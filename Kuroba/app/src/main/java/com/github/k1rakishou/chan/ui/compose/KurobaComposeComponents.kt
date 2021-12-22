@@ -698,11 +698,11 @@ fun KurobaSearchInput(
   chanTheme: ChanTheme,
   themeEngine: ThemeEngine,
   onBackgroundColor: Color,
-  searchQuery: MutableState<String>,
+  searchQueryState: MutableState<String>,
   onSearchQueryChanged: (String) -> Unit,
   labelText: String = stringResource(id = R.string.search_hint)
 ) {
-  var localQuery by remember { searchQuery }
+  var localQuery by remember { searchQueryState }
 
   Row(modifier = modifier) {
     Row(modifier = Modifier.wrapContentHeight()) {

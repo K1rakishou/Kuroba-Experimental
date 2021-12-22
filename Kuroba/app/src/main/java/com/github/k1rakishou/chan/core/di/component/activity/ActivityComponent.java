@@ -70,7 +70,6 @@ import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerVi
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostGapView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostView;
 import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchSiteView;
-import com.github.k1rakishou.chan.features.search.epoxy.EpoxySelectableBoardItemView;
 import com.github.k1rakishou.chan.features.settings.MainSettingsControllerV2;
 import com.github.k1rakishou.chan.features.settings.SettingsCoordinator;
 import com.github.k1rakishou.chan.features.settings.epoxy.EpoxyBooleanSetting;
@@ -341,7 +340,6 @@ public interface ActivityComponent {
     void inject(EpoxyTextViewWrapHeight epoxyTextViewWrapHeight);
     void inject(EpoxyPostLink epoxyPostLink);
     void inject(EpoxyBoardSelectionButtonView epoxyBoardSelectionButtonView);
-    void inject(EpoxySelectableBoardItemView epoxySelectableBoardItemView);
     void inject(EpoxySimpleGroupView epoxySimpleGroupView);
     void inject(EpoxyDuplicateImageView epoxyDuplicateImageView);
     void inject(EpoxyReorderableItemView epoxyReorderableItemView);

@@ -231,7 +231,7 @@ class ComposeBoardsSelectorController(
       chanTheme = chanTheme,
       themeEngine = themeEngine,
       onBackgroundColor = backgroundColor,
-      searchQuery = searchQuery,
+      searchQueryState = searchQuery,
       onSearchQueryChanged = { newQuery -> onSearchQueryChangedRemembered.value.invoke(newQuery) }
     )
   }

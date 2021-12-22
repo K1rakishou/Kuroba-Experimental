@@ -274,6 +274,7 @@ class GlobalSearchController(
 
         val controller = SelectBoardForSearchController(
           context = context,
+          siteDescriptor = selectedSiteDescriptor,
           supportsAllBoardsSearch = false,
           prevSelectedBoard = searchParameters.searchBoard,
           searchBoardProvider = { boardsSupportingSearch },
@@ -426,6 +427,7 @@ class GlobalSearchController(
 
           val controller = SelectBoardForSearchController(
             context = context,
+            siteDescriptor = selectedSiteDescriptor,
             supportsAllBoardsSearch = searchParameters.supportsAllBoardsSearch,
             prevSelectedBoard = searchParameters.searchBoard,
             searchBoardProvider = { boardsSupportingSearch },
