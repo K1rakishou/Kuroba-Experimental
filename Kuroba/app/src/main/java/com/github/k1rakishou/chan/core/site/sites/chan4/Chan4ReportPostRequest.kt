@@ -28,10 +28,19 @@ class Chan4ReportPostRequest(
     val selectedCategoryId = postReportData.catId
     val captchaSolution = postReportData.captchaSolution
 
+    val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+      ?: return PostReportResult.Error("Site is not active")
+
+    val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
+      ?: return PostReportResult.Error("Bad endpoints()")
+
+    val sysEndpoint = endpoints.getSysEndpoint(postDescriptor.boardDescriptor())
+
     val result: ModularResult<PostReportResult> = ModularResult.Try {
       val reportPostEndpoint = String.format(
         Locale.ENGLISH,
         REPORT_POST_ENDPOINT_FORMAT,
+        sysEndpoint,
         postDescriptor.boardDescriptor().boardCode,
         postDescriptor.postNo
       )
@@ -51,9 +60,7 @@ class Chan4ReportPostRequest(
         .url(reportPostEndpoint)
         .post(body)
 
-      siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())?.let { site ->
-        site.requestModifier().modifyPostReportRequest(site, requestBuilder)
-      }
+      site.requestModifier().modifyPostReportRequest(site, requestBuilder)
 
       val document = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(requestBuilder.build())
         .unwrap()
@@ -92,7 +99,7 @@ class Chan4ReportPostRequest(
     private const val SUCCESS_TEXT = "Report submitted"
     private const val CAPTCHA_REQUIRED_ERROR_TEXT = "You seem to have mistyped the CAPTCHA"
 
-    const val REPORT_POST_ENDPOINT_FORMAT = "https://sys.4chan.org/%s/imgboard.php?mode=report&no=%d"
+    const val REPORT_POST_ENDPOINT_FORMAT = "%s%s/imgboard.php?mode=report&no=%d"
   }
 
 }

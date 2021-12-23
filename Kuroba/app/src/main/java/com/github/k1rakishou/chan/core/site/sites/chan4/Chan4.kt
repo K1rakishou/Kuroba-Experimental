@@ -129,7 +129,9 @@ open class Chan4 : SiteBase() {
     )
   }
 
-  private val endpoints: SiteEndpoints = object : SiteEndpoints {
+  private val endpoints = Chan4Endpoints()
+
+  inner class Chan4Endpoints : SiteEndpoints {
     private val a = HttpUrl.Builder().scheme("https").host("a.4cdn.org").build()
     private val i = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
     private val t = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
@@ -276,7 +278,7 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
-    private fun getSysEndpoint(boardDescriptor: BoardDescriptor?): HttpUrl {
+    fun getSysEndpoint(boardDescriptor: BoardDescriptor?): HttpUrl {
       if (boardDescriptor == null) {
         return sys4channel
       }

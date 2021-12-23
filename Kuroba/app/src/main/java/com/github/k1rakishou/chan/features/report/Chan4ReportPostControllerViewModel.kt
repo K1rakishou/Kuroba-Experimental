@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4ReportPostRequest
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
@@ -67,9 +68,18 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
         return@Try fromCache
       }
 
+      val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
+        ?: throw CommonClientException("Site is not active")
+
+      val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
+        ?: throw CommonClientException("Bad endpoints()")
+
+      val sysEndpoint = endpoints.getSysEndpoint(postDescriptor.boardDescriptor())
+
       val reportCategoriesEndpoint = String.format(
         Locale.ENGLISH,
         Chan4ReportPostRequest.REPORT_POST_ENDPOINT_FORMAT,
+        sysEndpoint,
         postDescriptor.boardDescriptor().boardCode,
         postDescriptor.postNo
       )
