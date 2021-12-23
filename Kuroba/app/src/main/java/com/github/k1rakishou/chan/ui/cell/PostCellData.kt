@@ -77,7 +77,6 @@ data class PostCellData(
 ) {
   var postCellCallback: PostCellInterface.PostCellCallback? = null
 
-  private var detailsSizePxPrecalculated: Int? = null
   private var postTitleStubPrecalculated: CharSequence? = null
   private var postTitlePrecalculated: CharSequence? = null
   private var postFileInfoPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
@@ -141,7 +140,8 @@ data class PostCellData(
   val showImageFileName: Boolean
     get() = (singleImageMode || (postImages.size > 1 && searchMode)) && showPostFileInfo
 
-  private val _detailsSizePx = RecalculatableLazy { detailsSizePxPrecalculated ?: sp(ChanSettings.detailsSizeSp()) }
+  private val _detailsSizePx = RecalculatableLazy { sp(ChanSettings.detailsSizeSp()) }
+  private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.fontSize.get().toInt()) }
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
@@ -151,6 +151,8 @@ data class PostCellData(
 
   val detailsSizePx: Int
     get() = _detailsSizePx.value()
+  val fontSizePx: Int
+    get() = _fontSizePx.value()
   val postTitle: CharSequence
     get() = _postTitle.value()
   val postTitleStub: CharSequence
@@ -174,7 +176,6 @@ data class PostCellData(
   }
 
   fun resetEverything() {
-    detailsSizePxPrecalculated = null
     postTitlePrecalculated = null
     postTitleStubPrecalculated = null
     postFileInfoPrecalculated = null
@@ -265,7 +266,6 @@ data class PostCellData(
       isSplitLayout = isSplitLayout
     ).also { newPostCellData ->
       newPostCellData.postCellCallback = postCellCallback
-      newPostCellData.detailsSizePxPrecalculated = detailsSizePxPrecalculated
       newPostCellData.postTitlePrecalculated = postTitlePrecalculated
       newPostCellData.postTitleStubPrecalculated = postTitleStubPrecalculated
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
@@ -325,6 +325,8 @@ data class PostCellData(
 
     val postSubject = formatPostSubjectSpannable()
     if (postSubject.isNotNullNorBlank()) {
+      postSubject.setSpanSafe(AbsoluteSizeSpanHashed(fontSizePx), 0, postSubject.length, 0)
+
       SpannableHelper.findAllQueryEntriesInsideSpannableStringAndMarkThem(
         inputQueries = listOf(searchQuery.query),
         spannableString = postSubject,
@@ -423,7 +425,12 @@ data class PostCellData(
     }
 
     fullTitle.append(date)
-    fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
+
+    if (postSubject.isEmpty()) {
+      fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
+    } else {
+      fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), postSubject.length, fullTitle.length, 0)
+    }
 
     return fullTitle
   }
