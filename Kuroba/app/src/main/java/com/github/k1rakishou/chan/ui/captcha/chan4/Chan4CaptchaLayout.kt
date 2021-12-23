@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.GridCells
+import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -35,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
@@ -42,6 +47,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -62,6 +68,7 @@ import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSnappingSlider
@@ -187,9 +194,10 @@ class Chan4CaptchaLayout(
   private fun BuildCaptchaWindow() {
     val chanTheme = LocalChanTheme.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
+    val sliderCaptchaGridMode = viewModel.chan4CaptchaSettingsJson.get().sliderCaptchaGridMode
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-    BuildCaptchaImageOrText(captchaInfoAsync)
+    BuildCaptchaImageOrText(captchaInfoAsync, sliderCaptchaGridMode)
 
     Spacer(modifier = Modifier.height(8.dp))
 
@@ -217,7 +225,7 @@ class Chan4CaptchaLayout(
 
       Spacer(modifier = Modifier.height(8.dp))
 
-      if (captchaInfo.needSlider()) {
+      if (captchaInfo.needSlider() && !sliderCaptchaGridMode) {
         BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
           val widthDiff = captchaInfo.widthDiff()
 
@@ -305,14 +313,17 @@ class Chan4CaptchaLayout(
 
   @Composable
   private fun BuildCaptchaImageOrText(
-    captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>
+    captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
+    sliderCaptchaGridMode: Boolean
   ) {
     var size by remember { mutableStateOf(IntSize.Zero) }
+    var height by remember { mutableStateOf(160.dp) }
 
-    Box(modifier = Modifier
-      .height(160.dp)
-      .fillMaxWidth()
-      .onSizeChanged { newSize -> size = newSize }
+    Box(
+      modifier = Modifier
+        .wrapContentHeight()
+        .height(height)
+        .onSizeChanged { newSize -> size = newSize }
     ) {
       if (size != IntSize.Zero) {
         val captchaInfo = when (captchaInfoAsync) {
@@ -322,7 +333,7 @@ class Chan4CaptchaLayout(
             null
           }
           is AsyncData.Error -> {
-            val error = (captchaInfoAsync as AsyncData.Error).throwable
+            val error = captchaInfoAsync.throwable
             KurobaComposeErrorMessage(
               error = error,
               modifier = Modifier.fillMaxSize()
@@ -330,7 +341,7 @@ class Chan4CaptchaLayout(
 
             null
           }
-          is AsyncData.Data -> (captchaInfoAsync as AsyncData.Data).data
+          is AsyncData.Data -> captchaInfoAsync.data
         }
 
         if (captchaInfo != null) {
@@ -348,15 +359,90 @@ class Chan4CaptchaLayout(
               )
             }
           } else {
-            BuildCaptchaImage(captchaInfo, size)
+            if (captchaInfo.needSlider() && sliderCaptchaGridMode) {
+              height = 320.dp
+              BuildCaptchaImageGridMode(captchaInfo)
+            } else {
+              height = 160.dp
+              BuildCaptchaImageNormal(captchaInfo, size)
+            }
           }
         }
       }
     }
   }
 
+  @OptIn(ExperimentalFoundationApi::class)
   @Composable
-  private fun BuildCaptchaImage(
+  private fun BuildCaptchaImageGridMode(
+    captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo
+  ) {
+    val widthDiff = captchaInfo.widthDiff()
+      ?: return
+    val chanTheme = LocalChanTheme.current
+    val totalHorizWidth = widthDiff.times(3)
+    val horizOffset = totalHorizWidth / 2
+    val imagesToShow = 30
+    val slideStep = totalHorizWidth / imagesToShow
+    val density = LocalDensity.current
+    val lazyListState = rememberLazyListState()
+
+    LazyVerticalGrid(
+      state = lazyListState,
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .simpleVerticalScrollbar(lazyListState, chanTheme),
+      cells = GridCells.Adaptive(minSize = 160.dp),
+      content = {
+        items(
+          count = imagesToShow,
+          itemContent = { index ->
+            val currentXOffset = (index * slideStep) - horizOffset
+            val bgBitmapPainter = captchaInfo.bgBitmapPainter!!
+            val imgBitmapPainter = captchaInfo.imgBitmapPainter!!
+            val offset = remember(key1 = currentXOffset) { IntOffset(x = currentXOffset, y = 0) }
+
+            BoxWithConstraints(
+              modifier = Modifier
+                .fillMaxWidth()
+                .wrapContentHeight()
+                .padding(all = 2.dp)
+                .clipToBounds()
+            ) {
+              val scale = with(density) {
+                 Math.min(
+                  maxWidth.toPx() / imgBitmapPainter.intrinsicSize.width,
+                  maxHeight.toPx() / imgBitmapPainter.intrinsicSize.height
+                )
+              }
+
+              val contentScale = Scale(scale)
+
+              Image(
+                modifier = Modifier
+                  .fillMaxSize()
+                  .offset { offset },
+                painter = bgBitmapPainter,
+                contentScale = contentScale,
+                contentDescription = null,
+              )
+
+              Image(
+                modifier = Modifier
+                  .fillMaxSize(),
+                painter = imgBitmapPainter,
+                contentScale = contentScale,
+                contentDescription = null
+              )
+            }
+          })
+      }
+    )
+  }
+
+  @Composable
+  private fun BuildCaptchaImageNormal(
     captchaInfo: Chan4CaptchaLayoutViewModel.CaptchaInfo,
     size: IntSize
   ) {
@@ -461,6 +547,12 @@ class Chan4CaptchaLayout(
       isCurrentlySelected = chan4CaptchaSettings.rememberCaptchaCookies
     )
 
+    items += CheckableFloatingListMenuItem(
+      ACTION_SLIDER_CAPTCHA_GRID_MODE,
+      getString(R.string.captcha_layout_slider_captcha_alternative_ui),
+      isCurrentlySelected = chan4CaptchaSettings.sliderCaptchaGridMode
+    )
+
     items += FloatingListMenuItem(
       ACTION_SHOW_CAPTCHA_HELP,
       getString(R.string.captcha_layout_show_captcha_help)
@@ -473,7 +565,11 @@ class Chan4CaptchaLayout(
       itemClickListener = { clickedMenuItem ->
         when (val itemId = clickedMenuItem.key as Int) {
           ACTION_USE_CONTRAST_BACKGROUND -> {
-            viewModel.toggleContrastBackground()
+            val settings = viewModel.chan4CaptchaSettingsJson.get()
+            val updatedSettings = settings
+              .copy(sliderCaptchaUseContrastBackground = settings.sliderCaptchaUseContrastBackground.not())
+
+            viewModel.chan4CaptchaSettingsJson.set(updatedSettings)
             showToast(context, R.string.captcha_layout_reload_captcha)
           }
           ACTION_SHOW_CAPTCHA_HELP -> {
@@ -484,6 +580,13 @@ class Chan4CaptchaLayout(
             val updatedSetting = setting.copy(rememberCaptchaCookies = setting.rememberCaptchaCookies.not())
 
             viewModel.chan4CaptchaSettingsJson.set(updatedSetting)
+          }
+          ACTION_SLIDER_CAPTCHA_GRID_MODE -> {
+            val setting = viewModel.chan4CaptchaSettingsJson.get()
+            val updatedSetting = setting.copy(sliderCaptchaGridMode = setting.sliderCaptchaGridMode.not())
+
+            viewModel.chan4CaptchaSettingsJson.set(updatedSetting)
+            showToast(context, R.string.captcha_layout_reload_captcha)
           }
         }
       }
@@ -510,6 +613,7 @@ class Chan4CaptchaLayout(
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1
     private const val ACTION_REMEMBER_CAPTCHA_COOKIES = 2
+    private const val ACTION_SLIDER_CAPTCHA_GRID_MODE = 3
   }
 
 }

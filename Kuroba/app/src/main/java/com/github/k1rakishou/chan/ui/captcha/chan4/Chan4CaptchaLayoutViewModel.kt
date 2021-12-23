@@ -89,14 +89,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
-  fun toggleContrastBackground() {
-    val settings = chan4CaptchaSettingsJson.get()
-    val updatedSettings = settings
-      .copy(sliderCaptchaUseContrastBackground = settings.sliderCaptchaUseContrastBackground.not())
-
-    chan4CaptchaSettingsJson.set(updatedSettings)
-  }
-
   fun cleanup() {
     activeJob?.cancel()
     activeJob = null
