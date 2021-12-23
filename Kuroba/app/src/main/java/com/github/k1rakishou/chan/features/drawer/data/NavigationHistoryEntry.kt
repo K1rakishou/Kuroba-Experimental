@@ -6,7 +6,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 
@@ -37,7 +37,7 @@ data class NavHistoryBookmarkAdditionalInfo(
   val isLastPage: Boolean = false
 ) {
 
-  fun toAnnotatedString(themeEngine: ThemeEngine): AnnotatedString {
+  fun toAnnotatedString(chanTheme: ChanTheme): AnnotatedString {
     val text = buildString {
       append(newPosts)
 
@@ -51,13 +51,13 @@ data class NavHistoryBookmarkAdditionalInfo(
     val spanStyleRanges = mutableListOf<AnnotatedString.Range<SpanStyle>>()
 
     if (newQuotes > 0) {
-      val spanStyle = SpanStyle(color = themeEngine.chanTheme.bookmarkCounterHasRepliesColorCompose)
+      val spanStyle = SpanStyle(color = chanTheme.bookmarkCounterHasRepliesColorCompose)
       spanStyleRanges += AnnotatedString.Range(spanStyle, 0, text.length)
     } else if (!watching) {
-      val spanStyle = SpanStyle(color = themeEngine.chanTheme.bookmarkCounterNotWatchingColorCompose)
+      val spanStyle = SpanStyle(color = chanTheme.bookmarkCounterNotWatchingColorCompose)
       spanStyleRanges += AnnotatedString.Range(spanStyle, 0, text.length)
     } else {
-      val spanStyle = SpanStyle(color = themeEngine.chanTheme.bookmarkCounterNormalColorCompose)
+      val spanStyle = SpanStyle(color = chanTheme.bookmarkCounterNormalColorCompose)
       spanStyleRanges += AnnotatedString.Range(spanStyle, 0, text.length)
     }
 

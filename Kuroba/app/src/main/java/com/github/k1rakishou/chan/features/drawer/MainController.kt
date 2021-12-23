@@ -1116,6 +1116,7 @@ class MainController(
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
     val chanDescriptor = navHistoryEntry.descriptor
+    val chanTheme = LocalChanTheme.current
 
     val circleCropTransformation = remember(key1 = chanDescriptor) {
       if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
@@ -1259,8 +1260,8 @@ class MainController(
 
       if (navHistoryEntry.additionalInfo != null) {
         val additionalInfo = navHistoryEntry.additionalInfo
-        val additionalInfoString = remember(key1 = additionalInfo) {
-          additionalInfo.toAnnotatedString(themeEngine)
+        val additionalInfoString = remember(key1 = additionalInfo, key2 = chanTheme) {
+          additionalInfo.toAnnotatedString(chanTheme)
         }
 
         KurobaComposeText(
@@ -1288,6 +1289,7 @@ class MainController(
     onNavHistoryDeleteClicked: (NavigationHistoryEntry) -> Unit
   ) {
     val chanDescriptor = navHistoryEntry.descriptor
+    val chanTheme = LocalChanTheme.current
 
     val siteIconRequest = remember(key1 = chanDescriptor) {
       if (navHistoryEntry.siteThumbnailUrl != null) {
@@ -1410,8 +1412,8 @@ class MainController(
 
       if (navHistoryEntry.additionalInfo != null) {
         val additionalInfo = navHistoryEntry.additionalInfo
-        val additionalInfoString = remember(key1 = additionalInfo) {
-          additionalInfo.toAnnotatedString(themeEngine)
+        val additionalInfoString = remember(key1 = additionalInfo, key2 = chanTheme) {
+          additionalInfo.toAnnotatedString(chanTheme)
         }
 
         KurobaComposeText(
