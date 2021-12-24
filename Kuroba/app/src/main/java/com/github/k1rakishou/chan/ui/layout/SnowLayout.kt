@@ -24,7 +24,7 @@ class SnowLayout @JvmOverloads constructor(
   private val fps = ((1f / 16f) * 1000f).toLong()
   private val random = Random(System.currentTimeMillis())
   private val snowflakes = Array<Snowflake>(45) { Snowflake(random) }
-  private val firework = Firework(random = random)
+  private val fireworks = Array<Firework>(3) { Firework(random = random) }
   private var prevDt = 0L
 
   private var shown = true
@@ -95,7 +95,9 @@ class SnowLayout @JvmOverloads constructor(
       }
 
       if (isNewYearToday) {
-        firework.draw(canvas)
+        for (firework in fireworks) {
+          firework.draw(canvas)
+        }
       }
     }
 
@@ -134,7 +136,9 @@ class SnowLayout @JvmOverloads constructor(
     }
 
     if (isNewYearToday) {
-      firework.update(dt.toInt(), viewWidth, viewHeight)
+      for (firework in fireworks) {
+        firework.update(dt.toInt(), viewWidth, viewHeight)
+      }
     }
   }
 
@@ -223,7 +227,7 @@ class SnowLayout @JvmOverloads constructor(
         return random.nextInt(1000, 4500)
       }
 
-      return random.nextInt(10000, 45000)
+      return random.nextInt(15000, 60000)
     }
 
     fun update(dt: Int, viewWidth: Int, viewHeight: Int) {
@@ -279,7 +283,7 @@ class SnowLayout @JvmOverloads constructor(
           fireworkExplosionAnimation.draw(canvas)
         }
         State.ExplosionAnimationEnd -> {
-          delayTillNextSpawnMs = nextRespawnTime()
+          // no-op
         }
       }
     }
@@ -296,7 +300,11 @@ class SnowLayout @JvmOverloads constructor(
         minHeight
       }
 
-      this.state = State.LaunchAnimation
+      this.state = if (random.nextInt() % 3 == 0) {
+        State.LaunchAnimation
+      } else {
+        State.ExplosionAnimationEnd
+      }
     }
 
     private enum class State {
