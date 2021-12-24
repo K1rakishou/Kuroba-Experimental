@@ -49,8 +49,8 @@ android {
         //          m -> Minor version
         //          p -> patch
         //          MmmPP
-        versionCode 10203
-        versionName "v1.2.3"
+        versionCode 10204
+        versionName "v1.2.4"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
