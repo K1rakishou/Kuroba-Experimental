@@ -21,9 +21,9 @@ class SnowLayout @JvmOverloads constructor(
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
 ) : FrameLayout(context, attributeSet, defAttrStyle) {
-  private val delay = ((1f / 12f) * 1000f).toLong()
+  private val fps = ((1f / 16f) * 1000f).toLong()
   private val random = Random(System.currentTimeMillis())
-  private val snowflakes = Array<Snowflake>(32) { Snowflake(random) }
+  private val snowflakes = Array<Snowflake>(45) { Snowflake(random) }
   private val firework = Firework(random = random)
   private var prevDt = 0L
 
@@ -104,7 +104,7 @@ class SnowLayout @JvmOverloads constructor(
         update()
         invalidate()
       },
-      delay
+      fps
     )
   }
 
@@ -122,7 +122,7 @@ class SnowLayout @JvmOverloads constructor(
 
     val dt = if (prevDt == 0L) {
       prevDt = SystemClock.elapsedRealtime()
-      delay
+      fps
     } else {
       val dt = SystemClock.elapsedRealtime() - prevDt
       prevDt = SystemClock.elapsedRealtime()

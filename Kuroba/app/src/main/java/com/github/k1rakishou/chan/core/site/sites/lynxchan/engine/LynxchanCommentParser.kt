@@ -14,7 +14,7 @@ class LynxchanCommentParser : CommentParser() {
 
     addDefaultRules()
 
-    rule(
+    addRule(
       tagRule("span")
         .withCssClass("redText")
         .size(redTextFontSize)

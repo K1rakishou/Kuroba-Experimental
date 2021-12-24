@@ -46,13 +46,15 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import kotlin.text.StringsKt;
+
 public class StyleRule {
     private final Set<String> blockElements = Sets.newHashSet("p", "div");
 
     private String tag;
-    private Set<String> expectedClasses;
-    private Set<String> notExpectedClasses;
-    private final List<Action> actions = new ArrayList<>();
+    private @NonNull final Set<String> expectedClasses = new HashSet<>();
+    private @NonNull final Set<String> notExpectedClasses = new HashSet<>();
+    private @NonNull final List<Action> actions = new ArrayList<>();
     private ChanThemeColorId foregroundChanThemeColorId = null;
     private ChanThemeColorId backgroundChanThemeColorId = null;
     private boolean strikeThrough;
@@ -67,6 +69,7 @@ public class StyleRule {
     private boolean linkify;
     private String justText = null;
     private boolean blockElement;
+    private boolean newLine;
 
     public static StyleRule tagRule(String tag) {
         return new StyleRule()
@@ -94,21 +97,12 @@ public class StyleRule {
     }
 
     public StyleRule withCssClass(String cssClass) {
-        if (expectedClasses == null) {
-            expectedClasses = new HashSet<>(4);
-        }
         expectedClasses.add(cssClass);
-
         return this;
     }
 
     public StyleRule withoutAnyOfCssClass(String... cssClasses) {
-        if (notExpectedClasses == null) {
-            notExpectedClasses = new HashSet<>(4);
-        }
-
         notExpectedClasses.addAll(Arrays.asList(cssClasses));
-
         return this;
     }
 
@@ -177,13 +171,18 @@ public class StyleRule {
         return this;
     }
 
+    public StyleRule newLine() {
+        newLine = true;
+        return this;
+    }
+
     public StyleRule just(String justText) {
         this.justText = justText;
         return this;
     }
 
     public boolean highPriority() {
-        return expectedClasses != null && !expectedClasses.isEmpty();
+        return !expectedClasses.isEmpty();
     }
 
     public boolean applies(HtmlTag htmlTag) {
@@ -191,7 +190,7 @@ public class StyleRule {
     }
 
     public boolean applies(HtmlTag htmlTag, boolean isWildcard) {
-        if (notExpectedClasses != null && !notExpectedClasses.isEmpty()) {
+        if (!notExpectedClasses.isEmpty()) {
             for (String clazz : notExpectedClasses) {
                 if (isWildcard) {
                     if (htmlTag.hasAttr(clazz)) {
@@ -205,7 +204,7 @@ public class StyleRule {
             }
         }
 
-        if (expectedClasses == null || expectedClasses.isEmpty()) {
+        if (expectedClasses.isEmpty()) {
             return true;
         }
 
@@ -312,6 +311,10 @@ public class StyleRule {
             );
         }
 
+        if (newLine && !StringsKt.endsWith(resultText, "\n", false)) {
+            resultText = TextUtils.concat(resultText, "\n");
+        }
+
         return resultText;
     }
 
@@ -332,6 +335,42 @@ public class StyleRule {
             }
         }
         return result;
+    }
+
+    public boolean areTheSame(@Nullable StyleRule other) {
+        if (other == null) {
+            return false;
+        }
+
+        if ((tag == null) != (other.tag == null)) {
+            return false;
+        }
+
+        if (tag != null && !tag.equals(other.tag)) {
+            return false;
+        }
+
+        if (expectedClasses.size() != other.expectedClasses.size()) {
+            return false;
+        }
+
+        for (String expectedClass : expectedClasses) {
+            if (!other.expectedClasses.contains(expectedClass)) {
+                return false;
+            }
+        }
+
+        if (notExpectedClasses.size() != other.notExpectedClasses.size()) {
+            return false;
+        }
+
+        for (String notExpectedClass : notExpectedClasses) {
+            if (!other.notExpectedClasses.contains(notExpectedClass)) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     @Override

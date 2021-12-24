@@ -82,31 +82,31 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
     public CommentParser() {
         // Required tags.
-        rule(tagRule("p"));
-        rule(tagRule("div"));
-        rule(tagRule("br").just("\n"));
+        addRule(tagRule("p"));
+        addRule(tagRule("div"));
+        addRule(tagRule("br").just("\n"));
     }
 
     public CommentParser addDefaultRules() {
         int codeTagFontSize = sp(ChanSettings.codeTagFontSizePx());
         int sjisTagFontSize = sp(ChanSettings.sjisTagFontSizePx());
 
-        rule(tagRule("a").action(this::handleAnchor));
-        rule(tagRule("iframe").action(this::handleIframe));
-        rule(tagRule("img").action(this::handleImg));
-        rule(tagRule("table").action(this::handleTable));
-        rule(tagRule("span").withCssClass("deadlink").action(this::handleDeadlink));
-        rule(tagRuleWithAttr("*", "style").action(this::handleAnyTagWithStyleAttr));
+        addRule(tagRule("a").action(this::handleAnchor));
+        addRule(tagRule("iframe").action(this::handleIframe));
+        addRule(tagRule("img").action(this::handleImg));
+        addRule(tagRule("table").action(this::handleTable));
+        addRule(tagRule("span").withCssClass("deadlink").action(this::handleDeadlink));
+        addRule(tagRuleWithAttr("*", "style").action(this::handleAnyTagWithStyleAttr));
 
-        rule(tagRule("s").link(PostLinkable.Type.SPOILER));
-        rule(tagRule("b").bold());
-        rule(tagRule("i").italic());
-        rule(tagRule("em").italic());
-        rule(tagRule("u").underline());
-        rule(tagRule("span").withCssClass("s").strikeThrough());
-        rule(tagRule("span").withCssClass("u").underline());
+        addRule(tagRule("s").link(PostLinkable.Type.SPOILER));
+        addRule(tagRule("b").bold());
+        addRule(tagRule("i").italic());
+        addRule(tagRule("em").italic());
+        addRule(tagRule("u").underline());
+        addRule(tagRule("span").withCssClass("s").strikeThrough());
+        addRule(tagRule("span").withCssClass("u").underline());
 
-        rule(tagRule("pre")
+        addRule(tagRule("pre")
                 .withCssClass("prettyprint")
                 .monospace()
                 .size(codeTagFontSize)
@@ -114,32 +114,50 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 .foregroundColorId(ChanThemeColorId.TextColorPrimary)
         );
 
-        rule(tagRule("span")
+        addRule(tagRule("span")
                 .withCssClass("sjis")
                 .size(sjisTagFontSize)
                 .foregroundColorId(ChanThemeColorId.TextColorPrimary)
         );
 
-        rule(tagRule("span")
+        addRule(tagRule("span")
                 .withCssClass("spoiler")
                 .link(PostLinkable.Type.SPOILER)
         );
 
-        rule(tagRule("span").withCssClass("abbr").nullify());
-        rule(tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor));
-        rule(tagRule("span").withoutAnyOfCssClass("quote").linkify());
+        addRule(tagRule("span").withCssClass("abbr").nullify());
+        addRule(tagRule("span").foregroundColorId(ChanThemeColorId.PostInlineQuoteColor));
+        addRule(tagRule("span").withoutAnyOfCssClass("quote").linkify());
 
-        rule(tagRule("strong").bold());
-        rule(tagRule("strong-red;").bold().foregroundColorId(ChanThemeColorId.AccentColor));
+        addRule(tagRule("strong").bold());
+        addRule(tagRule("strong-red;").bold().foregroundColorId(ChanThemeColorId.AccentColor));
 
         return this;
     }
 
-    public void rule(StyleRule rule) {
+    public void addRule(StyleRule rule) {
         List<StyleRule> list = rules.get(rule.tag());
         if (list == null) {
             list = new ArrayList<>(3);
             rules.put(rule.tag(), list);
+        }
+
+        list.add(rule);
+    }
+
+    public void addOrReplaceRule(StyleRule rule) {
+        List<StyleRule> list = rules.get(rule.tag());
+        if (list == null) {
+            list = new ArrayList<>(3);
+            rules.put(rule.tag(), list);
+        }
+
+        for (int i = 0; i < list.size(); i++) {
+            StyleRule oldRule = list.get(i);
+            if (oldRule.areTheSame(rule)) {
+                list.set(i, rule);
+                return;
+            }
         }
 
         list.add(rule);

@@ -35,10 +35,10 @@ public class TaimabaCommentParser extends CommentParser implements ICommentParse
         super();
         addDefaultRules();
 
-        rule(StyleRule.tagRule("strike").strikeThrough());
-        rule(StyleRule.tagRule("pre").monospace().size(sp(12f)));
+        addRule(StyleRule.tagRule("strike").strikeThrough());
+        addRule(StyleRule.tagRule("pre").monospace().size(sp(12f)));
 
-        rule(StyleRule.tagRule("blockquote")
+        addRule(StyleRule.tagRule("blockquote")
                 .withCssClass("unkfunc")
                 .foregroundColorId(ChanThemeColorId.PostInlineQuoteColor)
                 .linkify());

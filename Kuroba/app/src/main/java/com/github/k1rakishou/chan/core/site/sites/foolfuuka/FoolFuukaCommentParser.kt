@@ -24,7 +24,7 @@ class FoolFuukaCommentParser(
   init {
     addDefaultRules()
 
-    rule(
+    addRule(
       StyleRule.tagRule("pre")
         .monospace()
         .size(AppModuleAndroidUtils.sp(12f))

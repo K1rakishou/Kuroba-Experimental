@@ -10,7 +10,6 @@ import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.MultipartHttpCall
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanActions
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
@@ -143,7 +142,7 @@ class Kun8 : CommonSite() {
     })
 
     setApi(VichanApi(siteManager, boardManager, this))
-    setParser(VichanCommentParser())
+    setParser(Kun8CommentParser())
   }
 
   override fun commentParserType(): CommentParserType {
