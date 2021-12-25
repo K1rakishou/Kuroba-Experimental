@@ -288,19 +288,18 @@ class PostImageThumbnailView @JvmOverloads constructor(
     var url: String? = postImage.getThumbnailUrl()?.toString()
     var cacheFileType = CacheFileType.PostMediaThumbnail
 
-    val highRes = canUseHighResCells
-      && ChanSettings.highResCells.get()
-      && postImage.canBeUsedAsHighResolutionThumbnail()
-      && canAutoLoad(cacheHandler, postImage)
-
     val hasImageUrl = postImage.imageUrl != null
     val prefetchingDisabledOrAlreadyPrefetched = !ChanSettings.prefetchMedia.get() || postImage.isPrefetched
 
-    if (highRes
-      && hasImageUrl
+    val highRes = hasImageUrl
+      && ChanSettings.highResCells.get()
+      && postImage.canBeUsedAsHighResolutionThumbnail()
+      && canUseHighResCells
       && prefetchingDisabledOrAlreadyPrefetched
       && postImage.type == ChanPostImageType.STATIC
-    ) {
+      && canAutoLoad(cacheHandler, postImage)
+
+    if (highRes) {
       url = postImage.imageUrl?.toString()
       cacheFileType = CacheFileType.PostMediaFull
     }

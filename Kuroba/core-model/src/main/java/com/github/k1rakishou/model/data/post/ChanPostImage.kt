@@ -119,6 +119,10 @@ class ChanPostImage(
       return false
     }
 
+    if (imageSpoilered) {
+      return false
+    }
+
     if (size > MAX_PREFETCH_FILE_SIZE) {
       return false
     }
