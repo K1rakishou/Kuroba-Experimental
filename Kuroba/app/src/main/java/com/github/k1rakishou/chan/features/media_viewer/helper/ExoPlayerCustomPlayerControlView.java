@@ -54,8 +54,6 @@ import java.util.Formatter;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-import kotlin.Unit;
-
 public class ExoPlayerCustomPlayerControlView extends FrameLayout {
 
     static {
@@ -553,46 +551,41 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
      * be automatically hidden after this duration of time has elapsed without user input.
      */
     public void show() {
-        if (!isVisible()) {
-            hideShowAnimation = AnimationUtils.fadeIn(
-                    this,
-                    MediaViewerToolbar.ANIMATION_DURATION_MS,
-                    hideShowAnimation,
-                    () -> {
-                        for (ExoPlayerCustomPlayerControlView.VisibilityListener visibilityListener : visibilityListeners) {
-                            visibilityListener.onVisibilityChange(getVisibility());
-                        }
-                        updateAll();
-                        requestPlayPauseFocus();
-                        requestPlayPauseAccessibilityFocus();
+        hideShowAnimation = AnimationUtils.fadeIn(
+                this,
+                MediaViewerToolbar.ANIMATION_DURATION_MS,
+                hideShowAnimation,
+                null
+        );
 
-                        return Unit.INSTANCE;
-                    }
-            );
+        for (ExoPlayerCustomPlayerControlView.VisibilityListener visibilityListener : visibilityListeners) {
+            visibilityListener.onVisibilityChange(getVisibility());
         }
+        updateAll();
+        requestPlayPauseFocus();
+        requestPlayPauseAccessibilityFocus();
+
         // Call hideAfterTimeout even if already visible to reset the timeout.
         hideAfterTimeout();
     }
 
-    /** Hides the controller. */
+    /**
+     * Hides the controller.
+     */
     public void hide() {
-        if (isVisible()) {
-            hideShowAnimation = AnimationUtils.fadeOut(
-                    this,
-                    MediaViewerToolbar.ANIMATION_DURATION_MS,
-                    hideShowAnimation,
-                    () -> {
-                        for (ExoPlayerCustomPlayerControlView.VisibilityListener visibilityListener : visibilityListeners) {
-                            visibilityListener.onVisibilityChange(getVisibility());
-                        }
-                        removeCallbacks(updateProgressAction);
-                        removeCallbacks(hideAction);
-                        hideAtMs = C.TIME_UNSET;
+        hideShowAnimation = AnimationUtils.fadeOut(
+                this,
+                MediaViewerToolbar.ANIMATION_DURATION_MS,
+                hideShowAnimation,
+                null
+        );
 
-                        return Unit.INSTANCE;
-                    }
-            );
+        for (ExoPlayerCustomPlayerControlView.VisibilityListener visibilityListener : visibilityListeners) {
+            visibilityListener.onVisibilityChange(getVisibility());
         }
+        removeCallbacks(updateProgressAction);
+        removeCallbacks(hideAction);
+        hideAtMs = C.TIME_UNSET;
     }
 
     /** Returns whether the controller is currently visible. */
