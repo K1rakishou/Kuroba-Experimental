@@ -10,6 +10,7 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
@@ -47,6 +48,7 @@ class AudioMediaView(
 
   override val hasContent: Boolean
     get() = false
+  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip? = null
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -113,7 +115,7 @@ class AudioMediaView(
   }
 
   override fun show(isLifecycleChange: Boolean) {
-    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
     onSystemUiVisibilityChanged(isSystemUiHidden())
   }

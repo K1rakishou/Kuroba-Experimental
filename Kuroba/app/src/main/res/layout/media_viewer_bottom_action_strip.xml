@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingTop="4dp"
+    android:paddingBottom="4dp">
+
+    <FrameLayout
+        android:id="@+id/toolbar_go_to_post_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/circle_background_transparent"
+        app:layout_constraintEnd_toStartOf="@+id/toolbar_post_replies_button_container"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toStartOf="parent">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/toolbar_go_to_post_button"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_subdirectory_arrow_left_white_24dp"
+            android:tint="#fff" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/toolbar_post_replies_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/circle_background_transparent"
+        app:layout_constraintEnd_toStartOf="@+id/toolbar_reload_button_container"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/toolbar_go_to_post_button_container">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/toolbar_post_replies_button"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_baseline_comment_24"
+            android:tint="#fff" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/toolbar_reload_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/circle_background_transparent"
+        app:layout_constraintEnd_toStartOf="@+id/toolbar_download_button_container"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/toolbar_post_replies_button_container">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/toolbar_reload_button"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_refresh_white_24dp"
+            android:tint="#fff" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/toolbar_download_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/circle_background_transparent"
+        app:layout_constraintEnd_toStartOf="@+id/toolbar_options_button_container"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/toolbar_reload_button_container">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/toolbar_download_button"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_file_download_white_24dp"
+            android:tint="#fff" />
+
+    </FrameLayout>
+
+    <FrameLayout
+        android:id="@+id/toolbar_options_button_container"
+        android:layout_width="wrap_content"
+        android:layout_height="match_parent"
+        android:background="@drawable/circle_background_transparent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.5"
+        app:layout_constraintStart_toEndOf="@+id/toolbar_download_button_container">
+
+        <androidx.appcompat.widget.AppCompatImageButton
+            android:id="@+id/toolbar_options_button"
+            android:layout_width="36dp"
+            android:layout_height="match_parent"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:clickable="true"
+            android:focusable="true"
+            android:padding="6dp"
+            android:src="@drawable/ic_more_vert_white_24dp"
+            android:tint="#fff" />
+
+    </FrameLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

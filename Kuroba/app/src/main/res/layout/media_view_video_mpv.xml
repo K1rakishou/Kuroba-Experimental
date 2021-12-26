@@ -4,7 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/mpv_player_control_view" />
+    <FrameLayout
+        android:id="@+id/actual_video_player_view_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent" />
 
     <com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMediaView
         android:id="@+id/thumbnail_media_view"
@@ -31,10 +34,19 @@
         android:gravity="center_vertical"
         android:visibility="gone"/>
 
-    <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
-        android:id="@+id/audio_player_view"
-        android:layout_gravity="bottom"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
+            android:id="@+id/bottom_action_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <include layout="@layout/mpv_player_control_view" />
+
+    </LinearLayout>
 
 </FrameLayout>

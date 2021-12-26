@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/media_view_video_root"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -11,13 +10,11 @@
         android:layout_height="match_parent"
         android:visibility="visible" />
 
-    <com.google.android.exoplayer2.ui.PlayerView
+    <com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCustomPlayerView
         android:id="@+id/actual_video_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:visibility="invisible"
-        app:controller_layout_id="@layout/exo_player_control_view"
-        app:surface_type="texture_view" />
+        android:visibility="invisible"/>
 
     <com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
         android:id="@+id/buffering_progress_view"
@@ -28,11 +25,22 @@
         android:visibility="invisible"
         android:layout_gravity="center"/>
 
-
-    <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
-        android:id="@+id/audio_player_view"
-        android:layout_gravity="bottom"
+    <com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
+            android:id="@+id/bottom_action_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <FrameLayout
+            android:id="@+id/view_player_controls_placeholder"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout>
 
 </FrameLayout>

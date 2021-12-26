@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesCon
 import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImageView;
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerRootLayout;
@@ -190,6 +191,7 @@ import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar;
 import com.github.k1rakishou.chan.ui.view.FastScroller;
 import com.github.k1rakishou.chan.ui.view.FloatingMenu;
 import com.github.k1rakishou.chan.ui.view.HidingFloatingActionButton;
+import com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout;
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager;
 import com.github.k1rakishou.chan.ui.view.ReplyInputEditText;
 import com.github.k1rakishou.chan.ui.view.ThumbnailView;
@@ -400,6 +402,7 @@ public interface ActivityComponent {
     void inject(ExoPlayerVideoMediaView exoPlayerVideoMediaView);
     void inject(MpvVideoMediaView mpvVideoMediaView);
     void inject(MediaViewerToolbar mediaViewerToolbar);
+    void inject(MediaViewerBottomActionStrip mediaViewerBottomActionStrip);
     void inject(DvachCaptchaLayout dvachCaptchaLayout);
     void inject(Chan4CaptchaLayout chan4CaptchaLayout);
     void inject(LynxchanCaptchaLayout lynxchanCaptchaLayout);
@@ -407,6 +410,7 @@ public interface ActivityComponent {
     void inject(KurobaComposeIconPanel kurobaComposeIconPanel);
     void inject(ArrowMenuDrawable arrowMenuDrawable);
     void inject(PostPopupContainer postPopupContainer);
+    void inject(InsetAwareLinearLayout insetAwareLinearLayout);
 
     @Subcomponent.Builder
     interface Builder {

@@ -23,6 +23,7 @@ import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.mpv.MPVView
 import com.github.k1rakishou.chan.core.mpv.MpvUtils
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
@@ -89,6 +90,7 @@ class MpvVideoMediaView(
   private val mpvControlsRoot: LinearLayout
   private val mpvControlsBottomInset: FrameLayout
   private val mpvErrorMessage: TextView
+  private val bottomActionStrip: MediaViewerBottomActionStrip
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
@@ -104,6 +106,8 @@ class MpvVideoMediaView(
 
   override val hasContent: Boolean
     get() = _hasContent
+  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip?
+    get() = bottomActionStrip
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -130,6 +134,7 @@ class MpvVideoMediaView(
     mpvControlsBottomInset = findViewById(R.id.mpv_controls_insets_view)
     mpvSettings = findViewById(R.id.mpv_settings)
     mpvErrorMessage = findViewById(R.id.error_message)
+    bottomActionStrip = findViewById(R.id.bottom_action_strip)
 
     mpvSettings.setOnClickListener { showMpvSettings() }
 
@@ -298,7 +303,7 @@ class MpvVideoMediaView(
   }
 
   override fun show(isLifecycleChange: Boolean) {
-    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
     thumbnailMediaView.show()
 

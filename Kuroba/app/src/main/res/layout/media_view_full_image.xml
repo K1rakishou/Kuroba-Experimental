@@ -32,10 +32,22 @@
         android:visibility="gone"
         tools:visibility="visible" />
 
-    <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
-        android:id="@+id/audio_player_view"
-        android:layout_gravity="bottom"
+    <com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"/>
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:orientation="vertical">
+
+        <com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
+            android:id="@+id/bottom_action_strip"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <com.github.k1rakishou.chan.features.media_viewer.media_view.AudioPlayerView
+            android:id="@+id/audio_player_view"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+    </com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout>
 
 </FrameLayout>

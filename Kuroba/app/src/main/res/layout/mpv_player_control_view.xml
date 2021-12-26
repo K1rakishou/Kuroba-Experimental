@@ -6,11 +6,6 @@
     android:layout_height="match_parent"
     android:layoutDirection="ltr">
 
-    <FrameLayout
-        android:id="@+id/actual_video_player_view_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent" />
-
     <LinearLayout
         android:id="@+id/mpv_controls_view_root"
         android:layout_width="match_parent"

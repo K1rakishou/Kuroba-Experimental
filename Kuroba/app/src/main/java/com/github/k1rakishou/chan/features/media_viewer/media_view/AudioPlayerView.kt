@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.media_viewer.media_view
 
-import android.animation.Animator
 import android.animation.ValueAnimator
 import android.content.Context
 import android.os.Parcelable
@@ -15,21 +14,19 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
-import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
-import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
+import com.github.k1rakishou.chan.utils.AnimationUtils.fadeIn
+import com.github.k1rakishou.chan.utils.AnimationUtils.fadeOut
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CoroutineStart
@@ -42,7 +39,7 @@ class AudioPlayerView @JvmOverloads constructor(
   context: Context,
   attributeSet: AttributeSet? = null,
   defAttrStyle: Int = 0
-) : FrameLayout(context, attributeSet, defAttrStyle), WindowInsetsListener {
+) : FrameLayout(context, attributeSet, defAttrStyle) {
   private lateinit var audioPlayerMuteUnmute: ImageButton
   private lateinit var audioPlayerPlayPause: ImageButton
   private lateinit var audioPlayerRestart: ImageButton
@@ -57,7 +54,6 @@ class AudioPlayerView @JvmOverloads constructor(
   private lateinit var audioPlayerViewState: AudioPlayerViewState
   private lateinit var mediaViewContract: MediaViewContract
   private lateinit var cacheHandler: CacheHandler
-  private lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   private lateinit var threadDownloadManager: ThreadDownloadManager
   private lateinit var cachedHttpDataSourceFactory: DataSource.Factory
   private lateinit var fileDataSourceFactory: DataSource.Factory
@@ -94,7 +90,6 @@ class AudioPlayerView @JvmOverloads constructor(
     cacheHandler: CacheHandler,
     audioPlayerViewState: AudioPlayerViewState,
     mediaViewContract: MediaViewContract,
-    globalWindowInsetsManager: GlobalWindowInsetsManager,
     threadDownloadManager: ThreadDownloadManager,
     cachedHttpDataSourceFactory: DataSource.Factory,
     fileDataSourceFactory: DataSource.Factory,
@@ -109,7 +104,6 @@ class AudioPlayerView @JvmOverloads constructor(
     this.audioPlayerViewState = audioPlayerViewState
     this.mediaViewContract = mediaViewContract
     this.cacheHandler = cacheHandler
-    this.globalWindowInsetsManager = globalWindowInsetsManager
     this.threadDownloadManager = threadDownloadManager
     this.cachedHttpDataSourceFactory = cachedHttpDataSourceFactory
     this.fileDataSourceFactory = fileDataSourceFactory
@@ -159,9 +153,6 @@ class AudioPlayerView @JvmOverloads constructor(
       soundPostVideoPlayer.resetPosition()
       audioPlayerCallbacks.onRewindPlayback()
     }
-
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
-    onInsetsChanged()
   }
 
   fun show(isLifecycleChange: Boolean) {
@@ -208,10 +199,6 @@ class AudioPlayerView @JvmOverloads constructor(
     positionAndDurationUpdateJob?.cancel()
     positionAndDurationUpdateJob = null
 
-    if (::globalWindowInsetsManager.isInitialized) {
-      globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    }
-
     cancellableToast.cancel()
     scope.cancelChildren()
   }
@@ -224,14 +211,6 @@ class AudioPlayerView @JvmOverloads constructor(
         showAudioPlayerView()
       }
     }
-  }
-
-  override fun onInsetsChanged() {
-    audioPlayerControlsRoot.updatePaddings(
-      bottom = globalWindowInsetsManager.bottom(),
-      left = globalWindowInsetsManager.left(),
-      right = globalWindowInsetsManager.right()
-    )
   }
 
   fun pauseUnpause(isNowPaused: Boolean) {
@@ -266,9 +245,7 @@ class AudioPlayerView @JvmOverloads constructor(
         showAudioPlayerView()
       }
 
-      onInsetsChanged()
       onAudioPlaying()
-
       return
     }
 
@@ -290,9 +267,7 @@ class AudioPlayerView @JvmOverloads constructor(
           showAudioPlayerView()
         }
 
-        onInsetsChanged()
         onAudioPlaying()
-
         return
       } else if (!canAutoLoad) {
         val message = getString(
@@ -330,6 +305,7 @@ class AudioPlayerView @JvmOverloads constructor(
       }
 
       Logger.d(TAG, "loadImageBgAudio() preload()")
+      cancellableToast.showToast(context, R.string.media_viewer_loading_bg_audio)
 
       soundPostVideoPlayer.preload(
         viewableMedia = soundPostActualSoundMedia,
@@ -395,63 +371,19 @@ class AudioPlayerView @JvmOverloads constructor(
   }
 
   private fun hideAudioPlayerView() {
-    if (hideShowAnimation != null) {
-      hideShowAnimation?.end()
-      hideShowAnimation = null
-    }
-
-    if (audioPlayerControlsRoot.visibility == View.GONE) {
-      return
-    }
-
-    hideShowAnimation = ValueAnimator.ofFloat(1f, 0f).apply {
-      duration = MediaViewerToolbar.ANIMATION_DURATION_MS
-      addUpdateListener { animation ->
-        audioPlayerControlsRoot.alpha = animation.animatedValue as Float
-      }
-      addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
-          audioPlayerControlsRoot.alpha = 1f
-        }
-
-        override fun onAnimationEnd(animation: Animator?) {
-          audioPlayerControlsRoot.alpha = 0f
-          audioPlayerControlsRoot.setVisibilityFast(View.GONE)
-          hideShowAnimation = null
-        }
-      })
-      start()
-    }
+    hideShowAnimation = audioPlayerControlsRoot.fadeOut(
+      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
+      animator = hideShowAnimation,
+      onEnd = { hideShowAnimation = null }
+    )
   }
 
   private fun showAudioPlayerView() {
-    if (hideShowAnimation != null) {
-      hideShowAnimation?.end()
-      hideShowAnimation = null
-    }
-
-    if (audioPlayerControlsRoot.visibility == View.VISIBLE) {
-      return
-    }
-
-    hideShowAnimation = ValueAnimator.ofFloat(0f, 1f).apply {
-      duration = MediaViewerToolbar.ANIMATION_DURATION_MS
-      addUpdateListener { animation ->
-        audioPlayerControlsRoot.alpha = animation.animatedValue as Float
-      }
-      addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
-          audioPlayerControlsRoot.alpha = 0f
-        }
-
-        override fun onAnimationEnd(animation: Animator?) {
-          audioPlayerControlsRoot.alpha = 1f
-          audioPlayerControlsRoot.setVisibilityFast(View.VISIBLE)
-          hideShowAnimation = null
-        }
-      })
-      start()
-    }
+    hideShowAnimation = audioPlayerControlsRoot.fadeIn(
+      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
+      animator = hideShowAnimation,
+      onEnd = { hideShowAnimation = null }
+    )
   }
 
   @Parcelize

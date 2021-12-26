@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.FullMediaAppearAnimationHelper
@@ -62,6 +63,7 @@ class FullImageMediaView(
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualImageView: CustomScaleImageView
   private val loadingBar: CircularChunkedLoadingBar
+  private val bottomActionStrip: MediaViewerBottomActionStrip
 
   private val gestureDetector: GestureDetector
   private val gestureDetectorListener: GestureDetectorListener
@@ -72,6 +74,8 @@ class FullImageMediaView(
 
   override val hasContent: Boolean
     get() = actualImageView.hasImage()
+  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip
+    get() = bottomActionStrip
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -84,6 +88,7 @@ class FullImageMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualImageView = findViewById(R.id.actual_image_view)
     loadingBar = findViewById(R.id.loading_bar)
+    bottomActionStrip = findViewById(R.id.bottom_action_strip)
 
     closeMediaActionHelper = CloseMediaActionHelper(
       context = context,
@@ -235,7 +240,7 @@ class FullImageMediaView(
   }
 
   override fun show(isLifecycleChange: Boolean) {
-    mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+    super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
     onSystemUiVisibilityChanged(isSystemUiHidden())
     onUpdateTransparency()
     thumbnailMediaView.show()
@@ -244,7 +249,7 @@ class FullImageMediaView(
       if (hasContent) {
         val isForced = fullImageDeferred.awaitCatching().valueOrNull()?.isForced
         if (isForced != null) {
-          audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+          audioPlayerView?.loadAndPlaySoundPostAudioIfPossible(
             isLifecycleChange = isLifecycleChange,
             isForceLoad = isForced,
             viewableMedia = viewableMedia
@@ -279,7 +284,7 @@ class FullImageMediaView(
             }
           }
 
-          mediaViewToolbar?.updateWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
+          super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
         }
       }
 
@@ -326,7 +331,7 @@ class FullImageMediaView(
     fullImageDeferred.cancel()
     fullImageDeferred = CompletableDeferred<MediaPreloadResult>()
 
-    audioPlayerView.pauseUnpause(isNowPaused = true)
+    audioPlayerView?.pauseUnpause(isNowPaused = true)
 
     thumbnailMediaView.setVisibilityFast(View.VISIBLE)
     actualImageView.setVisibilityFast(View.INVISIBLE)
@@ -415,7 +420,7 @@ class FullImageMediaView(
 
       actualImageView.setImage(imageSource)
 
-      audioPlayerView.loadAndPlaySoundPostAudioIfPossible(
+      audioPlayerView?.loadAndPlaySoundPostAudioIfPossible(
         isLifecycleChange = isLifecycleChange,
         isForceLoad = mediaPreloadResult.isForced,
         viewableMedia = viewableMedia

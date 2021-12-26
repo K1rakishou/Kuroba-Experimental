@@ -33,7 +33,7 @@ import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.withTimeoutOrNull
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 object SpannableHelper {
@@ -255,7 +255,7 @@ object SpannableHelper {
         val bitmap = cache.getOrPut(
           key = catalogDescriptor.siteDescriptor(),
           defaultValue = {
-            var iconBitmap = withTimeoutOrNull(Duration.seconds(5)) {
+            var iconBitmap = withTimeoutOrNull(5.seconds) {
               siteManager.bySiteDescriptor(catalogDescriptor.siteDescriptor())
                 ?.icon()
                 ?.getIconSuspend(context)
