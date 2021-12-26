@@ -46,6 +46,11 @@ class PostRepliesAdapter(
     threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
   }
 
+  fun cleanup() {
+    threadCellData.cleanup()
+    notifyDataSetChanged()
+  }
+
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReplyViewHolder {
     return ReplyViewHolder(GenericPostCell(parent.context))
   }

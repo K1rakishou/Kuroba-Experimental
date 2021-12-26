@@ -128,11 +128,13 @@ data class PostCellData(
   val isInPopup: Boolean
     get() = postViewMode == PostViewMode.RepliesPopup
       || postViewMode == PostViewMode.ExternalPostsPopup
+      || postViewMode == PostViewMode.MediaViewerPostsPopup
       || postViewMode == PostViewMode.Search
   val isSelectionMode: Boolean
     get() = postViewMode == PostViewMode.PostSelection
   val threadPreviewMode: Boolean
     get() = postViewMode == PostViewMode.ExternalPostsPopup
+      || postViewMode == PostViewMode.MediaViewerPostsPopup
   val searchMode: Boolean
     get() = postViewMode == PostViewMode.Search
   val markedNo: Long
@@ -275,6 +277,7 @@ data class PostCellData(
 
   fun cleanup() {
     postCellCallback = null
+    resetEverything()
   }
 
   fun totalPostIconsCount(): Int {
@@ -786,6 +789,7 @@ data class PostCellData(
     Normal,
     RepliesPopup,
     ExternalPostsPopup,
+    MediaViewerPostsPopup,
     PostSelection,
     Search;
 
@@ -806,7 +810,7 @@ data class PostCellData(
     }
 
     fun canShowGoToPostButton(): Boolean {
-      if (this == RepliesPopup || this == ExternalPostsPopup || this == Search) {
+      if (this == RepliesPopup || this == ExternalPostsPopup || this == MediaViewerPostsPopup || this == Search) {
         return true
       }
 
@@ -814,7 +818,7 @@ data class PostCellData(
     }
 
     fun consumePostClicks(): Boolean {
-      if (this == ExternalPostsPopup || this == Search) {
+      if (this == ExternalPostsPopup || this == MediaViewerPostsPopup || this == Search) {
         return true
       }
 
@@ -827,6 +831,7 @@ data class PostCellData(
         RepliesPopup,
         Search -> true
         ExternalPostsPopup,
+        MediaViewerPostsPopup,
         PostSelection -> false
       }
     }

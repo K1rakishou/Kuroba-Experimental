@@ -15,7 +15,10 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
@@ -25,12 +28,20 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaLongClickMenuHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
+import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.cell.PostCellInterface
+import com.github.k1rakishou.chan.ui.helper.PostLinkableClickHelper
+import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.view.AppearTransitionImageView
 import com.github.k1rakishou.chan.ui.view.OptionalSwipeViewPager
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -44,10 +55,16 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
+import com.github.k1rakishou.model.data.board.pages.BoardPages
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.PersistableChanState.imageSaverV2PersistedOptions
 import com.google.android.exoplayer2.upstream.ContentDataSource
 import com.google.android.exoplayer2.upstream.DataSource
@@ -63,12 +80,24 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
+import java.util.*
 import javax.inject.Inject
 
 class MediaViewerController(
   context: Context,
   private val mediaViewerCallbacks: MediaViewerCallbacks
 ) : Controller(context), ViewPager.OnPageChangeListener, MediaViewContract, WindowInsetsListener {
+
+  @Inject
+  lateinit var _imageSaverV2: Lazy<ImageSaverV2>
+  @Inject
+  lateinit var _chanThreadManager: Lazy<ChanThreadManager>
+  @Inject
+  lateinit var _siteManager: Lazy<SiteManager>
+  @Inject
+  lateinit var _boardManager: Lazy<BoardManager>
+  @Inject
+  lateinit var _archivesManager: Lazy<ArchivesManager>
 
   @Inject
   lateinit var appConstants: AppConstants
@@ -79,19 +108,21 @@ class MediaViewerController(
   @Inject
   lateinit var exoPlayerCache: ExoPlayerCache
   @Inject
-  lateinit var imageSaverV2: Lazy<ImageSaverV2>
-  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
   lateinit var chan4CloudFlareImagePreloaderManager: Chan4CloudFlareImagePreloaderManager
-  @Inject
-  lateinit var siteManager: SiteManager
   @Inject
   lateinit var exclusionZonesHolder: Android10GesturesExclusionZonesHolder
   @Inject
   lateinit var mediaViewerOpenAlbumHelper: MediaViewerOpenAlbumHelper
   @Inject
   lateinit var fileChooser: FileChooser
+  @Inject
+  lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
+  @Inject
+  lateinit var mediaViewerGoToPostHelper: MediaViewerGoToPostHelper
+  @Inject
+  lateinit var mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
 
   private var chanDescriptor: ChanDescriptor? = null
   private var autoSwipeJob: Job? = null
@@ -104,6 +135,111 @@ class MediaViewerController(
   private lateinit var appearPreviewImage: AppearTransitionImageView
   private lateinit var pager: OptionalSwipeViewPager
   private lateinit var mediaViewerToolbar: MediaViewerToolbar
+
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val siteManager: SiteManager
+    get() = _siteManager.get()
+  private val imageSaverV2: ImageSaverV2
+    get() = _imageSaverV2.get()
+  private val boardManager: BoardManager
+    get() = _boardManager.get()
+  private val archivesManager: ArchivesManager
+    get() = _archivesManager.get()
+
+  private val postLinkableClickHelper by lazy {
+    PostLinkableClickHelper(
+      siteManager = siteManager,
+      boardManager = boardManager,
+      archivesManager = archivesManager
+    )
+  }
+
+  private val mediaViewerPostCellCallback = object : PostCellInterface.PostCellCallback {
+    override val currentChanDescriptor: ChanDescriptor? = chanDescriptor
+
+    override fun onPostBind(postCellData: PostCellData) {}
+    override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
+    override fun onPostClicked(postDescriptor: PostDescriptor) {}
+    override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
+    override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {}
+    override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
+
+    override fun onPostPosterIdClicked(post: ChanPost) {}
+    override fun onPostPosterNameClicked(post: ChanPost) {}
+    override fun onPostPosterTripcodeClicked(post: ChanPost) {}
+    override fun onPreviewThreadPostsClicked(post: ChanPost) {}
+    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {}
+    override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
+    override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
+    override fun onPostNoClicked(post: ChanPost) {}
+    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {}
+    override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {}
+    override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? = null
+    override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
+    override fun onUnhidePostClick(post: ChanPost) {}
+    override fun currentSpanCount(): Int = 1
+
+    override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
+      onGoToPostClick(post.postDescriptor)
+    }
+
+    override fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage) {
+      scrollToClickedImage(postImage)
+    }
+    override fun onShowPostReplies(post: ChanPost) {
+      showReplyChain(post.postDescriptor)
+    }
+    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {
+      mainScope.launch {
+        val currentChanDescriptor = chanDescriptor
+          ?: return@launch
+
+        postLinkableClickHelper.onPostLinkableClicked(
+          context = context,
+          post = post,
+          currentChanDescriptor = currentChanDescriptor,
+          linkable = linkable,
+          onQuoteClicked = { postNo ->
+            val postDescriptor = when (currentChanDescriptor) {
+              is ChanDescriptor.CompositeCatalogDescriptor -> {
+                error("Cannot use CompositeCatalogDescriptor here")
+              }
+              is ChanDescriptor.CatalogDescriptor -> {
+                PostDescriptor.create(currentChanDescriptor, postNo)
+              }
+              is ChanDescriptor.ThreadDescriptor -> {
+                PostDescriptor.create(currentChanDescriptor, postNo)
+              }
+            }
+
+            showPost(postDescriptor)
+          },
+          onLinkClicked = { /*no-op*/ },
+          onCrossThreadLinkClicked = { /*no-op*/ },
+          onBoardLinkClicked = { /*no-op*/ },
+          onSearchLinkClicked = { _, _ -> /*no-op*/ },
+          onDeadQuoteClicked = { _, _ -> /*no-op*/ },
+          onArchiveQuoteClicked = { /*no-op*/ }
+        )
+      }
+    }
+  }
+
+  private val postPopupHelperCallback = object : PostPopupHelper.PostPopupHelperCallback {
+    override fun presentRepliesController(controller: Controller) = presentController(controller)
+    override fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {}
+    override fun scrollToPost(postDescriptor: PostDescriptor, smooth: Boolean) {}
+  }
+
+  private val postPopupHelper by lazy {
+    PostPopupHelper(
+      context = context,
+      postCellCallback = mediaViewerPostCellCallback,
+      _chanThreadManager = _chanThreadManager,
+      callback = postPopupHelperCallback
+    )
+  }
 
   private val viewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
 
@@ -119,7 +255,7 @@ class MediaViewerController(
     MediaLongClickMenuHelper(
       scope = mainScope,
       globalWindowInsetsManager = globalWindowInsetsManager,
-      imageSaverV2 = imageSaverV2.get(),
+      imageSaverV2 = imageSaverV2,
       getMediaViewerAdapterFunc = { mediaViewerAdapter },
       presentControllerFunc = { controller -> presentController(controller, true) }
     )
@@ -191,6 +327,7 @@ class MediaViewerController(
   override fun onDestroy() {
     super.onDestroy()
 
+    postPopupHelper.popAll()
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
 
     mediaViewerAdapter?.onDestroy()
@@ -343,7 +480,7 @@ class MediaViewerController(
       return false
     }
 
-    val result = imageSaverV2.get().downloadMediaIntoUserProvidedFile(
+    val result = imageSaverV2.downloadMediaIntoUserProvidedFile(
       mediaUrl = remoteMediaLocation.url,
       outputFileUri = outputFileUri
     )
@@ -369,7 +506,7 @@ class MediaViewerController(
     val imageSaverV2Options = imageSaverV2PersistedOptions.get()
 
     if (!longClick && !imageSaverV2Options.shouldShowImageSaverOptionsController()) {
-      imageSaverV2.get().save(imageSaverV2Options, simpleImageInfo, null)
+      imageSaverV2.save(imageSaverV2Options, simpleImageInfo, null)
       return true
     }
 
@@ -377,7 +514,7 @@ class MediaViewerController(
       val options = ImageSaverV2OptionsController.Options.SingleImage(
         simpleSaveableMediaInfo = simpleImageInfo,
         onSaveClicked = { updatedImageSaverV2Options, newFileName ->
-          imageSaverV2.get().save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
+          imageSaverV2.save(updatedImageSaverV2Options, simpleImageInfo, newFileName)
           cancellableContinuation.resumeValueSafe(true)
         },
         onCanceled = { cancellableContinuation.resumeValueSafe(false) }
@@ -412,6 +549,108 @@ class MediaViewerController(
     viewableMedia: ViewableMedia
   ) {
     mediaLongClickMenuHelper.onMediaLongClick(view, viewableMedia)
+  }
+
+  private fun onGoToPostClick(postDescriptor: PostDescriptor) {
+    if (mediaViewerGoToPostHelper.tryGoToPost(postDescriptor)) {
+      closeMediaViewer()
+    }
+  }
+
+  override fun onGoToPostMediaClick(viewableMedia: ViewableMedia, postDescriptor: PostDescriptor) {
+    val mediaViewerOptions = viewModel.mediaViewerOptions.value
+    var closeMediaViewer = false
+
+    if (mediaViewerOptions.mediaViewerOpenedFromAlbum) {
+      val mediaLocation = viewableMedia.mediaLocation
+
+      if (mediaViewerGoToImagePostHelper.tryGoToPost(chanDescriptor, postDescriptor, mediaLocation)) {
+        closeMediaViewer = true
+      }
+    } else if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      if (mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)) {
+        closeMediaViewer = true
+      }
+    }
+
+    if (closeMediaViewer) {
+      closeMediaViewer()
+    }
+  }
+
+  private fun scrollToClickedImage(postImage: ChanPostImage) {
+    val adapter = mediaViewerAdapter
+      ?: return
+
+    val index = adapter.indexOfPostImageOrNull(postImage)
+      ?: return
+
+    if (adapter.lastViewedMediaPosition != index) {
+      pager.setCurrentItem(index, false)
+    }
+
+    postPopupHelper.popAll()
+  }
+
+  private fun showPost(postDescriptor: PostDescriptor) {
+    val threadDescriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+      ?: return
+
+    val chanPost = chanThreadManager.getPost(postDescriptor)
+    if (chanPost == null) {
+      Logger.e(TAG, "showPost($postDescriptor) chanPost is null")
+      return
+    }
+
+    postPopupHelper.showRepliesPopup(
+      threadDescriptor = threadDescriptor,
+      postViewMode = PostCellData.PostViewMode.MediaViewerPostsPopup,
+      postDescriptor = postDescriptor,
+      posts = listOf(chanPost)
+    )
+
+    Logger.d(TAG, "showReplyChain($postDescriptor)")
+  }
+
+  override fun showReplyChain(postDescriptor: PostDescriptor) {
+    val chanPost = chanThreadManager.getPost(postDescriptor)
+    if (chanPost == null) {
+      Logger.e(TAG, "showReplyChain($postDescriptor) chanPost is null")
+      return
+    }
+
+    val threadDescriptor = chanPost.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+    if (threadDescriptor == null) {
+      Logger.e(TAG, "showReplyChain($postDescriptor) threadDescriptor is null")
+      return
+    }
+
+    val posts = ArrayList<ChanPost>()
+
+    chanPost.repliesFromCopy.forEach { replyPostDescriptor ->
+      val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
+      if (replyPost != null) {
+        posts.add(replyPost)
+      }
+    }
+
+    if (posts.isEmpty()) {
+      Logger.e(TAG, "showReplyChain($postDescriptor) posts is empty")
+      return
+    }
+
+    if (!postPopupHelper.displayingAnything) {
+      posts.add(0, chanPost)
+    }
+
+    postPopupHelper.showRepliesPopup(
+      threadDescriptor = threadDescriptor,
+      postViewMode = PostCellData.PostViewMode.MediaViewerPostsPopup,
+      postDescriptor = postDescriptor,
+      posts = posts
+    )
+
+    Logger.d(TAG, "showReplyChain($postDescriptor) posts.size=${posts.size}")
   }
 
   override suspend fun defaultArtworkDrawable(): Drawable? {

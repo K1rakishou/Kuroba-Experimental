@@ -44,6 +44,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
@@ -54,6 +55,7 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
+import com.github.k1rakishou.chan.ui.helper.PostLinkableClickHelper
 import com.github.k1rakishou.chan.ui.helper.PostPopupHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout.ThreadListLayoutPresenterCallback
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -87,7 +89,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils.getReadableFileSize
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
-import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
@@ -118,6 +119,7 @@ class ThreadPresenter @Inject constructor(
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>,
   private val _thumbnailLongtapOptionsHelper: Lazy<ThumbnailLongtapOptionsHelper>,
+  private val _mediaViewerGoToPostHelper: Lazy<MediaViewerGoToPostHelper>,
   private val _themeEngine: Lazy<ThemeEngine>,
   private val _chanLoadProgressNotifier: Lazy<ChanLoadProgressNotifier>,
   private val _postHighlightManager: Lazy<PostHighlightManager>,
@@ -178,6 +180,8 @@ class ThreadPresenter @Inject constructor(
     get() = _chanCatalogSnapshotCache.get()
   private val compositeCatalogManager: CompositeCatalogManager
     get() = _compositeCatalogManager.get()
+  private val mediaViewerGoToPostHelper: MediaViewerGoToPostHelper
+    get() = _mediaViewerGoToPostHelper.get()
 
   private val chanThreadTicker by lazy {
     ChanThreadTicker(
@@ -274,7 +278,14 @@ class ThreadPresenter @Inject constructor(
     private set
 
   private val verboseLogs by lazy { ChanSettings.verboseLogs.get() }
-  private val compositeDisposable = CompositeDisposable()
+  private val postLinkableClickHelper by lazy {
+    PostLinkableClickHelper(
+      siteManager = siteManager,
+      boardManager = boardManager,
+      archivesManager = archivesManager
+    )
+  }
+
   private val job = SupervisorJob()
 
   private lateinit var postOptionsClickExecutor: RendezvousCoroutineExecutor
@@ -341,6 +352,18 @@ class ThreadPresenter @Inject constructor(
     launch {
       onDemandContentLoaderManager.postUpdateFlow
         .collect { batchResult -> onPostUpdatedWithNewContent(batchResult) }
+    }
+
+    launch {
+      mediaViewerGoToPostHelper.mediaViewerGoToPostEventsFlow
+        .collect { postDescriptor ->
+          if (postDescriptor.descriptor != currentChanDescriptor) {
+            return@collect
+          }
+
+          scrollToPost(needle = postDescriptor)
+          highlightPost(postDescriptor = postDescriptor, blink = true)
+        }
     }
   }
 
@@ -455,7 +478,6 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    compositeDisposable.clear()
     chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
   }
 
@@ -1871,22 +1893,25 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
+      val currentDescriptor = currentChanDescriptor
+        ?: return@post
+
       val currentThreadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
         ?: return@post
 
-      val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
-      val siteName = currentThreadDescriptor.siteName()
-      Logger.d(TAG, "onPostLinkableClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
+      val isExternalThread = post.postDescriptor.descriptor != currentDescriptor
 
-      if (linkable.type == PostLinkable.Type.QUOTE) {
-        val postId = linkable.linkableValue.extractValueOrNull()
-        if (postId == null) {
-          Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
-          return@post
-        }
+      postLinkableClickHelper.onPostLinkableClicked(
+        context = context,
+        post = post,
+        currentChanDescriptor = currentDescriptor,
+        linkable = linkable,
+        onQuoteClicked = { postNo ->
+          val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
+          if (linked == null) {
+            return@onPostLinkableClicked
+          }
 
-        val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postId)
-        if (linked != null) {
           val postViewMode = if (isExternalThread) {
             PostCellData.PostViewMode.ExternalPostsPopup
           } else {
@@ -1899,167 +1924,29 @@ class ThreadPresenter @Inject constructor(
             post.postDescriptor,
             listOf(linked)
           )
-        }
-
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.LINK) {
-        val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
-        if (link == null) {
-          Logger.e(TAG, "Bad link linkable: linkableValue = ${linkable.linkableValue}")
-          return@post
-        }
-
-        threadPresenterCallback?.openLink(link.toString())
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.THREAD) {
-        val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadOrPostLink
-        if (threadLink == null || !threadLink.isValid()) {
-          Logger.e(TAG, "Bad thread linkable: linkableValue = ${linkable.linkableValue}")
-          return@post
-        }
-
-        val boardDescriptor = BoardDescriptor.create(siteName, threadLink.board)
-        val board = boardManager.byBoardDescriptor(boardDescriptor)
-
-        if (board != null) {
-          val postDescriptor = PostDescriptor.create(
-            siteName,
-            threadLink.board,
-            threadLink.threadId,
-            threadLink.postId
+        },
+        onLinkClicked = { link ->
+          threadPresenterCallback?.openLink(link)
+        },
+        onCrossThreadLinkClicked = { postDescriptor ->
+          threadPresenterCallback?.showPostInExternalThread(postDescriptor)
+        },
+        onBoardLinkClicked = { catalogDescriptor ->
+          threadPresenterCallback?.showCatalog(catalogDescriptor, true)
+        },
+        onSearchLinkClicked = { catalogDescriptor, query ->
+          threadPresenterCallback?.setCatalogWithSearchQuery(catalogDescriptor, query, true)
+        },
+        onDeadQuoteClicked = { postDescriptor, preview ->
+          threadPresenterCallback?.showAvailableArchivesList(
+            postDescriptor = postDescriptor,
+            preview = preview
           )
-
+        },
+        onArchiveQuoteClicked = { postDescriptor ->
           threadPresenterCallback?.showPostInExternalThread(postDescriptor)
         }
-
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.BOARD) {
-        val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
-        if (link == null) {
-          Logger.e(TAG, "Bad board linkable: linkableValue = ${linkable.linkableValue}")
-          return@post
-        }
-
-        val boardDescriptor = BoardDescriptor.create(siteName, link.toString())
-        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
-        val board = boardManager.byBoardDescriptor(boardDescriptor)
-
-        if (board == null) {
-          showToast(context, getString(R.string.failed_to_find_board_with_code, boardDescriptor.boardCode))
-          return@post
-        }
-
-        threadPresenterCallback?.showCatalog(catalogDescriptor, true)
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.SEARCH) {
-        val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
-        if (searchLink == null) {
-          Logger.e(TAG, "Bad search linkable: linkableValue = ${linkable.linkableValue}")
-          return@post
-        }
-
-        val boardDescriptor = BoardDescriptor.create(siteName, searchLink.board)
-        val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor)
-        val board = boardManager.byBoardDescriptor(boardDescriptor)
-
-        if (board == null) {
-          showToast(context, R.string.site_uses_dynamic_boards)
-          return@post
-        }
-
-        threadPresenterCallback?.setCatalogWithSearchQuery(catalogDescriptor, searchLink.query, true)
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.DEAD) {
-        when (val postLinkableValue = linkable.linkableValue) {
-          is PostLinkable.Value.LongValue -> {
-            val postNo = postLinkableValue.extractValueOrNull()
-            if (postNo == null || postNo <= 0L) {
-              Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
-              return@post
-            }
-
-            val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor
-            if (threadDescriptor == null) {
-              Logger.e(TAG, "Bad currentChanDescriptor: ${currentChanDescriptor} (null or not thread descriptor)")
-              return@post
-            }
-
-            val archivePostDescriptor = PostDescriptor.create(
-              chanDescriptor = threadDescriptor,
-              postNo = postNo
-            )
-
-            threadPresenterCallback?.showAvailableArchivesList(
-              postDescriptor = archivePostDescriptor,
-              preview = true
-            )
-          }
-          is PostLinkable.Value.ThreadOrPostLink -> {
-            if (!postLinkableValue.isValid()) {
-              Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${postLinkableValue}")
-              return@post
-            }
-
-            val archivePostDescriptor = PostDescriptor.create(
-              siteName = siteName,
-              boardCode = postLinkableValue.board,
-              threadNo = postLinkableValue.threadId,
-              postNo = postLinkableValue.postId
-            )
-
-            threadPresenterCallback?.showAvailableArchivesList(
-              postDescriptor = archivePostDescriptor,
-              preview = true
-            )
-          }
-          else -> {
-            // no-op
-          }
-        }
-
-        return@post
-      }
-
-      if (linkable.type == PostLinkable.Type.ARCHIVE) {
-        val archiveThreadLink = (linkable.linkableValue as? PostLinkable.Value.ArchiveThreadLink)
-          ?: return@post
-
-        val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(archiveThreadLink.archiveType)
-          ?: return@post
-
-        val isSiteEnabled = siteManager.bySiteDescriptor(SiteDescriptor.create(archiveDescriptor.domain))?.enabled()
-          ?: false
-
-        if (!isSiteEnabled) {
-          showToast(context, getString(R.string.archive_is_not_enabled, archiveDescriptor.domain))
-          return@post
-        }
-
-        if (!archiveThreadLink.isValid()) {
-          Logger.e(TAG, "PostLinkable is not valid: linkableValue = ${archiveThreadLink}")
-          return@post
-        }
-
-        val archivePostDescriptor = PostDescriptor.create(
-          siteName = archiveDescriptor.siteDescriptor.siteName,
-          boardCode = archiveThreadLink.board,
-          threadNo = archiveThreadLink.threadId,
-          postNo = archiveThreadLink.postIdOrThreadId()
-        )
-
-        threadPresenterCallback?.showPostInExternalThread(archivePostDescriptor)
-        return@post
-      }
+      )
     }
   }
 
@@ -2322,20 +2209,22 @@ class ThreadPresenter @Inject constructor(
       }
     }
 
-    if (posts.size > 0) {
-      val postViewMode = if (isExternalThread) {
-        PostCellData.PostViewMode.ExternalPostsPopup
-      } else {
-        PostCellData.PostViewMode.RepliesPopup
-      }
-
-      threadPresenterCallback?.showPostsPopup(
-        threadDescriptor = threadDescriptor,
-        postViewMode = postViewMode,
-        postDescriptor = post.postDescriptor,
-        posts = posts
-      )
+    if (posts.size <= 0) {
+      return
     }
+
+    val postViewMode = if (isExternalThread) {
+      PostCellData.PostViewMode.ExternalPostsPopup
+    } else {
+      PostCellData.PostViewMode.RepliesPopup
+    }
+
+    threadPresenterCallback?.showPostsPopup(
+      threadDescriptor = threadDescriptor,
+      postViewMode = postViewMode,
+      postDescriptor = post.postDescriptor,
+      posts = posts
+    )
   }
 
   override fun onPostPosterIdClicked(post: ChanPost) {

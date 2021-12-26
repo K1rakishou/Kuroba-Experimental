@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
 import com.github.k1rakishou.chan.core.site.loader.internal.usecase.ParsePostsV1UseCase
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCache
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
@@ -159,6 +160,13 @@ class HelperModule {
   fun provideMediaViewerGoToImagePostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToImagePostHelper {
     Logger.deps("MediaViewerGoToImagePostHelper");
     return MediaViewerGoToImagePostHelper(chanThreadManager)
+  }
+
+  @Provides
+  @Singleton
+  fun provideMediaViewerGoToPostHelper(chanThreadManager: ChanThreadManager): MediaViewerGoToPostHelper {
+    Logger.deps("MediaViewerGoToPostHelper");
+    return MediaViewerGoToPostHelper(chanThreadManager)
   }
 
   @Provides

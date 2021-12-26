@@ -38,6 +38,7 @@ import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.exoplayer2.upstream.DataSource
 import dagger.Lazy
 import kotlinx.coroutines.CompletableDeferred
@@ -267,6 +268,14 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
 
   override fun onOptionsButtonClick() {
     mediaViewContract.onOptionsButtonClick(viewableMedia)
+  }
+
+  override fun onShowRepliesButtonClick(postDescriptor: PostDescriptor) {
+    mediaViewContract.showReplyChain(postDescriptor)
+  }
+
+  override fun onGoToPostMediaClick(viewableMedia: ViewableMedia, postDescriptor: PostDescriptor) {
+    mediaViewContract.onGoToPostMediaClick(viewableMedia, postDescriptor)
   }
 
   protected fun createGestureAction(isTopGesture: Boolean): CloseMediaActionHelper.GestureInfo? {

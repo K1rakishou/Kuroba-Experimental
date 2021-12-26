@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CompletableDeferred
 
@@ -424,6 +425,17 @@ class MediaViewerAdapter(
     }
 
     notifyDataSetChanged()
+  }
+
+  fun indexOfPostImageOrNull(postImage: ChanPostImage): Int? {
+    val indexToScroll = viewableMediaList
+      .indexOfFirst { viewableMedia -> viewableMedia.mediaLocation.value == postImage.imageUrl?.toString() }
+
+    if (indexToScroll < 0) {
+      return null
+    }
+
+    return indexToScroll
   }
 
   data class LoadedView(val viewIndex: Int, val mediaView: MediaView<ViewableMedia, MediaViewState>)

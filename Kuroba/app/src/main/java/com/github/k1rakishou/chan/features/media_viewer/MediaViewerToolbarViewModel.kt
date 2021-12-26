@@ -23,6 +23,7 @@ class MediaViewerToolbarViewModel : ViewModel() {
     val goToPostButtonEnabled: Boolean,
     val reloadButtonEnabled: Boolean,
     val downloadButtonEnabled: Boolean,
+    val showRepliesButtonVisible: Boolean,
     var toolbarShown: Boolean
   )
 }

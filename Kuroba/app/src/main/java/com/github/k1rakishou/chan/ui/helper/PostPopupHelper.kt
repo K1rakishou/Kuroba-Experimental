@@ -19,8 +19,8 @@ package com.github.k1rakishou.chan.ui.helper
 import android.content.Context
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
-import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
+import com.github.k1rakishou.chan.ui.cell.PostCellInterface
 import com.github.k1rakishou.chan.ui.controller.popup.BasePostPopupController
 import com.github.k1rakishou.chan.ui.controller.popup.PostRepliesPopupController
 import com.github.k1rakishou.chan.ui.controller.popup.PostSearchPopupController
@@ -38,7 +38,7 @@ import java.util.*
 
 class PostPopupHelper(
   private val context: Context,
-  private val presenter: ThreadPresenter,
+  private val postCellCallback: PostCellInterface.PostCellCallback,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val callback: PostPopupHelperCallback
 ) {
@@ -50,6 +50,8 @@ class PostPopupHelper(
 
   val isOpen: Boolean
     get() = presentingPostRepliesController != null && presentingPostRepliesController!!.alive
+  val displayingAnything: Boolean
+    get() = dataQueue.isNotEmpty()
 
   fun getDisplayingPostDescriptors(): List<PostDescriptor> {
     return presentingPostRepliesController?.getDisplayingPostDescriptors() ?: emptyList()
@@ -72,7 +74,7 @@ class PostPopupHelper(
     dataQueue.add(data)
 
     if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
-      present(PostRepliesPopupController(context, this, presenter))
+      present(PostRepliesPopupController(context, this, postCellCallback))
     }
 
     presentingPostRepliesController?.displayData(threadDescriptor, data)
@@ -93,7 +95,7 @@ class PostPopupHelper(
     }
 
     if (dataQueue.size == 1 || prevPostViewMode != postViewMode) {
-      present(PostSearchPopupController(context, this, presenter, searchQuery))
+      present(PostSearchPopupController(context, this, postCellCallback, searchQuery))
     }
 
     presentingPostRepliesController?.displayData(chanDescriptor, data)
@@ -164,11 +166,12 @@ class PostPopupHelper(
           throw IllegalArgumentException("Invalid postViewMode: ${repliesData.postViewMode}")
         }
         PostCellData.PostViewMode.RepliesPopup,
-        PostCellData.PostViewMode.ExternalPostsPopup -> {
-          present(PostRepliesPopupController(context, this, presenter))
+        PostCellData.PostViewMode.ExternalPostsPopup,
+        PostCellData.PostViewMode.MediaViewerPostsPopup -> {
+          present(PostRepliesPopupController(context, this, postCellCallback))
         }
         PostCellData.PostViewMode.Search -> {
-          present(PostSearchPopupController(context, this, presenter))
+          present(PostSearchPopupController(context, this, postCellCallback))
         }
       }.exhaustive
     }
@@ -186,6 +189,7 @@ class PostPopupHelper(
   private fun isNotReplyPostViewMode(repliesData: PostPopupData): Boolean {
     return repliesData.postViewMode != PostCellData.PostViewMode.RepliesPopup
       && repliesData.postViewMode != PostCellData.PostViewMode.ExternalPostsPopup
+      && repliesData.postViewMode != PostCellData.PostViewMode.MediaViewerPostsPopup
   }
 
   fun popAll() {
@@ -207,8 +211,8 @@ class PostPopupHelper(
 
   fun postClicked(postDescriptor: PostDescriptor) {
     popAll()
-    presenter.highlightPost(postDescriptor, blink = true)
-    presenter.scrollToPost(postDescriptor, true)
+    callback.highlightPost(postDescriptor, blink = true)
+    callback.scrollToPost(postDescriptor, smooth = true)
   }
 
   private fun dismiss() {
@@ -239,5 +243,7 @@ class PostPopupHelper(
 
   interface PostPopupHelperCallback {
     fun presentRepliesController(controller: Controller)
+    fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean)
+    fun scrollToPost(postDescriptor: PostDescriptor, smooth: Boolean)
   }
 }

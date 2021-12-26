@@ -805,10 +805,6 @@ class ThreadLayout @JvmOverloads constructor(
     threadListLayout.smoothScrollNewPosts(displayPosition)
   }
 
-  override fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
-    threadListLayout.highlightPost(postDescriptor, blink)
-  }
-
   override fun filterPostTripcode(tripcode: CharSequence) {
     callback.openFilterForType(
       type = FilterType.TRIPCODE,
@@ -1334,6 +1330,14 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun presentRepliesController(controller: Controller) {
     callback.presentController(controller, true)
+  }
+
+  override fun highlightPost(postDescriptor: PostDescriptor?, blink: Boolean) {
+    threadListLayout.highlightPost(postDescriptor, blink)
+  }
+
+  override fun scrollToPost(postDescriptor: PostDescriptor, smooth: Boolean) {
+    presenter.scrollToPost(postDescriptor, smooth)
   }
 
   override fun presentReencodeOptionsController(controller: Controller) {

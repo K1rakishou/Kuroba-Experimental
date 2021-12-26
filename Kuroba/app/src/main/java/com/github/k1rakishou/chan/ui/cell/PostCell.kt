@@ -67,11 +67,13 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
+import java.lang.ref.WeakReference
 import java.util.*
 import javax.inject.Inject
 
@@ -144,7 +146,7 @@ class PostCell @JvmOverloads constructor(
       }
 
       filterItem = menu.add(Menu.NONE, R.id.post_selection_action_filter, 1, R.string.post_filter)
-      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_search, 2, R.string.post_web_search)
+      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_web_search, 2, R.string.post_web_search)
       return true
     }
 
@@ -214,6 +216,10 @@ class PostCell @JvmOverloads constructor(
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     themeEngine.removeListener(this)
+
+    postTimeUpdaterJob?.cancel()
+    postTimeUpdaterJob = null
+    scope.cancelChildren()
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
@@ -309,17 +315,17 @@ class PostCell @JvmOverloads constructor(
 
     bindPost(postCellData)
 
-    super.postCellData(
-      postCellData,
-      postImageThumbnailViewsContainer,
-      title,
-      icons,
-      comment,
-      replies,
-      goToPostButton,
-      divider,
-      postAttentionLabel,
-      imageFileName
+    measureAndLayoutPostCell(
+      postCellData = postCellData,
+      postImageThumbnailViewsContainer = postImageThumbnailViewsContainer,
+      title = title,
+      icons = icons,
+      comment = comment,
+      replies = replies,
+      goToPostButton = goToPostButton,
+      divider = divider,
+      postAttentionLabel = postAttentionLabel,
+      imageFileName = imageFileName
     )
 
     onThemeChanged()
@@ -541,14 +547,6 @@ class PostCell @JvmOverloads constructor(
     this.isLongClickable = true
     val seenPostFadeOutAnimRemainingTimeMs = getSeenPostFadeOutAnimRemainingTime(postCellData)
 
-    if (postCellData.isSelectionMode) {
-      setPostLinkableListener(postCellData, false)
-      replies.isClickable = false
-    } else {
-      setPostLinkableListener(postCellData, true)
-      replies.isClickable = true
-    }
-
     startPostTitleTimeUpdateJob()
     bindBackgroundResources(postCellData)
     bindPostAttentionLabel(postCellData, seenPostFadeOutAnimRemainingTimeMs)
@@ -556,17 +554,7 @@ class PostCell @JvmOverloads constructor(
     bindPostTitle(postCellData)
     bindPostComment(postCellData)
     bindPostContent(postCellData)
-
-    val canBindReplies = (postCellData.isViewingCatalog && postCellData.catalogRepliesCount > 0)
-      || postCellData.repliesFromCount > 0
-
-    if (!postCellData.isSelectionMode && canBindReplies) {
-      replies.setVisibilityFast(View.VISIBLE)
-      replies.text = postCellData.catalogRepliesText
-    } else {
-      replies.setVisibilityFast(View.GONE)
-    }
-
+    bindPostReplies(postCellData)
     bindGoToPostButton(postCellData)
     bindIcons(postCellData)
 
@@ -588,33 +576,33 @@ class PostCell @JvmOverloads constructor(
     postTimeUpdaterJob?.cancel()
     postTimeUpdaterJob = null
 
+    val postCellDataWeak = WeakReference(postCellData)
+    val postCellWeak = WeakReference(this)
+
     postTimeUpdaterJob = scope.launch {
-      while (isActive) {
-        if (postCellData == null) {
-          delay(1_000L)
-          continue
-        }
+      coroutineScope {
+        while (isActive) {
+          if (postCellDataWeak.get() == null || postCellDataWeak.get()?.postFullDate == true) {
+            break
+          }
 
-        if (postCellData?.postFullDate == true) {
-          break
-        }
+          val timeDelta = System.currentTimeMillis() - ((postCellDataWeak.get()?.post?.timestamp ?: 0) * 1000L)
+          val nextDelayMs = if (timeDelta <= 60_000L) {
+            5_000L
+          } else {
+            60_000L
+          }
 
-        val timeDelta = System.currentTimeMillis() - ((postCellData?.post?.timestamp ?: 0L) * 1000L)
-        val nextDelayMs = if (timeDelta <= 60_000L) {
-          5_000L
-        } else {
-          60_000L
-        }
+          delay(nextDelayMs)
 
-        delay(nextDelayMs)
+          if (!isActive || postCellWeak.get() == null || postCellDataWeak.get() == null) {
+            break
+          }
 
-        if (postCellData == null) {
-          continue
-        }
-
-        postCellData?.let { pcd ->
-          pcd.recalculatePostTitle()
-          bindPostTitle(pcd)
+          postCellDataWeak.get()?.let { pcd ->
+            pcd.recalculatePostTitle()
+            postCellWeak.get()?.bindPostTitle(pcd)
+          }
         }
       }
     }
@@ -859,6 +847,30 @@ class PostCell @JvmOverloads constructor(
     }
 
     icons.apply()
+  }
+
+  private fun bindPostReplies(postCellData: PostCellData) {
+    if (postCellData.isSelectionMode) {
+      setPostLinkableListener(postCellData, false)
+      replies.isClickable = false
+    } else {
+      setPostLinkableListener(postCellData, true)
+      replies.isClickable = true
+    }
+
+    val hasRepliesToThisPost = when {
+      postCellData.isViewingCatalog -> postCellData.catalogRepliesCount > 0
+      postCellData.isViewingThread -> postCellData.repliesFromCount > 0
+      else -> false
+    }
+    val inSelectionMode = postCellData.isSelectionMode
+
+    if (!inSelectionMode && hasRepliesToThisPost) {
+      replies.setVisibilityFast(VISIBLE)
+      replies.text = postCellData.catalogRepliesText
+    } else {
+      replies.setVisibilityFast(GONE)
+    }
   }
 
   @SuppressLint("ClickableViewAccessibility")

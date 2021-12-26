@@ -159,6 +159,9 @@ sealed class ViewableMedia(
   open val viewableMediaMeta: ViewableMediaMeta
 ) {
 
+  val postDescriptor: PostDescriptor?
+    get() = viewableMediaMeta.ownerPostDescriptor
+
   fun formatFullOriginalFileName(): String? {
     if (viewableMediaMeta.originalMediaName.isNullOrEmpty()) {
       return null
@@ -197,7 +200,7 @@ sealed class ViewableMedia(
     return mediaLocation is MediaLocation.Remote
   }
 
-  fun canGoToMediaPost(): Boolean {
+  fun hasPostDescriptor(): Boolean {
     return viewableMediaMeta.ownerPostDescriptor != null
   }
 

@@ -16,20 +16,24 @@ import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToImagePostHelper
-import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 
@@ -41,9 +45,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
   @Inject
-  lateinit var mediaViewerGoToImagePostHelper: MediaViewerGoToImagePostHelper
-  @Inject
-  lateinit var mediaViewerOpenThreadHelper: MediaViewerOpenThreadHelper
+  lateinit var chanThreadManager: ChanThreadManager
 
   private val toolbarViewModel by (context as ComponentActivity).viewModels<MediaViewerToolbarViewModel>()
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
@@ -54,10 +56,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
   private val toolbarGoToPostButton: AppCompatImageButton
   private val toolbarReloadButton: AppCompatImageButton
   private val toolbarDownloadButton: AppCompatImageButton
+  private val toolbarPostRepliesButton: AppCompatImageButton
   private val toolbarOptionsButton: AppCompatImageButton
 
   private val scope = KurobaCoroutineScope()
 
+  private var postRepliesProcessJob: Job? = null
   private var mediaViewerToolbarCallbacks: MediaViewerToolbarCallbacks? = null
   private var chanDescriptor: ChanDescriptor? = null
   private var currentViewableMedia: ViewableMedia? = null
@@ -76,11 +80,13 @@ class MediaViewerToolbar @JvmOverloads constructor(
     toolbarGoToPostButton = findViewById(R.id.toolbar_go_to_post_button)
     toolbarReloadButton = findViewById(R.id.toolbar_reload_button)
     toolbarDownloadButton = findViewById(R.id.toolbar_download_button)
+    toolbarPostRepliesButton = findViewById(R.id.toolbar_post_replies_button)
     toolbarOptionsButton = findViewById(R.id.toolbar_options_button)
 
     toolbarGoToPostButton.setEnabledFast(false)
     toolbarReloadButton.setEnabledFast(false)
     toolbarDownloadButton.setEnabledFast(false)
+    toolbarPostRepliesButton.setVisibilityFast(View.GONE)
 
     toolbarCloseButton.setOnClickListener { mediaViewerToolbarCallbacks?.onCloseButtonClick() }
     toolbarGoToPostButton.setOnClickListener {
@@ -91,25 +97,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       val postDescriptor = currentViewableMedia?.viewableMediaMeta?.ownerPostDescriptor
         ?: return@setOnClickListener
 
-      val mediaViewerOptions = controllerViewModel.mediaViewerOptions.value
-      var closeMediaViewer = false
-
-      if (mediaViewerOptions.mediaViewerOpenedFromAlbum) {
-        val mediaLocation = currentViewableMedia?.mediaLocation
-          ?: return@setOnClickListener
-
-        if (mediaViewerGoToImagePostHelper.tryGoToPost(chanDescriptor, postDescriptor, mediaLocation)) {
-          closeMediaViewer = true
-        }
-      } else if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-        if (mediaViewerOpenThreadHelper.tryToOpenThread(postDescriptor)) {
-          closeMediaViewer = true
-        }
-      }
-
-      if (closeMediaViewer) {
-        mediaViewerToolbarCallbacks?.onCloseButtonClick()
-      }
+      mediaViewerToolbarCallbacks?.onGoToPostMediaClick(currentViewableMedia!!, postDescriptor)
     }
 
     toolbarReloadButton.setOnClickListener {
@@ -126,6 +114,12 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
 
     toolbarOptionsButton.setOnClickListener { mediaViewerToolbarCallbacks?.onOptionsButtonClick() }
+    toolbarPostRepliesButton.setOnClickListener {
+      val postDescriptor = currentViewableMedia?.viewableMediaMeta?.ownerPostDescriptor
+        ?: return@setOnClickListener
+
+      mediaViewerToolbarCallbacks?.onShowRepliesButtonClick(postDescriptor)
+    }
 
     scope.launch {
       controllerViewModel.mediaViewerOptions.collect { mediaViewerOptions ->
@@ -145,27 +139,56 @@ class MediaViewerToolbar @JvmOverloads constructor(
 
     updateToolbarStateFromViewOptions(controllerViewModel.mediaViewerOptions.value, chanDescriptor)
 
+    postRepliesProcessJob?.cancel()
+    postRepliesProcessJob = null
+
     val toolbarState = toolbarViewModel.restore(viewableMedia.mediaLocation)
     if (toolbarState != null) {
       toolbarGoToPostButton.setEnabledFast(toolbarState.goToPostButtonEnabled)
       toolbarReloadButton.setEnabledFast(toolbarState.reloadButtonEnabled)
       toolbarDownloadButton.setEnabledFast(toolbarState.downloadButtonEnabled)
-      setVisibilityFast(if (toolbarState.toolbarShown) View.VISIBLE else View.GONE)
 
-      return
+      toolbarPostRepliesButton.setVisibilityFast(
+        if (toolbarState.showRepliesButtonVisible) {
+          View.VISIBLE
+        } else {
+          View.GONE
+        }
+      )
+
+      setVisibilityFast(
+        if (toolbarState.toolbarShown) {
+          View.VISIBLE
+        } else {
+          View.GONE
+        }
+      )
+    } else {
+      toolbarReloadButton.setEnabledFast(viewableMedia.canReloadMedia())
+      toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
+      toolbarGoToPostButton.setEnabledFast(viewableMedia.hasPostDescriptor())
+
+      if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+        // We need to offload this to a background thread because it may become a reason of micro-freezes
+        postRepliesProcessJob = scope.launch(Dispatchers.Default) {
+          processPostRepliesButton(viewableMedia)
+        }
+      } else {
+        toolbarPostRepliesButton.setVisibilityFast(View.GONE)
+      }
     }
-
-    toolbarReloadButton.setEnabledFast(viewableMedia.canReloadMedia())
-    toolbarDownloadButton.setEnabledFast(viewableMedia.canMediaBeDownloaded())
-    toolbarGoToPostButton.setEnabledFast(viewableMedia.canGoToMediaPost())
   }
 
   fun detach() {
+    postRepliesProcessJob?.cancel()
+    postRepliesProcessJob = null
+
     currentViewableMedia?.let { viewableMedia ->
       val toolbarState = MediaViewerToolbarViewModel.ToolbarState(
         goToPostButtonEnabled = toolbarGoToPostButton.isEnabled,
         reloadButtonEnabled = toolbarReloadButton.isEnabled,
         downloadButtonEnabled = toolbarDownloadButton.isEnabled,
+        showRepliesButtonVisible = toolbarPostRepliesButton.visibility == View.VISIBLE,
         toolbarShown = visibility == View.VISIBLE
       )
 
@@ -183,6 +206,9 @@ class MediaViewerToolbar @JvmOverloads constructor(
   fun onDestroy() {
     this.mediaViewerToolbarCallbacks = null
     this.currentViewableMedia = null
+
+    postRepliesProcessJob?.cancel()
+    postRepliesProcessJob = null
     scope.cancelChildren()
 
     globalWindowInsetsManager.removeInsetsUpdatesListener(this)
@@ -284,6 +310,26 @@ class MediaViewerToolbar @JvmOverloads constructor(
     }
   }
 
+  private suspend fun processPostRepliesButton(viewableMedia: ViewableMedia) {
+    BackgroundUtils.ensureBackgroundThread()
+
+    val hasRepliesToPost = viewableMedia.postDescriptor?.let { postDescriptor ->
+      return@let (chanThreadManager.getPost(postDescriptor)?.repliesFromCount ?: 0) > 0
+    } ?: false
+
+    withContext(Dispatchers.Main) {
+      BackgroundUtils.ensureMainThread()
+
+      toolbarPostRepliesButton.setVisibilityFast(
+        if (hasRepliesToPost) {
+          View.VISIBLE
+        } else {
+          View.GONE
+        }
+      )
+    }
+  }
+
   private fun updateToolbarStateFromViewOptions(
     mediaViewerOptions: MediaViewerOptions,
     chanDescriptor: ChanDescriptor?
@@ -379,6 +425,8 @@ class MediaViewerToolbar @JvmOverloads constructor(
     suspend fun reloadMedia()
     suspend fun downloadMedia(isLongClick: Boolean): Boolean
     fun onOptionsButtonClick()
+    fun onShowRepliesButtonClick(postDescriptor: PostDescriptor)
+    fun onGoToPostMediaClick(viewableMedia: ViewableMedia, postDescriptor: PostDescriptor)
   }
 
   companion object {

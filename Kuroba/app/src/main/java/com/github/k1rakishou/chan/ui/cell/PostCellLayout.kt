@@ -69,7 +69,7 @@ open class PostCellLayout @JvmOverloads constructor(
   private val postAttentionLabelPaddings = (horizPaddingPx * 2)
   private val commentTopPadding = (vertPaddingPx * 2)
 
-  fun postCellData(
+  fun measureAndLayoutPostCell(
     postCellData: PostCellData,
     postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer,
     title: TextView,

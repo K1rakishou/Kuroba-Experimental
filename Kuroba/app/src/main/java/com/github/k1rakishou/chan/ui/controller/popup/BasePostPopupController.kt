@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
+import com.github.k1rakishou.chan.ui.adapter.PostAdapter
 import com.github.k1rakishou.chan.ui.adapter.PostRepliesAdapter
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
@@ -107,6 +108,14 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     themeEngine.removeListener(this)
 
     if (::postsView.isInitialized) {
+      val adapter = postsView.adapter
+      if (adapter is PostAdapter) {
+        adapter.cleanup()
+      } else if (adapter is PostRepliesAdapter) {
+        adapter.cleanup()
+      }
+
+      postsView.recycledViewPool.clear()
       postsView.swapAdapter(null, true)
     }
   }

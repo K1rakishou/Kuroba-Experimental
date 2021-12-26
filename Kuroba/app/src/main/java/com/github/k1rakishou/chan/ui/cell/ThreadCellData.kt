@@ -363,6 +363,8 @@ class ThreadCellData(
     lastSeenIndicatorPosition = -1
     defaultMarkedNo = null
     error = null
+    postCellCallback = null
+    _chanDescriptor = null
   }
 
   fun setSearchQuery(searchQuery: PostCellData.SearchQuery) {
