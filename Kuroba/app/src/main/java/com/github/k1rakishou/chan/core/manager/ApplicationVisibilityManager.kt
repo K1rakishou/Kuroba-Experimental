@@ -43,7 +43,6 @@ class ApplicationVisibilityManager {
   fun onEnteredBackground() {
     BackgroundUtils.ensureMainThread()
 
-    _switchedToForegroundAt = null
     currentApplicationVisibility = ApplicationVisibility.Background
 
     val time = measureTime {
@@ -58,6 +57,10 @@ class ApplicationVisibilityManager {
 
   fun getCurrentAppVisibility(): ApplicationVisibility = currentApplicationVisibility
   fun isAppInForeground(): Boolean = getCurrentAppVisibility() == ApplicationVisibility.Foreground
+
+  // Maybe because the app may get started for whatever reason (service got invoked by the OS) but
+  // no activities are going to start up.
+  fun isMaybeAppStartingUp(): Boolean = _switchedToForegroundAt == null
 
   companion object {
     private const val TAG = "ApplicationVisibilityManager"
