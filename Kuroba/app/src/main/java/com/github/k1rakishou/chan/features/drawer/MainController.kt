@@ -266,6 +266,7 @@ class MainController(
   }
 
   private val bottomPadding = mutableStateOf(0)
+  private val drawerOpenedState = mutableStateOf(false)
 
   private val drawerViewModel by lazy {
     requireComponentActivity().viewModelByKey<MainControllerViewModel>()
@@ -495,10 +496,12 @@ class MainController(
   }
 
   override fun onDrawerOpened(drawerView: View) {
+    drawerOpenedState.value = true
   }
 
   override fun onDrawerClosed(drawerView: View) {
     drawerViewModel.clearSelection()
+    drawerOpenedState.value = false
   }
 
   override fun onDrawerStateChanged(newState: Int) {
@@ -1467,7 +1470,8 @@ class MainController(
       label = "Text transition animation"
     )
 
-    val animationDisabled = isLowRamDevice || searchQuery.isNotEmpty()
+    val drawerOpened by drawerOpenedState
+    val animationDisabled = isLowRamDevice || searchQuery.isNotEmpty() || !drawerOpened
 
     val textAnimationSpec: FiniteAnimationSpec<Int> = if (animationDisabled) {
       // This will disable animations, basically it will switch to the final animation frame right
