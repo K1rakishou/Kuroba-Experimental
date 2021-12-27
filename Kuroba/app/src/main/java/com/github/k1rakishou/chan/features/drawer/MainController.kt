@@ -20,6 +20,13 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.view.MotionEvent
 import android.view.View
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.AnimationSpec
+import androidx.compose.animation.core.FiniteAnimationSpec
+import androidx.compose.animation.core.animateInt
+import androidx.compose.animation.core.snap
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.updateTransition
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -45,15 +52,18 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyVerticalGrid
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
@@ -88,6 +98,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.navigation.HasNavigation
 import com.github.k1rakishou.chan.features.drawer.data.HistoryControllerState
+import com.github.k1rakishou.chan.features.drawer.data.NavHistoryBookmarkAdditionalInfo
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsController
@@ -140,6 +151,7 @@ import com.github.k1rakishou.chan.utils.TimeUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
@@ -388,11 +400,12 @@ class MainController(
     drawerComposeView.setContent {
       ProvideChanTheme(themeEngine) {
         val chanTheme = LocalChanTheme.current
+        val bgColor = chanTheme.backColorCompose
 
         Column(
           modifier = Modifier
             .fillMaxSize()
-            .background(chanTheme.backColorCompose)
+            .background(bgColor)
         ) {
           BuildContent()
         }
@@ -959,7 +972,7 @@ class MainController(
     }
 
     val selectedHistoryEntries = remember { drawerViewModel.selectedHistoryEntries }
-
+    val isLowRamDevice = ChanSettings.isLowRamDevice()
     val padding by bottomPadding
     val contentPadding = remember(key1 = padding) { PaddingValues(bottom = 4.dp + padding.dp) }
 
@@ -991,15 +1004,20 @@ class MainController(
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
               val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
 
-              BuildNavigationHistoryListEntryGridMode(
-                navHistoryEntry = navHistoryEntry,
-                isSelectionMode = isSelectionMode,
-                isSelected = isSelected,
-                onHistoryEntryViewClicked = onHistoryEntryViewClicked,
-                onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
-                onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
-                onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
-              )
+              // Fucking magic
+              key(searchResults[index].descriptor) {
+                BuildNavigationHistoryListEntryGridMode(
+                  searchQuery = query,
+                  navHistoryEntry = navHistoryEntry,
+                  isSelectionMode = isSelectionMode,
+                  isSelected = isSelected,
+                  isLowRamDevice = isLowRamDevice,
+                  onHistoryEntryViewClicked = onHistoryEntryViewClicked,
+                  onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                  onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
+                  onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
+                )
+              }
             }
           })
       } else {
@@ -1016,15 +1034,19 @@ class MainController(
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
               val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
 
-              BuildNavigationHistoryListEntryListMode(
-                navHistoryEntry = navHistoryEntry,
-                isSelectionMode = isSelectionMode,
-                isSelected = isSelected,
-                onHistoryEntryViewClicked = onHistoryEntryViewClicked,
-                onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
-                onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
-                onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
-              )
+              key(searchResults[index].descriptor) {
+                BuildNavigationHistoryListEntryListMode(
+                  searchQuery = query,
+                  navHistoryEntry = navHistoryEntry,
+                  isSelectionMode = isSelectionMode,
+                  isSelected = isSelected,
+                  isLowRamDevice = isLowRamDevice,
+                  onHistoryEntryViewClicked = onHistoryEntryViewClicked,
+                  onHistoryEntryViewLongClicked = onHistoryEntryViewLongClicked,
+                  onHistoryEntrySelectionChanged = onHistoryEntrySelectionChanged,
+                  onNavHistoryDeleteClicked = onNavHistoryDeleteClicked
+                )
+              }
             }
           })
       }
@@ -1107,9 +1129,11 @@ class MainController(
 
   @Composable
   private fun BuildNavigationHistoryListEntryListMode(
+    searchQuery: String,
     navHistoryEntry: NavigationHistoryEntry,
     isSelectionMode: Boolean,
     isSelected: Boolean,
+    isLowRamDevice: Boolean,
     onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
@@ -1187,18 +1211,22 @@ class MainController(
             onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
-          val circleColor = remember { Color(0x80000000L) }
+          val circleColor = remember { Color(0x55000000L) }
           val shape = remember { CircleShape }
 
-          Image(
+          Box(
             modifier = Modifier
               .align(Alignment.TopStart)
-              .size(20.dp)
+              .size(28.dp)
               .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-              .background(color = circleColor, shape = shape),
-            painter = painterResource(id = R.drawable.ic_clear_white_24dp),
-            contentDescription = null
-          )
+              .background(color = circleColor, shape = shape)
+          ) {
+            Image(
+              modifier = Modifier.padding(4.dp),
+              painter = painterResource(id = R.drawable.ic_clear_white_24dp),
+              contentDescription = null
+            )
+          }
         }
 
         Column(
@@ -1259,20 +1287,12 @@ class MainController(
       )
 
       if (navHistoryEntry.additionalInfo != null) {
-        val additionalInfo = navHistoryEntry.additionalInfo
-        val additionalInfoString = remember(key1 = additionalInfo, key2 = chanTheme) {
-          additionalInfo.toAnnotatedString(chanTheme)
-        }
-
-        KurobaComposeText(
-          modifier = Modifier
-            .wrapContentWidth()
-            .wrapContentHeight()
-            .padding(horizontal = 4.dp),
-          maxLines = 1,
-          overflow = TextOverflow.Ellipsis,
-          fontSize = 16.sp,
-          text = additionalInfoString
+        BuildAdditionalBookmarkInfoText(
+          isLowRamDevice = isLowRamDevice,
+          isListMode = true,
+          searchQuery = searchQuery,
+          additionalInfo = navHistoryEntry.additionalInfo,
+          chanTheme = chanTheme
         )
       }
     }
@@ -1280,9 +1300,11 @@ class MainController(
 
   @Composable
   private fun BuildNavigationHistoryListEntryGridMode(
+    searchQuery: String,
     navHistoryEntry: NavigationHistoryEntry,
     isSelectionMode: Boolean,
     isSelected: Boolean,
+    isLowRamDevice: Boolean,
     onHistoryEntryViewClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntryViewLongClicked: (NavigationHistoryEntry) -> Unit,
     onHistoryEntrySelectionChanged: (Boolean, NavigationHistoryEntry) -> Unit,
@@ -1359,18 +1381,22 @@ class MainController(
             onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
-          val circleColor = remember { Color(0x80000000L) }
+          val circleColor = remember { Color(0x55000000L) }
           val shape = remember { CircleShape }
 
-          Image(
+          Box(
             modifier = Modifier
               .align(Alignment.TopStart)
-              .size(20.dp)
+              .size(28.dp)
               .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-              .background(color = circleColor, shape = shape),
-            painter = painterResource(id = R.drawable.ic_clear_white_24dp),
-            contentDescription = null
-          )
+              .background(color = circleColor, shape = shape)
+          ) {
+            Image(
+              modifier = Modifier.padding(4.dp),
+              painter = painterResource(id = R.drawable.ic_clear_white_24dp),
+              contentDescription = null
+            )
+          }
         }
 
         Row(
@@ -1382,8 +1408,7 @@ class MainController(
 
           if (navHistoryEntry.pinned) {
             Image(
-              modifier = Modifier
-                .size(20.dp),
+              modifier = Modifier.size(20.dp),
               painter = painterResource(id = R.drawable.sticky_icon),
               contentDescription = null
             )
@@ -1393,8 +1418,7 @@ class MainController(
             KurobaComposeImage(
               request = siteIconRequest,
               contentScale = ContentScale.Crop,
-              modifier = Modifier
-                .size(20.dp),
+              modifier = Modifier.size(20.dp),
               imageLoaderV2 = imageLoaderV2,
               error = {
                 Image(
@@ -1405,26 +1429,16 @@ class MainController(
               }
             )
           }
-
         }
-
       }
 
       if (navHistoryEntry.additionalInfo != null) {
-        val additionalInfo = navHistoryEntry.additionalInfo
-        val additionalInfoString = remember(key1 = additionalInfo, key2 = chanTheme) {
-          additionalInfo.toAnnotatedString(chanTheme)
-        }
-
-        KurobaComposeText(
-          modifier = Modifier
-            .fillMaxWidth()
-            .wrapContentHeight(),
-          maxLines = 1,
-          textAlign = TextAlign.Center,
-          overflow = TextOverflow.Ellipsis,
-          fontSize = 14.sp,
-          text = additionalInfoString
+        BuildAdditionalBookmarkInfoText(
+          isLowRamDevice = isLowRamDevice,
+          isListMode = false,
+          searchQuery = searchQuery,
+          additionalInfo = navHistoryEntry.additionalInfo,
+          chanTheme = chanTheme,
         )
       }
 
@@ -1434,9 +1448,107 @@ class MainController(
           .wrapContentHeight(),
         text = navHistoryEntry.title,
         maxLines = 4,
-        overflow = TextOverflow.Ellipsis,
         fontSize = 12.sp,
         textAlign = TextAlign.Center
+      )
+    }
+  }
+
+  @Composable
+  private fun BuildAdditionalBookmarkInfoText(
+    isLowRamDevice: Boolean,
+    isListMode: Boolean,
+    searchQuery: String,
+    additionalInfo: NavHistoryBookmarkAdditionalInfo,
+    chanTheme: ChanTheme
+  ) {
+    val transition = updateTransition(
+      targetState = additionalInfo,
+      label = "Text transition animation"
+    )
+
+    val animationDisabled = isLowRamDevice || searchQuery.isNotEmpty()
+
+    val textAnimationSpec: FiniteAnimationSpec<Int> = if (animationDisabled) {
+      // This will disable animations, basically it will switch to the final animation frame right
+      // away
+      snap()
+    } else {
+      tween(durationMillis = TEXT_ANIMATION_DURATION)
+    }
+
+    val newPostsCountAnimated by transition.animateInt(
+      transitionSpec = { textAnimationSpec },
+      label = "New posts animation"
+    ) { info -> info.newPosts }
+    val newQuotesCountAnimated by transition.animateInt(
+      transitionSpec = { textAnimationSpec },
+      label = "New quotes animation"
+    ) { info -> info.newQuotes }
+
+    val additionalInfoString = remember(
+      additionalInfo,
+      chanTheme,
+      newPostsCountAnimated,
+      newQuotesCountAnimated
+    ) {
+      return@remember additionalInfo.toAnnotatedString(
+        chanTheme = chanTheme,
+        newPostsCount = newPostsCountAnimated,
+        newQuotesCount = newQuotesCountAnimated
+      )
+    }
+
+    val targetColor = if (transition.isRunning) {
+      if (additionalInfo.newQuotes > 0) {
+        chanTheme.bookmarkCounterHasRepliesColorCompose.copy(alpha = 0.5f)
+      } else {
+        chanTheme.bookmarkCounterNormalColorCompose.copy(alpha = 0.5f)
+      }
+    } else {
+      Color.Unspecified
+    }
+
+    val shape = if (transition.isRunning) {
+      RoundedCornerShape(4.dp)
+    } else {
+      RectangleShape
+    }
+
+    val bgAnimationSpec: AnimationSpec<Color> = if (animationDisabled) {
+      snap()
+    } else {
+      tween(durationMillis = TEXT_ANIMATION_DURATION)
+    }
+
+    val backgroundColor by animateColorAsState(
+      targetValue = targetColor,
+      animationSpec = bgAnimationSpec
+    )
+
+    if (isListMode) {
+      KurobaComposeText(
+        modifier = Modifier
+          .wrapContentWidth()
+          .wrapContentHeight()
+          .padding(horizontal = 4.dp)
+          .background(color = backgroundColor, shape = shape),
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        fontSize = 16.sp,
+        text = additionalInfoString
+      )
+    } else {
+      KurobaComposeText(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .background(color = backgroundColor, shape = shape),
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+        overflow = TextOverflow.Ellipsis,
+        fontSize = 14.sp,
+        text = additionalInfoString
       )
     }
   }
@@ -1882,6 +1994,7 @@ class MainController(
     private const val TAG = "MainController"
     private const val MIN_SPAN_COUNT = 3
     private const val MAX_SPAN_COUNT = 6
+    private const val TEXT_ANIMATION_DURATION = 1000
 
     private const val ACTION_MOVE_LAST_ACCESSED_THREAD_TO_TOP = 0
     private const val ACTION_SHOW_BOOKMARKS = 1

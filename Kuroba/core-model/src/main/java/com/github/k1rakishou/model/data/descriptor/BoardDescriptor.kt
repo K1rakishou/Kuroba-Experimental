@@ -1,9 +1,13 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 class BoardDescriptor private constructor(
   val siteDescriptor: SiteDescriptor,
   val boardCode: String
-) {
+) : Parcelable {
 
   fun siteName(): String = siteDescriptor.siteName
 

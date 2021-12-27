@@ -37,7 +37,14 @@ data class NavHistoryBookmarkAdditionalInfo(
   val isLastPage: Boolean = false
 ) {
 
-  fun toAnnotatedString(chanTheme: ChanTheme): AnnotatedString {
+  fun toAnnotatedString(
+    chanTheme: ChanTheme,
+    newPostsCount: Int? = null,
+    newQuotesCount: Int? = null
+  ): AnnotatedString {
+    val newPosts = newPostsCount ?: this.newPosts
+    val newQuotes = newQuotesCount ?: this.newQuotes
+
     val text = buildString {
       append(newPosts)
 

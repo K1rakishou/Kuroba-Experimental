@@ -65,8 +65,16 @@ class BookmarkWatcherCoordinator(
       val watchBackgroundIntervalFlowable = ChanSettings.watchBackgroundInterval.listenForChanges()
         .map { interval -> WatchSettingChange.BackgroundWatcherIntervalSettingChanged(interval) }
         .distinctUntilChanged()
+      val watchForegroundIntervalFlowable = ChanSettings.watchForegroundInterval.listenForChanges()
+        .map { interval -> WatchSettingChange.ForegroundWatcherIntervalSettingChanged(interval) }
+        .distinctUntilChanged()
 
-      Flowable.merge(watchEnabledFlowable, watchBackgroundFlowable, watchBackgroundIntervalFlowable)
+      Flowable.merge(
+        watchEnabledFlowable,
+        watchBackgroundFlowable,
+        watchBackgroundIntervalFlowable,
+        watchForegroundIntervalFlowable
+      )
         .asFlow()
         .collect { watchSettingChange ->
           if (verboseLogsEnabled) {
@@ -79,6 +87,9 @@ class BookmarkWatcherCoordinator(
               }
               is WatchSettingChange.BackgroundWatcherIntervalSettingChanged -> {
                 Logger.d(TAG, "Calling onBookmarksChanged() watchBackgroundInterval setting changed")
+              }
+              is WatchSettingChange.ForegroundWatcherIntervalSettingChanged -> {
+                Logger.d(TAG, "Calling onBookmarksChanged() watchForegroundInterval setting changed")
               }
             }
           }
@@ -170,6 +181,7 @@ class BookmarkWatcherCoordinator(
     data class WatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherSettingChanged(val enabled: Boolean) : WatchSettingChange()
     data class BackgroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
+    data class ForegroundWatcherIntervalSettingChanged(val interval: Int) : WatchSettingChange()
   }
 
   companion object {

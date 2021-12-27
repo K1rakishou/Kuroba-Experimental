@@ -662,7 +662,7 @@ fun Modifier.kurobaClickable(
       }
     }
 
-    then(
+    return@composed then(
       Modifier.combinedClickable(
         indication = rememberRipple(bounded = bounded, color = color),
         interactionSource = remember { MutableInteractionSource() },

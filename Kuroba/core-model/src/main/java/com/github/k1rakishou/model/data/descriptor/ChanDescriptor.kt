@@ -1,8 +1,10 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import android.os.Parcelable
 import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
+import kotlinx.parcelize.Parcelize
 
-sealed class ChanDescriptor {
+sealed class ChanDescriptor : Parcelable {
   abstract fun isThreadDescriptor(): Boolean
   abstract fun isCatalogDescriptor(): Boolean
 
@@ -58,6 +60,7 @@ sealed class ChanDescriptor {
     }
   }
 
+  @Parcelize
   class ThreadDescriptor private constructor(
     val boardDescriptor: BoardDescriptor,
     val threadNo: Long
@@ -148,6 +151,7 @@ sealed class ChanDescriptor {
   // ChanDescriptors to only allow/disallow catalog descriptors.
   sealed interface ICatalogDescriptor
 
+  @Parcelize
   class CatalogDescriptor private constructor(
     val boardDescriptor: BoardDescriptor
   ) : ChanDescriptor(), ICatalogDescriptor {
@@ -242,6 +246,7 @@ sealed class ChanDescriptor {
     }
   }
 
+  @Parcelize
   class CompositeCatalogDescriptor private constructor(
     val catalogDescriptors: List<CatalogDescriptor>
   ) : ChanDescriptor(), ICatalogDescriptor {

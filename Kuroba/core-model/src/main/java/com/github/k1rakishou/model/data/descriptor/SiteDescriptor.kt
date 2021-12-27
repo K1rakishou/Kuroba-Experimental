@@ -1,8 +1,12 @@
 package com.github.k1rakishou.model.data.descriptor
 
+import android.os.Parcelable
+import kotlinx.parcelize.Parcelize
+
+@Parcelize
 class SiteDescriptor private constructor(
   val siteName: String
-) {
+): Parcelable {
   fun is4chan(): Boolean {
     // Kinda bad, but Chan4 file is located in another module so for now it's impossible to use
     // it
