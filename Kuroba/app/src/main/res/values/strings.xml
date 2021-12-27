@@ -605,7 +605,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_report_description">Report a problem/crash</string>
     <string name="settings_collect_crash_logs">Collect crash logs</string>
     <string name="settings_collect_crash_logs_description">By enabling this setting, the app will start collecting crash logs. They are NOT uploaded automatically. Crash logs only collect the stacktrace itself, app version and basic OS information. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
-    <string name="settings_collect_anrs">Collect ANR repors</string>
+    <string name="settings_collect_anrs">Collect ANR reports</string>
     <string name="settings_collect_anrs_description">Same as with crashlogs. When enabling this setting ANRs will be collected but not uploaded. ANR means Application Not Responding reports. They will be formed every time the app hangs for more than 2.5 seconds. At that time a thread stack dump will be collected and stored into a file. This may help developers to fix those hangs/freezes/deadlocks so please report them. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
     <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
     <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
