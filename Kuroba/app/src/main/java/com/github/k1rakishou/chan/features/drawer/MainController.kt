@@ -60,6 +60,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -1463,13 +1464,32 @@ class MainController(
     additionalInfo: NavHistoryBookmarkAdditionalInfo,
     chanTheme: ChanTheme
   ) {
+    val drawerOpened by drawerOpenedState
+
+    // Now this is epic. So what this thing does (and ^ this one above), they receive all changes
+    // to navigation history elements and if the drawer is currently opened display them (with or
+    // without animation depending on settings and other stuff) but if the drawer is currently closed
+    // then the changes are accumulated and the next time the drawer is opened the difference is
+    // displayed. Basically once you open the drawer you will see the changes applied to bookmarks
+    // during the time the drawer was closed.
+    val prevAdditionalInfoState = remember { mutableStateOf(additionalInfo.copy()) }
+    var prevAdditionalInfo by prevAdditionalInfoState
+
+    val currentAdditionalInfo = if (drawerOpened) {
+      additionalInfo
+    } else {
+      prevAdditionalInfo
+    }
+
     val transition = updateTransition(
-      targetState = additionalInfo,
+      targetState = currentAdditionalInfo,
       label = "Text transition animation"
     )
 
-    val drawerOpened by drawerOpenedState
-    val animationDisabled = isLowRamDevice || searchQuery.isNotEmpty() || !drawerOpened
+    val animationDisabled = isLowRamDevice
+      || searchQuery.isNotEmpty()
+      || !drawerOpened
+      || prevAdditionalInfo == currentAdditionalInfo
 
     val textAnimationSpec: FiniteAnimationSpec<Int> = if (animationDisabled) {
       // This will disable animations, basically it will switch to the final animation frame right
@@ -1494,7 +1514,7 @@ class MainController(
       newPostsCountAnimated,
       newQuotesCountAnimated
     ) {
-      return@remember additionalInfo.toAnnotatedString(
+      return@remember currentAdditionalInfo.toAnnotatedString(
         chanTheme = chanTheme,
         newPostsCount = newPostsCountAnimated,
         newQuotesCount = newQuotesCountAnimated
@@ -1505,10 +1525,10 @@ class MainController(
 
     val targetColor = if (transition.isRunning) {
       when {
-        additionalInfo.newQuotes > 0 -> {
+        currentAdditionalInfo.newQuotes > 0 -> {
           chanTheme.bookmarkCounterHasRepliesColorCompose.copy(alpha = alpha)
         }
-        additionalInfo.newPosts > 0 -> {
+        currentAdditionalInfo.newPosts > 0 -> {
           chanTheme.bookmarkCounterNormalColorCompose.copy(alpha = alpha)
         }
         else -> {
@@ -1560,6 +1580,10 @@ class MainController(
         fontSize = 14.sp,
         text = additionalInfoString
       )
+    }
+
+    if (drawerOpened) {
+      prevAdditionalInfoState.value = additionalInfo.copy()
     }
   }
 

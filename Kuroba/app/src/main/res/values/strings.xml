@@ -1136,8 +1136,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="drawer_controller_show_bookmarks">Display bookmarked threads</string>
     <string name="drawer_controller_show_navigation_history">Track and display navigation history</string>
     <string name="drawer_controller_delete_shortcut">Show delete navigation history button</string>
-    <string name="drawer_controller_delete_bookmark_on_history_delete">Delete bookmarks when deleting navigation history</string>
-    <string name="drawer_controller_delete_nav_history_on_bookmark_delete">Delete navigation history when bookmark deleted</string>
+    <string name="drawer_controller_delete_bookmark_on_history_delete">Delete bookmark(s) when navigation history deleted</string>
+    <string name="drawer_controller_delete_nav_history_on_bookmark_delete">Delete navigation history when bookmark(s) deleted</string>
     <string name="drawer_controller_clear_nav_history">Clear navigation history</string>
     <string name="drawer_controller_clear_nav_history_dialog_title">Clear navigation history?</string>
     <string name="drawer_controller_navigation_entry_pinned_one">Pinned \'%1$s\'</string>
