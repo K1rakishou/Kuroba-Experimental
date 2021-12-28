@@ -432,6 +432,8 @@ public class ChanSettings {
     public static BooleanSetting drawerShowBookmarkedThreads;
     public static BooleanSetting drawerShowNavigationHistory;
     public static BooleanSetting drawerShowDeleteButtonShortcut;
+    public static BooleanSetting drawerDeleteBookmarksWhenDeletingNavHistory;
+    public static BooleanSetting drawerDeleteNavHistoryWhenBookmarkDeleted;
     public static BooleanSetting isLowRamDeviceForced;
     //endregion
     //endregion
@@ -720,6 +722,8 @@ public class ChanSettings {
                     "drawer_show_delete_button_shortcut",
                     true
             );
+            drawerDeleteBookmarksWhenDeletingNavHistory = new BooleanSetting(provider, "drawer_delete_bookmarks_when_deleting_nav_history", false);
+            drawerDeleteNavHistoryWhenBookmarkDeleted = new BooleanSetting(provider, "drawer_delete_nav_history_when_bookmark_deleted", false);
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the
             // stacktrace. Otherwise we won't because of Feather.

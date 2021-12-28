@@ -1618,8 +1618,11 @@ class ThreadPresenter @Inject constructor(
         menu.add(createMenuItem(POST_OPTION_BOOKMARK, R.string.action_pin))
       }
 
-      if (historyNavigationManager.canCreateNavElement(bookmarksManager, chanDescriptor)) {
-        menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
+      if (historyNavigationManager.canCreateNavElement(bookmarksManager, threadDescriptor)) {
+        val alreadyContains = runBlocking { historyNavigationManager.contains(threadDescriptor) }
+        if (!alreadyContains) {
+          menu.add(createMenuItem(POST_OPTION_ADD_TO_NAV_HISTORY, R.string.post_add_to_nav_history))
+        }
       }
     } else {
       menu.add(createMenuItem(POST_OPTION_QUOTE, R.string.post_quote))

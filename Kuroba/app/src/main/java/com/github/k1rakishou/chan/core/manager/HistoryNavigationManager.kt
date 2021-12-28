@@ -155,7 +155,10 @@ class HistoryNavigationManager(
       return
     }
 
-    if (!ChanSettings.drawerShowNavigationHistory.get()) {
+    val canDelete = ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.get()
+      || !ChanSettings.drawerShowNavigationHistory.get()
+
+    if (canDelete) {
       deleteNavElements(threadDescriptors)
     }
   }

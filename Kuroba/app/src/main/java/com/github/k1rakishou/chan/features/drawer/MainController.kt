@@ -1214,15 +1214,14 @@ class MainController(
             onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
-          val circleColor = remember { Color(0x55000000L) }
           val shape = remember { CircleShape }
 
           Box(
             modifier = Modifier
               .align(Alignment.TopStart)
-              .size(28.dp)
+              .size(NAV_HISTORY_DELETE_BTN_SIZE)
               .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-              .background(color = circleColor, shape = shape)
+              .background(color = NAV_HISTORY_DELETE_BTN_BG_COLOR, shape = shape)
           ) {
             Image(
               modifier = Modifier.padding(4.dp),
@@ -1384,15 +1383,14 @@ class MainController(
             onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
-          val circleColor = remember { Color(0x55000000L) }
           val shape = remember { CircleShape }
 
           Box(
             modifier = Modifier
               .align(Alignment.TopStart)
-              .size(28.dp)
+              .size(NAV_HISTORY_DELETE_BTN_SIZE)
               .kurobaClickable(onClick = { onNavHistoryDeleteClicked(navHistoryEntry) })
-              .background(color = circleColor, shape = shape)
+              .background(color = NAV_HISTORY_DELETE_BTN_BG_COLOR, shape = shape)
           ) {
             Image(
               modifier = Modifier.padding(4.dp),
@@ -1503,11 +1501,19 @@ class MainController(
       )
     }
 
+    val alpha = .35f
+
     val targetColor = if (transition.isRunning) {
-      if (additionalInfo.newQuotes > 0) {
-        chanTheme.bookmarkCounterHasRepliesColorCompose.copy(alpha = 0.5f)
-      } else {
-        chanTheme.bookmarkCounterNormalColorCompose.copy(alpha = 0.5f)
+      when {
+        additionalInfo.newQuotes > 0 -> {
+          chanTheme.bookmarkCounterHasRepliesColorCompose.copy(alpha = alpha)
+        }
+        additionalInfo.newPosts > 0 -> {
+          chanTheme.bookmarkCounterNormalColorCompose.copy(alpha = alpha)
+        }
+        else -> {
+          chanTheme.bookmarkCounterNotWatchingColorCompose.copy(alpha = alpha)
+        }
       }
     } else {
       Color.Unspecified
@@ -1591,6 +1597,18 @@ class MainController(
     )
 
     drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY,
+      name = getString(R.string.drawer_controller_delete_bookmark_on_history_delete),
+      isCurrentlySelected = ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
+      key = ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED,
+      name = getString(R.string.drawer_controller_delete_nav_history_on_bookmark_delete),
+      isCurrentlySelected = ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.get()
+    )
+
+    drawerOptions += CheckableFloatingListMenuItem(
       key = ACTION_RESTORE_LAST_VISITED_CATALOG,
       name = getString(R.string.setting_load_last_opened_board_upon_app_start_title),
       isCurrentlySelected = ChanSettings.loadLastOpenedBoardUponAppStart.get()
@@ -1630,6 +1648,12 @@ class MainController(
             }
             ACTION_SHOW_DELETE_SHORTCUT -> {
               drawerViewModel.updateDeleteButtonShortcut(ChanSettings.drawerShowDeleteButtonShortcut.toggle())
+            }
+            ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY -> {
+              ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.toggle()
+            }
+            ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED -> {
+              ChanSettings.drawerDeleteNavHistoryWhenBookmarkDeleted.toggle()
             }
             ACTION_RESTORE_LAST_VISITED_CATALOG -> {
               ChanSettings.loadLastOpenedBoardUponAppStart.toggle()
@@ -2008,6 +2032,8 @@ class MainController(
     private const val ACTION_RESTORE_LAST_VISITED_CATALOG = 5
     private const val ACTION_RESTORE_LAST_VISITED_THREAD = 6
     private const val ACTION_GRID_MODE = 7
+    private const val ACTION_DELETE_BOOKMARK_WHEN_DELETING_NAV_HISTORY = 8
+    private const val ACTION_DELETE_NAV_HISTORY_WHEN_BOOKMARK_DELETED = 9
 
     private const val ACTION_START_SELECTION = 100
     private const val ACTION_SELECT_ALL = 101
@@ -2020,7 +2046,8 @@ class MainController(
 
     private val GRID_COLUMN_WIDTH = dp(80f)
     private val LIST_MODE_ROW_HEIGHT = 52.dp
-
+    private val NAV_HISTORY_DELETE_BTN_SIZE = 24.dp
+    private val NAV_HISTORY_DELETE_BTN_BG_COLOR = Color(0x50000000)
     private val CIRCLE_CROP = CircleCropTransformation()
   }
 }

@@ -284,8 +284,8 @@ class BookmarksManager(
 
     check(isReady()) { "BookmarksManager is not ready yet! Use awaitUntilInitialized()" }
 
-    val updated = lock.write {
-      var updated = false
+    val actuallyDeleted = lock.write {
+      val actuallyDeleted = mutableListOf<ChanDescriptor.ThreadDescriptor>()
 
       for (threadDescriptor in threadDescriptors) {
         if (!bookmarks.containsKey(threadDescriptor)) {
@@ -293,18 +293,18 @@ class BookmarksManager(
         }
 
         bookmarks.remove(threadDescriptor)
-        updated = true
+        actuallyDeleted += threadDescriptor
       }
 
-      return@write updated
+      return@write actuallyDeleted
     }
 
-    if (!updated) {
+    if (actuallyDeleted.isEmpty()) {
       return false
     }
 
-    bookmarksChanged(BookmarkChange.BookmarksDeleted(threadDescriptors))
-    Logger.d(TAG, "Bookmarks deleted count ${threadDescriptors.size}")
+    bookmarksChanged(BookmarkChange.BookmarksDeleted(actuallyDeleted))
+    Logger.d(TAG, "Bookmarks deleted count ${actuallyDeleted.size}")
 
     return true
   }

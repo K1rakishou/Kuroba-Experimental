@@ -201,6 +201,15 @@ class MainControllerViewModel : BaseViewModel() {
 
   suspend fun deleteNavElementsByDescriptors(descriptors: Collection<ChanDescriptor>) {
     historyNavigationManager.deleteNavElements(descriptors)
+
+    if (ChanSettings.drawerDeleteBookmarksWhenDeletingNavHistory.get()) {
+      val bookmarkDescriptors = descriptors
+        .mapNotNull { chanDescriptor -> chanDescriptor.threadDescriptorOrNull() }
+
+      if (bookmarkDescriptors.isNotEmpty()) {
+        bookmarksManager.deleteBookmarks(bookmarkDescriptors)
+      }
+    }
   }
 
   fun deleteBookmarkedNavHistoryElements() {
