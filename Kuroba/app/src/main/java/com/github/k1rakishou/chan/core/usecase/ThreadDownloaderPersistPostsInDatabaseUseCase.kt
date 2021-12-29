@@ -27,13 +27,25 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
 ) : ISuspendUseCase<DownloadParams, ModularResult<DownloadResult>> {
 
   override suspend fun execute(parameter: DownloadParams): ModularResult<DownloadResult> {
-    return ModularResult.Try { downloadThreadPosts(parameter) }
+    val ownerThreadDatabaseId = parameter.ownerThreadDatabaseId
+    val threadDescriptor = parameter.threadDescriptor
+
+    return ModularResult.Try {
+      downloadThreadPosts(
+        ownerThreadDatabaseId = ownerThreadDatabaseId,
+        threadDescriptor = threadDescriptor,
+        isReloadingAfter404 = false
+      )
+    }
   }
 
   @OptIn(ExperimentalTime::class)
-  private suspend fun downloadThreadPosts(parameter: DownloadParams): DownloadResult {
-    val ownerThreadDatabaseId = parameter.ownerThreadDatabaseId
-    val threadDescriptor = parameter.threadDescriptor
+  private suspend fun downloadThreadPosts(
+    ownerThreadDatabaseId: Long,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    isReloadingAfter404: Boolean
+  ): DownloadResult {
+    Logger.d(TAG, "downloadThreadPosts($ownerThreadDatabaseId, $threadDescriptor, $isReloadingAfter404)")
 
     val site = siteManager.bySiteDescriptor(threadDescriptor.siteDescriptor())
       ?: throw ThreadDownloadException("No site found by siteDescriptor ${threadDescriptor.siteDescriptor()}")
@@ -42,7 +54,9 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       site = site,
       chanDescriptor = threadDescriptor,
       page = null,
-      postProcessFlags = null,
+      postProcessFlags = ChanThreadLoaderCoordinator.PostProcessFlags(
+        reloadingAfter404 = isReloadingAfter404
+      ),
       forceFullLoad = true
     )
 
@@ -59,6 +73,15 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
     if (!response.isSuccessful) {
       if (response.code == 404) {
+        if (!isReloadingAfter404 && site.redirectsToArchiveThread()) {
+          // Fix for 2ch.hk archived threads
+          return downloadThreadPosts(
+            ownerThreadDatabaseId = ownerThreadDatabaseId,
+            threadDescriptor = threadDescriptor,
+            isReloadingAfter404 = true
+          )
+        }
+
         chanPostRepository.updateThreadState(
           threadDescriptor = threadDescriptor,
           deleted = true
@@ -107,7 +130,7 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
       parsingResult.parsedPosts
     ).unwrap()
 
-    Logger.d(TAG, "deleted=${chanReaderProcessor.deleted}, " +
+    Logger.d(TAG, "downloadThreadPosts() deleted=${chanReaderProcessor.deleted}, " +
       "closed=${chanReaderProcessor.closed}, " +
       "archived=${chanReaderProcessor.archived}, " +
       "posts=${parsingResult.parsedPosts.size}")
