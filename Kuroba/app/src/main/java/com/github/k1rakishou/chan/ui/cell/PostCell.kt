@@ -295,6 +295,10 @@ class PostCell @JvmOverloads constructor(
             return@collect
           }
 
+          if (blinkExecuted && postHighlight.isBlinking()) {
+            blinkExecuted = false
+          }
+
           postCellHighlight = postHighlight.fullCopy()
           bindBackgroundColor(themeEngine.chanTheme)
         }
