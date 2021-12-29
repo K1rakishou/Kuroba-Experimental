@@ -15,6 +15,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 import okhttp3.HttpUrl.Companion.toHttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.jsoup.parser.Parser
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
@@ -406,8 +407,14 @@ data class ViewableMediaMeta(
         return@lazy null
       }
 
+      val actualUrl = "https://$unescapedUrl"
+      if (actualUrl.toHttpUrlOrNull() == null) {
+        Logger.e("ViewableMediaMeta", "soundPostActualSoundMedia incorrect url: '$actualUrl'")
+        return@lazy null
+      }
+
       return@lazy ViewableMedia.Audio(
-        mediaLocation = MediaLocation.Remote("https://$unescapedUrl"),
+        mediaLocation = MediaLocation.Remote(actualUrl),
         previewLocation = null,
         spoilerLocation = null,
         viewableMediaMeta = ViewableMediaMeta(
