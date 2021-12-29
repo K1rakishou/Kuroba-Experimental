@@ -719,7 +719,7 @@ open class ViewThreadController(
 
     if (chanDescriptor is ThreadDescriptor) {
       threadController.highlightPost(postDescriptor = chanDescriptor.toOriginalPostDescriptor(), blink = false)
-    } else {
+    } else if (chanDescriptor == null) {
       threadController.highlightPost(postDescriptor = null, blink = false)
     }
   }
@@ -788,6 +788,7 @@ open class ViewThreadController(
     }
 
     currentOpenedDescriptorStateManager.updateCurrentFocusedController(ThreadPresenter.CurrentFocusedController.Thread)
+    updateLeftPaneHighlighting(threadDescriptor)
   }
 
   companion object {
