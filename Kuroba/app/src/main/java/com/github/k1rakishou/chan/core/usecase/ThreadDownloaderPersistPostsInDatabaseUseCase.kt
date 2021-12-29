@@ -73,6 +73,11 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build())
     if (!response.isSuccessful) {
       if (response.code == 404) {
+        chanPostRepository.updateThreadState(
+          threadDescriptor = threadDescriptor,
+          deleted = true
+        )
+
         if (!isReloadingAfter404 && site.redirectsToArchiveThread()) {
           // Fix for 2ch.hk archived threads
           return downloadThreadPosts(
@@ -81,11 +86,6 @@ class ThreadDownloaderPersistPostsInDatabaseUseCase(
             isReloadingAfter404 = true
           )
         }
-
-        chanPostRepository.updateThreadState(
-          threadDescriptor = threadDescriptor,
-          deleted = true
-        )
 
         return DownloadResult(
           deleted = true,
