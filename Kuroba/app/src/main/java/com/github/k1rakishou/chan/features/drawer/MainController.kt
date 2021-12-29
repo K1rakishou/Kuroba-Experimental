@@ -1528,7 +1528,7 @@ class MainController(
         currentAdditionalInfo.newQuotes > 0 -> {
           chanTheme.bookmarkCounterHasRepliesColorCompose.copy(alpha = alpha)
         }
-        currentAdditionalInfo.newPosts > 0 -> {
+        currentAdditionalInfo.newPosts > 0 || currentAdditionalInfo.watching -> {
           chanTheme.bookmarkCounterNormalColorCompose.copy(alpha = alpha)
         }
         else -> {
