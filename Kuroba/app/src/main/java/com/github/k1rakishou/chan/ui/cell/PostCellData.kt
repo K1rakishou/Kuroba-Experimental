@@ -135,6 +135,8 @@ data class PostCellData(
   val threadPreviewMode: Boolean
     get() = postViewMode == PostViewMode.ExternalPostsPopup
       || postViewMode == PostViewMode.MediaViewerPostsPopup
+  val isMediaViewerPostsPopup: Boolean
+    get() = postViewMode == PostViewMode.MediaViewerPostsPopup
   val searchMode: Boolean
     get() = postViewMode == PostViewMode.Search
   val markedNo: Long

@@ -138,14 +138,16 @@ class PostCell @JvmOverloads constructor(
     private var processed = false
 
     override fun onCreateActionMode(mode: ActionMode, menu: Menu): Boolean {
-      val threadPreviewMode = postCellData?.threadPreviewMode
-        ?: return false
+      val pcd = postCellData ?: return false
 
-      if (!threadPreviewMode) {
+      if (!pcd.threadPreviewMode && !pcd.isMediaViewerPostsPopup) {
         quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
       }
 
-      filterItem = menu.add(Menu.NONE, R.id.post_selection_action_filter, 1, R.string.post_filter)
+      if (!pcd.isMediaViewerPostsPopup) {
+        filterItem = menu.add(Menu.NONE, R.id.post_selection_action_filter, 1, R.string.post_filter)
+      }
+
       webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_web_search, 2, R.string.post_web_search)
       return true
     }
