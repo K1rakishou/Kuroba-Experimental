@@ -60,7 +60,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -1473,7 +1472,7 @@ class MainController(
     // displayed. Basically once you open the drawer you will see the changes applied to bookmarks
     // during the time the drawer was closed.
     val prevAdditionalInfoState = remember { mutableStateOf(additionalInfo.copy()) }
-    var prevAdditionalInfo by prevAdditionalInfoState
+    val prevAdditionalInfo by prevAdditionalInfoState
 
     val currentAdditionalInfo = if (drawerOpened) {
       additionalInfo
@@ -1561,8 +1560,8 @@ class MainController(
         modifier = Modifier
           .wrapContentWidth()
           .wrapContentHeight()
-          .padding(horizontal = 4.dp)
-          .background(color = backgroundColor, shape = shape),
+          .background(color = backgroundColor, shape = shape)
+          .padding(horizontal = 6.dp),
         maxLines = 1,
         overflow = TextOverflow.Ellipsis,
         fontSize = 16.sp,
