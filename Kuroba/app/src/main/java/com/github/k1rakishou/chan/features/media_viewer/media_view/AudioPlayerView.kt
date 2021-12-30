@@ -317,7 +317,7 @@ class AudioPlayerView @JvmOverloads constructor(
       if (audioPlayerViewState.playing == null || audioPlayerViewState.playing == true) {
         Logger.d(TAG, "loadImageBgAudio() startAndAwaitFirstFrame()")
 
-        soundPostVideoPlayer.startAndAwaitFirstFrame()
+        soundPostVideoPlayer.startAndAwaitFirstFrame(soundPostActualSoundMedia.mediaLocation)
       } else if (audioPlayerViewState.prevWindowIndex >= 0 && audioPlayerViewState.prevPosition >= 0) {
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
         // after the activity is paused and then unpaused (like when the user turns off/on the phone

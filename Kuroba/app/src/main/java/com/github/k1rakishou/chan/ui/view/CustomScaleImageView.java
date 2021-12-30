@@ -24,7 +24,10 @@ import android.util.AttributeSet;
 import androidx.annotation.Nullable;
 
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.github.k1rakishou.ChanSettings;
+import com.github.k1rakishou.common.AndroidUtils;
 import com.github.k1rakishou.common.DoNotStrip;
+import com.github.k1rakishou.core_logger.Logger;
 
 @DoNotStrip
 public class CustomScaleImageView extends SubsamplingScaleImageView {
@@ -41,7 +44,19 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
     public CustomScaleImageView(Context context, AttributeSet attr) {
         super(context, attr);
 
-        setPreferredBitmapConfig(Bitmap.Config.ARGB_8888);
+        if (ChanSettings.isLowRamDevice()) {
+            Logger.d(TAG, "Using Bitmap.Config.RGB_565");
+            setPreferredBitmapConfig(Bitmap.Config.RGB_565);
+        } else {
+            if (AndroidUtils.isAndroidO()) {
+                Logger.d(TAG, "Using Bitmap.Config.HARDWARE");
+                setPreferredBitmapConfig(Bitmap.Config.HARDWARE);
+            } else {
+                Logger.d(TAG, "Using Bitmap.Config.ARGB_8888");
+                setPreferredBitmapConfig(Bitmap.Config.ARGB_8888);
+            }
+        }
+
         setOnImageEventListener(new DefaultOnImageEventListener() {
             @Override
             public void onReady() {

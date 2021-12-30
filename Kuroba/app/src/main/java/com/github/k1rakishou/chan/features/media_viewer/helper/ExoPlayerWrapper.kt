@@ -55,7 +55,7 @@ class ExoPlayerWrapper(
   val hasContent: Boolean
     get() = _hasContent
 
-  private var firstFrameRendered: CompletableDeferred<Unit>? = null
+  private var firstFrameRendered: CompletableDeferred<MediaLocation>? = null
 
   private val _positionAndDurationFlow = MutableStateFlow(Pair(0L, 0L))
   val positionAndDurationFlow: StateFlow<Pair<Long, Long>>
@@ -80,12 +80,18 @@ class ExoPlayerWrapper(
 
       actualExoPlayer.prepare()
 
-      firstFrameRendered?.cancel()
-      firstFrameRendered = CompletableDeferred()
+      val prevRenderedVideo = firstFrameRendered
+      val shouldRecreateDeferred = prevRenderedVideo == null || !prevRenderedVideo.isCompleted
+        || (prevRenderedVideo.isCompleted && prevRenderedVideo.getCompleted() != mediaLocation)
+
+      if (shouldRecreateDeferred) {
+        firstFrameRendered?.cancel()
+        firstFrameRendered = CompletableDeferred()
+      }
 
       actualExoPlayer.addListener(object : Player.Listener {
         override fun onRenderedFirstFrame() {
-          firstFrameRendered?.complete(Unit)
+          firstFrameRendered?.complete(mediaLocation)
           actualExoPlayer.removeListener(this)
 
           coroutineContext[Job.Key]?.invokeOnCompletion {
@@ -177,13 +183,13 @@ class ExoPlayerWrapper(
       .createMediaSource(MediaItem.fromUri(Uri.parse(mediaLocation.url.toString())))
   }
 
-  suspend fun startAndAwaitFirstFrame() {
+  suspend fun startAndAwaitFirstFrame(mediaLocation: MediaLocation) {
     start()
 
     val deferred = requireNotNull(firstFrameRendered) { "firstFrameRendered is null!" }
 
     if (actualExoPlayer.videoFormat == null) {
-      deferred.complete(Unit)
+      deferred.complete(mediaLocation)
     }
 
     deferred.await()

@@ -438,13 +438,20 @@ class ImageLoaderV2(
       else -> error("Unknown file type: ${imageFile.javaClass.simpleName}")
     }
 
+    // When using any transformations at all we won't be able to use HARDWARE bitmaps. We only really
+    // need the RESIZE_TRANSFORMATION when highResCells setting is turned on because we load original
+    // images which we then want to resize down to ThumbnailView dimensions.
+    val transformations = if (ChanSettings.highResCells.get()) {
+      activeListener.transformations + RESIZE_TRANSFORMATION
+    } else {
+      activeListener.transformations
+    }
+
     val request = with(ImageRequest.Builder(context)) {
       lifecycle(lifecycle)
-      allowHardware(true)
-      allowRgb565(ChanSettings.isLowRamDevice())
       data(fileLocation)
       scale(Scale.FIT)
-      transformations(activeListener.transformations + RESIZE_TRANSFORMATION)
+      transformations(transformations)
       applyImageSize(activeListener.imageSize)
 
       build()
@@ -849,8 +856,6 @@ class ImageLoaderV2(
 
             lifecycle(lifecycle)
             transformations(transformations)
-            allowHardware(true)
-            allowRgb565(ChanSettings.isLowRamDevice())
             scale(scale)
             applyImageSize(imageSize)
 
@@ -911,8 +916,6 @@ class ImageLoaderV2(
       data(drawableId)
       lifecycle(lifecycle)
       transformations(transformations)
-      allowHardware(true)
-      allowRgb565(ChanSettings.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -960,8 +963,6 @@ class ImageLoaderV2(
       data(replyFile.previewFileOnDisk)
       lifecycle(lifecycle)
       transformations(transformations)
-      allowHardware(true)
-      allowRgb565(ChanSettings.isLowRamDevice())
       scale(scale)
       applyImageSize(imageSize)
 
@@ -1162,8 +1163,6 @@ class ImageLoaderV2(
 
         lifecycle(lifecycle)
         transformations(transformations)
-        allowHardware(true)
-        allowRgb565(ChanSettings.isLowRamDevice())
         scale(scale)
         size(width, height)
 
@@ -1331,20 +1330,30 @@ class ImageLoaderV2(
     override fun key(): String = "${TAG}_ResizeTransformation"
 
     override suspend fun transform(pool: BitmapPool, input: Bitmap, size: Size): Bitmap {
-      val (width, height) = when (size) {
+      val (availableWidth, availableHeight) = when (size) {
         OriginalSize -> null to null
         is PixelSize -> size.width to size.height
       }
 
-      if (width == null || height == null) {
+      if (availableWidth == null || availableHeight == null) {
         return input
       }
 
-      if (input.width == width && input.height == height) {
+      if (input.width <= availableWidth && input.height <= availableHeight) {
+        // If the bitmap fits into the availableSize then do not re-scale it again to avoid
+        // re-allocations and all that stuff
         return input
       }
 
-      return scale(pool, input, width, height)
+      return scale(pool, input, availableWidth, availableHeight)
+    }
+
+    private fun config(): Bitmap.Config {
+      if (ChanSettings.isLowRamDevice()) {
+        return Bitmap.Config.RGB_565
+      }
+
+      return Bitmap.Config.ARGB_8888
     }
 
     private fun scale(pool: BitmapPool, bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
@@ -1361,7 +1370,7 @@ class ImageLoaderV2(
         width = (height.toFloat() / bitmap.height * bitmap.width).toInt()
       }
 
-      val scaledBitmap = pool.get(width, height, bitmap.config ?: Bitmap.Config.ARGB_8888)
+      val scaledBitmap = pool.get(width, height, bitmap.config ?: config())
       val ratioX = width.toFloat() / bitmap.width
       val ratioY = height.toFloat() / bitmap.height
       val middleX = width / 2.0f

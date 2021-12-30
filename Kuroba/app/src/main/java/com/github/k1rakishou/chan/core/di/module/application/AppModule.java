@@ -114,13 +114,16 @@ public class AppModule {
             CoilOkHttpClient coilOkHttpClient
     ) {
         boolean isLowRamDevice = ChanSettings.isLowRamDevice();
+        boolean allowHardware = !isLowRamDevice;
+        boolean allowRgb565 = isLowRamDevice;
         double availableMemoryPercentage = getDefaultAvailableMemoryPercentage();
-        Logger.d(Logger.DI_TAG, "availableMemoryPercentage=" + availableMemoryPercentage);
-        Logger.deps("ImageLoader");
+        Logger.deps("ImageLoader(), availableMemoryPercentage=" + availableMemoryPercentage +
+                ", isLowRamDevice=" + isLowRamDevice + ", allowHardware=" + allowHardware +
+                ", allowRgb565=" + allowRgb565);
 
         return new ImageLoader.Builder(applicationContext)
-                .allowHardware(true)
-                .allowRgb565(isLowRamDevice)
+                .allowHardware(allowHardware)
+                .allowRgb565(allowRgb565)
                 .memoryCachePolicy(CachePolicy.ENABLED)
                 .networkCachePolicy(CachePolicy.ENABLED)
                 // Coil's caching system relies on OkHttp's caching system which is not suitable for

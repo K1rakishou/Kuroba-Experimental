@@ -458,7 +458,7 @@ class ExoPlayerVideoMediaView(
 
     when {
       mediaViewState.playing == null || mediaViewState.playing == true -> {
-        mainVideoPlayer.startAndAwaitFirstFrame()
+        mainVideoPlayer.startAndAwaitFirstFrame(viewableMedia.mediaLocation)
       }
       mediaViewState.prevWindowIndex >= 0 && mediaViewState.prevPosition >= 0 -> {
         // We need to do this hacky stuff to force exoplayer to show the video frame instead of nothing
