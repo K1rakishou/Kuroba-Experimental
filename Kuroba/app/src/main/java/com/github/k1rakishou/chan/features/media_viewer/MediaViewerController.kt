@@ -634,11 +634,6 @@ class MediaViewerController(
       }
     }
 
-    if (posts.isEmpty()) {
-      Logger.e(TAG, "showReplyChain($postDescriptor) posts is empty")
-      return
-    }
-
     if (!postPopupHelper.displayingAnything) {
       posts.add(0, chanPost)
     }

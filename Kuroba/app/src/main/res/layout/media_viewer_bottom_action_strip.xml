@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools"
     android:paddingTop="4dp"
     android:paddingBottom="4dp">
 
@@ -47,6 +48,21 @@
             android:padding="6dp"
             android:src="@drawable/ic_baseline_comment_24"
             android:tint="#fff" />
+
+        <TextView
+            android:id="@+id/replies_count_text"
+            android:layout_width="20dp"
+            android:layout_height="20dp"
+            android:layout_gravity="end|top"
+            android:gravity="center"
+            android:clickable="false"
+            android:focusable="false"
+            android:background="@drawable/circle_background_transparent"
+            android:textColor="#fff"
+            android:textSize="11sp"
+            android:visibility="gone"
+            tools:text="99+"
+            tools:visibility="visible"/>
 
     </FrameLayout>
 

@@ -48,13 +48,13 @@ class SearxImageSearchUseCase(
 
       val thumbnailUrl = searxResult.thumbnail()
       if (thumbnailUrl == null) {
-        Logger.e(TAG, "Failed to convert '${searxResult.thumbnailUrl}' to HttpUrl")
+        Logger.e(TAG, "Failed to convert thumbnailUrl '${searxResult.thumbnailUrl}' to HttpUrl")
         return@mapNotNull null
       }
 
       val imageUrl = searxResult.image()
       if (imageUrl == null) {
-        Logger.e(TAG, "Failed to convert '${searxResult.fullUrl}' to HttpUrl")
+        Logger.e(TAG, "Failed to convert imageUrl '${searxResult.fullUrl}' to HttpUrl")
         return@mapNotNull null
       }
 
@@ -77,7 +77,10 @@ class SearxImageSearchUseCase(
   ) {
 
     fun isValid(): Boolean {
-      return thumbnailUrl.isNotNullNorEmpty() && fullUrl.isNotNullNorEmpty()
+      return thumbnailUrl.isNotNullNorEmpty()
+        && fullUrl.isNotNullNorEmpty()
+        && !thumbnailUrl.startsWith(RAW_IMAGE_DATA_MARKER)
+        && !fullUrl.startsWith(RAW_IMAGE_DATA_MARKER)
     }
 
     fun thumbnail(): HttpUrl? {
@@ -108,6 +111,9 @@ class SearxImageSearchUseCase(
       return HTTPS + inputUrlRaw
     }
 
+    companion object {
+      private const val RAW_IMAGE_DATA_MARKER = "data:"
+    }
   }
 
   companion object {

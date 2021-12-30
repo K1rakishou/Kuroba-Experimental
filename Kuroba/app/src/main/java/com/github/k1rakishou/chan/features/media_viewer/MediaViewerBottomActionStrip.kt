@@ -5,6 +5,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatImageButton
@@ -46,6 +47,7 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
   private val toolbarDownloadButtonContainer: FrameLayout
   private val toolbarPostRepliesButtonContainer: FrameLayout
   private val toolbarOptionsButtonContainer: FrameLayout
+  private val repliesCountTextView: TextView
 
   private val scope = KurobaCoroutineScope()
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
@@ -73,11 +75,12 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
     toolbarDownloadButtonContainer = findViewById(R.id.toolbar_download_button_container)
     toolbarPostRepliesButtonContainer = findViewById(R.id.toolbar_post_replies_button_container)
     toolbarOptionsButtonContainer = findViewById(R.id.toolbar_options_button_container)
+    repliesCountTextView = findViewById(R.id.replies_count_text)
 
     toolbarGoToPostButton.setEnabledFast(false)
     toolbarReloadButton.setEnabledFast(false)
     toolbarDownloadButton.setEnabledFast(false)
-    toolbarPostRepliesButtonContainer.setVisibilityFast(View.GONE)
+    toolbarPostRepliesButtonContainer.setVisibilityFast(View.VISIBLE)
 
     toolbarGoToPostButton.setOnClickListener {
       if (mediaViewerStripCallbacks == null || chanDescriptor == null) {
@@ -178,20 +181,27 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
   private suspend fun processPostRepliesButton(viewableMedia: ViewableMedia) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val hasRepliesToPost = viewableMedia.postDescriptor?.let { postDescriptor ->
-      return@let (chanThreadManager.getPost(postDescriptor)?.repliesFromCount ?: 0) > 0
-    } ?: false
+    val repliesFromCount = viewableMedia.postDescriptor?.let { postDescriptor ->
+      return@let chanThreadManager.getPost(postDescriptor)?.repliesFromCount
+    } ?: 0
 
     withContext(Dispatchers.Main) {
       BackgroundUtils.ensureMainThread()
 
-      toolbarPostRepliesButtonContainer.setVisibilityFast(
-        if (hasRepliesToPost) {
-          VISIBLE
+      toolbarPostRepliesButtonContainer.setVisibilityFast(VISIBLE)
+
+      if (repliesFromCount > 0) {
+        val repliesFromCountString = if (repliesFromCount > 99) {
+          "99+"
         } else {
-          GONE
+          repliesFromCount.toString()
         }
-      )
+
+        repliesCountTextView.setVisibilityFast(VISIBLE)
+        repliesCountTextView.text = repliesFromCountString
+      } else {
+        repliesCountTextView.setVisibilityFast(GONE)
+      }
     }
   }
 
@@ -245,6 +255,7 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
   }
 
   fun updateWithViewableMedia(pagerPosition: Int, totalPageItemsCount: Int, viewableMedia: ViewableMedia) {
+    // no-op
   }
 
   fun hide() {
