@@ -92,11 +92,6 @@ class PostHighlightManager(
     }
 
     val updatedPostHighlight = updater(oldPostHighlight.fullCopy())
-
-    if (oldPostHighlight == updatedPostHighlight) {
-      return
-    }
-
     highlightedPosts[postDescriptor] = updatedPostHighlight
 
     val postHighlightEvent = PostHighlightEvent(
@@ -117,7 +112,10 @@ class PostHighlightManager(
   data class PostHighlightEvent(
     val isCatalogDescriptor: Boolean,
     val postHighlight: PostHighlight
-  )
+  ) {
+    val postNo: Long
+      get() = postHighlight.postDescriptor.postNo
+  }
 
   class PostHighlight(
     val postDescriptor: PostDescriptor,

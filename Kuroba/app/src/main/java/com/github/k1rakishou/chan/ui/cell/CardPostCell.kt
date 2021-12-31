@@ -165,6 +165,10 @@ class CardPostCell : ConstraintLayout,
             return@collect
           }
 
+          if (blinkExecuted && postHighlight.isBlinking()) {
+            blinkExecuted = false
+          }
+
           postCellHighlight = postHighlight.fullCopy()
           bindBackgroundColor(themeEngine.chanTheme)
         }
