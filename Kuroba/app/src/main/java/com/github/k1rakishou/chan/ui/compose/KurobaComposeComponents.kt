@@ -323,7 +323,7 @@ fun KurobaComposeCustomTextField(
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
   textColor: Color = Color.Unspecified,
-  onBackgroundColor: Color = Color.Unspecified,
+  parentBackgroundColor: Color = Color.Unspecified,
   drawBottomIndicator: Boolean = true,
   fontSize: TextUnit = TextUnit.Unspecified,
   maxLines: Int = Int.MAX_VALUE,
@@ -341,7 +341,7 @@ fun KurobaComposeCustomTextField(
   val actualTextColor = if (!textColor.isUnspecified) {
     textColor
   } else {
-    if (ThemeEngine.isDarkColor(onBackgroundColor)) {
+    if (ThemeEngine.isDarkColor(parentBackgroundColor)) {
       Color.White
     } else {
       Color.Black
@@ -392,11 +392,11 @@ fun KurobaComposeCustomTextField(
           ContentAlpha.disabled
         }
 
-        val hintColor = remember(key1 = onBackgroundColor) {
-          if (onBackgroundColor.isUnspecified) {
+        val hintColor = remember(key1 = parentBackgroundColor) {
+          if (parentBackgroundColor.isUnspecified) {
             Color.DarkGray.copy(alpha = alpha)
           } else {
-            if (ThemeEngine.isDarkColor(onBackgroundColor)) {
+            if (ThemeEngine.isDarkColor(parentBackgroundColor)) {
               Color.LightGray.copy(alpha = alpha)
             } else {
               Color.DarkGray.copy(alpha = alpha)
@@ -727,7 +727,7 @@ fun KurobaSearchInput(
             .wrapContentHeight()
             .fillMaxWidth(),
           textColor = textColor,
-          onBackgroundColor = onBackgroundColor,
+          parentBackgroundColor = onBackgroundColor,
           fontSize = 16.sp,
           singleLine = true,
           maxLines = 1,

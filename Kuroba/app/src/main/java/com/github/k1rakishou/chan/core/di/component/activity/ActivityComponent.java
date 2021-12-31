@@ -150,7 +150,6 @@ import com.github.k1rakishou.chan.ui.epoxy.EpoxyTextViewWrapHeight;
 import com.github.k1rakishou.chan.ui.helper.RemovedPostsHelper;
 import com.github.k1rakishou.chan.ui.layout.MrSkeletonLayout;
 import com.github.k1rakishou.chan.ui.layout.PostPopupContainer;
-import com.github.k1rakishou.chan.ui.layout.ReportProblemLayout;
 import com.github.k1rakishou.chan.ui.layout.SearchLayout;
 import com.github.k1rakishou.chan.ui.layout.SplitNavigationControllerLayout;
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout;
@@ -368,7 +367,6 @@ public interface ActivityComponent {
     void inject(AdjustAndroid10GestureZonesView adjustAndroid10GestureZonesView);
     void inject(SettingsCoordinator settingsCoordinator);
     void inject(JsCaptchaCookiesEditorLayout jsCaptchaCookiesEditorLayout);
-    void inject(ReportProblemLayout reportProblemLayout);
     void inject(ReviewReportFilesLayout reviewReportFilesLayout);
     void inject(ViewFullReportFileLayout viewFullReportFileLayout);
     void inject(HidingFloatingActionButton hidingFloatingActionButton);

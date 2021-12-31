@@ -12,10 +12,12 @@ import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.TimeUtils.getCurrentDateAndTimeUTC
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -133,6 +135,8 @@ class ReportManager(
       Logger.e(TAG, "Error writing to a crash log file", error)
       return
     }
+
+    deleteOldCrashlogs()
 
     Logger.d(TAG, "Stored new crash log, path = ${newCrashLog.absolutePath}")
     settingsNotificationManager.get().notify(SettingNotificationType.CrashLogOrAnr)
@@ -306,13 +310,19 @@ class ReportManager(
     logs?.let { require(it.length <= MAX_LOGS_LENGTH) { "logs are too long" } }
 
     serializedCoroutineExecutor.post {
-      val request = ReportRequest(
-        buildFlavor = BuildConfig.FLAVOR,
-        versionName = BuildConfig.VERSION_NAME,
-        osInfo = getOsInfo(),
+      val body = buildString(8192) {
+        appendLine(description)
+
+        if (logs.isNotNullNorEmpty()) {
+          append("```")
+          append(logs)
+          append("```")
+        }
+      }
+
+      val request = ReportRequest.report(
         title = title,
-        description = description,
-        logs = logs
+        body = body
       )
 
       val result = sendInternal(request)
@@ -322,23 +332,59 @@ class ReportManager(
 
   private fun deleteOldAnrReports() {
     val prevAnrs = anrsDir.listFiles() ?: arrayOf<File>()
-    if (prevAnrs.size > MAX_ANR_FILES) {
-      val toDelete = prevAnrs.size - MAX_ANR_FILES
-      if (toDelete > 0) {
-        val oldestAnrFilesToDelete = prevAnrs.map { prevAnrFile ->
-          val matcher = ANR_EXTRACT_TIME_PATTERN.matcher(prevAnrFile.name)
-          if (!matcher.find()) {
-            return@map prevAnrFile to 0L
-          }
+    if (prevAnrs.size <= MAX_ANR_FILES) {
+      return
+    }
 
-          return@map prevAnrFile to (matcher.groupOrNull(1)?.toLongOrNull() ?: 0L)
-        }
-          .sortedByDescending { (_, time) -> time }
-          .takeLast(toDelete)
-          .map { (anrFile, _) -> anrFile }
+    val toDelete = prevAnrs.size - MAX_ANR_FILES
+    if (toDelete <= 0) {
+      return
+    }
 
-        oldestAnrFilesToDelete.forEach { anrFile -> anrFile.delete() }
+    val oldestAnrFilesToDelete = prevAnrs.map { prevAnrFile ->
+      val matcher = ANR_EXTRACT_TIME_PATTERN.matcher(prevAnrFile.name)
+      if (!matcher.find()) {
+        return@map prevAnrFile to 0L
       }
+
+      return@map prevAnrFile to (matcher.groupOrNull(1)?.toLongOrNull() ?: 0L)
+    }
+      .sortedByDescending { (_, time) -> time }
+      .takeLast(toDelete)
+      .map { (anrFile, _) -> anrFile }
+
+    oldestAnrFilesToDelete.forEach { anrFile ->
+      Logger.d(TAG, "deleteOldAnrReports() deleting anrFile: '${anrFile.name}'")
+      anrFile.delete()
+    }
+  }
+
+  private fun deleteOldCrashlogs() {
+    val prevCrashlogs = crashLogsDir.listFiles() ?: arrayOf<File>()
+    if (prevCrashlogs.size <= MAX_CRASHLOG_FILES) {
+      return
+    }
+
+    val toDelete = prevCrashlogs.size - MAX_CRASHLOG_FILES
+    if (toDelete <= 0) {
+      return
+    }
+
+    val oldestCrashlogFilesToDelete = prevCrashlogs.map { prevCrashlogFile ->
+      val matcher = CRASHLOG_EXTRACT_TIME_PATTERN.matcher(prevCrashlogFile.name)
+      if (!matcher.find()) {
+        return@map prevCrashlogFile to 0L
+      }
+
+      return@map prevCrashlogFile to (matcher.groupOrNull(1)?.toLongOrNull() ?: 0L)
+    }
+      .sortedByDescending { (_, time) -> time }
+      .takeLast(toDelete)
+      .map { (anrFile, _) -> anrFile }
+
+    oldestCrashlogFilesToDelete.forEach { crashlogFile ->
+      Logger.d(TAG, "deleteOldCrashlogs() deleting crashlogFile: '${crashlogFile.name}'")
+      crashlogFile.delete()
     }
   }
 
@@ -364,10 +410,10 @@ class ReportManager(
         }
       }
       is ModularResult.Error -> {
-        if (result.error is HttpCodeError) {
-          val httpCodeError = result.error as HttpCodeError
+        if (result.error is ReportError) {
+          val reportError = result.error as ReportError
 
-          Logger.e(TAG, "Bad response code: ${httpCodeError.code}")
+          Logger.e(TAG, "Bad response: '${reportError.errorMessage}'")
         } else {
           Logger.e(TAG, "Error while trying to send crash log", result.error)
         }
@@ -443,32 +489,35 @@ class ReportManager(
       return null
     }
 
-    val title = if (reportFile.fileName.startsWith(ANR_FILE_NAME_PREFIX)) {
+    val isAnr = reportFile.fileName.startsWith(ANR_FILE_NAME_PREFIX)
+
+    val title = if (isAnr) {
       "ANR report"
     } else {
       "Crash report"
     }
 
-    val request = ReportRequest(
-      buildFlavor = BuildConfig.FLAVOR,
-      versionName = BuildConfig.VERSION_NAME,
-      osInfo = getOsInfo(),
-      title = title,
-      description = "No title",
-      logs = log
-    )
+    val body = buildString(8192) {
+      append("```")
+      append(log)
+      append("```")
+    }
+
+    val request = if (isAnr) {
+      ReportRequest.anr(
+        title = title,
+        body = body
+      )
+    } else {
+      ReportRequest.crashLog(
+        title = title,
+        body = body
+      )
+    }
 
     return ReportRequestWithFile(
       reportRequest = request,
       crashLogFile = reportFile.file
-    )
-  }
-
-  private fun getOsInfo(): String {
-    return String.format(Locale.ENGLISH,
-      "Android %s, sdk version: %d",
-      Build.VERSION.RELEASE,
-      Build.VERSION.SDK_INT
     )
   }
 
@@ -503,28 +552,43 @@ class ReportManager(
         throw error
       }
 
+      val reportUrl = "https://api.github.com/repos/kurobaexreports/reports/issues"
       val requestBody = json.toRequestBody("application/json".toMediaType())
+
       val request = Request.Builder()
-        .url(REPORT_URL)
+        .url(reportUrl)
         .post(requestBody)
+        .header("Accept", "application/vnd.github.v3+json")
+        .header("Authorization", "token ${supersikritdonotlook()}")
         .build()
 
       val response = okHttpClient.suspendCall(request)
 
       if (!response.isSuccessful) {
-        val message = "Response is not successful, status = ${response.code}"
-        Logger.e(TAG, message)
+        val errorMessage = response.body
+          ?.let { body -> gson.get().fromJson(body.string(), ReportResponse::class.java) }
+          ?.errorMessage
 
-        throw HttpCodeError(response.code)
+        val message = if (errorMessage.isNullOrEmpty()) {
+          "Response is not successful. Status: ${response.code}"
+        } else {
+          "Response is not successful. Status: ${response.code}. ErrorMessage: '${errorMessage}'"
+        }
+
+        throw ReportError(message)
       }
     }
+  }
+
+  private fun supersikritdonotlook(): String {
+    return HashingUtil.stringBase64Decode("Z2hwXzJMOUpaZ1ozM24xcDhBM3pwVnBYNmgwVkNPTzUzRzB1b2lCZA==")
   }
 
   fun postTask(task: () -> Unit) {
     serializedCoroutineExecutor.post { task() }
   }
 
-  private class HttpCodeError(val code: Int) : Exception("Response is not successful, code = $code")
+  private class ReportError(val errorMessage: String) : Exception(errorMessage)
 
   data class ReportRequestWithFile(
     val reportRequest: ReportRequest,
@@ -532,30 +596,59 @@ class ReportManager(
   )
 
   data class ReportRequest(
-    @SerializedName("build_flavor")
-    val buildFlavor: String,
-    @SerializedName("version_name")
-    val versionName: String,
-    @SerializedName("os_info")
-    val osInfo: String,
-    @SerializedName("report_title")
+    @SerializedName("title")
     val title: String,
-    @SerializedName("report_description")
-    val description: String,
-    @SerializedName("report_logs")
-    val logs: String?
+    @SerializedName("body")
+    val body: String,
+    @SerializedName("labels")
+    val labels: List<String>
+  ) {
+
+    companion object {
+
+      fun crashLog(title: String, body: String): ReportRequest {
+        return ReportRequest(
+          title = title,
+          body = body,
+          labels = listOf("New", "Crash")
+        )
+      }
+
+      fun report(title: String, body: String): ReportRequest {
+        return ReportRequest(
+          title = title,
+          body = body,
+          labels = listOf("New", "Report")
+        )
+      }
+
+      fun anr(title: String, body: String): ReportRequest {
+        return ReportRequest(
+          title = title,
+          body = body,
+          labels = listOf("New", "ANR")
+        )
+      }
+
+    }
+
+  }
+
+  data class ReportResponse(
+    @SerializedName("message")
+    val errorMessage: String?,
   )
 
   companion object {
     private const val TAG = "ReportManager"
-    private const val REPORT_URL = "${BuildConfig.DEV_API_ENDPOINT}/report"
     private const val CRASH_LOG_FILE_NAME_PREFIX = "crashlog"
     private const val ANR_FILE_NAME_PREFIX = "anr"
-    private const val CRASH_REPORT_LOGS_LINES_COUNT = 500
     private const val MAX_ANR_FILES = 5
+    private const val MAX_CRASHLOG_FILES = 5
 
     private val MAX_CRASH_LOG_LIFETIME = TimeUnit.DAYS.toMillis(3)
     private val ANR_EXTRACT_TIME_PATTERN = Pattern.compile("${ANR_FILE_NAME_PREFIX}_(\\d+)\\.txt")
+    private val CRASHLOG_EXTRACT_TIME_PATTERN = Pattern.compile("${CRASH_LOG_FILE_NAME_PREFIX}_(\\d+)\\.txt")
 
     const val MAX_TITLE_LENGTH = 512
     const val MAX_DESCRIPTION_LENGTH = 8192

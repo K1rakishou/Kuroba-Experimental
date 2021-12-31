@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.utils
 
 import android.util.Base64
+import android.util.Base64InputStream
 import android.util.Base64OutputStream
 import okio.ByteString.Companion.encodeUtf8
 import okio.ByteString.Companion.toByteString
@@ -32,6 +33,18 @@ object HashingUtil {
       Base64OutputStream(outputStream, flags).use { base64FilterStream ->
         inputFile.inputStream().use { inputStream ->
           inputStream.copyTo(base64FilterStream)
+        }
+      }
+
+      return@use outputStream.toString()
+    }
+  }
+
+  fun stringBase64Decode(string: String, flags: Int = Base64.DEFAULT): String {
+    return ByteArrayOutputStream().use { outputStream ->
+      string.byteInputStream().use { inputStream ->
+        Base64InputStream(inputStream, flags).use { base64FilterStream ->
+          base64FilterStream.copyTo(outputStream)
         }
       }
 

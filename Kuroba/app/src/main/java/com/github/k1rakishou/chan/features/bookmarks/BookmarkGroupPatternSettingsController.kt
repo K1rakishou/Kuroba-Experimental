@@ -324,7 +324,7 @@ class BookmarkGroupPatternSettingsController(
             keyboardType = KeyboardType.Password
           ),
           labelText = stringResource(id = R.string.bookmark_group_settings_enter_matcher_pattern),
-          onBackgroundColor = chanTheme.backColorCompose,
+          parentBackgroundColor = chanTheme.backColorCompose,
           value = patternRaw,
           onValueChange = { newValue ->
             patternRaw = newValue

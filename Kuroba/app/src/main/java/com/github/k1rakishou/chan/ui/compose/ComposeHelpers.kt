@@ -52,7 +52,7 @@ object ComposeHelpers {
       val ref = remember { DebugRef(0) }
       SideEffect { ref.value++ }
 
-      Logger.d("Compositions_$tag", "Count: ${ref.value}, ref=${ref.hashCode()}")
+      Logger.d("Compositions", "${tag} Count: ${ref.value}, ref=${ref.hashCode()}")
     }
   }
 

@@ -479,7 +479,7 @@ class CreateOrUpdateFilterController(
       value = pattern ?: "",
       labelText = stringResource(id = R.string.filter_enter_pattern),
       textColor = chanTheme.textColorPrimaryCompose,
-      onBackgroundColor = chanTheme.backColorCompose,
+      parentBackgroundColor = chanTheme.backColorCompose,
       onValueChange = { text -> pattern = text }
     )
 
@@ -540,7 +540,7 @@ class CreateOrUpdateFilterController(
       value = testText,
       labelText = stringResource(id = R.string.filter_test_pattern),
       textColor = chanTheme.textColorPrimaryCompose,
-      onBackgroundColor = chanTheme.backColorCompose,
+      parentBackgroundColor = chanTheme.backColorCompose,
       onValueChange = { text -> testText = text }
     )
 
@@ -555,7 +555,7 @@ class CreateOrUpdateFilterController(
       value = note ?: "",
       labelText = stringResource(id = R.string.filter_note),
       textColor = chanTheme.textColorPrimaryCompose,
-      onBackgroundColor = chanTheme.backColorCompose,
+      parentBackgroundColor = chanTheme.backColorCompose,
       onValueChange = { text -> note = text }
     )
 
