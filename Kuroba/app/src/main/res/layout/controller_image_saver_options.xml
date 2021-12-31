@@ -51,19 +51,36 @@
                             android:gravity="center_horizontal"
                             android:text="@string/controller_image_save_options_root_dir" />
 
-                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
-                            android:id="@+id/root_dir"
+                        <LinearLayout
+                            android:id="@+id/root_dir_animation_container"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:background="?attr/selectableItemBackground"
-                            android:clickable="true"
-                            android:focusable="true"
-                            android:gravity="center_horizontal"
-                            android:paddingStart="4dp"
-                            android:paddingTop="8dp"
-                            android:paddingEnd="4dp"
-                            android:paddingBottom="8dp"
-                            android:text="@string/controller_image_save_options_click_to_set_root_dir" />
+                            android:orientation="horizontal">
+
+                            <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+                                android:id="@+id/root_dir"
+                                android:layout_width="0dp"
+                                android:layout_height="wrap_content"
+                                android:layout_weight="1"
+                                android:background="?attr/selectableItemBackground"
+                                android:clickable="true"
+                                android:focusable="true"
+                                android:gravity="center_horizontal"
+                                android:paddingStart="4dp"
+                                android:paddingTop="8dp"
+                                android:paddingEnd="4dp"
+                                android:paddingBottom="8dp"
+                                android:text="@string/controller_image_save_options_click_to_set_root_dir" />
+
+                            <ImageView
+                                android:id="@+id/root_dir_status_icon"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:padding="4dp"
+                                android:layout_gravity="center_vertical"
+                                android:src="@drawable/ic_alert"/>
+
+                        </LinearLayout>
 
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
                             android:id="@+id/custom_file_name_til"

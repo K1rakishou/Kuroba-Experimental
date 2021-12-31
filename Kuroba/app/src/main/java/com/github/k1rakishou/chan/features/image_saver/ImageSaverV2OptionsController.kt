@@ -5,6 +5,8 @@ import android.net.Uri
 import android.text.TextWatcher
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.RadioGroup
 import android.widget.ScrollView
 import android.widget.Toast
@@ -23,6 +25,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDrawable
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
@@ -48,7 +51,9 @@ class ImageSaverV2OptionsController(
   private lateinit var appendBoardCode: ColorizableCheckBox
   private lateinit var appendThreadId: ColorizableCheckBox
   private lateinit var appendThreadSubject: ColorizableCheckBox
+  private lateinit var rootDirAnimationContainer: LinearLayout
   private lateinit var rootDir: ColorizableTextView
+  private lateinit var rootDirStatusIcon: ImageView
   private lateinit var customFileName: ColorizableEditText
   private lateinit var resultPath: ColorizableEditText
   private lateinit var outputDirFile: ColorizableTextInputLayout
@@ -70,10 +75,13 @@ class ImageSaverV2OptionsController(
   @Inject
   lateinit var dialogFactory: DialogFactory
 
+  private var rootDirAccessible = false
   private var needCallCancelFunc = true
   private var overriddenFileName: String? = null
 
-  private val currentSetting = PersistableChanState.imageSaverV2PersistedOptions.get().copy()
+  private val currentSetting by lazy {
+    PersistableChanState.imageSaverV2PersistedOptions.get().copy()
+  }
 
   private val rootDirButtonBackgroundAnimation = RootDirBackgroundAnimationFactory.createRootDirBackgroundAnimation(
     themeEngine = themeEngine,
@@ -93,7 +101,9 @@ class ImageSaverV2OptionsController(
 
     imageNameOptionsGroup = view.findViewById(R.id.image_name_options_group)
     duplicatesResolutionOptionsGroup = view.findViewById(R.id.duplicate_resolution_options_group)
+    rootDirAnimationContainer = view.findViewById(R.id.root_dir_animation_container)
     rootDir = view.findViewById(R.id.root_dir)
+    rootDirStatusIcon = view.findViewById(R.id.root_dir_status_icon)
     appendSiteName = view.findViewById(R.id.append_site_name)
     appendBoardCode = view.findViewById(R.id.append_board_code)
     appendThreadId = view.findViewById(R.id.append_thread_id)
@@ -106,6 +116,16 @@ class ImageSaverV2OptionsController(
     additionalDirectoriesTil = view.findViewById(R.id.additional_directories_til)
     cancelButton = view.findViewById(R.id.cancel_button)
     saveButton = view.findViewById(R.id.save_button)
+
+    rootDirStatusIcon.setOnClickListener {
+      val rootDirUri = currentSetting.rootDirectoryUri
+      if (rootDirUri.isNullOrEmpty()) {
+        showToast(context.getString(R.string.image_saver_root_dir_is_inaccessible), Toast.LENGTH_LONG)
+        return@setOnClickListener
+      }
+
+      checkRootDirAccessible(Uri.parse(rootDirUri))
+    }
 
     val innerContainer = view.findViewById<FrameLayout>(R.id.inner_container)
     innerContainer.updateLayoutParams<ConstraintLayout.LayoutParams> {
@@ -303,22 +323,44 @@ class ImageSaverV2OptionsController(
   }
 
   private fun checkRootDirAccessible(uri: Uri): Boolean {
+    fun updateRootDirIcon(rootDirAccessible: Boolean) {
+      if (rootDirAccessible) {
+        startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
+        rootDirStatusIcon.setImageDrawable(getDrawable(R.drawable.exo_ic_check))
+      } else {
+        rootDirButtonBackgroundAnimation.unlock()
+        startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = false)
+        rootDirStatusIcon.setImageDrawable(getDrawable(R.drawable.ic_alert))
+      }
+    }
+
     val externalFile = fileManager.fromUri(uri)
     if (externalFile == null) {
+      rootDirAccessible = false
+
+      updateRootDirIcon(rootDirAccessible = false)
       showToast(context.getString(R.string.image_saver_root_dir_is_inaccessible), Toast.LENGTH_LONG)
       return false
     }
 
     if (!fileManager.isDirectory(externalFile)) {
+      rootDirAccessible = false
+
+      updateRootDirIcon(rootDirAccessible = false)
       showToast(context.getString(R.string.image_saver_root_uri_is_not_a_dir, uri), Toast.LENGTH_LONG)
       return false
     }
 
     if (!fileManager.exists(externalFile)) {
+      rootDirAccessible = false
+
+      updateRootDirIcon(rootDirAccessible = false)
       showToast(context.getString(R.string.image_saver_root_dir_uri_does_not_exist, uri), Toast.LENGTH_LONG)
       return false
     }
 
+    rootDirAccessible = true
+    updateRootDirIcon(rootDirAccessible = true)
     return true
   }
 
@@ -435,7 +477,11 @@ class ImageSaverV2OptionsController(
       rootDir.text = rootDirectoryUriString
       rootDir.textSize = 14f
 
-      startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
+      if (!rootDirAccessible) {
+        startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = false)
+      } else {
+        startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
+      }
     }
 
     val subDirsString = currentImageSaverSetting.subDirs

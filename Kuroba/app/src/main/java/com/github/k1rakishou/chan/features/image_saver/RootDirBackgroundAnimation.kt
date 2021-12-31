@@ -74,6 +74,10 @@ object RootDirBackgroundAnimationFactory {
       updateBackgroundColorFunc.invoke(themeEngine.chanTheme.backColor)
     }
 
+    fun unlock() {
+      rootDirAnimationLockedAndTurnedOff = false
+    }
+
     companion object {
       private const val ALPHA_ANIMATION_DURATION = 2_000L
     }
