@@ -77,6 +77,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 ### New stuff and important annoncements:
 
+#### - (2022-01-01) Deprecation of apk/report server (https://kuroba.io:8443/), the server will be shut down in ~1-2 weeks. The apks are already stored on Github, reports will soon be moved into a separate github repository (https://github.com/KurobaExReports/Reports/issues). 
+
 #### - (2021-11-03) A new tool can now be used to create/modify KurobaEx themes - https://github.com/K1rakishou/KurobaEx-theme-builder
 
 #### - (2021-09-26) Due to another mistake in v0.12.7-beta you will have to update it manually since the updater is broken. Release/FDroid versions are not affected.
