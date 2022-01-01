@@ -335,6 +335,12 @@ class MpvVideoMediaView(
     _hasContent = false
   }
 
+  override suspend fun reloadMedia() {
+    if (MPVLib.librariesAreLoaded()) {
+      setFileToPlay(context)
+    }
+  }
+
   override fun eventProperty(property: String) {
     if (!shown) {
       return

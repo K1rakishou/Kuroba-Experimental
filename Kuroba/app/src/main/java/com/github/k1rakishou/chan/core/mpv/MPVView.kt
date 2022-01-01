@@ -34,7 +34,9 @@ class MPVView(
     attrs: AttributeSet?
 ) : TextureView(context, attrs), TextureView.SurfaceTextureListener {
     private var filePath: String? = null
+    private var surfaceAttached = false
     private var _initialized = false
+
     val initialized: Boolean
         get() = _initialized
 
@@ -155,7 +157,12 @@ class MPVView(
             return
         }
 
-        this.filePath = filePath
+        if (!surfaceAttached) {
+            this.filePath = filePath
+        } else {
+            this.filePath = null
+            MPVLib.mpvCommand(arrayOf("loadfile", filePath))
+        }
 
         if (ChanSettings.videoAutoLoop.get()) {
             MPVLib.mpvSetOptionString("loop-file", "inf")
@@ -308,6 +315,8 @@ class MPVView(
             // We disable video output when the context disappears, enable it back
             MPVLib.mpvSetPropertyString("vo", "gpu")
         }
+
+        surfaceAttached = true
     }
 
     override fun onSurfaceTextureDestroyed(surfaceTexture: SurfaceTexture): Boolean {
@@ -316,6 +325,7 @@ class MPVView(
         MPVLib.mpvSetPropertyString("vo", "null")
         MPVLib.mpvSetOptionString("force-window", "no")
         MPVLib.mpvDetachSurface()
+        surfaceAttached = false
 
         return true
     }
