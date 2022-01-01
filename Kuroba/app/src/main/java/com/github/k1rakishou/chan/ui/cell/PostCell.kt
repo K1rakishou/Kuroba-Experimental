@@ -218,10 +218,6 @@ class PostCell @JvmOverloads constructor(
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
     themeEngine.removeListener(this)
-
-    postTimeUpdaterJob?.cancel()
-    postTimeUpdaterJob = null
-    scope.cancelChildren()
   }
 
   override fun onPostRecycled(isActuallyRecycling: Boolean) {
