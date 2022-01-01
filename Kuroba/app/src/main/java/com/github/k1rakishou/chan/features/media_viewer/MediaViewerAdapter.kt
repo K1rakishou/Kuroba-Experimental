@@ -52,6 +52,8 @@ class MediaViewerAdapter(
   private var _lastViewedMediaPosition = 0
   val lastViewedMediaPosition: Int
     get() = _lastViewedMediaPosition
+  val totalViewableMediaCount: Int
+    get() = viewableMediaList.size
 
   suspend fun awaitUntilPreviewThumbnailFullyLoaded() {
     Logger.d(TAG, "awaitUntilPreviewThumbnailFullyLoaded()...")

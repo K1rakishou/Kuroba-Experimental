@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerMenuHe
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAlbumHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
+import com.github.k1rakishou.chan.features.media_viewer.helper.ViewPagerAutoSwiper
 import com.github.k1rakishou.chan.features.media_viewer.media_view.MediaViewContract
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.cell.PostCellInterface
@@ -146,6 +147,11 @@ class MediaViewerController(
     get() = _boardManager.get()
   private val archivesManager: ArchivesManager
     get() = _archivesManager.get()
+
+  private val viewPagerAutoSwiperLazy = lazy {
+    ViewPagerAutoSwiper(pager)
+  }
+  private val viewPagerAutoSwiper by viewPagerAutoSwiperLazy
 
   private val postLinkableClickHelper by lazy {
     PostLinkableClickHelper(
@@ -322,6 +328,10 @@ class MediaViewerController(
   fun onPause() {
     lifecycleChange = true
     mediaViewerAdapter?.onPause()
+
+    if (viewPagerAutoSwiperLazy.isInitialized()) {
+      viewPagerAutoSwiper.stop()
+    }
   }
 
   override fun onDestroy() {
@@ -540,7 +550,19 @@ class MediaViewerController(
     mediaViewerMenuHelper.onMediaViewerOptionsClick(
       context = context,
       mediaViewerAdapter = adapter,
-      reloadMediaFunc = { reloadLoadedMedia() }
+      handleClickedOption = { clickedOptionId ->
+        when (clickedOptionId) {
+          MediaViewerMenuHelper.ACTION_USE_MPV -> {
+            reloadLoadedMedia()
+          }
+          MediaViewerMenuHelper.ACTION_VIEW_PAGER_AUTO_SWIPE -> {
+            viewPagerAutoSwiper.start()
+          }
+          else -> {
+            // no-op
+          }
+        }
+      }
     )
   }
 

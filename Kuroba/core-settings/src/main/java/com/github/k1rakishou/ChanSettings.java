@@ -583,7 +583,7 @@ public class ChanSettings {
             videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
             headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
             videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
-            mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", getMediaViewerOffscreenPagesDefault());
+            mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", 1);
             mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
             mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
             mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
@@ -730,14 +730,6 @@ public class ChanSettings {
             Logger.e(TAG, "Error while initializing the settings", error);
             throw error;
         }
-    }
-
-    private static Integer getMediaViewerOffscreenPagesDefault() {
-        if (isLowRamDevice()) {
-            return 1;
-        }
-
-        return 2;
     }
 
     public static int mediaViewerOffscreenPagesCount() {

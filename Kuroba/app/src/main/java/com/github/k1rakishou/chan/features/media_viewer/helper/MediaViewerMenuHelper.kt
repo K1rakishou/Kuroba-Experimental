@@ -11,6 +11,8 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 
 class MediaViewerMenuHelper(
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
@@ -21,7 +23,7 @@ class MediaViewerMenuHelper(
   fun onMediaViewerOptionsClick(
     context: Context,
     mediaViewerAdapter: MediaViewerAdapter,
-    reloadMediaFunc: () -> Unit
+    handleClickedOption: (Int) -> Unit,
   ) {
     val mediaLongClickOptions = buildMediaViewerOptions()
     if (mediaLongClickOptions.isEmpty()) {
@@ -33,7 +35,7 @@ class MediaViewerMenuHelper(
       globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       mediaLongClickOptions,
       itemClickListener = { clickedItem ->
-        handleMenuItemClick(context, mediaViewerAdapter, clickedItem, reloadMediaFunc)
+        handleMenuItemClick(context, mediaViewerAdapter, clickedItem, handleClickedOption)
       }
     )
 
@@ -123,6 +125,13 @@ class MediaViewerMenuHelper(
       enabled = !ChanSettings.isLowRamDevice()
     )
 
+    if (isDevBuild()) {
+      options += FloatingListMenuItem(
+        key = ACTION_VIEW_PAGER_AUTO_SWIPE,
+        name = getString(R.string.setting_media_viewer_auto_swipe)
+      )
+    }
+
     return options
   }
 
@@ -130,7 +139,7 @@ class MediaViewerMenuHelper(
     context: Context,
     mediaViewerAdapter: MediaViewerAdapter,
     clickedItem: FloatingListMenuItem,
-    reloadMediaFunc: () -> Unit
+    handleClickedOption: (Int) -> Unit,
   ) {
     when (clickedItem.key as Int) {
       ACTION_DRAW_BEHIND_NOTCH -> {
@@ -168,7 +177,7 @@ class MediaViewerMenuHelper(
       }
       ACTION_USE_MPV -> {
         ChanSettings.useMpvVideoPlayer.toggle()
-        reloadMediaFunc()
+        handleClickedOption(ACTION_USE_MPV)
       }
       ACTION_MEDIA_VIEWER_GESTURE_SETTINGS -> {
         val mediaViewerGesturesSettingsController = MediaViewerGesturesSettingsController(context)
@@ -176,6 +185,9 @@ class MediaViewerMenuHelper(
       }
       ACTION_MAX_OFFSCREEN_PAGES_SETTING -> {
         showMediaViewerOffscreenPagesSelector(context)
+      }
+      ACTION_VIEW_PAGER_AUTO_SWIPE -> {
+        handleClickedOption(ACTION_VIEW_PAGER_AUTO_SWIPE)
       }
     }
   }
@@ -236,6 +248,7 @@ class MediaViewerMenuHelper(
     const val ACTION_ENABLE_SOUND_POSTS = 110
     const val ACTION_USE_MPV = 111
     const val ACTION_PAUSE_PLAYERS_WHEN_IN_BG = 112
+    const val ACTION_VIEW_PAGER_AUTO_SWIPE = 113
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201
