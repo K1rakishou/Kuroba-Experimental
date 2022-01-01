@@ -5,10 +5,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
-import com.github.k1rakishou.chan.core.cache.CacheFileType
-import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
-import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
@@ -17,28 +13,15 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
-import com.github.k1rakishou.chan.utils.IOUtils
-import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
-import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState
-import com.google.android.exoplayer2.upstream.cache.SimpleCache
-import dagger.Lazy
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 
 class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
-  private val cacheHandler: Lazy<CacheHandler>,
-  private val fileCacheV2: FileCacheV2,
   private val themeEngine: ThemeEngine,
-  private val appConstants: AppConstants,
-  private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -47,101 +30,8 @@ class DeveloperSettingsScreen(
 
   override suspend fun buildGroups(): List<SettingsGroup.SettingsGroupBuilder> {
     return listOf(
-      buildMainSettingsGroup(),
-      buildCacheSettingsGroup()
+      buildMainSettingsGroup()
     )
-  }
-
-  private fun buildCacheSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
-    val identifier = DeveloperScreen.CacheGroup
-
-    return SettingsGroup.SettingsGroupBuilder(
-      groupIdentifier = identifier,
-      buildFunction = {
-        val group = SettingsGroup(
-          groupIdentifier = identifier,
-          groupTitle = "Caches"
-        )
-
-        for (cacheFileType in CacheFileType.values()) {
-          group += LinkSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.CacheGroup.ClearFileCache(cacheFileType.name),
-            topDescriptionStringFunc = { context.getString(R.string.settings_clear_file_cache, cacheFileType.name) },
-            bottomDescriptionStringFunc = {
-              val internalCacheSizeBytes = cacheHandler.get().getSize(cacheFileType)
-              val internalCacheMaxSizeBytes = cacheHandler.get().getMaxSize(cacheFileType)
-
-              context.getString(
-                R.string.settings_clear_file_cache_bottom_description,
-                cacheFileType.name,
-                ChanPostUtils.getReadableFileSize(internalCacheSizeBytes),
-                ChanPostUtils.getReadableFileSize(internalCacheMaxSizeBytes),
-              )
-            },
-            callback = {
-              fileCacheV2.clearCache(cacheFileType)
-              showToast(context, "Cleared ${cacheFileType.name} disk cache")
-            }
-          )
-        }
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DeveloperScreen.CacheGroup.ClearExoPlayerCache,
-          topDescriptionStringFunc = { context.getString(R.string.settings_clear_exo_player_file_cache) },
-          bottomDescriptionStringFunc = {
-            val exoPlayerCacheSizeBytes = withContext(Dispatchers.Default) {
-              IOUtils.calculateDirectoryFilesFullSize(appConstants.exoPlayerCacheDir)
-            }
-
-            context.getString(
-              R.string.settings_clear_exo_player_cache_bottom_description,
-              ChanPostUtils.getReadableFileSize(exoPlayerCacheSizeBytes)
-            )
-          },
-          callback = {
-            SimpleCache.delete(appConstants.exoPlayerCacheDir, null)
-            showToast(context, "Cleared exoplayer cache")
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = DeveloperScreen.CacheGroup.ThreadDownloadCacheSize,
-          topDescriptionStringFunc = { context.getString(R.string.settings_clear_thread_downloader_disk_cache) },
-          bottomDescriptionStringFunc = {
-            val threadDownloadCacheSize = withContext(Dispatchers.Default) {
-              IOUtils.calculateDirectoryFilesFullSize(appConstants.threadDownloaderCacheDir)
-            }
-
-            context.getString(
-              R.string.settings_thread_download_cache_bottom_description,
-              ChanPostUtils.getReadableFileSize(threadDownloadCacheSize)
-            )
-          },
-          callback = {
-            dialogFactory.createSimpleConfirmationDialog(
-              context = context,
-              titleText = getString(R.string.settings_thread_downloader_clear_disk_cache_title),
-              descriptionText = getString(R.string.settings_thread_downloader_clear_disk_cache_description),
-              positiveButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_clear),
-              negativeButtonText = getString(R.string.settings_thread_downloader_clear_disk_cache_do_not_clear),
-              onPositiveButtonClickListener = {
-                for (file in appConstants.threadDownloaderCacheDir.listFiles() ?: emptyArray()) {
-                  if (!file.deleteRecursively()) {
-                    Logger.d(TAG, "Failed to delete ${file.absolutePath}")
-                  }
-                }
-
-                showToast(context, "Thread downloader cached cleared")
-              }
-            )
-          }
-        )
-
-        group
-      })
   }
 
   private fun buildMainSettingsGroup(): SettingsGroup.SettingsGroupBuilder {
@@ -305,9 +195,18 @@ class DeveloperSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = DeveloperScreen.MainGroup.FunThingsAreFun,
+          topDescriptionIdFunc = { R.string.settings_fun_things_are_fun },
+          setting = ChanSettings.funThingsAreFun,
+          requiresRestart = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = DeveloperScreen.MainGroup.Force4chanBirthday,
           topDescriptionIdFunc = { R.string.settings_force_4chan_birthday },
           setting = ChanSettings.force4chanBirthdayMode,
+          dependsOnSetting = ChanSettings.funThingsAreFun,
           requiresRestart = true
         )
 
@@ -316,26 +215,27 @@ class DeveloperSettingsScreen(
           identifier = DeveloperScreen.MainGroup.ForceHalloween,
           topDescriptionIdFunc = { R.string.settings_force_halloween },
           setting = ChanSettings.forceHalloweenMode,
+          dependsOnSetting = ChanSettings.funThingsAreFun,
           requiresRestart = true
         )
 
-        if (AppModuleAndroidUtils.isDevBuild()) {
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.ForceChristmas,
-            topDescriptionIdFunc = { R.string.settings_force_christmas },
-            setting = ChanSettings.forceChristmasMode,
-            requiresRestart = true
-          )
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ForceChristmas,
+          topDescriptionIdFunc = { R.string.settings_force_christmas },
+          setting = ChanSettings.forceChristmasMode,
+          dependsOnSetting = ChanSettings.funThingsAreFun,
+          requiresRestart = true
+        )
 
-          group += BooleanSettingV2.createBuilder(
-            context = context,
-            identifier = DeveloperScreen.MainGroup.ForceNewYear,
-            topDescriptionIdFunc = { R.string.settings_force_new_year },
-            setting = ChanSettings.forceNewYearMode,
-            requiresRestart = true
-          )
-        }
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = DeveloperScreen.MainGroup.ForceNewYear,
+          topDescriptionIdFunc = { R.string.settings_force_new_year },
+          setting = ChanSettings.forceNewYearMode,
+          dependsOnSetting = ChanSettings.funThingsAreFun,
+          requiresRestart = true
+        )
 
         group
       }

@@ -206,11 +206,11 @@ class MainSettingsControllerV2(
     var globalSettingIndex = 0
 
     val isDefaultScreen = (topScreenIdentifier != null
-      && topScreenIdentifier.getScreenIdentifier() == defaultScreen.getScreenIdentifier())
+      && topScreenIdentifier.screenIdentifier() == defaultScreen.screenIdentifier())
 
     graph.iterateScreens { settingsScreen ->
       val isCurrentScreen =
-        settingsScreen.screenIdentifier.getScreenIdentifier() != topScreenIdentifier?.getScreenIdentifier()
+        settingsScreen.screenIdentifier.screenIdentifier() != topScreenIdentifier?.screenIdentifier()
 
       if (!isDefaultScreen && isCurrentScreen) {
         return@iterateScreens

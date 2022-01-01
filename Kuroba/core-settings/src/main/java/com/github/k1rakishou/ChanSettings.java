@@ -403,6 +403,8 @@ public class ChanSettings {
     public static BooleanSetting verboseLogs;
     public static BooleanSetting checkUpdateApkVersionCode;
     public static BooleanSetting showMpvInternalLogs;
+
+    public static BooleanSetting funThingsAreFun;
     public static BooleanSetting force4chanBirthdayMode;
     public static BooleanSetting forceHalloweenMode;
     public static BooleanSetting forceChristmasMode;
@@ -651,6 +653,8 @@ public class ChanSettings {
             );
             checkUpdateApkVersionCode = new BooleanSetting(provider, "check_update_apk_version_code", true);
             showMpvInternalLogs = new BooleanSetting(provider, "show_mpv_internal_logs", chanSettingsInfo.isDevBuild());
+
+            funThingsAreFun = new BooleanSetting(provider, "fun_things_are_fun", true);
             force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
             forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
             forceChristmasMode = new BooleanSetting(provider, "force_christmas_mode", false);

@@ -237,7 +237,7 @@ class SiteSettingsPresenter(
   sealed class SiteSettingsScreen(
     groupIdentifier: GroupIdentifier,
     settingsIdentifier: SettingIdentifier,
-    screenIdentifier: ScreenIdentifier = getScreenIdentifier()
+    screenIdentifier: ScreenIdentifier = screenIdentifier()
   ) : IScreen,
     SettingsIdentifier(screenIdentifier, groupIdentifier, settingsIdentifier) {
 
@@ -250,7 +250,7 @@ class SiteSettingsPresenter(
       object SetUpBoards : GeneralGroup("set_up_boards")
 
       companion object : IGroupIdentifier() {
-        override fun getScreenIdentifier(): ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
+        override fun screenIdentifier(): ScreenIdentifier = SiteSettingsScreen.screenIdentifier()
         override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("general_group")
       }
     }
@@ -264,7 +264,7 @@ class SiteSettingsPresenter(
       object Login : AuthenticationGroup("login")
 
       companion object : IGroupIdentifier() {
-        override fun getScreenIdentifier(): ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
+        override fun screenIdentifier(): ScreenIdentifier = SiteSettingsScreen.screenIdentifier()
         override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("authentication_group")
       }
     }
@@ -276,13 +276,13 @@ class SiteSettingsPresenter(
       SiteSettingsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
       companion object : IGroupIdentifier() {
-        override fun getScreenIdentifier(): ScreenIdentifier = SiteSettingsScreen.getScreenIdentifier()
+        override fun screenIdentifier(): ScreenIdentifier = SiteSettingsScreen.screenIdentifier()
         override fun getGroupIdentifier(): GroupIdentifier = GroupIdentifier("additional_settings_group")
       }
     }
 
     companion object : IScreenIdentifier() {
-      override fun getScreenIdentifier(): ScreenIdentifier = ScreenIdentifier("developer_settings_screen")
+      override fun screenIdentifier(): ScreenIdentifier = ScreenIdentifier("developer_settings_screen")
     }
   }
 

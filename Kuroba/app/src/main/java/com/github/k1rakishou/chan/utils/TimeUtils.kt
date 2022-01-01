@@ -38,6 +38,10 @@ object TimeUtils {
 
   @JvmStatic
   fun isHalloweenToday(): Boolean {
+    if (!ChanSettings.funThingsAreFun.get()) {
+      return false
+    }
+
     if (ChanSettings.forceHalloweenMode.get()) {
       return true
     }
@@ -53,6 +57,10 @@ object TimeUtils {
 
   @JvmStatic
   fun is4chanBirthdayToday(): Boolean {
+    if (!ChanSettings.funThingsAreFun.get()) {
+      return false
+    }
+
     if (ChanSettings.force4chanBirthdayMode.get()) {
       return true
     }
@@ -63,6 +71,10 @@ object TimeUtils {
 
   @JvmStatic
   fun isChristmasToday(): Boolean {
+    if (!ChanSettings.funThingsAreFun.get()) {
+      return false
+    }
+
     if (ChanSettings.forceChristmasMode.get()) {
       return true
     }
@@ -79,6 +91,10 @@ object TimeUtils {
 
   @JvmStatic
   fun isNewYearToday(): Boolean {
+    if (!ChanSettings.funThingsAreFun.get()) {
+      return false
+    }
+
     if (ChanSettings.forceNewYearMode.get()) {
       return true
     }

@@ -170,11 +170,7 @@ class SettingsCoordinator(
     DeveloperSettingsScreen(
       context,
       navigationController,
-      cacheHandler,
-      fileCacheV2,
       themeEngine,
-      appConstants,
-      dialogFactory
     )
   }
 
@@ -212,7 +208,15 @@ class SettingsCoordinator(
     )
   }
 
-  private val cachingSettingsScreen by lazy { CachingSettingsScreen(context) }
+  private val cachingSettingsScreen by lazy {
+    CachingSettingsScreen(
+      context,
+      cacheHandler,
+      fileCacheV2,
+      appConstants,
+      dialogFactory
+    )
+  }
 
   private val pluginSettingsScreen by lazy {
     PluginSettingsScreen(
