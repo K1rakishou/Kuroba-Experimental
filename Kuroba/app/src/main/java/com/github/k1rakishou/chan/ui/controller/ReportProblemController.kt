@@ -18,6 +18,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -101,13 +102,13 @@ class ReportProblemController(context: Context)
       KurobaComposeCustomTextField(
         modifier = Modifier
           .fillMaxWidth()
-          .wrapContentHeight()
-          .padding(vertical = 8.dp),
+          .wrapContentHeight(),
         value = reportTitle,
         textColor = chanTheme.textColorPrimaryCompose,
         parentBackgroundColor = chanTheme.backColorCompose,
         maxLines = 1,
         singleLine = true,
+        maxTextLength = MAX_TITLE_LENGTH,
         labelText = stringResource(id = R.string.report_controller_i_have_a_problem_with),
         onValueChange = { title -> reportTitle = title }
       )
@@ -117,15 +118,17 @@ class ReportProblemController(context: Context)
       KurobaComposeCustomTextField(
         modifier = Modifier
           .fillMaxWidth()
-          .wrapContentHeight()
-          .padding(vertical = 8.dp),
+          .wrapContentHeight(),
         value = reportDescription,
         textColor = chanTheme.textColorPrimaryCompose,
         parentBackgroundColor = chanTheme.backColorCompose,
         maxLines = 4,
+        maxTextLength = MAX_DESCRIPTION_LENGTH,
         labelText = stringResource(id = R.string.report_controller_problem_description),
         onValueChange = { description -> reportDescription = description }
       )
+
+      Spacer(modifier = Modifier.height(8.dp))
 
       KurobaComposeCheckbox(
         modifier = Modifier
@@ -135,6 +138,8 @@ class ReportProblemController(context: Context)
         currentlyChecked = attachLogs,
         onCheckChanged = { checked -> attachLogs = checked }
       )
+
+      Spacer(modifier = Modifier.height(8.dp))
 
       if (attachLogs) {
         var reportLogs by reportLogsState
@@ -154,10 +159,12 @@ class ReportProblemController(context: Context)
           KurobaComposeCustomTextField(
             modifier = Modifier
               .fillMaxWidth()
-              .weight(1f),
+              .wrapContentHeight(),
             textColor = chanTheme.textColorPrimaryCompose,
             parentBackgroundColor = chanTheme.backColorCompose,
             value = reportLogs,
+            maxTextLength = MAX_LOGS_LENGTH,
+            fontSize = 12.sp,
             onValueChange = { logs -> reportLogs = logs }
           )
         }
@@ -262,8 +269,8 @@ class ReportProblemController(context: Context)
 
     private const val ACTION_SEND_REPORT = 1
 
-    private const val MAX_TITLE_LENGTH = 512
-    private const val MAX_DESCRIPTION_LENGTH = 8192
-    private const val MAX_LOGS_LENGTH = 65535
+    private const val MAX_TITLE_LENGTH = 256
+    private const val MAX_DESCRIPTION_LENGTH = 1024
+    private const val MAX_LOGS_LENGTH = 65535 * 2
   }
 }

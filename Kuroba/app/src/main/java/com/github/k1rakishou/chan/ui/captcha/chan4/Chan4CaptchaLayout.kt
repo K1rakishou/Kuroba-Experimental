@@ -206,6 +206,10 @@ class Chan4CaptchaLayout(
       val scrollValueState = captchaInfo.sliderValue
 
       KurobaComposeTextField(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .padding(horizontal = 16.dp),
         value = currentInputValue,
         onValueChange = { newValue -> currentInputValue = newValue.uppercase(Locale.ENGLISH) },
         keyboardActions = KeyboardActions(
@@ -216,11 +220,7 @@ class Chan4CaptchaLayout(
           keyboardType = KeyboardType.Password
         ),
         maxLines = 1,
-        singleLine = true,
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-          .padding(horizontal = 16.dp)
+        singleLine = true
       )
 
       Spacer(modifier = Modifier.height(8.dp))
