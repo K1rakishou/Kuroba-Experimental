@@ -109,11 +109,11 @@ import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveContro
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequest
 import com.github.k1rakishou.chan.ui.compose.ImageLoaderRequestData
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeImage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeSelectionIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaSearchInput
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
@@ -1005,7 +1005,7 @@ class MainController(
             items(count = searchResults.size) { index ->
               val navHistoryEntry = searchResults[index]
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
-              val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
+              val isSelected = selectedHistoryEntries.contains(navHistoryEntry.descriptor)
 
               // Fucking magic
               key(searchResults[index].descriptor) {
@@ -1035,7 +1035,7 @@ class MainController(
             items(count = searchResults.size) { index ->
               val navHistoryEntry = searchResults[index]
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
-              val isSelected = selectedHistoryEntries.contains(navHistoryEntry)
+              val isSelected = selectedHistoryEntries.contains(navHistoryEntry.descriptor)
 
               key(searchResults[index].descriptor) {
                 BuildNavigationHistoryListEntryListMode(
@@ -1209,9 +1209,10 @@ class MainController(
         val showDeleteButtonShortcut by remember { drawerViewModel.showDeleteButtonShortcut }
 
         if (isSelectionMode) {
-          KurobaComposeCheckbox(
-            currentlyChecked = isSelected,
-            onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
+          KurobaComposeSelectionIndicator(
+            size = NAV_HISTORY_DELETE_BTN_SIZE,
+            currentlySelected = isSelected,
+            onSelectionChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
           val shape = remember { CircleShape }
@@ -1378,9 +1379,10 @@ class MainController(
         val showDeleteButtonShortcut by remember { drawerViewModel.showDeleteButtonShortcut }
 
         if (isSelectionMode) {
-          KurobaComposeCheckbox(
-            currentlyChecked = isSelected,
-            onCheckChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
+          KurobaComposeSelectionIndicator(
+            size = NAV_HISTORY_DELETE_BTN_SIZE,
+            currentlySelected = isSelected,
+            onSelectionChanged = { checked -> drawerViewModel.selectUnselect(navHistoryEntry, checked) }
           )
         } else if (showDeleteButtonShortcut) {
           val shape = remember { CircleShape }

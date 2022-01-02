@@ -87,8 +87,8 @@ class MainControllerViewModel : BaseViewModel() {
   val navigationHistoryEntryList: List<NavigationHistoryEntry>
     get() = _navigationHistoryEntryList
 
-  private val _selectedHistoryEntries = mutableStateMapOf<NavigationHistoryEntry, Unit>()
-  val selectedHistoryEntries: Map<NavigationHistoryEntry, Unit>
+  private val _selectedHistoryEntries = mutableStateMapOf<ChanDescriptor, Unit>()
+  val selectedHistoryEntries: Map<ChanDescriptor, Unit>
     get() = _selectedHistoryEntries
 
   val drawerGridMode = mutableStateOf(ChanSettings.drawerGridMode.get())
@@ -140,7 +140,7 @@ class MainControllerViewModel : BaseViewModel() {
   }
 
   fun getSelectedDescriptors(): List<ChanDescriptor> {
-    return _selectedHistoryEntries.keys.map { it.descriptor }
+    return _selectedHistoryEntries.keys.toList()
   }
 
   fun updateDeleteButtonShortcut(show: Boolean) {
@@ -149,17 +149,17 @@ class MainControllerViewModel : BaseViewModel() {
 
   fun selectUnselect(navHistoryEntry: NavigationHistoryEntry, select: Boolean) {
     if (select) {
-      _selectedHistoryEntries.put(navHistoryEntry, Unit)
+      _selectedHistoryEntries.put(navHistoryEntry.descriptor, Unit)
     } else {
-      _selectedHistoryEntries.remove(navHistoryEntry)
+      _selectedHistoryEntries.remove(navHistoryEntry.descriptor)
     }
   }
 
   fun toggleSelection(navHistoryEntry: NavigationHistoryEntry) {
-    if (_selectedHistoryEntries.containsKey(navHistoryEntry)) {
-      _selectedHistoryEntries.remove(navHistoryEntry)
+    if (_selectedHistoryEntries.containsKey(navHistoryEntry.descriptor)) {
+      _selectedHistoryEntries.remove(navHistoryEntry.descriptor)
     } else {
-      _selectedHistoryEntries.put(navHistoryEntry, Unit)
+      _selectedHistoryEntries.put(navHistoryEntry.descriptor, Unit)
     }
   }
 
@@ -171,7 +171,7 @@ class MainControllerViewModel : BaseViewModel() {
           chanDescriptor = navigationHistoryEntry.descriptor
         )
       }
-      .map { navigationHistoryEntry -> Pair(navigationHistoryEntry, Unit) }
+      .map { navigationHistoryEntry -> Pair(navigationHistoryEntry.descriptor, Unit) }
 
     _selectedHistoryEntries.putAll(allNavigationHistoryEntries)
   }
