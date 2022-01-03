@@ -168,28 +168,49 @@ class MediaViewerController(
     override fun onPostUnbind(postCellData: PostCellData, isActuallyRecycling: Boolean) {}
     override fun onPostClicked(postDescriptor: PostDescriptor) {}
     override fun onGoToPostButtonLongClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {}
-    override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {}
-    override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
-
-    override fun onPostPosterIdClicked(post: ChanPost) {}
-    override fun onPostPosterNameClicked(post: ChanPost) {}
-    override fun onPostPosterTripcodeClicked(post: ChanPost) {}
-    override fun onPreviewThreadPostsClicked(post: ChanPost) {}
-    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {}
-    override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
-    override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
-    override fun onPostNoClicked(post: ChanPost) {}
-    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {}
-    override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages? = null
-    override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
-    override fun onUnhidePostClick(post: ChanPost) {}
+    override fun onThumbnailOmittedFilesClicked(postCellData: PostCellData, postImage: ChanPostImage) {}
+    override fun onPreviewThreadPostsClicked(post: ChanPost) {}
+    override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
     override fun currentSpanCount(): Int = 1
+
+    override fun onThumbnailLongClicked(chanDescriptor: ChanDescriptor, postImage: ChanPostImage) {
+      notSupported()
+    }
+    override fun onPostPosterIdClicked(post: ChanPost) {
+      notSupported()
+    }
+    override fun onPostPosterNameClicked(post: ChanPost) {
+      notSupported()
+    }
+    override fun onPostPosterTripcodeClicked(post: ChanPost) {
+      notSupported()
+    }
+    override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {
+      notSupported()
+    }
+    override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {
+      notSupported()
+    }
+    override fun onPostNoClicked(post: ChanPost) {
+      notSupported()
+    }
+    override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {
+      notSupported()
+    }
+    override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {
+      notSupported()
+    }
+    override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {
+      notSupported()
+    }
+    override fun onUnhidePostClick(post: ChanPost) {
+      notSupported()
+    }
 
     override fun onGoToPostButtonClicked(post: ChanPost, postViewMode: PostCellData.PostViewMode) {
       onGoToPostClick(post.postDescriptor)
     }
-
     override fun onThumbnailClicked(postCellData: PostCellData, postImage: ChanPostImage) {
       scrollToClickedImage(postImage)
     }
@@ -221,14 +242,18 @@ class MediaViewerController(
 
             showPost(postDescriptor)
           },
-          onLinkClicked = { /*no-op*/ },
-          onCrossThreadLinkClicked = { /*no-op*/ },
-          onBoardLinkClicked = { /*no-op*/ },
-          onSearchLinkClicked = { _, _ -> /*no-op*/ },
-          onDeadQuoteClicked = { _, _ -> /*no-op*/ },
-          onArchiveQuoteClicked = { /*no-op*/ }
+          onLinkClicked = { notSupported() },
+          onCrossThreadLinkClicked = { notSupported() },
+          onBoardLinkClicked = { notSupported() },
+          onSearchLinkClicked = { _, _ -> notSupported() },
+          onDeadQuoteClicked = { _, _ -> notSupported() },
+          onArchiveQuoteClicked = { notSupported() }
         )
       }
+    }
+
+    private fun notSupported() {
+      showToast(R.string.media_viewer_action_not_supported)
     }
   }
 

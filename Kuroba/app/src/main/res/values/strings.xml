@@ -246,9 +246,12 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="image_failed_gif_error">Failed to load gif (reason: %1$s)</string>
     <string name="image_failed_video_error">Failed to load video (reason: %1$s)</string>
     <string name="image_not_found">Image not found</string>
+
     <string name="media_viewer_loading_bg_audio">Loading external audio…</string>
     <string name="media_viewer_error_loading_bg_audio">Failed to load image bg audio, error=\'%1$s\'</string>
     <string name="media_viewer_error_cannot_load_bg_audio_because_of_settings">Cannot load BG audio (\'%1$s\') because current media load settings do not allow doing that</string>
+    <string name="media_viewer_action_not_supported">This action is not supported in media viewer</string>
+
     <string name="thread_load_failed_ssl">HTTPS error</string>
     <string name="thread_load_failed_ssl_with_reason">HTTPS error (reason: %1$s)</string>
     <string name="thread_load_failed_json_parsing">Error while trying to parse server response.</string>
@@ -1489,7 +1492,7 @@ Actual error: \'%1$s\'</string>
     <string name="dvach_report_post_title">Report post \'%1$s\'</string>
     <string name="dvach_report_post_description">Enter report reason</string>
     <string name="dvach_report_post_reason_cannot_be_empty">Report reason cannot be empty</string>
-    <string name="dvach_report_post_sending">Sending report...</string>
+    <string name="dvach_report_post_sending">Sending report…</string>
     <string name="dvach_report_post_error">Error: \'%1$s\'</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
