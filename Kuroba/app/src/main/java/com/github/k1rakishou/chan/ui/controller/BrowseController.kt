@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
@@ -288,8 +289,7 @@ class BrowseController(
       )
       .withSubItem(ACTION_CATALOG_ALBUM, R.string.action_catalog_album, { threadLayout.presenter.showAlbum() })
       .withSubItem(ACTION_OPEN_BROWSER, R.string.action_open_browser, !isCompositeCatalog, { item -> openBrowserClicked(item) })
-      .withSubItem(ACTION_OPEN_THREAD_BY_ID, R.string.action_open_thread_by_id, !isCompositeCatalog, { item -> openThreadById(item) })
-      .withSubItem(ACTION_OPEN_THREAD_BY_URL, R.string.action_open_thread_by_url, { item -> openThreadByUrl(item) })
+      .withSubItem(ACTION_OPEN_CATALOG_OR_THREAD_BY_IDENTIFIER, R.string.action_open_catalog_or_thread_by_identifier, { item -> openCatalogOrThreadByIdentifier(item) })
       .withSubItem(ACTION_OPEN_MEDIA_BY_URL, R.string.action_open_media_by_url, { item -> openMediaByUrl(item) })
       .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
@@ -504,15 +504,16 @@ class BrowseController(
     handleShareOrOpenInBrowser(false)
   }
 
-  private fun openThreadByUrl(item: ToolbarMenuSubItem) {
+  private fun openCatalogOrThreadByIdentifier(item: ToolbarMenuSubItem) {
     if (chanDescriptor == null) {
       return
     }
 
     dialogFactory.createSimpleDialogWithInput(
       context = context,
-      titleTextId = R.string.browse_controller_enter_thread_url,
-      onValueEntered = { input: String -> openThreadByUrlInternal(input) },
+      titleTextId = R.string.browse_controller_enter_identifier,
+      descriptionTextId = R.string.browse_controller_enter_identifier_description,
+      onValueEntered = { input: String -> openCatalogOrThreadByIdentifierInternal(input) },
       inputType = DialogFactory.DialogInputType.String
     )
   }
@@ -538,49 +539,71 @@ class BrowseController(
     )
   }
 
-  private fun openThreadById(item: ToolbarMenuSubItem) {
-    if (chanDescriptor == null || chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      return
-    }
-
-    dialogFactory.createSimpleDialogWithInput(
-      context = context,
-      titleTextId = R.string.browse_controller_enter_thread_id,
-      descriptionTextId = R.string.browse_controller_enter_thread_id_msg,
-      onValueEntered = { input: String -> openThreadByIdInternal(input) },
-      inputType = DialogFactory.DialogInputType.Integer
-    )
-  }
-
-  private fun openThreadByUrlInternal(input: String) {
+  private fun openCatalogOrThreadByIdentifierInternal(input: String) {
     mainScope.launch {
       val chanDescriptorResult = siteResolver.resolveChanDescriptorForUrl(input)
       if (chanDescriptorResult == null) {
-        showToast(
-          getString(R.string.open_link_not_matched, input),
-          Toast.LENGTH_LONG
-        )
-        
-        return@launch
-      }
+        if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+          showToast(
+            getString(R.string.open_by_board_code_or_thread_no_composite_catalog_error, input),
+            Toast.LENGTH_LONG
+          )
 
-      val resolvedChanDescriptor = chanDescriptorResult.chanDescriptor
-      if (resolvedChanDescriptor !is ThreadDescriptor) {
-        showToast(
-          getString(R.string.open_link_not_thread_link, input),
-          Toast.LENGTH_LONG
-        )
-
-        return@launch
-      }
-
-      if (chanDescriptorResult.markedPostNo > 0L) {
-        chanThreadViewableInfoManager.update(resolvedChanDescriptor, createEmptyWhenNull = true) { chanThreadViewableInfo ->
-          chanThreadViewableInfo.markedPostNo = chanDescriptorResult.markedPostNo
+          return@launch
         }
+
+        val currentCatalogDescriptor = chanDescriptor as? CatalogDescriptor
+        if (currentCatalogDescriptor == null) {
+          return@launch
+        }
+
+        val inputTrimmed = input.trim()
+
+        val asThreadNo = inputTrimmed.toLongOrNull()
+        if (asThreadNo != null && asThreadNo > 0) {
+          val threadDescriptor = currentCatalogDescriptor.toThreadDescriptor(threadNo = asThreadNo)
+          showThread(threadDescriptor, false)
+          return@launch
+        }
+
+        val asBoardCode = inputTrimmed.replace("/", "")
+        if (asBoardCode.all { ch -> ch.isLetter() }) {
+          val boardDescriptor = BoardDescriptor.create(
+            siteDescriptor = currentCatalogDescriptor.siteDescriptor(),
+            boardCode = asBoardCode
+          )
+
+          showCatalog(CatalogDescriptor.create(boardDescriptor), false)
+          return@launch
+        }
+
+        // fallthrough
+      } else {
+        val resolvedChanDescriptor = chanDescriptorResult.chanDescriptor
+        if (resolvedChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+          showCatalog(resolvedChanDescriptor.catalogDescriptor(), false)
+          return@launch
+        }
+
+        if (resolvedChanDescriptor is ThreadDescriptor) {
+          if (chanDescriptorResult.markedPostNo > 0L) {
+            chanThreadViewableInfoManager.update(
+              chanDescriptor = resolvedChanDescriptor,
+              createEmptyWhenNull = true
+            ) { ctvi -> ctvi.markedPostNo = chanDescriptorResult.markedPostNo }
+          }
+
+          showThread(resolvedChanDescriptor, false)
+          return@launch
+        }
+
+        // fallthrough
       }
 
-      showThread(resolvedChanDescriptor, false)
+      showToast(
+        getString(R.string.open_link_not_matched, input),
+        Toast.LENGTH_LONG
+      )
     }
   }
 
@@ -987,13 +1010,6 @@ class BrowseController(
       menuItem.visible = supportsArchive
     }
 
-    navigation.findSubItem(ACTION_OPEN_THREAD_BY_ID)?.let { menuItem ->
-      val isNotCompositeCatalog =
-        threadLayout.presenter.currentChanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor
-
-      menuItem.visible = isNotCompositeCatalog
-    }
-
     navigation.findSubItem(ACTION_LOAD_WHOLE_COMPOSITE_CATALOG)?.let { menuItem ->
       val isCompositeCatalog =
         threadLayout.presenter.currentChanDescriptor is ChanDescriptor.CompositeCatalogDescriptor
@@ -1067,8 +1083,7 @@ class BrowseController(
     private const val ACTION_SHARE = 906
     private const val ACTION_SCROLL_TO_TOP = 907
     private const val ACTION_SCROLL_TO_BOTTOM = 908
-    private const val ACTION_OPEN_THREAD_BY_ID = 909
-    private const val ACTION_OPEN_THREAD_BY_URL = 910
+    private const val ACTION_OPEN_CATALOG_OR_THREAD_BY_IDENTIFIER = 910
     private const val ACTION_OPEN_MEDIA_BY_URL = 911
     private const val ACTION_CATALOG_ALBUM = 912
     private const val ACTION_BOARD_ARCHIVE = 913

@@ -337,8 +337,11 @@ abstract class CommonSite : SiteBase() {
           )
         } else {
           val boardPattern = boardPattern().matcher(url.encodedPath)
-          val boardCode = boardPattern.groupOrNull(1)
+          if (!boardPattern.find()) {
+            return null
+          }
 
+          val boardCode = boardPattern.groupOrNull(1)
           if (boardCode.isNullOrEmpty()) {
             return null
           }
@@ -596,7 +599,7 @@ abstract class CommonSite : SiteBase() {
     const val DEFAULT_ATTACHABLES_PER_POST_COUNT = 1
     const val DEFAULT_MAX_ATTACHABLES_SIZE = 4L * 1024 * 1024 // 4 MB
 
-    private val BOARD_PATTERN = Pattern.compile("/(\\w+)")
+    private val BOARD_PATTERN = Pattern.compile("\\/(\\w+)\\/?")
     private val THREAD_PATTERN = Pattern.compile("/(\\w+)/(\\w+)/(\\d+).*")
     private val POST_NO_PATTERN = Pattern.compile("(\\d+)")
   }

@@ -86,6 +86,10 @@ class ComposeBoardsSelectorControllerViewModel : BaseViewModel() {
     val boardCellDataList = mutableListOf<CatalogCellData>()
 
     val iteratorFunc = iteratorFunc@ { chanBoard: ChanBoard ->
+      if (chanBoard.synthetic) {
+        return@iteratorFunc
+      }
+
       val boardCode = chanBoard.formattedBoardCode()
       val boardName = chanBoard.boardName()
 

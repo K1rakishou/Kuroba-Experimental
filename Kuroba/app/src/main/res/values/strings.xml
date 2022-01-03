@@ -147,8 +147,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_open_browser">Open in a browser</string>
     <string name="action_catalog_album">Catalog album</string>
     <string name="action_rest_composite_catalog">Load the rest of this composite catalog</string>
-    <string name="action_open_thread_by_id">Open thread by ID</string>
-    <string name="action_open_thread_by_url">Open thread by url</string>
+    <string name="action_open_catalog_or_thread_by_identifier">Open catalog/thread by any identifier</string>
     <string name="action_open_media_by_url">Open media (image/video) by url</string>
     <string name="action_share">Share</string>
     <string name="action_board_archive">View board archive</string>
@@ -210,7 +209,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_share_media_content">Share media content</string>
 
     <string name="open_link_not_matched">Cannot open this link: \'%1$s\'.</string>
-    <string name="open_link_not_thread_link">Not a thread link: \'%1$s\'.</string>
+    <string name="open_by_board_code_or_thread_no_composite_catalog_error">Cannot be used in a composite catalog</string>
 
     <string name="dev_bookmark_every_thread">Bookmark every thread</string>
     <string name="dev_cache_every_thread">Cache every thread</string>
@@ -1058,8 +1057,13 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="browse_controller_title_app_setup">App Setup</string>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
-    <string name="browse_controller_enter_thread_id">Enter thread id (the OP number, e.g. 123456789)</string>
-    <string name="browse_controller_enter_thread_url">Enter thread url</string>
+    <string name="browse_controller_enter_identifier">Enter catalog/thread identifier</string>
+    <string name="browse_controller_enter_identifier_description">
+        - \'board_code\' or \'/board_code/\' to open board of the currently opened site\n
+        - \'1234567890\' to open thread with id \'1234567890\' of the currently opened board\n
+        - \'4chan.org/a/\' to open \'/a/\' board of \'4chan.org\' site\n
+        - Full links like \'https://boards.4channel.org/g/thread/1234567890#p1122334455\' or \'4channel.org/g/\' work too
+    </string>
     <string name="browse_controller_enter_media_url">Enter media url</string>
     <string name="browse_controller_enter_media_url_error">Failed to convert \'%1$s\' to url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>

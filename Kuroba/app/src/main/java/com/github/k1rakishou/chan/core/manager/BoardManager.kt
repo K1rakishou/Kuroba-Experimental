@@ -7,7 +7,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.SuspendableInitializer
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableListWithCap
-import com.github.k1rakishou.common.putIfNotContains
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.ChanBoardMeta
@@ -236,15 +235,24 @@ class BoardManager(
           return@forEach
         }
 
-        ordersMap.putIfNotContains(boardDescriptor.siteDescriptor, mutableListOf())
+        val innerList = ordersMap.getOrPut(
+          key = boardDescriptor.siteDescriptor,
+          defaultValue = { mutableListWithCap(64) }
+        )
 
         if (activate) {
-          ordersMap[boardDescriptor.siteDescriptor]!!.add(boardDescriptor)
+          if (!innerList.contains(boardDescriptor)) {
+            innerList.add(boardDescriptor)
+          }
         } else {
-          ordersMap[boardDescriptor.siteDescriptor]!!.remove(boardDescriptor)
+          innerList.remove(boardDescriptor)
         }
 
         board.active = activate
+        if (board.synthetic) {
+          board.synthetic = false
+        }
+
         changed = true
       }
 
