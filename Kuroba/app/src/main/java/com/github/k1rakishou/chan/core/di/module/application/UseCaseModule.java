@@ -27,7 +27,6 @@ import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser;
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.engine.LynxchanGetBoardsUseCase;
 import com.github.k1rakishou.chan.core.usecase.BookmarkFilterWatchableThreadsUseCase;
 import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
-import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase;
@@ -244,19 +243,6 @@ public class UseCaseModule {
                 appContext,
                 appConstants,
                 fileManager
-        );
-    }
-
-    @Provides
-    @Singleton
-    public CreateBoardManuallyUseCase provideCreateBoardManuallyUseCase(
-            SiteManager siteManager,
-            RealProxiedOkHttpClient proxiedOkHttpClient
-    ) {
-        Logger.deps("CreateBoardManuallyUseCase");
-        return new CreateBoardManuallyUseCase(
-                siteManager,
-                proxiedOkHttpClient
         );
     }
 

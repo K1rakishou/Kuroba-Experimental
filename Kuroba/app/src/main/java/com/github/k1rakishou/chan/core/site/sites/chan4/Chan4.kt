@@ -80,9 +80,6 @@ open class Chan4 : SiteBase() {
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
-  override val canCreateBoardsManually: Boolean
-    get() = true
-
   override fun initialize() {
     super.initialize()
 

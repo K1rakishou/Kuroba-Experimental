@@ -32,8 +32,6 @@ import kotlinx.coroutines.Job
 interface Site {
   val isSynthetic: Boolean
     get() = false
-  val canCreateBoardsManually: Boolean
-    get() = false
 
   enum class SiteFeature {
     /**

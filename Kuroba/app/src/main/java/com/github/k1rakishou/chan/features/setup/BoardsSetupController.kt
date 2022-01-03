@@ -21,7 +21,6 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.core.usecase.CreateBoardManuallyUseCase
 import com.github.k1rakishou.chan.features.bypass.CookieResult
 import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
@@ -57,8 +56,6 @@ class BoardsSetupController(
   @Inject
   lateinit var dialogFactory: DialogFactory
   @Inject
-  lateinit var createBoardManuallyUseCase: CreateBoardManuallyUseCase
-  @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val controller = BoardsEpoxyController()
@@ -73,8 +70,7 @@ class BoardsSetupController(
     BoardsSetupPresenter(
       siteDescriptor = siteDescriptor,
       siteManager = siteManager,
-      boardManager = boardManager,
-      createBoardManuallyUseCase = createBoardManuallyUseCase
+      boardManager = boardManager
     )
   }
 
@@ -137,9 +133,7 @@ class BoardsSetupController(
     navigation.title = context.getString(R.string.controller_boards_setup_title, siteDescriptor.siteName)
 
     val site = siteManager.bySiteDescriptor(siteDescriptor)!!
-
     val syntheticSite = site.isSynthetic
-    val canCreateBoardsManually = site.canCreateBoardsManually
 
     val builder = navigation
       .buildMenu(context)
@@ -147,11 +141,6 @@ class BoardsSetupController(
     if (!syntheticSite) {
       builder
         .withItem(R.drawable.ic_refresh_white_24dp) { presenter.updateBoardsFromServerAndDisplayActive() }
-    }
-
-    if (canCreateBoardsManually) {
-      builder
-        .withItem(R.drawable.ic_create_white_24dp) { onCreateBoardManuallyClicked() }
     }
 
     builder
@@ -302,22 +291,6 @@ class BoardsSetupController(
 
   override fun showMessageToast(message: String) {
     showToast(message, Toast.LENGTH_LONG)
-  }
-
-  private fun onCreateBoardManuallyClicked() {
-    dialogFactory.createSimpleDialogWithInput(
-      context = context,
-      titleTextId = R.string.controller_boards_setup_enter_board_code,
-      inputType = DialogFactory.DialogInputType.String,
-      onValueEntered = { boardCode ->
-        if (boardCode.isEmpty()) {
-          showToast(R.string.controller_boards_setup_board_code_is_empty)
-          return@createSimpleDialogWithInput
-        }
-
-        presenter.createBoardManually(boardCode)
-      }
-    )
   }
 
   private inner class BoardsEpoxyController : EpoxyController() {

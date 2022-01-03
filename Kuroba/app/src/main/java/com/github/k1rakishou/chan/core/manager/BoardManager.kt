@@ -435,13 +435,17 @@ class BoardManager(
     }
   }
 
-  fun boardsCount(siteDescriptor: SiteDescriptor): Int {
+  fun boardsCount(siteDescriptor: SiteDescriptor, counter: ((ChanBoard) -> Boolean)? = null): Int {
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
 
     return lock.read {
-      return@read boardsMap[siteDescriptor]?.entries?.count { (boardDescriptor, _) ->
-        boardDescriptor.siteDescriptor == siteDescriptor
-      } ?: 0
+      return@read boardsMap[siteDescriptor]
+        ?.entries
+        ?.count { (boardDescriptor, chanBoard) ->
+          return@count boardDescriptor.siteDescriptor == siteDescriptor
+            && (counter?.invoke(chanBoard) ?: true)
+        }
+        ?: 0
     }
   }
 
