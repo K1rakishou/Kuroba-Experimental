@@ -62,7 +62,14 @@ class BoardLocalSource(
     val boardMapPerSite = mutableMapOf<SiteDescriptor, Map<BoardDescriptor, BoardDBId>>()
 
     boardsOrdered.forEach { (siteDescriptor, boards) ->
-      val boardCodes = boards.map { board -> board.boardCode() }
+      val boardCodes = boards.mapNotNull { board ->
+        if (board.synthetic) {
+          return@mapNotNull null
+        }
+
+        return@mapNotNull board.boardCode()
+      }
+
       if (boardCodes.isEmpty()) {
         return@forEach
       }

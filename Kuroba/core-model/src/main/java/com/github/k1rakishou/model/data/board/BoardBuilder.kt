@@ -45,6 +45,8 @@ class BoardBuilder(
     return ChanBoard(
       boardDescriptor = boardDescriptor(),
       active = active,
+      // We don't persist synthetic boards so we assume all boards coming from the DB are not synthetic
+      synthetic = false,
       order = order,
       name = name,
       perPage = perPage,

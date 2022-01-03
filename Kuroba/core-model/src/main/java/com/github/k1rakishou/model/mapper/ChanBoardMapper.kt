@@ -20,6 +20,8 @@ object ChanBoardMapper {
     return ChanBoard(
       boardDescriptor = boardDescriptor,
       active = chanBoardFull.chanBoardEntity.active,
+      // We don't persist synthetic boards so we assume all boards coming from the DB are not synthetic
+      synthetic = false,
       order = chanBoardFull.chanBoardEntity.boardOrder,
       name = chanBoardFull.chanBoardEntity.name,
       perPage = chanBoardFull.chanBoardEntity.perPage,
@@ -47,6 +49,8 @@ object ChanBoardMapper {
   }
 
   fun toChanBoardEntity(boardDatabaseId: Long, order: Int?, board: ChanBoard): ChanBoardEntity {
+    require(!board.synthetic) { "Cannot persist synthetic boards! board: ${board}" }
+
     return ChanBoardEntity(
       ownerChanBoardId = boardDatabaseId,
       active = board.active,

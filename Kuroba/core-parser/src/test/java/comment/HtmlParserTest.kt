@@ -345,4 +345,72 @@ Remember to do some research before asking a question. No one wants to answer a 
     }
   }
 
+  @Test
+  fun html_parser_2chhk_weird_attribute_that_crashes_the_parser() {
+    val html = """
+      <p><a href="https://2ch.hk/media/res/127593.html" style="color:#CD6EFF;class=" s13"="">Webm-тред</a><br><br></p><table class="table table-bordered"><tbody><tr><td>test</td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr><tr><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td><td><br></td></tr></tbody></table>
+    """.trimIndent()
+
+    val expected = """
+      <p>
+      <a, href=https://2ch.hk/media/res/127593.html, style=color:#CD6EFF;class=>
+      Webm-тред
+      <br>
+      <br>
+      <table, class=table table-bordered>
+      <tbody>
+      <tr>
+      <td>
+      test
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <tr>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <tr>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      <td>
+      <br>
+      
+    """.trimIndent().lines()
+
+    val htmlParser = HtmlParser()
+    val nodes = htmlParser.parse(html).nodes
+
+    val actual = htmlParser.debugConcatIntoString(nodes).lines()
+    assertEquals(expected.size, actual.size)
+
+    actual.forEachIndexed { index, actualLine ->
+      val expectedLine = expected[index]
+      assertEquals(expectedLine, actualLine)
+    }
+  }
+
 }

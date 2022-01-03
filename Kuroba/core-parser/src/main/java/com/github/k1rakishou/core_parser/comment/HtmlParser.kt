@@ -146,8 +146,8 @@ class HtmlParser {
       }
 
       val attributeSplitList = splitIntoPartsBySeparator(tagPart, '=')
-      val attrName = attributeSplitList[0]
-      var attrValue = attributeSplitList[1]
+      val attrName = attributeSplitList.getOrNull(0) ?: CharArray(0)
+      var attrValue = attributeSplitList?.getOrNull(1) ?: CharArray(0)
 
       if (attrName.isEmpty() || attrValue.isEmpty()) {
         continue

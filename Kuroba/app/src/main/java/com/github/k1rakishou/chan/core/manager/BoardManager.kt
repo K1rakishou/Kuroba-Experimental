@@ -414,7 +414,35 @@ class BoardManager(
     check(isReady()) { "BoardManager is not ready yet! Use awaitUntilInitialized()" }
     ensureBoardsAndOrdersConsistency()
 
-    return lock.read { boardsMap[boardDescriptor.siteDescriptor]?.get(boardDescriptor) }
+    return lock.write {
+      val board = boardsMap[boardDescriptor.siteDescriptor]?.get(boardDescriptor)
+      if (board != null) {
+        return@write board
+      }
+
+      val boardsOrdered = ordersMap.getOrPut(
+        key = boardDescriptor.siteDescriptor,
+        defaultValue = { mutableListWithCap(64) }
+      )
+
+      boardsOrdered.add(boardDescriptor)
+
+      val syntheticBoard = ChanBoard(
+        boardDescriptor = boardDescriptor,
+        active = false,
+        synthetic = true,
+        order = boardsOrdered.lastIndex
+      )
+
+      val innerMap = boardsMap.getOrPut(
+        key = boardDescriptor.siteDescriptor,
+        defaultValue = { linkedMapWithCap(64) }
+      )
+
+      innerMap[boardDescriptor] = syntheticBoard
+
+      return@write syntheticBoard
+    }
   }
 
   fun activeBoardsCount(siteDescriptor: SiteDescriptor): Int {
@@ -573,7 +601,7 @@ class BoardManager(
         }
 
         boardsMap.forEach { (siteDescriptor, innerMap) ->
-          val innerBoardsMapCount = innerMap.values.count { chanBoard -> chanBoard.active }
+          val innerBoardsMapCount = innerMap.values.count { chanBoard -> chanBoard.active || chanBoard.synthetic }
           val innerOrdersMapCount = ordersMap[siteDescriptor]?.size ?: 0
 
           check(innerBoardsMapCount == innerOrdersMapCount) {
@@ -616,6 +644,11 @@ class BoardManager(
           val board = boardsMap[siteDescriptor]?.get(boardDescriptor)
             ?: return@forEach
 
+          // Do not persist synthetic boards
+          if (board.synthetic) {
+            return@forEach
+          }
+
           resultMap[siteDescriptor]!!.add(board)
         }
 
@@ -637,6 +670,7 @@ class BoardManager(
     return ChanBoard(
       boardDescriptor = prevBoard.boardDescriptor,
       active = prevBoard.active,
+      synthetic = newBoard.synthetic,
       order = prevBoard.order,
       name = newBoard.name,
       perPage = newBoard.perPage,

@@ -206,12 +206,18 @@ public class ToolbarContainer extends FrameLayout {
 
         TextView titleView = view.findViewById(R.id.title);
         if (titleView != null) {
-            titleView.setText(item.title);
+            if (isEmpty(item.title)) {
+                titleView.setText("", TextView.BufferType.SPANNABLE);
+            } else {
+                titleView.setText(item.title, TextView.BufferType.SPANNABLE);
+            }
         }
 
-        if (!isEmpty(item.subtitle)) {
-            TextView subtitleView = view.findViewById(R.id.subtitle);
-            if (subtitleView != null) {
+        TextView subtitleView = view.findViewById(R.id.subtitle);
+        if (subtitleView != null) {
+            if (isEmpty(item.subtitle)) {
+                subtitleView.setText("", TextView.BufferType.SPANNABLE);
+            } else {
                 subtitleView.setText(item.subtitle, TextView.BufferType.SPANNABLE);
             }
         }
