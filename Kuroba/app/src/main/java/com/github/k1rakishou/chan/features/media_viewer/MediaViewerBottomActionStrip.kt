@@ -137,7 +137,10 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
     chanDescriptor: ChanDescriptor?,
     viewableMedia: ViewableMedia, callbacks: MediaViewerBottomActionStripCallbacks
   ) {
-    check(this.mediaViewerStripCallbacks == null) { "Callbacks are already set!" }
+    if (this.mediaViewerStripCallbacks != null) {
+      return
+    }
+    
     this.chanDescriptor = chanDescriptor
     this.currentViewableMedia = viewableMedia
     this.mediaViewerStripCallbacks = callbacks

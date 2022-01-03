@@ -58,8 +58,15 @@ class MediaViewerToolbar @JvmOverloads constructor(
     setVisibilityFast(View.GONE)
   }
 
-  fun attach(chanDescriptor: ChanDescriptor?, viewableMedia: ViewableMedia, callbacks: MediaViewerToolbarCallbacks) {
-    check(this.mediaViewerToolbarCallbacks == null) { "Callbacks are already set!" }
+  fun attach(
+    chanDescriptor: ChanDescriptor?,
+    viewableMedia: ViewableMedia,
+    callbacks: MediaViewerToolbarCallbacks
+  ) {
+    if (this.mediaViewerToolbarCallbacks != null) {
+      return
+    }
+
     this.chanDescriptor = chanDescriptor
     this.currentViewableMedia = viewableMedia
     this.mediaViewerToolbarCallbacks = callbacks

@@ -439,6 +439,7 @@ class ReportManager(
       appendLine("Bottom navigation enabled: ${ChanSettings.bottomNavigationViewEnabled.get()}")
       appendLine("Prefetching enabled: ${ChanSettings.prefetchMedia.get()}")
       appendLine("Hi-res thumbnails enabled: ${ChanSettings.highResCells.get()}")
+      appendLine("mediaViewerMaxOffscreenPages: ${ChanSettings.mediaViewerMaxOffscreenPages.get()}")
       appendLine("CloudFlare force preload enabled: ${ChanSettings.cloudflareForcePreload.get()}")
       appendLine("useMpvVideoPlayer: ${ChanSettings.useMpvVideoPlayer.get()}")
       appendLine("userAgent: ${appConstants.userAgent}")
