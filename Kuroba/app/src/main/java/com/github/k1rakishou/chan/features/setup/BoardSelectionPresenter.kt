@@ -13,9 +13,11 @@ import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.InputWithQuerySorter
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.catalog.CompositeCatalog
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -203,6 +205,27 @@ class BoardSelectionPresenter(
 
     boardManager.viewAllBoards(siteDescriptor, iteratorFunc)
 
+    var canFilterOutLastElement = true
+    if (query.isNotEmpty()) {
+      val boardCode = query.filter { ch -> ch.isLetterOrDigit() }
+      if (boardCode.isNotNullNorBlank()) {
+        val alreadyContainsThisBoard = boardCellDataList.any { it.boardDescriptorOrNull?.boardCode == boardCode }
+        if (!alreadyContainsThisBoard) {
+          val boardDescriptor = BoardDescriptor.create(siteDescriptor, boardCode)
+
+          val cellDataList = CatalogCellData(
+            searchQuery = query,
+            catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(boardDescriptor),
+            boardName = "",
+            description = ""
+          )
+
+          boardCellDataList += cellDataList
+          canFilterOutLastElement = false
+        }
+      }
+    }
+
     val sortedBoards = InputWithQuerySorter.sort(
       input = boardCellDataList,
       query = query,
@@ -228,7 +251,11 @@ class BoardSelectionPresenter(
       MAX_CATALOGS_TO_SHOW_IN_SEARCH_MODE_PHONE
     }
 
-    return sortedBoards.take(maxBoardsToShow)
+    if (canFilterOutLastElement || sortedBoards.size <= maxBoardsToShow) {
+      return sortedBoards.take(maxBoardsToShow)
+    }
+
+    return sortedBoards.take(maxBoardsToShow) + sortedBoards.last()
   }
 
   private fun setState(state: BoardSelectionControllerState) {

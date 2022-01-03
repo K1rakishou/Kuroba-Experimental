@@ -6,7 +6,7 @@ class ChanBoard(
   val boardDescriptor: BoardDescriptor,
   var active: Boolean = false,
   var synthetic: Boolean = false,
-  val order: Int = 0,
+  val order: Int? = null,
   val name: String? = null,
   val perPage: Int = 15,
   val pages: Int = 10,
@@ -163,7 +163,7 @@ class ChanBoard(
     var result = boardDescriptor.hashCode()
     result = 31 * result + active.hashCode()
     result = 31 * result + synthetic.hashCode()
-    result = 31 * result + order
+    result = 31 * result + (order?.hashCode() ?: 0)
     result = 31 * result + (name?.hashCode() ?: 0)
     result = 31 * result + perPage
     result = 31 * result + pages

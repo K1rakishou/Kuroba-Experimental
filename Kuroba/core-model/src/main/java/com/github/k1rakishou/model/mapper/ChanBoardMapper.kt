@@ -17,12 +17,18 @@ object ChanBoardMapper {
       chanBoardFull.chanBoardIdEntity.boardCode
     )
 
+    val boardOrder = if (chanBoardFull.chanBoardEntity.boardOrder >= 0) {
+      chanBoardFull.chanBoardEntity.boardOrder
+    } else {
+      null
+    }
+
     return ChanBoard(
       boardDescriptor = boardDescriptor,
       active = chanBoardFull.chanBoardEntity.active,
       // We don't persist synthetic boards so we assume all boards coming from the DB are not synthetic
       synthetic = false,
-      order = chanBoardFull.chanBoardEntity.boardOrder,
+      order = boardOrder,
       name = chanBoardFull.chanBoardEntity.name,
       perPage = chanBoardFull.chanBoardEntity.perPage,
       pages = chanBoardFull.chanBoardEntity.pages,
@@ -51,10 +57,12 @@ object ChanBoardMapper {
   fun toChanBoardEntity(boardDatabaseId: Long, order: Int?, board: ChanBoard): ChanBoardEntity {
     require(!board.synthetic) { "Cannot persist synthetic boards! board: ${board}" }
 
+    val boardOrder = (order ?: board.order) ?: -1
+
     return ChanBoardEntity(
       ownerChanBoardId = boardDatabaseId,
       active = board.active,
-      boardOrder = order ?: board.order,
+      boardOrder = boardOrder,
       name = board.name,
       perPage = board.perPage,
       pages = board.pages,

@@ -24,7 +24,7 @@ data class ChanBoardEntity(
   @ColumnInfo(name = BOARD_ACTIVE_COLUMN_NAME)
   val active: Boolean = false,
   @ColumnInfo(name = BOARD_ORDER_COLUMN_NAME)
-  val boardOrder: Int = 0,
+  val boardOrder: Int = -1,
   @ColumnInfo(name = NAME_COLUMN_NAME)
   val name: String? = null,
   @ColumnInfo(name = PER_PAGE_COLUMN_NAME)
