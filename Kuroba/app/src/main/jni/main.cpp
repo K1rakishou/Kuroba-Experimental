@@ -33,7 +33,7 @@ mpv_handle *g_mpv;
 std::atomic<bool> g_event_thread_request_exit(false);
 
 // When updating the player code or anything related to it update this variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
-static int64_t player_version = 2;
+static int64_t player_version = 3;
 static pthread_t event_thread_id;
 
 static void prepare_environment(JNIEnv *env) {

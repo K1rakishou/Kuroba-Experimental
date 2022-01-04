@@ -3,14 +3,14 @@
 ## Dependency versions
 
 v_sdk=6609375_latest
-v_ndk=r23
-v_sdk_build_tools=29.0.2
+v_ndk=r23b
+v_sdk_build_tools=30.0.2
 
 v_lua=5.2.4
-v_harfbuzz=2.9.0
-v_fribidi=1.0.10
-v_freetype=2-11-0
-v_mbedtls=2.27.0
+v_harfbuzz=3.1.2
+v_fribidi=1.0.11
+v_freetype=2-11-1
+v_mbedtls=2.28.0
 
 
 ## Dependency tree

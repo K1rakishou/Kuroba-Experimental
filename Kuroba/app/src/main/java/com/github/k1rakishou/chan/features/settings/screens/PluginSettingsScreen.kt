@@ -282,10 +282,12 @@ class PluginSettingsScreen(
         val mpvCertFile = File(appConstants.mpvCertDir, AppConstants.MPV_CERTIFICATE_FILE_NAME)
 
         if (mpvCertFile.exists()) {
-          mpvCertFile.delete()
+          val deleteSuccess = mpvCertFile.delete()
+          Logger.d(TAG, "Deleting old cert file: ${mpvCertFile.absolutePath}, success: $deleteSuccess")
         }
 
-        mpvCertFile.createNewFile()
+        val createSuccess = mpvCertFile.createNewFile()
+        Logger.d(TAG, "Creating new cert file: ${mpvCertFile.absolutePath}, success: $createSuccess")
 
         mpvCertFile.outputStream().use { outputStream ->
           inputStream.copyTo(outputStream)
