@@ -186,7 +186,8 @@ class BookmarkForegroundWatcher(
       if (switchedToForegroundAt == null || (currentTime - switchedToForegroundAt) < REQUIRED_FOREGROUND_TIME_MS) {
         if (switchedToForegroundAt == null && attemptsBeforeShuttingDown.decrementAndGet() <= 0) {
           Logger.d(TAG, "updateBookmarksWorkerLoop() app haven't started up within the allowed attempts count. " +
-            "This is most likely because some service got started up. Shutting down the foreground watcher.")
+            "This is most likely because some service got started up, not the app itself. " +
+            "Shutting down the foreground watcher.")
           return
         }
 

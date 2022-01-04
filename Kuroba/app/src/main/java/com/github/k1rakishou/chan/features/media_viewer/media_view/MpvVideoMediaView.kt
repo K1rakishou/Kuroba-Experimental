@@ -18,7 +18,6 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
-import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.mpv.MPVView
 import com.github.k1rakishou.chan.core.mpv.MpvUtils
@@ -39,8 +38,6 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.updateHeight
-import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.github.k1rakishou.fsaf.file.RawFile
@@ -73,7 +70,7 @@ class MpvVideoMediaView(
   cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
   fileDataSourceFactory = fileDataSourceFactory,
   contentDataSourceFactory = contentDataSourceFactory,
-), WindowInsetsListener, MPVLib.EventObserver {
+), MPVLib.EventObserver {
 
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerViewContainer: FrameLayout
@@ -276,12 +273,7 @@ class MpvVideoMediaView(
   }
 
   override fun onInsetsChanged() {
-    mpvControlsBottomInset.updateHeight(globalWindowInsetsManager.bottom())
-
-    mpvControlsRoot.updatePaddings(
-      left = globalWindowInsetsManager.left(),
-      right = globalWindowInsetsManager.right()
-    )
+    // no-op
   }
 
   override fun preload() {
@@ -294,12 +286,9 @@ class MpvVideoMediaView(
         onThumbnailFullyLoadedFunc()
       }
     )
-
-    onInsetsChanged()
   }
 
   override fun bind() {
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
   }
 
   override fun show(isLifecycleChange: Boolean) {
@@ -331,7 +320,6 @@ class MpvVideoMediaView(
     thumbnailMediaView.unbind()
     closeMediaActionHelper.onDestroy()
 
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
     _hasContent = false
   }
 

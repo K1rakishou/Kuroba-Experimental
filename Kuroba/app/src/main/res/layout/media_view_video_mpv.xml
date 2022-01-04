@@ -34,7 +34,7 @@
         android:gravity="center_vertical"
         android:visibility="gone"/>
 
-    <LinearLayout
+    <com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
@@ -47,6 +47,6 @@
 
         <include layout="@layout/mpv_player_control_view" />
 
-    </LinearLayout>
+    </com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout>
 
 </FrameLayout>
