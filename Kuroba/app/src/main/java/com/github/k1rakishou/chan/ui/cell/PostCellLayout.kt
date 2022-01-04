@@ -93,7 +93,11 @@ open class PostCellLayout @JvmOverloads constructor(
     this.postAttentionLabel = postAttentionLabel
     this.imageFileName = imageFileName
 
-    val commentBottomPadding = vertPaddingPx * 2
+    val commentBottomPadding = if (replies.visibility == View.GONE) {
+      vertPaddingPx * 2
+    } else {
+      0
+    }
 
     icons.updatePaddings(top = vertPaddingPx)
     comment.updatePaddings(top = commentTopPadding, bottom = commentBottomPadding)
