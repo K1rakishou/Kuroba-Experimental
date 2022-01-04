@@ -401,7 +401,7 @@ public class MPVLib {
         public MismatchedVersionException(int playerVersion, int supportedVersion) {
             super("Mismatched libplayer.so and currently supported versions! libplayer.so version: " +
                     playerVersion + ", supported version: " + supportedVersion +
-                    ". You need to install the correct libplayer.so version which is " + supportedVersion);
+                    ". You need to install the correct libplayer.so version which is: " + supportedVersion);
         }
     }
 
