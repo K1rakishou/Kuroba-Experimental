@@ -80,6 +80,7 @@ data class PostCellData(
   private var postTitleStubPrecalculated: CharSequence? = null
   private var postTitlePrecalculated: CharSequence? = null
   private var postFileInfoPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
+  private var postFileInfoMapForThumbnailWrapperPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
   private var postFileInfoHashPrecalculated: MurmurHashUtils.Murmur3Hash? = null
   private var commentTextPrecalculated: CharSequence? = null
   private var catalogRepliesTextPrecalculated: CharSequence? = null
@@ -149,6 +150,9 @@ data class PostCellData(
   private val _postTitleStub = RecalculatableLazy { postTitleStubPrecalculated ?: calculatePostTitleStub() }
   private val _postTitle = RecalculatableLazy { postTitlePrecalculated ?: calculatePostTitle() }
   private val _postFileInfoMap = RecalculatableLazy { postFileInfoPrecalculated ?: calculatePostFileInfo() }
+  private val _postFileInfoMapForThumbnailWrapper = RecalculatableLazy {
+    postFileInfoMapForThumbnailWrapperPrecalculated ?: calculatePostFileInfoMapForThumbnailWrapper()
+  }
   private val _postFileInfoMapHash = RecalculatableLazy { postFileInfoHashPrecalculated ?: calculatePostFileInfoHash(_postFileInfoMap) }
   private val _commentText = RecalculatableLazy { commentTextPrecalculated ?: calculateCommentText() }
   private val _catalogRepliesText = RecalculatableLazy { catalogRepliesTextPrecalculated ?: calculateCatalogRepliesText() }
@@ -163,6 +167,8 @@ data class PostCellData(
     get() = _postTitleStub.value()
   val postFileInfoMap: Map<ChanPostImage, SpannableString>
     get() = _postFileInfoMap.value()
+  val postFileInfoMapForThumbnailWrapper: Map<ChanPostImage, SpannableString>
+    get() = _postFileInfoMapForThumbnailWrapper.value()
   val postFileInfoMapHash: MurmurHashUtils.Murmur3Hash
     get() = _postFileInfoMapHash.value()
   val commentText: CharSequence
@@ -183,6 +189,7 @@ data class PostCellData(
     postTitlePrecalculated = null
     postTitleStubPrecalculated = null
     postFileInfoPrecalculated = null
+    postFileInfoMapForThumbnailWrapperPrecalculated = null
     postFileInfoHashPrecalculated = null
     commentTextPrecalculated = null
     catalogRepliesTextPrecalculated = null
@@ -191,6 +198,7 @@ data class PostCellData(
     _postTitle.resetValue()
     _postTitleStub.resetValue()
     _postFileInfoMap.resetValue()
+    _postFileInfoMapForThumbnailWrapper.resetValue()
     _postFileInfoMapHash.resetValue()
     _commentText.resetValue()
     _catalogRepliesText.resetValue()
@@ -211,8 +219,10 @@ data class PostCellData(
 
   fun resetPostFileInfoCache() {
     postFileInfoPrecalculated = null
+    postFileInfoMapForThumbnailWrapperPrecalculated = null
     postFileInfoHashPrecalculated = null
     _postFileInfoMap.resetValue()
+    _postFileInfoMapForThumbnailWrapper.resetValue()
     _postFileInfoMapHash.resetValue()
   }
 
@@ -227,6 +237,7 @@ data class PostCellData(
     _postTitle.value()
     _postTitleStub.value()
     _postFileInfoMap.value()
+    _postFileInfoMapForThumbnailWrapper.value()
     _postFileInfoMapHash.value()
     _commentText.value()
     _catalogRepliesText.value()
@@ -591,6 +602,33 @@ data class PostCellData(
     return commentText
   }
 
+  private fun calculatePostFileInfoMapForThumbnailWrapper(): Map<ChanPostImage, SpannableString> {
+    val resultMap = mutableMapOf<ChanPostImage, SpannableString>()
+
+    postImages.forEach { postImage ->
+      resultMap[postImage] = buildSpannableString {
+        if (postImage.extension.isNotNullNorBlank()) {
+          append(postImage.extension!!.uppercase(Locale.ENGLISH))
+          append(" ")
+        }
+
+        if (postImage.imageWidth > 0 || postImage.imageHeight > 0) {
+          append("${postImage.imageWidth}x${postImage.imageHeight}")
+          append(" ")
+        }
+
+        val readableFileSize = ChanPostUtils.getReadableFileSize(postImage.size)
+          .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+        append(readableFileSize)
+
+        setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
+        setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)
+      }
+    }
+
+    return resultMap
+  }
+
   private fun calculatePostFileInfo(): Map<ChanPostImage, SpannableString> {
     val postFileInfoTextMap = calculatePostFileInfoInternal()
 
@@ -628,6 +666,12 @@ data class PostCellData(
     } else if (postImages.size > 1) {
       postImages.forEach { postImage ->
         resultMap[postImage] = buildSpannableString {
+          if (searchMode) {
+            append(postImage.formatFullAvailableFileName(appendExtension = false))
+            append(" ")
+            setSpan(UnderlineSpan(), 0, this.length, 0)
+          }
+
           if (postImage.extension.isNotNullNorBlank()) {
             append(postImage.extension!!.uppercase(Locale.ENGLISH))
             append(" ")

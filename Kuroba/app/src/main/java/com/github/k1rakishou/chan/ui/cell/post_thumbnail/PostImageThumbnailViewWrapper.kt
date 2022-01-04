@@ -57,7 +57,7 @@ class PostImageThumbnailViewWrapper(
     postCellData: PostCellData,
     chanPostImage: ChanPostImage
   ) {
-    val postFileInfo = postCellData.postFileInfoMap[chanPostImage]
+    val postFileInfo = postCellData.postFileInfoMapForThumbnailWrapper[chanPostImage]
     val imagesCount = postCellData.postImages.size
 
     if (
