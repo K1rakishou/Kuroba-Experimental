@@ -212,11 +212,18 @@ class PostCell @JvmOverloads constructor(
 
   override fun onAttachedToWindow() {
     super.onAttachedToWindow()
+
+    startPostTitleTimeUpdateJob()
+
     themeEngine.addListener(this)
   }
 
   override fun onDetachedFromWindow() {
     super.onDetachedFromWindow()
+
+    postTimeUpdaterJob?.cancel()
+    postTimeUpdaterJob = null
+
     themeEngine.removeListener(this)
   }
 
@@ -578,12 +585,16 @@ class PostCell @JvmOverloads constructor(
     postTimeUpdaterJob?.cancel()
     postTimeUpdaterJob = null
 
+    if (postCellData == null) {
+      return
+    }
+
     val postCellDataWeak = WeakReference(postCellData)
     val postCellWeak = WeakReference(this)
 
     postTimeUpdaterJob = scope.launch {
       coroutineScope {
-        while (isActive) {
+        while (isActive && isAttachedToWindow) {
           if (postCellDataWeak.get() == null || postCellDataWeak.get()?.postFullDate == true) {
             break
           }
