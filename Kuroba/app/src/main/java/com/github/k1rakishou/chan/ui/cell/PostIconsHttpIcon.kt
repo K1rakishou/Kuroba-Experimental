@@ -6,7 +6,6 @@ import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import coil.request.Disposable
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -36,10 +35,6 @@ class PostIconsHttpIcon(
   private val imageLoaderV2: Lazy<ImageLoaderV2>
 
   init {
-    require(context is StartActivity) {
-      "Bad context type! Must be StartActivity, actual: ${context.javaClass.simpleName}"
-    }
-
     this.context = context
     this.postIcons = postIcons
     this.name = name
