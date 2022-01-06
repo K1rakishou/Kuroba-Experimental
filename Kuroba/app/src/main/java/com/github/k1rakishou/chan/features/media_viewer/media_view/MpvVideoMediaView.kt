@@ -22,10 +22,11 @@ import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.mpv.MPVView
 import com.github.k1rakishou.chan.core.mpv.MpvUtils
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerActionStrip
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
@@ -33,6 +34,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.SimpleAnimatorListener
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
@@ -87,7 +89,7 @@ class MpvVideoMediaView(
   private val mpvControlsRoot: LinearLayout
   private val mpvControlsBottomInset: FrameLayout
   private val mpvErrorMessage: TextView
-  private val bottomActionStrip: MediaViewerBottomActionStrip
+  private val actionStrip: MediaViewerActionStrip
 
   private val closeMediaActionHelper: CloseMediaActionHelper
   private val gestureDetector: GestureDetector
@@ -103,8 +105,8 @@ class MpvVideoMediaView(
 
   override val hasContent: Boolean
     get() = _hasContent
-  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip?
-    get() = bottomActionStrip
+  override val mediaViewerActionStrip: MediaViewerActionStrip?
+    get() = actionStrip
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -131,7 +133,12 @@ class MpvVideoMediaView(
     mpvControlsBottomInset = findViewById(R.id.mpv_controls_insets_view)
     mpvSettings = findViewById(R.id.mpv_settings)
     mpvErrorMessage = findViewById(R.id.error_message)
-    bottomActionStrip = findViewById(R.id.bottom_action_strip)
+
+    if (isTablet()) {
+      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
+    } else {
+      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)
+    }
 
     mpvSettings.setOnClickListener { showMpvSettings() }
 

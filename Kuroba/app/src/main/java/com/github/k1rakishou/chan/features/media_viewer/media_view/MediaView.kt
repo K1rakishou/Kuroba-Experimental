@@ -19,12 +19,13 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.ChanPostBackgroundColorStorage
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerActionStrip
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStripCallbacks
 import com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingFrameLayoutNoBackground
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
@@ -58,7 +59,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   val mediaViewState: S
 ) : TouchBlockingFrameLayoutNoBackground(context, attributeSet, 0),
   MediaViewerToolbar.MediaViewerToolbarCallbacks,
-  MediaViewerBottomActionStrip.MediaViewerBottomActionStripCallbacks,
+  MediaViewerBottomActionStripCallbacks,
   AudioPlayerView.AudioPlayerCallbacks {
   abstract val viewableMedia: T
   abstract val pagerPosition: Int
@@ -103,7 +104,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     return@lazy findViewById<AudioPlayerView>(R.id.audio_player_view)
   }
 
-  abstract val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip?
+  abstract val mediaViewerActionStrip: MediaViewerActionStrip?
 
   val bound: Boolean
     get() = _bound
@@ -122,7 +123,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   }
 
   fun markMediaAsDownloaded() {
-    mediaViewerBottomActionStrip?.markMediaAsDownloaded()
+    mediaViewerActionStrip?.markMediaAsDownloaded()
   }
 
   fun onUpdateTransparency() {
@@ -178,7 +179,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar = mediaViewerToolbar
     this._mediaViewToolbar!!.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
-    this.mediaViewerBottomActionStrip?.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
+    this.mediaViewerActionStrip?.attach(mediaViewContract.viewerChanDescriptor, viewableMedia, this)
 
     if (audioPlayerView != null && mediaViewState.audioPlayerViewState != null) {
       audioPlayerView?.show(isLifecycleChange)
@@ -194,7 +195,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     this._mediaViewToolbar?.detach()
     this._mediaViewToolbar = null
 
-    this.mediaViewerBottomActionStrip?.detach()
+    this.mediaViewerActionStrip?.detach()
 
     if (audioPlayerView != null && mediaViewState.audioPlayerViewState != null) {
       audioPlayerView?.hide(
@@ -218,7 +219,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     _bound = false
     _preloadingCalled = false
     _mediaViewToolbar?.onDestroy()
-    mediaViewerBottomActionStrip?.onDestroy()
+    mediaViewerActionStrip?.onDestroy()
 
     if (audioPlayerView != null && mediaViewState.audioPlayerViewState != null) {
       audioPlayerView?.unbind()
@@ -248,17 +249,17 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     viewableMedia: ViewableMedia
   ) {
     mediaViewToolbar?.updateWithViewableMedia(currentIndex, totalMediaCount, viewableMedia)
-    mediaViewerBottomActionStrip?.updateWithViewableMedia(currentIndex, totalMediaCount, viewableMedia)
+    mediaViewerActionStrip?.updateWithViewableMedia(currentIndex, totalMediaCount, viewableMedia)
   }
 
   @CallSuper
   open fun onSystemUiVisibilityChanged(systemUIHidden: Boolean) {
     if (systemUIHidden) {
       mediaViewToolbar?.hide()
-      mediaViewerBottomActionStrip?.hide()
+      mediaViewerActionStrip?.hide()
     } else {
       mediaViewToolbar?.show()
-      mediaViewerBottomActionStrip?.show()
+      mediaViewerActionStrip?.show()
     }
 
     if (audioPlayerView != null && mediaViewState.audioPlayerViewState != null) {
@@ -311,13 +312,13 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
         return CloseMediaActionHelper.GestureInfo(
           gestureLabelText = AppModuleAndroidUtils.getString(R.string.download),
           isClosingMediaViewerGesture = false,
-          onGestureTriggeredFunc = { mediaViewerBottomActionStrip?.downloadMedia() },
+          onGestureTriggeredFunc = { mediaViewerActionStrip?.downloadMedia() },
           gestureCanBeExecuted = {
             if (!gestureCanBeExecuted(gestureSetting)) {
               return@GestureInfo false
             }
 
-            return@GestureInfo mediaViewerBottomActionStrip?.isDownloadAllowed() ?: false
+            return@GestureInfo mediaViewerActionStrip?.isDownloadAllowed() ?: false
           }
         )
       }

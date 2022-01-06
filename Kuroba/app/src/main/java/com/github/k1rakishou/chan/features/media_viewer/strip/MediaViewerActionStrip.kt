@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.media_viewer
+package com.github.k1rakishou.chan.features.media_viewer.strip
 
 import android.animation.ValueAnimator
 import android.content.Context
@@ -13,14 +13,16 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
+import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
+import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.utils.AnimationUtils.fadeIn
 import com.github.k1rakishou.chan.utils.AnimationUtils.fadeOut
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.collect
@@ -28,7 +30,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class MediaViewerBottomActionStrip @JvmOverloads constructor(
+abstract class MediaViewerActionStrip(
   context: Context,
   attributeSet: AttributeSet? = null
 ) : ConstraintLayout(context, attributeSet) {
@@ -36,18 +38,18 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
 
-  private val toolbarGoToPostButton: AppCompatImageButton
-  private val toolbarReloadButton: AppCompatImageButton
-  private val toolbarDownloadButton: AppCompatImageButton
-  private val toolbarPostRepliesButton: AppCompatImageButton
-  private val toolbarOptionsButton: AppCompatImageButton
+  private lateinit var toolbarGoToPostButton: AppCompatImageButton
+  private lateinit var toolbarReloadButton: AppCompatImageButton
+  private lateinit var toolbarDownloadButton: AppCompatImageButton
+  private lateinit var toolbarPostRepliesButton: AppCompatImageButton
+  private lateinit var toolbarOptionsButton: AppCompatImageButton
 
-  private val toolbarGoToPostButtonContainer: FrameLayout
-  private val toolbarReloadButtonContainer: FrameLayout
-  private val toolbarDownloadButtonContainer: FrameLayout
-  private val toolbarPostRepliesButtonContainer: FrameLayout
-  private val toolbarOptionsButtonContainer: FrameLayout
-  private val repliesCountTextView: TextView
+  private lateinit var toolbarGoToPostButtonContainer: FrameLayout
+  private lateinit var toolbarReloadButtonContainer: FrameLayout
+  private lateinit var toolbarDownloadButtonContainer: FrameLayout
+  private lateinit var toolbarPostRepliesButtonContainer: FrameLayout
+  private lateinit var toolbarOptionsButtonContainer: FrameLayout
+  private lateinit var repliesCountTextView: TextView
 
   private val scope = KurobaCoroutineScope()
   private val controllerViewModel by (context as ComponentActivity).viewModels<MediaViewerControllerViewModel>()
@@ -58,12 +60,7 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
   private var postRepliesProcessJob: Job? = null
   private var hideShowAnimation: ValueAnimator? = null
 
-  init {
-    AppModuleAndroidUtils.extractActivityComponent(context)
-      .inject(this)
-
-    inflate(context, R.layout.media_viewer_bottom_action_strip, this)
-
+  protected fun init() {
     toolbarGoToPostButton = findViewById(R.id.toolbar_go_to_post_button)
     toolbarReloadButton = findViewById(R.id.toolbar_reload_button)
     toolbarDownloadButton = findViewById(R.id.toolbar_download_button)
@@ -140,7 +137,7 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
     if (this.mediaViewerStripCallbacks != null) {
       return
     }
-    
+
     this.chanDescriptor = chanDescriptor
     this.currentViewableMedia = viewableMedia
     this.mediaViewerStripCallbacks = callbacks
@@ -170,6 +167,26 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
 
     this.mediaViewerStripCallbacks = null
     this.chanDescriptor = null
+  }
+
+  fun updateWithViewableMedia(pagerPosition: Int, totalPageItemsCount: Int, viewableMedia: ViewableMedia) {
+    // no-op
+  }
+
+  fun hide() {
+    hideShowAnimation = fadeOut(
+      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
+      animator = hideShowAnimation,
+      onEnd = { hideShowAnimation = null }
+    )
+  }
+
+  fun show() {
+    hideShowAnimation = fadeIn(
+      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
+      animator = hideShowAnimation,
+      onEnd = { hideShowAnimation = null }
+    )
   }
 
   fun onDestroy() {
@@ -256,33 +273,4 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
       }
     }
   }
-
-  fun updateWithViewableMedia(pagerPosition: Int, totalPageItemsCount: Int, viewableMedia: ViewableMedia) {
-    // no-op
-  }
-
-  fun hide() {
-    hideShowAnimation = fadeOut(
-      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
-      animator = hideShowAnimation,
-      onEnd = { hideShowAnimation = null }
-    )
-  }
-
-  fun show() {
-    hideShowAnimation = fadeIn(
-      duration = MediaViewerToolbar.ANIMATION_DURATION_MS,
-      animator = hideShowAnimation,
-      onEnd = { hideShowAnimation = null }
-    )
-  }
-
-  interface MediaViewerBottomActionStripCallbacks {
-    suspend fun reloadMedia()
-    suspend fun downloadMedia(isLongClick: Boolean): Boolean
-    fun onOptionsButtonClick()
-    fun onShowRepliesButtonClick(postDescriptor: PostDescriptor)
-    fun onGoToPostMediaClick(viewableMedia: ViewableMedia, postDescriptor: PostDescriptor)
-  }
-
 }

@@ -15,15 +15,17 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerCustomPlayerView
 import com.github.k1rakishou.chan.features.media_viewer.helper.ExoPlayerWrapper
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerActionStrip
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableProgressBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.ModularResult
@@ -66,7 +68,7 @@ class ExoPlayerVideoMediaView(
   private val actualVideoPlayerView: ExoPlayerCustomPlayerView
   private val bufferingProgressView: ColorizableProgressBar
   private val muteUnmuteButton: ImageButton
-  private val bottomActionStrip: MediaViewerBottomActionStrip
+  private val actionStrip: MediaViewerActionStrip
 
   private val mainVideoPlayer by lazy {
     ExoPlayerWrapper(
@@ -93,8 +95,8 @@ class ExoPlayerVideoMediaView(
 
   override val hasContent: Boolean
     get() = mainVideoPlayer.hasContent
-  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip?
-    get() = bottomActionStrip
+  override val mediaViewerActionStrip: MediaViewerActionStrip?
+    get() = actionStrip
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
@@ -106,7 +108,12 @@ class ExoPlayerVideoMediaView(
     thumbnailMediaView = findViewById(R.id.thumbnail_media_view)
     actualVideoPlayerView = findViewById(R.id.actual_video_view)
     bufferingProgressView = findViewById(R.id.buffering_progress_view)
-    bottomActionStrip = findViewById(R.id.bottom_action_strip)
+
+    if (isTablet()) {
+      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
+    } else {
+      actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)
+    }
 
     val placeholderView = findViewById<FrameLayout>(R.id.view_player_controls_placeholder)
     actualVideoPlayerView.setControllerPlaceholderView(placeholderView)

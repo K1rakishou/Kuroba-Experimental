@@ -10,9 +10,9 @@ import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
-import com.github.k1rakishou.chan.features.media_viewer.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.features.media_viewer.ViewableMedia
 import com.github.k1rakishou.chan.features.media_viewer.helper.CloseMediaActionHelper
+import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -50,7 +50,7 @@ class UnsupportedMediaView(
 
   override val hasContent: Boolean
     get() = false
-  override val mediaViewerBottomActionStrip: MediaViewerBottomActionStrip? = null
+  override val mediaViewerActionStrip: MediaViewerBottomActionStrip? = null
 
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
