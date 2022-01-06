@@ -91,8 +91,12 @@ public class ProgressRequestBody extends RequestBody {
             super.write(source, byteCount);
 
             if (bytesWritten == 0) {
-                // so we can know that the uploading has just started
-                listener.onRequestProgress(fileIndex, totalFiles, 0);
+                try {
+                    // so we can know that the uploading has just started
+                    listener.onRequestProgress(fileIndex, totalFiles, 0);
+                } catch (CancellationException cancellationException) {
+                    throw new IOException("Canceled");
+                }
             }
 
             bytesWritten += byteCount;
@@ -102,6 +106,9 @@ public class ProgressRequestBody extends RequestBody {
                 if (percent - lastPercent >= percentStep) {
                     lastPercent = percent;
 
+                    // OkHttp will explode if the listener throws anything other than IOException
+                    // so we need to wrap those exceptions into IOException. For now only
+                    // CancellationException was found to be thrown somewhere deep inside the listener.
                     try {
                         listener.onRequestProgress(fileIndex, totalFiles, percent);
                     } catch (CancellationException cancellationException) {

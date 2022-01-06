@@ -1,8 +1,12 @@
-package com.github.k1rakishou.chan.ui.layout.crashlogs
+package com.github.k1rakishou.chan.features.issues
 
 import java.io.File
 
-data class ReportFile(val file: File, val fileName: String, var markedToSend: Boolean) {
+data class ReportFile(
+  val file: File,
+  val fileName: String,
+  var markedToSend: Boolean
+) {
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true

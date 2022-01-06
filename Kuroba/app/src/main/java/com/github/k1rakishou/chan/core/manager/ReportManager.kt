@@ -7,8 +7,8 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.features.issues.ReportFile
 import com.github.k1rakishou.chan.ui.controller.LogsController
-import com.github.k1rakishou.chan.ui.layout.crashlogs.ReportFile
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils

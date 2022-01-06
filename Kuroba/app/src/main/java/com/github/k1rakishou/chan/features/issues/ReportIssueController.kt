@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.controller
+package com.github.k1rakishou.chan.features.issues
 
 import android.content.Context
 import androidx.compose.foundation.background
@@ -29,6 +29,8 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -40,8 +42,9 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
-class ReportProblemController(context: Context)
-  : Controller(context), WindowInsetsListener {
+class ReportIssueController(
+  context: Context
+) : Controller(context), WindowInsetsListener {
 
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -54,7 +57,6 @@ class ReportProblemController(context: Context)
   private val reportDescriptionState = mutableStateOf("")
   private val reportLogsState = mutableStateOf("")
   private val attachLogsState = mutableStateOf(true)
-
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)

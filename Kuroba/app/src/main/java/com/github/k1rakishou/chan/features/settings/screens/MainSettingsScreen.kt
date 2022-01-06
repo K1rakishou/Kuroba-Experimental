@@ -11,6 +11,8 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
+import com.github.k1rakishou.chan.features.issues.ReportIssueController
+import com.github.k1rakishou.chan.features.issues.ReviewReportFilesController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.CachingScreen
@@ -29,8 +31,6 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
-import com.github.k1rakishou.chan.ui.controller.ReportProblemController
-import com.github.k1rakishou.chan.ui.controller.crashlogs.ReviewReportFilesController
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
@@ -353,7 +353,8 @@ class MainSettingsScreen(
 
   private fun onReportSettingClick() {
     fun openReportProblemController() {
-      navigationController.pushController(ReportProblemController(context))
+      val reportProblemController = ReportIssueController(context = context)
+      navigationController.pushController(reportProblemController)
     }
 
     val crashLogsCount: Int = reportManager.countReportFiles()

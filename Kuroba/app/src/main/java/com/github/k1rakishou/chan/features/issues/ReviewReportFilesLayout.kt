@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.layout.crashlogs
+package com.github.k1rakishou.chan.features.issues
 
 import android.content.Context
 import android.widget.FrameLayout

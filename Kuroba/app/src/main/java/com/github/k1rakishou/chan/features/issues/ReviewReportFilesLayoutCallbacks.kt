@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.ui.layout.crashlogs
+package com.github.k1rakishou.chan.features.issues
 
 internal interface ReviewReportFilesLayoutCallbacks {
   fun onReportFileClicked(reportFile: ReportFile)
