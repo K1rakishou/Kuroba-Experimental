@@ -80,6 +80,9 @@ import io.reactivex.plugins.RxJavaPlugins
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineName
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.DEBUG_PROPERTY_NAME
+import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_OFF
+import kotlinx.coroutines.DEBUG_PROPERTY_VALUE_ON
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -97,10 +100,12 @@ import kotlin.system.exitProcess
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
 
-  private val job = SupervisorJob(null)
+  // Delay job creation here because we need to first set the kotlinx.coroutines.DEBUG_PROPERTY_NAME
+  private val job by lazy { SupervisorJob(null) }
   private lateinit var applicationScope: CoroutineScope
 
   private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
+    Logger.e(TAG, "Coroutine undeliverable exception", exception)
     onUnhandledException(exception, exceptionToString(UnhandlerExceptionHandlerType.Coroutines, exception))
   }
 
@@ -185,6 +190,12 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   override fun attachBaseContext(base: Context) {
     super.attachBaseContext(base)
 
+    val isDev = isDevBuild()
+    System.setProperty(
+      DEBUG_PROPERTY_NAME,
+      if (isDev) DEBUG_PROPERTY_VALUE_ON else DEBUG_PROPERTY_VALUE_OFF
+    )
+
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
     Logger.init(tagPrefix, isDevBuild())
@@ -226,8 +237,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
           .build()
       )
     }
-
-    System.setProperty("kotlinx.coroutines.debug", if (isDev) "on" else "off")
 
     val kurobaExUserAgent = buildString {
       append(getApplicationLabel())
@@ -379,9 +388,9 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       onUnhandledException(error, exceptionToString(UnhandlerExceptionHandlerType.RxJava, error))
     }
 
-    Thread.setDefaultUncaughtExceptionHandler { _, e ->
+    Thread.setDefaultUncaughtExceptionHandler { thread, e ->
       // if there's any uncaught crash stuff, just dump them to the log and exit immediately
-      Logger.e(TAG, "Unhandled exception", e)
+      Logger.e(TAG, "Unhandled exception in thread: ${thread.name}", e)
       onUnhandledException(e, exceptionToString(UnhandlerExceptionHandlerType.Normal, e))
       exitProcess(999)
     }

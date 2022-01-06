@@ -231,7 +231,8 @@ class ReplyPresenter @Inject constructor(
             callback.enableOrDisableReplyLayout()
           }
         }
-        is PostingStatus.Progress -> {
+        is PostingStatus.UploadingProgress,
+        is PostingStatus.Uploaded -> {
           // no-op
         }
         is PostingStatus.AfterPosting -> {

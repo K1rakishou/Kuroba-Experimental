@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.posting
 
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.Job
@@ -31,7 +32,7 @@ internal class ReplyInfo(
     get() = _status.value
   val statusUpdates: StateFlow<PostingStatus>
     get() = _status.asStateFlow()
-  val activeJob = AtomicReference<Job>(null)
+  private val activeJob = AtomicReference<Job>(null)
 
   val canceled: Boolean
     get() = activeJob.get() == null || _canceled.get()
@@ -57,13 +58,22 @@ internal class ReplyInfo(
   }
 
   @Synchronized
-  fun cancelReplyUpload() {
+  fun cancelReplyUpload(): Boolean {
+    if (!currentStatus.canCancel()) {
+      Logger.d(TAG, "cancelReplyUpload() can't cancel, status=${currentStatus}")
+      return false
+    }
+
+    Logger.d(TAG, "cancelReplyUpload() cancelling, status=${currentStatus}")
+
     _canceled.set(true)
     activeJob.get()?.cancel()
     activeJob.set(null)
     _lastError.set(null)
 
     _status.value = PostingStatus.Attached(chanDescriptor)
+
+    return true
   }
 
   @Synchronized
@@ -75,6 +85,17 @@ internal class ReplyInfo(
     enqueuedAt.set(System.currentTimeMillis())
 
     _status.value = PostingStatus.Enqueued(chanDescriptor)
+  }
+
+  @Synchronized
+  fun setJob(job: Job) {
+    if (!activeJob.compareAndSet(null, job)) {
+      job.cancel()
+    }
+  }
+
+  companion object {
+    private const val TAG = "ReplyInfo"
   }
 
 }

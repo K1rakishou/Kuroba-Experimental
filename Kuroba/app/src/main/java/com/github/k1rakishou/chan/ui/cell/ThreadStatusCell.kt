@@ -26,6 +26,7 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.ThrottlingCoroutineExecutor
@@ -211,7 +212,7 @@ class ThreadStatusCell(
     val chanThread = chanThreadManager.getChanThread(chanDescriptor)
       ?: return
 
-    val canUpdate = chanThread.canUpdateThread()
+    val canUpdate = ChanSettings.autoRefreshThread.get() && chanThread.canUpdateThread()
     val builder = SpannableStringBuilder()
       .apply { appendLine() }
 

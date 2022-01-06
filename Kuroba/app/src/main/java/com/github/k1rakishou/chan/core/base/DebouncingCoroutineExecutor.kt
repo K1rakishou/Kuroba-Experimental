@@ -60,14 +60,14 @@ class DebouncingCoroutineExecutor(
     }
   }
 
-  fun post(timeout: Long, func: suspend () -> Unit) {
+  fun post(timeout: Long, func: suspend () -> Unit): Boolean {
     require(timeout > 0L) { "Bad timeout!" }
 
     if (channel.isClosedForSend) {
-      return
+      return false
     }
 
-    channel.offer(Payload(counter.incrementAndGet(), timeout, func))
+    return channel.trySend(Payload(counter.incrementAndGet(), timeout, func)).isSuccess
   }
 
   // For tests. Most of the time you don't really need to call this.

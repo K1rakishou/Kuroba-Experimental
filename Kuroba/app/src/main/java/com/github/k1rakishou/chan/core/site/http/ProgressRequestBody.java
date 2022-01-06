@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site.http;
 
 import java.io.IOException;
+import java.util.concurrent.CancellationException;
 
 import okhttp3.MediaType;
 import okhttp3.RequestBody;
@@ -100,7 +101,12 @@ public class ProgressRequestBody extends RequestBody {
                 int percent = (int) (maxPercent * bytesWritten / contentLength());
                 if (percent - lastPercent >= percentStep) {
                     lastPercent = percent;
-                    listener.onRequestProgress(fileIndex, totalFiles, percent);
+
+                    try {
+                        listener.onRequestProgress(fileIndex, totalFiles, percent);
+                    } catch (CancellationException cancellationException) {
+                        throw new IOException("Canceled");
+                    }
                 }
             }
         }

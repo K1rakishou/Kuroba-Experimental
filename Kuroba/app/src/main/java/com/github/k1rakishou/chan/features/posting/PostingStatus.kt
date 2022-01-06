@@ -13,7 +13,21 @@ sealed class PostingStatus {
       is WaitingForAdditionalService,
       is BeforePosting,
       is Enqueued,
-      is Progress -> true
+      is UploadingProgress,
+      is Uploaded -> true
+    }
+  }
+
+  fun canCancel(): Boolean {
+    return when (this) {
+      is Attached,
+      is BeforePosting,
+      is Enqueued,
+      is WaitingForAdditionalService,
+      is WaitingForSiteRateLimitToPass -> true
+      is UploadingProgress -> toOverallPercent() < 0.9f
+      is Uploaded,
+      is AfterPosting -> false
     }
   }
 
@@ -42,7 +56,7 @@ sealed class PostingStatus {
     override val chanDescriptor: ChanDescriptor
   ) : PostingStatus()
 
-  data class Progress(
+  data class UploadingProgress(
     override val chanDescriptor: ChanDescriptor,
     val fileIndex: Int,
     val totalFiles: Int,
@@ -57,6 +71,10 @@ sealed class PostingStatus {
       return currentProgress / totalProgress
     }
   }
+
+  data class Uploaded(
+    override val chanDescriptor: ChanDescriptor,
+  ) : PostingStatus()
 
   data class AfterPosting(
     override val chanDescriptor: ChanDescriptor,

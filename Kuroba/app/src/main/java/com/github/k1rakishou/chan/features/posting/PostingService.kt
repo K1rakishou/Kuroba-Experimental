@@ -59,6 +59,8 @@ class PostingService : Service() {
     kurobaScope.launch {
       postingServiceDelegate.get().listenForMainNotificationUpdates()
         .collect { mainNotificationInfo ->
+          Logger.d(TAG, "mainNotificationUpdates() activeRepliesCount=${mainNotificationInfo.activeRepliesCount}")
+
           notificationManagerCompat.notify(
             NotificationConstants.POSTING_SERVICE_NOTIFICATION_ID,
             createMainNotification(mainNotificationInfo)
@@ -69,6 +71,9 @@ class PostingService : Service() {
     kurobaScope.launch {
       postingServiceDelegate.get().listenForChildNotificationUpdates()
         .collect { childNotificationInfo ->
+          Logger.d(TAG, "childNotificationUpdates() descriptor=${childNotificationInfo.chanDescriptor}, " +
+            "status=${childNotificationInfo.status}")
+
           val chanDescriptor = childNotificationInfo.chanDescriptor
           val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
@@ -84,7 +89,7 @@ class PostingService : Service() {
       postingServiceDelegate.get().listenForChildNotificationsToClose()
         .collect { chanDescriptor ->
           Logger.d(TAG, "cancelNotification($chanDescriptor)")
-          val notificationId = chanDescriptor.hashCode()
+          val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
           notificationManagerCompat.cancel(
             "${CHILD_NOTIFICATION_TAG}_${chanDescriptor.serializeToString()}",
@@ -162,6 +167,7 @@ class PostingService : Service() {
       is ChildNotificationInfo.Status.WaitingForSiteRateLimitToPass,
       is ChildNotificationInfo.Status.WaitingForAdditionalService -> R.drawable.ic_baseline_access_time_24
       is ChildNotificationInfo.Status.Uploading -> android.R.drawable.stat_sys_upload
+      is ChildNotificationInfo.Status.Uploaded -> android.R.drawable.stat_sys_upload_done
       is ChildNotificationInfo.Status.Posted -> android.R.drawable.stat_sys_upload_done
       ChildNotificationInfo.Status.Canceled -> R.drawable.ic_stat_notify
       is ChildNotificationInfo.Status.Error -> android.R.drawable.stat_sys_warning

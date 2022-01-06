@@ -13,10 +13,11 @@ data class ChildNotificationInfo(
   val canCancel: Boolean
     get() {
       return when (status) {
-        is Status.Uploading,
         is Status.WaitingForSiteRateLimitToPass,
         is Status.WaitingForAdditionalService,
         is Status.Preparing -> true
+        is Status.Uploading -> status.totalProgress < .9f
+        is Status.Uploaded,
         is Status.Error,
         is Status.Posted,
         Status.Canceled -> false
@@ -27,6 +28,7 @@ data class ChildNotificationInfo(
     get() {
       return when (status) {
         is Status.Uploading,
+        is Status.Uploaded,
         is Status.WaitingForSiteRateLimitToPass,
         is Status.WaitingForAdditionalService -> true
         is Status.Error,
@@ -56,6 +58,8 @@ data class ChildNotificationInfo(
     data class Uploading(
       val totalProgress: Float
     ) : Status("Uploading ${(totalProgress * 100f).toInt()}%...")
+
+    class Uploaded : Status("Uploaded")
 
     data class Posted(
       val chanDescriptor: ChanDescriptor

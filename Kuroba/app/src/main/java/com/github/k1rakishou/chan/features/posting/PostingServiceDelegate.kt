@@ -104,7 +104,15 @@ class PostingServiceDelegate(
 
     mutex.withLockNonCancellable {
       activeReplyDescriptors.values.forEach { replyInfo ->
-        replyInfo.cancelReplyUpload()
+        if (!replyInfo.cancelReplyUpload()) {
+          return@withLockNonCancellable
+        }
+
+        updateChildNotification(
+          chanDescriptor = replyInfo.chanDescriptor,
+          status = ChildNotificationInfo.Status.Canceled
+        )
+        _closeChildNotificationFlow.emit(replyInfo.chanDescriptor)
       }
 
       twoCaptchaSolver.get().cancelAll()
@@ -117,11 +125,17 @@ class PostingServiceDelegate(
     Logger.d(TAG, "cancel($chanDescriptor)")
 
     mutex.withLockNonCancellable {
-      val replyInfo = activeReplyDescriptors[chanDescriptor]
-
-      replyInfo?.cancelReplyUpload()
       twoCaptchaSolver.get().cancel(chanDescriptor)
 
+      val replyInfo = activeReplyDescriptors[chanDescriptor]
+      if (replyInfo != null && !replyInfo.cancelReplyUpload()) {
+        return@withLockNonCancellable
+      }
+
+      updateChildNotification(
+        chanDescriptor = chanDescriptor,
+        status = ChildNotificationInfo.Status.Canceled
+      )
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
 
@@ -172,13 +186,11 @@ class PostingServiceDelegate(
       Logger.d(TAG, "onNewReply($chanDescriptor)")
       updateMainNotification()
 
-      val job = supervisorScope {
-        appScope.launch { onNewReplyInternal(chanDescriptor) }
+      val job = appScope.launch {
+        supervisorScope { onNewReplyInternal(chanDescriptor) }
       }
 
-      readReplyInfo(chanDescriptor) {
-        activeJob.compareAndSet(null, job)
-      }
+      readReplyInfo(chanDescriptor) { setJob(job) }
     }
   }
 
@@ -192,11 +204,21 @@ class PostingServiceDelegate(
       if (error is CancellationException) {
         Logger.e(TAG, "Posting canceled $chanDescriptor")
 
+        updateChildNotification(
+          chanDescriptor = chanDescriptor,
+          status = ChildNotificationInfo.Status.Canceled
+        )
+
         readReplyInfo(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Canceled))
         }
       } else {
         Logger.e(TAG, "Unhandled exception", error)
+
+        updateChildNotification(
+          chanDescriptor = chanDescriptor,
+          status = ChildNotificationInfo.Status.Error(error.errorMessageOrClassName())
+        )
 
         readReplyInfo(chanDescriptor) {
           updateStatus(PostingStatus.AfterPosting(chanDescriptor, PostResult.Error(error)))
@@ -285,7 +307,8 @@ class PostingServiceDelegate(
         is PostingStatus.Attached,
         is PostingStatus.AfterPosting -> true
         is PostingStatus.Enqueued,
-        is PostingStatus.Progress,
+        is PostingStatus.UploadingProgress,
+        is PostingStatus.Uploaded,
         is PostingStatus.BeforePosting,
         is PostingStatus.WaitingForSiteRateLimitToPass,
         is PostingStatus.WaitingForAdditionalService -> false
@@ -659,23 +682,38 @@ class PostingServiceDelegate(
       .collect { postResult ->
         when (postResult) {
           is SiteActions.PostResult.UploadingProgress -> {
-            val status = PostingStatus.Progress(
+            val status = PostingStatus.UploadingProgress(
               chanDescriptor = chanDescriptor,
               fileIndex = postResult.fileIndex,
               totalFiles = postResult.totalFiles,
               percent = postResult.percent
             )
 
-            val uploadingStatus = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
-            updateChildNotification(chanDescriptor, uploadingStatus)
+            updateChildNotification(
+              chanDescriptor = chanDescriptor,
+              status = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
+            )
             readReplyInfo(chanDescriptor) { updateStatus(status) }
           }
           is SiteActions.PostResult.PostError -> {
             Logger.e(TAG, "SiteActions.PostResult.PostError($chanDescriptor) " +
                 "error: ${postResult.error.errorMessageOrClassName()}")
+
+            updateChildNotification(
+              chanDescriptor = chanDescriptor,
+              status = ChildNotificationInfo.Status.Uploaded()
+            )
+            readReplyInfo(chanDescriptor) { updateStatus(PostingStatus.Uploaded(chanDescriptor)) }
+
             emitTerminalEvent(chanDescriptor, PostResult.Error(postResult.error))
           }
           is SiteActions.PostResult.PostComplete -> {
+            updateChildNotification(
+              chanDescriptor = chanDescriptor,
+              status = ChildNotificationInfo.Status.Uploaded()
+            )
+            readReplyInfo(chanDescriptor) { updateStatus(PostingStatus.Uploaded(chanDescriptor)) }
+
             onPostComplete(chanDescriptor, postResult, actualPostResult)
           }
         }

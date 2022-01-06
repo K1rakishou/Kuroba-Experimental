@@ -23,6 +23,7 @@ import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -54,8 +55,29 @@ class HttpCallManager @Inject constructor(
       try {
         val requestBuilder = Request.Builder()
 
-        httpCall.setup(requestBuilder) { fileIndex, totalFiles, percent ->
-          offer(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
+        try {
+          httpCall.setup(requestBuilder) { fileIndex, totalFiles, percent ->
+            val sendResult = trySend(HttpCall.HttpCallWithProgressResult.Progress(fileIndex, totalFiles, percent))
+            if (sendResult.isSuccess) {
+              return@setup
+            }
+
+            if (sendResult.isClosed) {
+              throw CancellationException()
+            }
+
+            if (sendResult.isFailure) {
+              val exception = sendResult.exceptionOrNull()
+              if (exception != null) {
+                throw exception
+              }
+
+              error("trySend failed for unknown reason")
+            }
+          }
+        } catch (error: Throwable) {
+          send(HttpCall.HttpCallWithProgressResult.Fail(httpCall, error))
+          return@channelFlow
         }
 
         httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
