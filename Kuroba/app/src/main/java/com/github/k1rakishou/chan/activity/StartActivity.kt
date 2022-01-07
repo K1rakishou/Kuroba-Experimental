@@ -72,6 +72,7 @@ import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -550,11 +551,10 @@ class StartActivity : ControllerHostActivity(),
   }
 
   fun restartApp() {
-    val intent = Intent(this, StartActivity::class.java)
-    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+    val intent = packageManager.getLaunchIntentForPackage(packageName)
+    finishAffinity()
     startActivity(intent)
-    finish()
-    Runtime.getRuntime().exit(0)
+    exitProcess(0)
   }
 
   override fun fsafStartActivityForResult(intent: Intent, requestCode: Int) {
