@@ -43,7 +43,9 @@ fun ProvideChanTheme(
     }
 
     MaterialTheme(colors = updatedColors) {
-      content()
+      ProvideKurobaViewConfiguration {
+        content()
+      }
     }
   }
 }

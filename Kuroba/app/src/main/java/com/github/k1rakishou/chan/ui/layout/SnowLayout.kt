@@ -7,6 +7,7 @@ import android.graphics.Paint
 import android.os.SystemClock
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.widget.FrameLayout
 import androidx.core.graphics.ColorUtils
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -14,6 +15,7 @@ import androidx.lifecycle.LifecycleOwner
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.TimeUtils
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import kotlin.random.Random
 
 class SnowLayout @JvmOverloads constructor(
@@ -51,10 +53,14 @@ class SnowLayout @JvmOverloads constructor(
     super.onAttachedToWindow()
 
     if (isNewYearToday || isChristmasToday) {
+      setVisibilityFast(View.VISIBLE)
+
       setWillNotDraw(false)
       invalidate()
 
       (context as? LifecycleOwner)?.lifecycle?.addObserver(observer)
+    } else {
+      setVisibilityFast(View.GONE)
     }
   }
 
