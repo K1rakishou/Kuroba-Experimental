@@ -160,6 +160,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       }
 
       val mediaSize = viewableMediaMeta.mediaSize
+        ?.takeIf { mediaSize -> mediaSize > 0 }
         ?: viewableMediaMeta.mediaOnDiskSize
 
       if (mediaSize != null) {

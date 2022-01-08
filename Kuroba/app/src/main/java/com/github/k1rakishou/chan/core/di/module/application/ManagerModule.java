@@ -42,6 +42,7 @@ import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostHighlightFilterLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
+import com.github.k1rakishou.chan.core.loader.impl.ThirdEyeLoader;
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -90,6 +91,7 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelega
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
+import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeManager;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate;
@@ -259,18 +261,22 @@ public class ManagerModule {
             Lazy<PostExtraContentLoader> postExtraContentLoader,
             Lazy<Chan4CloudFlareImagePreloader> chan4CloudFlareImagePreloader,
             Lazy<PostHighlightFilterLoader> postHighlightFilterLoader,
+            Lazy<ThirdEyeLoader> thirdEyeLoader,
             ChanThreadManager chanThreadManager
     ) {
         Logger.deps("OnDemandContentLoaderManager");
-        kotlin.Lazy<HashSet<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(LazyThreadSafetyMode.SYNCHRONIZED, () -> {
-            HashSet<OnDemandContentLoader> loaders = new HashSet<>();
-            loaders.add(chan4CloudFlareImagePreloader.get());
-            loaders.add(prefetchLoader.get());
-            loaders.add(postExtraContentLoader.get());
-            loaders.add(postHighlightFilterLoader.get());
+        kotlin.Lazy<HashSet<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(
+                LazyThreadSafetyMode.SYNCHRONIZED,
+                () -> {
+                    HashSet<OnDemandContentLoader> loaders = new HashSet<>();
+                    loaders.add(chan4CloudFlareImagePreloader.get());
+                    loaders.add(prefetchLoader.get());
+                    loaders.add(postExtraContentLoader.get());
+                    loaders.add(postHighlightFilterLoader.get());
+                    loaders.add(thirdEyeLoader.get());
 
-            return loaders;
-        });
+                    return loaders;
+                });
 
         return new OnDemandContentLoaderManager(
                 appScope,
@@ -889,6 +895,19 @@ public class ManagerModule {
     public PostFilterHighlightManager providePostFilterHighlightManager() {
         Logger.deps("PostFilterHighlightManager");
         return new PostFilterHighlightManager();
+    }
+
+    @Singleton
+    @Provides
+    public ThirdEyeManager provideThirdEyeManager(
+            ChanThreadsCache chanThreadsCache
+    ) {
+        Logger.deps("ThirdEyeManager");
+
+        return new ThirdEyeManager(
+                ChanSettings.verboseLogs.get(),
+                chanThreadsCache
+        );
     }
 
 }

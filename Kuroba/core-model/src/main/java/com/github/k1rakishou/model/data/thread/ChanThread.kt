@@ -781,7 +781,7 @@ class ChanThread(
       chanPostId = oldChanPost.chanPostId,
       postDescriptor = oldChanPost.postDescriptor,
       repliesFrom = oldChanPost.repliesFrom,
-      postImages = mergePostImages(newChanPost.postImages, oldChanPost.postImages),
+      _postImages = mergePostImages(newChanPost.postImages, oldChanPost.postImages).toMutableList(),
       postIcons = newChanPost.postIcons,
       repliesTo = newChanPost.repliesTo,
       timestamp = newChanPost.timestamp,
@@ -886,7 +886,20 @@ class ChanThread(
       }
     }
 
-    return newPostImages
+    oldPostImages.forEach { oldPostImage ->
+      val alreadyContains = resultList.any { postImage ->
+        postImage.serverFilename == oldPostImage.serverFilename
+          && postImage.isInlined == oldPostImage.isInlined
+      }
+
+      if (alreadyContains) {
+        return@forEach
+      }
+
+      resultList += oldPostImage
+    }
+
+    return resultList
   }
 
   private fun handlePostContentLoadedMap(

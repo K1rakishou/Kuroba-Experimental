@@ -38,7 +38,7 @@ class ChanOriginalPost(
 ) : ChanPost(
   chanPostId,
   postDescriptor,
-  postImages,
+  postImages.toMutableList(),
   postIcons,
   repliesTo,
   timestamp,

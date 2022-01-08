@@ -516,7 +516,7 @@ class PostAdapter(
 
     when (postViewMode) {
       BoardPostViewMode.LIST -> {
-        if (postCellData.post.postImages.size <= 1) {
+        if (postCellData.imagesCount <= 1) {
           when (postAlignmentMode) {
             ChanSettings.PostAlignmentMode.AlignLeft -> {
               return PostCellData.PostCellItemViewType.TypePostZeroOrSingleThumbnailLeftAlignment.viewTypeRaw

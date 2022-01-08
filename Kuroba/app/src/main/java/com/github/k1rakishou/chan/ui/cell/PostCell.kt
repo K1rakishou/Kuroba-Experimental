@@ -441,14 +441,12 @@ class PostCell @JvmOverloads constructor(
 
     replies.setOnThrottlingClickListener {
       if (replies.visibility == VISIBLE) {
-        val post = postCellData.post
-
         if (postCellData.isViewingThread) {
-          if (post.repliesFromCount > 0) {
-            postCellCallback?.onShowPostReplies(post)
+          if (postCellData.repliesFromCount > 0) {
+            postCellCallback?.onShowPostReplies(postCellData.post)
           }
         } else {
-          postCellCallback?.onPreviewThreadPostsClicked(post)
+          postCellCallback?.onPreviewThreadPostsClicked(postCellData.post)
         }
       }
     }
@@ -464,7 +462,7 @@ class PostCell @JvmOverloads constructor(
     }
 
     this.setOnThrottlingClickListener(POST_CELL_ROOT_CLICK_TOKEN) {
-      postCellCallback?.onPostClicked(postCellData.post.postDescriptor)
+      postCellCallback?.onPostClicked(postCellData.postDescriptor)
     }
   }
 
@@ -599,7 +597,7 @@ class PostCell @JvmOverloads constructor(
             break
           }
 
-          val timeDelta = System.currentTimeMillis() - ((postCellDataWeak.get()?.post?.timestamp ?: 0) * 1000L)
+          val timeDelta = System.currentTimeMillis() - ((postCellDataWeak.get()?.timestamp ?: 0) * 1000L)
           val nextDelayMs = if (timeDelta <= 60_000L) {
             5_000L
           } else {
@@ -1301,8 +1299,7 @@ class PostCell @JvmOverloads constructor(
       if (linkable2 == null && linkable1 != null) {
         // regular, non-spoilered link
         if (postCellData != null) {
-          val post = postCellData!!.post
-          consumeEvent = fireCallback(post, linkable1)
+          consumeEvent = fireCallback(postCellData!!.post, linkable1)
         }
       } else if (linkable2 != null && linkable1 != null) {
         // spoilered link, figure out which span is the spoiler
@@ -1310,8 +1307,7 @@ class PostCell @JvmOverloads constructor(
           if (linkable1.isSpoilerVisible) {
             // linkable2 is the link and we're unspoilered
             if (postCellData != null) {
-              val post = postCellData!!.post
-              consumeEvent = fireCallback(post, linkable2)
+              consumeEvent = fireCallback(postCellData!!.post, linkable2)
             }
           } else {
             // linkable2 is the link and we're spoilered; don't do the click event
@@ -1322,8 +1318,7 @@ class PostCell @JvmOverloads constructor(
           if (linkable2.isSpoilerVisible) {
             // linkable 1 is the link and we're unspoilered
             if (postCellData != null) {
-              val post = postCellData!!.post
-              consumeEvent = fireCallback(post, linkable1)
+              consumeEvent = fireCallback(postCellData!!.post, linkable1)
             }
           } else {
             // linkable1 is the link and we're spoilered; don't do the click event
@@ -1334,8 +1329,7 @@ class PostCell @JvmOverloads constructor(
           // weird case where a double stack of linkables, but isn't spoilered
           // (some 4chan stickied posts)
           if (postCellData != null) {
-            val post = postCellData!!.post
-            consumeEvent = fireCallback(post, linkable1)
+            consumeEvent = fireCallback(postCellData!!.post, linkable1)
           }
         }
       }

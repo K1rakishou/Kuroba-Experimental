@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeManager
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
@@ -20,11 +21,12 @@ class ExtractPostMapInfoHolderUseCase(
   private val siteManager: SiteManager,
   private val chanThreadManager: ChanThreadManager,
   private val postFilterManager: PostFilterManager,
-  private val chanFilterManager: ChanFilterManager
+  private val chanFilterManager: ChanFilterManager,
+  private val thirdEyeManager: ThirdEyeManager
 ) : ISuspendUseCase<ExtractPostMapInfoHolderUseCase.Params, PostMapInfoHolder> {
 
   override suspend fun execute(parameter: Params): PostMapInfoHolder {
-    return withContext(Dispatchers.Default) {
+    return withContext(Dispatchers.IO) {
       val postDescriptors = parameter.postDescriptors
 
       val postsMap = chanThreadManager.getPosts(postDescriptors)
@@ -37,8 +39,57 @@ class ExtractPostMapInfoHolderUseCase(
         postFilterHighlightRanges = extractPostFilterHighlightsFromPostList(parameter),
         deletedPostsPositionRanges = extractDeletedPostsPositionsFromPostList(parameter, postsMap),
         hotPostsPositionRanges = extractHotPostsPositionsFromPostList(parameter, postsMap),
+        thirdEyePostsPositionRanges = extractThirdEyePostsPositionsFromPostList(parameter, postsMap)
       )
     }
+  }
+
+  private suspend fun extractThirdEyePostsPositionsFromPostList(
+    params: Params,
+    postsMap: Map<PostDescriptor, ChanPost>
+  ): List<PostMapInfoEntry> {
+    BackgroundUtils.ensureBackgroundThread()
+
+    if (!thirdEyeManager.isEnabled()) {
+      return emptyList()
+    }
+
+    val postDescriptors = params.postDescriptors
+    if (postDescriptors.isEmpty()) {
+      return emptyList()
+    }
+
+    val replyRanges: MutableList<PostMapInfoEntry> = ArrayList()
+    val duplicateChecker: MutableSet<Int> = HashSet()
+    var prevIndex = 0
+
+    for ((index, postDescriptor) in postDescriptors.withIndex()) {
+      if (!duplicateChecker.add(index)) {
+        continue
+      }
+
+      val post = postsMap[postDescriptor]
+        ?: continue
+
+      val postImages = post.postImages
+
+      val hasThirdEyeImageHash = postImages.any { chanPostImage ->
+        if (chanPostImage.isInlined) {
+          return@any false
+        }
+
+        return@any thirdEyeManager.extractThirdEyeHashOrNull(chanPostImage) != null
+      }
+
+      if (!hasThirdEyeImageHash) {
+        continue
+      }
+
+      connectRangesIfContiguous(prevIndex, index, replyRanges)
+      prevIndex = index
+    }
+
+    return replyRanges
   }
 
   private fun extractHotPostsPositionsFromPostList(
@@ -362,7 +413,8 @@ data class PostMapInfoHolder(
   val crossThreadQuotePositionRanges: List<PostMapInfoEntry> = emptyList(),
   val postFilterHighlightRanges: List<PostMapInfoEntry> = emptyList(),
   val deletedPostsPositionRanges: List<PostMapInfoEntry> = emptyList(),
-  val hotPostsPositionRanges: List<PostMapInfoEntry> = emptyList()
+  val hotPostsPositionRanges: List<PostMapInfoEntry> = emptyList(),
+  val thirdEyePostsPositionRanges: List<PostMapInfoEntry> = emptyList()
 ) {
 
   fun isEmpty(): Boolean {
@@ -372,6 +424,7 @@ data class PostMapInfoHolder(
       && postFilterHighlightRanges.isEmpty()
       && deletedPostsPositionRanges.isEmpty()
       && hotPostsPositionRanges.isEmpty()
+      && thirdEyePostsPositionRanges.isEmpty()
   }
 
   fun isTheSame(otherPostMapInfoHolder: PostMapInfoHolder): Boolean {
@@ -396,6 +449,10 @@ data class PostMapInfoHolder(
     }
 
     if (!rangesTheSame(hotPostsPositionRanges, otherPostMapInfoHolder.hotPostsPositionRanges)) {
+      return false
+    }
+
+    if (!rangesTheSame(thirdEyePostsPositionRanges, otherPostMapInfoHolder.thirdEyePostsPositionRanges)) {
       return false
     }
 

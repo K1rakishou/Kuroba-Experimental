@@ -132,7 +132,7 @@ class PrefetchLoader(
   }
 
   override fun cancelLoading(postLoaderData: PostLoaderData) {
-    return postLoaderData.disposeAll()
+    // no-op
   }
 
   private fun tryGetPrefetchBatch(

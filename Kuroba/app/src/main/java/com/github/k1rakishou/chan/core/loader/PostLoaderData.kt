@@ -8,6 +8,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 @DoNotStrip
 class PostLoaderData(
+  val catalogMode: Boolean,
   val postDescriptor: PostDescriptor,
   private val disposeFuncList: MutableList<() -> Unit> = mutableListOf()
 ) {

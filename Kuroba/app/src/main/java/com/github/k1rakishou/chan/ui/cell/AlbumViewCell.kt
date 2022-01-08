@@ -114,7 +114,12 @@ class AlbumViewCell @JvmOverloads constructor(
       ratio = 0f
     }
 
-    onDemandContentLoaderManager.get().onPostBind(postImage.ownerPostDescriptor)
+    val catalogMode = chanDescriptor is ICatalogDescriptor
+
+    onDemandContentLoaderManager.get().onPostBind(
+      postDescriptor = postImage.ownerPostDescriptor,
+      catalogMode = catalogMode
+    )
   }
 
   private fun bindThreadSubjectDetails(postImage: ChanPostImage, chanDescriptor: ChanDescriptor?): Boolean {

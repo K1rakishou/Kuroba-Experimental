@@ -128,7 +128,7 @@ object ChanPostEntityMapper {
       ChanPost(
         chanPostId = chanPostEntity.chanPostId,
         postDescriptor = postDescriptor,
-        postImages = postImages,
+        _postImages = postImages.toMutableList(),
         postIcons = postIcons,
         repliesTo = repliesTo,
         timestamp = chanPostEntity.timestamp,

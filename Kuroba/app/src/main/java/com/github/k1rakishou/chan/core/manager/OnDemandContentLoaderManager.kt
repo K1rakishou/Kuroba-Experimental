@@ -48,7 +48,7 @@ class OnDemandContentLoaderManager(
     scope = scope
   )
 
-  fun onPostBind(postDescriptor: PostDescriptor) {
+  fun onPostBind(postDescriptor: PostDescriptor, catalogMode: Boolean) {
     check(loaders.isNotEmpty()) { "No loaders!" }
 
     val chanDescriptor = postDescriptor.descriptor
@@ -62,7 +62,7 @@ class OnDemandContentLoaderManager(
         return@write null
       }
 
-      val postLoaderData = PostLoaderData(postDescriptor)
+      val postLoaderData = PostLoaderData(catalogMode, postDescriptor)
       activeLoaders[chanDescriptor]!![postDescriptor] = postLoaderData
       return@write postLoaderData
     }
@@ -134,7 +134,7 @@ class OnDemandContentLoaderManager(
       return null
     }
 
-    val allLoadersCached = loaders.all { loader -> loader.isCached(PostLoaderData(postDescriptor)) }
+    val allLoadersCached = loaders.all { loader -> loader.isCached(postLoaderData) }
 
     // Add some delay here to avoid visual glitches when quickly scrolling through posts
     // (Especially when using the fast scroller). In case when the post loader results are not

@@ -58,7 +58,7 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
     this.postCellThumbnailCallbacks = postCellThumbnailCallbacks
     cachedThumbnailViewContainerInfoArray[PRE_BIND].updateFrom(postCellData)
 
-    if (postCellData.post.postImages.isNotEmpty()) {
+    if (postCellData.postImages.isNotEmpty()) {
       this.setVisibilityFast(View.VISIBLE)
     } else {
       this.setVisibilityFast(View.GONE)
@@ -98,8 +98,8 @@ class PostImageThumbnailViewsContainer @JvmOverloads constructor(
 
   @Suppress("WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private fun bindMoreThanOneImage(postCellData: PostCellData) {
-    check(postCellData.post.postImages.size > 1) {
-      "Bad post images count: ${postCellData.post.postImages.size}"
+    check(postCellData.postImages.size > 1) {
+      "Bad post images count: ${postCellData.postImages.size}"
     }
 
     val prevChanPostImages = cachedThumbnailViewContainerInfoArray[BIND].prevChanPostImages

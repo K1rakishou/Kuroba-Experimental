@@ -103,7 +103,7 @@ object ChanPostMapper {
       return ChanPost(
         chanPostId = 0L,
         postDescriptor = postDescriptor,
-        postImages = chanPostBuilder.postImages,
+        _postImages = chanPostBuilder.postImages.toMutableList(),
         postIcons = chanPostBuilder.httpIcons,
         repliesTo = chanPostBuilder.repliesToIds,
         timestamp = chanPostBuilder.unixTimestampSeconds,

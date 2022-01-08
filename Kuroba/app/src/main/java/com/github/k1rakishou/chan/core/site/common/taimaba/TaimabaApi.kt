@@ -168,7 +168,7 @@ class TaimabaApi(
         .imageWidth(fileWidth)
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
-        .size(fileSize)
+        .imageSize(fileSize)
         .build()
 
       // Insert it at the beginning.
@@ -262,7 +262,7 @@ class TaimabaApi(
         .imageWidth(fileWidth)
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
-        .size(fileSize)
+        .imageSize(fileSize)
         .build()
     }
 

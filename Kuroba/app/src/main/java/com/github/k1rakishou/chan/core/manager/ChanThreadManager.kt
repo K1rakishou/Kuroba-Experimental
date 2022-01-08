@@ -313,14 +313,14 @@ class ChanThreadManager(
     return postsSet
   }
 
-  fun getPostImages(imageToGet: Collection<Pair<PostDescriptor, HttpUrl>>): List<ChanPostImage> {
-    if (imageToGet.isEmpty()) {
+  fun getPostImages(imagesToGet: Collection<Pair<PostDescriptor, HttpUrl>>): List<ChanPostImage> {
+    if (imagesToGet.isEmpty()) {
       return emptyList()
     }
 
     val postImages = mutableListOf<ChanPostImage>()
 
-    imageToGet.forEach { (postDescriptor, imageUrl) ->
+    imagesToGet.forEach { (postDescriptor, imageUrl) ->
       val chanPostImage = chanThreadsCache.getThread(postDescriptor.threadDescriptor())
         ?.getPostImage(postDescriptor, imageUrl)
 

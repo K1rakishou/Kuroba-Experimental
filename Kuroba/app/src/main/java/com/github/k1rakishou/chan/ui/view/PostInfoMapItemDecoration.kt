@@ -49,6 +49,11 @@ class PostInfoMapItemDecoration(
     alpha = DEFAULT_ALPHA
   }
 
+  private val thirdEyePostsPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+    color = context.resources.getColor(R.color.third_eye_post_color)
+    alpha = DEFAULT_ALPHA
+  }
+
   private val testPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
     color = Color.MAGENTA
     alpha = DEFAULT_ALPHA
@@ -114,6 +119,13 @@ class PostInfoMapItemDecoration(
       recyclerView,
       postInfoHolder.hotPostsPositionRanges,
       hotPostsPaint
+    )
+
+    drawRanges(
+      canvas,
+      recyclerView,
+      postInfoHolder.thirdEyePostsPositionRanges,
+      thirdEyePostsPaint
     )
   }
 

@@ -956,11 +956,16 @@ class ThreadPresenter @Inject constructor(
   override fun onPostBind(postCellData: PostCellData) {
     BackgroundUtils.ensureMainThread()
 
+    val currentDescriptor = currentChanDescriptor
+      ?: return
+
+    val catalogMode = currentDescriptor is ChanDescriptor.ICatalogDescriptor
+
     postBindExecutor.post {
       BackgroundUtils.ensureBackgroundThread()
 
       val postDescriptor = postCellData.postDescriptor
-      onDemandContentLoaderManager.onPostBind(postDescriptor)
+      onDemandContentLoaderManager.onPostBind(postDescriptor, catalogMode)
       seenPostsManager.onPostBind(postCellData.isViewingThread, postDescriptor)
       threadBookmarkViewPost(postCellData)
     }
@@ -1018,24 +1023,6 @@ class ThreadPresenter @Inject constructor(
 
   private fun onPostUpdatedWithNewContent(batchResult: LoaderBatchResult) {
     BackgroundUtils.ensureMainThread()
-
-    val isTheSameDescriptor = when (val descriptor = currentChanDescriptor) {
-      is ChanDescriptor.CatalogDescriptor -> {
-        descriptor.boardDescriptor == batchResult.postDescriptor.boardDescriptor()
-      }
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        descriptor.catalogDescriptors
-          .any { catalogDescriptor -> catalogDescriptor.boardDescriptor == batchResult.postDescriptor.boardDescriptor()}
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        descriptor == batchResult.postDescriptor.threadDescriptor()
-      }
-      null -> false
-    }
-
-    if (!isTheSameDescriptor) {
-      return
-    }
 
     if (threadPresenterCallback != null && needUpdatePost(batchResult)) {
       postUpdatesExecutor.post(item = batchResult.postDescriptor, timeout = 200) { collectedPostDescriptors ->

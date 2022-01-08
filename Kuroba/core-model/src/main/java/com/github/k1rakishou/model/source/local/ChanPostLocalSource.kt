@@ -184,8 +184,13 @@ class ChanPostLocalSource(
       chanPostIdEntities.flatMapIndexed { index, chanPostIdEntity ->
         val chanPost = chanPostList[index]
 
-        return@flatMapIndexed chanPost.postImages.map { postImage ->
-          ChanPostImageMapper.toEntity(chanPostIdEntity.postId, postImage)
+        return@flatMapIndexed chanPost.postImages.mapNotNull { postImage ->
+          if (postImage.isInlined) {
+            // Skip inlined images
+            return@mapNotNull null
+          }
+
+          return@mapNotNull ChanPostImageMapper.toEntity(chanPostIdEntity.postId, postImage)
         }
       }
     )

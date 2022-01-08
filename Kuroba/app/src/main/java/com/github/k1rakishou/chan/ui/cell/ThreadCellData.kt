@@ -50,11 +50,7 @@ class ThreadCellData(
   var defaultBoardPostViewMode: ChanSettings.BoardPostViewMode = ChanSettings.boardPostViewMode.get()
   var defaultMarkedNo: Long? = null
   var defaultSearchQuery = PostCellData.SearchQuery()
-
-  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int ->
-    true
-  }
-
+  var defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> true }
   var error: String? = null
   var lastSeenIndicatorPosition: Int = -1
 
@@ -272,6 +268,7 @@ class ThreadCellData(
         val postCellData = PostCellData(
           chanDescriptor = chanDescriptor,
           post = postIndexed.post,
+          postImages = postIndexed.post.postImages,
           postIndex = postIndexed.postIndex,
           postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
           textSizeSp = textSizeSp,

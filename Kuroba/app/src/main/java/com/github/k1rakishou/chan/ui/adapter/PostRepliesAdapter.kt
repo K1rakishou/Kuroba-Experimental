@@ -68,12 +68,7 @@ class PostRepliesAdapter(
   }
 
   override fun getItemId(position: Int): Long {
-    val post = threadCellData.getPostCellData(position).post
-    val repliesFromCount = post.repliesFromCount
-
-    return (repliesFromCount.toLong() shl 32) +
-      post.postNo() +
-      post.postSubNo()
+        return threadCellData.getPostCellData(position).hashForAdapter()
   }
 
   override fun onViewRecycled(holder: ReplyViewHolder) {

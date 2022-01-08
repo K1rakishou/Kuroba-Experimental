@@ -228,7 +228,7 @@ class FoolFuukaReadCatalogThreadsHelper {
       .extension(extension)
       .imageWidth(width)
       .imageHeight(height)
-      .size(actualFileSize)
+      .imageSize(actualFileSize)
       .fileHash(md5Base64, true)
       .build()
 

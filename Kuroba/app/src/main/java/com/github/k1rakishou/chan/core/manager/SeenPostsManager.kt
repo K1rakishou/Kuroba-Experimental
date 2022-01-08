@@ -55,8 +55,11 @@ class SeenPostsManager(
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
-      Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
-        "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      if (verboseLogsEnabled) {
+        Logger.d(TAG, "chanThreadsCache.chanThreadDeleteEventFlow() " +
+            "threadDeleteEvent=${threadDeleteEvent.javaClass.simpleName}")
+      }
+
       onThreadDeleteEventReceived(threadDeleteEvent)
     }
   }

@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
@@ -7,6 +8,7 @@ import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostHighlightFilterLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
+import com.github.k1rakishou.chan.core.loader.impl.ThirdEyeLoader;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.ExternalMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundCloudMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
@@ -18,6 +20,7 @@ import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterManager;
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
+import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeManager;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.repository.MediaServiceLinkExtraContentRepository;
 
@@ -50,6 +53,22 @@ public class LoaderModule {
                 chanThreadManager,
                 prefetchStateManager,
                 threadDownloadManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ThirdEyeLoader provideThirdEyeLoader(
+            Lazy<ThirdEyeManager> thirdEyeManager,
+            Lazy<ChanThreadManager> chanThreadManager,
+            Lazy<ProxiedOkHttpClient> proxiedOkHttpClient
+    ) {
+        Logger.deps("ThirdEyeLoader");
+
+        return new ThirdEyeLoader(
+                thirdEyeManager,
+                chanThreadManager,
+                proxiedOkHttpClient
         );
     }
 

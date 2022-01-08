@@ -334,7 +334,7 @@ class CardPostCell : ConstraintLayout,
       return
     }
 
-    val firstPostImage = postCellData.post.firstImage()
+    val firstPostImage = postCellData.firstImage
 
     if (firstPostImage == null || ChanSettings.textOnly.get()) {
       thumbView?.visibility = GONE
@@ -365,7 +365,7 @@ class CardPostCell : ConstraintLayout,
 
       callback?.onThumbnailLongClicked(
         this.postCellData!!.chanDescriptor,
-        this.postCellData!!.post.firstImage()!!
+        this.postCellData!!.firstImage!!
       )
       return@setImageLongClickListener true
     }
@@ -468,7 +468,7 @@ class CardPostCell : ConstraintLayout,
     comment.textSize = textSizeSp.toFloat()
     replies.textSize = textSizeSp.toFloat()
 
-    val hasIconWithName = postCellData.post.postIcons
+    val hasIconWithName = postCellData.postIcons
       .any { chanPostHttpIcon -> chanPostHttpIcon.iconName.isNotEmpty() }
 
     val postIconsCompactMode = isPostIconCompactModeSpanCount

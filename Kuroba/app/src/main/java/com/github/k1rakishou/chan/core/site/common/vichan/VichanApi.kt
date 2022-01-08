@@ -169,7 +169,7 @@ class VichanApi(
         .imageWidth(fileWidth)
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
-        .size(fileSize)
+        .imageSize(fileSize)
         .fileHash(fileHash, true)
         .build()
 
@@ -265,7 +265,7 @@ class VichanApi(
         .imageWidth(fileWidth)
         .imageHeight(fileHeight)
         .spoiler(fileSpoiler)
-        .size(fileSize)
+        .imageSize(fileSize)
         .fileHash(fileHash, true)
         .build()
     }

@@ -42,6 +42,7 @@ import java.util.*
 data class PostCellData(
   val chanDescriptor: ChanDescriptor,
   val post: ChanPost,
+  val postImages: List<ChanPostImage>,
   val postIndex: Int,
   val postCellDataWidthNoPaddings: Int,
   val textSizeSp: Int,
@@ -100,10 +101,12 @@ data class PostCellData(
     get() = post.postDescriptor
   val fullPostComment: CharSequence
     get() = post.postComment.comment()
-  val postImages: List<ChanPostImage>
-    get() = post.postImages
   val firstImage: ChanPostImage?
     get() = postImages.firstOrNull()
+  val imagesCount: Int
+    get() = postImages.size
+  val timestamp: Long
+    get() = post.timestamp
   val postIcons: List<ChanPostHttpIcon>
     get() = post.postIcons
   val isDeleted: Boolean
@@ -176,6 +179,11 @@ data class PostCellData(
   val catalogRepliesText
     get() = _catalogRepliesText.value()
 
+  fun hashForAdapter(): Long {
+    val repliesFromCount = post.repliesFromCount
+    return (repliesFromCount.toLong() shl 32) + post.postNo() + post.postSubNo()
+  }
+
   suspend fun recalculatePostTitle() {
     postTitlePrecalculated = null
 
@@ -247,6 +255,7 @@ data class PostCellData(
     return PostCellData(
       chanDescriptor = chanDescriptor,
       post = post,
+      postImages = postImages.toList(),
       postIndex = postIndex,
       postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
       textSizeSp = textSizeSp,
@@ -617,9 +626,11 @@ data class PostCellData(
           append(" ")
         }
 
-        val readableFileSize = ChanPostUtils.getReadableFileSize(postImage.size)
-          .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-        append(readableFileSize)
+        if (postImage.size > 0) {
+          val readableFileSize = ChanPostUtils.getReadableFileSize(postImage.size)
+            .replace(' ', StringUtils.UNBREAKABLE_SPACE_SYMBOL)
+          append(readableFileSize)
+        }
 
         setSpan(ForegroundColorSpanHashed(theme.postDetailsColor), 0, this.length, 0)
         setSpan(AbsoluteSizeSpanHashed(detailsSizePx), 0, this.length, 0)

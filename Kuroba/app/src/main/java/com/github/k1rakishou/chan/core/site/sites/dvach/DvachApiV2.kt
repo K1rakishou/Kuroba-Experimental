@@ -601,7 +601,7 @@ class DvachApiV2(
           .imageWidth(width)
           .imageHeight(height)
           // 2ch file size is in kB
-          .size(size * 1024)
+          .imageSize(size * 1024)
           .fileHash(md5, false)
           .build()
       }

@@ -505,7 +505,7 @@ open class LynxchanApi(
         .extension(extension)
         .imageWidth(width ?: 0)
         .imageHeight(height ?: 0)
-        .size(size)
+        .imageSize(size)
         .fileHash(fileHash, false)
         .build()
     }
