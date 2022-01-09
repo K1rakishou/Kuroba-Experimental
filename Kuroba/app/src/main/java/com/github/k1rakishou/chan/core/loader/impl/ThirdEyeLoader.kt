@@ -156,12 +156,17 @@ class ThirdEyeLoader(
       batchCount = 4,
       dispatcher = Dispatchers.IO
     ) { (imageHash, postImage) ->
-      val cachedImage = thirdEyeManager.imagesForPost(postDescriptor)
-      if (cachedImage != null) {
+      val cachedThirdEyeImage = thirdEyeManager.imageForPost(postDescriptor)
+      if (cachedThirdEyeImage != null) {
+        val chanPostImage = cachedThirdEyeImage.chanPostImage
+        if (chanPostImage == null) {
+          return@processDataCollectionConcurrently false
+        }
+
         val chanPost = chanThreadManager.getPost(postDescriptor)
           ?: return@processDataCollectionConcurrently false
 
-        chanPost.addImage(cachedImage)
+        chanPost.addImage(chanPostImage)
         return@processDataCollectionConcurrently true
       }
 
@@ -200,8 +205,9 @@ class ThirdEyeLoader(
             chanPost.addImage(thirdEyeImage)
             thirdEyeManager.addImage(
               catalogMode = catalogMode,
-              chanPostImage = thirdEyeImage,
-              postDescriptor = postDescriptor
+              postDescriptor = postDescriptor,
+              imageHash = imageHash,
+              chanPostImage = thirdEyeImage
             )
 
             // Image found
@@ -211,6 +217,15 @@ class ThirdEyeLoader(
           }
         }
       }
+
+      // No image found on the external sites. We still need to add info about it into the
+      // thirdEyeManager.
+      thirdEyeManager.addImage(
+        catalogMode = catalogMode,
+        postDescriptor = postDescriptor,
+        imageHash = imageHash,
+        chanPostImage = null
+      )
 
       Logger.d(TAG, "Nothing found imageHash='$imageHash'")
       return@processDataCollectionConcurrently false

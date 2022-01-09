@@ -54,6 +54,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -120,10 +121,32 @@ class PostImageThumbnailView @JvmOverloads constructor(
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
     if (thirdEyeManager.isEnabled()) {
-      scope.launch { markThirdEyeImage(postImage) }
+      listenForThirdEyeUpdates(postImage)
     }
 
     bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions)
+  }
+
+  private fun listenForThirdEyeUpdates(postImage: ChanPostImage) {
+    scope.launch {
+      checkAndInvalidate(postImage)
+
+      thirdEyeManager.thirdEyeImageAddedFlow.collect { postDescriptor ->
+        if (postImage.ownerPostDescriptor != postDescriptor) {
+          return@collect
+        }
+
+        checkAndInvalidate(postImage)
+      }
+    }
+  }
+
+  private suspend fun checkAndInvalidate(postImage: ChanPostImage) {
+    hasThirdEyeImage = withContext(Dispatchers.Default) {
+      thirdEyeManager.extractThirdEyeHashOrNull(postImage) != null
+    }
+
+    invalidate()
   }
 
   override fun unbindPostImage() {
@@ -178,14 +201,6 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
   fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
     return thumbnail.onThumbnailViewLongClicked(listener)
-  }
-
-  private suspend fun markThirdEyeImage(chanPostImage: ChanPostImage) {
-    hasThirdEyeImage = withContext(Dispatchers.Default) {
-      thirdEyeManager.extractThirdEyeHashOrNull(chanPostImage) != null
-    }
-
-    invalidate()
   }
 
   private fun bindPostImage(

@@ -12,6 +12,9 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -25,6 +28,10 @@ class ThirdEyeManager(
 
   @GuardedBy("mutex")
   private val additionalPostImages = mutableMapWithCap<PostDescriptor, ThirdEyeImage>(128)
+
+  private val _thirdEyeImageAddedFlow = MutableSharedFlow<PostDescriptor>(extraBufferCapacity = 32)
+  val thirdEyeImageAddedFlow: SharedFlow<PostDescriptor>
+    get() = _thirdEyeImageAddedFlow.asSharedFlow()
 
   private val thirdEyeSettingsLazy = LazySuspend<ThirdEyeSettings> {
     try {
@@ -70,8 +77,9 @@ class ThirdEyeManager(
 
   suspend fun addImage(
     catalogMode: Boolean,
-    chanPostImage: ChanPostImage,
-    postDescriptor: PostDescriptor
+    postDescriptor: PostDescriptor,
+    imageHash: String,
+    chanPostImage: ChanPostImage?
   ) {
     mutex.withLock {
       val thirdEyeImage = additionalPostImages.getOrPut(
@@ -79,8 +87,10 @@ class ThirdEyeManager(
         defaultValue = {
           return@getOrPut ThirdEyeImage(
             chanPostImage = chanPostImage,
+            imageHash = imageHash,
             processedForCatalog = false,
-            processedForThread = false)
+            processedForThread = false
+          )
         }
       )
 
@@ -92,10 +102,12 @@ class ThirdEyeManager(
 
       additionalPostImages[postDescriptor] = thirdEyeImage
     }
+
+    _thirdEyeImageAddedFlow.emit(postDescriptor)
   }
 
-  suspend fun imagesForPost(postDescriptor: PostDescriptor): ChanPostImage? {
-    return mutex.withLock { additionalPostImages[postDescriptor]?.chanPostImage }
+  suspend fun imageForPost(postDescriptor: PostDescriptor): ThirdEyeImage? {
+    return mutex.withLock { additionalPostImages[postDescriptor] }
   }
 
   suspend fun extractThirdEyeHashOrNull(postImage: ChanPostImage): String? {
@@ -110,6 +122,19 @@ class ThirdEyeManager(
     val imageOriginalFileName = postImage.filename
     if (imageOriginalFileName.isNullOrEmpty()) {
       return null
+    }
+
+    val postDescriptor = postImage.ownerPostDescriptor
+
+    val cachedThirdEyeImage = mutex.withLock { additionalPostImages[postDescriptor] }
+    if (cachedThirdEyeImage != null) {
+      if (cachedThirdEyeImage.chanPostImage == null) {
+        // We found an image hash that is matched by one of the sites but failed to find the image
+        // on either of the sites so skip it
+        return null
+      }
+
+      return cachedThirdEyeImage.imageHash
     }
 
     val thirdEyeSettings = thirdEyeSettingsLazy.value()
@@ -191,7 +216,8 @@ class ThirdEyeManager(
   }
 
   data class ThirdEyeImage(
-    val chanPostImage: ChanPostImage,
+    val chanPostImage: ChanPostImage?,
+    val imageHash: String,
     var processedForCatalog: Boolean,
     var processedForThread: Boolean
   )
