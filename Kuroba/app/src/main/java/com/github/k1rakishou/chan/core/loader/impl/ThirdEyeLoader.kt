@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeManager
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.traverseJson
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -315,10 +316,12 @@ class ThirdEyeLoader(
     )
 
     try {
-      parseJsonInternal(
-        imageHash = imageHash,
-        jsonReader = jsonReader,
-        namesToCheck = namesToCheck,
+      jsonReader.traverseJson(
+        visitor = { name, value ->
+          if (namesToCheck.containsKey(name)) {
+            namesToCheck[name] = value
+          }
+        },
         jsonDebugOutput = null
       )
     } catch (error: Throwable) {
@@ -382,190 +385,6 @@ class ThirdEyeLoader(
     }
 
     return chanPostImageBuilder.build()
-  }
-
-  @Suppress("BlockingMethodInNonBlockingContext")
-  private fun parseJsonInternal(
-    imageHash: String,
-    jsonReader: JsonReader,
-    namesToCheck: MutableMap<String?, String?>,
-    jsonDebugOutput: StringBuilder? = null
-  ) {
-    var prevToken: JsonReader.Token? = null
-
-    while (jsonReader.hasNext()) {
-      val token = jsonReader.peek()
-
-      when (token) {
-        JsonReader.Token.BEGIN_ARRAY -> {
-          jsonDebugOutput?.append("[")
-
-          jsonReader.beginArray()
-          parseJsonInternal(imageHash, jsonReader, namesToCheck, jsonDebugOutput)
-          jsonReader.endArray()
-
-          jsonDebugOutput?.append("]")
-        }
-        JsonReader.Token.BEGIN_OBJECT -> {
-          val needAddComma = prevToken == JsonReader.Token.BEGIN_OBJECT
-
-          if (needAddComma) {
-            jsonDebugOutput?.append(",{")
-          } else {
-            jsonDebugOutput?.append("{")
-          }
-
-          jsonReader.beginObject()
-          parseJsonInternal(imageHash, jsonReader, namesToCheck, jsonDebugOutput)
-          jsonReader.endObject()
-
-          jsonDebugOutput?.append("}")
-        }
-        JsonReader.Token.END_ARRAY -> error("END_ARRAY must be unreachable")
-        JsonReader.Token.END_OBJECT -> error("END_OBJECT must be unreachable")
-        null -> {
-          Logger.d(TAG, "skipping ${token}")
-          jsonReader.skipValue()
-          return
-        }
-        JsonReader.Token.END_DOCUMENT -> {
-          Logger.d(TAG, "END_DOCUMENT")
-          jsonDebugOutput?.appendLine()
-          return
-        }
-        JsonReader.Token.NAME -> {
-          val name = jsonReader.nextName()
-          val valueToken = jsonReader.peek()
-
-          val needAddComma = if (prevToken != null) {
-            when (token) {
-              JsonReader.Token.NAME,
-              JsonReader.Token.STRING,
-              JsonReader.Token.NUMBER,
-              JsonReader.Token.BOOLEAN,
-              JsonReader.Token.END_OBJECT,
-              JsonReader.Token.NULL -> true
-              JsonReader.Token.BEGIN_ARRAY,
-              JsonReader.Token.END_ARRAY,
-              JsonReader.Token.BEGIN_OBJECT,
-              JsonReader.Token.END_DOCUMENT,
-              null -> false
-            }
-          } else {
-            false
-          }
-
-          if (needAddComma) {
-            jsonDebugOutput?.append(",\"$name\":")
-          } else {
-            jsonDebugOutput?.append("\"$name\":")
-          }
-
-          when (valueToken) {
-            JsonReader.Token.STRING,
-            JsonReader.Token.NUMBER,
-            JsonReader.Token.BOOLEAN,
-            JsonReader.Token.NULL -> {
-              parseJsonValue(valueToken, jsonDebugOutput, name, jsonReader, namesToCheck)
-            }
-            JsonReader.Token.BEGIN_ARRAY,
-            JsonReader.Token.END_ARRAY,
-            JsonReader.Token.BEGIN_OBJECT,
-            JsonReader.Token.END_OBJECT -> {
-              parseJsonInternal(imageHash, jsonReader, namesToCheck, jsonDebugOutput)
-            }
-            JsonReader.Token.NAME,
-            JsonReader.Token.END_DOCUMENT -> error("Unreachable!")
-            null -> error("Token is null!")
-          }
-        }
-        JsonReader.Token.STRING,
-        JsonReader.Token.NUMBER,
-        JsonReader.Token.BOOLEAN,
-        JsonReader.Token.NULL -> error("Unreachable!")
-      }
-
-      prevToken = token
-    }
-  }
-
-  private fun parseJsonValue(
-    valueToken: JsonReader.Token,
-    jsonOutput: StringBuilder?,
-    name: String?,
-    jsonReader: JsonReader,
-    namesToCheck: MutableMap<String?, String?>
-  ) {
-    when (valueToken) {
-      JsonReader.Token.STRING -> {
-        val value = jsonReader.nextString()
-        jsonOutput?.append("\"$value\"")
-
-        if (name != null && namesToCheck.containsKey(name)) {
-          namesToCheck[name] = value
-        }
-      }
-      JsonReader.Token.NUMBER -> {
-        val value = parseNumber(jsonReader)
-        jsonOutput?.append("$value")
-
-        if (name != null && namesToCheck.containsKey(name)) {
-          namesToCheck[name] = value
-        }
-      }
-      JsonReader.Token.BOOLEAN -> {
-        val value = jsonReader.nextBoolean().toString()
-        jsonOutput?.append("$value")
-
-        if (name != null && namesToCheck.containsKey(name)) {
-          namesToCheck[name] = value
-        }
-      }
-      JsonReader.Token.NULL -> {
-        val value = jsonReader.nextNull<String>()
-        jsonOutput?.append("$value")
-
-        if (name != null && namesToCheck.containsKey(name)) {
-          namesToCheck[name] = value
-        }
-      }
-      else -> error("Unreachable!")
-    }
-  }
-
-  private fun parseNumber(jsonReader: JsonReader): String? {
-    val asInt = try {
-      jsonReader.nextInt()
-    } catch (error: Throwable) {
-      null
-    }
-
-    if (asInt != null) {
-      return asInt.toString()
-    }
-
-    val asLong = try {
-      jsonReader.nextLong()
-    } catch (error: Throwable) {
-      null
-    }
-
-    if (asLong != null) {
-      return asLong.toString()
-    }
-
-    val asDouble = try {
-      jsonReader.nextDouble()
-    } catch (error: Throwable) {
-      null
-    }
-
-    if (asDouble != null) {
-      return asDouble.toString()
-    }
-
-    jsonReader.skipValue()
-    return null
   }
 
   companion object {
