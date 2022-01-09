@@ -214,7 +214,7 @@ open class ViewThreadController(
         R.string.action_go_to_post,
         isDevBuild()
       ) { item -> onGoToPostClicked(item) }
-      .withThreadOptions()
+      .withMoreThreadOptions()
       .withSubItem(
         ACTION_SCROLL_TO_TOP,
         R.string.action_scroll_to_top
@@ -229,9 +229,9 @@ open class ViewThreadController(
       .build()
   }
 
-  private fun NavigationItem.MenuOverflowBuilder.withThreadOptions(): NavigationItem.MenuOverflowBuilder {
+  private fun NavigationItem.MenuOverflowBuilder.withMoreThreadOptions(): NavigationItem.MenuOverflowBuilder {
     return withNestedOverflow(
-      ACTION_THREAD_OPTIONS,
+      ACTION_THREAD_MORE_OPTIONS,
       R.string.action_thread_options,
       true
     )
@@ -276,6 +276,13 @@ open class ViewThreadController(
         true,
         ChanSettings.markHotPostsOnScrollbar.get(),
         ACTION_MARK_HOT_POSTS_ON_SCROLLBAR
+      ) { item -> onScrollbarLabelingOptionClicked(item) }
+      .addNestedCheckableItem(
+        ACTION_GLOBAL_NSFW_MODE,
+        R.string.action_catalog_thread_nsfw_mode,
+        true,
+        ChanSettings.globalNsfwMode.get(),
+        ACTION_GLOBAL_NSFW_MODE
       ) { item -> onScrollbarLabelingOptionClicked(item) }
       .build()
   }
@@ -459,6 +466,10 @@ open class ViewThreadController(
       ACTION_MARK_HOT_POSTS_ON_SCROLLBAR -> {
         item as CheckableToolbarMenuSubItem
         item.isChecked = ChanSettings.markHotPostsOnScrollbar.toggle()
+      }
+      ACTION_GLOBAL_NSFW_MODE -> {
+        item as CheckableToolbarMenuSubItem
+        item.isChecked = ChanSettings.globalNsfwMode.toggle()
       }
       else -> throw IllegalStateException("Unknown clickedItemId $clickedItemId")
     }
@@ -804,7 +815,7 @@ open class ViewThreadController(
     private const val ACTION_OPEN_BROWSER = 9007
     private const val ACTION_SHARE = 9008
     private const val ACTION_GO_TO_POST = 9009
-    private const val ACTION_THREAD_OPTIONS = 9010
+    private const val ACTION_THREAD_MORE_OPTIONS = 9010
     private const val ACTION_SCROLL_TO_TOP = 9011
     private const val ACTION_SCROLL_TO_BOTTOM = 9012
     private const val ACTION_DOWNLOAD_THREAD = 9013
@@ -815,5 +826,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_CROSS_THREAD_REPLIES_ON_SCROLLBAR = 9103
     private const val ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR = 9104
     private const val ACTION_MARK_HOT_POSTS_ON_SCROLLBAR = 9105
+    private const val ACTION_GLOBAL_NSFW_MODE = 9106
   }
 }

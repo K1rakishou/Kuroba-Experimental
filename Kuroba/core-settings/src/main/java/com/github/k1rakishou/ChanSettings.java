@@ -290,11 +290,6 @@ public class ChanSettings {
     public static BooleanSetting anonymize;
     public static BooleanSetting showAnonymousName;
     public static BooleanSetting anonymizeIds;
-    public static BooleanSetting markYourPostsOnScrollbar;
-    public static BooleanSetting markRepliesToYourPostOnScrollbar;
-    public static BooleanSetting markCrossThreadQuotesOnScrollbar;
-    public static BooleanSetting markDeletedPostsOnScrollbar;
-    public static BooleanSetting markHotPostsOnScrollbar;
     public static BooleanSetting shiftPostComment;
     public static BooleanSetting forceShiftPostComment;
     public static BooleanSetting postMultipleImagesCompactMode;
@@ -415,8 +410,6 @@ public class ChanSettings {
     // While not a setting, the last image options selected should be persisted even after import.
     public static StringSetting lastImageOptions;
 
-    // While these are not "settings", they are here instead of in PersistableChanState because they
-    // control the appearance of hints. Hints should not be shown if re-imported.
     public static CounterSetting historyOpenCounter;
     public static CounterSetting threadOpenCounter;
     public static IntegerSetting drawerAutoOpenCount;
@@ -437,6 +430,12 @@ public class ChanSettings {
     public static BooleanSetting drawerDeleteBookmarksWhenDeletingNavHistory;
     public static BooleanSetting drawerDeleteNavHistoryWhenBookmarkDeleted;
     public static BooleanSetting isLowRamDeviceForced;
+    public static BooleanSetting markYourPostsOnScrollbar;
+    public static BooleanSetting markRepliesToYourPostOnScrollbar;
+    public static BooleanSetting markCrossThreadQuotesOnScrollbar;
+    public static BooleanSetting markDeletedPostsOnScrollbar;
+    public static BooleanSetting markHotPostsOnScrollbar;
+    public static BooleanSetting globalNsfwMode;
     //endregion
     //endregion
 
@@ -728,6 +727,7 @@ public class ChanSettings {
             );
             drawerDeleteBookmarksWhenDeletingNavHistory = new BooleanSetting(provider, "drawer_delete_bookmarks_when_deleting_nav_history", false);
             drawerDeleteNavHistoryWhenBookmarkDeleted = new BooleanSetting(provider, "drawer_delete_nav_history_when_bookmark_deleted", false);
+            globalNsfwMode = new BooleanSetting(provider, "global_nsfw_mode", false);
         } catch (Throwable error) {
             // If something crashes while the settings are initializing we at least will have the
             // stacktrace. Otherwise we won't because of Feather.

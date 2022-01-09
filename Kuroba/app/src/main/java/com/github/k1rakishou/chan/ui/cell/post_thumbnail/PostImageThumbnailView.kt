@@ -18,11 +18,14 @@ package com.github.k1rakishou.chan.ui.cell.post_thumbnail
 
 import android.content.Context
 import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.Rect
 import android.text.TextUtils
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import android.widget.TextView
+import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.withTranslation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -56,6 +59,7 @@ import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.reactive.asFlow
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
@@ -91,6 +95,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
   private val compositeDisposable = CompositeDisposable()
   private var segmentedCircleDrawable: SegmentedCircleDrawable? = null
   private var hasThirdEyeImage: Boolean = false
+  private var nsfwMode: Boolean = false
 
   private val prefetchStateManager: PrefetchStateManager
     get() = _prefetchStateManager.get()
@@ -120,6 +125,17 @@ class PostImageThumbnailView @JvmOverloads constructor(
     canUseHighResCells: Boolean,
     thumbnailViewOptions: ThumbnailViewOptions
   ) {
+    this.nsfwMode = ChanSettings.globalNsfwMode.get()
+
+    scope.launch {
+      ChanSettings.globalNsfwMode.listenForChanges().asFlow().collect { isNsfwModeEnabled ->
+        if (nsfwMode != isNsfwModeEnabled) {
+          nsfwMode = isNsfwModeEnabled
+          invalidate()
+        }
+      }
+    }
+
     if (thirdEyeManager.isEnabled()) {
       listenForThirdEyeUpdates(postImage)
     }
@@ -395,6 +411,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
         segmentedCircleDrawable!!.draw(canvas)
       }
     }
+
+    if (nsfwMode) {
+      canvas.drawRect(0f, 0f, width.toFloat(), height.toFloat(), nsfwModePaint)
+    }
   }
 
   override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -426,6 +446,12 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
     private val playIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_play_circle_outline_white_24dp)
     private val thirdEyeIcon = AppModuleAndroidUtils.getDrawable(R.drawable.ic_baseline_eye_24)
+
+    private val nsfwModePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = ColorUtils.setAlphaComponent(Color.DKGRAY, 225)
+      style = Paint.Style.FILL
+    }
+
   }
 
 }

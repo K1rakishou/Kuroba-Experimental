@@ -153,7 +153,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_board_archive">View board archive</string>
     <string name="action_open_catalog_page">Open catalog page</string>
     <string name="action_go_to_post">Go to post</string>
-    <string name="action_thread_options">Thread options</string>
+    <string name="action_thread_options">More options</string>
     <string name="action_allow_image_transparency">Allow image transparency</string>
     <string name="action_draw_behind_notch">Draw media content behind phone notch/system UI</string>
     <string name="action_search">Search</string>
@@ -185,6 +185,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
     <string name="action_mark_deleted_posts_on_scrollbar">Highlight deleted posts</string>
     <string name="action_mark_hot_posts_on_scrollbar">Highlight \"Hot\" posts</string>
+    <string name="action_catalog_thread_nsfw_mode">Catalog/Thread NSFW mode</string>
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
 
     <string name="action_scroll_to_top">Top</string>
