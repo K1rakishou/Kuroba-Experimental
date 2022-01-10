@@ -1513,15 +1513,15 @@ Actual error: \'%1$s\'</string>
     <string name="third_eye_settings_controller_image_height_key">Image height json key</string>
     <string name="third_eye_settings_controller_image_tags_key">Image tags json key</string>
     <string name="third_eye_settings_controller_image_banned_tags">Banned tags</string>
-    <string name="third_eye_add_site_controller_image_name_regex">Image file name regex pattern (pattern that will decide whether to check this image or not)</string>
-    <string name="third_eye_add_site_controller_api_endpoint_url">API endpoint url</string>
-    <string name="third_eye_add_site_controller_image_full_url_key">Image full url json key</string>
-    <string name="third_eye_add_site_controller_image_preview_url_key">Image preview url json key</string>
-    <string name="third_eye_add_site_controller_image_size_key">Image size json key (will fetch and show image size, if empty then ignored)</string>
-    <string name="third_eye_add_site_controller_image_width_key">Image width json key (will fetch and show image width, if empty then ignored)</string>
-    <string name="third_eye_add_site_controller_image_height_key">Image height json key (will fetch and show height size, if empty then ignored)</string>
-    <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (will fetch image tags to filter out images matching banned tags, if empty then ignored).</string>
-    <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (whitespace separated)</string>
+    <string name="third_eye_add_site_controller_image_name_regex">Image file name regex pattern (The pattern extracts the {key} parameter from the image file name which is then used in the API endpoint url)</string>
+    <string name="third_eye_add_site_controller_api_endpoint_url">API endpoint url (Use {key} marker to specify where the key extracted by the regex pattern will be inserted, if not specified it\'s inserted at the end of the string)</string>
+    <string name="third_eye_add_site_controller_image_full_url_key">Image full url json key (Required to display full image)</string>
+    <string name="third_eye_add_site_controller_image_preview_url_key">Image preview url json key (Required to display thumbnail)</string>
+    <string name="third_eye_add_site_controller_image_size_key">Image size json key (Optional. Will fetch and show image size)</string>
+    <string name="third_eye_add_site_controller_image_width_key">Image width json key (Optional. Will fetch and show image width)</string>
+    <string name="third_eye_add_site_controller_image_height_key">Image height json key (Optional. Will fetch and show height size)</string>
+    <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (Optional. Will fetch image tags to filter out images matching banned tags)</string>
+    <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (Optional if \'Image tags json key\' is not set. Must be whitespace separated)</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>

@@ -327,13 +327,20 @@ class ThirdEyeLoader(
       return null
     }
 
+    val fullUrlJsonKey = booruSettings.fullUrlJsonKey.lowercase(Locale.ENGLISH).trim()
+    val previewUrlJsonKey = booruSettings.previewUrlJsonKey.lowercase(Locale.ENGLISH).trim()
+    val fileSizeJsonKey = booruSettings.fileSizeJsonKey.lowercase(Locale.ENGLISH).trim()
+    val widthJsonKey = booruSettings.widthJsonKey.lowercase(Locale.ENGLISH).trim()
+    val heightJsonKey = booruSettings.heightJsonKey.lowercase(Locale.ENGLISH).trim()
+    val tagsJsonKey = booruSettings.tagsJsonKey.lowercase(Locale.ENGLISH).trim()
+
     val namesToCheck = mutableMapOf<String?, String?>(
-      booruSettings.previewUrlJsonKey to null,
-      booruSettings.fullUrlJsonKey to null,
-      booruSettings.widthJsonKey to null,
-      booruSettings.heightJsonKey to null,
-      booruSettings.fileSizeJsonKey to null,
-      booruSettings.tagsJsonKey to null,
+      fullUrlJsonKey to null,
+      previewUrlJsonKey to null,
+      fileSizeJsonKey to null,
+      widthJsonKey to null,
+      heightJsonKey to null,
+      tagsJsonKey to null,
     )
 
     try {
@@ -359,7 +366,7 @@ class ThirdEyeLoader(
       return null
     }
 
-    val tags = namesToCheck[booruSettings.tagsJsonKey]?.split(" ") ?: emptyList()
+    val tags = namesToCheck[tagsJsonKey]?.split(" ") ?: emptyList()
     val bannedTagsAsSet = booruSettings.bannedTagsAsSet
 
     for (imageTag in tags) {
@@ -370,21 +377,21 @@ class ThirdEyeLoader(
       }
     }
 
-    val previewUrl = namesToCheck[booruSettings.previewUrlJsonKey]?.toHttpUrlOrNull()
-    val fullUrl = namesToCheck[booruSettings.fullUrlJsonKey]?.toHttpUrlOrNull()
-    val width = namesToCheck[booruSettings.widthJsonKey]?.toIntOrNull()
-    val height = namesToCheck[booruSettings.heightJsonKey]?.toIntOrNull()
-    val fileSize = namesToCheck[booruSettings.fileSizeJsonKey]?.toLongOrNull()
+    val previewUrl = namesToCheck[previewUrlJsonKey]?.toHttpUrlOrNull()
+    val fullUrl = namesToCheck[fullUrlJsonKey]?.toHttpUrlOrNull()
+    val width = namesToCheck[widthJsonKey]?.toIntOrNull()
+    val height = namesToCheck[heightJsonKey]?.toIntOrNull()
+    val fileSize = namesToCheck[fileSizeJsonKey]?.toLongOrNull()
 
     if (previewUrl == null) {
       Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
-        "failed to extract previewUrl: '${namesToCheck[booruSettings.previewUrlJsonKey]}'")
+        "failed to extract previewUrl: '${namesToCheck[previewUrlJsonKey]}'")
       return null
     }
 
     if (fullUrl == null) {
       Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
-        "failed to extract fullUrl: '${namesToCheck[booruSettings.fullUrlJsonKey]}'")
+        "failed to extract fullUrl: '${namesToCheck[fullUrlJsonKey]}'")
       return null
     }
 

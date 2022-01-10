@@ -254,6 +254,17 @@ class AddOrEditBooruController(
           message = "it's empty"
         )
       }
+
+      val tagsJsonKey = booruSettingState.tagsJsonKeyState.value.trim()
+      if (tagsJsonKey.isNotEmpty()) {
+        val bannedTagsString = booruSettingState.bannedTagsStringState.value.trim()
+        if (bannedTagsString.isEmpty()) {
+          throw BooruSettingValidationException(
+            settingName = "bannedTagsString",
+            message = "it's empty while tagsJsonKey is not empty"
+          )
+        }
+      }
     }
   }
 
