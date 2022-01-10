@@ -100,7 +100,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
   private val circularProgressDrawableBounds = Rect()
   private val compositeDisposable = CompositeDisposable()
   private var segmentedCircleDrawable: SegmentedCircleDrawable? = null
-  private var hasThirdEyeImage: Boolean = false
+  private var hasThirdEyeImageMaybe: Boolean = false
   private var nsfwMode: Boolean = false
   private var alphaAnimator: ValueAnimator? = null
 
@@ -154,13 +154,21 @@ class PostImageThumbnailView @JvmOverloads constructor(
         return@launch
       }
 
-      checkAndInvalidate(postImage)
+      hasThirdEyeImageMaybe = withContext(Dispatchers.Default) {
+        thirdEyeManager.extractThirdEyeHashOrNull(postImage) != null
+      }
+
+      if (hasThirdEyeImageMaybe) {
+        invalidate()
+      }
 
       val thirdEyeImage = thirdEyeManager.imageForPost(postImage.ownerPostDescriptor)
-      if (thirdEyeImage == null) {
+      if (thirdEyeImage == null && hasThirdEyeImageMaybe) {
         // To avoid running the animation again after we rebind the post which happens after PostLoader
         // finishes it's job.
         runOrStopGlowAnimation(stop = false)
+      } else {
+        runOrStopGlowAnimation(stop = true)
       }
 
       thirdEyeManager.thirdEyeImageAddedFlow
@@ -170,7 +178,14 @@ class PostImageThumbnailView @JvmOverloads constructor(
             return@collect
           }
 
-          checkAndInvalidate(postImage)
+          hasThirdEyeImageMaybe = withContext(Dispatchers.Default) {
+            thirdEyeManager.extractThirdEyeHashOrNull(postImage) != null
+          }
+
+          if (hasThirdEyeImageMaybe) {
+            invalidate()
+          }
+
           runOrStopGlowAnimation(stop = true)
         }
     }
@@ -191,14 +206,16 @@ class PostImageThumbnailView @JvmOverloads constructor(
       alphaAnimator = null
     }
 
-    alphaAnimator = ValueAnimator.ofFloat(.2f, 8f).apply {
+    alphaAnimator = ValueAnimator.ofFloat(.2f, .8f).apply {
       duration = 500
       repeatMode = ValueAnimator.REVERSE
       repeatCount = ValueAnimator.INFINITE
       interpolator = glowInterpolator
 
       addUpdateListener { animator ->
-        thirdEyeIcon.alpha = (animator.animatedValue as Float * 255f).toInt()
+        val alpha = (animator.animatedValue as Float * 255f).toInt()
+
+        thirdEyeIcon.alpha = alpha
         invalidate()
       }
 
@@ -211,18 +228,10 @@ class PostImageThumbnailView @JvmOverloads constructor(
     }
   }
 
-  private suspend fun checkAndInvalidate(postImage: ChanPostImage) {
-    hasThirdEyeImage = withContext(Dispatchers.Default) {
-      thirdEyeManager.extractThirdEyeHashOrNull(postImage) != null
-    }
-
-    invalidate()
-  }
-
   override fun unbindPostImage() {
     postImage = null
     canUseHighResCells = false
-    hasThirdEyeImage = false
+    hasThirdEyeImageMaybe = false
 
     runOrStopGlowAnimation(stop = true)
 
@@ -455,7 +464,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
       playIcon.draw(canvas)
     }
 
-    if (hasThirdEyeImage) {
+    if (hasThirdEyeImageMaybe) {
       val x = (width - thirdEyeIconSize - cornerIndicatorMargin).toInt()
       val y = cornerIndicatorMargin.toInt()
 
