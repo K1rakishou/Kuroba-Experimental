@@ -73,6 +73,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="apply">Apply</string>
     <string name="clear">Clear</string>
     <string name="resolve">Resolve</string>
+    <string name="success">Success</string>
     <string name="unhandled_error">Unhandled error!</string>
     <string name="loading">Loading…</string>
     <string name="download">Download</string>
@@ -185,7 +186,8 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
     <string name="action_mark_deleted_posts_on_scrollbar">Highlight deleted posts</string>
     <string name="action_mark_hot_posts_on_scrollbar">Highlight \"Hot\" posts</string>
-    <string name="action_catalog_thread_nsfw_mode">Catalog/Thread NSFW mode</string>
+    <string name="action_catalog_thread_nsfw_mode">NSFW mode</string>
+    <string name="action_third_eye_settings">Third eye settings</string>
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
 
     <string name="action_scroll_to_top">Top</string>
@@ -1495,6 +1497,31 @@ Actual error: \'%1$s\'</string>
     <string name="dvach_report_post_reason_cannot_be_empty">Report reason cannot be empty</string>
     <string name="dvach_report_post_sending">Sending report…</string>
     <string name="dvach_report_post_error">Error: \'%1$s\'</string>
+
+    <string name="third_eye_import_settings">Import third eye settings</string>
+    <string name="third_eye_export_settings">Export third eye settings</string>
+    <string name="third_eye_settings_controller_failed_to_update_settings">Failed to update third eye settings</string>
+    <string name="third_eye_settings_controller_enable_third_eye">Enable ThirdEye</string>
+    <string name="third_eye_settings_controller_add_site">Add site</string>
+    <string name="third_eye_settings_controller_no_sites_added">No sites added yet</string>
+    <string name="third_eye_settings_controller_image_name_regex">Image file name regex pattern</string>
+    <string name="third_eye_settings_controller_image_by_key_endpoint_url">Get image by key endpoint url</string>
+    <string name="third_eye_settings_controller_image_full_url_key">Image full url json key</string>
+    <string name="third_eye_settings_controller_image_preview_url_key">Image preview url json key</string>
+    <string name="third_eye_settings_controller_image_size_key">Image size json key</string>
+    <string name="third_eye_settings_controller_image_width_key">Image width json key</string>
+    <string name="third_eye_settings_controller_image_height_key">Image height json key</string>
+    <string name="third_eye_settings_controller_image_tags_key">Image tags json key</string>
+    <string name="third_eye_settings_controller_image_banned_tags">Banned tags</string>
+    <string name="third_eye_add_site_controller_image_name_regex">Image file name regex pattern (pattern that will decide whether to check this image or not)</string>
+    <string name="third_eye_add_site_controller_image_by_key_endpoint_url">Get image by key endpoint url (md5 or any other key)</string>
+    <string name="third_eye_add_site_controller_image_full_url_key">Image full url json key</string>
+    <string name="third_eye_add_site_controller_image_preview_url_key">Image preview url json key</string>
+    <string name="third_eye_add_site_controller_image_size_key">Image size json key (will fetch and show image size, if empty then ignored)</string>
+    <string name="third_eye_add_site_controller_image_width_key">Image width json key (will fetch and show image width, if empty then ignored)</string>
+    <string name="third_eye_add_site_controller_image_height_key">Image height json key (will fetch and show height size, if empty then ignored)</string>
+    <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (will fetch image tags to filter out images matching banned tags, if empty then ignored).</string>
+    <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (whitespace separated)</string>
 
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>

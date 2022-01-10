@@ -12,6 +12,7 @@ import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
@@ -33,6 +34,8 @@ abstract class BaseFloatingComposeController(
   lateinit var themeEngine: ThemeEngine
 
   private var presenting = true
+
+  open val contentAlignment: Alignment = Alignment.TopStart
 
   @OptIn(ExperimentalMaterialApi::class)
   override fun onCreate() {
@@ -74,7 +77,8 @@ abstract class BaseFloatingComposeController(
                   end = currentPaddings.calculateEndPadding(LayoutDirection.Ltr) + horizPadding,
                   top = currentPaddings.calculateTopPadding() + vertPadding,
                   bottom = currentPaddings.calculateBottomPadding() + vertPadding,
-                )
+                ),
+              contentAlignment = contentAlignment,
             ) {
               BuildContent()
             }

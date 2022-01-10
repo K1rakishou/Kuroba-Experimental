@@ -100,6 +100,8 @@ import com.github.k1rakishou.chan.features.setup.epoxy.site.EpoxySiteView;
 import com.github.k1rakishou.chan.features.site_archive.BoardArchiveController;
 import com.github.k1rakishou.chan.features.themes.ThemeGalleryController;
 import com.github.k1rakishou.chan.features.themes.ThemeSettingsController;
+import com.github.k1rakishou.chan.features.thirdeye.AddOrEditBooruController;
+import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeSettingsController;
 import com.github.k1rakishou.chan.features.thread_downloading.LocalArchiveController;
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController;
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter;
@@ -284,6 +286,8 @@ public interface ActivityComponent {
     void inject(BookmarkGroupPatternSettingsController bookmarkGroupPatternSettingsController);
     void inject(KurobaAlertController kurobaAlertController);
     void inject(Chan4ReportPostController chan4ReportPostController);
+    void inject(ThirdEyeSettingsController thirdEyeSettingsController);
+    void inject(AddOrEditBooruController addOrEditBooruController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

@@ -32,6 +32,7 @@ import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
+import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeSettingsController
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloaderSettingsController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoCloseListener
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
@@ -284,6 +285,12 @@ open class ViewThreadController(
         ChanSettings.globalNsfwMode.get(),
         ACTION_GLOBAL_NSFW_MODE
       ) { item -> onScrollbarLabelingOptionClicked(item) }
+      .addNestedItem(
+        ACTION_THIRD_EYE_SETTINGS,
+        R.string.action_third_eye_settings,
+        true,
+        ACTION_THIRD_EYE_SETTINGS
+      ) { presentController(ThirdEyeSettingsController(context)) }
       .build()
   }
 
@@ -827,5 +834,6 @@ open class ViewThreadController(
     private const val ACTION_MARK_DELETED_POSTS_ON_SCROLLBAR = 9104
     private const val ACTION_MARK_HOT_POSTS_ON_SCROLLBAR = 9105
     private const val ACTION_GLOBAL_NSFW_MODE = 9106
+    private const val ACTION_THIRD_EYE_SETTINGS = 9107
   }
 }

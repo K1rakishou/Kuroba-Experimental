@@ -100,6 +100,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
+import com.github.k1rakishou.fsaf.FileManager;
 import com.github.k1rakishou.model.repository.BoardRepository;
 import com.github.k1rakishou.model.repository.BookmarksRepository;
 import com.github.k1rakishou.model.repository.ChanFilterRepository;
@@ -900,13 +901,21 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ThirdEyeManager provideThirdEyeManager(
-            ChanThreadsCache chanThreadsCache
+            Context appContext,
+            ChanThreadsCache chanThreadsCache,
+            AppConstants appConstants,
+            Moshi moshi,
+            FileManager fileManager
     ) {
         Logger.deps("ThirdEyeManager");
 
         return new ThirdEyeManager(
+                appContext,
                 ChanSettings.verboseLogs.get(),
-                chanThreadsCache
+                appConstants,
+                moshi,
+                chanThreadsCache,
+                fileManager
         );
     }
 

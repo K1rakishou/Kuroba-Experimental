@@ -18,6 +18,10 @@ class LazySuspend<T>(val initializer: suspend () -> T) {
     return cachedValue!!
   }
 
+  suspend fun update(newValue: T) {
+    mutex.withLock { cachedValue = newValue }
+  }
+
   suspend fun value(): T {
     if (cachedValue == null) {
        return mutex.withLock {

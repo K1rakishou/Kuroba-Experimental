@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CancellationException
 import java.util.*
 import java.util.concurrent.Callable
@@ -133,6 +134,30 @@ sealed class ModularResult<V : Any?> {
       is Error -> throw error
       is Value -> value
     }
+  }
+
+  fun logError(
+    tag: String,
+    logStacktrace: Boolean = true,
+    formatErrorMessage: ((Throwable) -> String)? = null
+  ): ModularResult<V> {
+    when (this) {
+      is Error -> {
+        if (logStacktrace) {
+          Logger.e(tag, "Unhandled error", this.error)
+        } else {
+          val message = formatErrorMessage?.invoke(this.error)
+            ?: this.error.errorMessageOrClassName()
+
+          Logger.e(tag, "Unhandled error: $message")
+        }
+      }
+      is Value -> {
+        // no-op
+      }
+    }
+
+    return this
   }
 
   override fun toString(): String {

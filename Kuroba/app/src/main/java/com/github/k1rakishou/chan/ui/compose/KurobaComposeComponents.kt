@@ -705,10 +705,10 @@ fun KurobaComposeButton(
 
 @Composable
 fun KurobaComposeTextBarButton(
-  onClick: () -> Unit,
-  text: String,
   modifier: Modifier = Modifier,
   enabled: Boolean = true,
+  onClick: () -> Unit,
+  text: String,
 ) {
   val chanTheme = LocalChanTheme.current
 
@@ -785,6 +785,7 @@ private val defaultNoopClickCallback = { }
 
 @OptIn(ExperimentalFoundationApi::class)
 fun Modifier.kurobaClickable(
+  enabled: Boolean = true,
   bounded: Boolean = false,
   onLongClick: (() -> Unit)? = null,
   onClick: (() -> Unit)? = null
@@ -806,6 +807,7 @@ fun Modifier.kurobaClickable(
 
     return@composed then(
       Modifier.combinedClickable(
+        enabled = enabled,
         indication = rememberRipple(bounded = bounded, color = color),
         interactionSource = remember { MutableInteractionSource() },
         onLongClick = onLongClick,

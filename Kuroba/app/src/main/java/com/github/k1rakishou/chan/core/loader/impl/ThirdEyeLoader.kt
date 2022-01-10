@@ -84,8 +84,8 @@ class ThirdEyeLoader(
       return rejected()
     }
 
-    val catalogMode = postLoaderData.catalogMode
     val postDescriptor = postLoaderData.postDescriptor
+    val catalogMode = postLoaderData.catalogMode
 
     val post = chanThreadManager.getPost(postDescriptor)
     if (post == null) {
@@ -134,6 +134,9 @@ class ThirdEyeLoader(
         )
       } catch (error: Throwable) {
         Logger.e(TAG, "processImages() unhandled error: ${error.errorMessageOrClassName()}")
+
+        // Notify the listeners so that the thumbnail animations can be stopped
+        thirdEyeManager.notifyListeners(postDescriptor)
         return@supervisorScope false
       }
     }
@@ -244,7 +247,7 @@ class ThirdEyeLoader(
     val imageByMd5EndpointUrl = booruSettings.formatFullImageByMd5EndpointUrl(imageHash)
     if (imageByMd5EndpointUrl == null) {
       Logger.e(TAG, "processSingleBooru() failed to format imageByMd5EndpointUrl. " +
-          "imageByMd5Endpoint=${booruSettings.imageByMd5Endpoint}, imageHash=${imageHash}")
+          "imageByMd5Endpoint=${booruSettings.imageByKeyEndpoint}, imageHash=${imageHash}")
       return null
     }
 
