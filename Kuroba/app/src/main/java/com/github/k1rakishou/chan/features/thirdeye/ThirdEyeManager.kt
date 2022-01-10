@@ -13,7 +13,6 @@ import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
-import com.github.k1rakishou.fsaf.file.AbstractFile
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
@@ -165,7 +164,7 @@ class ThirdEyeManager(
       val imageFileNamePattern = addedBooru.imageFileNamePattern()
       val matcher = imageFileNamePattern.matcher(imageOriginalFileName)
 
-      if (matcher.matches()) {
+      if (matcher.find()) {
         return matcher.groupOrNull(1)
       }
     }
@@ -197,21 +196,17 @@ class ThirdEyeManager(
         val inputStream = fileManager.getInputStream(settingsFile)
           ?: throw IOException("Failed to create input stream out of file \'$uri\'")
 
-        var currentSettingFile: AbstractFile = fileManager.fromRawFile(thirdEyeSettingsFile)
-        if (fileManager.exists(currentSettingFile)) {
-          // Delete old setting file to make sure we don't append new text to old text
-          // (because SAF can actually do that when you don't want to)
-
-          if (!fileManager.delete(currentSettingFile)) {
-            throw IOException("Failed to delete file \'${currentSettingFile.getFullPath()}\'")
+        if (thirdEyeSettingsFile.exists()) {
+          if (!thirdEyeSettingsFile.delete()) {
+            throw IOException("Failed to delete file \'${thirdEyeSettingsFile.absolutePath}\'")
           }
         }
 
-        val newFile = fileManager.create(currentSettingFile)
-          ?: throw IOException("Failed to create file \'${currentSettingFile.getFullPath()}\'")
+        if (!thirdEyeSettingsFile.createNewFile()) {
+          throw IOException("Failed to create file \'${thirdEyeSettingsFile.absolutePath}\'")
+        }
 
-        currentSettingFile = newFile
-
+        val currentSettingFile = fileManager.fromRawFile(thirdEyeSettingsFile)
         try {
           inputStream.use { inStream ->
             val outputStream = fileManager.getOutputStream(currentSettingFile)

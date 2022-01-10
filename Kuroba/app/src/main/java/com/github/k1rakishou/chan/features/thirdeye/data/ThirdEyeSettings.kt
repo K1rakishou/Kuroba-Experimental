@@ -16,7 +16,7 @@ data class ThirdEyeSettings(
 @JsonClass(generateAdapter = true)
 data class BooruSetting(
   @Json(name = "image_file_name_regex") val imageFileNameRegex: String = defaultImageFileNameRegex,
-  @Json(name = "image_by_key_endpoint") val imageByKeyEndpoint: String = "",
+  @Json(name = "api_endpoint") val apiEndpoint: String = "",
   @Json(name = "full_url_json_key") val fullUrlJsonKey: String = "",
   @Json(name = "preview_url_json_key") val previewUrlJsonKey: String = "",
   @Json(name = "file_size_json_key") val fileSizeJsonKey: String = "",
@@ -28,7 +28,7 @@ data class BooruSetting(
   // This is used to differentiate two boorus apart from each other.
   // It's impossible to have to separate boorus with the same key.
   val booruUniqueKey: String
-    get() = imageByKeyEndpoint
+    get() = apiEndpoint
 
   val bannedTagsAsSet by lazy {
     bannedTags
@@ -41,6 +41,13 @@ data class BooruSetting(
   @Transient
   private var _imageFileNamePattern: Pattern? = null
 
+  fun valid(): Boolean {
+    return imageFileNameRegex.isNotBlank()
+      && apiEndpoint.isNotBlank()
+      && fullUrlJsonKey.isNotBlank()
+      && previewUrlJsonKey.isNotBlank()
+  }
+
   fun imageFileNamePattern(): Pattern {
     return synchronized(this) {
       if (_imageFileNamePattern == null || _imageFileNamePattern?.pattern() != imageFileNameRegex) {
@@ -52,14 +59,14 @@ data class BooruSetting(
   }
 
   fun formatFullImageByMd5EndpointUrl(imageHash: String): HttpUrl? {
-    val index = imageByKeyEndpoint.indexOf(string = KEY_MARKER)
+    val index = apiEndpoint.indexOf(string = KEY_MARKER)
     if (index < 0) {
       // If KEY_MARKER not found then append the hash to the end of the imageByKeyEndpoint
-      return (imageByKeyEndpoint + imageHash).toHttpUrlOrNull()
+      return (apiEndpoint + imageHash).toHttpUrlOrNull()
     }
 
     // If KEY_MARKER found then replace it with the hash
-    return imageByKeyEndpoint.replace(KEY_MARKER, imageHash).toHttpUrlOrNull()
+    return apiEndpoint.replace(KEY_MARKER, imageHash).toHttpUrlOrNull()
   }
 
   companion object {

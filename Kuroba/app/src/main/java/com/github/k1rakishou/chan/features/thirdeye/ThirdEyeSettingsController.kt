@@ -439,7 +439,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
       ) {
         BuildSettingItem(booruSetting.imageFileNameRegex, R.string.third_eye_settings_controller_image_name_regex)
         Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.imageByKeyEndpoint, R.string.third_eye_settings_controller_image_by_key_endpoint_url)
+        BuildSettingItem(booruSetting.apiEndpoint, R.string.third_eye_settings_controller_api_endpoint_url)
         Spacer(modifier = Modifier.height(4.dp))
         BuildSettingItem(booruSetting.fullUrlJsonKey, R.string.third_eye_settings_controller_image_full_url_key)
         Spacer(modifier = Modifier.height(4.dp))
@@ -585,13 +585,19 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
     addedBoorus: List<BooruSetting> = emptyList()
   ) {
     val enabledState = mutableStateOf(enabled)
-    val addedBoorusState = mutableStateListOf(*addedBoorus.toTypedArray())
+    val addedBoorusState = mutableStateListOf<BooruSetting>()
+      .apply { addAll(filterOutInvalidBoorus(addedBoorus)) }
 
     fun updateFrom(thirdEyeSettings: ThirdEyeSettings) {
       enabledState.value = thirdEyeSettings.enabled
 
       addedBoorusState.clear()
-      addedBoorusState.addAll(thirdEyeSettings.addedBoorus)
+      addedBoorusState.addAll(filterOutInvalidBoorus(thirdEyeSettings.addedBoorus))
+    }
+
+    // Just in case to avoid crashes after importing invalid settings file
+    private fun filterOutInvalidBoorus(addedBoorus: Collection<BooruSetting>): List<BooruSetting> {
+      return addedBoorus.filter { booruSetting -> booruSetting.valid() }
     }
   }
 

@@ -96,29 +96,47 @@ class ThirdEyeLoader(
       return rejected()
     }
 
-    val imageHashes = post.postImages
-      .mapNotNull { postImage ->
-        if (thirdEyeManager.imageAlreadyProcessed(catalogMode, postDescriptor)) {
-          return@mapNotNull null
-        }
+    val overlappingHashes = mutableSetOf<String>()
+    val matchedHashes = mutableListOf<Pair<String, ChanPostImage>>()
 
-        val imageHash = thirdEyeManager.extractThirdEyeHashOrNull(postImage)
-          ?: return@mapNotNull null
-
-        if (postImage.fileHash != null && imageHash.equals(postImage.fileHash, ignoreCase = true)) {
-          // Do not load images which hash is the same as the hash info from the server. It seems like
-          // the values are never the same for 4chan's image hashes and whatever we are looking for.
-          // But lets leave the check here just in case.
-          return@mapNotNull null
-        }
-
-        return@mapNotNull imageHash to postImage
+    post.postImages.forEach { postImage ->
+      if (thirdEyeManager.imageAlreadyProcessed(catalogMode, postDescriptor)) {
+        return@forEach
       }
 
-    if (imageHashes.isEmpty()) {
+      val imageHash = thirdEyeManager.extractThirdEyeHashOrNull(postImage)
+        ?: return@forEach
+
+      if (postImage.fileHash != null && imageHash.equals(postImage.fileHash, ignoreCase = true)) {
+        // Do not load images which hash is the same as the hash info from the server. It seems like
+        // the values are never the same for 4chan's image hashes and whatever we are looking for.
+        // But lets leave the check here just in case. (This can actually happen).
+        overlappingHashes += imageHash
+        return@forEach
+      }
+
+      matchedHashes += Pair(imageHash, postImage)
+    }
+
+    if (matchedHashes.isEmpty()) {
       if (thirdEyeManager.needPostViewUpdate(catalogMode, postDescriptor)) {
-        Logger.d(TAG, "startLoading() needPostViewUpdate($catalogMode, $postDescriptor) -> true")
         return succeeded(needUpdateView = true)
+      }
+
+      // Sometimes we actually can get the matching hashes (the one we get from the API and
+      // then one we are looking for). In such cases we need to notify the listeners to stop the
+      // thumbnail eye animation.
+      if (overlappingHashes.isNotEmpty()) {
+        overlappingHashes.forEach { overlappingHash ->
+          thirdEyeManager.addImage(
+            catalogMode = catalogMode,
+            postDescriptor = postDescriptor,
+            imageHash = overlappingHash,
+            chanPostImage = null
+          )
+        }
+
+        thirdEyeManager.notifyListeners(postDescriptor)
       }
 
       return rejected()
@@ -130,7 +148,7 @@ class ThirdEyeLoader(
           catalogMode = postLoaderData.catalogMode,
           postDescriptor = postLoaderData.postDescriptor,
           boorusSettings = boorusSettings,
-          imageHashes = imageHashes
+          matchedHashes = matchedHashes
         )
       } catch (error: Throwable) {
         Logger.e(TAG, "processImages() unhandled error: ${error.errorMessageOrClassName()}")
@@ -153,10 +171,10 @@ class ThirdEyeLoader(
     catalogMode: Boolean,
     postDescriptor: PostDescriptor,
     boorusSettings: List<BooruSetting>,
-    imageHashes: List<Pair<String, ChanPostImage>>
+    matchedHashes: List<Pair<String, ChanPostImage>>
   ): Boolean {
     val results = processDataCollectionConcurrently(
-      dataList = imageHashes,
+      dataList = matchedHashes,
       batchCount = 4,
       dispatcher = Dispatchers.IO
     ) { (imageHash, postImage) ->
@@ -247,7 +265,7 @@ class ThirdEyeLoader(
     val imageByMd5EndpointUrl = booruSettings.formatFullImageByMd5EndpointUrl(imageHash)
     if (imageByMd5EndpointUrl == null) {
       Logger.e(TAG, "processSingleBooru() failed to format imageByMd5EndpointUrl. " +
-          "imageByMd5Endpoint=${booruSettings.imageByKeyEndpoint}, imageHash=${imageHash}")
+          "imageByMd5Endpoint=${booruSettings.apiEndpoint}, imageHash=${imageHash}")
       return null
     }
 
@@ -371,9 +389,11 @@ class ThirdEyeLoader(
     }
 
     val chanPostImageBuilder = ChanPostImageBuilder(postDescriptor).apply {
+      imageUrl(fullUrl)
+      thumbnailUrl(previewUrl)
+
       inlined()
       fileHash(imageHash, false)
-      imageUrl(fullUrl)
       serverFilename(imageHash)
 
       val extension = StringUtils.extractFileNameExtension(fullUrl.encodedPath)
@@ -381,7 +401,6 @@ class ThirdEyeLoader(
         extension(extension)
       }
 
-      thumbnailUrl(previewUrl)
       width?.let { w -> imageWidth(w) }
       height?.let { h -> imageHeight(h) }
       fileSize?.let { size -> imageSize(size) }

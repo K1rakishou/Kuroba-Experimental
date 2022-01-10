@@ -38,7 +38,10 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import kotlinx.coroutines.launch
+import java.util.regex.Pattern
 
 class AddOrEditBooruController(
   context: Context,
@@ -79,13 +82,13 @@ class AddOrEditBooruController(
             .verticalScroll(state = rememberScrollState())
         ) {
           BuildSettingItem(
-            settingState = booruSettingState.imageFileNameRegex,
+            settingState = booruSettingState.imageFileNameRegexState,
             labelText = stringResource(id = R.string.third_eye_add_site_controller_image_name_regex)
           )
           Spacer(modifier = Modifier.height(8.dp))
           BuildSettingItem(
-            settingState = booruSettingState.imageByKeyEndpointState,
-            labelText = stringResource(id = R.string.third_eye_add_site_controller_image_by_key_endpoint_url)
+            settingState = booruSettingState.apiEndpointState,
+            labelText = stringResource(id = R.string.third_eye_add_site_controller_api_endpoint_url)
           )
           Spacer(modifier = Modifier.height(8.dp))
           BuildSettingItem(
@@ -134,7 +137,10 @@ class AddOrEditBooruController(
           },
           saveClicked = {
             mainScope.launch {
-              if (!validate(booruSettingState)) {
+              val validationResult = validate(booruSettingState)
+                .toastOnError(longToast = true)
+              
+              if (!validationResult.isValue()) {
                 return@launch
               }
 
@@ -206,14 +212,59 @@ class AddOrEditBooruController(
     )
   }
 
-  private suspend fun validate(booruSettingState: BooruSettingState): Boolean {
-    // TODO(KurobaEx):
-    return true
+  private suspend fun validate(booruSettingState: BooruSettingState): ModularResult<Unit> {
+    return ModularResult.Try {
+      val imageFileNameRegex = booruSettingState.imageFileNameRegexState.value.trim()
+      if (imageFileNameRegex.isEmpty()) {
+        throw BooruSettingValidationException(
+          settingName = "imageFileNameRegex",
+          message = "it's empty"
+        )
+      }
+
+      try {
+        Pattern.compile(imageFileNameRegex)
+      } catch (error: Throwable) {
+        throw BooruSettingValidationException(
+          settingName = "imageFileNameRegex",
+          message = "failed to compile regex. Regex error: ${error.errorMessageOrClassName()}"
+        )
+      }
+
+      val apiEndpoint = booruSettingState.apiEndpointState.value.trim()
+      if (apiEndpoint.isEmpty()) {
+        throw BooruSettingValidationException(
+          settingName = "apiEndpoint",
+          message = "it's empty"
+        )
+      }
+
+      val fullUrlJsonKey = booruSettingState.fullUrlJsonKeyState.value.trim()
+      if (fullUrlJsonKey.isEmpty()) {
+        throw BooruSettingValidationException(
+          settingName = "fullUrlJsonKey",
+          message = "it's empty"
+        )
+      }
+
+      val previewUrlJsonKey = booruSettingState.previewUrlJsonKeyState.value.trim()
+      if (previewUrlJsonKey.isEmpty()) {
+        throw BooruSettingValidationException(
+          settingName = "previewUrlJsonKey",
+          message = "it's empty"
+        )
+      }
+    }
   }
+
+  class BooruSettingValidationException(
+    settingName: String,
+    message: String
+  ) : Exception("Validation of $settingName failed because $message")
 
   class BooruSettingState(
     imageFileNameRegex: String = BooruSetting.defaultImageFileNameRegex,
-    imageByMd5Endpoint: String = "",
+    apiEndpoint: String = "",
     previewUrlJsonKey: String = "",
     fullUrlJsonKey: String = "",
     widthJsonKey: String? = null,
@@ -222,8 +273,8 @@ class AddOrEditBooruController(
     fileSizeJsonKey: String? = null,
     bannedTagsString: String? = null
   ) {
-    val imageFileNameRegex = mutableStateOf<String>(imageFileNameRegex)
-    val imageByKeyEndpointState = mutableStateOf<String>(imageByMd5Endpoint)
+    val imageFileNameRegexState = mutableStateOf<String>(imageFileNameRegex)
+    val apiEndpointState = mutableStateOf<String>(apiEndpoint)
     val fullUrlJsonKeyState = mutableStateOf<String>(fullUrlJsonKey)
     val previewUrlJsonKeyState = mutableStateOf<String>(previewUrlJsonKey)
     val fileSizeJsonKeyState = mutableStateOf<String>(fileSizeJsonKey ?: "")
@@ -234,15 +285,15 @@ class AddOrEditBooruController(
 
     fun toBooruSetting(): BooruSetting {
       return BooruSetting(
-        imageFileNameRegex = imageFileNameRegex.value,
-        imageByKeyEndpoint = imageByKeyEndpointState.value,
-        fullUrlJsonKey = fullUrlJsonKeyState.value,
-        previewUrlJsonKey = previewUrlJsonKeyState.value,
-        fileSizeJsonKey = fileSizeJsonKeyState.value,
-        widthJsonKey = widthJsonKeyState.value,
-        heightJsonKey = heightJsonKeyState.value,
-        tagsJsonKey = tagsJsonKeyState.value,
-        bannedTags = bannedTagsStringState.value.split(" "),
+        imageFileNameRegex = imageFileNameRegexState.value.trim(),
+        apiEndpoint = apiEndpointState.value.trim(),
+        fullUrlJsonKey = fullUrlJsonKeyState.value.trim(),
+        previewUrlJsonKey = previewUrlJsonKeyState.value.trim(),
+        fileSizeJsonKey = fileSizeJsonKeyState.value.trim(),
+        widthJsonKey = widthJsonKeyState.value.trim(),
+        heightJsonKey = heightJsonKeyState.value.trim(),
+        tagsJsonKey = tagsJsonKeyState.value.trim(),
+        bannedTags = bannedTagsStringState.value.trim().split(" "),
       )
     }
 
@@ -250,7 +301,7 @@ class AddOrEditBooruController(
       fun fromBooruSetting(booruSetting: BooruSetting): BooruSettingState {
         return BooruSettingState(
           imageFileNameRegex = booruSetting.imageFileNameRegex,
-          imageByMd5Endpoint = booruSetting.imageByKeyEndpoint,
+          apiEndpoint = booruSetting.apiEndpoint,
           previewUrlJsonKey = booruSetting.previewUrlJsonKey,
           fullUrlJsonKey = booruSetting.fullUrlJsonKey,
           widthJsonKey = booruSetting.widthJsonKey,
