@@ -404,7 +404,7 @@ fun KurobaComposeCustomTextField(
           ContentAlpha.disabled
         }
 
-        val hintColor = remember(key1 = parentBackgroundColor) {
+        val hintColor = remember(key1 = parentBackgroundColor, key2 = alpha) {
           if (parentBackgroundColor.isUnspecified) {
             Color.DarkGray.copy(alpha = alpha)
           } else {

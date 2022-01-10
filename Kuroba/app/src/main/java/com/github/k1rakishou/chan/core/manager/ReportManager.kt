@@ -297,6 +297,40 @@ class ReportManager(
     }
   }
 
+  fun sendComment(
+    issueNumber: Int,
+    description: String,
+    logs: String?,
+    onReportSendResult: (ModularResult<Unit>) -> Unit
+  ) {
+    require(description.isNotEmpty() || logs != null) { "description is empty" }
+    require(description.length <= MAX_DESCRIPTION_LENGTH) { "description is too long ${description.length}" }
+    logs?.let { require(it.length <= MAX_LOGS_LENGTH) { "logs are too long" } }
+
+    serializedCoroutineExecutor.post {
+      val body = buildString(8192) {
+        appendLine(description)
+
+        if (logs.isNotNullNorEmpty()) {
+          append("```")
+          append(logs)
+          append("```")
+        }
+      }
+
+      val request = ReportRequest.comment(
+        body = body
+      )
+
+      val result = sendInternal(
+        reportRequest = request,
+        issueNumber = issueNumber
+      )
+
+      withContext(Dispatchers.Main) { onReportSendResult.invoke(result) }
+    }
+  }
+
   fun sendReport(
     title: String,
     description: String,
@@ -542,7 +576,7 @@ class ReportManager(
     return success
   }
 
-  private suspend fun sendInternal(reportRequest: ReportRequest): ModularResult<Unit> {
+  private suspend fun sendInternal(reportRequest: ReportRequest, issueNumber: Int? = null): ModularResult<Unit> {
     BackgroundUtils.ensureBackgroundThread()
 
     return ModularResult.Try {
@@ -553,7 +587,11 @@ class ReportManager(
         throw error
       }
 
-      val reportUrl = "https://api.github.com/repos/kurobaexreports/reports/issues"
+      val reportUrl = if (issueNumber != null) {
+        "https://api.github.com/repos/kurobaexreports/reports/issues/${issueNumber}/comments"
+      } else {
+        "https://api.github.com/repos/kurobaexreports/reports/issues"
+      }
       val requestBody = json.toRequestBody("application/json".toMediaType())
 
       val request = Request.Builder()
@@ -598,7 +636,7 @@ class ReportManager(
 
   data class ReportRequest(
     @SerializedName("title")
-    val title: String,
+    val title: String?,
     @SerializedName("body")
     val body: String,
     @SerializedName("labels")
@@ -620,6 +658,14 @@ class ReportManager(
           title = title,
           body = body,
           labels = listOf("New", "Report")
+        )
+      }
+
+      fun comment(body: String): ReportRequest {
+        return ReportRequest(
+          title = null,
+          body = body,
+          labels = emptyList()
         )
       }
 
