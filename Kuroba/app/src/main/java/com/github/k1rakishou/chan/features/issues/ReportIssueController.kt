@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.issues
 
 import android.content.Context
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -30,6 +31,7 @@ import com.github.k1rakishou.chan.core.manager.ReportManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
@@ -107,6 +109,22 @@ class ReportIssueController(
       var attachLogs by attachLogsState
       var attachLogsWasReset by remember { mutableStateOf(false) }
       val issueNumberKbOptions = remember { KeyboardOptions(keyboardType = KeyboardType.Number) }
+
+      Box(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight()
+          .background(chanTheme.accentColorCompose.copy(alpha = 0.5f))
+      ) {
+        KurobaComposeText(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight()
+            .padding(4.dp),
+          text = stringResource(id = R.string.report_controller_note),
+          fontSize = 12.sp
+        )
+      }
 
       KurobaComposeCustomTextField(
         modifier = Modifier
