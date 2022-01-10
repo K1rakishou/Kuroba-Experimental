@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.features.thirdeye
+package com.github.k1rakishou.chan.core.manager
 
 import android.content.Context
 import android.net.Uri

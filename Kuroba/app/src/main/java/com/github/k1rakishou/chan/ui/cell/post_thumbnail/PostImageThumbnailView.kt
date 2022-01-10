@@ -41,8 +41,8 @@ import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchCompleted
 import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchProgress
 import com.github.k1rakishou.chan.core.manager.PrefetchState.PrefetchStarted
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
+import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel.Companion.canAutoLoad
-import com.github.k1rakishou.chan.features.thirdeye.ThirdEyeManager
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.view.SegmentedCircleDrawable
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
