@@ -67,7 +67,6 @@ open class PostCellLayout @JvmOverloads constructor(
 
   private val postCellVerticalPadding = (vertPaddingPx * 2)
   private val postAttentionLabelPaddings = (horizPaddingPx * 2)
-  private val commentTopPadding = (vertPaddingPx * 2)
 
   fun measureAndLayoutPostCell(
     postCellData: PostCellData,
@@ -92,6 +91,12 @@ open class PostCellLayout @JvmOverloads constructor(
     this.divider = divider
     this.postAttentionLabel = postAttentionLabel
     this.imageFileName = imageFileName
+
+    val commentTopPadding = if (postCellData.imagesCount > 1) {
+      0
+    } else {
+      vertPaddingPx * 2
+    }
 
     val commentBottomPadding = if (replies.visibility == View.GONE) {
       vertPaddingPx * 2
