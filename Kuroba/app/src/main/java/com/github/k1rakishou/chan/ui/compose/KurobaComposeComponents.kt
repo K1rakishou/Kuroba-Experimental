@@ -522,7 +522,7 @@ private fun KurobaComposeCustomTextFieldInternal(
         placeables[labelTextSlotId] = placeable
       }
 
-      // We are always supposed to have at least the text
+      // We are always supposed to at least have the text
       measurables[textSlotId]!!.let { textMeasurable ->
         val textCounterPlaceable = measurables[textCounterSlotId]?.let { textCounterMeasurable ->
           val placeable = textCounterMeasurable.measure(Constraints(maxWidth = constraints.maxWidth))
@@ -532,12 +532,9 @@ private fun KurobaComposeCustomTextFieldInternal(
         }
 
         val textCounterHeight = (textCounterPlaceable?.height ?: 0)
+        val newMaxHeight = (constraints.maxHeight - textCounterHeight).coerceAtLeast(constraints.minHeight)
 
-        val textPlaceable = textMeasurable.measure(
-          constraints.copy(
-            maxHeight = constraints.maxHeight - textCounterHeight
-          )
-        )
+        val textPlaceable = textMeasurable.measure(constraints.copy(maxHeight = newMaxHeight))
         placeables[textSlotId] = textPlaceable
 
         maxHeight = Math.max(
@@ -636,6 +633,7 @@ fun KurobaComposeCheckbox(
           onCheckChanged(isChecked)
         }
       )
+      .padding(vertical = 4.dp)
       .then(modifier)
   ) {
     Checkbox(

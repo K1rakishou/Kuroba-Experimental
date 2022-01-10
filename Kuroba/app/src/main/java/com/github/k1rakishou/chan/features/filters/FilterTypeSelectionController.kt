@@ -85,8 +85,7 @@ class FilterTypeSelectionController(
           KurobaComposeCheckbox(
             modifier = Modifier
               .fillMaxWidth()
-              .wrapContentHeight()
-              .padding(4.dp),
+              .wrapContentHeight(),
             text = filterTypeName,
             currentlyChecked = currentlyChecked,
             onCheckChanged = { checked -> currentlyChecked = checked }

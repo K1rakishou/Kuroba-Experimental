@@ -299,8 +299,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
     ) {
       KurobaComposeCheckbox(
         modifier = Modifier
-          .weight(1f)
-          .padding(vertical = 4.dp),
+          .weight(1f),
         currentlyChecked = enabled,
         onCheckChanged = { nowEnabled -> enabled = nowEnabled },
         text = stringResource(id = R.string.third_eye_settings_controller_enable_third_eye)
