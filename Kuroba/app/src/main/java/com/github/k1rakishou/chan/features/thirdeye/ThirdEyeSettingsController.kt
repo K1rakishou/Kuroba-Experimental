@@ -308,7 +308,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
       if (enabled) {
         KurobaComposeIcon(
           modifier = Modifier
-            .kurobaClickable(onClick = { onImportExportClicked() })
+            .consumeClicks()
             .padding(vertical = 4.dp),
           drawableId = R.drawable.ic_baseline_eye_24,
           themeEngine = themeEngine
