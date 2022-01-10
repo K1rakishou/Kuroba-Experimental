@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.manager.watcher
+package com.github.k1rakishou.chan.core.watcher
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.helper.LastPageNotificationsHelper

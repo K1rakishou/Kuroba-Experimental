@@ -8,7 +8,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
-import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
+import com.github.k1rakishou.chan.core.watcher.BookmarkForegroundWatcher
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.WatcherScreen
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2

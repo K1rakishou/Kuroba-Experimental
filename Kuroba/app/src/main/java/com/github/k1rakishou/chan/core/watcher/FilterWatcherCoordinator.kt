@@ -1,4 +1,4 @@
-package com.github.k1rakishou.chan.core.manager.watcher
+package com.github.k1rakishou.chan.core.watcher
 
 import android.content.Context
 import androidx.work.Constraints

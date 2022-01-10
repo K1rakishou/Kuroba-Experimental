@@ -29,8 +29,8 @@ import com.github.k1rakishou.chan.core.manager.PageRequestManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.core.manager.watcher.BookmarkForegroundWatcher
-import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
+import com.github.k1rakishou.chan.core.watcher.BookmarkForegroundWatcher
+import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.bookmarks.data.BookmarksControllerState
 import com.github.k1rakishou.chan.features.bookmarks.data.GroupOfThreadBookmarkItemViews
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkItemView

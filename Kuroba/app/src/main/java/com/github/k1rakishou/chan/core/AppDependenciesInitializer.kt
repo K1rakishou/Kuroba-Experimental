@@ -7,8 +7,8 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
-import com.github.k1rakishou.chan.core.manager.watcher.BookmarkWatcherCoordinator
-import com.github.k1rakishou.chan.core.manager.watcher.FilterWatcherCoordinator
+import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherCoordinator
+import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingCoordinator
 import com.github.k1rakishou.model.data.site.ChanSiteData
 import kotlinx.coroutines.CompletableDeferred
