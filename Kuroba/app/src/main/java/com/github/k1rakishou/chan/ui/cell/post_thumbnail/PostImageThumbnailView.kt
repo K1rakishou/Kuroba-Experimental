@@ -459,6 +459,9 @@ class PostImageThumbnailView @JvmOverloads constructor(
       val x = (width - thirdEyeIconSize - cornerIndicatorMargin).toInt()
       val y = cornerIndicatorMargin.toInt()
 
+      val circleRadius = thirdEyeIconSize.toFloat() / 2f
+      canvas.drawCircle(x.toFloat() + circleRadius, y.toFloat() + circleRadius, circleRadius, thirdEyeIconBgPaint)
+
       thirdEyeIconBounds.set(x, y, x + thirdEyeIconSize, y + thirdEyeIconSize)
       thirdEyeIcon.bounds = thirdEyeIconBounds
       thirdEyeIcon.draw(canvas)
@@ -504,6 +507,11 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
     private val nsfwModePaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
       color = ColorUtils.setAlphaComponent(Color.DKGRAY, 225)
+      style = Paint.Style.FILL
+    }
+
+    private val thirdEyeIconBgPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = ColorUtils.setAlphaComponent(Color.BLACK, 128)
       style = Paint.Style.FILL
     }
   }
