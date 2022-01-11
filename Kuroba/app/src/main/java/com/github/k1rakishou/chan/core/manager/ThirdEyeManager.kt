@@ -49,7 +49,14 @@ class ThirdEyeManager(
   val thirdEyeImageAddedFlow: SharedFlow<PostDescriptor>
     get() = _thirdEyeImageAddedFlow.asSharedFlow()
 
-  private val thirdEyeSettingsLazy = LazySuspend<ThirdEyeSettings> { loadThirdEyeSettings() }
+  private val thirdEyeSettingsLazy = LazySuspend<ThirdEyeSettings> {
+    try {
+      loadThirdEyeSettings()
+    } catch (error: Throwable) {
+      Logger.e(TAG, "loadThirdEyeSettings() error!", error)
+      ThirdEyeSettings()
+    }
+  }
 
   init {
     chanThreadsCache.addChanThreadDeleteEventListener { threadDeleteEvent ->
@@ -275,24 +282,25 @@ class ThirdEyeManager(
 
   private suspend fun loadThirdEyeSettings(): ThirdEyeSettings {
     return withContext(Dispatchers.IO) {
-      try {
-        if (!thirdEyeSettingsFile.exists()) {
-          return@withContext ThirdEyeSettings()
-        }
-
-        val thirdEyeSettings = thirdEyeSettingsFile.source().buffer().use { bufferedSource ->
-          moshi.adapter(ThirdEyeSettings::class.java).fromJson(bufferedSource)
-        }
-
-        if (thirdEyeSettings == null) {
-          return@withContext ThirdEyeSettings()
-        }
-
-        return@withContext thirdEyeSettings
-      } catch (error: Throwable) {
-        Logger.e(TAG, "loadThirdEyeSettings() Failed to load settings, resetting to defaults", error)
-        return@withContext ThirdEyeSettings()
+      if (!thirdEyeSettingsFile.exists()) {
+        throw IOException("thirdEyeSettingsFile does not exist!")
       }
+
+      val thirdEyeSettings = thirdEyeSettingsFile.source().buffer().use { bufferedSource ->
+        moshi.adapter(ThirdEyeSettings::class.java).fromJson(bufferedSource)
+      }
+
+      if (thirdEyeSettings == null) {
+        throw IOException("Failed to convert thirdEyeSettingsFile into json data!")
+      }
+
+      thirdEyeSettings.addedBoorus.forEach { booruSetting ->
+        if (!booruSetting.valid()) {
+          throw IOException("BooruSetting is not valid! booruSetting=${booruSetting}")
+        }
+      }
+
+      return@withContext thirdEyeSettings
     }
   }
 

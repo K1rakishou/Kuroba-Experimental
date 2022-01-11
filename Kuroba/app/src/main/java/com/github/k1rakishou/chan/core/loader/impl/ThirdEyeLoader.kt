@@ -383,15 +383,15 @@ class ThirdEyeLoader(
     val height = namesToCheck[heightJsonKey]?.toIntOrNull()
     val fileSize = namesToCheck[fileSizeJsonKey]?.toLongOrNull()
 
-    if (previewUrl == null) {
-      Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
-        "failed to extract previewUrl: '${namesToCheck[previewUrlJsonKey]}'")
-      return null
-    }
-
     if (fullUrl == null) {
       Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
         "failed to extract fullUrl: '${namesToCheck[fullUrlJsonKey]}'")
+      return null
+    }
+
+    if (previewUrl == null) {
+      Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
+        "failed to extract previewUrl: '${namesToCheck[previewUrlJsonKey]}'")
       return null
     }
 
