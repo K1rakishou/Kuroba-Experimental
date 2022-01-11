@@ -7,16 +7,20 @@ import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.isExceptionImportant
-import com.github.k1rakishou.common.processDataCollectionConcurrently
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 import java.util.*
 import java.util.concurrent.locks.ReentrantReadWriteLock
@@ -27,12 +31,13 @@ import kotlin.concurrent.write
 
 class OnDemandContentLoaderManager(
   private val scope: CoroutineScope,
+  private val appConstants: AppConstants,
   private val dispatcher: CoroutineDispatcher,
-  private val loadersLazy: Lazy<HashSet<OnDemandContentLoader>>,
+  private val loadersLazy: Lazy<List<OnDemandContentLoader>>,
   private val chanThreadManager: ChanThreadManager
 ) {
   private val lock = ReentrantReadWriteLock()
-  private val loaders: HashSet<OnDemandContentLoader>
+  private val loaders: List<OnDemandContentLoader>
     get() = loadersLazy.value
 
   @GuardedBy("rwLock")
@@ -124,7 +129,7 @@ class OnDemandContentLoaderManager(
     }
   }
 
-  private suspend fun onPostBindInternal(postLoaderData: PostLoaderData): LoaderBatchResult? {
+  private suspend fun CoroutineScope.onPostBindInternal(postLoaderData: PostLoaderData): LoaderBatchResult? {
     BackgroundUtils.ensureBackgroundThread()
     val postDescriptor = postLoaderData.postDescriptor
 
@@ -151,14 +156,32 @@ class OnDemandContentLoaderManager(
       return null
     }
 
-    val loaderResults = processDataCollectionConcurrently(loaders) { loader ->
-      val result = withTimeoutOrNull(MAX_LOADER_LOADING_TIME_MS) { loader.startLoading(postLoaderData) }
-      if (result == null) {
-        removeFromActiveLoaders(postDescriptor)
-        return@processDataCollectionConcurrently LoaderResult.Failed(loader.loaderType)
-      }
+    val maxLoadingTime = if (appConstants.isDebuggerAttached) {
+      MAX_LOADER_LOADING_TIME_DEBUGGING_MS
+    } else {
+      MAX_LOADER_LOADING_TIME_NORMAL_MS
+    }
 
-      return@processDataCollectionConcurrently result
+    // We want to process loaders in the same order they are in the list
+    val loaderResults = withContext(Dispatchers.Default) {
+      withTimeoutOrNull(maxLoadingTime) {
+        loaders.fold(mutableListWithCap<LoaderResult>(loaders.size)) { acc, loader ->
+          if (!isActive) {
+            acc += LoaderResult.Failed(loader.loaderType)
+          } else {
+            acc += loader.startLoading(postLoaderData)
+          }
+
+          return@fold acc
+        }
+      }
+    }
+
+    if (loaderResults == null) {
+      val allFailed = loaders.map { loader -> LoaderResult.Failed(loader.loaderType) }
+
+      removeFromActiveLoaders(postDescriptor)
+      return LoaderBatchResult(postDescriptor, allFailed)
     }
 
     return LoaderBatchResult(postLoaderData.postDescriptor, loaderResults)
@@ -189,6 +212,7 @@ class OnDemandContentLoaderManager(
     private const val TAG = "OnDemandContentLoaderManager"
     const val LONG_LOADING_DELAY_TIME_MS = 1500L
     const val SHORT_LOADING_DELAY_TIME_MS = 500L
-    const val MAX_LOADER_LOADING_TIME_MS = 10_000L
+    const val MAX_LOADER_LOADING_TIME_NORMAL_MS = 15_000L
+    const val MAX_LOADER_LOADING_TIME_DEBUGGING_MS = 600_000L
   }
 }

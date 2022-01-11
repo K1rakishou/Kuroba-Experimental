@@ -122,7 +122,8 @@ import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache;
 import com.google.gson.Gson;
 import com.squareup.moshi.Moshi;
 
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.List;
 
 import javax.inject.Singleton;
 
@@ -258,6 +259,7 @@ public class ManagerModule {
     @Singleton
     public OnDemandContentLoaderManager provideOnDemandContentLoader(
             CoroutineScope appScope,
+            AppConstants appConstants,
             Lazy<PrefetchLoader> prefetchLoader,
             Lazy<PostExtraContentLoader> postExtraContentLoader,
             Lazy<Chan4CloudFlareImagePreloader> chan4CloudFlareImagePreloader,
@@ -266,10 +268,14 @@ public class ManagerModule {
             ChanThreadManager chanThreadManager
     ) {
         Logger.deps("OnDemandContentLoaderManager");
-        kotlin.Lazy<HashSet<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(
+        kotlin.Lazy<List<OnDemandContentLoader>> loadersLazy = kotlin.LazyKt.lazy(
                 LazyThreadSafetyMode.SYNCHRONIZED,
                 () -> {
-                    HashSet<OnDemandContentLoader> loaders = new HashSet<>();
+                    List<OnDemandContentLoader> loaders = new ArrayList<>();
+
+                    // Order matters! Loaders at the beginning of the list will be executed first.
+                    // If a loader depends on the results of another loader then add it before
+                    // the other loader.
                     loaders.add(chan4CloudFlareImagePreloader.get());
                     loaders.add(prefetchLoader.get());
                     loaders.add(postExtraContentLoader.get());
@@ -281,6 +287,7 @@ public class ManagerModule {
 
         return new OnDemandContentLoaderManager(
                 appScope,
+                appConstants,
                 Dispatchers.getDefault(),
                 loadersLazy,
                 chanThreadManager

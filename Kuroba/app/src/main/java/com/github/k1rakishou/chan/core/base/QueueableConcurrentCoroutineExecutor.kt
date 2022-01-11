@@ -19,9 +19,9 @@ class QueueableConcurrentCoroutineExecutor(
     require(maxConcurrency > 0) { "Bad maxConcurrency: $maxConcurrency" }
   }
 
-  fun post(action: suspend () -> Unit): Job {
+  fun post(action: suspend CoroutineScope.() -> Unit): Job {
     return scope.launch(dispatcher) {
-      semaphore.withPermit { action.invoke() }
+      semaphore.withPermit { action.invoke(this) }
     }
   }
 

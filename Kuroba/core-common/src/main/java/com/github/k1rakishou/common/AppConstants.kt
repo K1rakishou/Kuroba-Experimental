@@ -3,6 +3,7 @@ package com.github.k1rakishou.common
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import android.os.Debug
 import android.webkit.WebSettings
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -26,6 +27,9 @@ open class AppConstants(
   val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
   val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
   val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
+
+  val isDebuggerAttached: Boolean
+    get() = Debug.isDebuggerConnected()
 
   // 128MB
   val exoPlayerDiskCacheMaxSize = 128L * 1024 * 1024

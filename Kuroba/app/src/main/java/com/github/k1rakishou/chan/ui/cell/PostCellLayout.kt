@@ -92,7 +92,7 @@ open class PostCellLayout @JvmOverloads constructor(
     this.postAttentionLabel = postAttentionLabel
     this.imageFileName = imageFileName
 
-    val commentTopPadding = if (postCellData.imagesCount > 1) {
+    val commentTopPadding = if (postCellData.imagesCount > 1 && !postCellData.postMultipleImagesCompactMode) {
       0
     } else {
       vertPaddingPx * 2
