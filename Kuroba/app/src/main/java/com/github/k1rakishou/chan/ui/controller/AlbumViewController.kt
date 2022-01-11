@@ -75,7 +75,7 @@ class AlbumViewController(
 ) : Controller(context), RequiresNoBottomNavBar, WindowInsetsListener, ToolbarHeightUpdatesCallback {
   private lateinit var recyclerView: ColorizableGridRecyclerView
 
-  private var postImages = mutableListOf<ChanPostImage>()
+  private val postImages = mutableListOf<ChanPostImage>()
   private var targetIndex = -1
 
   private var fastScroller: FastScroller? = null

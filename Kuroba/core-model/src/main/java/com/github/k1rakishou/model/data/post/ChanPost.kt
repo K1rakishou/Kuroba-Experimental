@@ -184,15 +184,16 @@ open class ChanPost(
   }
 
   @Synchronized
-  fun addImage(thirdEyeImage: ChanPostImage) {
+  internal fun addImage(chanPostImage: ChanPostImage): Boolean {
     val alreadyAdded = _postImages
-      .any { postImage -> postImage.serverFilename == thirdEyeImage.serverFilename }
+      .any { postImage -> postImage.serverFilename == chanPostImage.serverFilename }
 
     if (alreadyAdded) {
-      return
+      return false
     }
 
-    _postImages += thirdEyeImage
+    _postImages += chanPostImage
+    return true
   }
 
   override fun equals(other: Any?): Boolean {

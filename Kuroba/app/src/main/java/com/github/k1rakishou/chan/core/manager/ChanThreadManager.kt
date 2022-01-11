@@ -332,6 +332,15 @@ class ChanThreadManager(
     return postImages
   }
 
+  fun addImage(chanPostImage: ChanPostImage): Boolean {
+    val threadDescriptor = chanPostImage.ownerPostDescriptor.threadDescriptor()
+    val chanThread = chanThreadsCache.getThread(threadDescriptor)
+      ?: return false
+
+    chanThread.addImage(chanPostImage)
+    return true
+  }
+
   fun getPost(postDescriptor: PostDescriptor): ChanPost? {
     return chanThreadsCache.getThread(postDescriptor.threadDescriptor())?.getPost(postDescriptor)
   }

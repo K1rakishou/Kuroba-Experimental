@@ -1051,6 +1051,15 @@ class ChanThread(
     return lock.isWriteLocked && !lock.isWriteLockedByCurrentThread
   }
 
+  fun addImage(chanPostImage: ChanPostImage) {
+    lock.write {
+      val chanPost = postsByPostDescriptors[chanPostImage.ownerPostDescriptor]
+        ?: return@write false
+
+      return@write chanPost.addImage(chanPostImage)
+    }
+  }
+
   companion object {
     private const val TAG = "ChanThread"
 

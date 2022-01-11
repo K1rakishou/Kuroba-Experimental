@@ -185,11 +185,7 @@ class ThirdEyeLoader(
           return@processDataCollectionConcurrently false
         }
 
-        val chanPost = chanThreadManager.getPost(postDescriptor)
-          ?: return@processDataCollectionConcurrently false
-
-        chanPost.addImage(chanPostImage)
-        return@processDataCollectionConcurrently true
+        return@processDataCollectionConcurrently chanThreadManager.addImage(chanPostImage)
       }
 
       for (booruSettings in boorusSettings) {
@@ -221,10 +217,10 @@ class ThirdEyeLoader(
             val thirdEyeImage = thirdEyeImageResult.value
               ?: continue
 
-            val chanPost = chanThreadManager.getPost(postDescriptor)
-              ?: break
+            if (!chanThreadManager.addImage(thirdEyeImage)) {
+              return@processDataCollectionConcurrently false
+            }
 
-            chanPost.addImage(thirdEyeImage)
             thirdEyeManager.addImage(
               catalogMode = catalogMode,
               postDescriptor = postDescriptor,
