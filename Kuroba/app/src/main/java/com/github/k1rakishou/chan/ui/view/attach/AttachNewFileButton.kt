@@ -56,7 +56,7 @@ class AttachNewFileButton @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    val tintColor = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+    val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
 
     paint.color = tintColor
     paint.alpha = 160

@@ -63,7 +63,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   override fun onThemeChanged() {
     siteName.setTextColor(themeEngine.chanTheme.textColorPrimary)
 
-    val dividerColor = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+    val dividerColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
     divider.setBackgroundColor(dividerColor)
   }
 

@@ -618,7 +618,7 @@ class LocalArchiveController(
 
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
     val color = remember(key1 = isBackColorDark) {
-      Color(themeEngine.resolveDrawableTintColor(isBackColorDark))
+      ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark)
     }
 
     Box(modifier = Modifier
@@ -651,7 +651,7 @@ class LocalArchiveController(
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
 
     val colorFilter = remember(key1 = isBackColorDark) {
-      ColorFilter.tint(Color(themeEngine.resolveDrawableTintColor(isBackColorDark)))
+      ColorFilter.tint(ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark))
     }
 
     if (downloadResultMsg == null) {
@@ -690,7 +690,7 @@ class LocalArchiveController(
     val isBackColorDark = LocalChanTheme.current.isBackColorDark
 
     val color = remember(key1 = isBackColorDark) {
-      Color(themeEngine.resolveDrawableTintColor(isBackColorDark))
+      ThemeEngine.resolveDrawableTintColorCompose(isBackColorDark)
     }
 
     val colorFilter = remember(key1 = isBackColorDark) {

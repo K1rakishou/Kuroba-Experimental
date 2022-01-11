@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -159,7 +160,7 @@ class SearxImageSearchController(
       ) {
         Spacer(modifier = Modifier.height(8.dp))
 
-        val drawableTintColor = themeEngine.resolveDrawableTintColor()
+        val drawableTintColor = ThemeEngine.resolveDrawableTintColor(chanTheme)
         val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
 
         Image(

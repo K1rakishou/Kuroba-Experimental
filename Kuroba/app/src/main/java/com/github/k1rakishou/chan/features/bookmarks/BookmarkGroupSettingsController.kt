@@ -169,8 +169,7 @@ class BookmarkGroupSettingsController(
         KurobaComposeIcon(
           modifier = Modifier
             .kurobaClickable(onClick = { onHelpClickedRemembered.value.invoke() }),
-          drawableId = R.drawable.ic_help_outline_white_24dp,
-          themeEngine = themeEngine
+          drawableId = R.drawable.ic_help_outline_white_24dp
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -349,8 +348,7 @@ class BookmarkGroupSettingsController(
                 bounded = false,
                 onClick = { removeBoardClickedRemembered.value.invoke(groupId) }
               ),
-            drawableId = R.drawable.ic_clear_white_24dp,
-            themeEngine = themeEngine
+            drawableId = R.drawable.ic_clear_white_24dp
           )
 
           Spacer(modifier = Modifier.width(8.dp))
@@ -387,8 +385,7 @@ class BookmarkGroupSettingsController(
                   bounded = false,
                   onClick = { bookmarkWarningClickedRemembered.value.invoke(groupId) }
                 ),
-              drawableId = R.drawable.ic_alert,
-              themeEngine = themeEngine
+              drawableId = R.drawable.ic_alert
             )
           }
 
@@ -403,8 +400,7 @@ class BookmarkGroupSettingsController(
                   bounded = false,
                   onClick = { bookmarkGroupSettingsClickedRemembered.value.invoke(groupId) }
                 ),
-              drawableId = R.drawable.ic_settings_white_24dp,
-              themeEngine = themeEngine
+              drawableId = R.drawable.ic_settings_white_24dp
             )
           }
 
@@ -415,8 +411,7 @@ class BookmarkGroupSettingsController(
               .size(28.dp)
               .align(Alignment.CenterVertically)
               .detectReorder(reoderableState),
-            drawableId = R.drawable.ic_baseline_reorder_24,
-            themeEngine = themeEngine
+            drawableId = R.drawable.ic_baseline_reorder_24
           )
 
           Spacer(modifier = Modifier.width(8.dp))

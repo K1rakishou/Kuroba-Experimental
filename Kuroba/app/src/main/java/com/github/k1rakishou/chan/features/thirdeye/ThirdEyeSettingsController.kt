@@ -16,11 +16,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.ContentAlpha
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -47,12 +47,19 @@ import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCollapsable
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextBarButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.reorder.ReorderableState
+import com.github.k1rakishou.chan.ui.compose.reorder.detectReorder
+import com.github.k1rakishou.chan.ui.compose.reorder.draggedItem
+import com.github.k1rakishou.chan.ui.compose.reorder.move
+import com.github.k1rakishou.chan.ui.compose.reorder.rememberReorderState
+import com.github.k1rakishou.chan.ui.compose.reorder.reorderable
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
@@ -208,36 +215,35 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
   }
 
   private fun deleteBooru(
-    addedBoorus: List<BooruSetting>,
+    addedBoorus: MutableList<BooruSetting>,
     booruSetting: BooruSetting
-  ): List<BooruSetting> {
+  ): MutableList<BooruSetting> {
     val existingBooruSettingIndex = addedBoorus
       .indexOfFirst { addedBooruSetting -> addedBooruSetting.booruUniqueKey == booruSetting.booruUniqueKey }
 
     if (existingBooruSettingIndex < 0) {
-      return addedBoorus + booruSetting
+      return addedBoorus
     }
 
-    val resultBoorus = addedBoorus.toMutableList()
-    resultBoorus.removeAt(existingBooruSettingIndex)
-    return resultBoorus
+    addedBoorus.removeAt(existingBooruSettingIndex)
+    return addedBoorus
   }
 
   private fun createOrUpdateBooru(
     prevBooruSettingKey: String?,
     prevSettings: ThirdEyeSettings,
     newBooruSetting: BooruSetting
-  ): List<BooruSetting> {
+  ): MutableList<BooruSetting> {
     val existingBooruSettingIndex = prevSettings.addedBoorus
       .indexOfFirst { addedBooruSetting -> addedBooruSetting.booruUniqueKey == prevBooruSettingKey }
 
     if (existingBooruSettingIndex < 0) {
-      return prevSettings.addedBoorus + newBooruSetting
+      prevSettings.addedBoorus.add(newBooruSetting)
+      return prevSettings.addedBoorus
     }
 
-    val resultBoorus = prevSettings.addedBoorus.toMutableList()
-    resultBoorus.set(existingBooruSettingIndex, newBooruSetting)
-    return resultBoorus
+    prevSettings.addedBoorus.set(existingBooruSettingIndex, newBooruSetting)
+    return prevSettings.addedBoorus
   }
 
   @Composable
@@ -310,8 +316,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
           modifier = Modifier
             .consumeClicks()
             .padding(vertical = 4.dp),
-          drawableId = R.drawable.ic_baseline_eye_24,
-          themeEngine = themeEngine
+          drawableId = R.drawable.ic_baseline_eye_24
         )
 
         Spacer(modifier = Modifier.width(8.dp))
@@ -321,8 +326,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         modifier = Modifier
           .kurobaClickable(onClick = { onImportExportClicked() })
           .padding(vertical = 4.dp),
-        drawableId = R.drawable.ic_baseline_import_export_24,
-        themeEngine = themeEngine
+        drawableId = R.drawable.ic_baseline_import_export_24
       )
 
       Spacer(modifier = Modifier.width(8.dp))
@@ -371,17 +375,28 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
     onBooruSettingLongClicked: (BooruSetting) -> Unit,
   ) {
     val chanTheme = LocalChanTheme.current
-    val lazyListState = rememberLazyListState()
+    val reorderableState = rememberReorderState()
 
     LazyColumn(
       modifier = Modifier
         .fillMaxWidth()
         .heightIn(min = 128.dp, max = mainContentMaxHeight)
+        .reorderable(
+          state = reorderableState,
+          onMove = { from, to ->
+            thirdEyeSettingState.move(from = from, to = to)
+          },
+          onDragEnd = { from, to ->
+            if (!thirdEyeManager.onMoved(from = from, to = to)) {
+              thirdEyeSettingState.move(from = to, to = from)
+            }
+          }
+        )
         .simpleVerticalScrollbar(
-          state = lazyListState,
+          state = reorderableState.listState,
           chanTheme = chanTheme
         ),
-      state = lazyListState,
+      state = reorderableState.listState,
       content = {
         val addedBoorus = thirdEyeSettingState.addedBoorusState
         if (addedBoorus.isEmpty()) {
@@ -402,6 +417,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
               val booruSetting = addedBoorus[index]
 
               BuildBooruSettingItem(
+                reorderableState = reorderableState,
                 thirdEyeSettingState = thirdEyeSettingState,
                 booruSetting = booruSetting,
                 onBooruSettingClicked = onBooruSettingClicked,
@@ -416,6 +432,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
 
   @Composable
   private fun LazyItemScope.BuildBooruSettingItem(
+    reorderableState: ReorderableState,
     thirdEyeSettingState: ThirdEyeSettingsState,
     booruSetting: BooruSetting,
     onBooruSettingClicked: (BooruSetting) -> Unit,
@@ -436,6 +453,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         .wrapContentHeight()
         .padding(vertical = 6.dp)
         .graphicsLayer { alpha = currentAlpha }
+        .draggedItem(reorderableState.offsetByKey(booruSetting.booruUniqueKey))
         .kurobaClickable(
           enabled = enabled,
           bounded = true,
@@ -444,28 +462,55 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         ),
       backgroundColor = chanTheme.backColorSecondaryCompose
     ) {
-      Column(
-        modifier = Modifier
-          .wrapContentHeight()
-          .padding(4.dp)
+      KurobaComposeCollapsable(
+        enabled = enabled,
+        gradientEndColor = chanTheme.backColorSecondaryCompose
       ) {
-        BuildSettingItem(booruSetting.imageFileNameRegex, R.string.third_eye_settings_controller_image_name_regex)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.apiEndpoint, R.string.third_eye_settings_controller_api_endpoint_url)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.fullUrlJsonKey, R.string.third_eye_settings_controller_image_full_url_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.previewUrlJsonKey, R.string.third_eye_settings_controller_image_preview_url_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.fileSizeJsonKey, R.string.third_eye_settings_controller_image_size_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.widthJsonKey, R.string.third_eye_settings_controller_image_width_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.heightJsonKey, R.string.third_eye_settings_controller_image_height_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.tagsJsonKey, R.string.third_eye_settings_controller_image_tags_key)
-        Spacer(modifier = Modifier.height(4.dp))
-        BuildSettingItem(booruSetting.bannedTagsAsString, R.string.third_eye_settings_controller_image_banned_tags)
+        Column(
+          modifier = Modifier
+            .fillMaxWidth()
+        ) {
+          Row(
+            modifier = Modifier
+              .wrapContentHeight()
+              .fillMaxWidth()
+          ) {
+            Column(
+              modifier = Modifier
+                .wrapContentHeight()
+                .weight(1f)
+                .padding(4.dp)
+            ) {
+              BuildSettingItem(booruSetting.imageFileNameRegex, R.string.third_eye_settings_controller_image_name_regex)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.apiEndpoint, R.string.third_eye_settings_controller_api_endpoint_url)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.fullUrlJsonKey, R.string.third_eye_settings_controller_image_full_url_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.previewUrlJsonKey, R.string.third_eye_settings_controller_image_preview_url_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.fileSizeJsonKey, R.string.third_eye_settings_controller_image_size_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.widthJsonKey, R.string.third_eye_settings_controller_image_width_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.heightJsonKey, R.string.third_eye_settings_controller_image_height_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.tagsJsonKey, R.string.third_eye_settings_controller_image_tags_key)
+              Spacer(modifier = Modifier.height(4.dp))
+              BuildSettingItem(booruSetting.bannedTagsAsString, R.string.third_eye_settings_controller_image_banned_tags)
+            }
+
+            if (enabled) {
+              KurobaComposeIcon(
+                modifier = Modifier
+                  .size(32.dp)
+                  .padding(all = 4.dp)
+                  .detectReorder(reorderableState),
+                drawableId = R.drawable.ic_baseline_reorder_24
+              )
+            }
+          }
+        }
       }
     }
   }
@@ -605,6 +650,10 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
 
       addedBoorusState.clear()
       addedBoorusState.addAll(filterOutInvalidBoorus(thirdEyeSettings.addedBoorus))
+    }
+
+    fun move(from: Int, to: Int) {
+      addedBoorusState.move(from, to)
     }
 
     // Just in case to avoid crashes after importing invalid settings file

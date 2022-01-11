@@ -287,7 +287,6 @@ class FilterBoardSelectorController(
         .fillMaxWidth()
         .padding(start = 4.dp, end = 4.dp, top = 8.dp, bottom = 8.dp),
       chanTheme = chanTheme,
-      themeEngine = themeEngine,
       onBackgroundColor = backgroundColor,
       searchQueryState = searchQuery,
       labelText = stringResource(id = R.string.search_hint),

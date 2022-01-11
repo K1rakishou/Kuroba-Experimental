@@ -283,8 +283,7 @@ class BookmarkGroupPatternSettingsController(
                 bounded = false,
                 onClick = { onRemoveMatcherFlagClickedRemembered.value.invoke(index) }
               ),
-            drawableId = R.drawable.ic_clear_white_24dp,
-            themeEngine = themeEngine
+            drawableId = R.drawable.ic_clear_white_24dp
           )
 
           Spacer(modifier = Modifier.width(8.dp))

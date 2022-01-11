@@ -191,8 +191,7 @@ class CreateOrUpdateFilterController(
         modifier = Modifier
           .align(Alignment.CenterVertically)
           .kurobaClickable(onClick = { onHelpClicked() }),
-        drawableId = R.drawable.ic_help_outline_white_24dp,
-        themeEngine = themeEngine
+        drawableId = R.drawable.ic_help_outline_white_24dp
       )
     }
   }
@@ -744,7 +743,7 @@ class CreateOrUpdateFilterController(
     val children: @Composable (String) -> Unit = {
       val chanTheme = LocalChanTheme.current
       val color = remember(key1 = chanTheme.backColorCompose) {
-        themeEngine.resolveDrawableTintColorCompose(ThemeEngine.isDarkColor(chanTheme.backColorCompose))
+        ThemeEngine.resolveDrawableTintColorCompose(ThemeEngine.isDarkColor(chanTheme.backColorCompose))
       }
 
       val dropdownArrowPainter = remember {

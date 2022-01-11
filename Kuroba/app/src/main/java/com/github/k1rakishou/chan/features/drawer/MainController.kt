@@ -1097,7 +1097,6 @@ class MainController(
                 .fillMaxWidth()
                 .padding(start = 4.dp, end = 4.dp, top = 8.dp),
               chanTheme = chanTheme,
-              themeEngine = themeEngine,
               onBackgroundColor = backgroundColor,
               searchQueryState = searchQuery,
               onSearchQueryChanged = onSearchQueryChanged
@@ -1108,7 +1107,6 @@ class MainController(
 
           KurobaComposeIcon(
             drawableId = R.drawable.ic_baseline_wb_sunny_24,
-            themeEngine = themeEngine,
             modifier = Modifier
               .align(Alignment.CenterVertically)
               .kurobaClickable(onClick = onSwitchDayNightThemeIconClick),
@@ -1119,7 +1117,6 @@ class MainController(
 
           KurobaComposeIcon(
             drawableId = R.drawable.ic_more_vert_white_24dp,
-            themeEngine = themeEngine,
             modifier = Modifier
               .align(Alignment.CenterVertically)
               .kurobaClickable(onClick = onShowDrawerOptionsIconClick),

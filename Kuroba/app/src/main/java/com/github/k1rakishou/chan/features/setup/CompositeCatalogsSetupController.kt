@@ -251,8 +251,7 @@ class CompositeCatalogsSetupController(
             bounded = false,
             onClick = { onDeleteCompositeCatalogItemClickedRemembered.value.invoke(compositeCatalog) }
           ),
-        drawableId = R.drawable.ic_clear_white_24dp,
-        themeEngine = themeEngine
+        drawableId = R.drawable.ic_clear_white_24dp
       )
 
       Spacer(modifier = Modifier.width(8.dp))
@@ -301,8 +300,7 @@ class CompositeCatalogsSetupController(
           .size(32.dp)
           .align(Alignment.CenterVertically)
           .detectReorder(reorderState),
-        drawableId = R.drawable.ic_baseline_reorder_24,
-        themeEngine = themeEngine
+        drawableId = R.drawable.ic_baseline_reorder_24
       )
 
       Spacer(modifier = Modifier.width(8.dp))

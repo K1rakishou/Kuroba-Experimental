@@ -85,6 +85,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.viewModelByKey
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.flow.collect
@@ -254,7 +255,7 @@ class Chan4CaptchaLayout(
         .fillMaxWidth()
         .wrapContentHeight()
     ) {
-      val drawableTintColor = themeEngine.resolveDrawableTintColor()
+      val drawableTintColor = ThemeEngine.resolveDrawableTintColor(chanTheme)
       val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
 
       Image(

@@ -80,7 +80,7 @@ class EpoxySimpleGroupView @JvmOverloads constructor(
 
   private fun updateDividerColor() {
     val isDarkColor = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
-    divider.setBackgroundColor(themeEngine.resolveDrawableTintColor(isDarkColor))
+    divider.setBackgroundColor(ThemeEngine.resolveDrawableTintColor(isDarkColor))
   }
 
 }

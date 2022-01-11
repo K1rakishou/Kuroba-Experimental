@@ -207,7 +207,7 @@ public class ImageOptionsController
 
     @Override
     public void onThemeChanged() {
-        int color = themeEngine.resolveDrawableTintColor(themeEngine.getChanTheme().isBackColorDark());
+        int color = ThemeEngine.resolveDrawableTintColor(themeEngine.getChanTheme().isBackColorDark());
 
         Drawable tintedDrawable = themeEngine.tintDrawable(
                 context,

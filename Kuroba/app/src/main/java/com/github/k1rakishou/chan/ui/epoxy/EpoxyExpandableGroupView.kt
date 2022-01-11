@@ -96,7 +96,7 @@ class EpoxyExpandableGroupView @JvmOverloads constructor(
 
   private fun updateDividerColor() {
     val isDarkColor = isDarkColor(themeEngine.chanTheme.backColor)
-    divider.setBackgroundColor(themeEngine.resolveDrawableTintColor(isDarkColor))
+    divider.setBackgroundColor(ThemeEngine.resolveDrawableTintColor(isDarkColor))
   }
 
   private fun updateToggleIndicator() {

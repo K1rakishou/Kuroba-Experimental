@@ -375,6 +375,8 @@ class ReportManager(
       return
     }
 
+    Logger.d(TAG, "deleteOldAnrReports() found ${prevAnrs.size} anrs, toDelete=${toDelete}")
+
     val oldestAnrFilesToDelete = prevAnrs.map { prevAnrFile ->
       val matcher = ANR_EXTRACT_TIME_PATTERN.matcher(prevAnrFile.name)
       if (!matcher.find()) {
@@ -403,6 +405,8 @@ class ReportManager(
     if (toDelete <= 0) {
       return
     }
+
+    Logger.d(TAG, "deleteOldCrashlogs() found ${prevCrashlogs.size} crashlogs, toDelete=${toDelete}")
 
     val oldestCrashlogFilesToDelete = prevCrashlogs.map { prevCrashlogFile ->
       val matcher = CRASHLOG_EXTRACT_TIME_PATTERN.matcher(prevCrashlogFile.name)

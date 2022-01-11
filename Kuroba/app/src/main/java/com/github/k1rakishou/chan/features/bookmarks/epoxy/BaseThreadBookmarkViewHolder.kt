@@ -466,7 +466,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
       if (isGridMode) {
         indicator.imageTintList = ColorStateList.valueOf(ThemeEngine.LIGHT_DRAWABLE_TINT)
       } else {
-        val color = themeEngine.resolveDrawableTintColor(
+        val color = ThemeEngine.resolveDrawableTintColor(
           isDarkColor(themeEngine.chanTheme.backColor)
         )
 

@@ -414,7 +414,7 @@ class ReplyLayout @JvmOverloads constructor(
     replyInputMessageHolder.setBackgroundColor(replyInputMessageHolderBackColor)
 
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
-    val tintColor = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+    val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
 
     if (commentRevertChangeButton.drawable != null) {
       commentRevertChangeButton.setImageDrawable(
@@ -1090,7 +1090,7 @@ class ReplyLayout @JvmOverloads constructor(
       submit.setImageDrawable(ContextCompat.getDrawable(context, R.drawable.ic_clear_white_24dp))
     }
 
-    val tintColor = themeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+    val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
     submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, tintColor))
   }
 

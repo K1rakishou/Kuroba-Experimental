@@ -114,7 +114,6 @@ class SelectBoardForSearchController(
                     .wrapContentHeight()
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                   chanTheme = chanTheme,
-                  themeEngine = themeEngine,
                   onBackgroundColor = chanTheme.primaryColorCompose,
                   searchQueryState = searchQuery,
                   onSearchQueryChanged = { query -> searchQuery.value = query }

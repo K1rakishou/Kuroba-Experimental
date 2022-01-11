@@ -280,7 +280,7 @@ class FiltersController(
       if (filters.isNotEmpty()) {
         BuildFilterList(
           filters = filters,
-          reoderableState = reoderableState,
+          reorderableState = reoderableState,
           chanTheme = chanTheme,
           contentPadding = contentPadding,
           coroutineScope = coroutineScope
@@ -318,7 +318,7 @@ class FiltersController(
   @Composable
   private fun BuildFilterList(
     filters: List<FiltersControllerViewModel.ChanFilterInfo>,
-    reoderableState: ReorderableState,
+    reorderableState: ReorderableState,
     chanTheme: ChanTheme,
     contentPadding: PaddingValues,
     coroutineScope: CoroutineScope
@@ -366,16 +366,16 @@ class FiltersController(
       modifier = Modifier
         .fillMaxSize()
         .reorderable(
-          state = reoderableState,
+          state = reorderableState,
           onMove = { from, to -> viewModel.reorderFilterInMemory(from, to) },
           onDragEnd = { _, _ -> viewModel.persistReorderedFilters() }
         )
         .simpleVerticalScrollbar(
-          state = reoderableState.listState,
+          state = reorderableState.listState,
           chanTheme = chanTheme,
           contentPadding = contentPadding
         ),
-      state = reoderableState.listState,
+      state = reorderableState.listState,
       contentPadding = contentPadding
     ) {
       items(
@@ -387,7 +387,7 @@ class FiltersController(
           BuildChanFilter(
             index = index,
             totalCount = searchResults.size,
-            reoderableState = reoderableState,
+            reorderableState = reorderableState,
             chanFilterInfo = chanFilterInfo,
             coroutineScope = coroutineScope,
             onFilterClicked = { clickedFilter ->
@@ -417,7 +417,7 @@ class FiltersController(
   private fun BuildChanFilter(
     index: Int,
     totalCount: Int,
-    reoderableState: ReorderableState,
+    reorderableState: ReorderableState,
     chanFilterInfo: FiltersControllerViewModel.ChanFilterInfo,
     coroutineScope: CoroutineScope,
     onFilterClicked: (ChanFilter) -> Unit,
@@ -432,7 +432,7 @@ class FiltersController(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight()
-        .draggedItem(reoderableState.offsetByKey(chanFilterInfo.chanFilter.getDatabaseId()))
+        .draggedItem(reorderableState.offsetByKey(chanFilterInfo.chanFilter.getDatabaseId()))
         .kurobaClickable(
           bounded = true,
           onLongClick = { onFilterLongClicked(chanFilter) },
@@ -485,7 +485,7 @@ class FiltersController(
                 .padding(all = 4.dp),
               initiallyChecked = chanFilter.enabled,
               onCheckedChange = { nowChecked ->
-                if (reoderableState.draggedIndex != null) {
+                if (reorderableState.draggedIndex != null) {
                   return@KurobaComposeSwitch
                 }
 
@@ -502,7 +502,7 @@ class FiltersController(
             val reorderModifier = if (isInSelectionMode) {
               Modifier
             } else {
-              Modifier.detectReorder(reoderableState)
+              Modifier.detectReorder(reorderableState)
             }
 
             KurobaComposeIcon(
@@ -511,8 +511,7 @@ class FiltersController(
                 .padding(all = 4.dp)
                 .align(Alignment.CenterHorizontally)
                 .then(reorderModifier),
-              drawableId = R.drawable.ic_baseline_reorder_24,
-              themeEngine = themeEngine
+              drawableId = R.drawable.ic_baseline_reorder_24
             )
           }
 

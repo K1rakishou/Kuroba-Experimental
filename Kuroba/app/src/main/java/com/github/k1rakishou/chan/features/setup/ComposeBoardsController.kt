@@ -295,8 +295,7 @@ class ComposeBoardsController(
                     bounded = false,
                     onClick = { removeBoardClickedRemembered.value.invoke(index) }
                   ),
-                drawableId = R.drawable.ic_clear_white_24dp,
-                themeEngine = themeEngine
+                drawableId = R.drawable.ic_clear_white_24dp
               )
 
               Row(
@@ -360,8 +359,7 @@ class ComposeBoardsController(
                   .align(Alignment.CenterVertically)
                   .detectReorder(reoderableState)
                   .padding(end = 8.dp),
-                drawableId = R.drawable.ic_baseline_reorder_24,
-                themeEngine = themeEngine
+                drawableId = R.drawable.ic_baseline_reorder_24
               )
             }
           }

@@ -216,30 +216,6 @@ open class ThemeEngine(
     return drawableMutable
   }
 
-  fun resolveDrawableTintColor(): Int {
-    return if (chanTheme.isBackColorDark) {
-      LIGHT_DRAWABLE_TINT
-    } else {
-      DARK_DRAWABLE_TINT
-    }
-  }
-
-  fun resolveDrawableTintColor(isCurrentColorDark: Boolean): Int {
-    return if (isCurrentColorDark) {
-      LIGHT_DRAWABLE_TINT
-    } else {
-      DARK_DRAWABLE_TINT
-    }
-  }
-
-  fun resolveDrawableTintColorCompose(isCurrentColorDark: Boolean): ComposeColor {
-    return if (isCurrentColorDark) {
-      LIGHT_DRAWABLE_TINT_COMPOSE
-    } else {
-      DARK_DRAWABLE_TINT_COMPOSE
-    }
-  }
-
   fun tintDrawable(context: Context, @DrawableRes drawableId: Int): Drawable {
     val drawable = ContextCompat.getDrawable(context, drawableId)
       ?: throw IllegalArgumentException("Couldn't find drawable with drawableId: $drawableId")
@@ -390,6 +366,32 @@ open class ThemeEngine(
 
     val LIGHT_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#EEEEEE"))
     val DARK_DRAWABLE_TINT_COMPOSE = ComposeColor(Color.parseColor("#7E7E7E"))
+
+    @JvmStatic
+    fun resolveDrawableTintColor(chanTheme: ChanTheme): Int {
+      return if (chanTheme.isBackColorDark) {
+        LIGHT_DRAWABLE_TINT
+      } else {
+        DARK_DRAWABLE_TINT
+      }
+    }
+
+    @JvmStatic
+    fun resolveDrawableTintColor(isCurrentColorDark: Boolean): Int {
+      return if (isCurrentColorDark) {
+        LIGHT_DRAWABLE_TINT
+      } else {
+        DARK_DRAWABLE_TINT
+      }
+    }
+
+    fun resolveDrawableTintColorCompose(isCurrentColorDark: Boolean): ComposeColor {
+      return if (isCurrentColorDark) {
+        LIGHT_DRAWABLE_TINT_COMPOSE
+      } else {
+        DARK_DRAWABLE_TINT_COMPOSE
+      }
+    }
 
     /**
      * Makes color brighter if factor > 1.0f or darker if factor < 1.0f

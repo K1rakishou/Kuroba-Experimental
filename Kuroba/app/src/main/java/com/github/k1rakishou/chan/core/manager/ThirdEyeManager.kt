@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.features.thirdeye.data.ThirdEyeSettings
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.move
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -177,6 +178,18 @@ class ThirdEyeManager(
     }
 
     return null
+  }
+
+  suspend fun onMoved(from: Int, to: Int): Boolean {
+    val currentSettings = thirdEyeSettingsLazy.value()
+    currentSettings.addedBoorus.move(fromIdx = from, toIdx = to)
+
+    if (!updateSettings(currentSettings)) {
+      currentSettings.addedBoorus.move(fromIdx = to, toIdx = from)
+      return false
+    }
+
+    return true
   }
 
   suspend fun imageAlreadyProcessed(catalogMode: Boolean, postDescriptor: PostDescriptor): Boolean {

@@ -10,7 +10,7 @@ import java.util.regex.Pattern
 @JsonClass(generateAdapter = true)
 data class ThirdEyeSettings(
   @Json(name = "enabled") val enabled: Boolean = false,
-  @Json(name = "added_boorus") val addedBoorus: List<BooruSetting> = emptyList()
+  @Json(name = "added_boorus") val addedBoorus: MutableList<BooruSetting> = mutableListOf()
 )
 
 @JsonClass(generateAdapter = true)
