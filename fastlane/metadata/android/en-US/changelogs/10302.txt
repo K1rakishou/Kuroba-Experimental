@@ -1,0 +1,39 @@
+v1.3.2
+TLDR version:
+- Media viewer updates.
+- mpv updated to the latest available version.
+- Apk/report server deprecation.
+- Third eye support.
+
+Full version:
+- Third eye support. Can be found in thread options (Thread -> three dot menu -> More options -> Third eye settings).
+- Implement nsfw mode for catalog/thread/album thumbnails. Can be found in thread options (Thread -> three dot menu -> More options -> NSFW mode).
+- Hopefully fix some notifications not getting closed when posting.
+- Use the left side of the screen for media viewer action strip when on tablets.
+- Decrease the minimumTouchTargetSize for Jetpack Compose UI elements.
+- Fix the restartApp() method which hasn't been working for months.
+- Add ability to leave comment via the built-in reporting system on already existing issues on Github by providing their issueId.
+
+v1.3.1
+- Fix crash when opening reply chain from the media viewer where posts have flags.
+- Fix memory leak caused by PostTitleTimeUpdate routine.
+
+v1.3.0
+- Allow visiting boards that are not currently added into the BoardManager. Basically it's now possible to open boards without having to download the board list from the server. Sites without catalog support won't work, obviously (like warosu).
+- Remove ability to create 4chan boards manually (you don't need it anymore, see ^).
+- Apk/report server deprecation. It will be shut down in a couple of weeks. All the new Anr/Crash reports will be sent to a separate github repo now. See https://github.com/KurobaExReports/Reports/issues
+- Update mpv with all the dependencies. You will have to download the new libraries.
+- Fix MpvVideoMediaView reload media button not doing anything.
+- Set mediaViewerMaxOffscreenPages to 1 by default instead of 2. This will only be applied to fresh app installs. If you have problems when viewing media such as lags or micro-freezes then it's recommended to set that setting to 1 since it will reduce the amount of media loaded into the memory at once. It can be done in the media viewer settings.
+- Move DiskCacheSettings from DeveloperSettingsScreen to CacheSettingsScreen. 
+- Add setting to disable in-app "events".
+- Improve open thread by url. It can now open catalogs/threads by board code/threadId or full url like before. Also open thread by ID was merged into open catalogs/threads by identifier.
+- Animate navigation history list element updates.
+- Move media viewer action buttons to bottom of the screen.
+- Add ability to display post replies in media viewer without having to close it.
+- Prefer using HARDWARE bitmaps when possible (stored only in the GPU memory, only supported on API 26+). Force RGB_565 if the device is low ram device. In all other cases use ARGB_8888.
+- Notify the user more aggressively when root directory is not accessible because apparently it's still not obvious to the user what to do in this situation.
+- Dot not use the full image url when "High resolution cell" setting is enabled and remove thumbnail spoilers enabled too.
+- Fix not being able to download archived 2ch.hk threads.
+- Do not crash when an url inside of soundpost tag is incorrect.
+- Fix a bug where clicking any kind of bookmark notification would not automatically run the foreground watcher right away after the app is started because by the time BookmarkForegroundWatcher.updateBookmarksWorkerLoop() is called applicationVisibilityManager.isAppInForeground() would still be false (since the activity might not be created yet).
