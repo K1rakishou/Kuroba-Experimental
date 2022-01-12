@@ -154,6 +154,14 @@ class MainSettingsScreen(
 
         group += LinkSettingV2.createBuilder(
           context = context,
+          identifier = MainScreen.AboutAppGroup.ReportTrackerLink,
+          topDescriptionIdFunc = { R.string.settings_report_tracker_link },
+          bottomDescriptionIdFunc = { R.string.settings_report_tracker_link_description },
+          callback = { openLink(BuildConfig.GITHUB_REPORTS_ENDPOINT) }
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
           identifier = MainScreen.AboutAppGroup.AppLicense,
           topDescriptionIdFunc = { R.string.settings_about_license },
           bottomDescriptionIdFunc = { R.string.settings_about_license_description },
@@ -162,21 +170,6 @@ class MainSettingsScreen(
               LicensesController(context,
                 getString(R.string.settings_about_license),
                 "file:///android_asset/html/license.html"
-              )
-            )
-          }
-        )
-
-        group += LinkSettingV2.createBuilder(
-          context = context,
-          identifier = MainScreen.AboutAppGroup.AppLicenses,
-          topDescriptionIdFunc = { R.string.settings_about_licenses },
-          bottomDescriptionIdFunc = { R.string.settings_about_licenses_description },
-          callback = {
-            navigationController.pushController(
-              LicensesController(context,
-                getString(R.string.settings_about_licenses),
-                "file:///android_asset/html/licenses.html"
               )
             )
           }

@@ -129,8 +129,8 @@ sealed class MainScreen(
     object CollectCrashReport : AboutAppGroup("collect_crash_reports")
     object CollectAnrReport : AboutAppGroup("collect_anr_reports")
     object FindAppOnGithub : AboutAppGroup("find_app_on_github")
+    object ReportTrackerLink : AboutAppGroup("report_tracker_link")
     object AppLicense : AboutAppGroup("app_license")
-    object AppLicenses : AboutAppGroup("app_licenses")
     object DeveloperSettings : AboutAppGroup("developer_settings")
 
     companion object : IGroupIdentifier() {
