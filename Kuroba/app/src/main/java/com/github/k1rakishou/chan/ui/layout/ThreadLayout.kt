@@ -470,7 +470,7 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val initial = visible != Visible.THREAD
-    loadView.awaitUntilGloballyLaidOut()
+    loadView.awaitUntilGloballyLaidOut(waitForWidth = true)
 
     val (showPostsResult, totalDuration) = measureTimedValue {
       threadListLayout.showPosts(loadView.width, descriptor, filter, initial)

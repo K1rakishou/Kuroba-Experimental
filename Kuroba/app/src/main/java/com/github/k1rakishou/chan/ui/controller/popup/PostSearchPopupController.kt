@@ -193,7 +193,7 @@ class PostSearchPopupController(
     val data = displayingData
       ?: return
 
-    postsView.awaitUntilGloballyLaidOut()
+    postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
 
     val resultPosts = withContext(Dispatchers.Default) {
       val searchQuery = query.toLowerCase(Locale.ENGLISH)

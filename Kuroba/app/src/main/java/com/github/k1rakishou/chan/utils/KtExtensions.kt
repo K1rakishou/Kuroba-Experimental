@@ -94,9 +94,29 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
   }
 }
 
-suspend fun View.awaitUntilGloballyLaidOut() {
-  if (ViewCompat.isLaidOut(this) && !isLayoutRequested || (width > 0 || height > 0)) {
+suspend fun View.awaitUntilGloballyLaidOut(
+  waitForWidth: Boolean = false,
+  waitForHeight: Boolean = false,
+  attempts: Int = 5
+) {
+  if (!waitForWidth && !waitForHeight) {
+    error("At least one of the parameters must be set to true!")
+  }
+
+  if (attempts <= 0) {
+    Logger.e(TAG, "awaitUntilGloballyLaidOut() exhausted all attempts exiting, viewInfo=${this}")
     return
+  }
+
+  val widthOk = (!waitForWidth || width > 0)
+  val heightOk = (!waitForHeight || height > 0)
+
+  if (widthOk && heightOk) {
+    return
+  }
+
+  if (!ViewCompat.isLaidOut(this) && !isLayoutRequested) {
+    requestLayout()
   }
 
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
@@ -117,6 +137,8 @@ suspend fun View.awaitUntilGloballyLaidOut() {
       viewTreeObserver.removeOnGlobalLayoutListener(listener)
     }
   }
+
+  awaitUntilGloballyLaidOut(waitForWidth, waitForHeight, attempts - 1)
 }
 
 fun Controller.findControllerOrNull(predicate: (Controller) -> Boolean): Controller? {

@@ -129,7 +129,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
     updateCurrentThemeIndicator(true)
     mainScope.launch {
-      pager.awaitUntilGloballyLaidOut()
+      pager.awaitUntilGloballyLaidOut(waitForWidth = true)
 
       reload()
     }

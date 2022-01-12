@@ -98,7 +98,7 @@ class PostRepliesPopupController(
     postsView.addOnScrollListener(scrollListener)
 
     mainScope.launch {
-      postsView.awaitUntilGloballyLaidOut()
+      postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
 
       repliesAdapter.setOrUpdateData(postsView.width, data.posts, themeEngine.chanTheme)
       restoreScrollPosition(data.forPostWithDescriptor)
