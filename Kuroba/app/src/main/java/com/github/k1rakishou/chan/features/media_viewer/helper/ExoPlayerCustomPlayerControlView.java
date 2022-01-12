@@ -54,6 +54,8 @@ import java.util.Formatter;
 import java.util.Locale;
 import java.util.concurrent.CopyOnWriteArrayList;
 
+import kotlin.Unit;
+
 public class ExoPlayerCustomPlayerControlView extends FrameLayout {
 
     static {
@@ -560,7 +562,10 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
                 this,
                 MediaViewerToolbar.ANIMATION_DURATION_MS,
                 hideShowAnimation,
-                null
+                () -> {
+                    updateAll();
+                    return Unit.INSTANCE;
+                }
         );
 
         for (ExoPlayerCustomPlayerControlView.VisibilityListener visibilityListener : visibilityListeners) {

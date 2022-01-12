@@ -55,15 +55,16 @@ class ExoPlayerVideoMediaView(
   override val viewableMedia: ViewableMedia.Video,
   override val pagerPosition: Int,
   override val totalPageItemsCount: Int,
-) : ExoPlayerCustomPlayerControlView.VideoMediaViewCallbacks, MediaView<ViewableMedia.Video, ExoPlayerVideoMediaView.VideoMediaViewState>(
-  context = context,
-  attributeSet = null,
-  mediaViewContract = mediaViewContract,
-  mediaViewState = initialMediaViewState,
-  cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
-  fileDataSourceFactory = fileDataSourceFactory,
-  contentDataSourceFactory = contentDataSourceFactory,
-) {
+) : ExoPlayerCustomPlayerControlView.VideoMediaViewCallbacks,
+  MediaView<ViewableMedia.Video, ExoPlayerVideoMediaView.VideoMediaViewState>(
+    context = context,
+    attributeSet = null,
+    mediaViewContract = mediaViewContract,
+    mediaViewState = initialMediaViewState,
+    cachedHttpDataSourceFactory = cachedHttpDataSourceFactory,
+    fileDataSourceFactory = fileDataSourceFactory,
+    contentDataSourceFactory = contentDataSourceFactory,
+  ) {
 
   private val thumbnailMediaView: ThumbnailMediaView
   private val actualVideoPlayerView: ExoPlayerCustomPlayerView
