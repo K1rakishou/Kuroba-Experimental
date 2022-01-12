@@ -1089,6 +1089,10 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun openFiltersController(chanFilterMutable: ChanFilterMutable) {
+    if (postPopupHelper.isOpen) {
+      postPopupHelper.popAll()
+    }
+
     callback.openFiltersController(chanFilterMutable)
   }
 
