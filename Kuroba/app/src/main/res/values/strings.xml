@@ -1522,7 +1522,7 @@ Actual error: \'%1$s\'</string>
     <string name="third_eye_add_site_controller_image_preview_url_key">Image preview url json key (Required to display thumbnail)</string>
     <string name="third_eye_add_site_controller_image_size_key">Image size json key (Optional. Will fetch and show image size)</string>
     <string name="third_eye_add_site_controller_image_width_key">Image width json key (Optional. Will fetch and show image width)</string>
-    <string name="third_eye_add_site_controller_image_height_key">Image height json key (Optional. Will fetch and show height size)</string>
+    <string name="third_eye_add_site_controller_image_height_key">Image height json key (Optional. Will fetch and show image height)</string>
     <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (Optional. Will fetch image tags to filter out images matching banned tags)</string>
     <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (Optional if \'Image tags json key\' is not set. Must be whitespace separated)</string>
 

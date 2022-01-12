@@ -97,6 +97,7 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
     private static final int MAX_UPDATE_INTERVAL_MS = 1000;
 
     private ValueAnimator hideShowAnimation = null;
+    private VideoMediaViewCallbacks videoMediaViewCallbacks = null;
 
     private final ComponentListener componentListener;
     private final CopyOnWriteArrayList<ExoPlayerCustomPlayerControlView.VisibilityListener> visibilityListeners;
@@ -289,6 +290,10 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
 
         currentPosition = C.TIME_UNSET;
         currentBufferedPosition = C.TIME_UNSET;
+    }
+
+    public void setVideoMediaViewCallbacks(VideoMediaViewCallbacks videoMediaViewCallbacks) {
+        this.videoMediaViewCallbacks = videoMediaViewCallbacks;
     }
 
     /**
@@ -1121,6 +1126,12 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
         public void onClick(View view) {
             Player player = ExoPlayerCustomPlayerControlView.this.player;
             if (player == null) {
+                if (view == playButton || view == pauseButton) {
+                    if (videoMediaViewCallbacks != null) {
+                        videoMediaViewCallbacks.initializePlayerAndStartPlaying();
+                    }
+                }
+
                 return;
             }
             if (nextButton == view) {
@@ -1152,5 +1163,9 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
         public static boolean isAccessibilityFocused(View view) {
             return view.isAccessibilityFocused();
         }
+    }
+
+    public interface VideoMediaViewCallbacks {
+        public void initializePlayerAndStartPlaying();
     }
 }

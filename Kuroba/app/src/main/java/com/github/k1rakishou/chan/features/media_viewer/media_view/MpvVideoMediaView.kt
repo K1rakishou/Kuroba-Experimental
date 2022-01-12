@@ -163,7 +163,13 @@ class MpvVideoMediaView(
 
       actualVideoPlayerView.cycleHwdec()
     }
-    mpvPlayPause.setOnClickListener { actualVideoPlayerView.cyclePause() }
+    mpvPlayPause.setOnClickListener {
+      if (playJob == null && !playing) {
+        startPlayingVideo(isLifecycleChange = false)
+      } else if (playing) {
+        actualVideoPlayerView.cyclePause()
+      }
+    }
 
     mpvVideoProgress.addListener(object : TimeBar.OnScrubListener {
       override fun onScrubStart(timeBar: TimeBar, position: Long) {
@@ -185,7 +191,6 @@ class MpvVideoMediaView(
 
     mpvMuteUnmute.setEnabledFast(false)
     mpvHwSw.setEnabledFast(false)
-    mpvPlayPause.setEnabledFast(false)
     mpvSettings.setEnabledFast(false)
 
     val movableContainer = actualVideoPlayerView.findViewById<View>(R.id.media_view_video_root)
@@ -507,7 +512,6 @@ class MpvVideoMediaView(
         showBufferingJob = null
 
         mpvHwSw.setEnabledFast(true)
-        mpvPlayPause.setEnabledFast(true)
         mpvSettings.setEnabledFast(true)
 
         if (_hasAudio) {

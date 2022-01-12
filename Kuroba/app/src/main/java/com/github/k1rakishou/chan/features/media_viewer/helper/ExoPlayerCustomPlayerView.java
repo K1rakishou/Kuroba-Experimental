@@ -268,10 +268,14 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
         this.useController = useController;
     }
 
-    public void setControllerPlaceholderView(ViewGroup controllerPlaceholder) {
+    public void setControllerPlaceholderView(
+            ViewGroup controllerPlaceholder,
+            ExoPlayerCustomPlayerControlView.VideoMediaViewCallbacks videoMediaViewCallbacks
+    ) {
         this.controller = new ExoPlayerCustomPlayerControlView(getContext(), null, 0);
         controller.setId(R.id.exo_controller);
         controller.setLayoutParams(controllerPlaceholder.getLayoutParams());
+        controller.setVideoMediaViewCallbacks(videoMediaViewCallbacks);
         ViewGroup parent = ((ViewGroup) controllerPlaceholder.getParent());
         int controllerIndex = parent.indexOfChild(controllerPlaceholder);
         parent.removeView(controllerPlaceholder);
