@@ -1063,12 +1063,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_title_app_setup">App Setup</string>
     <string name="browse_controller_subtitle">Tap for site/board setup</string>
     <string name="browse_controller_enter_identifier">Enter catalog/thread identifier</string>
-    <string name="browse_controller_enter_identifier_description">
-        - \'board_code\' or \'/board_code/\' to open board of the currently opened site\n
-        - \'1234567890\' to open thread with id \'1234567890\' of the currently opened board\n
-        - \'4chan.org/a/\' to open \'/a/\' board of \'4chan.org\' site\n
-        - Full links like \'https://boards.4channel.org/g/thread/1234567890#p1122334455\' or \'4channel.org/g/\' work too
-    </string>
+    <string name="browse_controller_enter_identifier_description">Thread id/board code/full catalog/thread/post url</string>
     <string name="browse_controller_enter_media_url">Enter media url</string>
     <string name="browse_controller_enter_media_url_error">Failed to convert \'%1$s\' to url</string>
     <string name="browse_controller_enter_thread_id_msg">The thread must belong to a board you are currently on, otherwise it won\'t be found</string>
