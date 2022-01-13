@@ -265,6 +265,35 @@ class AddOrEditBooruController(
           )
         }
       }
+
+      val fileSizeJsonKey = booruSettingState.fileSizeJsonKeyState.value.trim()
+      val widthJsonKey = booruSettingState.widthJsonKeyState.value.trim()
+      val heightJsonKey = booruSettingState.heightJsonKeyState.value.trim()
+
+      validateNestedJsonKey(fullUrlJsonKey)
+      validateNestedJsonKey(previewUrlJsonKey)
+      validateNestedJsonKey(fileSizeJsonKey)
+      validateNestedJsonKey(widthJsonKey)
+      validateNestedJsonKey(heightJsonKey)
+      validateNestedJsonKey(tagsJsonKey)
+    }
+  }
+
+  private fun validateNestedJsonKey(jsonKey: String) {
+    val markersCount = jsonKey.count { it == '>' }
+    if (markersCount == 0) {
+      return
+    }
+
+    val innerKeys = jsonKey.split(">")
+
+    for (innerKey in innerKeys) {
+      if (innerKey.isBlank()) {
+        throw BooruSettingValidationException(
+          settingName = "jsonKey",
+          message = "after splitting it one of the inner keys is empty or blank"
+        )
+      }
     }
   }
 
