@@ -87,7 +87,7 @@ abstract class CommonSite : SiteBase() {
   }
 
   private val defaultRequestModifier by lazy {
-    object : SiteRequestModifier<Site>(this, appConstants) {
+    object : SiteRequestModifier<Site>(this@CommonSite, appConstants) {
       // Default implementation.
     }
   }

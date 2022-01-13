@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.base
 
 import junit.framework.Assert.assertEquals
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.runBlockingTest
 import org.junit.Test
 import java.util.concurrent.atomic.AtomicInteger
@@ -16,7 +17,7 @@ class DebouncingCoroutineExecutorTest {
       val counter = AtomicInteger(0)
 
       suspendDebouncer.post(500L) { counter.getAndIncrement() }
-      advanceTimeBy(600L)
+      testScheduler.apply { advanceTimeBy(600L); runCurrent() }
 
       assertEquals(1, counter.get())
 
@@ -31,7 +32,7 @@ class DebouncingCoroutineExecutorTest {
       val counter = AtomicInteger(0)
 
       repeat(100) { suspendDebouncer.post(500L) { counter.getAndIncrement() } }
-      advanceTimeBy(600L)
+      testScheduler.apply { advanceTimeBy(600L); runCurrent() }
 
       assertEquals(1, counter.get())
 
@@ -65,7 +66,7 @@ class DebouncingCoroutineExecutorTest {
 
       repeat(10) {
         suspendDebouncer.post(500L) { counter.getAndIncrement() }
-        advanceTimeBy(400L)
+        testScheduler.apply { advanceTimeBy(400L); runCurrent() }
       }
 
       advanceUntilIdle()

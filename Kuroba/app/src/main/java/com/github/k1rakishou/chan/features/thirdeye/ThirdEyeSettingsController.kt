@@ -225,8 +225,9 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
       return addedBoorus
     }
 
-    addedBoorus.removeAt(existingBooruSettingIndex)
-    return addedBoorus
+    val addedBoorusCopy = addedBoorus.toMutableList()
+    addedBoorusCopy.removeAt(existingBooruSettingIndex)
+    return addedBoorusCopy
   }
 
   private fun createOrUpdateBooru(
@@ -237,13 +238,15 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
     val existingBooruSettingIndex = prevSettings.addedBoorus
       .indexOfFirst { addedBooruSetting -> addedBooruSetting.booruUniqueKey == prevBooruSettingKey }
 
+    val addedBoorusCopy = prevSettings.addedBoorus.toMutableList()
+
     if (existingBooruSettingIndex < 0) {
-      prevSettings.addedBoorus.add(newBooruSetting)
-      return prevSettings.addedBoorus
+      addedBoorusCopy.add(newBooruSetting)
+      return addedBoorusCopy
     }
 
-    prevSettings.addedBoorus.set(existingBooruSettingIndex, newBooruSetting)
-    return prevSettings.addedBoorus
+    addedBoorusCopy.set(existingBooruSettingIndex, newBooruSetting)
+    return addedBoorusCopy
   }
 
   @Composable

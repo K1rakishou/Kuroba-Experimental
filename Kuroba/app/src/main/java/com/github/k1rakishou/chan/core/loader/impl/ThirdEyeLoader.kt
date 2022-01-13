@@ -6,14 +6,17 @@ import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
+import com.github.k1rakishou.chan.core.site.SiteRequestModifier.Companion.addDefaultHeaders
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.traverseJson
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isJson
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
@@ -34,6 +37,7 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicBoolean
 
 class ThirdEyeLoader(
+  private val appConstants: AppConstants,
   private val _thirdEyeManager: Lazy<ThirdEyeManager>,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>
@@ -268,6 +272,7 @@ class ThirdEyeLoader(
     val request = Request.Builder()
       .url(imageByMd5EndpointUrl)
       .get()
+      .addDefaultHeaders(appConstants)
       .build()
 
     val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
@@ -323,14 +328,14 @@ class ThirdEyeLoader(
       return null
     }
 
-    val fullUrlJsonKey = booruSettings.fullUrlJsonKey.lowercase(Locale.ENGLISH).trim()
-    val previewUrlJsonKey = booruSettings.previewUrlJsonKey.lowercase(Locale.ENGLISH).trim()
-    val fileSizeJsonKey = booruSettings.fileSizeJsonKey.lowercase(Locale.ENGLISH).trim()
-    val widthJsonKey = booruSettings.widthJsonKey.lowercase(Locale.ENGLISH).trim()
-    val heightJsonKey = booruSettings.heightJsonKey.lowercase(Locale.ENGLISH).trim()
-    val tagsJsonKey = booruSettings.tagsJsonKey.lowercase(Locale.ENGLISH).trim()
+    val fullUrlJsonKey = JsonKey(booruSettings.fullUrlJsonKey.lowercase(Locale.ENGLISH).trim())
+    val previewUrlJsonKey = JsonKey(booruSettings.previewUrlJsonKey.lowercase(Locale.ENGLISH).trim())
+    val fileSizeJsonKey = JsonKey(booruSettings.fileSizeJsonKey.lowercase(Locale.ENGLISH).trim())
+    val widthJsonKey = JsonKey(booruSettings.widthJsonKey.lowercase(Locale.ENGLISH).trim())
+    val heightJsonKey = JsonKey(booruSettings.heightJsonKey.lowercase(Locale.ENGLISH).trim())
+    val tagsJsonKey = JsonKey(booruSettings.tagsJsonKey.lowercase(Locale.ENGLISH).trim())
 
-    val namesToCheck = mutableMapOf<String?, String?>(
+    val namesToCheck = mutableMapOf<JsonKey, JsonValue?>(
       fullUrlJsonKey to null,
       previewUrlJsonKey to null,
       fileSizeJsonKey to null,
@@ -341,11 +346,8 @@ class ThirdEyeLoader(
 
     try {
       jsonReader.traverseJson(
-        visitor = { name, value ->
-          if (namesToCheck.containsKey(name)) {
-            namesToCheck[name] = value
-          }
-        },
+        visitor = { path, name, value -> visit(namesToCheck, path, name, value) },
+        currentName = null,
         jsonDebugOutput = null
       )
     } catch (error: Throwable) {
@@ -362,32 +364,34 @@ class ThirdEyeLoader(
       return null
     }
 
-    val tags = namesToCheck[tagsJsonKey]?.split(" ") ?: emptyList()
+    val tags = namesToCheck[tagsJsonKey]?.asList() ?: emptyList()
     val bannedTagsAsSet = booruSettings.bannedTagsAsSet
 
     for (imageTag in tags) {
       if (imageTag.lowercase(Locale.ENGLISH) in bannedTagsAsSet) {
-        Logger.d(TAG, "extractChanPostImageDataFromJson() Found banned tag: ${imageTag}, skipping this image")
+        Logger.d(TAG, "extractChanPostImageDataFromJson() Found banned tag: '${imageTag}', " +
+          "skipping this image (imageHash='$imageHash')")
+
         skipImageCompletely.set(true)
         return null
       }
     }
 
-    val previewUrl = namesToCheck[previewUrlJsonKey]?.toHttpUrlOrNull()
-    val fullUrl = namesToCheck[fullUrlJsonKey]?.toHttpUrlOrNull()
-    val width = namesToCheck[widthJsonKey]?.toIntOrNull()
-    val height = namesToCheck[heightJsonKey]?.toIntOrNull()
-    val fileSize = namesToCheck[fileSizeJsonKey]?.toLongOrNull()
+    val previewUrl = namesToCheck[previewUrlJsonKey]?.firstOrNull()?.toHttpUrlOrNull()
+    val fullUrl = namesToCheck[fullUrlJsonKey]?.firstOrNull()?.toHttpUrlOrNull()
+    val width = namesToCheck[widthJsonKey]?.firstOrNull()?.toIntOrNull()
+    val height = namesToCheck[heightJsonKey]?.firstOrNull()?.toIntOrNull()
+    val fileSize = namesToCheck[fileSizeJsonKey]?.firstOrNull()?.toLongOrNull()
 
     if (fullUrl == null) {
       Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
-        "failed to extract fullUrl: '${namesToCheck[fullUrlJsonKey]}'")
+        "failed to extract fullUrl: '${namesToCheck[fullUrlJsonKey]?.firstOrNull()}'")
       return null
     }
 
     if (previewUrl == null) {
       Logger.e(TAG, "extractChanPostImageDataFromJson() imageByMd5EndpointUrl='$imageByMd5EndpointUrl', " +
-        "failed to extract previewUrl: '${namesToCheck[previewUrlJsonKey]}'")
+        "failed to extract previewUrl: '${namesToCheck[previewUrlJsonKey]?.firstOrNull()}'")
       return null
     }
 
@@ -410,6 +414,164 @@ class ThirdEyeLoader(
     }
 
     return chanPostImageBuilder.build()
+  }
+
+  private fun visit(
+    namesToCheck: MutableMap<JsonKey, JsonValue?>,
+    path: List<String>,
+    name: String?,
+    value: String?
+  ) {
+    for (jsonKey in namesToCheck.keys) {
+      if (!jsonKey.compare(path, name)) {
+        continue
+      }
+
+      if (namesToCheck[jsonKey] is JsonValue.JsonString) {
+        val prevValue = (namesToCheck[jsonKey] as JsonValue.JsonString).value
+
+        val list = mutableListWithCap<String>(10).apply {
+          if (prevValue != null) {
+            add(prevValue)
+          }
+
+          if (value != null) {
+            add(value)
+          }
+        }
+
+        namesToCheck[jsonKey] = JsonValue.JsonArray(list)
+      } else if (namesToCheck[jsonKey] is JsonValue.JsonArray) {
+        if (value != null) {
+          (namesToCheck[jsonKey] as JsonValue.JsonArray).values.add(value)
+        }
+      } else {
+        namesToCheck[jsonKey] = JsonValue.JsonString(value)
+      }
+
+      return
+    }
+  }
+
+  class JsonKey(
+    private val keyFull: String
+  ) {
+    private val keyAsListOfKeys: List<String>
+
+    init {
+      if (!keyFull.contains('>')) {
+        keyAsListOfKeys = emptyList<String>()
+      } else {
+        keyAsListOfKeys = keyFull
+          .split('>')
+          .map { innerKey -> innerKey.trim().lowercase(Locale.ENGLISH) }
+      }
+    }
+
+    fun compare(path: List<String>, name: String?): Boolean {
+      if (keyAsListOfKeys.isEmpty()) {
+        return keyFull.equals(other = name, ignoreCase = true)
+      }
+
+      val pathFullSize = if (name != null) {
+        path.size + 1
+      } else {
+        path.size
+      }
+
+      if (keyAsListOfKeys.size != pathFullSize) {
+        return false
+      }
+
+      for (index in path.indices) {
+        val keyFromPath = path.getOrNull(index)
+          ?: return false
+        val keyFromList = keyAsListOfKeys.getOrNull(index)
+          ?: return false
+
+        if (keyFromList == "*") {
+          continue
+        }
+
+        if (!keyFromPath.equals(keyFromList, ignoreCase = true)) {
+          return false
+        }
+      }
+
+      if (name != null) {
+        val lastKey = keyAsListOfKeys.lastOrNull()
+          ?: return false
+
+        if (lastKey == "*") {
+          return true
+        }
+
+        if (!lastKey.equals(name, ignoreCase = true)) {
+          return false
+        }
+      }
+
+      return true
+    }
+
+    override fun equals(other: Any?): Boolean {
+      if (this === other) return true
+      if (javaClass != other?.javaClass) return false
+
+      other as JsonKey
+
+      if (keyFull != other.keyFull) return false
+
+      return true
+    }
+
+    override fun hashCode(): Int {
+      return keyFull.hashCode()
+    }
+
+    override fun toString(): String {
+      return "JsonKey(keyFull='$keyFull')"
+    }
+
+  }
+
+  sealed class JsonValue {
+
+    fun firstOrNull(): String? {
+      when (this) {
+        is JsonString -> {
+          return value
+        }
+        is JsonArray -> {
+          return values.firstOrNull()
+        }
+      }
+    }
+
+    fun asList(): List<String> {
+      when (this) {
+        is JsonString -> {
+          if (value == null) {
+            return emptyList()
+          }
+
+          return listOf<String>(value)
+        }
+        is JsonArray -> {
+          return values
+        }
+      }
+    }
+
+    fun asString(separator: String = ","): String? {
+      return when (this) {
+        is JsonString -> value
+        is JsonArray -> values.joinToString(separator = separator)
+      }
+    }
+
+    class JsonString(val value: String?) : JsonValue()
+    class JsonArray(val values: MutableList<String>) : JsonValue()
   }
 
   companion object {

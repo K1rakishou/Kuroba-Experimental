@@ -36,7 +36,6 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -269,7 +268,7 @@ class BoardSelectionController(
   private fun startListeningForSearchQueries(): Flow<String> {
     return callbackFlow<String> {
       searchView.setCallback { query ->
-        offer(query)
+        trySend(query)
       }
 
       awaitClose()

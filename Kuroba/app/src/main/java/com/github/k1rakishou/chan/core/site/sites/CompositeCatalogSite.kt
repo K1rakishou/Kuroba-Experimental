@@ -120,7 +120,7 @@ class CompositeCatalogSite : Site {
   }
 
   private val noOpSiteRequestModifier by lazy {
-    object : SiteRequestModifier<Site>(this, appConstants) {
+    object : SiteRequestModifier<Site>(this@CompositeCatalogSite, appConstants) {
 
     }
   }

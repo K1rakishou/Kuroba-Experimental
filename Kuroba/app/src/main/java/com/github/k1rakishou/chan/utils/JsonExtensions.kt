@@ -3,7 +3,9 @@ package com.github.k1rakishou.chan.utils
 import com.squareup.moshi.JsonReader
 
 fun JsonReader.traverseJson(
-  visitor: (String, String?) -> Unit,
+  visitor: (List<String>, String?, String?) -> Unit,
+  currentPath: List<String> = emptyList(),
+  currentName: String?,
   jsonDebugOutput: StringBuilder? = null
 ) {
   var prevToken: JsonReader.Token? = null
@@ -16,10 +18,15 @@ fun JsonReader.traverseJson(
         jsonDebugOutput?.append("[")
 
         this.beginArray()
-        traverseJson(visitor, jsonDebugOutput)
+
+        while (peek() != JsonReader.Token.END_ARRAY) {
+          traverseJson(visitor, currentPath, currentName, jsonDebugOutput)
+        }
+
         this.endArray()
 
         jsonDebugOutput?.append("]")
+        return
       }
       JsonReader.Token.BEGIN_OBJECT -> {
         val needAddComma = prevToken == JsonReader.Token.BEGIN_OBJECT
@@ -31,10 +38,11 @@ fun JsonReader.traverseJson(
         }
 
         this.beginObject()
-        traverseJson(visitor, jsonDebugOutput)
+        traverseJson(visitor, currentPath, currentName, jsonDebugOutput)
         this.endObject()
 
         jsonDebugOutput?.append("}")
+        return
       }
       JsonReader.Token.END_ARRAY -> error("END_ARRAY must be unreachable")
       JsonReader.Token.END_OBJECT -> error("END_OBJECT must be unreachable")
@@ -79,13 +87,13 @@ fun JsonReader.traverseJson(
           JsonReader.Token.NUMBER,
           JsonReader.Token.BOOLEAN,
           JsonReader.Token.NULL -> {
-            parseJsonValue(valueToken, name, visitor, jsonDebugOutput)
+            parseJsonValue(valueToken, currentPath, name, visitor, jsonDebugOutput)
           }
           JsonReader.Token.BEGIN_ARRAY,
           JsonReader.Token.END_ARRAY,
           JsonReader.Token.BEGIN_OBJECT,
           JsonReader.Token.END_OBJECT -> {
-            traverseJson(visitor, jsonDebugOutput)
+            traverseJson(visitor, currentPath + name, name, jsonDebugOutput)
           }
           JsonReader.Token.NAME,
           JsonReader.Token.END_DOCUMENT -> error("Unreachable! valueToken=$valueToken")
@@ -95,7 +103,9 @@ fun JsonReader.traverseJson(
       JsonReader.Token.STRING,
       JsonReader.Token.NUMBER,
       JsonReader.Token.BOOLEAN,
-      JsonReader.Token.NULL -> error("Unreachable! token=$token")
+      JsonReader.Token.NULL -> {
+        parseJsonValue(token, currentPath, null, visitor, jsonDebugOutput)
+      }
     }
 
     prevToken = token
@@ -104,8 +114,9 @@ fun JsonReader.traverseJson(
 
 private fun JsonReader.parseJsonValue(
   valueToken: JsonReader.Token,
-  name: String,
-  visitor: (String, String?) -> Unit,
+  currentPath: List<String>,
+  name: String?,
+  visitor: (List<String>, String?, String?) -> Unit,
   jsonOutput: StringBuilder?,
 ) {
   when (valueToken) {
@@ -113,25 +124,25 @@ private fun JsonReader.parseJsonValue(
       val value = this.nextString()
       jsonOutput?.append("\"$value\"")
 
-      visitor(name, value)
+      visitor(currentPath, name, value)
     }
     JsonReader.Token.NUMBER -> {
       val value = parseNumber()
       jsonOutput?.append("$value")
 
-      visitor(name, value)
+      visitor(currentPath, name, value)
     }
     JsonReader.Token.BOOLEAN -> {
       val value = this.nextBoolean().toString()
       jsonOutput?.append(value)
 
-      visitor(name, value)
+      visitor(currentPath, name, value)
     }
     JsonReader.Token.NULL -> {
       val value = this.nextNull<String>()
       jsonOutput?.append("$value")
 
-      visitor(name, value)
+      visitor(currentPath, name, value)
     }
     else -> error("Unreachable! valueToken=$valueToken")
   }

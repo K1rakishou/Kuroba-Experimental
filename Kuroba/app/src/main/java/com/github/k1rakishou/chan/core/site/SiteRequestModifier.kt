@@ -27,10 +27,6 @@ abstract class SiteRequestModifier<T : Site>(
   protected val site: T,
   protected val appConstants: AppConstants
 ) {
-  protected val userAgentHeaderKey = "User-Agent"
-
-  private val acceptEncodingHeaderKey = "Accept-Encoding"
-  private val gzip = "gzip"
 
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
@@ -40,7 +36,7 @@ abstract class SiteRequestModifier<T : Site>(
       requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
     }
 
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
@@ -50,7 +46,7 @@ abstract class SiteRequestModifier<T : Site>(
   @CallSuper
   open fun modifyThumbnailGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
@@ -60,7 +56,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
@@ -77,7 +73,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
@@ -86,7 +82,7 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder: Request.Builder
   ) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
@@ -95,31 +91,44 @@ abstract class SiteRequestModifier<T : Site>(
     requestProperties: MutableMap<String, String>
   ) {
     requestProperties.put(userAgentHeaderKey, appConstants.userAgent)
-    requestProperties.put(acceptEncodingHeaderKey, gzip)
+    requestProperties.put(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
   open fun modifyArchiveGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
   open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
   open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
   @CallSuper
   open fun modifyPostReportRequest(site: T, requestBuilder: Request.Builder) {
     requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzip)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+  }
+
+  companion object {
+    val userAgentHeaderKey = "User-Agent"
+    val acceptEncodingHeaderKey = "Accept-Encoding"
+    val gzipHeaderValue = "gzip"
+
+    fun Request.Builder.addDefaultHeaders(appConstants: AppConstants): Request.Builder {
+      this.addHeader(userAgentHeaderKey, appConstants.userAgent)
+      this.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+
+      return this
+    }
   }
 
 }

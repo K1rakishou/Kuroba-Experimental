@@ -90,7 +90,7 @@ class ChanThreadTicker(
     // We don't use ticking for catalog (meaning we don't auto update catalogs) so just invoke
     // the action with a slight delay.
     if (descriptor is ChanDescriptor.ICatalogDescriptor) {
-      actor.offer(TickerAction.StopTicker)
+      actor.trySend(TickerAction.StopTicker)
       debouncer.post(DEBOUNCE_TIMEOUT) { action.invoke(descriptor) }
 
       Logger.d(TAG, "kickTicker() called with catalog descriptor, ticking right away")
@@ -101,7 +101,7 @@ class ChanThreadTicker(
       chanDescriptor = descriptor as ChanDescriptor.ThreadDescriptor
     )
 
-    actor.offer(tickerAction)
+    actor.trySend(tickerAction)
   }
 
   fun resetTicker() {
@@ -114,7 +114,7 @@ class ChanThreadTicker(
     }
 
     if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
-      actor.offer(TickerAction.StopTicker)
+      actor.trySend(TickerAction.StopTicker)
       debouncer.post(DEBOUNCE_TIMEOUT) { action.invoke(chanDescriptor) }
 
       Logger.d(TAG, "resetTicker() called with catalog descriptor, ticking right away")
@@ -127,7 +127,7 @@ class ChanThreadTicker(
       chanDescriptor = chanDescriptor as ChanDescriptor.ThreadDescriptor
     )
 
-    actor.offer(tickerAction)
+    actor.trySend(tickerAction)
   }
 
   fun stopTicker(resetCurrentChanDescriptor: Boolean) {
@@ -139,7 +139,7 @@ class ChanThreadTicker(
       chanTickerData.resetCurrentChanDescriptor()
     }
 
-    actor.offer(TickerAction.StopTicker)
+    actor.trySend(TickerAction.StopTicker)
   }
 
   fun timeUntilLoadMoreMs(): Long = chanTickerData.getTimeUntilLoadMoreMs()
