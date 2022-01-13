@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.drawer.data
 
-import androidx.compose.runtime.Immutable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.font.FontStyle
@@ -11,7 +10,6 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import okhttp3.HttpUrl
 
-@Immutable
 data class NavigationHistoryEntry(
   val descriptor: ChanDescriptor,
   val threadThumbnailUrl: HttpUrl,
@@ -30,7 +28,6 @@ data class NavigationHistoryEntry(
 
 }
 
-@Immutable
 data class NavHistoryBookmarkAdditionalInfo(
   val watching: Boolean = false,
   val newPosts: Int = 0,
