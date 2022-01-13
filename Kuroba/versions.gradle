@@ -1,11 +1,11 @@
 def versions = [:]
 versions.kotlin_version = '1.6.10'
-versions.kotlin_coroutines_version = '1.5.2'
+versions.kotlin_coroutines_version = '1.6.0'
 versions.compose_version = "1.1.0-rc01"
 versions.compose_compiler_version = "1.1.0-rc02"
-versions.room_version = '2.4.0-rc01'
+versions.room_version = '2.4.0'
 versions.dagger_version = '2.40.5'
-versions.okhttp = "4.9.1"
+versions.okhttp = "4.9.2"
 versions.exoplayer = "2.16.1"
 versions.joda_time = "2.10.10"
 versions.appcompat = "1.4.0"
