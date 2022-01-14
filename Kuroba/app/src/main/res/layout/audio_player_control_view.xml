@@ -11,7 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
-        android:background="#CC000000"
+        android:background="@color/transparent_black_bg"
         android:orientation="vertical"
         android:visibility="gone"
         tools:visibility="visible">

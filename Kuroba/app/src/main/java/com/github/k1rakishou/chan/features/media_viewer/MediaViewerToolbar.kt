@@ -47,7 +47,7 @@ class MediaViewerToolbar @JvmOverloads constructor(
       .inject(this)
 
     inflate(context, R.layout.media_view_toolbar, this)
-    setBackgroundColor(0xCC000000L.toInt())
+    setBackgroundColor(context.resources.getColor(R.color.transparent_black_bg))
 
     toolbarCloseButton = findViewById(R.id.toolbar_close_button)
     toolbarTitle = findViewById(R.id.toolbar_title)

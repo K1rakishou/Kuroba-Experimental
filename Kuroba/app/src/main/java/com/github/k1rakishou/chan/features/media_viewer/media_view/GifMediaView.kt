@@ -20,7 +20,6 @@ import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerActionS
 import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip
 import com.github.k1rakishou.chan.ui.view.CircularChunkedLoadingBar
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.awaitCatching
@@ -92,7 +91,7 @@ class GifMediaView(
     actualGifView = findViewById(R.id.actual_gif_view)
     loadingBar = findViewById(R.id.loading_bar)
 
-    if (isTablet()) {
+    if (AppModuleAndroidUtils.isTablet()) {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.left_action_strip)
     } else {
       actionStrip = findViewById<MediaViewerBottomActionStrip?>(R.id.bottom_action_strip)

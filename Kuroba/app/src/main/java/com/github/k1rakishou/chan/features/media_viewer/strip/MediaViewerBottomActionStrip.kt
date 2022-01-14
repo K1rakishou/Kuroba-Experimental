@@ -18,6 +18,4 @@ class MediaViewerBottomActionStrip @JvmOverloads constructor(
     super.init()
   }
 
-
-
 }

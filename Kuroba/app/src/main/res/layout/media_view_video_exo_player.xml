@@ -41,6 +41,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="8dp"/>
+
         <FrameLayout
             android:id="@+id/view_player_controls_placeholder"
             android:layout_width="match_parent"

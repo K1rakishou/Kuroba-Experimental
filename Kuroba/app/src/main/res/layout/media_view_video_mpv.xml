@@ -50,6 +50,10 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content" />
 
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="8dp"/>
+
         <include layout="@layout/mpv_player_control_view" />
 
     </com.github.k1rakishou.chan.ui.view.InsetAwareLinearLayout>
