@@ -157,7 +157,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -693,8 +692,7 @@ class MainController(
       val topController = currentNavController.top
         ?: return
 
-      // Closing any "floating" controllers like ImageViewController
-      closeAllFloatingControllers(topController.childControllers)
+      closeAllChildControllers(topController.childControllers)
 
       if (topController is HasNavigation) {
         return
@@ -1922,12 +1920,12 @@ class MainController(
     popChildController(false)
   }
 
-  private fun closeAllFloatingControllers(childControllers: List<Controller>) {
+  private fun closeAllChildControllers(childControllers: List<Controller>) {
     for (childController in childControllers) {
       childController.presentingThisController?.stopPresenting(false)
 
       if (childController.childControllers.isNotEmpty()) {
-        closeAllFloatingControllers(childController.childControllers)
+        closeAllChildControllers(childController.childControllers)
       }
     }
   }

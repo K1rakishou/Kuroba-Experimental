@@ -79,7 +79,7 @@ class Chan420 : CommonSite() {
             )
           },
           defaultBoardsProvider = {
-            ArrayList<ChanBoard>().apply {
+            return@genericBoardsRequestResponseHandler ArrayList<ChanBoard>().apply {
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "weed"), "Cannabis Discussion"))
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "hooch"), "Alcohol Discussion"))
               add(ChanBoard.create(BoardDescriptor.create(siteDescriptor().siteName, "dr"), "Dream Discussion"))
