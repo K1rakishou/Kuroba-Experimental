@@ -45,7 +45,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
@@ -88,7 +87,6 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import java.util.*
@@ -193,14 +191,30 @@ class Chan4CaptchaLayout(
 
   @Composable
   private fun BuildCaptchaWindow() {
-    val chanTheme = LocalChanTheme.current
-    val captchaInfoAsync by viewModel.captchaInfoToShow
     val sliderCaptchaGridMode = viewModel.chan4CaptchaSettingsJson.get().sliderCaptchaGridMode
-    val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-    BuildCaptchaImageOrText(captchaInfoAsync, sliderCaptchaGridMode)
+    BuildCaptchaWindowImageOrText(
+      sliderCaptchaGridMode = sliderCaptchaGridMode
+    )
 
     Spacer(modifier = Modifier.height(8.dp))
+
+    BuildCaptchaWindowSliderOrInput(
+      sliderCaptchaGridMode = sliderCaptchaGridMode
+    )
+
+    BuildCaptchaWindowFooter()
+
+    Spacer(modifier = Modifier.height(8.dp))
+  }
+
+  @Composable
+  private fun BuildCaptchaWindowSliderOrInput(
+    sliderCaptchaGridMode: Boolean
+  ) {
+    val chanTheme = LocalChanTheme.current
+    val captchaInfoAsync by viewModel.captchaInfoToShow
+    val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
     if (captchaInfo != null && !captchaInfo.isNoopChallenge()) {
       var currentInputValue by captchaInfo.currentInputValue
@@ -248,6 +262,13 @@ class Chan4CaptchaLayout(
         Spacer(modifier = Modifier.height(8.dp))
       }
     }
+  }
+
+  @Composable
+  private fun BuildCaptchaWindowFooter() {
+    val chanTheme = LocalChanTheme.current
+    val captchaInfoAsync by viewModel.captchaInfoToShow
+    val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
     Row(
       horizontalArrangement = Arrangement.End,
@@ -308,33 +329,35 @@ class Chan4CaptchaLayout(
 
       Spacer(modifier = Modifier.width(8.dp))
     }
-
-    Spacer(modifier = Modifier.height(8.dp))
   }
 
   @Composable
-  private fun BuildCaptchaImageOrText(
-    captchaInfoAsync: AsyncData<Chan4CaptchaLayoutViewModel.CaptchaInfo>,
+  private fun BuildCaptchaWindowImageOrText(
     sliderCaptchaGridMode: Boolean
   ) {
-    var size by remember { mutableStateOf(IntSize.Zero) }
+    val captchaInfoAsync by viewModel.captchaInfoToShow
     var height by remember { mutableStateOf(160.dp) }
 
-    Box(
+    BoxWithConstraints(
       modifier = Modifier
         .wrapContentHeight()
         .height(height)
-        .onSizeChanged { newSize -> size = newSize }
     ) {
+      val size = with(LocalDensity.current) {
+        remember(key1 = maxWidth, key2 = maxHeight) {
+          IntSize(maxWidth.toPx().toInt(), maxHeight.toPx().toInt())
+        }
+      }
+
       if (size != IntSize.Zero) {
-        val captchaInfo = when (captchaInfoAsync) {
+        val captchaInfo = when (val cia = captchaInfoAsync) {
           AsyncData.NotInitialized,
           AsyncData.Loading -> {
             KurobaComposeProgressIndicator()
             null
           }
           is AsyncData.Error -> {
-            val error = captchaInfoAsync.throwable
+            val error = cia.throwable
             KurobaComposeErrorMessage(
               error = error,
               modifier = Modifier.fillMaxSize()
@@ -342,7 +365,7 @@ class Chan4CaptchaLayout(
 
             null
           }
-          is AsyncData.Data -> captchaInfoAsync.data
+          is AsyncData.Data -> cia.data
         }
 
         if (captchaInfo != null) {
