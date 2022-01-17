@@ -525,7 +525,7 @@ class ReportManager(
   private fun formatAppRunningTime(): String {
     val time = ((appContext as? Chan)?.appRunningTime) ?: -1L
     if (time <= 0) {
-      return "Unknown, time ms: $time"
+      return "Unknown (appContext=${appContext::class.java.simpleName}), time ms: $time"
     }
 
     return appRunningTimeFormatter.print(Duration.millis(time).toPeriod())
