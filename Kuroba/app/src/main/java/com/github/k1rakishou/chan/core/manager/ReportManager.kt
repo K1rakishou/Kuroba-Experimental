@@ -5,6 +5,7 @@ import android.content.Context
 import android.os.Build
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
+import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.features.issues.ReportFile
@@ -34,6 +35,8 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
+import org.joda.time.Duration
+import org.joda.time.format.PeriodFormatterBuilder
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.util.*
@@ -462,7 +465,7 @@ class ReportManager(
   }
 
   fun getReportFooter(): String {
-    return buildString(capacity = 512) {
+    return buildString(capacity = 2048) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
       appendLine("App Version: " + BuildConfig.VERSION_NAME)
@@ -471,6 +474,7 @@ class ReportManager(
       appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
+      appendLine("App running time: ${formatAppRunningTime()}")
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
@@ -516,6 +520,15 @@ class ReportManager(
 
       appendLine("------------------------------")
     }
+  }
+
+  private fun formatAppRunningTime(): String {
+    val time = ((appContext as? Chan)?.appRunningTime) ?: -1L
+    if (time <= 0) {
+      return "Unknown, time ms: $time"
+    }
+
+    return appRunningTimeFormatter.print(Duration.millis(time).toPeriod())
   }
 
   private fun createReportRequest(reportFile: ReportFile): ReportRequestWithFile? {
@@ -704,6 +717,18 @@ class ReportManager(
     const val MAX_TITLE_LENGTH = 512
     const val MAX_DESCRIPTION_LENGTH = 8192
     const val MAX_LOGS_LENGTH = 65535
+
+    private val appRunningTimeFormatter = PeriodFormatterBuilder()
+      .printZeroAlways()
+      .minimumPrintedDigits(2)
+      .appendHours()
+      .appendSuffix(":")
+      .appendMinutes()
+      .appendSuffix(":")
+      .appendSeconds()
+      .appendSuffix(".")
+      .appendMillis3Digit()
+      .toFormatter()
   }
 
 }

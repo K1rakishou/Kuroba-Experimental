@@ -23,6 +23,7 @@ import android.content.Context
 import android.os.Build
 import android.os.Bundle
 import android.os.StrictMode
+import android.os.SystemClock
 import com.github.k1rakishou.BookmarkGridViewInfo
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettingsInfo
@@ -99,6 +100,7 @@ import kotlin.system.exitProcess
 
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
+  private var startTime = 0L
 
   // Delay job creation here because we need to first set the kotlinx.coroutines.DEBUG_PROPERTY_NAME
   private val job by lazy { SupervisorJob(null) }
@@ -186,6 +188,14 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   val applicationInForeground: Boolean
     get() = activityForegroundCounter > 0
+  val appRunningTime: Long
+    get() {
+      if (startTime == 0L) {
+        return 0
+      }
+
+      return SystemClock.elapsedRealtime() - startTime
+    }
 
   override fun attachBaseContext(base: Context) {
     super.attachBaseContext(base)
@@ -206,6 +216,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
   override fun onCreate() {
     super.onCreate()
+
+    startTime = SystemClock.elapsedRealtime()
 
     val start = System.currentTimeMillis()
     onCreateInternal()
