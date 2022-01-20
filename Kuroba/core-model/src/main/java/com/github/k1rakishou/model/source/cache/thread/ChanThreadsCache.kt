@@ -340,14 +340,12 @@ class ChanThreadsCache(
       )
     }
 
-    notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreadPostsExceptOP(entries))
-  }
+    val event = ThreadDeleteEvent.RemoveThreadPostsExceptOP(
+      evictingOld = false,
+      entries = entries
+    )
 
-  fun deleteAll() {
-    lastEvictInvokeTime.set(0)
-    chanThreads.clear()
-
-    notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.ClearAll)
+    notifyChanThreadDeleteEventListeners(event)
   }
 
   private fun getLastThreadAccessTime(cacheOptions: ChanCacheOptions): Long {
@@ -479,11 +477,21 @@ class ChanThreadsCache(
     Logger.d(TAG, "evictOld() threadsToRemove=${threadsToRemove.size}, threadsToClean=${threadsToClean.size}")
 
     if (threadsToRemove.isNotEmpty()) {
-      notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreads(threadsToRemove))
+      val event = ThreadDeleteEvent.RemoveThreads(
+        evictingOld = true,
+        threadDescriptors = threadsToRemove
+      )
+
+      notifyChanThreadDeleteEventListeners(event)
     }
 
     if (threadsToClean.isNotEmpty()) {
-      notifyChanThreadDeleteEventListeners(ThreadDeleteEvent.RemoveThreadPostsExceptOP(threadsToClean))
+      val event = ThreadDeleteEvent.RemoveThreadPostsExceptOP(
+        evictingOld = true,
+        entries = threadsToClean
+      )
+
+      notifyChanThreadDeleteEventListeners(event)
     }
   }
 
@@ -493,26 +501,65 @@ class ChanThreadsCache(
     }
   }
 
-  sealed class ThreadDeleteEvent {
-    object ClearAll : ThreadDeleteEvent() {
-      override fun toString(): String {
-        return "ClearAll"
+  sealed class ThreadDeleteEvent(val evictingOld: Boolean) {
+
+    class RemoveThreads(
+      evictingOld: Boolean,
+      val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
+    ) : ThreadDeleteEvent(evictingOld) {
+
+      override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RemoveThreads
+
+        if (threadDescriptors != other.threadDescriptors) return false
+
+        return true
       }
+
+      override fun hashCode(): Int {
+        return threadDescriptors.hashCode()
+      }
+
+      override fun toString(): String {
+        return "RemoveThreads(threadDescriptors=$threadDescriptors)"
+      }
+
     }
 
-    data class RemoveThreads(
-      val threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>
-    ) : ThreadDeleteEvent()
-
-    data class RemoveThreadPostsExceptOP(
+    class RemoveThreadPostsExceptOP(
+      evictingOld: Boolean,
       val entries: Collection<Entry>,
-    ) : ThreadDeleteEvent() {
+    ) : ThreadDeleteEvent(evictingOld) {
+
+      override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as RemoveThreadPostsExceptOP
+
+        if (entries != other.entries) return false
+
+        return true
+      }
+
+      override fun hashCode(): Int {
+        return entries.hashCode()
+      }
+
+      override fun toString(): String {
+        return "RemoveThreadPostsExceptOP(entries=$entries)"
+      }
 
       data class Entry(
         val threadDescriptor: ChanDescriptor.ThreadDescriptor,
         val originalPostDescriptor: PostDescriptor
       )
+
     }
+
   }
 
   companion object {

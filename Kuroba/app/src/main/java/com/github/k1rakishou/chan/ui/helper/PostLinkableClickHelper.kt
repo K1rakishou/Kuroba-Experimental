@@ -26,6 +26,7 @@ class PostLinkableClickHelper(
     currentChanDescriptor: ChanDescriptor,
     linkable: PostLinkable,
     onQuoteClicked: (Long) -> Unit,
+    onQuoteToHiddenOrRemovedPostClicked: (Long) -> Unit,
     onLinkClicked: (String) -> Unit,
     onCrossThreadLinkClicked: suspend (PostDescriptor) -> Unit,
     onBoardLinkClicked: suspend (ChanDescriptor.CatalogDescriptor) -> Unit,
@@ -47,6 +48,17 @@ class PostLinkableClickHelper(
       }
 
       onQuoteClicked(postId)
+      return
+    }
+
+    if (linkable.type == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
+      val postId = linkable.linkableValue.extractValueOrNull()
+      if (postId == null) {
+        Logger.e(TAG, "Bad quote linkable: linkableValue = ${linkable.linkableValue}")
+        return
+      }
+
+      onQuoteToHiddenOrRemovedPostClicked(postId)
       return
     }
 

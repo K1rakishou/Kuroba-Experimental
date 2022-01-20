@@ -90,12 +90,23 @@ class DvachCommentParser : VichanCommentParser(), ICommentParser {
     }
 
     // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-    if (callback.isSaved(postNo, postSubNo)) {
+    if (callback.isSaved(post.opId, postNo, postSubNo)) {
       if (post.isSavedReply) {
         handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_SELF_SUFFIX)
       } else {
         handlerLink.key = TextUtils.concat(handlerLink.key, CommentParserConstants.SAVED_REPLY_OTHER_SUFFIX)
       }
+    }
+
+    val hiddenOrRemoved = callback.isHiddenOrRemoved(post.opId, postNo, postSubNo)
+    if (hiddenOrRemoved != PostParser.NORMAL_POST) {
+      val suffix = if (hiddenOrRemoved == PostParser.HIDDEN_POST) {
+        CommentParserConstants.HIDDEN_POST_SUFFIX
+      } else {
+        CommentParserConstants.REMOVED_POST_SUFFIX
+      }
+
+      handlerLink.key = TextUtils.concat(handlerLink.key, suffix)
     }
   }
 

@@ -234,10 +234,6 @@ class SavedReplyManager(
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
     lock.write {
       when (threadDeleteEvent) {
-        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${savedReplyMap.size} threads")
-          savedReplyMap.clear()
-        }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedThreads = 0
 

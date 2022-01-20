@@ -16,9 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site.parser
 
-import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import java.util.*
@@ -26,18 +26,38 @@ import java.util.*
 // Called concurrently to parse the post html and the filters on it
 // belong to ChanReaderRequest
 internal class PostParseWorker(
-  private val savedReplyManager: SavedReplyManager,
   private val postBuilder: ChanPostBuilder,
   private val postParser: PostParser,
   private val internalIds: Set<Long>,
+  private val savedPosts: Set<PostDescriptor>,
+  private val hiddenOrRemovedPosts: Map<PostDescriptor, Int>,
   private val isParsingCatalog: Boolean
 ) {
 
   suspend fun parse(): ChanPost? {
     return Try {
       return@Try postParser.parseFull(postBuilder, object : PostParser.Callback {
-        override fun isSaved(postNo: Long, postSubNo: Long): Boolean {
-          return savedReplyManager.isSaved(postBuilder.postDescriptor.descriptor, postNo, postSubNo)
+
+        override fun isSaved(threadNo: Long, postNo: Long, postSubNo: Long): Boolean {
+          val postDescriptor = PostDescriptor.create(
+            chanDescriptor = postBuilder.postDescriptor.descriptor,
+            threadNo = threadNo,
+            postNo = postNo,
+            postSubNo = postSubNo
+          )
+
+          return savedPosts.contains(postDescriptor)
+        }
+
+        override fun isHiddenOrRemoved(threadNo: Long, postNo: Long, postSubNo: Long): Int {
+          val postDescriptor = PostDescriptor.create(
+            chanDescriptor = postBuilder.postDescriptor.descriptor,
+            threadNo = threadNo,
+            postNo = postNo,
+            postSubNo = postSubNo
+          )
+
+          return hiddenOrRemovedPosts[postDescriptor] ?: PostParser.NORMAL_POST
         }
 
         override fun isInternal(postNo: Long): Boolean {
@@ -47,6 +67,7 @@ internal class PostParseWorker(
         override fun isParsingCatalogPosts(): Boolean {
           return isParsingCatalog
         }
+
       })
     }.mapErrorToValue { error ->
       Logger.e(TAG, "Error parsing post ${postBuilderToString(postBuilder)}", error)

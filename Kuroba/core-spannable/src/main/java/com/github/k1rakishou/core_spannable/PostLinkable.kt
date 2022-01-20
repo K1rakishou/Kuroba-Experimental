@@ -64,6 +64,7 @@ open class PostLinkable(
 
     when (type) {
       Type.QUOTE,
+      Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
       Type.LINK,
       Type.THREAD,
       Type.BOARD,
@@ -90,7 +91,7 @@ open class PostLinkable(
           ds.color = theme.postQuoteColor
         }
 
-        if (type == Type.DEAD) {
+        if (type == Type.DEAD || type == Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
           ds.isStrikeThruText = true
         } else {
           ds.isUnderlineText = true
@@ -162,6 +163,7 @@ open class PostLinkable(
 
   enum class Type {
     QUOTE,
+    QUOTE_TO_HIDDEN_OR_REMOVED_POST,
     LINK,
     SPOILER,
     THREAD,

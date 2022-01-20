@@ -246,6 +246,7 @@ class MediaViewerController(
 
             showPost(postDescriptor)
           },
+          onQuoteToHiddenOrRemovedPostClicked = { notSupported() },
           onLinkClicked = { notSupported() },
           onCrossThreadLinkClicked = { notSupported() },
           onBoardLinkClicked = { notSupported() },

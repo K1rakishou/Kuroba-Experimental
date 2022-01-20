@@ -54,7 +54,9 @@ data class ChanPostHideEntity(
   @ColumnInfo(name = APPLY_TO_WHOLE_THREAD_COLUMN_NAME)
   val applyToWholeThread: Boolean,
   @ColumnInfo(name = APPLY_TO_REPLIES_COLUMN_NAME)
-  val applyToReplies: Boolean
+  val applyToReplies: Boolean,
+  @ColumnInfo(name = MANUALLY_RESTORED_COLUMN_NAME)
+  val manuallyRestored: Boolean
 ) {
 
   companion object {
@@ -69,5 +71,6 @@ data class ChanPostHideEntity(
     const val ONLY_HIDE_COLUMN_NAME = "only_hide"
     const val APPLY_TO_WHOLE_THREAD_COLUMN_NAME = "apply_to_whole_thread"
     const val APPLY_TO_REPLIES_COLUMN_NAME = "apply_to_replies"
+    const val MANUALLY_RESTORED_COLUMN_NAME = "manually_restored"
   }
 }

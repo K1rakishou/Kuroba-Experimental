@@ -35,14 +35,14 @@ class ChanPostHideLocalSource(
     ).map { chanPostHideEntity -> ChanPostHideMapper.fromEntity(chanPostHideEntity) }
   }
 
-  suspend fun createMany(chanPostHideList: List<ChanPostHide>) {
+  suspend fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>) {
     ensureInTransaction()
 
     val entities = chanPostHideList.map { chanPostHide -> ChanPostHideMapper.toEntity(chanPostHide) }
-    chanPostHideDao.insertManyOrIgnore(entities)
+    chanPostHideDao.insertManyOrUpdate(entities)
   }
 
-  suspend fun removeMany(postDescriptorList: List<PostDescriptor>) {
+  suspend fun removeMany(postDescriptorList: Collection<PostDescriptor>) {
     ensureInTransaction()
 
     postDescriptorList.forEach { postDescriptor ->

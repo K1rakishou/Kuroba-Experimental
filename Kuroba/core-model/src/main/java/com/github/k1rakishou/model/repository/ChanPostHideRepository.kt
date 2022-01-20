@@ -33,10 +33,10 @@ class ChanPostHideRepository(
     }
   }
 
-  suspend fun createMany(chanPostHideList: List<ChanPostHide>): ModularResult<Unit> {
+  suspend fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
-        return@tryWithTransaction localSource.createMany(chanPostHideList)
+        return@tryWithTransaction localSource.createOrUpdateMany(chanPostHideList)
       }
     }
   }
@@ -49,7 +49,7 @@ class ChanPostHideRepository(
     }
   }
 
-  suspend fun removeMany(postDescriptorList: List<PostDescriptor>): ModularResult<Unit> {
+  suspend fun removeMany(postDescriptorList: Collection<PostDescriptor>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.removeMany(postDescriptorList)

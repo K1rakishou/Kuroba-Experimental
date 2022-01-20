@@ -320,10 +320,6 @@ class ThirdEyeManager(
   private suspend fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
     mutex.withLock {
       when (threadDeleteEvent) {
-        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${additionalPostImages.size} images")
-          additionalPostImages.clear()
-        }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedImages = 0
           val threadDescriptorSet = threadDeleteEvent.threadDescriptors.toSet()

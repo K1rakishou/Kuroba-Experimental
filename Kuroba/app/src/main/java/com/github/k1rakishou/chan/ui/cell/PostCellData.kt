@@ -796,6 +796,10 @@ data class PostCellData(
       val chanPostHide = postHideMap[postDescriptor]
         ?: continue
 
+      if (chanPostHide.manuallyRestored) {
+        continue
+      }
+
       if (chanPostHide.onlyHide) {
         ++hiddenRepliesCount
       } else {

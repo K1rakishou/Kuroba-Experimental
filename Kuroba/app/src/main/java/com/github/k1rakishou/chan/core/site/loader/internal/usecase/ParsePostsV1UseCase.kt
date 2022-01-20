@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParseWorker
 import com.github.k1rakishou.chan.core.site.parser.PostParser
@@ -12,6 +13,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.processDataCollectionConcurrently
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import kotlinx.coroutines.Dispatchers
@@ -25,6 +27,7 @@ class ParsePostsV1UseCase(
   chanPostRepository: ChanPostRepository,
   filterEngine: FilterEngine,
   postFilterManager: PostFilterManager,
+  postHideManager: PostHideManager,
   savedReplyManager: SavedReplyManager,
   boardManager: BoardManager,
   chanLoadProgressNotifier: ChanLoadProgressNotifier
@@ -33,6 +36,7 @@ class ParsePostsV1UseCase(
   chanPostRepository,
   filterEngine,
   postFilterManager,
+  postHideManager,
   savedReplyManager,
   boardManager,
   chanLoadProgressNotifier
@@ -60,6 +64,41 @@ class ParsePostsV1UseCase(
       ChanLoadProgressEvent.ParsingPosts(chanDescriptor, postBuildersToParse.size)
     )
 
+    val savedPosts = when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        emptySet<PostDescriptor>()
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        savedReplyManager.getThreadSavedReplies(chanDescriptor)
+          .map { it.postDescriptor }
+          .toSet()
+      }
+    }
+
+    val hiddenOrRemovedPosts = when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        emptyMap()
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        val resultMap = mutableMapOf<PostDescriptor, Int>()
+        val hiddenOrRemovedPosts = postHideManager.getHiddenPostsForThread(chanDescriptor)
+
+        for (hiddenOrRemovedPost in hiddenOrRemovedPosts) {
+          if (hiddenOrRemovedPost.manuallyRestored) {
+            continue
+          }
+
+          resultMap[hiddenOrRemovedPost.postDescriptor] = if (hiddenOrRemovedPost.onlyHide) {
+            PostParser.HIDDEN_POST
+          } else {
+            PostParser.REMOVED_POST
+          }
+        }
+
+        resultMap
+      }
+    }
+
     val (parsedPosts, parsingDuration) = measureTimedValue {
       return@measureTimedValue processDataCollectionConcurrently(
         dataList = postBuildersToParse,
@@ -67,10 +106,11 @@ class ParsePostsV1UseCase(
         dispatcher = Dispatchers.IO
       ) { postToParse ->
         return@processDataCollectionConcurrently PostParseWorker(
-          savedReplyManager = savedReplyManager,
           postBuilder = postToParse,
           postParser = postParser,
           internalIds = internalIds,
+          savedPosts = savedPosts,
+          hiddenOrRemovedPosts = hiddenOrRemovedPosts,
           isParsingCatalog = chanDescriptor is ChanDescriptor.ICatalogDescriptor
         ).parse()
       }

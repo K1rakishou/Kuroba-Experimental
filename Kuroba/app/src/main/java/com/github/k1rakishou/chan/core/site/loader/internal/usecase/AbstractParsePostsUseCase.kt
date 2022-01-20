@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.FilterEngine
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -26,6 +27,7 @@ abstract class AbstractParsePostsUseCase(
   protected val chanPostRepository: ChanPostRepository,
   protected val filterEngine: FilterEngine,
   protected val postFilterManager: PostFilterManager,
+  protected val postHideManager: PostHideManager,
   protected val savedReplyManager: SavedReplyManager,
   protected val boardManager: BoardManager,
   protected val chanLoadProgressNotifier: ChanLoadProgressNotifier

@@ -40,14 +40,14 @@ class PostHideHelper(
       }
 
       val postFilterMap = postFilterManager.getManyPostFilters(postDescriptorSet)
+      val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
 
       applyFiltersToReplies(
         posts = posts,
         postFilterMap = postFilterMap,
-        postsFastLookupMap = postsFastLookupMap
+        postsFastLookupMap = postsFastLookupMap,
+        hiddenPostsLookupMap = hiddenPostsLookupMap
       )
-
-      val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
 
       // find replies to hidden posts and add them to the PostHide table in the database
       // and to the hiddenPostsLookupMap
@@ -70,38 +70,44 @@ class PostHideHelper(
         }
 
         val hiddenPost = hiddenPostsLookupMap[post.postDescriptor]
-        if (hiddenPost != null) {
-          if (hiddenPost.onlyHide) {
-            val ownerFilterId = postFilterMap[post.postDescriptor]?.ownerFilterId
-
-            // hide post
-            updatePostWithCustomFilter(
-              childPost = post,
-              ownerFilterId = ownerFilterId,
-              filterHighlightedColor = 0,
-              filterStub = true,
-              filterRemove = false,
-              filterWatch = false,
-              filterReplies = hiddenPost.applyToReplies,
-              filterSaved = false
-            )
-
-            resultList.add(post)
-          } else {
-            // remove post
-            if (post.postDescriptor.isOP()) {
-              // hide OP post only if the user hid the whole thread
-              if (!hiddenPost.applyToWholeThread) {
-                resultList.add(post)
-              }
-            }
-          }
-
+        if (hiddenPost == null) {
+          // no record of hidden post in the DB
+          resultList.add(post)
           continue
         }
 
-        // no record of hidden post in the DB
-        resultList.add(post)
+        if (hiddenPost.manuallyRestored) {
+          // User manually clicked the post stub to unhide it or did the same thing via
+          // ViewRemovedPosts controller
+          resultList.add(post)
+          continue
+        }
+
+        if (hiddenPost.onlyHide) {
+          val ownerFilterId = postFilterMap[post.postDescriptor]?.ownerFilterId
+
+          // hide post
+          updatePostWithCustomFilter(
+            childPost = post,
+            ownerFilterId = ownerFilterId,
+            filterHighlightedColor = 0,
+            filterStub = true,
+            filterRemove = false,
+            filterWatch = false,
+            filterReplies = hiddenPost.applyToReplies,
+            filterSaved = false
+          )
+
+          resultList.add(post)
+        } else {
+          // remove post
+          if (post.postDescriptor.isOP()) {
+            // hide OP post only if the user hid the whole thread
+            if (!hiddenPost.applyToWholeThread) {
+              resultList.add(post)
+            }
+          }
+        }
       }
 
       return@Try resultList
@@ -126,7 +132,6 @@ class PostHideHelper(
             ?: continue
           val parentHiddenPost = hiddenPostsLookupMap[replyPostDescriptor]
             ?: continue
-
           val filterRemove = postFilterMap[parentPost.postDescriptor]?.remove
             ?: false
 
@@ -134,11 +139,17 @@ class PostHideHelper(
             continue
           }
 
+          val thisHiddenPost = hiddenPostsLookupMap[post.postDescriptor]
+          if (thisHiddenPost?.manuallyRestored == true) {
+            break
+          }
+
           val newHiddenPost = ChanPostHide(
             postDescriptor = post.postDescriptor,
             onlyHide = false,
             applyToWholeThread = parentHiddenPost.onlyHide,
-            applyToReplies = true
+            applyToReplies = true,
+            manuallyRestored = false
           )
 
           hiddenPostsLookupMap[newHiddenPost.postDescriptor] = newHiddenPost
@@ -154,17 +165,24 @@ class PostHideHelper(
       return
     }
 
-    postHideManager.createMany(newHiddenPosts)
+    postHideManager.createOrUpdateMany(newHiddenPosts)
   }
 
   private fun applyFiltersToReplies(
     posts: List<ChanPost>,
     postFilterMap: Map<PostDescriptor, PostFilter>,
-    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
+    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>,
+    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>
   ) {
     for (post in posts) {
       if (post.postDescriptor.isOP()) {
         // skip the OP
+        continue
+      }
+
+      val manuallyRestored = hiddenPostsLookupMap[post.postDescriptor]?.manuallyRestored ?: false
+      if (manuallyRestored) {
+        // Do not auto hide posts that were manually unhidden
         continue
       }
 
@@ -192,7 +210,8 @@ class PostHideHelper(
         filterRemove = filterRemove,
         filterStub = filterStub,
         postFilterMap = postFilterMap,
-        postsFastLookupMap = postsFastLookupMap
+        postsFastLookupMap = postsFastLookupMap,
+        hiddenPostsLookupMap = hiddenPostsLookupMap
       )
     }
   }
@@ -207,7 +226,8 @@ class PostHideHelper(
     filterRemove: Boolean,
     filterStub: Boolean,
     postFilterMap: Map<PostDescriptor, PostFilter>,
-    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>
+    postsFastLookupMap: MutableMap<PostDescriptor, ChanPost>,
+    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>
   ) {
     if (postsFastLookupMap.isEmpty()) {
       return
@@ -233,6 +253,12 @@ class PostHideHelper(
     for (postDescriptor in postDescriptorWithAllReplies) {
       if (postDescriptor == parentPost.postDescriptor) {
         // do nothing with the parent post
+        continue
+      }
+
+      val manuallyRestored = hiddenPostsLookupMap[postDescriptor]?.manuallyRestored ?: false
+      if (manuallyRestored) {
+        // Do not auto hide posts that were manually unhidden
         continue
       }
 

@@ -28,6 +28,8 @@ class PostHideManager(
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val postHideMap = mutableMapOf<ChanDescriptor, MutableMap<PostDescriptor, ChanPostHide>>()
+  @GuardedBy("lock")
+  private val alreadyPreloaded = mutableSetOf<ChanDescriptor>()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
@@ -60,11 +62,9 @@ class PostHideManager(
 
   @OptIn(ExperimentalTime::class)
   suspend fun preloadForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val alreadyPreloaded = lock.read {
-      // We consider data preloaded only if it contains more than one entry (for original post) per thread.
-      return@read (postHideMap[threadDescriptor]?.size ?: 0) > 1
-    }
-
+    // TODO(KurobaEx): this may not be correct, probably should use the previous solution but also
+    //  check whether the post hide is for the OP.
+    val alreadyPreloaded = lock.read { !alreadyPreloaded.add(threadDescriptor) }
     if (alreadyPreloaded) {
       return
     }
@@ -142,10 +142,10 @@ class PostHideManager(
   }
 
   fun create(chanPostHide: ChanPostHide) {
-    createMany(listOf(chanPostHide))
+    createOrUpdateMany(listOf(chanPostHide))
   }
 
-  fun createMany(chanPostHideList: List<ChanPostHide>) {
+  fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>) {
     lock.write {
       chanPostHideList.forEach { chanPostHide ->
         val chanDescriptor = chanPostHide.postDescriptor.descriptor
@@ -156,7 +156,7 @@ class PostHideManager(
     }
 
     serializedCoroutineExecutor.post {
-      chanPostHideRepository.createMany(chanPostHideList)
+      chanPostHideRepository.createOrUpdateMany(chanPostHideList)
         .safeUnwrap { error ->
           Logger.e(TAG, "chanPostHideRepository.createMany() error", error)
 
@@ -181,7 +181,7 @@ class PostHideManager(
       }
     }
 
-    chanPostHideRepository.createMany(chanPostHideList)
+    chanPostHideRepository.createOrUpdateMany(chanPostHideList)
       .safeUnwrap { error ->
         Logger.e(TAG, "chanPostHideRepository.createMany() error", error)
 
@@ -204,7 +204,7 @@ class PostHideManager(
     removeManyChanPostHides(listOf(postDescriptor))
   }
 
-  fun removeManyChanPostHides(postDescriptorList: List<PostDescriptor>) {
+  fun removeManyChanPostHides(postDescriptorList: Collection<PostDescriptor>) {
     val copy = lock.write {
       postDescriptorList.mapNotNull { postDescriptor ->
         val chanDescriptor = postDescriptor.descriptor
@@ -225,6 +225,65 @@ class PostHideManager(
               postHideMap[chanDescriptor]!!.put(chanPostHide.postDescriptor, chanPostHide)
             }
           }
+          return@post
+        }
+    }
+  }
+
+  fun update(postDescriptor: PostDescriptor, updater: (ChanPostHide) -> ChanPostHide) {
+    updateMany(listOf(postDescriptor), updater)
+  }
+
+  fun updateMany(
+    postDescriptors: Collection<PostDescriptor>,
+    updater: (ChanPostHide) -> ChanPostHide
+  ) {
+    if (postDescriptors.isEmpty()) {
+      return
+    }
+
+    val (oldPostHides, updatedPostHides) = lock.write {
+      val oldPostHides = mutableListOf<ChanPostHide>()
+      val updatedPostHides = mutableListOf<ChanPostHide>()
+
+      postDescriptors.forEach { postDescriptor ->
+        val chanDescriptor = postDescriptor.descriptor
+        val oldPostHide = postHideMap[chanDescriptor]?.get(postDescriptor)
+          ?: return@forEach
+
+        val updatedPostHide = updater(oldPostHide)
+
+        if (oldPostHide == updatedPostHide) {
+          return@forEach
+        }
+
+        postHideMap[chanDescriptor]?.set(postDescriptor, updatedPostHide)
+
+        oldPostHides += oldPostHide
+        updatedPostHides += updatedPostHide
+      }
+
+      return@write oldPostHides to updatedPostHides
+    }
+
+    if (updatedPostHides.isEmpty()) {
+      return
+    }
+
+    serializedCoroutineExecutor.post {
+      chanPostHideRepository.createOrUpdateMany(updatedPostHides)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "chanPostHideRepository.removeMany() error", error)
+
+          lock.write {
+            oldPostHides.forEach { chanPostHide ->
+              val chanDescriptor = chanPostHide.postDescriptor.descriptor
+
+              postHideMap.putIfNotContains(chanDescriptor, mutableMapWithCap(16))
+              postHideMap[chanDescriptor]!!.put(chanPostHide.postDescriptor, chanPostHide)
+            }
+          }
+
           return@post
         }
     }
@@ -277,12 +336,12 @@ class PostHideManager(
   }
 
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
+    if (!threadDeleteEvent.evictingOld) {
+      return
+    }
+
     lock.write {
       when (threadDeleteEvent) {
-        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${postHideMap.size} threads")
-          postHideMap.clear()
-        }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedThreads = 0
 

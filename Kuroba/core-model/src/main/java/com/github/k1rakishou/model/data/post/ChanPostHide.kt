@@ -6,5 +6,6 @@ data class ChanPostHide(
   val postDescriptor: PostDescriptor,
   val onlyHide: Boolean,
   val applyToWholeThread: Boolean,
-  val applyToReplies: Boolean
+  val applyToReplies: Boolean,
+  val manuallyRestored: Boolean
 )

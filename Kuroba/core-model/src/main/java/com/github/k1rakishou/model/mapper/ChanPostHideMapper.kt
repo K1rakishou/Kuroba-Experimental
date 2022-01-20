@@ -16,6 +16,7 @@ object ChanPostHideMapper {
       onlyHide = chanPostHide.onlyHide,
       applyToWholeThread = chanPostHide.applyToWholeThread,
       applyToReplies = chanPostHide.applyToReplies,
+      manuallyRestored = chanPostHide.manuallyRestored
     )
   }
 
@@ -30,7 +31,8 @@ object ChanPostHideMapper {
       ),
       onlyHide = chanPostHideEntity.onlyHide,
       applyToWholeThread = chanPostHideEntity.applyToWholeThread,
-      applyToReplies = chanPostHideEntity.applyToReplies
+      applyToReplies = chanPostHideEntity.applyToReplies,
+      manuallyRestored = chanPostHideEntity.manuallyRestored
     )
   }
 

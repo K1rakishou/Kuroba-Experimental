@@ -83,7 +83,7 @@ class ChanCatalog(
     includeRepliesTo: Boolean,
     maxRecursion: Int = Int.MAX_VALUE
   ) {
-    if (maxRecursion <= 0) {
+    if (maxRecursion < 0) {
       return
     }
 

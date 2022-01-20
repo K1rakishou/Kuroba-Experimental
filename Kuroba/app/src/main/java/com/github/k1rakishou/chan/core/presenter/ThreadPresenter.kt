@@ -1899,12 +1899,12 @@ class ThreadPresenter @Inject constructor(
         currentChanDescriptor = currentDescriptor,
         linkable = linkable,
         onQuoteClicked = { postNo ->
-          val linked = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
-          if (linked == null) {
+          val chanPost = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
+          if (chanPost == null) {
             return@onPostLinkableClicked
           }
 
-          if (postHideManager.contains(linked.postDescriptor)) {
+          if (postHideManager.contains(chanPost.postDescriptor)) {
             return@onPostLinkableClicked
           }
 
@@ -1918,8 +1918,16 @@ class ThreadPresenter @Inject constructor(
             currentThreadDescriptor,
             postViewMode,
             post.postDescriptor,
-            listOf(linked)
+            listOf(chanPost)
           )
+        },
+        onQuoteToHiddenOrRemovedPostClicked = { postNo ->
+          val chanPost = chanThreadManager.findPostByPostNo(currentThreadDescriptor, postNo)
+          if (chanPost == null) {
+            return@onPostLinkableClicked
+          }
+
+          threadPresenterCallback?.unhideOrUnremovePost(chanPost)
         },
         onLinkClicked = { link ->
           threadPresenterCallback?.openLink(link)
@@ -1969,6 +1977,7 @@ class ThreadPresenter @Inject constructor(
           return@post
         }
         PostLinkable.Type.DEAD,
+        PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
         PostLinkable.Type.QUOTE -> {
           floatingListMenuItems += createMenuItem(
             menuItemId = COPY_LINK_TEXT,

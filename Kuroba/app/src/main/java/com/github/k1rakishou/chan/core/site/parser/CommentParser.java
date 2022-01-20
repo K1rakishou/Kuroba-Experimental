@@ -492,7 +492,8 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         if (handlerLink.getType() == PostLinkable.Type.QUOTE
-                || handlerLink.getType() == PostLinkable.Type.DEAD) {
+                || handlerLink.getType() == PostLinkable.Type.DEAD
+                || handlerLink.getType() == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
             Long postNo = handlerLink.getLinkValue().extractValueOrNull();
 
             // TODO(KurobaEx / @GhostPosts): archive ghost posts
@@ -558,7 +559,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-        if (callback.isSaved(postNo, postSubNo)) {
+        if (callback.isSaved(post.opId, postNo, postSubNo)) {
             if (post.isSavedReply) {
                 handlerLink.setKey(
                         TextUtils.concat(
@@ -574,6 +575,19 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                         )
                 );
             }
+        }
+
+        int hiddenOrRemoved = callback.isHiddenOrRemoved(post.opId, postNo, postSubNo);
+        if (hiddenOrRemoved != PostParser.NORMAL_POST) {
+            String suffix;
+
+            if (hiddenOrRemoved == PostParser.HIDDEN_POST) {
+                suffix = CommentParserConstants.HIDDEN_POST_SUFFIX;
+            } else {
+                suffix = CommentParserConstants.REMOVED_POST_SUFFIX;
+            }
+
+            handlerLink.setKey(TextUtils.concat(handlerLink.getKey(), suffix));
         }
     }
 
@@ -690,8 +704,20 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
                 long postId = Long.parseLong(quoteMatcher.group(1));
 
                 if (callback.isInternal(postId)) {
-                    // Normal post quote
-                    type = PostLinkable.Type.QUOTE;
+                    // TODO(KurobaEx / @GhostPosts): archive ghost posts
+                    int hiddenOrRemoved = callback.isHiddenOrRemoved(post.opId, postId, 0);
+
+                    switch (hiddenOrRemoved) {
+                        case PostParser.HIDDEN_POST:
+                        case PostParser.REMOVED_POST:
+                            // Quote pointing to a (locally) hidden or removed post
+                            type = PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST;
+                            break;
+                        default:
+                            // Normal post quote
+                            type = PostLinkable.Type.QUOTE;
+                            break;
+                    }
                 } else {
                     // Most likely a quote to a deleted post (Or any other post that we don't have
                     // in the cache).

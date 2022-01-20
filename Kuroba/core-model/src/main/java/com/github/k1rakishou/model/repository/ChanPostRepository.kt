@@ -528,19 +528,6 @@ class ChanPostRepository(
     }
   }
 
-  suspend fun deleteAll(): ModularResult<Int> {
-    check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
-
-    return applicationScope.dbCall {
-      return@dbCall tryWithTransaction {
-        val result = localSource.deleteAll()
-        chanThreadsCache.deleteAll()
-
-        return@tryWithTransaction result
-      }
-    }
-  }
-
   suspend fun deleteThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): ModularResult<Unit> {
     check(suspendableInitializer.isInitialized()) { "ChanPostRepository is not initialized yet!" }
 

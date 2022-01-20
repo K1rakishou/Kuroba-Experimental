@@ -92,6 +92,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
+import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -913,7 +914,8 @@ class ThreadLayout @JvmOverloads constructor(
         postDescriptor = post.postDescriptor,
         onlyHide = hide,
         applyToWholeThread = true,
-        applyToReplies = false
+        applyToReplies = false,
+        manuallyRestored = false
       )
 
       postHideManager.create(postHide)
@@ -953,24 +955,29 @@ class ThreadLayout @JvmOverloads constructor(
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
 
-      val hideList: MutableList<ChanPostHide> = ArrayList()
+      val hideList = mutableListOf<ChanPostHide>()
+      val resultPostDescriptors = mutableListOf<PostDescriptor>()
+
       for (postDescriptor in postDescriptors) {
         // Do not add the OP post to the hideList since we don't want to hide an OP post
         // while being in a thread (it just doesn't make any sense)
-        if (!postDescriptor.isOP()) {
-          hideList.add(
-            ChanPostHide(
-              postDescriptor = postDescriptor,
-              onlyHide = hide,
-              applyToWholeThread = false,
-              applyToReplies = wholeChain
-            )
-          )
+        if (postDescriptor.isOP()) {
+          continue
         }
+
+        hideList += ChanPostHide(
+          postDescriptor = postDescriptor,
+          onlyHide = hide,
+          applyToWholeThread = false,
+          applyToReplies = wholeChain,
+          manuallyRestored = false
+        )
+
+        resultPostDescriptors += postDescriptor
       }
 
-      postHideManager.createMany(hideList)
-      presenter.refreshUI()
+      postHideManager.createOrUpdateMany(hideList)
+      reparsePosts(resultPostDescriptors)
 
       val formattedString = if (hide) {
         getQuantityString(R.plurals.post_hidden, postDescriptors.size, postDescriptors.size)
@@ -988,9 +995,16 @@ class ThreadLayout @JvmOverloads constructor(
       ).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
-            postFilterManager.removeMany(postDescriptors)
-            postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
-            presenter.refreshUI()
+            reparsePosts(resultPostDescriptors) { totalPostsWithReplies ->
+              postFilterManager.removeMany(totalPostsWithReplies)
+              postHideManager.removeManyChanPostHides(totalPostsWithReplies)
+
+              if (postPopupHelper.isOpen) {
+                postPopupHelper.resetCachedPostData(totalPostsWithReplies)
+              }
+
+              threadListLayout.resetCachedPostData(totalPostsWithReplies)
+            }
           }
         }
 
@@ -1001,7 +1015,20 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
-      restoreHiddenOrRemovedPosts(listOf(post.postDescriptor))
+      reparsePosts(listOf(post.postDescriptor)) { totalPostsWithReplies ->
+        postFilterManager.removeMany(totalPostsWithReplies)
+
+        postHideManager.update(
+          postDescriptor = post.postDescriptor,
+          updater = { oldChanPostHide -> oldChanPostHide.copy(manuallyRestored = true) }
+        )
+
+        if (postPopupHelper.isOpen) {
+          postPopupHelper.resetCachedPostData(totalPostsWithReplies)
+        }
+
+        threadListLayout.resetCachedPostData(totalPostsWithReplies)
+      }
     }
   }
 
@@ -1018,7 +1045,21 @@ class ThreadLayout @JvmOverloads constructor(
   ) {
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
-      restoreHiddenOrRemovedPosts(selectedPosts)
+
+      reparsePosts(selectedPosts) { totalPostsWithReplies ->
+        postFilterManager.removeMany(totalPostsWithReplies)
+
+        postHideManager.updateMany(
+          postDescriptors = totalPostsWithReplies,
+          updater = { oldChanPostHide -> oldChanPostHide.copy(manuallyRestored = true) }
+        )
+
+        if (postPopupHelper.isOpen) {
+          postPopupHelper.resetCachedPostData(totalPostsWithReplies)
+        }
+
+        threadListLayout.resetCachedPostData(totalPostsWithReplies)
+      }
 
       SnackbarWrapper.create(
         globalViewStateManager,
@@ -1031,16 +1072,16 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  private suspend fun restoreHiddenOrRemovedPosts(selectedPosts: List<PostDescriptor>) {
+  private suspend fun reparsePosts(
+    postDescriptors: Collection<PostDescriptor>,
+    func: (suspend (Collection<PostDescriptor>) -> Unit)? = null
+  ) {
     val totalPostsWithReplies = withContext(Dispatchers.Default) {
-      postFilterManager.removeMany(selectedPosts)
-      postHideManager.removeManyChanPostHides(selectedPosts)
-
       val totalPostsWithReplies = hashSetWithCap<PostDescriptor>(16)
 
-      selectedPosts.forEach { selectedPost ->
+      postDescriptors.forEach { postDescriptor ->
         totalPostsWithReplies += chanThreadManager.findPostWithReplies(
-          postDescriptor = selectedPost,
+          postDescriptor = postDescriptor,
           includeRepliesFrom = true,
           includeRepliesTo = true,
           maxRecursion = 1
@@ -1050,12 +1091,13 @@ class ThreadLayout @JvmOverloads constructor(
       return@withContext totalPostsWithReplies
     }
 
-    if (postPopupHelper.isOpen) {
-      postPopupHelper.resetCachedPostData(totalPostsWithReplies)
-    }
+    func?.invoke(totalPostsWithReplies)
 
-    threadListLayout.resetCachedPostData(totalPostsWithReplies)
-    presenter.refreshUI()
+    presenter.normalLoad(
+      showLoading = false,
+      chanLoadOptions = ChanLoadOptions.forceUpdatePosts(totalPostsWithReplies.toSet()),
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+    )
   }
 
   override suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

@@ -387,10 +387,6 @@ class Chan4CloudFlareImagePreloaderManager(
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
     lock.write {
       when (threadDeleteEvent) {
-        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${alreadyPreloaded.size} threads")
-          alreadyPreloaded.clear()
-        }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedThreads = 0
 

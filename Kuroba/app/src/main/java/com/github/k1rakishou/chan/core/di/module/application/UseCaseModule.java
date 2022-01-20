@@ -315,6 +315,7 @@ public class UseCaseModule {
             ChanPostRepository chanPostRepository,
             FilterEngine filterEngine,
             PostFilterManager postFilterManager,
+            PostHideManager postHideManager,
             SavedReplyManager savedReplyManager,
             BoardManager boardManager,
             ChanLoadProgressNotifier chanLoadProgressNotifier
@@ -325,6 +326,7 @@ public class UseCaseModule {
                 chanPostRepository,
                 filterEngine,
                 postFilterManager,
+                postHideManager,
                 savedReplyManager,
                 boardManager,
                 chanLoadProgressNotifier

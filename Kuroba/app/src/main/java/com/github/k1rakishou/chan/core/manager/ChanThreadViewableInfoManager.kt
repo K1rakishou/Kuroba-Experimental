@@ -203,10 +203,6 @@ class ChanThreadViewableInfoManager(
   private fun onThreadDeleteEventReceived(threadDeleteEvent: ChanThreadsCache.ThreadDeleteEvent) {
     lock.write {
       when (threadDeleteEvent) {
-        ChanThreadsCache.ThreadDeleteEvent.ClearAll -> {
-          Logger.d(TAG, "onThreadDeleteEventReceived.ClearAll() clearing ${chanThreadViewableMap.size} threads")
-          chanThreadViewableMap.clear()
-        }
         is ChanThreadsCache.ThreadDeleteEvent.RemoveThreads -> {
           var removedThreads = 0
 

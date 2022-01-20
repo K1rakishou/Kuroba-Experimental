@@ -9,8 +9,8 @@ import com.github.k1rakishou.model.entity.chan.post.ChanPostHideEntity
 @Dao
 abstract class ChanPostHideDao {
 
-  @Insert(onConflict = OnConflictStrategy.IGNORE)
-  abstract suspend fun insertManyOrIgnore(entities: List<ChanPostHideEntity>)
+  @Insert(onConflict = OnConflictStrategy.REPLACE)
+  abstract suspend fun insertManyOrUpdate(entities: List<ChanPostHideEntity>)
 
   @Query("""
     SELECT *
