@@ -13,6 +13,7 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerOptions
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerToolbar
@@ -36,6 +37,8 @@ abstract class MediaViewerActionStrip(
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
+  @Inject
+  lateinit var postHideManager: PostHideManager
 
   private lateinit var toolbarGoToPostButton: AppCompatImageButton
   private lateinit var toolbarReloadButton: AppCompatImageButton
@@ -201,7 +204,16 @@ abstract class MediaViewerActionStrip(
     BackgroundUtils.ensureBackgroundThread()
 
     val repliesFromCount = viewableMedia.postDescriptor?.let { postDescriptor ->
-      return@let chanThreadManager.getPost(postDescriptor)?.repliesFromCount
+      val chanPost = chanThreadManager.getPost(postDescriptor)
+        ?: return@let null
+
+      if (postHideManager.contains(chanPost.postDescriptor)) {
+        return@let null
+      }
+
+      return@let chanPost.repliesFromCopy.count { replyFrom ->
+        return@count !postHideManager.contains(replyFrom)
+      }
     } ?: 0
 
     withContext(Dispatchers.Main) {

@@ -130,7 +130,22 @@ class PostPopupHelper(
   }
 
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    presentingPostRepliesController?.resetCachedPostData(postDescriptor)
+    presentingPostRepliesController?.resetCachedPostData(listOf(postDescriptor))
+  }
+
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    presentingPostRepliesController?.resetCachedPostData(postDescriptors)
+  }
+
+  suspend fun onPostsWithDescriptorsUpdated(updatedPostDescriptors: Collection<PostDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+
+    val updatedPosts = chanThreadManager.getPosts(updatedPostDescriptors)
+    if (updatedPosts.isEmpty()) {
+      return
+    }
+
+    onPostsUpdated(updatedPosts)
   }
 
   suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

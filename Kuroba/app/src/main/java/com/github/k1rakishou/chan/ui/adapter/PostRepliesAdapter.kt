@@ -6,6 +6,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.cell.GenericPostCell
 import com.github.k1rakishou.chan.ui.cell.PostCellData
@@ -27,6 +28,7 @@ class PostRepliesAdapter(
   postFilterManager: Lazy<PostFilterManager>,
   savedReplyManager: Lazy<SavedReplyManager>,
   postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
+  postHideManager: Lazy<PostHideManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
@@ -35,6 +37,7 @@ class PostRepliesAdapter(
     _postFilterManager = postFilterManager,
     _savedReplyManager = savedReplyManager,
     _postFilterHighlightManager = postFilterHighlightManager,
+    _postHideManager = postHideManager,
     initialTheme = initialTheme
   )
 
@@ -103,8 +106,8 @@ class PostRepliesAdapter(
     notifyDataSetChanged()
   }
 
-  fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    threadCellData.resetCachedPostData(postDescriptor)
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    threadCellData.resetCachedPostData(postDescriptors)
   }
 
   suspend fun updatePosts(updatedPosts: List<ChanPost>) {

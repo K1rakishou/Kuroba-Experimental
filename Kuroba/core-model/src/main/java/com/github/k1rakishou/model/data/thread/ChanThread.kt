@@ -482,8 +482,19 @@ class ChanThread(
 
   fun findPostWithRepliesRecursive(
     postDescriptor: PostDescriptor,
-    postsSet: MutableSet<ChanPost>
+    postsSet: MutableSet<ChanPost>,
+    includeRepliesFrom: Boolean,
+    includeRepliesTo: Boolean,
+    maxRecursion: Int = Int.MAX_VALUE
   ) {
+    if (maxRecursion <= 0) {
+      return
+    }
+
+    require(includeRepliesFrom || includeRepliesTo) {
+      "Either includeRepliesFrom or includeRepliesTo must be true"
+    }
+
     val postsToCheck = mutableListOf<ChanPost>()
 
     lock.read {
@@ -502,10 +513,31 @@ class ChanThread(
       }
 
       postsSet.add(post)
-      val repliesFromCopy = post.repliesFromCopy
 
-      repliesFromCopy.forEach { lookUpPostDescriptor ->
-        findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
+      if (includeRepliesFrom) {
+        val repliesFrom = post.repliesFromCopy
+        repliesFrom.forEach { lookUpPostDescriptor ->
+          findPostWithRepliesRecursive(
+            postDescriptor = lookUpPostDescriptor,
+            postsSet = postsSet,
+            includeRepliesFrom = includeRepliesFrom,
+            includeRepliesTo = includeRepliesTo,
+            maxRecursion = maxRecursion - 1
+          )
+        }
+      }
+
+      if (includeRepliesTo) {
+        val repliesTo = post.repliesTo
+        repliesTo.forEach { lookUpPostDescriptor ->
+          findPostWithRepliesRecursive(
+            postDescriptor = lookUpPostDescriptor,
+            postsSet = postsSet,
+            includeRepliesFrom = includeRepliesFrom,
+            includeRepliesTo = includeRepliesTo,
+            maxRecursion = maxRecursion - 1
+          )
+        }
       }
     }
   }

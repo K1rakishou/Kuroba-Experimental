@@ -32,6 +32,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -69,6 +70,7 @@ data class PostCellData(
   val postViewMode: PostViewMode,
   val searchQuery: SearchQuery,
   val keywordsToHighlight: Set<HighlightFilterKeyword>,
+  val postHideMap: Map<PostDescriptor, ChanPostHide>,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
   val isSavedReply: Boolean,
@@ -84,7 +86,7 @@ data class PostCellData(
   private var postFileInfoMapForThumbnailWrapperPrecalculated: MutableMap<ChanPostImage, SpannableString>? = null
   private var postFileInfoHashPrecalculated: MurmurHashUtils.Murmur3Hash? = null
   private var commentTextPrecalculated: CharSequence? = null
-  private var catalogRepliesTextPrecalculated: CharSequence? = null
+  private var repliesToThisPostTextPrecalculated: CharSequence? = null
 
   val iconSizePx = sp(textSizeSp - 2.toFloat())
   val postStubCellTitlePaddingPx = sp((textSizeSp - 6).toFloat())
@@ -158,7 +160,7 @@ data class PostCellData(
   }
   private val _postFileInfoMapHash = RecalculatableLazy { postFileInfoHashPrecalculated ?: calculatePostFileInfoHash(_postFileInfoMap) }
   private val _commentText = RecalculatableLazy { commentTextPrecalculated ?: calculateCommentText() }
-  private val _catalogRepliesText = RecalculatableLazy { catalogRepliesTextPrecalculated ?: calculateCatalogRepliesText() }
+  private val _repliesToThisPostText = RecalculatableLazy { repliesToThisPostTextPrecalculated ?: calculateRepliesToThisPostText() }
 
   val detailsSizePx: Int
     get() = _detailsSizePx.value()
@@ -176,8 +178,8 @@ data class PostCellData(
     get() = _postFileInfoMapHash.value()
   val commentText: CharSequence
     get() = _commentText.value()
-  val catalogRepliesText
-    get() = _catalogRepliesText.value()
+  val repliesToThisPostText
+    get() = _repliesToThisPostText.value()
 
   fun hashForAdapter(): Long {
     val repliesFromCount = post.repliesFromCount
@@ -200,7 +202,7 @@ data class PostCellData(
     postFileInfoMapForThumbnailWrapperPrecalculated = null
     postFileInfoHashPrecalculated = null
     commentTextPrecalculated = null
-    catalogRepliesTextPrecalculated = null
+    repliesToThisPostTextPrecalculated = null
 
     _detailsSizePx.resetValue()
     _postTitle.resetValue()
@@ -209,7 +211,7 @@ data class PostCellData(
     _postFileInfoMapForThumbnailWrapper.resetValue()
     _postFileInfoMapHash.resetValue()
     _commentText.resetValue()
-    _catalogRepliesText.resetValue()
+    _repliesToThisPostText.resetValue()
   }
 
   fun resetCommentTextCache() {
@@ -235,8 +237,8 @@ data class PostCellData(
   }
 
   fun resetCatalogRepliesTextCache() {
-    catalogRepliesTextPrecalculated = null
-    _catalogRepliesText.resetValue()
+    repliesToThisPostTextPrecalculated = null
+    _repliesToThisPostText.resetValue()
   }
 
   fun preload() {
@@ -248,7 +250,7 @@ data class PostCellData(
     _postFileInfoMapForThumbnailWrapper.value()
     _postFileInfoMapHash.value()
     _commentText.value()
-    _catalogRepliesText.value()
+    _repliesToThisPostText.value()
   }
 
   fun fullCopy(): PostCellData {
@@ -282,6 +284,7 @@ data class PostCellData(
       postViewMode = postViewMode,
       searchQuery = searchQuery,
       keywordsToHighlight = keywordsToHighlight.toSet(),
+      postHideMap = postHideMap.toMap(),
       postAlignmentMode = postAlignmentMode,
       postCellThumbnailSizePercents = postCellThumbnailSizePercents,
       isSavedReply = isSavedReply,
@@ -293,7 +296,7 @@ data class PostCellData(
       newPostCellData.postTitlePrecalculated = postTitlePrecalculated
       newPostCellData.postTitleStubPrecalculated = postTitleStubPrecalculated
       newPostCellData.commentTextPrecalculated = commentTextPrecalculated
-      newPostCellData.catalogRepliesTextPrecalculated = catalogRepliesTextPrecalculated
+      newPostCellData.repliesToThisPostTextPrecalculated = repliesToThisPostTextPrecalculated
     }
   }
 
@@ -546,8 +549,7 @@ data class PostCellData(
   }
 
   private fun getPostStubTitle(): CharSequence {
-    val titleText = post.postComment.comment()
-
+    val titleText = SpannableString(post.postComment.comment())
     if (titleText.isEmpty()) {
       val firstImage = post.firstImage()
       if (firstImage != null) {
@@ -748,29 +750,17 @@ data class PostCellData(
     return commentText.ellipsizeEnd(commentMaxLength)
   }
 
-  private fun calculateCatalogRepliesText(): String {
-    if (compact) {
-      return calculateCatalogRepliesTextCompact()
+  private fun calculateRepliesToThisPostText(): String {
+    if (isViewingCatalog && compact) {
+      return calculateRepliesToThisPostTextCompact()
     } else {
-      return calculateCatalogRepliesTextNormal()
+      return calculateRepliesToThisPostTextNormal()
     }
   }
 
-  private fun calculateCatalogRepliesTextNormal(): String {
-    val replyCount = if (isViewingThread) {
-      repliesFromCount
-    } else {
-      catalogRepliesCount
-    }
-
-    val repliesCountText = AppModuleAndroidUtils.getQuantityString(
-      R.plurals.reply,
-      replyCount,
-      replyCount
-    )
-
+  private fun calculateRepliesToThisPostTextNormal(): String {
     val catalogRepliesTextBuilder = StringBuilder(64)
-    catalogRepliesTextBuilder.append(repliesCountText)
+    formatPostReplyCountString(catalogRepliesTextBuilder)
 
     if (!isViewingThread && catalogImagesCount > 0) {
       val imagesCountText = AppModuleAndroidUtils.getQuantityString(
@@ -797,7 +787,58 @@ data class PostCellData(
     return catalogRepliesTextBuilder.toString()
   }
 
-  private fun calculateCatalogRepliesTextCompact(): String {
+  private fun formatPostReplyCountString(catalogRepliesTextBuilder: StringBuilder) {
+    val replyCount = if (isViewingThread) repliesFromCount else catalogRepliesCount
+    var hiddenRepliesCount = 0
+    var removedRepliesCount = 0
+
+    for (postDescriptor in post.repliesFromCopy) {
+      val chanPostHide = postHideMap[postDescriptor]
+        ?: continue
+
+      if (chanPostHide.onlyHide) {
+        ++hiddenRepliesCount
+      } else {
+        ++removedRepliesCount
+      }
+    }
+
+    val repliesCountText = AppModuleAndroidUtils.getQuantityString(
+      R.plurals.reply,
+      replyCount,
+      replyCount
+    )
+
+    catalogRepliesTextBuilder.append(repliesCountText)
+
+    if (hiddenRepliesCount > 0 || removedRepliesCount > 0) {
+      catalogRepliesTextBuilder
+        .append(" (")
+
+      if (hiddenRepliesCount > 0) {
+        catalogRepliesTextBuilder
+          .append(hiddenRepliesCount)
+          .append(" ")
+          .append(getString(R.string.post_reply_hidden))
+      }
+
+      if (removedRepliesCount > 0) {
+        if (hiddenRepliesCount > 0) {
+          catalogRepliesTextBuilder
+            .append(", ")
+        }
+
+        catalogRepliesTextBuilder
+          .append(removedRepliesCount)
+          .append(" ")
+          .append(getString(R.string.post_reply_removed))
+      }
+
+      catalogRepliesTextBuilder.append(")")
+    }
+  }
+
+  private fun calculateRepliesToThisPostTextCompact(): String {
     return buildString {
       if (catalogRepliesCount > 0) {
         append(getString(R.string.card_stats_replies_compact, catalogRepliesCount))

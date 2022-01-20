@@ -152,6 +152,7 @@ class PostSearchPopupController(
       postFilterManager = postFilterManager,
       savedReplyManager = savedReplyManager,
       postFilterHighlightManager = postFilterHighlightManager,
+      postHideManager = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 

@@ -1315,6 +1315,17 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.removeItemDecoration(chan4BirthdayDecoration)
   }
 
+  suspend fun onPostsWithDescriptorsUpdated(updatedPostDescriptors: Collection<PostDescriptor>) {
+    BackgroundUtils.ensureMainThread()
+
+    val updatedPosts = chanThreadManager.getPosts(updatedPostDescriptors)
+    if (updatedPosts.isEmpty()) {
+      return
+    }
+
+    postAdapter.updatePosts(updatedPosts)
+  }
+
   suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {
     BackgroundUtils.ensureMainThread()
     postAdapter.updatePosts(updatedPosts)
@@ -1326,7 +1337,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    postAdapter.resetCachedPostData(postDescriptor)
+    resetCachedPostData(listOf(postDescriptor))
+  }
+
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    postAdapter.resetCachedPostData(postDescriptors)
   }
 
   fun onImageOptionsComplete() {

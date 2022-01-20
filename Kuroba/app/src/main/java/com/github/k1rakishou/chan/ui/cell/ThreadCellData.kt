@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
@@ -35,6 +36,7 @@ class ThreadCellData(
   private val _postFilterManager: Lazy<PostFilterManager>,
   private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   private val _savedReplyManager: Lazy<SavedReplyManager>,
+  private val _postHideManager: Lazy<PostHideManager>,
   initialTheme: ChanTheme
 ): Iterable<ThreadCellData.PostCellDataLazy> {
   private val postCellDataLazyList: MutableList<PostCellDataLazy> = mutableListWithCap(64)
@@ -212,6 +214,7 @@ class ThreadCellData(
     val postFilterManager = _postFilterManager.get()
     val postFilterHighlightManager = _postFilterHighlightManager.get()
     val savedReplyManager = _savedReplyManager.get()
+    val postHideManager = _postHideManager.get()
 
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
@@ -233,6 +236,16 @@ class ThreadCellData(
     val boardPages = getBoardPages(chanDescriptor, neverShowPages, postCellCallback)
     val isTablet = isTablet()
     val isSplitLayout = ChanSettings.isSplitLayoutMode()
+
+    val postHideMap = when (chanDescriptor) {
+      is ChanDescriptor.ICatalogDescriptor -> {
+        mapOf()
+      }
+      is ChanDescriptor.ThreadDescriptor -> {
+        postHideManager.getHiddenPostsForThread(chanDescriptor)
+          .associateBy { it.postDescriptor }
+      }
+    }
 
     val postAlignmentMode = when (chanDescriptor) {
       is ChanDescriptor.CatalogDescriptor,
@@ -295,6 +308,7 @@ class ThreadCellData(
           filterHash = filterHashMap[postDescriptor] ?: 0,
           searchQuery = defaultSearchQuery,
           keywordsToHighlight = highlightFilterKeywordMap[postDescriptor] ?: emptySet(),
+          postHideMap = postHideMap,
           postAlignmentMode = postAlignmentMode,
           postCellThumbnailSizePercents = postCellThumbnailSizePercents,
           isSavedReply = postIndexed.post.isSavedReply,
@@ -405,19 +419,21 @@ class ThreadCellData(
     }
   }
 
-  fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    val postCellDataIndex = postCellDataLazyList
-      .indexOfFirst { postCellDataLazy -> postCellDataLazy.postDescriptor == postDescriptor }
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    postDescriptors.forEach { postDescriptor ->
+      val postCellDataIndex = postCellDataLazyList
+        .indexOfFirst { postCellDataLazy -> postCellDataLazy.postDescriptor == postDescriptor }
 
-    if (postCellDataIndex < 0) {
-      return
-    }
+      if (postCellDataIndex < 0) {
+        return@forEach
+      }
 
-    val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
-      ?: return
+      val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
+        ?: return@forEach
 
-    if (postCellDataLazy.isInitialized) {
-      postCellDataLazy.postCellDataCalculated.resetEverything()
+      if (postCellDataLazy.isInitialized) {
+        postCellDataLazy.postCellDataCalculated.resetEverything()
+      }
     }
   }
 

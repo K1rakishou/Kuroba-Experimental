@@ -51,7 +51,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -320,7 +319,7 @@ class CardPostCell : ConstraintLayout,
     comment.setText(postCellData.commentText, TextView.BufferType.SPANNABLE)
     comment.requestLayout()
 
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.catalogRepliesText, replies)
+    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.repliesToThisPostText, replies)
 
     bindIcons(postCellData)
 

@@ -83,6 +83,7 @@ import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -106,9 +107,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
@@ -988,7 +989,6 @@ class ThreadLayout @JvmOverloads constructor(
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
             postFilterManager.removeMany(postDescriptors)
-
             postHideManager.removeManyChanPostHides(hideList.map { postHide -> postHide.postDescriptor })
             presenter.refreshUI()
           }
@@ -1001,16 +1001,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
-      postFilterManager.remove(post.postDescriptor)
-      postHideManager.removeManyChanPostHides(listOf(post.postDescriptor))
-
-      if (postPopupHelper.isOpen) {
-        postPopupHelper.resetCachedPostData(post.postDescriptor)
-        postPopupHelper.onPostsUpdated(listOf(post))
-      }
-
-      threadListLayout.resetCachedPostData(post.postDescriptor)
-      threadListLayout.onPostsUpdated(listOf(post))
+      restoreHiddenOrRemovedPosts(listOf(post.postDescriptor))
     }
   }
 
@@ -1027,9 +1018,7 @@ class ThreadLayout @JvmOverloads constructor(
   ) {
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
-
-      postHideManager.removeManyChanPostHides(selectedPosts)
-      presenter.refreshUI()
+      restoreHiddenOrRemovedPosts(selectedPosts)
 
       SnackbarWrapper.create(
         globalViewStateManager,
@@ -1040,6 +1029,33 @@ class ThreadLayout @JvmOverloads constructor(
         Snackbar.LENGTH_LONG
       ).apply { show(type) }
     }
+  }
+
+  private suspend fun restoreHiddenOrRemovedPosts(selectedPosts: List<PostDescriptor>) {
+    val totalPostsWithReplies = withContext(Dispatchers.Default) {
+      postFilterManager.removeMany(selectedPosts)
+      postHideManager.removeManyChanPostHides(selectedPosts)
+
+      val totalPostsWithReplies = hashSetWithCap<PostDescriptor>(16)
+
+      selectedPosts.forEach { selectedPost ->
+        totalPostsWithReplies += chanThreadManager.findPostWithReplies(
+          postDescriptor = selectedPost,
+          includeRepliesFrom = true,
+          includeRepliesTo = true,
+          maxRecursion = 1
+        ).map { it.postDescriptor }
+      }
+
+      return@withContext totalPostsWithReplies
+    }
+
+    if (postPopupHelper.isOpen) {
+      postPopupHelper.resetCachedPostData(totalPostsWithReplies)
+    }
+
+    threadListLayout.resetCachedPostData(totalPostsWithReplies)
+    presenter.refreshUI()
   }
 
   override suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

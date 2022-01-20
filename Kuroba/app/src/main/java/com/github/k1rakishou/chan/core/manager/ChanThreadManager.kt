@@ -296,17 +296,32 @@ class ChanThreadManager(
     return chanThreadsCache.getLastPost(descriptor)
   }
 
-  fun findPostWithReplies(postDescriptor: PostDescriptor): Set<ChanPost> {
+  fun findPostWithReplies(
+    postDescriptor: PostDescriptor,
+    includeRepliesFrom: Boolean = true,
+    includeRepliesTo: Boolean = false,
+    maxRecursion: Int = Int.MAX_VALUE
+  ): Set<ChanPost> {
     val postsSet = hashSetOf<ChanPost>()
 
     when (val descriptor = postDescriptor.descriptor) {
       is ChanDescriptor.ThreadDescriptor -> {
-        chanThreadsCache.getThread(descriptor)
-          ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
+        chanThreadsCache.getThread(descriptor)?.findPostWithRepliesRecursive(
+          postDescriptor = postDescriptor,
+          postsSet = postsSet,
+          includeRepliesFrom = includeRepliesFrom,
+          includeRepliesTo = includeRepliesTo,
+          maxRecursion = maxRecursion
+        )
       }
       is ChanDescriptor.ICatalogDescriptor -> {
-        getChanCatalog(descriptor)
-          ?.findPostWithRepliesRecursive(postDescriptor, postsSet)
+        getChanCatalog(descriptor)?.findPostWithRepliesRecursive(
+          postDescriptor = postDescriptor,
+          postsSet = postsSet,
+          includeRepliesFrom = includeRepliesFrom,
+          includeRepliesTo = includeRepliesTo,
+          maxRecursion = maxRecursion
+        )
       }
     }
 

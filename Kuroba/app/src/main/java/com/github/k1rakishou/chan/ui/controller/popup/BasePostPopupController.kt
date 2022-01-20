@@ -26,6 +26,7 @@ import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter
@@ -63,6 +64,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var postFilterHighlightManager: Lazy<PostFilterHighlightManager>
   @Inject
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
+  @Inject
+  lateinit var postHideManager: Lazy<PostHideManager>
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 
@@ -149,8 +152,8 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     }
   }
 
-  fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    (postsView.adapter as? PostRepliesAdapter)?.resetCachedPostData(postDescriptor)
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    (postsView.adapter as? PostRepliesAdapter)?.resetCachedPostData(postDescriptors)
   }
 
   fun getThumbnail(postImage: ChanPostImage): ThumbnailView? {

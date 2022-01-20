@@ -90,7 +90,6 @@ import com.github.k1rakishou.persist_state.IndexAndTop
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
 import kotlinx.coroutines.*
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import okhttp3.HttpUrl
 import java.util.*
@@ -116,6 +115,7 @@ class ThreadPresenter @Inject constructor(
   private val _lastViewedPostNoInfoHolder: Lazy<LastViewedPostNoInfoHolder>,
   private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _postHideHelper: Lazy<PostHideHelper>,
+  private val _postHideManager: Lazy<PostHideManager>,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>,
   private val _thumbnailLongtapOptionsHelper: Lazy<ThumbnailLongtapOptionsHelper>,
@@ -162,6 +162,8 @@ class ThreadPresenter @Inject constructor(
     get() = _chanThreadViewableInfoManager.get()
   private val postHideHelper: PostHideHelper
     get() = _postHideHelper.get()
+  private val postHideManager: PostHideManager
+    get() = _postHideManager.get()
   private val chanThreadManager: ChanThreadManager
     get() = _chanThreadManager.get()
   private val globalWindowInsetsManager: GlobalWindowInsetsManager
@@ -1902,6 +1904,10 @@ class ThreadPresenter @Inject constructor(
             return@onPostLinkableClicked
           }
 
+          if (postHideManager.contains(linked.postDescriptor)) {
+            return@onPostLinkableClicked
+          }
+
           val postViewMode = if (isExternalThread) {
             PostCellData.PostViewMode.ExternalPostsPopup
           } else {
@@ -2185,36 +2191,45 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
-    val posts = ArrayList<ChanPost>()
-    val threadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
-      ?: return
+    serializedCoroutineExecutor.post {
+      val threadDescriptor = post.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
+        ?: return@post
 
-    val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
-    val repliesFromCopy = post.repliesFromCopy
+      val isExternalThread = post.postDescriptor.descriptor != currentChanDescriptor
+      val repliesFromCopy = post.repliesFromCopy
 
-    repliesFromCopy.forEach { replyPostDescriptor ->
-      val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
-      if (replyPost != null) {
-        posts.add(replyPost)
+      val posts = withContext(Dispatchers.Default) {
+        val posts = ArrayList<ChanPost>()
+
+        repliesFromCopy.forEach { replyPostDescriptor ->
+          val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
+          if (replyPost != null) {
+            if (!postHideManager.contains(replyPostDescriptor)) {
+              posts.add(replyPost)
+            }
+          }
+        }
+
+        return@withContext posts
       }
-    }
 
-    if (posts.size <= 0) {
-      return
-    }
+      if (posts.size <= 0) {
+        return@post
+      }
 
-    val postViewMode = if (isExternalThread) {
-      PostCellData.PostViewMode.ExternalPostsPopup
-    } else {
-      PostCellData.PostViewMode.RepliesPopup
-    }
+      val postViewMode = if (isExternalThread) {
+        PostCellData.PostViewMode.ExternalPostsPopup
+      } else {
+        PostCellData.PostViewMode.RepliesPopup
+      }
 
-    threadPresenterCallback?.showPostsPopup(
-      threadDescriptor = threadDescriptor,
-      postViewMode = postViewMode,
-      postDescriptor = post.postDescriptor,
-      posts = posts
-    )
+      threadPresenterCallback?.showPostsPopup(
+        threadDescriptor = threadDescriptor,
+        postViewMode = postViewMode,
+        postDescriptor = post.postDescriptor,
+        posts = posts
+      )
+    }
   }
 
   override fun onPostPosterIdClicked(post: ChanPost) {

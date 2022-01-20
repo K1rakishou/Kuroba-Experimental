@@ -242,6 +242,12 @@ class PostHideManager(
     return chanPostHideList
   }
 
+  fun contains(postDescriptor: PostDescriptor): Boolean {
+    return lock.read {
+      return@read postHideMap[postDescriptor.threadDescriptor()]?.containsKey(postDescriptor) == true
+    }
+  }
+
   fun getHiddenPostsMap(postDescriptorSet: Set<PostDescriptor>): MutableMap<PostDescriptor, ChanPostHide> {
     val resultMap = mutableMapOf<PostDescriptor, ChanPostHide>()
 

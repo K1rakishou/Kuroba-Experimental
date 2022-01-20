@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
@@ -77,7 +78,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
@@ -99,6 +99,8 @@ class MediaViewerController(
   lateinit var _boardManager: Lazy<BoardManager>
   @Inject
   lateinit var _archivesManager: Lazy<ArchivesManager>
+  @Inject
+  lateinit var _postHideManager: Lazy<PostHideManager>
 
   @Inject
   lateinit var appConstants: AppConstants
@@ -147,6 +149,8 @@ class MediaViewerController(
     get() = _boardManager.get()
   private val archivesManager: ArchivesManager
     get() = _archivesManager.get()
+  private val postHideManager: PostHideManager
+    get() = _postHideManager.get()
 
   private val viewPagerAutoSwiperLazy = lazy {
     ViewPagerAutoSwiper(pager)
@@ -649,6 +653,11 @@ class MediaViewerController(
       return
     }
 
+    if (postHideManager.contains(chanPost.postDescriptor)) {
+      Logger.e(TAG, "showPost($postDescriptor) chanPost is hidden or removed")
+      return
+    }
+
     postPopupHelper.showRepliesPopup(
       threadDescriptor = threadDescriptor,
       postViewMode = PostCellData.PostViewMode.MediaViewerPostsPopup,
@@ -666,6 +675,11 @@ class MediaViewerController(
       return
     }
 
+    if (postHideManager.contains(chanPost.postDescriptor)) {
+      Logger.e(TAG, "showReplyChain($postDescriptor) chanPost is hidden or removed")
+      return
+    }
+
     val threadDescriptor = chanPost.postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
     if (threadDescriptor == null) {
       Logger.e(TAG, "showReplyChain($postDescriptor) threadDescriptor is null")
@@ -677,12 +691,18 @@ class MediaViewerController(
     chanPost.repliesFromCopy.forEach { replyPostDescriptor ->
       val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
       if (replyPost != null) {
-        posts.add(replyPost)
+        if (!postHideManager.contains(replyPost.postDescriptor)) {
+          posts.add(replyPost)
+        }
       }
     }
 
     if (!postPopupHelper.displayingAnything) {
       posts.add(0, chanPost)
+    }
+
+    if (posts.isEmpty()) {
+      return
     }
 
     postPopupHelper.showRepliesPopup(

@@ -69,7 +69,6 @@ import dagger.Lazy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
@@ -878,7 +877,7 @@ class PostCell @JvmOverloads constructor(
 
     if (!inSelectionMode && hasRepliesToThisPost) {
       replies.setVisibilityFast(VISIBLE)
-      replies.text = postCellData.catalogRepliesText
+      replies.text = postCellData.repliesToThisPostText
     } else {
       replies.setVisibilityFast(GONE)
     }

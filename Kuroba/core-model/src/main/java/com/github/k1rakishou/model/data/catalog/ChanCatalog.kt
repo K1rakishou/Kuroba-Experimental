@@ -78,23 +78,29 @@ class ChanCatalog(
 
   fun findPostWithRepliesRecursive(
     postDescriptor: PostDescriptor,
-    postsSet: MutableSet<ChanPost>
-  ): Boolean {
+    postsSet: MutableSet<ChanPost>,
+    includeRepliesFrom: Boolean,
+    includeRepliesTo: Boolean,
+    maxRecursion: Int = Int.MAX_VALUE
+  ) {
+    if (maxRecursion <= 0) {
+      return
+    }
+
+    require(includeRepliesFrom || includeRepliesTo) {
+      "Either includeRepliesFrom or includeRepliesTo must be true"
+    }
+
     val postsToCheck = mutableListOf<ChanPost>()
 
-    val found = lock.read {
-      var found = false
-
+    lock.read {
       for (post in originalPosts) {
         if (post.postDescriptor != postDescriptor || postsSet.contains(post)) {
           continue
         }
 
-        found = true
         postsToCheck.add(post)
       }
-
-      return@read found
     }
 
     for (post in postsToCheck) {
@@ -103,14 +109,33 @@ class ChanCatalog(
       }
 
       postsSet.add(post)
-      val repliesFromCopy = post.repliesFromCopy
 
-      repliesFromCopy.forEach { lookUpPostDescriptor ->
-        findPostWithRepliesRecursive(lookUpPostDescriptor, postsSet)
+      if (includeRepliesFrom) {
+        val repliesFrom = post.repliesFromCopy
+        repliesFrom.forEach { lookUpPostDescriptor ->
+          findPostWithRepliesRecursive(
+            postDescriptor = lookUpPostDescriptor,
+            postsSet = postsSet,
+            includeRepliesFrom = includeRepliesFrom,
+            includeRepliesTo = includeRepliesTo,
+            maxRecursion = maxRecursion - 1
+          )
+        }
+      }
+
+      if (includeRepliesTo) {
+        val repliesTo = post.repliesTo
+        repliesTo.forEach { lookUpPostDescriptor ->
+          findPostWithRepliesRecursive(
+            postDescriptor = lookUpPostDescriptor,
+            postsSet = postsSet,
+            includeRepliesFrom = includeRepliesFrom,
+            includeRepliesTo = includeRepliesTo,
+            maxRecursion = maxRecursion - 1
+          )
+        }
       }
     }
-
-    return found
   }
 
   fun getPost(postDescriptor: PostDescriptor): ChanOriginalPost? {

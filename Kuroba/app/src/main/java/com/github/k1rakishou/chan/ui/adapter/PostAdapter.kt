@@ -27,6 +27,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
 import com.github.k1rakishou.chan.core.manager.PostHighlightManager
 import com.github.k1rakishou.chan.core.manager.SavedReplyManager
 import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository
@@ -66,6 +67,8 @@ class PostAdapter(
   lateinit var savedReplyManager: Lazy<SavedReplyManager>
   @Inject
   lateinit var postFilterHighlightManager: Lazy<PostFilterHighlightManager>
+  @Inject
+  lateinit var postHideManager: Lazy<PostHideManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -125,6 +128,7 @@ class PostAdapter(
       _postFilterManager = postFilterManager,
       _postFilterHighlightManager = postFilterHighlightManager,
       _savedReplyManager = savedReplyManager,
+      _postHideManager = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 
@@ -392,8 +396,8 @@ class PostAdapter(
     return threadCellData.getScrollPosition(displayPosition)
   }
 
-  fun resetCachedPostData(postDescriptor: PostDescriptor) {
-    threadCellData.resetCachedPostData(postDescriptor)
+  fun resetCachedPostData(postDescriptors: Collection<PostDescriptor>) {
+    threadCellData.resetCachedPostData(postDescriptors)
   }
 
   private fun showStatusView(): Boolean {
