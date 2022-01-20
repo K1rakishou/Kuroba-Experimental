@@ -566,7 +566,8 @@ class ChanPostLocalSource(
   suspend fun getThreadOriginalPostsByDatabaseId(threadDatabaseIds: Collection<Long>): List<ChanOriginalPost> {
     ensureInTransaction()
 
-    val chanThreadMap = chanThreadDao.selectManyByThreadIdList(threadDatabaseIds)
+    val chanThreadMap = threadDatabaseIds.chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { chunk -> chanThreadDao.selectManyByThreadIdList(chunk) }
       .associateBy { chanThreadEntity -> chanThreadEntity.threadId }
 
     val boardsIdSet = chanThreadMap.map { (_, chanThreadEntity) -> chanThreadEntity.ownerBoardId }
