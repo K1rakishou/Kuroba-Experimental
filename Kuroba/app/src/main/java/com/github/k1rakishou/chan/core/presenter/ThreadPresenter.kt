@@ -1904,7 +1904,7 @@ class ThreadPresenter @Inject constructor(
             return@onPostLinkableClicked
           }
 
-          if (postHideManager.contains(chanPost.postDescriptor)) {
+          if (postHideManager.hiddenOrRemoved(chanPost.postDescriptor)) {
             return@onPostLinkableClicked
           }
 
@@ -2213,7 +2213,7 @@ class ThreadPresenter @Inject constructor(
         repliesFromCopy.forEach { replyPostDescriptor ->
           val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
           if (replyPost != null) {
-            if (!postHideManager.contains(replyPostDescriptor)) {
+            if (!postHideManager.hiddenOrRemoved(replyPostDescriptor)) {
               posts.add(replyPost)
             }
           }

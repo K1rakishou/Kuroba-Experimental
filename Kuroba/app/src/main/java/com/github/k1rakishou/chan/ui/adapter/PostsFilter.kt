@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.adapter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.helper.PostHideHelper
+import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
@@ -48,7 +49,7 @@ class PostsFilter(
     }
 
     // Process hidden by filter and post/thread hiding
-    val retainedPosts: List<ChanPost> = postHideHelper.filterHiddenPosts(posts)
+    val retainedPosts = postHideHelper.processPostFilters(chanDescriptor, posts)
       .safeUnwrap { error ->
         Logger.e(TAG, "postHideHelper.filterHiddenPosts error", error)
         return emptyList()
@@ -58,11 +59,12 @@ class PostsFilter(
       "retainedPosts.size=${retainedPosts.size}, " +
       "chanDescriptor=$chanDescriptor")
 
-    val indexedPosts: MutableList<PostIndexed> = ArrayList(retainedPosts.size)
+    var index = 0
+    val indexedPosts = mutableListWithCap<PostIndexed>(retainedPosts.size)
 
-    for (currentPostIndex in retainedPosts.indices) {
-      val retainedPost = retainedPosts[currentPostIndex]
-      indexedPosts.add(PostIndexed(retainedPost, currentPostIndex))
+    for ((_, chanPostWithFilterResult) in retainedPosts) {
+      indexedPosts.add(PostIndexed(chanPostWithFilterResult, index))
+      ++index
     }
 
     return indexedPosts

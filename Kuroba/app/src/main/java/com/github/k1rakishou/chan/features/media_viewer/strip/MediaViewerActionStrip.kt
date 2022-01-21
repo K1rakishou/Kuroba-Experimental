@@ -207,12 +207,12 @@ abstract class MediaViewerActionStrip(
       val chanPost = chanThreadManager.getPost(postDescriptor)
         ?: return@let null
 
-      if (postHideManager.contains(chanPost.postDescriptor)) {
+      if (postHideManager.hiddenOrRemoved(chanPost.postDescriptor)) {
         return@let null
       }
 
       return@let chanPost.repliesFromCopy.count { replyFrom ->
-        return@count !postHideManager.contains(replyFrom)
+        return@count !postHideManager.hiddenOrRemoved(replyFrom)
       }
     } ?: 0
 

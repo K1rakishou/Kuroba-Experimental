@@ -654,7 +654,7 @@ class MediaViewerController(
       return
     }
 
-    if (postHideManager.contains(chanPost.postDescriptor)) {
+    if (postHideManager.hiddenOrRemoved(chanPost.postDescriptor)) {
       Logger.e(TAG, "showPost($postDescriptor) chanPost is hidden or removed")
       return
     }
@@ -676,7 +676,7 @@ class MediaViewerController(
       return
     }
 
-    if (postHideManager.contains(chanPost.postDescriptor)) {
+    if (postHideManager.hiddenOrRemoved(chanPost.postDescriptor)) {
       Logger.e(TAG, "showReplyChain($postDescriptor) chanPost is hidden or removed")
       return
     }
@@ -692,7 +692,7 @@ class MediaViewerController(
     chanPost.repliesFromCopy.forEach { replyPostDescriptor ->
       val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
       if (replyPost != null) {
-        if (!postHideManager.contains(replyPost.postDescriptor)) {
+        if (!postHideManager.hiddenOrRemoved(replyPost.postDescriptor)) {
           posts.add(replyPost)
         }
       }

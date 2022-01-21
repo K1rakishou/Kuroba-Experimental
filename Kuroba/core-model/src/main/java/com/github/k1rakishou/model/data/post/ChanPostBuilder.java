@@ -25,7 +25,7 @@ public class ChanPostBuilder {
     public long id = -1;
     // TODO(KurobaEx / @GhostPosts):
     public long subId = 0;
-    public long opId = -1;
+    private long opId = -1;
     public boolean op;
     public int totalRepliesCount = -1;
     public int threadImagesCount = -1;

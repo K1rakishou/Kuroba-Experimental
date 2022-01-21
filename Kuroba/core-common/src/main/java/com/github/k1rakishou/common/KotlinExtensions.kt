@@ -572,6 +572,23 @@ public inline fun <T, K> Iterable<T>.toHashSetBy(capacity: Int = 16, keySelector
   return hashSet
 }
 
+public inline fun <T, K, V> Iterable<T>.toHashMapBy(
+  capacity: Int = 16,
+  keySelector: (T) -> K,
+  valueSelector: (T) -> V
+): MutableMap<K, V> {
+  val hashMap = mutableMapWithCap<K, V>(capacity)
+
+  for (element in this) {
+    val key = keySelector(element)
+    val value = valueSelector(element)
+
+    hashMap[key] = value
+  }
+
+  return hashMap
+}
+
 /**
  * Forces the kotlin compiler to require handling of all branches in the "when" operator
  * */

@@ -61,7 +61,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -84,6 +84,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
   lateinit var cacheHandler: CacheHandler
 
   private val scope = KurobaCoroutineScope()
+  private var listenForThirdEyeUpdatesJob: Job? = null
+
   private val thirdEyeIcon by lazy { getDrawable(R.drawable.ic_baseline_eye_24).mutate() }
 
   private var postImage: ChanPostImage? = null
@@ -149,7 +151,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
   }
 
   private fun listenForThirdEyeUpdates(postImage: ChanPostImage) {
-    scope.launch {
+    listenForThirdEyeUpdatesJob = scope.launch {
       if (!thirdEyeManager.isEnabled()) {
         return@launch
       }
@@ -237,7 +239,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
     thumbnail.unbindImageUrl()
     compositeDisposable.clear()
-    scope.cancelChildren()
+    scope.cancel()
   }
 
   override fun getViewId(): Int {

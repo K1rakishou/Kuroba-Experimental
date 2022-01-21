@@ -30,6 +30,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.IndexAndTop
@@ -48,7 +49,7 @@ class PostSearchPopupController(
   postCellCallback: PostCellInterface.PostCellCallback,
   private var initialQuery: String? = null
 ) : BasePostPopupController<PostSearchPopupController.PostSearchPopupData>(context, postPopupHelper, postCellCallback) {
-  private val currentPosts = mutableListOf<PostIndexed>()
+  private val indexedPosts = mutableListOf<PostIndexed>()
   private var skipDebouncer = true
   private var scrollPositionRestored = false
   private var updaterJob: Job? = null
@@ -83,13 +84,13 @@ class PostSearchPopupController(
   }
 
   override fun getDisplayingPostDescriptors(): List<PostDescriptor> {
-    if (currentPosts.isEmpty()) {
+    if (indexedPosts.isEmpty()) {
       return emptyList()
     }
 
     val postDescriptors: MutableList<PostDescriptor> = ArrayList()
-    for (chanPost in currentPosts) {
-      postDescriptors.add(chanPost.post.postDescriptor)
+    for (postIndexed in indexedPosts) {
+      postDescriptors.add(postIndexed.chanPostWithFilterResult.chanPost.postDescriptor)
     }
 
     return postDescriptors
@@ -207,12 +208,20 @@ class PostSearchPopupController(
         }
 
         if (query.length < MIN_QUERY_LENGTH) {
-          resultPosts += PostIndexed(chanPost.deepCopy(), postIndex++)
+          resultPosts += PostIndexed(
+            ChanPostWithFilterResult(chanPost.deepCopy()),
+            postIndex++
+          )
+
           return@iteratePostsWhile true
         }
 
         if (matchesQuery(chanPost, searchQuery)) {
-          resultPosts += PostIndexed(chanPost.deepCopy(), postIndex++)
+          resultPosts += PostIndexed(
+            ChanPostWithFilterResult(chanPost.deepCopy()),
+            postIndex++
+          )
+
           return@iteratePostsWhile true
         }
 
@@ -232,8 +241,8 @@ class PostSearchPopupController(
       totalFoundTextView.text = context.getString(R.string.search_found_count, resultPosts.size)
     }
 
-    this@PostSearchPopupController.currentPosts.clear()
-    this@PostSearchPopupController.currentPosts.addAll(resultPosts)
+    this@PostSearchPopupController.indexedPosts.clear()
+    this@PostSearchPopupController.indexedPosts.addAll(resultPosts)
 
     repliesAdapter.setSearchQuery(PostCellData.SearchQuery(query, MIN_QUERY_LENGTH))
     repliesAdapter.setOrUpdateData(postsView.width, resultPosts, themeEngine.chanTheme)

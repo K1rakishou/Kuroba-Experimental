@@ -15,9 +15,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <plurals name="reply">
+    <plurals name="reply_with_number">
         <item quantity="one">%d reply</item>
         <item quantity="other">%d replies</item>
+    </plurals>
+    <plurals name="reply">
+        <item quantity="one">reply</item>
+        <item quantity="other">replies</item>
     </plurals>
     <plurals name="image">
         <item quantity="one">%d image</item>
@@ -1089,7 +1093,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="thread_layout_load_progress_processing_filters">Processing %1$d filters</string>
     <string name="thread_layout_load_progress_parsing_posts">Parsing %1$d posts</string>
     <string name="thread_layout_load_progress_persisting_posts">Persisting %1$d posts</string>
-    <string name="thread_layout_load_progress_applying_filters">Applying filters. Hidden/Removed posts count: %1$d. Posts matched by filters count: %2$d</string>
+    <string name="thread_layout_load_progress_applying_filters">Applying filters.\nHidden/Removed posts count: %1$d.\nPosts matched by filters count: %2$d</string>
     <string name="thread_layout_load_progress_diffing_results">Diffing new and old posts, applying results</string>
     <string name="thread_layout_load_progress_done">Done</string>
 

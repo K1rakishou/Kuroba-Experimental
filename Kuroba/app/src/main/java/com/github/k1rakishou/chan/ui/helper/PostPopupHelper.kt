@@ -32,6 +32,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
 import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
 import java.util.*
@@ -113,9 +114,8 @@ class PostPopupHelper(
       threadDescriptor,
       posts,
       ChanPost::postDescriptor
-    ) { chanPost: ChanPost, postIndex: Int ->
-      postIndexedList.add(PostIndexed(chanPost, postIndex))
-      Unit
+    ) { chanPost, postIndex ->
+      postIndexedList.add(PostIndexed(ChanPostWithFilterResult(chanPost), postIndex))
     }
 
     return postIndexedList

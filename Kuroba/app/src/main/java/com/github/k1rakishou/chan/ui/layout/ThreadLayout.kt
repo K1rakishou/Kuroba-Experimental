@@ -1020,7 +1020,19 @@ class ThreadLayout @JvmOverloads constructor(
 
         postHideManager.update(
           postDescriptor = post.postDescriptor,
-          updater = { oldChanPostHide -> oldChanPostHide.copy(manuallyRestored = true) }
+          updater = { postDescriptor, oldChanPostHide ->
+            if (oldChanPostHide == null) {
+              return@update ChanPostHide(
+                postDescriptor = postDescriptor,
+                onlyHide = true,
+                applyToWholeThread = false,
+                applyToReplies = false,
+                manuallyRestored = true
+              )
+            }
+
+            return@update oldChanPostHide.copy(manuallyRestored = true)
+          }
         )
 
         if (postPopupHelper.isOpen) {
@@ -1051,7 +1063,19 @@ class ThreadLayout @JvmOverloads constructor(
 
         postHideManager.updateMany(
           postDescriptors = totalPostsWithReplies,
-          updater = { oldChanPostHide -> oldChanPostHide.copy(manuallyRestored = true) }
+          updater = { postDescriptor, oldChanPostHide ->
+            if (oldChanPostHide == null) {
+              return@updateMany ChanPostHide(
+                postDescriptor = postDescriptor,
+                onlyHide = true,
+                applyToWholeThread = false,
+                applyToReplies = false,
+                manuallyRestored = true
+              )
+            }
+
+            return@updateMany oldChanPostHide.copy(manuallyRestored = true)
+          }
         )
 
         if (postPopupHelper.isOpen) {

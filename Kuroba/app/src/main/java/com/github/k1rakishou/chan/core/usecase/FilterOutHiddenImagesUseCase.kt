@@ -43,7 +43,10 @@ class FilterOutHiddenImagesUseCase(
         val postDescriptor = parameter.postDescriptorSelector(chanPostImage)
           ?: return@forEach
 
-        if (chanPostHidesMap.containsKey(postDescriptor)) {
+        val chanPostHide = chanPostHidesMap[postDescriptor]
+
+        if (chanPostHide != null && !chanPostHide.manuallyRestored) {
+          // Hidden or removed
           return@forEach
         }
 

@@ -58,7 +58,7 @@ class PostRepliesPopupController(
 
     val postDescriptors: MutableList<PostDescriptor> = ArrayList()
     for (post in displayingData!!.posts) {
-      postDescriptors.add(post.post.postDescriptor)
+      postDescriptors.add(post.chanPostWithFilterResult.chanPost.postDescriptor)
     }
 
     return postDescriptors

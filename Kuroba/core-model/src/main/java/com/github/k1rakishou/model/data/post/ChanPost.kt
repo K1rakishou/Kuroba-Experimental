@@ -9,7 +9,7 @@ open class ChanPost(
   val postDescriptor: PostDescriptor,
   private val _postImages: MutableList<ChanPostImage>,
   val postIcons: List<ChanPostHttpIcon>,
-  val repliesTo: Set<PostDescriptor>,
+  repliesTo: Set<PostDescriptor>,
   val timestamp: Long = -1L,
   val postComment: PostComment,
   val subject: CharSequence?,
@@ -40,6 +40,9 @@ open class ChanPost(
 
   @get:Synchronized
   val repliesFrom = mutableSetOf<PostDescriptor>()
+
+  @get:Synchronized
+  val repliesTo = mutableSetOf<PostDescriptor>()
 
   @get:Synchronized
   val repliesFromCopy: Set<PostDescriptor>
@@ -81,6 +84,10 @@ open class ChanPost(
     }
 
     repliesFrom?.let { replies -> this.repliesFrom.addAll(replies) }
+
+    if (repliesTo.isNotEmpty()) {
+      this.repliesTo.addAll(repliesTo)
+    }
   }
 
   open fun deepCopy(overrideDeleted: Boolean? = null): ChanPost {

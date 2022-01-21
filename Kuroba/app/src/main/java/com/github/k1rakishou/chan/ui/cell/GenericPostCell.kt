@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.PostFilterResult
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -81,7 +82,7 @@ class GenericPostCell(context: Context) : FrameLayout(context), PostCellInterfac
   }
 
   private fun getLayoutId(postCellData: PostCellData): Int {
-    val stub = postCellData.stub
+    val stub = postCellData.postFilterResult == PostFilterResult.Hide
     if (stub) {
       return R.layout.cell_post_stub
     }

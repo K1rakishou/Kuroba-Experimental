@@ -71,7 +71,7 @@ open class PostLinkable(
       Type.SEARCH,
       Type.DEAD,
       Type.ARCHIVE -> {
-        if (type == Type.QUOTE) {
+        if (type == Type.QUOTE || type == Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
           val value = when (linkableValue) {
             is Value.LongValue -> linkableValue.value
             else -> throw IllegalArgumentException("Unsupported value type: ${linkableValue::class.java.simpleName}")
@@ -91,7 +91,7 @@ open class PostLinkable(
           ds.color = theme.postQuoteColor
         }
 
-        if (type == Type.DEAD || type == Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST) {
+        if (type == Type.DEAD) {
           ds.isStrikeThruText = true
         } else {
           ds.isUnderlineText = true

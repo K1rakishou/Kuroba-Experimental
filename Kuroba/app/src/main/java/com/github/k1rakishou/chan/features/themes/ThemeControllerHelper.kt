@@ -55,6 +55,8 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
+import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
+import com.github.k1rakishou.model.data.post.PostFilterResult
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -371,7 +373,9 @@ class ThemeControllerHelper(
   }
 
   private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
-    return posts.mapIndexed { index, post -> PostIndexed(post, index) }
+    return posts.mapIndexed { index, post ->
+      PostIndexed(ChanPostWithFilterResult(post, PostFilterResult.Leave), index)
+    }
   }
 
   private fun hackSpanColors(input: CharSequence?, theme: ChanTheme) {

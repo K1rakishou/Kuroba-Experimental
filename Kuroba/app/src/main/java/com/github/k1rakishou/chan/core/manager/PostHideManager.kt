@@ -19,12 +19,12 @@ import kotlin.concurrent.write
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
-class PostHideManager(
+open class PostHideManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val chanPostHideRepository: ChanPostHideRepository,
   private val chanThreadsCache: ChanThreadsCache
-) {
+) : IPostHideManager {
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val postHideMap = mutableMapOf<ChanDescriptor, MutableMap<PostDescriptor, ChanPostHide>>()
@@ -44,14 +44,15 @@ class PostHideManager(
     }
   }
 
-  fun countPostHides(postDescriptors: List<PostDescriptor>): Int {
+  override fun countPostHides(postDescriptors: List<PostDescriptor>): Int {
     return lock.read {
       var counter = 0
 
       postDescriptors.forEach { postDescriptor ->
         val chanDescriptor = postDescriptor.descriptor
+        val chanPostHide = postHideMap[chanDescriptor]?.get(postDescriptor)
 
-        if (postHideMap[chanDescriptor]?.containsKey(postDescriptor) == true) {
+        if (chanPostHide != null && !chanPostHide.manuallyRestored) {
           ++counter
         }
       }
@@ -230,28 +231,26 @@ class PostHideManager(
     }
   }
 
-  fun update(postDescriptor: PostDescriptor, updater: (ChanPostHide) -> ChanPostHide) {
+  fun update(postDescriptor: PostDescriptor, updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide) {
     updateMany(listOf(postDescriptor), updater)
   }
 
   fun updateMany(
     postDescriptors: Collection<PostDescriptor>,
-    updater: (ChanPostHide) -> ChanPostHide
+    updater: (PostDescriptor, ChanPostHide?) -> ChanPostHide
   ) {
     if (postDescriptors.isEmpty()) {
       return
     }
 
     val (oldPostHides, updatedPostHides) = lock.write {
-      val oldPostHides = mutableListOf<ChanPostHide>()
+      val oldPostHides = mutableListOf<ChanPostHide?>()
       val updatedPostHides = mutableListOf<ChanPostHide>()
 
       postDescriptors.forEach { postDescriptor ->
         val chanDescriptor = postDescriptor.descriptor
         val oldPostHide = postHideMap[chanDescriptor]?.get(postDescriptor)
-          ?: return@forEach
-
-        val updatedPostHide = updater(oldPostHide)
+        val updatedPostHide = updater(postDescriptor, oldPostHide)
 
         if (oldPostHide == updatedPostHide) {
           return@forEach
@@ -276,11 +275,20 @@ class PostHideManager(
           Logger.e(TAG, "chanPostHideRepository.removeMany() error", error)
 
           lock.write {
-            oldPostHides.forEach { chanPostHide ->
-              val chanDescriptor = chanPostHide.postDescriptor.descriptor
+            for (index in oldPostHides.indices) {
+              val oldPostHide = oldPostHides[index]
+              if (oldPostHide == null) {
+                val updatedPostHide = updatedPostHides[index]
+                val chanDescriptor = updatedPostHide.postDescriptor.descriptor
+
+                postHideMap[chanDescriptor]?.remove(updatedPostHide.postDescriptor)
+                continue
+              }
+
+              val chanDescriptor = oldPostHide.postDescriptor.descriptor
 
               postHideMap.putIfNotContains(chanDescriptor, mutableMapWithCap(16))
-              postHideMap[chanDescriptor]!!.put(chanPostHide.postDescriptor, chanPostHide)
+              postHideMap[chanDescriptor]!!.put(oldPostHide.postDescriptor, oldPostHide)
             }
           }
 
@@ -294,6 +302,10 @@ class PostHideManager(
 
     lock.read {
       postHideMap[threadDescriptor]?.values?.forEach { chanPostHide ->
+        if (chanPostHide.manuallyRestored) {
+          return@forEach
+        }
+
         chanPostHideList += chanPostHide
       }
     }
@@ -301,21 +313,24 @@ class PostHideManager(
     return chanPostHideList
   }
 
-  fun contains(postDescriptor: PostDescriptor): Boolean {
+  fun hiddenOrRemoved(postDescriptor: PostDescriptor): Boolean {
     return lock.read {
-      return@read postHideMap[postDescriptor.threadDescriptor()]?.containsKey(postDescriptor) == true
+      val chanPostHide = postHideMap[postDescriptor.threadDescriptor()]?.get(postDescriptor)
+        ?: return@read false
+
+      return@read !chanPostHide.manuallyRestored
     }
   }
 
-  fun getHiddenPostsMap(postDescriptorSet: Set<PostDescriptor>): MutableMap<PostDescriptor, ChanPostHide> {
+  override fun getHiddenPostsMap(postDescriptors: Set<PostDescriptor>): MutableMap<PostDescriptor, ChanPostHide> {
     val resultMap = mutableMapOf<PostDescriptor, ChanPostHide>()
 
     lock.read {
-      postDescriptorSet.forEach { postDescriptor ->
+      postDescriptors.forEach { postDescriptor ->
         val chanDescriptor = postDescriptor.descriptor
 
         postHideMap[chanDescriptor]?.entries?.forEach { (postDescriptor, chanPostHide) ->
-          if (postDescriptor in postDescriptorSet) {
+          if (postDescriptor in postDescriptors) {
             resultMap[postDescriptor] = chanPostHide
           }
         }

@@ -16,11 +16,11 @@ import kotlin.concurrent.read
 import kotlin.concurrent.write
 
 @DoNotStrip
-class PostFilterManager(
+open class PostFilterManager(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
   private val chanThreadsCache: ChanThreadsCache
-) {
+) : IPostFilterManager{
   private val lock = ReentrantReadWriteLock()
   @GuardedBy("lock")
   private val filterStorage = mutableMapWithCap<ChanDescriptor.ThreadDescriptor, MutableMap<PostDescriptor, PostFilter>>(16)
@@ -36,7 +36,7 @@ class PostFilterManager(
     }
   }
 
-  fun countMatchedFilters(postDescriptors: List<PostDescriptor>): Int {
+  override fun countMatchedFilters(postDescriptors: List<PostDescriptor>): Int {
     return lock.read {
       var counter = 0
 
@@ -159,7 +159,7 @@ class PostFilterManager(
     return lock.read { filterStorage[postDescriptor.threadDescriptor()]?.get(postDescriptor) }
   }
 
-  fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
+  override fun getManyPostFilters(postDescriptors: Collection<PostDescriptor>): Map<PostDescriptor, PostFilter> {
     if (postDescriptors.isEmpty()) {
       return emptyMap()
     }

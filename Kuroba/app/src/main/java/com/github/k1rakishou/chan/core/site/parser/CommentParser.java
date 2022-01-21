@@ -549,7 +549,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             Long postSubNo
     ) {
         // Append (OP) when it's a reply to OP
-        if (postNo == post.opId) {
+        if (postNo == post.getOpId()) {
             handlerLink.setKey(
                     TextUtils.concat(
                             handlerLink.getKey(),
@@ -559,7 +559,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         }
 
         // Append (You) when it's a reply to a saved reply, (Me) if it's a self reply
-        if (callback.isSaved(post.opId, postNo, postSubNo)) {
+        if (callback.isSaved(post.getOpId(), postNo, postSubNo)) {
             if (post.isSavedReply) {
                 handlerLink.setKey(
                         TextUtils.concat(
@@ -577,7 +577,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             }
         }
 
-        int hiddenOrRemoved = callback.isHiddenOrRemoved(post.opId, postNo, postSubNo);
+        int hiddenOrRemoved = callback.isHiddenOrRemoved(post.getOpId(), postNo, postSubNo);
         if (hiddenOrRemoved != PostParser.NORMAL_POST) {
             String suffix;
 
@@ -705,7 +705,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
 
                 if (callback.isInternal(postId)) {
                     // TODO(KurobaEx / @GhostPosts): archive ghost posts
-                    int hiddenOrRemoved = callback.isHiddenOrRemoved(post.opId, postId, 0);
+                    int hiddenOrRemoved = callback.isHiddenOrRemoved(post.getOpId(), postId, 0);
 
                     switch (hiddenOrRemoved) {
                         case PostParser.HIDDEN_POST:

@@ -207,8 +207,8 @@ open class PostDescriptor protected constructor(
     @JvmOverloads
     @JvmStatic
     fun create(siteName: String, boardCode: String, threadNo: Long, postNo: Long, postSubNo: Long = 0L): PostDescriptor {
-      require(threadNo > 0) { "Bad threadNo: $threadNo" }
-      require(postNo > 0) { "Bad postNo: $postNo" }
+      require(threadNo > 0) { "Bad threadNo: $threadNo. siteName=$siteName, boardCode=$boardCode, threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo" }
+      require(postNo > 0) { "Bad postNo: $postNo. siteName=$siteName, boardCode=$boardCode, threadNo=$threadNo, postNo=$postNo, postSubNo=$postSubNo" }
 
       return PostDescriptor(
         ChanDescriptor.ThreadDescriptor.create(siteName, boardCode, threadNo),

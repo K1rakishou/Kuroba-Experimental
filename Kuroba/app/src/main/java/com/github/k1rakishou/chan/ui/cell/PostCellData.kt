@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.RecalculatableLazy
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getQuantityString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.SpannableHelper
@@ -32,9 +33,9 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.PostFilterResult
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -64,13 +65,11 @@ data class PostCellData(
   val markUnseenPosts: Boolean,
   val markSeenThreads: Boolean,
   var compact: Boolean,
-  val stub: Boolean,
+  val postFilterResults: Map<PostDescriptor, PostFilterResult>,
   val theme: ChanTheme,
-  val filterHash: Int,
   val postViewMode: PostViewMode,
   val searchQuery: SearchQuery,
   val keywordsToHighlight: Set<HighlightFilterKeyword>,
-  val postHideMap: Map<PostDescriptor, ChanPostHide>,
   val postAlignmentMode: ChanSettings.PostAlignmentMode,
   val postCellThumbnailSizePercents: Int,
   val isSavedReply: Boolean,
@@ -149,6 +148,9 @@ data class PostCellData(
     get() = markedPostNo ?: -1
   val showImageFileName: Boolean
     get() = (singleImageMode || (postImages.size > 1 && searchMode)) && showPostFileInfo
+
+  val postFilterResult: PostFilterResult
+    get() = postFilterResults[postDescriptor] ?: PostFilterResult.Leave
 
   private val _detailsSizePx = RecalculatableLazy { sp(ChanSettings.detailsSizeSp()) }
   private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.fontSize.get().toInt()) }
@@ -278,13 +280,11 @@ data class PostCellData(
       markUnseenPosts = markUnseenPosts,
       markSeenThreads = markSeenThreads,
       compact = compact,
-      stub = stub,
+      postFilterResults = postFilterResults.toMap(),
       theme = theme,
-      filterHash = filterHash,
       postViewMode = postViewMode,
       searchQuery = searchQuery,
       keywordsToHighlight = keywordsToHighlight.toSet(),
-      postHideMap = postHideMap.toMap(),
       postAlignmentMode = postAlignmentMode,
       postCellThumbnailSizePercents = postCellThumbnailSizePercents,
       isSavedReply = isSavedReply,
@@ -333,7 +333,7 @@ data class PostCellData(
   }
 
   private fun calculatePostTitleStub(): CharSequence {
-    if (!stub) {
+    if (postFilterResult != PostFilterResult.Hide) {
       return ""
     }
 
@@ -788,42 +788,57 @@ data class PostCellData(
   }
 
   private fun formatPostReplyCountString(catalogRepliesTextBuilder: StringBuilder) {
-    val replyCount = if (isViewingThread) repliesFromCount else catalogRepliesCount
+    var replyCount = if (isViewingThread) repliesFromCount else catalogRepliesCount
     var hiddenRepliesCount = 0
     var removedRepliesCount = 0
 
     for (postDescriptor in post.repliesFromCopy) {
-      val chanPostHide = postHideMap[postDescriptor]
+      val currentPostFilterResult = postFilterResults[postDescriptor]
         ?: continue
 
-      if (chanPostHide.manuallyRestored) {
-        continue
-      }
-
-      if (chanPostHide.onlyHide) {
-        ++hiddenRepliesCount
-      } else {
-        ++removedRepliesCount
+      when (currentPostFilterResult) {
+        PostFilterResult.Leave -> {
+          // no-op
+        }
+        PostFilterResult.Hide -> ++hiddenRepliesCount
+        PostFilterResult.Remove -> ++removedRepliesCount
       }
     }
 
-    val repliesCountText = AppModuleAndroidUtils.getQuantityString(
-      R.plurals.reply,
-      replyCount,
-      replyCount
-    )
+    replyCount -= hiddenRepliesCount
+    replyCount -= removedRepliesCount
 
-    catalogRepliesTextBuilder.append(repliesCountText)
+    if (replyCount > 0) {
+      val repliesCountText = getQuantityString(
+        R.plurals.reply_with_number,
+        replyCount,
+        replyCount
+      )
+
+      catalogRepliesTextBuilder.append(repliesCountText)
+    }
 
     if (hiddenRepliesCount > 0 || removedRepliesCount > 0) {
+      if (catalogRepliesTextBuilder.isNotEmpty()) {
+        catalogRepliesTextBuilder.append(" ")
+      }
+
       catalogRepliesTextBuilder
-        .append(" (")
+        .append("(")
 
       if (hiddenRepliesCount > 0) {
         catalogRepliesTextBuilder
           .append(hiddenRepliesCount)
           .append(" ")
           .append(getString(R.string.post_reply_hidden))
+
+        if (replyCount <= 0) {
+          val repliesCountText = getQuantityString(R.plurals.reply, hiddenRepliesCount)
+
+          catalogRepliesTextBuilder
+            .append(" ")
+            .append(repliesCountText)
+        }
       }
 
       if (removedRepliesCount > 0) {
@@ -836,6 +851,14 @@ data class PostCellData(
           .append(removedRepliesCount)
           .append(" ")
           .append(getString(R.string.post_reply_removed))
+
+        if (replyCount <= 0) {
+          val repliesCountText = getQuantityString(R.plurals.reply, removedRepliesCount)
+
+          catalogRepliesTextBuilder
+            .append(" ")
+            .append(repliesCountText)
+        }
       }
 
       catalogRepliesTextBuilder.append(")")

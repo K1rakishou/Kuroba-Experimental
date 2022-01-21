@@ -78,8 +78,17 @@ class FoolFuukaCommentParser(
             && callback.isInternal(postId)
 
           if (isInternalQuote) {
-            // link to post in same thread with post number (>>post)
-            return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postId))
+            when (callback.isHiddenOrRemoved(post.opId, postId, 0)) {
+              PostParser.HIDDEN_POST,
+              PostParser.REMOVED_POST -> {
+                // Quote pointing to a (locally) hidden or removed post
+                return PostLinkable.Link(PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST, text, PostLinkable.Value.LongValue(postId))
+              }
+              else -> {
+                // Normal post quote
+                return PostLinkable.Link(PostLinkable.Type.QUOTE, text, PostLinkable.Value.LongValue(postId))
+              }
+            }
           }
 
           // link to post not in same thread with post number (>>post or >>>/board/post)

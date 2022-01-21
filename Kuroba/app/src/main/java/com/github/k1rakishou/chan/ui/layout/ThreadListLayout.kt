@@ -661,7 +661,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val chanDescriptor = currentChanDescriptorOrNull()
     chanLoadProgressNotifier.sendProgressEvent(ChanLoadProgressEvent.RefreshingPosts(descriptor))
 
-
     val setThreadPostsDuration = measureTime {
       val prevScrollPositionData = getPrevScrollPosition(chanDescriptor, initial)
 
