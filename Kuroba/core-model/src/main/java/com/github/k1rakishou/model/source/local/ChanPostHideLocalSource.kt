@@ -35,7 +35,7 @@ class ChanPostHideLocalSource(
     ).map { chanPostHideEntity -> ChanPostHideMapper.fromEntity(chanPostHideEntity) }
   }
 
-  suspend fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>) {
+  suspend fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>) {
     ensureInTransaction()
 
     val entities = chanPostHideList.map { chanPostHide -> ChanPostHideMapper.toEntity(chanPostHide) }

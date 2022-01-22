@@ -194,7 +194,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
 
     setOnClickListener {
       if (callback != null) {
-        callback!!.onUnhidePostClick(postCellData.post)
+        callback!!.onUnhidePostClick(postCellData.post, postCellData.isInPopup)
       }
     }
 

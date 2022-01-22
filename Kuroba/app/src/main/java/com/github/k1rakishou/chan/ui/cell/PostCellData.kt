@@ -33,9 +33,9 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.HighlightFilterKeyword
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
+import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.data.post.PostFilterResult
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -65,7 +65,7 @@ data class PostCellData(
   val markUnseenPosts: Boolean,
   val markSeenThreads: Boolean,
   var compact: Boolean,
-  val postFilterResults: Map<PostDescriptor, PostFilterResult>,
+  val postHideMap: Map<PostDescriptor, ChanPostHide>,
   val theme: ChanTheme,
   val postViewMode: PostViewMode,
   val searchQuery: SearchQuery,
@@ -149,8 +149,20 @@ data class PostCellData(
   val showImageFileName: Boolean
     get() = (singleImageMode || (postImages.size > 1 && searchMode)) && showPostFileInfo
 
-  val postFilterResult: PostFilterResult
-    get() = postFilterResults[postDescriptor] ?: PostFilterResult.Leave
+
+  private val chanPostHide: ChanPostHide?
+    get() = postHideMap[postDescriptor]
+  val isPostHidden: Boolean
+    get() {
+      val postHide = chanPostHide
+        ?: return false
+
+      if (postHide.manuallyRestored) {
+        return false
+      }
+
+      return postHide.onlyHide
+    }
 
   private val _detailsSizePx = RecalculatableLazy { sp(ChanSettings.detailsSizeSp()) }
   private val _fontSizePx = RecalculatableLazy { sp(ChanSettings.fontSize.get().toInt()) }
@@ -280,7 +292,7 @@ data class PostCellData(
       markUnseenPosts = markUnseenPosts,
       markSeenThreads = markSeenThreads,
       compact = compact,
-      postFilterResults = postFilterResults.toMap(),
+      postHideMap = postHideMap.toMap(),
       theme = theme,
       postViewMode = postViewMode,
       searchQuery = searchQuery,
@@ -333,7 +345,7 @@ data class PostCellData(
   }
 
   private fun calculatePostTitleStub(): CharSequence {
-    if (postFilterResult != PostFilterResult.Hide) {
+    if (!isPostHidden) {
       return ""
     }
 
@@ -793,15 +805,17 @@ data class PostCellData(
     var removedRepliesCount = 0
 
     for (postDescriptor in post.repliesFromCopy) {
-      val currentPostFilterResult = postFilterResults[postDescriptor]
+      val postHide = postHideMap[postDescriptor]
         ?: continue
 
-      when (currentPostFilterResult) {
-        PostFilterResult.Leave -> {
-          // no-op
-        }
-        PostFilterResult.Hide -> ++hiddenRepliesCount
-        PostFilterResult.Remove -> ++removedRepliesCount
+      if (postHide.manuallyRestored) {
+        continue
+      }
+
+      if (postHide.onlyHide) {
+        ++hiddenRepliesCount
+      } else {
+        ++removedRepliesCount
       }
     }
 

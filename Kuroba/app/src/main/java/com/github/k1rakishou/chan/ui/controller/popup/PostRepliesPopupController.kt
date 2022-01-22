@@ -16,8 +16,11 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
 import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.common.mutableListWithCap
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.launch
@@ -57,8 +60,8 @@ class PostRepliesPopupController(
     }
 
     val postDescriptors: MutableList<PostDescriptor> = ArrayList()
-    for (post in displayingData!!.posts) {
-      postDescriptors.add(post.chanPostWithFilterResult.chanPost.postDescriptor)
+    for (chanPost in displayingData!!.posts) {
+      postDescriptors.add(chanPost.postDescriptor)
     }
 
     return postDescriptors
@@ -101,11 +104,48 @@ class PostRepliesPopupController(
     mainScope.launch {
       postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
 
-      repliesAdapter.setOrUpdateData(postsView.width, data.posts, themeEngine.chanTheme)
+      val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, data.posts)
+        .safeUnwrap { error ->
+          Logger.e(TAG, "postHideHelper.filterHiddenPosts error", error)
+          return@launch
+        }
+
+      val indexedPosts = indexPosts(chanDescriptor, retainedPosts)
+      repliesAdapter.setOrUpdateData(postsView.width, indexedPosts, themeEngine.chanTheme)
+
       restoreScrollPosition(data.forPostWithDescriptor)
     }
 
     return dataView
+  }
+
+  private fun indexPosts(
+    chanDescriptor: ChanDescriptor,
+    retainedPosts: List<ChanPost>
+  ): List<PostIndexed> {
+    if (retainedPosts.isEmpty()) {
+      return emptyList()
+    }
+
+    val postIndexedList = mutableListWithCap<PostIndexed>(retainedPosts.size)
+
+    if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+      return retainedPosts.mapIndexed { index, chanPost ->
+        return@mapIndexed PostIndexed(chanPost, index)
+      }
+    }
+
+    chanDescriptor as ChanDescriptor.ThreadDescriptor
+
+    chanThreadManager.get().iteratePostIndexes(
+      threadDescriptor = chanDescriptor,
+      input = retainedPosts,
+      postDescriptorSelector = ChanPost::postDescriptor
+    ) { chanPost, postIndex ->
+      postIndexedList.add(PostIndexed(chanPost, postIndex))
+    }
+
+    return postIndexedList
   }
 
   override fun onImageIsAboutToShowUp() {
@@ -141,12 +181,13 @@ class PostRepliesPopupController(
 
   class PostRepliesPopupData(
     override val descriptor: ChanDescriptor,
-    val forPostWithDescriptor: PostDescriptor,
     override val postViewMode: PostCellData.PostViewMode,
-    val posts: List<PostIndexed>
+    val forPostWithDescriptor: PostDescriptor,
+    val posts: List<ChanPost>
   ) : PostPopupHelper.PostPopupData
 
   companion object {
+    private const val TAG = "PostRepliesPopupController"
     val scrollPositionCache = LruCache<PostDescriptor, IndexAndTop>(128)
   }
 

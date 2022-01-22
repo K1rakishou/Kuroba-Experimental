@@ -23,6 +23,8 @@ import android.widget.TextView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.PostHideHelper
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -66,6 +68,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var postHideManager: Lazy<PostHideManager>
+  @Inject
+  lateinit var postHideHelper: Lazy<PostHideHelper>
+  @Inject
+  lateinit var chanThreadManager: Lazy<ChanThreadManager>
   @Inject
   lateinit var postHighlightManager: PostHighlightManager
 
@@ -180,6 +186,25 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     }
 
     return thumbnail
+  }
+
+  suspend fun updateAllPosts(chanDescriptor: ChanDescriptor) {
+    if (!::postsView.isInitialized) {
+      return
+    }
+
+    BackgroundUtils.ensureMainThread()
+
+    val adapter = postsView.adapter as? PostRepliesAdapter
+      ?: return
+
+    if (adapter.chanDescriptor != chanDescriptor) {
+      return
+    }
+
+    val currentlyDisplayedPosts = adapter.displayedPosts()
+    val updatedPosts = chanThreadManager.get().getPosts(currentlyDisplayedPosts)
+    adapter.updatePosts(updatedPosts)
   }
 
   suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

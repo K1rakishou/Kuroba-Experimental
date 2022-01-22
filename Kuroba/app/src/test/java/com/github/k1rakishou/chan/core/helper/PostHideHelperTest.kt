@@ -184,9 +184,11 @@ class PostHideHelperTest {
       postFilterMap = mapOf()
     )
 
-    assertEquals(1, resultMap.size)
+    assertEquals(3, resultMap.size)
 
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
   }
 
   @Test
@@ -266,9 +268,13 @@ class PostHideHelperTest {
       postFilterMap = mapOf()
     )
 
-    assertEquals(1, resultMap.size)
+    assertEquals(5, resultMap.size)
 
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
   }
 
   @Test
@@ -348,9 +354,10 @@ class PostHideHelperTest {
       postFilterMap = mapOf()
     )
 
-    assertEquals(4, resultMap.size)
+    assertEquals(5, resultMap.size)
 
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
     assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)

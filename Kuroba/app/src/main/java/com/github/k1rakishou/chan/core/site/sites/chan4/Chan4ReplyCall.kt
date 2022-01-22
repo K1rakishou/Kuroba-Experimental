@@ -147,11 +147,12 @@ class Chan4ReplyCall(
   override fun process(response: Response, result: String) {
     setChan4CaptchaHeader(response.headers)
 
-    if (result.contains(CAPTCHA_REQUIRED_TEXT1, ignoreCase = true)
-      || result.contains(CAPTCHA_REQUIRED_TEXT2, ignoreCase = true)
-    ) {
+    val forgotCaptcha = result.contains(FORGOT_TO_SOLVE_CAPTCHA, ignoreCase = true)
+    val mistypedCaptcha = result.contains(MISTYPED_CAPTCHA, ignoreCase = true)
+
+    if (forgotCaptcha || mistypedCaptcha) {
       replyResponse.requireAuthentication = true
-      Logger.e(TAG, "process() requireAuthentication")
+      Logger.e(TAG, "process() requireAuthentication (forgotCaptcha=$forgotCaptcha, mistypedCaptcha=$mistypedCaptcha)")
       return
     }
 
@@ -324,8 +325,8 @@ class Chan4ReplyCall(
 
     private const val PROBABLY_BANNED_TEXT = "banned"
     private const val PROBABLY_IP_RANGE_BLOCKED = "Posting from your IP range has been blocked due to abuse"
-    private const val CAPTCHA_REQUIRED_TEXT1 = "Error: You forgot to solve the CAPTCHA"
-    private const val CAPTCHA_REQUIRED_TEXT2 = "Error: You seem to have mistyped the CAPTCHA"
+    private const val FORGOT_TO_SOLVE_CAPTCHA = "Error: You forgot to solve the CAPTCHA"
+    private const val MISTYPED_CAPTCHA = "Error: You seem to have mistyped the CAPTCHA"
 
     private const val SET_COOKIE_HEADER = "set-cookie"
     private const val CAPTCHA_COOKIE_PREFIX = "4chan_pass="

@@ -59,12 +59,10 @@ class PostsFilter(
       "retainedPosts.size=${retainedPosts.size}, " +
       "chanDescriptor=$chanDescriptor")
 
-    var index = 0
     val indexedPosts = mutableListWithCap<PostIndexed>(retainedPosts.size)
 
-    for ((_, chanPostWithFilterResult) in retainedPosts) {
-      indexedPosts.add(PostIndexed(chanPostWithFilterResult, index))
-      ++index
+    for ((index, retainedPost) in retainedPosts.withIndex()) {
+      indexedPosts.add(PostIndexed(retainedPost, index))
     }
 
     return indexedPosts

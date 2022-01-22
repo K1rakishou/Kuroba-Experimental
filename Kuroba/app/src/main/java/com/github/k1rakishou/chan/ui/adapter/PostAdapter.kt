@@ -47,7 +47,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
-import com.github.k1rakishou.model.data.post.PostFilterResult
 import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
 import java.util.*
@@ -241,7 +240,7 @@ class PostAdapter(
       return PostCellData.TYPE_STATUS
     } else {
       val postCellData = threadCellData.getPostCellData(position)
-      if (postCellData.postFilterResult == PostFilterResult.Hide) {
+      if (postCellData.isPostHidden) {
         return PostCellData.TYPE_POST_STUB
       } else {
         return getPostCellItemViewType(postCellData)
@@ -505,7 +504,7 @@ class PostAdapter(
   }
 
   private fun getPostCellItemViewType(postCellData: PostCellData): Int {
-    if (postCellData.postFilterResult == PostFilterResult.Hide) {
+    if (postCellData.isPostHidden) {
       return PostCellData.PostCellItemViewType.TypePostStub.viewTypeRaw
     }
 

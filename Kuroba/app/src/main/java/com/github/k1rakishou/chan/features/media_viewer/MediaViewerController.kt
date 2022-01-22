@@ -208,7 +208,7 @@ class MediaViewerController(
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {
       notSupported()
     }
-    override fun onUnhidePostClick(post: ChanPost) {
+    override fun onUnhidePostClick(post: ChanPost, inPopup: Boolean) {
       notSupported()
     }
 
@@ -221,7 +221,7 @@ class MediaViewerController(
     override fun onShowPostReplies(post: ChanPost) {
       showReplyChain(post.postDescriptor)
     }
-    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {
+    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {
       mainScope.launch {
         val currentChanDescriptor = chanDescriptor
           ?: return@launch

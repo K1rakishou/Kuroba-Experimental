@@ -5,7 +5,6 @@ import android.os.Looper
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.text.SimpleDateFormat
@@ -190,7 +189,7 @@ sealed class CaptchaSolution {
 
   data class SimpleTokenSolution(val token: String) : CaptchaSolution() {
     override fun toString(): String {
-      return "SimpleTokenSolution{token=${formatToken(token)}}"
+      return "SimpleTokenSolution{token=$token}"
     }
   }
 
@@ -200,7 +199,7 @@ sealed class CaptchaSolution {
     }
 
     override fun toString(): String {
-      return "ChallengeWithSolution{challenge=$challenge, solution=${formatToken(solution)}}"
+      return "ChallengeWithSolution{challenge=$challenge, solution=$solution}"
     }
   }
 }

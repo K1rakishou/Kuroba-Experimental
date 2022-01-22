@@ -55,8 +55,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
-import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
-import com.github.k1rakishou.model.data.post.PostFilterResult
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
@@ -88,7 +86,7 @@ class ThemeControllerHelper(
     override fun onPreviewThreadPostsClicked(post: ChanPost) {}
     override fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean) {}
     override fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean) {}
-    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {}
+    override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
     override fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {}
     override fun onPostNoClicked(post: ChanPost) {}
     override fun onPostPosterIdClicked(post: ChanPost) {}
@@ -97,7 +95,7 @@ class ThemeControllerHelper(
     override fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence) {}
     override fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>) {}
-    override fun onUnhidePostClick(post: ChanPost) {}
+    override fun onUnhidePostClick(post: ChanPost, inPopup: Boolean) {}
     override fun currentSpanCount(): Int = 1
 
     override val currentChanDescriptor: ChanDescriptor?
@@ -374,7 +372,7 @@ class ThemeControllerHelper(
 
   private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
     return posts.mapIndexed { index, post ->
-      PostIndexed(ChanPostWithFilterResult(post, PostFilterResult.Leave), index)
+      PostIndexed(post, index)
     }
   }
 

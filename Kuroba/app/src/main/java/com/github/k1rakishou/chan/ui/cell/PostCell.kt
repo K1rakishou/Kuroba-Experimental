@@ -1272,15 +1272,15 @@ class PostCell @JvmOverloads constructor(
     ) {
 
       fun fireCallback(post: ChanPost, linkable: PostLinkable): Boolean {
+        val isInPopup = postCellData?.isInPopup
+          ?: return false
+
         if (!longClicking) {
-          postCellCallback?.onPostLinkableClicked(post, linkable)
+          postCellCallback?.onPostLinkableClicked(post, linkable, isInPopup)
           return false
         }
 
         skipNextUpEvent = true
-
-        val isInPopup = postCellData?.isInPopup
-          ?: return false
 
         comment.performHapticFeedback(HapticFeedbackConstants.LONG_PRESS)
 

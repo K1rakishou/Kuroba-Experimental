@@ -146,7 +146,7 @@ open class PostHideManager(
     createOrUpdateMany(listOf(chanPostHide))
   }
 
-  fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>) {
+  override fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>) {
     lock.write {
       chanPostHideList.forEach { chanPostHide ->
         val chanDescriptor = chanPostHide.postDescriptor.descriptor

@@ -61,14 +61,14 @@ interface PostCellInterface {
     fun onPreviewThreadPostsClicked(post: ChanPost)
     fun onPopulatePostOptions(post: ChanPost, menu: MutableList<FloatingListMenuItem>, inPopup: Boolean)
     fun onPostOptionClicked(post: ChanPost, item: FloatingListMenuItem, inPopup: Boolean)
-    fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable)
+    fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean)
     fun onPostLinkableLongClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean)
     fun onPostNoClicked(post: ChanPost)
     fun onPostSelectionQuoted(postDescriptor: PostDescriptor, selection: CharSequence)
     fun onPostSelectionFilter(postDescriptor: PostDescriptor, selection: CharSequence)
     fun getBoardPages(boardDescriptor: BoardDescriptor): BoardPages?
     fun showPostOptions(post: ChanPost, inPopup: Boolean, items: List<FloatingListMenuItem>)
-    fun onUnhidePostClick(post: ChanPost)
+    fun onUnhidePostClick(post: ChanPost, inPopup: Boolean)
     fun currentSpanCount(): Int
   }
 }

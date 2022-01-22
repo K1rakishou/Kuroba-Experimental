@@ -33,7 +33,7 @@ class ChanPostHideRepository(
     }
   }
 
-  suspend fun createOrUpdateMany(chanPostHideList: List<ChanPostHide>): ModularResult<Unit> {
+  suspend fun createOrUpdateMany(chanPostHideList: Collection<ChanPostHide>): ModularResult<Unit> {
     return applicationScope.dbCall {
       return@dbCall tryWithTransaction {
         return@tryWithTransaction localSource.createOrUpdateMany(chanPostHideList)

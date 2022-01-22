@@ -464,7 +464,8 @@ class ThreadLayout @JvmOverloads constructor(
   @OptIn(ExperimentalTime::class)
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
-    filter: PostsFilter
+    filter: PostsFilter,
+    refreshPostPopupHelperPosts: Boolean
   ) {
     if (descriptor == null) {
       Logger.d(TAG, "showPostsForChanDescriptor() descriptor==null")
@@ -473,6 +474,10 @@ class ThreadLayout @JvmOverloads constructor(
 
     val initial = visible != Visible.THREAD
     loadView.awaitUntilGloballyLaidOut(waitForWidth = true)
+
+    if (refreshPostPopupHelperPosts && postPopupHelper.isOpen) {
+      postPopupHelper.updateAllPosts(descriptor)
+    }
 
     val (showPostsResult, totalDuration) = measureTimedValue {
       threadListLayout.showPosts(loadView.width, descriptor, filter, initial)
@@ -610,7 +615,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun showPostLinkables(post: ChanPost) {
+  override fun showPostLinkables(post: ChanPost, inPopup: Boolean) {
     val linkables = post.postComment.linkables
       .filter { postLinkable -> postLinkable.type == PostLinkable.Type.LINK }
 
@@ -620,9 +625,9 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val postLinksController = PostLinksController(
-      post,
-      { postLinkable -> presenter.onPostLinkableClicked(post, postLinkable) },
-      context
+      post = post,
+      onPostLinkClicked = { postLinkable -> presenter.onPostLinkableClicked(post, postLinkable, inPopup) },
+      context = context
     )
 
     callback.presentController(postLinksController, animated = true)
@@ -998,12 +1003,6 @@ class ThreadLayout @JvmOverloads constructor(
             reparsePosts(resultPostDescriptors) { totalPostsWithReplies ->
               postFilterManager.removeMany(totalPostsWithReplies)
               postHideManager.removeManyChanPostHides(totalPostsWithReplies)
-
-              if (postPopupHelper.isOpen) {
-                postPopupHelper.resetCachedPostData(totalPostsWithReplies)
-              }
-
-              threadListLayout.resetCachedPostData(totalPostsWithReplies)
             }
           }
         }
@@ -1034,12 +1033,6 @@ class ThreadLayout @JvmOverloads constructor(
             return@update oldChanPostHide.copy(manuallyRestored = true)
           }
         )
-
-        if (postPopupHelper.isOpen) {
-          postPopupHelper.resetCachedPostData(totalPostsWithReplies)
-        }
-
-        threadListLayout.resetCachedPostData(totalPostsWithReplies)
       }
     }
   }
@@ -1077,12 +1070,6 @@ class ThreadLayout @JvmOverloads constructor(
             return@updateMany oldChanPostHide.copy(manuallyRestored = true)
           }
         )
-
-        if (postPopupHelper.isOpen) {
-          postPopupHelper.resetCachedPostData(totalPostsWithReplies)
-        }
-
-        threadListLayout.resetCachedPostData(totalPostsWithReplies)
       }
 
       SnackbarWrapper.create(
@@ -1120,7 +1107,8 @@ class ThreadLayout @JvmOverloads constructor(
     presenter.normalLoad(
       showLoading = false,
       chanLoadOptions = ChanLoadOptions.forceUpdatePosts(totalPostsWithReplies.toSet()),
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
+      refreshPostPopupHelperPosts = true
     )
   }
 
@@ -1441,11 +1429,17 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   @Suppress("MoveLambdaOutsideParentheses")
-  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost) {
-    val positiveButtonText = if (hide) {
-      getString(R.string.thread_layout_hide_whole_chain)
+  override fun showHideOrRemoveWholeChainDialog(hide: Boolean, hasReplies: Boolean, post: ChanPost) {
+    val action = if (hide) {
+      getString(R.string.thread_layout_hide_action)
     } else {
-      getString(R.string.thread_layout_remove_whole_chain)
+      getString(R.string.thread_layout_remove_action)
+    }
+
+    val positiveButtonText = if (hasReplies) {
+      getString(R.string.thread_layout_hide_or_remove_whole_chain_action, action.capitalize(Locale.ENGLISH))
+    } else {
+      getString(R.string.thread_layout_hide_or_remove_future_replies_action, action.capitalize(Locale.ENGLISH))
     }
 
     val negativeButtonText = if (hide) {
@@ -1454,10 +1448,10 @@ class ThreadLayout @JvmOverloads constructor(
       getString(R.string.thread_layout_remove_post)
     }
 
-    val message = if (hide) {
-      getString(R.string.thread_layout_hide_whole_chain_as_well)
+    val message = if (hasReplies) {
+      getString(R.string.thread_layout_hide_or_remove_whole_chain_as_well, action)
     } else {
-      getString(R.string.thread_layout_remove_whole_chain_as_well)
+      getString(R.string.thread_layout_hide_or_remove_future_replies, action)
     }
 
     dialogFactory.createSimpleConfirmationDialog(

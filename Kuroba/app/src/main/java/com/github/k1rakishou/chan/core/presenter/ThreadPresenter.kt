@@ -704,7 +704,10 @@ class ThreadPresenter @Inject constructor(
           onChanLoaderError(lastThreadLoadResult.chanDescriptor, lastThreadLoadResult.exception)
         }
         is ThreadLoadResult.Loaded -> {
-          val successfullyProcessedNewPosts = onChanLoaderData(lastThreadLoadResult.chanDescriptor)
+          val successfullyProcessedNewPosts = onChanLoaderData(
+            loadedChanDescriptor = lastThreadLoadResult.chanDescriptor,
+            refreshPostPopupHelperPosts = false
+          )
           if (!successfullyProcessedNewPosts) {
             val error = getPossibleChanLoadError(currentChanDescriptor)
             onChanLoaderError(lastThreadLoadResult.chanDescriptor, error)
@@ -730,7 +733,8 @@ class ThreadPresenter @Inject constructor(
     chanLoadOptions: ChanLoadOptions = ChanLoadOptions.retainAll(),
     chanCacheOptions: ChanCacheOptions = ChanCacheOptions.onlyCacheInMemory(),
     chanReadOptions: ChanReadOptions = ChanReadOptions.default(),
-    deleteChanCatalogSnapshot: Boolean = showLoading
+    deleteChanCatalogSnapshot: Boolean = showLoading,
+    refreshPostPopupHelperPosts: Boolean = false
   ) {
     if (currentNormalLoadThreadJob != null) {
       Logger.d(TAG, "normalLoad() currentNormalLoadThreadJob != null")
@@ -834,7 +838,10 @@ class ThreadPresenter @Inject constructor(
         }
         is ThreadLoadResult.Loaded -> {
           val (successfullyProcessedNewPosts, time) = measureTimedValue {
-            onChanLoaderData(threadLoadResult.chanDescriptor)
+            onChanLoaderData(
+              loadedChanDescriptor = threadLoadResult.chanDescriptor,
+              refreshPostPopupHelperPosts = refreshPostPopupHelperPosts
+            )
           }
 
           Logger.d(TAG, "onChanLoaderData(${threadLoadResult.chanDescriptor}) end, took $time")
@@ -1064,7 +1071,10 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showError(chanDescriptor, error)
   }
 
-  private suspend fun onChanLoaderData(loadedChanDescriptor: ChanDescriptor): Boolean {
+  private suspend fun onChanLoaderData(
+    loadedChanDescriptor: ChanDescriptor,
+    refreshPostPopupHelperPosts: Boolean
+  ): Boolean {
     BackgroundUtils.ensureMainThread()
     Logger.d(TAG, "onChanLoaderData() called, loadedChanDescriptor=$loadedChanDescriptor")
 
@@ -1106,7 +1116,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     threadPresenterCallback?.hideError(loadedChanDescriptor)
-    showPosts()
+    showPosts(refreshPostPopupHelperPosts = refreshPostPopupHelperPosts)
 
     if (localChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       if (
@@ -1670,7 +1680,7 @@ class ThreadPresenter @Inject constructor(
     menu.add(createMenuItem(POST_OPTION_COPY_TEXT, R.string.post_copy_text))
     menu.add(createMenuItem(POST_OPTION_INFO, R.string.post_info))
 
-    if (!inPopup && containsSite && chanDescriptor.isThreadDescriptor()) {
+    if (containsSite && chanDescriptor.isThreadDescriptor()) {
       val isSaved = savedReplyManager.isSaved(post.postDescriptor)
       val stringId = if (isSaved) {
         R.string.unmark_as_my_post
@@ -1731,8 +1741,10 @@ class ThreadPresenter @Inject constructor(
           threadPresenterCallback?.quote(post, true)
         }
         POST_OPTION_INFO -> showPostInfo(post)
-        POST_OPTION_LINKS -> if (post.postComment.linkables.isNotEmpty()) {
-          threadPresenterCallback?.showPostLinkables(post)
+        POST_OPTION_LINKS -> {
+          if (post.postComment.linkables.isNotEmpty()) {
+            threadPresenterCallback?.showPostLinkables(post, inPopup)
+          }
         }
         POST_OPTION_COPY_TEXT -> threadPresenterCallback?.clipboardPost(post)
         POST_OPTION_REPORT -> {
@@ -1833,21 +1845,11 @@ class ThreadPresenter @Inject constructor(
 
           chanDescriptor as ChanDescriptor.ThreadDescriptor
 
-          val isEmpty = post.repliesFromCount == 0
-          if (isEmpty) {
-            // no replies to this post so no point in showing the dialog
-            hideOrRemovePosts(
-              hide = hide,
-              wholeChain = false,
-              post = post
-            )
-          } else {
-            // show a dialog to the user with options to hide/remove the whole chain of posts
-            threadPresenterCallback?.showHideOrRemoveWholeChainDialog(
-              hide = hide,
-              post = post
-            )
-          }
+          threadPresenterCallback?.showHideOrRemoveWholeChainDialog(
+            hide = hide,
+            hasReplies = post.repliesFromCount > 0,
+            post = post
+          )
         }
       }
     }
@@ -1879,7 +1881,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable) {
+  override fun onPostLinkableClicked(post: ChanPost, linkable: PostLinkable, inPopup: Boolean) {
     serializedCoroutineExecutor.post {
       if (!isBound || currentChanDescriptor == null) {
         return@post
@@ -2378,7 +2380,7 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  override fun onUnhidePostClick(post: ChanPost) {
+  override fun onUnhidePostClick(post: ChanPost, inPopup: Boolean) {
     threadPresenterCallback?.unhideOrUnremovePost(post)
   }
 
@@ -2401,7 +2403,8 @@ class ThreadPresenter @Inject constructor(
       normalLoad(
         showLoading = true,
         chanLoadOptions = ChanLoadOptions.forceUpdateAllPosts(),
-        chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.UpdateCache,
+        refreshPostPopupHelperPosts = true
       )
     } else {
       val postsToUpdate = chanThread
@@ -2411,7 +2414,8 @@ class ThreadPresenter @Inject constructor(
       normalLoad(
         showLoading = false,
         chanLoadOptions = ChanLoadOptions.forceUpdatePosts(postsToUpdate),
-        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache
+        chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
+        refreshPostPopupHelperPosts = true
       )
     }
   }
@@ -2618,7 +2622,7 @@ class ThreadPresenter @Inject constructor(
     threadPresenterCallback?.showPostInfo(text.toString())
   }
 
-  private suspend fun showPosts() {
+  private suspend fun showPosts(refreshPostPopupHelperPosts: Boolean = false) {
     if (!isBound) {
       Logger.d(TAG, "showPosts() isBound==false")
       return
@@ -2633,8 +2637,13 @@ class ThreadPresenter @Inject constructor(
     val order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
 
     threadPresenterCallback?.showPostsForChanDescriptor(
-      descriptor,
-      PostsFilter(chanLoadProgressNotifier, postHideHelper, order)
+      descriptor = descriptor,
+      filter = PostsFilter(
+        chanLoadProgressNotifier = chanLoadProgressNotifier,
+        postHideHelper = postHideHelper,
+        order = order
+      ),
+      refreshPostPopupHelperPosts = refreshPostPopupHelperPosts
     )
   }
 
@@ -2787,7 +2796,7 @@ class ThreadPresenter @Inject constructor(
     val displayingPostDescriptorsInThread: List<PostDescriptor>
     val currentPosition: IndexAndTop?
 
-    suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter)
+    suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter, refreshPostPopupHelperPosts: Boolean)
     fun postClicked(postDescriptor: PostDescriptor)
     fun hideError(chanDescriptor: ChanDescriptor)
     fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException)
@@ -2795,7 +2804,7 @@ class ThreadPresenter @Inject constructor(
     fun showLoading(animateTransition: Boolean)
     fun showEmpty()
     fun showPostInfo(info: String)
-    fun showPostLinkables(post: ChanPost)
+    fun showPostLinkables(post: ChanPost, inPopup: Boolean)
     fun clipboardPost(post: ChanPost)
     suspend fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)
     suspend fun showPostInExternalThread(postDescriptor: PostDescriptor)
@@ -2853,7 +2862,7 @@ class ThreadPresenter @Inject constructor(
 
     fun hideThread(post: ChanPost, hide: Boolean)
     fun hideOrRemovePosts(hide: Boolean, wholeChain: Boolean, postDescriptors: Set<PostDescriptor>)
-    fun showHideOrRemoveWholeChainDialog(hide: Boolean, post: ChanPost)
+    fun showHideOrRemoveWholeChainDialog(hide: Boolean, hasReplies: Boolean, post: ChanPost)
 
     fun unhideOrUnremovePost(post: ChanPost)
     fun viewRemovedPostsForTheThread(

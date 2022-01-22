@@ -22,7 +22,7 @@ import dagger.Lazy
 class PostRepliesAdapter(
   private val postViewMode: PostCellData.PostViewMode,
   private val postCellCallback: PostCellInterface.PostCellCallback,
-  private val chanDescriptor: ChanDescriptor,
+  val chanDescriptor: ChanDescriptor,
   private val clickedPostDescriptor: PostDescriptor?,
   chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   postFilterManager: Lazy<PostFilterManager>,
@@ -47,6 +47,10 @@ class PostRepliesAdapter(
     threadCellData.defaultBoardPostViewMode = ChanSettings.BoardPostViewMode.LIST
     threadCellData.defaultMarkedNo = clickedPostDescriptor?.postNo
     threadCellData.defaultShowDividerFunc = { postIndex: Int, totalPostsCount: Int -> postIndex < totalPostsCount - 1 }
+  }
+
+  fun displayedPosts(): List<PostDescriptor> {
+    return threadCellData.map { it.post.postDescriptor }
   }
 
   fun cleanup() {

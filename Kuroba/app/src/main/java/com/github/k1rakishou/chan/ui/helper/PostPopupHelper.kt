@@ -32,8 +32,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.data.post.ChanPostWithFilterResult
-import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
 import java.util.*
 
@@ -66,9 +64,9 @@ class PostPopupHelper(
   ) {
     val data = PostRepliesPopupController.PostRepliesPopupData(
       descriptor = threadDescriptor,
-      postViewMode = postViewMode,
       forPostWithDescriptor = postDescriptor,
-      posts = indexPosts(posts)
+      postViewMode = postViewMode,
+      posts = posts
     )
 
     val prevPostViewMode = dataQueue.lastOrNull()?.postViewMode
@@ -102,25 +100,6 @@ class PostPopupHelper(
     presentingPostRepliesController?.displayData(chanDescriptor, data)
   }
 
-  private fun indexPosts(posts: List<ChanPost>): List<PostIndexed> {
-    if (posts.isEmpty()) {
-      return emptyList()
-    }
-
-    val postIndexedList: MutableList<PostIndexed> = ArrayList()
-    val threadDescriptor = posts[0].postDescriptor.threadDescriptor()
-
-    chanThreadManager.iteratePostIndexes(
-      threadDescriptor,
-      posts,
-      ChanPost::postDescriptor
-    ) { chanPost, postIndex ->
-      postIndexedList.add(PostIndexed(ChanPostWithFilterResult(chanPost), postIndex))
-    }
-
-    return postIndexedList
-  }
-
   fun topOrNull(): PostPopupData? {
     if (dataQueue.isEmpty()) {
       return null
@@ -146,6 +125,11 @@ class PostPopupHelper(
     }
 
     onPostsUpdated(updatedPosts)
+  }
+
+  suspend fun updateAllPosts(chanDescriptor: ChanDescriptor) {
+    BackgroundUtils.ensureMainThread()
+    presentingPostRepliesController?.updateAllPosts(chanDescriptor)
   }
 
   suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

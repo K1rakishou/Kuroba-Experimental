@@ -7,7 +7,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableIteration
-import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -39,7 +38,7 @@ class PostHideHelper(
   suspend fun processPostFilters(
     chanDescriptor: ChanDescriptor,
     posts: List<ChanPost>
-  ): ModularResult<Map<PostDescriptor, ChanPostWithFilterResult>> {
+  ): ModularResult<List<ChanPost>> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
         val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
@@ -53,6 +52,15 @@ class PostHideHelper(
           postFilterMap = postFilterMap
         )
 
+        resultMap.mutableIteration { mutableIterator, entry ->
+          val chanPostWithFilterResult = entry.value
+          if (chanPostWithFilterResult.postFilterResult == PostFilterResult.Remove) {
+            mutableIterator.remove()
+          }
+
+          return@mutableIteration true
+        }
+
         if (AppModuleAndroidUtils.isDevBuild()) {
           resultMap.values.forEach { chanPostWithFilterResult ->
             val postDescriptor = chanPostWithFilterResult.chanPost.postDescriptor
@@ -64,7 +72,7 @@ class PostHideHelper(
           }
         }
 
-        return@Try resultMap
+        return@Try resultMap.values.map { it.chanPost }
       }
     }
   }
@@ -110,6 +118,8 @@ class PostHideHelper(
     }
 
     if (!processingCatalog) {
+      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+
       // Second pass, process the reply chains (Do not do this in the catalogs)
       for ((sourcePost, _) in resultMap.values) {
         val sourcePostDescriptor = sourcePost.postDescriptor
@@ -154,36 +164,27 @@ class PostHideHelper(
             continue
           }
 
-          sourceChanPostWithFilterResult.postFilterResult = targetChanPostWithFilterResult.postFilterResult
+          val onlyHide = targetChanPostWithFilterResult.postFilterResult == PostFilterResult.Hide
 
+          if (newChanPostHides[sourcePostDescriptor]?.manuallyRestored != true) {
+            newChanPostHides[sourcePostDescriptor] = ChanPostHide(
+              postDescriptor = sourcePostDescriptor,
+              onlyHide = onlyHide,
+              applyToWholeThread = false,
+              applyToReplies = applyToReplies,
+              manuallyRestored = false
+            )
+          }
+
+          sourceChanPostWithFilterResult.postFilterResult = targetChanPostWithFilterResult.postFilterResult
           break
         }
       }
-    }
 
-    resultMap.mutableIteration { mutableIterator, entry ->
-      val chanPostWithFilterResult = entry.value
-      if (chanPostWithFilterResult.postFilterResult == PostFilterResult.Remove) {
-        mutableIterator.remove()
-      }
-
-      return@mutableIteration true
-    }
-
-    var hiddenCount = 0
-    var removedCount = 0
-    var normalCount = 0
-
-    resultMap.entries.forEach { (_, chanPostWithFilterResult) ->
-      when (chanPostWithFilterResult.postFilterResult) {
-        PostFilterResult.Leave -> ++normalCount
-        PostFilterResult.Hide -> ++hiddenCount
-        PostFilterResult.Remove -> ++removedCount
+      if (newChanPostHides.isNotEmpty()) {
+        postHideManager.createOrUpdateMany(newChanPostHides.values)
       }
     }
-
-    Logger.d(TAG, "End. hiddenCount=$hiddenCount, removedCount=$removedCount, " +
-      "normalCount=$normalCount, totalPostsCount=${posts.size}")
 
     return resultMap
   }

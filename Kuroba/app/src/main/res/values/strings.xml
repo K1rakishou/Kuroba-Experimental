@@ -1080,12 +1080,14 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="browse_controller_failed_to_parse_page_number">Failed to convert \'%1$s\' into integer value</string>
     <string name="browse_controller_composite_catalog_subtitle_loading">…</string>
 
-    <string name="thread_layout_hide_whole_chain">Hide whole chain</string>
-    <string name="thread_layout_remove_whole_chain">Remove whole chain</string>
+    <string name="thread_layout_hide_or_remove_whole_chain_action">%1$s whole chain</string>
+    <string name="thread_layout_hide_or_remove_future_replies_action">%1$s future replies</string>
     <string name="thread_layout_hide_post">Hide post</string>
     <string name="thread_layout_remove_post">Remove post</string>
-    <string name="thread_layout_hide_whole_chain_as_well">Would you like to hide the whole reply chain as well?</string>
-    <string name="thread_layout_remove_whole_chain_as_well">Would you like to remove the whole reply chain as well?</string>
+    <string name="thread_layout_hide_action">hide</string>
+    <string name="thread_layout_remove_action">remove</string>
+    <string name="thread_layout_hide_or_remove_whole_chain_as_well">Would you like to %1$s the whole reply chain with future replies as well?</string>
+    <string name="thread_layout_hide_or_remove_future_replies">Would you like to %1$s future replies to this post as well?</string>
 
     <string name="thread_layout_load_progress_preparing">Preparing</string>
     <string name="thread_layout_load_progress_requesting_server_data">Requesting data from the server</string>
