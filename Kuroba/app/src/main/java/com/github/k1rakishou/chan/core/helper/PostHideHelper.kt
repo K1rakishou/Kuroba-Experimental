@@ -45,16 +45,21 @@ class PostHideHelper(
         val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
         val postFilterMap = postFilterManager.getManyPostFilters(postDescriptorSet)
         val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
+        val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
 
         Logger.d(TAG, "processPostFilters($chanDescriptor) start")
-
 
         val resultMap = processPostFiltersInternal(
           posts = posts,
           chanDescriptor = chanDescriptor,
           hiddenPostsLookupMap = hiddenPostsLookupMap,
-          postFilterMap = postFilterMap
+          postFilterMap = postFilterMap,
+          newChanPostHides = newChanPostHides
         )
+
+        if (chanDescriptor is ChanDescriptor.ThreadDescriptor && newChanPostHides.isNotEmpty()) {
+          postHideManager.createOrUpdateMany(newChanPostHides.values)
+        }
 
         var hiddenPostsCount = 0
         var removedPostsCount = 0
@@ -101,7 +106,8 @@ class PostHideHelper(
     posts: List<ChanPost>,
     chanDescriptor: ChanDescriptor,
     hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
-    postFilterMap: Map<PostDescriptor, PostFilter>
+    postFilterMap: Map<PostDescriptor, PostFilter>,
+    newChanPostHides: MutableMap<PostDescriptor, ChanPostHide>,
   ): MutableMap<PostDescriptor, ChanPostWithFilterResult> {
     val resultMap = linkedMapWithCap<PostDescriptor, ChanPostWithFilterResult>(posts.size)
     val processingCatalog = chanDescriptor is ChanDescriptor.ICatalogDescriptor
@@ -137,8 +143,6 @@ class PostHideHelper(
     }
 
     if (!processingCatalog) {
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
-
       // Second pass, process the reply chains (Do not do this in the catalogs)
       for ((sourcePost, _) in resultMap.values) {
         val sourcePostDescriptor = sourcePost.postDescriptor
@@ -198,10 +202,6 @@ class PostHideHelper(
           sourceChanPostWithFilterResult.postFilterResult = targetChanPostWithFilterResult.postFilterResult
           break
         }
-      }
-
-      if (newChanPostHides.isNotEmpty()) {
-        postHideManager.createOrUpdateMany(newChanPostHides.values)
       }
     }
 
