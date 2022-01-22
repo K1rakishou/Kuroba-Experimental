@@ -2683,17 +2683,14 @@ class ThreadPresenter @Inject constructor(
   }
 
   fun showRemovedPostsDialog() {
-    if (!isBound || currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+    if (!isBound) {
       return
     }
 
-    val threadDescriptor = (currentChanDescriptor as? ChanDescriptor.ThreadDescriptor)
+    val chanDescriptor = currentChanDescriptor
       ?: return
 
-    val postDescriptors = chanThreadManager.getChanThread(threadDescriptor)?.getPostDescriptors()
-      ?: return
-
-    threadPresenterCallback?.viewRemovedPostsForTheThread(postDescriptors, threadDescriptor)
+    threadPresenterCallback?.viewHiddenOrRemovedPosts(chanDescriptor)
   }
 
   fun onRestoreRemovedPostsClicked(selectedPosts: List<PostDescriptor>) {
@@ -2865,10 +2862,7 @@ class ThreadPresenter @Inject constructor(
     fun showHideOrRemoveWholeChainDialog(hide: Boolean, hasReplies: Boolean, post: ChanPost)
 
     fun unhideOrUnremovePost(post: ChanPost)
-    fun viewRemovedPostsForTheThread(
-      threadPosts: List<PostDescriptor>,
-      threadDescriptor: ChanDescriptor.ThreadDescriptor
-    )
+    fun viewHiddenOrRemovedPosts(chanDescriptor: ChanDescriptor)
 
     fun onRestoreRemovedPostsClicked(
       chanDescriptor: ChanDescriptor,

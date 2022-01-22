@@ -234,20 +234,20 @@ class PostHideHelper(
       return false
     }
 
-    if (post.isOP()) {
-      if (processingCatalog) {
-        return postHide?.applyToWholeThread == true
-      }
-
-      return false
-    }
-
     if (postHide != null) {
       if (postHide.manuallyRestored) {
         return false
       }
 
       return true
+    }
+
+    if (post.isOP()) {
+      if (processingCatalog) {
+        return postHide?.applyToWholeThread == true
+      }
+
+      return false
     }
 
     return false
@@ -268,20 +268,20 @@ class PostHideHelper(
       return false
     }
 
-    if (post.isOP()) {
-      if (processingCatalog) {
-        return postHide?.applyToWholeThread == true
-      }
-
-      return false
-    }
-
     if (postHide != null) {
       if (postHide.manuallyRestored) {
         return false
       }
 
       return true
+    }
+
+    if (post.isOP()) {
+      if (processingCatalog) {
+        return postHide?.applyToWholeThread == true
+      }
+
+      return false
     }
 
     return false

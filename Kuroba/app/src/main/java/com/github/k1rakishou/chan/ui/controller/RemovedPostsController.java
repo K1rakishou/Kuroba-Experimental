@@ -125,8 +125,8 @@ public class RemovedPostsController
         HiddenOrRemovedPost[] hiddenOrRemovedPosts = new HiddenOrRemovedPost[removedPosts.size()];
 
         for (int i = 0, removedPostsSize = removedPosts.size(); i < removedPostsSize; i++) {
-            ChanPost post = removedPosts.get(i).chanPost;
-            ChanPostHide postHide = removedPosts.get(i).chanPostHide;
+            ChanPost post = removedPosts.get(i).getChanPost();
+            ChanPostHide postHide = removedPosts.get(i).getChanPostHide();
 
             hiddenOrRemovedPosts[i] = new HiddenOrRemovedPost(
                     post.getPostImages(),
@@ -242,8 +242,7 @@ public class RemovedPostsController
             HiddenOrRemovedPost hiddenOrRemovedPost = getItem(position);
 
             if (hiddenOrRemovedPost == null) {
-                throw new RuntimeException(
-                        "removedPost is null! position = " + position + ", items count = " + getCount());
+                throw new RuntimeException("removedPost is null! position = " + position + ", items count = " + getCount());
             }
 
             if (convertView == null) {
@@ -277,7 +276,6 @@ public class RemovedPostsController
 
             postComment.setText(hiddenOrRemovedPost.comment);
             checkbox.setChecked(hiddenOrRemovedPost.isChecked());
-            postImage.setVisibility(GONE);
 
             if (hiddenOrRemovedPost.images.size() > 0) {
                 ChanPostImage image = hiddenOrRemovedPost.getImages().get(0);
@@ -286,9 +284,12 @@ public class RemovedPostsController
                 if (thumbnailUrl != null) {
                     // load only the first image
                     postImage.setVisibility(VISIBLE);
-
                     loadImage(postImage, thumbnailUrl);
+                } else {
+                    postImage.setVisibility(GONE);
                 }
+            } else {
+                postImage.setVisibility(GONE);
             }
 
             checkbox.setOnClickListener(v -> onItemClick(position));

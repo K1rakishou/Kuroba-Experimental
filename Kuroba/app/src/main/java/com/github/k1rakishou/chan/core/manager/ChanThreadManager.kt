@@ -245,6 +245,17 @@ class ChanThreadManager(
     return chanThreadsCache.getThread(threadDescriptor)
   }
 
+  fun getCatalogThreadDescriptors(
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor?
+  ): List<ChanDescriptor.ThreadDescriptor> {
+    if (catalogDescriptor == null) {
+      return emptyList()
+    }
+
+    return chanThreadsCache.getCatalogThreadDescriptors(catalogDescriptor)
+  }
+
+
   fun getChanCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor?): ChanCatalog? {
     if (catalogDescriptor == null) {
       return null

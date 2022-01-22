@@ -188,6 +188,14 @@ class ChanThreadsCache(
     return chanThreads[threadDescriptor]?.getPost(postDescriptor)
   }
 
+  fun getCatalogThreadDescriptors(
+    catalogDescriptor: ChanDescriptor.ICatalogDescriptor
+  ): List<ChanDescriptor.ThreadDescriptor> {
+    return chanCatalogSnapshotCache.get(catalogDescriptor)
+      ?.catalogThreadDescriptorList
+      ?: emptyList()
+  }
+
   fun getCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor): ChanCatalog? {
     val threadDescriptors = chanCatalogSnapshotCache.get(catalogDescriptor)
       ?.catalogThreadDescriptorList

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.cell
 
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -32,7 +33,8 @@ import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
 class ThreadCellData(
-  private val chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val _postFilterManager: Lazy<PostFilterManager>,
   private val _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
   private val _savedReplyManager: Lazy<SavedReplyManager>,
@@ -41,6 +43,19 @@ class ThreadCellData(
 ): Iterable<ThreadCellData.PostCellDataLazy> {
   private val postCellDataLazyList: MutableList<PostCellDataLazy> = mutableListWithCap(64)
   private val coroutineScope = KurobaCoroutineScope()
+
+  private val chanThreadViewableInfoManager: ChanThreadViewableInfoManager
+    get() = _chanThreadViewableInfoManager.get()
+  private val chanThreadManager: ChanThreadManager
+    get() = _chanThreadManager.get()
+  private val postFilterManager: PostFilterManager
+    get() = _postFilterManager.get()
+  private val postFilterHighlightManager: PostFilterHighlightManager
+    get() = _postFilterHighlightManager.get()
+  private val savedReplyManager: SavedReplyManager
+    get() = _savedReplyManager.get()
+  private val postHideManager: PostHideManager
+    get() = _postHideManager.get()
 
   private var _chanDescriptor: ChanDescriptor? = null
   private var postCellCallback: PostCellInterface.PostCellCallback? = null
@@ -213,11 +228,6 @@ class ThreadCellData(
   ): List<PostCellDataLazy> {
     BackgroundUtils.ensureBackgroundThread()
 
-    val postFilterManager = _postFilterManager.get()
-    val postFilterHighlightManager = _postFilterHighlightManager.get()
-    val savedReplyManager = _savedReplyManager.get()
-    val postHideManager = _postHideManager.get()
-
     val totalPostsCount = postIndexedList.size
     val resultList = mutableListWithCap<PostCellDataLazy>(totalPostsCount)
 
@@ -241,7 +251,10 @@ class ThreadCellData(
 
     val postHideMap = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        emptyMap()
+        val chanCatalogThreadDescriptors = chanThreadManager.getCatalogThreadDescriptors(chanDescriptor)
+
+        postHideManager.getHiddenPostsForCatalog(chanCatalogThreadDescriptors)
+          .associateBy { chanPostHide -> chanPostHide.postDescriptor }
       }
       is ChanDescriptor.ThreadDescriptor -> {
         postHideManager.getHiddenPostsForThread(chanDescriptor)
@@ -550,7 +563,7 @@ class ThreadCellData(
       return null
     }
 
-    return chanThreadViewableInfoManager.get().view(chanDescriptor) { chanThreadViewableInfoView ->
+    return chanThreadViewableInfoManager.view(chanDescriptor) { chanThreadViewableInfoView ->
       if (chanThreadViewableInfoView.lastViewedPostNo >= 0) {
         // Do not process the last post, the indicator does not have to appear at the bottom
         var postIndex = 0

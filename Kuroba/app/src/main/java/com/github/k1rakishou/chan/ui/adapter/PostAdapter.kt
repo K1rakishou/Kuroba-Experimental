@@ -24,6 +24,7 @@ import androidx.recyclerview.widget.StaggeredGridLayoutManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -69,6 +70,8 @@ class PostAdapter(
   lateinit var postFilterHighlightManager: Lazy<PostFilterHighlightManager>
   @Inject
   lateinit var postHideManager: Lazy<PostHideManager>
+  @Inject
+  lateinit var chanThreadManager: Lazy<ChanThreadManager>
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -124,7 +127,8 @@ class PostAdapter(
     this.statusCellCallback = statusCellCallback
 
     threadCellData = ThreadCellData(
-      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      _chanThreadManager = chanThreadManager,
       _postFilterManager = postFilterManager,
       _postFilterHighlightManager = postFilterHighlightManager,
       _savedReplyManager = savedReplyManager,

@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.adapter
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
@@ -24,20 +25,22 @@ class PostRepliesAdapter(
   private val postCellCallback: PostCellInterface.PostCellCallback,
   val chanDescriptor: ChanDescriptor,
   private val clickedPostDescriptor: PostDescriptor?,
-  chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
-  postFilterManager: Lazy<PostFilterManager>,
-  savedReplyManager: Lazy<SavedReplyManager>,
-  postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
-  postHideManager: Lazy<PostHideManager>,
+  _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
+  _chanThreadManager: Lazy<ChanThreadManager>,
+  _postFilterManager: Lazy<PostFilterManager>,
+  _savedReplyManager: Lazy<SavedReplyManager>,
+  _postFilterHighlightManager: Lazy<PostFilterHighlightManager>,
+  _postHideManager: Lazy<PostHideManager>,
   initialTheme: ChanTheme
 ) : RecyclerView.Adapter<PostRepliesAdapter.ReplyViewHolder>() {
 
   private val threadCellData = ThreadCellData(
-    chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-    _postFilterManager = postFilterManager,
-    _savedReplyManager = savedReplyManager,
-    _postFilterHighlightManager = postFilterHighlightManager,
-    _postHideManager = postHideManager,
+    _chanThreadViewableInfoManager = _chanThreadViewableInfoManager,
+    _chanThreadManager = _chanThreadManager,
+    _postFilterManager = _postFilterManager,
+    _savedReplyManager = _savedReplyManager,
+    _postFilterHighlightManager = _postFilterHighlightManager,
+    _postHideManager = _postHideManager,
     initialTheme = initialTheme
   )
 

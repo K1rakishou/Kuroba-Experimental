@@ -594,6 +594,25 @@ class ChanThread(
     }
   }
 
+  fun <T> mapPostsOrdered(mapper: (ChanPost) -> T): List<T> {
+    return lock.read {
+      if (threadPosts.isEmpty()) {
+        return@read emptyList()
+      }
+
+      val resultList = mutableListOf<T>()
+
+      for (index in threadPosts.indices) {
+        val chanPost = threadPosts.getOrNull(index)
+          ?: return@read emptyList()
+
+        resultList += mapper(chanPost)
+      }
+
+      return@read resultList
+    }
+  }
+
   fun mapPostsWithImagesAround(
     postDescriptor: PostDescriptor,
     leftCount: Int,

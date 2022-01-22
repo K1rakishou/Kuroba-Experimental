@@ -144,11 +144,12 @@ class PostSearchPopupController(
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
       clickedPostDescriptor = null,
-      chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      postFilterManager = postFilterManager,
-      savedReplyManager = savedReplyManager,
-      postFilterHighlightManager = postFilterHighlightManager,
-      postHideManager = postHideManager,
+      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      _chanThreadManager = chanThreadManager,
+      _postFilterManager = postFilterManager,
+      _savedReplyManager = savedReplyManager,
+      _postFilterHighlightManager = postFilterHighlightManager,
+      _postHideManager = postHideManager,
       initialTheme = themeEngine.chanTheme
     )
 

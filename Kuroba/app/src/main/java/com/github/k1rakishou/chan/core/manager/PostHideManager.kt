@@ -297,6 +297,28 @@ open class PostHideManager(
     }
   }
 
+  fun getHiddenPostsForCatalog(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>): List<ChanPostHide> {
+    val chanPostHideList = mutableListOf<ChanPostHide>()
+
+    lock.read {
+      for (threadDescriptor in threadDescriptors) {
+        val innerMap = postHideMap[threadDescriptor]
+          ?: continue
+        val chanPostHide = innerMap[threadDescriptor.toOriginalPostDescriptor()]
+          ?: continue
+
+        if (chanPostHide.manuallyRestored) {
+          continue
+        }
+
+        chanPostHideList += chanPostHide
+      }
+    }
+
+    return chanPostHideList
+  }
+
+
   fun getHiddenPostsForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPostHide> {
     val chanPostHideList = mutableListOf<ChanPostHide>()
 

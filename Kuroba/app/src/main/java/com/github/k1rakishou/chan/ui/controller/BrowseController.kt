@@ -294,6 +294,7 @@ class BrowseController(
       .withSubItem(ACTION_OPEN_UNLIMITED_CATALOG_PAGE, R.string.action_open_catalog_page, isUnlimitedCatalog, { openCatalogPageClicked() })
       .withSubItem(ACTION_SHARE, R.string.action_share, { item -> shareClicked(item) })
       .withSubItem(ACTION_BOARD_ARCHIVE, R.string.action_board_archive, supportsArchive, { viewBoardArchiveClicked() })
+      .withSubItem(ACTION_VIEW_REMOVED_THREADS, R.string.action_view_removed_threads, { threadLayout.presenter.showRemovedPostsDialog() })
       .withSubItem(ACTION_SCROLL_TO_TOP, R.string.action_scroll_to_top, { item -> upClicked(item) })
       .withSubItem(ACTION_SCROLL_TO_BOTTOM, R.string.action_scroll_to_bottom, { item -> downClicked(item) })
       .build()
@@ -1089,6 +1090,7 @@ class BrowseController(
     private const val ACTION_BOARD_ARCHIVE = 913
     private const val ACTION_OPEN_UNLIMITED_CATALOG_PAGE = 914
     private const val ACTION_LOAD_WHOLE_COMPOSITE_CATALOG = 915
+    private const val ACTION_VIEW_REMOVED_THREADS = 916
 
     private const val SORT_MODE_BUMP = 1000
     private const val SORT_MODE_REPLY = 1001

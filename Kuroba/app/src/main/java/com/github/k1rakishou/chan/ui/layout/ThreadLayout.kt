@@ -1037,11 +1037,8 @@ class ThreadLayout @JvmOverloads constructor(
     }
   }
 
-  override fun viewRemovedPostsForTheThread(
-    threadPosts: List<PostDescriptor>,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
-  ) {
-    removedPostsHelper.showPosts(threadPosts, threadDescriptor)
+  override fun viewHiddenOrRemovedPosts(chanDescriptor: ChanDescriptor) {
+    removedPostsHelper.showPosts(chanDescriptor)
   }
 
   override fun onRestoreRemovedPostsClicked(
