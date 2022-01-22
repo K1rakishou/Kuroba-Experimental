@@ -39,160 +39,90 @@ class PostHideHelperTest {
   }
 
   @Test
-  fun shouldNotBeAbleToHideOriginalPostWhenInThread() {
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .childPosts {
-        posts(
-          createPost(postNo = 2),
-          createPost(postNo = 3)
-        )
-      }
-      .build()
+  fun shouldNotBeAbleToHideOrRemoveOriginalPostWhenInThread() {
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = ReplyChainBuilder()
+        .post(createPost(postNo = 1))
+        .childPosts {
+          posts(
+            createPost(postNo = 2),
+            createPost(postNo = 3)
+          )
+        }
+        .build()
 
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
         chanDescriptor = threadDescriptor,
-        postNos = listOf(1)
-      ),
-      postFilterMap = mapOf()
-    )
+        hiddenPostsLookupMap = hiddenPosts(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(1),
+          mapper = { chanPostHide -> chanPostHide.copy(onlyHide = onlyHide) }
+        ),
+        postFilterMap = mapOf()
+      )
 
-    assertEquals(3, resultMap.size)
+      assertEquals(3, resultMap.size)
+    }
   }
 
   @Test
-  fun shouldNotBeAbleToRemoveOriginalPostWhenInThread() {
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .childPosts {
-        posts(
-          createPost(postNo = 2),
-          createPost(postNo = 3)
-        )
-      }
-      .build()
+  fun shouldNotBeAbleToHideOrRemoveThreadWhenInCatalogAndApplyToWholeThreadIsFalse() {
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = ReplyChainBuilder()
+        .post(createPost(postNo = 1))
+        .childPosts {
+          posts(
+            createPost(postNo = 2),
+            createPost(postNo = 3)
+          )
+        }
+        .build()
 
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
-        chanDescriptor = threadDescriptor,
-        postNos = listOf(1),
-        mapper = { chanPostHide -> chanPostHide.copy(onlyHide = false) }
-      ),
-      postFilterMap = mapOf()
-    )
-
-    assertEquals(3, resultMap.size)
-  }
-
-  @Test
-  fun shouldNotBeAbleToHideThreadWhenInCatalogAndApplyToWholeThreadIsFalse() {
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .childPosts {
-        posts(
-          createPost(postNo = 2),
-          createPost(postNo = 3)
-        )
-      }
-      .build()
-
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = catalogDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
         chanDescriptor = catalogDescriptor,
-        postNos = listOf(1),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = false) }
-      ),
-      postFilterMap = mapOf()
-    )
+        hiddenPostsLookupMap = hiddenPosts(
+          chanDescriptor = catalogDescriptor,
+          postNos = listOf(1),
+          mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = false, onlyHide = onlyHide) }
+        ),
+        postFilterMap = mapOf()
+      )
 
-    assertEquals(3, resultMap.size)
+      assertEquals(3, resultMap.size)
+    }
   }
 
   @Test
-  fun shouldNotBeAbleToRemoveThreadWhenInCatalogAndApplyToWholeThreadIsFalse() {
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .childPosts {
-        posts(
-          createPost(postNo = 2),
-          createPost(postNo = 3)
-        )
-      }
-      .build()
+  fun shouldBeAbleToHideOrRemoveOriginalPostWhenInCatalogAndApplyToWholeThreadIsTrue() {
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = mutableListOf<ChanPost>()
+      posts += createPost(postNo = 1)
+      posts += createPost(postNo = 2)
+      posts += createPost(postNo = 3)
 
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = catalogDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
         chanDescriptor = catalogDescriptor,
-        postNos = listOf(1),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = false, onlyHide = false) }
-      ),
-      postFilterMap = mapOf()
-    )
+        hiddenPostsLookupMap = hiddenPosts(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(1, 3),
+          mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, onlyHide = onlyHide) }
+        ),
+        postFilterMap = mapOf()
+      )
 
-    assertEquals(3, resultMap.size)
+      assertEquals(3, resultMap.size)
+
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+    }
   }
 
   @Test
-  fun shouldBeAbleToHideOriginalPostWhenInCatalogAndApplyToWholeThreadIsTrue() {
-    val posts = mutableListOf<ChanPost>()
-    posts += createPost(postNo = 1)
-    posts += createPost(postNo = 2)
-    posts += createPost(postNo = 3)
-
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = catalogDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
-        chanDescriptor = threadDescriptor,
-        postNos = listOf(1, 3),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true) }
-      ),
-      postFilterMap = mapOf()
-    )
-
-    assertEquals(3, resultMap.size)
-
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-  }
-
-  @Test
-  fun shouldBeAbleToRemoveOriginalPostWhenInCatalogAndApplyToWholeThreadIsTrue() {
-    val posts = mutableListOf<ChanPost>()
-    posts += createPost(postNo = 1)
-    posts += createPost(postNo = 2)
-    posts += createPost(postNo = 3)
-
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = catalogDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
-        chanDescriptor = threadDescriptor,
-        postNos = listOf(1, 3),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, onlyHide = false) }
-      ),
-      postFilterMap = mapOf()
-    )
-
-    assertEquals(3, resultMap.size)
-
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-  }
-
-  @Test
-  fun shouldBeAbleToHideAllPostsInDiamondReplyChain() {
+  fun shouldBeAbleToHideOrRemoveAllPostsInDiamondReplyChain() {
     /**
      *                 child post 3
      *               /              \
@@ -201,123 +131,39 @@ class PostHideHelperTest {
      *                 child post 4
      * */
 
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .post(createPost(postNo = 2))
-      .childPosts {
-        parentPosts(
-          createPost(postNo = 3),
-          createPost(postNo = 4)
-        ) {
-          post(createPost(postNo = 5))
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = ReplyChainBuilder()
+        .post(createPost(postNo = 1))
+        .post(createPost(postNo = 2))
+        .childPosts {
+          parentPosts(
+            createPost(postNo = 3),
+            createPost(postNo = 4)
+          ) {
+            post(createPost(postNo = 5))
+          }
         }
-      }
-      .build()
+        .build()
 
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
         chanDescriptor = threadDescriptor,
-        postNos = listOf(2),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = true) }
-      ),
-      postFilterMap = mapOf()
-    )
+        hiddenPostsLookupMap = hiddenPosts(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(2),
+          mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = true, onlyHide = onlyHide) }
+        ),
+        postFilterMap = mapOf()
+      )
 
-    assertEquals(5, resultMap.size)
+      assertEquals(5, resultMap.size)
 
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
-  }
-
-  @Test
-  fun shouldBeAbleToRemoveAllPostsInDiamondReplyChain() {
-    /**
-     *                 child post 3
-     *               /              \
-     * parent post 2                 child post 5
-     *               \              /
-     *                 child post 4
-     * */
-
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .post(createPost(postNo = 2))
-      .childPosts {
-        parentPosts(
-          createPost(postNo = 3),
-          createPost(postNo = 4)
-        ) {
-          post(createPost(postNo = 5))
-        }
-      }
-      .build()
-
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
-        chanDescriptor = threadDescriptor,
-        postNos = listOf(2),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = true, onlyHide = false) }
-      ),
-      postFilterMap = mapOf()
-    )
-
-    assertEquals(5, resultMap.size)
-
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
-  }
-
-  @Test
-  fun shouldNotBeAbleToHideChildPostsOfPostThatHasApplyToRepliesSetToFalseInDiamondReplyChain() {
-    /**
-     *                 child post 3
-     *               /              \
-     * parent post 2                 child post 5
-     *               \              /
-     *                 child post 4
-     * */
-
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .post(createPost(postNo = 2))
-      .childPosts {
-        parentPosts(
-          createPost(postNo = 3),
-          createPost(postNo = 4)
-        ) {
-          post(createPost(postNo = 5))
-        }
-      }
-      .build()
-
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
-        chanDescriptor = threadDescriptor,
-        postNos = listOf(2),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = false) }
-      ),
-      postFilterMap = mapOf()
-    )
-
-    assertEquals(5, resultMap.size)
-
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Hide, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+    }
   }
 
   @Test
@@ -330,37 +176,44 @@ class PostHideHelperTest {
      *                 child post 4
      * */
 
-    val posts = ReplyChainBuilder()
-      .post(createPost(postNo = 1))
-      .post(createPost(postNo = 2))
-      .childPosts {
-        parentPosts(
-          createPost(postNo = 3),
-          createPost(postNo = 4)
-        ) {
-          post(createPost(postNo = 5))
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = ReplyChainBuilder()
+        .post(createPost(postNo = 1))
+        .post(createPost(postNo = 2))
+        .childPosts {
+          parentPosts(
+            createPost(postNo = 3),
+            createPost(postNo = 4)
+          ) {
+            post(createPost(postNo = 5))
+          }
         }
-      }
-      .build()
+        .build()
 
-    val resultMap = postHideHelper.processPostFiltersInternal(
-      posts = posts,
-      chanDescriptor = threadDescriptor,
-      hiddenPostsLookupMap = hiddenPosts(
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
         chanDescriptor = threadDescriptor,
-        postNos = listOf(2),
-        mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = false, onlyHide = false) }
-      ),
-      postFilterMap = mapOf()
-    )
+        hiddenPostsLookupMap = hiddenPosts(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(2),
+          mapper = { chanPostHide -> chanPostHide.copy(applyToWholeThread = true, applyToReplies = false, onlyHide = onlyHide) }
+        ),
+        postFilterMap = mapOf()
+      )
 
-    assertEquals(5, resultMap.size)
+      assertEquals(5, resultMap.size)
 
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Remove, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
-    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+    }
+  }
+
+  private fun hideRemoveTest(func: (PostFilterResult, Boolean) -> Unit) {
+    func(PostFilterResult.Hide, true)
+    func(PostFilterResult.Remove, false)
   }
 
   private fun hiddenPosts(

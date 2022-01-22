@@ -31,6 +31,7 @@ import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor;
 import com.github.k1rakishou.model.data.post.ChanPost;
+import com.github.k1rakishou.model.data.post.ChanPostHide;
 import com.github.k1rakishou.model.data.post.ChanPostImage;
 
 import org.jetbrains.annotations.NotNull;
@@ -118,19 +119,21 @@ public class RemovedPostsController
         return true;
     }
 
-    public void showRemovePosts(List<ChanPost> removedPosts) {
+    public void showRemovePosts(List<RemovedPostsHelper.HiddenOrRemovedPost> removedPosts) {
         BackgroundUtils.ensureMainThread();
 
-        RemovedPost[] removedPostsArray = new RemovedPost[removedPosts.size()];
+        HiddenOrRemovedPost[] hiddenOrRemovedPosts = new HiddenOrRemovedPost[removedPosts.size()];
 
         for (int i = 0, removedPostsSize = removedPosts.size(); i < removedPostsSize; i++) {
-            ChanPost post = removedPosts.get(i);
+            ChanPost post = removedPosts.get(i).chanPost;
+            ChanPostHide postHide = removedPosts.get(i).chanPostHide;
 
-            removedPostsArray[i] = new RemovedPost(
+            hiddenOrRemovedPosts[i] = new HiddenOrRemovedPost(
                     post.getPostImages(),
                     post.getPostDescriptor(),
                     post.getPostComment().comment(),
-                    false
+                    false,
+                    postHide.getOnlyHide()
             );
         }
 
@@ -145,7 +148,7 @@ public class RemovedPostsController
             postsListView.setAdapter(adapter);
         }
 
-        adapter.setRemovedPosts(removedPostsArray);
+        adapter.setRemovedPosts(hiddenOrRemovedPosts);
     }
 
     @Override
@@ -174,22 +177,25 @@ public class RemovedPostsController
         removedPostsHelper.onRestoreClicked(selectedPosts);
     }
 
-    public static class RemovedPost {
+    public static class HiddenOrRemovedPost {
         private List<ChanPostImage> images;
         private PostDescriptor postDescriptor;
         private CharSequence comment;
         private boolean checked;
+        private boolean isHidden;
 
-        public RemovedPost(
+        public HiddenOrRemovedPost(
                 List<ChanPostImage> images,
                 PostDescriptor postDescriptor,
                 CharSequence comment,
-                boolean checked
+                boolean checked,
+                boolean isHidden
         ) {
             this.images = images;
             this.postDescriptor = postDescriptor;
             this.comment = comment;
             this.checked = checked;
+            this.isHidden = isHidden;
         }
 
         public void setChecked(boolean checked) {
@@ -213,10 +219,10 @@ public class RemovedPostsController
         }
     }
 
-    public static class RemovedPostAdapter extends ArrayAdapter<RemovedPost> {
+    public static class RemovedPostAdapter extends ArrayAdapter<HiddenOrRemovedPost> {
         private ImageLoaderV2 imageLoaderV2;
         private ThemeEngine themeEngine;
-        private List<RemovedPost> removedPostsCopy = new ArrayList<>();
+        private List<HiddenOrRemovedPost> hiddenOrRemovedPosts = new ArrayList<>();
 
         public RemovedPostAdapter(
                 @NonNull Context context,
@@ -233,9 +239,9 @@ public class RemovedPostsController
         @NonNull
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
-            RemovedPost removedPost = getItem(position);
+            HiddenOrRemovedPost hiddenOrRemovedPost = getItem(position);
 
-            if (removedPost == null) {
+            if (hiddenOrRemovedPost == null) {
                 throw new RuntimeException(
                         "removedPost is null! position = " + position + ", items count = " + getCount());
             }
@@ -253,13 +259,28 @@ public class RemovedPostsController
             postNo.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             postComment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
-            postNo.setText(String.format(Locale.ENGLISH, "No. %d", removedPost.postDescriptor.getPostNo()));
-            postComment.setText(removedPost.comment);
-            checkbox.setChecked(removedPost.isChecked());
+            String hiddenOrRemoved;
+            if (hiddenOrRemovedPost.isHidden) {
+                hiddenOrRemoved = "(Hidden)";
+            } else {
+                hiddenOrRemoved = "(Removed)";
+            }
+
+            String postNoFormatted = String.format(
+                    Locale.ENGLISH,
+                    "No. %d %s",
+                    hiddenOrRemovedPost.postDescriptor.getPostNo(),
+                    hiddenOrRemoved
+            );
+
+            postNo.setText(postNoFormatted);
+
+            postComment.setText(hiddenOrRemovedPost.comment);
+            checkbox.setChecked(hiddenOrRemovedPost.isChecked());
             postImage.setVisibility(GONE);
 
-            if (removedPost.images.size() > 0) {
-                ChanPostImage image = removedPost.getImages().get(0);
+            if (hiddenOrRemovedPost.images.size() > 0) {
+                ChanPostImage image = hiddenOrRemovedPost.getImages().get(0);
                 HttpUrl thumbnailUrl = image.getThumbnailUrl();
 
                 if (thumbnailUrl != null) {
@@ -310,34 +331,34 @@ public class RemovedPostsController
         }
 
         public void onItemClick(int position) {
-            RemovedPost rp = getItem(position);
-            if (rp == null) {
+            HiddenOrRemovedPost hiddenOrRemovedPost = getItem(position);
+            if (hiddenOrRemovedPost == null) {
                 return;
             }
 
-            rp.setChecked(!rp.isChecked());
-            removedPostsCopy.get(position).setChecked(rp.isChecked());
+            hiddenOrRemovedPost.setChecked(!hiddenOrRemovedPost.isChecked());
+            hiddenOrRemovedPosts.get(position).setChecked(hiddenOrRemovedPost.isChecked());
 
             notifyDataSetChanged();
         }
 
-        public void setRemovedPosts(RemovedPost[] removedPostsArray) {
-            removedPostsCopy.clear();
-            removedPostsCopy.addAll(Arrays.asList(removedPostsArray));
+        public void setRemovedPosts(HiddenOrRemovedPost[] hiddenOrRemovedPosts) {
+            this.hiddenOrRemovedPosts.clear();
+            this.hiddenOrRemovedPosts.addAll(Arrays.asList(hiddenOrRemovedPosts));
 
             clear();
-            addAll(removedPostsCopy);
+            addAll(this.hiddenOrRemovedPosts);
             notifyDataSetChanged();
         }
 
         public List<PostDescriptor> getSelectedPostDescriptorList() {
             List<PostDescriptor> selectedPosts = new ArrayList<>();
 
-            for (RemovedPost removedPost : removedPostsCopy) {
-                if (removedPost == null) continue;
+            for (HiddenOrRemovedPost hiddenOrRemovedPost : hiddenOrRemovedPosts) {
+                if (hiddenOrRemovedPost == null) continue;
 
-                if (removedPost.isChecked()) {
-                    selectedPosts.add(removedPost.getPostDescriptor());
+                if (hiddenOrRemovedPost.isChecked()) {
+                    selectedPosts.add(hiddenOrRemovedPost.getPostDescriptor());
                 }
             }
 
@@ -345,22 +366,22 @@ public class RemovedPostsController
         }
 
         public void selectAll() {
-            if (removedPostsCopy.isEmpty()) {
+            if (hiddenOrRemovedPosts.isEmpty()) {
                 return;
             }
 
             // If first item is selected - unselect all other items
             // If it's not selected - select all other items
-            boolean select = !removedPostsCopy.get(0).isChecked();
+            boolean select = !hiddenOrRemovedPosts.get(0).isChecked();
 
-            for (int i = 0; i < removedPostsCopy.size(); ++i) {
-                RemovedPost rp = getItem(i);
-                if (rp == null) {
+            for (int i = 0; i < hiddenOrRemovedPosts.size(); ++i) {
+                HiddenOrRemovedPost hiddenOrRemovedPost = getItem(i);
+                if (hiddenOrRemovedPost == null) {
                     return;
                 }
 
-                rp.setChecked(select);
-                removedPostsCopy.get(i).setChecked(select);
+                hiddenOrRemovedPost.setChecked(select);
+                hiddenOrRemovedPosts.get(i).setChecked(select);
             }
 
             notifyDataSetChanged();

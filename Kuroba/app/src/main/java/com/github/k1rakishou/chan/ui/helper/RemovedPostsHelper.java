@@ -2,9 +2,9 @@ package com.github.k1rakishou.chan.ui.helper;
 
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
 
+import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
 import com.github.k1rakishou.chan.R;
@@ -53,19 +53,25 @@ public class RemovedPostsHelper {
     }
 
     public void showPosts(List<PostDescriptor> threadPosts, ChanDescriptor.ThreadDescriptor threadDescriptor) {
-        List<PostDescriptor> removedPosts = getRemovedPosts(threadPosts, threadDescriptor);
-        if (removedPosts.isEmpty()) {
+        Map<PostDescriptor, ChanPostHide> hiddenPostMap = getHiddenPostsForThread(threadDescriptor);
+        List<PostDescriptor> hiddenOrRemovedPosts = getRemovedPosts(hiddenPostMap, threadPosts);
+
+        if (hiddenOrRemovedPosts.isEmpty()) {
             showToast(context, R.string.no_removed_posts_for_current_thread);
             return;
         }
 
-        Collections.sort(removedPosts, (o1, o2) -> Long.compare(o1.getPostNo(), o2.getPostNo()));
+        Collections.sort(hiddenOrRemovedPosts, (o1, o2) -> Long.compare(o1.getPostNo(), o2.getPostNo()));
         present();
 
-        List<ChanPost> resultPosts = new ArrayList<>();
+        List<HiddenOrRemovedPost> resultPosts = new ArrayList<>();
 
-        chanThreadManager.get().iteratePostsWhile(threadDescriptor, removedPosts, chanPost -> {
-            resultPosts.add(chanPost);
+        chanThreadManager.get().iteratePostsWhile(threadDescriptor, hiddenOrRemovedPosts, chanPost -> {
+            ChanPostHide chanPostHide = hiddenPostMap.get(chanPost.getPostDescriptor());
+            if (chanPostHide != null) {
+                resultPosts.add(new HiddenOrRemovedPost(chanPost, chanPostHide));
+            }
+
             return true;
         });
 
@@ -78,22 +84,26 @@ public class RemovedPostsHelper {
         }
     }
 
-    private List<PostDescriptor> getRemovedPosts(
-            List<PostDescriptor> threadPosts,
-            ChanDescriptor.ThreadDescriptor threadDescriptor
-    ) {
-        List<ChanPostHide> hiddenPosts = postHideManager.get().getHiddenPostsForThread(threadDescriptor);
-        List<PostDescriptor> removedPosts = new ArrayList<>();
+    @NonNull
+    private Map<PostDescriptor, ChanPostHide> getHiddenPostsForThread(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+        List<ChanPostHide> chanPostHides = postHideManager.get().getHiddenPostsForThread(threadDescriptor);
+        Map<PostDescriptor, ChanPostHide> resultMap = new HashMap<>(chanPostHides.size());
 
-        @SuppressLint("UseSparseArrays")
-        Map<Long, ChanPostHide> fastLookupMap = new HashMap<>();
-
-        for (ChanPostHide postHide : hiddenPosts) {
-            fastLookupMap.put(postHide.getPostDescriptor().getPostNo(), postHide);
+        for (ChanPostHide chanPostHide : chanPostHides) {
+            resultMap.put(chanPostHide.getPostDescriptor(), chanPostHide);
         }
 
+        return resultMap;
+    }
+
+    private List<PostDescriptor> getRemovedPosts(
+            Map<PostDescriptor, ChanPostHide> hiddenPostMap,
+            List<PostDescriptor> threadPosts
+    ) {
+        List<PostDescriptor> removedPosts = new ArrayList<>();
+
         for (PostDescriptor post : threadPosts) {
-            if (fastLookupMap.containsKey(post.getPostNo())) {
+            if (hiddenPostMap.containsKey(post)) {
                 removedPosts.add(post);
             }
         }
@@ -127,5 +137,15 @@ public class RemovedPostsHelper {
 
     public interface RemovedPostsCallbacks {
         void presentRemovedPostsController(Controller controller);
+    }
+
+    public class HiddenOrRemovedPost {
+        public ChanPost chanPost;
+        public ChanPostHide chanPostHide;
+
+        public HiddenOrRemovedPost(ChanPost chanPost, ChanPostHide chanPostHide) {
+            this.chanPost = chanPost;
+            this.chanPostHide = chanPostHide;
+        }
     }
 }

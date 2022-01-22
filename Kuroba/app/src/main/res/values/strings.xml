@@ -149,7 +149,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
 
     <string name="action_reload">Reload</string>
     <string name="action_pin">Bookmark</string>
-    <string name="action_view_removed_posts">View manually removed posts</string>
+    <string name="action_view_removed_posts">View manually hidden/removed posts</string>
     <string name="action_preview_thread_in_archive">Preview in archive</string>
     <string name="action_open_in_archive">Open in archive</string>
     <string name="action_open_browser">Open in a browser</string>
