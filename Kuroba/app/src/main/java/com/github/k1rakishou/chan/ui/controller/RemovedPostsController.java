@@ -40,11 +40,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 
 import javax.inject.Inject;
 
+import coil.request.Disposable;
 import okhttp3.HttpUrl;
 
 public class RemovedPostsController
@@ -224,6 +227,8 @@ public class RemovedPostsController
         private ThemeEngine themeEngine;
         private List<HiddenOrRemovedPost> hiddenOrRemovedPosts = new ArrayList<>();
 
+        private Map<PostDescriptor, Disposable> activeImageLoadRequests = new HashMap<>();
+
         public RemovedPostAdapter(
                 @NonNull Context context,
                 ImageLoaderV2 imageLoaderV2,
@@ -236,18 +241,26 @@ public class RemovedPostsController
             this.themeEngine = themeEngine;
         }
 
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+
+        @Override
+        public long getItemId(int position) {
+            return hiddenOrRemovedPosts.get(position).postDescriptor.hashCode();
+        }
+
         @NonNull
         @Override
         public View getView(int position, @Nullable View convertView, @NonNull ViewGroup parent) {
             HiddenOrRemovedPost hiddenOrRemovedPost = getItem(position);
-
             if (hiddenOrRemovedPost == null) {
                 throw new RuntimeException("removedPost is null! position = " + position + ", items count = " + getCount());
             }
 
-            if (convertView == null) {
-                convertView = inflate(getContext(), R.layout.layout_removed_post, parent, false);
-            }
+            PostDescriptor postDescriptor = hiddenOrRemovedPost.postDescriptor;
+            convertView = inflate(getContext(), R.layout.layout_removed_post, parent, false);
 
             LinearLayout viewHolder = convertView.findViewById(R.id.removed_post_view_holder);
             AppCompatTextView postNo = convertView.findViewById(R.id.removed_post_no);
@@ -277,6 +290,11 @@ public class RemovedPostsController
             postComment.setText(hiddenOrRemovedPost.comment);
             checkbox.setChecked(hiddenOrRemovedPost.isChecked());
 
+            Disposable activeRequestDisposable = activeImageLoadRequests.remove(postDescriptor);
+            if (activeRequestDisposable != null && !activeRequestDisposable.isDisposed()) {
+                activeRequestDisposable.dispose();
+            }
+
             if (hiddenOrRemovedPost.images.size() > 0) {
                 ChanPostImage image = hiddenOrRemovedPost.getImages().get(0);
                 HttpUrl thumbnailUrl = image.getThumbnailUrl();
@@ -284,11 +302,15 @@ public class RemovedPostsController
                 if (thumbnailUrl != null) {
                     // load only the first image
                     postImage.setVisibility(VISIBLE);
-                    loadImage(postImage, thumbnailUrl);
+
+                    Disposable disposable = loadImage(postImage, thumbnailUrl);
+                    activeImageLoadRequests.put(postDescriptor, disposable);
                 } else {
+                    postImage.setImageBitmap(null);
                     postImage.setVisibility(GONE);
                 }
             } else {
+                postImage.setImageBitmap(null);
                 postImage.setVisibility(GONE);
             }
 
@@ -298,7 +320,10 @@ public class RemovedPostsController
             return convertView;
         }
 
-        private void loadImage(AppCompatImageView postImage, HttpUrl thumbnailUrl) {
+        private Disposable loadImage(
+                AppCompatImageView postImage,
+                HttpUrl thumbnailUrl
+        ) {
             ImageLoaderV2.FailureAwareImageListener listener = new ImageLoaderV2.FailureAwareImageListener() {
                 @Override
                 public void onResponse(@NotNull BitmapDrawable drawable, boolean isImmediate) {
@@ -313,11 +338,13 @@ public class RemovedPostsController
                 @Override
                 public void onResponseError(@NotNull Throwable error) {
                     Logger.e(TAG, "Error while trying to download post image", error);
+
+                    postImage.setImageBitmap(null);
                     postImage.setVisibility(GONE);
                 }
             };
 
-            imageLoaderV2.loadFromNetwork(
+            return imageLoaderV2.loadFromNetwork(
                     getContext(),
                     thumbnailUrl.toString(),
                     CacheFileType.PostMediaThumbnail,

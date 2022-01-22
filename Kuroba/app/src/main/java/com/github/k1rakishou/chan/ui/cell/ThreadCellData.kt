@@ -93,12 +93,12 @@ class ThreadCellData(
         continue
       }
 
-      val postCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
+      val oldPostCellDataLazy = postCellDataLazyList.getOrNull(postCellDataIndex)
         ?: continue
 
       val updatedPostCellData = withContext(Dispatchers.Default) {
-        val postCellData = postCellDataLazy.getOrCalculate()
-        val postIndexed = PostIndexed(updatedPost, postCellData.postIndex)
+        val oldPostCellData = oldPostCellDataLazy.getOrCalculate()
+        val postIndexed = PostIndexed(updatedPost, oldPostCellData.postIndex)
 
         val updatedPostCellData = postIndexedListToLazyPostCellDataList(
           postCellCallback = postCellCallback!!,
@@ -106,7 +106,8 @@ class ThreadCellData(
           theme = currentTheme,
           postIndexedList = listOf(postIndexed),
           postDescriptors = listOf(updatedPost.postDescriptor),
-          postCellDataWidthNoPaddings = postCellData.postCellDataWidthNoPaddings
+          postCellDataWidthNoPaddings = oldPostCellData.postCellDataWidthNoPaddings,
+          oldPostCellData = oldPostCellData
         )
 
         // precalculate right away
@@ -158,7 +159,8 @@ class ThreadCellData(
         theme = theme,
         postIndexedList = postIndexedList,
         postDescriptors = postDescriptors,
-        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings
+        postCellDataWidthNoPaddings = postCellDataWidthNoPaddings,
+        oldPostCellData = null
       )
     }
 
@@ -224,7 +226,8 @@ class ThreadCellData(
     theme: ChanTheme,
     postIndexedList: List<PostIndexed>,
     postDescriptors: List<PostDescriptor>,
-    postCellDataWidthNoPaddings: Int
+    postCellDataWidthNoPaddings: Int,
+    oldPostCellData: PostCellData?
   ): List<PostCellDataLazy> {
     BackgroundUtils.ensureBackgroundThread()
 
@@ -303,7 +306,7 @@ class ThreadCellData(
           theme = chanTheme,
           postViewMode = postViewMode,
           markedPostNo = defaultMarkedNo,
-          showDivider = defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
+          showDivider = oldPostCellData?.showDivider ?: defaultShowDividerFunc.invoke(orderInList, totalPostsCount),
           compact = defaultIsCompact,
           boardPostViewMode = defaultBoardPostViewMode,
           boardPostsSortOrder = boardPostsSortOrder,

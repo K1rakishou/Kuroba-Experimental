@@ -692,9 +692,7 @@ class MediaViewerController(
     chanPost.repliesFromCopy.forEach { replyPostDescriptor ->
       val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
       if (replyPost != null) {
-        if (!postHideManager.hiddenOrRemoved(replyPost.postDescriptor)) {
-          posts.add(replyPost)
-        }
+        posts.add(replyPost)
       }
     }
 

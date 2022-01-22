@@ -1102,7 +1102,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="restore_posts">Restore posts</string>
     <string name="restored_n_posts">Restored %1$d posts</string>
-    <string name="no_removed_posts_for_current_thread">You have not removed any posts in this thread</string>
+    <string name="no_removed_posts_for_current_thread">No hidden/removed posts found</string>
+    <string name="no_removed_threads_for_current_catalog">No hidden/removed threads found</string>
     <string name="select_all">Select all</string>
 
     <!-- Captcha settings -->

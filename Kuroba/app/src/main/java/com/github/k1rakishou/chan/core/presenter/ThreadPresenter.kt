@@ -2215,9 +2215,7 @@ class ThreadPresenter @Inject constructor(
         repliesFromCopy.forEach { replyPostDescriptor ->
           val replyPost = chanThreadManager.findPostByPostDescriptor(replyPostDescriptor)
           if (replyPost != null) {
-            if (!postHideManager.hiddenOrRemoved(replyPostDescriptor)) {
-              posts.add(replyPost)
-            }
+            posts.add(replyPost)
           }
         }
 

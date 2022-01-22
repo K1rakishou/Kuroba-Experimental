@@ -14,7 +14,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import dagger.Lazy
-import java.util.*
 import javax.inject.Inject
 
 class RemovedPostsHelper(
@@ -39,11 +38,16 @@ class RemovedPostsHelper(
   fun showPosts(chanDescriptor: ChanDescriptor) {
     val resultPosts = getHiddenOrRemovedPosts(chanDescriptor)
     if (resultPosts.isEmpty()) {
-      AppModuleAndroidUtils.showToast(context, R.string.no_removed_posts_for_current_thread)
+      if (chanDescriptor is ChanDescriptor.ICatalogDescriptor) {
+        AppModuleAndroidUtils.showToast(context, R.string.no_removed_threads_for_current_catalog)
+      } else {
+        AppModuleAndroidUtils.showToast(context, R.string.no_removed_posts_for_current_thread)
+      }
+
       return
     }
 
-    Collections.sort(resultPosts) { o1, o2 -> o1.chanPost.postNo().compareTo(o2.chanPost.postNo()) }
+    resultPosts.sortBy { hiddenOrRemovedPost -> hiddenOrRemovedPost.chanPost.postNo() }
     present()
 
     if (resultPosts.isEmpty()) {
@@ -53,7 +57,7 @@ class RemovedPostsHelper(
     controller?.showRemovePosts(resultPosts)
   }
 
-  private fun getHiddenOrRemovedPosts(chanDescriptor: ChanDescriptor): List<HiddenOrRemovedPost> {
+  private fun getHiddenOrRemovedPosts(chanDescriptor: ChanDescriptor): MutableList<HiddenOrRemovedPost> {
     val postHideMap = when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
         val chanCatalogThreadDescriptors = chanThreadManager.getCatalogThreadDescriptors(chanDescriptor)
@@ -68,12 +72,12 @@ class RemovedPostsHelper(
     }
 
     if (postHideMap.isEmpty()) {
-      return emptyList()
+      return mutableListOf()
     }
 
     val chanPosts = chanThreadManager.getPosts(postHideMap.keys)
     if (chanPosts.isEmpty()) {
-      return emptyList()
+      return mutableListOf()
     }
 
     val hiddenOrRemovedPosts = mutableListWithCap<HiddenOrRemovedPost>(postHideMap.size)

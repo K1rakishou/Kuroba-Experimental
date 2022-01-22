@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableIteration
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
@@ -45,12 +46,30 @@ class PostHideHelper(
         val postFilterMap = postFilterManager.getManyPostFilters(postDescriptorSet)
         val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
 
+        Logger.d(TAG, "processPostFilters($chanDescriptor) start")
+
+
         val resultMap = processPostFiltersInternal(
           posts = posts,
           chanDescriptor = chanDescriptor,
           hiddenPostsLookupMap = hiddenPostsLookupMap,
           postFilterMap = postFilterMap
         )
+
+        var hiddenPostsCount = 0
+        var removedPostsCount = 0
+        var normalPostsCount = 0
+
+        for ((_, chanPostWithFilterResult) in resultMap.entries) {
+          when (chanPostWithFilterResult.postFilterResult) {
+            PostFilterResult.Hide -> ++hiddenPostsCount
+            PostFilterResult.Remove -> ++removedPostsCount
+            PostFilterResult.Leave -> ++normalPostsCount
+          }
+        }
+
+        Logger.d(TAG, "processPostFilters($chanDescriptor) end (hiddenPostsCount=$hiddenPostsCount, " +
+          "removedPostsCount=$removedPostsCount, normalPostsCount=$normalPostsCount, total=${resultMap.size})")
 
         resultMap.mutableIteration { mutableIterator, entry ->
           val chanPostWithFilterResult = entry.value

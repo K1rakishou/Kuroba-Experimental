@@ -55,10 +55,6 @@ class PostsFilter(
         return emptyList()
       }
 
-    Logger.d(TAG, "originalPosts.size=${postsCount}, " +
-      "retainedPosts.size=${retainedPosts.size}, " +
-      "chanDescriptor=$chanDescriptor")
-
     val indexedPosts = mutableListWithCap<PostIndexed>(retainedPosts.size)
 
     for ((index, retainedPost) in retainedPosts.withIndex()) {
