@@ -1962,6 +1962,8 @@ class ThreadPresenter @Inject constructor(
         return@post
       }
 
+      Logger.d(TAG, "onPostLinkableLongClicked, postDescriptor: ${post.postDescriptor}, linkable: '${linkable}'")
+
       val site = siteManager.bySiteDescriptor(post.postDescriptor.siteDescriptor())
         ?: return@post
 
@@ -2025,39 +2027,50 @@ class ThreadPresenter @Inject constructor(
         }
         PostLinkable.Type.LINK -> {
           val link = (linkable.linkableValue as? PostLinkable.Value.StringValue)?.value
-          if (link != null) {
-            floatingListMenuItems += createMenuItem(
-              menuItemId = COPY_LINK_VALUE,
-              stringId = R.string.action_copy_link_value,
-              value = link
-            )
+          if (link == null) {
+            Logger.e(TAG, "PostLinkable is not valid: linkableValue is not StringValue, linkableValue=${linkable.linkableValue}")
+            return@post
           }
+
+          floatingListMenuItems += createMenuItem(
+            menuItemId = COPY_LINK_VALUE,
+            stringId = R.string.action_copy_link_value,
+            value = link
+          )
         }
         PostLinkable.Type.THREAD -> {
           val threadLink = linkable.linkableValue as? PostLinkable.Value.ThreadOrPostLink
           if (threadLink != null) {
+            if (!threadLink.isValid()) {
+              Logger.e(TAG, "PostLinkable is not valid: threadLink = ${threadLink}")
+              return@post
+            }
+
             val boardDescriptor = BoardDescriptor.create(site.name(), threadLink.board)
             val board = boardManager.byBoardDescriptor(boardDescriptor)
 
-            if (board != null) {
-              val linkPostDescriptor = PostDescriptor.create(
-                site.name(),
-                threadLink.board,
-                threadLink.threadId,
-                threadLink.postId
-              )
-
-              val desktopUrl = site.resolvable().desktopUrl(
-                chanDescriptor = linkPostDescriptor.descriptor,
-                postNo = linkPostDescriptor.postNo
-              )
-
-              floatingListMenuItems += createMenuItem(
-                menuItemId = COPY_LINK_VALUE,
-                stringId = R.string.action_copy_link_value,
-                value = desktopUrl
-              )
+            if (board == null) {
+              Logger.e(TAG, "PostLinkable is not valid: board with descriptor ${boardDescriptor} is null")
+              return@post
             }
+
+            val linkPostDescriptor = PostDescriptor.create(
+              site.name(),
+              threadLink.board,
+              threadLink.threadId,
+              threadLink.postId
+            )
+
+            val desktopUrl = site.resolvable().desktopUrl(
+              chanDescriptor = linkPostDescriptor.descriptor,
+              postNo = linkPostDescriptor.postNo
+            )
+
+            floatingListMenuItems += createMenuItem(
+              menuItemId = COPY_LINK_VALUE,
+              stringId = R.string.action_copy_link_value,
+              value = desktopUrl
+            )
           }
         }
         PostLinkable.Type.BOARD -> {
@@ -2079,23 +2092,31 @@ class ThreadPresenter @Inject constructor(
         }
         PostLinkable.Type.SEARCH -> {
           val searchLink = linkable.linkableValue as? PostLinkable.Value.SearchLink
-          if (searchLink != null) {
-            val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
-              BoardDescriptor.create(site.name(), searchLink.board)
-            )
-
-            val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
-
-            floatingListMenuItems += createMenuItem(
-              menuItemId = COPY_LINK_VALUE,
-              stringId = R.string.action_copy_link_value,
-              value = desktopUrl
-            )
+          if (searchLink == null) {
+            Logger.e(TAG, "PostLinkable is not valid: searchLink is null")
+            return@post
           }
+
+          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+            BoardDescriptor.create(site.name(), searchLink.board)
+          )
+
+          val desktopUrl = site.resolvable().desktopUrl(catalogDescriptor, null)
+
+          floatingListMenuItems += createMenuItem(
+            menuItemId = COPY_LINK_VALUE,
+            stringId = R.string.action_copy_link_value,
+            value = desktopUrl
+          )
         }
         PostLinkable.Type.ARCHIVE -> {
           val archiveThreadLink = (linkable.linkableValue as? PostLinkable.Value.ArchiveThreadLink)
           if (archiveThreadLink != null) {
+            if (!archiveThreadLink.isValid()) {
+              Logger.e(TAG, "PostLinkable is not valid: archiveThreadLink = ${archiveThreadLink}")
+              return@post
+            }
+
             val archiveDescriptor = archivesManager.getArchiveDescriptorByArchiveType(
               archiveThreadLink.archiveType
             )

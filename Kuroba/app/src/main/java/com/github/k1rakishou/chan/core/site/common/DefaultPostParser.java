@@ -238,12 +238,12 @@ public class DefaultPostParser implements PostParser {
         }
 
         String boardCode = KotlinExtensionsKt.groupOrNull(matcher, 1);
-        if (TextUtils.isEmpty(boardCode)) {
+        if (boardCode == null || TextUtils.isEmpty(boardCode)) {
             return null;
         }
 
         String threadNoStr = KotlinExtensionsKt.groupOrNull(matcher, 2);
-        if (TextUtils.isEmpty(threadNoStr)) {
+        if (threadNoStr == null || TextUtils.isEmpty(threadNoStr)) {
             return null;
         }
 
@@ -253,7 +253,18 @@ public class DefaultPostParser implements PostParser {
             postNo = StringsKt.toLongOrNull(postNoStr);
         }
 
+        if (postNo == null) {
+            return null;
+        }
+
         Long threadNo = StringsKt.toLongOrNull(threadNoStr);
+        if (threadNo == null || threadNo <= 0) {
+            return null;
+        }
+
+        if (postNo <= 0) {
+            postNo = threadNo;
+        }
 
         PostLinkable.Value.ArchiveThreadLink archiveThreadLink = new PostLinkable.Value.ArchiveThreadLink(
                 archiveType,
