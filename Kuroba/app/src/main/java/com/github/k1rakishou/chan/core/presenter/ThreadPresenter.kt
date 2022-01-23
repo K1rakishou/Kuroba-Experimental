@@ -2195,9 +2195,15 @@ class ThreadPresenter @Inject constructor(
       return
     }
 
+    val pattern = if (selection.any { ch -> ch.isWhitespace() }) {
+      "\"${selection}\""
+    } else {
+      "/${selection}/"
+    }
+
     val chanFilterMutable = ChanFilterMutable()
     chanFilterMutable.type = FilterType.COMMENT.flag
-    chanFilterMutable.pattern = "/${selection}/"
+    chanFilterMutable.pattern = pattern
 
     threadPresenterCallback?.openFiltersController(chanFilterMutable)
   }
