@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 import android.content.Context;
@@ -136,7 +137,8 @@ public class RemovedPostsController
                     post.getPostDescriptor(),
                     post.getPostComment().comment(),
                     false,
-                    postHide.getOnlyHide()
+                    postHide.getOnlyHide(),
+                    postHide.getManuallyRestored()
             );
         }
 
@@ -186,19 +188,22 @@ public class RemovedPostsController
         private CharSequence comment;
         private boolean checked;
         private boolean isHidden;
+        private boolean manuallyRestored;
 
         public HiddenOrRemovedPost(
                 List<ChanPostImage> images,
                 PostDescriptor postDescriptor,
                 CharSequence comment,
                 boolean checked,
-                boolean isHidden
+                boolean isHidden,
+                boolean manuallyRestored
         ) {
             this.images = images;
             this.postDescriptor = postDescriptor;
             this.comment = comment;
             this.checked = checked;
             this.isHidden = isHidden;
+            this.manuallyRestored = manuallyRestored;
         }
 
         public void setChecked(boolean checked) {
@@ -271,18 +276,13 @@ public class RemovedPostsController
             postNo.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             postComment.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
 
-            String hiddenOrRemoved;
-            if (hiddenOrRemovedPost.isHidden) {
-                hiddenOrRemoved = "(Hidden)";
-            } else {
-                hiddenOrRemoved = "(Removed)";
-            }
+            StringBuilder additionalPostHideInfo = formatAdditionalPostHideInfo(hiddenOrRemovedPost);
 
             String postNoFormatted = String.format(
                     Locale.ENGLISH,
-                    "No. %d %s",
-                    hiddenOrRemovedPost.postDescriptor.getPostNo(),
-                    hiddenOrRemoved
+                    "%s\nNo. %d",
+                    additionalPostHideInfo.toString(),
+                    hiddenOrRemovedPost.postDescriptor.getPostNo()
             );
 
             postNo.setText(postNoFormatted);
@@ -318,6 +318,28 @@ public class RemovedPostsController
             viewHolder.setOnClickListener(v -> onItemClick(position));
 
             return convertView;
+        }
+
+        @NonNull
+        private StringBuilder formatAdditionalPostHideInfo(HiddenOrRemovedPost hiddenOrRemovedPost) {
+            StringBuilder additionalPostHideInfo = new StringBuilder();
+            additionalPostHideInfo.append("(");
+
+            if (hiddenOrRemovedPost.isHidden) {
+                additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_hidden));
+            } else {
+                additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_removed));
+            }
+
+            if (hiddenOrRemovedPost.manuallyRestored) {
+                additionalPostHideInfo
+                        .append(", ")
+                        .append(getString(R.string.hidden_or_removed_posts_post_manually_restored));
+            }
+
+            additionalPostHideInfo.append(")");
+
+            return additionalPostHideInfo;
         }
 
         private Disposable loadImage(

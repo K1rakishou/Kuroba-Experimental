@@ -1532,6 +1532,10 @@ Actual error: \'%1$s\'</string>
     <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (Optional. Will fetch image tags to filter out images matching banned tags)</string>
     <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (Optional if \'Image tags json key\' is not set. Must be whitespace separated)</string>
 
+    <string name="hidden_or_removed_posts_post_hidden">Hidden</string>
+    <string name="hidden_or_removed_posts_post_removed">Removed</string>
+    <string name="hidden_or_removed_posts_post_manually_restored">Manually restored</string>
+
     <string name="not_allowed_during_halloween">You are not allowed to do this</string>
     <string name="setting_show_prefetch_loading_indicator_title">Show loading indicator for prefetching images</string>
     <string name="epoxy_no_settings_found_by_query">No settings were found by query \"%1$s\"</string>

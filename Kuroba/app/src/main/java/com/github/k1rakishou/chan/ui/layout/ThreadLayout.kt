@@ -1049,23 +1049,7 @@ class ThreadLayout @JvmOverloads constructor(
 
       presenter.reparsePostsWithReplies(selectedPosts) { totalPostsWithReplies ->
         postFilterManager.removeMany(totalPostsWithReplies)
-
-        postHideManager.updateMany(
-          postDescriptors = totalPostsWithReplies,
-          updater = { postDescriptor, oldChanPostHide ->
-            if (oldChanPostHide == null) {
-              return@updateMany ChanPostHide(
-                postDescriptor = postDescriptor,
-                onlyHide = true,
-                applyToWholeThread = false,
-                applyToReplies = false,
-                manuallyRestored = true
-              )
-            }
-
-            return@updateMany oldChanPostHide.copy(manuallyRestored = true)
-          }
-        )
+        postHideManager.removeManyChanPostHides(selectedPosts)
       }
 
       SnackbarWrapper.create(

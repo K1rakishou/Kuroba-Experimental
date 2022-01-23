@@ -62,12 +62,16 @@ class RemovedPostsHelper(
       is ChanDescriptor.ICatalogDescriptor -> {
         val chanCatalogThreadDescriptors = chanThreadManager.getCatalogThreadDescriptors(chanDescriptor)
 
-        postHideManager.getHiddenPostsForCatalog(chanCatalogThreadDescriptors)
-          .associateBy { chanPostHide -> chanPostHide.postDescriptor }
+        postHideManager.getHiddenPostsForCatalog(
+          threadDescriptors = chanCatalogThreadDescriptors,
+          filterManuallyRestored = false
+        ).associateBy { chanPostHide -> chanPostHide.postDescriptor }
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        postHideManager.getHiddenPostsForThread(chanDescriptor)
-          .associateBy { chanPostHide -> chanPostHide.postDescriptor }
+        postHideManager.getHiddenPostsForThread(
+          threadDescriptor = chanDescriptor,
+          filterManuallyRestored = false
+        ).associateBy { chanPostHide -> chanPostHide.postDescriptor }
       }
     }
 
