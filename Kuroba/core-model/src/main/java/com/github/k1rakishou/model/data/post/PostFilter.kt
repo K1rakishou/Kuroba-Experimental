@@ -22,6 +22,10 @@ data class PostFilter(
     onlyOP: Boolean? = null,
     saved: Boolean? = null
   ) {
+    if (stub != null && remove != null && stub && remove) {
+      error("Cannot both stub and remove post at the same time!")
+    }
+
     if (enable != null) {
       filterEnabled = enable
     }
@@ -32,10 +36,18 @@ data class PostFilter(
 
     if (stub != null) {
       filterStub = stub
+
+      if (stub) {
+        filterRemove = false
+      }
     }
 
     if (remove != null) {
       filterRemove = remove
+
+      if (remove) {
+        filterStub = false
+      }
     }
 
     if (watch != null) {

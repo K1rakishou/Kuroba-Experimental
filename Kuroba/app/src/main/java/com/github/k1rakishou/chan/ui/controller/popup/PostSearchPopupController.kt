@@ -228,7 +228,7 @@ class PostSearchPopupController(
       totalFoundTextView.text = context.getString(R.string.search_found_count, resultPosts.size)
     }
 
-    val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, resultPosts)
+    val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, resultPosts, mutableSetOf())
       .safeUnwrap { error ->
         Logger.e(TAG, "postHideHelper.filterHiddenPosts error", error)
         return

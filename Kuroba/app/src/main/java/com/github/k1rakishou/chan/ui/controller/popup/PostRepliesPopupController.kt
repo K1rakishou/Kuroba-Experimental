@@ -105,7 +105,7 @@ class PostRepliesPopupController(
     mainScope.launch {
       postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
 
-      val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, data.posts)
+      val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, data.posts, mutableSetOf())
         .safeUnwrap { error ->
           Logger.e(TAG, "postHideHelper.filterHiddenPosts error", error)
           return@launch

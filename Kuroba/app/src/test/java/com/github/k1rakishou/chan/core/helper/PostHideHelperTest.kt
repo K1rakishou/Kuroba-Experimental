@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.helper
 
 import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
+import com.github.k1rakishou.common.toHashMapBy
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
@@ -9,6 +10,7 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.PostComment
+import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.data.post.PostFilterResult
 import junit.framework.Assert.assertEquals
 import org.junit.Test
@@ -25,7 +27,7 @@ class PostHideHelperTest {
 
   @Test
   fun simpleTest() {
-    val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+    val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
     val resultMap = postHideHelper.processPostFiltersInternal(
       posts = listOf(createPost(postNo = 1)),
@@ -55,7 +57,7 @@ class PostHideHelperTest {
         }
         .build()
 
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       val resultMap = postHideHelper.processPostFiltersInternal(
         posts = posts,
@@ -87,7 +89,7 @@ class PostHideHelperTest {
         }
         .build()
 
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       val resultMap = postHideHelper.processPostFiltersInternal(
         posts = posts,
@@ -114,7 +116,7 @@ class PostHideHelperTest {
       posts += createPost(postNo = 2)
       posts += createPost(postNo = 3)
 
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       val resultMap = postHideHelper.processPostFiltersInternal(
         posts = posts,
@@ -139,29 +141,9 @@ class PostHideHelperTest {
 
   @Test
   fun shouldBeAbleToHideOrRemoveAllPostsInDiamondReplyChain() {
-    /**
-     *                 child post 3
-     *               /              \
-     * parent post 2                 child post 5
-     *               \              /
-     *                 child post 4
-     * */
-
     hideRemoveTest { postFilterResult, onlyHide ->
-      val posts = ReplyChainBuilder()
-        .post(createPost(postNo = 1))
-        .post(createPost(postNo = 2))
-        .childPosts {
-          parentPosts(
-            createPost(postNo = 3),
-            createPost(postNo = 4)
-          ) {
-            post(createPost(postNo = 5))
-          }
-        }
-        .build()
-
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val posts = createReplyChain()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       val resultMap = postHideHelper.processPostFiltersInternal(
         posts = posts,
@@ -188,29 +170,9 @@ class PostHideHelperTest {
 
   @Test
   fun shouldNotBeAbleToRemoveChildPostsOfPostThatHasApplyToRepliesSetToFalseInDiamondReplyChain() {
-    /**
-     *                 child post 3
-     *               /              \
-     * parent post 2                 child post 5
-     *               \              /
-     *                 child post 4
-     * */
-
     hideRemoveTest { postFilterResult, onlyHide ->
-      val posts = ReplyChainBuilder()
-        .post(createPost(postNo = 1))
-        .post(createPost(postNo = 2))
-        .childPosts {
-          parentPosts(
-            createPost(postNo = 3),
-            createPost(postNo = 4)
-          ) {
-            post(createPost(postNo = 5))
-          }
-        }
-        .build()
-
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val posts = createReplyChain()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       val resultMap = postHideHelper.processPostFiltersInternal(
         posts = posts,
@@ -237,29 +199,9 @@ class PostHideHelperTest {
 
   @Test
   fun shouldOnlyBeAbleToHideOrRemoveChildPostsIfParentPostHasManuallyRestoredSetToTrue() {
-    /**
-     *                 child post 3
-     *               /              \
-     * parent post 2                 child post 5
-     *               \              /
-     *                 child post 4
-     * */
-
     hideRemoveTest { postFilterResult, onlyHide ->
-      val posts = ReplyChainBuilder()
-        .post(createPost(postNo = 1))
-        .post(createPost(postNo = 2))
-        .childPosts {
-          parentPosts(
-            createPost(postNo = 3),
-            createPost(postNo = 4)
-          ) {
-            post(createPost(postNo = 5))
-          }
-        }
-        .build()
-
-      val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+      val posts = createReplyChain()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
 
       // Step 1: hide the 2 post with all it's replies
       var resultMap = postHideHelper.processPostFiltersInternal(
@@ -310,19 +252,131 @@ class PostHideHelperTest {
     }
   }
 
+  @Test
+  fun shouldHideOrRemoveOnlyOnePostByPostFilter() {
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = createReplyChain()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
+
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
+        chanDescriptor = threadDescriptor,
+        hiddenPostsLookupMap = mutableMapOf(),
+        postFilterMap = postFilters(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(2),
+          mapper = { postFilter ->
+            postFilter.update(stub = onlyHide, remove = !onlyHide)
+            postFilter
+          }
+        ),
+        newChanPostHides = newChanPostHides
+      )
+
+      assertEquals(5, resultMap.size)
+      assertEquals(1, newChanPostHides.size)
+
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+    }
+  }
+
+  @Test
+  fun shouldHideOrRemovePostWithRepliesByPostFilter() {
+    hideRemoveTest { postFilterResult, onlyHide ->
+      val posts = createReplyChain()
+      val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
+
+      val resultMap = postHideHelper.processPostFiltersInternal(
+        posts = posts,
+        chanDescriptor = threadDescriptor,
+        hiddenPostsLookupMap = mutableMapOf(),
+        postFilterMap = postFilters(
+          chanDescriptor = threadDescriptor,
+          postNos = listOf(2),
+          mapper = { postFilter ->
+            postFilter.update(stub = onlyHide, remove = !onlyHide, replies = true)
+            postFilter
+          }
+        ),
+        newChanPostHides = newChanPostHides
+      )
+
+      assertEquals(5, resultMap.size)
+      assertEquals(4, newChanPostHides.size)
+
+      assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(3)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(4)]!!.postFilterResult)
+      assertEquals(postFilterResult, resultMap[threadDescriptor.postDescriptor(5)]!!.postFilterResult)
+    }
+  }
+
+  /**
+   *                   post 3
+   *                 /        \
+   * post 1 - post 2            post 5
+   *                 \        /
+   *                   post 4
+   *
+   * Post 5 replies to posts 3 and 4.
+   * Posts 3 and 4 reply to post 2.
+   * Post 1 and 2 do not reply to any other posts.
+   * */
+  private fun createReplyChain(): List<ChanPost> {
+    return ReplyChainBuilder()
+      .post(createPost(postNo = 1))
+      .post(createPost(postNo = 2))
+      .childPosts {
+        parentPosts(
+          createPost(postNo = 3),
+          createPost(postNo = 4)
+        ) {
+          post(createPost(postNo = 5))
+        }
+      }
+      .build()
+  }
+
   private fun hideRemoveTest(func: (PostFilterResult, Boolean) -> Unit) {
     func(PostFilterResult.Hide, true)
     func(PostFilterResult.Remove, false)
   }
 
+  private fun postFilters(
+    postNos: List<Long>,
+    chanDescriptor: ChanDescriptor,
+    mapper: ((PostFilter) -> PostFilter)? = null
+  ): Map<PostDescriptor, PostFilter> {
+    val resultMap = mutableMapOf<PostDescriptor, PostFilter>()
+
+    if (postNos.isEmpty()) {
+      return resultMap
+    }
+
+    postNos.forEach { postNo ->
+      val postDescriptor = chanDescriptor.postDescriptor(postNo)
+      val chanPostHide = PostFilter(ownerFilterId = null, filterEnabled = true)
+
+      val updatedChanPostHide = mapper?.invoke(chanPostHide) ?: chanPostHide
+      resultMap[postDescriptor] = updatedChanPostHide
+    }
+
+    return resultMap
+  }
+
   private fun hiddenPosts(
-    newChanPostHides: MutableMap<PostDescriptor, ChanPostHide> = mutableMapOf(),
+    newChanPostHides: MutableMap<PostDescriptor, PostHideHelper.ChanPostHideWrapper> = mutableMapOf(),
     chanDescriptor: ChanDescriptor,
     postNos: List<Long>,
     mapper: ((ChanPostHide) -> ChanPostHide)? = null
-  ): Map<PostDescriptor, ChanPostHide> {
+  ): MutableMap<PostDescriptor, ChanPostHide> {
     val resultMap = mutableMapOf<PostDescriptor, ChanPostHide>()
-    resultMap.putAll(newChanPostHides)
+    resultMap.putAll(newChanPostHides.entries.toHashMapBy(keySelector = { it.key }, valueSelector = { it.value.chanPostHide }))
 
     if (postNos.isEmpty()) {
       return resultMap

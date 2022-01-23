@@ -38,14 +38,15 @@ class PostHideHelper(
    */
   suspend fun processPostFilters(
     chanDescriptor: ChanDescriptor,
-    posts: List<ChanPost>
+    posts: List<ChanPost>,
+    additionalPostsToReparse: MutableSet<PostDescriptor>
   ): ModularResult<List<ChanPost>> {
     return withContext(Dispatchers.IO) {
       return@withContext ModularResult.Try {
         val postDescriptorSet = posts.map { post -> post.postDescriptor }.toSet()
         val postFilterMap = postFilterManager.getManyPostFilters(postDescriptorSet)
-        val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet)
-        val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHide>()
+        val hiddenPostsLookupMap = postHideManager.getHiddenPostsMap(postDescriptorSet).toMutableMap()
+        val newChanPostHides = mutableMapOf<PostDescriptor, ChanPostHideWrapper>()
 
         Logger.d(TAG, "processPostFilters($chanDescriptor) start")
 
@@ -58,7 +59,20 @@ class PostHideHelper(
         )
 
         if (chanDescriptor is ChanDescriptor.ThreadDescriptor && newChanPostHides.isNotEmpty()) {
-          postHideManager.createOrUpdateMany(newChanPostHides.values)
+          val chanPostHides = newChanPostHides.values.map { it.chanPostHide }
+          postHideManager.createOrUpdateMany(chanPostHides)
+
+          val postDescriptors = newChanPostHides.values.mapNotNull { chanPostHideWrapper ->
+            if (!chanPostHideWrapper.createdByFilter) {
+              return@mapNotNull null
+            }
+
+            return@mapNotNull chanPostHideWrapper.chanPostHide.postDescriptor
+          }.toSet()
+
+          if (postDescriptors.isNotEmpty()) {
+            additionalPostsToReparse.addAll(postDescriptors)
+          }
         }
 
         var hiddenPostsCount = 0
@@ -105,9 +119,9 @@ class PostHideHelper(
   fun processPostFiltersInternal(
     posts: List<ChanPost>,
     chanDescriptor: ChanDescriptor,
-    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
+    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>,
     postFilterMap: Map<PostDescriptor, PostFilter>,
-    newChanPostHides: MutableMap<PostDescriptor, ChanPostHide>,
+    newChanPostHides: MutableMap<PostDescriptor, ChanPostHideWrapper>,
   ): MutableMap<PostDescriptor, ChanPostWithFilterResult> {
     val resultMap = linkedMapWithCap<PostDescriptor, ChanPostWithFilterResult>(posts.size)
     val processingCatalog = chanDescriptor is ChanDescriptor.ICatalogDescriptor
@@ -134,6 +148,23 @@ class PostHideHelper(
         canRemoveThisPost -> PostFilterResult.Remove
         canHideThisPost -> PostFilterResult.Hide
         else -> PostFilterResult.Leave
+      }
+
+      if ((canHideThisPost || canRemoveThisPost) && postHide == null && postFilter != null) {
+        @Suppress("RedundantIf") val onlyHide = if ((canHideThisPost && canRemoveThisPost) || canRemoveThisPost) {
+          false
+        } else {
+          true
+        }
+
+        createNewChanPostHide(
+          postFilter = postFilter,
+          postDescriptor = postDescriptor,
+          newChanPostHides = newChanPostHides,
+          hiddenPostsLookupMap = hiddenPostsLookupMap,
+          onlyHide = onlyHide,
+          applyToReplies = postFilter.replies
+        )
       }
 
       resultMap[postDescriptor] = ChanPostWithFilterResult(
@@ -163,7 +194,8 @@ class PostHideHelper(
         for (targetPostDescriptor in sourcePost.repliesTo) {
           val targetPostHide = findParentNonNullPostHide(
             postDescriptor = targetPostDescriptor,
-            postHideMap = hiddenPostsLookupMap,
+            hiddenPostsLookupMap = hiddenPostsLookupMap,
+            newChanPostHides = newChanPostHides,
             postMap = postsFastLookupMap
           )
 
@@ -189,15 +221,14 @@ class PostHideHelper(
 
           val onlyHide = targetChanPostWithFilterResult.postFilterResult == PostFilterResult.Hide
 
-          if (newChanPostHides[sourcePostDescriptor]?.manuallyRestored != true) {
-            newChanPostHides[sourcePostDescriptor] = ChanPostHide(
-              postDescriptor = sourcePostDescriptor,
-              onlyHide = onlyHide,
-              applyToWholeThread = false,
-              applyToReplies = applyToReplies,
-              manuallyRestored = false
-            )
-          }
+          createNewChanPostHide(
+            postFilter = targetPostFilter,
+            postDescriptor = sourcePostDescriptor,
+            newChanPostHides = newChanPostHides,
+            hiddenPostsLookupMap = hiddenPostsLookupMap,
+            onlyHide = onlyHide,
+            applyToReplies = applyToReplies
+          )
 
           sourceChanPostWithFilterResult.postFilterResult = targetChanPostWithFilterResult.postFilterResult
           break
@@ -208,12 +239,49 @@ class PostHideHelper(
     return resultMap
   }
 
+  private fun createNewChanPostHide(
+    postFilter: PostFilter?,
+    postDescriptor: PostDescriptor,
+    newChanPostHides: MutableMap<PostDescriptor, ChanPostHideWrapper>,
+    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>,
+    onlyHide: Boolean,
+    applyToReplies: Boolean,
+  ) {
+    if (newChanPostHides[postDescriptor]?.chanPostHide?.manuallyRestored == true) {
+      return
+    }
+
+    if (newChanPostHides.containsKey(postDescriptor)) {
+      return
+    }
+
+    val chanPostHide = ChanPostHide(
+      postDescriptor = postDescriptor,
+      onlyHide = onlyHide,
+      applyToWholeThread = false,
+      applyToReplies = applyToReplies,
+      manuallyRestored = false
+    )
+
+    newChanPostHides[postDescriptor] = ChanPostHideWrapper(
+      chanPostHide = chanPostHide,
+      createdByFilter = postFilter != null
+    )
+    hiddenPostsLookupMap[postDescriptor] = chanPostHide
+  }
+
   private fun findParentNonNullPostHide(
     postDescriptor: PostDescriptor,
-    postHideMap: Map<PostDescriptor, ChanPostHide>,
+    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
+    newChanPostHides: Map<PostDescriptor, ChanPostHideWrapper>,
     postMap: Map<PostDescriptor, ChanPost>
   ): ChanPostHide? {
-    val chanPostHide = postHideMap[postDescriptor]
+    var chanPostHide = hiddenPostsLookupMap[postDescriptor]
+    if (chanPostHide != null) {
+      return chanPostHide
+    }
+
+    chanPostHide = newChanPostHides[postDescriptor]?.chanPostHide
     if (chanPostHide != null) {
       return chanPostHide
     }
@@ -226,7 +294,8 @@ class PostHideHelper(
     for (targetPostDescriptor in chanPost.repliesTo) {
       val parentChanPostHide = findParentNonNullPostHide(
         postDescriptor = targetPostDescriptor,
-        postHideMap = postHideMap,
+        hiddenPostsLookupMap = hiddenPostsLookupMap,
+        newChanPostHides = newChanPostHides,
         postMap = postMap
       )
 
@@ -248,7 +317,7 @@ class PostHideHelper(
       return false
     }
 
-    val attemptingToRemove = (postFilter?.remove == true) || (postHide?.onlyHide == false)
+    val attemptingToRemove = (postFilter?.enabled == true && postFilter.remove) || (postHide?.onlyHide == false)
     if (!attemptingToRemove) {
       return false
     }
@@ -257,8 +326,6 @@ class PostHideHelper(
       if (postHide.manuallyRestored) {
         return false
       }
-
-      return true
     }
 
     if (post.isOP()) {
@@ -269,7 +336,7 @@ class PostHideHelper(
       return false
     }
 
-    return false
+    return true
   }
 
   private fun canHidePost(
@@ -282,7 +349,7 @@ class PostHideHelper(
       return false
     }
 
-    val attemptingToHide = (postFilter?.stub == true) || (postHide?.onlyHide == true)
+    val attemptingToHide = (postFilter?.enabled == true && postFilter.stub) || (postHide?.onlyHide == true)
     if (!attemptingToHide) {
       return false
     }
@@ -291,8 +358,6 @@ class PostHideHelper(
       if (postHide.manuallyRestored) {
         return false
       }
-
-      return true
     }
 
     if (post.isOP()) {
@@ -303,8 +368,13 @@ class PostHideHelper(
       return false
     }
 
-    return false
+    return true
   }
+
+  class ChanPostHideWrapper(
+    val chanPostHide: ChanPostHide,
+    val createdByFilter: Boolean
+  )
 
   companion object {
     private const val TAG = "PostHideHelper"

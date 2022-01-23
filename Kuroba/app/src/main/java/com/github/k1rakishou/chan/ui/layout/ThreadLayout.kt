@@ -83,7 +83,6 @@ import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -92,7 +91,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import com.github.k1rakishou.model.data.filter.FilterType
 import com.github.k1rakishou.model.data.options.ChanCacheUpdateOptions
-import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostHide
 import com.github.k1rakishou.model.data.post.ChanPostImage
@@ -110,7 +108,6 @@ import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
@@ -465,7 +462,8 @@ class ThreadLayout @JvmOverloads constructor(
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
     filter: PostsFilter,
-    refreshPostPopupHelperPosts: Boolean
+    refreshPostPopupHelperPosts: Boolean,
+    additionalPostsToReparse: MutableSet<PostDescriptor>
   ) {
     if (descriptor == null) {
       Logger.d(TAG, "showPostsForChanDescriptor() descriptor==null")
@@ -480,8 +478,9 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val (showPostsResult, totalDuration) = measureTimedValue {
-      threadListLayout.showPosts(loadView.width, descriptor, filter, initial)
+      threadListLayout.showPosts(loadView.width, descriptor, filter, initial, additionalPostsToReparse)
     }
+
     val applyFilterDuration = showPostsResult.applyFilterDuration
     val setThreadPostsDuration = showPostsResult.setThreadPostsDuration
 
@@ -982,7 +981,7 @@ class ThreadLayout @JvmOverloads constructor(
       }
 
       postHideManager.createOrUpdateMany(hideList)
-      reparsePosts(resultPostDescriptors)
+      presenter.reparsePostsWithReplies(resultPostDescriptors)
 
       val formattedString = if (hide) {
         getQuantityString(R.plurals.post_hidden, postDescriptors.size, postDescriptors.size)
@@ -1000,7 +999,7 @@ class ThreadLayout @JvmOverloads constructor(
       ).apply {
         setAction(R.string.undo) {
           serializedCoroutineExecutor.post {
-            reparsePosts(resultPostDescriptors) { totalPostsWithReplies ->
+            presenter.reparsePostsWithReplies(resultPostDescriptors) { totalPostsWithReplies ->
               postFilterManager.removeMany(totalPostsWithReplies)
               postHideManager.removeManyChanPostHides(totalPostsWithReplies)
             }
@@ -1014,7 +1013,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   override fun unhideOrUnremovePost(post: ChanPost) {
     serializedCoroutineExecutor.post {
-      reparsePosts(listOf(post.postDescriptor)) { totalPostsWithReplies ->
+      presenter.reparsePostsWithReplies(listOf(post.postDescriptor)) { totalPostsWithReplies ->
         postFilterManager.removeMany(totalPostsWithReplies)
 
         postHideManager.update(
@@ -1048,7 +1047,7 @@ class ThreadLayout @JvmOverloads constructor(
     serializedCoroutineExecutor.post {
       val type = threadControllerType ?: return@post
 
-      reparsePosts(selectedPosts) { totalPostsWithReplies ->
+      presenter.reparsePostsWithReplies(selectedPosts) { totalPostsWithReplies ->
         postFilterManager.removeMany(totalPostsWithReplies)
 
         postHideManager.updateMany(
@@ -1078,35 +1077,6 @@ class ThreadLayout @JvmOverloads constructor(
         Snackbar.LENGTH_LONG
       ).apply { show(type) }
     }
-  }
-
-  private suspend fun reparsePosts(
-    postDescriptors: Collection<PostDescriptor>,
-    func: (suspend (Collection<PostDescriptor>) -> Unit)? = null
-  ) {
-    val totalPostsWithReplies = withContext(Dispatchers.Default) {
-      val totalPostsWithReplies = hashSetWithCap<PostDescriptor>(16)
-
-      postDescriptors.forEach { postDescriptor ->
-        totalPostsWithReplies += chanThreadManager.findPostWithReplies(
-          postDescriptor = postDescriptor,
-          includeRepliesFrom = true,
-          includeRepliesTo = true,
-          maxRecursion = 1
-        ).map { it.postDescriptor }
-      }
-
-      return@withContext totalPostsWithReplies
-    }
-
-    func?.invoke(totalPostsWithReplies)
-
-    presenter.normalLoad(
-      showLoading = false,
-      chanLoadOptions = ChanLoadOptions.forceUpdatePosts(totalPostsWithReplies.toSet()),
-      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
-      refreshPostPopupHelperPosts = true
-    )
   }
 
   override suspend fun onPostsUpdated(updatedPosts: List<ChanPost>) {

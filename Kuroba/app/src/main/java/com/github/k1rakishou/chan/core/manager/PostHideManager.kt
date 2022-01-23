@@ -297,7 +297,10 @@ open class PostHideManager(
     }
   }
 
-  fun getHiddenPostsForCatalog(threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>): List<ChanPostHide> {
+  fun getHiddenPostsForCatalog(
+    threadDescriptors: Collection<ChanDescriptor.ThreadDescriptor>,
+    filterManuallyRestored: Boolean = true
+  ): List<ChanPostHide> {
     val chanPostHideList = mutableListOf<ChanPostHide>()
 
     lock.read {
@@ -307,7 +310,7 @@ open class PostHideManager(
         val chanPostHide = innerMap[threadDescriptor.toOriginalPostDescriptor()]
           ?: continue
 
-        if (chanPostHide.manuallyRestored) {
+        if (filterManuallyRestored && chanPostHide.manuallyRestored) {
           continue
         }
 
@@ -319,12 +322,15 @@ open class PostHideManager(
   }
 
 
-  fun getHiddenPostsForThread(threadDescriptor: ChanDescriptor.ThreadDescriptor): List<ChanPostHide> {
+  fun getHiddenPostsForThread(
+    threadDescriptor: ChanDescriptor.ThreadDescriptor,
+    filterManuallyRestored: Boolean = true
+  ): List<ChanPostHide> {
     val chanPostHideList = mutableListOf<ChanPostHide>()
 
     lock.read {
       postHideMap[threadDescriptor]?.values?.forEach { chanPostHide ->
-        if (chanPostHide.manuallyRestored) {
+        if (filterManuallyRestored && chanPostHide.manuallyRestored) {
           return@forEach
         }
 

@@ -627,7 +627,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerViewWidth: Int,
     descriptor: ChanDescriptor,
     filter: PostsFilter,
-    initial: Boolean
+    initial: Boolean,
+    additionalPostsToReparse: MutableSet<PostDescriptor>
   ): ShowPostsResult {
     val presenter = threadPresenter
     if (presenter == null) {
@@ -655,7 +656,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
     val (filteredPosts, applyFilterDuration) = measureTimedValue {
-      filter.applyFilter(descriptor, posts)
+      filter.applyFilter(descriptor, posts, additionalPostsToReparse)
     }
 
     val chanDescriptor = currentChanDescriptorOrNull()

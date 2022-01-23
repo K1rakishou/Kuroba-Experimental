@@ -65,6 +65,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.bidirectionalSequence
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -1633,9 +1634,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     if (!inPopup && (chanDescriptor.isCatalogDescriptor() || (chanDescriptor.isThreadDescriptor() && !post.postDescriptor.isOP()))) {
-      if (!postFilterManager.getFilterStub(post.postDescriptor)) {
-        menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
-      }
+      menu.add(createMenuItem(POST_OPTION_HIDE, R.string.post_hide))
       menu.add(createMenuItem(POST_OPTION_REMOVE, R.string.post_remove))
     }
 
@@ -2655,6 +2654,10 @@ class ThreadPresenter @Inject constructor(
 
     val order = PostsFilter.Order.find(ChanSettings.boardOrder.get())
 
+    // When processing filters which create new post hides we need to reparse those posts so that
+    // their replies have the correct postlinkable types (QUOTE_TO_HIDDEN_OR_REMOVED_POST)
+    val additionalPostsToReparse = mutableSetOf<PostDescriptor>()
+
     threadPresenterCallback?.showPostsForChanDescriptor(
       descriptor = descriptor,
       filter = PostsFilter(
@@ -2662,9 +2665,51 @@ class ThreadPresenter @Inject constructor(
         postHideHelper = postHideHelper,
         order = order
       ),
-      refreshPostPopupHelperPosts = refreshPostPopupHelperPosts
+      refreshPostPopupHelperPosts = refreshPostPopupHelperPosts,
+      additionalPostsToReparse = additionalPostsToReparse
+    )
+
+    if (additionalPostsToReparse.isNotEmpty()) {
+      Logger.d(TAG, "showPosts() additionalPostsToReparse=${additionalPostsToReparse.size}")
+
+      // God I hope this won't cause an infinite recursion
+      reparsePostsWithReplies(additionalPostsToReparse)
+    }
+  }
+
+  suspend fun reparsePostsWithReplies(
+    postDescriptors: Collection<PostDescriptor>,
+    func: (suspend (Collection<PostDescriptor>) -> Unit)? = null
+  ) {
+    val totalPostsWithReplies = withContext(Dispatchers.Default) {
+      val totalPostsWithReplies = hashSetWithCap<PostDescriptor>(16)
+
+      postDescriptors.forEach { postDescriptor ->
+        totalPostsWithReplies += chanThreadManager.findPostWithReplies(
+          postDescriptor = postDescriptor,
+          includeRepliesFrom = true,
+          includeRepliesTo = true,
+          maxRecursion = 1
+        ).map { it.postDescriptor }
+      }
+
+      return@withContext totalPostsWithReplies
+    }
+
+    Logger.d(TAG, "reparsePostsWithReplies() " +
+      "postDescriptorsCount=${postDescriptors.size}, " +
+      "totalPostsWithRepliesCount=${totalPostsWithReplies.size}")
+
+    func?.invoke(totalPostsWithReplies)
+
+    normalLoad(
+      showLoading = false,
+      chanLoadOptions = ChanLoadOptions.forceUpdatePosts(totalPostsWithReplies.toSet()),
+      chanCacheUpdateOptions = ChanCacheUpdateOptions.DoNotUpdateCache,
+      refreshPostPopupHelperPosts = true
     )
   }
+
 
   fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean) {
     val chanDescriptor = currentChanDescriptor
@@ -2812,7 +2857,12 @@ class ThreadPresenter @Inject constructor(
     val displayingPostDescriptorsInThread: List<PostDescriptor>
     val currentPosition: IndexAndTop?
 
-    suspend fun showPostsForChanDescriptor(descriptor: ChanDescriptor?, filter: PostsFilter, refreshPostPopupHelperPosts: Boolean)
+    suspend fun showPostsForChanDescriptor(
+      descriptor: ChanDescriptor?,
+      filter: PostsFilter,
+      refreshPostPopupHelperPosts: Boolean,
+      additionalPostsToReparse: MutableSet<PostDescriptor>
+    )
     fun postClicked(postDescriptor: PostDescriptor)
     fun hideError(chanDescriptor: ChanDescriptor)
     fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException)
