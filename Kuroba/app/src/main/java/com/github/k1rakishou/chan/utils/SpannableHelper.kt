@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.ELLIPSIZE_SYMBOL
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_spannable.BackgroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
 import com.github.k1rakishou.core_spannable.PostFilterHighlightBackgroundSpan
@@ -52,7 +53,7 @@ object SpannableHelper {
         val start = message.getSpanStart(span)
         val end = message.getSpanEnd(span)
 
-        message.setSpan(BackgroundColorSpan(spanBgColor), start, end, 0)
+        message.setSpanSafe(BackgroundColorSpan(spanBgColor), start, end, 0)
       }
     }
 
@@ -62,7 +63,7 @@ object SpannableHelper {
         val start = message.getSpanStart(span)
         val end = message.getSpanEnd(span)
 
-        message.setSpan(BackgroundColorSpan(spanBgColor), start, end, 0)
+        message.setSpanSafe(BackgroundColorSpan(spanBgColor), start, end, 0)
       }
     }
 
@@ -169,7 +170,7 @@ object SpannableHelper {
       }
 
       spans.forEach { spanToAdd ->
-        spannableString.setSpan(spanToAdd.span, spanToAdd.position, spanToAdd.position + spanToAdd.length, 0)
+        spannableString.setSpanSafe(spanToAdd.span, spanToAdd.position, spanToAdd.position + spanToAdd.length, 0)
       }
     }
 
@@ -188,8 +189,8 @@ object SpannableHelper {
         Color.DKGRAY
       }
 
-      spannableString.setSpan(PostSearchQueryBackgroundSpan(bgColor), start, end, 0)
-      spannableString.setSpan(PostSearchQueryForegroundSpan(textColor), start, end, 0)
+      spannableString.setSpanSafe(PostSearchQueryBackgroundSpan(bgColor), start, end, 0)
+      spannableString.setSpanSafe(PostSearchQueryForegroundSpan(textColor), start, end, 0)
     }
   }
 
