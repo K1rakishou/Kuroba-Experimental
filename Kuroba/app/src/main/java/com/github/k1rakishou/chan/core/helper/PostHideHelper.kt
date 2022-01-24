@@ -58,7 +58,7 @@ class PostHideHelper(
           newChanPostHides = newChanPostHides
         )
 
-        if (chanDescriptor is ChanDescriptor.ThreadDescriptor && newChanPostHides.isNotEmpty()) {
+        if (newChanPostHides.isNotEmpty()) {
           val chanPostHides = newChanPostHides.values.map { it.chanPostHide }
           postHideManager.createOrUpdateMany(chanPostHides)
 
@@ -317,26 +317,34 @@ class PostHideHelper(
       return false
     }
 
-    val attemptingToRemove = (postFilter?.enabled == true && postFilter.remove) || (postHide?.onlyHide == false)
-    if (!attemptingToRemove) {
-      return false
+    if (postFilter != null) {
+      val attemptingToHide = (postFilter.enabled && postFilter.remove)
+      if (attemptingToHide) {
+        return true
+      }
     }
 
     if (postHide != null) {
       if (postHide.manuallyRestored) {
         return false
       }
-    }
 
-    if (post.isOP()) {
       if (processingCatalog) {
-        return postHide?.applyToWholeThread == true
+        if (post.isOP() && !postHide.applyToWholeThread) {
+          return false
+        }
+      } else {
+        if (post.isOP()) {
+          return false
+        }
       }
 
-      return false
+      if (!postHide.onlyHide) {
+        return true
+      }
     }
 
-    return true
+    return false
   }
 
   private fun canHidePost(
@@ -349,26 +357,34 @@ class PostHideHelper(
       return false
     }
 
-    val attemptingToHide = (postFilter?.enabled == true && postFilter.stub) || (postHide?.onlyHide == true)
-    if (!attemptingToHide) {
-      return false
+    if (postFilter != null) {
+      val attemptingToHide = (postFilter.enabled && postFilter.stub)
+      if (attemptingToHide) {
+        return true
+      }
     }
 
     if (postHide != null) {
       if (postHide.manuallyRestored) {
         return false
       }
-    }
 
-    if (post.isOP()) {
       if (processingCatalog) {
-        return postHide?.applyToWholeThread == true
+        if (post.isOP() && !postHide.applyToWholeThread) {
+          return false
+        }
+      } else {
+        if (post.isOP()) {
+          return false
+        }
       }
 
-      return false
+      if (postHide.onlyHide) {
+        return true
+      }
     }
 
-    return true
+    return false
   }
 
   class ChanPostHideWrapper(

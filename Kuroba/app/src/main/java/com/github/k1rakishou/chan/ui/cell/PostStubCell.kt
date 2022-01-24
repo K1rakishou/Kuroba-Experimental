@@ -43,6 +43,9 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
   @Inject
   lateinit var postFilterManager: PostFilterManager
 
+  private val postAttentionLabelWidth = AppModuleAndroidUtils.getDimen(R.dimen.post_attention_label_width)
+  private val postAttentionLabelPaddings = (PostCellLayout.horizPaddingPx * 2)
+
   private var postCellData: PostCellData? = null
   private var callback: PostCellInterface.PostCellCallback? = null
 
@@ -139,19 +142,26 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
 
     val textSizeSp = postCellData.textSizeSp
     title.textSize = textSizeSp.toFloat()
+    title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
+
+    val leftPadding = if (postCellData.isViewingCatalog) {
+      PostCellLayout.horizPaddingPx + postAttentionLabelPaddings
+    } else {
+      postAttentionLabelWidth + postAttentionLabelPaddings
+    }
+
+    val rightPadding = PostCellLayout.horizPaddingPx * 2
 
     title.setPadding(
-      postCellData.postStubCellTitlePaddingPx,
+      leftPadding,
       VERTICAL_PADDING,
-      postCellData.postStubCellTitlePaddingPx,
+      rightPadding,
       VERTICAL_PADDING
     )
 
-    title.isSingleLine = postCellData.boardPostViewMode == ChanSettings.BoardPostViewMode.LIST
-
     val dividerParams = divider.layoutParams as LayoutParams
-    dividerParams.leftMargin = PostCellLayout.horizPaddingPx
-    dividerParams.rightMargin = PostCellLayout.horizPaddingPx
+    dividerParams.leftMargin = leftPadding
+    dividerParams.rightMargin = rightPadding
     divider.layoutParams = dividerParams
 
     setBackgroundResource(R.drawable.item_background)

@@ -88,7 +88,6 @@ data class PostCellData(
   private var repliesToThisPostTextPrecalculated: CharSequence? = null
 
   val iconSizePx = sp(textSizeSp - 2.toFloat())
-  val postStubCellTitlePaddingPx = sp((textSizeSp - 6).toFloat())
 
   val postNo: Long
     get() = post.postNo()
