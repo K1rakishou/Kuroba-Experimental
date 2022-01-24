@@ -2676,10 +2676,16 @@ class ThreadPresenter @Inject constructor(
     )
 
     if (additionalPostsToReparse.isNotEmpty()) {
-      Logger.d(TAG, "showPosts() additionalPostsToReparse=${additionalPostsToReparse.size}")
+      // Launch a new coroutine here and wait a little bit because otherwise normalLoad() call
+      // will just end right away since it's not supposed to have multiple instances running at
+      // the same time
+      launch {
+        delay(125L)
+        Logger.d(TAG, "showPosts() additionalPostsToReparse=${additionalPostsToReparse.size}")
 
-      // God I hope this won't cause an infinite recursion
-      reparsePostsWithReplies(additionalPostsToReparse)
+        // God I hope this won't cause an infinite recursion
+        reparsePostsWithReplies(additionalPostsToReparse)
+      }
     }
   }
 

@@ -325,16 +325,20 @@ public class RemovedPostsController
             StringBuilder additionalPostHideInfo = new StringBuilder();
             additionalPostHideInfo.append("(");
 
-            if (hiddenOrRemovedPost.isHidden) {
-                additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_hidden));
+            if (!hiddenOrRemovedPost.manuallyRestored) {
+                if (hiddenOrRemovedPost.isHidden) {
+                    additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_hidden));
+                } else {
+                    additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_removed));
+                }
             } else {
-                additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_removed));
-            }
+                // we are checking additionalPostHideInfo's length to be greater than 1 because
+                // we always insert the "(" at the very beginning
+                if (additionalPostHideInfo.length() > 1) {
+                    additionalPostHideInfo.append(", ");
+                }
 
-            if (hiddenOrRemovedPost.manuallyRestored) {
-                additionalPostHideInfo
-                        .append(", ")
-                        .append(getString(R.string.hidden_or_removed_posts_post_manually_restored));
+                additionalPostHideInfo.append(getString(R.string.hidden_or_removed_posts_post_manually_restored));
             }
 
             additionalPostHideInfo.append(")");
