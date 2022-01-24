@@ -348,15 +348,20 @@ data class PostCellData(
       return ""
     }
 
-    var postSubject = formatPostSubjectSpannable()
+    return buildSpannableString {
+      append("No.")
+      append(" ")
+      append(postNo.toString())
+      append(" ")
 
-    if (postSubject.isNullOrEmpty()) {
-      postSubject = SpannableString.valueOf(getPostStubTitle())
+      var postSubject = formatPostSubjectSpannable()
+      if (postSubject.isNullOrEmpty()) {
+        postSubject = SpannableString.valueOf(getPostStubTitle())
+      }
+
+      append(postSubject)
+      setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, length, 0)
     }
-
-    postSubject.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, postSubject.length, 0)
-
-    return postSubject
   }
 
   private fun calculatePostTitle(): CharSequence {
@@ -481,12 +486,7 @@ data class PostCellData(
     }
 
     val subjectSpan = SpannableString.valueOf(subject)
-    subjectSpan.setSpan(
-      ForegroundColorIdSpan(ChanThemeColorId.PostSubjectColor),
-      0,
-      subjectSpan.length,
-      0
-    )
+    subjectSpan.setSpanSafe(ForegroundColorIdSpan(ChanThemeColorId.PostSubjectColor), 0, subjectSpan.length, 0)
 
     return subjectSpan
   }
