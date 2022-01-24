@@ -115,18 +115,23 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
     super.onDestroy()
 
     themeEngine.removeListener(this)
+    unbindPostAdapterItems()
+  }
 
-    if (::postsView.isInitialized) {
-      val adapter = postsView.adapter
-      if (adapter is PostAdapter) {
-        adapter.cleanup()
-      } else if (adapter is PostRepliesAdapter) {
-        adapter.cleanup()
-      }
-
-      postsView.recycledViewPool.clear()
-      postsView.swapAdapter(null, true)
+  private fun unbindPostAdapterItems() {
+    if (!::postsView.isInitialized) {
+      return
     }
+
+    val adapter = postsView.adapter
+    if (adapter is PostAdapter) {
+      adapter.cleanup()
+    } else if (adapter is PostRepliesAdapter) {
+      adapter.cleanup()
+    }
+
+    postsView.recycledViewPool.clear()
+    postsView.swapAdapter(null, true)
   }
 
   override fun onThemeChanged() {
@@ -222,10 +227,10 @@ abstract class BasePostPopupController<T : PostPopupHelper.PostPopupData>(
 
   fun displayData(chanDescriptor: ChanDescriptor, data: PostPopupHelper.PostPopupData) {
     rendezvousCoroutineExecutor.post {
+      unbindPostAdapterItems()
       displayingData = data as T
 
       val dataView = displayData(chanDescriptor, data)
-
       val repliesBack = dataView.findViewById<View>(R.id.replies_back)
       repliesBack.setOnClickListener { postPopupHelper.pop() }
 

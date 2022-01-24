@@ -61,6 +61,7 @@ import com.github.k1rakishou.model.data.post.ChanPostImageType
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.flow.onCompletion
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -133,6 +134,13 @@ class PostImageThumbnailView @JvmOverloads constructor(
   ) {
     this.nsfwMode = ChanSettings.globalNsfwMode.get()
 
+    listenForNsfwSettingUpdates()
+    listenForThirdEyeUpdates(postImage)
+
+    bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions)
+  }
+
+  private fun listenForNsfwSettingUpdates() {
     scope.launch {
       ChanSettings.globalNsfwMode.listenForChanges().asFlow().collect { isNsfwModeEnabled ->
         if (nsfwMode != isNsfwModeEnabled) {
@@ -141,10 +149,6 @@ class PostImageThumbnailView @JvmOverloads constructor(
         }
       }
     }
-
-    listenForThirdEyeUpdates(postImage)
-
-    bindPostImage(postImage, canUseHighResCells, false, thumbnailViewOptions)
   }
 
   private fun listenForThirdEyeUpdates(postImage: ChanPostImage) {
@@ -173,6 +177,8 @@ class PostImageThumbnailView @JvmOverloads constructor(
       thirdEyeManager.thirdEyeImageAddedFlow
         .onCompletion { runOrStopGlowAnimation(stop = true) }
         .collect { postDescriptor ->
+          ensureActive()
+
           if (postImage.ownerPostDescriptor != postDescriptor) {
             return@collect
           }
@@ -236,7 +242,7 @@ class PostImageThumbnailView @JvmOverloads constructor(
 
     thumbnail.unbindImageUrl()
     compositeDisposable.clear()
-    scope.cancel()
+    scope.cancelChildren()
   }
 
   override fun getViewId(): Int {
