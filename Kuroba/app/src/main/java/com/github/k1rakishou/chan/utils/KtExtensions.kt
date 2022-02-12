@@ -99,12 +99,14 @@ suspend fun View.awaitUntilGloballyLaidOut(
   waitForHeight: Boolean = false,
   attempts: Int = 5
 ) {
+  val viewTag = this.toString()
+
   if (!waitForWidth && !waitForHeight) {
-    error("At least one of the parameters must be set to true!")
+    error("awaitUntilGloballyLaidOut($viewTag) At least one of the parameters must be set to true!")
   }
 
   if (attempts <= 0) {
-    Logger.e(TAG, "awaitUntilGloballyLaidOut() exhausted all attempts exiting, viewInfo=${this}")
+    Logger.e(TAG, "awaitUntilGloballyLaidOut($viewTag) exhausted all attempts exiting, viewInfo=${this}")
     return
   }
 
@@ -112,16 +114,22 @@ suspend fun View.awaitUntilGloballyLaidOut(
   val heightOk = (!waitForHeight || height > 0)
 
   if (widthOk && heightOk) {
+    Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) widthOk=$widthOk, width=$width, heightOk=$heightOk, height=$height")
     return
   }
 
   if (!ViewCompat.isLaidOut(this) && !isLayoutRequested) {
+    Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) requesting layout...")
     requestLayout()
   }
+
+  Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) before OnGlobalLayoutListener (attempts=$attempts)")
 
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
     val listener = object : OnGlobalLayoutListener {
       override fun onGlobalLayout() {
+        Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) onGlobalLayout called")
+
         viewTreeObserver.removeOnGlobalLayoutListener(this)
         cancellableContinuation.resumeValueSafe(Unit)
       }
@@ -130,14 +138,13 @@ suspend fun View.awaitUntilGloballyLaidOut(
     viewTreeObserver.addOnGlobalLayoutListener(listener)
 
     cancellableContinuation.invokeOnCancellation { cause ->
-      if (cause == null) {
-        return@invokeOnCancellation
-      }
+      Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) onCancel called, reason=${cause}")
 
       viewTreeObserver.removeOnGlobalLayoutListener(listener)
     }
   }
 
+  Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) after OnGlobalLayoutListener")
   awaitUntilGloballyLaidOut(waitForWidth, waitForHeight, attempts - 1)
 }
 
