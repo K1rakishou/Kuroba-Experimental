@@ -68,9 +68,6 @@ import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 import javax.net.ssl.SSLException
-import kotlin.collections.ArrayList
-import kotlin.collections.HashMap
-import kotlin.collections.LinkedHashMap
 import kotlin.contracts.ExperimentalContracts
 import kotlin.contracts.contract
 import kotlin.coroutines.resume
@@ -1042,30 +1039,42 @@ inline fun <T, R> Iterable<T>.chunkedMap(chunkSize: Int, mapper: (List<T>) -> Li
 }
 
 fun SpannableStringBuilder.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
-  setSpan(
-    span,
-    start.coerceAtLeast(0),
-    end.coerceAtMost(this.length),
-    flags
-  )
+  if (this.length <= 0) {
+    return
+  }
+
+  if (start >= end) {
+    return
+  }
+
+  val len = this.length.coerceAtLeast(0)
+  setSpan(span, start.coerceIn(0, len), end.coerceIn(0, len), flags)
 }
 
 fun SpannableString.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
-  setSpan(
-    span,
-    start.coerceAtLeast(0),
-    end.coerceAtMost(this.length),
-    flags
-  )
+  if (this.length <= 0) {
+    return
+  }
+
+  if (start >= end) {
+    return
+  }
+
+  val len = this.length.coerceAtLeast(0)
+  setSpan(span, start.coerceIn(0, len), end.coerceIn(0, len), flags)
 }
 
 fun Spannable.setSpanSafe(span: CharacterStyle, start: Int, end: Int, flags: Int) {
-  setSpan(
-    span,
-    start.coerceAtLeast(0),
-    end.coerceAtMost(this.length),
-    flags
-  )
+  if (this.length <= 0) {
+    return
+  }
+
+  if (start >= end) {
+    return
+  }
+
+  val len = this.length.coerceAtLeast(0)
+  setSpan(span, start.coerceIn(0, len), end.coerceIn(0, len), flags)
 }
 
 fun Int.mbytesToBytes(): Long {
