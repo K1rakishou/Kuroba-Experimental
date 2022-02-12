@@ -37,9 +37,6 @@ android {
         buildConfigField "String", "GITHUB_ENDPOINT", "\"https://github.com/K1rakishou/Kuroba-Experimental\""
         buildConfigField "String", "GITHUB_CHANGELOGS_ENDPOINT", "\"https://raw.githubusercontent.com/K1rakishou/Kuroba-Experimental/develop/fastlane/metadata/android/en-US/changelogs/\""
         buildConfigField "String", "GITHUB_REPORTS_ENDPOINT", "\"https://github.com/KurobaExReports/Reports/issues/\""
-        // this is for your development server endpoint
-        // you WILL need to change the code in UpdateManager if your endpoint changes or you use a different API structure
-        buildConfigField "String", "DEV_API_ENDPOINT", "\"https://kuroba.io:8443\""
         // this is for checking who's built what in debug logs
         buildConfigField "String", "RELEASE_SIGNATURE", "\"86242978CF53C34361A8C962D0A57107AEB70E10631AE13EB5B006C0CF673FA9\""
         // this is the default dev signing signature, update it if you change the dev keystore
@@ -50,8 +47,8 @@ android {
         //          m -> Minor version
         //          p -> patch
         //          MmmPP
-        versionCode 10305
-        versionName "v1.3.5"
+        versionCode 10306
+        versionName "v1.3.6"
 
         applicationVariants.all { variant ->
             variant.outputs.all {
