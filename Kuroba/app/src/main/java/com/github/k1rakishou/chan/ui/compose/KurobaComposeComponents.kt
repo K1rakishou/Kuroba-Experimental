@@ -110,7 +110,6 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.flow.collect
 import java.util.*
 import kotlin.math.roundToInt
 
@@ -762,14 +761,14 @@ fun KurobaComposeSlider(
 fun KurobaComposeIcon(
   @DrawableRes drawableId: Int,
   modifier: Modifier = Modifier,
-  colorBelowIcon: Color? = null
+  colorBehindIcon: Color? = null
 ) {
   val chanTheme = LocalChanTheme.current
   val tintColor = remember(key1 = chanTheme) {
-    if (colorBelowIcon == null) {
+    if (colorBehindIcon == null) {
       Color(ThemeEngine.resolveDrawableTintColor(chanTheme))
     } else {
-      Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBelowIcon.value)))
+      Color(ThemeEngine.resolveDrawableTintColor(ThemeEngine.isDarkColor(colorBehindIcon.value)))
     }
   }
 
@@ -900,7 +899,7 @@ fun KurobaSearchInput(
               }
             ),
           drawableId = R.drawable.ic_clear_white_24dp,
-          colorBelowIcon = chanTheme.primaryColorCompose
+          colorBehindIcon = chanTheme.primaryColorCompose
         )
       }
     }

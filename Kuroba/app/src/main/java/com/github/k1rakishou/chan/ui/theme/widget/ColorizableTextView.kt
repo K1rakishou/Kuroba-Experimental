@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Rect
 import android.util.AttributeSet
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
@@ -53,6 +54,14 @@ class ColorizableTextView @JvmOverloads constructor(
         )
       )
     )
+  }
+
+  override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
+    try {
+      super.onFocusChanged(focused, direction, previouslyFocusedRect)
+    } catch (ignored: IndexOutOfBoundsException) {
+      // java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0
+    }
   }
 
 }

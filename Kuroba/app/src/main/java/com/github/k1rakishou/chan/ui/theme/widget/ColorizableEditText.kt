@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 
 import android.content.Context
 import android.content.res.ColorStateList
+import android.graphics.Rect
 import android.util.AttributeSet
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
@@ -96,6 +97,14 @@ open class ColorizableEditText @JvmOverloads constructor(
         )
       )
     )
+  }
+
+  override fun onFocusChanged(focused: Boolean, direction: Int, previouslyFocusedRect: Rect?) {
+    try {
+      super.onFocusChanged(focused, direction, previouslyFocusedRect)
+    } catch (ignored: IndexOutOfBoundsException) {
+      // java.lang.IndexOutOfBoundsException: setSpan (-1 ... -1) starts before 0
+    }
   }
 
 }
