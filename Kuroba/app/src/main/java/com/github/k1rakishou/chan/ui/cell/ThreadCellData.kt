@@ -81,6 +81,10 @@ class ThreadCellData(
   suspend fun onPostsUpdated(updatedPosts: List<ChanPost>): Boolean {
     BackgroundUtils.ensureMainThread()
 
+    if (postCellCallback == null || chanDescriptor == null) {
+      return false
+    }
+
     var updatedAtLeastOne = false
 
     for (updatedPost in updatedPosts) {
