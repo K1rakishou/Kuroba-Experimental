@@ -50,7 +50,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
-import java.util.*
 import javax.inject.Inject
 
 class PostAdapter(
@@ -206,8 +205,6 @@ class PostAdapter(
       PostCellData.TYPE_POST_MULTIPLE_THUMBNAILS,
       PostCellData.TYPE_POST_STUB,
       PostCellData.TYPE_POST_CARD -> {
-        checkNotNull(threadCellData.chanDescriptor) { "chanDescriptor cannot be null" }
-
         val postViewHolder = holder as PostViewHolder
         val postCellData = threadCellData.getPostCellData(position)
         val postCell = postViewHolder.itemView as GenericPostCell
