@@ -54,6 +54,7 @@ import com.github.k1rakishou.chan.ui.theme.ArrowMenuDrawable;
 import com.github.k1rakishou.chan.ui.theme.DropdownArrowDrawable;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.common.KotlinExtensionsKt;
+import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.core_themes.ChanTheme;
 import com.github.k1rakishou.core_themes.ThemeEngine;
 
@@ -155,6 +156,17 @@ public class ToolbarContainer extends FrameLayout {
         }
 
         endAnimations();
+
+        if (getChildCount() >= 2) {
+            Logger.e(TAG, "2 or more child views are already attached. Waiting for the transition cancellation to complete...");
+
+            // The animation was canceled but it's still not fully completed (there are 2 toolbar
+            // child views present doing a transition). We need to wait a frame or so for it to finish
+            // and then execute a new transition.
+            post(() -> set(item, theme, animation, listener));
+            return;
+        }
+
         ItemView itemView = new ItemView(item, theme);
 
         previousView = currentView;
