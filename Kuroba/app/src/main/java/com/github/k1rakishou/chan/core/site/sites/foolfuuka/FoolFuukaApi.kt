@@ -59,8 +59,8 @@ class FoolFuukaApi(
         jsonObject {
           while (hasNext()) {
             when (nextName()) {
-              "op" -> readOriginalPost(this, chanReaderProcessor)
-              "posts" -> readRegularPosts(this, chanReaderProcessor)
+              "op" -> readOriginalPost(requestUrl, this, chanReaderProcessor)
+              "posts" -> readRegularPosts(requestUrl, this, chanReaderProcessor)
               else -> skipValue()
             }
           }
@@ -72,13 +72,15 @@ class FoolFuukaApi(
   }
 
   private suspend fun readOriginalPost(
+    requestUrl: String,
     reader: JsonReader,
     chanReaderProcessor: ChanReaderProcessor
   ) {
-    reader.jsonObject { readPostObject(reader, chanReaderProcessor, true) }
+    reader.jsonObject { readPostObject(requestUrl, reader, chanReaderProcessor, true) }
   }
 
   private suspend fun readRegularPosts(
+    requestUrl: String,
     reader: JsonReader,
     chanReaderProcessor: ChanReaderProcessor
   ) {
@@ -91,12 +93,13 @@ class FoolFuukaApi(
         // skip the json key
         nextName()
 
-        reader.jsonObject { readPostObject(reader, chanReaderProcessor, false) }
+        reader.jsonObject { readPostObject(requestUrl, reader, chanReaderProcessor, false) }
       }
     }
   }
 
   private suspend fun readPostObject(
+    requestUrl: String,
     reader: JsonReader,
     chanReaderProcessor: ChanReaderProcessor,
     expectedOp: Boolean
@@ -104,7 +107,7 @@ class FoolFuukaApi(
     val chanDescriptor = chanReaderProcessor.chanDescriptor
     val boardDescriptor = chanDescriptor.boardDescriptor()
 
-    val archivePost = reader.readPost(boardDescriptor)
+    val archivePost = reader.readPost(requestUrl, boardDescriptor)
     if (expectedOp != archivePost.isOP) {
       Logger.e(TAG, "Invalid archive post OP flag (expected: ${expectedOp}, actual: ${archivePost.isOP})")
       return
@@ -127,7 +130,10 @@ class FoolFuukaApi(
     }
   }
 
-  private fun JsonReader.readPost(boardDescriptor: BoardDescriptor): ArchivePost {
+  private fun JsonReader.readPost(
+    requestUrl: String,
+    boardDescriptor: BoardDescriptor
+  ): ArchivePost {
     val archivePost = ArchivePost(boardDescriptor)
 
     while (hasNext()) {
@@ -152,7 +158,7 @@ class FoolFuukaApi(
               skipValue()
             } else {
               jsonObject {
-                val archivePostMedia = readPostMedia()
+                val archivePostMedia = readPostMedia(requestUrl)
 
                 if (!archivePostMedia.isValid()) {
                   Logger.e(TAG, "Invalid archive post media: ${archivePostMedia}")
@@ -173,7 +179,9 @@ class FoolFuukaApi(
     return archivePost
   }
 
-  private fun JsonReader.readPostMedia(): ArchivePostMedia {
+  private fun JsonReader.readPostMedia(
+    requestUrl: String
+  ): ArchivePostMedia {
     val archivePostMedia = ArchivePostMedia()
 
     var mediaLink: String? = null
@@ -218,7 +226,8 @@ class FoolFuukaApi(
       archivePostMedia.imageUrl = remoteMediaLink
     }
 
-    archivePostMedia.imageUrl = fixImageUrlIfNecessary(archivePostMedia.imageUrl)
+    archivePostMedia.imageUrl = fixImageUrlIfNecessary(requestUrl, archivePostMedia.imageUrl)
+    archivePostMedia.thumbnailUrl = fixImageUrlIfNecessary(requestUrl, archivePostMedia.thumbnailUrl)
 
     return archivePostMedia
   }

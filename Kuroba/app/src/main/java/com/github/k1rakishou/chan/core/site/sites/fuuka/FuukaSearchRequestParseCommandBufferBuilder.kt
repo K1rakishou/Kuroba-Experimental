@@ -202,8 +202,10 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
           attrExtractorBuilderFunc = { extractAttrValueByKey("src") },
           extractorFunc = { _, extractedAttributeValues, fuukaSearchPageCollector ->
             fuukaSearchPageCollector.lastOrNull()?.let { searchEntryPostBuilder ->
-              val thumbUrl = fixImageUrlIfNecessary(extractedAttributeValues.getAttrValue("src"))
-                ?.toHttpUrlOrNull()
+              val thumbUrl = fixImageUrlIfNecessary(
+                fuukaSearchPageCollector.requestUrl,
+                extractedAttributeValues.getAttrValue("src")
+              )?.toHttpUrlOrNull()
 
               if (thumbUrl == null) {
                 Logger.e(TAG, "Failed to parse thumbnail image url, thumbUrl='$thumbUrl'")
@@ -264,6 +266,7 @@ internal class FuukaSearchRequestParseCommandBufferBuilder {
 
   internal data class FuukaSearchPageCollector(
     val verboseLogs: Boolean,
+    val requestUrl: String,
     val boardDescriptor: BoardDescriptor,
     val searchResults: MutableList<SearchEntryPostBuilder> = mutableListOf(),
     var foundEntriesRaw: String? = null

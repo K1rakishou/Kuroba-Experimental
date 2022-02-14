@@ -36,9 +36,10 @@ class FuukaSearchRequest(
       }
   }
 
-  suspend fun readHtml(url: String, document: Document): SearchResult {
+  suspend fun readHtml(requestUrl: String, document: Document): SearchResult {
     val collector = FuukaSearchRequestParseCommandBufferBuilder.FuukaSearchPageCollector(
       verboseLogs,
+      requestUrl,
       searchParams.boardDescriptor
     )
 
@@ -50,7 +51,7 @@ class FuukaSearchRequest(
         document,
         commandBuffer,
         collector,
-        url
+        requestUrl
       )
     } catch (error: Throwable) {
       Logger.e(TAG, "parserCommandExecutor.executeCommands() error", error)

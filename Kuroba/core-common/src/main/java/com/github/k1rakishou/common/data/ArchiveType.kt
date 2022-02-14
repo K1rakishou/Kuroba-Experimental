@@ -14,7 +14,8 @@ enum class ArchiveType(
     TheBarchive("thebarchive.com"),
     ArchiveOfSins("archiveofsins.com"),
     TokyoChronos("tokyochronos.net"),
-    WakarimasenMoe("archive.wakarimasen.moe");
+    WakarimasenMoe("archive.wakarimasen.moe"),
+    RozenArcana("archive.alice.al");
 
     fun isFoolFuukaArchive(): Boolean {
         return when (this) {
@@ -29,7 +30,8 @@ enum class ArchiveType(
             TheBarchive,
             ArchiveOfSins,
             TokyoChronos,
-            WakarimasenMoe -> true
+            WakarimasenMoe,
+            RozenArcana -> true
         }
     }
 
@@ -46,7 +48,8 @@ enum class ArchiveType(
             TheBarchive,
             ArchiveOfSins,
             TokyoChronos,
-            WakarimasenMoe -> false
+            WakarimasenMoe,
+            RozenArcana -> false
         }
     }
 
@@ -64,6 +67,7 @@ enum class ArchiveType(
             ArchiveOfSins.domain to ArchiveOfSins,
             TokyoChronos.domain to TokyoChronos,
             WakarimasenMoe.domain to WakarimasenMoe,
+            RozenArcana.domain to RozenArcana,
         )
 
         fun hasDomain(domain: String): Boolean {

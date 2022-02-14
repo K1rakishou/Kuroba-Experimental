@@ -27,6 +27,8 @@ import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
+import okhttp3.HttpUrl
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import kotlin.math.log10
 
 
@@ -238,7 +240,7 @@ private fun checkPattern(input: ByteArray, offset: Int, pattern: ByteArray): Boo
   return true
 }
 
-fun fixImageUrlIfNecessary(imageUrl: String?): String? {
+fun fixImageUrlIfNecessary(requestUrl: String, imageUrl: String?): String? {
   if (imageUrl == null) {
     return imageUrl
   }
@@ -256,6 +258,27 @@ fun fixImageUrlIfNecessary(imageUrl: String?): String? {
 
   if (imageUrl.startsWith("//")) {
     return "https:$imageUrl"
+  }
+
+  if (imageUrl.startsWith("/")) {
+    val requestHttpUrl = requestUrl.toHttpUrlOrNull()
+    if (requestHttpUrl == null) {
+      Logger.e(TAG, "Failed to convert requestUrl \'${requestUrl}\' to HttpUrl")
+      return null
+    }
+
+    val scheme = if (requestHttpUrl.isHttps) {
+      requestHttpUrl.scheme
+    } else {
+      "https"
+    }
+
+    return HttpUrl.Builder()
+      .scheme(scheme)
+      .host(requestHttpUrl.host)
+      .encodedPath(imageUrl)
+      .build()
+      .toString()
   }
 
   Logger.e(TAG, "Unknown kind of broken image url: \"$imageUrl\". If you see this report it to devs!")

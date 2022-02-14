@@ -142,7 +142,8 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe,
       ArchiveType.TheBarchive,
       ArchiveType.ArchiveOfSins,
-      ArchiveType.TokyoChronos -> FULL_QUOTE_PATTERN
+      ArchiveType.TokyoChronos,
+      ArchiveType.RozenArcana -> FULL_QUOTE_PATTERN
       null -> null
     }
   }
@@ -165,7 +166,8 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchivedMoe,
       ArchiveType.TheBarchive,
       ArchiveType.ArchiveOfSins,
-      ArchiveType.TokyoChronos -> INTERNAL_QUOTE_PATTERN
+      ArchiveType.TokyoChronos,
+      ArchiveType.RozenArcana -> INTERNAL_QUOTE_PATTERN
       null -> null
     }
   }
@@ -185,6 +187,7 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchiveOfSins -> ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN
       ArchiveType.TokyoChronos -> TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN
       ArchiveType.WakarimasenMoe -> WAKARIMASEN_DEFAULT_QUOTE_PATTERN
+      ArchiveType.RozenArcana -> ROZEN_ARCANA_QUOTE_PATTERN
 
       // Not a FoolFuuka archive
       ArchiveType.Warosu,
@@ -221,6 +224,7 @@ class FoolFuukaCommentParser(
     private val ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archiveofsins\\.com\\/(.*?)\\/(?:post|thread)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
     private val TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?tokyochronos\\.net\\/(.*?)\\/(?:post|thread)\\/?(\\d+)\\/(?:#)?(\\d+)?\\/?")
     private val WAKARIMASEN_DEFAULT_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.wakarimasen\\.moe\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
+    private val ROZEN_ARCANA_QUOTE_PATTERN = Pattern.compile("(?:https:\\/\\/)?archive.alice\\.al\\/(.*?)\\/(?:thread|post)\\/(\\d+)\\/?(?:#)?(\\d+)?\\/?")
 
     @JvmField
     val ALL_ARCHIVE_LINKS_PATTERNS_MAP = mapOf<ArchiveType, Pattern>(
@@ -233,6 +237,7 @@ class FoolFuukaCommentParser(
       ArchiveType.ArchiveOfSins to ARCHIVE_OF_SINS_DEFAULT_QUOTE_PATTERN,
       ArchiveType.TokyoChronos to TOKYO_CHRONOS_DEFAULT_QUOTE_PATTERN,
       ArchiveType.WakarimasenMoe to WAKARIMASEN_DEFAULT_QUOTE_PATTERN,
+      ArchiveType.RozenArcana to ROZEN_ARCANA_QUOTE_PATTERN,
     )
 
     private val FULL_QUOTE_PATTERN = Pattern.compile("\\/(\\w+)\\/\\w+\\/(\\d+)\\/?(?:#p?(\\d+))?")

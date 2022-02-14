@@ -38,7 +38,7 @@ class FuukaApi(
       }
 
       val threadDescriptor = chanReaderProcessor.chanDescriptor
-      val collector = ArchiveThreadPostCollector(threadDescriptor)
+      val collector = ArchiveThreadPostCollector(requestUrl, threadDescriptor)
       val parserCommandExecutor = KurobaHtmlParserCommandExecutor<ArchiveThreadPostCollector>()
 
       try {
@@ -103,6 +103,7 @@ class FuukaApi(
   }
 
   data class ArchiveThreadPostCollector(
+    val requestUrl: String,
     val threadDescriptor: ChanDescriptor.ThreadDescriptor,
     val archivePosts: MutableList<ArchivePost> = mutableListOf()
   ) : KurobaHtmlParserCollector {

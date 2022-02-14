@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.site.sites.foolfuuka
 
 import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderProcessor
+import com.github.k1rakishou.chan.utils.fixImageUrlIfNecessary
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.getFirstElementByClassWithAnyValue
 import com.github.k1rakishou.common.getFirstElementByClassWithValue
@@ -40,7 +41,7 @@ class FoolFuukaReadCatalogThreadsHelper {
 
     originalPostElements.forEach { originalPostElement ->
       try {
-        processOriginalPostElement(originalPostElement, chanReaderProcessor)
+        processOriginalPostElement(requestUrl, originalPostElement, chanReaderProcessor)
       } catch (error: Throwable) {
         Logger.e(TAG, "processOriginalPostElement() error", error)
       }
@@ -52,6 +53,7 @@ class FoolFuukaReadCatalogThreadsHelper {
   }
 
   private suspend fun processOriginalPostElement(
+    requestUrl: String,
     originalPostElement: Element,
     chanReaderProcessor: AbstractChanReaderProcessor
   ) {
@@ -123,7 +125,7 @@ class FoolFuukaReadCatalogThreadsHelper {
     }
 
     val chanPostImages = originalPostElement.getFirstElementByClassWithValue("thread_image_box")
-      ?.let { threadImageBoxElement -> convertToChanPostImages(threadImageBoxElement) }
+      ?.let { threadImageBoxElement -> convertToChanPostImages(requestUrl, threadImageBoxElement) }
 
     if (chanPostImages != null && chanPostImages.isNotEmpty()) {
       chanPostBuilder.postImages(chanPostImages, chanPostBuilder.postDescriptor)
@@ -165,16 +167,20 @@ class FoolFuukaReadCatalogThreadsHelper {
     chanReaderProcessor.addPost(chanPostBuilder)
   }
 
-  private fun convertToChanPostImages(threadImageBoxElement: Element): List<ChanPostImage> {
+  private fun convertToChanPostImages(requestUrl: String, threadImageBoxElement: Element): List<ChanPostImage> {
     val fullImageLink = threadImageBoxElement.getFirstElementByClassWithValue("thread_image_link")
       ?.attr("href")
+      ?.let { href -> fixImageUrlIfNecessary(requestUrl, href) }
       ?.toHttpUrlOrNull()
       ?: return emptyList()
 
     val postImageElement = threadImageBoxElement.getFirstElementByClassWithAnyValue("post_image", "thread_image")
       ?: return emptyList()
 
-    val thumbnailImageLink = postImageElement.attr("src")?.toHttpUrlOrNull()
+    val thumbnailImageLink = postImageElement.attr("src")
+      ?.let { href -> fixImageUrlIfNecessary(requestUrl, href) }
+      ?.toHttpUrlOrNull()
+
     val md5Base64 = postImageElement.attr("data-md5")
 
     val postFileInfo = threadImageBoxElement.getFirstElementByClassWithValue("post_file")

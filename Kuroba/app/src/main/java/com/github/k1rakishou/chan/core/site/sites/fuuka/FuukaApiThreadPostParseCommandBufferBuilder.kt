@@ -115,7 +115,11 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
         attrExtractorBuilderFunc = { extractAttrValueByKey("src") },
         extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
           archiveThreadPostCollector.lastMediaOrNull()?.let { archivePostMedia ->
-            val thumbUrl = fixImageUrlIfNecessary(extractedAttributeValues.getAttrValue("src"))
+            val thumbUrl = fixImageUrlIfNecessary(
+              archiveThreadPostCollector.requestUrl,
+              extractedAttributeValues.getAttrValue("src")
+            )
+
             if (thumbUrl == null) {
               Logger.e(TAG, "Failed to parse thumbnail image url, thumbUrl='$thumbUrl'")
               return@let
@@ -373,7 +377,11 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
           attrExtractorBuilderFunc = { extractAttrValueByKey("src") },
           extractorFunc = { _, extractedAttributeValues, archiveThreadPostCollector ->
             archiveThreadPostCollector.lastMediaOrNull()?.let { archivePostMedia ->
-              val thumbUrl = fixImageUrlIfNecessary(extractedAttributeValues.getAttrValue("src"))
+              val thumbUrl = fixImageUrlIfNecessary(
+                archiveThreadPostCollector.requestUrl,
+                extractedAttributeValues.getAttrValue("src")
+              )
+
               if (thumbUrl == null) {
                 Logger.e(TAG, "Failed to parse thumbnail image url, thumbUrl='$thumbUrl'")
                 return@let
@@ -451,7 +459,11 @@ internal class FuukaApiThreadPostParseCommandBufferBuilder(
     extractedAttributeValues: ExtractedAttributeValues
   ) {
     archiveThreadPostCollector.lastMediaOrNull()?.let { archivePostMedia ->
-      val fullImageUrl = fixImageUrlIfNecessary(extractedAttributeValues.getAttrValue("href"))
+      val fullImageUrl = fixImageUrlIfNecessary(
+        archiveThreadPostCollector.requestUrl,
+        extractedAttributeValues.getAttrValue("href")
+      )
+
       if (fullImageUrl == null) {
         Logger.e(TAG, "Failed to parse full image url, fullImageUrl='$fullImageUrl'")
         return@let
