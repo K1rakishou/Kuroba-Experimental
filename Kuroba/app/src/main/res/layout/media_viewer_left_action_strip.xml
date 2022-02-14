@@ -1,9 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/media_viewer_actions_container"
     android:layout_width="wrap_content"
     android:layout_height="match_parent"
+    android:gravity="center_vertical"
+    android:orientation="vertical"
     android:paddingLeft="8dp"
     android:paddingTop="8dp"
     android:paddingRight="8dp"
@@ -13,12 +15,9 @@
         android:id="@+id/toolbar_go_to_post_button_container"
         android:layout_width="@dimen/left_action_strip_button_size"
         android:layout_height="@dimen/left_action_strip_button_size"
-        android:background="@drawable/bottom_strip_item_circle_bg"
-        app:layout_constraintBottom_toTopOf="@+id/toolbar_post_replies_button_container"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_chainStyle="packed">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bottom_strip_item_circle_bg">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/toolbar_go_to_post_button"
@@ -37,12 +36,9 @@
         android:id="@+id/toolbar_post_replies_button_container"
         android:layout_width="@dimen/left_action_strip_button_size"
         android:layout_height="@dimen/left_action_strip_button_size"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bottom_strip_item_circle_bg"
-        app:layout_constraintBottom_toTopOf="@+id/toolbar_reload_button_container"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_go_to_post_button_container">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bottom_strip_item_circle_bg">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/toolbar_post_replies_button"
@@ -76,12 +72,9 @@
         android:id="@+id/toolbar_reload_button_container"
         android:layout_width="@dimen/left_action_strip_button_size"
         android:layout_height="@dimen/left_action_strip_button_size"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bottom_strip_item_circle_bg"
-        app:layout_constraintBottom_toTopOf="@+id/toolbar_download_button_container"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_post_replies_button_container">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bottom_strip_item_circle_bg">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/toolbar_reload_button"
@@ -100,12 +93,9 @@
         android:id="@+id/toolbar_download_button_container"
         android:layout_width="@dimen/left_action_strip_button_size"
         android:layout_height="@dimen/left_action_strip_button_size"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bottom_strip_item_circle_bg"
-        app:layout_constraintBottom_toTopOf="@+id/toolbar_options_button_container"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_reload_button_container">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bottom_strip_item_circle_bg">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/toolbar_download_button"
@@ -124,12 +114,9 @@
         android:id="@+id/toolbar_options_button_container"
         android:layout_width="@dimen/left_action_strip_button_size"
         android:layout_height="@dimen/left_action_strip_button_size"
-        android:layout_marginTop="32dp"
-        android:background="@drawable/bottom_strip_item_circle_bg"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/toolbar_download_button_container">
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
+        android:background="@drawable/bottom_strip_item_circle_bg">
 
         <androidx.appcompat.widget.AppCompatImageButton
             android:id="@+id/toolbar_options_button"
@@ -144,4 +131,4 @@
 
     </FrameLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+</LinearLayout>

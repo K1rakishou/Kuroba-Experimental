@@ -714,6 +714,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_reveal_image_spoilers">Auto reveal image spoilers</string>
     <string name="setting_media_viewer_gesture_settings">Media viewer gesture settings</string>
     <string name="setting_media_viewer_offscreen_pages_count">Media viewer offscreen pages count (%1$d)</string>
+    <string name="setting_media_viewer_reorder_actions">Reorder media viewer buttons</string>
     <string name="setting_media_viewer_auto_swipe">Launch auto page swiper</string>
     <string name="setting_media_viewer_one_offscreen_page">One offscreen page (3 pages total)</string>
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages (5 pages total, may become laggy on some devices)</string>

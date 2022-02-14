@@ -5,11 +5,11 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.View
 import android.widget.FrameLayout
+import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.activity.ComponentActivity
 import androidx.activity.viewModels
 import androidx.appcompat.widget.AppCompatImageButton
-import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -33,7 +33,7 @@ import javax.inject.Inject
 abstract class MediaViewerActionStrip(
   context: Context,
   attributeSet: AttributeSet? = null
-) : ConstraintLayout(context, attributeSet) {
+) : LinearLayout(context, attributeSet) {
 
   @Inject
   lateinit var chanThreadManager: ChanThreadManager
@@ -46,11 +46,11 @@ abstract class MediaViewerActionStrip(
   private lateinit var toolbarPostRepliesButton: AppCompatImageButton
   private lateinit var toolbarOptionsButton: AppCompatImageButton
 
-  private lateinit var toolbarGoToPostButtonContainer: FrameLayout
-  private lateinit var toolbarReloadButtonContainer: FrameLayout
-  private lateinit var toolbarDownloadButtonContainer: FrameLayout
-  private lateinit var toolbarPostRepliesButtonContainer: FrameLayout
-  private lateinit var toolbarOptionsButtonContainer: FrameLayout
+  protected lateinit var toolbarGoToPostButtonContainer: FrameLayout
+  protected lateinit var toolbarReloadButtonContainer: FrameLayout
+  protected lateinit var toolbarDownloadButtonContainer: FrameLayout
+  protected lateinit var toolbarPostRepliesButtonContainer: FrameLayout
+  protected lateinit var toolbarOptionsButtonContainer: FrameLayout
   private lateinit var repliesCountTextView: TextView
 
   private val scope = KurobaCoroutineScope()
@@ -75,6 +75,8 @@ abstract class MediaViewerActionStrip(
     toolbarPostRepliesButtonContainer = findViewById(R.id.toolbar_post_replies_button_container)
     toolbarOptionsButtonContainer = findViewById(R.id.toolbar_options_button_container)
     repliesCountTextView = findViewById(R.id.replies_count_text)
+
+    reorder()
 
     toolbarGoToPostButton.setEnabledFast(false)
     toolbarReloadButton.setEnabledFast(false)
@@ -284,4 +286,6 @@ abstract class MediaViewerActionStrip(
       }
     }
   }
+
+  abstract fun reorder()
 }

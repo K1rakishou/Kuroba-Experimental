@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.features.media_viewer.helper
 
+import ReorderableMediaViewerActions
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -7,12 +8,14 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerAdapter
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerGesturesSettingsController
+import com.github.k1rakishou.chan.features.reordering.SimpleListItemsReorderingController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
+import com.github.k1rakishou.persist_state.PersistableChanState
 
 class MediaViewerMenuHelper(
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
@@ -125,6 +128,11 @@ class MediaViewerMenuHelper(
       enabled = !ChanSettings.isLowRamDevice()
     )
 
+    options += FloatingListMenuItem(
+      key = ACTION_REORDER_MEDIA_VIEWER_ACTIONS,
+      name = getString(R.string.setting_media_viewer_reorder_actions)
+    )
+
     if (isDevBuild()) {
       options += FloatingListMenuItem(
         key = ACTION_VIEW_PAGER_AUTO_SWIPE,
@@ -185,6 +193,25 @@ class MediaViewerMenuHelper(
       }
       ACTION_MAX_OFFSCREEN_PAGES_SETTING -> {
         showMediaViewerOffscreenPagesSelector(context)
+      }
+      ACTION_REORDER_MEDIA_VIEWER_ACTIONS -> {
+        val reorderableMediaViewerActions = PersistableChanState.reorderableMediaViewerActions.get()
+
+        val items = reorderableMediaViewerActions.mediaViewerActionButtons()
+          .map { button -> SimpleListItemsReorderingController.SimpleReorderableItem(button.id, button.title) }
+
+        val controller = SimpleListItemsReorderingController(
+          context = context,
+          items = items,
+          onApplyClicked = { itemsReordered ->
+            val reorderedButtons = ReorderableMediaViewerActions(itemsReordered.map { it.id })
+            PersistableChanState.reorderableMediaViewerActions.set(reorderedButtons)
+
+            AppModuleAndroidUtils.showToast(context, R.string.restart_the_media_viewer)
+          }
+        )
+
+        presentControllerFunc(controller)
       }
       ACTION_VIEW_PAGER_AUTO_SWIPE -> {
         handleClickedOption(ACTION_VIEW_PAGER_AUTO_SWIPE)
@@ -249,6 +276,7 @@ class MediaViewerMenuHelper(
     const val ACTION_USE_MPV = 111
     const val ACTION_PAUSE_PLAYERS_WHEN_IN_BG = 112
     const val ACTION_VIEW_PAGER_AUTO_SWIPE = 113
+    const val ACTION_REORDER_MEDIA_VIEWER_ACTIONS = 114
 
     const val ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE = 200
     const val ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES = 201

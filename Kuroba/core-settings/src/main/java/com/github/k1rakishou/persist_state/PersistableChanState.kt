@@ -1,5 +1,6 @@
 package com.github.k1rakishou.persist_state
 
+import ReorderableMediaViewerActions
 import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.ReorderableBottomNavViewButtons
 import com.github.k1rakishou.SharedPreferencesSettingProvider
@@ -60,6 +61,8 @@ object PersistableChanState {
   lateinit var imageSaverV2PersistedOptions: GsonJsonSetting<ImageSaverV2Options>
   @JvmStatic
   lateinit var reorderableBottomNavViewButtons: GsonJsonSetting<ReorderableBottomNavViewButtons>
+  @JvmStatic
+  lateinit var reorderableMediaViewerActions: GsonJsonSetting<ReorderableMediaViewerActions>
   @JvmStatic
   lateinit var showAlbumViewsImageDetails: BooleanSetting
   @JvmStatic
@@ -130,6 +133,14 @@ object PersistableChanState {
         provider,
         "bottom_nav_view_buttons_ordered",
         ReorderableBottomNavViewButtons()
+      )
+
+      reorderableMediaViewerActions = GsonJsonSetting(
+        gson,
+        ReorderableMediaViewerActions::class.java,
+        provider,
+        "media_viewer_action_buttons_ordered",
+        ReorderableMediaViewerActions()
       )
 
       showAlbumViewsImageDetails = BooleanSetting(provider, "show_album_views_image_details", true)
