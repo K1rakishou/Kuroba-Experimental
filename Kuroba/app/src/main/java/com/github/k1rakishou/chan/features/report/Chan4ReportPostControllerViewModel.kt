@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4ReportPostRequest
-import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
@@ -140,7 +139,7 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
 
   suspend fun reportPost(
     postDescriptor: PostDescriptor,
-    captchaSolution: CaptchaSolution.ChallengeWithSolution,
+    captchaInfo: PostReportData.Chan4.CaptchaInfo,
     selectedCategoryId: Int
   ): ModularResult<PostReportResult> {
     _reporting.value = true
@@ -152,7 +151,7 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
       return@Try site.actions().reportPost(
         postReportData = PostReportData.Chan4(
           postDescriptor = postDescriptor,
-          captchaSolution = captchaSolution,
+          captchaInfo = captchaInfo,
           catId = selectedCategoryId
         )
       )

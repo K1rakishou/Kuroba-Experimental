@@ -8,9 +8,16 @@ sealed class PostReportData {
 
   data class Chan4(
     val postDescriptor: PostDescriptor,
-    val captchaSolution: CaptchaSolution.ChallengeWithSolution,
+    val captchaInfo: CaptchaInfo,
     val catId: Int
-  ) : PostReportData()
+  ) : PostReportData() {
+
+    sealed class CaptchaInfo {
+      object UsePasscode : CaptchaInfo()
+      data class Solution(val captchaSolution: CaptchaSolution.ChallengeWithSolution) : CaptchaInfo()
+    }
+
+  }
 
   data class Dvach(
     val postDescriptor: PostDescriptor,

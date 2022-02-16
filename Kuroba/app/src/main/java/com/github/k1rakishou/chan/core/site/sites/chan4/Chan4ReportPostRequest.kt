@@ -26,7 +26,7 @@ class Chan4ReportPostRequest(
   suspend fun execute(): PostReportResult {
     val postDescriptor = postReportData.postDescriptor
     val selectedCategoryId = postReportData.catId
-    val captchaSolution = postReportData.captchaSolution
+    val captchaInfo = postReportData.captchaInfo
 
     val site = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())
       ?: return PostReportResult.Error("Site is not active")
@@ -47,22 +47,34 @@ class Chan4ReportPostRequest(
 
       Logger.d(TAG, "reportPost($postDescriptor, $selectedCategoryId) reportPostEndpoint=$reportPostEndpoint")
 
-      val body = MultipartBody.Builder()
-        .setType(MultipartBody.FORM)
-        .addFormDataPart("cat_id", selectedCategoryId.toString())
-        .addFormDataPart("t-challenge", captchaSolution.challenge)
-        .addFormDataPart("t-response", captchaSolution.solution)
-        .addFormDataPart("board", postDescriptor.boardDescriptor().boardCode)
-        .addFormDataPart("no", postDescriptor.postNo.toString())
-        .build()
+      val requestBuilder = with(MultipartBody.Builder()) {
+        setType(MultipartBody.FORM)
+        addFormDataPart("cat_id", selectedCategoryId.toString())
 
-      val requestBuilder = Request.Builder()
-        .url(reportPostEndpoint)
-        .post(body)
+        when (captchaInfo) {
+          is PostReportData.Chan4.CaptchaInfo.Solution -> {
+            addFormDataPart("t-challenge", captchaInfo.captchaSolution.challenge)
+            addFormDataPart("t-response", captchaInfo.captchaSolution.solution)
+          }
+          PostReportData.Chan4.CaptchaInfo.UsePasscode -> {
+            // no-op
+          }
+        }
+
+        addFormDataPart("board", postDescriptor.boardDescriptor().boardCode)
+        addFormDataPart("no", postDescriptor.postNo.toString())
+
+        val body = build()
+
+        return@with Request.Builder()
+          .url(reportPostEndpoint)
+          .post(body)
+      }
 
       site.requestModifier().modifyPostReportRequest(site, requestBuilder)
 
-      val document = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(requestBuilder.build())
+      val document = proxiedOkHttpClient.okHttpClient()
+        .suspendConvertIntoJsoupDocument(requestBuilder.build())
         .unwrap()
 
       val bodyElement = document.getElementsByTag("body").firstOrNull()

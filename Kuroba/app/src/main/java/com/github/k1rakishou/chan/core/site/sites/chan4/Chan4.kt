@@ -650,6 +650,11 @@ open class Chan4 : SiteBase() {
     override fun modifyPostReportRequest(site: Chan4, requestBuilder: Request.Builder) {
       super.modifyPostReportRequest(site, requestBuilder)
 
+      if (site.actions().isLoggedIn()) {
+        val passTokenSetting = site.passToken
+        requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+      }
+
       addChan4CookieHeader(site, requestBuilder)
     }
 

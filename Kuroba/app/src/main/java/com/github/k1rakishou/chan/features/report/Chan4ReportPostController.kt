@@ -25,6 +25,8 @@ import androidx.compose.ui.unit.dp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
@@ -53,6 +55,8 @@ class Chan4ReportPostController(
 
   @Inject
   lateinit var captchaHolder: CaptchaHolder
+  @Inject
+  lateinit var siteManager: SiteManager
 
   private val viewModel by lazy { requireComponentActivity().viewModelByKey<Chan4ReportPostControllerViewModel>() }
 
@@ -209,16 +213,26 @@ class Chan4ReportPostController(
           val catId = selectedCategoryId
             ?: return@KurobaComposeTextBarButton
 
+          val isLoggedIn = siteManager.bySiteDescriptor(postDescriptor.siteDescriptor())?.actions()?.isLoggedIn() == true
           val captchaSolution = captchaHolder.solution as? CaptchaSolution.ChallengeWithSolution
-          if (captchaSolution == null || captchaSolution.isTokenEmpty()) {
-            onCaptchaRequired()
-            return@KurobaComposeTextBarButton
+
+          val captchaInfo = when {
+            isLoggedIn -> {
+              PostReportData.Chan4.CaptchaInfo.UsePasscode
+            }
+            captchaSolution != null && !captchaSolution.isTokenEmpty() -> {
+              PostReportData.Chan4.CaptchaInfo.Solution(captchaSolution)
+            }
+            else -> {
+              onCaptchaRequired()
+              return@KurobaComposeTextBarButton
+            }
           }
 
           mainScope.launch {
             val reportPostResult = viewModel.reportPost(
               postDescriptor = postDescriptor,
-              captchaSolution = captchaSolution,
+              captchaInfo = captchaInfo,
               selectedCategoryId = catId
             )
               .toastOnError(longToast = true)
