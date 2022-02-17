@@ -211,8 +211,9 @@ class BrowseController(
 
   private fun openBoardSelectionController() {
     val boardSelectionController = BoardSelectionController(
-      context,
-      object : BoardSelectionController.UserSelectionListener {
+      context = context,
+      currentSiteDescriptor = chanDescriptor?.siteDescriptor(),
+      callback = object : BoardSelectionController.UserSelectionListener {
         override fun onOpenSitesSettingsClicked() {
           openSitesSetupController()
         }
@@ -230,7 +231,7 @@ class BrowseController(
         }
       })
 
-    navigationController!!.presentController(boardSelectionController)
+    requireNavController().presentController(boardSelectionController)
   }
 
   private fun openSitesSetupController() {

@@ -16,6 +16,12 @@
  */
 package com.github.k1rakishou.chan.ui.layout;
 
+import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
+import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
+import static com.github.k1rakishou.common.AndroidUtils.requestKeyboardFocus;
+
 import android.content.Context;
 import android.graphics.Color;
 import android.text.Editable;
@@ -40,12 +46,6 @@ import com.google.android.material.textfield.TextInputEditText;
 import javax.inject.Inject;
 
 import kotlin.Unit;
-
-import static android.view.ViewGroup.LayoutParams.MATCH_PARENT;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-import static com.github.k1rakishou.common.AndroidUtils.hideKeyboard;
-import static com.github.k1rakishou.common.AndroidUtils.requestKeyboardFocus;
 
 public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChangesListener {
 
@@ -105,10 +105,10 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
     }
 
     public void setCallback(final SearchLayoutCallback callback) {
-        setCallback(false, callback);
+        setCallback(false, false, callback);
     }
 
-    public void setCallback(boolean isToolbar, final SearchLayoutCallback callback) {
+    public void setCallback(boolean isToolbar, boolean overrideDoneAction, final SearchLayoutCallback callback) {
         if (isToolbar) {
             searchView = new ColorizableToolbarSearchLayoutEditText(getContext());
         } else {
@@ -149,9 +149,23 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         searchView.setOnEditorActionListener((v, actionId, event) -> {
             if (actionId == EditorInfo.IME_ACTION_DONE) {
                 hideKeyboard(searchView);
-                callback.onSearchEntered(getText());
+
+                if (overrideDoneAction) {
+                    Editable editable = searchView.getText();
+
+                    String input = "";
+                    if (editable != null) {
+                        input = editable.toString();
+                    }
+
+                    callback.onDoneClicked(input);
+                } else {
+                    callback.onSearchEntered(getText());
+                }
+
                 return true;
             }
+
             return false;
         });
         searchView.setOnFocusChangeListener((view, focused) -> {
@@ -225,5 +239,9 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
 
     public interface SearchLayoutCallback {
         void onSearchEntered(String entered);
+
+        default void onDoneClicked(String input) {
+            // no-op
+        }
     }
 }

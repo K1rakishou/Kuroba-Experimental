@@ -705,7 +705,7 @@ public class ToolbarContainer extends FrameLayout {
         @NonNull
         private LinearLayout createSearchLayout(NavigationItem item) {
             SearchLayout searchLayout = new SearchLayout(getContext());
-            searchLayout.setCallback(true, input -> {
+            searchLayout.setCallback(true, false, input -> {
                 searchDebouncer.post(() -> {
                     callback.searchInput(input);
                 }, 250L);

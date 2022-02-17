@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
@@ -36,16 +37,15 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.time.Duration
 import kotlin.time.ExperimentalTime
 
 class BoardSelectionController(
   context: Context,
+  private val currentSiteDescriptor: SiteDescriptor?,
   private val callback: UserSelectionListener
 ) : BaseFloatingController(context), BoardSelectionView, ThemeEngine.ThemeChangesListener {
 
@@ -115,8 +115,31 @@ class BoardSelectionController(
 
     mainScope.launch {
       startListeningForSearchQueries()
-        .debounce(Duration.milliseconds(125))
-        .collect { query -> presenter.onSearchQueryChanged(query) }
+        .collect { (doneClicked, query) ->
+          if (!doneClicked) {
+            presenter.onSearchQueryChanged(query)
+            return@collect
+          }
+
+          if (currentSiteDescriptor == null) {
+            return@collect
+          }
+
+          val normalizedQuery = query.trim()
+          if (normalizedQuery.isEmpty()) {
+            return@collect
+          }
+
+          val catalogDescriptor = ChanDescriptor.CatalogDescriptor.create(
+            boardDescriptor = BoardDescriptor.Companion.create(
+              siteDescriptor = currentSiteDescriptor,
+              boardCode = normalizedQuery
+            )
+          )
+
+          callback.onCatalogSelected(catalogDescriptor)
+          pop()
+        }
     }
 
     compositeDisposable.add(
@@ -265,11 +288,21 @@ class BoardSelectionController(
   }
 
   @OptIn(ExperimentalCoroutinesApi::class)
-  private fun startListeningForSearchQueries(): Flow<String> {
-    return callbackFlow<String> {
-      searchView.setCallback { query ->
-        trySend(query)
-      }
+  private fun startListeningForSearchQueries(): Flow<Pair<Boolean, String>> {
+    return callbackFlow<Pair<Boolean, String>> {
+      searchView.setCallback(false, true, object : SearchLayout.SearchLayoutCallback {
+        override fun onSearchEntered(input: String?) {
+          if (input != null) {
+            trySend(false to input)
+          }
+        }
+
+        override fun onDoneClicked(input: String?) {
+          if (input != null) {
+            trySend(true to input)
+          }
+        }
+      })
 
       awaitClose()
     }
