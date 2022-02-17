@@ -18,10 +18,12 @@ package com.github.k1rakishou.chan.ui.view
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.os.Build
 import android.os.Bundle
 import android.text.Spanned
 import android.util.AttributeSet
 import android.view.MotionEvent
+import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
 import androidx.core.view.inputmethod.EditorInfoCompat
@@ -61,6 +63,13 @@ class ReplyInputEditText @JvmOverloads constructor(
   init {
     AppModuleAndroidUtils.extractActivityComponent(context)
       .inject(this)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Hopefully this will fix these crashes:
+      // java.lang.RuntimeException:
+      //    android.os.TransactionTooLargeException: data parcel size 296380 bytes
+      importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+    }
 
     setOnTouchListener { view, event ->
       if (hasFocus()) {

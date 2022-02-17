@@ -879,6 +879,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
+    Logger.d(TAG, "openReply() open: ${open}")
+
     val chanDescriptor = currentChanDescriptorOrNull()
     replyOpen = open
 
