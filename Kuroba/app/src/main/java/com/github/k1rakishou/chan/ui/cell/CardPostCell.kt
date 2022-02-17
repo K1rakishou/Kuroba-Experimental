@@ -21,6 +21,7 @@ import android.text.TextUtils
 import android.util.AttributeSet
 import android.view.View
 import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.ChanSettings.BoardPostViewMode
@@ -52,7 +53,6 @@ import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.launch
-import java.util.*
 import javax.inject.Inject
 
 class CardPostCell : ConstraintLayout,
@@ -78,9 +78,9 @@ class CardPostCell : ConstraintLayout,
   private var blinkExecuted = false
 
   private lateinit var cardContent: FixedRatioLinearLayout
-  private lateinit var title: TextView
+  private lateinit var title: AppCompatTextView
   private lateinit var comment: TextView
-  private lateinit var replies: TextView
+  private lateinit var replies: AppCompatTextView
   private lateinit var icons: PostIcons
 
   private val scope = KurobaCoroutineScope()

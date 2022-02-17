@@ -20,18 +20,31 @@ import android.annotation.SuppressLint
 import android.app.SearchManager
 import android.content.Context
 import android.content.Intent
-import android.graphics.*
+import android.graphics.Typeface
 import android.os.Handler
 import android.os.Looper
 import android.os.SystemClock
-import android.text.*
+import android.text.Layout
+import android.text.Spannable
+import android.text.SpannableString
+import android.text.Spanned
+import android.text.TextPaint
 import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
 import android.text.style.ClickableSpan
 import android.util.AttributeSet
-import android.view.*
+import android.view.ActionMode
+import android.view.GestureDetector
+import android.view.HapticFeedbackConstants
+import android.view.Menu
+import android.view.MenuItem
+import android.view.MotionEvent
+import android.view.View
+import android.view.ViewConfiguration
+import android.view.ViewGroup
 import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.core.view.GravityCompat
 import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.ChanSettings
@@ -49,16 +62,24 @@ import com.github.k1rakishou.chan.ui.view.DashedLineView
 import com.github.k1rakishou.chan.ui.view.PostCommentTextView
 import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.utils.*
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.extractActivityComponent
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
+import com.github.k1rakishou.chan.utils.setAlphaFast
+import com.github.k1rakishou.chan.utils.setBackgroundColorFast
+import com.github.k1rakishou.chan.utils.setOnThrottlingClickListener
+import com.github.k1rakishou.chan.utils.setOnThrottlingLongClickListener
+import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.modifyCurrentAlpha
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_spannable.*
+import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -73,7 +94,6 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.joda.time.DateTime
 import java.lang.ref.WeakReference
-import java.util.*
 import javax.inject.Inject
 
 class PostCell @JvmOverloads constructor(
@@ -95,7 +115,7 @@ class PostCell @JvmOverloads constructor(
   lateinit var postHighlightManager: PostHighlightManager
 
   private lateinit var postImageThumbnailViewsContainer: PostImageThumbnailViewsContainer
-  private lateinit var title: TextView
+  private lateinit var title: AppCompatTextView
   private lateinit var icons: PostIcons
   private lateinit var comment: PostCommentTextView
   private lateinit var replies: TextView

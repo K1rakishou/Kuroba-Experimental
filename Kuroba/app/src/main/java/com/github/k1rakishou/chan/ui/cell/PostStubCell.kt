@@ -19,7 +19,7 @@ package com.github.k1rakishou.chan.ui.cell
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
-import android.widget.TextView
+import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -34,7 +34,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.util.ChanPostUtils
-import java.util.*
 import javax.inject.Inject
 
 class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
@@ -49,7 +48,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
   private var postCellData: PostCellData? = null
   private var callback: PostCellInterface.PostCellCallback? = null
 
-  private lateinit var title: TextView
+  private lateinit var title: AppCompatTextView
   private lateinit var divider: ColorizableDivider
 
   constructor(context: Context) : super(context) {
