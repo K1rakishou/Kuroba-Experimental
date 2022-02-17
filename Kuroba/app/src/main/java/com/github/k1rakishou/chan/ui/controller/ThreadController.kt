@@ -70,7 +70,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import javax.inject.Inject
@@ -603,7 +602,10 @@ abstract class ThreadController(
         isPreviewingCatalogThread = false
       )
     } else {
-      openExternalThread(externalArchivePostDescriptor)
+      openExternalThread(
+        postDescriptor = externalArchivePostDescriptor,
+        scrollToPost = true
+      )
     }
   }
 

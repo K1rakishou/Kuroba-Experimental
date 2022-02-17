@@ -59,7 +59,6 @@ import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.PersistableChanState
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
@@ -624,13 +623,14 @@ open class ViewThreadController(
     updateLeftPaneHighlighting(newThreadDescriptor)
   }
 
-  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor, scrollToPost: Boolean) {
     val descriptor = chanDescriptor
       ?: return
 
     openExternalThreadHelper.openExternalThread(
       currentChanDescriptor = descriptor,
-      postDescriptor = postDescriptor
+      postDescriptor = postDescriptor,
+      scrollToPost = scrollToPost
     ) { threadDescriptor ->
       mainScope.launch { loadThread(threadDescriptor = threadDescriptor, openingExternalThread = true) }
     }

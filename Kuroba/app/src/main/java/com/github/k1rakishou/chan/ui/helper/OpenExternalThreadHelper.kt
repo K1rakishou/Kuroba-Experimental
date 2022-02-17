@@ -21,6 +21,7 @@ class OpenExternalThreadHelper(
   fun openExternalThread(
     currentChanDescriptor: ChanDescriptor,
     postDescriptor: PostDescriptor,
+    scrollToPost: Boolean,
     openThreadFunc: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Logger.d(TAG, "openExternalThread($postDescriptor)")
@@ -32,6 +33,7 @@ class OpenExternalThreadHelper(
       postDescriptor = postDescriptor,
       currentChanDescriptor = currentChanDescriptor,
       threadToOpenDescriptor = threadToOpenDescriptor,
+      scrollToPost = scrollToPost,
       openThreadFunc = openThreadFunc
     )
   }
@@ -40,14 +42,17 @@ class OpenExternalThreadHelper(
     postDescriptor: PostDescriptor,
     currentChanDescriptor: ChanDescriptor,
     threadToOpenDescriptor: ChanDescriptor.ThreadDescriptor,
+    scrollToPost: Boolean,
     openThreadFunc: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     Logger.d(TAG, "openExternalThread() loading external thread $postDescriptor from $currentChanDescriptor")
 
-    chanThreadViewableInfoManager.update(
-      chanDescriptor = threadToOpenDescriptor,
-      createEmptyWhenNull = true
-    ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
+    if (scrollToPost) {
+      chanThreadViewableInfoManager.update(
+        chanDescriptor = threadToOpenDescriptor,
+        createEmptyWhenNull = true
+      ) { chanThreadViewableInfo -> chanThreadViewableInfo.markedPostNo = postDescriptor.postNo }
+    }
 
     if (currentChanDescriptor is ChanDescriptor.ThreadDescriptor) {
       threadFollowHistoryManager.pushThreadDescriptor(currentChanDescriptor)

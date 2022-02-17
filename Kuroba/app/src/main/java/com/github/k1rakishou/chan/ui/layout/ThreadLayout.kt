@@ -710,10 +710,10 @@ class ThreadLayout @JvmOverloads constructor(
     )
   }
 
-  override suspend fun openExternalThread(postDescriptor: PostDescriptor) {
-    Logger.d(TAG, "openExternalThread($postDescriptor)")
+  override suspend fun openExternalThread(postDescriptor: PostDescriptor, scrollToPost: Boolean) {
+    Logger.d(TAG, "openExternalThread($postDescriptor, $scrollToPost)")
 
-    callback.openExternalThread(postDescriptor)
+    callback.openExternalThread(postDescriptor, scrollToPost)
   }
 
   override suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean) {
@@ -1514,7 +1514,7 @@ class ThreadLayout @JvmOverloads constructor(
     suspend fun showThread(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showThreadWithoutFocusing(descriptor: ChanDescriptor.ThreadDescriptor, animated: Boolean)
     suspend fun showPostsInExternalThread(postDescriptor: PostDescriptor, isPreviewingCatalogThread: Boolean)
-    suspend fun openExternalThread(postDescriptor: PostDescriptor)
+    suspend fun openExternalThread(postDescriptor: PostDescriptor, scrollToPost: Boolean)
     suspend fun showCatalogWithoutFocusing(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
     suspend fun showCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
     suspend fun setCatalog(catalogDescriptor: ChanDescriptor.ICatalogDescriptor, animated: Boolean)
