@@ -15,7 +15,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
-import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.common.mutableListWithCap
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -24,7 +24,6 @@ import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.persist_state.IndexAndTop
 import kotlinx.coroutines.launch
-import java.util.*
 
 class PostRepliesPopupController(
   context: Context,
@@ -103,7 +102,7 @@ class PostRepliesPopupController(
     postsView.addOnScrollListener(scrollListener)
 
     mainScope.launch {
-      postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
+      val (width, _) = postsView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
 
       val retainedPosts = postHideHelper.get().processPostFilters(chanDescriptor, data.posts, mutableSetOf())
         .safeUnwrap { error ->
@@ -112,7 +111,11 @@ class PostRepliesPopupController(
         }
 
       val indexedPosts = indexPosts(chanDescriptor, retainedPosts)
-      repliesAdapter.setOrUpdateData(postsView.width, indexedPosts, themeEngine.chanTheme)
+      repliesAdapter.setOrUpdateData(
+        postCellDataWidthNoPaddings = width,
+        postIndexedList = indexedPosts,
+        theme = themeEngine.chanTheme
+      )
 
       restoreScrollPosition(data.forPostWithDescriptor)
     }

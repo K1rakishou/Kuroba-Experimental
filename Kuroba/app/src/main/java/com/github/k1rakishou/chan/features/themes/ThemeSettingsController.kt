@@ -41,7 +41,7 @@ import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.view.ViewPagerAdapter
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.ViewUtils.changeEdgeEffect
-import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
@@ -56,7 +56,6 @@ import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import java.util.*
 import javax.inject.Inject
 
 class ThemeSettingsController(context: Context) : Controller(context),
@@ -129,9 +128,8 @@ class ThemeSettingsController(context: Context) : Controller(context),
 
     updateCurrentThemeIndicator(true)
     mainScope.launch {
-      pager.awaitUntilGloballyLaidOut(waitForWidth = true)
-
-      reload()
+      val (width, _) = pager.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
+      reload(postCellDataWidthNoPaddings = width)
     }
 
     if (AndroidUtils.isAndroid10()) {
@@ -163,10 +161,10 @@ class ThemeSettingsController(context: Context) : Controller(context),
     }
   }
 
-  private fun reload() {
+  private fun reload(postCellDataWidthNoPaddings: Int) {
     val root = view.findViewById<LinearLayout>(R.id.root)
 
-    val adapter = Adapter(pager.width)
+    val adapter = Adapter(postCellDataWidthNoPaddings)
     pager.adapter = adapter
     pager.setCurrentItem(currentItemIndex, false)
     pager.changeEdgeEffect(themeEngine.chanTheme)
@@ -200,7 +198,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
       return
     }
 
-    reload()
+    reload(postCellDataWidthNoPaddings = pager.width)
   }
 
   private fun exportThemeToClipboard(item: ToolbarMenuSubItem) {
@@ -386,7 +384,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
       }
       is ThemeParser.ThemeParseResult.Success -> {
         showToastLong(context.getString(R.string.done))
-        reload()
+        reload(postCellDataWidthNoPaddings = pager.width)
       }
     }.exhaustive
   }
@@ -458,7 +456,7 @@ class ThemeSettingsController(context: Context) : Controller(context),
         requireNavController(),
         ThemeControllerHelper.Options(
           showMoreThemesButton = true,
-          refreshThemesControllerFunc = { reload() }
+          refreshThemesControllerFunc = { reload(postCellDataWidthNoPaddings = pager.width) }
         ),
         postCellDataWidthNoPaddings
       )

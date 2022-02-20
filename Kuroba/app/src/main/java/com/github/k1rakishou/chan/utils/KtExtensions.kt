@@ -96,28 +96,29 @@ fun Context.getLifecycleFromContext(): Lifecycle? {
   }
 }
 
-suspend fun View.awaitUntilGloballyLaidOut(
+suspend fun View.awaitUntilGloballyLaidOutAndGetSize(
   waitForWidth: Boolean = false,
   waitForHeight: Boolean = false,
   attempts: Int = 5
-) {
+) : Pair<Int, Int> {
   val viewTag = this.toString()
 
   if (!waitForWidth && !waitForHeight) {
     error("awaitUntilGloballyLaidOut($viewTag) At least one of the parameters must be set to true!")
   }
 
-  if (attempts <= 0) {
-    Logger.e(TAG, "awaitUntilGloballyLaidOut($viewTag) exhausted all attempts exiting, viewInfo=${this}")
-    return
-  }
-
   val widthOk = (!waitForWidth || width > 0)
   val heightOk = (!waitForHeight || height > 0)
 
+  if (attempts <= 0) {
+    Logger.e(TAG, "awaitUntilGloballyLaidOut($viewTag) exhausted all attempts exiting " +
+      "(widthOk=$widthOk, width=$width, heightOk=$heightOk, height=$height)")
+    return width to height
+  }
+
   if (widthOk && heightOk) {
     Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) widthOk=$widthOk, width=$width, heightOk=$heightOk, height=$height")
-    return
+    return width to height
   }
 
   if (!ViewCompat.isLaidOut(this) && !isLayoutRequested) {
@@ -147,7 +148,7 @@ suspend fun View.awaitUntilGloballyLaidOut(
   }
 
   Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) after OnGlobalLayoutListener")
-  awaitUntilGloballyLaidOut(waitForWidth, waitForHeight, attempts - 1)
+  return awaitUntilGloballyLaidOutAndGetSize(waitForWidth, waitForHeight, attempts - 1)
 }
 
 fun Controller.findControllerOrNull(predicate: (Controller) -> Boolean): Controller? {

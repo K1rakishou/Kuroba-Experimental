@@ -78,7 +78,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
@@ -471,14 +471,14 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     val initial = visible != Visible.THREAD
-    loadView.awaitUntilGloballyLaidOut(waitForWidth = true)
+    val (width, _) = loadView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
 
     if (refreshPostPopupHelperPosts && postPopupHelper.isOpen) {
       postPopupHelper.updateAllPosts(descriptor)
     }
 
     val (showPostsResult, totalDuration) = measureTimedValue {
-      threadListLayout.showPosts(loadView.width, descriptor, filter, initial, additionalPostsToReparse)
+      threadListLayout.showPosts(width, descriptor, filter, initial, additionalPostsToReparse)
     }
 
     val applyFilterDuration = showPostsResult.applyFilterDuration

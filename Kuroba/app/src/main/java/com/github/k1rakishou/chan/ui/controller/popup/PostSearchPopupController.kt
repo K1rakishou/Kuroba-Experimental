@@ -19,7 +19,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.RecyclerUtils.restoreScrollPosition
-import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOut
+import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -191,7 +191,7 @@ class PostSearchPopupController(
     val data = displayingData
       ?: return
 
-    postsView.awaitUntilGloballyLaidOut(waitForWidth = true)
+    val (width, _) = postsView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
 
     val resultPosts = withContext(Dispatchers.Default) {
       val searchQuery = query.toLowerCase(Locale.ENGLISH)
@@ -244,7 +244,7 @@ class PostSearchPopupController(
     this@PostSearchPopupController.indexedPosts.addAll(indexedPosts)
 
     repliesAdapter.setSearchQuery(PostCellData.SearchQuery(query, MIN_QUERY_LENGTH))
-    repliesAdapter.setOrUpdateData(postsView.width, indexedPosts, themeEngine.chanTheme)
+    repliesAdapter.setOrUpdateData(width, indexedPosts, themeEngine.chanTheme)
 
     postsView.post {
       if (!scrollPositionRestored) {
