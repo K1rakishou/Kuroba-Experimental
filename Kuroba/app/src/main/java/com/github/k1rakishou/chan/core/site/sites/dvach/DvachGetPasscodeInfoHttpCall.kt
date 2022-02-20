@@ -26,6 +26,8 @@ class DvachGetPasscodeInfoHttpCall(
     requestBuilder
       .url(passcodeInfoUrl)
       .get()
+
+    site.requestModifier().modifyGetPasscodeInfoRequest(site, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {

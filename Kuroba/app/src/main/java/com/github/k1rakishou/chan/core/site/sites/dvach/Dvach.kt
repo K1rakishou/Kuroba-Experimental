@@ -60,7 +60,6 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
-import java.util.*
 import java.util.regex.Pattern
 
 @DoNotStrip
@@ -473,6 +472,20 @@ class Dvach : CommonSite() {
 
     override fun modifyPostReportRequest(site: Dvach, requestBuilder: Request.Builder) {
       super.modifyPostReportRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyLoginRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyLoginRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
+    override fun modifyGetPasscodeInfoRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyGetPasscodeInfoRequest(site, requestBuilder)
 
       addAntiSpamCookie(requestBuilder)
       addUserCodeCookie(site, requestBuilder)

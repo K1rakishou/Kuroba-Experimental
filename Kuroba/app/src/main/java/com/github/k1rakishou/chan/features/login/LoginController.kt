@@ -200,8 +200,11 @@ class LoginController(
 
   private fun showBottomDescription() {
     if (site is Chan4) {
-      bottomDescription.text = getString(R.string.setting_pass_bottom_description).parseAsHtml()
+      bottomDescription.text = getString(R.string.setting_pass_bottom_description_chan4).parseAsHtml()
       bottomDescription.movementMethod = LinkMovementMethod.getInstance()
+      return
+    } else if (site is Dvach) {
+      bottomDescription.text = getString(R.string.setting_pass_bottom_description_dvach)
       return
     }
 

@@ -1277,7 +1277,7 @@ fun Request.Builder.appendCookieHeader(value: String): Request.Builder {
   // Absolute retardiation but OkHttp doesn't allow doing it differently (or maybe I just don't know?)
   val fullCookieValue = request.newBuilder()
     .removeHeader(COOKIE_HEADER_NAME)
-    .addHeader(COOKIE_HEADER_NAME, "${cookies};${value}")
+    .addHeader(COOKIE_HEADER_NAME, "${cookies}; ${value}")
     .build()
     .header(COOKIE_HEADER_NAME)!!
 

@@ -936,7 +936,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_posting_limits_info_refresh_success">Posting limits info refreshed</string>
     <string name="setting_posting_limits_info_refresh_failure">Failed to refresh posting limits info</string>
 
-    <string name="setting_pass_bottom_description">"
+    <string name="setting_pass_bottom_description_chan4">"
 <![CDATA[
 Forgot your 4chan Pass login details?<br>
 <a href=\"https://www.4chan.org/pass?reset\">Go here to reset your PIN.</a><br>
@@ -953,6 +953,7 @@ Otherwise you will still have to solve captchas.<br>
 If you ever log out or if the passcode expires you will have to change reply mode too.
 ]]>
     "</string>
+    <string name="setting_pass_bottom_description_dvach">You need to pass 2ch anti-spam checks before trying to enter your passcode!</string>
 
     <string name="settings_screen_theme">Themes</string>
     <string name="image_quality">Image quality: %1$d</string>
