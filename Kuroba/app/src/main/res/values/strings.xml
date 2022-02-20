@@ -672,6 +672,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
 
     <!-- Appearance post group -->
     <string name="setting_post_full_date">Show the full date on posts</string>
+    <string name="setting_post_full_date_local_locale">Use system locale for post date format</string>
+    <string name="setting_post_full_date_local_locale_description">By default English/US is used, if this setting is enabled then your system\'s locale will be used</string>
     <string name="setting_post_draw_post_thumbnail_background">Draw background behind post thumbnails</string>
     <string name="setting_post_file_info">Show file info on posts</string>
     <string name="setting_post_shift_post_comment">Shift post comment to be to the left/right side of a thumbnail when possible</string>

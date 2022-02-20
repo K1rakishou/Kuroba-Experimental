@@ -280,6 +280,7 @@ public class ChanSettings {
     public static StringSetting fontSize;
     public static RangeSetting postCellThumbnailSizePercents;
     public static BooleanSetting postFullDate;
+    public static BooleanSetting postFullDateUseLocalLocale;
     public static BooleanSetting postFileInfo;
     public static OptionsSetting<PostAlignmentMode> catalogPostAlignmentMode;
     public static OptionsSetting<PostAlignmentMode> threadPostAlignmentMode;
@@ -498,6 +499,7 @@ public class ChanSettings {
             fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
             postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 125);
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
+            postFullDateUseLocalLocale = new BooleanSetting(provider, "preference_post_full_date_use_local_locale", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
             catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
             threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);

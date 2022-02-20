@@ -57,6 +57,7 @@ data class PostCellData(
   val neverShowPages: Boolean,
   val tapNoReply: Boolean,
   val postFullDate: Boolean,
+  val postFullDateLocalLocale: Boolean,
   val shiftPostComment: Boolean,
   val forceShiftPostComment: Boolean,
   val postMultipleImagesCompactMode: Boolean,
@@ -283,6 +284,7 @@ data class PostCellData(
       neverShowPages = neverShowPages,
       tapNoReply = tapNoReply,
       postFullDate = postFullDate,
+      postFullDateLocalLocale = postFullDateLocalLocale,
       shiftPostComment = shiftPostComment,
       forceShiftPostComment = forceShiftPostComment,
       postMultipleImagesCompactMode = postMultipleImagesCompactMode,
@@ -587,7 +589,7 @@ data class PostCellData(
 
   private fun calculatePostTime(post: ChanPost): CharSequence {
     val postTime = if (postFullDate) {
-      ChanPostUtils.getLocalDate(post)
+      ChanPostUtils.getLocalDate(post, postFullDateLocalLocale)
     } else {
       DateUtils.getRelativeTimeSpanString(
         post.timestamp * 1000L,

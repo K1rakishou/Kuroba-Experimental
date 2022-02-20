@@ -143,6 +143,15 @@ class AppearanceSettingsScreen(
 
         group += BooleanSettingV2.createBuilder(
           context = context,
+          identifier = AppearanceScreen.PostGroup.PostFullDateUseLocalLocale,
+          topDescriptionIdFunc = { R.string.setting_post_full_date_local_locale },
+          bottomDescriptionIdFunc = { R.string.setting_post_full_date_local_locale_description },
+          setting = ChanSettings.postFullDateUseLocalLocale,
+          requiresUiRefresh = true
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
           identifier = AppearanceScreen.PostGroup.PostFileInfo,
           topDescriptionIdFunc = { R.string.setting_post_file_info },
           setting = ChanSettings.postFileInfo,

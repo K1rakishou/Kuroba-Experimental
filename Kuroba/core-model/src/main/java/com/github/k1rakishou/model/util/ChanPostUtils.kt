@@ -27,10 +27,17 @@ import kotlin.math.min
 object ChanPostUtils {
   private const val TAG = "ChanPostUtils"
 
-  private val dateFormat = SimpleDateFormat.getDateTimeInstance(
+  private val dateFormatEnglish = SimpleDateFormat.getDateTimeInstance(
     DateFormat.SHORT,
     DateFormat.MEDIUM,
     Locale.ENGLISH
+  )
+
+  @SuppressLint("ConstantLocale")
+  private val dateFormatLocal = SimpleDateFormat.getDateTimeInstance(
+    DateFormat.SHORT,
+    DateFormat.MEDIUM,
+    Locale.getDefault()
   )
 
   @JvmStatic
@@ -147,12 +154,16 @@ object ChanPostUtils {
     return "/" + boardDescriptor.boardCode + "/" + threadDescriptor.threadNo
   }
 
-  fun getLocalDate(post: ChanPost): String {
+  fun getLocalDate(post: ChanPost, localDate: Boolean): String {
     val tmpDate = Date()
     tmpDate.time = post.timestamp * 1000L
 
-    return try {
-      dateFormat.format(tmpDate)
+    try {
+      if (localDate) {
+        return dateFormatLocal.format(tmpDate)
+      } else {
+        return dateFormatEnglish.format(tmpDate)
+      }
     } catch (error: Throwable) {
       Logger.e(TAG, "Invalid time: ${tmpDate.time}")
       return "Unk"

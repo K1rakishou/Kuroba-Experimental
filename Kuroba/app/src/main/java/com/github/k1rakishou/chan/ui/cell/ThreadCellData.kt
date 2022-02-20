@@ -244,6 +244,7 @@ class ThreadCellData(
     val neverShowPages = ChanSettings.neverShowPages.get()
     val tapNoReply = ChanSettings.tapNoReply.get()
     val postFullDate = ChanSettings.postFullDate.get()
+    val postFullDateLocalLocale = ChanSettings.postFullDateUseLocalLocale.get()
     val shiftPostComment = ChanSettings.shiftPostComment.get()
     val forceShiftPostComment = ChanSettings.forceShiftPostComment.get()
     val textOnly = ChanSettings.textOnly.get()
@@ -318,6 +319,7 @@ class ThreadCellData(
           neverShowPages = neverShowPages,
           tapNoReply = tapNoReply,
           postFullDate = postFullDate,
+          postFullDateLocalLocale = postFullDateLocalLocale,
           shiftPostComment = shiftPostComment,
           forceShiftPostComment = forceShiftPostComment,
           postMultipleImagesCompactMode = postMultipleImagesCompactMode,

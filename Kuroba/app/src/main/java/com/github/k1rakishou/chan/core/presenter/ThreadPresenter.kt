@@ -2626,7 +2626,7 @@ class ThreadPresenter @Inject constructor(
 
     text
       .append("Posted: ")
-      .append(ChanPostUtils.getLocalDate(post))
+      .append(ChanPostUtils.getLocalDate(post, ChanSettings.postFullDateUseLocalLocale.get()))
 
     if (!TextUtils.isEmpty(post.posterId) && isBound) {
       val threadDescriptor = currentChanDescriptor as? ChanDescriptor.ThreadDescriptor

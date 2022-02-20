@@ -356,6 +356,7 @@ sealed class AppearanceScreen(
     object PostCellThumbnailSizePercent : PostGroup("post_cell_thumbnail_size_percent")
     object PostThumbnailScaling : PostGroup("post_thumbnail_scaling")
     object PostFullDate : PostGroup("post_full_date")
+    object PostFullDateUseLocalLocale : PostGroup("post_full_date_use_local_locale")
     object DrawPostThumbnailBackground : PostGroup("draw_post_thumbnail_background")
     object PostFileInfo : PostGroup("post_file_info")
     object ShiftPostComment : PostGroup("shift_post_comment")
