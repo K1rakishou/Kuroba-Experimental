@@ -1,0 +1,81 @@
+v1.3.7
+TLDR version:
+- Media viewer updates.
+- mpv updated to the latest available version.
+- Apk/report server deprecation.
+- Third eye support.
+
+Full version:
+- Add ability to reorder media viewer action buttons.
+- Add RozenArcana (archive.alice.al) archive support. Update TokyoChronos boards.
+- Use passcode when reporting posts on 4chan (if logged in).
+- Try a different method for setting precomputed text (possible fix for a frequent crash).
+- Potential fix for weird "android.os.TransactionTooLargeException: data parcel size 296380 bytes" crashes that happen somewhere inside AutofillManager.
+- When navigating to a thread via the catalog search do not scroll to the OP but use the last viewed post position.
+- Open a board on the current site with the entered board code when clicking keyboard's DONE button in the board selection menu.
+- Potential fix for "Bad postCellDataWidthNoPaddings: 0" crash.
+- Fix not being able to enter 2ch.hk passcode info.
+- Use a different method to recycle posts when navigating reply chains which shouldn't have this weird glitch where the reply list is shown empty for a split second and then expanded with posts.
+- Other minor changes and fixes.
+
+v1.3.6
+- Fix, suppress or add logs for a bunch of crashes accumulated over the past days.
+
+v1.3.5
+- Hide/remove post logic rewritten from scratch. Removed posts are no longer shown in the "X replies" post text view. Both hidden and removed posts are nor marked as hidden/removed in the "X replies" post text view. Quotes pointing to hidden/removed posts are now marked as hidden/removed accordingly. Clicking such quotes will first unhide/unremove the post and then after clicking it again the post will be shown (works in reply chains as well). 
+More info regarding the changes can be found here: https://github.com/K1rakishou/Kuroba-Experimental/wiki/Post-filtering-changes-in-v1.3.5
+- Fix crash when trying to select more than 1000 threads (sqlite limits).
+- Fix ArrayIndexOutOfBoundsException when setting spans.
+- Manually hidden/removed threads can now be viewed and restored by going to three dot menu in the catalog -> "View manually hidden/removed threads".
+- Fix memory leak when walking through post reply chains where posts have images (basically in this case PostImageThumbnailView.unbindPostImage() is never called so we never cancel active coroutines/flow which causes leaks).
+- Include postNo into PostCellStub title.
+
+v1.3.4
+- Add app run time to the report footer.
+
+v1.3.3
+- Fix media viewer action strip blinking for an instant when opening media viewer with controls hidden.
+- Add ability to reorder boorus + make BuildBooruSettingItem collapsable.
+- Fix play/pause button not working in ExoPlayer/Mpv media views when it's impossible to autoplay the video (no wifi and setting is set to only play when wifi connected, etc.)
+- Fix ExoPlayer view not handling video updates (like progress/pause/resume) in some cases.
+- Hide postPopupHelper when opening FiltersController.
+- ThirdEye can now look for nested or wildcard json keys.
+	For example:
+	- "test1 > test2 > test3" will search for json value which is inside of 2 json objects (test1 and test2) with name test3.
+	- "test1 > test2 > *" will search for similar stuff but the last key may be any string (basically it just always matches it).
+- Add headers to ThirdEye network requests.
+- Fix not being able to load 420chan boards.
+- Change bg color of media viewer UI elements (make it more transparent). Add spacer between the child elements inside of the InsetAwareLinearLayout.
+
+v1.3.2
+- Third eye support. Can be found in thread options (Thread -> three dot menu -> More options -> Third eye settings).
+- Implement nsfw mode for catalog/thread/album thumbnails. Can be found in thread options (Thread -> three dot menu -> More options -> NSFW mode).
+- Hopefully fix some notifications not getting closed when posting.
+- Use the left side of the screen for media viewer action strip when on tablets.
+- Decrease the minimumTouchTargetSize for Jetpack Compose UI elements.
+- Fix the restartApp() method which hasn't been working for months.
+- Add ability to leave comment via the built-in reporting system on already existing issues on Github by providing their issueId.
+
+v1.3.1
+- Fix crash when opening reply chain from the media viewer where posts have flags.
+- Fix memory leak caused by PostTitleTimeUpdate routine.
+
+v1.3.0
+- Allow visiting boards that are not currently added into the BoardManager. Basically it's now possible to open boards without having to download the board list from the server. Sites without catalog support won't work, obviously (like warosu).
+- Remove ability to create 4chan boards manually (you don't need it anymore, see ^).
+- Apk/report server deprecation. It will be shut down in a couple of weeks. All the new Anr/Crash reports will be sent to a separate github repo now. See https://github.com/KurobaExReports/Reports/issues
+- Update mpv with all the dependencies. You will have to download the new libraries.
+- Fix MpvVideoMediaView reload media button not doing anything.
+- Set mediaViewerMaxOffscreenPages to 1 by default instead of 2. This will only be applied to fresh app installs. If you have problems when viewing media such as lags or micro-freezes then it's recommended to set that setting to 1 since it will reduce the amount of media loaded into the memory at once. It can be done in the media viewer settings.
+- Move DiskCacheSettings from DeveloperSettingsScreen to CacheSettingsScreen. 
+- Add setting to disable in-app "events".
+- Improve open thread by url. It can now open catalogs/threads by board code/threadId or full url like before. Also open thread by ID was merged into open catalogs/threads by identifier.
+- Animate navigation history list element updates.
+- Move media viewer action buttons to bottom of the screen.
+- Add ability to display post replies in media viewer without having to close it.
+- Prefer using HARDWARE bitmaps when possible (stored only in the GPU memory, only supported on API 26+). Force RGB_565 if the device is low ram device. In all other cases use ARGB_8888.
+- Notify the user more aggressively when root directory is not accessible because apparently it's still not obvious to the user what to do in this situation.
+- Dot not use the full image url when "High resolution cell" setting is enabled and remove thumbnail spoilers enabled too.
+- Fix not being able to download archived 2ch.hk threads.
+- Do not crash when an url inside of soundpost tag is incorrect.
+- Fix a bug where clicking any kind of bookmark notification would not automatically run the foreground watcher right away after the app is started because by the time BookmarkForegroundWatcher.updateBookmarksWorkerLoop() is called applicationVisibilityManager.isAppInForeground() would still be false (since the activity might not be created yet).
