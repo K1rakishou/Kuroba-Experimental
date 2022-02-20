@@ -576,7 +576,9 @@ class ChanPostLocalSource(
     val chanBoardMap = chanBoardDao.selectMany(boardsIdSet)
       .associateBy { chanBoardIdEntity -> chanBoardIdEntity.boardId }
 
-    val chanPostFullList = chanPostDao.selectOriginalPosts(threadDatabaseIds)
+    val chanPostFullList = threadDatabaseIds
+      .chunked(KurobaDatabase.SQLITE_IN_OPERATOR_MAX_BATCH_SIZE)
+      .flatMap { chunk -> chanPostDao.selectOriginalPosts(chunk) }
 
     val postIdList = chanPostFullList.map { it.chanPostIdEntity.postId }
 
