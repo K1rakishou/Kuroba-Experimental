@@ -28,8 +28,10 @@ import com.squareup.moshi.JsonReader
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.supervisorScope
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
@@ -158,7 +160,7 @@ class ThirdEyeLoader(
         Logger.e(TAG, "processImages() unhandled error: ${error.errorMessageOrClassName()}")
 
         // Notify the listeners so that the thumbnail animations can be stopped
-        thirdEyeManager.notifyListeners(postDescriptor)
+        withContext(NonCancellable) { thirdEyeManager.notifyListeners(postDescriptor) }
         return@supervisorScope false
       }
     }
