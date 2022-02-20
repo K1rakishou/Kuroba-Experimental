@@ -21,6 +21,7 @@ import com.github.k1rakishou.model.data.post.PostIndexed
 import dagger.Lazy
 
 class PostRepliesAdapter(
+  private val recyclerView: RecyclerView,
   private val postViewMode: PostCellData.PostViewMode,
   private val postCellCallback: PostCellInterface.PostCellCallback,
   val chanDescriptor: ChanDescriptor,
@@ -57,6 +58,14 @@ class PostRepliesAdapter(
   }
 
   fun cleanup() {
+    val childCount = recyclerView.childCount
+    for (i in 0 until childCount) {
+      val child = recyclerView.getChildAt(i)
+      if (child is GenericPostCell) {
+        child.onPostRecycled(isActuallyRecycling = true)
+      }
+    }
+
     threadCellData.cleanup()
     notifyDataSetChanged()
   }
@@ -78,7 +87,7 @@ class PostRepliesAdapter(
   }
 
   override fun getItemId(position: Int): Long {
-        return threadCellData.getPostCellData(position).hashForAdapter()
+    return threadCellData.getPostCellData(position).hashForAdapter()
   }
 
   override fun onViewRecycled(holder: ReplyViewHolder) {

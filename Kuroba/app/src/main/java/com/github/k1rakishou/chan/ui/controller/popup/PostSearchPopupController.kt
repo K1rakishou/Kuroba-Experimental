@@ -52,6 +52,8 @@ class PostSearchPopupController(
   private var scrollPositionRestored = false
   private var updaterJob: Job? = null
 
+  private var dataView: ViewGroup? = null
+
   private lateinit var totalFoundTextView: ColorizableTextView
   private lateinit var searchLayout: SearchLayout
 
@@ -73,8 +75,16 @@ class PostSearchPopupController(
   override fun onDestroy() {
     super.onDestroy()
 
+    dataView = null
+
     if (postsViewInitialized) {
       postsView.removeOnScrollListener(scrollListener)
+    }
+  }
+
+  override fun cleanup() {
+    if (postsViewInitialized) {
+      (postsView.adapter as? PostRepliesAdapter)?.cleanup()
     }
   }
 
@@ -107,6 +117,26 @@ class PostSearchPopupController(
     chanDescriptor: ChanDescriptor,
     data: PostSearchPopupData
   ): ViewGroup {
+    if (!postsViewInitialized || postsView.adapter !is PostRepliesAdapter || dataView == null) {
+      dataView = initializeEverything(chanDescriptor, data)
+    }
+
+    val prevQuery = initialQuery ?: getLastQuery(chanDescriptor)
+    initialQuery = null
+    searchLayout.text = prevQuery
+
+    updaterJob?.cancel()
+    updaterJob = null
+
+    updaterJob = mainScope.launch {
+      onQueryUpdated(chanDescriptor, prevQuery)
+      updaterJob = null
+    }
+
+    return dataView!!
+  }
+
+  private fun initializeEverything(chanDescriptor: ChanDescriptor, data: PostSearchPopupData): ViewGroup {
     val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_search)
     dataView.id = R.id.post_popup_search_view_id
 
@@ -140,6 +170,7 @@ class PostSearchPopupController(
     postsView = dataView.findViewById(R.id.post_list)
 
     val repliesAdapter = PostRepliesAdapter(
+      recyclerView = postsView,
       postViewMode = data.postViewMode,
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
@@ -159,18 +190,6 @@ class PostSearchPopupController(
     postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
-
-    val prevQuery = initialQuery ?: getLastQuery(chanDescriptor)
-    initialQuery = null
-    searchLayout.text = prevQuery
-
-    updaterJob?.cancel()
-    updaterJob = null
-
-    updaterJob = mainScope.launch {
-      onQueryUpdated(chanDescriptor, prevQuery)
-      updaterJob = null
-    }
 
     return dataView
   }

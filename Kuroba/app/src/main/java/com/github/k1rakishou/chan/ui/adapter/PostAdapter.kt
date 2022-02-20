@@ -358,6 +358,14 @@ class PostAdapter(
       currentlyDisplayedCatalogPostsRepository.clear()
     }
 
+    val childCount = recyclerView.childCount
+    for (i in 0 until childCount) {
+      val child = recyclerView.getChildAt(i)
+      if (child is GenericPostCell) {
+        child.onPostRecycled(isActuallyRecycling = true)
+      }
+    }
+
     updatingPosts.clear()
     threadCellData.cleanup()
     notifyDataSetChanged()

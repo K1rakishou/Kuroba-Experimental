@@ -30,6 +30,8 @@ class PostRepliesPopupController(
   postPopupHelper: PostPopupHelper,
   postCellCallback: PostCellInterface.PostCellCallback
 ) : BasePostPopupController<PostRepliesPopupController.PostRepliesPopupData>(context, postPopupHelper, postCellCallback) {
+  private var dataView: ViewGroup? = null
+
   override var displayingData: PostRepliesPopupData? = null
 
   private val scrollListener = object : RecyclerView.OnScrollListener() {
@@ -48,8 +50,16 @@ class PostRepliesPopupController(
   override fun onDestroy() {
     super.onDestroy()
 
+    dataView = null
+
     if (postsViewInitialized) {
       postsView.removeOnScrollListener(scrollListener)
+    }
+  }
+
+  override fun cleanup() {
+    if (postsViewInitialized) {
+      (postsView.adapter as? PostRepliesAdapter)?.cleanup()
     }
   }
 
@@ -76,30 +86,7 @@ class PostRepliesPopupController(
   ): ViewGroup {
     BackgroundUtils.ensureMainThread()
 
-    val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_replies)
-    dataView.id = R.id.post_popup_replies_view_id
-
-    val repliesAdapter = PostRepliesAdapter(
-      postViewMode = data.postViewMode,
-      postCellCallback = postCellCallback,
-      chanDescriptor = chanDescriptor,
-      clickedPostDescriptor = data.forPostWithDescriptor,
-      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
-      _chanThreadManager = chanThreadManager,
-      _postFilterManager = postFilterManager,
-      _savedReplyManager = savedReplyManager,
-      _postFilterHighlightManager = postFilterHighlightManager,
-      _postHideManager = postHideManager,
-      initialTheme = themeEngine.chanTheme
-    )
-
-    repliesAdapter.setHasStableIds(true)
-
-    postsView = dataView.findViewById(R.id.post_list)
-    postsView.layoutManager = LinearLayoutManager(context)
-    postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
-    postsView.adapter = repliesAdapter
-    postsView.addOnScrollListener(scrollListener)
+    val repliesAdapter = getRepliesAdapterOrInitializeEverything(data, chanDescriptor)
 
     mainScope.launch {
       val (width, _) = postsView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
@@ -120,7 +107,46 @@ class PostRepliesPopupController(
       restoreScrollPosition(data.forPostWithDescriptor)
     }
 
-    return dataView
+    return dataView!!
+  }
+
+  private fun getRepliesAdapterOrInitializeEverything(
+    data: PostRepliesPopupData,
+    chanDescriptor: ChanDescriptor
+  ): PostRepliesAdapter {
+    if (postsViewInitialized && postsView.adapter is PostRepliesAdapter && dataView != null) {
+      return postsView.adapter as PostRepliesAdapter
+    }
+
+    val dataView = AppModuleAndroidUtils.inflate(context, R.layout.layout_post_popup_replies)
+    dataView.id = R.id.post_popup_replies_view_id
+    postsView = dataView.findViewById(R.id.post_list)
+
+    val repliesAdapter = PostRepliesAdapter(
+      recyclerView = postsView,
+      postViewMode = data.postViewMode,
+      postCellCallback = postCellCallback,
+      chanDescriptor = chanDescriptor,
+      clickedPostDescriptor = data.forPostWithDescriptor,
+      _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
+      _chanThreadManager = chanThreadManager,
+      _postFilterManager = postFilterManager,
+      _savedReplyManager = savedReplyManager,
+      _postFilterHighlightManager = postFilterHighlightManager,
+      _postHideManager = postHideManager,
+      initialTheme = themeEngine.chanTheme
+    )
+
+    repliesAdapter.setHasStableIds(true)
+
+    postsView.layoutManager = LinearLayoutManager(context)
+    postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
+    postsView.adapter = repliesAdapter
+    postsView.addOnScrollListener(scrollListener)
+
+    this.dataView = dataView
+
+    return repliesAdapter
   }
 
   private fun indexPosts(
