@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.ui.cell
 import android.content.Context
 import android.util.AttributeSet
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.ChanSettings
@@ -33,7 +34,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.util.ChanPostUtils
 import javax.inject.Inject
 
 class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, ThemeChangesListener {
@@ -186,7 +186,7 @@ class PostStubCell : ConstraintLayout, PostCellInterface, View.OnClickListener, 
       throw NullPointerException("Callback is null during bindPost()")
     }
 
-    ChanPostUtils.wrapTextIntoPrecomputedText(postCellData.postTitleStub, title)
+    title.setText(postCellData.postTitle, TextView.BufferType.SPANNABLE)
 
     val isGridOrStagger = (postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.GRID
       || postCellData.boardPostViewMode === ChanSettings.BoardPostViewMode.STAGGER)

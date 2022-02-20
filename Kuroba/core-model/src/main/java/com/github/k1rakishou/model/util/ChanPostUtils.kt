@@ -2,13 +2,8 @@ package com.github.k1rakishou.model.util
 
 import android.annotation.SuppressLint
 import android.text.TextUtils
-import android.widget.TextView
-import androidx.appcompat.widget.AppCompatTextView
-import androidx.core.text.PrecomputedTextCompat
-import androidx.core.widget.TextViewCompat
 import com.github.k1rakishou.common.MurmurHashUtils
 import com.github.k1rakishou.common.StringUtils
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -303,29 +298,6 @@ object ChanPostUtils {
           findPostWithRepliesRecursive(replyId, posts, postsSet)
         }
       }
-    }
-  }
-
-  fun wrapTextIntoPrecomputedText(text: CharSequence?, textView: AppCompatTextView) {
-    try {
-      if (text.isNullOrEmpty()) {
-        textView.setText(text, TextView.BufferType.SPANNABLE)
-        return
-      }
-
-      val textFuture = PrecomputedTextCompat.getTextFuture(
-        text,
-        TextViewCompat.getTextMetricsParams(textView),
-        null
-      )
-
-      textView.setTextFuture(textFuture)
-    } catch (error: Throwable) {
-      if (error is IllegalArgumentException) {
-        throw IllegalAccessException("Exception=${error.errorMessageOrClassName()}, viewInfo=${textView}, text=${text}")
-      }
-
-      textView.setText(text, TextView.BufferType.SPANNABLE)
     }
   }
 

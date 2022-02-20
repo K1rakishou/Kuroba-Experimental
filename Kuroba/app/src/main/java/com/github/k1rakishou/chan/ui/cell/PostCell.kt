@@ -85,7 +85,6 @@ import com.github.k1rakishou.core_themes.ChanThemeColorId
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
-import com.github.k1rakishou.model.util.ChanPostUtils
 import dagger.Lazy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
@@ -640,7 +639,7 @@ class PostCell @JvmOverloads constructor(
 
   private fun bindPostTitle(pcd: PostCellData) {
     if (::title.isInitialized) {
-      ChanPostUtils.wrapTextIntoPrecomputedText(pcd.postTitle, title)
+      title.setText(pcd.postTitle, TextView.BufferType.SPANNABLE)
     }
   }
 
