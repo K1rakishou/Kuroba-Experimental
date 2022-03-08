@@ -210,9 +210,15 @@ class BrowseController(
   }
 
   private fun openBoardSelectionController() {
+    val siteDescriptor = if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      null
+    } else {
+      chanDescriptor?.siteDescriptor()
+    }
+
     val boardSelectionController = BoardSelectionController(
       context = context,
-      currentSiteDescriptor = chanDescriptor?.siteDescriptor(),
+      currentSiteDescriptor = siteDescriptor,
       callback = object : BoardSelectionController.UserSelectionListener {
         override fun onOpenSitesSettingsClicked() {
           openSitesSetupController()
