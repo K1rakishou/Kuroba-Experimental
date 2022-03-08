@@ -317,6 +317,41 @@ class PostHideHelperTest {
   }
 
   /**
+   * post 1 >-< post 2
+   * Post 1 replies to post 2 which replies to post 1.
+   *
+   * Note: in case of a bug in the logic this test will fail with StackOverflow exception.
+   * */
+  @Test
+  fun shouldNotEndUpInEndlessRecursionWhenPostReplyToEachOther() {
+    val firstPost = createPost(1).apply {
+      repliesTo.add(PostDescriptor.create(threadDescriptor, 2))
+      repliesFrom.add(PostDescriptor.create(threadDescriptor, 2))
+    }
+    val secondPost = createPost(2).apply {
+      repliesTo.add(PostDescriptor.create(threadDescriptor, 1))
+      repliesFrom.add(PostDescriptor.create(threadDescriptor, 1))
+    }
+
+    val posts = listOf(firstPost, secondPost)
+    val newChanPostHides = mutableMapOf<PostDescriptor, PostHideHelper.ChanPostHideWrapper>()
+
+    val resultMap = postHideHelper.processPostFiltersInternal(
+      posts = posts,
+      chanDescriptor = threadDescriptor,
+      hiddenPostsLookupMap = mutableMapOf(),
+      postFilterMap = mapOf(),
+      newChanPostHides = newChanPostHides
+    )
+
+    assertEquals(2, resultMap.size)
+    assertEquals(0, newChanPostHides.size)
+
+    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(1)]!!.postFilterResult)
+    assertEquals(PostFilterResult.Leave, resultMap[threadDescriptor.postDescriptor(2)]!!.postFilterResult)
+  }
+
+  /**
    *                   post 3
    *                 /        \
    * post 1 - post 2            post 5

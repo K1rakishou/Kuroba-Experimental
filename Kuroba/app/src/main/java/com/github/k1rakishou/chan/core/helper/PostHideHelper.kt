@@ -5,6 +5,7 @@ import com.github.k1rakishou.chan.core.manager.IPostFilterManager
 import com.github.k1rakishou.chan.core.manager.IPostHideManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.linkedMapWithCap
 import com.github.k1rakishou.common.mutableIteration
 import com.github.k1rakishou.core_logger.Logger
@@ -17,7 +18,6 @@ import com.github.k1rakishou.model.data.post.PostFilter
 import com.github.k1rakishou.model.data.post.PostFilterResult
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import java.util.*
 
 class PostHideHelper(
   private val postHideManager: IPostHideManager,
@@ -151,6 +151,7 @@ class PostHideHelper(
       }
 
       if ((canHideThisPost || canRemoveThisPost) && postHide == null && postFilter != null) {
+        // TODO(KurobaEx): this probably can be simplified to only "val onlyHide = !canRemoveThisPost"?
         @Suppress("RedundantIf") val onlyHide = if ((canHideThisPost && canRemoveThisPost) || canRemoveThisPost) {
           false
         } else {
@@ -174,6 +175,8 @@ class PostHideHelper(
     }
 
     if (!processingCatalog) {
+      val alreadyVisited = hashSetWithCap<PostDescriptor>(64)
+
       // Second pass, process the reply chains (Do not do this in the catalogs)
       for ((sourcePost, _) in resultMap.values) {
         val sourcePostDescriptor = sourcePost.postDescriptor
@@ -192,11 +195,14 @@ class PostHideHelper(
         }
 
         for (targetPostDescriptor in sourcePost.repliesTo) {
+          alreadyVisited.clear()
+
           val targetPostHide = findParentNonNullPostHide(
             postDescriptor = targetPostDescriptor,
             hiddenPostsLookupMap = hiddenPostsLookupMap,
             newChanPostHides = newChanPostHides,
-            postMap = postsFastLookupMap
+            postMap = postsFastLookupMap,
+            alreadyVisited = alreadyVisited
           )
 
           var targetPostFilter = postFilterMap[targetPostDescriptor]
@@ -272,9 +278,10 @@ class PostHideHelper(
 
   private fun findParentNonNullPostHide(
     postDescriptor: PostDescriptor,
-    hiddenPostsLookupMap: Map<PostDescriptor, ChanPostHide>,
+    hiddenPostsLookupMap: MutableMap<PostDescriptor, ChanPostHide>,
     newChanPostHides: Map<PostDescriptor, ChanPostHideWrapper>,
-    postMap: Map<PostDescriptor, ChanPost>
+    postMap: Map<PostDescriptor, ChanPost>,
+    alreadyVisited: HashSet<PostDescriptor>
   ): ChanPostHide? {
     var chanPostHide = hiddenPostsLookupMap[postDescriptor]
     if (chanPostHide != null) {
@@ -291,12 +298,21 @@ class PostHideHelper(
       return null
     }
 
+    alreadyVisited.add(postDescriptor)
+
     for (targetPostDescriptor in chanPost.repliesTo) {
+      // In some thread we can end up in a really long reply chains where a post can be checked
+      // millions of times if we don't skip already visited posts
+      if (alreadyVisited.contains(targetPostDescriptor)) {
+        continue
+      }
+
       val parentChanPostHide = findParentNonNullPostHide(
         postDescriptor = targetPostDescriptor,
         hiddenPostsLookupMap = hiddenPostsLookupMap,
         newChanPostHides = newChanPostHides,
-        postMap = postMap
+        postMap = postMap,
+        alreadyVisited = alreadyVisited
       )
 
       if (parentChanPostHide != null) {
