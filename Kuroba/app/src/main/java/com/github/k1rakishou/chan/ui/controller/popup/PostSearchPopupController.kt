@@ -190,6 +190,7 @@ class PostSearchPopupController(
 
     postsView.layoutManager = LinearLayoutManager(context)
     postsView.recycledViewPool.setMaxRecycledViews(PostRepliesAdapter.POST_REPLY_VIEW_TYPE, 0)
+    postsView.itemAnimator = null
     postsView.adapter = repliesAdapter
     postsView.addOnScrollListener(scrollListener)
 

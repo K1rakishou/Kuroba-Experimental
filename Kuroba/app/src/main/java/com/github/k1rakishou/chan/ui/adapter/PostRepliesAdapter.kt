@@ -66,9 +66,6 @@ class PostRepliesAdapter(
     }
 
     threadCellData.cleanup()
-
-    // TODO(KurobaEx): maybe I don't need to do this?
-    notifyDataSetChanged()
   }
 
   override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ReplyViewHolder {
