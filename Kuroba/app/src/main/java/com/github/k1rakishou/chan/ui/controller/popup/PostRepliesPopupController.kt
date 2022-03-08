@@ -87,6 +87,7 @@ class PostRepliesPopupController(
     BackgroundUtils.ensureMainThread()
 
     val repliesAdapter = getRepliesAdapterOrInitializeEverything(data, chanDescriptor)
+    repliesAdapter.init(data.forPostWithDescriptor)
 
     mainScope.launch {
       val (width, _) = postsView.awaitUntilGloballyLaidOutAndGetSize(waitForWidth = true)
@@ -127,7 +128,6 @@ class PostRepliesPopupController(
       postViewMode = data.postViewMode,
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
-      clickedPostDescriptor = data.forPostWithDescriptor,
       _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       _chanThreadManager = chanThreadManager,
       _postFilterManager = postFilterManager,

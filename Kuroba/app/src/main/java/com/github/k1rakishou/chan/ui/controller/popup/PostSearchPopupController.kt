@@ -121,6 +121,9 @@ class PostSearchPopupController(
       dataView = initializeEverything(chanDescriptor, data)
     }
 
+    val postRepliesAdapter = (postsView.adapter as? PostRepliesAdapter)
+    postRepliesAdapter?.init(null)
+
     val prevQuery = initialQuery ?: getLastQuery(chanDescriptor)
     initialQuery = null
     searchLayout.text = prevQuery
@@ -174,7 +177,6 @@ class PostSearchPopupController(
       postViewMode = data.postViewMode,
       postCellCallback = postCellCallback,
       chanDescriptor = chanDescriptor,
-      clickedPostDescriptor = null,
       _chanThreadViewableInfoManager = chanThreadViewableInfoManager,
       _chanThreadManager = chanThreadManager,
       _postFilterManager = postFilterManager,
