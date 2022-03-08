@@ -204,7 +204,7 @@ class PostInfoMapItemDecoration(
     private val DEFAULT_LABEL_WIDTH = dp(10f).toFloat()
 
     private const val SHOW_DURATION_MS = 500
-    private const val DEFAULT_ALPHA = 180
+    private const val DEFAULT_ALPHA = 220
 
     private const val THREAD_STATUS_CELL = 1
   }
