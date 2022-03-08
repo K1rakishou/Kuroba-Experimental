@@ -112,7 +112,6 @@ import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import dagger.Lazy
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
@@ -275,7 +274,12 @@ class ReplyLayout @JvmOverloads constructor(
 
       // setup standard items
       // >greentext
-      quoteMenuItem = menu.add(Menu.NONE, R.id.reply_selection_action_quote, 1, R.string.post_quote)
+      quoteMenuItem = menu.add(
+        Menu.NONE,
+        R.id.reply_selection_action_quote,
+        1,
+        getString(R.string.post_quote)
+      )
 
       // [spoiler] tags
       if (chanBoard.spoilers) {
@@ -283,7 +287,7 @@ class ReplyLayout @JvmOverloads constructor(
           Menu.NONE,
           R.id.reply_selection_action_spoiler,
           2,
-          R.string.reply_comment_button_spoiler
+          getString(R.string.reply_comment_button_spoiler)
         )
       }
 
@@ -296,7 +300,7 @@ class ReplyLayout @JvmOverloads constructor(
           Menu.NONE,
           R.id.reply_selection_action_code,
           1,
-          R.string.reply_comment_button_code
+          getString(R.string.reply_comment_button_code)
         )
       }
 
@@ -306,13 +310,13 @@ class ReplyLayout @JvmOverloads constructor(
           Menu.NONE,
           R.id.reply_selection_action_eqn,
           2,
-          R.string.reply_comment_button_eqn
+          getString(R.string.reply_comment_button_eqn)
         )
         mathMenuItem = otherMods.add(
           Menu.NONE,
           R.id.reply_selection_action_math,
           3,
-          R.string.reply_comment_button_math
+          getString(R.string.reply_comment_button_math)
         )
       }
 
@@ -322,7 +326,7 @@ class ReplyLayout @JvmOverloads constructor(
           Menu.NONE,
           R.id.reply_selection_action_sjis,
           4,
-          R.string.reply_comment_button_sjis
+          getString(R.string.reply_comment_button_sjis)
         )
       }
 
@@ -335,24 +339,12 @@ class ReplyLayout @JvmOverloads constructor(
 
     override fun onActionItemClicked(mode: ActionMode, item: MenuItem): Boolean {
       when {
-        item === quoteMenuItem -> {
-          processed = insertQuote()
-        }
-        item === spoilerMenuItem -> {
-          processed = insertTags("[spoiler]", "[/spoiler]")
-        }
-        item === codeMenuItem -> {
-          processed = insertTags("[code]", "[/code]")
-        }
-        item === eqnMenuItem -> {
-          processed = insertTags("[eqn]", "[/eqn]")
-        }
-        item === mathMenuItem -> {
-          processed = insertTags("[math]", "[/math]")
-        }
-        item === sjisMenuItem -> {
-          processed = insertTags("[sjis]", "[/sjis]")
-        }
+        item === quoteMenuItem -> processed = insertQuote()
+        item === spoilerMenuItem -> processed = insertTags("[spoiler]", "[/spoiler]")
+        item === codeMenuItem -> processed = insertTags("[code]", "[/code]")
+        item === eqnMenuItem -> processed = insertTags("[eqn]", "[/eqn]")
+        item === mathMenuItem -> processed = insertTags("[math]", "[/math]")
+        item === sjisMenuItem -> processed = insertTags("[sjis]", "[/sjis]")
       }
 
       if (processed) {
