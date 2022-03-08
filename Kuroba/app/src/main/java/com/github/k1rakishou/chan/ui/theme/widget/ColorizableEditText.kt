@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Rect
+import android.os.Build
 import android.util.AttributeSet
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
@@ -27,6 +28,13 @@ open class ColorizableEditText @JvmOverloads constructor(
   protected lateinit var themeEngine: ThemeEngine
 
   init {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Hopefully this will fix these crashes:
+      // java.lang.RuntimeException:
+      //    android.os.TransactionTooLargeException: data parcel size 296380 bytes
+      importantForAutofill = IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+    }
+
     if (!isInEditMode) {
       AppModuleAndroidUtils.extractActivityComponent(context)
         .inject(this)

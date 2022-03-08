@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.features.search.epoxy
 
 import android.content.Context
+import android.os.Build
 import android.text.TextWatcher
 import android.util.AttributeSet
 import android.widget.FrameLayout
@@ -26,6 +27,13 @@ class EpoxySearchInputView @JvmOverloads constructor(
 
     searchInputEditText = findViewById(R.id.search_input_edit_text)
     searchInputEditText.text = null
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      // Hopefully this will fix these crashes:
+      // java.lang.RuntimeException:
+      //    android.os.TransactionTooLargeException: data parcel size 296380 bytes
+      searchInputEditText.importantForAutofill = IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
+    }
 
     searchInputLayout = findViewById(R.id.search_input_layout)
   }

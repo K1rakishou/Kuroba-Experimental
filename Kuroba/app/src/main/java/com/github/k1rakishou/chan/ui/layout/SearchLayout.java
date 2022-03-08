@@ -24,11 +24,13 @@ import static com.github.k1rakishou.common.AndroidUtils.requestKeyboardFocus;
 
 import android.content.Context;
 import android.graphics.Color;
+import android.os.Build;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.AttributeSet;
 import android.util.TypedValue;
 import android.view.Gravity;
+import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -121,6 +123,13 @@ public class SearchLayout extends LinearLayout implements ThemeEngine.ThemeChang
         searchView.setSingleLine(true);
         searchView.setBackgroundResource(0);
         searchView.setPadding(0, 0, 0, 0);
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            // Hopefully this will fix these crashes:
+            // java.lang.RuntimeException:
+            //    android.os.TransactionTooLargeException: data parcel size 296380 bytes
+            searchView.setImportantForAutofill(View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS);
+        }
 
         clearButton = new ImageView(getContext());
 
