@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
