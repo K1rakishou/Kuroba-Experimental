@@ -99,7 +99,7 @@ class ReplyParserTest {
   fun `test extract quotes from vhschan_org comment`() {
     whenever(siteManager.bySiteDescriptor(any())).thenReturn(Vhschan())
 
-    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("vhschan.org>
+    val replies = replyParser.extractCommentReplies(SiteDescriptor.create("vhschan.org), VICHAN_PARSER_TEST_COMMENT)
     assertEquals(2, replies.size)
     assertTrue(replies.all { it is ReplyParser.ExtractedQuote.Quote })
 
