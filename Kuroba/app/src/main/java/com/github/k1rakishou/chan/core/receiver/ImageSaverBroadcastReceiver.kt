@@ -63,7 +63,7 @@ class ImageSaverBroadcastReceiver : BroadcastReceiver() {
           return
         }
 
-        imageSaverV2.get().restartUncompleted(uniqueId, null)
+        imageSaverV2.get().restartUnfinished(uniqueId, null)
       }
       ImageSaverV2Service.ACTION_TYPE_DELETE -> {
         val uniqueId = extras.getString(ImageSaverV2Service.UNIQUE_ID)
