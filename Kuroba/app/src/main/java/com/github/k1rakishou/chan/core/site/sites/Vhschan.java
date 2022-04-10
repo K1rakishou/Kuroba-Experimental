@@ -119,7 +119,7 @@ public class Vhschan extends CommonSite {
             }
         });
 
-        setEndpoints(new VichanEndpoints(this, "https://Vhschan.com", "https://vhschan.com"));
+        setEndpoints(new VichanEndpoints(this, "https://vhschan.org", "https://vhschan.org"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser());
