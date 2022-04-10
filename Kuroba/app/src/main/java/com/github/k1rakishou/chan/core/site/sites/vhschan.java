@@ -39,9 +39,9 @@ import org.jetbrains.annotations.NotNull;
 import okhttp3.HttpUrl;
 
 @DoNotStrip
-public class Vhschan extends CommonSite {
+public class vhschan extends CommonSite {
     private final ChunkDownloaderSiteProperties chunkDownloaderSiteProperties;
-    public static final String SITE_NAME = "Vhschan";
+    public static final String SITE_NAME = "vhschan";
     public static final SiteDescriptor SITE_DESCRIPTOR = SiteDescriptor.Companion.create(SITE_NAME);
 
     public static final CommonSiteUrlHandler URL_HANDLER = new CommonSiteUrlHandler() {
@@ -49,7 +49,7 @@ public class Vhschan extends CommonSite {
 
         @Override
         public Class<? extends Site> getSiteClass() {
-            return Vhschan.class;
+            return vhschan.class;
         }
 
         @Override
@@ -64,7 +64,7 @@ public class Vhschan extends CommonSite {
 
         @Override
         public String[] getNames() {
-            return new String[]{"Vhschan"};
+            return new String[]{"vhschan"};
         }
 
         @Override
@@ -84,7 +84,7 @@ public class Vhschan extends CommonSite {
         }
     };
 
-    public Vhschan() {
+    public vhschan() {
         chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
     }
 
@@ -92,22 +92,23 @@ public class Vhschan extends CommonSite {
     public void setup() {
         setEnabled(true);
         setName(SITE_NAME);
-        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://vhschan.org/favicon.ico")));
+        setIcon(SiteIcon.fromFavicon(getImageLoaderV2(), HttpUrl.parse("https://vhschan.org/stylesheets/favicon.ico")));
 
         setBoards(
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Random"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "s"), "( ͡° ͜ʖ ͡°)"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "x"), "Ics"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "hd"), "Help Desk"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "aco"), "Anime, Fumetti & Cartoni"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "v"), "Videogiochi da tavolo"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "cul"), "Cultura"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "yt"), "YouTube, TikTok, etc"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "ck"), "Cucina"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "mu"), "Musica"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "pol"), "Politica & Affari"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sug"), "Suggerimenti & Lamentele"),
-                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "p"), "Prova")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "b"), "Betamax"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "n64"), "Jogos"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "k7"), "Musicas"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "warhol"), "Artes"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sebo"), "Cafe, livros e Londres"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "uhf"), "TV, Filmes e series"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "ego"), "how to dress well"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "meth"), "The krystal ship"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "oprah"), "baw"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "toth"), "pineal gland"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "win95"), "CyberTech"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "loverboy"), "Good Old-Fashioned Lover Boy"),
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "sac"), "Serviço de atendimento ao channer")
+                ChanBoard.create(BoardDescriptor.create(siteDescriptor().getSiteName(), "Recentes"), "Recentes")
         );
 
         setResolvable(URL_HANDLER);
