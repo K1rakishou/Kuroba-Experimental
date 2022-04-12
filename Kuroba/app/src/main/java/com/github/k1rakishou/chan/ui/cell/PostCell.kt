@@ -64,6 +64,7 @@ import com.github.k1rakishou.chan.ui.view.ThumbnailView
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.extractActivityComponent
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.sp
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
@@ -159,14 +160,29 @@ class PostCell @JvmOverloads constructor(
       val pcd = postCellData ?: return false
 
       if (!pcd.threadPreviewMode && !pcd.isMediaViewerPostsPopup) {
-        quoteMenuItem = menu.add(Menu.NONE, R.id.post_selection_action_quote, 0, R.string.post_quote)
+        quoteMenuItem = menu.add(
+          Menu.NONE,
+          R.id.post_selection_action_quote,
+          0,
+          getString(R.string.post_quote)
+        )
       }
 
       if (!pcd.isMediaViewerPostsPopup) {
-        filterItem = menu.add(Menu.NONE, R.id.post_selection_action_filter, 1, R.string.post_filter)
+        filterItem = menu.add(
+          Menu.NONE,
+          R.id.post_selection_action_filter,
+          1,
+          getString(R.string.post_filter)
+        )
       }
 
-      webSearchItem = menu.add(Menu.NONE, R.id.post_selection_action_web_search, 2, R.string.post_web_search)
+      webSearchItem = menu.add(
+        Menu.NONE,
+        R.id.post_selection_action_web_search,
+        2,
+        getString(R.string.post_web_search)
+      )
       return true
     }
 
