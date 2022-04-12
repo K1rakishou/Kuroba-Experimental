@@ -23,6 +23,9 @@ import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.sites.lainchan.LainchanActions
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
+import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
+import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
+import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
 import com.github.k1rakishou.chan.core.site.parser.CommentParserType
 import com.github.k1rakishou.common.DoNotStrip
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -71,6 +74,14 @@ class Wired7 : CommonSite() {
     setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
     setApi(Wired7Api(siteManager, boardManager, this))
     setParser(VichanCommentParser())
+    setPostingLimitationInfo(
+      postingLimitationInfoLazy = lazy {
+        SitePostingLimitation(
+          postMaxAttachables = ConstantAttachablesCount(3),
+          postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(20000)
+        )
+      }
+    )
   }
 
   override fun commentParserType(): CommentParserType {

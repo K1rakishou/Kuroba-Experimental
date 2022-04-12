@@ -73,8 +73,11 @@ class Wired7Api(
 
     val site = siteManager.bySiteDescriptor(chanReaderProcessor.chanDescriptor.siteDescriptor())
       ?: return
-    val board = boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor())
-      ?: return
+    val board = if (chanReaderProcessor.canUseEmptyBoardIfBoardDoesNotExist) {
+      ChanBoard(chanReaderProcessor.chanDescriptor.boardDescriptor())
+    } else {
+      boardManager.byBoardDescriptor(chanReaderProcessor.chanDescriptor.boardDescriptor()) ?: return
+    }
 
     val endpoints = site.endpoints()
 
@@ -214,18 +217,7 @@ class Wired7Api(
     board: ChanBoard,
     endpoints: SiteEndpoints
   ): ChanPostImage? {
-    try {
-      reader.beginObject()
-    } catch (e: Exception) {
-      //workaround for weird 8chan error where extra_files has a random empty array in it
-      reader.beginArray()
-      reader.endArray()
-      try {
-        reader.beginObject()
-      } catch (e1: Exception) {
-        return null
-      }
-    }
+    reader.beginObject()
 
     var fpath = 1
     var fileId: String? = null
