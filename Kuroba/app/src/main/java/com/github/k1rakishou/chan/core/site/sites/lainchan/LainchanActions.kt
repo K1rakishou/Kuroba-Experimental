@@ -67,7 +67,7 @@ open class LainchanActions(
 
         call.parameter("body", reply.comment)
 
-        if(reply.hasFiles()){
+        if (reply.hasFiles()) {
           var spoiler = false
 
           reply.iterateFilesOrThrowIfEmpty { fileIndex, replyFile ->
@@ -77,13 +77,15 @@ open class LainchanActions(
             }
 
             val replyFileMetaInfo = (replyFileMetaResult as ModularResult.Value).value
-
             call.fileParameter("file$fileIndex", replyFileMetaInfo.fileName, replyFile.fileOnDisk)
 
-            spoiler = spoiler || replyFileMetaInfo.spoiler
+            // Apparently you can't spoiler individual files on Llainchan?
+            if (replyFileMetaInfo.spoiler) {
+              spoiler = true
+            }
           }
 
-          if(spoiler) {
+          if (spoiler) {
             call.parameter("spoiler", "on")
           }
         }
