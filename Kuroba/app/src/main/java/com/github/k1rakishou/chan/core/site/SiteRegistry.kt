@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
 import com.github.k1rakishou.chan.core.site.sites.Diochan
 import com.github.k1rakishou.chan.core.site.sites.Sushichan
 import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
+import com.github.k1rakishou.chan.core.site.sites.Vhschan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -68,6 +69,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Warosu.SITE_NAME, Warosu::class.java)
     siteClasses.addSiteToSiteClassesMap(WakarimasenMoe.SITE_NAME, WakarimasenMoe::class.java)
     siteClasses.addSiteToSiteClassesMap(Chan370.SITE_NAME, Chan370::class.java)
+    siteClasses.addSiteToSiteClassesMap(Vhschan.SITE_NAME, Vhschan::class.java)
     siteClasses.addSiteToSiteClassesMap(Endchan.SITE_NAME, Endchan::class.java)
     siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
     siteClasses.addSiteToSiteClassesMap(RozenArcana.SITE_NAME, RozenArcana::class.java)

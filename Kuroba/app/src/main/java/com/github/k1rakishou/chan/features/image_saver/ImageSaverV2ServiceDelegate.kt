@@ -403,7 +403,7 @@ class ImageSaverV2ServiceDelegate(
     BackgroundUtils.ensureBackgroundThread()
 
     if (verboseLogs) {
-      Logger.d(TAG, "downloadImagesInternal() start uniqueId='${imageDownloadInputData.uniqueId}', " +
+      Logger.d(TAG, "downloadSingleImage() start uniqueId='${imageDownloadInputData.uniqueId}', " +
           "imageUrl='${imageDownloadRequest.imageFullUrl}'")
     }
 
@@ -455,7 +455,7 @@ class ImageSaverV2ServiceDelegate(
     }
 
     if (verboseLogs) {
-      Logger.d(TAG, "downloadImagesInternal() end uniqueId='${imageDownloadInputData.uniqueId}', " +
+      Logger.d(TAG, "downloadSingleImage() end uniqueId='${imageDownloadInputData.uniqueId}', " +
         "imageUrl='${imageDownloadRequest.imageFullUrl}', result=$downloadImageResult")
     }
 
@@ -731,6 +731,7 @@ class ImageSaverV2ServiceDelegate(
     ) : ResultFile()
   }
 
+  // TODO(KurobaEx): more logs
   private suspend fun downloadSingleImageInternal(
     hasResultDirAccessErrors: AtomicBoolean,
     hasOutOfDiskSpaceErrors: AtomicBoolean,
