@@ -61,7 +61,7 @@ public class VichanEndpoints extends CommonSite.CommonEndpoints {
     public HttpUrl thumbnailUrl(
             BoardDescriptor boardDescriptor,
             boolean spoiler,
-            int customSpoilter,
+            int customSpoilers,
             Map<String, String> arg
     ) {
         return root.builder()
