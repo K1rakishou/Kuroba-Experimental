@@ -16,24 +16,24 @@
  */
 package com.github.k1rakishou.chan.core.site.sites.lainchan
 
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor.Companion.create
-import com.github.k1rakishou.chan.core.site.SiteIcon.Companion.fromFavicon
-import com.github.k1rakishou.model.data.board.ChanBoard.Companion.create
-import com.github.k1rakishou.model.data.descriptor.BoardDescriptor.Companion.create
-import com.github.k1rakishou.common.DoNotStrip
-import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
-import okhttp3.HttpUrl
+import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.SiteFeature
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
+import com.github.k1rakishou.chan.core.site.SiteIcon.Companion.fromFavicon
+import com.github.k1rakishou.chan.core.site.common.CommonSite
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
-import com.github.k1rakishou.chan.core.site.parser.CommentParserType
-import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
 import com.github.k1rakishou.chan.core.site.limitations.SitePostingLimitation
+import com.github.k1rakishou.chan.core.site.parser.CommentParserType
+import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.model.data.board.ChanBoard.Companion.create
+import com.github.k1rakishou.model.data.descriptor.BoardDescriptor.Companion.create
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor.Companion.create
+import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
 @DoNotStrip
@@ -80,7 +80,7 @@ class Lainchan : CommonSite() {
             postingLimitationInfoLazy = lazy {
                 SitePostingLimitation(
                     postMaxAttachables = ConstantAttachablesCount(3),
-                    postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75000)
+                    postMaxAttachablesTotalSize = ConstantMaxTotalSizeInfo(75 * (1024 * 1024)) // 75 MB
                 )
             }
         )
