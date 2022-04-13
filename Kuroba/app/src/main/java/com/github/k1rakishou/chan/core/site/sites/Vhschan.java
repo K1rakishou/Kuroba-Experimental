@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.core.site.sites;
 
+import android.text.TextUtils;
+import android.webkit.MimeTypeMap;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
@@ -35,6 +38,8 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 import org.jetbrains.annotations.NotNull;
+
+import java.util.Map;
 
 import okhttp3.HttpUrl;
 
@@ -84,6 +89,35 @@ public class Vhschan extends CommonSite {
         }
     };
 
+    private class VhschanEndpoints extends VichanEndpoints {
+
+        public VhschanEndpoints(CommonSite commonSite, String rootUrl, String sysUrl) {
+            super(commonSite, rootUrl, sysUrl);
+        }
+
+        @NonNull
+        @Override
+        public HttpUrl thumbnailUrl(BoardDescriptor boardDescriptor, boolean spoiler, int customSpoilers, Map<String, String> arg) {
+            String tim = arg.get("tim");
+            String ext = arg.get("ext");
+
+            String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(ext);
+            if (!TextUtils.isEmpty(mimeType) && !mimeType.startsWith("image/")) {
+                ext = "jpg";
+            }
+
+            if (!ext.startsWith(".")) {
+                ext = "." + ext;
+            }
+
+            return root.builder()
+                    .s(boardDescriptor.getBoardCode())
+                    .s("thumb")
+                    .s(tim + ext)
+                    .url();
+        }
+    }
+
     public Vhschan() {
         chunkDownloaderSiteProperties = new ChunkDownloaderSiteProperties(true, true);
     }
@@ -120,7 +154,7 @@ public class Vhschan extends CommonSite {
             }
         });
 
-        setEndpoints(new VichanEndpoints(this, "https://vhschan.org", "https://vhschan.org"));
+        setEndpoints(new VhschanEndpoints(this, "https://vhschan.org", "https://vhschan.org"));
         setActions(new VichanActions(this, getProxiedOkHttpClient(), getSiteManager(), getReplyManager()));
         setApi(new VichanApi(getSiteManager(), getBoardManager(), this));
         setParser(new VichanCommentParser());

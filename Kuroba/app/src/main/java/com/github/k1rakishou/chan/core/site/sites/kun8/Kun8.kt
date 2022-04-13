@@ -64,7 +64,7 @@ class Kun8 : CommonSite() {
       override fun thumbnailUrl(
         boardDescriptor: BoardDescriptor,
         spoiler: Boolean,
-        customSpoilters: Int,
+        customSpoilers: Int,
         arg: Map<String, String>
       ): HttpUrl {
         if (spoiler) {
