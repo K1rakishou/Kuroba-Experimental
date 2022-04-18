@@ -193,7 +193,7 @@ internal class ResolveDuplicateImagesPresenter(
         return@post
       }
 
-      imageSaverV2.restartUncompleted(
+      imageSaverV2.restartUnfinished(
         uniqueId = uniqueId,
         overrideImageSaverV2Options = imageSaverOptions
       )

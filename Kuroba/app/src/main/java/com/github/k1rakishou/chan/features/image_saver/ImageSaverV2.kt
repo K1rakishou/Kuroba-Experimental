@@ -47,11 +47,11 @@ class ImageSaverV2(
     Dispatchers.Default
   )
 
-  fun restartUncompleted(
+  fun restartUnfinished(
     uniqueId: String,
     overrideImageSaverV2Options: ImageSaverV2Options? = null
   ) {
-    Logger.d(TAG, "restartUncompleted('$uniqueId', $overrideImageSaverV2Options)")
+    Logger.d(TAG, "restartUnfinished('$uniqueId', $overrideImageSaverV2Options)")
 
     try {
       val imageSaverV2Options = overrideImageSaverV2Options
@@ -63,7 +63,7 @@ class ImageSaverV2(
         downloadType = ImageSaverV2Service.RESTART_UNCOMPLETED_DOWNLOAD_TYPE
       )
     } catch (error: Throwable) {
-      Logger.e(TAG, "restartUncompleted($uniqueId, $overrideImageSaverV2Options) error", error)
+      Logger.e(TAG, "restartUnfinished($uniqueId, $overrideImageSaverV2Options) error", error)
     }
   }
 

@@ -842,7 +842,7 @@ class MainController(
 
     val options = ImageSaverV2OptionsController.Options.ResultDirAccessProblems(
       uniqueId,
-      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUncompleted(uniqueId, imageSaverV2Options) },
+      onRetryClicked = { imageSaverV2Options -> imageSaverV2.restartUnfinished(uniqueId, imageSaverV2Options) },
       onCancelClicked = { imageSaverV2.deleteDownload(uniqueId) }
     )
 
