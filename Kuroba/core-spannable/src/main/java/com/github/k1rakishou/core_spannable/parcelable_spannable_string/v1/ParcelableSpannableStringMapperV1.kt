@@ -422,6 +422,10 @@ internal object ParcelableSpannableStringMapperV1 : ParcelableStringMapper {
           )
         )
       }
+      PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST -> {
+        // We don't want to serialize these PostLinkables
+        return null
+      }
     }
 
     if (parcelableSpan == null) {
