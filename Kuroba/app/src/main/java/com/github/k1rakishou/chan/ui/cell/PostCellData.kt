@@ -392,7 +392,14 @@ data class PostCellData(
       }
 
       fullTitle.append(postSubject)
-      fullTitle.append("\n")
+
+      if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
+        fullTitle.append("\n")
+      }
+    }
+
+    if (boardPostViewMode != ChanSettings.BoardPostViewMode.LIST) {
+      return fullTitle
     }
 
     if (isSage) {
@@ -463,12 +470,7 @@ data class PostCellData(
     }
 
     fullTitle.append(postNoText)
-
-    if (boardPostViewMode == ChanSettings.BoardPostViewMode.LIST) {
-      fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-    } else {
-      fullTitle.append(" ")
-    }
+    fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
 
     fullTitle.append(date)
 
