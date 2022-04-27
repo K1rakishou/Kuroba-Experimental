@@ -34,9 +34,9 @@ class ConstantAttachablesCount(val count: Int) : PostAttachableLimitation {
   }
 }
 
-class ConstantMaxTotalSizeInfo(val maxSize: Long) : PostAttachlesMaxTotalSize {
+class ConstantMaxTotalSizeInfo(val maxSizeBytes: Long) : PostAttachlesMaxTotalSize {
   override suspend fun getMaxTotalAttachablesSize(params: PostAttachlesMaxTotalSize.Params): Long {
-    return maxSize
+    return maxSizeBytes
   }
 }
 
