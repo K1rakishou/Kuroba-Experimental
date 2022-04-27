@@ -558,6 +558,10 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
      * be automatically hidden after this duration of time has elapsed without user input.
      */
     public void show() {
+        if (videoMediaViewCallbacks.isSystemUiHidden()) {
+            return;
+        }
+
         hideShowAnimation = AnimationUtils.fadeIn(
                 this,
                 MediaViewerToolbar.ANIMATION_DURATION_MS,
@@ -1171,6 +1175,7 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
     }
 
     public interface VideoMediaViewCallbacks {
+        public boolean isSystemUiHidden();
         public void initializePlayerAndStartPlaying();
     }
 }

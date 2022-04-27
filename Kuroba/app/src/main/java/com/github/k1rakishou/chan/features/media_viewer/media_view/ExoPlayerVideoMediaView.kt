@@ -374,6 +374,10 @@ class ExoPlayerVideoMediaView(
   override fun onInsetsChanged() {
   }
 
+  override fun isSystemUiHidden(): Boolean {
+    return mediaViewContract.isSystemUiHidden()
+  }
+
   override fun initializePlayerAndStartPlaying() {
     if (preloadingJob == null) {
       preloadingJob = startFullVideoPreloading(viewableMedia.mediaLocation)
