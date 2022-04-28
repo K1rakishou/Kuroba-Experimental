@@ -57,8 +57,8 @@ class ThreadCellData(
   private val postHideManager: PostHideManager
     get() = _postHideManager.get()
 
-  private var _chanDescriptor: ChanDescriptor? = null
-  private var postCellCallback: PostCellInterface.PostCellCallback? = null
+  @Volatile private var _chanDescriptor: ChanDescriptor? = null
+  @Volatile private var postCellCallback: PostCellInterface.PostCellCallback? = null
   private var currentTheme: ChanTheme = initialTheme
   private var lazyCalculationJob: Job? = null
 
@@ -101,12 +101,17 @@ class ThreadCellData(
         ?: continue
 
       val updatedPostCellData = withContext(Dispatchers.Default) {
+        val callback = postCellCallback
+          ?: return@withContext emptyList()
+        val descriptor = chanDescriptor
+          ?: return@withContext emptyList()
+
         val oldPostCellData = oldPostCellDataLazy.getOrCalculate()
         val postIndexed = PostIndexed(updatedPost, oldPostCellData.postIndex)
 
         val updatedPostCellData = postIndexedListToLazyPostCellDataList(
-          postCellCallback = postCellCallback!!,
-          chanDescriptor = chanDescriptor!!,
+          postCellCallback = callback,
+          chanDescriptor = descriptor,
           theme = currentTheme,
           postIndexedList = listOf(postIndexed),
           postDescriptors = listOf(updatedPost.postDescriptor),
@@ -118,6 +123,10 @@ class ThreadCellData(
         updatedPostCellData.forEach { postCellDataLazy -> postCellDataLazy.getOrCalculate(isPrecalculating = true) }
 
         return@withContext updatedPostCellData
+      }
+
+      if (updatedPostCellData.isEmpty()) {
+        return false
       }
 
       // We need to recalculate the index again because it might have changed and if it did
