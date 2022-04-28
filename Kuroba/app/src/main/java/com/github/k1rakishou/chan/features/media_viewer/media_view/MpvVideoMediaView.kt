@@ -14,6 +14,7 @@ import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.core.view.contains
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.chan.R
@@ -431,6 +432,13 @@ class MpvVideoMediaView(
 
         mpvErrorMessage.setVisibilityFast(GONE)
         actualVideoPlayerViewContainer.setVisibilityFast(VISIBLE)
+
+        // java.lang.IllegalStateException: The specified child already has a parent.
+        // You must call removeView() on the child's parent first.
+        if (actualVideoPlayerViewContainer.contains(actualVideoPlayerView)) {
+          actualVideoPlayerView.destroy()
+          actualVideoPlayerViewContainer.removeView(actualVideoPlayerView)
+        }
 
         actualVideoPlayerViewContainer.addView(
           actualVideoPlayerView,
