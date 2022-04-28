@@ -116,6 +116,7 @@ class ImageSaverV2ServiceDelegate(
   }
 
   suspend fun deleteDownload(uniqueId: String) {
+    Logger.d(TAG, "deleteDownload('$uniqueId')")
     ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
 
     imageDownloadRequestRepository.deleteByUniqueId(uniqueId)
@@ -129,8 +130,14 @@ class ImageSaverV2ServiceDelegate(
   }
 
   suspend fun cancelDownload(uniqueId: String) {
+    Logger.d(TAG, "cancelDownload('$uniqueId')")
+
     ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
-    mutex.withLock { activeDownloads[uniqueId]?.cancel() }
+
+    mutex.withLock {
+      activeNotificationIdQueue.remove(uniqueId)
+      activeDownloads[uniqueId]?.cancel()
+    }
   }
 
   suspend fun createDownloadContext(uniqueId: String): Int {
@@ -506,6 +513,12 @@ class ImageSaverV2ServiceDelegate(
 
       return@withLock emptyList<String>()
     }
+
+    if (notificationsIdToDelete.isEmpty()) {
+      return
+    }
+
+    Logger.d(TAG, "handleNewNotificationId() notificationsIdToDelete=${notificationsIdToDelete}")
 
     notificationsIdToDelete.forEach { notificationIdToDelete ->
       deleteDownload(notificationIdToDelete)

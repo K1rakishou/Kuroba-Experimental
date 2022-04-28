@@ -30,7 +30,6 @@ import com.google.gson.Gson
 import dagger.Lazy
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -455,7 +454,9 @@ class ImageSaverV2Service : Service() {
     return this
   }
 
-  private fun NotificationCompat.Builder.addCancelIntent(imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult) {
+  private fun NotificationCompat.Builder.addCancelIntent(
+    imageSaverDelegateResult: ImageSaverV2ServiceDelegate.ImageSaverDelegateResult
+  ) {
     val intent = Intent(applicationContext, ImageSaverBroadcastReceiver::class.java).apply {
       setAction(ACTION_TYPE_CANCEL)
       putExtra(UNIQUE_ID, imageSaverDelegateResult.uniqueId)
@@ -661,9 +662,12 @@ class ImageSaverV2Service : Service() {
       notificationManagerCompat: NotificationManagerCompat,
       uniqueId: String
     ) {
+      val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+      Logger.d(TAG, "cancelNotification('$uniqueId', '$notificationId')")
+
       notificationManagerCompat.cancel(
         IMAGE_SAVER_NOTIFICATIONS_TAG,
-        NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+        notificationId
       )
     }
 
