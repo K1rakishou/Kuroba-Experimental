@@ -471,12 +471,15 @@ data class PostCellData(
 
     fullTitle.append(postNoText)
     fullTitle.append(StringUtils.UNBREAKABLE_SPACE_SYMBOL)
-
     fullTitle.append(date)
 
     if (postSubject.isEmpty()) {
       fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
     } else {
+      check(postSubject.length <= fullTitle.length) {
+        "Bad start/end positions! start=${postSubject.length}, end=${fullTitle.length}"
+      }
+
       fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), postSubject.length, fullTitle.length, 0)
     }
 
