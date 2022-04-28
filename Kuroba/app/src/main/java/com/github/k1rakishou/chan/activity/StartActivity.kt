@@ -423,7 +423,12 @@ class StartActivity : ControllerHostActivity(),
       return true
     }
 
-    return super.dispatchKeyEvent(event)
+    try {
+      return super.dispatchKeyEvent(event)
+    } catch (error: Throwable) {
+      // java.lang.IllegalStateException: focus search returned a view that wasn't able to take focus
+      return false
+    }
   }
 
   override fun dispatchTouchEvent(ev: MotionEvent?): Boolean {
