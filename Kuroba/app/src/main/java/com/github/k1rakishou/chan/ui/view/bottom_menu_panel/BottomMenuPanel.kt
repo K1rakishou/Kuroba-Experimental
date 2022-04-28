@@ -117,8 +117,6 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun show(items: List<BottomMenuPanelItem>) {
-    require(state != State.NotInitialized) { "state is NotInitialized!" }
-
     if (state == State.Shown) {
       if (!itemsDiffer(this.items, items)) {
         return
