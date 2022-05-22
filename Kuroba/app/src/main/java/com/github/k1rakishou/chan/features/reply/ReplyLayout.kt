@@ -61,7 +61,7 @@ import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
-import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -73,6 +73,7 @@ import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder.CaptchaValidationListener
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
@@ -97,6 +98,7 @@ import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.selectionEndSafe
@@ -146,7 +148,7 @@ class ReplyLayout @JvmOverloads constructor(
   @Inject
   lateinit var _replyManager: Lazy<ReplyManager>
   @Inject
-  lateinit var _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
+  lateinit var _boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
   @Inject
   lateinit var _globalViewStateManager: Lazy<GlobalViewStateManager>
   @Inject
@@ -168,8 +170,8 @@ class ReplyLayout @JvmOverloads constructor(
     get() = _proxyStorage.get()
   private val replyManager: ReplyManager
     get() = _replyManager.get()
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
-    get() = _staticBoardFlagInfoRepository.get()
+  private val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = _boardFlagInfoRepository.get()
   private val globalViewStateManager: GlobalViewStateManager
     get() = _globalViewStateManager.get()
   private val appSettingsUpdateAppRefreshHelper: AppSettingsUpdateAppRefreshHelper
@@ -879,7 +881,7 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  private fun showFlagSelector(chanDescriptor: ChanDescriptor?) {
+  private suspend fun showFlagSelector(chanDescriptor: ChanDescriptor?) {
     val boardDescriptor = chanDescriptor?.boardDescriptor()
       ?: return
 
@@ -887,12 +889,25 @@ class ReplyLayout @JvmOverloads constructor(
       ?.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)
       ?: return
 
-    val flagInfoList = staticBoardFlagInfoRepository.getFlagInfoList(boardDescriptor)
+    val loadingViewController = if (!boardFlagInfoRepository.cached(chanDescriptor.boardDescriptor())) {
+      val loadingViewController = LoadingViewController(context, true, "Loading flags...")
+      threadListLayoutCallbacks?.presentController(loadingViewController)
+      loadingViewController
+    } else {
+      null
+    }
+
+    val flagInfoList = try {
+      boardFlagInfoRepository.getFlagInfoList(boardDescriptor)
+    } finally {
+      loadingViewController?.stopPresenting()
+    }
+
     if (flagInfoList.isEmpty()) {
       return
     }
 
-    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(boardDescriptor)
+    val lastUsedFlagInfo = boardFlagInfoRepository.getLastUsedFlagInfo(boardDescriptor)
       ?: return
 
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
@@ -907,20 +922,20 @@ class ReplyLayout @JvmOverloads constructor(
     }
 
     val floatingListMenuController = FloatingListMenuController(
-      context,
-      globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      floatingListMenuItems,
-      { floatingListMenuItem ->
-        val flagInfo = floatingListMenuItem.value as? StaticBoardFlagInfoRepository.FlagInfo
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = floatingListMenuItems,
+      itemClickListener = { floatingListMenuItem ->
+        val flagInfo = floatingListMenuItem.value as? BoardFlagInfoRepository.FlagInfo
           ?: return@FloatingListMenuController
 
-        staticBoardFlagInfoRepository.storeLastUsedFlag(
-          lastUsedCountryFlagPerBoardSetting,
-          flagInfo,
-          boardDescriptor.boardCode
+        boardFlagInfoRepository.storeLastUsedFlag(
+          lastUsedCountryFlagPerBoardSetting = lastUsedCountryFlagPerBoardSetting,
+          selectedFlagInfo = flagInfo,
+          currentBoardCode = boardDescriptor.boardCode
         )
 
-        openFlag(flagInfo)
+        openFlag(flagInfo.flagKey)
       })
 
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
@@ -1010,14 +1025,14 @@ class ReplyLayout @JvmOverloads constructor(
       return
     }
 
-    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
+    val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply: Reply ->
       name.setText(reply.postName)
       subject.setText(reply.subject)
 
-      if (lastUsedFlagInfo != null) {
-        flag.text = getString(R.string.reply_flag_format, lastUsedFlagInfo.flagKey)
+      if (lastUsedFlagKey.isNotNullNorEmpty()) {
+        flag.text = getString(R.string.reply_flag_format, lastUsedFlagKey)
       }
 
       options.setText(reply.options)
@@ -1087,7 +1102,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun loadViewsIntoDraft(chanDescriptor: ChanDescriptor) {
-    val lastUsedFlagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanDescriptor.boardDescriptor())
+    val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanDescriptor.boardDescriptor())
 
     replyManager.readReply(chanDescriptor) { reply: Reply ->
       reply.postName = name.text.toString()
@@ -1095,8 +1110,8 @@ class ReplyLayout @JvmOverloads constructor(
       reply.options = options.text.toString()
       reply.comment = comment.text.toString()
 
-      if (lastUsedFlagInfo != null) {
-        reply.flag = lastUsedFlagInfo.flagKey
+      if (lastUsedFlagKey.isNotNullNorEmpty()) {
+        reply.flag = lastUsedFlagKey
       }
     }
   }
@@ -1227,9 +1242,9 @@ class ReplyLayout @JvmOverloads constructor(
     subject.visibility = if (open) VISIBLE else GONE
   }
 
-  override fun openFlag(flagInfo: StaticBoardFlagInfoRepository.FlagInfo) {
+  override fun openFlag(lastUsedFlagKey: String) {
     flag.visibility = VISIBLE
-    flag.text = getString(R.string.reply_flag_format, flagInfo.flagKey)
+    flag.text = getString(R.string.reply_flag_format, lastUsedFlagKey)
   }
 
   override fun hideFlag() {

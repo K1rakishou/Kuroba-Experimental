@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -88,7 +88,7 @@ abstract class SiteBase : Site, CoroutineScope {
   @Inject
   protected lateinit var gson: Gson
   @Inject
-  protected lateinit var staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
+  protected lateinit var boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
   @Inject
   protected lateinit var simpleCommentParser: Lazy<SimpleCommentParser>
 

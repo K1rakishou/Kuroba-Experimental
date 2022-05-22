@@ -28,7 +28,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
-import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
@@ -67,7 +67,6 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
@@ -80,7 +79,7 @@ class ReplyPresenter @Inject constructor(
   private val _replyManager: Lazy<ReplyManager>,
   private val _siteManager: Lazy<SiteManager>,
   private val _boardManager: Lazy<BoardManager>,
-  private val _staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>,
+  private val _boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>,
   private val _postingServiceDelegate: Lazy<PostingServiceDelegate>,
   private val _twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
   private val _dialogFactory: Lazy<DialogFactory>,
@@ -108,8 +107,8 @@ class ReplyPresenter @Inject constructor(
     get() = _siteManager.get()
   private val boardManager: BoardManager
     get() = _boardManager.get()
-  private val staticBoardFlagInfoRepository: StaticBoardFlagInfoRepository
-    get() = _staticBoardFlagInfoRepository.get()
+  private val boardFlagInfoRepository: BoardFlagInfoRepository
+    get() = _boardFlagInfoRepository.get()
   private val postingServiceDelegate: PostingServiceDelegate
     get() = _postingServiceDelegate.get()
   private val twoCaptchaSolver: TwoCaptchaSolver
@@ -364,9 +363,9 @@ class ReplyPresenter @Inject constructor(
       }
 
       if (isExpanded && chanBoard.boardSupportsFlagSelection()) {
-        val flagInfo = staticBoardFlagInfoRepository.getLastUsedFlagInfo(chanBoard.boardDescriptor)
+        val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanBoard.boardDescriptor)
           ?: return
-        callback.openFlag(flagInfo)
+        callback.openFlag(lastUsedFlagKey)
       } else {
         callback.hideFlag()
       }
@@ -951,7 +950,7 @@ class ReplyPresenter @Inject constructor(
     fun setExpanded(expanded: Boolean, isCleaningUp: Boolean)
     fun openNameOptions(open: Boolean)
     fun openSubject(open: Boolean)
-    fun openFlag(flagInfo: StaticBoardFlagInfoRepository.FlagInfo)
+    fun openFlag(lastUsedFlagKey: String)
     fun hideFlag()
     fun openCommentQuoteButton(open: Boolean)
     fun openCommentSpoilerButton(open: Boolean)

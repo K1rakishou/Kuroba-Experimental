@@ -201,7 +201,6 @@ open class Chan4 : SiteBase() {
           b.addPathSegment("country")
           b.addPathSegment(countryCode.toLowerCase(Locale.ENGLISH) + ".gif")
         }
-        // https://s.4cdn.org/image/flags/[board]/[code].gif
         "board_flag" -> {
           val boardFlagCode = requireNotNull(arg?.get("board_flag_code")) { "Bad arg map: $arg" }
           val boardCode = requireNotNull(arg?.get("board_code")) { "Bad arg map: $arg" }
@@ -328,7 +327,7 @@ open class Chan4 : SiteBase() {
         replyChanDescriptor = replyChanDescriptor,
         replyMode = replyMode,
         replyManager = replyManager,
-        staticBoardFlagInfoRepository = staticBoardFlagInfoRepository
+        boardFlagInfoRepository = boardFlagInfoRepository
       )
 
       return httpCallManager.get().makePostHttpCallWithProgress(replyCall)

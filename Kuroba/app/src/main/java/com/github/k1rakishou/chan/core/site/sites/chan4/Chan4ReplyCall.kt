@@ -18,9 +18,8 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.TextUtils
 import com.github.k1rakishou.chan.core.manager.ReplyManager
-import com.github.k1rakishou.chan.core.repository.StaticBoardFlagInfoRepository
+import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
@@ -32,12 +31,12 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.groupOrNull
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
-import com.github.k1rakishou.prefs.StringSetting
 import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
@@ -56,7 +55,7 @@ class Chan4ReplyCall(
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
   private val replyManager: Lazy<ReplyManager>,
-  private val staticBoardFlagInfoRepository: Lazy<StaticBoardFlagInfoRepository>
+  private val boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   @Throws(IOException::class)
@@ -113,15 +112,10 @@ class Chan4ReplyCall(
         if (reply.flag.isNotEmpty()) {
           formBuilder.addFormDataPart("flag", reply.flag)
         } else {
-          val lastUsedCountryFlagPerBoardString =
-            site.getSettingBySettingId<StringSetting>(SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard)?.get()
+          val lastUsedFlag = boardFlagInfoRepository.get()
+            .getLastUsedFlagKey(replyChanDescriptor.boardDescriptor())
 
-          if (lastUsedCountryFlagPerBoardString != null) {
-            val lastUsedFlag = staticBoardFlagInfoRepository.get().extractFlagCodeOrDefault(
-              lastUsedCountryFlagPerBoardString,
-              replyChanDescriptor.boardCode()
-            )
-
+          if (lastUsedFlag.isNotNullNorEmpty()) {
             formBuilder.addFormDataPart("flag", lastUsedFlag)
           }
         }
