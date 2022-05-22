@@ -26,6 +26,7 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputConnection
+import android.view.inputmethod.InputConnectionWrapper
 import androidx.core.view.inputmethod.EditorInfoCompat
 import androidx.core.view.inputmethod.InputConnectionCompat
 import androidx.core.view.inputmethod.InputContentInfoCompat
@@ -38,6 +39,7 @@ import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
@@ -270,7 +272,9 @@ class ReplyInputEditText @JvmOverloads constructor(
         }
       }
 
-    return InputConnectionCompat.createWrapper(ic, editorInfo, callback)
+    val connectionWrapper = InputConnectionCompat.createWrapper(ic, editorInfo, callback)
+
+    return KurobaInputConnectionWrapper(connectionWrapper)
   }
 
   fun cleanup() {
@@ -282,6 +286,23 @@ class ReplyInputEditText @JvmOverloads constructor(
     this.listener = null
     this.showLoadingViewFunc = null
     this.hideLoadingViewFunc = null
+  }
+
+  private class KurobaInputConnectionWrapper(
+    inputConnection: InputConnection
+  ) : InputConnectionWrapper(inputConnection, false) {
+
+    override fun deleteSurroundingText(beforeLength: Int, afterLength: Int): Boolean {
+      return try {
+        super.deleteSurroundingText(beforeLength, afterLength)
+      } catch (error: IndexOutOfBoundsException) {
+        // java.lang.IndexOutOfBoundsException: replace (0 ... -1) has end before start in
+        // androidx.emoji2.viewsintegration.EmojiInputConnection
+        Logger.e(TAG, "Caught IndexOutOfBoundsException in deleteSurroundingText() msg: ${error.errorMessageOrClassName()}")
+        return false
+      }
+    }
+
   }
 
   interface SelectionChangedListener {
