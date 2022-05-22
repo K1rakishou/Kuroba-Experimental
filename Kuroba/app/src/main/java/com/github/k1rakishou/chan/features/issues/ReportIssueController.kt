@@ -153,7 +153,7 @@ class ReportIssueController(
         parentBackgroundColor = chanTheme.backColorCompose,
         maxLines = 1,
         singleLine = true,
-        maxTextLength = MAX_TITLE_LENGTH,
+        maxTextLength = ReportManager.MAX_TITLE_LENGTH,
         labelText = stringResource(id = R.string.report_controller_i_have_a_problem_with),
         onValueChange = { title -> reportTitle = title }
       )
@@ -168,7 +168,7 @@ class ReportIssueController(
         textColor = chanTheme.textColorPrimaryCompose,
         parentBackgroundColor = chanTheme.backColorCompose,
         maxLines = 4,
-        maxTextLength = MAX_DESCRIPTION_LENGTH,
+        maxTextLength = ReportManager.MAX_DESCRIPTION_LENGTH,
         labelText = stringResource(id = R.string.report_controller_problem_description),
         onValueChange = { description -> reportDescription = description }
       )
@@ -215,7 +215,7 @@ class ReportIssueController(
             textColor = chanTheme.textColorPrimaryCompose,
             parentBackgroundColor = chanTheme.backColorCompose,
             value = reportLogs,
-            maxTextLength = MAX_LOGS_LENGTH,
+            maxTextLength = ReportManager.MAX_LOGS_LENGTH,
             fontSize = 12.sp,
             onValueChange = { logs -> reportLogs = logs }
           )
@@ -255,14 +255,14 @@ class ReportIssueController(
       return
     }
 
-    val description = reportDescriptionState.value.take(MAX_DESCRIPTION_LENGTH)
+    val description = reportDescriptionState.value.take(ReportManager.MAX_DESCRIPTION_LENGTH)
     if (description.isEmpty()) {
       showToast(R.string.report_controller_description_cannot_be_empty_error_comment_mode)
       return
     }
 
     val logs = if (attachLogsState.value) {
-      reportLogsState.value.takeLast(MAX_LOGS_LENGTH)
+      reportLogsState.value.takeLast(ReportManager.MAX_LOGS_LENGTH)
     } else {
       null
     }
@@ -299,14 +299,14 @@ class ReportIssueController(
   }
 
   private fun sendActualReport() {
-    val title = reportTitleState.value.take(MAX_TITLE_LENGTH)
+    val title = reportTitleState.value.take(ReportManager.MAX_TITLE_LENGTH)
     if (title.isEmpty()) {
       showToast(R.string.report_controller_title_cannot_be_empty_error)
       return
     }
 
     val logs = if (attachLogsState.value) {
-      reportLogsState.value.takeLast(MAX_LOGS_LENGTH)
+      reportLogsState.value.takeLast(ReportManager.MAX_LOGS_LENGTH)
     } else {
       null
     }
@@ -316,7 +316,7 @@ class ReportIssueController(
       return
     }
 
-    val description = reportDescriptionState.value.take(MAX_DESCRIPTION_LENGTH)
+    val description = reportDescriptionState.value.take(ReportManager.MAX_DESCRIPTION_LENGTH)
     if (description.isEmpty() && logs.isNullOrEmpty()) {
       showToast(R.string.report_controller_description_cannot_be_empty_error)
       return
@@ -379,9 +379,5 @@ class ReportIssueController(
     private const val TAG = "ReportProblemController"
 
     private const val ACTION_SEND_REPORT = 1
-
-    private const val MAX_TITLE_LENGTH = 256
-    private const val MAX_DESCRIPTION_LENGTH = 1024
-    private const val MAX_LOGS_LENGTH = 65535 * 2
   }
 }
