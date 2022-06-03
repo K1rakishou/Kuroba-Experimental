@@ -86,11 +86,13 @@ public class RepositoryModule {
     @Singleton
     public BoardFlagInfoRepository provideStaticBoardFlagInfoRepository(
             SiteManager siteManager,
+            BoardManager boardManager,
             ProxiedOkHttpClient proxiedOkHttpClient
     ) {
         Logger.deps("StaticBoardFlagInfoRepository");
         return new BoardFlagInfoRepository(
                 siteManager,
+                boardManager,
                 proxiedOkHttpClient
         );
     }

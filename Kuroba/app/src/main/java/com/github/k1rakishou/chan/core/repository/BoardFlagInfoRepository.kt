@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.core.repository
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
+import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
@@ -16,15 +16,11 @@ import java.util.regex.Pattern
 
 class BoardFlagInfoRepository(
   private val siteManager: SiteManager,
+  private val boardManager: BoardManager,
   private val proxiedOkHttpClient: ProxiedOkHttpClient
 ) {
   private val cachedFlagInfoMap = ConcurrentHashMap<BoardDescriptor, List<FlagInfo>>()
   private val defaultFlagInfoMap = ConcurrentHashMap<BoardDescriptor, FlagInfo>()
-
-  init {
-    defaultFlagInfoMap.put(BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "pol"), FlagInfo("0", "Geographic Location"))
-    defaultFlagInfoMap.put(BoardDescriptor.Companion.create(Chan4.SITE_DESCRIPTOR, "mlp"), FlagInfo("0", "None"))
-  }
 
   suspend fun cached(boardDescriptor: BoardDescriptor): Boolean {
     return cachedFlagInfoMap[boardDescriptor]?.isNotEmpty() == true
@@ -32,7 +28,10 @@ class BoardFlagInfoRepository(
 
   suspend fun getFlagInfoList(boardDescriptor: BoardDescriptor): List<FlagInfo> {
     if (cachedFlagInfoMap[boardDescriptor].isNullOrEmpty()) {
-      if (!defaultFlagInfoMap.containsKey(boardDescriptor)) {
+      boardManager.awaitUntilInitialized()
+
+      val supportsFlags = boardManager.byBoardDescriptor(boardDescriptor)?.countryFlags ?: false
+      if (!supportsFlags) {
         return emptyList()
       }
 
@@ -188,6 +187,18 @@ class BoardFlagInfoRepository(
     }
 
     cachedFlagInfoMap[boardDescriptor] = flags
+
+    if (!defaultFlagInfoMap.containsKey(boardDescriptor)) {
+      var defaultFlag = flags
+        .firstOrNull { flagInfo -> flagInfo.flagKey == "0" }
+
+      if (defaultFlag == null) {
+        defaultFlag = FlagInfo("0", "No flag")
+      }
+
+      defaultFlagInfoMap[boardDescriptor] = defaultFlag
+    }
+
     return true
   }
 

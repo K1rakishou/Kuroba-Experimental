@@ -890,7 +890,7 @@ class ReplyLayout @JvmOverloads constructor(
       ?: return
 
     val loadingViewController = if (!boardFlagInfoRepository.cached(chanDescriptor.boardDescriptor())) {
-      val loadingViewController = LoadingViewController(context, true, "Loading flags...")
+      val loadingViewController = LoadingViewController(context, true, getString(R.string.reply_layout_loading_flags))
       threadListLayoutCallbacks?.presentController(loadingViewController)
       loadingViewController
     } else {

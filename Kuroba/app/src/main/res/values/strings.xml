@@ -1139,6 +1139,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
 
     <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
+    <string name="reply_layout_loading_flags">Loading flags...</string>
     <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
 
