@@ -6,7 +6,7 @@ import com.github.k1rakishou.core_themes.ChanTheme
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicLong
 
-class DownloadThemeJsonFilesRepository(
+class ThemeJsonFilesRepository(
   private val downloadThemeJsonFilesUseCase: DownloadThemeJsonFilesUseCase
 ) {
   private val lastUpdateTime = AtomicLong(0L)

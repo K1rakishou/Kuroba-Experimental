@@ -13,7 +13,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.PostFilterManager
-import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository
+import com.github.k1rakishou.chan.core.repository.ThemeJsonFilesRepository
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -34,7 +34,7 @@ class ThemeGalleryController(
 ) : Controller(context) {
 
   @Inject
-  lateinit var downloadThemeJsonFilesRepository: DownloadThemeJsonFilesRepository
+  lateinit var themeJsonFilesRepository: ThemeJsonFilesRepository
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
@@ -80,7 +80,7 @@ class ThemeGalleryController(
 
     themesList.doOnPreDraw {
       mainScope.launch {
-        val themes = downloadThemeJsonFilesRepository.download()
+        val themes = themeJsonFilesRepository.download()
           .filter { chanTheme -> chanTheme.isLightTheme == lightThemes }
 
         loadingViewController.stopPresenting()

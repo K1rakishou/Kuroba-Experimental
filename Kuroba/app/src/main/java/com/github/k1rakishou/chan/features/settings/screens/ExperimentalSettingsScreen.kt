@@ -91,6 +91,15 @@ class ExperimentalSettingsScreen(
           requiresUiRefresh = true
         )
 
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.ColorizeTextSelectionCursors,
+          topDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor },
+          bottomDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor_description },
+          setting = ChanSettings.colorizeTextSelectionCursors,
+          requiresRestart = true
+        )
+
         group
       }
     )

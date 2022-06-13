@@ -17,6 +17,7 @@ import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.DrawableCompat
 import androidx.recyclerview.widget.RecyclerView
 import androidx.viewpager.widget.ViewPager
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.google.android.material.tabs.TabLayout
@@ -28,6 +29,10 @@ object ViewUtils {
 
   @JvmStatic
   fun TextView.setEditTextCursorColor(theme: ChanTheme) {
+    if (!ChanSettings.colorizeTextSelectionCursors.get()) {
+      return
+    }
+
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,
       0xb0
@@ -77,6 +82,10 @@ object ViewUtils {
 
   @JvmStatic
   fun TextView.setHandlesColors(theme: ChanTheme) {
+    if (!ChanSettings.colorizeTextSelectionCursors.get()) {
+      return
+    }
+
     val accentColorWithAlpha = ColorUtils.setAlphaComponent(
       theme.accentColor,
       0xb0

@@ -22,8 +22,8 @@ import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository;
 import com.github.k1rakishou.chan.core.repository.CurrentlyDisplayedCatalogPostsRepository;
-import com.github.k1rakishou.chan.core.repository.DownloadThemeJsonFilesRepository;
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository;
+import com.github.k1rakishou.chan.core.repository.ThemeJsonFilesRepository;
 import com.github.k1rakishou.chan.core.site.ParserRepository;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
@@ -99,11 +99,11 @@ public class RepositoryModule {
 
     @Provides
     @Singleton
-    public DownloadThemeJsonFilesRepository provideDownloadThemeJsonFilesRepository(
+    public ThemeJsonFilesRepository provideDownloadThemeJsonFilesRepository(
             DownloadThemeJsonFilesUseCase downloadThemeJsonFilesUseCase
     ) {
         Logger.deps("DownloadThemeJsonFilesRepository");
-        return new DownloadThemeJsonFilesRepository(downloadThemeJsonFilesUseCase);
+        return new ThemeJsonFilesRepository(downloadThemeJsonFilesUseCase);
     }
 
     @Provides

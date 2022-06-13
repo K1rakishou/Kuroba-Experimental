@@ -722,6 +722,9 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_media_viewer_two_offscreen_page">Two offscreen pages (5 pages total, may become laggy on some devices)</string>
     <string name="setting_images_high_res">High resolution cells</string>
     <string name="setting_images_high_res_description">Make the album view and card catalog images higher resolution by pre-rescaling full size images (⚠ May become the reason of freezes while scrolling catalog/thread/album on old devices ⚠)</string>
+    <string name="setting_update_colors_for_text_selection_cursor">Colorize text selection cursors</string>
+    <string name="setting_update_colors_for_text_selection_cursor_description">Some devices behave weirdly when text selection cursor colors are changed (for example on some xiaomi devices they become stretched vertically). Disabling this setting will make the text selection cursor use the default theme\'s color (which is gray)</string>
+
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>
@@ -961,7 +964,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="image_quality">Image quality: %1$d</string>
 
     <string name="theme_gallery_screen_theme_gallery">Theme gallery (%1$s themes)</string>
-    <string name="theme_gallery_screen_loading_themes">Loading themes</string>
+    <string name="theme_gallery_screen_loading_themes">Loading themes...</string>
     <string name="theme_gallery_screen_loading_themes_failed">Failed to load themes</string>
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>

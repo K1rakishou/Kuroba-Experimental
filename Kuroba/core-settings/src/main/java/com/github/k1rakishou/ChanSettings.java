@@ -386,6 +386,7 @@ public class ChanSettings {
     public static BooleanSetting showPrefetchLoadingIndicator;
     public static BooleanSetting highResCells;
     public static BooleanSetting useMpvVideoPlayer;
+    public static BooleanSetting colorizeTextSelectionCursors;
     //endregion
 
     //region OTHER
@@ -631,6 +632,7 @@ public class ChanSettings {
             cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
             useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
+            colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
             //endregion
 
             //region OTHER
