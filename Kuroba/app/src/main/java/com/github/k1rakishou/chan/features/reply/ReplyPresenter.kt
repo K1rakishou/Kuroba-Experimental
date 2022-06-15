@@ -362,7 +362,7 @@ class ReplyPresenter @Inject constructor(
         callback.openCommentSJISButton(isExpanded)
       }
 
-      if (isExpanded && chanBoard.boardSupportsFlagSelection()) {
+      if (isExpanded && chanBoard.countryFlags) {
         val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanBoard.boardDescriptor)
           ?: return
         callback.openFlag(lastUsedFlagKey)
