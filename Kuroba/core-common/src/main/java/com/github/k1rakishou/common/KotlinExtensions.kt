@@ -1091,7 +1091,7 @@ fun StringBuilder.appendIfNotEmpty(text: String): StringBuilder {
   }
 
   return this
-}
+} 
 
 @Suppress("UnnecessaryVariable")
 suspend fun <T : Any> doIoTaskWithAttempts(attempts: Int, task: suspend (Int) -> T): T {
