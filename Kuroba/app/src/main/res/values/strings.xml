@@ -617,10 +617,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_updates_are_disabled">Updates are disabled</string>
     <string name="settings_report">Report</string>
     <string name="settings_report_description">Report a problem/crash</string>
-    <string name="settings_collect_crash_logs">Collect crash logs</string>
-    <string name="settings_collect_crash_logs_description">By enabling this setting, the app will start collecting crash logs. They are NOT uploaded automatically. Crash logs only collect the stacktrace itself, app version and basic OS information. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
-    <string name="settings_collect_anrs">Collect ANR reports</string>
-    <string name="settings_collect_anrs_description">Same as with crashlogs. When enabling this setting ANRs will be collected but not uploaded. ANR means Application Not Responding reports. They will be formed every time the app hangs for more than 2.5 seconds. At that time a thread stack dump will be collected and stored into a file. This may help developers to fix those hangs/freezes/deadlocks so please report them. You can review and upload them manually (or delete) by clicking the \"Report\" setting.</string>
     <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
     <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
     <string name="settings_report_tracker_link">Report tracker</string>
@@ -1256,9 +1252,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="apply_themes">Apply themes</string>
     <string name="apply_theme">Apply \"%1$s\"</string>
     <string name="review_report_files_controller_title">Review report files</string>
-    <string name="settings_report_suggest_sending_logs_title">You have %1$d collected report files</string>
-    <string name="settings_report_suggest_sending_logs_message">Would you like to review and maybe send them to developers?</string>
-    <string name="settings_report_review_button_text">Review report files</string>
     <string name="settings_report_review_later_button_text">Review later</string>
     <string name="settings_report_delete_all_report_files">Delete all report files</string>
     <string name="deleted_n_report_files">Deleted %1$d report file(s)</string>
@@ -1539,6 +1532,20 @@ Actual error: \'%1$s\'</string>
     <string name="third_eye_add_site_controller_image_height_key">Image height json key (Optional. Will fetch and show image height)</string>
     <string name="third_eye_add_site_controller_image_tags_key">Image tags json key (Optional. Will fetch image tags to filter out images matching banned tags)</string>
     <string name="third_eye_add_site_controller_image_banned_tags">Banned tags (Optional if \'Image tags json key\' is not set. Must be whitespace separated)</string>
+
+    <string name="crash_report_activity_title">The application has crashed!</string>
+    <string name="crash_report_activity_crash_message_section">Crash message</string>
+    <string name="crash_report_activity_crash_stacktrace_section">Crash stacktrace</string>
+    <string name="crash_report_activity_crash_logs_section">Last logs before the crash</string>
+    <string name="crash_report_activity_additional_info_section">Additional information</string>
+    <string name="crash_report_activity_loading_logs">Loading logs…</string>
+    <string name="crash_report_activity_verbose_logs">+Verbose logs</string>
+    <string name="crash_report_activity_mpv_logs">+MPV logs</string>
+    <string name="crash_report_activity_send_report">Send crash report</string>
+    <string name="crash_report_activity_open_issue_tracker">Open the issue tracker</string>
+    <string name="crash_report_activity_restart_the_app_unhandled">Not my problem, restart the app</string>
+    <string name="crash_report_activity_restart_the_app">Restart the app</string>
+    <string name="crash_report_activity_copied_to_clipboard">Report copied to clipboard</string>
 
     <string name="hidden_or_removed_posts_post_hidden">Hidden</string>
     <string name="hidden_or_removed_posts_post_removed">Removed</string>

@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.di.component.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import com.github.k1rakishou.chan.activity.CrashReportActivity;
 import com.github.k1rakishou.chan.activity.SharingActivity;
 import com.github.k1rakishou.chan.activity.StartActivity;
 import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLayout;
@@ -30,10 +31,6 @@ import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2OptionsContro
 import com.github.k1rakishou.chan.features.image_saver.ResolveDuplicateImagesController;
 import com.github.k1rakishou.chan.features.image_saver.epoxy.EpoxyDuplicateImageView;
 import com.github.k1rakishou.chan.features.issues.ReportIssueController;
-import com.github.k1rakishou.chan.features.issues.ReviewReportFilesController;
-import com.github.k1rakishou.chan.features.issues.ReviewReportFilesLayout;
-import com.github.k1rakishou.chan.features.issues.ViewFullCrashLogController;
-import com.github.k1rakishou.chan.features.issues.ViewFullReportFileLayout;
 import com.github.k1rakishou.chan.features.login.LoginController;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerController;
@@ -214,6 +211,7 @@ public interface ActivityComponent {
     void inject(StartActivity startActivity);
     void inject(SharingActivity sharingActivity);
     void inject(MediaViewerActivity mediaViewerActivity);
+    void inject(CrashReportActivity crashReportActivity);
 
     void inject(AlbumDownloadController albumDownloadController);
     void inject(AlbumViewController albumViewController);
@@ -250,8 +248,6 @@ public interface ActivityComponent {
     void inject(MainSettingsControllerV2 mainSettingsControllerV2);
     void inject(SiteSettingsController siteSettingsController);
     void inject(ReportIssueController reportIssueController);
-    void inject(ReviewReportFilesController reviewReportFilesController);
-    void inject(ViewFullCrashLogController viewFullCrashLogController);
     void inject(FloatingListMenuController floatingListMenuController);
     void inject(BottomNavBarAwareNavigationController bottomNavBarAwareNavigationController);
     void inject(JsCaptchaCookiesEditorController jsCaptchaCookiesEditorController);
@@ -372,8 +368,6 @@ public interface ActivityComponent {
     void inject(AdjustAndroid10GestureZonesView adjustAndroid10GestureZonesView);
     void inject(SettingsCoordinator settingsCoordinator);
     void inject(JsCaptchaCookiesEditorLayout jsCaptchaCookiesEditorLayout);
-    void inject(ReviewReportFilesLayout reviewReportFilesLayout);
-    void inject(ViewFullReportFileLayout viewFullReportFileLayout);
     void inject(HidingFloatingActionButton hidingFloatingActionButton);
     void inject(TouchBlockingConstraintLayout touchBlockingConstraintLayout);
     void inject(TouchBlockingCoordinatorLayout touchBlockingCoordinatorLayout);

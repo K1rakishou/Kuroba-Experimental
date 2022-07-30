@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
-import com.github.k1rakishou.chan.core.diagnostics.AnrSupervisor;
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
@@ -33,7 +32,6 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.ReplyManager;
-import com.github.k1rakishou.chan.core.manager.ReportManager;
 import com.github.k1rakishou.chan.core.manager.SiteManager;
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager;
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager;
@@ -215,13 +213,5 @@ public class AppModule {
         Logger.deps("Android10GesturesExclusionZonesHolder");
 
         return new Android10GesturesExclusionZonesHolder(gson);
-    }
-
-    @Provides
-    @Singleton
-    public AnrSupervisor provideAnrSupervisor(dagger.Lazy<ReportManager> reportManager) {
-        Logger.deps("AnrSupervisor");
-
-        return new AnrSupervisor(reportManager);
     }
 }

@@ -95,26 +95,6 @@ open class AppConstants(
       return field
     }
 
-  val crashLogsDir: File
-    get() {
-      if (field.exists()) {
-        return field
-      }
-
-      check(field.mkdir()) { "Failed to create Crash Log directory! crashLogsDir=${field.absolutePath}" }
-      return field
-    }
-
-  val anrsDir: File
-    get() {
-      if (field.exists()) {
-        return field
-      }
-
-      check(field.mkdir()) { "Failed to create ANR directory! anrsDir=${field.absolutePath}" }
-      return field
-    }
-
   val diskCacheDir: File
     get() {
       if (field.exists()) {
@@ -172,9 +152,6 @@ open class AppConstants(
 
     mpvNativeLibsDir = File(context.filesDir, MPV_NATIVE_LIBS_DIR_NAME)
     mpvCertDir = File(context.filesDir, MPV_CERT_DIR_NAME)
-
-    crashLogsDir = File(context.filesDir, CRASH_LOGS_DIR_NAME)
-    anrsDir = File(context.filesDir, ANRS_DIR_NAME)
 
     diskCacheDir = File(context.filesDir, DISK_CACHE_DIR_NAME)
 
@@ -241,8 +218,6 @@ open class AppConstants(
     private const val MPV_NATIVE_LIBS_DIR_NAME = "mpv_native_libs"
     private const val MPV_CERT_DIR_NAME = "certs/mpv"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
-    private const val CRASH_LOGS_DIR_NAME = "crashlogs"
-    private const val ANRS_DIR_NAME = "anrs"
 
     // TODO(KurobaEx): remove me in v1.5.0
     @Deprecated("Use DISK_CACHE_DIR_NAME") private const val OLD_FILE_CACHE_DIR = "filecache"

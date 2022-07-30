@@ -4,7 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.features.settings.DatabaseSummaryScreen
 import com.github.k1rakishou.chan.features.settings.DeveloperScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
@@ -22,6 +22,7 @@ class DeveloperSettingsScreen(
   context: Context,
   private val navigationController: NavigationController,
   private val themeEngine: ThemeEngine,
+  private val appRestarter: AppRestarter
 ) : BaseSettingsScreen(
   context,
   DeveloperScreen,
@@ -90,7 +91,7 @@ class DeveloperSettingsScreen(
           },
           callback = {
             ChanSettings.verboseLogs.setSync(!ChanSettings.verboseLogs.get())
-            (context as StartActivity).restartApp()
+            appRestarter.restart()
           }
         )
 
@@ -150,7 +151,7 @@ class DeveloperSettingsScreen(
             PersistableChanState.previousDevHash.setSync(ChanSettings.NO_HASH_SET)
             PersistableChanState.updateCheckTime.setSync(0L)
             PersistableChanState.hasNewApkUpdate.setSync(false)
-            (context as StartActivity).restartApp()
+            appRestarter.restart()
           }
         )
 
@@ -165,7 +166,7 @@ class DeveloperSettingsScreen(
             PersistableChanState.previousDevHash.setSync(BuildConfig.COMMIT_HASH)
             PersistableChanState.updateCheckTime.setSync(0L)
             PersistableChanState.hasNewApkUpdate.setSync(true)
-            (context as StartActivity).restartApp()
+            appRestarter.restart()
           }
         )
 

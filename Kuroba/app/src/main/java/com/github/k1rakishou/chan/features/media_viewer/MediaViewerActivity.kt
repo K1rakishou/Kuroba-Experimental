@@ -18,6 +18,7 @@ import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
@@ -54,6 +55,8 @@ class MediaViewerActivity : ControllerHostActivity(),
   lateinit var fileChooser: FileChooser
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var appRestarter: AppRestarter
 
   private lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
@@ -100,6 +103,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     themeEngine.setRootView(this, mediaViewerController.view)
     themeEngine.addListener(this)
     fileChooser.setCallbacks(this)
+    appRestarter.attachActivity(this)
     setupContext(this, themeEngine.chanTheme)
 
     window.setupEdgeToEdge()
@@ -154,6 +158,7 @@ class MediaViewerActivity : ControllerHostActivity(),
       fileChooser.removeCallbacks()
     }
 
+    appRestarter.detachActivity(this)
     AppModuleAndroidUtils.cancelLastToast()
 
     AndroidUtils.getWindow(this)

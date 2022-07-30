@@ -126,8 +126,6 @@ sealed class MainScreen(
     object AppVersion : AboutAppGroup("app_version")
     object Changelog : AboutAppGroup("changelog")
     object Reports : AboutAppGroup("reports")
-    object CollectCrashReport : AboutAppGroup("collect_crash_reports")
-    object CollectAnrReport : AboutAppGroup("collect_anr_reports")
     object FindAppOnGithub : AboutAppGroup("find_app_on_github")
     object ReportTrackerLink : AboutAppGroup("report_tracker_link")
     object AppLicense : AboutAppGroup("app_license")

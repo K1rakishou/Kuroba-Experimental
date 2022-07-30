@@ -6,8 +6,8 @@ import androidx.recyclerview.widget.RecyclerView
 import com.airbnb.epoxy.EpoxyController
 import com.airbnb.epoxy.EpoxyRecyclerView
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
@@ -44,6 +44,8 @@ class MainSettingsControllerV2(
   lateinit var settingsNotificationManager: SettingsNotificationManager
   @Inject
   lateinit var appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
+  @Inject
+  lateinit var appRestarter: AppRestarter
 
   lateinit var epoxyRecyclerView: EpoxyRecyclerView
   lateinit var settingsCoordinator: SettingsCoordinator
@@ -190,7 +192,7 @@ class MainSettingsControllerV2(
 
   private fun restartAppOrRefreshUiIfNecessary() {
     if (hasPendingRestart) {
-      (context as StartActivity).restartApp()
+      appRestarter.restart()
     } else if (hasPendingUiRefresh) {
       hasPendingUiRefresh = false
       appSettingsUpdateAppRefreshHelper.get().settingsUpdated()

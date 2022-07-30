@@ -7,16 +7,37 @@ import com.github.k1rakishou.chan.core.base.LazySuspend
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
-import com.github.k1rakishou.chan.core.manager.*
+import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
+import com.github.k1rakishou.chan.core.manager.PostHideManager
+import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.core.manager.SettingsNotificationManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.gesture_editor.Android10GesturesExclusionZonesHolder
-import com.github.k1rakishou.chan.features.settings.screens.*
+import com.github.k1rakishou.chan.features.settings.screens.AppearanceSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.BehaviourSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.CachingSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.CaptchaSolversScreen
+import com.github.k1rakishou.chan.features.settings.screens.DatabaseSettingsSummaryScreen
+import com.github.k1rakishou.chan.features.settings.screens.DeveloperSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.ExperimentalSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.ImportExportSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.MainSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.MediaSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.PluginSettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.SecuritySettingsScreen
+import com.github.k1rakishou.chan.features.settings.screens.WatcherSettingsScreen
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
 import com.github.k1rakishou.chan.ui.controller.navigation.NavigationController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
@@ -37,11 +58,15 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.BehaviorProcessor
 import io.reactivex.processors.PublishProcessor
-import kotlinx.coroutines.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancelChildren
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
+import kotlinx.coroutines.withContext
 import java.util.*
 import javax.inject.Inject
 import kotlin.time.Duration
@@ -107,6 +132,8 @@ class SettingsCoordinator(
   lateinit var installMpvNativeLibrariesFromGithubUseCase: InstallMpvNativeLibrariesFromGithubUseCase
   @Inject
   lateinit var installMpvNativeLibrariesFromLocalDirectoryUseCase: InstallMpvNativeLibrariesFromLocalDirectoryUseCase
+  @Inject
+  lateinit var appRestarter: AppRestarter
 
   private val scope = KurobaCoroutineScope()
   private val settingBuilderExecutor = SerializedCoroutineExecutor(scope)
@@ -171,6 +198,7 @@ class SettingsCoordinator(
       context,
       navigationController,
       themeEngine,
+      appRestarter
     )
   }
 
@@ -192,6 +220,7 @@ class SettingsCoordinator(
       fileChooser,
       fileManager,
       dialogFactory,
+      appRestarter,
       importExportRepository,
       threadDownloadingDelegate
     )
@@ -222,6 +251,7 @@ class SettingsCoordinator(
     PluginSettingsScreen(
       context,
       appConstants,
+      appRestarter,
       dialogFactory,
       fileChooser,
       globalWindowInsetsManager,

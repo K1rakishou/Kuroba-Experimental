@@ -5,7 +5,7 @@ import android.net.Uri
 import android.widget.Toast
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadingDelegate
@@ -32,6 +32,7 @@ class ImportExportSettingsDelegate(
   private val context: Context,
   private val coroutineScope: CoroutineScope,
   private val navigationController: NavigationController,
+  private val appRestarter: AppRestarter,
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
   private val dialogFactory: DialogFactory,
@@ -166,7 +167,7 @@ class ImportExportSettingsDelegate(
             context = context,
             titleText = getString(R.string.import_export_backup_import_success),
             descriptionText = getString(R.string.import_export_backup_import_success_description),
-            onDismissListener = { (context as StartActivity).restartApp() }
+            onDismissListener = { appRestarter.restart() }
           )
         }
       }
@@ -209,7 +210,7 @@ class ImportExportSettingsDelegate(
             context = context,
             titleText = getString(R.string.import_export_backup_import_from_kuroba_success),
             descriptionText = getString(R.string.import_export_backup_import_success_description),
-            onDismissListener = { (context as StartActivity).restartApp() }
+            onDismissListener = { appRestarter.restart() }
           )
         }
       }

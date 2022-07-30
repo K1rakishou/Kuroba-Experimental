@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
@@ -12,7 +11,6 @@ import com.github.k1rakishou.chan.core.manager.UpdateManager
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.filters.FiltersController
 import com.github.k1rakishou.chan.features.issues.ReportIssueController
-import com.github.k1rakishou.chan.features.issues.ReviewReportFilesController
 import com.github.k1rakishou.chan.features.settings.AppearanceScreen
 import com.github.k1rakishou.chan.features.settings.BehaviorScreen
 import com.github.k1rakishou.chan.features.settings.CachingScreen
@@ -27,7 +25,6 @@ import com.github.k1rakishou.chan.features.settings.SecurityScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.WatcherScreen
-import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.setup.SitesSetupController
 import com.github.k1rakishou.chan.ui.controller.LicensesController
@@ -114,33 +111,9 @@ class MainSettingsScreen(
           identifier = MainScreen.AboutAppGroup.Reports,
           topDescriptionIdFunc = { R.string.settings_report },
           bottomDescriptionIdFunc = { R.string.settings_report_description },
-          callback = { onReportSettingClick() },
-          notificationType = SettingNotificationType.CrashLogOrAnr
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MainScreen.AboutAppGroup.CollectCrashReport,
-          topDescriptionIdFunc = { R.string.settings_collect_crash_logs },
-          bottomDescriptionIdFunc = { R.string.settings_collect_crash_logs_description },
-          setting = ChanSettings.collectCrashLogs,
-          checkChangedCallback = { isChecked ->
-            if (!isChecked) {
-              reportManager.deleteAllCrashLogs()
-            }
-          }
-        )
-
-        group += BooleanSettingV2.createBuilder(
-          context = context,
-          identifier = MainScreen.AboutAppGroup.CollectAnrReport,
-          topDescriptionIdFunc = { R.string.settings_collect_anrs },
-          bottomDescriptionIdFunc = { R.string.settings_collect_anrs_description },
-          setting = ChanSettings.collectANRs,
-          checkChangedCallback = { isChecked ->
-            if (!isChecked) {
-              reportManager.deleteAllAnrs()
-            }
+          callback = {
+            val reportProblemController = ReportIssueController(context = context)
+            navigationController.pushController(reportProblemController)
           }
         )
 
@@ -342,39 +315,6 @@ class MainSettingsScreen(
     } else {
       "✗"
     }
-  }
-
-  private fun onReportSettingClick() {
-    fun openReportProblemController() {
-      val reportProblemController = ReportIssueController(context = context)
-      navigationController.pushController(reportProblemController)
-    }
-
-    val crashLogsCount: Int = reportManager.countReportFiles()
-    if (crashLogsCount > 0) {
-      dialogFactory.createSimpleConfirmationDialog(
-        context = context,
-        titleText = getString(R.string.settings_report_suggest_sending_logs_title, crashLogsCount),
-        descriptionTextId = R.string.settings_report_suggest_sending_logs_message,
-        positiveButtonText = getString(R.string.settings_report_review_button_text),
-        onPositiveButtonClickListener = {
-          navigationController.pushController(ReviewReportFilesController(context))
-        },
-        neutralButtonText = getString(R.string.settings_report_review_later_button_text),
-        onNeutralButtonClickListener = {
-          openReportProblemController()
-        },
-        negativeButtonText = getString(R.string.settings_report_delete_all_report_files),
-        onNegativeButtonClickListener = {
-          reportManager.deleteAllReportFiles(deleteCrashLogs = true, deleteAnrs = true)
-          openReportProblemController()
-        }
-      )
-
-      return
-    }
-
-    openReportProblemController()
   }
 
 }

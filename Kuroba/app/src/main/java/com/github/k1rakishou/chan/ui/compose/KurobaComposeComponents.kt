@@ -192,9 +192,9 @@ fun KurobaComposeText(
   textAlign: TextAlign? = null,
   inlineContent: Map<String, InlineTextContent> = mapOf()
 ) {
-  val textColorPrimary = if (color == null) {
-    val chanTheme = LocalChanTheme.current
+  val chanTheme = LocalChanTheme.current
 
+  val textColorPrimary = if (color == null) {
     remember(key1 = chanTheme.textColorPrimary) {
       Color(chanTheme.textColorPrimary)
     }
@@ -1220,4 +1220,36 @@ fun KurobaComposeCollapsable(
       }
     }
   }
+}
+
+@Composable
+fun KurobaComposeDivider(
+  modifier: Modifier = Modifier,
+  thickness: Dp = 1.dp,
+  startIndent: Dp = 0.dp
+) {
+  val chanTheme = LocalChanTheme.current
+
+  val indentMod = if (startIndent.value != 0f) {
+    Modifier.padding(start = startIndent)
+  } else {
+    Modifier
+  }
+
+  val targetThickness = if (thickness == Dp.Hairline) {
+    (1f / LocalDensity.current.density).dp
+  } else {
+    thickness
+  }
+
+  val dividerColorWithAlpha = remember(key1 = chanTheme.dividerColorCompose) {
+    chanTheme.dividerColorCompose.copy(alpha = 0.1f)
+  }
+
+  Box(
+    modifier
+      .then(indentMod)
+      .height(targetThickness)
+      .background(color = dividerColorWithAlpha)
+  )
 }

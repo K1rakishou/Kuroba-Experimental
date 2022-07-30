@@ -23,15 +23,36 @@ class ApplicationMigrationManager {
     }
 
     if (prevVersion < 1) {
-      Logger.d(TAG, "performMigration_0_to_1 begin")
-      performMigration_0_to_1(context)
-      Logger.d(TAG, "performMigration_0_to_1 end")
+      Logger.d(TAG, "performMigrationV1 begin")
+      performMigrationV1(context)
+      Logger.d(TAG, "performMigrationV1 end")
+    }
+
+    if (prevVersion < 2) {
+      Logger.d(TAG, "performMigrationV2 begin")
+      performMigrationV2(context)
+      Logger.d(TAG, "performMigrationV2 end")
     }
 
     PersistableChanState.applicationMigrationVersion.set(LATEST_VERSION)
   }
 
-  private fun performMigration_0_to_1(context: Context) {
+  // No more crashlogs/anrs stored on the disk
+  private fun performMigrationV2(context: Context) {
+    val filesDir = context.filesDir
+
+    val crashLogsDir = File(filesDir, "crashlogs")
+    if (crashLogsDir.exists()) {
+      crashLogsDir.delete()
+    }
+
+    val anrsDir = File(filesDir, "anrs")
+    if (anrsDir.exists()) {
+      anrsDir.delete()
+    }
+  }
+
+  private fun performMigrationV1(context: Context) {
     val cacheDir = context.cacheDir
     val filesDir = context.filesDir
 
@@ -75,7 +96,7 @@ class ApplicationMigrationManager {
 
   companion object {
     private const val TAG = "ApplicationMigrationManager"
-    const val LATEST_VERSION = 1
+    const val LATEST_VERSION = 2
   }
 
 }

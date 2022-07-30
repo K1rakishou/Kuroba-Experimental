@@ -233,8 +233,7 @@ public class ManagerModule {
             Context appContext,
             AppConstants appConstants,
             Lazy<ProxiedOkHttpClient> okHttpClient,
-            Lazy<Gson> gson,
-            Lazy<SettingsNotificationManager> settingsNotificationManager
+            Lazy<Gson> gson
     ) {
         Logger.deps("ReportManager");
 
@@ -242,7 +241,6 @@ public class ManagerModule {
                 appScope,
                 appContext,
                 okHttpClient,
-                settingsNotificationManager,
                 gson,
                 appConstants
         );

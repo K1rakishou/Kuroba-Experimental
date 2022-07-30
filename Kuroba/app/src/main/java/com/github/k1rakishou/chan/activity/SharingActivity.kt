@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
@@ -33,6 +34,8 @@ class SharingActivity : AppCompatActivity() {
   lateinit var replyManager: Lazy<ReplyManager>
   @Inject
   lateinit var appConstants: AppConstants
+  @Inject
+  lateinit var appRestarter: AppRestarter
 
   private val mainScope = KurobaCoroutineScope()
 
@@ -52,6 +55,7 @@ class SharingActivity : AppCompatActivity() {
       .build()
       .also { component -> component.inject(this) }
 
+    appRestarter.attachActivity(this)
     imagePickHelper.onActivityCreated(this)
 
     mainScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
@@ -70,6 +74,7 @@ class SharingActivity : AppCompatActivity() {
       imagePickHelper.onActivityDestroyed(this)
     }
 
+    appRestarter.detachActivity(this)
     AppModuleAndroidUtils.cancelLastToast()
     mainScope.cancelChildren()
   }

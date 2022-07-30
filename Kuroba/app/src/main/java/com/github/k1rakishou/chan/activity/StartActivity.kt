@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
@@ -72,7 +73,6 @@ import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.system.exitProcess
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 
@@ -95,6 +95,8 @@ class StartActivity : ControllerHostActivity(),
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var imagePickHelper: ImagePickHelper
+  @Inject
+  lateinit var appRestarter: AppRestarter
   @Inject
   lateinit var startActivityStartupHandlerHelper: StartActivityStartupHandlerHelper
   @Inject
@@ -149,6 +151,7 @@ class StartActivity : ControllerHostActivity(),
     Logger.d(TAG, "createUi took $createUiTime")
 
     imagePickHelper.onActivityCreated(this)
+    appRestarter.attachActivity(this)
 
     startActivityStartupHandlerHelper.onCreate(
       context = this,
@@ -172,6 +175,7 @@ class StartActivity : ControllerHostActivity(),
 
     AppModuleAndroidUtils.cancelLastToast()
     compositeDisposable.clear()
+    appRestarter.detachActivity(this)
 
     if (::updateManager.isInitialized) {
       updateManager.get().onDestroy()
@@ -553,13 +557,6 @@ class StartActivity : ControllerHostActivity(),
     }
 
     return false
-  }
-
-  fun restartApp() {
-    val intent = packageManager.getLaunchIntentForPackage(packageName)
-    finishAffinity()
-    startActivity(intent)
-    exitProcess(0)
   }
 
   override fun fsafStartActivityForResult(intent: Intent, requestCode: Int) {

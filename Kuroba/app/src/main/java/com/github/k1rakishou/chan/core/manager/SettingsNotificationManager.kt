@@ -34,35 +34,6 @@ class SettingsNotificationManager {
   }
 
   @Synchronized
-  fun getNotificationByPriority(): SettingNotificationType? {
-    if (contains(SettingNotificationType.ApkUpdate)) {
-      return SettingNotificationType.ApkUpdate
-    }
-
-    if (contains(SettingNotificationType.CrashLogOrAnr)) {
-      return SettingNotificationType.CrashLogOrAnr
-    }
-
-    // Add new notifications here. Don't forget that order matters! The order affects priority.
-    // For now "Apk update" has higher priority than "Crash log".
-
-    return null
-  }
-
-
-  @Synchronized
-  fun notificationsCount(): Int = notifications.size
-
-  @Synchronized
-  fun getOrDefault(notificationType: SettingNotificationType): SettingNotificationType {
-    if (!contains(notificationType)) {
-      return SettingNotificationType.Default
-    }
-
-    return notificationType
-  }
-
-  @Synchronized
   fun count(): Int = notifications.size
 
   @Synchronized

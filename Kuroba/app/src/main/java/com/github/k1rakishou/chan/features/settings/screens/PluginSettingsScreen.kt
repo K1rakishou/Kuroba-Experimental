@@ -6,7 +6,7 @@ import android.net.Uri
 import android.os.Build
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.activity.StartActivity
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.mpv.MPVLib
@@ -39,6 +39,7 @@ import java.io.IOException
 class PluginSettingsScreen(
   context: Context,
   private val appConstants: AppConstants,
+  private val appRestarter: AppRestarter,
   private val dialogFactory: DialogFactory,
   private val fileChooser: FileChooser,
   private val globalWindowInsetsManager: GlobalWindowInsetsManager,
@@ -154,7 +155,7 @@ class PluginSettingsScreen(
       context = context,
       titleText = getString(R.string.settings_plugins_libs_installation_success),
       descriptionText = getString(R.string.settings_plugins_libs_old_libs_deleted),
-      onDismissListener = { (context as StartActivity).restartApp() }
+      onDismissListener = { appRestarter.restart() }
     )
   }
 
@@ -216,7 +217,7 @@ class PluginSettingsScreen(
           context = context,
           titleText = getString(R.string.settings_plugins_libs_installation_success),
           descriptionText = getString(R.string.settings_plugins_libs_installation_description_success),
-          onDismissListener = { (context as StartActivity).restartApp() }
+          onDismissListener = { appRestarter.restart() }
         )
       }
     }
@@ -266,7 +267,7 @@ class PluginSettingsScreen(
           context = context,
           titleText = getString(R.string.settings_plugins_libs_installation_success),
           descriptionText = getString(R.string.settings_plugins_libs_installation_description_success),
-          onDismissListener = { (context as StartActivity).restartApp() }
+          onDismissListener = { appRestarter.restart() }
         )
       }
     }

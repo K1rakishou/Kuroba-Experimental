@@ -186,6 +186,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         </activity>
 
+        <activity
+            android:name=".activity.CrashReportActivity"
+            android:process=":crashReportProcess"
+            android:launchMode="singleTask" />
+
         <service
             android:name=".features.image_saver.ImageSaverV2Service"
             android:exported="false" />

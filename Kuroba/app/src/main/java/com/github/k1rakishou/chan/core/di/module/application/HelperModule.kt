@@ -4,6 +4,7 @@ import android.content.Context
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -209,6 +210,13 @@ class HelperModule {
   fun provideThreadDownloadProgressNotifier(): ThreadDownloadProgressNotifier {
     Logger.deps("ThreadDownloadProgressNotifier");
     return ThreadDownloadProgressNotifier()
+  }
+
+  @Provides
+  @Singleton
+  fun provideAppRestarter(): AppRestarter {
+    Logger.deps("AppRestarter");
+    return AppRestarter()
   }
 
 }

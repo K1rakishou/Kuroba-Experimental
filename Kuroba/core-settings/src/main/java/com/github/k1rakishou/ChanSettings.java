@@ -391,8 +391,6 @@ public class ChanSettings {
 
     //region OTHER
     public static BooleanSetting historyEnabled;
-    public static BooleanSetting collectCrashLogs;
-    public static BooleanSetting collectANRs;
     //endregion
 
     //region DEVELOPER
@@ -637,8 +635,6 @@ public class ChanSettings {
 
             //region OTHER
             historyEnabled = new BooleanSetting(provider, "preference_history_enabled", true);
-            collectCrashLogs = new BooleanSetting(provider, "collect_crash_logs", true);
-            collectANRs = new BooleanSetting(provider, "collect_anrs", true);
             //endregion
 
             //region DEVELOPER

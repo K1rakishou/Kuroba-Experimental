@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.settings.ImportExportScreen
@@ -21,6 +22,7 @@ class ImportExportSettingsScreen(
   private val fileChooser: FileChooser,
   private val fileManager: FileManager,
   private val dialogFactory: DialogFactory,
+  private val appRestarter: AppRestarter,
   private val importExportRepository: ImportExportRepository,
   private val threadDownloadingDelegate: ThreadDownloadingDelegate
 ) : BaseSettingsScreen(
@@ -33,6 +35,7 @@ class ImportExportSettingsScreen(
       context,
       coroutineScope,
       navigationController,
+      appRestarter,
       fileChooser,
       fileManager,
       dialogFactory,
