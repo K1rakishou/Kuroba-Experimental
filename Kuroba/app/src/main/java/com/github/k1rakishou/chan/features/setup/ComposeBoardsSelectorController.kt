@@ -16,9 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -120,7 +120,7 @@ class ComposeBoardsSelectorController(
   private fun ColumnScope.BuildContentInternal(chanTheme: ChanTheme, backgroundColor: Color) {
     val searchState = rememberSimpleSearchState<ComposeBoardsSelectorControllerViewModel.CellData>()
     val cellDataList = remember { viewModel.cellDataList }
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
 
     BuildSearchInput(
       backgroundColor = backgroundColor,
@@ -182,7 +182,7 @@ class ComposeBoardsSelectorController(
         .defaultMinSize(minHeight = 256.dp)
         .simpleVerticalScrollbar(state = listState, chanTheme = chanTheme),
       state = listState,
-      cells = GridCells.Adaptive(CELL_SIZE),
+      columns = GridCells.Adaptive(CELL_SIZE),
       content = {
         items(searchResults.size) { index ->
           val cellData = searchResults[index]

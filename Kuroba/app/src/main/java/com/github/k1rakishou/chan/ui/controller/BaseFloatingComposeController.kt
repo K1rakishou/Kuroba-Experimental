@@ -49,10 +49,9 @@ abstract class BaseFloatingComposeController(
           val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 
           Surface(
-            onClick = { pop() },
-            indication = null,
+            modifier = Modifier.fillMaxSize(),
             color = backgroundColor,
-            modifier = Modifier.fillMaxSize()
+            onClick = { pop() },
           ) {
             val horizPadding = remember {
               if (AppModuleAndroidUtils.isTablet()) {

@@ -299,6 +299,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
           return 0
         }
+        null -> -1
       }
 
       return -1
@@ -328,7 +329,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
           return totalItemsCount
         }
+        null -> -1
       }
+
       return -1
     }
 
@@ -762,6 +765,9 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         BoardPostViewMode.GRID,
         BoardPostViewMode.STAGGER -> {
           (lm as StaggeredGridLayoutManager).scrollToPositionWithOffset(index, top)
+        }
+        null -> {
+          // no-op
         }
       }
     }

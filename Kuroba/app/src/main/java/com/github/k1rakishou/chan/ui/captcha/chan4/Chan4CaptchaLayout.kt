@@ -24,9 +24,9 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -409,15 +409,15 @@ class Chan4CaptchaLayout(
     val imagesToShow = 30
     val slideStep = totalHorizWidth / imagesToShow
     val density = LocalDensity.current
-    val lazyListState = rememberLazyListState()
+    val state = rememberLazyGridState()
 
     LazyVerticalGrid(
-      state = lazyListState,
+      state = state,
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight()
-        .simpleVerticalScrollbar(lazyListState, chanTheme),
-      cells = GridCells.Adaptive(minSize = 160.dp),
+        .simpleVerticalScrollbar(state, chanTheme),
+      columns = GridCells.Adaptive(minSize = 160.dp),
       content = {
         items(
           count = imagesToShow,

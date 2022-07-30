@@ -4,7 +4,7 @@ apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 32
 
     defaultConfig {
         minSdkVersion 21
@@ -29,7 +29,6 @@ android {
         jvmTarget = JavaVersion.VERSION_1_8.toString()
         freeCompilerArgs = ["-Xopt-in=kotlin.RequiresOptIn"]
         jvmTarget = "1.8"
-        useIR = true
     }
 
     buildFeatures {

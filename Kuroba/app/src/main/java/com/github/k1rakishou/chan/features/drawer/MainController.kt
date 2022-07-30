@@ -47,9 +47,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.GridCells
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -984,10 +985,11 @@ class MainController(
         .weight(1f)
     ) {
       val chanTheme = LocalChanTheme.current
-      val state = rememberLazyListState()
       val drawerGridMode by drawerViewModel.drawerGridMode
 
       if (drawerGridMode) {
+        val state = rememberLazyGridState()
+
         val spanCount = with(LocalDensity.current) {
           (maxWidth.toPx() / GRID_COLUMN_WIDTH).toInt().coerceIn(MIN_SPAN_COUNT, MAX_SPAN_COUNT)
         }
@@ -999,7 +1001,7 @@ class MainController(
             .wrapContentHeight()
             .simpleVerticalScrollbar(state, chanTheme, contentPadding),
           contentPadding = contentPadding,
-          cells = GridCells.Fixed(count = spanCount),
+          columns = GridCells.Fixed(count = spanCount),
           content = {
             items(count = searchResults.size) { index ->
               val navHistoryEntry = searchResults[index]
@@ -1023,6 +1025,8 @@ class MainController(
             }
           })
       } else {
+        val state = rememberLazyListState()
+
         LazyColumn(
           state = state,
           modifier = Modifier

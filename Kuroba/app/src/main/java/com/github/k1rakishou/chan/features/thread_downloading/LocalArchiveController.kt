@@ -30,9 +30,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.runtime.Composable
@@ -96,7 +96,6 @@ import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
@@ -286,7 +285,6 @@ class LocalArchiveController(
     )
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildThreadDownloadsList(
     threadDownloadViews: List<LocalArchiveViewModel.ThreadDownloadView>,
@@ -295,7 +293,7 @@ class LocalArchiveController(
     onThreadDownloadLongClicked: (ChanDescriptor.ThreadDescriptor) -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
-    val state = rememberLazyListState(
+    val state = rememberLazyGridState(
       initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
       initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
     )
@@ -329,7 +327,7 @@ class LocalArchiveController(
 
       LazyVerticalGrid(
         state = state,
-        cells = GridCells.Adaptive(300.dp),
+        columns = GridCells.Adaptive(300.dp),
         contentPadding = bottomPadding,
         modifier = Modifier
           .fillMaxSize()

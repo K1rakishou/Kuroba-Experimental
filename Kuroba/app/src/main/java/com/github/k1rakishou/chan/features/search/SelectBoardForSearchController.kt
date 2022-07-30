@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.search
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -12,10 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.GridItemSpan
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -55,9 +54,7 @@ class SelectBoardForSearchController(
   @Inject
   lateinit var archivesManager: ArchivesManager
 
-  @OptIn(ExperimentalFoundationApi::class)
   private val oneCellSpan = GridItemSpan(1)
-  @OptIn(ExperimentalFoundationApi::class)
   private val twoCellsSpan = GridItemSpan(2)
 
   private val searchQuery = mutableStateOf("")
@@ -66,7 +63,6 @@ class SelectBoardForSearchController(
     component.inject(this)
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
@@ -97,13 +93,13 @@ class SelectBoardForSearchController(
           86.dp
         }
 
-        val listState = rememberLazyListState()
+        val listState = rememberLazyGridState()
 
         LazyVerticalGrid(
           state = listState,
           modifier = Modifier
             .simpleVerticalScrollbar(state = listState, chanTheme = chanTheme),
-          cells = GridCells.Adaptive(minSize = minSize),
+          columns = GridCells.Adaptive(minSize = minSize),
           content = {
             item(
               span = { GridItemSpan(this.maxCurrentLineSpan) },

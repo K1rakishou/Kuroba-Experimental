@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.derivedStateOf
@@ -65,6 +66,55 @@ object ComposeHelpers {
         interactionSource = remember { MutableInteractionSource() },
         indication = null,
         onClick = { /** no-op */ }
+      )
+    }
+  }
+
+  fun Modifier.simpleVerticalScrollbar(
+    state: LazyGridState,
+    chanTheme: ChanTheme,
+    contentPadding: PaddingValues = DefaultPaddingValues,
+    width: Dp = SCROLLBAR_WIDTH
+  ): Modifier {
+    return composed {
+      val targetAlpha = if (state.isScrollInProgress) 0.8f else 0f
+      val duration = if (state.isScrollInProgress) 10 else 1500
+
+      val alpha by animateFloatAsState(
+        targetValue = targetAlpha,
+        animationSpec = tween(durationMillis = duration)
+      )
+
+      this.then(
+        Modifier.drawWithContent {
+          drawContent()
+
+          val layoutInfo = state.layoutInfo
+          val firstVisibleElementIndex = layoutInfo.visibleItemsInfo.firstOrNull()?.index
+          val needDrawScrollbar = layoutInfo.totalItemsCount > layoutInfo.visibleItemsInfo.size
+            && (state.isScrollInProgress || alpha > 0.0f)
+
+          // Draw scrollbar if total item count is greater than visible item count and either
+          // currently scrolling or if the animation is still running and lazy column has content
+          if (!needDrawScrollbar || firstVisibleElementIndex == null) {
+            return@drawWithContent
+          }
+
+          val topPaddingPx = contentPadding.calculateTopPadding().toPx()
+          val bottomPaddingPx = contentPadding.calculateBottomPadding().toPx()
+          val totalHeightWithoutPaddings = this.size.height - topPaddingPx - bottomPaddingPx
+
+          val elementHeight = totalHeightWithoutPaddings / layoutInfo.totalItemsCount
+          val scrollbarOffsetY = firstVisibleElementIndex * elementHeight
+          val scrollbarHeight = layoutInfo.visibleItemsInfo.size * elementHeight
+
+          drawRect(
+            color = chanTheme.textColorHintCompose,
+            topLeft = Offset(this.size.width - width.toPx(), topPaddingPx + scrollbarOffsetY),
+            size = Size(width.toPx(), scrollbarHeight),
+            alpha = alpha
+          )
+        }
       )
     }
   }
@@ -196,7 +246,12 @@ object ComposeHelpers {
           SpanStyle(background = Color(characterStyle.backgroundColor))
         }
         is BackgroundColorIdSpan -> {
-          val color = getColorByColorId(themeEngine, characterStyle.chanThemeColorId, characterStyle.colorModificationFactor)
+          val color = getColorByColorId(
+            themeEngine = themeEngine,
+            chanThemeColorId = characterStyle.chanThemeColorId,
+            factor = characterStyle.colorModificationFactor
+          )
+
           SpanStyle(background = color)
         }
         is ForegroundColorSpan -> {
@@ -231,6 +286,7 @@ object ComposeHelpers {
 
     when (characterStyle.type) {
       PostLinkable.Type.QUOTE,
+      PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST,
       PostLinkable.Type.LINK,
       PostLinkable.Type.THREAD,
       PostLinkable.Type.BOARD,
@@ -250,7 +306,10 @@ object ComposeHelpers {
           color = Color(theme.postQuoteColor)
         }
 
-        if (characterStyle.type == PostLinkable.Type.DEAD) {
+        if (
+          characterStyle.type == PostLinkable.Type.DEAD ||
+          characterStyle.type == PostLinkable.Type.QUOTE_TO_HIDDEN_OR_REMOVED_POST
+        ) {
           textDecoration = TextDecoration.LineThrough
         } else {
           textDecoration = TextDecoration.Underline

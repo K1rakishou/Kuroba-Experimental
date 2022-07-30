@@ -54,23 +54,23 @@ class ThreadDownloaderSettingsController(
     val chanTheme = LocalChanTheme.current
 
     Surface(
-      onClick = { },
-      indication = null,
-      color = chanTheme.backColorCompose,
       modifier = Modifier
         .wrapContentHeight()
         .width(320.dp)
-        .align(Alignment.TopEnd)
+        .align(Alignment.TopEnd),
+      color = chanTheme.backColorCompose,
+      onClick = { },
     ) {
-        Column(modifier = Modifier
+      Column(
+        modifier = Modifier
           .wrapContentHeight()
           .fillMaxWidth()
           .padding(horizontal = 8.dp, vertical = 8.dp)
-        ) {
-          BuildThreadDownloaderSettings()
+      ) {
+        BuildThreadDownloaderSettings()
 
-          BuilderThreadDownloaderButtons()
-        }
+        BuilderThreadDownloaderButtons()
+      }
     }
   }
 

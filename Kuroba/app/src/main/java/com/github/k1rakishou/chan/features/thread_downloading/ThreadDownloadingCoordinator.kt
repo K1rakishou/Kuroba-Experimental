@@ -13,7 +13,6 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -48,6 +47,9 @@ class ThreadDownloadingCoordinator(
 
   private suspend fun onThreadDownloadUpdateEvent(event: ThreadDownloadManager.Event) {
     when (event) {
+      ThreadDownloadManager.Event.Initialized -> {
+        // no-op
+      }
       is ThreadDownloadManager.Event.StartDownload -> {
         startOrRestartThreadDownloading(appContext, appConstants, eager = true)
       }

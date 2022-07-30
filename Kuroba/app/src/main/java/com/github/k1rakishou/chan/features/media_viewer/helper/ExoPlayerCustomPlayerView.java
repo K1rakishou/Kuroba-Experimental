@@ -37,7 +37,7 @@ import com.google.android.exoplayer2.MediaMetadata;
 import com.google.android.exoplayer2.PlaybackException;
 import com.google.android.exoplayer2.Player;
 import com.google.android.exoplayer2.Timeline;
-import com.google.android.exoplayer2.TracksInfo;
+import com.google.android.exoplayer2.Tracks;
 import com.google.android.exoplayer2.text.Cue;
 import com.google.android.exoplayer2.ui.AdOverlayInfo;
 import com.google.android.exoplayer2.ui.AdViewProvider;
@@ -371,7 +371,7 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
                 updateAspectRatio();
             }
             if (subtitleView != null && player.isCommandAvailable(COMMAND_GET_TEXT)) {
-                subtitleView.setCues(player.getCurrentCues());
+                subtitleView.setCues(player.getCurrentCues().cues);
             }
             player.addListener(componentListener);
             maybeShowController(false);
@@ -1012,8 +1012,8 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
     private void updateForCurrentTrackSelections(boolean isNewPlayer) {
         @Nullable Player player = this.player;
         if (player == null
-                || !player.isCommandAvailable(Player.COMMAND_GET_TRACK_INFOS)
-                || player.getCurrentTracksInfo().getTrackGroupInfos().isEmpty()) {
+                || !player.isCommandAvailable(Player.COMMAND_GET_TRACKS)
+                || player.getCurrentTracks().getGroups().isEmpty()) {
             if (!keepContentOnPlayerReset) {
                 hideArtwork();
                 closeShutter();
@@ -1025,7 +1025,7 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
             // Hide any video from the previous player.
             closeShutter();
         }
-        if (player.getCurrentTracksInfo().isTypeSelected(C.TRACK_TYPE_VIDEO)) {
+        if (player.getCurrentTracks().isTypeSelected(C.TRACK_TYPE_VIDEO)) {
             // Video enabled, so artwork must be hidden. If the shutter is closed, it will be opened
             // in onRenderedFirstFrame().
             hideArtwork();
@@ -1255,7 +1255,7 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
         }
 
         @Override
-        public void onTracksInfoChanged(TracksInfo tracksInfo) {
+        public void onTracksChanged(Tracks tracks) {
             // Suppress the update if transitioning to an unprepared period within the same window. This
             // is necessary to avoid closing the shutter when such a transition occurs. See:
             // https://github.com/google/ExoPlayer/issues/5507.
@@ -1263,7 +1263,7 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
             Timeline timeline = player.getCurrentTimeline();
             if (timeline.isEmpty()) {
                 lastPeriodUidWithTracks = null;
-            } else if (!player.getCurrentTracksInfo().getTrackGroupInfos().isEmpty()) {
+            } else if (!player.getCurrentTracks().getGroups().isEmpty()) {
                 lastPeriodUidWithTracks =
                         timeline.getPeriod(player.getCurrentPeriodIndex(), period, /* setIds= */ true).uid;
             } else if (lastPeriodUidWithTracks != null) {

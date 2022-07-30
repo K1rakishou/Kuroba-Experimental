@@ -89,8 +89,10 @@ class PostRepliesAdapter(
   }
 
   override fun onViewRecycled(holder: ReplyViewHolder) {
-    if (holder.itemView is GenericPostCell) {
-      holder.itemView.onPostRecycled(true)
+    val itemView = holder.itemView
+
+    if (itemView is GenericPostCell) {
+      itemView.onPostRecycled(true)
     }
   }
 

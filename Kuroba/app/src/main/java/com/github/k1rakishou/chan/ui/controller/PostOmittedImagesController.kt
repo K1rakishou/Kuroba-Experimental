@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,8 +13,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -56,7 +55,6 @@ class PostOmittedImagesController(
     component.inject(this)
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   override fun BoxScope.BuildContent() {
     LazyVerticalGrid(
@@ -64,7 +62,7 @@ class PostOmittedImagesController(
         .widthIn(max = 600.dp)
         .wrapContentHeight()
         .align(Alignment.Center),
-      cells = GridCells.Fixed(2),
+      columns = GridCells.Fixed(2),
       content = {
         items(postImages.size) { index ->
           val postImage = postImages.get(index)

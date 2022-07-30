@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.filters
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -20,9 +19,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -154,7 +153,6 @@ class FilterBoardSelectorController(
     }
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun ColumnScope.BuildContentInternal(
     searchState: SimpleSearchState<FilterBoardSelectorControllerViewModel.CellData>,
@@ -162,7 +160,7 @@ class FilterBoardSelectorController(
     backgroundColor: Color
   ) {
     val cellDataList = remember { viewModel.cellDataList }
-    val listState = rememberLazyListState()
+    val listState = rememberLazyGridState()
 
     BuildSearchInput(
       backgroundColor = backgroundColor,
@@ -224,7 +222,7 @@ class FilterBoardSelectorController(
         .defaultMinSize(minHeight = 256.dp)
         .simpleVerticalScrollbar(state = listState, chanTheme = chanTheme),
       state = listState,
-      cells = GridCells.Adaptive(CELL_WIDTH),
+      columns = GridCells.Adaptive(CELL_WIDTH),
       content = {
         items(searchResults.size) { index ->
           val cellData = searchResults[index]

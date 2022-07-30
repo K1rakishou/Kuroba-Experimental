@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.features.reply_image_search.searx
 import android.content.Context
 import android.text.SpannableString
 import android.text.util.Linkify
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -20,9 +19,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.GridCells
-import androidx.compose.foundation.lazy.LazyVerticalGrid
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
@@ -57,7 +56,6 @@ import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
@@ -217,12 +215,11 @@ class SearxImageSearchController(
     BuildSearxImages(searxImages, onImageClicked)
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun BuildSearxImages(searxImages: List<SearxImage>, onImageClicked: (SearxImage) -> Unit) {
     val chanTheme = LocalChanTheme.current
 
-    val state = rememberLazyListState(
+    val state = rememberLazyGridState(
       initialFirstVisibleItemIndex = viewModel.rememberedFirstVisibleItemIndex,
       initialFirstVisibleItemScrollOffset = viewModel.rememberedFirstVisibleItemScrollOffset
     )
@@ -235,7 +232,7 @@ class SearxImageSearchController(
 
     LazyVerticalGrid(
       state = state,
-      cells = GridCells.Adaptive(minSize = IMAGE_SIZE),
+      columns = GridCells.Adaptive(minSize = IMAGE_SIZE),
       modifier = Modifier
         .fillMaxSize()
         .simpleVerticalScrollbar(state = state, chanTheme = chanTheme)
