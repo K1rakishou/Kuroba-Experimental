@@ -127,6 +127,7 @@ sealed class MainScreen(
     object Changelog : AboutAppGroup("changelog")
     object Reports : AboutAppGroup("reports")
     object FindAppOnGithub : AboutAppGroup("find_app_on_github")
+    object TryKurobaExLite : AboutAppGroup("try_kuroba_ex_lite")
     object ReportTrackerLink : AboutAppGroup("report_tracker_link")
     object AppLicense : AboutAppGroup("app_license")
     object DeveloperSettings : AboutAppGroup("developer_settings")

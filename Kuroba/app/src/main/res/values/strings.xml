@@ -618,6 +618,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_report">Report</string>
     <string name="settings_report_description">Report a problem/crash</string>
     <string name="settings_find_app_on_github">Find %1$s on GitHub</string>
+    <string name="settings_try_kuroba_ex_lite">Try KurobaExLite out!</string>
+    <string name="settings_try_kuroba_ex_lite_bottom">Feedback is needed. (Click to open Github page)</string>
     <string name="settings_find_app_on_github_bottom">View the source code, give feedback, submit bug reports</string>
     <string name="settings_report_tracker_link">Report tracker</string>
     <string name="settings_report_tracker_link_description">View reports sent via in-app reporting system</string>
