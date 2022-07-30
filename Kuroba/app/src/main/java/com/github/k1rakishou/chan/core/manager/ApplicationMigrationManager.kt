@@ -43,12 +43,12 @@ class ApplicationMigrationManager {
 
     val crashLogsDir = File(filesDir, "crashlogs")
     if (crashLogsDir.exists()) {
-      crashLogsDir.delete()
+      crashLogsDir.deleteRecursively()
     }
 
     val anrsDir = File(filesDir, "anrs")
     if (anrsDir.exists()) {
-      anrsDir.delete()
+      anrsDir.deleteRecursively()
     }
   }
 
@@ -58,22 +58,22 @@ class ApplicationMigrationManager {
 
     val crashLogsDir = File(cacheDir, "crashlogs")
     if (crashLogsDir.exists()) {
-      crashLogsDir.delete()
+      crashLogsDir.deleteRecursively()
     }
 
     val anrsDir = File(cacheDir, "anrs")
     if (anrsDir.exists()) {
-      anrsDir.delete()
+      anrsDir.deleteRecursively()
     }
 
     val coilCacheDir = File(cacheDir, "coil_image_cache_dir")
     if (coilCacheDir.exists()) {
-      coilCacheDir.delete()
+      coilCacheDir.deleteRecursively()
     }
 
     val fileChunksCache = File(cacheDir, "file_chunks_cache")
     if (fileChunksCache.exists()) {
-      fileChunksCache.delete()
+      fileChunksCache.deleteRecursively()
     }
 
     val oldFileCacheDir = File(cacheDir, "filecache")
