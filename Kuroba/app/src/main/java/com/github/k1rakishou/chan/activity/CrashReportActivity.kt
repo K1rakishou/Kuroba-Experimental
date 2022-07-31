@@ -164,8 +164,8 @@ class CrashReportActivity : AppCompatActivity() {
     InsetsAwareBox(
       modifier = Modifier
         .fillMaxSize()
-        .padding(horizontal = 4.dp, vertical = 8.dp)
         .drawBehind { drawRect(chanTheme.backColorCompose) }
+        .padding(horizontal = 4.dp, vertical = 8.dp)
         .verticalScrollbar(
           thumbColor = chanTheme.accentColorCompose,
           contentPadding = insets,
