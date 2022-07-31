@@ -158,7 +158,6 @@ class CrashReportActivity : AppCompatActivity() {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
-    var reportSent by rememberSaveable { mutableStateOf(false) }
     var blockSendReportButton by rememberSaveable { mutableStateOf(false) }
     var blockRestartAppButton by rememberSaveable { mutableStateOf(false) }
 
@@ -289,7 +288,6 @@ class CrashReportActivity : AppCompatActivity() {
             onClick = {
               blockSendReportButton = true
               blockRestartAppButton = true
-              reportSent = true
 
               coroutineScope.launch {
                 val logs = withContext(Dispatchers.IO) { LogsController.loadLogs() }
@@ -349,15 +347,9 @@ class CrashReportActivity : AppCompatActivity() {
 
           Spacer(modifier = Modifier.height(8.dp))
 
-          val buttonText = if (reportSent) {
-            stringResource(id = R.string.crash_report_activity_restart_the_app)
-          } else {
-            stringResource(id = R.string.crash_report_activity_restart_the_app_unhandled)
-          }
-
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
-            text = buttonText,
+            text = stringResource(id = R.string.crash_report_activity_restart_the_app),
             enabled = !blockRestartAppButton,
             onClick = { appRestarter.restart() }
           )

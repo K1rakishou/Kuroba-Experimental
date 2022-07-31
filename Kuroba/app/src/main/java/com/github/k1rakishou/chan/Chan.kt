@@ -92,6 +92,7 @@ import okhttp3.Protocol
 import okhttp3.dnsoverhttps.DnsOverHttps
 import java.io.IOException
 import java.net.InetAddress
+import java.util.*
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
@@ -401,7 +402,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       }
     }
 
-    val message = exception.message ?: return
+    val message = extractExceptionMessage(exception)
     val stacktrace = exception.stackTraceToString()
 
     val bundle = Bundle()
@@ -417,6 +418,42 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     startActivity(intent)
 
     exitProcess(-1)
+  }
+
+  private fun extractExceptionMessage(exception: Throwable): String? {
+    var message = exception.message
+    var throwable: Throwable? = exception
+
+    val processed = IdentityHashMap<Throwable, Unit>()
+    processed.put(exception, Unit)
+
+    while (true) {
+      if (throwable == null) {
+        break
+      }
+
+      val parentMessage = throwable.message
+      if (parentMessage.isNullOrEmpty()) {
+        break
+      }
+
+      throwable = throwable.cause
+
+      if (throwable != null && processed.contains(throwable)) {
+        break
+      }
+
+      val isAppStacktrace = throwable
+        ?.stackTrace
+        ?.any { stackTraceElement -> stackTraceElement.className.contains("com.github.k1rakishou") }
+        ?: false
+
+      if (isAppStacktrace) {
+        message = parentMessage
+      }
+    }
+
+    return message
   }
 
   private fun activityEnteredForeground() {

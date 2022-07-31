@@ -1545,7 +1545,6 @@ Actual error: \'%1$s\'</string>
     <string name="crash_report_activity_mpv_logs">+MPV logs</string>
     <string name="crash_report_activity_send_report">Send crash report</string>
     <string name="crash_report_activity_open_issue_tracker">Open the issue tracker</string>
-    <string name="crash_report_activity_restart_the_app_unhandled">Not my problem, restart the app</string>
     <string name="crash_report_activity_restart_the_app">Restart the app</string>
     <string name="crash_report_activity_copied_to_clipboard">Report copied to clipboard</string>
 
