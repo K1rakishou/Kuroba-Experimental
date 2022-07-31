@@ -79,6 +79,8 @@ class CrashReportActivity : AppCompatActivity() {
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
+    Logger.d(TAG, "CrashReportActivity launched")
+
     val bundle = intent.getBundleExtra(EXCEPTION_BUNDLE_KEY)
     if (bundle == null) {
       Logger.e(TAG, "Bundle is null")

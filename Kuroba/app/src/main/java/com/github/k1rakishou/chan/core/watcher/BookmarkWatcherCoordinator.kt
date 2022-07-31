@@ -9,13 +9,13 @@ import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import io.reactivex.Flowable
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -188,6 +188,10 @@ class BookmarkWatcherCoordinator(
     private const val TAG = "BookmarkWatcherCoordinator"
 
     suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "restartBackgroundWork() called tag=$tag")
 
@@ -226,6 +230,10 @@ class BookmarkWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.bookmarkWatchWorkUniqueTag
       Logger.d(TAG, "cancelBackgroundBookmarkWatching() called tag=$tag")
 

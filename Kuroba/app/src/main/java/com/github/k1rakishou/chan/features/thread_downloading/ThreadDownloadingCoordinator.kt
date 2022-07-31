@@ -9,6 +9,7 @@ import androidx.work.WorkManager
 import androidx.work.await
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
@@ -71,6 +72,10 @@ class ThreadDownloadingCoordinator(
       appConstants: AppConstants,
       eager: Boolean
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.threadDownloadWorkUniqueTag
       Logger.d(TAG, "startOrRestartThreadDownloading() called tag=$tag, eager=$eager")
 
@@ -104,6 +109,10 @@ class ThreadDownloadingCoordinator(
       appContext: Context,
       appConstants: AppConstants,
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.threadDownloadWorkUniqueTag
       Logger.d(TAG, "cancelThreadDownloading() called tag=$tag")
 

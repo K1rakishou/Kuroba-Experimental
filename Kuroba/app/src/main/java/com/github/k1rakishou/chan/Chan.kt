@@ -392,16 +392,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private fun onUnhandledException(exception: Throwable) {
-    if (!isDevBuild()) {
-      if ("Debug crash" == exception.message) {
-        return
-      }
-
-      if (isEmulator) {
-        return
-      }
-    }
-
     val message = extractExceptionMessage(exception)
     val stacktrace = exception.stackTraceToString()
 

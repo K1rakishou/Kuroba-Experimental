@@ -88,6 +88,25 @@ public class AndroidUtils {
         return application.getPackageName() + ".fileprovider";
     }
 
+    public static AppProcessType getProcessType() {
+        String currentProcName = "";
+        int pid = android.os.Process.myPid();
+        ActivityManager manager = (ActivityManager) getAppContext().getSystemService(Context.ACTIVITY_SERVICE);
+
+        for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
+            if (processInfo.pid == pid) {
+                currentProcName = processInfo.processName;
+                break;
+            }
+        }
+
+        if (currentProcName.contains(":crashReportProcess")) {
+            return AppProcessType.CrashReporting;
+        }
+
+        return AppProcessType.Main;
+    }
+
     public static SharedPreferences getAppMainPreferences() {
         return PreferenceManager.getDefaultSharedPreferences(application);
     }
@@ -328,5 +347,10 @@ public class AndroidUtils {
         Debug,
         Release,
         Unknown
+    }
+
+    public enum AppProcessType {
+        Main,
+        CrashReporting
     }
 }

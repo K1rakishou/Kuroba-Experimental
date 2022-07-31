@@ -10,11 +10,11 @@ import androidx.work.await
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
@@ -134,6 +134,10 @@ class FilterWatcherCoordinator(
       appContext: Context,
       isCalledBySwipeToRefresh: Boolean
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatchingRightAway() called tag=$tag")
 
@@ -174,6 +178,10 @@ class FilterWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "startFilterWatching() called tag=$tag")
 
@@ -211,6 +219,10 @@ class FilterWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
+      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+        return
+      }
+
       val tag = appConstants.filterWatchWorkUniqueTag
       Logger.d(TAG, "cancelFilterWatching() called tag=$tag")
 
