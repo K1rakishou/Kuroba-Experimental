@@ -145,7 +145,9 @@ class CrashReportActivity : AppCompatActivity() {
   override fun onDestroy() {
     super.onDestroy()
 
-    appRestarter.detachActivity(this)
+    if (::appRestarter.isInitialized) {
+      appRestarter.detachActivity(this)
+    }
   }
 
   @Composable
