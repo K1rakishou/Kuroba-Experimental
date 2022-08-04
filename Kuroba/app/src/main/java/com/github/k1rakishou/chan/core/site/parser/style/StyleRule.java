@@ -70,6 +70,7 @@ public class StyleRule {
     private String justText = null;
     private boolean blockElement;
     private boolean newLine;
+    private Priority priority = Priority.Normal;
 
     public static StyleRule tagRule(String tag) {
         return new StyleRule()
@@ -80,6 +81,10 @@ public class StyleRule {
         return new StyleRule()
                 .tag(tag)
                 .withCssClass(attr);
+    }
+
+    public Priority rulePriority() {
+        return priority;
     }
 
     public StyleRule tag(String tag) {
@@ -94,6 +99,11 @@ public class StyleRule {
 
     public String tag() {
         return tag;
+    }
+
+    public StyleRule withPriority(Priority newPriority) {
+        this.priority = newPriority;
+        return this;
     }
 
     public StyleRule withCssClass(String cssClass) {
@@ -379,6 +389,11 @@ public class StyleRule {
                 "tag='" + tag + '\'' +
                 ", expectedClasses=" + expectedClasses +
                 '}';
+    }
+
+    public enum Priority {
+        BeforeWildcardRules,
+        Normal;
     }
 
     public interface Action {

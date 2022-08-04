@@ -188,7 +188,26 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             HtmlTag htmlTag
     ) {
         boolean forceHttpsScheme = ChanSettings.forceHttpsUrlScheme.get();
+        List<StyleRule> normalRules = this.rules.get(tag);
 
+        // Execute rules which must be executed before the wildcard rules
+        if (normalRules != null) {
+            for (int i = 0; i < 2; i++) {
+                boolean highPriority = i == 0;
+
+                for (StyleRule rule : normalRules) {
+                    if (rule.rulePriority() != StyleRule.Priority.BeforeWildcardRules) {
+                        continue;
+                    }
+
+                    if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
+                        return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
+                    }
+                }
+            }
+        }
+
+        // Execute wildcard rules
         List<StyleRule> wildcardRules = this.rules.get("*");
         if (wildcardRules != null) {
             outer: for (int i = 0; i < 2; i++) {
@@ -207,12 +226,16 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             }
         }
 
-        List<StyleRule> normalRules = this.rules.get(tag);
+        // Execute the rest of the rules
         if (normalRules != null) {
             for (int i = 0; i < 2; i++) {
                 boolean highPriority = i == 0;
 
                 for (StyleRule rule : normalRules) {
+                    if (rule.rulePriority() != StyleRule.Priority.Normal) {
+                        continue;
+                    }
+
                     if (rule.highPriority() == highPriority && rule.applies(htmlTag)) {
                         return rule.apply(new StyleRulesParams(text, htmlTag, callback, post, forceHttpsScheme));
                     }

@@ -21,8 +21,8 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.Site.SiteFeature
 import com.github.k1rakishou.chan.core.site.SiteIcon.Companion.fromFavicon
 import com.github.k1rakishou.chan.core.site.common.CommonSite
+import com.github.k1rakishou.chan.core.site.common.vichan.LainchanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanApi
-import com.github.k1rakishou.chan.core.site.common.vichan.VichanCommentParser
 import com.github.k1rakishou.chan.core.site.common.vichan.VichanEndpoints
 import com.github.k1rakishou.chan.core.site.limitations.ConstantAttachablesCount
 import com.github.k1rakishou.chan.core.site.limitations.ConstantMaxTotalSizeInfo
@@ -75,7 +75,7 @@ class Lainchan : CommonSite() {
         setEndpoints(VichanEndpoints(this, "https://lainchan.org", "https://lainchan.org"))
         setActions(LainchanActions(this, proxiedOkHttpClient, siteManager, replyManager))
         setApi(VichanApi(siteManager, boardManager, this))
-        setParser(VichanCommentParser())
+        setParser(LainchanCommentParser())
         setPostingLimitationInfo(
             postingLimitationInfoLazy = lazy {
                 SitePostingLimitation(
