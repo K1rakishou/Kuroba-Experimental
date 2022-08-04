@@ -27,7 +27,7 @@ class ShowPostsInExternalThreadHelper(
   private val postPopupHelper: PostPopupHelper,
   private val _chanThreadManager: Lazy<ChanThreadManager>,
   private val presentControllerFunc: (Controller) -> Unit,
-  private val showAvailableArchivesListFunc: (PostDescriptor) -> Unit,
+  private val showAvailableArchivesListFunc: (PostDescriptor, canAutoSelectArchive: Boolean) -> Unit,
   private val showToastFunc: (String) -> Unit
 ) {
   private val chanThreadManager: ChanThreadManager
@@ -103,7 +103,7 @@ class ShowPostsInExternalThreadHelper(
       if (threadLoadResult is ThreadLoadResult.Error) {
         if (threadLoadResult.exception.isNotFound) {
           showToastFunc("Failed to open ${postDescriptor} server returned 404")
-          showAvailableArchivesListFunc(originalPostDescriptor)
+          showAvailableArchivesListFunc(originalPostDescriptor, false)
           return@launch
         }
 
@@ -137,7 +137,7 @@ class ShowPostsInExternalThreadHelper(
         }
 
         showToastFunc("Failed to open ${postDescriptor} as a post, trying to open it as a thread")
-        showAvailableArchivesListFunc(originalPostDescriptor)
+        showAvailableArchivesListFunc(originalPostDescriptor, true)
         return@launch
       }
 

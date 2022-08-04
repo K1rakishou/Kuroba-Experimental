@@ -186,8 +186,12 @@ abstract class ThreadController(
       postPopupHelper = threadLayout.popupHelper,
       _chanThreadManager = _chanThreadManager,
       presentControllerFunc = { controller -> presentController(controller) },
-      showAvailableArchivesListFunc = { postDescriptor ->
-        showAvailableArchivesList(postDescriptor = postDescriptor, preview = true)
+      showAvailableArchivesListFunc = { postDescriptor, canAutoSelectArchive ->
+        showAvailableArchivesList(
+          postDescriptor = postDescriptor,
+          preview = true,
+          canAutoSelectArchive = canAutoSelectArchive
+        )
       },
       showToastFunc = { message -> showToast(message) }
     )
@@ -525,8 +529,12 @@ abstract class ThreadController(
     // no-op
   }
 
-  override fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean) {
-    Logger.d(TAG, "showAvailableArchives($postDescriptor)")
+  override fun showAvailableArchivesList(
+    postDescriptor: PostDescriptor,
+    preview: Boolean,
+    canAutoSelectArchive: Boolean
+  ) {
+    Logger.d(TAG, "showAvailableArchivesList($postDescriptor, $preview, $canAutoSelectArchive)")
 
     val descriptor = postDescriptor.descriptor as? ChanDescriptor.ThreadDescriptor
       ?: return
@@ -548,7 +556,7 @@ abstract class ThreadController(
       return
     }
 
-    if (supportedArchiveDescriptors.size == 1) {
+    if (canAutoSelectArchive && supportedArchiveDescriptors.size == 1) {
       mainScope.launch { onArchiveSelected(supportedArchiveDescriptors.first(), postDescriptor, preview) }
       return
     }

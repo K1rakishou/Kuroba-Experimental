@@ -1534,7 +1534,12 @@ class ThreadLayout @JvmOverloads constructor(
     fun openFiltersController(chanFilterMutable: ChanFilterMutable)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
-    fun showAvailableArchivesList(postDescriptor: PostDescriptor, preview: Boolean)
+
+    fun showAvailableArchivesList(
+      postDescriptor: PostDescriptor,
+      preview: Boolean,
+      canAutoSelectArchive: Boolean = true
+    )
   }
 
   companion object {

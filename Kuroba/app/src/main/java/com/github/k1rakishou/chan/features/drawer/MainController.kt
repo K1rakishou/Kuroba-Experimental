@@ -27,7 +27,6 @@ import androidx.compose.animation.core.animateInt
 import androidx.compose.animation.core.snap
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.updateTransition
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -928,7 +927,6 @@ class MainController(
     }
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun ColumnScope.BuildNavigationHistoryList(
     navHistoryEntryList: List<NavigationHistoryEntry>,
@@ -1008,7 +1006,6 @@ class MainController(
               val isSelectionMode = selectedHistoryEntries.isNotEmpty()
               val isSelected = selectedHistoryEntries.contains(navHistoryEntry.descriptor)
 
-              // Fucking magic
               key(searchResults[index].descriptor) {
                 BuildNavigationHistoryListEntryGridMode(
                   searchQuery = query,
