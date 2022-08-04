@@ -8,7 +8,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.actor
@@ -35,7 +34,6 @@ class ChanThreadTicker(
   val currentChanDescriptor: ChanDescriptor?
     get() = chanTickerData.currentChanDescriptor()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private val actor = scope.actor<TickerAction>(capacity = Channel.UNLIMITED) {
     consumeEach { tickerAction ->
       when (tickerAction) {

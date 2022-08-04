@@ -39,7 +39,8 @@ internal object ErrorMapper {
     if (error is FileCacheException.CancellationException) {
       return when (error.state) {
         DownloadState.Running -> {
-          throw RuntimeException("Got cancellation exception but the state is still running!")
+          activeDownloads.get(url)?.cancelableDownload?.cancel()
+          FileDownloadResult.Canceled
         }
         DownloadState.Stopped -> FileDownloadResult.Stopped
         DownloadState.Canceled -> FileDownloadResult.Canceled
@@ -49,7 +50,8 @@ internal object ErrorMapper {
     if (DownloaderUtils.isCancellationError(error)) {
       return when (activeDownloads.getState(url)) {
         DownloadState.Running -> {
-          throw RuntimeException("Got cancellation exception but the state is still running!")
+          activeDownloads.get(url)?.cancelableDownload?.cancel()
+          FileDownloadResult.Canceled
         }
         DownloadState.Stopped -> FileDownloadResult.Stopped
         else -> FileDownloadResult.Canceled

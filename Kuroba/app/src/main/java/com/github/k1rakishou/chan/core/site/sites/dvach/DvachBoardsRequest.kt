@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.github.k1rakishou.common.nextStringOrNull
@@ -36,7 +37,6 @@ import okhttp3.Request
 import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
-import java.util.*
 
 class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
@@ -222,10 +222,20 @@ class DvachBoardsRequest internal constructor(
     val sageEnabled: Boolean
   )
 
-  private sealed class DvachBoardsRequestException : Throwable() {
-    class ServerErrorException(val code: Int) : DvachBoardsRequestException()
-    class UnknownServerError(val throwable: Throwable) : DvachBoardsRequestException()
-    class ParsingError(val throwable: Throwable) : DvachBoardsRequestException()
+  private sealed class DvachBoardsRequestException(
+    message: String,
+  ) : Throwable(message) {
+    class ServerErrorException(val code: Int) : DvachBoardsRequestException(
+      message = "Bad response code: ${code}"
+    )
+
+    class UnknownServerError(val throwable: Throwable) : DvachBoardsRequestException(
+      message = "UnknownServerError, cause=${throwable.errorMessageOrClassName()}"
+    )
+
+    class ParsingError(val throwable: Throwable) : DvachBoardsRequestException(
+      message = "ParsingError, cause=${throwable.errorMessageOrClassName()}"
+    )
   }
 
   companion object {
