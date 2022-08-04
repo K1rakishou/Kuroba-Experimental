@@ -894,6 +894,10 @@ class ReplyPresenter @Inject constructor(
         val postNo = quote.toLongOrNull()
           ?: continue
 
+        if (postNo <= 0) {
+          continue
+        }
+
         selectedQuotes += PostDescriptor.create(chanDescriptor, postNo)
       }
 
