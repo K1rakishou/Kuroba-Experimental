@@ -184,6 +184,7 @@ class Chan4ReportPostController(
     ) {
 
       KurobaComposeTextBarButton(
+        modifier = Modifier.weight(0.33f),
         text = stringResource(id = R.string.report_controller_open_in_webview),
         onClick = {
           pop()
@@ -191,9 +192,10 @@ class Chan4ReportPostController(
         }
       )
 
-      Spacer(modifier = Modifier.weight(1f))
+      Spacer(modifier = Modifier.width(8.dp))
 
       KurobaComposeTextBarButton(
+        modifier = Modifier.weight(0.33f),
         text = stringResource(id = R.string.close),
         onClick = {
           focusManager.clearFocus(force = true)
@@ -207,6 +209,7 @@ class Chan4ReportPostController(
       val reporting by viewModel.reporting
 
       KurobaComposeTextBarButton(
+        modifier = Modifier.weight(0.33f),
         enabled = selectedCategoryId != null && !reporting,
         text = stringResource(id = R.string.report_controller_report_post),
         onClick = {
