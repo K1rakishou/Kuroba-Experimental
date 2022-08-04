@@ -43,15 +43,16 @@ public class ThumbnailImageView extends AppCompatImageView {
 
         if (isOriginalMediaPlayable) {
             int iconScale = 2;
-            double scalar = (Math.pow(2.0, iconScale) - 1) / Math.pow(2.0, iconScale);
-            int x = (int) (getWidth() / 2.0 - playIcon.getIntrinsicWidth() * scalar);
-            int y = (int) (getHeight() / 2.0 - playIcon.getIntrinsicHeight() * scalar);
+            int iconWidth = playIcon.getIntrinsicWidth() * iconScale;
+            int iconHeight = playIcon.getIntrinsicHeight() * iconScale;
 
-            bounds.set(x,
-                    y,
-                    x + playIcon.getIntrinsicWidth() * iconScale,
-                    y + playIcon.getIntrinsicHeight() * iconScale
-            );
+            int left = (int) ((getWidth() / 2.0) - (iconWidth / 2));
+            int top = (int) ((getHeight() / 2.0) - (iconHeight / 2));
+            int right = left + iconWidth;
+            int bottom = top + iconHeight;
+
+            bounds.set(left, top, right, bottom);
+
             playIcon.setBounds(bounds);
             playIcon.draw(canvas);
         }
