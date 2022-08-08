@@ -82,6 +82,7 @@ interface SiteActions {
   sealed class LoginResult {
     class LoginComplete(val loginResponse: AbstractLoginResponse) : LoginResult()
     class LoginError(val errorMessage: String) : LoginResult()
+    object CloudflareDetected : LoginResult()
     object AntiSpamDetected : LoginResult()
   }
 

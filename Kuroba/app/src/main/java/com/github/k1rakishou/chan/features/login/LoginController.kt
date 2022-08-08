@@ -241,30 +241,34 @@ class LoginController(
       is SiteActions.LoginResult.LoginError -> {
         onLoginError(loginResult.errorMessage)
       }
+      SiteActions.LoginResult.CloudflareDetected,
       SiteActions.LoginResult.AntiSpamDetected -> {
         if (retrying) {
-          onLoginError("Anti-spam check passed, now try logging in again")
+          onLoginError("Firewall passed, now try logging in again")
           return
         }
 
-        handleAntiSpam()
+        val firewallType = if (loginResult is SiteActions.LoginResult.CloudflareDetected) {
+          FirewallType.Cloudflare
+        } else {
+          FirewallType.DvachAntiSpam
+        }
+
+        handleAntiSpam(firewallType)
       }
     }
   }
 
-  private fun handleAntiSpam() {
+  private fun handleAntiSpam(firewallType: FirewallType) {
     val siteDescriptor = site.siteDescriptor()
 
     if (siteDescriptor.isDvach()) {
-      val urlToOpen = (siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach)
-        ?.domainUrl
-        ?.value
-        ?.toString()
+      val urlToOpen = siteManager.bySiteDescriptor(siteDescriptor)?.firewallChallengeEndpoint()
         ?: return
 
       val controller = SiteFirewallBypassController(
         context = context,
-        firewallType = FirewallType.DvachAntiSpam,
+        firewallType = firewallType,
         urlToOpen = urlToOpen,
         onResult = { cookieResult ->
           if (cookieResult is CookieResult.CookieValue) {

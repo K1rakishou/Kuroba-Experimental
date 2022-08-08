@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -325,8 +326,9 @@ class Dvach : CommonSite() {
       return HttpUrl.Builder()
         .scheme("https")
         .host(siteHost)
-        .addPathSegment("makaba")
-        .addPathSegment("makaba.fcgi")
+        .addPathSegment("user")
+        .addPathSegment("passlogin")
+        .addQueryParameter("json", "1")
         .build()
     }
 
@@ -589,7 +591,7 @@ class Dvach : CommonSite() {
       passCode.set(dvachLoginRequest.passcode)
 
       val loginResult = httpCallManager.get().makeHttpCall(
-        DvachGetPassCookieHttpCall(this@Dvach, loginRequest)
+        DvachGetPassCookieHttpCall(this@Dvach, moshi, loginRequest)
       )
 
       when (loginResult) {
@@ -611,6 +613,10 @@ class Dvach : CommonSite() {
           }
         }
         is HttpCall.HttpCallResult.Fail -> {
+          if (loginResult.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+            return SiteActions.LoginResult.CloudflareDetected
+          }
+
           return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
         }
       }
