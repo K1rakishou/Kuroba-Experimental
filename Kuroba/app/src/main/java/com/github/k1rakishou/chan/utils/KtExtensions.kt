@@ -2,11 +2,13 @@ package com.github.k1rakishou.chan.utils
 
 import android.content.Context
 import android.content.ContextWrapper
+import android.content.Intent
 import android.graphics.drawable.ColorDrawable
 import android.text.TextWatcher
 import android.view.View
 import android.view.ViewTreeObserver.OnGlobalLayoutListener
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.appcompat.app.AppCompatActivity
 import androidx.appcompat.widget.AppCompatEditText
@@ -24,6 +26,8 @@ import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.compose.viewModelProviderFactoryOf
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -302,5 +306,23 @@ inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(
     return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(key, VM::class.java)
   } else {
     return ViewModelProvider(this, viewModelProviderFactoryOf { vmFactory() }).get(VM::class.java)
+  }
+}
+
+fun Context.startActivitySafe(intent: Intent) {
+  val activityName = intent.component?.className ?: "???"
+
+  try {
+    startActivity(intent)
+  } catch (error: Throwable) {
+    Logger.e("startActivitySafe", "error", error)
+
+    showToast(this, "Failed to start activity (${activityName}) because of an unknown error. " +
+      "Error=${error.errorMessageOrClassName()}, intent=$intent", Toast.LENGTH_LONG)
+  } catch (error: RuntimeException) {
+    Logger.e(TAG, "startActivitySafe() error", error)
+
+    showToast(this, "Failed to start activity (${activityName}) because of an unknown error. " +
+      "Error=${error.errorMessageOrClassName()}, intent=$intent", Toast.LENGTH_LONG)
   }
 }

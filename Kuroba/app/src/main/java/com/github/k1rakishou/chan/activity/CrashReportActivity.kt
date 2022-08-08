@@ -165,6 +165,9 @@ class CrashReportActivity : AppCompatActivity() {
     var blockSendReportButton by rememberSaveable { mutableStateOf(false) }
     var blockRestartAppButton by rememberSaveable { mutableStateOf(false) }
 
+    var logsMut by rememberSaveable { mutableStateOf<String?>(null) }
+    val logs = logsMut
+
     InsetsAwareBox(
       modifier = Modifier
         .fillMaxSize()
@@ -230,9 +233,6 @@ class CrashReportActivity : AppCompatActivity() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Collapsable(title = stringResource(id = R.string.crash_report_activity_crash_logs_section)) {
-          var logsMut by rememberSaveable { mutableStateOf<String?>(null) }
-          val logs = logsMut
-
           LaunchedEffect(
             key1 = Unit,
             block = {
@@ -294,7 +294,12 @@ class CrashReportActivity : AppCompatActivity() {
               blockRestartAppButton = true
 
               coroutineScope.launch {
-                val logs = withContext(Dispatchers.IO) { LogsController.loadLogs() }
+                val logsForSending = if (logs.isNullOrEmpty()) {
+                  withContext(Dispatchers.IO) { LogsController.loadLogs() }
+                } else {
+                  logs
+                }
+
                 val reportFooter = reportManager.getReportFooter()
                 val title = "${className} ${message}"
 
@@ -305,10 +310,10 @@ class CrashReportActivity : AppCompatActivity() {
                   appendLine("```")
                   appendLine()
 
-                  if (logs.isNotNullNorEmpty()) {
+                  if (logsForSending.isNotNullNorEmpty()) {
                     appendLine("Logs")
                     appendLine("```")
-                    appendLine(logs)
+                    appendLine(logsForSending)
                     appendLine("```")
                   }
 

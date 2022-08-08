@@ -195,7 +195,7 @@ public class AppModuleAndroidUtils {
 
             try {
                 intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                application.startActivity(intent);
+                KtExtensionsKt.startActivitySafe(application, intent);
             } catch (Throwable e) {
                 Logger.e(TAG, "openLink() application.startActivity() error, intent = " + intent, e);
 
@@ -267,7 +267,7 @@ public class AppModuleAndroidUtils {
         intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 
         try {
-            application.startActivity(intent);
+            KtExtensionsKt.startActivitySafe(application, intent);
         } catch (Throwable e) {
             Logger.e(TAG, "openIntent() application.startActivity() error, intent = " + intent, e);
 

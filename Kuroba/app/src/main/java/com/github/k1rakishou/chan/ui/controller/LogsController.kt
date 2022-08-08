@@ -113,7 +113,7 @@ class LogsController(context: Context) : Controller(context) {
 
   companion object {
     private const val TAG = "LogsController"
-    private const val DEFAULT_LINES_COUNT = 500
+    private const val DEFAULT_LINES_COUNT = 300
     private const val ACTION_LOGS_COPY = 1
 
     fun loadLogs(): String? {
