@@ -2869,7 +2869,8 @@ class ThreadPresenter @Inject constructor(
         is PostReportResult.CaptchaRequired -> {
           // 2ch.hk does not require captcha?
         }
-        is PostReportResult.AuthRequired -> {
+        is PostReportResult.AuthRequired,
+        is PostReportResult.CloudFlareDetected -> {
           threadPresenterCallback?.showCaptchaController(
             chanDescriptor = post.postDescriptor.descriptor,
             replyMode = ReplyMode.ReplyModeSendWithoutCaptcha,

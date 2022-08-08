@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
@@ -8,7 +9,6 @@ import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
@@ -46,16 +46,14 @@ class DvachReportPostRequest(
       val reportPostEndpoint = HttpUrl.Builder()
         .scheme("https")
         .host(siteHost)
-        .addPathSegment("makaba")
-        .addPathSegment("makaba.fcgi")
-        .addQueryParameter("json", "1")
+        .addPathSegment("user")
+        .addPathSegment("report")
         .build()
 
       Logger.d(TAG, "reportPost($postDescriptor) reportPostEndpoint=$reportPostEndpoint")
 
       val body = MultipartBody.Builder()
         .setType(MultipartBody.FORM)
-        .addFormDataPart("task", "report")
         .addFormDataPart("board", postDescriptor.boardDescriptor().boardCode)
         .addFormDataPart("thread", postDescriptor.threadDescriptor().threadNo.toString())
         .addFormDataPart("posts", postDescriptor.postNo.toString())
@@ -78,31 +76,11 @@ class DvachReportPostRequest(
         throw CommonClientException("Failed to convert server response into ReportResponseData")
       }
 
-      if (reportResponseData.isOk()) {
+      if (reportResponseData.error == null) {
         return@Try PostReportResult.Success
       }
 
-      val errorMessage = if (!reportResponseData.bothNullOrEmpty()) {
-        buildString {
-          if (reportResponseData.messageTitle.isNotNullNorEmpty()) {
-            append("title: ")
-            append(reportResponseData.messageTitle)
-          }
-
-          if (reportResponseData.message.isNotNullNorEmpty()) {
-            if (isNotEmpty()) {
-              append(", ")
-            }
-
-            append("message: ")
-            append(reportResponseData.message)
-          }
-        }
-      } else {
-        "Unknown error"
-      }
-
-      return@Try PostReportResult.Error(errorMessage)
+      return@Try PostReportResult.Error(reportResponseData.error.message)
     }
 
     when (result) {
@@ -110,6 +88,11 @@ class DvachReportPostRequest(
         if (result.error is DvachAuthRequiredException) {
           Logger.e(TAG, "reportPost($postDescriptor) auth required")
           return PostReportResult.AuthRequired
+        }
+
+        if (result.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+          Logger.e(TAG, "reportPost($postDescriptor) cloudflare required")
+          return PostReportResult.CloudFlareDetected
         }
 
         Logger.e(TAG, "reportPost($postDescriptor) error", result.error)
@@ -159,19 +142,15 @@ class DvachReportPostRequest(
 
   @JsonClass(generateAdapter = true)
   data class ReportResponseData(
-    @Json(name = "message") val message: String?,
-    @Json(name = "message_title") val messageTitle: String?
-  ) {
+    @Json(name = "result") val result: Int?,
+    @Json(name = "error") val error: DvachError?
+  )
 
-    fun bothNullOrEmpty(): Boolean {
-      return messageTitle.isNullOrEmpty() && message.isNullOrEmpty()
-    }
-
-    fun isOk(): Boolean {
-      return messageTitle.equals(NO_ERRORS_MSG, ignoreCase = true)
-    }
-
-  }
+  @JsonClass(generateAdapter = true)
+  data class DvachError(
+    val code: Int,
+    val message: String
+  )
 
   class DvachAuthRequiredException : Exception("Dvach Auth required")
 

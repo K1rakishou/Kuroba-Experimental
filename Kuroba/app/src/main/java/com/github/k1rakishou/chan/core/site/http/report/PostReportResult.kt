@@ -5,5 +5,6 @@ sealed class PostReportResult {
   object Success : PostReportResult()
   object CaptchaRequired : PostReportResult()
   object AuthRequired : PostReportResult()
+  object CloudFlareDetected : PostReportResult()
   data class Error(val errorMessage: String) : PostReportResult()
 }

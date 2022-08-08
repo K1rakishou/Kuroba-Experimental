@@ -260,6 +260,7 @@ class Chan4ReportPostController(
                 showToast(R.string.post_report_not_supported, Toast.LENGTH_LONG)
               }
               PostReportResult.AuthRequired,
+              PostReportResult.CloudFlareDetected,
               null -> {
                 // no-op
               }

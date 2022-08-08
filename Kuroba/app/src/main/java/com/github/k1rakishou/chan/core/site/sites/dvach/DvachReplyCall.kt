@@ -78,7 +78,6 @@ class DvachReplyCall internal constructor(
         0L
       }
 
-      formBuilder.addFormDataPart("task", "post")
       formBuilder.addFormDataPart("board", chanDescriptor.boardCode())
       formBuilder.addFormDataPart("thread", threadNo.toString())
       formBuilder.addFormDataPart("name", reply.postName)
