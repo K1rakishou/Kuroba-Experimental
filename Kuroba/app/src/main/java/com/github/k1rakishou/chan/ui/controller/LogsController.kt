@@ -90,7 +90,7 @@ class LogsController(context: Context) : Controller(context) {
             }
 
             appendLine(logs)
-            appendLine(reportManager.getReportFooter())
+            appendLine(reportManager.getReportFooter(context))
           }
         }
 

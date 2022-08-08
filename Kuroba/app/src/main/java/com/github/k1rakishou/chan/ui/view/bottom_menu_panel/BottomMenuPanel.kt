@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getDimen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
@@ -108,6 +109,8 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun onBack(): Boolean {
+    Logger.d(TAG, "onBack(${items.size}), state=${state}, childCount=${childCount}")
+
     if (state == State.NotInitialized || state == State.Hidden) {
       return false
     }
@@ -157,6 +160,7 @@ class BottomMenuPanel @JvmOverloads constructor(
       .withEndAction {
         state = State.Shown
         onBottomStateChangedFunc?.invoke(state)
+        Logger.d(TAG, "show(${items.size}), state=${state}")
       }
       .start()
   }
@@ -178,11 +182,14 @@ class BottomMenuPanel @JvmOverloads constructor(
       .withEndAction {
         state = State.Hidden
         onBottomStateChangedFunc?.invoke(state)
+        Logger.d(TAG, "hide(${items.size}), state=${state}")
       }
       .start()
   }
 
   private fun transitionBetweenViews(items: List<BottomMenuPanelItem>) {
+    Logger.d(TAG, "hide(${items.size}), state=${state}, childCount=${childCount}")
+
     if (childCount != 1) {
       return
     }
@@ -299,11 +306,15 @@ class BottomMenuPanel @JvmOverloads constructor(
       updatePadding(bottom = globalWindowInsetsManager.bottom())
     }
 
+    Logger.d(TAG, "updatePaddings() state=${state}")
+
     if (state == State.NotInitialized) {
       translationY = totalHeight().toFloat()
 
       visibility = View.VISIBLE
       state = State.Hidden
+
+      Logger.d(TAG, "updatePaddings() state=${state}, visibility: ${visibility}, translationY=${translationY}")
     }
   }
 
@@ -316,6 +327,8 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   companion object {
+    private const val TAG = "BottomMenuPanel"
+
     private const val ANIMATION_DURATION = 250L
     private const val HIDE_DELAY = 100L
 

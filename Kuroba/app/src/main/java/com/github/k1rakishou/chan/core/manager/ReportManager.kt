@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.manager
 import android.app.ActivityManager
 import android.content.Context
 import android.os.Build
+import android.provider.Settings
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
@@ -126,7 +127,7 @@ class ReportManager(
     }
   }
 
-  fun getReportFooter(): String {
+  fun getReportFooter(context: Context): String {
     return buildString(capacity = 2048) {
       appendLine("------------------------------")
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
@@ -137,6 +138,7 @@ class ReportManager(
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
       appendLine("App running time: ${formatAppRunningTime()}")
+      appendLine("System animations state: ${systemAnimationsState(context)}")
       appendLine("------------------------------")
       appendLine("Current layout mode: ${ChanSettings.getCurrentLayoutMode().name}")
       appendLine("Board view mode: ${ChanSettings.boardPostViewMode.get()}")
@@ -182,6 +184,25 @@ class ReportManager(
 
       appendLine("------------------------------")
     }
+  }
+
+  private fun systemAnimationsState(context: Context): String {
+    val duration = Settings.Global.getFloat(
+      context.contentResolver,
+      Settings.Global.ANIMATOR_DURATION_SCALE, 0f
+    )
+
+    val transition = Settings.Global.getFloat(
+      context.contentResolver,
+      Settings.Global.TRANSITION_ANIMATION_SCALE, 0f
+    )
+
+    val window = Settings.Global.getFloat(
+      context.contentResolver,
+      Settings.Global.WINDOW_ANIMATION_SCALE, 0f
+    )
+
+    return "duration: ${duration}, transition: ${transition}, window: ${window}"
   }
 
   private fun formatAppRunningTime(): String {

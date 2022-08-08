@@ -203,7 +203,7 @@ class ReportIssueController(
               return@withContext ""
             }
 
-            return@withContext logs + reportManager.getReportFooter()
+            return@withContext logs + reportManager.getReportFooter(context)
           }
         })
 

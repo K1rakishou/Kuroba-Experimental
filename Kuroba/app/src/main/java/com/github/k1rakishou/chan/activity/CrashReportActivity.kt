@@ -265,7 +265,7 @@ class CrashReportActivity : AppCompatActivity() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Collapsable(title = stringResource(id = R.string.crash_report_activity_additional_info_section)) {
-          val footer = remember { reportManager.getReportFooter() }
+          val footer = remember { reportManager.getReportFooter(this@CrashReportActivity) }
 
           SelectionContainer {
             KurobaComposeText(
@@ -300,7 +300,7 @@ class CrashReportActivity : AppCompatActivity() {
                   logs
                 }
 
-                val reportFooter = reportManager.getReportFooter()
+                val reportFooter = reportManager.getReportFooter(this@CrashReportActivity)
                 val title = "${className} ${message}"
 
                 val body = buildString(4096) {
