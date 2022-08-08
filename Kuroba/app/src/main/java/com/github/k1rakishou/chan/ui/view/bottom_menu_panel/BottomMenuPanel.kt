@@ -109,7 +109,7 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun onBack(): Boolean {
-    Logger.d(TAG, "onBack(${items.size}), state=${state}, childCount=${childCount}")
+    Logger.d(TAG, "onBack(${items.size})")
 
     if (state == State.NotInitialized || state == State.Hidden) {
       return false
@@ -120,6 +120,8 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun show(items: List<BottomMenuPanelItem>) {
+    Logger.d(TAG, "show(${items.size}), prevState=${state}")
+
     if (state == State.Shown) {
       if (!itemsDiffer(this.items, items)) {
         return
@@ -166,6 +168,8 @@ class BottomMenuPanel @JvmOverloads constructor(
   }
 
   fun hide() {
+    Logger.d(TAG, "hide(${items.size}), prevState=${state}")
+
     if (state == State.Hidden || state == State.NotInitialized) {
       return
     }
