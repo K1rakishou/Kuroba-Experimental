@@ -34,7 +34,6 @@ import com.google.gson.stream.JsonReader
 import dagger.Lazy
 import okhttp3.HttpUrl
 import okhttp3.Request
-import java.io.IOException
 import java.io.InputStreamReader
 import java.nio.charset.StandardCharsets
 
@@ -42,39 +41,16 @@ class DvachBoardsRequest internal constructor(
   private val siteDescriptor: SiteDescriptor,
   private val boardManager: BoardManager,
   private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
-  private val regularGetBoardsRequestUrl: HttpUrl,
-  private val additionalGetBoardsRequestUrl: HttpUrl
+  private val boardsRequestUrl: HttpUrl
 ) {
 
   suspend fun execute(): ModularResult<SiteBoards> {
      return Try {
-      val dvachBoardAdditionalInfoMap = getBoardsAdditionalInfo(additionalGetBoardsRequestUrl)
-      if (dvachBoardAdditionalInfoMap.isEmpty()) {
-        throw DvachBoardsRequestException.ParsingError(
-          IOException("Failed to parse boards additional info, empty")
-        )
-      }
-
-      return@Try getSiteBoards(dvachBoardAdditionalInfoMap)
+      return@Try genericDvachBoardRequest(
+        url = boardsRequestUrl,
+        readJsonFunc = { jsonReader -> readDvachBoards(jsonReader) }
+      )
     }
-  }
-
-  private suspend fun getSiteBoards(
-    dvachBoardAdditionalInfoMap: Map<String, DvachBoardAdditionalInfo>
-  ): SiteBoards {
-    return genericDvachBoardRequest(
-      url = regularGetBoardsRequestUrl,
-      readJsonFunc = { jsonReader -> readSiteBoards(jsonReader, dvachBoardAdditionalInfoMap) }
-    )
-  }
-
-  private suspend fun getBoardsAdditionalInfo(
-    additionalGetBoardsRequestUrl: HttpUrl
-  ): Map<String, DvachBoardAdditionalInfo> {
-    return genericDvachBoardRequest(
-      url = additionalGetBoardsRequestUrl,
-      readJsonFunc = { jsonReader -> readDvachBoardAdditionalInfoMap(jsonReader) }
-    )
   }
 
   private suspend fun <T> genericDvachBoardRequest(
@@ -109,118 +85,56 @@ class DvachBoardsRequest internal constructor(
   }
 
 
-  private fun readDvachBoardAdditionalInfoMap(
+  private fun readDvachBoards(
     jsonReader: JsonReader
-  ): Map<String, DvachBoardAdditionalInfo> {
-    val dvachBoardAdditionalInfoMap = mutableMapOf<String, DvachBoardAdditionalInfo>()
+  ): SiteBoards {
+    val boardList: MutableList<ChanBoard> = ArrayList()
 
-    jsonReader.jsonObject {
+    jsonReader.jsonArray {
       while (hasNext()) {
-        nextName()
-
-        jsonArray {
-          while (hasNext()) {
-            jsonObject {
-              val dvachBoardAdditionalInfo = readDvachBoardAdditionalInfoEntry()
-              if (dvachBoardAdditionalInfo != null) {
-                dvachBoardAdditionalInfoMap[dvachBoardAdditionalInfo.boardCode] = dvachBoardAdditionalInfo
-              }
-            }
+        jsonObject {
+          val board = readDvachBoard()
+          if (board != null) {
+            boardList += board
           }
         }
       }
     }
 
-    return dvachBoardAdditionalInfoMap
+    return SiteBoards(siteDescriptor, boardList)
   }
 
-  private fun JsonReader.readDvachBoardAdditionalInfoEntry(): DvachBoardAdditionalInfo? {
-    var boardCode: String? = null
-    var pages = -1
-    var sageEnabled = false
+  private fun JsonReader.readDvachBoard(): ChanBoard? {
+    val board = BoardBuilder(siteDescriptor)
 
     while (hasNext()) {
       when (nextName()) {
-        "id" -> boardCode = nextStringOrNull()
-        "pages" -> pages = nextInt()
-        "sage" -> sageEnabled = nextInt() == 1
+        "id" -> board.code = nextStringOrNull()
+        "max_pages" -> board.pages = nextInt()
+        "threads_per_page" -> board.perPage = nextInt()
+        "name" -> board.name = nextString()
+        "max_files_size" -> {
+          val maxFileSize = nextInt()
+          board.maxFileSize = maxFileSize
+          board.maxWebmSize = maxFileSize
+        }
+        "max_comment" -> board.maxCommentChars = nextInt()
+        "bump_limit" -> board.bumpLimit = nextInt()
+        "info_outer" -> board.description = nextString()
+        "category" -> board.workSafe = "Взрослым" != nextString()
         else -> skipValue()
       }
     }
 
-    if (boardCode.isNullOrEmpty() || pages < 0) {
+    board.maxFileSize = Dvach.DEFAULT_MAX_FILE_SIZE
+
+    if (board.hasMissingInfo()) {
+      // Invalid data, ignore
       return null
     }
 
-    return DvachBoardAdditionalInfo(boardCode, pages, sageEnabled)
+    return board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
   }
-
-  private fun readSiteBoards(
-    reader: JsonReader,
-    dvachBoardAdditionalInfoMap: Map<String, DvachBoardAdditionalInfo>
-  ): SiteBoards {
-    val boardList: MutableList<ChanBoard> = ArrayList()
-    
-    reader.jsonObject {
-      while (hasNext()) {
-        val key = nextName()
-        if (key == "boards") {
-          jsonArray {
-            while (hasNext()) {
-              val board = readBoardEntry(this, dvachBoardAdditionalInfoMap)
-              if (board != null) {
-                boardList.add(board)
-              }
-            }
-          }
-        } else {
-          skipValue()
-        }
-      }
-    }
-    
-    return SiteBoards(siteDescriptor, boardList)
-  }
-
-  private fun readBoardEntry(
-    reader: JsonReader,
-    dvachBoardAdditionalInfoMap: Map<String, DvachBoardAdditionalInfo>
-  ): ChanBoard? {
-    return reader.jsonObject {
-      val board = BoardBuilder(siteDescriptor)
-
-      while (hasNext()) {
-        when (nextName()) {
-          "name" -> board.name = nextString()
-          "id" -> board.code = nextString()
-          "bump_limit" -> board.bumpLimit = nextInt()
-          "info" -> board.description = nextString()
-          "category" -> board.workSafe = "Взрослым" != nextString()
-          else -> skipValue()
-        }
-      }
-
-      board.maxFileSize = Dvach.DEFAULT_MAX_FILE_SIZE
-  
-      if (board.hasMissingInfo()) {
-        // Invalid data, ignore
-        return@jsonObject null
-      }
-
-      dvachBoardAdditionalInfoMap[board.code]?.let { dvachBoardAdditionalInfo ->
-        board.pages = dvachBoardAdditionalInfo.pages
-        // TODO(KurobaEx): handle SAGE
-      }
-
-      return@jsonObject board.toChanBoard(boardManager.byBoardDescriptor(board.boardDescriptor()))
-    }
-  }
-
-  class DvachBoardAdditionalInfo(
-    val boardCode: String,
-    val pages: Int,
-    val sageEnabled: Boolean
-  )
 
   private sealed class DvachBoardsRequestException(
     message: String,

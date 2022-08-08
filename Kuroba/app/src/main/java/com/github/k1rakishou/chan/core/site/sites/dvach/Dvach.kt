@@ -259,21 +259,14 @@ class Dvach : CommonSite() {
       return root.builder().s(thumbnail).url()
     }
 
-    fun dvachGetBoards(): HttpUrl {
-      return HttpUrl.Builder()
-        .scheme("https")
-        .host(siteHost)
-        .addPathSegment("makaba")
-        .addPathSegment("mobile.fcgi")
-        .addQueryParameter("task", "get_boards")
-        .build()
-    }
-
     override fun boards(): HttpUrl {
       return HttpUrl.Builder()
         .scheme("https")
         .host(siteHost)
-        .addPathSegment("boards.json")
+        .addPathSegment("api")
+        .addPathSegment("mobile")
+        .addPathSegment("v2")
+        .addPathSegment("boards")
         .build()
     }
 
@@ -577,11 +570,10 @@ class Dvach : CommonSite() {
       val dvachEndpoints = endpoints() as DvachEndpoints
 
       return DvachBoardsRequest(
-        siteDescriptor(),
-        boardManager,
-        proxiedOkHttpClient,
-        dvachEndpoints.boards(),
-        dvachEndpoints.dvachGetBoards()
+        siteDescriptor = siteDescriptor(),
+        boardManager = boardManager,
+        proxiedOkHttpClient = proxiedOkHttpClient,
+        boardsRequestUrl = dvachEndpoints.boards(),
       ).execute()
     }
 
