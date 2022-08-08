@@ -33,6 +33,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
@@ -205,7 +206,11 @@ class BoardsSetupController(
     mainScope.launch { showToast(R.string.controller_boards_setup_boards_updated) }
   }
 
-  override fun showCloudflareBypassController(firewallType: FirewallType, urlToOpen: HttpUrl) {
+  override fun showCloudflareBypassController(
+    firewallType: FirewallType,
+    siteDescriptor: SiteDescriptor,
+    urlToOpen: HttpUrl
+  ) {
     val siteFirewallBypassController = SiteFirewallBypassController(
       context = context,
       firewallType = firewallType,
@@ -225,6 +230,12 @@ class BoardsSetupController(
           }
           CookieResult.Canceled -> {
             showToast(getString(R.string.firewall_check_canceled, firewallType))
+          }
+          CookieResult.NotSupported -> {
+            AppModuleAndroidUtils.showToast(
+              context,
+              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName)
+            )
           }
         }
       }

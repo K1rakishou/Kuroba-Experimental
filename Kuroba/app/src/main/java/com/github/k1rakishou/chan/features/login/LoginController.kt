@@ -275,6 +275,7 @@ class LoginController(
           val error = when (cookieResult) {
             is CookieResult.CookieValue -> throw IllegalStateException("Must not be used here")
             CookieResult.Canceled -> getString(R.string.canceled)
+            CookieResult.NotSupported -> "Not supported"
             is CookieResult.Error -> cookieResult.exception.errorMessageOrClassName()
           }
 

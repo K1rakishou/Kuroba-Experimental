@@ -151,6 +151,9 @@ class SiteFirewallBypassController(
       CookieResult.Canceled -> {
         Logger.e(TAG, "Canceled")
       }
+      CookieResult.NotSupported -> {
+        Logger.e(TAG, "NotSupported")
+      }
     }
 
     notifyAboutResult(cookieResult)

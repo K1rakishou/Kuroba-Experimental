@@ -25,7 +25,7 @@ sealed class PostingStatus {
       is Enqueued,
       is WaitingForAdditionalService,
       is WaitingForSiteRateLimitToPass -> true
-      is UploadingProgress -> toOverallPercent() < 0.9f
+      is UploadingProgress -> toTotalPercent() < 0.9f
       is Uploaded,
       is AfterPosting -> false
     }
@@ -62,7 +62,7 @@ sealed class PostingStatus {
     val totalFiles: Int,
     val percent: Int
   ) : PostingStatus() {
-    fun toOverallPercent(): Float {
+    fun toTotalPercent(): Float {
       val index = (fileIndex - 1).coerceAtLeast(0).toFloat()
 
       val totalProgress = totalFiles.toFloat() * 100f

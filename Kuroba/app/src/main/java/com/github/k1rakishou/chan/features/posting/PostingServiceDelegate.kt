@@ -39,13 +39,13 @@ import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
@@ -79,9 +79,9 @@ class PostingServiceDelegate(
   private val activeReplyDescriptors = hashMapOf<ChanDescriptor, ReplyInfo>()
 
   private val _stopServiceEventFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-  private val _updateMainNotificationFlow = MutableSharedFlow<MainNotificationInfo>(extraBufferCapacity = 16)
-  private val _updateChildNotificationFlow = MutableSharedFlow<ChildNotificationInfo>(extraBufferCapacity = 16)
-  private val _closeChildNotificationFlow = MutableSharedFlow<ChanDescriptor>(extraBufferCapacity = 16)
+  private val _updateMainNotificationFlow = MutableSharedFlow<MainNotificationInfo>(extraBufferCapacity = Channel.UNLIMITED)
+  private val _updateChildNotificationFlow = MutableSharedFlow<ChildNotificationInfo>(extraBufferCapacity = Channel.UNLIMITED)
+  private val _closeChildNotificationFlow = MutableSharedFlow<ChanDescriptor>(extraBufferCapacity = Channel.UNLIMITED)
 
   fun listenForStopServiceEvents(): SharedFlow<Unit> {
     return _stopServiceEventFlow
@@ -671,6 +671,8 @@ class PostingServiceDelegate(
       return
     }
 
+    var prevUploadingProgressNotifyTime = 0L
+
     site.actions()
       .post(chanDescriptor, replyMode)
       .catch { error ->
@@ -689,9 +691,17 @@ class PostingServiceDelegate(
               percent = postResult.percent
             )
 
+            // Update the notification only once in 100ms
+            val now = System.currentTimeMillis()
+            if (now - prevUploadingProgressNotifyTime < 100) {
+              return@collect
+            }
+
+            prevUploadingProgressNotifyTime = now
+
             updateChildNotification(
               chanDescriptor = chanDescriptor,
-              status = ChildNotificationInfo.Status.Uploading(status.toOverallPercent())
+              status = ChildNotificationInfo.Status.Uploading(status.toTotalPercent())
             )
             readReplyInfo(chanDescriptor) { updateStatus(status) }
           }
@@ -708,6 +718,8 @@ class PostingServiceDelegate(
             emitTerminalEvent(chanDescriptor, PostResult.Error(postResult.error))
           }
           is SiteActions.PostResult.PostComplete -> {
+            Logger.d(TAG, "SiteActions.PostResult.PostComplete")
+
             updateChildNotification(
               chanDescriptor = chanDescriptor,
               status = ChildNotificationInfo.Status.Uploaded()

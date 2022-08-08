@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.captcha.dvach
 
 import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
@@ -14,6 +15,9 @@ import com.github.k1rakishou.core_logger.Logger
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.SharedFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
@@ -33,6 +37,10 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
   var currentInputValue = mutableStateOf<String>("")
 
+  private val _cloudFlareDetectedFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
+  val cloudFlareDetectedFlow: SharedFlow<Unit>
+    get() = _cloudFlareDetectedFlow.asSharedFlow()
+
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
@@ -51,7 +59,13 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
 
       val result = ModularResult.Try { requestCaptchaIdInternal(captchaIdUrl) }
       captchaInfoToShow.value = when (result) {
-        is ModularResult.Error -> AsyncData.Error(result.error)
+        is ModularResult.Error -> {
+          if (result.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+            _cloudFlareDetectedFlow.emit(Unit)
+          }
+
+          AsyncData.Error(result.error)
+        }
         is ModularResult.Value -> AsyncData.Data(result.value)
       }
     }

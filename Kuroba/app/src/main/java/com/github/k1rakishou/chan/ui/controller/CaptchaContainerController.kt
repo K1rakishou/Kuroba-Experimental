@@ -11,6 +11,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
+import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
@@ -135,8 +136,8 @@ class CaptchaContainerController(
     pop()
   }
 
-  override fun onSiteRequiresAdditionalAuth(siteDescriptor: SiteDescriptor) {
-    authenticationCallback(AuthenticationResult.SiteRequiresAdditionalAuth(siteDescriptor))
+  override fun onSiteRequiresAdditionalAuth(firewallType: FirewallType, siteDescriptor: SiteDescriptor) {
+    authenticationCallback(AuthenticationResult.SiteRequiresAdditionalAuth(firewallType, siteDescriptor))
     pop()
   }
 
@@ -240,7 +241,11 @@ class CaptchaContainerController(
   sealed class AuthenticationResult {
     object Success : AuthenticationResult()
     data class Failure(val throwable: Throwable) : AuthenticationResult()
-    data class SiteRequiresAdditionalAuth(val siteDescriptor: SiteDescriptor) : AuthenticationResult()
+
+    data class SiteRequiresAdditionalAuth(
+      val firewallType: FirewallType,
+      val siteDescriptor: SiteDescriptor
+    ) : AuthenticationResult()
   }
 
   companion object {

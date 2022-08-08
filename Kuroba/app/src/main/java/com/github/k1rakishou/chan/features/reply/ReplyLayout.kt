@@ -64,7 +64,6 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
 import com.github.k1rakishou.chan.features.bypass.CookieResult
 import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
@@ -109,6 +108,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
+import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
@@ -703,21 +703,24 @@ class ReplyLayout @JvmOverloads constructor(
     threadListLayoutCallbacks?.presentController(controller)
   }
 
-  override suspend fun show2chAntiSpamCheckSolverController(): CookieResult {
+  override suspend fun showFireWallBypassController(
+    firewallType: FirewallType,
+    siteDescriptor: SiteDescriptor
+  ): CookieResult {
     BackgroundUtils.ensureMainThread()
 
     val callbacks = threadListLayoutCallbacks
       ?: return CookieResult.Canceled
 
-    val antiSpamChallengeEndpoint = (siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach)
-      ?.antiSpamChallengeEndpoint
-      ?: return CookieResult.Canceled
+    val firewallChallengeEndpoint = siteManager.bySiteDescriptor(siteDescriptor)
+      ?.firewallChallengeEndpoint()
+      ?: return CookieResult.NotSupported
 
     return suspendCancellableCoroutine { continuation ->
       val controller = SiteFirewallBypassController(
         context = context,
-        firewallType = FirewallType.DvachAntiSpam,
-        urlToOpen = antiSpamChallengeEndpoint,
+        firewallType = firewallType,
+        urlToOpen = firewallChallengeEndpoint,
         onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
       )
 

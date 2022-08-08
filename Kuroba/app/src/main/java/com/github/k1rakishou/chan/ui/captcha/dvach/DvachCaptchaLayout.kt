@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -33,6 +34,7 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
+import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -52,6 +54,7 @@ import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import kotlinx.coroutines.flow.collectLatest
 import javax.inject.Inject
 
 class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
@@ -89,6 +92,15 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
       setContent {
         ProvideChanTheme(themeEngine) {
           val chanTheme = LocalChanTheme.current
+
+          LaunchedEffect(
+            key1 = Unit,
+            block = {
+              viewModel.cloudFlareDetectedFlow.collectLatest {
+                callback.onSiteRequiresAdditionalAuth(FirewallType.Cloudflare, siteDescriptor)
+              }
+            }
+          )
 
           Box(
             modifier = Modifier
@@ -134,7 +146,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
     BuildCaptchaInput(
       onAuthClick = {
         if (siteDescriptor != null) {
-          callback?.onSiteRequiresAdditionalAuth(siteDescriptor!!)
+          callback?.onSiteRequiresAdditionalAuth(FirewallType.DvachAntiSpam, siteDescriptor!!)
         }
       },
       onReloadClick = { hardReset() },

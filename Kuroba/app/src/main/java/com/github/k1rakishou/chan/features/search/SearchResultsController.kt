@@ -19,10 +19,18 @@ import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
-import com.github.k1rakishou.chan.features.search.epoxy.*
+import com.github.k1rakishou.chan.features.search.epoxy.EpoxySearchPostDividerView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchEndOfResultsView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchErrorView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchLoadingView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostDividerView
+import com.github.k1rakishou.chan.features.search.epoxy.epoxySearchPostView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.*
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -107,7 +115,7 @@ class SearchResultsController(
     epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
 
-  override fun onFirewallDetected(firewallType: FirewallType, requestUrl: HttpUrl) {
+  override fun onFirewallDetected(firewallType: FirewallType, siteDescriptor: SiteDescriptor, requestUrl: HttpUrl) {
     val hostUrl = getUrlToOpen(firewallType, requestUrl)
 
     val controller = SiteFirewallBypassController(
@@ -130,6 +138,9 @@ class SearchResultsController(
           }
           CookieResult.Canceled -> {
             showToast(context, getString(R.string.firewall_check_canceled, firewallType))
+          }
+          CookieResult.NotSupported -> {
+            showToast(context, getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName))
           }
         }
       }

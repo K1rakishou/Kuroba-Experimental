@@ -71,7 +71,7 @@ class DvachApiV2(
       return
     }
 
-    val bumpLimit = dvachThreadsFresh?.bumpLimit
+    val bumpLimit = dvachThreadsFresh?.board?.bumpLimit
     val posters = dvachThreadsFresh?.posters
     val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
@@ -280,7 +280,7 @@ class DvachApiV2(
       val dvachThreadsFresh = responseBodyStream
         .useBufferedSource { bufferedSource -> dvachBookmarkCatalogInfoAdapter.fromJson(bufferedSource) }
 
-      val bumpLimitCount = dvachThreadsFresh?.bumpLimit
+      val bumpLimitCount = dvachThreadsFresh?.board?.bumpLimit
       val threadPosts = dvachThreadsFresh?.threads?.firstOrNull()?.posts
 
       if (threadPosts == null) {
@@ -303,7 +303,7 @@ class DvachApiV2(
           val sticky = threadPost.sticky > 0
           val rollingSticky = threadPost.endless == 1L
           val closed = threadPost.closed == 1L
-          var isBumpLimit = bumpLimitCount != null && bumpLimitCount > 0
+          var isBumpLimit = bumpLimitCount != null && threadPosts.size > bumpLimitCount
 
           val stickyPost = if (sticky && rollingSticky && bumpLimitCount != null) {
             StickyThread.StickyWithCap
@@ -456,8 +456,8 @@ class DvachApiV2(
 
   @JsonClass(generateAdapter = true)
   data class DvachThreadsFresh(
-    @Json(name = "bump_limit")
-    val bumpLimit: Int?,
+    @Json(name = "board")
+    val board: DvachThreadBoardInfo?,
     @Json(name = "threads")
     val threads: List<DvachThreadFresh>?,
     @Json(name = "unique_posters")
@@ -613,10 +613,16 @@ class DvachApiV2(
 
   @JsonClass(generateAdapter = true)
   data class DvachBookmarkCatalogInfo(
-    @Json(name = "bump_limit")
-    val bumpLimit: Int,
+    @Json(name = "board")
+    val board: DvachThreadBoardInfo?,
     @Json(name = "threads")
     val threads: List<DvachThreadPostInfo>,
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachThreadBoardInfo(
+    @Json(name = "bump_limit")
+    val bumpLimit: Int,
   )
 
   @JsonClass(generateAdapter = true)

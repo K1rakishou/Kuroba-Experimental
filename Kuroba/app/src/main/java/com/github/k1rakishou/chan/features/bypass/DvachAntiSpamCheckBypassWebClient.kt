@@ -19,7 +19,9 @@ class DvachAntiSpamCheckBypassWebClient(
       ?.split(';')
 
     if (cookies != null) {
-      for (cookie in cookies) {
+      for (_cookie in cookies) {
+        val cookie = _cookie.trim()
+
         val parts = cookie
           .split("=")
           .map { cookiePart -> cookiePart.trim() }

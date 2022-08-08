@@ -99,13 +99,12 @@ class Dvach : CommonSite() {
   private val urlHandlerLazy = lazy { DvachSiteUrlHandler(domainUrl) }
   private val siteIconLazy = lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
 
-  val antiSpamChallengeEndpoint by lazy {
-
+  override fun firewallChallengeEndpoint(): String? {
     // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
     // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
     // https://2ch.hk doesn't trigger anti-spam script.
 
-    return@lazy "https://2ch.hk/challenge/"
+    return "https://2ch.hk/challenge/"
   }
 
   val captchaV2NoJs by lazy {
@@ -317,9 +316,8 @@ class Dvach : CommonSite() {
       return HttpUrl.Builder()
         .scheme("https")
         .host(siteHost)
-        .addPathSegment("makaba")
-        .addPathSegment("posting.fcgi")
-        .addQueryParameter("json", "1")
+        .addPathSegment("user")
+        .addPathSegment("posting")
         .build()
     }
 
@@ -543,6 +541,7 @@ class Dvach : CommonSite() {
         site = this@Dvach,
         replyChanDescriptor = replyChanDescriptor,
         replyMode = replyMode,
+        moshi = moshi,
         replyManager = replyManager
       )
 

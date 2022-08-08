@@ -101,7 +101,7 @@ class BoardsSetupPresenter(
             hideLoadingView()
 
             if (!retrying && error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-              showCloudflareBypassController(FirewallType.Cloudflare, error.requestUrl)
+              showCloudflareBypassController(FirewallType.Cloudflare, siteDescriptor, error.requestUrl)
             }
           }
 

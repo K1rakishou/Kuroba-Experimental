@@ -19,11 +19,12 @@ package com.github.k1rakishou.chan.ui.captcha;
 
 import androidx.annotation.NonNull;
 
+import com.github.k1rakishou.chan.features.bypass.FirewallType;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 
 public interface AuthenticationLayoutCallback {
     void onAuthenticationComplete();
     void onAuthenticationFailed(Throwable error);
-    void onSiteRequiresAdditionalAuth(@NonNull SiteDescriptor siteDescriptor);
+    void onSiteRequiresAdditionalAuth(FirewallType firewallType, @NonNull SiteDescriptor siteDescriptor);
     void onFallbackToV1CaptchaView();
 }

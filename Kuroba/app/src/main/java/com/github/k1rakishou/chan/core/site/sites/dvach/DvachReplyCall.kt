@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
@@ -36,22 +37,24 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescript
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
+import com.squareup.moshi.Moshi
 import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
-import org.jsoup.Jsoup
 import java.io.IOException
 import java.util.*
 import java.util.concurrent.TimeUnit
-import java.util.regex.Pattern
 
 class DvachReplyCall internal constructor(
   site: Dvach,
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
+  private val moshi: Lazy<Moshi>,
   private val replyManager: Lazy<ReplyManager>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
@@ -77,10 +80,10 @@ class DvachReplyCall internal constructor(
 
       formBuilder.addFormDataPart("task", "post")
       formBuilder.addFormDataPart("board", chanDescriptor.boardCode())
-      formBuilder.addFormDataPart("comment", reply.comment)
       formBuilder.addFormDataPart("thread", threadNo.toString())
       formBuilder.addFormDataPart("name", reply.postName)
       formBuilder.addFormDataPart("email", reply.options)
+      formBuilder.addFormDataPart("comment", reply.comment)
 
       if (chanDescriptor is CatalogDescriptor && !TextUtils.isEmpty(reply.subject)) {
         formBuilder.addFormDataPart("subject", reply.subject)
@@ -180,14 +183,29 @@ class DvachReplyCall internal constructor(
       )
     }
 
-    formBuilder.addFormDataPart("formimages[]", replyFileMeta.fileName, requestBody)
+    formBuilder.addFormDataPart("file[]", replyFileMeta.fileName, requestBody)
   }
 
   override fun process(response: Response, result: String) {
-    val errorMessageMatcher = ERROR_MESSAGE.matcher(result)
-    if (errorMessageMatcher.find()) {
-      val errorCode = errorMessageMatcher.group(1).toInt()
-      val errorText = errorMessageMatcher.group(2)
+    val postingResult = try {
+      moshi.get()
+        .adapter(PostingResult::class.java)
+        .fromJson(result)
+    } catch (error: Throwable) {
+      Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+      replyResponse.errorMessage = "Failed process server response, error: ${error.errorMessageOrClassName()}"
+      return
+    }
+
+    if (postingResult == null) {
+      Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
+      replyResponse.errorMessage = "Failed process server response (postingResult == null)"
+      return
+    }
+
+    if (postingResult.error != null) {
+      val errorCode = postingResult.error.code
+      val errorText = postingResult.error.message
 
       if (errorCode == INVALID_CAPTCHA_ERROR_CODE || errorText.equals(INVALID_CAPTCHA_ERROR_TEXT, ignoreCase = true)) {
         replyResponse.requireAuthentication = true
@@ -197,7 +215,7 @@ class DvachReplyCall internal constructor(
       if (replyChanDescriptor is ThreadDescriptor) {
         // Only check for rate limits when replying in threads. Do not do this when creating new
         // threads.
-        if (errorText != null && errorText.contains(RATE_LIMITED_PATTERN, ignoreCase = true)) {
+        if (errorCode == RATE_LIMITED_ERROR_CODE || errorText.contains(RATE_LIMITED_PATTERN, ignoreCase = true)) {
           replyResponse.rateLimitInfo = ReplyResponse.RateLimitInfo(
             actualTimeToWaitMs = POSTING_COOLDOWN_MS,
             cooldownInfo = LastReplyRepository.CooldownInfo(
@@ -210,8 +228,11 @@ class DvachReplyCall internal constructor(
         }
       }
 
-      replyResponse.errorMessage = Jsoup.parse(errorText).body().text()
-      replyResponse.probablyBanned = replyResponse.errorMessage?.contains(PROBABLY_BANNED_TEXT) ?: false
+      replyResponse.errorMessage = errorText
+      replyResponse.probablyBanned = replyResponse.errorMessage
+        ?.contains(PROBABLY_BANNED_TEXT, ignoreCase = true)
+        ?: false
+
       return
     }
 
@@ -220,22 +241,20 @@ class DvachReplyCall internal constructor(
       return
     }
 
-    val postMessageMatcher = POST_MESSAGE.matcher(result)
-    if (postMessageMatcher.find()) {
+    if (postingResult.postNo != null) {
       if (replyChanDescriptor is ThreadDescriptor) {
         replyResponse.threadNo = replyChanDescriptor.threadNo
       }
 
-      replyResponse.postNo = postMessageMatcher.group(1).toInt().toLong()
+      replyResponse.postNo = postingResult.postNo
       replyResponse.posted = true
 
       storeUserCodeCookieIfNeeded(response.headers)
       return
     }
 
-    val threadMessageMatcher = THREAD_MESSAGE.matcher(result)
-    if (threadMessageMatcher.find()) {
-      val threadNo = threadMessageMatcher.group(1).toInt()
+    if (postingResult.threadNo != null) {
+      val threadNo = postingResult.threadNo
 
       replyResponse.threadNo = threadNo.toLong()
       replyResponse.postNo = threadNo.toLong()
@@ -284,21 +303,34 @@ class DvachReplyCall internal constructor(
     userCodeSetting.set(userCodeCookieValue)
   }
 
+  @JsonClass(generateAdapter = true)
+  data class PostingResult(
+    val result: Int,
+    val error: DvachError?,
+    @Json(name = "thread")
+    val threadNo: Long?,
+    @Json(name = "num")
+    val postNo: Long?
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachError(
+    val code: Int,
+    val message: String
+  )
+
   companion object {
     private const val TAG = "DvachReplyCall"
 
     private const val INVALID_CAPTCHA_ERROR_CODE = -5
+    private const val RATE_LIMITED_ERROR_CODE = -8
+
     private const val INVALID_CAPTCHA_ERROR_TEXT = "Капча невалидна"
     private const val RATE_LIMITED_PATTERN = "Вы постите слишком быстро"
 
     private val POSTING_COOLDOWN_MS = TimeUnit.SECONDS.toMillis(35)
 
-    private val ERROR_MESSAGE = Pattern.compile("^\\{\"Error\":(-?\\d+),\"Reason\":\"(.*)\"")
-    private val POST_MESSAGE =
-      Pattern.compile("^\\{\"Error\":null,\"Status\":\"OK\",\"Num\":(\\d+)")
-    private val THREAD_MESSAGE =
-      Pattern.compile("^\\{\"Error\":null,\"Status\":\"Redirect\",\"Target\":(\\d+)")
-    private const val PROBABLY_BANNED_TEXT = "banned"
+    private const val PROBABLY_BANNED_TEXT = "Постинг запрещён"
     const val ANTI_SPAM_SCRIPT_TAG = "<title>Проверка...</title>"
   }
 }

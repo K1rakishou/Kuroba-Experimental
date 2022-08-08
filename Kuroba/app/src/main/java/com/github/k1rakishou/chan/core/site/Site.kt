@@ -185,6 +185,8 @@ interface Site {
 
   fun redirectsToArchiveThread(): Boolean = false
 
+  fun firewallChallengeEndpoint(): String? = null
+
   fun <T : Setting<*>> requireSettingBySettingId(settingId: SiteSetting.SiteSettingId): T {
     return requireNotNull(getSettingBySettingId(settingId)) { "Setting ${settingId} not found for site ${siteDescriptor()}" }
   }

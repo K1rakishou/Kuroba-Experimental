@@ -451,6 +451,11 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun presentController(controller: Controller) {
+    val alreadyPresenting = callback.isAlreadyPresentingController { c -> c.javaClass == controller.javaClass }
+    if (alreadyPresenting) {
+      return
+    }
+
     callback.presentController(controller, animated = false)
   }
 
@@ -534,11 +539,14 @@ class ThreadLayout @JvmOverloads constructor(
     callback.onShowError()
 
     if (error.isCloudFlareError()) {
-      openCloudFlareBypassControllerAndHandleResult(error)
+      openCloudFlareBypassControllerAndHandleResult(chanDescriptor, error)
     }
   }
 
-  private fun openCloudFlareBypassControllerAndHandleResult(error: ChanLoaderException) {
+  private fun openCloudFlareBypassControllerAndHandleResult(
+    chanDescriptor: ChanDescriptor,
+    error: ChanLoaderException
+  ) {
     val presenting = callback
       .isAlreadyPresentingController { controller -> controller is SiteFirewallBypassController }
 
@@ -568,6 +576,12 @@ class ThreadLayout @JvmOverloads constructor(
           }
           CookieResult.Canceled -> {
             showToast(context, getString(R.string.firewall_check_canceled, firewallType))
+          }
+          CookieResult.NotSupported -> {
+            showToast(
+              context,
+              getString(R.string.firewall_check_not_supported, firewallType, chanDescriptor.siteDescriptor().siteName)
+            )
           }
         }
       }

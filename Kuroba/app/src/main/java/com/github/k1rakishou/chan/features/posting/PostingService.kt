@@ -24,7 +24,6 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.DescriptorParcelable
 import com.github.k1rakishou.persist_state.ReplyMode
 import dagger.Lazy
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -71,7 +70,8 @@ class PostingService : Service() {
     kurobaScope.launch {
       postingServiceDelegate.get().listenForChildNotificationUpdates()
         .collect { childNotificationInfo ->
-          Logger.d(TAG, "childNotificationUpdates() descriptor=${childNotificationInfo.chanDescriptor}, " +
+          Logger.d(TAG, "childNotificationUpdates() " +
+            "descriptor=${childNotificationInfo.chanDescriptor}, " +
             "status=${childNotificationInfo.status}")
 
           val chanDescriptor = childNotificationInfo.chanDescriptor

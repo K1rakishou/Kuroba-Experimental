@@ -59,7 +59,11 @@ data class ChildNotificationInfo(
       val totalProgress: Float
     ) : Status("Uploading ${(totalProgress * 100f).toInt()}%...")
 
-    class Uploaded : Status("Uploaded")
+    class Uploaded : Status("Uploaded") {
+      override fun toString(): String {
+        return "Uploaded"
+      }
+    }
 
     data class Posted(
       val chanDescriptor: ChanDescriptor

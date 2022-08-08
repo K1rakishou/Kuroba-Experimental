@@ -167,7 +167,11 @@ class CloudFlareHandlerInterceptor(
             return@use false
           }
         } else {
-          if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) && !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2)) {
+          if (
+            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) &&
+            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2) &&
+            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE3)
+          ) {
             return@use false
           }
         }
@@ -192,6 +196,7 @@ class CloudFlareHandlerInterceptor(
 
     private val CLOUD_FLARE_NEEDLE1 = "<title>Please Wait... | Cloudflare</title>".toByteArray(StandardCharsets.UTF_8)
     private val CLOUD_FLARE_NEEDLE2 = "Checking your browser before accessing".toByteArray(StandardCharsets.UTF_8)
+    private val CLOUD_FLARE_NEEDLE3 = "<title>Just a moment...</title>".toByteArray(StandardCharsets.UTF_8)
     private val CLOUD_FLARE_NEEDLE_4CHAN_SEARCH = "Browser Integrity Check".toByteArray(StandardCharsets.UTF_8)
   }
 }
