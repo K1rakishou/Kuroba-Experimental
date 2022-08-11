@@ -72,6 +72,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.view.GravityCompat
@@ -403,12 +404,21 @@ class MainController(
         val chanTheme = LocalChanTheme.current
         val bgColor = chanTheme.backColorCompose
 
-        Column(
-          modifier = Modifier
-            .fillMaxSize()
-            .background(bgColor)
+        BoxWithConstraints(
+          modifier = Modifier.fillMaxSize()
         ) {
-          BuildContent()
+          // A hack to fix crash
+          // "java.lang.IllegalArgumentException LazyVerticalGrid's width should be bound by parent."
+          // I dunno why or when this happens but this happens.
+          if (constraints.maxWidth != Constraints.Infinity) {
+            Column(
+              modifier = Modifier
+                .fillMaxSize()
+                .background(bgColor)
+            ) {
+              BuildContent()
+            }
+          }
         }
       }
     }
