@@ -21,6 +21,7 @@ import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.ellipsizeEnd
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.setSpanSafe
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed
 import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan
 import com.github.k1rakishou.core_spannable.ForegroundColorSpanHashed
@@ -476,11 +477,13 @@ data class PostCellData(
     if (postSubject.isEmpty()) {
       fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), 0, fullTitle.length, 0)
     } else {
-      check(postSubject.length <= fullTitle.length) {
-        "Bad start/end positions! start=${postSubject.length}, end=${fullTitle.length}"
+      if (postSubject.length <= fullTitle.length) {
+        fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), postSubject.length, fullTitle.length, 0)
+      } else {
+        Logger.e(TAG, "calculatePostTitle() Bad start/end positions! " +
+          "start=${postSubject.length}, end=${fullTitle.length}, " +
+          "postDescriptor=${post.postDescriptor}")
       }
-
-      fullTitle.setSpanSafe(AbsoluteSizeSpanHashed(detailsSizePx), postSubject.length, fullTitle.length, 0)
     }
 
     return fullTitle
@@ -488,7 +491,7 @@ data class PostCellData(
 
   private fun formatPostSubjectSpannable(): SpannableString {
     val subject = post.subject
-    if (subject.isNullOrEmpty()) {
+    if (subject.isNullOrBlank()) {
       return SpannableString.valueOf("")
     }
 
@@ -1008,6 +1011,8 @@ data class PostCellData(
   // ^^^ When updating any of these don't forget to update the flags !!! ^^^
 
   companion object {
+    private const val TAG = "PostCellData"
+
     private const val COMMENT_MAX_LENGTH_LIST = 350
     private const val COMMENT_MAX_LENGTH_GRID = 200
     private const val COMMENT_MAX_LENGTH_STAGGER_MIN = 100
