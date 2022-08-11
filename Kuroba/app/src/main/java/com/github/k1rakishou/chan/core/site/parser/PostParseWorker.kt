@@ -39,6 +39,10 @@ internal class PostParseWorker(
       return@Try postParser.parseFull(postBuilder, object : PostParser.Callback {
 
         override fun isSaved(threadNo: Long, postNo: Long, postSubNo: Long): Boolean {
+          if (threadNo <= 0 || postNo <= 0) {
+            return false
+          }
+
           val postDescriptor = PostDescriptor.create(
             chanDescriptor = postBuilder.postDescriptor.descriptor,
             threadNo = threadNo,
@@ -50,6 +54,10 @@ internal class PostParseWorker(
         }
 
         override fun isHiddenOrRemoved(threadNo: Long, postNo: Long, postSubNo: Long): Int {
+          if (threadNo <= 0 || postNo <= 0) {
+            return PostParser.NORMAL_POST
+          }
+
           val postDescriptor = PostDescriptor.create(
             chanDescriptor = postBuilder.postDescriptor.descriptor,
             threadNo = threadNo,

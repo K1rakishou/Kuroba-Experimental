@@ -2043,6 +2043,10 @@ class ThreadPresenter @Inject constructor(
               }
             }
             is PostLinkable.Value.ThreadOrPostLink -> {
+              if (postLinkableValue.threadId <= 0 || postLinkableValue.postId <= 0) {
+                return@post
+              }
+
               val postDescriptor = PostDescriptor.create(
                 siteName = site.name(),
                 boardCode = postLinkableValue.board,
