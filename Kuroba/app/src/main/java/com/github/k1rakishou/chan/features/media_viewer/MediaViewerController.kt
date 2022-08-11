@@ -81,7 +81,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withTimeoutOrNull
-import java.util.*
 import javax.inject.Inject
 
 class MediaViewerController(
@@ -782,8 +781,9 @@ class MediaViewerController(
     pager.setVisibilityFast(View.INVISIBLE)
     pager.setSwipingEnabled(true)
 
-    val previewThumbnailLocation =
-      mediaViewerState.loadedMedia[mediaViewerState.initialPagerIndex].mediaLocation
+    val previewThumbnailLocation = mediaViewerState.loadedMedia.getOrNull(mediaViewerState.initialPagerIndex)
+      ?.mediaLocation
+      ?: return
 
     val adapter = MediaViewerAdapter(
       context = context,
