@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.ui.captcha.chan4
 
+import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.util.Base64
@@ -15,9 +16,11 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
+import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
-import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
+import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -55,6 +58,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var moshi: Moshi
   @Inject
   lateinit var themeEngine: ThemeEngine
+  @Inject
+  lateinit var chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -75,6 +80,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   private val captchaInfoCache = mutableMapOf<ChanDescriptor, CaptchaInfo>()
 
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
+  var captchaSolverInstalled = mutableStateOf<Boolean>(false)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -114,7 +120,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   @Suppress("MoveVariableDeclarationIntoWhen")
-  fun requestCaptcha(chanDescriptor: ChanDescriptor, forced: Boolean) {
+  fun requestCaptcha(context: Context, chanDescriptor: ChanDescriptor, forced: Boolean) {
     activeJob?.cancel()
     activeJob = null
 
@@ -122,6 +128,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     captchaTtlUpdateJob = null
 
     val prevCaptchaInfo = getCachedCaptchaInfoOrNull(chanDescriptor)
+    val appContext = context
 
     if (!forced
       && prevCaptchaInfo != null
@@ -148,7 +155,9 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       captchaInfoToShow.value = AsyncData.Loading
       viewModelInitialized.awaitUntilInitialized()
 
-      val result = ModularResult.Try { requestCaptchaInternal(chanDescriptor) }
+      captchaSolverInstalled.value = chan4CaptchaSolverHelper.checkCaptchaSolverInstalled(appContext)
+
+      val result = ModularResult.Try { requestCaptchaInternal(appContext, chanDescriptor) }
       when (result) {
         is ModularResult.Error -> {
           Logger.e(TAG, "requestCaptcha() error=${result.error.errorMessageOrClassName()}")
@@ -157,7 +166,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
           if (error is CaptchaRateLimitError) {
             waitUntilCaptchaRateLimitPassed(error.cooldownMs)
 
-            withContext(Dispatchers.Main) { requestCaptcha(chanDescriptor, forced = true) }
+            withContext(Dispatchers.Main) { requestCaptcha(appContext, chanDescriptor, forced = true) }
             return@launch
           }
 
@@ -221,7 +230,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
-  private suspend fun requestCaptchaInternal(chanDescriptor: ChanDescriptor): CaptchaInfo {
+  private suspend fun requestCaptchaInternal(appContext: Context, chanDescriptor: ChanDescriptor): CaptchaInfo {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
     val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode)
 
@@ -238,11 +247,17 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val request = requestBuilder.build()
     val captchaInfoRawAdapter = moshi.adapter(CaptchaInfoRaw::class.java)
 
-    val captchaInfoRaw = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
-      request = request,
-      adapter = captchaInfoRawAdapter
-    ).unwrap()
+    val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
+    if (!response.isSuccessful) {
+      throw BadStatusResponseException(response.code)
+    }
 
+    val captchaInfoRawString = response.body?.string()
+    if (captchaInfoRawString == null) {
+      throw EmptyBodyResponseException()
+    }
+
+    val captchaInfoRaw = captchaInfoRawAdapter.fromJson(captchaInfoRawString)
     if (captchaInfoRaw == null) {
       throw IOException("Failed to convert json to CaptchaInfoRaw")
     }
@@ -267,8 +282,15 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         ttlSeconds = captchaInfoRaw.ttlSeconds(),
         bgInitialOffset = 0f,
         imgWidth = null,
-        bgWidth = null
+        bgWidth = null,
+        captchaSolution = null
       )
+    }
+
+    val captchaSolution = if (captchaSolverInstalled.value) {
+      chan4CaptchaSolverHelper.autoSolveCaptcha(appContext, captchaInfoRawString, null)
+    } else {
+      null
     }
     
     val bgBitmapPainter = captchaInfoRaw.bg?.let { bgBase64Img ->
@@ -310,7 +332,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       ttlSeconds = captchaInfoRaw.ttl!!,
       bgInitialOffset = bgInitialOffset.toFloat(),
       imgWidth = captchaInfoRaw.imgWidth,
-      bgWidth = captchaInfoRaw.bgWidth
+      bgWidth = captchaInfoRaw.bgWidth,
+      captchaSolution = captchaSolution
     )
   }
 
@@ -415,10 +438,12 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val ttlSeconds: Int,
     val bgInitialOffset: Float,
     val imgWidth: Int?,
-    val bgWidth: Int?
+    val bgWidth: Int?,
+    captchaSolution: Chan4CaptchaSolverHelper.CaptchaSolution?
   ) {
-    var currentInputValue = mutableStateOf<String>("")
-    var sliderValue = mutableStateOf(0f)
+    val currentInputValue = mutableStateOf<String>("")
+    val sliderValue = mutableStateOf(0f)
+    val captchaSolution = mutableStateOf<Chan4CaptchaSolverHelper.CaptchaSolution?>(captchaSolution)
 
     fun widthDiff(): Int? {
       if (imgWidth == null || bgWidth == null) {

@@ -165,7 +165,7 @@ class Chan4CaptchaLayout(
   }
 
   override fun hardReset() {
-    viewModel.requestCaptcha(chanDescriptor, forced = false)
+    viewModel.requestCaptcha(context, chanDescriptor, forced = false)
   }
 
   override fun onDestroy() {
@@ -306,7 +306,7 @@ class Chan4CaptchaLayout(
 
       KurobaComposeTextBarButton(
         onClick = {
-          viewModel.requestCaptcha(chanDescriptor, forced = true)
+          viewModel.requestCaptcha(context, chanDescriptor, forced = true)
         },
         text = stringResource(id = R.string.captcha_layout_reload)
       )

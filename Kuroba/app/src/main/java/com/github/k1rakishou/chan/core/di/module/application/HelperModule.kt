@@ -21,6 +21,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenAl
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerOpenThreadHelper
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScrollerHelper
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
+import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
@@ -33,6 +34,7 @@ import com.github.k1rakishou.model.repository.ChanCatalogSnapshotRepository
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.model.source.cache.thread.ChanThreadsCache
+import com.squareup.moshi.Moshi
 import dagger.Lazy
 import dagger.Module
 import dagger.Provides
@@ -217,6 +219,13 @@ class HelperModule {
   fun provideAppRestarter(): AppRestarter {
     Logger.deps("AppRestarter");
     return AppRestarter()
+  }
+
+  @Provides
+  @Singleton
+  fun provideChan4CaptchaSolverHelper(moshi: Lazy<Moshi>): Chan4CaptchaSolverHelper {
+    Logger.deps("Chan4CaptchaSolverHelper");
+    return Chan4CaptchaSolverHelper(moshi)
   }
 
 }
