@@ -1118,11 +1118,13 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="captcha_layout_dvach_auth">Auth</string>
     <string name="captcha_layout_dvach_auth_required">Authentication required! Click \'Auth\' button to pass 2ch.hk anti-spam check</string>
     <string name="captcha_layout_reload">Reload</string>
+    <string name="captcha_layout_copy">Copy</string>
+    <string name="captcha_layout_solve">Solve</string>
     <string name="captcha_layout_verify">Verify</string>
+    <string name="captcha_layout_failed_to_find_solution">Failed to find captcha solution</string>
     <string name="captcha_layout_reload_captcha">Reload captcha to apply the setting</string>
     <string name="captcha_layout_contrast_bg_slider_captcha">Use contrast background for slider captcha</string>
     <string name="captcha_layout_remember_captcha_cookies">Remember captcha cookies for easy captcha</string>
-    <string name="captcha_layout_slider_captcha_alternative_ui">Split slider captcha into a grid of images</string>
     <string name="captcha_layout_show_captcha_help">Show captcha help</string>
     <string name="captcha_layout_help_title">Captcha help</string>
     <string name="captcha_layout_captcha_already_expired">The captcha has already expired</string>

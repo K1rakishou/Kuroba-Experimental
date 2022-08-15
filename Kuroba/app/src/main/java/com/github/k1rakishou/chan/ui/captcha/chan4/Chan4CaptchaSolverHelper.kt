@@ -31,8 +31,8 @@ class Chan4CaptchaSolverHelper(
 
     val appContext = context.applicationContext
     val intent = Intent(ACTION_GET_INFO)
-    val resultBundle = sendBroadcastInternal(appContext, intent)
 
+    val resultBundle = sendBroadcastInternal(appContext, intent)
     if (resultBundle == null) {
       Logger.d(TAG, "checkCaptchaSolverInstalled() resultIntent == null")
       return false
@@ -59,6 +59,8 @@ class Chan4CaptchaSolverHelper(
       return null
     }
 
+    Logger.d(TAG, "autoSolveCaptcha() sliderOffset=${sliderOffset}")
+
     val appContext = context.applicationContext
     val intent = Intent(ACTION_SOLVE_CAPTCHA).apply {
       putExtra(ACTION_SOLVE_CAPTCHA_JSON, captchaInfoRawString)
@@ -69,7 +71,6 @@ class Chan4CaptchaSolverHelper(
     }
 
     val resultBundle = sendBroadcastInternal(appContext, intent)
-
     if (resultBundle == null) {
       Logger.d(TAG, "autoSolveCaptcha() resultIntent == null")
       return null
@@ -141,7 +142,7 @@ class Chan4CaptchaSolverHelper(
     @Json(name = "solutions")
     val solutions: List<String>,
     @Json(name = "slider_offset")
-    val sliderOffset: Float
+    val sliderOffset: Float?
   )
 
   companion object {

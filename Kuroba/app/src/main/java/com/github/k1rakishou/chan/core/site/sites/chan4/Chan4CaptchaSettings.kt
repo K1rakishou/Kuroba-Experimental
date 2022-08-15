@@ -11,9 +11,7 @@ data class Chan4CaptchaSettings(
   @SerializedName("slider_captcha_use_contrast_background")
   val sliderCaptchaUseContrastBackground: Boolean = true,
   @SerializedName("remember_captcha_cookies")
-  val rememberCaptchaCookies: Boolean = true,
-  @SerializedName("slider_captcha_grid_mode")
-  val sliderCaptchaGridMode: Boolean = false
+  val rememberCaptchaCookies: Boolean = true
 ) {
 
   companion object {
