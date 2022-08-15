@@ -44,6 +44,8 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 - Bookmark groups with ability to setup regex matchers to automatically move newly created bookmarks into them.
 
+- Automatic captcha solver for 4chan captcha (See https://github.com/K1rakishou/4chanCaptchaSolver)
+
 - Lots of other tiny improvements.
 
 ### Screenshots:
