@@ -484,6 +484,13 @@ class Dvach : CommonSite() {
       addUserCodeCookie(site, requestBuilder)
     }
 
+    override fun modifyPagesRequest(site: Dvach, requestBuilder: Request.Builder) {
+      super.modifyPagesRequest(site, requestBuilder)
+
+      addAntiSpamCookie(requestBuilder)
+      addUserCodeCookie(site, requestBuilder)
+    }
+
     private fun addUserCodeCookie(
       site: Dvach,
       requestBuilder: Request.Builder
@@ -691,14 +698,15 @@ class Dvach : CommonSite() {
     override suspend fun pages(
       board: ChanBoard
     ): JsonReaderRequest.JsonReaderResponse<BoardPages> {
-      val request = Request.Builder()
+      val requestBuilder = Request.Builder()
         .url(endpoints().pages(board))
         .get()
-        .build()
+
+      this@Dvach.requestModifier().modifyPagesRequest(this@Dvach, requestBuilder)
 
       return DvachPagesRequest(
         board,
-        request,
+        requestBuilder.build(),
         proxiedOkHttpClient
       ).execute()
     }

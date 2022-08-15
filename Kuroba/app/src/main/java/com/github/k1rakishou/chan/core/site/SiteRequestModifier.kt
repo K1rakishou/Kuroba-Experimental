@@ -130,6 +130,12 @@ abstract class SiteRequestModifier<T : Site>(
     requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
   }
 
+  @CallSuper
+  open fun modifyPagesRequest(site: T, requestBuilder: Request.Builder) {
+    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+  }
+
   companion object {
     val userAgentHeaderKey = "User-Agent"
     val acceptEncodingHeaderKey = "Accept-Encoding"

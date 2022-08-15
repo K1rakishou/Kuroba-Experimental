@@ -20,9 +20,11 @@ class CloudFlareHandlerInterceptor(
   private val verboseLogs: Boolean,
   private val okHttpType: String
 ) : Interceptor {
-
   @GuardedBy("this")
   private val sitesThatRequireCloudFlareCache = mutableSetOf<String>()
+
+  @GuardedBy("this")
+  private val requestsWithAddedCookie = mutableMapOf<String, Request>()
 
   override fun intercept(chain: Interceptor.Chain): Response {
     var request = chain.request()
@@ -34,42 +36,77 @@ class CloudFlareHandlerInterceptor(
       if (updatedRequest != null) {
         request = updatedRequest
         addedCookie = true
+
+        synchronized(this) {
+          if (!requestsWithAddedCookie.containsKey(host)) {
+            requestsWithAddedCookie[host] = request
+          }
+        }
       }
     }
 
     val response = chain.proceed(request)
 
     if (response.code == 503 || response.code == 403) {
-      val body = response.body
-      if (body != null && tryDetectCloudFlareNeedle(host, body)) {
-        if (verboseLogs) {
-          Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
-        }
-
-        if (addedCookie && isOkHttpClientForSiteRequests) {
-          if (verboseLogs) {
-            Logger.d(TAG, "[$okHttpType] Cookie was already added and we still failed, " +
-              "removing the old cookie")
-          }
-
-          // For some reason CloudFlare still rejected our request even though we added the cookie.
-          // This may happen because of many reasons like the cookie expired or it was somehow
-          // damaged so we need to delete it and re-request again.
-          removeSiteClearanceCookie(chain.request())
-        }
-
-        synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
-
-        // We only want to throw this exception when loading a site's thread endpoint. In any other
-        // case (like when opening media files on that site) we only want to add the CloudFlare
-        // CfClearance cookie to the headers.
-        if (isOkHttpClientForSiteRequests) {
-          throw CloudFlareDetectedException(request.url)
-        }
-      }
+      processCloudflareRejectedRequest(
+        response = response,
+        host = host,
+        addedCookie = addedCookie,
+        chain = chain,
+        request = request
+      )
+    } else {
+      synchronized(this) { requestsWithAddedCookie.remove(host) }
     }
 
     return response
+  }
+
+  private fun processCloudflareRejectedRequest(
+    response: Response,
+    host: String,
+    addedCookie: Boolean,
+    chain: Interceptor.Chain,
+    request: Request
+  ) {
+    val body = response.body
+    if (body == null || !tryDetectCloudFlareNeedle(host, body)) {
+      return
+    }
+
+    if (verboseLogs) {
+      Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
+    }
+
+
+    // To avoid race conditions which could result in us ending up in a situation where a request
+    // with an old cookie or no cookie at all causing us to remove the old cookie from the site
+    // settings.
+    val isExpectedRequestWithCookie = synchronized(this) { requestsWithAddedCookie[host] === request }
+    if (addedCookie && isOkHttpClientForSiteRequests && isExpectedRequestWithCookie) {
+      // For some reason CloudFlare still rejected our request even though we added the cookie.
+      // This may happen because of many reasons like the cookie expired or it was somehow
+      // damaged so we need to delete it and re-request again.
+
+      if (verboseLogs) {
+        Logger.d(
+          TAG,
+          "[$okHttpType] Cookie was already added and we still failed, removing the old cookie"
+        )
+      }
+
+      removeSiteClearanceCookie(chain.request())
+      synchronized(this) { requestsWithAddedCookie.remove(host) }
+    }
+
+    synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
+
+    // We only want to throw this exception when loading a site's thread endpoint. In any other
+    // case (like when opening media files on that site) we only want to add the CloudFlare
+    // CfClearance cookie to the headers.
+    if (isOkHttpClientForSiteRequests) {
+      throw CloudFlareDetectedException(request.url)
+    }
   }
 
   private fun requireCloudFlareCookie(request: Request): Boolean {
