@@ -2,6 +2,8 @@ package com.github.k1rakishou.chan.ui.captcha.chan4
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.text.SpannableString
+import android.text.util.Linkify
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
@@ -139,6 +141,42 @@ class Chan4CaptchaLayout(
     scope.launch {
       viewModel.showCaptchaHelpFlow.take(1).collect {
         showCaptchaHelp()
+      }
+    }
+
+    scope.launch {
+      viewModel.notifyUserAboutCaptchaSolverErrorFlow.collect { captchaSolverInfo ->
+        when (captchaSolverInfo) {
+          CaptchaSolverInfo.Installed -> {
+            // no-op
+          }
+          CaptchaSolverInfo.NotInstalled -> {
+            val bodyMessage = SpannableString(getString(R.string.captcha_layout_captcha_solver_not_installed_body))
+            Linkify.addLinks(bodyMessage, Linkify.WEB_URLS)
+
+            dialogFactory.createSimpleInformationDialog(
+              context = context,
+              titleText = getString(R.string.captcha_layout_captcha_solver_not_installed_title),
+              descriptionText = bodyMessage
+            )
+          }
+          is CaptchaSolverInfo.InstalledVersionMismatch -> {
+            val bodyMessage = SpannableString(
+              getString(
+                R.string.captcha_layout_captcha_solver_version_mismatch_body,
+                captchaSolverInfo.expected,
+                captchaSolverInfo.actual
+              )
+            )
+            Linkify.addLinks(bodyMessage, Linkify.WEB_URLS)
+
+            dialogFactory.createSimpleInformationDialog(
+              context = context,
+              titleText = getString(R.string.captcha_layout_captcha_solver_version_mismatch_title),
+              descriptionText = bodyMessage
+            )
+          }
+        }
       }
     }
 
@@ -661,6 +699,12 @@ class Chan4CaptchaLayout(
       isCurrentlySelected = chan4CaptchaSettings.rememberCaptchaCookies
     )
 
+    items += CheckableFloatingListMenuItem(
+      ACTION_USE_CAPTCHA_SOLVER,
+      getString(R.string.captcha_layout_use_captcha_solver),
+      isCurrentlySelected = chan4CaptchaSettings.useCaptchaSolver
+    )
+
     items += FloatingListMenuItem(
       ACTION_SHOW_CAPTCHA_HELP,
       getString(R.string.captcha_layout_show_captcha_help)
@@ -689,6 +733,12 @@ class Chan4CaptchaLayout(
 
             viewModel.chan4CaptchaSettingsJson.set(updatedSetting)
           }
+          ACTION_USE_CAPTCHA_SOLVER -> {
+            val setting = viewModel.chan4CaptchaSettingsJson.get()
+            val updatedSetting = setting.copy(useCaptchaSolver = setting.useCaptchaSolver.not())
+
+            viewModel.chan4CaptchaSettingsJson.set(updatedSetting)
+          }
         }
       }
     )
@@ -710,6 +760,7 @@ class Chan4CaptchaLayout(
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1
     private const val ACTION_REMEMBER_CAPTCHA_COOKIES = 2
+    private const val ACTION_USE_CAPTCHA_SOLVER = 3
   }
 
 }

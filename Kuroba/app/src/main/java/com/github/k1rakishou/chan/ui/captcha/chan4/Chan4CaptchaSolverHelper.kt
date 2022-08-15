@@ -19,14 +19,14 @@ import kotlinx.coroutines.withTimeoutOrNull
 class Chan4CaptchaSolverHelper(
   private val _moshi: Lazy<Moshi>
 ) {
-  @Volatile private var chan4CaptchaSolverInstalled: Boolean? = null
+  @Volatile private var chan4CaptchaSolverInfo: CaptchaSolverInfo? = null
 
   private val moshi: Moshi
     get() = _moshi.get()
 
-  suspend fun checkCaptchaSolverInstalled(context: Context): Boolean {
-    if (chan4CaptchaSolverInstalled != null) {
-      return chan4CaptchaSolverInstalled!!
+  suspend fun checkCaptchaSolverInstalled(context: Context): CaptchaSolverInfo {
+    if (chan4CaptchaSolverInfo != null) {
+      return chan4CaptchaSolverInfo!!
     }
 
     val appContext = context.applicationContext
@@ -35,19 +35,22 @@ class Chan4CaptchaSolverHelper(
     val resultBundle = sendBroadcastInternal(appContext, intent)
     if (resultBundle == null) {
       Logger.d(TAG, "checkCaptchaSolverInstalled() resultIntent == null")
-      return false
+      return CaptchaSolverInfo.NotInstalled
     }
 
     val appApiVersion = resultBundle.getInt(ACTION_GET_INFO_RESULT)
     if (appApiVersion != API_VERSION) {
       Logger.d(TAG, "checkCaptchaSolverInstalled() appApiVersion (${appApiVersion}) != API_VERSION (${API_VERSION})")
-      chan4CaptchaSolverInstalled = false
-      return false
+      chan4CaptchaSolverInfo = CaptchaSolverInfo.InstalledVersionMismatch(
+        expected = API_VERSION,
+        actual = appApiVersion
+      )
+      return chan4CaptchaSolverInfo!!
     }
 
     Logger.d(TAG, "checkCaptchaSolverInstalled() true")
-    chan4CaptchaSolverInstalled = true
-    return true
+    chan4CaptchaSolverInfo = CaptchaSolverInfo.Installed
+    return chan4CaptchaSolverInfo!!
   }
 
   suspend fun autoSolveCaptcha(
@@ -55,7 +58,7 @@ class Chan4CaptchaSolverHelper(
     captchaInfoRawString: String,
     sliderOffset: Float?
   ): CaptchaSolution? {
-    if (chan4CaptchaSolverInstalled != true) {
+    if (chan4CaptchaSolverInfo != CaptchaSolverInfo.Installed) {
       return null
     }
 
@@ -79,7 +82,6 @@ class Chan4CaptchaSolverHelper(
     val solvedCaptchaJson = resultBundle.getString(ACTION_SOLVE_CAPTCHA_RESULT)
     if (solvedCaptchaJson.isNullOrEmpty()) {
       Logger.d(TAG, "autoSolveCaptcha() solvedCaptchaJson isNullOrEmpty")
-      chan4CaptchaSolverInstalled = false
       return null
     }
 
@@ -160,4 +162,10 @@ class Chan4CaptchaSolverHelper(
     private const val ACTION_SOLVE_CAPTCHA_SLIDER_OFFSET = "${PACKAGE}.solve_captcha_slider_offset"
   }
 
+}
+
+sealed class CaptchaSolverInfo {
+  object NotInstalled : CaptchaSolverInfo()
+  data class InstalledVersionMismatch(val expected: Int, val actual: Int) : CaptchaSolverInfo()
+  object Installed : CaptchaSolverInfo()
 }

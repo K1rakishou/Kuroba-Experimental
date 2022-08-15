@@ -85,6 +85,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   val captchaInfoToShow: State<AsyncData<CaptchaInfo>>
     get() = _captchaInfoToShow
 
+  @Volatile private var notifiedUserAboutCaptchaSolver = false
+
   private var _captchaSolverInstalled = mutableStateOf<Boolean>(false)
   val captchaSolverInstalled: State<Boolean>
     get() = _captchaSolverInstalled
@@ -92,6 +94,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   private var _solvingInProgress = mutableStateOf<Boolean>(false)
   val solvingInProgress: State<Boolean>
     get() = _solvingInProgress
+
+  private val _notifyUserAboutCaptchaSolverErrorFlow = MutableSharedFlow<CaptchaSolverInfo>(extraBufferCapacity = 1)
+  val notifyUserAboutCaptchaSolverErrorFlow: SharedFlow<CaptchaSolverInfo>
+    get() = _notifyUserAboutCaptchaSolverErrorFlow.asSharedFlow()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -166,7 +172,15 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       _captchaInfoToShow.value = AsyncData.Loading
       viewModelInitialized.awaitUntilInitialized()
 
-      _captchaSolverInstalled.value = chan4CaptchaSolverHelper.checkCaptchaSolverInstalled(appContext)
+      if (chan4CaptchaSettingsJson.get().useCaptchaSolver) {
+        val chan4CaptchaSolverInfo = chan4CaptchaSolverHelper.checkCaptchaSolverInstalled(appContext)
+        if (chan4CaptchaSolverInfo !is CaptchaSolverInfo.Installed && !notifiedUserAboutCaptchaSolver) {
+          notifiedUserAboutCaptchaSolver = true
+          _notifyUserAboutCaptchaSolverErrorFlow.emit(chan4CaptchaSolverInfo)
+        }
+
+        _captchaSolverInstalled.value = chan4CaptchaSolverInfo == CaptchaSolverInfo.Installed
+      }
 
       val result = ModularResult.Try { requestCaptchaInternal(appContext, chanDescriptor) }
       when (result) {
