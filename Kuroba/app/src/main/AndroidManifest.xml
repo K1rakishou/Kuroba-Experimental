@@ -31,6 +31,14 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             <action android:name="android.intent.action.GET_CONTENT" />
             <data android:mimeType="*/*" />
         </intent>
+
+        <intent>
+            <action android:name="com.github.k1rakishou.chan4captchasolver.get_info" />
+        </intent>
+        <intent>
+            <action android:name="com.github.k1rakishou.chan4captchasolver.solve_captcha" />
+        </intent>
+
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <category android:name="android.intent.category.BROWSABLE" />
