@@ -1134,7 +1134,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="captcha_layout_captcha_solver_not_installed_title">Captcha solver not installed</string>
     <string name="captcha_layout_captcha_solver_not_installed_body">See https://github.com/K1rakishou/4chanCaptchaSolver for more info</string>
     <string name="captcha_layout_captcha_solver_version_mismatch_title">Captcha solver versions mismatch!</string>
-    <string name="captcha_layout_captcha_solver_version_mismatch_body">Expected \'%1$d\' (current supported version) version but got \'%2$d\' (installed captcha solver version). You need to updated the captcha solver application. See https://github.com/K1rakishou/4chanCaptchaSolver for more info</string>
+    <string name="captcha_layout_captcha_solver_version_mismatch_body">Expected \'%1$d\' (currently supported version) version but got \'%2$d\' (installed captcha solver version). You need to either update the captcha solver application or KurobaEx or both. See https://github.com/K1rakishou/4chanCaptchaSolver for more info</string>
 
     <string name="captcha_layout_v2_you_have_to_select_at_least_one_image">You have to select at least one image (if you see a captcha that does not have any matching images, then it is probably a bug; fill an issue and use the old captcha)</string>
     <string name="captcha_layout_v2_verification_already_in_progress">Verification is already in progress</string>

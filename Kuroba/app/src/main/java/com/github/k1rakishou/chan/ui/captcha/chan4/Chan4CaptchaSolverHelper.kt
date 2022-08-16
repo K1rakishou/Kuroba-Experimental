@@ -151,7 +151,7 @@ class Chan4CaptchaSolverHelper(
     private const val TAG = "Chan4CaptchaSolverHelper"
 
     // Change this when any public api of this app changes to avoid crashes
-    private const val API_VERSION = 1
+    private const val API_VERSION = 2
     private const val PACKAGE = "com.github.k1rakishou.chan4captchasolver"
     private const val ACTION_GET_INFO = "${PACKAGE}.get_info"
     private const val ACTION_GET_INFO_RESULT = "${PACKAGE}.get_info_result"
