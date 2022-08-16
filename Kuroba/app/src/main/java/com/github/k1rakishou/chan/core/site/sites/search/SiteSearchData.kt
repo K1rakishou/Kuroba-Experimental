@@ -88,6 +88,7 @@ sealed class SearchError  {
   data class UnknownError(val error: Throwable) : SearchError()
   data class FirewallDetectedError(val firewallType: FirewallType, val requestUrl: HttpUrl) : SearchError()
   data class ParsingError(val message: String) : SearchError()
+  data class SiteSpecificError(val message: String) : SearchError()
   data class FailedToSearchError(val message: String) : SearchError()
 }
 

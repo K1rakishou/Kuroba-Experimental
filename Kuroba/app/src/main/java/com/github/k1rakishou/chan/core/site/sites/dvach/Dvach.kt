@@ -60,6 +60,7 @@ import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.MultipartBody
 import okhttp3.Request
 import java.util.regex.Pattern
 
@@ -350,9 +351,9 @@ class Dvach : CommonSite() {
       return HttpUrl.Builder()
         .scheme("https")
         .host(siteHost)
-        .addPathSegment("makaba")
-        .addPathSegment("makaba.fcgi")
-        .addQueryParameter("task", "search")
+        .addPathSegment("user")
+        .addPathSegment("search")
+        .addQueryParameter("json", "1")
         .build()
     }
 
@@ -713,18 +714,17 @@ class Dvach : CommonSite() {
 
     override suspend fun <T : SearchParams> search(searchParams: T): SearchResult {
       val dvachSearchParams = searchParams as DvachSearchParams
-
-      // https://2ch.hk/makaba/makaba.fcgi?task=search&board=mobi&find=poco%20x3&json=1
       val searchUrl = requireNotNull(endpoints().search())
-        .newBuilder()
-        .addQueryParameter("board", dvachSearchParams.boardCode)
-        .addQueryParameter("find", dvachSearchParams.query)
-        .addQueryParameter("json", "1")
-        .build()
+
+      val formBuilder = MultipartBody.Builder().apply {
+        setType(MultipartBody.FORM)
+        addFormDataPart("board", dvachSearchParams.boardCode)
+        addFormDataPart("text", dvachSearchParams.query)
+      }
 
       val requestBuilder = Request.Builder()
         .url(searchUrl)
-        .get()
+        .post(formBuilder.build())
 
       this@Dvach.requestModifier().modifySearchGetRequest(this@Dvach, requestBuilder)
 

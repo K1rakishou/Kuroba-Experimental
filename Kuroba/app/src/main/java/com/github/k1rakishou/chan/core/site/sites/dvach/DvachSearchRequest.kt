@@ -32,10 +32,12 @@ class DvachSearchRequest(
 ) {
 
   suspend fun execute(): SearchResult {
-    val dvachSearchResult = proxiedOkHttpClient.get().okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
-      request,
-      moshi.get().adapter(DvachSearchResult::class.java)
-    )
+    val dvachSearchResult = proxiedOkHttpClient.get()
+      .okHttpClient()
+      .suspendConvertIntoJsonObjectWithAdapter(
+        request,
+        moshi.get().adapter(DvachSearchResult::class.java)
+      )
 
     val dvachSearch = if (dvachSearchResult is ModularResult.Error) {
       val error = dvachSearchResult.error
@@ -57,7 +59,11 @@ class DvachSearchRequest(
   }
 
   private fun convertToSearchResult(dvachSearchResult: DvachSearchResult): SearchResult {
-    if (dvachSearchResult.posts.isEmpty()) {
+    if (dvachSearchResult.error != null) {
+      return SearchResult.Failure(SearchError.SiteSpecificError(dvachSearchResult.error.message))
+    }
+
+    if (dvachSearchResult.posts.isNullOrEmpty()) {
       return SearchResult.Success(searchParams, emptyList(), PageCursor.End, null)
     }
 
@@ -119,7 +125,14 @@ class DvachSearchRequest(
 
   @JsonClass(generateAdapter = true)
   data class DvachSearchResult(
-    val posts: List<DvachSearchPost>
+    val posts: List<DvachSearchPost>?,
+    val error: DvachError?
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class DvachError(
+    val code: Int,
+    val message: String
   )
 
   @JsonClass(generateAdapter = true)

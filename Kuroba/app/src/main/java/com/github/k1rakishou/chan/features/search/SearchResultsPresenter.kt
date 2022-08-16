@@ -203,6 +203,7 @@ internal class SearchResultsPresenter(
       is SearchError.ParsingError -> Logger.e(TAG, "$searchError")
       is SearchError.UnknownError -> Logger.e(TAG, "Unknown error", searchError.error)
       is SearchError.FailedToSearchError -> Logger.e(TAG, "FailedToSearchError, message: ${searchError.message}")
+      is SearchError.SiteSpecificError -> Logger.e(TAG, "SiteSpecificError, message: ${searchError.message}")
       is SearchError.FirewallDetectedError -> {
         Logger.e(TAG, "Firewall (${searchError.firewallType}) detected error, requestUrl=${searchError.requestUrl}")
       }
@@ -399,7 +400,10 @@ internal class SearchResultsPresenter(
         "Unknown error: ${searchError.error.errorMessageOrClassName()}"
       }
       is SearchError.ParsingError -> {
-        "Html parsing error: ${searchError.message}"
+        "Parsing error: ${searchError.message}"
+      }
+      is SearchError.SiteSpecificError -> {
+        "Site returned error: ${searchError.message}"
       }
       is SearchError.FirewallDetectedError -> {
         "${searchError.firewallType} detected! You need to pass ${searchError.firewallType} checks to continue"
