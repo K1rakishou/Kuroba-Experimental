@@ -1,19 +1,20 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.unit.LayoutDirection
@@ -37,7 +38,6 @@ abstract class BaseFloatingComposeController(
 
   open val contentAlignment: Alignment = Alignment.TopStart
 
-  @OptIn(ExperimentalMaterialApi::class)
   override fun onCreate() {
     super.onCreate()
     presenting = true
@@ -48,10 +48,16 @@ abstract class BaseFloatingComposeController(
           val currentPaddings by globalWindowInsetsManager.currentInsetsCompose
           val backgroundColor = remember { Color(red = 0f, green = 0f, blue = 0f, alpha = 0.6f) }
 
-          Surface(
-            modifier = Modifier.fillMaxSize(),
-            color = backgroundColor,
-            onClick = { pop() },
+          Box(
+            modifier = Modifier
+              .fillMaxSize()
+              .drawBehind { drawRect(backgroundColor) }
+              .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = { pop() }
+              ),
+            contentAlignment = Alignment.Center
           ) {
             val horizPadding = remember {
               if (AppModuleAndroidUtils.isTablet()) {
