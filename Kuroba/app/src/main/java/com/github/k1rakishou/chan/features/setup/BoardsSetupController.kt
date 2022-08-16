@@ -21,9 +21,6 @@ import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardView
 import com.github.k1rakishou.chan.features.setup.epoxy.EpoxyBoardViewModel_
@@ -33,16 +30,12 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyErrorView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableFloatingActionButton
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.launch
-import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class BoardsSetupController(
@@ -204,44 +197,6 @@ class BoardsSetupController(
 
   override fun onBoardsLoaded() {
     mainScope.launch { showToast(R.string.controller_boards_setup_boards_updated) }
-  }
-
-  override fun showCloudflareBypassController(
-    firewallType: FirewallType,
-    siteDescriptor: SiteDescriptor,
-    urlToOpen: HttpUrl
-  ) {
-    val siteFirewallBypassController = SiteFirewallBypassController(
-      context = context,
-      firewallType = firewallType,
-      urlToOpen = urlToOpen.toString(),
-      onResult = { cookieResult ->
-        when (cookieResult) {
-          is CookieResult.CookieValue -> {
-            presenter.updateBoardsFromServerAndDisplayActive(retrying = true)
-            showToast(getString(R.string.firewall_check_success, firewallType))
-            return@SiteFirewallBypassController
-          }
-          is CookieResult.Error -> {
-            showToast(getString(
-              R.string.firewall_check_failure,
-              firewallType, cookieResult.exception.errorMessageOrClassName()
-            ))
-          }
-          CookieResult.Canceled -> {
-            showToast(getString(R.string.firewall_check_canceled, firewallType))
-          }
-          CookieResult.NotSupported -> {
-            AppModuleAndroidUtils.showToast(
-              context,
-              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName)
-            )
-          }
-        }
-      }
-    )
-
-    presentController(siteFirewallBypassController)
   }
 
   private fun onStateChanged(state: BoardsSetupControllerState) {

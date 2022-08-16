@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.usecase
 
 import android.text.SpannableString
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
@@ -12,7 +11,6 @@ import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.utils.SpannableHelper
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -62,18 +60,6 @@ class GlobalSearchUseCase(
         return searchResult
       }
       is ModularResult.Error -> {
-        if (result.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-          val cloudFlareDetectedException =
-            result.error as CloudFlareHandlerInterceptor.CloudFlareDetectedException
-
-          val resultError = SearchError.FirewallDetectedError(
-            FirewallType.Cloudflare,
-            cloudFlareDetectedException.requestUrl
-          )
-
-          return SearchResult.Failure(resultError)
-        }
-
         Logger.e(TAG, "doSearch() Unknown error", result.error)
         return SearchResult.Failure(SearchError.UnknownError(result.error))
       }

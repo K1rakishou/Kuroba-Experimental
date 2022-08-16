@@ -68,7 +68,7 @@ class ReplyResponse {
 
   @get:Synchronized
   @set:Synchronized
-  var additionalResponseData: AdditionalResponseData? = null
+  var additionalResponseData: AdditionalResponseData = ReplyResponse.AdditionalResponseData.NoOp
 
   @get:Synchronized
   @set:Synchronized
@@ -115,7 +115,7 @@ class ReplyResponse {
     password: String,
     probablyBanned: Boolean,
     requireAuthentication: Boolean,
-    additionalResponseData: AdditionalResponseData?,
+    additionalResponseData: AdditionalResponseData,
     rateLimitInfo: RateLimitInfo?
   ) {
     this.posted = posted
@@ -132,11 +132,7 @@ class ReplyResponse {
   }
 
   sealed class AdditionalResponseData {
-    object DvachAntiSpamCheckDetected : AdditionalResponseData() {
-      override fun toString(): String {
-        return "DvachAntiSpamCheckDetected"
-      }
-    }
+    object NoOp : AdditionalResponseData()
   }
 
   data class RateLimitInfo(

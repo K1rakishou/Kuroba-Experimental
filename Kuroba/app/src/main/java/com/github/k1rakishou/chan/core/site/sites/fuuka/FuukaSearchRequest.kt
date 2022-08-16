@@ -1,13 +1,11 @@
 package com.github.k1rakishou.chan.core.site.sites.fuuka
 
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.FuukaSearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendConvertIntoJsoupDocument
 import com.github.k1rakishou.core_logger.Logger
@@ -26,14 +24,7 @@ class FuukaSearchRequest(
   suspend fun execute(): SearchResult {
     return proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsoupDocument(request)
       .mapValue { document -> readHtml(request.url.toString(), document) }
-      .mapErrorToValue { error ->
-        if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-          val searchError = SearchError.FirewallDetectedError(FirewallType.Cloudflare, error.requestUrl)
-          return@mapErrorToValue SearchResult.Failure(searchError)
-        }
-
-        return@mapErrorToValue SearchResult.Failure(SearchError.UnknownError(error))
-      }
+      .mapErrorToValue { error -> SearchResult.Failure(SearchError.UnknownError(error)) }
   }
 
   suspend fun readHtml(requestUrl: String, document: Document): SearchResult {

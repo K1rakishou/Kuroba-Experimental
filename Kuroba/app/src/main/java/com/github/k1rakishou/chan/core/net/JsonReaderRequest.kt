@@ -19,6 +19,8 @@ package com.github.k1rakishou.chan.core.net
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult.Companion.Try
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.google.gson.stream.JsonReader
@@ -49,7 +51,12 @@ abstract class JsonReaderRequest<T>(
 
         return@Try timedValue.value
       }.safeUnwrap { error ->
-        Logger.e(TAG, "Network request error", error)
+        if (error.isExceptionImportant()) {
+          Logger.e(TAG, "Network request error", error)
+        } else {
+          Logger.e(TAG, "Network request error: ${error.errorMessageOrClassName()}")
+        }
+
         return@withContext JsonReaderResponse.UnknownServerError(error)
       }
 

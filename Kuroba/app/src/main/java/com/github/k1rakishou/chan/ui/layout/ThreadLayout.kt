@@ -49,9 +49,6 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.presenter.ThreadPresenter.ThreadPresenterCallback
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
@@ -82,7 +79,6 @@ import com.github.k1rakishou.chan.utils.awaitUntilGloballyLaidOutAndGetSize
 import com.github.k1rakishou.chan.utils.setBackgroundColorFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -513,7 +509,7 @@ class ThreadLayout @JvmOverloads constructor(
   }
 
   override fun showError(chanDescriptor: ChanDescriptor, error: ChanLoaderException) {
-    if (hasSupportedActiveArchives() && !error.isCloudFlareError()) {
+    if (hasSupportedActiveArchives() && !error.isFirewallError()) {
       openThreadInArchiveButton.setVisibilityFast(View.VISIBLE)
     } else {
       openThreadInArchiveButton.setVisibilityFast(View.GONE)
@@ -537,57 +533,6 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     callback.onShowError()
-
-    if (error.isCloudFlareError()) {
-      openCloudFlareBypassControllerAndHandleResult(chanDescriptor, error)
-    }
-  }
-
-  private fun openCloudFlareBypassControllerAndHandleResult(
-    chanDescriptor: ChanDescriptor,
-    error: ChanLoaderException
-  ) {
-    val presenting = callback
-      .isAlreadyPresentingController { controller -> controller is SiteFirewallBypassController }
-
-    if (presenting) {
-      return
-    }
-
-    val firewallType = FirewallType.Cloudflare
-
-    val controller = SiteFirewallBypassController(
-      context = context,
-      firewallType = firewallType,
-      urlToOpen = error.getOriginalRequestHost(),
-      onResult = { cookieResult ->
-        when (cookieResult) {
-          is CookieResult.CookieValue -> {
-            showToast(context, getString(R.string.firewall_check_success, firewallType))
-            presenter.normalLoad()
-
-            return@SiteFirewallBypassController
-          }
-          is CookieResult.Error -> {
-            showToast(
-              context,
-              getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
-            )
-          }
-          CookieResult.Canceled -> {
-            showToast(context, getString(R.string.firewall_check_canceled, firewallType))
-          }
-          CookieResult.NotSupported -> {
-            showToast(
-              context,
-              getString(R.string.firewall_check_not_supported, firewallType, chanDescriptor.siteDescriptor().siteName)
-            )
-          }
-        }
-      }
-    )
-
-    callback.presentController(controller, animated = true)
   }
 
   private fun hasSupportedActiveArchives(): Boolean {

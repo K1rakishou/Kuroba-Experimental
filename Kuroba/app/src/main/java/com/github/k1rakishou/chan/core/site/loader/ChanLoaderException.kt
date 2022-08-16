@@ -1,9 +1,9 @@
 package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.google.gson.JsonParseException
@@ -48,7 +48,7 @@ open class ChanLoaderException(
         is JsonDataException,
         is JsonEncodingException,
         is JsonParseException -> getString(R.string.thread_load_failed_json_parsing)
-        is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> {
+        is FirewallDetectedException -> {
           getString(R.string.thread_load_failed_cloud_flare_detected)
         }
         is SiteError -> exception.shortMessage()
@@ -64,21 +64,20 @@ open class ChanLoaderException(
       is SocketException,
       is UnknownHostException,
       is SSLException,
-      is CloudFlareHandlerInterceptor.CloudFlareDetectedException -> true
+      is FirewallDetectedException -> true
       is ChanLoaderException -> isRecoverableError(error.exception)
       else -> false
     }
   }
 
-  fun isCloudFlareError(): Boolean =
-    exception is CloudFlareHandlerInterceptor.CloudFlareDetectedException
+  fun isFirewallError(): Boolean = exception is FirewallDetectedException
 
   fun getOriginalRequestHost(): String {
-    if (!isCloudFlareError()) {
-      throw IllegalStateException("Not a CloudFlareDetectedException error!")
+    if (!isFirewallError()) {
+      throw IllegalStateException("Not a FirewallDetectedException error!")
     }
 
-    val fullUrl = (exception as CloudFlareHandlerInterceptor.CloudFlareDetectedException).requestUrl
+    val fullUrl = (exception as FirewallDetectedException).requestUrl
 
     return HttpUrl.Builder()
       .scheme("https")

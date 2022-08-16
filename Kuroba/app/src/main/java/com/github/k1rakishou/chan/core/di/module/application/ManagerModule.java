@@ -53,6 +53,7 @@ import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager;
 import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager;
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
@@ -921,6 +922,20 @@ public class ManagerModule {
                 moshi,
                 chanThreadsCache,
                 fileManager
+        );
+    }
+
+    @Singleton
+    @Provides
+    public FirewallBypassManager provideFirewallBypassManager(
+            CoroutineScope appScope,
+            ApplicationVisibilityManager applicationVisibilityManager
+    ) {
+        Logger.deps("FirewallBypassManager");
+
+        return new FirewallBypassManager(
+                appScope,
+                applicationVisibilityManager
         );
     }
 

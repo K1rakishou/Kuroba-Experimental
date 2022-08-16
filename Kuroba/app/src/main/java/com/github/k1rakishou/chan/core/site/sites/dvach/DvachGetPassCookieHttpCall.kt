@@ -51,11 +51,6 @@ class DvachGetPassCookieHttpCall(
       return
     }
 
-    if (result.contains(DvachReplyCall.ANTI_SPAM_SCRIPT_TAG, ignoreCase = true)) {
-      loginResponse = DvachLoginResponse.AntiSpamDetected
-      return
-    }
-
     if (passcodeResult.error != null) {
       loginResponse = DvachLoginResponse.Failure(passcodeResult.error.message)
       return

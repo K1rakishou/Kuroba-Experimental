@@ -1,8 +1,11 @@
 package com.github.k1rakishou.chan.core.base.okhttp;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.common.dns.CompositeDnsSelector;
@@ -16,8 +19,6 @@ import javax.inject.Inject;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 // this is basically the same as OkHttpClient, but with a singleton for a proxy instance
 public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
     private OkHttpClient proxiedClient;
@@ -28,6 +29,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
     private final ProxyStorage proxyStorage;
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final SiteResolver siteResolver;
+    private final FirewallBypassManager firewallBypassManager;
 
     @Inject
     public RealProxiedOkHttpClient(
@@ -36,7 +38,8 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         this.normalDnsSelectorFactory = normalDnsSelectorFactory;
         this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
@@ -44,6 +47,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
         this.siteResolver = siteResolver;
+        this.firewallBypassManager = firewallBypassManager;
     }
 
     @NotNull
@@ -59,7 +63,7 @@ public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
 
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
-                            true,
+                            firewallBypassManager,
                             ChanSettings.verboseLogs.get(),
                             "Generic"
                     );

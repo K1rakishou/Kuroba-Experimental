@@ -33,8 +33,6 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.features.posting.PostResult
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
@@ -48,7 +46,6 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
@@ -57,7 +54,6 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
@@ -427,58 +423,6 @@ class ReplyPresenter @Inject constructor(
             onFinished?.invoke(true)
           }
         }
-        is CaptchaContainerController.AuthenticationResult.SiteRequiresAdditionalAuth -> {
-          launch {
-            var cookieResult: CookieResult = CookieResult.Canceled
-
-            val firewallType = authenticationResult.firewallType
-            val siteDescriptor = authenticationResult.siteDescriptor
-
-            when (firewallType) {
-              FirewallType.Cloudflare -> {
-                cookieResult = callback.showFireWallBypassController(firewallType, siteDescriptor)
-                when (cookieResult) {
-                  CookieResult.Canceled -> {
-                    showToast(context, getString(R.string.firewall_check_canceled, firewallType))
-                  }
-                  CookieResult.NotSupported -> {
-                    showToast(context, getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName))
-                  }
-                  is CookieResult.Error -> {
-                    val errorMsg = cookieResult.exception.errorMessageOrClassName()
-                    showToast(context, getString(R.string.firewall_check_failure, firewallType, errorMsg))
-                  }
-                  is CookieResult.CookieValue -> {
-                    showToast(context, getString(R.string.firewall_check_success, firewallType))
-                  }
-                }
-              }
-              FirewallType.DvachAntiSpam -> {
-                cookieResult = callback.showFireWallBypassController(firewallType, siteDescriptor)
-                when (cookieResult) {
-                  CookieResult.Canceled -> {
-                    showToast(context, R.string.dvach_antispam_result_canceled)
-                  }
-                  CookieResult.NotSupported -> {
-                    showToast(context, getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName))
-                  }
-                  is CookieResult.Error -> {
-                    val errorMsg = cookieResult.exception.errorMessageOrClassName()
-                    showToast(context, getString(R.string.dvach_antispam_result_error, errorMsg))
-                  }
-                  is CookieResult.CookieValue -> {
-                    showToast(context, getString(R.string.dvach_antispam_result_success))
-                  }
-                }
-              }
-            }
-
-            if (!autoReply) {
-              val success = cookieResult is CookieResult.CookieValue
-              onFinished?.invoke(success)
-            }
-          }
-        }
       }
     }
 
@@ -782,49 +726,11 @@ class ReplyPresenter @Inject constructor(
         }
 
         when (replyResponse.additionalResponseData) {
-          ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected -> {
-            handleDvachAntiSpam(replyResponse, chanDescriptor, replyMode)
-          }
-          null -> {
+          ReplyResponse.AdditionalResponseData.NoOp -> {
             onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
           }
         }
       }
-    }
-  }
-
-  private suspend fun handleDvachAntiSpam(
-    replyResponse: ReplyResponse,
-    chanDescriptor: ChanDescriptor,
-    replyMode: ReplyMode
-  ) {
-    val firewallType = FirewallType.DvachAntiSpam
-    val siteDescriptor = chanDescriptor.siteDescriptor()
-
-    val cookieResult = callback.showFireWallBypassController(firewallType, siteDescriptor)
-    if (cookieResult is CookieResult.CookieValue) {
-      // We managed to solve the anti spam check, try posting again
-      makeSubmitCall(chanDescriptor = chanDescriptor, replyMode = replyMode, retrying = true)
-    } else {
-      val reason = when (cookieResult) {
-        CookieResult.Canceled -> {
-          getString(R.string.dvach_antispam_result_canceled)
-        }
-        CookieResult.NotSupported -> {
-          getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName)
-        }
-        is CookieResult.Error -> {
-          val errorMsg = cookieResult.exception.errorMessageOrClassName()
-          getString(R.string.dvach_antispam_result_error, errorMsg)
-        }
-        is CookieResult.CookieValue -> getString(R.string.dvach_antispam_result_success)
-      }
-
-      // We failed to solve the anti spam check, show the error
-      onPostCompleteUnsuccessful(
-        replyResponse = replyResponse,
-        additionalErrorMessage = getString(R.string.reply_error_failed_to_process_dvach_anti_spam_locally, reason)
-      )
     }
   }
 
@@ -1011,7 +917,6 @@ class ReplyPresenter @Inject constructor(
     fun restoreComment(prevCommentInputState: CommentEditingHistory.CommentInputState)
     suspend fun bindReplyImages(chanDescriptor: ChanDescriptor)
     fun unbindReplyImages(chanDescriptor: ChanDescriptor)
-    suspend fun showFireWallBypassController(firewallType: FirewallType, siteDescriptor: SiteDescriptor): CookieResult
     fun presentController(controller: Controller)
     fun hideKeyboard()
     fun updateCaptchaContainerVisibility()

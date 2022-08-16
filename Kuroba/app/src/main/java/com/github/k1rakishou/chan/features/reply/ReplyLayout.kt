@@ -64,9 +64,6 @@ import com.github.k1rakishou.chan.core.presenter.ThreadPresenter
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.reply.ReplyPresenter.ReplyPresenterCallback
 import com.github.k1rakishou.chan.features.reply.data.Reply
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -99,7 +96,6 @@ import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isPointInsideView
-import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.core_logger.Logger
@@ -108,14 +104,12 @@ import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.android.material.textview.MaterialTextView
 import dagger.Lazy
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.suspendCancellableCoroutine
 import javax.inject.Inject
 
 class ReplyLayout @JvmOverloads constructor(
@@ -701,32 +695,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   override fun presentController(controller: Controller) {
     threadListLayoutCallbacks?.presentController(controller)
-  }
-
-  override suspend fun showFireWallBypassController(
-    firewallType: FirewallType,
-    siteDescriptor: SiteDescriptor
-  ): CookieResult {
-    BackgroundUtils.ensureMainThread()
-
-    val callbacks = threadListLayoutCallbacks
-      ?: return CookieResult.Canceled
-
-    val firewallChallengeEndpoint = siteManager.bySiteDescriptor(siteDescriptor)
-      ?.firewallChallengeEndpoint()
-      ?: return CookieResult.NotSupported
-
-    return suspendCancellableCoroutine { continuation ->
-      val controller = SiteFirewallBypassController(
-        context = context,
-        firewallType = firewallType,
-        urlToOpen = firewallChallengeEndpoint,
-        onResult = { cookieResult -> continuation.resumeValueSafe(cookieResult) }
-      )
-
-      callbacks.presentController(controller)
-      continuation.invokeOnCancellation { controller.stopPresenting() }
-    }
   }
 
   override fun hideKeyboard() {

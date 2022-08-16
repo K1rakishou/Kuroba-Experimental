@@ -1148,11 +1148,9 @@ class PostingServiceDelegate(
           replyResponse.errorMessage.isNotNullNorBlank() -> replyResponse.errorMessage!!
           replyResponse.probablyBanned -> getString(R.string.post_service_response_probably_banned)
           replyResponse.requireAuthentication -> getString(R.string.post_service_response_authentication_required)
-          replyResponse.additionalResponseData != null -> {
-            when (replyResponse.additionalResponseData!!) {
-              ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected -> {
-                getString(R.string.post_service_response_dvach_antispam_detected)
-              }
+          replyResponse.additionalResponseData !is ReplyResponse.AdditionalResponseData.NoOp -> {
+            when (replyResponse.additionalResponseData) {
+              ReplyResponse.AdditionalResponseData.NoOp -> "NoOp"
             }
           }
           else -> getString(R.string.post_service_response_unknown_error)

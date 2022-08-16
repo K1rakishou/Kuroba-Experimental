@@ -1,12 +1,12 @@
 package com.github.k1rakishou.chan.core.site.sites.dvach
 
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.common.CommonClientException
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
+import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.suspendCall
@@ -90,7 +90,7 @@ class DvachReportPostRequest(
           return PostReportResult.AuthRequired
         }
 
-        if (result.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+        if (result.error is FirewallDetectedException) {
           Logger.e(TAG, "reportPost($postDescriptor) cloudflare required")
           return PostReportResult.CloudFlareDetected
         }

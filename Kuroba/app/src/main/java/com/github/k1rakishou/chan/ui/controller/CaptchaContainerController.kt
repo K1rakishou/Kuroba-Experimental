@@ -11,7 +11,6 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutInterface
 import com.github.k1rakishou.chan.ui.captcha.CaptchaLayout
@@ -25,7 +24,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
-import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import javax.inject.Inject
 
 class CaptchaContainerController(
@@ -136,11 +134,6 @@ class CaptchaContainerController(
     pop()
   }
 
-  override fun onSiteRequiresAdditionalAuth(firewallType: FirewallType, siteDescriptor: SiteDescriptor) {
-    authenticationCallback(AuthenticationResult.SiteRequiresAdditionalAuth(firewallType, siteDescriptor))
-    pop()
-  }
-
   override fun onFallbackToV1CaptchaView() {
     initAuthenticationInternal(useV2NoJsCaptcha = false)
   }
@@ -241,11 +234,6 @@ class CaptchaContainerController(
   sealed class AuthenticationResult {
     object Success : AuthenticationResult()
     data class Failure(val throwable: Throwable) : AuthenticationResult()
-
-    data class SiteRequiresAdditionalAuth(
-      val firewallType: FirewallType,
-      val siteDescriptor: SiteDescriptor
-    ) : AuthenticationResult()
   }
 
   companion object {

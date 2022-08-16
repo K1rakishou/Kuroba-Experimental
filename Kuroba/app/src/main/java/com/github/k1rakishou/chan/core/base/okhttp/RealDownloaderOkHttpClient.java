@@ -1,8 +1,11 @@
 package com.github.k1rakishou.chan.core.base.okhttp;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.common.dns.CompositeDnsSelector;
@@ -16,8 +19,6 @@ import javax.inject.Inject;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 
-import static java.util.concurrent.TimeUnit.SECONDS;
-
 public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
     private final NormalDnsSelectorFactory normalDnsSelectorFactory;
     private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;
@@ -25,6 +26,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
     private final SiteResolver siteResolver;
+    private final FirewallBypassManager firewallBypassManager;
 
     private OkHttpClient downloaderClient;
 
@@ -35,7 +37,8 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         this.normalDnsSelectorFactory = normalDnsSelectorFactory;
         this.dnsOverHttpsSelectorFactory = dnsOverHttpsSelectorFactory;
@@ -43,6 +46,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
         this.siteResolver = siteResolver;
+        this.firewallBypassManager = firewallBypassManager;
     }
 
     @NotNull
@@ -58,7 +62,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
 
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
-                            false,
+                            firewallBypassManager,
                             ChanSettings.verboseLogs.get(),
                             "Downloader"
                     );

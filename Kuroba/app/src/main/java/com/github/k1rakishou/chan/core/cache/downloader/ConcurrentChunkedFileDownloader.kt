@@ -305,11 +305,11 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
         // file - cache file. After that we need to do clean up: delete chunk files
         // (we also need to delete them in case of an error)
         return@flatMap chunkPersister.storeChunkInFile(
-          url,
-          chunkResponse,
-          totalDownloaded,
-          chunkIndex,
-          totalChunksCount
+          url = url,
+          chunkResponse = chunkResponse,
+          totalDownloaded = totalDownloaded,
+          chunkIndex = chunkIndex,
+          totalChunksCount = totalChunksCount
         )
       }
       // Retry on IO error mechanism. Apply it to each chunk individually

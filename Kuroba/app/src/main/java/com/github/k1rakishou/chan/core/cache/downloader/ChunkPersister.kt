@@ -34,10 +34,12 @@ internal class ChunkPersister(
     return Flowable.create({ emitter ->
       BackgroundUtils.ensureBackgroundThread()
 
-      val serializedEmitter = emitter.serialize()
-      val chunk = chunkResponse.chunk
       val request = activeDownloads.get(url)
         ?: activeDownloads.throwCancellationException(url)
+
+      val serializedEmitter = emitter.serialize()
+      val chunk = chunkResponse.chunk
+      val response = chunkResponse.response
 
       try {
         if (verboseLogs) {
@@ -49,12 +51,12 @@ internal class ChunkPersister(
             "should be only one but actual = $totalChunksCount")
         }
 
-        if (!chunkResponse.response.isSuccessful) {
-          if (chunkResponse.response.code == 404) {
+        if (!response.isSuccessful) {
+          if (response.code == 404) {
             throw FileCacheException.FileNotFoundOnTheServerException()
           }
 
-          throw FileCacheException.HttpCodeException(chunkResponse.response.code)
+          throw FileCacheException.HttpCodeException(response.code)
         }
 
         val chunkCacheFile = cacheHandler.get().getOrCreateChunkCacheFile(
@@ -65,7 +67,7 @@ internal class ChunkPersister(
         ) ?: throw IOException("Couldn't create chunk cache file")
 
         try {
-          chunkResponse.response.useAsResponseBody { responseBody ->
+          response.useAsResponseBody { responseBody ->
             var chunkSize = responseBody.contentLength()
 
             if (totalChunksCount == 1) {
@@ -114,6 +116,8 @@ internal class ChunkPersister(
           chunk,
           serializedEmitter
         )
+      } finally {
+        response.closeQuietly()
       }
     }, BackpressureStrategy.BUFFER)
   }

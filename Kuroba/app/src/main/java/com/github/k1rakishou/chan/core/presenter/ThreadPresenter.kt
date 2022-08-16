@@ -1095,8 +1095,8 @@ class ThreadPresenter @Inject constructor(
       error is ClientException -> {
         Logger.e(TAG, "onChanLoaderError($chanDescriptor) called, error=${error.errorMessageOrClassName()}")
       }
-      error.isCloudFlareError() -> {
-        Logger.e(TAG, "onChanLoaderError($chanDescriptor) called CloudFlareDetectedException")
+      error.isFirewallError() -> {
+        Logger.e(TAG, "onChanLoaderError($chanDescriptor) called FirewallDetectedException")
       }
       else -> {
         Logger.e(TAG, "onChanLoaderError($chanDescriptor) called", error)

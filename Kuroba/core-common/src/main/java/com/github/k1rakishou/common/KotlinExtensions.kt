@@ -659,6 +659,7 @@ fun Throwable.isExceptionImportant(): Boolean {
     is CancellationException,
     is InterruptedIOException,
     is InterruptedException,
+    is FirewallDetectedException,
     is SSLException -> false
     else -> true
   }

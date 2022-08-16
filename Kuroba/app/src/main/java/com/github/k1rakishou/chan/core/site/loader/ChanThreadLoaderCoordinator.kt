@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.site.loader
 
 import com.github.k1rakishou.ChanSettings
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressEvent
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
@@ -39,6 +38,7 @@ import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
+import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.errorMessageOrClassName
@@ -64,7 +64,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.Request
 import java.io.InputStream
-import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
@@ -211,7 +210,7 @@ class ChanThreadLoaderCoordinator(
         val (response, requestDuration) = try {
           measureTimedValue { proxiedOkHttpClient.okHttpClient().suspendCall(requestBuilder.build()) }
         } catch (error: Throwable) {
-          if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+          if (error is FirewallDetectedException) {
             throw error
           }
 

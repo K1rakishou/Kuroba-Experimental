@@ -13,9 +13,6 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
 import com.github.k1rakishou.chan.core.usecase.GlobalSearchUseCase
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.features.search.data.SearchParameters
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerState
 import com.github.k1rakishou.chan.features.search.data.SearchResultsControllerStateData
@@ -30,15 +27,12 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyTextView
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.RecyclerUtils
 import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
-import okhttp3.HttpUrl
 import javax.inject.Inject
 
 class SearchResultsController(
@@ -114,59 +108,6 @@ class SearchResultsController(
 
     epoxyRecyclerView.updatePaddings(bottom = dp(bottomPaddingDp.toFloat()))
   }
-
-  override fun onFirewallDetected(firewallType: FirewallType, siteDescriptor: SiteDescriptor, requestUrl: HttpUrl) {
-    val hostUrl = getUrlToOpen(firewallType, requestUrl)
-
-    val controller = SiteFirewallBypassController(
-      context = context,
-      firewallType = firewallType,
-      urlToOpen = hostUrl,
-      onResult = { cookieResult ->
-        when (cookieResult) {
-          is CookieResult.CookieValue -> {
-            showToast(context, getString(R.string.firewall_check_success, firewallType))
-            presenter.reloadCurrentPage()
-
-            return@SiteFirewallBypassController
-          }
-          is CookieResult.Error -> {
-            showToast(
-              context,
-              getString(R.string.firewall_check_failure, firewallType, cookieResult.exception.errorMessageOrClassName())
-            )
-          }
-          CookieResult.Canceled -> {
-            showToast(context, getString(R.string.firewall_check_canceled, firewallType))
-          }
-          CookieResult.NotSupported -> {
-            showToast(context, getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName))
-          }
-        }
-      }
-    )
-
-    presentController(controller, animated = true)
-  }
-
-  private fun getUrlToOpen(firewallType: FirewallType, requestUrl: HttpUrl) =
-    when (firewallType) {
-      FirewallType.Cloudflare -> {
-        HttpUrl.Builder()
-          .scheme("https")
-          .host(requestUrl.host)
-          .build()
-          .toString()
-      }
-      FirewallType.DvachAntiSpam -> {
-        HttpUrl.Builder()
-          .scheme("https")
-          .host(requestUrl.host)
-          .addPathSegment("challenge")
-          .build()
-          .toString()
-      }
-    }
 
   private fun onStateChanged(state: SearchResultsControllerState) {
     epoxyRecyclerView.withModels {

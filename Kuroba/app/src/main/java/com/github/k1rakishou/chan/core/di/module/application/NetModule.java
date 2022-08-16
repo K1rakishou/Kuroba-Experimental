@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
 import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.chan.core.site.http.HttpCallManager;
 import com.github.k1rakishou.common.AppConstants;
@@ -129,7 +130,8 @@ public class NetModule {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         Logger.deps("RealProxiedOkHttpClient");
 
@@ -139,7 +141,8 @@ public class NetModule {
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,
-                siteResolver
+                siteResolver,
+                firewallBypassManager
         );
     }
 
@@ -155,7 +158,8 @@ public class NetModule {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         Logger.deps("CoilOkHttpClient");
 
@@ -166,7 +170,8 @@ public class NetModule {
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,
-                siteResolver
+                siteResolver,
+                firewallBypassManager
         );
     }
 
@@ -181,7 +186,8 @@ public class NetModule {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         Logger.deps("RealDownloaderOkHttpClient");
 
@@ -191,7 +197,8 @@ public class NetModule {
                 okHttpProtocols,
                 proxyStorage,
                 httpLoggingInterceptorLazy,
-                siteResolver
+                siteResolver,
+                firewallBypassManager
         );
     }
 }

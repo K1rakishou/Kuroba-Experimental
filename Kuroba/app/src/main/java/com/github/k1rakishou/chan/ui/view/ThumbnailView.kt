@@ -21,7 +21,11 @@ import android.animation.ValueAnimator
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.ColorStateList
-import android.graphics.*
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
+import android.graphics.Paint
+import android.graphics.Rect
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
@@ -201,7 +205,14 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     this.cacheFileType = cacheFileType
     this._thumbnailViewOptions = thumbnailViewOptions
 
-    kurobaScope!!.launch { setUrlInternal(url, postDescriptor, imageSize, thumbnailViewOptions) }
+    kurobaScope!!.launch {
+      setUrlInternal(
+        url = url,
+        postDescriptor = postDescriptor,
+        imageSize = imageSize,
+        thumbnailViewOptions = thumbnailViewOptions
+      )
+    }
   }
 
   fun unbindImageUrl() {
@@ -247,50 +258,10 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
   }
 
   fun onThumbnailViewClicked(listener: OnClickListener) {
-    if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.get().deleteCacheFileByUrl(
-        cacheFileType = CacheFileType.PostMediaThumbnail,
-        url = _imageUrl!!
-      )
-      cacheHandler.get().deleteCacheFileByUrl(
-        cacheFileType = CacheFileType.PostMediaFull,
-        url = _imageUrl!!
-      )
-
-      bindImageUrl(
-        url = _imageUrl!!,
-        cacheFileType = cacheFileType,
-        postDescriptor = postDescriptor!!,
-        imageSize = imageSize!!,
-        thumbnailViewOptions = _thumbnailViewOptions!!
-      )
-      return
-    }
-
     listener.onClick(this)
   }
 
   fun onThumbnailViewLongClicked(listener: OnLongClickListener): Boolean {
-    if (_error && _imageUrl != null && postDescriptor != null && imageSize != null && _thumbnailViewOptions != null) {
-      cacheHandler.get().deleteCacheFileByUrl(
-        cacheFileType = CacheFileType.PostMediaThumbnail,
-        url = _imageUrl!!
-      )
-      cacheHandler.get().deleteCacheFileByUrl(
-        cacheFileType = CacheFileType.PostMediaFull,
-        url = _imageUrl!!
-      )
-
-      bindImageUrl(
-        url = _imageUrl!!,
-        cacheFileType = cacheFileType,
-        postDescriptor = postDescriptor!!,
-        imageSize = imageSize!!,
-        thumbnailViewOptions = _thumbnailViewOptions!!
-      )
-      return true
-    }
-
     return listener.onLongClick(this)
   }
 
@@ -313,10 +284,9 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
       val y = height / 2f - tmpTextRect.exactCenterY()
       canvas.drawText(errorText!!, x + paddingLeft, y + paddingTop, textPaint)
       canvas.restore()
-      return
+    } else {
+      super.onDraw(canvas)
     }
-
-    super.onDraw(canvas)
 
     if (_thumbnailViewOptions?.drawRipple == true && imageForeground != null) {
       if (foregroundCalculate) {

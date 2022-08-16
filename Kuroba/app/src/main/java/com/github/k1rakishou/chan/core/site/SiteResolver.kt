@@ -30,6 +30,8 @@ open class SiteResolver @Inject constructor(
     siteManager.runWhenInitialized(func)
   }
 
+  fun isInitialized(): Boolean = siteManager.isReady()
+
   open fun findSiteForUrl(url: String): Site? {
     var httpUrl = sanitizeUrl(url)
 

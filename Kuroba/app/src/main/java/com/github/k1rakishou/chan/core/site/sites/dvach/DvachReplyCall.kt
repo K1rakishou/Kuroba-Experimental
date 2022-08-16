@@ -263,12 +263,6 @@ class DvachReplyCall internal constructor(
       return
     }
 
-    if (result.contains(ANTI_SPAM_SCRIPT_TAG)) {
-      replyResponse.errorMessage = "2ch.hk anti spam script detected"
-      replyResponse.additionalResponseData = ReplyResponse.AdditionalResponseData.DvachAntiSpamCheckDetected
-      return
-    }
-
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
     replyResponse.errorMessage = "Failed to post, see the logs for more info"
   }
@@ -330,6 +324,5 @@ class DvachReplyCall internal constructor(
     private val POSTING_COOLDOWN_MS = TimeUnit.SECONDS.toMillis(35)
 
     private const val PROBABLY_BANNED_TEXT = "Постинг запрещён"
-    const val ANTI_SPAM_SCRIPT_TAG = "<title>Проверка...</title>"
   }
 }

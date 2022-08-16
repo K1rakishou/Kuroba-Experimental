@@ -1,5 +1,6 @@
 package com.github.k1rakishou.common
 
+import okhttp3.HttpUrl
 import java.io.IOException
 
 interface ExceptionWithShortErrorMessage {
@@ -62,3 +63,13 @@ class ParsingException(message: String) : IOException(message), ExceptionWithSho
     return "Parsing error"
   }
 }
+
+enum class FirewallType {
+  Cloudflare,
+  DvachAntiSpam
+}
+
+class FirewallDetectedException(
+  val firewallType: FirewallType,
+  val requestUrl: HttpUrl
+) : IOException("Url '$requestUrl' cannot be opened without going through ${firewallType} checks first!")

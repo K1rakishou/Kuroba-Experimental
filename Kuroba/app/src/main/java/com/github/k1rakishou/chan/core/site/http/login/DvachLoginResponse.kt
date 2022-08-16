@@ -7,5 +7,4 @@ sealed class DvachLoginResponse(authCookie: String?) : AbstractLoginResponse(aut
 
   class Success(val successMessage: String, authCookie: String) : DvachLoginResponse(authCookie)
   class Failure(val errorMessage: String) : DvachLoginResponse(null)
-  object AntiSpamDetected : DvachLoginResponse(null)
 }

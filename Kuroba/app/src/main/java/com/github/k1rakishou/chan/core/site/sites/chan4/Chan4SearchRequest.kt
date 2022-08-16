@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.text.SpannableStringBuilder
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.site.sites.search.Chan4SearchParams
 import com.github.k1rakishou.chan.core.site.sites.search.PageCursor
@@ -9,7 +8,6 @@ import com.github.k1rakishou.chan.core.site.sites.search.SearchEntry
 import com.github.k1rakishou.chan.core.site.sites.search.SearchEntryPost
 import com.github.k1rakishou.chan.core.site.sites.search.SearchError
 import com.github.k1rakishou.chan.core.site.sites.search.SearchResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -64,11 +62,6 @@ class Chan4SearchRequest(
           }
         }
       } catch (error: Throwable) {
-        if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-          val searchError = SearchError.FirewallDetectedError(FirewallType.Cloudflare, error.requestUrl)
-          return@withContext SearchResult.Failure(searchError)
-        }
-
         return@withContext SearchResult.Failure(SearchError.UnknownError(error))
       }
     }

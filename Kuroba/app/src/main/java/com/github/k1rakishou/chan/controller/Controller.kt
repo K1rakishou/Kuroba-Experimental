@@ -66,7 +66,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
-import java.util.*
 import javax.inject.Inject
 
 @Suppress("LeakingThis")
@@ -115,8 +114,12 @@ abstract class Controller(@JvmField var context: Context) {
   open val toolbar: Toolbar?
     get() = null
 
-  @JvmField
-  var alive = false
+  private var _alive = false
+  val alive: Boolean
+    get() = _alive
+  private var _shown = false
+  val shown: Boolean
+    get() = _shown
 
   protected var compositeDisposable = CompositeDisposable()
     @JvmName("compositeDisposable") get
@@ -124,10 +127,6 @@ abstract class Controller(@JvmField var context: Context) {
 
   private val job = SupervisorJob()
   protected var mainScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("Controller_${this::class.java.simpleName}"))
-
-  var shown = false
-    @JvmName("shown") get
-    private set
 
   protected val cancellableToast = CancellableToast()
 
@@ -188,7 +187,7 @@ abstract class Controller(@JvmField var context: Context) {
 
   @CallSuper
   open fun onCreate() {
-    alive = true
+    _alive = true
 
     if (LOG_STATES) {
       Logger.e("LOG_STATES", javaClass.simpleName + " onCreate")
@@ -197,7 +196,7 @@ abstract class Controller(@JvmField var context: Context) {
 
   @CallSuper
   open fun onShow() {
-    shown = true
+    _shown = true
 
     if (LOG_STATES) {
       Logger.e("LOG_STATES", javaClass.simpleName + " onShow")
@@ -214,7 +213,7 @@ abstract class Controller(@JvmField var context: Context) {
 
   @CallSuper
   open fun onHide() {
-    shown = false
+    _shown = false
 
     if (LOG_STATES) {
       Logger.e("LOG_STATES", javaClass.simpleName + " onHide")
@@ -231,7 +230,7 @@ abstract class Controller(@JvmField var context: Context) {
 
   @CallSuper
   open fun onDestroy() {
-    alive = false
+    _alive = false
     compositeDisposable.clear()
     job.cancelChildren()
 

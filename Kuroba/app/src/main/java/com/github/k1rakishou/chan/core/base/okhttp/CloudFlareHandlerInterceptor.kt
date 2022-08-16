@@ -1,22 +1,23 @@
 package com.github.k1rakishou.chan.core.base.okhttp
 
 import androidx.annotation.GuardedBy
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.containsPattern
+import com.github.k1rakishou.common.FirewallDetectedException
+import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.StringSetting
-import okhttp3.HttpUrl
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.ResponseBody
-import java.io.IOException
 import java.nio.charset.StandardCharsets
 
 class CloudFlareHandlerInterceptor(
   private val siteResolver: SiteResolver,
-  private val isOkHttpClientForSiteRequests: Boolean,
+  private val firewallBypassManager: FirewallBypassManager,
   private val verboseLogs: Boolean,
   private val okHttpType: String
 ) : Interceptor {
@@ -78,12 +79,11 @@ class CloudFlareHandlerInterceptor(
       Logger.d(TAG, "[$okHttpType] Found CloudFlare needle in the page's body")
     }
 
-
     // To avoid race conditions which could result in us ending up in a situation where a request
     // with an old cookie or no cookie at all causing us to remove the old cookie from the site
     // settings.
     val isExpectedRequestWithCookie = synchronized(this) { requestsWithAddedCookie[host] === request }
-    if (addedCookie && isOkHttpClientForSiteRequests && isExpectedRequestWithCookie) {
+    if (addedCookie && isExpectedRequestWithCookie) {
       // For some reason CloudFlare still rejected our request even though we added the cookie.
       // This may happen because of many reasons like the cookie expired or it was somehow
       // damaged so we need to delete it and re-request again.
@@ -101,12 +101,30 @@ class CloudFlareHandlerInterceptor(
 
     synchronized(this) { sitesThatRequireCloudFlareCache.add(host) }
 
+    if (siteResolver.isInitialized() && request.method.equals("GET", ignoreCase = true)) {
+      val site = siteResolver.findSiteForUrl(request.url.toString())
+      if (site != null) {
+        val siteDescriptor = site.siteDescriptor()
+
+        val requestUrl = site
+          .firewallChallengeEndpoint()
+          ?: request.url
+
+        firewallBypassManager.onFirewallDetected(
+          firewallType = FirewallType.Cloudflare,
+          siteDescriptor = siteDescriptor,
+          urlToOpen = requestUrl
+        )
+      }
+    }
+
     // We only want to throw this exception when loading a site's thread endpoint. In any other
     // case (like when opening media files on that site) we only want to add the CloudFlare
     // CfClearance cookie to the headers.
-    if (isOkHttpClientForSiteRequests) {
-      throw CloudFlareDetectedException(request.url)
-    }
+    throw FirewallDetectedException(
+      firewallType = FirewallType.Cloudflare,
+      requestUrl = request.url
+    )
   }
 
   private fun requireCloudFlareCookie(request: Request): Boolean {
@@ -217,10 +235,6 @@ class CloudFlareHandlerInterceptor(
       }
     }
   }
-
-  class CloudFlareDetectedException(
-    val requestUrl: HttpUrl
-  ) : IOException("Url '$requestUrl' cannot be opened without going through CloudFlare checks first!")
 
   companion object {
     private const val TAG = "CloudFlareHandlerInterceptor"

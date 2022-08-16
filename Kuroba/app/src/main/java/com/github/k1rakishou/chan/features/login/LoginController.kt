@@ -23,7 +23,6 @@ import android.widget.TextView
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -35,9 +34,6 @@ import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.DvachLoginRequest
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
-import com.github.k1rakishou.chan.features.bypass.CookieResult
-import com.github.k1rakishou.chan.features.bypass.FirewallType
-import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.view.CrossfadeView
@@ -143,11 +139,6 @@ class LoginController(
   override fun onRefreshPostingLimitsInfoError(error: Throwable) {
     showToast(error.errorMessageOrClassName())
     enableDisableControls(enable = true)
-
-    if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-      val firewallType = FirewallType.Cloudflare
-      handleFirewall(firewallType)
-    }
   }
 
   override fun onRefreshPostingLimitsInfoResult(refreshed: Boolean) {
@@ -246,57 +237,7 @@ class LoginController(
       is SiteActions.LoginResult.LoginError -> {
         onLoginError(loginResult.errorMessage)
       }
-      SiteActions.LoginResult.CloudflareDetected,
-      SiteActions.LoginResult.AntiSpamDetected -> {
-        if (retrying) {
-          onLoginError("Firewall passed, now try logging in again")
-          return
-        }
-
-        val firewallType = if (loginResult is SiteActions.LoginResult.CloudflareDetected) {
-          FirewallType.Cloudflare
-        } else {
-          FirewallType.DvachAntiSpam
-        }
-
-        handleFirewall(firewallType)
-      }
     }
-  }
-
-  private fun handleFirewall(firewallType: FirewallType) {
-    val siteDescriptor = site.siteDescriptor()
-
-    if (siteDescriptor.isDvach()) {
-      val urlToOpen = siteManager.bySiteDescriptor(siteDescriptor)?.firewallChallengeEndpoint()
-        ?: return
-
-      val controller = SiteFirewallBypassController(
-        context = context,
-        firewallType = firewallType,
-        urlToOpen = urlToOpen,
-        onResult = { cookieResult ->
-          if (cookieResult is CookieResult.CookieValue) {
-            mainScope.launch { auth(retrying = true) }
-            return@SiteFirewallBypassController
-          }
-
-          val error = when (cookieResult) {
-            is CookieResult.CookieValue -> throw IllegalStateException("Must not be used here")
-            CookieResult.Canceled -> getString(R.string.canceled)
-            CookieResult.NotSupported -> "Not supported"
-            is CookieResult.Error -> cookieResult.exception.errorMessageOrClassName()
-          }
-
-          onLoginError("Failed to pass anti-spam check, error=$error")
-        }
-      )
-
-      presentController(controller)
-      return
-    }
-
-    onLoginError("Unsupported anti-spam system detected!")
   }
 
   private fun createLoginRequest(): AbstractLoginRequest {

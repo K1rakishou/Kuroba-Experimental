@@ -2,11 +2,9 @@ package com.github.k1rakishou.chan.features.setup
 
 import com.github.k1rakishou.chan.core.base.BasePresenter
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
-import com.github.k1rakishou.chan.features.bypass.FirewallType
 import com.github.k1rakishou.chan.features.setup.data.BoardsSetupControllerState
 import com.github.k1rakishou.chan.features.setup.data.CatalogCellData
 import com.github.k1rakishou.chan.ui.helper.BoardHelper
@@ -97,14 +95,7 @@ class BoardsSetupPresenter(
       loadBoardInfoSuspend(site)
         .safeUnwrap { error ->
           Logger.e(TAG, "Error loading boards for site ${siteDescriptor}", error)
-          withView {
-            hideLoadingView()
-
-            if (!retrying && error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-              showCloudflareBypassController(FirewallType.Cloudflare, siteDescriptor, error.requestUrl)
-            }
-          }
-
+          withView { hideLoadingView() }
           setState(BoardsSetupControllerState.Error(error.errorMessageOrClassName()))
           return@launch
         }

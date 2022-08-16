@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
-import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -101,12 +100,11 @@ class Dvach : CommonSite() {
   private val urlHandlerLazy = lazy { DvachSiteUrlHandler(domainUrl) }
   private val siteIconLazy = lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
 
-  override fun firewallChallengeEndpoint(): String? {
+  override fun firewallChallengeEndpoint(): HttpUrl {
     // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
     // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
     // https://2ch.hk doesn't trigger anti-spam script.
-
-    return "https://2ch.hk/challenge/"
+    return "${domainString}/challenge/".toHttpUrl()
   }
 
   val captchaV2NoJs by lazy {
@@ -607,16 +605,9 @@ class Dvach : CommonSite() {
             is DvachLoginResponse.Failure -> {
               SiteActions.LoginResult.LoginError(loginResponse.errorMessage)
             }
-            DvachLoginResponse.AntiSpamDetected -> {
-              SiteActions.LoginResult.AntiSpamDetected
-            }
           }
         }
         is HttpCall.HttpCallResult.Fail -> {
-          if (loginResult.error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
-            return SiteActions.LoginResult.CloudflareDetected
-          }
-
           return SiteActions.LoginResult.LoginError(loginResult.error.errorMessageOrClassName())
         }
       }

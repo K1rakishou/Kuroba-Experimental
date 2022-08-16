@@ -5,6 +5,7 @@ import android.content.Context;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
+import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.net.KurobaProxySelector;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
 import com.github.k1rakishou.common.dns.CompositeDnsSelector;
@@ -27,6 +28,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     private final HttpLoggingInterceptorLazy httpLoggingInterceptorLazy;
     private final ProxyStorage proxyStorage;
     private final SiteResolver siteResolver;
+    private final FirewallBypassManager firewallBypassManager;
 
     private OkHttpClient coilClient;
 
@@ -38,7 +40,8 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
             Chan.OkHttpProtocols okHttpProtocols,
             ProxyStorage proxyStorage,
             HttpLoggingInterceptorLazy httpLoggingInterceptorLazy,
-            SiteResolver siteResolver
+            SiteResolver siteResolver,
+            FirewallBypassManager firewallBypassManager
     ) {
         this.applicationContext = applicationContext;
         this.normalDnsSelectorFactory = normalDnsSelectorFactory;
@@ -47,6 +50,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
         this.proxyStorage = proxyStorage;
         this.httpLoggingInterceptorLazy = httpLoggingInterceptorLazy;
         this.siteResolver = siteResolver;
+        this.firewallBypassManager = firewallBypassManager;
     }
 
     @NotNull
@@ -62,7 +66,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
 
                     Interceptor interceptor = new CloudFlareHandlerInterceptor(
                             siteResolver,
-                            false,
+                            firewallBypassManager,
                             ChanSettings.verboseLogs.get(),
                             "Coil"
                     );
