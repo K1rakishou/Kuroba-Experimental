@@ -52,7 +52,13 @@ class ThirdEyeManager(
 
   private val thirdEyeSettingsLazy = LazySuspend<ThirdEyeSettings> {
     try {
-      loadThirdEyeSettings() ?: ThirdEyeSettings()
+      val thirdEyeSettings = loadThirdEyeSettings()
+      if (thirdEyeSettings != null) {
+        return@LazySuspend thirdEyeSettings
+      }
+
+      Logger.d(TAG, "loadThirdEyeSettings() thirdEyeSettings == null")
+      return@LazySuspend ThirdEyeSettings()
     } catch (error: Throwable) {
       Logger.e(TAG, "loadThirdEyeSettings() error!", error)
       ThirdEyeSettings()
