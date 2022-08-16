@@ -4,6 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.RendezvousCoroutineExecutor
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.awaitSilently
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
@@ -29,7 +30,11 @@ class FirewallBypassManager(
   val showFirewallControllerEvents: SharedFlow<ShowFirewallControllerInfo>
     get() = _showFirewallControllerEvents.asSharedFlow()
 
-  fun onFirewallDetected(firewallType: FirewallType, siteDescriptor: SiteDescriptor, urlToOpen: HttpUrl) {
+  fun onFirewallDetected(
+    firewallType: FirewallType,
+    siteDescriptor: SiteDescriptor,
+    urlToOpen: HttpUrl
+  ) {
     if (!applicationVisibilityManager.isAppInForeground()) {
       // No point to do anything here since there is most likely no activity currently alive
       return
@@ -58,6 +63,8 @@ class FirewallBypassManager(
     if (!notifyListeners) {
       return
     }
+
+    Logger.d(TAG, "Sending event to show SiteFirewallBypassController")
 
     rendezvousCoroutineExecutor.post {
       val completableDeferred = CompletableDeferred(Unit)
@@ -98,6 +105,7 @@ class FirewallBypassManager(
   )
 
   companion object {
+    private const val TAG = "FirewallBypassManager"
     private const val FIREWALL_CHECK_TIMEOUT_MS = 10_000L
   }
 

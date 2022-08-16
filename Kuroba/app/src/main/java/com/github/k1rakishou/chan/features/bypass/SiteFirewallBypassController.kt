@@ -207,7 +207,7 @@ class SiteFirewallBypassController(
   }
 
   companion object {
-    private const val TAG = "CloudFlareBypassController"
+    private const val TAG = "SiteFirewallBypassController"
     const val MAX_PAGE_LOADS_COUNT = 10
   }
 }
