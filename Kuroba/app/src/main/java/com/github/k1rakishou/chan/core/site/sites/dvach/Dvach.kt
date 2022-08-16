@@ -627,7 +627,11 @@ class Dvach : CommonSite() {
         return SiteActions.GetPasscodeInfoResult.NotLoggedIn
       }
 
-      if (!resetCached && passCodeInfo.isNotDefault()) {
+      if (resetCached) {
+        passCodeInfo.reset()
+      }
+
+      if (passCodeInfo.isNotDefault()) {
         val dvachPasscodeInfo = passCodeInfo.get()
 
         val maxAttachedFilesPerPost = dvachPasscodeInfo.files
@@ -643,6 +647,10 @@ class Dvach : CommonSite() {
         }
 
         // fallthrough
+      }
+
+      if (!resetCached) {
+        return SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork
       }
 
       val passcodeInfoCall = DvachGetPasscodeInfoHttpCall(this@Dvach, gson)

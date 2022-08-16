@@ -95,7 +95,6 @@ class PasscodeDependantAttachablesCount(
   private val siteManager: SiteManager,
   private val defaultMaxAttachablesPerPost: Int
 ) : PostAttachableLimitation {
-
   override suspend fun getMaxAllowedAttachablesPerPost(params: PostAttachableLimitation.Params): Int {
     val siteDescriptor = params.boardDescriptor.siteDescriptor
 
@@ -110,22 +109,27 @@ class PasscodeDependantAttachablesCount(
       return defaultMaxAttachablesPerPost
     }
 
-    val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)
-    if (getPasscodeInfoResult == null) {
-      Logger.d(TAG, "getOrRefreshPasscodeInfo() == null, siteDescriptor='$siteDescriptor'")
-      return defaultMaxAttachablesPerPost
+    when (val getPasscodeInfoResult = site.actions().getOrRefreshPasscodeInfo(resetCached = false)) {
+      null -> {
+        Logger.d(TAG, "getOrRefreshPasscodeInfo() == null, siteDescriptor='$siteDescriptor'")
+        return defaultMaxAttachablesPerPost
+      }
+      is SiteActions.GetPasscodeInfoResult.Failure -> {
+        Logger.e(TAG, "getOrRefreshPasscodeInfo() is Failure, siteDescriptor='$siteDescriptor'", getPasscodeInfoResult.error)
+        return defaultMaxAttachablesPerPost
+      }
+      SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork -> {
+        Logger.d(TAG, "getOrRefreshPasscodeInfo() is NotAllowedToRefreshFromNetwork, siteDescriptor='$siteDescriptor'")
+        return defaultMaxAttachablesPerPost
+      }
+      SiteActions.GetPasscodeInfoResult.NotLoggedIn -> {
+        Logger.d(TAG, "getOrRefreshPasscodeInfo() is NotLoggedIn, siteDescriptor='$siteDescriptor'")
+        return defaultMaxAttachablesPerPost
+      }
+      is SiteActions.GetPasscodeInfoResult.Success -> {
+        return getPasscodeInfoResult.postingLimitationsInfo.maxAttachedFilesPerPost
+      }
     }
-
-    if (getPasscodeInfoResult is SiteActions.GetPasscodeInfoResult.Failure) {
-      Logger.e(TAG, "getPasscodeInfoResult is Failure, " +
-        "siteDescriptor='$siteDescriptor'", getPasscodeInfoResult.error)
-      return defaultMaxAttachablesPerPost
-    }
-
-    val postingLimitationsInfo =
-      (getPasscodeInfoResult as SiteActions.GetPasscodeInfoResult.Success).postingLimitationsInfo
-
-    return postingLimitationsInfo.maxAttachedFilesPerPost
   }
 
   companion object {

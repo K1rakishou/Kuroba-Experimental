@@ -32,6 +32,7 @@ class PostingLimitationsInfoManager(
     }
 
     when (getPasscodeInfoResult) {
+      is SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork,
       is SiteActions.GetPasscodeInfoResult.NotLoggedIn -> {
         return ModularResult.value(false)
       }

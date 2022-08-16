@@ -10,7 +10,7 @@ class LoginPresenter(
   private val postingLimitationsInfoManager: PostingLimitationsInfoManager
 ) : BasePresenter<LoginView>() {
 
-  fun refreshPostingLimitsInfo(siteDescriptor: SiteDescriptor) {
+  fun updatePasscodeInfo(siteDescriptor: SiteDescriptor) {
     scope.launch {
       when (val result = postingLimitationsInfoManager.refresh(siteDescriptor)) {
         is ModularResult.Value -> {

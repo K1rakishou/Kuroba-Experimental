@@ -936,8 +936,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_pass_logout">Logout</string>
     <string name="setting_pass_error">Connection error</string>
 
-    <string name="setting_posting_limits_info_refresh_success">Posting limits info refreshed</string>
-    <string name="setting_posting_limits_info_refresh_failure">Failed to refresh posting limits info</string>
+    <string name="setting_posting_limits_info_refresh_success">Passcode info updated</string>
+    <string name="setting_posting_limits_info_refresh_failure">Failed to update passcode info</string>
 
     <string name="setting_pass_bottom_description_chan4">"
 <![CDATA[
@@ -1570,7 +1570,7 @@ Actual error: \'%1$s\'</string>
     <string name="decoding_reply_file_preview">Decoding file preview, this may take some time</string>
     <string name="downloading_file">Downloading file, this may take some time</string>
     <string name="enter_image_video_url">Enter image/video url</string>
-    <string name="refresh_posting_limits_info">Refresh posting limits info</string>
+    <string name="update_passcode_info">Update passcode info</string>
     <string name="must_be_logged_in">Must be logged in</string>
     <string name="attached_file_info">Attached file info</string>
     <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>

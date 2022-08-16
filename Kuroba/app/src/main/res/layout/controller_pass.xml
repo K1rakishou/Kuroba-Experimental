@@ -85,11 +85,11 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
             android:layout_height="wrap_content" />
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
-            android:id="@+id/refresh_posting_limits_info"
+            android:id="@+id/update_passcode_info"
             android:layout_width="180dp"
             android:layout_height="wrap_content"
             android:textSize="12sp"
-            android:text="@string/refresh_posting_limits_info"
+            android:text="@string/update_passcode_info"
             android:visibility="gone"
             tools:visibility="visible"/>
 

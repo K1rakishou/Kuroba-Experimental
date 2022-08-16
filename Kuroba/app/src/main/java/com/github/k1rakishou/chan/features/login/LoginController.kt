@@ -23,6 +23,7 @@ import android.widget.TextView
 import androidx.core.text.parseAsHtml
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
@@ -67,7 +68,7 @@ class LoginController(
   private lateinit var bottomDescription: TextView
 
   private lateinit var button: ColorizableButton
-  private lateinit var refreshPostingLimitsInfoButton: ColorizableButton
+  private lateinit var updatePasscodeInfo: ColorizableButton
   private lateinit var inputToken: ColorizableEditText
   private lateinit var inputPin: ColorizableEditText
 
@@ -86,7 +87,7 @@ class LoginController(
       crossfadeView = view.findViewById(R.id.crossfade)
       errors = view.findViewById(R.id.errors)
       button = view.findViewById(R.id.retry_button)
-      refreshPostingLimitsInfoButton = view.findViewById(R.id.refresh_posting_limits_info)
+      updatePasscodeInfo = view.findViewById(R.id.update_passcode_info)
       inputToken = view.findViewById(R.id.input_token)
       inputPin = view.findViewById(R.id.input_pin)
       authenticated = view.findViewById(R.id.authenticated)
@@ -141,8 +142,12 @@ class LoginController(
 
   override fun onRefreshPostingLimitsInfoError(error: Throwable) {
     showToast(error.errorMessageOrClassName())
-
     enableDisableControls(enable = true)
+
+    if (error is CloudFlareHandlerInterceptor.CloudFlareDetectedException) {
+      val firewallType = FirewallType.Cloudflare
+      handleFirewall(firewallType)
+    }
   }
 
   override fun onRefreshPostingLimitsInfoResult(refreshed: Boolean) {
@@ -178,22 +183,22 @@ class LoginController(
     }
 
     if (loginDetails.loginOverridesPostLimitations) {
-      refreshPostingLimitsInfoButton.visibility = View.VISIBLE
-      refreshPostingLimitsInfoButton.setOnClickListener {
+      updatePasscodeInfo.visibility = View.VISIBLE
+      updatePasscodeInfo.setOnClickListener {
         if (!loggedIn()) {
           showToast(context.getString(R.string.must_be_logged_in))
           return@setOnClickListener
         }
 
         enableDisableControls(enable = false)
-        loginPresenter.refreshPostingLimitsInfo(site.siteDescriptor())
+        loginPresenter.updatePasscodeInfo(site.siteDescriptor())
       }
     }
   }
 
   private fun enableDisableControls(enable: Boolean) {
     button.isEnabled = enable
-    refreshPostingLimitsInfoButton.isEnabled = enable
+    updatePasscodeInfo.isEnabled = enable
     inputToken.isEnabled = enable
     inputPin.isEnabled = enable
   }
@@ -254,12 +259,12 @@ class LoginController(
           FirewallType.DvachAntiSpam
         }
 
-        handleAntiSpam(firewallType)
+        handleFirewall(firewallType)
       }
     }
   }
 
-  private fun handleAntiSpam(firewallType: FirewallType) {
+  private fun handleFirewall(firewallType: FirewallType) {
     val siteDescriptor = site.siteDescriptor()
 
     if (siteDescriptor.isDvach()) {
