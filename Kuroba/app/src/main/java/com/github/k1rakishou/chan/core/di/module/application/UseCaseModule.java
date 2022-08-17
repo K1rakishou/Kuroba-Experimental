@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase;
+import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadMediaUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
@@ -473,6 +474,20 @@ public class UseCaseModule {
                 appConstants,
                 moshi,
                 proxiedOkHttpClient
+        );
+    }
+
+    @Provides
+    @Singleton
+    public ExportDownloadedThreadMediaUseCase provideExportDownloadedThreadMediaUseCase(
+            AppConstants appConstants,
+            FileManager fileManager
+    ) {
+        Logger.deps("ExportDownloadedThreadMediaUseCase");
+
+        return new ExportDownloadedThreadMediaUseCase(
+                appConstants,
+                fileManager
         );
     }
 

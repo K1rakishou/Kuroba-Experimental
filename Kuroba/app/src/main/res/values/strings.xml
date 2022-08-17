@@ -1336,6 +1336,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_local_archive_show_downloading_threads">DOWNLOADING</string>
     <string name="controller_local_archive_show_downloaded_threads">DOWNLOADED</string>
     <string name="controller_local_archive_additional_thread_stats">Posts: %1$d, Media: %2$d, Media on disk: %3$s</string>
+    <string name="controller_local_archive_export_threads">Export threads</string>
+    <string name="controller_local_archive_export_thread_media">Export thread media</string>
 
     <string name="controller_saved_posts_delete_many_posts">Delete %1$d saved post(s)?</string>
     <string name="controller_saved_posts_delete_many_posts_description">This action will delete saved posts and unmark replies as yours in threads. Are you sure you want to do that?</string>
