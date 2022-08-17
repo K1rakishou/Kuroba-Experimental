@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.core.usecase
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImage
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendConvertIntoJsonObjectWithAdapter
 import com.github.k1rakishou.core_logger.Logger
@@ -91,26 +92,6 @@ class SearxImageSearchUseCase(
       return fixUrlOrNull(fullUrl)?.toHttpUrlOrNull()
     }
 
-    private fun fixUrlOrNull(inputUrlRaw: String?): String? {
-      if (inputUrlRaw == null) {
-        return null
-      }
-
-      if (inputUrlRaw.startsWith("//")) {
-        return HTTPS + inputUrlRaw.removePrefix("//")
-      }
-
-      if (inputUrlRaw.startsWith(HTTPS)) {
-        return inputUrlRaw
-      }
-
-      if (inputUrlRaw.startsWith(HTTP)) {
-        return HTTPS + inputUrlRaw.removePrefix(HTTP)
-      }
-
-      return HTTPS + inputUrlRaw
-    }
-
     companion object {
       private const val RAW_IMAGE_DATA_MARKER = "data:"
     }
@@ -118,8 +99,6 @@ class SearxImageSearchUseCase(
 
   companion object {
     private const val TAG = "SearxImageSearchUseCase"
-    private const val HTTP = "http://"
-    private const val HTTPS = "https://"
   }
 
 }

@@ -25,6 +25,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonV
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController
+import com.github.k1rakishou.chan.features.reply_image_search.yandex.YandexImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
@@ -47,7 +48,6 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -397,6 +397,11 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       name = context.getString(R.string.layout_reply_files_area_searx_image_search)
     )
 
+    floatingListMenuItems += FloatingListMenuItem(
+      key = ACTION_USE_YANDEX_IMAGE_SEARCH,
+      name = context.getString(R.string.layout_reply_files_area_yandex_image_search)
+    )
+
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
@@ -428,6 +433,15 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
         replyLayoutCallbacks?.hideKeyboard()
         threadListLayoutCallbacks?.presentController(searxImageSearchController)
+      }
+      ACTION_USE_YANDEX_IMAGE_SEARCH -> {
+        val yandexImageSearchController = YandexImageSearchController(
+          context = context,
+          onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
+        )
+
+        replyLayoutCallbacks?.hideKeyboard()
+        threadListLayoutCallbacks?.presentController(yandexImageSearchController)
       }
     }
   }
@@ -546,6 +560,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
     private const val ACTION_USE_SEARX_IMAGE_SEARCH = 102
+    private const val ACTION_USE_YANDEX_IMAGE_SEARCH = 103
 
     private const val MIN_FILES_PER_ROW = 2
 

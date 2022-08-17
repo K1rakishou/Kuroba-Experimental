@@ -1241,6 +1241,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
     <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
     <string name="layout_reply_files_area_searx_image_search">Use searx image search</string>
+    <string name="layout_reply_files_area_yandex_image_search">Use Yandex image search</string>
 
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>

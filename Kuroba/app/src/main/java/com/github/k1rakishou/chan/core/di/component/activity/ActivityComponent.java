@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonV
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
 import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController;
+import com.github.k1rakishou.chan.features.reply_image_search.yandex.YandexImageSearchController;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
@@ -284,6 +285,7 @@ public interface ActivityComponent {
     void inject(Chan4ReportPostController chan4ReportPostController);
     void inject(ThirdEyeSettingsController thirdEyeSettingsController);
     void inject(AddOrEditBooruController addOrEditBooruController);
+    void inject(YandexImageSearchController yandexImageSearchController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

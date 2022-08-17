@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
+import com.github.k1rakishou.chan.core.usecase.YandexImageSearchUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -489,6 +490,17 @@ public class UseCaseModule {
                 appConstants,
                 fileManager
         );
+    }
+
+    @Provides
+    @Singleton
+    public YandexImageSearchUseCase provideYandexImageSearchUseCase(
+            RealProxiedOkHttpClient proxiedOkHttpClient,
+            Moshi moshi
+    ) {
+        Logger.deps("YandexImageSearchUseCase");
+
+        return new YandexImageSearchUseCase(proxiedOkHttpClient, moshi);
     }
 
 }
