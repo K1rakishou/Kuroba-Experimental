@@ -19,8 +19,15 @@ import coil.annotation.ExperimentalCoilApi
 import coil.bitmap.BitmapPool
 import coil.memory.MemoryCache
 import coil.network.HttpException
-import coil.request.*
-import coil.size.*
+import coil.request.Disposable
+import coil.request.ErrorResult
+import coil.request.ImageRequest
+import coil.request.SuccessResult
+import coil.size.OriginalSize
+import coil.size.PixelSize
+import coil.size.Scale
+import coil.size.Size
+import coil.size.ViewSizeResolver
 import coil.transform.Transformation
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -36,10 +43,21 @@ import com.github.k1rakishou.chan.ui.widget.FixedViewSizeResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.MediaUtils
 import com.github.k1rakishou.chan.utils.getLifecycleFromContext
-import com.github.k1rakishou.common.*
+import com.github.k1rakishou.common.BadContentTypeException
+import com.github.k1rakishou.common.DoNotStrip
+import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
 import com.github.k1rakishou.common.ModularResult.Companion.error
 import com.github.k1rakishou.common.ModularResult.Companion.value
+import com.github.k1rakishou.common.NotFoundException
+import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isCoroutineCancellationException
+import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.common.removeIfKt
+import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileManager
@@ -49,8 +67,17 @@ import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.exoplayer2.util.MimeTypes
 import dagger.Lazy
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import java.io.File
@@ -666,7 +693,7 @@ class ImageLoaderV2(
       val contentMainType = responseBody.contentType()?.type
       val contentSubType = responseBody.contentType()?.subtype
 
-      if (contentMainType != "image" && contentMainType != "video" && !endchanFaviconUrl(url)) {
+      if (contentMainType != "image" && contentMainType != "video" && !faviconUrlWithInvalidMimeType(url)) {
         throw BadContentTypeException("${contentMainType}/${contentSubType}")
       }
 
@@ -692,11 +719,12 @@ class ImageLoaderV2(
   }
 
   // Super hack.
-  // Endchan sends it's favicon without the content type which breaks our content type checks so
-  // we have to check the url manually...
-  private fun endchanFaviconUrl(url: String): Boolean {
+  // Some sites send their favicons without the content type which breaks our content type checks so
+  // we have to check the urls manually...
+  private fun faviconUrlWithInvalidMimeType(url: String): Boolean {
     return url == "https://endchan.net/favicon.ico"
       || url == "https://endchan.org/favicon.ico"
+      || url == "https://yeshoney.xyz/favicon.ico"
   }
 
   private suspend fun tryLoadFromDiskCacheOrNull(
