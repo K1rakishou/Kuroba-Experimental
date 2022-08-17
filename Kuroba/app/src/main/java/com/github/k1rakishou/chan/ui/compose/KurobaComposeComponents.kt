@@ -834,7 +834,6 @@ fun KurobaComposeCardView(
   }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
 @Composable
 fun KurobaSearchInput(
   modifier: Modifier = Modifier,

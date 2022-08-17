@@ -108,6 +108,7 @@ class SelectBoardForSearchController(
                   modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
+                    .background(chanTheme.primaryColorCompose)
                     .padding(horizontal = 4.dp, vertical = 8.dp),
                   chanTheme = chanTheme,
                   onBackgroundColor = chanTheme.primaryColorCompose,
