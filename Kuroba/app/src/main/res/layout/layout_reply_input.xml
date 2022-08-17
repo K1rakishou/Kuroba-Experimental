@@ -222,6 +222,54 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                             tools:visibility="visible" />
 
                         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/comment_bold"
+                            android:layout_width="50dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="0dp"
+                            android:padding="0dp"
+                            android:text="@string/reply_comment_button_bold_tag"
+                            android:textAllCaps="false"
+                            android:textSize="14dp"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/comment_italic"
+                            android:layout_width="50dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="0dp"
+                            android:padding="0dp"
+                            android:text="@string/reply_comment_button_italic_tag"
+                            android:textAllCaps="false"
+                            android:textSize="14dp"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/comment_underline"
+                            android:layout_width="50dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="0dp"
+                            android:padding="0dp"
+                            android:text="@string/reply_comment_button_underline_tag"
+                            android:textAllCaps="false"
+                            android:textSize="14dp"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
+                            android:id="@+id/comment_strikethrough"
+                            android:layout_width="50dp"
+                            android:layout_height="40dp"
+                            android:layout_margin="0dp"
+                            android:padding="0dp"
+                            android:text="@string/reply_comment_button_strikethrough_tag"
+                            android:textAllCaps="false"
+                            android:textSize="14dp"
+                            android:visibility="gone"
+                            tools:visibility="visible" />
+
+                        <com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton
                             android:id="@+id/comment_eqn"
                             android:layout_width="40dp"
                             android:layout_height="40dp"

@@ -292,6 +292,8 @@ class ReplyPresenter @Inject constructor(
       return
     }
 
+    processTextFormattingButtons()
+
     callback.focusComment()
 
     postingCheckLastErrorJob?.cancel()
@@ -307,6 +309,40 @@ class ReplyPresenter @Inject constructor(
       }
 
       onPostCompleteUnsuccessful(lastUnsuccessfulReplyResponse)
+    }
+  }
+
+  private fun processTextFormattingButtons() {
+    callback.openCommentQuoteButton(true)
+
+    val chanBoard = getBoardByCurrentDescriptorOrNull()
+      ?: return
+
+    val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
+    val isDvach = chanBoard.boardDescriptor.siteDescriptor.isDvach()
+
+    if (isDvach || chanBoard.spoilers) {
+      callback.openCommentSpoilerButton(true)
+    }
+
+    if (is4chan && chanBoard.boardCode() == "g") {
+      callback.openCommentCodeButton(true)
+    }
+
+    if (is4chan && chanBoard.boardCode() == "sci") {
+      callback.openCommentEqnButton(true)
+      callback.openCommentMathButton(true)
+    }
+
+    if (is4chan && (chanBoard.boardCode() == "jp" || chanBoard.boardCode() == "vip")) {
+      callback.openCommentSJISButton(true)
+    }
+
+    if (isDvach) {
+      callback.openCommentBoldButton(true)
+      callback.openCommentItalicButton(true)
+      callback.openCommentUnderlineButton(true)
+      callback.openCommentStrikeThroughButton(true)
     }
   }
 
@@ -339,31 +375,9 @@ class ReplyPresenter @Inject constructor(
     }
 
     getBoardByCurrentDescriptorOrNull()?.let { chanBoard ->
-      val is4chan = chanBoard.boardDescriptor.siteDescriptor.is4chan()
-
-      callback.openCommentQuoteButton(isExpanded)
-
-      if (chanBoard.spoilers) {
-        callback.openCommentSpoilerButton(isExpanded)
-      }
-
-      if (is4chan && chanBoard.boardCode() == "g") {
-        callback.openCommentCodeButton(isExpanded)
-      }
-
-      if (is4chan && chanBoard.boardCode() == "sci") {
-        callback.openCommentEqnButton(isExpanded)
-        callback.openCommentMathButton(isExpanded)
-      }
-
-      if (is4chan && (chanBoard.boardCode() == "jp" || chanBoard.boardCode() == "vip")) {
-        callback.openCommentSJISButton(isExpanded)
-      }
-
       if (isExpanded && chanBoard.countryFlags) {
-        val lastUsedFlagKey = boardFlagInfoRepository.getLastUsedFlagKey(chanBoard.boardDescriptor)
-          ?: return
-        callback.openFlag(lastUsedFlagKey)
+        boardFlagInfoRepository.getLastUsedFlagKey(chanBoard.boardDescriptor)
+          ?.let { lastUsedFlagKey -> callback.openFlag(lastUsedFlagKey) }
       } else {
         callback.hideFlag()
       }
@@ -905,6 +919,10 @@ class ReplyPresenter @Inject constructor(
     fun openCommentQuoteButton(open: Boolean)
     fun openCommentSpoilerButton(open: Boolean)
     fun openCommentCodeButton(open: Boolean)
+    fun openCommentBoldButton(open: Boolean)
+    fun openCommentItalicButton(open: Boolean)
+    fun openCommentUnderlineButton(open: Boolean)
+    fun openCommentStrikeThroughButton(open: Boolean)
     fun openCommentEqnButton(open: Boolean)
     fun openCommentMathButton(open: Boolean)
     fun openCommentSJISButton(open: Boolean)

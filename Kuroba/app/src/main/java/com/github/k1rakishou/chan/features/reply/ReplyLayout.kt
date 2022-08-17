@@ -197,6 +197,10 @@ class ReplyLayout @JvmOverloads constructor(
   private lateinit var commentEqnButton: ColorizableBarButton
   private lateinit var commentMathButton: ColorizableBarButton
   private lateinit var commentSJISButton: ColorizableBarButton
+  private lateinit var commentBoldButton: ColorizableBarButton
+  private lateinit var commentItalicButton: ColorizableBarButton
+  private lateinit var commentUnderlineButton: ColorizableBarButton
+  private lateinit var commentStrikeThroughButton: ColorizableBarButton
   private lateinit var comment: ReplyInputEditText
   private lateinit var commentCounter: TextView
   private lateinit var fileCounter: TextView
@@ -399,6 +403,7 @@ class ReplyLayout @JvmOverloads constructor(
     } else {
       ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, .8f)
     }
+
     replyInputMessageHolder.setBackgroundColor(replyInputMessageHolderBackColor)
 
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
@@ -486,9 +491,14 @@ class ReplyLayout @JvmOverloads constructor(
     commentQuoteButton = replyInputLayout.findViewById(R.id.comment_quote)
     commentSpoilerButton = replyInputLayout.findViewById(R.id.comment_spoiler)
     commentCodeButton = replyInputLayout.findViewById(R.id.comment_code)
+    commentBoldButton = replyInputLayout.findViewById(R.id.comment_bold)
+    commentItalicButton = replyInputLayout.findViewById(R.id.comment_italic)
+    commentUnderlineButton = replyInputLayout.findViewById(R.id.comment_underline)
+    commentStrikeThroughButton = replyInputLayout.findViewById(R.id.comment_strikethrough)
     commentEqnButton = replyInputLayout.findViewById(R.id.comment_eqn)
     commentMathButton = replyInputLayout.findViewById(R.id.comment_math)
     commentSJISButton = replyInputLayout.findViewById(R.id.comment_sjis)
+
     comment = replyInputLayout.findViewById(R.id.comment)
     commentCounter = replyInputLayout.findViewById(R.id.comment_counter)
     fileCounter = replyInputLayout.findViewById(R.id.file_counter)
@@ -505,6 +515,10 @@ class ReplyLayout @JvmOverloads constructor(
     commentQuoteButton.setOnClickListener(this)
     commentSpoilerButton.setOnClickListener(this)
     commentCodeButton.setOnClickListener(this)
+    commentBoldButton.setOnClickListener(this)
+    commentItalicButton.setOnClickListener(this)
+    commentUnderlineButton.setOnClickListener(this)
+    commentStrikeThroughButton.setOnClickListener(this)
     commentMathButton.setOnClickListener(this)
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
@@ -839,6 +853,10 @@ class ReplyLayout @JvmOverloads constructor(
           v === commentQuoteButton -> insertQuote()
           v === commentSpoilerButton -> insertTags("[spoiler]", "[/spoiler]")
           v === commentCodeButton -> insertTags("[code]", "[/code]")
+          v === commentBoldButton -> insertTags("[b]", "[/b]")
+          v === commentItalicButton -> insertTags("[i]", "[/i]")
+          v === commentUnderlineButton -> insertTags("[u]", "[/u]")
+          v === commentStrikeThroughButton -> insertTags("[s]", "[/s]")
           v === commentEqnButton -> insertTags("[eqn]", "[/eqn]")
           v === commentMathButton -> insertTags("[math]", "[/math]")
           v === commentSJISButton -> insertTags("[sjis]", "[/sjis]")
@@ -1054,6 +1072,10 @@ class ReplyLayout @JvmOverloads constructor(
     commentQuoteButton.setEnabledFast(enable)
     commentSpoilerButton.setEnabledFast(enable)
     commentCodeButton.setEnabledFast(enable)
+    commentBoldButton.setEnabledFast(enable)
+    commentItalicButton.setEnabledFast(enable)
+    commentUnderlineButton.setEnabledFast(enable)
+    commentStrikeThroughButton.setEnabledFast(enable)
     commentEqnButton.setEnabledFast(enable)
     commentMathButton.setEnabledFast(enable)
     commentSJISButton.setEnabledFast(enable)
@@ -1237,6 +1259,26 @@ class ReplyLayout @JvmOverloads constructor(
     updateCommentButtonsHolderVisibility()
   }
 
+  override fun openCommentBoldButton(open: Boolean) {
+    commentBoldButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
+  }
+
+  override fun openCommentItalicButton(open: Boolean) {
+    commentItalicButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
+  }
+
+  override fun openCommentUnderlineButton(open: Boolean) {
+    commentUnderlineButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
+  }
+
+  override fun openCommentStrikeThroughButton(open: Boolean) {
+    commentStrikeThroughButton.visibility = if (open) VISIBLE else GONE
+    updateCommentButtonsHolderVisibility()
+  }
+
   override fun openCommentEqnButton(open: Boolean) {
     commentEqnButton.visibility = if (open) VISIBLE else GONE
     updateCommentButtonsHolderVisibility()
@@ -1256,6 +1298,10 @@ class ReplyLayout @JvmOverloads constructor(
     if (commentQuoteButton.visibility == View.VISIBLE ||
       commentSpoilerButton.visibility == View.VISIBLE ||
       commentCodeButton.visibility == View.VISIBLE ||
+      commentBoldButton.visibility == View.VISIBLE ||
+      commentItalicButton.visibility == View.VISIBLE ||
+      commentUnderlineButton.visibility == View.VISIBLE ||
+      commentStrikeThroughButton.visibility == View.VISIBLE ||
       commentEqnButton.visibility == View.VISIBLE ||
       commentMathButton.visibility == View.VISIBLE ||
       commentSJISButton.visibility == View.VISIBLE

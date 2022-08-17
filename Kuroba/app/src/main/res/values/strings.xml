@@ -509,11 +509,16 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_comment_button_eqn">Eqn</string>
     <string name="reply_comment_button_math">Math</string>
     <string name="reply_comment_button_sjis">SJIS</string>
-    <string name="reply_comment_button_spoiler_tag">[s]</string>
+    <string name="reply_comment_button_spoiler_tag">[sp]</string>
     <string name="reply_comment_button_code_tag">[c]</string>
     <string name="reply_comment_button_eqn_tag">[eqn]</string>
     <string name="reply_comment_button_math_tag">[math]</string>
     <string name="reply_comment_button_sjis_tag">[sjis]</string>
+    <string name="reply_comment_button_bold_tag">[b]</string>
+    <string name="reply_comment_button_italic_tag">[i]</string>
+    <string name="reply_comment_button_underline_tag">[u]</string>
+    <string name="reply_comment_button_overline_tag">[o]</string>
+    <string name="reply_comment_button_strikethrough_tag">[st]</string>
     <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
     <string name="reply_flag_format">Flag: %1$s</string>
     <string name="reply_captcha_failure">Captcha failure</string>
