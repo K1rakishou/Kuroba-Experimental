@@ -9,6 +9,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 
 class YesHoney : LynxchanSite() {
   private val siteIconLazy by lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
+  private val yesHoneyEndpoints = lazy { YesHoneyEndpoints(this) }
 
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", defaultDomain.toString())
@@ -26,9 +27,9 @@ class YesHoney : LynxchanSite() {
   override val urlHandler: Lazy<BaseLynxchanUrlHandler>
     get() = siteUrlHandler
   override val endpoints: Lazy<LynxchanEndpoints>
-    get() = lynxchanEndpoints
+    get() = yesHoneyEndpoints
   override val postingViaFormData: Boolean
-    get() = false
+    get() = true
 
   class YesHoneyUrlHandler(baseUrl: HttpUrl, mediaHosts: Array<HttpUrl>) : BaseLynxchanUrlHandler(
     url = baseUrl,
@@ -39,8 +40,9 @@ class YesHoney : LynxchanSite() {
 
   companion object {
     private const val TAG = "Yes Honey"
-    const val SITE_NAME = "Yes Honey"
+    const val SITE_NAME = "YesHoney"
 
     private val DEFAULT_DOMAIN = "https://yeshoney.xyz".toHttpUrl()
   }
+
 }
