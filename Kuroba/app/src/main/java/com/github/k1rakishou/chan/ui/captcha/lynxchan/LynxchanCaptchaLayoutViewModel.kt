@@ -245,6 +245,10 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
         val blockBypassWithStatusJson = moshi.adapter(BlockBypassWithStatusJson::class.java).fromJson(body)
           ?: return@run false
 
+        if (blockBypassWithStatusJson.status == "ok") {
+          return@run false
+        }
+
         return@run !blockBypassWithStatusJson.data.valid
       }
 
