@@ -66,7 +66,8 @@ class ParsingException(message: String) : IOException(message), ExceptionWithSho
 
 enum class FirewallType {
   Cloudflare,
-  DvachAntiSpam
+  DvachAntiSpam,
+  YandexSmartCaptcha
 }
 
 class FirewallDetectedException(

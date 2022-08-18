@@ -455,6 +455,10 @@ class ThreadLayout @JvmOverloads constructor(
     callback.presentController(controller, animated = false)
   }
 
+  override fun pushController(controller: Controller) {
+    callback.pushController(controller)
+  }
+
   override fun unpresentController(predicate: (Controller) -> Boolean) {
     callback.unpresentController(predicate)
   }
@@ -748,10 +752,6 @@ class ThreadLayout @JvmOverloads constructor(
     }
 
     callback.showImages(chanDescriptor, initialImageUrl, transitionThumbnailUrl)
-  }
-
-  override fun pushController(controller: Controller) {
-    callback.pushController(controller)
   }
 
   override fun showAlbum(initialImageUrl: HttpUrl?, displayingPostDescriptors: List<PostDescriptor>) {

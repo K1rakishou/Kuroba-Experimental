@@ -72,8 +72,6 @@ object PersistableChanState {
   @JvmStatic
   lateinit var threadDownloaderArchiveWarningShown: BooleanSetting
   @JvmStatic
-  lateinit var searxLastUsedInstanceUrl: StringSetting
-  @JvmStatic
   lateinit var dontKeepActivitiesWarningShown: BooleanSetting
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
@@ -155,7 +153,6 @@ object PersistableChanState {
       )
 
       threadDownloaderArchiveWarningShown = BooleanSetting(provider, "thread_downloader_archive_warning_shown", false)
-      searxLastUsedInstanceUrl = StringSetting(provider, "searx_last_used_instance_url", "")
       dontKeepActivitiesWarningShown = BooleanSetting(provider, "dont_keep_activities_warning_shown", false)
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)

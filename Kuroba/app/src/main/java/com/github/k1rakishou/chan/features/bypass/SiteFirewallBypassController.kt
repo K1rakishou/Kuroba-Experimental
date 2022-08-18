@@ -25,7 +25,7 @@ import javax.inject.Inject
 
 class SiteFirewallBypassController(
   context: Context,
-  private val firewallType: FirewallType,
+  val firewallType: FirewallType,
   private val urlToOpen: String,
   private val onResult: (CookieResult) -> Unit
 ) : BaseFloatingController(context) {
@@ -48,6 +48,13 @@ class SiteFirewallBypassController(
     return when (mode) {
       FirewallType.Cloudflare -> {
         CloudFlareCheckBypassWebClient(
+          originalRequestUrlHost = urlToOpen,
+          cookieManager = cookieManager,
+          cookieResultCompletableDeferred = cookieResultCompletableDeferred
+        )
+      }
+      FirewallType.YandexSmartCaptcha -> {
+        YandexSmartCaptchaCheckBypassWebClient(
           originalRequestUrlHost = urlToOpen,
           cookieManager = cookieManager,
           cookieResultCompletableDeferred = cookieResultCompletableDeferred
@@ -191,6 +198,9 @@ class SiteFirewallBypassController(
         }
 
         dvachAntiSpamCookieSetting.set(cookie)
+      }
+      FirewallType.YandexSmartCaptcha -> {
+        // no-op
       }
     }
 

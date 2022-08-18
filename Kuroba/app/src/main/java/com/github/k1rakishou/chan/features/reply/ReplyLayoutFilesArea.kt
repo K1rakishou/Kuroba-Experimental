@@ -24,8 +24,7 @@ import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
-import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController
-import com.github.k1rakishou.chan.features.reply_image_search.yandex.YandexImageSearchController
+import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
@@ -393,13 +392,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
 
     floatingListMenuItems += FloatingListMenuItem(
-      key = ACTION_USE_SEARX_IMAGE_SEARCH,
-      name = context.getString(R.string.layout_reply_files_area_searx_image_search)
-    )
-
-    floatingListMenuItems += FloatingListMenuItem(
-      key = ACTION_USE_YANDEX_IMAGE_SEARCH,
-      name = context.getString(R.string.layout_reply_files_area_yandex_image_search)
+      key = ACTION_USE_REMOTE_IMAGE_SEARCH,
+      name = context.getString(R.string.layout_reply_files_area_remote_image_search)
     )
 
     val floatingListMenuController = FloatingListMenuController(
@@ -425,23 +419,17 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           onValueEntered = { url -> presenter.pickRemoteFile(url) }
         )
       }
-      ACTION_USE_SEARX_IMAGE_SEARCH -> {
-        val searxImageSearchController = SearxImageSearchController(
+      ACTION_USE_REMOTE_IMAGE_SEARCH -> {
+        val imageSearchController = ImageSearchController(
           context = context,
-          onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
+          onImageSelected = { imageUrls ->
+            val urlsRaw = imageUrls.map { it.toString() }
+            presenter.pickOneOfRemoteFiles(urlsRaw)
+          }
         )
 
         replyLayoutCallbacks?.hideKeyboard()
-        threadListLayoutCallbacks?.presentController(searxImageSearchController)
-      }
-      ACTION_USE_YANDEX_IMAGE_SEARCH -> {
-        val yandexImageSearchController = YandexImageSearchController(
-          context = context,
-          onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
-        )
-
-        replyLayoutCallbacks?.hideKeyboard()
-        threadListLayoutCallbacks?.presentController(yandexImageSearchController)
+        threadListLayoutCallbacks?.pushController(imageSearchController)
       }
     }
   }
@@ -533,6 +521,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: Controller)
+    fun pushController(controller: Controller)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()
@@ -559,8 +548,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
-    private const val ACTION_USE_SEARX_IMAGE_SEARCH = 102
-    private const val ACTION_USE_YANDEX_IMAGE_SEARCH = 103
+    private const val ACTION_USE_REMOTE_IMAGE_SEARCH = 102
 
     private const val MIN_FILES_PER_ROW = 2
 

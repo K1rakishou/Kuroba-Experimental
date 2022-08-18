@@ -46,7 +46,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -170,6 +169,14 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun pickRemoteFile(url: String) {
+    pickOneOfRemoteFiles(listOf(url))
+  }
+
+  fun pickOneOfRemoteFiles(urls: List<String>) {
+    if (urls.isEmpty()) {
+      return
+    }
+
     if (AppModuleAndroidUtils.checkDontKeepActivitiesSettingEnabledForWarningDialog(context)) {
       withViewNormal { onDontKeepActivitiesSettingDetected() }
       return
@@ -186,7 +193,7 @@ class ReplyLayoutFilesAreaPresenter(
         val input = RemoteFilePicker.RemoteFilePickerInput(
           notifyListeners = false,
           replyChanDescriptor = chanDescriptor,
-          imageUrl = url,
+          imageUrls = urls,
           showLoadingView = { textId -> withView { showLoadingView(cancellationFunc, textId) } },
           hideLoadingView = { withView { hideLoadingView() } }
         )

@@ -37,33 +37,52 @@ class RemoteFilePicker(
   private val cacheFileType = CacheFileType.Other
 
   override suspend fun pickFile(filePickerInput: RemoteFilePickerInput): ModularResult<PickedFile> {
-    if (filePickerInput.imageUrl.isEmpty()) {
-      return ModularResult.error(FilePickerError.BadUrl(filePickerInput.imageUrl))
-    }
-
-    val imageUrl = filePickerInput.imageUrl.toHttpUrlOrNull()
-    if (imageUrl == null) {
-      return ModularResult.error(FilePickerError.BadUrl(filePickerInput.imageUrl))
+    if (filePickerInput.imageUrls.isEmpty()) {
+      return ModularResult.error(FilePickerError.BadUrl("No url"))
     }
 
     return withContext(Dispatchers.IO) {
-      val downloadedFileMaybe = downloadFile(
-        imageUrl = imageUrl,
-        showLoadingView = filePickerInput.showLoadingView,
-        hideLoadingView = filePickerInput.hideLoadingView
-      )
+      var downloadedFileMaybe: ModularResult<File>? = null
+      var lastError: FilePickerError? = null
+      var downloadedUrl: HttpUrl? = null
 
-      if (downloadedFileMaybe is ModularResult.Error) {
-        val error = FilePickerError.FailedToDownloadFile(
-          filePickerInput.imageUrl,
-          downloadedFileMaybe.error
-        )
+      serializedCoroutineExecutor.post {
+        filePickerInput.showLoadingView.invoke(R.string.downloading_file)
+      }
 
-        return@withContext ModularResult.error(error)
+      try {
+        // Download the first image out of the provided urls because some of them may fail
+        for (imageUrlRaw in filePickerInput.imageUrls) {
+          downloadedUrl = imageUrlRaw.toHttpUrlOrNull()
+          if (downloadedUrl == null) {
+            lastError = FilePickerError.BadUrl(imageUrlRaw)
+            continue
+          }
+
+          downloadedFileMaybe = downloadFile(downloadedUrl)
+          if (downloadedFileMaybe is ModularResult.Error) {
+            lastError = FilePickerError.FailedToDownloadFile(
+              imageUrlRaw,
+              downloadedFileMaybe.error
+            )
+
+            continue
+          }
+
+          break
+        }
+      } finally {
+        serializedCoroutineExecutor.post {
+          filePickerInput.hideLoadingView.invoke()
+        }
+      }
+
+      if (downloadedFileMaybe == null || downloadedUrl == null) {
+        return@withContext ModularResult.error(lastError!!)
       }
 
       val downloadedFile = (downloadedFileMaybe as ModularResult.Value).value
-      val fileName = getRemoteFileName(imageUrl)
+      val fileName = getRemoteFileName(downloadedUrl)
 
       val copyResult = copyDownloadedFileToReplyFileStorage(
         downloadedFile,
@@ -139,14 +158,8 @@ class RemoteFilePicker(
 
   private suspend fun downloadFile(
     imageUrl: HttpUrl,
-    showLoadingView: suspend (Int) -> Unit,
-    hideLoadingView: suspend () -> Unit
   ): ModularResult<File> {
     val urlString = imageUrl.toString()
-
-    serializedCoroutineExecutor.post {
-      showLoadingView.invoke(R.string.downloading_file)
-    }
 
     return suspendCancellableCoroutine { cancellableContinuation ->
       val cancelableDownload = fileCacheV2.get().enqueueDownloadFileRequest(
@@ -177,14 +190,6 @@ class RemoteFilePicker(
             onError(FilePickerError.Canceled())
           }
 
-          override fun onEnd() {
-            super.onEnd()
-
-            serializedCoroutineExecutor.post {
-              hideLoadingView.invoke()
-            }
-          }
-
           private fun onError(error: FilePickerError) {
             cancellableContinuation.resumeValueSafe(ModularResult.error(error))
           }
@@ -203,7 +208,7 @@ class RemoteFilePicker(
   data class RemoteFilePickerInput(
     val notifyListeners: Boolean,
     val replyChanDescriptor: ChanDescriptor,
-    val imageUrl: String,
+    val imageUrls: List<String>,
     val showLoadingView: suspend (Int) -> Unit,
     val hideLoadingView: suspend () -> Unit
   )

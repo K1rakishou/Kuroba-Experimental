@@ -39,6 +39,7 @@ object StringUtils {
     }
 
     return filename.substring(index + 1)
+      .takeIf { ext -> ext.length <= 6 }
   }
 
   fun removeExtensionFromFileName(filename: String): String {

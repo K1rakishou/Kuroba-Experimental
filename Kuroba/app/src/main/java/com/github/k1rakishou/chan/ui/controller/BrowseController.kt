@@ -1205,6 +1205,9 @@ class BrowseController(
           }
         }
       }
+      FirewallType.YandexSmartCaptcha -> {
+        // No-op. We only handle Yandex's captcha in one place (ImageSearchController)
+      }
     }
   }
 
