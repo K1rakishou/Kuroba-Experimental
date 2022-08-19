@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.AttributeSet
 import android.view.ViewGroup
 import android.widget.FrameLayout
+import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.updateLayoutParams
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
@@ -12,7 +13,6 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
-import java.util.*
 import javax.inject.Inject
 
 @ModelView(autoLayout = ModelView.Size.MATCH_WIDTH_WRAP_HEIGHT, fullSpan = false)
@@ -26,6 +26,8 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private val newAttachableButton: FrameLayout
+  private val attachImageByUrl: AppCompatImageView
+  private val imageRemoteSearch: AppCompatImageView
 
   init {
     inflate(context, R.layout.epoxy_attach_new_file_button_view, this)
@@ -34,6 +36,10 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
       .inject(this)
 
     newAttachableButton = findViewById(R.id.reply_new_attachable_button)
+    attachImageByUrl = findViewById(R.id.reply_attach_file_by_url_button)
+    imageRemoteSearch = findViewById(R.id.reply_image_remote_search)
+
+    onThemeChanged()
   }
 
   override fun onAttachedToWindow() {
@@ -59,7 +65,10 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    // no-op
+    val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
+
+    attachImageByUrl.setImageDrawable(themeEngine.tintDrawable(attachImageByUrl.drawable, tintColor))
+    imageRemoteSearch.setImageDrawable(themeEngine.tintDrawable(imageRemoteSearch.drawable, tintColor))
   }
 
   @ModelProp
@@ -81,6 +90,31 @@ class EpoxyAttachNewFileButtonView @JvmOverloads constructor(
     }
 
     newAttachableButton.setOnClickListener {
+      listener.invoke()
+    }
+  }
+
+
+  @CallbackProp
+  fun setOnAttachImageByUrlClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      attachImageByUrl.setOnClickListener(null)
+      return
+    }
+
+    attachImageByUrl.setOnClickListener {
+      listener.invoke()
+    }
+  }
+
+  @CallbackProp
+  fun setOnImageRemoteSearchClickListener(listener: (() -> Unit)?) {
+    if (listener == null) {
+      imageRemoteSearch.setOnClickListener(null)
+      return
+    }
+
+    imageRemoteSearch.setOnClickListener {
       listener.invoke()
     }
   }

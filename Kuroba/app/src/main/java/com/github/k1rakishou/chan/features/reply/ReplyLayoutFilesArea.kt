@@ -214,6 +214,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           id("epoxy_attach_new_file_button_wide_view")
           onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
           onLongClickListener { showPickFileOptions() }
+          onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
+          onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
         }
 
         return@stateRenderer
@@ -239,6 +241,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               expandedMode(state.isReplyLayoutExpanded)
               onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
               onLongClickListener { showPickFileOptions() }
+              onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
+              onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
             }
           }
           is ReplyFileAttachable -> {
@@ -400,14 +404,14 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingListMenuItems,
-      itemClickListener = { item -> onPickFileItemClicked(item) }
+      itemClickListener = { item -> onPickFileItemClicked(item.key as Int) }
     )
 
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
-  private fun onPickFileItemClicked(item: FloatingListMenuItem) {
-    when (item.key as Int) {
+  private fun onPickFileItemClicked(clickedItemKey: Int) {
+    when (clickedItemKey) {
       ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS -> {
         presenter.pickLocalFile(showFilePickerChooser = true)
       }

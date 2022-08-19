@@ -13,4 +13,38 @@
         android:clickable="false"
         android:focusable="false" />
 
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_gravity="center_vertical|end">
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/reply_attach_file_by_url_button"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_baseline_cloud_download_24"/>
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="0dp"/>
+
+        <androidx.appcompat.widget.AppCompatImageView
+            android:id="@+id/reply_image_remote_search"
+            android:layout_width="32dp"
+            android:layout_height="32dp"
+            android:clickable="true"
+            android:focusable="true"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:src="@drawable/ic_search_white_24dp"/>
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="0dp"/>
+
+    </LinearLayout>
+
 </FrameLayout>
