@@ -24,7 +24,7 @@ import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
-import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController
+import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
 import com.github.k1rakishou.chan.ui.epoxy.epoxyTextViewWrapHeight
@@ -47,7 +47,6 @@ import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -215,6 +214,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           id("epoxy_attach_new_file_button_wide_view")
           onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
           onLongClickListener { showPickFileOptions() }
+          onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
+          onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
         }
 
         return@stateRenderer
@@ -240,6 +241,8 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               expandedMode(state.isReplyLayoutExpanded)
               onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
               onLongClickListener { showPickFileOptions() }
+              onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
+              onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
             }
           }
           is ReplyFileAttachable -> {
@@ -393,22 +396,22 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     )
 
     floatingListMenuItems += FloatingListMenuItem(
-      key = ACTION_USE_SEARX_IMAGE_SEARCH,
-      name = context.getString(R.string.layout_reply_files_area_searx_image_search)
+      key = ACTION_USE_REMOTE_IMAGE_SEARCH,
+      name = context.getString(R.string.layout_reply_files_area_remote_image_search)
     )
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
       constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
       items = floatingListMenuItems,
-      itemClickListener = { item -> onPickFileItemClicked(item) }
+      itemClickListener = { item -> onPickFileItemClicked(item.key as Int) }
     )
 
     threadListLayoutCallbacks?.presentController(floatingListMenuController)
   }
 
-  private fun onPickFileItemClicked(item: FloatingListMenuItem) {
-    when (item.key as Int) {
+  private fun onPickFileItemClicked(clickedItemKey: Int) {
+    when (clickedItemKey) {
       ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS -> {
         presenter.pickLocalFile(showFilePickerChooser = true)
       }
@@ -420,14 +423,18 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           onValueEntered = { url -> presenter.pickRemoteFile(url) }
         )
       }
-      ACTION_USE_SEARX_IMAGE_SEARCH -> {
-        val searxImageSearchController = SearxImageSearchController(
+      ACTION_USE_REMOTE_IMAGE_SEARCH -> {
+        val boundChanDescriptor = presenter.boundChanDescriptor
+          ?: return
+
+        val imageSearchController = ImageSearchController(
           context = context,
+          boundChanDescriptor = boundChanDescriptor,
           onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
         )
 
         replyLayoutCallbacks?.hideKeyboard()
-        threadListLayoutCallbacks?.presentController(searxImageSearchController)
+        threadListLayoutCallbacks?.pushController(imageSearchController)
       }
     }
   }
@@ -519,6 +526,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
   interface ThreadListLayoutCallbacks {
     fun presentController(controller: Controller)
+    fun pushController(controller: Controller)
     fun showImageReencodingWindow(fileUuid: UUID, supportsReencode: Boolean)
     fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
     fun hideLoadingView()
@@ -545,7 +553,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
 
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
-    private const val ACTION_USE_SEARX_IMAGE_SEARCH = 102
+    private const val ACTION_USE_REMOTE_IMAGE_SEARCH = 102
 
     private const val MIN_FILES_PER_ROW = 2
 

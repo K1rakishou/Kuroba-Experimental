@@ -1556,3 +1556,26 @@ private fun unmarshall(bytes: ByteArray): Parcel {
 fun MediaType.isJson(): Boolean {
   return type == "application" && subtype == "json"
 }
+
+private const val HTTP = "http://"
+private const val HTTPS = "https://"
+
+fun fixUrlOrNull(inputUrlRaw: String?): String? {
+  if (inputUrlRaw == null) {
+    return null
+  }
+
+  if (inputUrlRaw.startsWith("//")) {
+    return HTTPS + inputUrlRaw.removePrefix("//")
+  }
+
+  if (inputUrlRaw.startsWith(HTTPS)) {
+    return inputUrlRaw
+  }
+
+  if (inputUrlRaw.startsWith(HTTP)) {
+    return HTTPS + inputUrlRaw.removePrefix(HTTP)
+  }
+
+  return HTTPS + inputUrlRaw
+}

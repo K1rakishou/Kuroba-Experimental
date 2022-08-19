@@ -81,16 +81,18 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.SelectableItem
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
 import com.github.k1rakishou.chan.ui.controller.navigation.ToolbarNavigationController
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.AppConstants
-import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
+import com.github.k1rakishou.fsaf.callback.directory.DirectoryChooserCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -757,10 +759,34 @@ class LocalArchiveController(
         viewModel.startDownloads(selectedItems)
       }
       LocalArchiveViewModel.MenuItemType.Export -> {
-        val threadDescriptor = selectedItems.firstOrNull()
-        if (threadDescriptor != null) {
-          exportThreadAsHtml(threadDescriptor)
-        }
+        val items = listOf(
+          FloatingListMenuItem(ACTION_EXPORT_THREADS, getString(R.string.controller_local_archive_export_threads)),
+          FloatingListMenuItem(ACTION_EXPORT_THREAD_MEDIA, getString(R.string.controller_local_archive_export_thread_media))
+        )
+
+        val floatingListMenuController = FloatingListMenuController(
+          context = context,
+          constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+          items = items,
+          itemClickListener = { clickedItem ->
+            when (clickedItem.key as Int) {
+              ACTION_EXPORT_THREADS -> {
+                val threadDescriptor = selectedItems.firstOrNull()
+                if (threadDescriptor != null) {
+                  exportThreadAsHtml(threadDescriptor)
+                }
+              }
+              ACTION_EXPORT_THREAD_MEDIA -> {
+                val threadDescriptor = selectedItems.firstOrNull()
+                if (threadDescriptor != null) {
+                  exportThreadMedia(threadDescriptor)
+                }
+              }
+            }
+          }
+        )
+
+        presentController(floatingListMenuController)
       }
     }
   }
@@ -774,33 +800,63 @@ class LocalArchiveController(
       }
 
       override fun onResult(uri: Uri) {
-        onFileSelected(uri, threadDescriptor)
+        val loadingViewController = LoadingViewController(context, true)
+
+        val job = mainScope.launch(start = CoroutineStart.LAZY) {
+          try {
+            viewModel.exportThreadAsHtml(uri, threadDescriptor)
+              .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
+              .toastOnSuccess(message = { "Successfully exported" })
+              .ignore()
+          } finally {
+            loadingViewController.stopPresenting()
+          }
+        }
+
+        loadingViewController.enableCancellation {
+          if (job.isActive) {
+            job.cancel()
+          }
+        }
+
+        presentController(loadingViewController)
+        job.start()
       }
     })
   }
 
-  private fun onFileSelected(uri: Uri, threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val loadingViewController = LoadingViewController(context, true)
+  private fun exportThreadMedia(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+    val directoryName = "${threadDescriptor.siteName()}_${threadDescriptor.boardCode()}_${threadDescriptor.threadNo}"
 
-    val job = mainScope.launch(start = CoroutineStart.LAZY) {
-      try {
-        when (val result = viewModel.exportThreadAsHtml(uri, threadDescriptor)) {
-          is ModularResult.Error -> showToast("Failed to export. Error: ${result.error.errorMessageOrClassName()}")
-          is ModularResult.Value -> showToast("Successfully exported")
+    fileChooser.openChooseDirectoryDialog(object : DirectoryChooserCallback() {
+      override fun onCancel(reason: String) {
+        showToast(R.string.canceled)
+      }
+
+      override fun onResult(uri: Uri) {
+        val loadingViewController = LoadingViewController(context, true)
+
+        val job = mainScope.launch(start = CoroutineStart.LAZY) {
+          try {
+            viewModel.exportThreadMedia(uri, directoryName, threadDescriptor)
+              .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
+              .toastOnSuccess(message = { "Successfully exported" })
+              .ignore()
+          } finally {
+            loadingViewController.stopPresenting()
+          }
         }
-      } finally {
-        loadingViewController.stopPresenting()
-      }
-    }
 
-    loadingViewController.enableCancellation {
-      if (job.isActive) {
-        job.cancel()
-      }
-    }
+        loadingViewController.enableCancellation {
+          if (job.isActive) {
+            job.cancel()
+          }
+        }
 
-    presentController(loadingViewController)
-    job.start()
+        presentController(loadingViewController)
+        job.start()
+      }
+    })
   }
 
   private fun onNewSelectionEvent(selectionEvent: BaseSelectionHelper.SelectionEvent?) {
@@ -866,6 +922,9 @@ class LocalArchiveController(
   companion object {
     private const val ACTION_SEARCH = 0
     private const val ACTION_UPDATE_ALL = 1
+
+    private const val ACTION_EXPORT_THREADS = 100
+    private const val ACTION_EXPORT_THREAD_MEDIA = 101
 
     private val ICON_SIZE = 26.dp
     private val PROGRESS_SIZE = 20.dp

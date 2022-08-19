@@ -1245,6 +1245,11 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     threadListLayoutCallback?.presentController(controller)
   }
 
+  override fun pushController(controller: Controller) {
+    BackgroundUtils.ensureMainThread()
+    threadListLayoutCallback?.pushController(controller)
+  }
+
   override fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int) {
     BackgroundUtils.ensureMainThread()
 
@@ -1397,6 +1402,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     fun threadBackPressed(): Boolean
     fun threadBackLongPressed()
     fun presentController(controller: Controller)
+    fun pushController(controller: Controller)
     fun unpresentController(predicate: (Controller) -> Boolean)
   }
 

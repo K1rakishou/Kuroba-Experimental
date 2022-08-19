@@ -38,8 +38,8 @@ import javax.net.ssl.SSLException
 @Suppress("UnnecessaryVariable")
 @Composable
 fun KurobaComposeImage(
-  request: ImageLoaderRequest,
   modifier: Modifier,
+  request: ImageLoaderRequest,
   imageLoaderV2: ImageLoaderV2,
   contentScale: ContentScale = ContentScale.Fit,
   loading: (@Composable BoxScope.() -> Unit)? = null,

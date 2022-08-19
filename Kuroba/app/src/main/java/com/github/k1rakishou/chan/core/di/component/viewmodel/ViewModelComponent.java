@@ -9,7 +9,7 @@ import com.github.k1rakishou.chan.features.filters.FilterBoardSelectorController
 import com.github.k1rakishou.chan.features.filters.FiltersControllerViewModel;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerControllerViewModel;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsViewModel;
-import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchControllerViewModel;
+import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchControllerViewModel;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostControllerViewModel;
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsControllerViewModel;
 import com.github.k1rakishou.chan.features.setup.ComposeBoardsSelectorControllerViewModel;
@@ -33,7 +33,6 @@ public abstract class ViewModelComponent {
     public abstract void inject(LocalArchiveViewModel localArchiveViewModel);
     public abstract void inject(DvachCaptchaLayoutViewModel dvachCaptchaLayoutViewModel);
     public abstract void inject(Chan4CaptchaLayoutViewModel chan4CaptchaLayoutViewModel);
-    public abstract void inject(SearxImageSearchControllerViewModel searxImageSearchControllerViewModel);
     public abstract void inject(MainControllerViewModel mainControllerViewModel);
     public abstract void inject(ComposeBoardsControllerViewModel composeBoardsControllerViewModel);
     public abstract void inject(ComposeBoardsSelectorControllerViewModel composeBoardsSelectorControllerViewModel);
@@ -44,6 +43,7 @@ public abstract class ViewModelComponent {
     public abstract void inject(BookmarkGroupPatternSettingsControllerViewModel bookmarkGroupPatternSettingsControllerViewModel);
     public abstract void inject(LynxchanCaptchaLayoutViewModel lynxchanCaptchaLayoutViewModel);
     public abstract void inject(Chan4ReportPostControllerViewModel chan4ReportPostControllerViewModel);
+    public abstract void inject(ImageSearchControllerViewModel imageSearchControllerViewModel);
 
     @Subcomponent.Builder
     public interface Builder {

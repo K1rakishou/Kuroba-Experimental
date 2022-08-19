@@ -61,7 +61,7 @@ import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
-import com.github.k1rakishou.chan.features.reply_image_search.searx.SearxImageSearchController;
+import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
 import com.github.k1rakishou.chan.features.search.SearchResultsController;
@@ -269,7 +269,6 @@ public interface ActivityComponent {
     void inject(SavedPostsController savedPostsController);
     void inject(ThreadDownloaderSettingsController threadDownloaderSettingsController);
     void inject(LocalArchiveController localArchiveController);
-    void inject(SearxImageSearchController searxImageSearchController);
     void inject(PostOmittedImagesController postOmittedImagesController);
     void inject(ExportBackupOptionsController exportBackupOptionsController);
     void inject(ComposeBoardsController composeBoardsController);
@@ -284,6 +283,7 @@ public interface ActivityComponent {
     void inject(Chan4ReportPostController chan4ReportPostController);
     void inject(ThirdEyeSettingsController thirdEyeSettingsController);
     void inject(AddOrEditBooruController addOrEditBooruController);
+    void inject(ImageSearchController imageSearchController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

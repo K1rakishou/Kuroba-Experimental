@@ -71,7 +71,6 @@ import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.atomic.AtomicBoolean
@@ -448,12 +447,16 @@ class BookmarksController(
         }
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.MoveToGroup -> {
+        // Forcefully exit the selection mode because otherwise the toolbar will get stuck
+        // in selection mode
+        onNewSelectionEvent(BaseSelectionHelper.SelectionEvent.ExitedSelectionMode)
+
         val controller = BookmarkGroupSettingsController(
           context = context,
           bookmarksToMove = selectedItems,
           refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
         )
-        presentController(controller)
+        requireNavController().pushController(controller)
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.Download -> {
         val threadDownloaderSettingsController = ThreadDownloaderSettingsController(
@@ -621,7 +624,7 @@ class BookmarksController(
       refreshBookmarksFunc = { bookmarksPresenter.reloadBookmarks() }
     )
 
-    presentController(controller)
+    requireNavController().pushController(controller)
   }
 
   private fun restartFilterWatcherClicked() {

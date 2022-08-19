@@ -31,6 +31,7 @@ import com.github.k1rakishou.chan.core.usecase.CatalogDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.DownloadThemeJsonFilesUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportBackupFileUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase;
+import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadMediaUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.ExtractPostMapInfoHolderUseCase;
 import com.github.k1rakishou.chan.core.usecase.FetchThreadBookmarkInfoUseCase;
@@ -47,6 +48,7 @@ import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
 import com.github.k1rakishou.chan.core.usecase.TwoCaptchaCheckBalanceUseCase;
+import com.github.k1rakishou.chan.core.usecase.YandexImageSearchUseCase;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
 import com.github.k1rakishou.common.AppConstants;
 import com.github.k1rakishou.core_logger.Logger;
@@ -474,6 +476,31 @@ public class UseCaseModule {
                 moshi,
                 proxiedOkHttpClient
         );
+    }
+
+    @Provides
+    @Singleton
+    public ExportDownloadedThreadMediaUseCase provideExportDownloadedThreadMediaUseCase(
+            AppConstants appConstants,
+            FileManager fileManager
+    ) {
+        Logger.deps("ExportDownloadedThreadMediaUseCase");
+
+        return new ExportDownloadedThreadMediaUseCase(
+                appConstants,
+                fileManager
+        );
+    }
+
+    @Provides
+    @Singleton
+    public YandexImageSearchUseCase provideYandexImageSearchUseCase(
+            RealProxiedOkHttpClient proxiedOkHttpClient,
+            Moshi moshi
+    ) {
+        Logger.deps("YandexImageSearchUseCase");
+
+        return new YandexImageSearchUseCase(proxiedOkHttpClient, moshi);
     }
 
 }

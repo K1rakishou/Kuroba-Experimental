@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.BoxScope
@@ -115,7 +114,6 @@ class ComposeBoardsSelectorController(
     }
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   private fun ColumnScope.BuildContentInternal(chanTheme: ChanTheme, backgroundColor: Color) {
     val searchState = rememberSimpleSearchState<ComposeBoardsSelectorControllerViewModel.CellData>()

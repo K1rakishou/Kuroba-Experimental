@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.settings.screens.delegate
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Row
@@ -38,7 +37,6 @@ class ExportBackupOptionsController(
     component.inject(this)
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   override fun BoxScope.BuildContent() {
     KurobaComposeCardView(

@@ -1,7 +1,10 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
 import android.net.Uri
-import androidx.compose.runtime.*
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
+import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
@@ -10,6 +13,7 @@ import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadAsHtmlUseCase
+import com.github.k1rakishou.chan.core.usecase.ExportDownloadedThreadMediaUseCase
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItem
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanelItemId
 import com.github.k1rakishou.common.AppConstants
@@ -27,7 +31,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.sample
 import kotlinx.coroutines.launch
@@ -57,6 +60,8 @@ class LocalArchiveViewModel : BaseViewModel() {
   lateinit var threadDownloadProgressNotifier: ThreadDownloadProgressNotifier
   @Inject
   lateinit var exportDownloadedThreadAsHtmlUseCase: ExportDownloadedThreadAsHtmlUseCase
+  @Inject
+  lateinit var exportDownloadedThreadMediaUseCase: ExportDownloadedThreadMediaUseCase
 
   private val recalculateAdditionalInfoExecutor = DebouncingCoroutineExecutor(mainScope)
   private val cachedThreadDownloadViews = mutableListWithCap<ThreadDownloadView>(32)
@@ -484,6 +489,16 @@ class LocalArchiveViewModel : BaseViewModel() {
     val params = ExportDownloadedThreadAsHtmlUseCase.Params(outputFileUri, threadDescriptor)
     return exportDownloadedThreadAsHtmlUseCase.execute(params)
       .peekError { error -> Logger.e(TAG, "exportDownloadedThreadAsHtmlUseCase() error", error) }
+  }
+
+  suspend fun exportThreadMedia(
+    outputDirectoryUri: Uri,
+    directoryName: String,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ): ModularResult<Unit> {
+    val params = ExportDownloadedThreadMediaUseCase.Params(outputDirectoryUri, directoryName, threadDescriptor)
+    return exportDownloadedThreadMediaUseCase.execute(params)
+      .peekError { error -> Logger.e(TAG, "exportDownloadedThreadMediaUseCase() error", error) }
   }
 
   enum class ViewMode {

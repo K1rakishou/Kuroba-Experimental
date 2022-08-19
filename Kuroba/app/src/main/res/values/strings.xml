@@ -509,11 +509,16 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_comment_button_eqn">Eqn</string>
     <string name="reply_comment_button_math">Math</string>
     <string name="reply_comment_button_sjis">SJIS</string>
-    <string name="reply_comment_button_spoiler_tag">[s]</string>
+    <string name="reply_comment_button_spoiler_tag">[sp]</string>
     <string name="reply_comment_button_code_tag">[c]</string>
     <string name="reply_comment_button_eqn_tag">[eqn]</string>
     <string name="reply_comment_button_math_tag">[math]</string>
     <string name="reply_comment_button_sjis_tag">[sjis]</string>
+    <string name="reply_comment_button_bold_tag">[b]</string>
+    <string name="reply_comment_button_italic_tag">[i]</string>
+    <string name="reply_comment_button_underline_tag">[u]</string>
+    <string name="reply_comment_button_overline_tag">[o]</string>
+    <string name="reply_comment_button_strikethrough_tag">[st]</string>
     <string name="reply_proxy_list_is_dirty_message">You recently changed your proxy list and didn\'t restart the app. There is a possibility that the next post you make will use a wrong proxy or no proxy at all (that depends on what you\'ve changed). Restart the app to make sure everything works as expected.</string>
     <string name="reply_flag_format">Flag: %1$s</string>
     <string name="reply_captcha_failure">Captcha failure</string>
@@ -1235,7 +1240,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
 
     <string name="layout_reply_files_area_pick_local_file_show_pickers">Pick local file (show all file pickers)</string>
     <string name="layout_reply_files_area_pick_remote_file">Pick remote file (by file url)</string>
-    <string name="layout_reply_files_area_searx_image_search">Use searx image search</string>
+    <string name="layout_reply_files_area_remote_image_search">Remote image search</string>
 
     <string name="reply_notifications_new_replies_total_stats">You have %1$d replies in %2$d thread(s)</string>
     <string name="reply_notifications_new_replies_in_thread">You have %1$d new replies in thread %2$d</string>
@@ -1331,6 +1336,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_local_archive_show_downloading_threads">DOWNLOADING</string>
     <string name="controller_local_archive_show_downloaded_threads">DOWNLOADED</string>
     <string name="controller_local_archive_additional_thread_stats">Posts: %1$d, Media: %2$d, Media on disk: %3$s</string>
+    <string name="controller_local_archive_export_threads">Export threads</string>
+    <string name="controller_local_archive_export_thread_media">Export thread media</string>
 
     <string name="controller_saved_posts_delete_many_posts">Delete %1$d saved post(s)?</string>
     <string name="controller_saved_posts_delete_many_posts_description">This action will delete saved posts and unmark replies as yours in threads. Are you sure you want to do that?</string>
@@ -1378,8 +1385,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
     <string name="firewall_check_not_supported">Firewall check %1$s for site %2$s is not supported</string>
 
-    <string name="searx_image_search_controller_base_url_hint">Searx instance base url, e.g. %1$s</string>
-    <string name="searx_image_search_controller_help_text">Only searx search engines are supported. You can find them all here:\nhttps://searx.space \nNote: Some of them do not support/block the API so they won\'t work.</string>
+    <string name="image_search_controller_title">Remote image search</string>
+    <string name="image_search_controller_current_instance">Current search instance</string>
 
     <string name="catalog_load_page">Loading page %1$d</string>
     <string name="catalog_load_catalog">Loading catalog \'%1$s\'</string>
@@ -1411,7 +1418,7 @@ Actual error: \'%1$s\'</string>
 
     <string name="bookmark_groups_controller_title">Bookmark groups</string>
     <string name="bookmark_groups_controller_no_groups_created">No groups created</string>
-    <string name="bookmark_groups_controller_select_bookmark_group">Select bookmark group to move selected bookmarks into</string>
+    <string name="bookmark_groups_controller_select_bookmark_group">Select existing group</string>
     <string name="bookmark_groups_controller_create_new_group">Create new group</string>
     <string name="bookmark_groups_controller_group_has_no_matcher">Group \'%1$s\' has no matcher</string>
     <string name="bookmark_groups_enter_new_group_name">Enter bookmark group name (must be unique)</string>
