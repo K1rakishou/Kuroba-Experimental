@@ -1,7 +1,6 @@
 package com.github.k1rakishou.chan.features.setup
 
 import android.content.Context
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -91,7 +90,6 @@ class ComposeBoardsController(
     viewModel.resetCompositionSlots(prevCompositeCatalog)
   }
 
-  @OptIn(ExperimentalFoundationApi::class)
   @Composable
   override fun BoxScope.BuildContent() {
     val chanTheme = LocalChanTheme.current
