@@ -153,7 +153,7 @@ class ImageSearchControllerViewModel : BaseViewModel() {
 
     activeSearchJob = mainScope.launch {
       if (debounce) {
-        delay(500L)
+        delay(1000L)
       }
 
       if (_solvingCaptcha.value != null) {

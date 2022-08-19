@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.features.reply_image_search
 
 import androidx.annotation.DrawableRes
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.persist_state.PersistableChanState
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 
@@ -27,11 +28,10 @@ abstract class ImageSearchInstance(
   val searchQuery: String?
     get() = _searchQuery
 
-  private var _cookies: String? = null
-  val cookies: String?
-    get() = _cookies
+  abstract val cookies: String?
 
   abstract fun buildSearchUrl(query: String, page: Int?): HttpUrl
+  abstract fun updateCookies(newCookies: String)
 
   fun updateLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
     _rememberedFirstVisibleItemIndex = firstVisibleItemIndex
@@ -40,10 +40,6 @@ abstract class ImageSearchInstance(
 
   fun updateCurrentPage(page: Int) {
     _currentPage = page
-  }
-
-  fun updateCookies(newCookies: String) {
-    _cookies = newCookies
   }
 
   fun updateSearchQuery(newQuery: String) {
@@ -62,6 +58,12 @@ class SearxInstance : ImageSearchInstance(
   baseUrl = "https://searx.prvcy.eu".toHttpUrl(),
   icon = R.drawable.searx_favicon
 ) {
+
+  override val cookies: String? = null
+
+  override fun updateCookies(newCookies: String) {
+    // no-op
+  }
 
   override fun buildSearchUrl(query: String, page: Int?): HttpUrl {
     return with(baseUrl.newBuilder()) {
@@ -86,6 +88,20 @@ class YandexInstance : ImageSearchInstance(
   baseUrl = "https://yandex.com".toHttpUrl(),
   icon = R.drawable.yandex_favicon
 ) {
+
+  private var _cookies: String? = null
+  override val cookies: String?
+    get() = _cookies
+
+  init {
+    _cookies = PersistableChanState.yandexImageSearchCookies.get()
+      .takeIf { cookiesString -> cookiesString.isNotEmpty() }
+  }
+
+  override fun updateCookies(newCookies: String) {
+    _cookies = newCookies
+    PersistableChanState.yandexImageSearchCookies.set(newCookies)
+  }
 
   override fun buildSearchUrl(query: String, page: Int?): HttpUrl {
     return with(baseUrl.newBuilder()) {
