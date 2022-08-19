@@ -426,10 +426,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         val imageSearchController = ImageSearchController(
           context = context,
           boundChanDescriptor = boundChanDescriptor,
-          onImageSelected = { imageUrls ->
-            val urlsRaw = imageUrls.map { it.toString() }
-            presenter.pickOneOfRemoteFiles(urlsRaw)
-          }
+          onImageSelected = { imageUrl -> presenter.pickRemoteFile(imageUrl.toString()) }
         )
 
         replyLayoutCallbacks?.hideKeyboard()

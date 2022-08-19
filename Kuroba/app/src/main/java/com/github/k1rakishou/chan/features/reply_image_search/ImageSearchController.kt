@@ -60,6 +60,9 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
+import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
+import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
 import com.github.k1rakishou.chan.utils.viewModelByKey
@@ -80,7 +83,7 @@ import javax.inject.Inject
 class ImageSearchController(
   context: Context,
   private val boundChanDescriptor: ChanDescriptor,
-  private val onImageSelected: (List<HttpUrl>) -> Unit
+  private val onImageSelected: (HttpUrl) -> Unit
 ) : Controller(context), WindowInsetsListener {
 
   @Inject
@@ -278,12 +281,47 @@ class ImageSearchController(
           onImageClicked = { searxImage ->
             focusManager.clearFocus(force = true)
 
-            onImageSelected(searxImage.fullImageUrls)
-            popFromNavController(boundChanDescriptor)
+            if (searxImage.fullImageUrls.isEmpty()) {
+              return@BuildImageSearchResults
+            }
+
+            if (searxImage.fullImageUrls.size == 1) {
+              onImageSelected(searxImage.fullImageUrls.first())
+              popFromNavController(boundChanDescriptor)
+
+              return@BuildImageSearchResults
+            }
+
+            showOptions(searxImage.fullImageUrls)
           }
         )
       }
     }
+  }
+
+  private fun showOptions(fullImageUrls: List<HttpUrl>) {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+
+    menuItems += HeaderFloatingListMenuItem("header", "Select source url")
+
+    fullImageUrls.forEach { httpUrl ->
+      menuItems += FloatingListMenuItem(httpUrl, httpUrl.toString(), httpUrl)
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        val clickedItemUrl = (clickedItem.value as? HttpUrl)
+          ?: return@FloatingListMenuController
+
+        onImageSelected(clickedItemUrl)
+        popFromNavController(boundChanDescriptor)
+      }
+    )
+
+    presentController(floatingListMenuController)
   }
 
   @Composable
