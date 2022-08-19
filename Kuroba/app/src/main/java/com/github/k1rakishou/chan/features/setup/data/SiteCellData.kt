@@ -9,11 +9,3 @@ data class SiteCellData(
   val siteName: String,
   val siteEnableState: SiteEnableState
 )
-
-data class SiteCellArchiveGroupInfo(
-  val archives: List<SiteCellData>,
-  val isGroupExpanded: Boolean = false,
-  val archiveEnabledTotalCount: ArchiveEnabledTotalCount
-)
-
-data class ArchiveEnabledTotalCount(val enabledCount: Int, val totalCount: Int)
