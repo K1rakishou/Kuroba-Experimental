@@ -243,9 +243,7 @@ class ImageSearchController(
 
       SearchInstanceSelector(
         searchInstance = searchInstance,
-        onSelectorItemClicked = { clickedImageSearchInstance ->
-          // TODO(KurobaEx):
-        }
+        onSelectorItemClicked = { showImageSearchInstances() }
       )
 
       Spacer(modifier = Modifier.height(8.dp))
@@ -299,35 +297,10 @@ class ImageSearchController(
     }
   }
 
-  private fun showOptions(fullImageUrls: List<HttpUrl>) {
-    val menuItems = mutableListOf<FloatingListMenuItem>()
-
-    menuItems += HeaderFloatingListMenuItem("header", "Select source url")
-
-    fullImageUrls.forEach { httpUrl ->
-      menuItems += FloatingListMenuItem(httpUrl, httpUrl.toString(), httpUrl)
-    }
-
-    val floatingListMenuController = FloatingListMenuController(
-      context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items = menuItems,
-      itemClickListener = { clickedItem ->
-        val clickedItemUrl = (clickedItem.value as? HttpUrl)
-          ?: return@FloatingListMenuController
-
-        onImageSelected(clickedItemUrl)
-        popFromNavController(boundChanDescriptor)
-      }
-    )
-
-    presentController(floatingListMenuController)
-  }
-
   @Composable
   private fun SearchInstanceSelector(
     searchInstance: ImageSearchInstance,
-    onSelectorItemClicked: (ImageSearchInstance) -> Unit
+    onSelectorItemClicked: () -> Unit
   ) {
     val chanTheme = LocalChanTheme.current
 
@@ -343,7 +316,7 @@ class ImageSearchController(
         .wrapContentHeight()
         .kurobaClickable(
           bounded = true,
-          onClick = { onSelectorItemClicked(searchInstance) }
+          onClick = { onSelectorItemClicked() }
         )
         .padding(vertical = 10.dp),
       verticalAlignment = Alignment.CenterVertically
@@ -549,6 +522,59 @@ class ImageSearchController(
         )
       }
     }
+  }
+
+  private fun showImageSearchInstances() {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+
+    menuItems += HeaderFloatingListMenuItem("header", "Select image search instance")
+
+    ImageSearchInstanceType.values().forEach { imageSearchInstanceType ->
+      menuItems += FloatingListMenuItem(
+        key = imageSearchInstanceType,
+        name = imageSearchInstanceType.name,
+        value = imageSearchInstanceType
+      )
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        val selectedImageSearchInstanceType = (clickedItem.value as? ImageSearchInstanceType)
+          ?: return@FloatingListMenuController
+
+        viewModel.changeSearchInstance(selectedImageSearchInstanceType)
+      }
+    )
+
+    presentController(floatingListMenuController)
+  }
+
+  private fun showOptions(fullImageUrls: List<HttpUrl>) {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+
+    menuItems += HeaderFloatingListMenuItem("header", "Select source url")
+
+    fullImageUrls.forEach { httpUrl ->
+      menuItems += FloatingListMenuItem(httpUrl, httpUrl.toString(), httpUrl)
+    }
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        val clickedItemUrl = (clickedItem.value as? HttpUrl)
+          ?: return@FloatingListMenuController
+
+        onImageSelected(clickedItemUrl)
+        popFromNavController(boundChanDescriptor)
+      }
+    )
+
+    presentController(floatingListMenuController)
   }
 
   companion object {

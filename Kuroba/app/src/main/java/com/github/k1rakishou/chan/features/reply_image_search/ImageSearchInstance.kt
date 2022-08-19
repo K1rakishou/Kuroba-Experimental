@@ -23,6 +23,10 @@ abstract class ImageSearchInstance(
   val currentPage: Int
     get() = _currentPage
 
+  private var _searchQuery: String? = null
+  val searchQuery: String?
+    get() = _searchQuery
+
   private var _cookies: String? = null
   val cookies: String?
     get() = _cookies
@@ -40,6 +44,10 @@ abstract class ImageSearchInstance(
 
   fun updateCookies(newCookies: String) {
     _cookies = newCookies
+  }
+
+  fun updateSearchQuery(newQuery: String) {
+    _searchQuery = newQuery
   }
 
   companion object {
@@ -63,7 +71,7 @@ class SearxInstance : ImageSearchInstance(
       addQueryParameter("language", "en-US")
       addQueryParameter("format", "json")
 
-      if (page != null) {
+      if (page != null && page > 0) {
         addQueryParameter("pageno", "${page}")
       }
 

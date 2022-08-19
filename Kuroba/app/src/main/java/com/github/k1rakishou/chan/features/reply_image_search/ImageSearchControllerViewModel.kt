@@ -86,6 +86,14 @@ class ImageSearchControllerViewModel : BaseViewModel() {
 
   fun changeSearchInstance(newImageSearchInstanceType: ImageSearchInstanceType) {
     _lastUsedSearchInstance.value = newImageSearchInstanceType
+
+    val prevQuery = getCurrentSearchInstance()?.searchQuery
+    val newQuery = searchQuery.value
+
+    val searchResults = _searchResults[newImageSearchInstanceType]
+    if (searchResults !is AsyncData.Data || prevQuery != newQuery) {
+      onSearchQueryChanged(newQuery)
+    }
   }
 
   fun updatePrevLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
@@ -155,7 +163,10 @@ class ImageSearchControllerViewModel : BaseViewModel() {
       val currentImageSearchInstance = getCurrentSearchInstance()
         ?: return@launch
 
+      currentImageSearchInstance.updateSearchQuery(query)
+
       if (query.isEmpty()) {
+        _searchResults[currentImageSearchInstance.type] = AsyncData.NotInitialized
         return@launch
       }
 
