@@ -447,6 +447,10 @@ class BookmarksController(
         }
       }
       BookmarksSelectionHelper.BookmarksMenuItemType.MoveToGroup -> {
+        // Forcefully exit the selection mode because otherwise the toolbar will get stuck
+        // in selection mode
+        onNewSelectionEvent(BaseSelectionHelper.SelectionEvent.ExitedSelectionMode)
+
         val controller = BookmarkGroupSettingsController(
           context = context,
           bookmarksToMove = selectedItems,
