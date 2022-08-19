@@ -953,21 +953,23 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun insertTags(before: String, after: String): Boolean {
-    val selectionStart = comment.selectionStartSafe()
-    val selectionEnd = comment.selectionEndSafe()
+    val selectionStart = comment.selectionStart
+    val selectionEnd = comment.selectionEnd
 
     val hadSelectedText = selectionStart != selectionEnd
 
     comment.text?.insert(selectionEnd, after)
     comment.text?.insert(selectionStart, before)
 
-    if (!hadSelectedText) {
+    val newCommentText = comment.text
+
+    if (!hadSelectedText && newCommentText != null) {
       // In case of when the tags are inserted and there is no selected text, the text cursor will be
       // moved between the tags, e.g.:
       // [tag]<cursor>[/tag]
       // Otherwise it will remain at the end of the closing tag, e.g.:
       // [tag]some text[/tag]<cursor>
-      val newSelectionCenter = selectionEnd - after.length
+      val newSelectionCenter = newCommentText.length - after.length
       if (newSelectionCenter >= 0) {
         comment.setSelection(newSelectionCenter)
       }
