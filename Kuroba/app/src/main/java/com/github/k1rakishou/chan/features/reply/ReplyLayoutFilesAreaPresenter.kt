@@ -66,7 +66,10 @@ class ReplyLayoutFilesAreaPresenter(
   private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
   private val fileChangeExecutor = SerializedCoroutineExecutor(scope)
   private val state = MutableStateFlow(ReplyLayoutFilesState(loading = true))
-  private var boundChanDescriptor: ChanDescriptor? = null
+
+  private var _boundChanDescriptor: ChanDescriptor? = null
+  val boundChanDescriptor: ChanDescriptor?
+    get() = _boundChanDescriptor
 
   fun listenForStateUpdates(): Flow<ReplyLayoutFilesState> = state.asStateFlow()
 
@@ -76,7 +79,7 @@ class ReplyLayoutFilesAreaPresenter(
       return
     }
 
-    this.boundChanDescriptor = chanDescriptor
+    this._boundChanDescriptor = chanDescriptor
 
     scope.launch {
       imagePickHelper.get().listenForNewPickedFiles()
@@ -92,7 +95,7 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   fun unbindChanDescriptor() {
-    this.boundChanDescriptor = null
+    this._boundChanDescriptor = null
   }
 
   fun pickLocalFile(showFilePickerChooser: Boolean) {
@@ -103,7 +106,7 @@ class ReplyLayoutFilesAreaPresenter(
 
     pickFilesExecutor.post {
       handleStateUpdate {
-        val chanDescriptor = boundChanDescriptor
+        val chanDescriptor = _boundChanDescriptor
           ?: return@handleStateUpdate
 
         val granted = requestPermissionIfNeededSuspend()
@@ -184,7 +187,7 @@ class ReplyLayoutFilesAreaPresenter(
 
     pickFilesExecutor.post {
       handleStateUpdate {
-        val chanDescriptor = boundChanDescriptor
+        val chanDescriptor = _boundChanDescriptor
           ?: return@handleStateUpdate
 
         val job = SupervisorJob()
@@ -256,7 +259,7 @@ class ReplyLayoutFilesAreaPresenter(
   fun selectedFilesCount(): Int = replyManager.get().selectedFilesCount().unwrap()
 
   private fun boardSupportsSpoilers(): Boolean {
-    val chanDescriptor = boundChanDescriptor
+    val chanDescriptor = _boundChanDescriptor
       ?: return false
 
     return boardManager.get().byBoardDescriptor(chanDescriptor.boardDescriptor())
@@ -517,7 +520,7 @@ class ReplyLayoutFilesAreaPresenter(
   ) {
     refreshFilesExecutor.post(debounceTime) {
       handleStateUpdate {
-        val chanDescriptor = boundChanDescriptor
+        val chanDescriptor = _boundChanDescriptor
           ?: return@handleStateUpdate
 
         val attachables = enumerateReplyAttachables(chanDescriptor).unwrap()
@@ -807,7 +810,7 @@ class ReplyLayoutFilesAreaPresenter(
 
   fun onFileStatusRequested(fileUuid: UUID) {
     scope.launch {
-      val chanDescriptor = boundChanDescriptor
+      val chanDescriptor = _boundChanDescriptor
         ?: return@launch
 
       val clickedFile = state.value.attachables.firstOrNull { replyAttachable ->

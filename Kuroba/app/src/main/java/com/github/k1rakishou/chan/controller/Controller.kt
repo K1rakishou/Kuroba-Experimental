@@ -410,11 +410,6 @@ abstract class Controller(@JvmField var context: Context) {
     return (context as ControllerHostActivity).getControllerOrNull(predicate)
   }
 
-  open fun popController(): Boolean {
-    return navigationController?.popController()
-      ?: false
-  }
-
   open fun stopPresenting() {
     stopPresenting(true)
   }

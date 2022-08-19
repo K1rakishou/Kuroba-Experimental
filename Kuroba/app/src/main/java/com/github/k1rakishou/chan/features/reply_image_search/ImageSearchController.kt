@@ -68,6 +68,7 @@ import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
@@ -78,6 +79,7 @@ import javax.inject.Inject
 
 class ImageSearchController(
   context: Context,
+  private val boundChanDescriptor: ChanDescriptor,
   private val onImageSelected: (List<HttpUrl>) -> Unit
 ) : Controller(context), WindowInsetsListener {
 
@@ -277,7 +279,7 @@ class ImageSearchController(
             focusManager.clearFocus(force = true)
 
             onImageSelected(searxImage.fullImageUrls)
-            popController()
+            popFromNavController(boundChanDescriptor)
           }
         )
       }

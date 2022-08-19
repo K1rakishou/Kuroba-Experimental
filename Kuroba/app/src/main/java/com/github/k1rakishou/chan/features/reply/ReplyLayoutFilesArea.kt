@@ -420,8 +420,12 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         )
       }
       ACTION_USE_REMOTE_IMAGE_SEARCH -> {
+        val boundChanDescriptor = presenter.boundChanDescriptor
+          ?: return
+
         val imageSearchController = ImageSearchController(
           context = context,
+          boundChanDescriptor = boundChanDescriptor,
           onImageSelected = { imageUrls ->
             val urlsRaw = imageUrls.map { it.toString() }
             presenter.pickOneOfRemoteFiles(urlsRaw)
