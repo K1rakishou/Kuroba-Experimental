@@ -106,6 +106,14 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         addRule(tagRule("span").withCssClass("s").strikeThrough());
         addRule(tagRule("span").withCssClass("u").underline());
 
+        addRule(tagRule("sup").superscript());
+        addRule(tagRule("sub").subscript());
+        addRule(
+                tagRule("span").withCssClass("o")
+                        .withPriority(StyleRule.Priority.BeforeWildcardRules)
+                        .overline()
+        );
+
         addRule(tagRule("pre")
                 .withCssClass("prettyprint")
                 .monospace()

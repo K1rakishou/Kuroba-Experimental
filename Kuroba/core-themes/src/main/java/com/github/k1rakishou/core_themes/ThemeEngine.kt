@@ -44,6 +44,9 @@ open class ThemeEngine(
   private var isHalloweenToday = false
   private var autoThemeSwitcherJob: Job? = null
 
+  var density: Float = 2f
+    private set
+
   private val halloweenTheme by lazy { HalloweenTheme() }
 
   lateinit var chanTheme: ChanTheme
@@ -51,6 +54,7 @@ open class ThemeEngine(
 
   fun initialize(context: Context, isHalloweenToday: Boolean) {
     this.isHalloweenToday = isHalloweenToday
+    this.density = context.resources.displayMetrics.density
 
     defaultDarkTheme = DefaultDarkTheme()
     defaultLightTheme = DefaultLightTheme()

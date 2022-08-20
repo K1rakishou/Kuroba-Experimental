@@ -35,7 +35,9 @@ import com.github.k1rakishou.core_spannable.AbsoluteSizeSpanHashed;
 import com.github.k1rakishou.core_spannable.BackgroundColorIdSpan;
 import com.github.k1rakishou.core_spannable.CustomTypefaceSpan;
 import com.github.k1rakishou.core_spannable.ForegroundColorIdSpan;
+import com.github.k1rakishou.core_spannable.OverlineSpan;
 import com.github.k1rakishou.core_spannable.PostLinkable;
+import com.github.k1rakishou.core_spannable.ScriptSpan;
 import com.github.k1rakishou.core_themes.ChanThemeColorId;
 import com.github.k1rakishou.model.data.post.ChanPostBuilder;
 import com.google.common.collect.Sets;
@@ -59,6 +61,9 @@ public class StyleRule {
     private ChanThemeColorId backgroundChanThemeColorId = null;
     private boolean strikeThrough;
     private boolean underline;
+    private boolean overline;
+    private boolean superscript;
+    private boolean subscript;
     private boolean bold;
     private boolean italic;
     private boolean monospace;
@@ -143,6 +148,21 @@ public class StyleRule {
 
     public StyleRule underline() {
         this.underline = true;
+        return this;
+    }
+
+    public StyleRule overline() {
+        this.overline = true;
+        return this;
+    }
+
+    public StyleRule superscript() {
+        this.superscript = true;
+        return this;
+    }
+
+    public StyleRule subscript() {
+        this.subscript = true;
         return this;
     }
 
@@ -270,6 +290,18 @@ public class StyleRule {
 
         if (underline) {
             spansToApply.add(new UnderlineSpan());
+        }
+
+        if (overline) {
+            spansToApply.add(new OverlineSpan());
+        }
+
+        if (superscript) {
+            spansToApply.add(new ScriptSpan(true));
+        }
+
+        if (subscript) {
+            spansToApply.add(new ScriptSpan(false));
         }
 
         if (bold && italic) {
