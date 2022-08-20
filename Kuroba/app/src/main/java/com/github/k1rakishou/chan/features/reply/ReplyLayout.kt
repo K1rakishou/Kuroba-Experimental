@@ -21,10 +21,14 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.res.Configuration
 import android.graphics.Color
+import android.graphics.Typeface
 import android.os.Build
 import android.text.Editable
 import android.text.Selection
 import android.text.TextWatcher
+import android.text.style.StrikethroughSpan
+import android.text.style.StyleSpan
+import android.text.style.UnderlineSpan
 import android.util.AttributeSet
 import android.view.ActionMode
 import android.view.GestureDetector
@@ -92,6 +96,7 @@ import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
+import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -99,6 +104,7 @@ import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_spannable.PostLinkable
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.core_themes.ThemeEngine.ThemeChangesListener
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -510,6 +516,7 @@ class ReplyLayout @JvmOverloads constructor(
     replyLayoutFilesArea = replyInputLayout.findViewById(R.id.reply_layout_files_area)
 
     passChildMotionEventsToDetectors()
+    setFormattingButtonsDescriptiveNames()
 
     // Setup reply layout views
     commentQuoteButton.setOnClickListener(this)
@@ -581,6 +588,38 @@ class ReplyLayout @JvmOverloads constructor(
 
     setView(replyInputLayout)
     elevation = dp(4f).toFloat()
+  }
+
+  private fun setFormattingButtonsDescriptiveNames() {
+    commentSpoilerButton.text = buildSpannableString {
+      append("[")
+      append("   ", PostLinkable("   ", PostLinkable.Value.StringValue("   "), PostLinkable.Type.SPOILER), 0)
+      append("]")
+    }
+
+    commentBoldButton.text = buildSpannableString {
+      append("[")
+      append("b", StyleSpan(Typeface.BOLD), 0)
+      append("]")
+    }
+
+    commentItalicButton.text = buildSpannableString {
+      append("[")
+      append("i", StyleSpan(Typeface.ITALIC), 0)
+      append("]")
+    }
+
+    commentUnderlineButton.text = buildSpannableString {
+      append("[")
+      append("u", UnderlineSpan(), 0)
+      append("]")
+    }
+
+    commentStrikeThroughButton.text = buildSpannableString {
+      append("[")
+      append("s", StrikethroughSpan(), 0)
+      append("]")
+    }
   }
 
   fun onCreate(
