@@ -77,6 +77,10 @@ class RemoteFilePicker(
         }
       }
 
+      if (downloadedFileMaybe is ModularResult.Error) {
+        return@withContext ModularResult.error(FilePickerError.UnknownError(downloadedFileMaybe.error))
+      }
+
       if (downloadedFileMaybe == null || downloadedUrl == null) {
         return@withContext ModularResult.error(lastError!!)
       }
