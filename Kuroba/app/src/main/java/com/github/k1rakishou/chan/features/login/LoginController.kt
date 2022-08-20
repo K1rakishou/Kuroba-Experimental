@@ -199,9 +199,6 @@ class LoginController(
       bottomDescription.text = getString(R.string.setting_pass_bottom_description_chan4).parseAsHtml()
       bottomDescription.movementMethod = LinkMovementMethod.getInstance()
       return
-    } else if (site is Dvach) {
-      bottomDescription.text = getString(R.string.setting_pass_bottom_description_dvach)
-      return
     }
 
     bottomDescription.visibility = View.GONE

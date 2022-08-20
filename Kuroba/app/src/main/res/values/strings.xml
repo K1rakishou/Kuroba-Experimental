@@ -961,13 +961,11 @@ Otherwise you will still have to solve captchas.<br>
 If you ever log out or if the passcode expires you will have to change reply mode too.
 ]]>
     "</string>
-    <string name="setting_pass_bottom_description_dvach">You need to pass 2ch anti-spam checks before trying to enter your passcode!</string>
-
     <string name="settings_screen_theme">Themes</string>
     <string name="image_quality">Image quality: %1$d</string>
 
     <string name="theme_gallery_screen_theme_gallery">Theme gallery (%1$s themes)</string>
-    <string name="theme_gallery_screen_loading_themes">Loading themes...</string>
+    <string name="theme_gallery_screen_loading_themes">Loading themes…</string>
     <string name="theme_gallery_screen_loading_themes_failed">Failed to load themes</string>
 
     <string name="site_settings_not_site_found">No site found with siteDescriptor: %1$s</string>
