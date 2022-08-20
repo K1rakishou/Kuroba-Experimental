@@ -22,6 +22,7 @@ import com.github.k1rakishou.chan.features.settings.ScreenIdentifier
 import com.github.k1rakishou.chan.features.settings.SettingIdentifier
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.SettingsIdentifier
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
@@ -143,6 +144,22 @@ class SiteSettingsPresenter(
                     }
                   }
                 }
+              )
+            }
+            is SiteSetting.SiteBooleanSetting -> {
+              val bottomDescriptionStringFunc: (suspend () -> String)? = if (siteSetting.settingDescription != null) {
+                { siteSetting.settingDescription }
+              } else {
+                null
+              }
+
+              group += BooleanSettingV2.createBuilder(
+                context = context,
+                identifier = identifier,
+                setting = siteSetting.setting,
+                dependsOnSetting = null,
+                topDescriptionStringFunc = { siteSetting.settingTitle },
+                bottomDescriptionStringFunc = bottomDescriptionStringFunc
               )
             }
           }

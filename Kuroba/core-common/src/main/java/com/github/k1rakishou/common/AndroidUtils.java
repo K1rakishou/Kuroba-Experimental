@@ -93,7 +93,12 @@ public class AndroidUtils {
         int pid = android.os.Process.myPid();
         ActivityManager manager = (ActivityManager) getAppContext().getSystemService(Context.ACTIVITY_SERVICE);
 
-        for (ActivityManager.RunningAppProcessInfo processInfo : manager.getRunningAppProcesses()) {
+        List<ActivityManager.RunningAppProcessInfo> processes = manager.getRunningAppProcesses();
+        if (processes == null) {
+            return AppProcessType.Main;
+        }
+
+        for (ActivityManager.RunningAppProcessInfo processInfo : processes) {
             if (processInfo.pid == pid) {
                 currentProcName = processInfo.processName;
                 break;

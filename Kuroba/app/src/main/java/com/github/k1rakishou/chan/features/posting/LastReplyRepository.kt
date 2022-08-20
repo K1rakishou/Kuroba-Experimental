@@ -19,12 +19,14 @@ package com.github.k1rakishou.chan.features.posting
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.common.putIfNotContainsLazy
 import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import java.util.concurrent.TimeUnit
@@ -134,6 +136,16 @@ class LastReplyRepository(
     hasAttachedImages: Boolean = false
   ): Long {
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
+
+    val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+      ?.get()
+
+    if (ignoreReplyCooldowns == true) {
+      Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode) " +
+        "ignoreReplyCooldowns setting is enabled, skipping cooldown checks")
+      return 0
+    }
 
     return when (chanDescriptor) {
       is ChanDescriptor.CompositeCatalogDescriptor -> 0

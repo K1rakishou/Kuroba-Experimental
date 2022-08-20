@@ -156,12 +156,15 @@ class Chan4ReplyCall(
       replyResponse.errorMessage = errorMessage
       replyResponse.probablyBanned = checkIfBanned()
 
+      Logger.e(TAG, "process() error (errorMessage=${errorMessage})")
+
       if (replyChanDescriptor is ThreadDescriptor) {
         // Only check for rate limits when replying in threads. Do not do this when creating new
         // threads.
         val rateLimitMatcher = RATE_LIMITED_PATTERN.matcher(errorMessage)
         if (rateLimitMatcher.find()) {
-          replyResponse.rateLimitInfo = createRateLimitInfo(rateLimitMatcher)
+          val rateLimitInfo = createRateLimitInfo(rateLimitMatcher)
+          replyResponse.rateLimitInfo = rateLimitInfo
           return
         }
       }
@@ -172,6 +175,7 @@ class Chan4ReplyCall(
     val threadNoMatcher = THREAD_NO_PATTERN.matcher(result)
     if (!threadNoMatcher.find()) {
       Logger.e(TAG, "process() Couldn't handle server response! response = \"$result\"")
+      replyResponse.errorMessage = "Error trying to parse server response"
       return
     }
 

@@ -12,8 +12,10 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.settings.BaseSettingsController
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
+import com.github.k1rakishou.chan.features.settings.epoxy.epoxyBooleanSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxyLinkSetting
 import com.github.k1rakishou.chan.features.settings.epoxy.epoxySettingsGroupTitle
+import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
@@ -184,6 +186,25 @@ class SiteSettingsController(
                 return@showInputDialog
               }
 
+              rebuildSettings()
+            }
+          }
+        }
+      }
+      is BooleanSettingV2 -> {
+        epoxyBooleanSetting {
+          id("epoxy_boolean_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          checked(settingV2.isChecked)
+          bindNotificationIcon(SettingNotificationType.Default)
+          settingEnabled(true)
+
+          clickListener {
+            val prev = settingV2.isChecked
+            val curr = settingV2.callback?.invoke()
+
+            if (prev != curr) {
               rebuildSettings()
             }
           }

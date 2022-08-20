@@ -56,6 +56,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
@@ -480,6 +481,57 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun showReplyOptions(chanDescriptor: ChanDescriptor, prevReplyMode: ReplyMode) {
+    val menuItems = mutableListOf<FloatingListMenuItem>()
+    val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
+
+    val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+    val lastUsedReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+
+    menuItems += FloatingListMenuItem(
+      key = ACTION_REPLY_MODES,
+      name = "Reply modes",
+      more = availableReplyModes
+    )
+    menuItems += CheckableFloatingListMenuItem(
+      key = ACTION_IGNORE_REPLY_COOLDOWNS,
+      name = "Ignore reply cooldowns",
+      isCurrentlySelected = ignoreReplyCooldowns?.get() == true
+    )
+
+    val floatingListMenuController = FloatingListMenuController(
+      context = context,
+      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
+      items = menuItems,
+      itemClickListener = { clickedItem ->
+        if (clickedItem.key is Int) {
+          when (clickedItem.key) {
+            ACTION_REPLY_MODES -> {
+              // ???
+            }
+            ACTION_IGNORE_REPLY_COOLDOWNS -> {
+              ignoreReplyCooldowns?.toggle()
+            }
+          }
+        } else if (clickedItem.key is ReplyMode) {
+          val replyMode = clickedItem.key as? ReplyMode
+            ?: return@FloatingListMenuController
+
+          lastUsedReplyMode?.set(replyMode)
+
+          callback.updateCaptchaContainerVisibility()
+        }
+      }
+    )
+
+    callback.presentController(floatingListMenuController)
+  }
+
+  private fun buildReplyModeOptions(
+    chanDescriptor: ChanDescriptor,
+    prevReplyMode: ReplyMode
+  ): MutableList<FloatingListMenuItem> {
     val availableReplyModes = mutableListOf<FloatingListMenuItem>()
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
 
@@ -515,23 +567,7 @@ class ReplyPresenter @Inject constructor(
       )
     }
 
-    val floatingListMenuController = FloatingListMenuController(
-      context = context,
-      constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
-      items = availableReplyModes,
-      itemClickListener = { clickedItem ->
-        val replyMode = clickedItem.key as? ReplyMode
-          ?: return@FloatingListMenuController
-
-        siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-          ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
-          ?.set(replyMode)
-
-        callback.updateCaptchaContainerVisibility()
-      }
-    )
-
-    callback.presentController(floatingListMenuController)
+    return availableReplyModes
   }
 
   private fun submitOrAuthenticate(chanDescriptor: ChanDescriptor, replyMode: ReplyMode) {
@@ -939,6 +975,9 @@ class ReplyPresenter @Inject constructor(
     // matches for >>123, >>123 (text), >>>/fit/123
     private val QUOTE_PATTERN = Pattern.compile(">>\\d+")
     private val UTF_8 = StandardCharsets.UTF_8
+
+    private const val ACTION_REPLY_MODES = 0
+    private const val ACTION_IGNORE_REPLY_COOLDOWNS = 1
   }
 
 }

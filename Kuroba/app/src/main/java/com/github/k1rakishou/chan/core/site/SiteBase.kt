@@ -40,6 +40,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
@@ -105,6 +106,7 @@ abstract class SiteBase : Site, CoroutineScope {
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookie: StringSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
+  lateinit var ignoreReplyCooldowns: BooleanSetting
 
   private var initialized = false
 
@@ -139,6 +141,8 @@ abstract class SiteBase : Site, CoroutineScope {
       ReplyMode::class.java,
       ReplyMode.Unknown
     )
+
+    ignoreReplyCooldowns = BooleanSetting(prefs, "ignore_reply_cooldowns", false)
   }
 
   override fun loadBoardInfo(callback: ((ModularResult<SiteBoards>) -> Unit)?): Job? {
@@ -197,6 +201,7 @@ abstract class SiteBase : Site, CoroutineScope {
     return when (settingId) {
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
       SiteSetting.SiteSettingId.LastUsedReplyMode -> lastUsedReplyMode as T
+      SiteSetting.SiteSettingId.IgnoreReplyCooldowns -> ignoreReplyCooldowns as T
       // 4chan only
       SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> null
       // 2ch.hk only
@@ -233,6 +238,12 @@ abstract class SiteBase : Site, CoroutineScope {
         siteDomainSetting!!
       )
     }
+
+    settings += SiteSetting.SiteBooleanSetting(
+      getString(R.string.site_ignore_reply_cooldowns),
+      getString(R.string.site_ignore_reply_cooldowns_description),
+      ignoreReplyCooldowns
+    )
 
     return settings
   }

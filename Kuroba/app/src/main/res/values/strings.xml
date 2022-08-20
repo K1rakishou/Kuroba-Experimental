@@ -1498,6 +1498,8 @@ Actual error: \'%1$s\'</string>
     <string name="site_captcha_id_cookie_description">Last used captchaId cookie</string>
     <string name="site_block_bypass_cookie_description">Cookie issued by the server after bypassing Lynxchan block</string>
     <string name="site_proof_of_work_cookie_description">Cookie issued by the server after solving Lynxchan Proof-of-work problem</string>
+    <string name="site_ignore_reply_cooldowns">Ignore reply cooldowns</string>
+    <string name="site_ignore_reply_cooldowns_description">When enabled, client-side reply cooldown check will be disabled</string>
 
     <string name="lynxchan_proof_of_work_message">Lynxchan Proof–of–work is required in order to post. This is an additional anti-spam check and is usually required when Tor/VPN/proxy detected. Proof-of-work is not supported by the application because you need to solve a complex problem which requires a lot of computation power and time when solved on PC (~30-40 minutes on Threadripper 2950X with 16 cores). You have to do that on PC and then use the resulting cookies on the phone for posting. To do that, open any thread and try to post. After solving the problem, you will need to copy the following 3 cookies: \'captchaid\', \'bypass\' and \'extraCookie\' into the current site settings.</string>
     <string name="lynxchan_tor_proxy_vpv_detected_message">Tor / VPN / Proxy detected\nYou need a block bypass to post</string>
