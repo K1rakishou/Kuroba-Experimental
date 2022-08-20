@@ -41,8 +41,10 @@ import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.annotation.Px;
 import androidx.core.content.ContextCompat;
+import androidx.core.graphics.Insets;
 import androidx.core.view.AccessibilityDelegateCompat;
 import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
 import androidx.core.view.accessibility.AccessibilityNodeInfoCompat;
 import androidx.customview.view.AbsSavedState;
 import androidx.customview.widget.ViewDragHelper;
@@ -769,6 +771,19 @@ public class SlidingPaneLayoutEx extends ViewGroup {
     @Override
     public boolean onInterceptTouchEvent(MotionEvent ev) {
         final int action = ev.getActionMasked();
+
+        if (action == MotionEvent.ACTION_DOWN) {
+            WindowInsetsCompat rootWindowInsets = ViewCompat.getRootWindowInsets(this);
+
+            if (rootWindowInsets != null) {
+                Insets systemGestures = rootWindowInsets.getInsets(WindowInsetsCompat.Type.systemGestures());
+
+                int rightInsetStart = getWidth() - systemGestures.right;
+                if (systemGestures.right > 0 && ev.getX() > rightInsetStart) {
+                    return false;
+                }
+            }
+        }
 
         // Preserve the open state based on the last view that was touched.
         if (!mCanSlide && action == MotionEvent.ACTION_DOWN && getChildCount() > 1) {
