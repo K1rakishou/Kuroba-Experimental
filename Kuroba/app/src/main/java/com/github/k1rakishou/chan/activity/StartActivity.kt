@@ -175,7 +175,10 @@ class StartActivity : ControllerHostActivity(),
 
     AppModuleAndroidUtils.cancelLastToast()
     compositeDisposable.clear()
-    appRestarter.detachActivity(this)
+
+    if (::appRestarter.isInitialized) {
+      appRestarter.detachActivity(this)
+    }
 
     if (::updateManager.isInitialized) {
       updateManager.get().onDestroy()

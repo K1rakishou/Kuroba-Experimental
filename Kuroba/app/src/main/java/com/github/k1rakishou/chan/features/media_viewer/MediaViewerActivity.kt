@@ -157,7 +157,10 @@ class MediaViewerActivity : ControllerHostActivity(),
       fileChooser.removeCallbacks()
     }
 
-    appRestarter.detachActivity(this)
+    if (::appRestarter.isInitialized) {
+      appRestarter.detachActivity(this)
+    }
+
     AppModuleAndroidUtils.cancelLastToast()
 
     AndroidUtils.getWindow(this)

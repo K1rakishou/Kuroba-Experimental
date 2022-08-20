@@ -74,7 +74,10 @@ class SharingActivity : AppCompatActivity() {
       imagePickHelper.onActivityDestroyed(this)
     }
 
-    appRestarter.detachActivity(this)
+    if (::appRestarter.isInitialized) {
+      appRestarter.detachActivity(this)
+    }
+
     AppModuleAndroidUtils.cancelLastToast()
     mainScope.cancelChildren()
   }
