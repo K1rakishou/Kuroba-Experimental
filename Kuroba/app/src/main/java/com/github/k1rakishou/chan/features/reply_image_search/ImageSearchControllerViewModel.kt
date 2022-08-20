@@ -91,7 +91,7 @@ class ImageSearchControllerViewModel : BaseViewModel() {
     val newQuery = searchQuery.value
 
     val searchResults = _searchResults[newImageSearchInstanceType]
-    if (searchResults !is AsyncData.Data || prevQuery != newQuery) {
+    if ((searchResults !is AsyncData.Data || prevQuery != newQuery) && newQuery.isNotEmpty()) {
       onSearchQueryChanged(newQuery)
     }
   }
