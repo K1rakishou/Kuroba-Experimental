@@ -24,10 +24,10 @@ import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
 import okhttp3.Request
+import okhttp3.Response
 import org.joda.time.DateTime
 import org.joda.time.DateTimeZone
 import org.joda.time.Period
@@ -84,7 +84,6 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
 
         val lynxchanCaptchaFull = requestCaptchaInternal(
           lynxchanCaptcha = lynxchanCaptcha,
-          chanDescriptor = chanDescriptor,
           needBlockBypass = needBlockBypass
         )
 
@@ -246,6 +245,10 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
         val blockBypassWithStatusJson = moshi.adapter(BlockBypassWithStatusJson::class.java).fromJson(body)
           ?: return@run false
 
+        if (blockBypassWithStatusJson.status == "ok") {
+          return@run false
+        }
+
         return@run !blockBypassWithStatusJson.data.valid
       }
 
@@ -258,7 +261,6 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
 
   private suspend fun requestCaptchaInternal(
     lynxchanCaptcha: SiteAuthentication.CustomCaptcha.LynxchanCaptcha,
-    chanDescriptor: ChanDescriptor,
     needBlockBypass: Boolean
   ): LynxchanCaptchaFull {
     val captchaEndpoint = lynxchanCaptcha.captchaEndpoint
@@ -272,11 +274,11 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
       throw BadStatusResponseException(status = response.code)
     }
 
+    val lynxchanCaptchaJson = extractLynxchanCaptcha(response)
+      ?: throw LynxchanCaptchaError("Failed to extract captcha info from headers")
+
     val imgByteArray = response.body?.bytes()
       ?: throw EmptyBodyResponseException()
-
-    val lynxchanCaptchaJson = extractLynxchanCaptcha(response.headers)
-      ?: throw LynxchanCaptchaError("Failed to extract captcha info from headers")
 
     val imgImageBitmap = BitmapPainter(
       BitmapFactory.decodeByteArray(imgByteArray, 0, imgByteArray.size)
@@ -290,10 +292,22 @@ class LynxchanCaptchaLayoutViewModel : BaseViewModel() {
     )
   }
 
-  private fun extractLynxchanCaptcha(headers: Headers): LynxchanCaptchaJson? {
-    val captchaData = headers
-      .filter { (name, _) -> name.equals("set-cookie", ignoreCase = true) }
-      .map { (_, value) -> value }
+  private fun extractLynxchanCaptcha(response: Response): LynxchanCaptchaJson? {
+    val captchaData = mutableListOf<String>()
+    var currentResponse: Response? = response
+
+    while (currentResponse != null) {
+      val setCookieHeader = currentResponse.headers
+        .filter { (name, _) -> name.equals("set-cookie", ignoreCase = true) }
+        .map { (_, value) -> value }
+
+      if (setCookieHeader.isNotEmpty()) {
+        captchaData.addAll(setCookieHeader)
+        break
+      }
+
+      currentResponse = currentResponse.priorResponse
+    }
 
     Logger.d(TAG, "extractLynxchanCaptcha() captchaData=$captchaData")
 
