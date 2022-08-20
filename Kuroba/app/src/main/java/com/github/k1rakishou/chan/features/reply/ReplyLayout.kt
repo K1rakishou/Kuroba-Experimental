@@ -592,8 +592,10 @@ class ReplyLayout @JvmOverloads constructor(
 
   private fun setFormattingButtonsDescriptiveNames() {
     commentSpoilerButton.text = buildSpannableString {
+      val text = "   "
+
       append("[")
-      append("   ", PostLinkable("   ", PostLinkable.Value.StringValue("   "), PostLinkable.Type.SPOILER), 0)
+      append(text, PostLinkable(text, PostLinkable.Value.StringValue(text), PostLinkable.Type.SPOILER), 0)
       append("]")
     }
 
