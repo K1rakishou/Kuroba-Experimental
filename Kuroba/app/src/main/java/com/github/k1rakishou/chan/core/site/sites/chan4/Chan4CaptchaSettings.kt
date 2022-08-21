@@ -13,7 +13,7 @@ data class Chan4CaptchaSettings(
   @SerializedName("remember_captcha_cookies")
   val rememberCaptchaCookies: Boolean = true,
   @SerializedName("use_captcha_solver")
-  val useCaptchaSolver: Boolean = true
+  val useCaptchaSolver: Boolean = false
 ) {
 
   companion object {
