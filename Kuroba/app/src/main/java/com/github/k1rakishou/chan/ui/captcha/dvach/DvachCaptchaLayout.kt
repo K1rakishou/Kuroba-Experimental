@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -161,6 +162,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
       val captchaInfoAsync by viewModel.captchaInfoToShow
       val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
+      val captchaId = captchaInfo?.id
+
       if (captchaInfo != null) {
         val input = captchaInfo.input
 
@@ -176,7 +179,15 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
           value = currentInputValue,
           onValueChange = { newValue -> currentInputValue = newValue },
           maxLines = 1,
+          singleLine = true,
           keyboardOptions = keyboardOptions,
+          keyboardActions = KeyboardActions(
+            onDone = {
+              if (captchaId.isNotNullNorEmpty()) {
+                onVerifyClick(captchaId, viewModel.currentInputValue.value)
+              }
+            }
+          ),
           modifier = Modifier
             .fillMaxWidth()
             .wrapContentHeight()
@@ -201,7 +212,6 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
         Spacer(modifier = Modifier.width(8.dp))
 
-        val captchaId = captchaInfo?.id
         val buttonEnabled = captchaId.isNotNullNorEmpty() && currentInputValue.isNotEmpty()
 
         KurobaComposeTextBarButton(
