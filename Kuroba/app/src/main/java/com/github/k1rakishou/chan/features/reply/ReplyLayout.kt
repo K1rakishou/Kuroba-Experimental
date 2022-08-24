@@ -968,7 +968,7 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   private fun insertTags(openTag: String, closeTag: String): Boolean {
-    val replyText = comment.text?.toString() ?: ""
+    val replyText = comment.text ?: ""
 
     val selectionStart = comment.selectionStart.takeIf { it >= 0 } ?: 0
     val selectionEnd = comment.selectionEnd.takeIf { it >= 0 } ?: 0
@@ -976,9 +976,9 @@ class ReplyLayout @JvmOverloads constructor(
 
     var cursorPosition = 0
 
-    val replyTextWithNewTags = buildString {
-      val textBeforeSelection = replyText.substring(0, selectionStart)
-      val textAfterSelection = replyText.substring(selectionEnd, replyText.length)
+    val replyTextWithNewTags = buildSpannableString {
+      val textBeforeSelection = replyText.subSequence(0, selectionStart)
+      val textAfterSelection = replyText.subSequence(selectionEnd, replyText.length)
       val selectedText = replyText.subSequence(selectionStart, selectionEnd)
 
       if (selectionCollapsed) {
@@ -997,10 +997,7 @@ class ReplyLayout @JvmOverloads constructor(
       }
     }
 
-    comment.text?.let { editable ->
-      editable.clear()
-      editable.append(replyTextWithNewTags)
-    }
+    comment.setText(replyTextWithNewTags, BufferType.EDITABLE)
     comment.setSelection(cursorPosition)
 
     return true
