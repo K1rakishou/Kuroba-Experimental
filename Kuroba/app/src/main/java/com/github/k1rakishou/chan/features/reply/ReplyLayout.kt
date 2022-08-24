@@ -967,28 +967,41 @@ class ReplyLayout @JvmOverloads constructor(
     return true
   }
 
-  private fun insertTags(before: String, after: String): Boolean {
-    val selectionStart = comment.selectionStart
-    val selectionEnd = comment.selectionEnd
+  private fun insertTags(openTag: String, closeTag: String): Boolean {
+    val replyText = comment.text?.toString() ?: ""
 
-    val hadSelectedText = selectionStart != selectionEnd
+    val selectionStart = comment.selectionStart.takeIf { it >= 0 } ?: 0
+    val selectionEnd = comment.selectionEnd.takeIf { it >= 0 } ?: 0
+    val selectionCollapsed = selectionStart == selectionEnd
 
-    comment.text?.insert(selectionEnd, after)
-    comment.text?.insert(selectionStart, before)
+    var cursorPosition = 0
 
-    val newCommentText = comment.text
+    val replyTextWithNewTags = buildString {
+      val textBeforeSelection = replyText.substring(0, selectionStart)
+      val textAfterSelection = replyText.substring(selectionEnd, replyText.length)
+      val selectedText = replyText.subSequence(selectionStart, selectionEnd)
 
-    if (!hadSelectedText && newCommentText != null) {
-      // In case of when the tags are inserted and there is no selected text, the text cursor will be
-      // moved between the tags, e.g.:
-      // [tag]<cursor>[/tag]
-      // Otherwise it will remain at the end of the closing tag, e.g.:
-      // [tag]some text[/tag]<cursor>
-      val newSelectionCenter = newCommentText.length - after.length
-      if (newSelectionCenter >= 0) {
-        comment.setSelection(newSelectionCenter)
+      if (selectionCollapsed) {
+        append(textBeforeSelection)
+        append(openTag)
+        cursorPosition = this.length
+        append(closeTag)
+        append(textAfterSelection)
+      } else {
+        append(textBeforeSelection)
+        append(openTag)
+        append(selectedText)
+        append(closeTag)
+        cursorPosition = this.length
+        append(textAfterSelection)
       }
     }
+
+    comment.text?.let { editable ->
+      editable.clear()
+      editable.append(replyTextWithNewTags)
+    }
+    comment.setSelection(cursorPosition)
 
     return true
   }
