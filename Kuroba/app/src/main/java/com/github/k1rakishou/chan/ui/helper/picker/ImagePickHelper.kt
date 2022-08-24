@@ -6,10 +6,14 @@ import androidx.appcompat.app.AppCompatActivity
 import coil.size.Scale
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -20,12 +24,15 @@ import java.util.*
 
 class ImagePickHelper(
   private val appContext: Context,
+  private val siteManager: Lazy<SiteManager>,
   private val replyManager: Lazy<ReplyManager>,
   private val imageLoaderV2: Lazy<ImageLoaderV2>,
   private val shareFilePicker: Lazy<ShareFilePicker>,
   private val localFilePicker: Lazy<LocalFilePicker>,
   private val remoteFilePicker: Lazy<RemoteFilePicker>,
-) {
+  private val postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>,
+  private val currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
+  ) {
   private val pickedFilesUpdatesState = MutableSharedFlow<UUID>()
 
   fun listenForNewPickedFiles(): Flow<UUID> {
@@ -84,6 +91,18 @@ class ImagePickHelper(
             replyFileMeta.fileUuid,
             Scale.FIT
           )
+        }
+
+        val currentFocusedDescriptor = currentOpenedDescriptorStateManager.get().currentFocusedDescriptor
+        if (currentFocusedDescriptor != null) {
+          val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(currentFocusedDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.get().updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = false
+            )
+          }
         }
 
         Logger.d(TAG, "pickFilesFromIntent() success! Picked new local file with UUID='${replyFileMeta.fileUuid}'")
@@ -257,6 +276,22 @@ class ImagePickHelper(
 
   fun onActivityDestroyed(activity: AppCompatActivity) {
     localFilePicker.get().onActivityDestroyed(activity)
+  }
+
+  private fun canAutoSelectFile(maxAllowedFilesPerPost: Int): ModularResult<Boolean> {
+    return ModularResult.Try { replyManager.get().selectedFilesCount().unwrap() < maxAllowedFilesPerPost }
+  }
+
+  private suspend fun getMaxAllowedFilesPerPost(chanDescriptor: ChanDescriptor): Int? {
+    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
+      return null
+    }
+
+    siteManager.get().awaitUntilInitialized()
+
+    return postingLimitationsInfoManager.get().getMaxAllowedFilesPerPost(
+      chanDescriptor.boardDescriptor()
+    )
   }
 
   companion object {

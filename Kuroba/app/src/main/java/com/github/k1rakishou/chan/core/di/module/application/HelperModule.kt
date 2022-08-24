@@ -9,7 +9,10 @@ import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager
+import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.ReplyManager
+import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.loader.ChanThreadLoaderCoordinator
@@ -135,19 +138,26 @@ class HelperModule {
   fun provideImagePickHelper(
     appContext: Context,
     replyManager: Lazy<ReplyManager>,
+    siteManager: Lazy<SiteManager>,
     imageLoaderV2: Lazy<ImageLoaderV2>,
     shareFilePicker: Lazy<ShareFilePicker>,
     localFilePicker: Lazy<LocalFilePicker>,
     remoteFilePicker: Lazy<RemoteFilePicker>,
+    postingLimitationsInfoManager: Lazy<PostingLimitationsInfoManager>,
+    currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
   ): ImagePickHelper {
     Logger.deps("ImagePickHelper");
+
     return ImagePickHelper(
       appContext,
+      siteManager,
       replyManager,
       imageLoaderV2,
       shareFilePicker,
       localFilePicker,
-      remoteFilePicker
+      remoteFilePicker,
+      postingLimitationsInfoManager,
+      currentOpenedDescriptorStateManager
     )
   }
 

@@ -149,20 +149,21 @@ class ReplyLayoutFilesAreaPresenter(
           return@handleStateUpdate
         }
 
-        val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
+        val replyFiles = (pickedFileResult as PickedFile.Result).replyFiles
+        replyFiles.forEach { replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
+            return@forEach
+          }
 
-        val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-          Logger.e(TAG, "imagePickHelper.pickLocalFile($chanDescriptor) getReplyFileMeta() error", error)
-          return@handleStateUpdate
-        }
-
-        val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-        if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
-          replyManager.get().updateFileSelection(
-            fileUuid = replyFileMeta.fileUuid,
-            selected = true,
-            notifyListeners = false
-          )
+          val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.get().updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = false
+            )
+          }
         }
 
         Logger.d(TAG, "pickNewLocalFile() success")
@@ -210,33 +211,29 @@ class ReplyLayoutFilesAreaPresenter(
           }
 
         if (pickedFileResult is PickedFile.Failure) {
-          Logger.e(
-            TAG, "pickRemoteFile() error, " +
-              "pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
+          Logger.e(TAG,
+            "pickRemoteFile() error, pickedFileResult=${pickedFileResult.reason.errorMessageOrClassName()}"
           )
 
           withView { showFilePickerErrorToast(pickedFileResult.reason) }
           return@handleStateUpdate
         }
 
-        val replyFile = (pickedFileResult as PickedFile.Result).replyFiles.first()
+        val replyFiles = (pickedFileResult as PickedFile.Result).replyFiles
+        replyFiles.forEach { replyFile ->
+          val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+            Logger.e(TAG, "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error", error)
+            return@forEach
+          }
 
-        val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-          Logger.e(
-            TAG,
-            "imagePickHelper.pickRemoteFile($chanDescriptor) getReplyFileMeta() error",
-            error
-          )
-          return@handleStateUpdate
-        }
-
-        val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
-        if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
-          replyManager.get().updateFileSelection(
-            fileUuid = replyFileMeta.fileUuid,
-            selected = true,
-            notifyListeners = false
-          )
+          val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
+          if (maxAllowedFilesPerPost != null && canAutoSelectFile(maxAllowedFilesPerPost).unwrap()) {
+            replyManager.get().updateFileSelection(
+              fileUuid = replyFileMeta.fileUuid,
+              selected = true,
+              notifyListeners = false
+            )
+          }
         }
 
         Logger.d(TAG, "pickRemoteFile() success")
