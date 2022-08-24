@@ -351,7 +351,7 @@ class Chan4CaptchaLayout(
       BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
         KurobaComposeSnappingSlider(
           slideOffsetState = scrollValueState,
-          slideSteps = PIXELS_PER_STEP,
+          slideSteps = SLIDE_STEPS,
           backgroundColor = chanTheme.backColorCompose,
           modifier = Modifier
             .wrapContentHeight()
@@ -482,7 +482,6 @@ class Chan4CaptchaLayout(
           .fillMaxWidth()
           .wrapContentHeight()
       ) {
-
         KurobaComposeTextBarButton(
           onClick = {
             viewModel.requestCaptcha(context, chanDescriptor, forced = true)
@@ -755,7 +754,7 @@ class Chan4CaptchaLayout(
   }
   
   companion object {
-    private const val PIXELS_PER_STEP = 50
+    private const val SLIDE_STEPS = 50
 
     private const val ACTION_USE_CONTRAST_BACKGROUND = 0
     private const val ACTION_SHOW_CAPTCHA_HELP = 1

@@ -308,15 +308,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         imgWidth = null,
         bgWidth = null,
         captchaInfoRawString = null,
-        captchaBgColor = CAPTCHA_DEFAULT_BG_COLOR,
         captchaSolution = null
       )
-    }
-
-    val captchaBgColor = if (chan4CaptchaSettingsJson.get().sliderCaptchaUseContrastBackground) {
-      CAPTCHA_CONTRAST_BG_COLOR
-    } else {
-      CAPTCHA_DEFAULT_BG_COLOR
     }
 
     val captchaSolution = if (_captchaSolverInstalled.value) {
@@ -357,7 +350,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       imgWidth = captchaInfoRaw.imgWidth,
       bgWidth = captchaInfoRaw.bgWidth,
       captchaInfoRawString = captchaInfoRawString,
-      captchaBgColor = captchaBgColor,
       captchaSolution = captchaSolution
     )
   }
@@ -495,7 +487,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     val bgWidth: Int?,
     val imgWidth: Int?,
     val captchaInfoRawString: String?,
-    val captchaBgColor: Color,
     captchaSolution: Chan4CaptchaSolverHelper.CaptchaSolution?
   ) {
     val currentInputValue = mutableStateOf<String>("")
