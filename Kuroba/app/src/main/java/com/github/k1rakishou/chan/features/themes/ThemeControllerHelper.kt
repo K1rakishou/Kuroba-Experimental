@@ -58,8 +58,8 @@ import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.github.k1rakishou.model.data.post.PostIndexed
 import com.google.android.material.bottomnavigation.BottomNavigationView
 import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.google.android.material.navigation.NavigationBarView
 import okhttp3.HttpUrl.Companion.toHttpUrl
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 class ThemeControllerHelper(
@@ -273,6 +273,7 @@ class ThemeControllerHelper(
     bottomNavView.inflateMenu(R.menu.bottom_navigation_menu)
     bottomNavView.selectedItemId = R.id.action_browse
     bottomNavView.setBackgroundColor(theme.primaryColor)
+    bottomNavView.labelVisibilityMode = NavigationBarView.LABEL_VISIBILITY_UNLABELED
 
     val uncheckedColor = if (ThemeEngine.isNearToFullyBlackColor(theme.primaryColor)) {
       Color.DKGRAY
