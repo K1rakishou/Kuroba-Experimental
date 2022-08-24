@@ -544,7 +544,6 @@ class ReplyLayoutFilesAreaPresenter(
             
             val maxAllowedFilesPerPost = getMaxAllowedFilesPerPost(chanDescriptor)
             if (maxAllowedFilesPerPost != null) {
-              updateSendButtonState(selectedFilesCount, maxAllowedFilesPerPost)
               updateSelectedFilesCounter(selectedFilesCount, maxAllowedFilesPerPost, totalFilesCount)
             }
           }

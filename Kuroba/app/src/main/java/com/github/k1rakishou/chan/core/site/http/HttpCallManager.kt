@@ -25,7 +25,6 @@ import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.withContext
@@ -47,7 +46,6 @@ class HttpCallManager @Inject constructor(
   /**
    * Use this one when you want to send a Post request and want to show some progress indicator
    * */
-  @OptIn(ExperimentalCoroutinesApi::class)
   suspend fun <T : HttpCall> makePostHttpCallWithProgress(
     httpCall: T
   ): Flow<HttpCall.HttpCallWithProgressResult<T>> {
@@ -72,7 +70,7 @@ class HttpCallManager @Inject constructor(
                 throw exception
               }
 
-              error("trySend failed for unknown reason")
+              Logger.w(TAG, "trySend failed for unknown reason")
             }
           }
         } catch (error: Throwable) {

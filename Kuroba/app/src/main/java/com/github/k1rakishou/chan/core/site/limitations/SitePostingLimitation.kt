@@ -114,16 +114,16 @@ class PasscodeDependantAttachablesCount(
         Logger.d(TAG, "getOrRefreshPasscodeInfo() == null, siteDescriptor='$siteDescriptor'")
         return defaultMaxAttachablesPerPost
       }
+      SiteActions.GetPasscodeInfoResult.NotLoggedIn -> {
+        Logger.d(TAG, "getOrRefreshPasscodeInfo() is NotLoggedIn, siteDescriptor='$siteDescriptor'")
+        return defaultMaxAttachablesPerPost
+      }
       is SiteActions.GetPasscodeInfoResult.Failure -> {
         Logger.e(TAG, "getOrRefreshPasscodeInfo() is Failure, siteDescriptor='$siteDescriptor'", getPasscodeInfoResult.error)
         return defaultMaxAttachablesPerPost
       }
       SiteActions.GetPasscodeInfoResult.NotAllowedToRefreshFromNetwork -> {
         Logger.d(TAG, "getOrRefreshPasscodeInfo() is NotAllowedToRefreshFromNetwork, siteDescriptor='$siteDescriptor'")
-        return defaultMaxAttachablesPerPost
-      }
-      SiteActions.GetPasscodeInfoResult.NotLoggedIn -> {
-        Logger.d(TAG, "getOrRefreshPasscodeInfo() is NotLoggedIn, siteDescriptor='$siteDescriptor'")
         return defaultMaxAttachablesPerPost
       }
       is SiteActions.GetPasscodeInfoResult.Success -> {

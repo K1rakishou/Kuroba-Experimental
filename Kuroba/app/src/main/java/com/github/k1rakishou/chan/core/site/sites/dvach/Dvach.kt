@@ -212,7 +212,10 @@ class Dvach : CommonSite() {
     setPostingLimitationInfo(
       postingLimitationInfoLazy = lazy {
         SitePostingLimitation(
-          postMaxAttachables = PasscodeDependantAttachablesCount(siteManager, 4),
+          postMaxAttachables = PasscodeDependantAttachablesCount(
+            siteManager = siteManager,
+            defaultMaxAttachablesPerPost = 4
+          ),
           postMaxAttachablesTotalSize = PasscodeDependantMaxAttachablesTotalSize(
             siteManager = siteManager
           )

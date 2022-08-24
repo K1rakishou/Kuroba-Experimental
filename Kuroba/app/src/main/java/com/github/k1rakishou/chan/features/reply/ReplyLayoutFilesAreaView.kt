@@ -8,7 +8,6 @@ interface ReplyLayoutFilesAreaView {
   fun requestReplyLayoutWrappingModeUpdate()
   fun showLoadingView(cancellationFunc: () -> Unit, titleTextId: Int)
   fun hideLoadingView()
-  fun updateSendButtonState(selectedFilesCount: Int, maxAllowedSelectedFilesCount: Int)
   fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int)
   fun showFileStatusMessage(fileStatusString: String)
   fun showReplyLayoutMessage(message: String?, hideDelayMs: Int)

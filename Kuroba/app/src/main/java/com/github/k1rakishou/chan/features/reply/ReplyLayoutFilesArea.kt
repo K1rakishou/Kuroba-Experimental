@@ -469,16 +469,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     threadListLayoutCallbacks?.hideLoadingView()
   }
 
-  override fun updateSendButtonState(selectedFilesCount: Int, maxAllowedSelectedFilesCount: Int) {
-    BackgroundUtils.ensureMainThread()
-
-    if (selectedFilesCount == 0 || selectedFilesCount <= maxAllowedSelectedFilesCount) {
-      replyLayoutCallbacks?.enableSendButton()
-    } else {
-      replyLayoutCallbacks?.disableSendButton()
-    }
-  }
-
   override fun showReplyLayoutMessage(message: String?, hideDelayMs: Int) {
     replyLayoutCallbacks?.openMessage(message, hideDelayMs)
   }
@@ -535,8 +525,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   interface ReplyLayoutCallbacks {
     fun hideKeyboard()
     fun requestWrappingModeUpdate()
-    fun disableSendButton()
-    fun enableSendButton()
     fun openMessage(message: String?, hideDelayMs: Int)
     fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int)
     fun showReplyLayoutMessage(message: String, duration: Int = 5000)

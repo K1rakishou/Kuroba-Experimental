@@ -790,32 +790,6 @@ class ReplyLayout @JvmOverloads constructor(
     wrappingModeUpdateDebouncer.post({ updateWrappingMode() }, 250L)
   }
 
-  override fun disableSendButton() {
-    BackgroundUtils.ensureMainThread()
-
-    if (!submit.isEnabled) {
-      return
-    }
-
-    submit.isEnabled = false
-    submit.isClickable = false
-    submit.isFocusable = false
-    submit.setAlphaFast(.4f)
-  }
-
-  override fun enableSendButton() {
-    BackgroundUtils.ensureMainThread()
-
-    if (submit.isEnabled) {
-      return
-    }
-
-    submit.isEnabled = true
-    submit.isClickable = true
-    submit.isFocusable = true
-    submit.setAlphaFast(1f)
-  }
-
   override fun showReplyLayoutMessage(message: String, duration: Int) {
     openMessage(message, duration)
   }
