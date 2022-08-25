@@ -83,7 +83,7 @@ class SiteFirewallBypassController(
 
       onCreateInternal()
     } catch (error: Throwable) {
-      onResult(CookieResult.Error(BypassExceptions(error.errorMessageOrClassName())))
+      onResult(CookieResult.Error(BypassException(error.errorMessageOrClassName())))
       pop()
     }
   }

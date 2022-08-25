@@ -20,7 +20,7 @@ class CloudFlareCheckBypassWebClient(
       ++pageLoadsCounter
 
       if (pageLoadsCounter > SiteFirewallBypassController.MAX_PAGE_LOADS_COUNT) {
-        fail(BypassExceptions("Exceeded max page load limit"))
+        fail(BypassException("Exceeded max page load limit"))
       }
 
       return
@@ -33,7 +33,7 @@ class CloudFlareCheckBypassWebClient(
       ?.removePrefix("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=")
 
     if (actualCookie == null) {
-      fail(BypassExceptions("No cf_clearance cookie found in result"))
+      fail(BypassException("No cf_clearance cookie found in result"))
       return
     }
 
@@ -49,7 +49,7 @@ class CloudFlareCheckBypassWebClient(
     super.onReceivedError(view, errorCode, description, failingUrl)
 
     val error = description ?: "Unknown error while trying to load CloudFlare page"
-    fail(BypassExceptions(error))
+    fail(BypassException(error))
   }
 
 }

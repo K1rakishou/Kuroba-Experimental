@@ -15,7 +15,7 @@ abstract class BypassWebClient(
     cookieResultCompletableDeferred.complete(CookieResult.CookieValue(cookieValue))
   }
 
-  protected fun fail(exception: BypassExceptions) {
+  protected fun fail(exception: BypassException) {
     if (cookieResultCompletableDeferred.isCompleted) {
       return
     }
