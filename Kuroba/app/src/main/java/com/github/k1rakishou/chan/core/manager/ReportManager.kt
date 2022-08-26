@@ -30,7 +30,6 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
-import java.io.File
 
 class ReportManager(
   private val appScope: CoroutineScope,
@@ -87,7 +86,7 @@ class ReportManager(
     onReportSendResult: (ModularResult<Unit>) -> Unit
   ) {
     serializedCoroutineExecutor.post {
-      val request = ReportRequest.report(
+      val request = ReportRequest.crashLog(
         title = title,
         body = body
       )
@@ -261,16 +260,7 @@ class ReportManager(
     return HashingUtil.stringBase64Decode("Z2hwXzJMOUpaZ1ozM24xcDhBM3pwVnBYNmgwVkNPTzUzRzB1b2lCZA==")
   }
 
-  fun postTask(task: () -> Unit) {
-    serializedCoroutineExecutor.post { task() }
-  }
-
   private class ReportError(val errorMessage: String) : Exception(errorMessage)
-
-  data class ReportRequestWithFile(
-    val reportRequest: ReportRequest,
-    val crashLogFile: File
-  )
 
   data class ReportRequest(
     @SerializedName("title")
@@ -287,7 +277,7 @@ class ReportManager(
         return ReportRequest(
           title = title,
           body = body,
-          labels = listOf("New", "Crash")
+          labels = listOf("KurobaEx", "New", "Crash")
         )
       }
 
@@ -295,7 +285,7 @@ class ReportManager(
         return ReportRequest(
           title = title,
           body = body,
-          labels = listOf("New", "Report")
+          labels = listOf("KurobaEx", "New", "Report")
         )
       }
 
@@ -304,14 +294,6 @@ class ReportManager(
           title = null,
           body = body,
           labels = emptyList()
-        )
-      }
-
-      fun anr(title: String, body: String): ReportRequest {
-        return ReportRequest(
-          title = title,
-          body = body,
-          labels = listOf("New", "ANR")
         )
       }
 
