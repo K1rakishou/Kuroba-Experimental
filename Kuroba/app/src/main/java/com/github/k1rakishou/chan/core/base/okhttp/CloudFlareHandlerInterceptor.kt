@@ -71,7 +71,7 @@ class CloudFlareHandlerInterceptor(
     request: Request
   ) {
     val body = response.body
-    if (body == null || !tryDetectCloudFlareNeedle(host, body)) {
+    if (body == null || !tryDetectCloudFlareNeedle(body)) {
       return
     }
 
@@ -208,7 +208,7 @@ class CloudFlareHandlerInterceptor(
       .build()
   }
 
-  private fun tryDetectCloudFlareNeedle(host: String, responseBody: ResponseBody): Boolean {
+  private fun tryDetectCloudFlareNeedle(responseBody: ResponseBody): Boolean {
     return responseBody.use { body ->
       return@use body.byteStream().use { inputStream ->
         val bytes = ByteArray(READ_BYTES_COUNT) { 0x00 }
@@ -217,21 +217,7 @@ class CloudFlareHandlerInterceptor(
           return@use false
         }
 
-        if (host.contains(CHAN4_SEARCH_URL, ignoreCase = true) || host.contains(CHANNEL4_SEARCH_URL, ignoreCase = true)) {
-          if (!bytes.containsPattern(0, CLOUD_FLARE_NEEDLE_4CHAN_SEARCH)) {
-            return@use false
-          }
-        } else {
-          if (
-            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE1) &&
-            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE2) &&
-            !bytes.containsPattern(0, CLOUD_FLARE_NEEDLE3)
-          ) {
-            return@use false
-          }
-        }
-
-        return@use true
+        return@use cloudflareNeedles.any { needle -> bytes.containsPattern(0, needle) }
       }
     }
   }
@@ -242,12 +228,11 @@ class CloudFlareHandlerInterceptor(
 
     const val CF_CLEARANCE = "cf_clearance"
 
-    private const val CHAN4_SEARCH_URL = "find.4chan.org"
-    private const val CHANNEL4_SEARCH_URL = "find.4channel.org"
-
-    private val CLOUD_FLARE_NEEDLE1 = "<title>Please Wait... | Cloudflare</title>".toByteArray(StandardCharsets.UTF_8)
-    private val CLOUD_FLARE_NEEDLE2 = "Checking your browser before accessing".toByteArray(StandardCharsets.UTF_8)
-    private val CLOUD_FLARE_NEEDLE3 = "<title>Just a moment...</title>".toByteArray(StandardCharsets.UTF_8)
-    private val CLOUD_FLARE_NEEDLE_4CHAN_SEARCH = "Browser Integrity Check".toByteArray(StandardCharsets.UTF_8)
+    private val cloudflareNeedles = arrayOf(
+      "<title>Just a moment".toByteArray(StandardCharsets.UTF_8),
+      "<title>Please wait".toByteArray(StandardCharsets.UTF_8),
+      "Checking your browser before accessing".toByteArray(StandardCharsets.UTF_8),
+      "Browser Integrity Check".toByteArray(StandardCharsets.UTF_8)
+    )
   }
 }
