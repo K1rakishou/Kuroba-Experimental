@@ -7,9 +7,7 @@ import android.text.util.Linkify
 import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
 import androidx.compose.foundation.Canvas
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -44,13 +42,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.ScaleFactor
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
@@ -74,6 +70,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.ui.compose.FlowMainAxisAlignment
 import com.github.k1rakishou.chan.ui.compose.FlowRow
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeClickableIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeSnappingSlider
@@ -439,106 +436,91 @@ class Chan4CaptchaLayout(
 
   @Composable
   private fun BuildCaptchaWindowFooter() {
-    val chanTheme = LocalChanTheme.current
     val captchaInfoAsync by viewModel.captchaInfoToShow
     val solvingInProgress by viewModel.solvingInProgress
     val captchaSolverInstalled by viewModel.captchaSolverInstalled
     val captchaInfo = (captchaInfoAsync as? AsyncData.Data)?.data
 
-    Column {
-      Row {
-        val drawableTintColor = ThemeEngine.resolveDrawableTintColor(chanTheme)
-        val colorFilter = remember(key1 = drawableTintColor) { ColorFilter.tint(color = Color(drawableTintColor)) }
-
-        Image(
-          painter = painterResource(id = R.drawable.ic_settings_white_24dp),
-          contentDescription = null,
-          colorFilter = colorFilter,
-          modifier = Modifier
-            .padding(start = 16.dp)
-            .width(24.dp)
-            .height(24.dp)
-            .align(Alignment.CenterVertically)
-            .clickable { showChan4CaptchaSettings() }
-        )
-
-        val captchaTtlMillis by viewModel.captchaTtlMillisFlow.collectAsState()
-        if (captchaTtlMillis >= 0L) {
-          Spacer(modifier = Modifier.width(8.dp))
-
-          KurobaComposeText(
-            text = "${captchaTtlMillis / 1000L} sec",
-            fontSize = 13.sp,
-            modifier = Modifier.align(Alignment.CenterVertically)
-          )
-        }
-      }
-
-      Spacer(modifier = Modifier.height(4.dp))
-
-      Row(
-        horizontalArrangement = Arrangement.End,
+    Row(
+      horizontalArrangement = Arrangement.End,
+      verticalAlignment = Alignment.CenterVertically,
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+    ) {
+      KurobaComposeClickableIcon(
         modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight()
-      ) {
-        KurobaComposeTextBarButton(
-          onClick = {
-            viewModel.requestCaptcha(context, chanDescriptor, forced = true)
-          },
-          text = stringResource(id = R.string.captcha_layout_reload),
-          enabled = !solvingInProgress
-        )
+          .padding(8.dp)
+          .width(28.dp)
+          .height(28.dp),
+        drawableId = R.drawable.ic_settings_white_24dp,
+        onClick = { showChan4CaptchaSettings() }
+      )
 
-        Spacer(modifier = Modifier.width(8.dp))
+      Spacer(modifier = Modifier.width(8.dp))
 
-        KurobaComposeTextBarButton(
-          onClick = {
-            captchaInfo?.captchaInfoRawString?.let { captchaInfoJson ->
-              AndroidUtils.setClipboardContent("captcha_json", captchaInfoJson)
-              showToast(context, "Captcha json copied to clipboard")
-            }
-          },
-          text = stringResource(id = R.string.captcha_layout_copy),
-          enabled = captchaInfo?.captchaInfoRawString != null
-        )
+      KurobaComposeClickableIcon(
+        modifier = Modifier
+          .padding(8.dp)
+          .width(28.dp)
+          .height(28.dp),
+        drawableId = R.drawable.ic_refresh_white_24dp,
+        enabled = !solvingInProgress,
+        onClick = { viewModel.requestCaptcha(context, chanDescriptor, forced = true) }
+      )
 
-        Spacer(modifier = Modifier.weight(1f))
+      Spacer(modifier = Modifier.width(8.dp))
 
-        KurobaComposeTextBarButton(
-          onClick = {
-            if (captchaInfo?.captchaInfoRawString != null) {
-              viewModel.solveCaptcha(
-                context = context,
-                captchaInfoRawString = captchaInfo.captchaInfoRawString,
-                sliderOffset = captchaInfo.sliderValue.value
-              )
-            }
-          },
-          text = stringResource(id = R.string.captcha_layout_solve),
-          enabled = !solvingInProgress &&
-            captchaSolverInstalled &&
-            captchaInfo != null &&
-            captchaInfo.captchaInfoRawString != null
-        )
+      KurobaComposeClickableIcon(
+        modifier = Modifier
+          .padding(8.dp)
+          .width(28.dp)
+          .height(28.dp),
+        drawableId = R.drawable.ic_baseline_content_copy_24,
+        enabled = captchaInfo?.captchaInfoRawString != null,
+        onClick = {
+          captchaInfo?.captchaInfoRawString?.let { captchaInfoJson ->
+            AndroidUtils.setClipboardContent("captcha_json", captchaInfoJson)
+            showToast(context, "Captcha json copied to clipboard")
+          }
+        }
+      )
 
-        Spacer(modifier = Modifier.width(8.dp))
+      Spacer(modifier = Modifier.weight(1f))
 
-        KurobaComposeTextBarButton(
-          onClick = {
-            val currentInputValue = captchaInfo?.currentInputValue
-              ?: return@KurobaComposeTextBarButton
+      KurobaComposeTextBarButton(
+        onClick = {
+          if (captchaInfo?.captchaInfoRawString != null) {
+            viewModel.solveCaptcha(
+              context = context,
+              captchaInfoRawString = captchaInfo.captchaInfoRawString,
+              sliderOffset = captchaInfo.sliderValue.value
+            )
+          }
+        },
+        text = stringResource(id = R.string.captcha_layout_solve),
+        enabled = !solvingInProgress &&
+          captchaSolverInstalled &&
+          captchaInfo != null &&
+          captchaInfo.captchaInfoRawString != null
+      )
 
-            verifyCaptcha(captchaInfo, currentInputValue.value)
-          },
-          enabled = captchaInfo != null
-            && (captchaInfo.isNoopChallenge() || captchaInfo.currentInputValue.value.isNotEmpty())
-            && !solvingInProgress,
-          text = stringResource(id = R.string.captcha_layout_verify)
-        )
+      Spacer(modifier = Modifier.width(8.dp))
 
-        Spacer(modifier = Modifier.width(8.dp))
-      }
+      KurobaComposeTextBarButton(
+        onClick = {
+          val currentInputValue = captchaInfo?.currentInputValue
+            ?: return@KurobaComposeTextBarButton
+
+          verifyCaptcha(captchaInfo, currentInputValue.value)
+        },
+        enabled = captchaInfo != null
+          && (captchaInfo.isNoopChallenge() || captchaInfo.currentInputValue.value.isNotEmpty())
+          && !solvingInProgress,
+        text = stringResource(id = R.string.captcha_layout_verify)
+      )
+
+      Spacer(modifier = Modifier.width(8.dp))
     }
   }
 
@@ -625,27 +607,44 @@ class Chan4CaptchaLayout(
     val canvasHeightDp = with(density) { (canvasHeight * scale).toDp() }
 
     val scrollValue by captchaInfo.sliderValue
+    val captchaTtlMillis by viewModel.captchaTtlMillisFlow.collectAsState()
 
-    Canvas(
-      modifier = Modifier
-        .size(canvasWidthDp, canvasHeightDp)
-        .clipToBounds(),
-      onDraw = {
-        val canvas = drawContext.canvas.nativeCanvas
+    Box {
+      Canvas(
+        modifier = Modifier
+          .size(canvasWidthDp, canvasHeightDp)
+          .clipToBounds(),
+        onDraw = {
+          val canvas = drawContext.canvas.nativeCanvas
 
-        canvas.withScale(x = scale, y = scale) {
-          drawRect(Color(0xFFEEEEEE.toInt()))
+          canvas.withScale(x = scale, y = scale) {
+            drawRect(Color(0xFFEEEEEE.toInt()))
 
-          if (captchaInfo.bgBitmap != null) {
-            canvas.withTranslation(x = (scrollValue * captchaInfo.widthDiff() * -1)) {
-              canvas.drawBitmap(captchaInfo.bgBitmap, 0f, 0f, null)
+            if (captchaInfo.bgBitmap != null) {
+              canvas.withTranslation(x = (scrollValue * captchaInfo.widthDiff() * -1)) {
+                canvas.drawBitmap(captchaInfo.bgBitmap, 0f, 0f, null)
+              }
             }
-          }
 
-          canvas.drawBitmap(captchaInfo.imgBitmap, 0f, 0f, null)
+            canvas.drawBitmap(captchaInfo.imgBitmap, 0f, 0f, null)
+          }
         }
+      )
+
+      if (captchaTtlMillis >= 0L) {
+        val bgColor = remember { Color.Black.copy(alpha = 0.6f) }
+
+        KurobaComposeText(
+          modifier = Modifier
+            .align(Alignment.TopStart)
+            .background(bgColor)
+            .padding(4.dp),
+          text = "${captchaTtlMillis / 1000L} sec",
+          color = Color.White,
+          fontSize = 12.sp
+        )
       }
-    )
+    }
   }
 
   private fun verifyCaptcha(

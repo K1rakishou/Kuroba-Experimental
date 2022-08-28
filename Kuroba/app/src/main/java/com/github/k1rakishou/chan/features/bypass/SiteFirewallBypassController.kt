@@ -7,6 +7,7 @@ import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewDatabase
+import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
@@ -20,6 +21,7 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -145,7 +147,17 @@ class SiteFirewallBypassController(
   }
 
   private suspend fun waitAndHandleResult() {
-    val cookieResult = cookieResultCompletableDeferred.await()
+    val job = mainScope.launch {
+      delay(15_000L)
+      showToast(R.string.firewall_check_takes_too_long, Toast.LENGTH_LONG)
+    }
+
+    val cookieResult = try {
+      cookieResultCompletableDeferred.await()
+    } finally {
+      job.cancel()
+    }
+
     webView.stopLoading()
 
     when (cookieResult) {

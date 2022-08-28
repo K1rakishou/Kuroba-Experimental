@@ -1382,6 +1382,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="firewall_check_failure">Failed to pass %1$s checks, reason: %2$s</string>
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
     <string name="firewall_check_not_supported">Firewall check %1$s for site %2$s is not supported</string>
+    <string name="firewall_check_takes_too_long">If a browser check seem to get stuck then make sure your system\'s \'WebView\' is updated to the LATEST version.</string>
 
     <string name="image_search_controller_title">Remote image search</string>
     <string name="image_search_controller_current_instance">Current search instance</string>
