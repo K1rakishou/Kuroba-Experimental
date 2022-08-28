@@ -556,17 +556,6 @@ public class AppModuleAndroidUtils {
         });
     }
 
-    public static void showToast(Context context, String message, int duration) {
-        if (BackgroundUtils.isMainThread()) {
-            cancellableToast.showToast(context.getApplicationContext(), message, duration);
-            return;
-        }
-
-        BackgroundUtils.runOnMainThread(() -> {
-            cancellableToast.showToast(context.getApplicationContext(), message, duration);
-        });
-    }
-
     public static void showToast(Context context, String message) {
         showToast(context, message, Toast.LENGTH_SHORT);
     }
@@ -577,6 +566,17 @@ public class AppModuleAndroidUtils {
 
     public static void showToast(Context context, int resId) {
         showToast(context, getString(resId));
+    }
+
+    public static void showToast(Context context, String message, int duration) {
+        if (BackgroundUtils.isMainThread()) {
+            cancellableToast.showToast(context.getApplicationContext(), message, duration);
+            return;
+        }
+
+        BackgroundUtils.runOnMainThread(() -> {
+            cancellableToast.showToast(context.getApplicationContext(), message, duration);
+        });
     }
 
     public static void cancelLastToast() {

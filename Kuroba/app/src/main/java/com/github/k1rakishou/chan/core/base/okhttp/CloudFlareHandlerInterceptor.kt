@@ -12,7 +12,6 @@ import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
-import okhttp3.ResponseBody
 import java.nio.charset.StandardCharsets
 
 class CloudFlareHandlerInterceptor(
@@ -70,8 +69,7 @@ class CloudFlareHandlerInterceptor(
     chain: Interceptor.Chain,
     request: Request
   ) {
-    val body = response.body
-    if (body == null || !tryDetectCloudFlareNeedle(body)) {
+    if (!tryDetectCloudFlareNeedle(response)) {
       return
     }
 
@@ -208,7 +206,22 @@ class CloudFlareHandlerInterceptor(
       .build()
   }
 
-  private fun tryDetectCloudFlareNeedle(responseBody: ResponseBody): Boolean {
+  private fun tryDetectCloudFlareNeedle(response: Response): Boolean {
+    // Fast path, check the "Server" header
+    val serverHeader = response.header("Server")
+    if (serverHeader != null) {
+      val foundCloudFlareHeader = cloudFlareHeaders
+        .any { cloudFlareHeader -> cloudFlareHeader.equals(serverHeader, ignoreCase = true) }
+
+      if (foundCloudFlareHeader) {
+        return true
+      }
+    }
+
+    // Slow path, load first READ_BYTES_COUNT bytes of the body
+    val responseBody = response.body
+      ?: return false
+
     return responseBody.use { body ->
       return@use body.byteStream().use { inputStream ->
         val bytes = ByteArray(READ_BYTES_COUNT) { 0x00 }
@@ -227,6 +240,8 @@ class CloudFlareHandlerInterceptor(
     private const val READ_BYTES_COUNT = 24 * 1024 // 24KB
 
     const val CF_CLEARANCE = "cf_clearance"
+
+    private val cloudFlareHeaders = arrayOf("cloudflare-nginx", "cloudflare")
 
     private val cloudflareNeedles = arrayOf(
       "<title>Just a moment".toByteArray(StandardCharsets.UTF_8),

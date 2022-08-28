@@ -1152,26 +1152,30 @@ class BrowseController(
           CookieResult.Canceled -> {
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.firewall_check_canceled, firewallType)
+              getString(R.string.firewall_check_canceled, firewallType),
+              Toast.LENGTH_LONG
             )
           }
           CookieResult.NotSupported -> {
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName)
+              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName),
+              Toast.LENGTH_LONG
             )
           }
           is CookieResult.Error -> {
             val errorMsg = cookieResult.exception.errorMessageOrClassName()
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.firewall_check_failure, firewallType, errorMsg)
+              getString(R.string.firewall_check_failure, firewallType, errorMsg),
+              Toast.LENGTH_LONG
             )
           }
           is CookieResult.CookieValue -> {
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.firewall_check_success, firewallType)
+              getString(R.string.firewall_check_success, firewallType),
+              Toast.LENGTH_LONG
             )
           }
         }
@@ -1181,26 +1185,30 @@ class BrowseController(
           CookieResult.Canceled -> {
             AppModuleAndroidUtils.showToast(
               context,
-              R.string.dvach_antispam_result_canceled
+              R.string.dvach_antispam_result_canceled,
+              Toast.LENGTH_LONG
             )
           }
           CookieResult.NotSupported -> {
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName)
+              getString(R.string.firewall_check_not_supported, firewallType, siteDescriptor.siteName),
+              Toast.LENGTH_LONG
             )
           }
           is CookieResult.Error -> {
             val errorMsg = cookieResult.exception.errorMessageOrClassName()
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.dvach_antispam_result_error, errorMsg)
+              getString(R.string.dvach_antispam_result_error, errorMsg),
+              Toast.LENGTH_LONG
             )
           }
           is CookieResult.CookieValue -> {
             AppModuleAndroidUtils.showToast(
               context,
-              getString(R.string.dvach_antispam_result_success)
+              getString(R.string.dvach_antispam_result_success),
+              Toast.LENGTH_LONG
             )
           }
         }

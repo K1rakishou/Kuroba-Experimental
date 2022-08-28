@@ -1378,7 +1378,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="dvach_antispam_result_error">Dvach anti-spam result: Error %1$s</string>
     <string name="dvach_antispam_result_success">Dvach anti-spam result: Success</string>
 
-    <string name="firewall_check_success">Successfully passed %1$s checks!</string>
+    <string name="firewall_check_success">Successfully passed %1$s checks! You can now retry the last attempt.</string>
     <string name="firewall_check_failure">Failed to pass %1$s checks, reason: %2$s</string>
     <string name="firewall_check_canceled">Failed to pass %1$s checks, reason: Canceled</string>
     <string name="firewall_check_not_supported">Firewall check %1$s for site %2$s is not supported</string>
