@@ -969,8 +969,8 @@ class ReplyLayout @JvmOverloads constructor(
 
   private fun insertTags(openTag: String, closeTag: String): Boolean {
     val replyText = comment.text ?: ""
-    val selectionStart = comment.selectionStart.takeIf { it >= 0 } ?: 0
-    val selectionEnd = comment.selectionEnd.takeIf { it >= 0 } ?: 0
+    val selectionStart = comment.selectionStartSafe()
+    val selectionEnd = comment.selectionEndSafe()
     val selectionCollapsed = selectionStart == selectionEnd
     var newCursorPosition = 0
 
