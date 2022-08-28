@@ -79,14 +79,17 @@ class SiteFirewallBypassController(
   override fun getLayoutId(): Int = R.layout.controller_firewall_bypass
 
   override fun onCreate() {
-    try {
-      // Some users may have no WebView installed so this two methods may throw an exception
-      super.onCreate()
+    super.onCreate()
 
-      onCreateInternal()
-    } catch (error: Throwable) {
-      onResult(CookieResult.Error(BypassException(error.errorMessageOrClassName())))
-      pop()
+    // Add a frame delay for the navigation stuff to completely load
+    mainScope.launch {
+      try {
+        // Some users may have no WebView installed
+        onCreateInternal()
+      } catch (error: Throwable) {
+        onResult(CookieResult.Error(BypassException(error.errorMessageOrClassName())))
+        pop()
+      }
     }
   }
 
