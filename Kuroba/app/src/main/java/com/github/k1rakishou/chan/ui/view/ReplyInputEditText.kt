@@ -20,7 +20,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.os.Build
 import android.os.Bundle
-import android.text.InputType
 import android.text.Spanned
 import android.util.AttributeSet
 import android.view.MotionEvent
@@ -73,8 +72,6 @@ class ReplyInputEditText @JvmOverloads constructor(
       //    android.os.TransactionTooLargeException: data parcel size 296380 bytes
       importantForAutofill = View.IMPORTANT_FOR_AUTOFILL_NO_EXCLUDE_DESCENDANTS
     }
-
-    inputType = InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS
 
     setOnTouchListener { view, event ->
       if (hasFocus()) {
