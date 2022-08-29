@@ -1053,6 +1053,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="controller_proxy_editor_proxy_type_socks">SOCKS</string>
     <string name="controller_proxy_editor_enable_on_sites">Enable on sites</string>
     <string name="controller_proxy_editor_actions">Actions</string>
+    <string name="controller_proxy_editor_proxy_add_error">Failed to add proxy, make sure everything is correct</string>
     <string name="controller_proxy_editor_proxy_added">New proxy added. Restart the app</string>
     <string name="controller_proxy_editor_proxy_updated">Proxy updated. Restart the app</string>
     <string name="controller_proxy_editor_proxy_deleted">Proxy deleted. Restart the app</string>

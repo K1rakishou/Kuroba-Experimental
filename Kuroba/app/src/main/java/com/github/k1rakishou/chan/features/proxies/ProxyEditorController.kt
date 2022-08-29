@@ -26,6 +26,9 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.google.android.material.chip.ChipDrawable
 import com.google.android.material.chip.ChipGroup
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.net.InetAddress
 import javax.inject.Inject
 
 
@@ -120,16 +123,18 @@ class ProxyEditorController(
           enableDisableUi(enable = true)
         }
 
-        if (success) {
-          if (proxyKey == null) {
-            showToast(R.string.controller_proxy_editor_proxy_added)
-          } else {
-            showToast(R.string.controller_proxy_editor_proxy_updated)
-          }
-
-          applyClickListener.invoke()
-          pop()
+        if (!success) {
+          return@post
         }
+
+        if (proxyKey == null) {
+          showToast(R.string.controller_proxy_editor_proxy_added)
+        } else {
+          showToast(R.string.controller_proxy_editor_proxy_updated)
+        }
+
+        applyClickListener.invoke()
+        pop()
       }
     }
   }
@@ -164,17 +169,27 @@ class ProxyEditorController(
     }
   }
 
-  suspend fun saveProxy(): Boolean {
+  private suspend fun saveProxy(): Boolean {
+    proxyAddressTIL.error = null
     val proxyAddress = proxyAddress.text?.toString()
 
     if (proxyAddress == null || !isValidAddress(proxyAddress)) {
       proxyAddressTIL.error = getString(R.string.controller_proxy_editor_proxy_address_is_not_valid)
+      showToast(R.string.controller_proxy_editor_proxy_add_error)
+      return false
+    }
+
+    val inetAddressResult = validateProxyAddress(proxyAddress)
+    if (inetAddressResult.isFailure) {
+      proxyAddressTIL.error = inetAddressResult.exceptionOrNull()!!.errorMessageOrClassName()
+      showToast(R.string.controller_proxy_editor_proxy_add_error)
       return false
     }
 
     val proxyPort = proxyPort.text?.toString()?.toIntOrNull()
     if (proxyPort == null || !isValidPort(proxyPort)) {
       proxyPortTIL.error = getString(R.string.controller_proxy_editor_proxy_port_is_not_valid)
+      showToast(R.string.controller_proxy_editor_proxy_add_error)
       return false
     }
 
@@ -236,13 +251,13 @@ class ProxyEditorController(
     val order = proxyStorage.getNewProxyOrder()
 
     val newProxy = ProxyStorage.KurobaProxy(
-      proxyAddress,
-      proxyPort,
-      true,
-      order,
-      selectedSites,
-      supportedSelectors,
-      proxyType
+      address = proxyAddress,
+      port = proxyPort,
+      enabled = true,
+      order = order,
+      supportedSites = selectedSites,
+      supportedActions = supportedSelectors,
+      proxyType = proxyType
     )
 
     val addNewProxyResult = proxyStorage.addNewProxy(newProxy)
@@ -253,12 +268,10 @@ class ProxyEditorController(
     if (addNewProxyResult is ModularResult.Error) {
       Logger.e(TAG, "addNewProxy error", addNewProxyResult.error)
 
-      showToast(
-        getString(
+      showToast(getString(
           R.string.controller_proxy_editor_failed_to_persist_new_proxy_error,
           addNewProxyResult.error.errorMessageOrClassName()
-        )
-      )
+        ))
     } else {
       showToast(R.string.controller_proxy_editor_failed_to_persist_new_proxy_unknown_error)
     }
@@ -266,28 +279,22 @@ class ProxyEditorController(
     return false
   }
 
+  private suspend fun validateProxyAddress(proxyAddress: String): Result<InetAddress> {
+    return Result.runCatching {
+      return@runCatching withContext(Dispatchers.IO) { InetAddress.getByName(proxyAddress) }
+    }
+  }
+
   private fun isValidPort(port: Int): Boolean {
     return port in 0..65535
   }
 
   private fun isValidAddress(address: String?): Boolean {
-    if (address == null) {
+    if (address.isNullOrBlank()) {
       return false
     }
 
-    val parts = address
-      .split(".")
-
-    if (parts.size != 4) {
-      return false
-    }
-
-    return parts.all { part ->
-      val decimalPart = part.toIntOrNull()
-        ?: return@all false
-
-      return@all decimalPart in 0..255
-    }
+    return true
   }
 
   private fun enableDisableUi(enable: Boolean) {

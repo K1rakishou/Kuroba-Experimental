@@ -19,9 +19,8 @@
                 android:id="@+id/proxy_address"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:digits="0123456789."
                 android:hint="@string/controller_proxy_editor_proxy_address"
-                android:inputType="number" />
+                android:inputType="textNoSuggestions" />
 
         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
 
