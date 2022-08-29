@@ -50,78 +50,78 @@ class MediaViewerMenuHelper(
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_DRAW_BEHIND_NOTCH,
-      name = AppModuleAndroidUtils.getString(R.string.action_draw_behind_notch),
+      name = getString(R.string.action_draw_behind_notch),
       isCurrentlySelected = ChanSettings.mediaViewerDrawBehindNotch.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_ALLOW_IMAGE_TRANSPARENCY,
-      name = AppModuleAndroidUtils.getString(R.string.action_allow_image_transparency),
+      name = getString(R.string.action_allow_image_transparency),
       isCurrentlySelected = ChanSettings.transparencyOn.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_AUTO_REVEAL_SPOILERS,
-      name = AppModuleAndroidUtils.getString(R.string.settings_reveal_image_spoilers),
+      name = getString(R.string.settings_reveal_image_spoilers),
       isCurrentlySelected = ChanSettings.mediaViewerRevealImageSpoilers.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_AUTO_LOOP,
-      name = AppModuleAndroidUtils.getString(R.string.setting_video_auto_loop),
+      name = getString(R.string.setting_video_auto_loop),
       isCurrentlySelected = ChanSettings.videoAutoLoop.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_START_MUTED,
-      name = AppModuleAndroidUtils.getString(R.string.setting_video_default_muted),
+      name = getString(R.string.setting_video_default_muted),
       isCurrentlySelected = ChanSettings.videoDefaultMuted.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_START_MUTED_WITH_HEADSET,
-      name = AppModuleAndroidUtils.getString(R.string.setting_headset_default_muted),
+      name = getString(R.string.setting_headset_default_muted),
       isCurrentlySelected = ChanSettings.headsetDefaultMuted.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_VIDEO_ALWAYS_RESET_TO_START,
-      name = AppModuleAndroidUtils.getString(R.string.setting_video_always_reset_to_start),
+      name = getString(R.string.setting_video_always_reset_to_start),
       isCurrentlySelected = ChanSettings.videoAlwaysResetToStart.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_AUTO_SWIPE_AFTER_DOWNLOAD,
-      name = AppModuleAndroidUtils.getString(R.string.setting_auto_swipe_after_download),
+      name = getString(R.string.setting_auto_swipe_after_download),
       isCurrentlySelected = ChanSettings.mediaViewerAutoSwipeAfterDownload.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_PAUSE_PLAYERS_WHEN_IN_BG,
-      name = AppModuleAndroidUtils.getString(R.string.setting_pause_players_when_in_bg),
+      name = getString(R.string.setting_pause_players_when_in_bg),
       isCurrentlySelected = ChanSettings.mediaViewerPausePlayersWhenInBackground.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_ENABLE_SOUND_POSTS,
-      name = AppModuleAndroidUtils.getString(R.string.setting_enable_sound_posts),
+      name = getString(R.string.setting_enable_sound_posts),
       isCurrentlySelected = ChanSettings.mediaViewerSoundPostsEnabled.get()
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_USE_MPV,
-      name = AppModuleAndroidUtils.getString(R.string.settings_plugins_use_mpv),
+      name = getString(R.string.settings_plugins_use_mpv),
       isCurrentlySelected = ChanSettings.useMpvVideoPlayer.get()
     )
 
     options += FloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_GESTURE_SETTINGS,
-      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_gesture_settings),
+      name = getString(R.string.setting_media_viewer_gesture_settings),
     )
 
     options += FloatingListMenuItem(
       key = ACTION_MAX_OFFSCREEN_PAGES_SETTING,
-      name = AppModuleAndroidUtils.getString(
+      name = getString(
         R.string.setting_media_viewer_offscreen_pages_count,
         ChanSettings.mediaViewerOffscreenPagesCount()
       ),
@@ -221,16 +221,19 @@ class MediaViewerMenuHelper(
 
   private fun showMediaViewerOffscreenPagesSelector(context: Context) {
     val options = mutableListOf<FloatingListMenuItem>()
+    val groupId = "media_viewer_offscreen_pages_selector"
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_ONE_OFFSCREEN_PAGE,
-      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_one_offscreen_page),
+      name = getString(R.string.setting_media_viewer_one_offscreen_page),
+      groupId = groupId,
       isCurrentlySelected = ChanSettings.mediaViewerOffscreenPagesCount() == 1
     )
 
     options += CheckableFloatingListMenuItem(
       key = ACTION_MEDIA_VIEWER_TWO_OFFSCREEN_PAGES,
-      name = AppModuleAndroidUtils.getString(R.string.setting_media_viewer_two_offscreen_page),
+      name = getString(R.string.setting_media_viewer_two_offscreen_page),
+      groupId = groupId,
       isCurrentlySelected = ChanSettings.mediaViewerOffscreenPagesCount() == 2
     )
 

@@ -132,7 +132,7 @@ abstract class ThreadController(
 
   private val applicationVisibilityManager: ApplicationVisibilityManager
     get() = _applicationVisibilityManager.get()
-  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+  protected val globalWindowInsetsManager: GlobalWindowInsetsManager
     get() = _globalWindowInsetsManager.get()
   private val mediaViewerScrollerHelper: MediaViewerScrollerHelper
     get() = _mediaViewerScrollerHelper.get()

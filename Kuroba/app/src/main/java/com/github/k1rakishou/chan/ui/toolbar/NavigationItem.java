@@ -380,12 +380,13 @@ public class NavigationItem {
             return this;
         }
 
-        public MenuNestedOverflowBuilder addNestedCheckableItem(
+        private MenuNestedOverflowBuilder addNestedCheckableItem(
                 int itemId,
                 int text,
                 boolean visible,
                 boolean isCurrentlySelected,
                 Object value,
+                Object groupId,
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
             for (ToolbarMenuSubItem subItem : menuSubItem.moreItems) {
@@ -401,6 +402,7 @@ public class NavigationItem {
                             clickCallback,
                             visible,
                             value,
+                            groupId,
                             isCurrentlySelected
                     )
             );
@@ -438,6 +440,27 @@ public class NavigationItem {
                     visible,
                     isCurrentlySelected,
                     value,
+                    null,
+                    (ToolbarMenuSubItem.ClickCallback) clickCallback::invoke
+            );
+        }
+
+        public MenuNestedOverflowBuilder addNestedCheckableItem(
+                int itemId,
+                int text,
+                boolean visible,
+                boolean isCurrentlySelected,
+                Object value,
+                Object groupId,
+                Function1<ToolbarMenuSubItem, Unit> clickCallback
+        ) {
+            return addNestedCheckableItem(
+                    itemId,
+                    text,
+                    visible,
+                    isCurrentlySelected,
+                    value,
+                    groupId,
                     (ToolbarMenuSubItem.ClickCallback) clickCallback::invoke
             );
         }

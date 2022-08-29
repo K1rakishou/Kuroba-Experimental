@@ -198,6 +198,7 @@ import com.github.k1rakishou.chan.ui.view.attach.AttachNewFileButton;
 import com.github.k1rakishou.chan.ui.view.bottom_menu_panel.BottomMenuPanel;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyCheckableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyFloatingListMenuRow;
+import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyGroupableFloatingListMenuRow;
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.EpoxyHeaderListMenuRow;
 import com.github.k1rakishou.chan.ui.view.sorting.BookmarkSortingItemView;
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertController;
@@ -333,6 +334,7 @@ public interface ActivityComponent {
     void inject(EpoxyExpandableGroupView epoxyExpandableGroupView);
     void inject(EpoxyTextView epoxyTextView);
     void inject(EpoxyCheckableFloatingListMenuRow epoxyCheckableFloatingListMenuRow);
+    void inject(EpoxyGroupableFloatingListMenuRow epoxyGroupableFloatingListMenuRow);
     void inject(EpoxyFloatingListMenuRow epoxyFloatingListMenuRow);
     void inject(EpoxyHeaderListMenuRow epoxyHeaderListMenuRow);
     void inject(EpoxyHistoryHeaderView epoxyHistoryHeaderView);

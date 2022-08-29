@@ -915,12 +915,14 @@ class ReplyLayout @JvmOverloads constructor(
       ?: return
 
     val floatingListMenuItems = mutableListOf<FloatingListMenuItem>()
+    val groupId = "flag_selector"
 
     flagInfoList.forEach { flagInfo ->
       floatingListMenuItems += CheckableFloatingListMenuItem(
         key = flagInfo.flagKey,
         name = "${flagInfo.flagKey} (${flagInfo.flagDescription})",
         value = flagInfo,
+        groupId = groupId,
         isCurrentlySelected = flagInfo.flagKey == lastUsedFlagInfo.flagKey
       )
     }

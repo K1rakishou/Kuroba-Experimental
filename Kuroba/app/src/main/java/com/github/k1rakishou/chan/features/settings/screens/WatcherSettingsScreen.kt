@@ -65,6 +65,7 @@ class WatcherSettingsScreen(
               THREAD_DOWNLOADER_INTERVALS.drop(1)
             }
           },
+          groupId = "thread_downloader_intervals",
           itemNameMapper = { timeout ->
             return@createBuilder kotlin.run {
               val timeoutShouldBeInMinutes = TimeUnit.MILLISECONDS.toHours(timeout.toLong()).toInt() <= 0
@@ -139,6 +140,7 @@ class WatcherSettingsScreen(
               FILTER_WATCHER_INTERVALS.drop(1)
             }
           },
+          groupId = "filter_watcher_intervals",
           itemNameMapper = { timeout ->
             return@createBuilder kotlin.run {
               val timeoutShouldBeInMinutes = TimeUnit.MILLISECONDS.toHours(timeout.toLong()).toInt() <= 0
@@ -191,6 +193,7 @@ class WatcherSettingsScreen(
             getString(R.string.setting_watch_foreground_timeout_description).toString() + "\n\n" + itemName
           },
           items = THREAD_WATCHER_FOREGROUND_INTERVALS,
+          groupId = "foreground_watcher_intervals",
           itemNameMapper = { timeout ->
             return@createBuilder getString(
               R.string.seconds,
@@ -246,6 +249,7 @@ class WatcherSettingsScreen(
               THREAD_WATCHER_BACKGROUND_INTERVALS.drop(1)
             }
           },
+          groupId = "background_watcher_intervals",
           itemNameMapper = { timeout ->
             val timeoutString = getString(
               R.string.minutes,

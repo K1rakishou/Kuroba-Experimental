@@ -624,10 +624,13 @@ class CreateOrUpdateFilterController(
   }
 
   private fun showAvailableFilterActions() {
+    val groupId = "filter_action"
+
     val items = FilterAction.values().map { filterAction ->
       return@map CheckableFloatingListMenuItem(
         key = filterAction.id,
         name = FilterAction.filterActionName(filterAction),
+        groupId = groupId,
         isCurrentlySelected = chanFilterMutableState.action.value == filterAction.id
       )
     }

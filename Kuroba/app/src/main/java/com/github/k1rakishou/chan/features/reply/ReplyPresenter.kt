@@ -534,11 +534,13 @@ class ReplyPresenter @Inject constructor(
   ): MutableList<FloatingListMenuItem> {
     val availableReplyModes = mutableListOf<FloatingListMenuItem>()
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    val groupId = "reply_mode"
 
     if (site?.actions()?.postAuthenticate()?.type != SiteAuthentication.Type.NONE) {
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaManually,
         name = getString(R.string.reply_mode_solve_captcha_and_post),
+        groupId = groupId,
         isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaManually
       )
     }
@@ -546,6 +548,7 @@ class ReplyPresenter @Inject constructor(
     availableReplyModes += CheckableFloatingListMenuItem(
       key = ReplyMode.ReplyModeSendWithoutCaptcha,
       name = getString(R.string.reply_mode_attempt_post_without_captcha),
+      groupId = groupId,
       isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSendWithoutCaptcha
     )
 
@@ -555,6 +558,7 @@ class ReplyPresenter @Inject constructor(
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeSolveCaptchaAuto,
         name = getString(R.string.reply_mode_post_with_captcha_solver),
+        groupId = groupId,
         isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeSolveCaptchaAuto
       )
     }
@@ -563,6 +567,7 @@ class ReplyPresenter @Inject constructor(
       availableReplyModes += CheckableFloatingListMenuItem(
         key = ReplyMode.ReplyModeUsePasscode,
         name = getString(R.string.reply_mode_post_with_passcode),
+        groupId = groupId,
         isCurrentlySelected = prevReplyMode == ReplyMode.ReplyModeUsePasscode
       )
     }

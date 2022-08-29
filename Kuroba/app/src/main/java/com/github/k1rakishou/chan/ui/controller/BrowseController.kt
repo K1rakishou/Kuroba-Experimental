@@ -382,6 +382,7 @@ class BrowseController(
   @Suppress("MoveLambdaOutsideParentheses")
   private fun NavigationItem.MenuOverflowBuilder.addSortMenu(): NavigationItem.MenuOverflowBuilder {
     val currentOrder = PostsFilter.Order.find(ChanSettings.boardOrder.get())
+    val groupId = "catalog_sort"
 
     withNestedOverflow(ACTION_SORT, R.string.action_sort, true)
       .addNestedCheckableItem(
@@ -390,6 +391,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.BUMP,
         PostsFilter.Order.BUMP,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -398,6 +400,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.REPLY,
         PostsFilter.Order.REPLY,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -406,6 +409,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.IMAGE,
         PostsFilter.Order.IMAGE,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -414,6 +418,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.NEWEST,
         PostsFilter.Order.NEWEST,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -422,6 +427,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.OLDEST,
         PostsFilter.Order.OLDEST,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -430,6 +436,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.MODIFIED,
         PostsFilter.Order.MODIFIED,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .addNestedCheckableItem(
@@ -438,6 +445,7 @@ class BrowseController(
         true,
         currentOrder == PostsFilter.Order.ACTIVITY,
         PostsFilter.Order.ACTIVITY,
+        groupId,
         { subItem -> onSortItemClicked(subItem) }
       )
       .build()

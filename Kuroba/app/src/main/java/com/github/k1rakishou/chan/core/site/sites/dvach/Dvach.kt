@@ -167,7 +167,7 @@ class Dvach : CommonSite() {
 
     settings.addAll(super.settings())
 
-    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, mutableListOf("Javascript", "Noscript", "Invisible")))
+    settings.add(SiteOptionsSetting("Captcha type", null, "captcha_type", captchaType, mutableListOf("Javascript", "Noscript", "Invisible")))
     settings.add(SiteSetting.SiteStringSetting("User code cookie", null, userCodeCookie))
     settings.add(SiteSetting.SiteStringSetting("Anti-spam cookie", null, antiSpamCookie))
 

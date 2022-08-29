@@ -29,6 +29,7 @@ abstract class BaseSettingsController(
         key = index,
         name = settingV2.itemNameMapper(item),
         value = item,
+        groupId = settingV2.groupId,
         isCurrentlySelected = settingV2.isCurrent(item)
       )
     }

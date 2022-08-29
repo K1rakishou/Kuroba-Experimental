@@ -55,6 +55,7 @@ open class FloatingListMenuItem @JvmOverloads constructor(
             key = toolbarMenuSubItem.id,
             name = toolbarMenuSubItem.text!!,
             value = null,
+            groupId = toolbarMenuSubItem.groupId,
             visible = toolbarMenuSubItem.visible,
             enabled = toolbarMenuSubItem.enabled,
             more = nestedItems,

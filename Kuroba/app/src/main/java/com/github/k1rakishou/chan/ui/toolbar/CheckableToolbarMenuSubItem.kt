@@ -6,5 +6,6 @@ class CheckableToolbarMenuSubItem @JvmOverloads constructor(
   clicked: ClickCallback? = null,
   visible: Boolean = true,
   value: Any? = null,
+  val groupId: Any? = null,
   @JvmField var isChecked: Boolean = false
 ) : ToolbarMenuSubItem(id, text, clicked, visible, value)

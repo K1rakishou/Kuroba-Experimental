@@ -4,6 +4,7 @@ class CheckableFloatingListMenuItem(
   key: Any,
   name: String,
   value: Any? = null,
+  val groupId: Any? = null,
   visible: Boolean = true,
   enabled: Boolean = true,
   more: MutableList<FloatingListMenuItem> = mutableListOf(),

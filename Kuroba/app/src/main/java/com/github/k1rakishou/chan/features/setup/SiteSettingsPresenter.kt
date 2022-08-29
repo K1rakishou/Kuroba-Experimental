@@ -112,6 +112,7 @@ class SiteSettingsPresenter(
                 identifier = identifier,
                 setting = siteSetting.options as Setting<OptionSettingItem>,
                 items = siteSetting.options.items.toList(),
+                groupId = siteSetting.groupId,
                 itemNameMapper = { item -> item.key },
                 topDescriptionStringFunc = { siteSetting.settingTitle },
                 bottomDescriptionStringFunc = {

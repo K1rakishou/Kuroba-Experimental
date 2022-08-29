@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEpoxyRecyclerView
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyCheckableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyFloatingListMenuRow
+import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyGroupableFloatingListMenuRow
 import com.github.k1rakishou.chan.ui.view.floating_menu.epoxy.epoxyHeaderListMenuRow
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 
@@ -65,14 +66,27 @@ class FloatingListMenu @JvmOverloads constructor(
               }
             }
             is CheckableFloatingListMenuItem -> {
-              epoxyCheckableFloatingListMenuRow {
-                id("epoxy_checkable_floating_list_menu_row_${item.key.hashCode()}")
-                title(item.name)
-                settingEnabled(item.enabled)
-                checked(item.isCurrentlySelected)
+              if (item.groupId == null) {
+                epoxyCheckableFloatingListMenuRow {
+                  id("epoxy_checkable_floating_list_menu_row_${item.key.hashCode()}")
+                  title(item.name)
+                  settingEnabled(item.enabled)
+                  checked(item.isCurrentlySelected)
 
-                callback {
-                  itemClickListener?.invoke(item)
+                  callback {
+                    itemClickListener?.invoke(item)
+                  }
+                }
+              } else {
+                epoxyGroupableFloatingListMenuRow {
+                  id("epoxy_groupable_floating_list_menu_row_${item.key.hashCode()}")
+                  title(item.name)
+                  settingEnabled(item.enabled)
+                  checked(item.isCurrentlySelected)
+
+                  callback {
+                    itemClickListener?.invoke(item)
+                  }
                 }
               }
             }

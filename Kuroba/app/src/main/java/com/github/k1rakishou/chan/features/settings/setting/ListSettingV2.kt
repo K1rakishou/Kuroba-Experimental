@@ -18,6 +18,9 @@ class ListSettingV2<T : Any> : SettingV2() {
   override var bottomDescription: String? = null
   override var notificationType: SettingNotificationType? = null
 
+  var groupId: String? = null
+    private set
+
   var dependsOnSetting: BooleanSetting? = null
     private set
   var items: List<T> = emptyList()
@@ -102,6 +105,7 @@ class ListSettingV2<T : Any> : SettingV2() {
       setting: Setting<T>,
       items: List<T>,
       itemNameMapper: (T) -> String,
+      groupId: String? = null,
       dependsOnSetting: BooleanSetting? = null,
       topDescriptionIdFunc: (suspend () -> Int)? = null,
       topDescriptionStringFunc: (suspend () -> String)? = null,
@@ -168,6 +172,7 @@ class ListSettingV2<T : Any> : SettingV2() {
         }
 
         dependsOnSetting?.let { setting -> listSettingV2.setDependsOnSetting(setting) }
+        listSettingV2.groupId = groupId
         listSettingV2.requiresRestart = requiresRestart
         listSettingV2.requiresUiRefresh = requiresUiRefresh
         listSettingV2.notificationType = notificationType

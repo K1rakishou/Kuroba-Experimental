@@ -90,6 +90,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_font_size },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = SUPPORTED_FONT_SIZES.map { fontSize -> fontSize.toString() }.toList(),
+          groupId = "font_size",
           itemNameMapper = { fontSize ->
             when (fontSize.toIntOrNull()) {
               in SUPPORTED_FONT_SIZES -> fontSize
@@ -115,6 +116,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_post_thumbnail_scaling },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.PostThumbnailScaling.values().toList(),
+          groupId = "post_thumbnail_scaling",
           itemNameMapper = { postThumbnailScaling ->
             when (postThumbnailScaling) {
               ChanSettings.PostThumbnailScaling.FitCenter -> getString(R.string.setting_post_thumbnail_scaling_fit_center)
@@ -192,6 +194,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_catalog_post_alignment_mode },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.PostAlignmentMode.values().toList(),
+          groupId = "post_alignment_mode_catalog",
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
               ChanSettings.PostAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_alignment_mode_left)
@@ -208,6 +211,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_thread_post_alignment_mode },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.PostAlignmentMode.values().toList(),
+          groupId = "post_alignment_mode_thread",
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
               ChanSettings.PostAlignmentMode.AlignLeft -> context.getString(R.string.setting_post_alignment_mode_left)
@@ -290,6 +294,7 @@ class AppearanceSettingsScreen(
           },
           setting = ChanSettings.parseYoutubeTitlesAndDuration,
           items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          groupId = "youtube_title_parsing",
           itemNameMapper = { item -> networkContentAutoLoadNameMapper(item) },
           requiresUiRefresh = true
         )
@@ -306,6 +311,7 @@ class AppearanceSettingsScreen(
           },
           setting = ChanSettings.parseSoundCloudTitlesAndDuration,
           items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          groupId = "soundcloud_title_parsing",
           itemNameMapper = { item -> networkContentAutoLoadNameMapper(item) },
           requiresUiRefresh = true
         )
@@ -322,6 +328,7 @@ class AppearanceSettingsScreen(
           },
           setting = ChanSettings.parseStreamableTitlesAndDuration,
           items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          groupId = "streamable_title_parsing",
           itemNameMapper = { item -> networkContentAutoLoadNameMapper(item) },
           requiresUiRefresh = true
         )
@@ -367,6 +374,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_layout_mode },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.LayoutMode.values().toList(),
+          groupId = "layout_mode",
           itemNameMapper = { layoutMode ->
             when (layoutMode) {
               ChanSettings.LayoutMode.AUTO -> context.getString(R.string.setting_layout_mode_auto)
@@ -385,6 +393,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_board_grid_span_count },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ALL_COLUMNS,
+          groupId = "catalog_column_count",
           itemNameMapper = { columnsCount ->
             when (columnsCount) {
               AUTO_COLUMN -> context.getString(R.string.setting_span_count_default)
@@ -404,6 +413,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_album_span_count },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ALL_COLUMNS,
+          groupId = "album_column_count",
           itemNameMapper = { columnsCount ->
             when (columnsCount) {
               AUTO_COLUMN -> context.getString(R.string.setting_span_count_default)
@@ -457,6 +467,7 @@ class AppearanceSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars },
           bottomDescriptionIdFunc = { R.string.setting_enable_draggable_scrollbars_bottom },
           items = ChanSettings.FastScrollerType.values().toList(),
+          groupId = "fast_scroller_type",
           itemNameMapper = { fastScrollerType ->
             when (fastScrollerType) {
               ChanSettings.FastScrollerType.Disabled -> {

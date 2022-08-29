@@ -28,6 +28,7 @@ sealed class SiteSetting(
   class SiteOptionsSetting(
     settingName: String,
     settingDescription: String?,
+    val groupId: String? = null,
     val options: OptionsSetting<*>,
     val optionNames: List<String>
   ) : SiteSetting(settingName, settingDescription)

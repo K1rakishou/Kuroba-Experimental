@@ -589,7 +589,7 @@ open class Chan4 : SiteBase() {
     val settings = ArrayList<SiteSetting>()
 
     settings.addAll(super.settings())
-    settings.add(SiteOptionsSetting("Captcha type", null, captchaType, listOf("Javascript", "Noscript")))
+    settings.add(SiteOptionsSetting("Captcha type", null, "captcha_type", captchaType, listOf("Javascript", "Noscript")))
     settings.add(SiteSetting.SiteStringSetting("4chan captcha cookie", null, chan4CaptchaCookie))
     settings.add(SiteSetting.SiteStringSetting("4channel captcha cookie", null, channel4CaptchaCookie))
 

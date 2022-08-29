@@ -67,6 +67,7 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_image_auto_load },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          groupId = "image_auto_load",
           itemNameMapper = { item ->
             when (item) {
               ChanSettings.NetworkContentAutoLoadMode.ALL -> {
@@ -89,6 +90,7 @@ class MediaSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_video_auto_load },
           bottomDescriptionStringFunc = { itemName -> itemName },
           items = ChanSettings.NetworkContentAutoLoadMode.values().toList(),
+          groupId = "video_auto_load",
           itemNameMapper = { item ->
             when (item) {
               ChanSettings.NetworkContentAutoLoadMode.ALL -> {

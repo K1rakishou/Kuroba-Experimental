@@ -244,7 +244,7 @@ open class ViewThreadController(
       ) { item -> onThreadViewOptionClicked(item) }
       .addNestedCheckableItem(
         ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR,
-        R.string.action_mark_replies_your_posts_on_scrollbar,
+        R.string.action_mark_your_posts_on_scrollbar,
         true,
         ChanSettings.markYourPostsOnScrollbar.get(),
         ACTION_MARK_YOUR_POSTS_ON_SCROLLBAR

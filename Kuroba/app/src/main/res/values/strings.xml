@@ -189,7 +189,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_reset_dark_theme">Reset Dark theme</string>
     <string name="action_ignore_dark_night_mode">Ignore system Day/Night mode</string>
 
-    <string name="action_mark_replies_your_posts_on_scrollbar">Highlight my posts</string>
+    <string name="action_mark_your_posts_on_scrollbar">Highlight my posts</string>
     <string name="action_mark_replies_to_your_posts_on_scrollbar">Highlight (You)s</string>
     <string name="action_mark_cross_thread_quotes_on_scrollbar">Highlight cross-thread replies</string>
     <string name="action_mark_deleted_posts_on_scrollbar">Highlight deleted posts</string>
@@ -197,6 +197,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="action_catalog_thread_nsfw_mode">NSFW mode</string>
     <string name="action_third_eye_settings">Third eye settings</string>
     <string name="action_use_scrolling_text_for_thread_title">Use scrolling text for thread title</string>
+    <string name="action_thread_highlight_options">Thread scrollbar post highlight options</string>
 
     <string name="action_scroll_to_top">Top</string>
     <string name="action_scroll_to_bottom">Bottom</string>

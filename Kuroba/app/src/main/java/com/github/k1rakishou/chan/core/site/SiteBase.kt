@@ -219,6 +219,7 @@ abstract class SiteBase : Site, CoroutineScope {
     settings += SiteSetting.SiteOptionsSetting(
       getString(R.string.settings_concurrent_file_downloading_name),
       getString(R.string.settings_concurrent_file_downloading_description),
+      "concurrent_file_downloading_chunks",
       concurrentFileDownloadingChunks,
       ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
     )
