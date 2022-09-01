@@ -81,4 +81,14 @@ class ColorizableTextView @JvmOverloads constructor(
       throw IllegalAccessException("Exception=${error.errorMessageOrClassName()}, viewInfo=${this}")
     }
   }
+
+  override fun performLongClick(): Boolean {
+    try {
+      return super.performLongClick()
+    } catch (error: Throwable) {
+      // java.lang.IllegalStateException: Drag shadow dimensions must be positive
+      return false
+    }
+  }
+
 }
