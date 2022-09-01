@@ -372,6 +372,14 @@ class Dvach : CommonSite() {
       return builder.build()
     }
 
+    override fun icon(icon: String, arg: Map<String, String>?): HttpUrl {
+      return HttpUrl.Builder()
+        .scheme("https")
+        .host(siteHost)
+        .addPathSegment(requireNotNull(arg?.get("icon")) { "Bad arg map: $arg" })
+        .build()
+    }
+
   }
 
   class DvachSiteRequestModifier(

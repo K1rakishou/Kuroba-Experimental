@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.site.parser.processor.AbstractChanReaderP
 import com.github.k1rakishou.chan.core.site.parser.processor.ChanReaderProcessor
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.useBufferedSource
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -20,13 +21,16 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogInfoObject
 import com.github.k1rakishou.model.data.filter.FilterWatchCatalogThreadInfoObject
 import com.github.k1rakishou.model.data.post.ChanPostBuilder
+import com.github.k1rakishou.model.data.post.ChanPostHttpIcon
 import com.github.k1rakishou.model.data.post.ChanPostImage
 import com.github.k1rakishou.model.data.post.ChanPostImageBuilder
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import dagger.Lazy
+import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
+import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
@@ -262,6 +266,21 @@ class DvachApiV2(
         ?: emptyList()
 
       builder.postImages(postImages, builder.postDescriptor)
+
+      if (threadPost.icon.isNotNullNorEmpty()) {
+      val document = Jsoup.parseBodyFragment(threadPost.icon)
+      val icons = document.body().select("img")
+      for (icon in icons) {
+        val imageUrl = icon?.attr("src")?.takeIf { attrValue -> attrValue.isNotNullNorEmpty() } ?: continue
+        var title = icon.attr("title")
+        if (title.isEmpty()) title = File(imageUrl).nameWithoutExtension.takeIf { attrValue -> attrValue.isNotEmpty() } ?: continue
+        val iconUrl = endpoints.icon(
+          title,
+          SiteEndpoints.makeArgument("icon", imageUrl)
+        )
+        builder.addHttpIcon(ChanPostHttpIcon(iconUrl, title))
+      }
+    }
 
       return@map builder
     }
@@ -508,6 +527,7 @@ class DvachApiV2(
     val endless: Long,
     val timestamp: Long,
     val trip: String,
+    val icon: String?,
     val lasthit: Long,
     @Json(name = "posts_count")
     val postsCount: Int?,

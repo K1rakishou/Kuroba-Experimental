@@ -122,6 +122,11 @@ class DvachBoardsRequest internal constructor(
         "bump_limit" -> board.bumpLimit = nextInt()
         "info_outer" -> board.description = nextString()
         "category" -> board.workSafe = "Взрослым" != nextString()
+        "enable_flags" -> board.countryFlags = nextBoolean()
+        "icons" -> {
+          board.countryFlags = true
+          skipValue()
+        }
         else -> skipValue()
       }
     }
