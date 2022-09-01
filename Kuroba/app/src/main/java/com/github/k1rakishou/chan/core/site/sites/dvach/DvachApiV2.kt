@@ -30,6 +30,7 @@ import com.squareup.moshi.Moshi
 import dagger.Lazy
 import org.jsoup.Jsoup
 import org.jsoup.parser.Parser
+import java.io.File
 import java.io.InputStream
 import java.util.concurrent.ConcurrentHashMap
 
@@ -267,19 +268,19 @@ class DvachApiV2(
       builder.postImages(postImages, builder.postDescriptor)
 
       if (threadPost.icon.isNotNullNorEmpty()) {
-        val document = Jsoup.parseBodyFragment(threadPost.icon)
-        val icons = document.body().select("img")
-        for (icon in icons) {
-          val imageUrl = icon?.attr("src")
-          val title = icon?.attr("title")
-
-          val iconUrl = endpoints.icon(
-            title.toString(),
-            SiteEndpoints.makeArgument("icon", imageUrl)
-          )
-          builder.addHttpIcon(ChanPostHttpIcon(iconUrl, "$title"))
-        }
+      val document = Jsoup.parseBodyFragment(threadPost.icon)
+      val icons = document.body().select("img")
+      for (icon in icons) {
+        val imageUrl = icon?.attr("src")?.takeIf { attrValue -> attrValue.isNotNullNorEmpty() } ?: continue
+        var title = icon.attr("title")
+        if (title.isEmpty()) title = File(imageUrl).nameWithoutExtension.takeIf { attrValue -> attrValue.isNotEmpty() } ?: continue
+        val iconUrl = endpoints.icon(
+          title,
+          SiteEndpoints.makeArgument("icon", imageUrl)
+        )
+        builder.addHttpIcon(ChanPostHttpIcon(iconUrl, title))
       }
+    }
 
       return@map builder
     }
