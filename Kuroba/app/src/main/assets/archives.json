@@ -51,7 +51,8 @@
   "name": "Archive Of Sins",
   "domain": "archiveofsins.com",
   "boards": ["h", "hc", "hm", "i", "lgbt", "r", "s", "soc", "t", "u"],
-  "files": ["h", "hc", "hm", "i", "lgbt", "r", "s", "soc", "t", "u"]
+  "files": ["h", "hc", "hm", "i", "lgbt", "r", "s", "soc", "t", "u"],
+  "search": ["h", "hc", "hm", "i", "lgbt", "r", "s", "soc", "t", "u"]
 }, {
   "name": "TokyoChronos",
   "domain": "www.tokyochronos.net",
