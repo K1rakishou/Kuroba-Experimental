@@ -125,8 +125,9 @@ suspend fun View.awaitUntilGloballyLaidOutAndGetSize(
     return width to height
   }
 
-  if (!ViewCompat.isLaidOut(this) && !isLayoutRequested) {
-    Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) requesting layout...")
+  if (!ViewCompat.isLaidOut(this) || attempts < 5) {
+    Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) requesting layout " +
+            "(viewLaidOut: ${ViewCompat.isLaidOut(this)}, attempts: ${attempts})...")
     requestLayout()
   }
 
@@ -135,7 +136,11 @@ suspend fun View.awaitUntilGloballyLaidOutAndGetSize(
   suspendCancellableCoroutine<Unit> { cancellableContinuation ->
     val listener = object : OnGlobalLayoutListener {
       override fun onGlobalLayout() {
-        Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) onGlobalLayout called")
+        val view = this@awaitUntilGloballyLaidOutAndGetSize
+
+        Logger.d(TAG, "awaitUntilGloballyLaidOut($viewTag) onGlobalLayout called " +
+                "(width=${view.width}, ${view.measuredWidth}, " +
+                "height=${view.height}, ${view.measuredHeight})")
 
         viewTreeObserver.removeOnGlobalLayoutListener(this)
         cancellableContinuation.resumeValueSafe(Unit)
