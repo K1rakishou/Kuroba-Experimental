@@ -545,7 +545,7 @@ class ReplyFilesStorage(
 
     replyFiles.forEach { replyFile ->
       val addedOn = replyFile.getReplyFileMeta().unwrap().addedOn
-      check(addedOn > prevAddedOn) { "Files not sorted! addedOn='$addedOn', prevAddedOn='$prevAddedOn'" }
+      check(addedOn >= prevAddedOn) { "Files not sorted! addedOn='$addedOn', prevAddedOn='$prevAddedOn'" }
 
       prevAddedOn = addedOn
     }

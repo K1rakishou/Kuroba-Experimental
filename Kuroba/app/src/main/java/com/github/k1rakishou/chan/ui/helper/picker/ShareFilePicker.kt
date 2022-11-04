@@ -44,15 +44,16 @@ class ShareFilePicker(
 
       uris.forEach { dataUri ->
         val copyResult = copyExternalFileToReplyFileStorage(appContext, dataUri, now)
+
+        // To avoid multiple files having the same addedOn which will make it impossible to sort them
+        ++now
+
         if (copyResult is ModularResult.Error) {
           Logger.e(TAG, "handleActionSend() error, dataUri='$dataUri'", copyResult.error)
           return@forEach
         }
 
         pickedFiles += (copyResult as ModularResult.Value).value
-
-        // To avoid multiple files having the same addedOn which will make it impossible to sort them
-        ++now
       }
 
       return@Try PickedFile.Result(pickedFiles)
