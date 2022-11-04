@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
 import com.github.k1rakishou.chan.ui.widget.CancellableToast;
 import com.github.k1rakishou.common.AndroidUtils;
+import com.github.k1rakishou.common.KotlinExtensionsKt;
 import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor;
 import com.github.k1rakishou.persist_state.PersistableChanState;
@@ -107,7 +108,8 @@ public class AppModuleAndroidUtils {
             }
 
             return Unknown;
-        } catch (Exception ignored) {
+        } catch (Throwable error) {
+            Logger.e(TAG, "getVerifiedBuildType() error: " + KotlinExtensionsKt.errorMessageOrClassName(error));
             return Unknown;
         }
     }

@@ -188,7 +188,7 @@ class BookmarkWatcherCoordinator(
     private const val TAG = "BookmarkWatcherCoordinator"
 
     suspend fun restartBackgroundWork(appConstants: AppConstants, appContext: Context) {
-      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+      if (AndroidUtils.isNotMainProcess()) {
         return
       }
 
@@ -230,7 +230,7 @@ class BookmarkWatcherCoordinator(
       appConstants: AppConstants,
       appContext: Context
     ) {
-      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+      if (AndroidUtils.isNotMainProcess()) {
         return
       }
 

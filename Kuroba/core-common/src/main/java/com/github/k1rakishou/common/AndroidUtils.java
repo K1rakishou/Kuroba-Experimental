@@ -88,7 +88,11 @@ public class AndroidUtils {
         return application.getPackageName() + ".fileprovider";
     }
 
-    public static AppProcessType getProcessType() {
+    public static boolean isNotMainProcess() {
+        return getProcessType() != AppProcessType.Main;
+    }
+
+    private static AppProcessType getProcessType() {
         String currentProcName = "";
         int pid = android.os.Process.myPid();
         ActivityManager manager = (ActivityManager) getAppContext().getSystemService(Context.ACTIVITY_SERVICE);

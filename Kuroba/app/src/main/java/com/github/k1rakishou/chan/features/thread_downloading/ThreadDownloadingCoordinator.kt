@@ -72,7 +72,7 @@ class ThreadDownloadingCoordinator(
       appConstants: AppConstants,
       eager: Boolean
     ) {
-      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+      if (AndroidUtils.isNotMainProcess()) {
         return
       }
 
@@ -109,7 +109,7 @@ class ThreadDownloadingCoordinator(
       appContext: Context,
       appConstants: AppConstants,
     ) {
-      if (AndroidUtils.getProcessType() != AndroidUtils.AppProcessType.Main) {
+      if (AndroidUtils.isNotMainProcess()) {
         return
       }
 

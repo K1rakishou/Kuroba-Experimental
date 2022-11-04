@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.HashingUtil
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -132,7 +133,12 @@ class ReportManager(
       appendLine("Android API Level: " + Build.VERSION.SDK_INT)
       appendLine("App Version: " + BuildConfig.VERSION_NAME)
       appendLine("Phone Model: " + Build.MANUFACTURER + " " + Build.MODEL)
-      appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
+
+      if (AppModuleAndroidUtils.getFlavorType() != AndroidUtils.FlavorType.Fdroid) {
+        // Do not log this for FDroid builds since it's always going to be "Unknown" which is confusing
+        appendLine("Build type: " + AppModuleAndroidUtils.getVerifiedBuildType().name)
+      }
+
       appendLine("Flavor type: " + AppModuleAndroidUtils.getFlavorType().name)
       appendLine("isLowRamDevice: ${ChanSettings.isLowRamDevice()}, isLowRamDeviceForced: ${ChanSettings.isLowRamDeviceForced.get()}")
       appendLine("MemoryClass: ${activityManager?.memoryClass}")
