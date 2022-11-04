@@ -86,6 +86,7 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.options.ChanLoadOptions
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.post.ChanPostImage
+import com.github.k1rakishou.model.data.post.PostIndexed
 import com.github.k1rakishou.model.source.cache.ChanCatalogSnapshotCache
 import com.github.k1rakishou.persist_state.IndexAndTop
 import com.github.k1rakishou.persist_state.ReplyMode
@@ -460,7 +461,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     recyclerView.addOnScrollListener(scrollListener)
     recyclerView.addItemDecoration(gridModeSpaceItemDecoration)
 
-    runBlocking { setFastScroll(false) }
+    runBlocking { setFastScroll(false, emptyList()) }
     attachToolbarScroll(true)
 
     threadListLayoutCallback.toolbar?.addToolbarHeightUpdatesCallback(this)
@@ -472,7 +473,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
     threadListLayoutCallback?.toolbar?.removeToolbarHeightUpdatesCallback(this)
     replyLayout.onDestroy()
-    runBlocking { setFastScroll(false) }
+    runBlocking { setFastScroll(false, emptyList()) }
 
     forceRecycleAllPostViews()
     recyclerView.removeItemDecoration(gridModeSpaceItemDecoration)
@@ -655,7 +656,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       party()
     }
 
-    setFastScroll(true)
     val posts = chanThreadManager.getMutableListOfPosts(descriptor)
 
     val (filteredPosts, applyFilterDuration) = measureTimedValue {
@@ -676,6 +676,8 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
         prevScrollPositionData = prevScrollPositionData,
       )
     }
+
+    setFastScroll(true, filteredPosts)
 
     if (chanDescriptor != null) {
       // Use post() here to wait until recycler had processed the new posts so that we don't end up
@@ -1117,7 +1119,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
     }
   }
 
-  private suspend fun setFastScroll(enable: Boolean) {
+  private suspend fun setFastScroll(enable: Boolean, posts: List<PostIndexed>) {
     val enabledInSettings = ChanSettings.draggableScrollbars.get().isEnabled
 
     if (!enable || !enabledInSettings) {
@@ -1140,45 +1142,38 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       return
     }
 
+    val postDescriptors = posts.map { postIndexed -> postIndexed.chanPost.postDescriptor }
+
     when (chanDescriptor) {
       is ChanDescriptor.ICatalogDescriptor -> {
-        val catalogSnapshot = chanCatalogSnapshotCache.get(chanDescriptor)
-        if (catalogSnapshot != null) {
-          val postDescriptors = catalogSnapshot.catalogThreadDescriptorList
-            .map { threadDescriptor -> threadDescriptor.toOriginalPostDescriptor() }
-
-          if (postInfoMapItemDecoration == null) {
-            postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
-          }
-
-          val params = ExtractPostMapInfoHolderUseCase.Params(
-            postDescriptors = postDescriptors,
-            isViewingThread = false
-          )
-
-          postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.execute(params),
-            catalogSnapshot.postsCount
-          )
+        if (postInfoMapItemDecoration == null) {
+          postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
         }
+
+        val params = ExtractPostMapInfoHolderUseCase.Params(
+          postDescriptors = postDescriptors,
+          isViewingThread = false
+        )
+
+        postInfoMapItemDecoration!!.setItems(
+          extractPostMapInfoHolderUseCase.execute(params),
+          postDescriptors.size
+        )
       }
       is ThreadDescriptor -> {
-        val chanThread = chanThreadManager.getChanThread(chanDescriptor)
-        if (chanThread != null) {
-          if (postInfoMapItemDecoration == null) {
-            postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
-          }
-
-          val params = ExtractPostMapInfoHolderUseCase.Params(
-            postDescriptors = chanThread.getPostDescriptors(),
-            isViewingThread = true
-          )
-
-          postInfoMapItemDecoration!!.setItems(
-            extractPostMapInfoHolderUseCase.execute(params),
-            chanThread.postsCount
-          )
+        if (postInfoMapItemDecoration == null) {
+          postInfoMapItemDecoration = PostInfoMapItemDecoration(context)
         }
+
+        val params = ExtractPostMapInfoHolderUseCase.Params(
+          postDescriptors = postDescriptors,
+          isViewingThread = true
+        )
+
+        postInfoMapItemDecoration!!.setItems(
+          extractPostMapInfoHolderUseCase.execute(params),
+          postDescriptors.size
+        )
       }
     }
 
