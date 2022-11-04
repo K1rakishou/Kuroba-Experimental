@@ -39,7 +39,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
         android:id="@+id/image_filename"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:gravity="start"
+        android:gravity="left"
         tools:text="test 1" />
 
     <com.github.k1rakishou.chan.ui.cell.PostIcons
