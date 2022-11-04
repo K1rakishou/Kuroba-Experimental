@@ -128,7 +128,13 @@ class PostCommentTextView @JvmOverloads constructor(
     }
 
     if (action == MotionEvent.ACTION_DOWN || linkConsumesEvents) {
-      linkConsumesEvents = customMovementMethod?.onTouchEvent(this, text as Spannable, event) == true
+      val spannableText = if (text is Spannable) {
+        text as Spannable
+      } else {
+        SpannableString.valueOf(text) as Spannable
+      }
+
+      linkConsumesEvents = customMovementMethod?.onTouchEvent(this, spannableText, event) == true
     }
 
     if (event.isActionUpOrCancel()) {
