@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.core.site.sites.dvach
 
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.site.ChunkDownloaderSiteProperties
 import com.github.k1rakishou.chan.core.site.ResolvedChanDescriptor
@@ -52,6 +53,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.GsonJsonSetting
+import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.flow.Flow
@@ -99,13 +101,6 @@ class Dvach : CommonSite() {
   private val siteRequestModifier by lazy { DvachSiteRequestModifier(this, appConstants) }
   private val urlHandlerLazy = lazy { DvachSiteUrlHandler(domainUrl) }
   private val siteIconLazy = lazy { SiteIcon.fromFavicon(imageLoaderV2, "${domainString}/favicon.ico".toHttpUrl()) }
-
-  override fun firewallChallengeEndpoint(): HttpUrl {
-    // Lmao, apparently this is the only endpoint where there is no NSFW ads and the anti-spam
-    // script is working. For some reason it doesn't work on https://2ch.hk anymore, meaning opening
-    // https://2ch.hk doesn't trigger anti-spam script.
-    return "${domainString}/challenge/".toHttpUrl()
-  }
 
   val captchaV2NoJs by lazy {
     SiteAuthentication.fromCaptcha2nojs(
@@ -453,17 +448,38 @@ class Dvach : CommonSite() {
       val fullCookie = buildString {
         val userCodeCookie = site.userCodeCookie.get()
         if (userCodeCookie.isNotEmpty()) {
-          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie};")
+          append("${USER_CODE_COOKIE_KEY}=${userCodeCookie}")
         }
 
         val antiSpamCookie = site.antiSpamCookie.get()
         if (antiSpamCookie.isNotEmpty()) {
+          if (isNotEmpty()) {
+            append("; ")
+          }
+
           append(antiSpamCookie)
-          append(";")
         }
+
+        site.getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+          ?.get()
+          ?.let { cookiesMap ->
+            cookiesMap.values.forEachIndexed { index, cookieForDomain ->
+              if (isNotEmpty() && index < cookiesMap.size) {
+                append("; ")
+              }
+
+              append(CloudFlareHandlerInterceptor.CF_CLEARANCE)
+              append('=')
+              append(cookieForDomain)
+            }
+          }
       }
 
       requestProperties.put("Cookie", fullCookie)
+
+      // For 2ch.hk we want to use our custom user-agent because when using the WebView's one the
+      // videos do not load with 403 status.
+      requestProperties.put(userAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
     }
 
     override fun modifyCaptchaGetRequest(site: Dvach, requestBuilder: Request.Builder) {

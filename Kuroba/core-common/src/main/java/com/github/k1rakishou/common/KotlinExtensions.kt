@@ -1578,3 +1578,31 @@ fun fixUrlOrNull(inputUrlRaw: String?): String? {
 
   return HTTPS + inputUrlRaw
 }
+
+fun HttpUrl.domain(): String? {
+  val host = host.removePrefix("www.")
+  if (host.isEmpty()) {
+    return null
+  }
+
+  var topDomainSeparatorFound = false
+  var indexOfDomainSeparator = -1
+
+  for (index in host.lastIndex downTo 0) {
+    if (host[index] == '.') {
+      if (!topDomainSeparatorFound) {
+        topDomainSeparatorFound = true
+        continue
+      }
+
+      indexOfDomainSeparator = index
+      break
+    }
+  }
+
+  if (indexOfDomainSeparator < 0) {
+    return host
+  }
+
+  return host.substring(indexOfDomainSeparator + 1, host.length)
+}

@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site
 
 import com.github.k1rakishou.prefs.BooleanSetting
+import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 
@@ -37,6 +38,12 @@ sealed class SiteSetting(
     settingName: String,
     settingDescription: String?,
     val setting: StringSetting
+  ) : SiteSetting(settingName, settingDescription)
+
+  class SiteMapSetting(
+    settingName: String,
+    settingDescription: String?,
+    val setting: MapSetting
   ) : SiteSetting(settingName, settingDescription)
 
   class SiteBooleanSetting(

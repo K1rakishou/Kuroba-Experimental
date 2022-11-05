@@ -20,13 +20,23 @@ open class AppConstants(
   val maxPostsCountInPostsCache: Int
   val maxAmountOfPostsInDatabase: Int = maxPostsInDatabaseSettingValue
   val maxAmountOfThreadsInDatabase: Int = maxThreadsInDatabaseSettingValue
-  val userAgent: String
   val processorsCount: Int
   val proxiesFileName = PROXIES_FILE_NAME
   val thirdEyeSettingsFileName = THIRD_EYE_SETTINGS_FILE_NAME
   val bookmarkWatchWorkUniqueTag = "BookmarkWatcherController_${flavorType.name}"
   val filterWatchWorkUniqueTag = "FilterWatcherController_${flavorType.name}"
   val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
+
+  val userAgent by lazy {
+    try {
+      WebSettings.getDefaultUserAgent(context)
+    } catch (error: Throwable) {
+      // Who knows what may happen if the user deletes webview from the system so just in case
+      // switch to a default user agent in case of a crash
+      Logger.e(TAG, "WebSettings.getDefaultUserAgent() error", error)
+      String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+    }
+  }
 
   val isDebuggerAttached: Boolean
     get() = Debug.isDebuggerConnected()
@@ -131,15 +141,6 @@ open class AppConstants(
 
     mpvDemuxerCacheMaxSize = calculateMpvDemuxerCacheSize(activityManager)
     maxPostsCountInPostsCache = calculatePostsCountForPostsCacheDependingOnDeviceRam(activityManager).toInt()
-
-    userAgent = try {
-      WebSettings.getDefaultUserAgent(context)
-    } catch (error: Throwable) {
-      // Who knows what may happen if the user deletes webview from the system so just in case
-      // switch to a default user agent in case of a crash
-      Logger.e(TAG, "WebSettings.getDefaultUserAgent() error", error)
-      String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
-    }
 
     processorsCount = Runtime.getRuntime().availableProcessors()
       .coerceAtLeast(2)

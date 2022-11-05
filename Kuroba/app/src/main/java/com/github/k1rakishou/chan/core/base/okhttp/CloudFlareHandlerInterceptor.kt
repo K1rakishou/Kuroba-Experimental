@@ -7,7 +7,10 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
+import com.github.k1rakishou.common.domain
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.Interceptor
 import okhttp3.Request
@@ -70,6 +73,7 @@ class CloudFlareHandlerInterceptor(
     request: Request
   ) {
     if (!tryDetectCloudFlareNeedle(response)) {
+      Logger.d(TAG, "[$okHttpType] Couldn't find CloudFlare needle in the page's body")
       return
     }
 
@@ -104,14 +108,10 @@ class CloudFlareHandlerInterceptor(
       if (site != null) {
         val siteDescriptor = site.siteDescriptor()
 
-        val requestUrl = site
-          .firewallChallengeEndpoint()
-          ?: request.url
-
         firewallBypassManager.onFirewallDetected(
           firewallType = FirewallType.Cloudflare,
           siteDescriptor = siteDescriptor,
-          urlToOpen = requestUrl
+          urlToOpen = request.url
         )
       }
     }
@@ -128,6 +128,9 @@ class CloudFlareHandlerInterceptor(
   private fun requireCloudFlareCookie(request: Request): Boolean {
     val host = request.url.host
 
+    val domainOrHost = request.url.domain()
+      ?: request.url.host
+
     val alreadyCheckedSite = synchronized(this) { host in sitesThatRequireCloudFlareCache }
     if (alreadyCheckedSite) {
       return true
@@ -140,7 +143,7 @@ class CloudFlareHandlerInterceptor(
       return false
     }
 
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
+    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie
     )
 
@@ -149,18 +152,21 @@ class CloudFlareHandlerInterceptor(
       return false
     }
 
-    return cloudFlareClearanceCookieSetting.get().isNotEmpty()
+    return cloudFlareClearanceCookieSetting.get(domainOrHost).isNotNullNorEmpty()
   }
 
   private fun removeSiteClearanceCookie(request: Request) {
     val url = request.url
     val site = siteResolver.findSiteForUrl(url.toString())
 
+    val domainOrHost = request.url.domain()
+      ?: request.url.host
+
     if (site == null) {
       return
     }
 
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
+    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie
     )
 
@@ -169,24 +175,27 @@ class CloudFlareHandlerInterceptor(
       return
     }
 
-    val prevValue = cloudFlareClearanceCookieSetting.get()
-    if (prevValue.isEmpty()) {
+    val prevValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
+    if (prevValue.isNullOrEmpty()) {
       Logger.e(TAG, "[$okHttpType] removeSiteClearanceCookie() cookieValue is empty")
       return
     }
 
-    cloudFlareClearanceCookieSetting.setSyncNoCheck("")
+    cloudFlareClearanceCookieSetting.remove(domainOrHost)
   }
 
   private fun addCloudFlareCookie(prevRequest: Request): Request? {
     val url = prevRequest.url
     val site = siteResolver.findSiteForUrl(url.toString())
 
+    val domainOrHost = prevRequest.url.domain()
+      ?: prevRequest.url.host
+
     if (site == null) {
       return null
     }
 
-    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
+    val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
       SiteSetting.SiteSettingId.CloudFlareClearanceCookie
     )
 
@@ -195,8 +204,8 @@ class CloudFlareHandlerInterceptor(
       return null
     }
 
-    val cookieValue = cloudFlareClearanceCookieSetting.get()
-    if (cookieValue.isEmpty()) {
+    val cookieValue = cloudFlareClearanceCookieSetting.get(domainOrHost)
+    if (cookieValue.isNullOrEmpty()) {
       Logger.e(TAG, "[$okHttpType] addCloudFlareCookie() cookieValue is empty")
       return null
     }

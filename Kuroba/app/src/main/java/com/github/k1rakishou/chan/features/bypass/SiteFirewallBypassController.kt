@@ -17,12 +17,15 @@ import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallType
+import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
 class SiteFirewallBypassController(
@@ -191,7 +194,7 @@ class SiteFirewallBypassController(
 
     when (firewallType) {
       FirewallType.Cloudflare -> {
-        val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<StringSetting>(
+        val cloudFlareClearanceCookieSetting = site.getSettingBySettingId<MapSetting>(
           SiteSetting.SiteSettingId.CloudFlareClearanceCookie
         )
 
@@ -200,7 +203,16 @@ class SiteFirewallBypassController(
           return false
         }
 
-        cloudFlareClearanceCookieSetting.set(cookie)
+        val domainOrHost = urlToOpen.toHttpUrlOrNull()?.let { httpUrl ->
+          httpUrl.domain() ?: httpUrl.host
+        }
+
+        if (domainOrHost.isNullOrEmpty()) {
+          Logger.e(TAG, "Failed to extract neither domain not host from url '${urlToOpen}'")
+          return false
+        }
+
+        cloudFlareClearanceCookieSetting.put(domainOrHost, cookie)
       }
       FirewallType.DvachAntiSpam -> {
         val dvachAntiSpamCookieSetting = site.getSettingBySettingId<StringSetting>(

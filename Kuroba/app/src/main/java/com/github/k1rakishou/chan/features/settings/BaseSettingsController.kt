@@ -6,6 +6,7 @@ import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.RangeSettingV2
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.settings.RangeSettingUpdaterController
@@ -93,6 +94,71 @@ abstract class BaseSettingsController(
         onInputValueEntered(inputSettingV2, input, rebuildScreenFunc)
       }
     )
+  }
+
+  protected fun showInputDialog(
+    mapSettingV2: MapSettingV2,
+    rebuildScreenFunc: (Any?) -> Unit,
+    forceRebuildScreen: () -> Unit,
+  ) {
+    val inputType = mapSettingV2.inputType
+    if (inputType == null) {
+      Logger.e(TAG, "Bad input type: ${inputType}")
+      return
+    }
+
+    dialogFactory.createSimpleDialogWithInputAndRemoveButton(
+      context = context,
+      onRemoveClicked = {
+        mapSettingV2.removeSetting()
+        forceRebuildScreen()
+      },
+      currentValue = mapSettingV2.getCurrent(),
+      inputType = inputType,
+      titleText = mapSettingV2.topDescription,
+      onValueEntered = { input ->
+        onInputValueEntered(mapSettingV2, input, rebuildScreenFunc)
+      }
+    )
+  }
+
+  @Suppress("FoldInitializerAndIfToElvis")
+  protected fun onInputValueEntered(
+    mapSettingV2: MapSettingV2,
+    input: String,
+    rebuildScreenFunc: (Any?) -> Unit
+  ) {
+    when (mapSettingV2.inputType) {
+      DialogFactory.DialogInputType.String -> {
+        val text = if (input.isNotEmpty()) {
+          input
+        } else {
+          mapSettingV2.getDefault()?.toString()
+        }
+
+        if (text == null) {
+          return
+        }
+
+        mapSettingV2.updateSetting(text)
+      }
+      DialogFactory.DialogInputType.Integer -> {
+        val integer = if (input.isNotEmpty()) {
+          input.toIntOrNull()
+        } else {
+          mapSettingV2.getDefault() as? Int
+        }
+
+        if (integer == null) {
+          return
+        }
+
+        mapSettingV2.updateSetting(integer.toString())
+      }
+      null -> throw IllegalStateException("InputType is null")
+    }.exhaustive
+
+    rebuildScreenFunc(mapSettingV2.getCurrent())
   }
 
   @Suppress("FoldInitializerAndIfToElvis")

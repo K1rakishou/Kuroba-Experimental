@@ -36,11 +36,13 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.json.JsonSetting
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.BooleanSetting
+import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import com.google.gson.Gson
@@ -104,7 +106,7 @@ abstract class SiteBase : Site, CoroutineScope {
   open val siteDomainSetting: StringSetting? = null
 
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
-  lateinit var cloudFlareClearanceCookie: StringSetting
+  lateinit var cloudFlareClearanceCookieMap: MapSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
   lateinit var ignoreReplyCooldowns: BooleanSetting
 
@@ -129,10 +131,23 @@ abstract class SiteBase : Site, CoroutineScope {
       ChanSettings.ConcurrentFileDownloadingChunks.Two
     )
 
-    cloudFlareClearanceCookie = StringSetting(
-      prefs,
-      "cloud_flare_clearance_cookie",
-      ""
+    cloudFlareClearanceCookieMap = MapSetting(
+      _moshi = moshi,
+      mapperFrom = { mapSettingEntry ->
+        return@MapSetting MapSetting.KeyValue(
+          key = mapSettingEntry.key,
+          value = mapSettingEntry.value
+        )
+      },
+      mapperTo = { keyValue ->
+        return@MapSetting MapSetting.MapSettingEntry(
+          key = keyValue.key,
+          value = keyValue.value
+        )
+      },
+      settingProvider = prefs,
+      key = "cloud_flare_clearance_cookie_map",
+      def = emptyMap()
     )
 
     lastUsedReplyMode = OptionsSetting(
@@ -199,7 +214,7 @@ abstract class SiteBase : Site, CoroutineScope {
 
   override fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T? {
     return when (settingId) {
-      SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookie as T
+      SiteSetting.SiteSettingId.CloudFlareClearanceCookie -> cloudFlareClearanceCookieMap as T
       SiteSetting.SiteSettingId.LastUsedReplyMode -> lastUsedReplyMode as T
       SiteSetting.SiteSettingId.IgnoreReplyCooldowns -> ignoreReplyCooldowns as T
       // 4chan only
@@ -224,10 +239,10 @@ abstract class SiteBase : Site, CoroutineScope {
       ChanSettings.ConcurrentFileDownloadingChunks.values().map { it.name }
     )
 
-    settings += SiteSetting.SiteStringSetting(
+    settings += SiteSetting.SiteMapSetting(
       getString(R.string.cloud_flare_cookie_setting_title),
-      getString(R.string.cloud_flare_cookie_setting_description),
-      cloudFlareClearanceCookie
+      null,
+      cloudFlareClearanceCookieMap
     )
 
     if (siteDomainSetting != null) {

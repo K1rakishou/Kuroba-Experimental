@@ -2,6 +2,7 @@ package com.github.k1rakishou.model.data.descriptor
 
 import android.os.Parcelable
 import com.github.k1rakishou.model.entity.chan.catalog.CompositeCatalogEntity
+import kotlinx.parcelize.IgnoredOnParcel
 import kotlinx.parcelize.Parcelize
 
 sealed class ChanDescriptor : Parcelable {
@@ -19,7 +20,7 @@ sealed class ChanDescriptor : Parcelable {
   abstract fun serializeToString(): String
   abstract fun userReadableString(): String
 
-  @Suppress("ReplaceCallWithBinaryOperator")
+  @Suppress("ReplaceCallWithBinaryOperator", "USELESS_CAST")
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is ChanDescriptor) return false
@@ -33,6 +34,7 @@ sealed class ChanDescriptor : Parcelable {
     }
   }
 
+  @Suppress("USELESS_CAST")
   override fun hashCode(): Int {
     return when (this) {
       // Do not remove the casts
@@ -250,6 +252,7 @@ sealed class ChanDescriptor : Parcelable {
   class CompositeCatalogDescriptor private constructor(
     val catalogDescriptors: List<CatalogDescriptor>
   ) : ChanDescriptor(), ICatalogDescriptor {
+    @IgnoredOnParcel
     private val _asSet by lazy { catalogDescriptors.toSet() }
     val asSet: Set<CatalogDescriptor>
       get() = _asSet

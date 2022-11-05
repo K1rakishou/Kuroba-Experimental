@@ -19,6 +19,7 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.SettingV2
 import com.github.k1rakishou.chan.ui.epoxy.epoxyDividerView
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
@@ -167,6 +168,31 @@ class SiteSettingsController(
 
               rebuildSettings()
             }
+          }
+        }
+      }
+      is MapSettingV2 -> {
+        epoxyLinkSetting {
+          id("epoxy_map_entry_setting_${settingV2.settingsIdentifier.getIdentifier()}")
+          topDescription(settingV2.topDescription)
+          bottomDescription(settingV2.bottomDescription)
+          bindNotificationIcon(SettingNotificationType.Default)
+          settingEnabled(true)
+
+          clickListener { view ->
+            val prev = settingV2.getCurrent()
+
+            showInputDialog(
+              mapSettingV2 = settingV2,
+              rebuildScreenFunc = { curr ->
+                if (prev == curr) {
+                  return@showInputDialog
+                }
+
+                rebuildSettings()
+              },
+              forceRebuildScreen = { rebuildSettings() }
+            )
           }
         }
       }

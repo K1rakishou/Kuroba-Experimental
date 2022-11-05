@@ -822,7 +822,6 @@ class MediaViewerController(
 
   private fun createCacheDataSourceFactory(viewableMedia: List<ViewableMedia>): DataSource.Factory {
     val defaultDataSourceFactory = DefaultHttpDataSource.Factory()
-      .setUserAgent(appConstants.userAgent)
       .setDefaultRequestProperties(createRequestProperties(viewableMedia))
 
     return CacheDataSource.Factory()

@@ -26,8 +26,11 @@ import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.LinkSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.MapSettingV2
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
+import com.github.k1rakishou.prefs.MapSetting
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -106,6 +109,33 @@ class SiteSettingsPresenter(
           val identifier = SiteSettingsScreen.AdditionalSettingsGroup(settingId)
 
           when (siteSetting) {
+            is SiteSetting.SiteMapSetting -> {
+              siteSetting.setting.get().forEach { mapEntry ->
+                val mapSettingId = groupId + "_" + siteSetting.settingTitle + mapEntry.key
+                val mapSettingIdentifier = SiteSettingsScreen.AdditionalSettingsGroup(mapSettingId)
+
+                group += MapSettingV2.createBuilder(
+                  context = context,
+                  identifier = mapSettingIdentifier,
+                  mapKey = mapEntry.key,
+                  setting = siteSetting.setting,
+                  inputType = DialogFactory.DialogInputType.String,
+                  topDescriptionStringFunc = { siteSetting.settingTitle + " (${mapEntry.key})" },
+                  bottomDescriptionStringFunc = {
+                    buildString {
+                      if (siteSetting.settingDescription != null) {
+                        appendLine(siteSetting.settingDescription)
+                      }
+
+                      val currentSetting = siteSetting.setting.get(mapEntry.key)
+                      if (currentSetting.isNotNullNorBlank()) {
+                        appendLine(currentSetting)
+                      }
+                    }
+                  }
+                )
+              }
+            }
             is SiteSetting.SiteOptionsSetting -> {
               group += ListSettingV2.createBuilder(
                 context = context,

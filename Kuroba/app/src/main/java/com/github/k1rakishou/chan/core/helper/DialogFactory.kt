@@ -190,6 +190,71 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  @JvmOverloads
+  fun createSimpleDialogWithInputAndRemoveButton(
+    context: Context,
+    onRemoveClicked: (() -> Unit),
+    titleTextId: Int? = null,
+    titleText: CharSequence? = null,
+    descriptionTextId: Int? = null,
+    descriptionText: CharSequence? = null,
+    onValueEntered: (String) -> Unit,
+    inputType: DialogInputType = DialogInputType.Integer,
+    onCanceled: (() -> Unit)? = null,
+    currentValue: String? = null,
+    positiveButtonTextId: Int = R.string.ok,
+    negativeButtonTextId: Int = R.string.cancel,
+    neutralButtonTextId: Int = R.string.remove
+  ): KurobaAlertDialog.AlertDialogHandle? {
+    if (!applicationVisibilityManager.isAppInForeground()) {
+      return null
+    }
+
+    val alertDialogHandle = AlertDialogHandleImpl()
+
+    showKurobaAlertDialogHostController(
+      context,
+      cancelable = true,
+      onDismissListener = { onCanceled?.invoke() }
+    ) { viewGroup, callbacks ->
+      val container = LinearLayout(context)
+      container.setPadding(dp(24f), dp(8f), dp(24f), 0)
+
+      val editText = ColorizableEditText(context)
+      editText.imeOptions = EditorInfo.IME_FLAG_NO_FULLSCREEN
+      editText.setText(currentValue ?: "")
+      editText.isSingleLine = true
+      editText.inputType = when (inputType) {
+        DialogInputType.String -> InputType.TYPE_CLASS_TEXT
+        DialogInputType.Integer -> InputType.TYPE_CLASS_NUMBER
+      }.exhaustive
+      editText.setSelection(editText.text?.length ?: 0)
+
+      container.addView(
+        editText,
+        ViewGroup.LayoutParams.MATCH_PARENT,
+        ViewGroup.LayoutParams.WRAP_CONTENT
+      )
+
+      KurobaAlertDialog.Builder(context)
+        .setPositiveButton(positiveButtonTextId) { _, _ ->
+          onValueEntered(editText.text?.toString() ?: "")
+        }
+        .setNeutralButtonInternal(getString(neutralButtonTextId)) {
+          onRemoveClicked()
+        }
+        .setNegativeButton(negativeButtonTextId) { _, _ -> }
+        .setTitleInternal(titleTextId, titleText)
+        .setDescriptionInternal(descriptionTextId, descriptionText)
+        .setView(container)
+        .setCancelable(true)
+        .create(viewGroup, callbacks, alertDialogHandle)
+
+      editText.requestFocus()
+    }
+
+    return alertDialogHandle
+  }
 
   @JvmOverloads
   fun createSimpleDialogWithInput(

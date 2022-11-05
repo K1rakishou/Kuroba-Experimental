@@ -1492,8 +1492,7 @@ Actual error: \'%1$s\'</string>
 ]]>
     </string>
 
-    <string name="cloud_flare_cookie_setting_title">CloudFlare cookie</string>
-    <string name="cloud_flare_cookie_setting_description">If a site is hosted by CloudFlare and has anti-ddos checks enabled the application will automatically try to pass them and store CloudFlare clearance cookie that will be used to access site normally without having to pass checks every singe time. You will see a cookie here and will be able to edit/remove it if you ever need to do that. When removing a cookie (making it empty) a new cookie will be requested on the next site access. If a site does not use CloudFlare then this setting will always be empty.</string>
+    <string name="cloud_flare_cookie_setting_title">CloudFlare clearance cookie</string>
     <string name="settings_concurrent_file_downloading_name">Concurrent chunked file downloading</string>
     <string name="settings_concurrent_file_downloading_description">Split file downloads into chunks and download them concurrently, when possible; makes loading times shorter when viewing them in the gallery. Determines the number of chunks to split files into.</string>
     <string name="site_domain_setting">Site domain</string>
