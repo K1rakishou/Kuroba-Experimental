@@ -13,13 +13,11 @@
         android:padding="8dp"
         android:orientation="vertical">
 
-        <WebView
-            android:id="@+id/web_view"
+        <FrameLayout
+            android:id="@+id/web_view_container"
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1"
-            android:clickable="false"
-            android:focusable="false" />
+            android:layout_weight="1" />
 
         <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
             android:id="@+id/close_button"
