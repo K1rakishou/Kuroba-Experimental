@@ -1564,6 +1564,10 @@ fun fixUrlOrNull(inputUrlRaw: String?): String? {
     return null
   }
 
+  return fixUrl(inputUrlRaw)
+}
+
+fun fixUrl(inputUrlRaw: String): String {
   if (inputUrlRaw.startsWith("//")) {
     return HTTPS + inputUrlRaw.removePrefix("//")
   }

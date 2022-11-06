@@ -241,6 +241,13 @@ public class AppModuleAndroidUtils {
             return;
         }
 
+        if (filteredIntents.size() == 1) {
+            Logger.d(TAG, "openLink() filteredIntents.size() == 1");
+            openIntent(filteredIntents.get(0));
+
+            return;
+        }
+
         // Create a chooser for the last app in the list, and add the rest with
         // EXTRA_INITIAL_INTENTS that get placed above
         Intent chooser = Intent.createChooser(

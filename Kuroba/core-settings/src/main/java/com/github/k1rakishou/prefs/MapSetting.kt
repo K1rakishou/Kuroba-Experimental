@@ -93,8 +93,9 @@ class MapSetting(
         }
       }
     } catch (error: Throwable) {
-      Logger.e("JsonSetting", "JsonSetting<${MapSettingEntries::class.java.simpleName}>.get()", error)
+      Logger.e(TAG, "MapSetting.get()", error)
 
+      settingProvider.putString(key, convertMapToJson(default))
       cache = def.toMutableMap()
     }
 
@@ -167,5 +168,9 @@ class MapSetting(
     val key: String,
     val value: String
   )
+
+  companion object {
+    private const val TAG = "MapSetting"
+  }
 
 }

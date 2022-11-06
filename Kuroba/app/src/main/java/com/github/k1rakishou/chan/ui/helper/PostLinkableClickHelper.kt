@@ -83,16 +83,19 @@ class PostLinkableClickHelper(
       val boardDescriptor = BoardDescriptor.create(siteName, threadLink.board)
       val board = boardManager.byBoardDescriptor(boardDescriptor)
 
-      if (board != null) {
-        val postDescriptor = PostDescriptor.create(
-          siteName,
-          threadLink.board,
-          threadLink.threadId,
-          threadLink.postId
-        )
-
-        onCrossThreadLinkClicked(postDescriptor)
+      if (board == null) {
+        Logger.e(TAG, "Bad thread linkable: Couldn't find board for descriptor ${boardDescriptor}")
+        return
       }
+
+      val postDescriptor = PostDescriptor.create(
+        siteName,
+        threadLink.board,
+        threadLink.threadId,
+        threadLink.postId
+      )
+
+      onCrossThreadLinkClicked(postDescriptor)
 
       return
     }

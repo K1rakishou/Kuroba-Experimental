@@ -7,6 +7,7 @@ import com.github.k1rakishou.chan.core.site.parser.PostParser
 import com.github.k1rakishou.chan.core.site.parser.style.StyleRule
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.common.data.ArchiveType
+import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.core_parser.comment.HtmlNode
 import com.github.k1rakishou.core_parser.comment.HtmlTag
@@ -57,7 +58,7 @@ class FoolFuukaCommentParser(
     anchorTag: HtmlTag,
     callback: PostParser.Callback
   ): PostLinkable.Link {
-    val href = anchorTag.attrUnescapedOrNull("href")
+    val href = fixUrlOrNull(anchorTag.attrUnescapedOrNull("href"))
     if (href == null) {
       return PostLinkable.Link(PostLinkable.Type.LINK, text, PostLinkable.Value.StringValue(anchorTag.text()))
     }
