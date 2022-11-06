@@ -316,13 +316,22 @@ class ThirdEyeManager(
         throw IOException("Failed to convert thirdEyeSettingsFile into json data!")
       }
 
+      val validBoorus = mutableListOf<BooruSetting>()
+      val duplicateChecker = mutableSetOf<String>()
+
       thirdEyeSettings.addedBoorus.forEach { booruSetting ->
         if (!booruSetting.valid()) {
-          throw IOException("BooruSetting is not valid! booruSetting=${booruSetting}")
+          return@forEach
         }
+
+        if (!duplicateChecker.add(booruSetting.booruUniqueKey)) {
+          return@forEach
+        }
+
+        validBoorus += booruSetting
       }
 
-      return@withContext thirdEyeSettings
+      return@withContext thirdEyeSettings.copy(addedBoorus = validBoorus)
     }
   }
 

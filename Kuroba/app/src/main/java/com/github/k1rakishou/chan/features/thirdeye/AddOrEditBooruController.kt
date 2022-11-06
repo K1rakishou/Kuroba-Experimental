@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
+import com.github.k1rakishou.chan.core.manager.ThirdEyeManager
 import com.github.k1rakishou.chan.features.thirdeye.data.BooruSetting
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
@@ -40,14 +41,19 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingComposeController
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.toHashSetBy
 import kotlinx.coroutines.launch
 import java.util.regex.Pattern
+import javax.inject.Inject
 
 class AddOrEditBooruController(
   context: Context,
   private val booruSetting: BooruSetting?,
   private val onSaveClicked: (String?, BooruSetting) -> Unit
 ) : BaseFloatingComposeController(context) {
+
+  @Inject
+  lateinit var thirdEyeManager: ThirdEyeManager
 
   override val contentAlignment: Alignment
     get() = Alignment.Center
@@ -214,6 +220,19 @@ class AddOrEditBooruController(
 
   private suspend fun validate(booruSettingState: BooruSettingState): ModularResult<Unit> {
     return ModularResult.Try {
+      // When adding a new booru check whether it's booruUniqueKey exists among already added boorus.
+      // Otherwise it will crash when displaying all of them.
+      if (booruSetting == null) {
+        val existingBooruKeys = thirdEyeManager.boorus().toHashSetBy { it.booruUniqueKey }
+
+        if (booruSettingState.booruUniqueKey in existingBooruKeys) {
+          throw BooruSettingValidationException(
+            settingName = "apiEndpoint",
+            message = "such apiEndpoint already exists (must be unique)"
+          )
+        }
+      }
+
       val imageFileNameRegex = booruSettingState.imageFileNameRegexState.value.trim()
       if (imageFileNameRegex.isEmpty()) {
         throw BooruSettingValidationException(
@@ -322,6 +341,9 @@ class AddOrEditBooruController(
     val heightJsonKeyState = mutableStateOf<String>(heightJsonKey ?: "")
     val tagsJsonKeyState = mutableStateOf<String>(tagsJsonKey ?: "")
     val bannedTagsStringState = mutableStateOf<String>(bannedTagsString ?: "")
+
+    val booruUniqueKey: String
+      get() = apiEndpointState.value
 
     fun toBooruSetting(): BooruSetting {
       return BooruSetting(
