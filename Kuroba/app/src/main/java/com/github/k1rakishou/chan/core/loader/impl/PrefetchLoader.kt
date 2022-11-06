@@ -60,6 +60,7 @@ class PrefetchLoader(
 
     val threadDescriptor = postLoaderData.postDescriptor.threadDescriptor()
     if (archivesManager.get().isSiteArchive(threadDescriptor.siteDescriptor())) {
+      // Disable prefetching for archives because they can ban you for this
       return rejected()
     }
 

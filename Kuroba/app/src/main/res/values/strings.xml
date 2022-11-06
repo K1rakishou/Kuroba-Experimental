@@ -942,6 +942,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_pass_login">Submit</string>
     <string name="setting_pass_logout">Logout</string>
     <string name="setting_pass_error">Connection error</string>
+    <string name="setting_pass_update_reply_mode">Don\'t forget to change the reply mode by long tapping the sent reply button</string>
 
     <string name="setting_posting_limits_info_refresh_success">Passcode info updated</string>
     <string name="setting_posting_limits_info_refresh_failure">Failed to update passcode info</string>

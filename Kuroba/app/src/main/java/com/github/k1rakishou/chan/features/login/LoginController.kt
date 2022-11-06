@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.core.manager.PostingLimitationsInfoManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginRequest
 import com.github.k1rakishou.chan.core.site.http.login.AbstractLoginResponse
 import com.github.k1rakishou.chan.core.site.http.login.Chan4LoginRequest
@@ -43,6 +44,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.waitForLayout
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.OptionsSetting
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -273,6 +276,8 @@ class LoginController(
     crossfadeView.toggle(false, true)
     button.setText(R.string.setting_pass_logout)
     authenticated.text = response.successMessage() ?: ""
+
+    showToast(R.string.setting_pass_update_reply_mode)
   }
   
   private fun authFail(errorMessage: String?) {
@@ -290,6 +295,7 @@ class LoginController(
   
   private fun deauth() {
     site.actions().logout()
+    showToast(R.string.setting_pass_update_reply_mode)
   }
   
   private fun showError(error: String) {
