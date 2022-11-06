@@ -91,7 +91,6 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
-import com.github.k1rakishou.fsaf.callback.FileCreateCallback
 import com.github.k1rakishou.fsaf.callback.directory.DirectoryChooserCallback
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.thread.ThreadDownload
@@ -769,17 +768,13 @@ class LocalArchiveController(
           constraintLayoutBias = globalWindowInsetsManager.lastTouchCoordinatesAsConstraintLayoutBias(),
           items = items,
           itemClickListener = { clickedItem ->
-            when (clickedItem.key as Int) {
-              ACTION_EXPORT_THREADS -> {
-                val threadDescriptor = selectedItems.firstOrNull()
-                if (threadDescriptor != null) {
-                  exportThreadAsHtml(threadDescriptor)
+            mainScope.launch {
+              when (clickedItem.key as Int) {
+                ACTION_EXPORT_THREADS -> {
+                  exportThreadAsHtml(selectedItems)
                 }
-              }
-              ACTION_EXPORT_THREAD_MEDIA -> {
-                val threadDescriptor = selectedItems.firstOrNull()
-                if (threadDescriptor != null) {
-                  exportThreadMedia(threadDescriptor)
+                ACTION_EXPORT_THREAD_MEDIA -> {
+                  exportThreadMedia(selectedItems)
                 }
               }
             }
@@ -791,20 +786,29 @@ class LocalArchiveController(
     }
   }
 
-  private fun exportThreadAsHtml(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val fileName = "${threadDescriptor.siteName()}_${threadDescriptor.boardCode()}_${threadDescriptor.threadNo}.zip"
+  private fun exportThreadAsHtml(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
+    if (threadDescriptors.isEmpty()) {
+      return
+    }
 
-    fileChooser.openCreateFileDialog(fileName, object : FileCreateCallback() {
+    fileChooser.openChooseDirectoryDialog(object : DirectoryChooserCallback() {
       override fun onCancel(reason: String) {
         showToast(R.string.canceled)
       }
 
       override fun onResult(uri: Uri) {
-        val loadingViewController = LoadingViewController(context, true)
+        val loadingViewController = LoadingViewController(context, false)
 
         val job = mainScope.launch(start = CoroutineStart.LAZY) {
           try {
-            viewModel.exportThreadAsHtml(uri, threadDescriptor)
+            viewModel.exportThreadsAsHtml(
+              outputDirUri = uri,
+              threadDescriptors = threadDescriptors,
+              onUpdate = { exported, total ->
+                val text = context.resources.getString(R.string.controller_local_archive_exported_format, exported, total)
+                loadingViewController.updateWithText(text)
+              }
+            )
               .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
               .toastOnSuccess(message = { "Successfully exported" })
               .ignore()
@@ -825,20 +829,25 @@ class LocalArchiveController(
     })
   }
 
-  private fun exportThreadMedia(threadDescriptor: ChanDescriptor.ThreadDescriptor) {
-    val directoryName = "${threadDescriptor.siteName()}_${threadDescriptor.boardCode()}_${threadDescriptor.threadNo}"
-
+  private suspend fun exportThreadMedia(threadDescriptors: List<ChanDescriptor.ThreadDescriptor>) {
     fileChooser.openChooseDirectoryDialog(object : DirectoryChooserCallback() {
       override fun onCancel(reason: String) {
         showToast(R.string.canceled)
       }
 
       override fun onResult(uri: Uri) {
-        val loadingViewController = LoadingViewController(context, true)
+        val loadingViewController = LoadingViewController(context, false)
 
         val job = mainScope.launch(start = CoroutineStart.LAZY) {
           try {
-            viewModel.exportThreadMedia(uri, directoryName, threadDescriptor)
+            viewModel.exportThreadsMedia(
+              outputDirectoryUri = uri,
+              threadDescriptors = threadDescriptors,
+              onUpdate = { exported, total ->
+                val text = context.resources.getString(R.string.controller_local_archive_exported_format, exported, total)
+                loadingViewController.updateWithText(text)
+              }
+            )
               .toastOnError(message = { error -> "Failed to export. Error: ${error.errorMessageOrClassName()}" })
               .toastOnSuccess(message = { "Successfully exported" })
               .ignore()

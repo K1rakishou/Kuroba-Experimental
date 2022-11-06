@@ -9,12 +9,17 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.file.AbstractFile
+import com.github.k1rakishou.fsaf.file.FileSegment
+import com.github.k1rakishou.fsaf.file.Segment
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.post.ChanOriginalPost
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ensureActive
+import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
@@ -34,26 +39,47 @@ class ExportDownloadedThreadAsHtmlUseCase(
 
   override suspend fun execute(parameter: Params): ModularResult<Unit> {
     return ModularResult.Try {
-      val outputFileUri = parameter.outputFileUri
-      val threadDescriptor = parameter.threadDescriptor
+      val outputDirUri = parameter.outputDirUri
+      val threadDescriptors = parameter.threadDescriptors
+      val onUpdate = parameter.onUpdate
 
       withContext(Dispatchers.IO) {
-        try {
-          exportThreadAsHtml(outputFileUri, threadDescriptor)
-        } catch (error: Throwable) {
-          fileManager.fromUri(outputFileUri)?.let { file ->
-            if (fileManager.isFile(file)) {
-              fileManager.delete(file)
+        withContext(Dispatchers.Main) { onUpdate(0, threadDescriptors.size) }
+
+        threadDescriptors.forEachIndexed { index, threadDescriptor ->
+          ensureActive()
+
+          val outputDir = fileManager.fromUri(outputDirUri)
+            ?: throw ThreadExportException("Failed to get output file for directory: \'$outputDirUri\'")
+
+          val fileName = "${threadDescriptor.siteName()}_${threadDescriptor.boardCode()}_${threadDescriptor.threadNo}.zip"
+          val outputFile = fileManager.createFile(outputDir, fileName)
+            ?: throw ThreadExportException("Failed to create output file \'$fileName\' in directory \'${outputDir}\'")
+
+          try {
+            exportThreadAsHtml(outputFile, threadDescriptor)
+          } catch (error: Throwable) {
+            fileManager.fromUri(outputDirUri)?.let { file ->
+              if (fileManager.isFile(file)) {
+                fileManager.delete(file)
+              }
             }
+
+            throw error
           }
 
-          throw error
+          withContext(Dispatchers.Main) { onUpdate(index + 1, threadDescriptors.size) }
         }
+
+        withContext(Dispatchers.Main) { onUpdate(threadDescriptors.size, threadDescriptors.size) }
       }
     }
   }
 
-  private suspend fun exportThreadAsHtml(outputFileUri: Uri, threadDescriptor: ChanDescriptor.ThreadDescriptor) {
+  private suspend fun exportThreadAsHtml(
+    outputFile: AbstractFile,
+    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) {
     val postsLoadResult = chanPostRepository.getThreadPostsFromDatabase(threadDescriptor)
 
     val chanPosts = if (postsLoadResult is ModularResult.Error) {
@@ -71,50 +97,48 @@ class ExportDownloadedThreadAsHtmlUseCase(
       throw ThreadExportException("First post is not OP")
     }
 
+    val outputFileUri = outputFile.getFullPath()
     Logger.d(TAG, "exportThreadAsHtml exporting ${chanPosts.size} posts into file '$outputFileUri'")
-
-    val outputFile = fileManager.fromUri(outputFileUri)
-    if (outputFile == null) {
-      throw ThreadExportException("Failed to open output file '${outputFileUri}'")
-    }
 
     val outputStream = fileManager.getOutputStream(outputFile)
     if (outputStream == null) {
       throw ThreadExportException("Failed to open output stream for file '${outputFileUri}'")
     }
 
-    outputStream.use { os ->
-      ZipOutputStream(os).use { zos ->
-        appContext.resources.openRawResource(R.raw.tomorrow).use { cssFileInputStream ->
-          zos.putNextEntry(ZipEntry("tomorrow.css"))
-          cssFileInputStream.copyTo(zos)
-        }
-
-        kotlin.run {
-          zos.putNextEntry(ZipEntry("thread_data.html"))
-          HTML_TEMPLATE_START.byteInputStream().use { templateStartStream ->
-            templateStartStream.copyTo(zos)
+    runInterruptible {
+      outputStream.use { os ->
+        ZipOutputStream(os).use { zos ->
+          appContext.resources.openRawResource(R.raw.tomorrow).use { cssFileInputStream ->
+            zos.putNextEntry(ZipEntry("tomorrow.css"))
+            cssFileInputStream.copyTo(zos)
           }
 
-          chanPosts.forEach { chanPost ->
-            formatPost(chanPost).byteInputStream().use { formattedPostStream ->
-              formattedPostStream.copyTo(zos)
+          kotlin.run {
+            zos.putNextEntry(ZipEntry("thread_data.html"))
+            HTML_TEMPLATE_START.byteInputStream().use { templateStartStream ->
+              templateStartStream.copyTo(zos)
+            }
+
+            chanPosts.forEach { chanPost ->
+              formatPost(chanPost).byteInputStream().use { formattedPostStream ->
+                formattedPostStream.copyTo(zos)
+              }
+            }
+
+            HTML_TEMPLATE_END.byteInputStream().use { templateEndStream ->
+              templateEndStream.copyTo(zos)
             }
           }
 
-          HTML_TEMPLATE_END.byteInputStream().use { templateEndStream ->
-            templateEndStream.copyTo(zos)
-          }
-        }
+          val threadMediaDirName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
+          val threadMediaDir = File(appConstants.threadDownloaderCacheDir, threadMediaDirName)
 
-        val threadMediaDirName = ThreadDownloadingDelegate.formatDirectoryName(threadDescriptor)
-        val threadMediaDir = File(appConstants.threadDownloaderCacheDir, threadMediaDirName)
+          threadMediaDir.listFiles()?.forEach { mediaFile ->
+            zos.putNextEntry(ZipEntry(mediaFile.name))
 
-        threadMediaDir.listFiles()?.forEach { mediaFile ->
-          zos.putNextEntry(ZipEntry(mediaFile.name))
-
-          mediaFile.inputStream().use { mediaFileSteam ->
-            mediaFileSteam.copyTo(zos)
+            mediaFile.inputStream().use { mediaFileSteam ->
+              mediaFileSteam.copyTo(zos)
+            }
           }
         }
       }
@@ -239,8 +263,9 @@ class ExportDownloadedThreadAsHtmlUseCase(
   class ThreadExportException(message: String) : Exception(message)
 
   data class Params(
-    val outputFileUri: Uri,
-    val threadDescriptor: ChanDescriptor.ThreadDescriptor
+    val outputDirUri: Uri,
+    val threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    val onUpdate: (Int, Int) -> Unit
   )
 
   companion object {

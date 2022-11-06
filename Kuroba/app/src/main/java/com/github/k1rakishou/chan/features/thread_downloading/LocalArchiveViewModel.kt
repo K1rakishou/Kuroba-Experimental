@@ -283,22 +283,20 @@ class LocalArchiveViewModel : BaseViewModel() {
       )
     }
 
-    if (currentlySelectedItems.size == 1) {
-      itemsList += BottomMenuPanelItem(
-        ArchiveMenuItemId(MenuItemType.Export),
-        R.drawable.ic_baseline_share_24,
-        R.string.bottom_menu_item_export,
-        {
-          val clickEvent = MenuItemClickEvent(
-            menuItemType = MenuItemType.Export,
-            items = viewModelSelectionHelper.getCurrentlySelectedItems()
-          )
+    itemsList += BottomMenuPanelItem(
+      ArchiveMenuItemId(MenuItemType.Export),
+      R.drawable.ic_baseline_share_24,
+      R.string.bottom_menu_item_export,
+      {
+        val clickEvent = MenuItemClickEvent(
+          menuItemType = MenuItemType.Export,
+          items = viewModelSelectionHelper.getCurrentlySelectedItems()
+        )
 
-          viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
-          viewModelSelectionHelper.unselectAll()
-        }
-      )
-    }
+        viewModelSelectionHelper.emitBottomPanelMenuItemClickEvent(clickEvent)
+        viewModelSelectionHelper.unselectAll()
+      }
+    )
 
     return itemsList
   }
@@ -482,23 +480,24 @@ class LocalArchiveViewModel : BaseViewModel() {
     }
   }
 
-  suspend fun exportThreadAsHtml(
-    outputFileUri: Uri,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
+  suspend fun exportThreadsAsHtml(
+    outputDirUri: Uri,
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    onUpdate: (Int, Int) -> Unit
   ): ModularResult<Unit> {
-    val params = ExportDownloadedThreadAsHtmlUseCase.Params(outputFileUri, threadDescriptor)
+    val params = ExportDownloadedThreadAsHtmlUseCase.Params(outputDirUri, threadDescriptors, onUpdate)
     return exportDownloadedThreadAsHtmlUseCase.execute(params)
-      .peekError { error -> Logger.e(TAG, "exportDownloadedThreadAsHtmlUseCase() error", error) }
+      .peekError { error -> Logger.e(TAG, "exportThreadsAsHtml() error", error) }
   }
 
-  suspend fun exportThreadMedia(
+  suspend fun exportThreadsMedia(
     outputDirectoryUri: Uri,
-    directoryName: String,
-    threadDescriptor: ChanDescriptor.ThreadDescriptor
+    threadDescriptors: List<ChanDescriptor.ThreadDescriptor>,
+    onUpdate: (Int, Int) -> Unit
   ): ModularResult<Unit> {
-    val params = ExportDownloadedThreadMediaUseCase.Params(outputDirectoryUri, directoryName, threadDescriptor)
+    val params = ExportDownloadedThreadMediaUseCase.Params(outputDirectoryUri, threadDescriptors, onUpdate)
     return exportDownloadedThreadMediaUseCase.execute(params)
-      .peekError { error -> Logger.e(TAG, "exportDownloadedThreadMediaUseCase() error", error) }
+      .peekError { error -> Logger.e(TAG, "exportThreadsMedia() error", error) }
   }
 
   enum class ViewMode {
