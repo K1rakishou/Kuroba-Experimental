@@ -428,7 +428,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="epoxy_proxy_view_supported_site">Supported sites: %1$s</string>
     <string name="epoxy_proxy_view_supported_actions">Supported actions: %1$s</string>
 
-    <string name="controller_bookmarks_sorting_by_creation_time">Sort by creation time</string>
+    <string name="controller_bookmarks_sorting_by_bookmark_creation_time">Sort by bookmark creation time</string>
+    <string name="controller_bookmarks_sorting_by_thread_id">Sort by thread id</string>
     <string name="controller_bookmarks_sorting_by_unread_replies">Sort by unread replies</string>
     <string name="controller_bookmarks_sorting_by_unread_posts">Sort by unread posts</string>
     <string name="controller_bookmarks_sorting_custom">Custom sort order</string>

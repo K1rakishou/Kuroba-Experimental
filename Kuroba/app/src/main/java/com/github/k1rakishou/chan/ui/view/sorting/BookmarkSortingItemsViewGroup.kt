@@ -77,11 +77,18 @@ class BookmarkSortingItemsViewGroup @JvmOverloads constructor(
     val sortDirectionDesc = requireNotNull(sortingItemView.sortDirectionDesc) { "sortDirectionDesc is null" }
 
     return when (sortingItemView.tag) {
-      BookmarkSortingItemView.CREATION_TIME_SORT_ITEM_VIEW_TAG -> {
+      BookmarkSortingItemView.BOOKMARK_CREATION_TIME_SORT_ITEM_VIEW_TAG -> {
         if (sortDirectionDesc) {
           ChanSettings.BookmarksSortOrder.CreatedOnDescending
         } else {
           ChanSettings.BookmarksSortOrder.CreatedOnAscending
+        }
+      }
+      BookmarkSortingItemView.THREAD_ID_SORT_ITEM_VIEW_TAG -> {
+        if (sortDirectionDesc) {
+          ChanSettings.BookmarksSortOrder.ThreadIdDescending
+        } else {
+          ChanSettings.BookmarksSortOrder.ThreadIdAscending
         }
       }
       BookmarkSortingItemView.UNREAD_REPLIES_SORT_ITEM_VIEW_TAG -> {

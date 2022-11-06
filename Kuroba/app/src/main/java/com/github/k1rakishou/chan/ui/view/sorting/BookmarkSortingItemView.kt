@@ -142,20 +142,22 @@ class BookmarkSortingItemView @JvmOverloads constructor(
 
   private fun indexToTag(index: Int): String {
     return when (index) {
-      0 -> CREATION_TIME_SORT_ITEM_VIEW_TAG
-      1 -> UNREAD_REPLIES_SORT_ITEM_VIEW_TAG
-      2 -> UNREAD_POSTS_SORT_ITEM_VIEW_TAG
-      3 -> CUSTOM_SORT_ITEM_VIEW_TAG
+      0 -> BOOKMARK_CREATION_TIME_SORT_ITEM_VIEW_TAG
+      1 -> THREAD_ID_SORT_ITEM_VIEW_TAG
+      2 -> UNREAD_REPLIES_SORT_ITEM_VIEW_TAG
+      3 -> UNREAD_POSTS_SORT_ITEM_VIEW_TAG
+      4 -> CUSTOM_SORT_ITEM_VIEW_TAG
       else -> throw IllegalAccessException("Unknown index: $index")
     }
   }
 
   private fun indexToTextResId(index: Int): Int {
     return when (index) {
-      0 -> R.string.controller_bookmarks_sorting_by_creation_time
-      1 -> R.string.controller_bookmarks_sorting_by_unread_replies
-      2 -> R.string.controller_bookmarks_sorting_by_unread_posts
-      3 -> R.string.controller_bookmarks_sorting_custom
+      0 -> R.string.controller_bookmarks_sorting_by_bookmark_creation_time
+      1 -> R.string.controller_bookmarks_sorting_by_thread_id
+      2 -> R.string.controller_bookmarks_sorting_by_unread_replies
+      3 -> R.string.controller_bookmarks_sorting_by_unread_posts
+      4 -> R.string.controller_bookmarks_sorting_custom
       else -> throw IllegalAccessException("Unknown index: $index")
     }
   }
@@ -164,17 +166,20 @@ class BookmarkSortingItemView @JvmOverloads constructor(
     return when (bookmarksSortOrder) {
       ChanSettings.BookmarksSortOrder.CreatedOnAscending,
       ChanSettings.BookmarksSortOrder.CreatedOnDescending -> 0
+      ChanSettings.BookmarksSortOrder.ThreadIdAscending,
+      ChanSettings.BookmarksSortOrder.ThreadIdDescending -> 1
       ChanSettings.BookmarksSortOrder.UnreadRepliesAscending,
-      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> 1
+      ChanSettings.BookmarksSortOrder.UnreadRepliesDescending -> 2
       ChanSettings.BookmarksSortOrder.UnreadPostsAscending,
-      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> 2
+      ChanSettings.BookmarksSortOrder.UnreadPostsDescending -> 3
       ChanSettings.BookmarksSortOrder.CustomAscending,
-      ChanSettings.BookmarksSortOrder.CustomDescending -> 3
+      ChanSettings.BookmarksSortOrder.CustomDescending -> 4
     }
   }
 
   companion object {
-    const val CREATION_TIME_SORT_ITEM_VIEW_TAG = "sort_by_creation_time"
+    const val BOOKMARK_CREATION_TIME_SORT_ITEM_VIEW_TAG = "sort_by_bookmark_creation_time"
+    const val THREAD_ID_SORT_ITEM_VIEW_TAG = "sort_by_thread_id"
     const val UNREAD_REPLIES_SORT_ITEM_VIEW_TAG = "sort_by_unread_replies"
     const val UNREAD_POSTS_SORT_ITEM_VIEW_TAG = "sort_by_unread_posts"
     const val CUSTOM_SORT_ITEM_VIEW_TAG = "sort_custom"

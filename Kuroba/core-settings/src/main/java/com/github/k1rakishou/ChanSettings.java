@@ -130,6 +130,8 @@ public class ChanSettings {
     public enum BookmarksSortOrder implements OptionSettingItem {
         CreatedOnAscending("creation_time_asc", true),
         CreatedOnDescending("creation_time_desc", false),
+        ThreadIdAscending("thread_id_asc", true),
+        ThreadIdDescending("thread_id_desc", false),
         UnreadRepliesAscending("replies_ascending", true),
         UnreadRepliesDescending("replies_descending", false),
         UnreadPostsAscending("unread_posts_ascending", true),
