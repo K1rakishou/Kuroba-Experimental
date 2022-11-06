@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.loader.impl.external_media_service.Extern
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.SoundCloudMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.StreamableMediaServiceExtraInfoFetcher;
 import com.github.k1rakishou.chan.core.loader.impl.external_media_service.YoutubeMediaServiceExtraInfoFetcher;
+import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
@@ -44,6 +45,7 @@ public class LoaderModule {
             Lazy<CacheHandler> cacheHandler,
             PrefetchStateManager prefetchStateManager,
             Lazy<ChanThreadManager> chanThreadManager,
+            Lazy<ArchivesManager> archivesManager,
             Lazy<ThreadDownloadManager> threadDownloadManager
     ) {
         Logger.deps("PrefetchLoader");
@@ -52,6 +54,7 @@ public class LoaderModule {
                 fileCacheV2,
                 cacheHandler,
                 chanThreadManager,
+                archivesManager,
                 prefetchStateManager,
                 threadDownloadManager
         );

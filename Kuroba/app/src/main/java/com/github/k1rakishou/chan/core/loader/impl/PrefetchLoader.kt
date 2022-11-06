@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
+import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
 import com.github.k1rakishou.chan.core.manager.PrefetchStateManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
@@ -27,6 +28,7 @@ class PrefetchLoader(
   private val fileCacheV2: Lazy<FileCacheV2>,
   private val cacheHandler: Lazy<CacheHandler>,
   private val chanThreadManager: Lazy<ChanThreadManager>,
+  private val archivesManager: Lazy<ArchivesManager>,
   private val prefetchStateManager: PrefetchStateManager,
   private val threadDownloadManager: Lazy<ThreadDownloadManager>
 ) : OnDemandContentLoader(LoaderType.PrefetchLoader) {
@@ -57,8 +59,11 @@ class PrefetchLoader(
     BackgroundUtils.ensureBackgroundThread()
 
     val threadDescriptor = postLoaderData.postDescriptor.threadDescriptor()
-    val downloadStatus = threadDownloadManager.get().getStatus(threadDescriptor)
+    if (archivesManager.get().isSiteArchive(threadDescriptor.siteDescriptor())) {
+      return rejected()
+    }
 
+    val downloadStatus = threadDownloadManager.get().getStatus(threadDescriptor)
     if (downloadStatus != null && downloadStatus != ThreadDownload.Status.Stopped) {
       // If downloading a thread then don't use the media prefetch
       return rejected()
