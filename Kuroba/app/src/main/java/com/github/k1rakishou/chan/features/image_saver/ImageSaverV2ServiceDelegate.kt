@@ -13,6 +13,7 @@ import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -672,50 +673,63 @@ class ImageSaverV2ServiceDelegate(
     val resultFileUri = Uri.parse(resultFile.getFullPath())
     val resultDirUri = Uri.parse(resultDir.getFullPath())
 
-    if (fileManager.exists(resultFile)) {
-      var duplicatesResolution =
-        ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
+    if (!fileManager.exists(resultFile)) {
+      return ResultFile.File(
+        resultDirUri,
+        resultFileUri,
+        resultFile
+      )
+    }
 
-      // If the setting is set to DuplicatesResolution.AskWhatToDo then check the duplicatesResolution
-      // of imageDownloadRequest
-      if (duplicatesResolution == ImageSaverV2Options.DuplicatesResolution.AskWhatToDo) {
-        duplicatesResolution = imageDownloadRequest.duplicatesResolution
+    var duplicatesResolution =
+      ImageSaverV2Options.DuplicatesResolution.fromRawValue(imageSaverV2Options.duplicatesResolution)
+
+    // If the setting is set to DuplicatesResolution.AskWhatToDo then check the duplicatesResolution
+    // of imageDownloadRequest
+    if (duplicatesResolution == ImageSaverV2Options.DuplicatesResolution.AskWhatToDo) {
+      duplicatesResolution = imageDownloadRequest.duplicatesResolution
+    }
+
+    // Do not process images with the same name, size and hash as the local ones
+    val areImagesExactlyTheSame = areImagesExactlyTheSame(chanPostImage, resultFile)
+    if (areImagesExactlyTheSame) {
+      val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
+      return ResultFile.Skip(resultDirUri, resultFileUri, fileIsNotEmpty)
+    }
+
+    when (duplicatesResolution) {
+      ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
+        return ResultFile.DuplicateFound(resultFileUri)
       }
+      ImageSaverV2Options.DuplicatesResolution.Skip -> {
+        val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
+        return ResultFile.Skip(resultDirUri, resultFileUri, fileIsNotEmpty)
+      }
+      ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate -> {
+        var duplicateId = 1
 
-      when (duplicatesResolution) {
-        ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
-          return ResultFile.DuplicateFound(resultFileUri)
-        }
-        ImageSaverV2Options.DuplicatesResolution.Skip -> {
-          val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
-          return ResultFile.Skipped(resultDirUri, resultFileUri, fileIsNotEmpty)
-        }
-        ImageSaverV2Options.DuplicatesResolution.SaveAsDuplicate -> {
-          var duplicateId = 1
+        while (true) {
+          val fileNameNoExtension = StringUtils.removeExtensionFromFileName(fileName)
+          val extension = StringUtils.extractFileNameExtension(fileName)
+          val newResultFile = resultDir.clone(FileSegment("${fileNameNoExtension}_($duplicateId).$extension"))
 
-          while (true) {
-            val fileNameNoExtension = StringUtils.removeExtensionFromFileName(fileName)
-            val extension = StringUtils.extractFileNameExtension(fileName)
-            val newResultFile = resultDir.clone(FileSegment("${fileNameNoExtension}_($duplicateId).$extension"))
-
-            if (!fileManager.exists(newResultFile)) {
-              return ResultFile.File(
-                resultDirUri,
-                Uri.parse(newResultFile.getFullPath()),
-                newResultFile
-              )
-            }
-
-            ++duplicateId
-          }
-        }
-        ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
-          if (!fileManager.delete(resultFile)) {
-            return ResultFile.FailedToOpenResultDir(resultFile.getFullPath())
+          if (!fileManager.exists(newResultFile)) {
+            return ResultFile.File(
+              resultDirUri,
+              Uri.parse(newResultFile.getFullPath()),
+              newResultFile
+            )
           }
 
-          // Fallthrough, continue downloading the file
+          ++duplicateId
         }
+      }
+      ImageSaverV2Options.DuplicatesResolution.Overwrite -> {
+        if (!fileManager.delete(resultFile)) {
+          return ResultFile.FailedToOpenResultDir(resultFile.getFullPath())
+        }
+
+        // Fallthrough, continue downloading the file
       }
     }
 
@@ -724,6 +738,24 @@ class ImageSaverV2ServiceDelegate(
       resultFileUri,
       resultFile
     )
+  }
+
+  private fun areImagesExactlyTheSame(
+    chanPostImage: ChanPostImage,
+    resultFile: AbstractFile
+  ): Boolean {
+    if (chanPostImage.size != fileManager.getLength(resultFile)) {
+      return false
+    }
+
+    if (chanPostImage.fileHash.isNullOrEmpty()) {
+      return false
+    }
+
+    val localFileMd5 = fileManager.getInputStream(resultFile)
+      ?.let { inputStream -> HashingUtil.inputStreamMd5(inputStream) }
+
+    return chanPostImage.fileHash.equals(localFileMd5, ignoreCase = true)
   }
 
   sealed class ResultFile {
@@ -737,7 +769,7 @@ class ImageSaverV2ServiceDelegate(
 
     data class FailedToOpenResultDir(val dirPath: String) : ResultFile()
 
-    data class Skipped(
+    data class Skip(
       val outputDirUri: Uri,
       val outputFileUri: Uri,
       val fileIsNotEmpty: Boolean
@@ -823,7 +855,7 @@ class ImageSaverV2ServiceDelegate(
             imageDownloadRequest
           )
         }
-        is ResultFile.Skipped -> {
+        is ResultFile.Skip -> {
           if (outputFileResult.fileIsNotEmpty) {
             return@Try DownloadImageResult.Success(
               outputFileResult.outputDirUri,

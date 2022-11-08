@@ -1610,3 +1610,5 @@ fun HttpUrl.domain(): String? {
 
   return host.substring(indexOfDomainSeparator + 1, host.length)
 }
+
+fun unreachable(message: String? = null): Nothing = error(message ?: "Unreachable!")

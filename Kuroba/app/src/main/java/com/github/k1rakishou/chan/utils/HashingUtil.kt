@@ -21,7 +21,7 @@ object HashingUtil {
       return null
     }
 
-    return inputStreamHash(inputFile.inputStream())
+    return inputStreamMd5(inputFile.inputStream())
   }
 
   fun fileBase64(inputFile: File, flags: Int = Base64.DEFAULT): String? {
@@ -52,7 +52,7 @@ object HashingUtil {
     }
   }
 
-  fun inputStreamHash(inputStream: InputStream): String {
+  fun inputStreamMd5(inputStream: InputStream): String {
     return HashingSource.md5(inputStream.source()).use { hashingSource ->
       return@use hashingSource.buffer().use { source ->
         source.readAll(blackholeSink())
