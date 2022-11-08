@@ -92,6 +92,8 @@ class CrashReportActivity : AppCompatActivity() {
     val className = bundle.getString(EXCEPTION_CLASS_NAME_KEY)
     val message = bundle.getString(EXCEPTION_MESSAGE_KEY)
     val stacktrace = bundle.getString(EXCEPTION_STACKTRACE_KEY)
+    val userAgent = bundle.getString(USER_AGENT_KEY) ?: "No user-agent"
+    val appLifetime = bundle.getString(APP_LIFE_TIME_KEY) ?: "-1"
 
     if (className == null || message == null || stacktrace == null) {
       Logger.e(TAG,
@@ -135,7 +137,9 @@ class CrashReportActivity : AppCompatActivity() {
           Content(
             className = className,
             message = message,
-            stacktrace = stacktrace
+            stacktrace = stacktrace,
+            userAgent = userAgent,
+            appLifetime = appLifetime
           )
         }
       }
@@ -154,7 +158,9 @@ class CrashReportActivity : AppCompatActivity() {
   private fun Content(
     className: String,
     message: String,
-    stacktrace: String
+    stacktrace: String,
+    userAgent: String,
+    appLifetime: String
   ) {
     val chanTheme = LocalChanTheme.current
     val insets by globalWindowInsetsManager.currentInsetsCompose
@@ -265,7 +271,13 @@ class CrashReportActivity : AppCompatActivity() {
         Spacer(modifier = Modifier.height(4.dp))
 
         Collapsable(title = stringResource(id = R.string.crash_report_activity_additional_info_section)) {
-          val footer = remember { reportManager.getReportFooter(this@CrashReportActivity) }
+          val footer = remember {
+            reportManager.getReportFooter(
+              context = this@CrashReportActivity,
+              appRunningTime = appLifetime,
+              userAgent = userAgent
+            )
+          }
 
           SelectionContainer {
             KurobaComposeText(
@@ -300,7 +312,12 @@ class CrashReportActivity : AppCompatActivity() {
                   logs
                 }
 
-                val reportFooter = reportManager.getReportFooter(this@CrashReportActivity)
+                val reportFooter = reportManager.getReportFooter(
+                  context = this@CrashReportActivity,
+                  appRunningTime = appLifetime,
+                  userAgent = userAgent
+                )
+
                 val title = "${className} ${message}"
 
                 val body = buildString(4096) {
@@ -387,7 +404,7 @@ class CrashReportActivity : AppCompatActivity() {
         modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight()
-          .kurobaClickable(onClick = { collapsed = !collapsed }),
+          .kurobaClickable(bounded = true, onClick = { collapsed = !collapsed }),
         verticalAlignment = Alignment.CenterVertically
       ) {
         KurobaComposeIcon(
@@ -424,6 +441,8 @@ class CrashReportActivity : AppCompatActivity() {
     const val EXCEPTION_CLASS_NAME_KEY = "exception_class_name"
     const val EXCEPTION_MESSAGE_KEY = "exception_message"
     const val EXCEPTION_STACKTRACE_KEY = "exception_stacktrace"
+    const val USER_AGENT_KEY = "user_agent"
+    const val APP_LIFE_TIME_KEY = "app_life_time"
   }
 
 }

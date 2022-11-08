@@ -90,6 +90,8 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
 import okhttp3.dnsoverhttps.DnsOverHttps
+import org.joda.time.Duration
+import org.joda.time.format.PeriodFormatterBuilder
 import java.io.IOException
 import java.net.InetAddress
 import java.util.*
@@ -121,6 +123,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var applicationVisibilityManager: Lazy<ApplicationVisibilityManager>
   @Inject
   lateinit var reportManager: ReportManager
+  @Inject
+  lateinit var appConstants: Lazy<AppConstants>
 
   private val normalDnsCreatorFactory: NormalDnsSelectorFactory = object : NormalDnsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
@@ -400,6 +404,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
         putString(CrashReportActivity.EXCEPTION_CLASS_NAME_KEY, exception::class.java.name)
         putString(CrashReportActivity.EXCEPTION_MESSAGE_KEY, message)
         putString(CrashReportActivity.EXCEPTION_STACKTRACE_KEY, stacktrace)
+        putString(CrashReportActivity.USER_AGENT_KEY, appConstants.get().userAgent)
+        putString(CrashReportActivity.APP_LIFE_TIME_KEY, formatAppRunningTime())
       }
 
     val intent = Intent(this, CrashReportActivity::class.java)
@@ -551,6 +557,15 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     return ImageLoaderFileManagerWrapper(fileManager)
   }
 
+  fun formatAppRunningTime(): String {
+    val time = appRunningTime
+    if (time <= 0) {
+      return "Unknown (appContext=${this::class.java.simpleName}), time ms: $time"
+    }
+
+    return appRunningTimeFormatter.print(Duration.millis(time).toPeriod())
+  }
+
   override fun onActivityCreated(activity: Activity, savedInstanceState: Bundle?) {}
   override fun onActivityStarted(activity: Activity) {
     activityEnteredForeground()
@@ -570,6 +585,18 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   companion object {
     private const val TAG = "Chan"
     private const val ENABLE_STRICT_MODE = false
+
+    private val appRunningTimeFormatter = PeriodFormatterBuilder()
+      .printZeroAlways()
+      .minimumPrintedDigits(2)
+      .appendHours()
+      .appendSuffix(":")
+      .appendMinutes()
+      .appendSuffix(":")
+      .appendSeconds()
+      .appendSuffix(".")
+      .appendMillis3Digit()
+      .toFormatter()
 
     private lateinit var applicationComponent: ApplicationComponent
 
