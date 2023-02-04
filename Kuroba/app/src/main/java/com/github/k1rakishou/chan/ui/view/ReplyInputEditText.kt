@@ -152,17 +152,6 @@ class ReplyInputEditText @JvmOverloads constructor(
     }
   }
 
-  override fun postDelayed(action: Runnable, delayMillis: Long): Boolean {
-//      java.lang.IndexOutOfBoundsException: setSpan (109 ... 480) ends beyond length 109
-//        at android.text.SpannableStringBuilder.checkRange(SpannableStringBuilder.java:1326)
-//        at android.text.SpannableStringBuilder.setSpan(SpannableStringBuilder.java:685)
-//        at android.text.SpannableStringBuilder.setSpan(SpannableStringBuilder.java:677)
-//        at androidx.emoji2.text.SpannableBuilder.setSpan(SpannableBuilder.java:4)
-//        at android.widget.Editor$SuggestionsPopupWindow.updateSuggestions(Editor.java:4173)
-//        at android.widget.Editor$SuggestionsPopupWindow.show(Editor.java:4039)
-    return super.postDelayed(SafeRunnableWrapper(action), delayMillis)
-  }
-
   override fun performClick(): Boolean {
     try {
       return super.performClick()
@@ -414,34 +403,6 @@ class ReplyInputEditText @JvmOverloads constructor(
         return false
       }
     }
-  }
-
-  private class SafeRunnableWrapper(
-    private val runnable: Runnable
-  ) : Runnable {
-
-    override fun run() {
-      try {
-        runnable.run()
-      } catch (error: Throwable) {
-        Logger.e(TAG, "runnable.run() crashed with error ${error.errorMessageOrClassName()}")
-      }
-    }
-
-    override fun equals(other: Any?): Boolean {
-      if (other is SafeRunnableWrapper) {
-        return other.runnable === runnable
-      } else if (other is Runnable) {
-        return other === runnable
-      }
-
-      return false
-    }
-
-    override fun hashCode(): Int {
-      return runnable.hashCode()
-    }
-
   }
 
   interface SelectionChangedListener {
