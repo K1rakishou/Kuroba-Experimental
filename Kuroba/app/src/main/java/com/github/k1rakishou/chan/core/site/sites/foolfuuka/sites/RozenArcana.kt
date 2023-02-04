@@ -33,7 +33,7 @@ class RozenArcana : BaseFoolFuukaSite() {
 
   companion object {
     val FAVICON_URL: HttpUrl = "https://www.tokyochronos.net/upload/gy9g2krc.png".toHttpUrl()
-    val ROOT: String = "https://archive.alice.al/"
+    val ROOT: String = "https://archive.palanq.win/"
     val ROOT_URL: HttpUrl = ROOT.toHttpUrl()
     val SITE_NAME: String = ArchiveType.RozenArcana.domain
     val MEDIA_HOSTS: Array<HttpUrl> = arrayOf(ROOT_URL)
