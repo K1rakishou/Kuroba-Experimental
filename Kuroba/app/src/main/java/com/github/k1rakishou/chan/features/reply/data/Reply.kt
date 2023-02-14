@@ -232,10 +232,12 @@ class Reply(
         .append('\n')
     }
 
-    stringBuilder
-      .append(">>")
-      .append(postNo)
-      .append("\n")
+    if (!comment.contains(">>${postNo}")) {
+      stringBuilder
+        .append(">>")
+        .append(postNo)
+        .append("\n")
+    }
 
     if (textQuote.isNotNullNorEmpty()) {
       val lines = textQuote.split("\n").toTypedArray()
