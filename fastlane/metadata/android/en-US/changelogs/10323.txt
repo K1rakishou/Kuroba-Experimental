@@ -1,0 +1,35 @@
+v1.3.23
+TLDR version:
+- Media viewer updates.
+- mpv updated to the latest available version.
+- Apk/report server deprecation.
+- Third eye support.
+- 4chan captcha solver.
+
+Full version:
+- Add a new setting to override the default User-Agent. If you experience problems with bypassing CloudFlare then this setting should help you. It seems like any random string will work, for example "KurobaEx/v1.2.3.4", but you might have to experiment with it.
+- Update Google reverse image search. (Thanks to @EsEnZeT).
+- Revert back the fix that should have consumed weird keyboard crashes. Some people said that it caused weird edit text behavior where it would longtap instead of doing tap to scroll.
+- Update domain for RozenArcana archive.
+- Add ability to use mpv.conf and edit it in the app. (Plugins - Edit mpv.conf).
+- Do not append the same quote multiple times.
+
+v1.3.22
+- Add icons support for Dvach (Thanks to @rgba0)
+- Add global search to archiveofsins (Thanks to @WINT-3R)
+- Consume a bunch of unfixable crashes in ReplyInputEditText. Possible fix for text sometimes being longtapped when it's actually tapped (override equals/hashcode of SafeRunnableWrapper and compare the inner Runnable).
+- Fix crash when clicking links and current input text is not an instance of Spannable.
+- Some adjustments for awaitUntilGloballyLaidOutAndGetSize to fix a crash where it returns Size(0, 0).
+- Fix crash when importing multiple files from incoming share request.
+- Use the incoming posts to add scrollbar marks instead of using posts from the cache because the incoming posts are already sorted so this fixes the issue where scrollbar marks do not account for the current catalog sort order.
+- Force PostCell.fileName textView to always be on the left side even if it contains RTL text.
+- Store CloudFlare cookie separate for each site domain. This should fix CloudFlare being overwritten when switching between site domains. For example when posting on 4chan.org and then posting on 4channel.org previously stored cookie (for 4chan.org) would be overwritten with the new one (4channel.org) so the next time you post on 4chan.org you would have to pass the CloudFlare checks again. Also fix not being able to play video through ExoPlayer on 2ch.hk. For some reason it returns 403 status when WebView's user agent is used for the request. Works fine with a custom user agent, though. Very weird.
+- Handle WebView crashes during controller_firewall_bypass.xml inflation.
+- Open external thread links via the browser when browsing archives.
+- Add ability to sort bookmarked threads by thread id (basically by thread creation order or thread creation time since both values are ever increasing).
+- Fix crashes when adding more than 1 booru with the same endpoint api. Do not allow adding duplicate boorus.
+- Disable media prefetcher for archives (they seem to ban people for using prefetcher).
+- Show helpful toast when logging in/out of passcode.
+- Add ability to export multiple downloaded threads/thread media at once.
+- Upon crash, format app life time and user agent in the main process instead of the new process.
+- When download media, if a file with the same name already exists, then check it's size and the md5 checksum before asking the user for duplicate resolution or whatever.
