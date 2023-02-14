@@ -14,6 +14,7 @@ open class AppConstants(
   private val flavorType: AndroidUtils.FlavorType,
   private val isLowRamDevice: Boolean,
   val kurobaExCustomUserAgent: String,
+  val overrideUserAgent: () -> String,
   maxPostsInDatabaseSettingValue: Int,
   maxThreadsInDatabaseSettingValue: Int
 ) {
@@ -28,13 +29,22 @@ open class AppConstants(
   val threadDownloadWorkUniqueTag = "ThreadDownloadController_${flavorType.name}"
 
   val userAgent by lazy {
+    val overriddenUserAgent = overrideUserAgent()
+    if (overriddenUserAgent.isNotBlank()) {
+      Logger.d(TAG, "userAgent() Using overridden user agent: \'${overriddenUserAgent}\'")
+      return@lazy overriddenUserAgent
+    }
+
     try {
-      WebSettings.getDefaultUserAgent(context)
+      val webViewUserAgent = WebSettings.getDefaultUserAgent(context)
+      Logger.d(TAG, "userAgent() Using default WebView user agent: \'${webViewUserAgent}\'")
+
+      return@lazy webViewUserAgent
     } catch (error: Throwable) {
       // Who knows what may happen if the user deletes webview from the system so just in case
       // switch to a default user agent in case of a crash
-      Logger.e(TAG, "WebSettings.getDefaultUserAgent() error", error)
-      String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
+      Logger.e(TAG, "userAgent() WebSettings.getDefaultUserAgent() error", error)
+      return@lazy String.format(USER_AGENT_FORMAT, Build.VERSION.RELEASE, Build.MODEL)
     }
   }
 

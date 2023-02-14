@@ -2,7 +2,9 @@ package com.github.k1rakishou.chan.features.bypass
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
+import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
@@ -157,12 +159,12 @@ class SiteFirewallBypassController(
 
     val webSettings: WebSettings = webView.settings
     webSettings.javaScriptEnabled = true
-    webSettings.useWideViewPort = true
-    webSettings.loadWithOverviewMode = true
-    webSettings.userAgentString = appConstants.userAgent
-    webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
     webSettings.domStorageEnabled = true
     webSettings.databaseEnabled = true
+    webSettings.useWideViewPort = true
+    webSettings.loadWithOverviewMode = true
+    webSettings.cacheMode = WebSettings.LOAD_DEFAULT
+    webSettings.userAgentString = appConstants.userAgent
 
     webView.webViewClient = webClient
     webView.loadUrl(urlToOpen)

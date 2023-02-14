@@ -389,6 +389,7 @@ public class ChanSettings {
     public static BooleanSetting highResCells;
     public static BooleanSetting useMpvVideoPlayer;
     public static BooleanSetting colorizeTextSelectionCursors;
+    public static StringSetting customUserAgent;
     //endregion
 
     //region OTHER
@@ -633,6 +634,7 @@ public class ChanSettings {
             highResCells = new BooleanSetting(provider, "high_res_cells", false);
             useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
             colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
+            customUserAgent = new StringSetting(provider, "custom_user_agent", "");
             //endregion
 
             //region OTHER

@@ -3,9 +3,11 @@ package com.github.k1rakishou.chan.features.settings.screens
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
 
 class ExperimentalSettingsScreen(
   context: Context,
@@ -97,6 +99,16 @@ class ExperimentalSettingsScreen(
           topDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor },
           bottomDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor_description },
           setting = ChanSettings.colorizeTextSelectionCursors,
+          requiresRestart = true
+        )
+
+        group += InputSettingV2.createBuilder<String>(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.CustomUserAgent,
+          inputType = DialogFactory.DialogInputType.String,
+          topDescriptionIdFunc = { R.string.setting_custom_user_agent },
+          bottomDescriptionIdFunc = { R.string.setting_custom_user_agent_description },
+          setting = ChanSettings.customUserAgent,
           requiresRestart = true
         )
 
