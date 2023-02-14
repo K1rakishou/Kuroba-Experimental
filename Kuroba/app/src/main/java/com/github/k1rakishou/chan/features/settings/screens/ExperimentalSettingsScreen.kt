@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 class ExperimentalSettingsScreen(
   context: Context,
@@ -107,7 +108,22 @@ class ExperimentalSettingsScreen(
           identifier = ExperimentalScreen.MainSettingsGroup.CustomUserAgent,
           inputType = DialogFactory.DialogInputType.String,
           topDescriptionIdFunc = { R.string.setting_custom_user_agent },
-          bottomDescriptionIdFunc = { R.string.setting_custom_user_agent_description },
+          bottomDescriptionStringFunc = {
+            val current = ChanSettings.customUserAgent.get()
+
+            buildString {
+              if (current.isNotEmpty()) {
+                append('\'')
+                append(current)
+                append('\'')
+
+                appendLine()
+                appendLine()
+              }
+
+              append(getString(R.string.setting_custom_user_agent_description))
+            }
+          },
           setting = ChanSettings.customUserAgent,
           requiresRestart = true
         )
