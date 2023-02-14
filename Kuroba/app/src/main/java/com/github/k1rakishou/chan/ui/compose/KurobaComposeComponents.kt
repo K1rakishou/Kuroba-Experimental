@@ -98,6 +98,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
@@ -333,7 +334,45 @@ fun KurobaComposeTextField(
   }
 }
 
-@OptIn(ExperimentalAnimationApi::class)
+@Composable
+fun KurobaComposeTextField(
+  value: TextFieldValue,
+  modifier: Modifier = Modifier,
+  onValueChange: (TextFieldValue) -> Unit,
+  maxLines: Int = Int.MAX_VALUE,
+  singleLine: Boolean = false,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = KeyboardActions(),
+  textStyle: TextStyle = LocalTextStyle.current,
+  enabled: Boolean = true,
+  label: @Composable (() -> Unit)? = null
+) {
+  val chanTheme = LocalChanTheme.current
+
+  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
+    TextSelectionColors(
+      handleColor = chanTheme.accentColorCompose,
+      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
+    )
+  }
+
+  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+    TextField(
+      enabled = enabled,
+      value = value,
+      label = label,
+      onValueChange = onValueChange,
+      maxLines = maxLines,
+      singleLine = singleLine,
+      modifier = modifier,
+      keyboardOptions = keyboardOptions,
+      keyboardActions = keyboardActions,
+      colors = chanTheme.textFieldColors(),
+      textStyle = textStyle
+    )
+  }
+}
+
 @Composable
 fun KurobaComposeCustomTextField(
   value: String,

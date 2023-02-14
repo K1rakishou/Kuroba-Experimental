@@ -54,6 +54,7 @@ class MPVView(
         Logger.d(TAG, "create()")
 
         MPVLib.mpvCreate(applicationContext)
+        setupMpvConf(applicationContext)
 
         // hwdec
         val hwdec = if (MpvSettings.hardwareDecoding.get()) {
@@ -108,6 +109,27 @@ class MPVView(
         observeProperties()
 
         _initialized = true
+    }
+
+    private fun setupMpvConf(applicationContext: Context) {
+        if (!ChanSettings.mpvUseConfigFile.get()) {
+            MPVLib.mpvSetPropertyString("config", "no")
+            return
+        }
+
+        val mpvconfDir = File(applicationContext.filesDir, MPV_CONF_DIR)
+        val mpvconfFile = File(mpvconfDir, MPV_CONF_FILE)
+
+        if (!mpvconfFile.exists() || mpvconfFile.length() <= 0) {
+            Logger.d(TAG, "initOptions() mpv.conf doesn't exist or empty")
+
+            MPVLib.mpvSetPropertyString("config", "no")
+        } else {
+            Logger.d(TAG, "initOptions() using mpv.conf")
+
+            MPVLib.mpvSetPropertyString("config", "yes")
+            MPVLib.mpvSetPropertyString("config-dir", mpvconfDir.absolutePath)
+        }
     }
 
     fun destroy() {
@@ -339,5 +361,8 @@ class MPVView(
 
     companion object {
         private const val TAG = "MPVView"
+
+        const val MPV_CONF_DIR = "mpvconf"
+        const val MPV_CONF_FILE = "mpv.conf"
     }
 }

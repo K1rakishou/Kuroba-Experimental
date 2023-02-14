@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.mpv.MPVLib
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase
+import com.github.k1rakishou.chan.features.mpv.EditMpvConfController
 import com.github.k1rakishou.chan.features.settings.PluginsScreen
 import com.github.k1rakishou.chan.features.settings.SettingClickAction
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -75,6 +76,24 @@ class PluginSettingsScreen(
           topDescriptionIdFunc = { R.string.settings_plugins_use_mpv },
           bottomDescriptionIdFunc = { R.string.settings_plugins_use_mpv_description },
           setting = ChanSettings.useMpvVideoPlayer
+        )
+
+        group += BooleanSettingV2.createBuilder(
+          context = context,
+          identifier = PluginsScreen.MpvPluginGroup.UseConfigFile,
+          topDescriptionIdFunc = { R.string.settings_plugins_use_config_file },
+          setting = ChanSettings.mpvUseConfigFile
+        )
+
+        group += LinkSettingV2.createBuilder(
+          context = context,
+          identifier = PluginsScreen.MpvPluginGroup.EditConfigFile,
+          topDescriptionIdFunc = { R.string.settings_plugins_edit_config_file },
+          dependsOnSetting = ChanSettings.mpvUseConfigFile,
+          callback = {
+            val editMpvConfController = EditMpvConfController(context)
+            navigationController.presentController(editMpvConfController)
+          }
         )
 
         group += LinkSettingV2.createBuilder(

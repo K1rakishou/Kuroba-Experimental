@@ -718,6 +718,8 @@ sealed class PluginsScreen(
     PluginsScreen(groupIdentifier, SettingIdentifier(settingsId)) {
 
     object UseMpv : MpvPluginGroup("use_mpv")
+    object UseConfigFile : MpvPluginGroup("use_config_file")
+    object EditConfigFile : MpvPluginGroup("edit_config_file")
     object CheckMpvLibsState : MpvPluginGroup("check_mpv_libs_state")
 
     companion object : IGroupIdentifier() {

@@ -46,6 +46,7 @@ import com.github.k1rakishou.chan.features.media_viewer.media_view.ThumbnailMedi
 import com.github.k1rakishou.chan.features.media_viewer.media_view.UnsupportedMediaView;
 import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerBottomActionStrip;
 import com.github.k1rakishou.chan.features.media_viewer.strip.MediaViewerLeftActionStrip;
+import com.github.k1rakishou.chan.features.mpv.EditMpvConfController;
 import com.github.k1rakishou.chan.features.my_posts.SavedPostsController;
 import com.github.k1rakishou.chan.features.proxies.ProxyEditorController;
 import com.github.k1rakishou.chan.features.proxies.ProxySetupController;
@@ -285,6 +286,7 @@ public interface ActivityComponent {
     void inject(ThirdEyeSettingsController thirdEyeSettingsController);
     void inject(AddOrEditBooruController addOrEditBooruController);
     void inject(ImageSearchController imageSearchController);
+    void inject(EditMpvConfController editMpvConfController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

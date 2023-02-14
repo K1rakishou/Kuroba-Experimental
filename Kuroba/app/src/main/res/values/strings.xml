@@ -827,6 +827,8 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="settings_plugins_mpv_group">Mpv video player</string>
     <string name="settings_plugins_use_mpv">Use mpv video player</string>
     <string name="settings_plugins_use_mpv_description">When turned on mpv video player will be used to play videos instead of the ExoPlayer. When turned off ExoPlayer will be used. You need to install the libraries for it to work.</string>
+    <string name="settings_plugins_use_config_file">Use mpv.conf</string>
+    <string name="settings_plugins_edit_config_file">Edit mpv.conf</string>
     <string name="settings_plugins_libs_status">Mpv libraries status</string>
     <string name="settings_plugins_libs_downloading_libraries">Downloading libraries</string>
     <string name="settings_plugins_libs_installation_failure">Failure</string>
