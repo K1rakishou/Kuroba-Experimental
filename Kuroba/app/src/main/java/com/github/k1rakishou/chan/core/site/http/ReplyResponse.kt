@@ -75,7 +75,7 @@ class ReplyResponse {
   var rateLimitInfo: RateLimitInfo? = null
 
   val errorMessageShort: String?
-    get() = errorMessage?.take(200)
+    get() = errorMessage?.take(256)
 
   @get:Synchronized
   val postDescriptorOrNull: PostDescriptor?
@@ -132,7 +132,11 @@ class ReplyResponse {
   }
 
   sealed class AdditionalResponseData {
-    object NoOp : AdditionalResponseData()
+    object NoOp : AdditionalResponseData() {
+      override fun toString(): String {
+        return "NoOp"
+      }
+    }
   }
 
   data class RateLimitInfo(
