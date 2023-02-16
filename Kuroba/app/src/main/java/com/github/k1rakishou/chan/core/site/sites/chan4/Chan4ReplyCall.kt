@@ -179,15 +179,39 @@ class Chan4ReplyCall(
       return
     }
 
-    try {
-      replyResponse.threadNo = threadNoMatcher.group(1).toInt().toLong()
-      replyResponse.postNo = threadNoMatcher.group(2).toInt().toLong()
+    val threadNoString = threadNoMatcher.groupOrNull(1) ?: ""
+    val threadNo = threadNoString.toIntOrNull()?.toLong()
+    if (threadNo == null) {
+      Logger.e(TAG, "process() Failed to convert threadNo from string to int (threadNoString: \'${threadNoString}\')")
+      replyResponse.errorMessage = "Failed to convert threadNo from string to int (threadNoString: '${threadNoString}')"
+      return
+    }
 
-      if (replyResponse.threadNo == 0L) {
-        replyResponse.threadNo = replyResponse.postNo
-      }
-    } catch (error: NumberFormatException) {
-      Logger.e(TAG, "process() ReplyResponse parsing error", error)
+    val postNoString = threadNoMatcher.groupOrNull(2) ?: ""
+    val postNo = postNoString.toIntOrNull()?.toLong()
+    if (postNo == null) {
+      Logger.e(TAG, "process() Failed to convert postNo from string to int (postNoString: \'${postNoString}\')")
+      replyResponse.errorMessage = "Failed to convert postNo from string to int (postNoString: '${postNoString}')"
+      return
+    }
+
+    replyResponse.threadNo = threadNo
+    replyResponse.postNo = postNo
+
+    if (replyResponse.threadNo == 0L) {
+      replyResponse.threadNo = replyResponse.postNo
+    }
+
+    // Some boards of 4chan return postNo == 0 when creating threads (threadNo is not zero so we can
+    if (replyChanDescriptor is CatalogDescriptor && replyResponse.postNo == 0L) {
+      replyResponse.postNo = replyResponse.threadNo
+    }
+
+    if (replyResponse.threadNo == 0L || replyResponse.postNo == 0L) {
+      Logger.e(TAG, "process() Server returned incorrect thread/post id! response = \"$result\"")
+      replyResponse.errorMessage = "Server returned incorrect thread/post id. " +
+          "threadNo: ${replyResponse.threadNo}, postNo: ${replyResponse.postNo}"
+      return
     }
 
     if (replyResponse.threadNo > 0 && replyResponse.postNo > 0) {
@@ -195,7 +219,8 @@ class Chan4ReplyCall(
       return
     }
 
-    Logger.e(TAG, "process() Couldn't handle server response! response = \"$result\"")
+    Logger.e(TAG, "process() Failed to handle server response. response: \"$result\"")
+    replyResponse.errorMessage = "Failed to handle server response. Report this with logs attached!"
   }
 
   private fun setChan4CaptchaHeader(headers: Headers) {
