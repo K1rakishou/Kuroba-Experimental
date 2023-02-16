@@ -94,7 +94,7 @@
                                 android:id="@+id/custom_file_name"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="text"
+                                android:inputType="textNoSuggestions"
                                 android:maxLines="3" />
 
                         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
@@ -134,7 +134,7 @@
                                 android:id="@+id/additional_directories"
                                 android:layout_width="match_parent"
                                 android:layout_height="wrap_content"
-                                android:inputType="text"
+                                android:inputType="textNoSuggestions"
                                 android:maxLines="2" />
 
                         </com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextInputLayout>
