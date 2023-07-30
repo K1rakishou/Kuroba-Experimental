@@ -47,7 +47,7 @@ class BookmarksSelectionHelper(
 
     itemsList += BottomMenuPanelItem(
       BookmarksMenuItemId(BookmarksMenuItemType.Read),
-      R.drawable.exo_ic_check,
+      com.google.android.exoplayer2.ui.R.drawable.exo_ic_check,
       R.string.bottom_menu_item_read,
       { bookmarkMenuItemClickListener.onMenuItemClicked(BookmarksMenuItemType.Read, selectedItems.toList()) }
     )

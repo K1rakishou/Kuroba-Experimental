@@ -16,7 +16,7 @@ import com.github.k1rakishou.common.updatePaddings
 import com.github.k1rakishou.core_themes.ThemeEngine
 import javax.inject.Inject
 
-@EpoxyModelClass(layout = R.layout.epoxy_reorderable_item_view)
+@EpoxyModelClass
 abstract class EpoxyReorderableItemView : EpoxyModelWithHolder<EpoxyReorderableItemViewHolder>(),
   ThemeEngine.ThemeChangesListener {
 
@@ -30,6 +30,8 @@ abstract class EpoxyReorderableItemView : EpoxyModelWithHolder<EpoxyReorderableI
   var context: Context? = null
   @EpoxyAttribute
   var titleText: String? = null
+
+  override fun getDefaultLayout(): Int = R.layout.epoxy_reorderable_item_view
 
   override fun bind(holder: EpoxyReorderableItemViewHolder) {
     super.bind(holder)

@@ -41,10 +41,9 @@ import org.joda.time.DateTimeZone
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.File
-import java.util.*
+import java.util.TimeZone
 import javax.inject.Inject
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.seconds
 
 class LocalArchiveViewModel : BaseViewModel() {
 
@@ -95,17 +94,16 @@ class LocalArchiveViewModel : BaseViewModel() {
     component.inject(this)
   }
 
-  @OptIn(ExperimentalTime::class)
   override suspend fun onViewModelReady() {
     mainScope.launch {
       threadDownloadManager.threadDownloadUpdateFlow
-        .debounce(Duration.seconds(1))
+        .debounce(1.seconds)
         .collect { refreshCacheAndReload() }
     }
 
     mainScope.launch {
       threadDownloadManager.threadsProcessedFlow
-        .debounce(Duration.seconds(1))
+        .debounce(1.seconds)
         .collect { refreshCacheAndReload() }
     }
 

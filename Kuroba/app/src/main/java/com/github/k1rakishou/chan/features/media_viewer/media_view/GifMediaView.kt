@@ -533,7 +533,7 @@ class GifMediaView(
     private val pauseUnpauseGifFunc: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
       if (actualGifView.visibility == View.VISIBLE) {
         mediaViewContract.onTapped()
         return true
@@ -544,7 +544,7 @@ class GifMediaView(
       return super.onSingleTapConfirmed(e)
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
       if (e == null || actualGifView.visibility != View.VISIBLE) {
         return false
       }
@@ -554,7 +554,7 @@ class GifMediaView(
       return super.onDoubleTap(e)
     }
 
-    override fun onLongPress(e: MotionEvent?) {
+    override fun onLongPress(e: MotionEvent) {
       onMediaLongClick()
     }
   }

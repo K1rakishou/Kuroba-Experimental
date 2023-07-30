@@ -11,13 +11,11 @@ import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
-import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
+import kotlin.time.Duration.Companion.milliseconds
 
 class ProxySetupPresenter(
   private val proxySelectionHelper: ProxySelectionHelper,
@@ -27,7 +25,6 @@ class ProxySetupPresenter(
   @ExperimentalCoroutinesApi
   private val proxySetupState = MutableStateFlow<ProxySetupState>(ProxySetupState.Uninitialized)
 
-  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: ProxySetupView) {
     super.onCreate(view)
 
@@ -40,7 +37,7 @@ class ProxySetupPresenter(
     reloadProxies()
   }
 
-  fun listenForStateUpdates(): Flow<ProxySetupState> {
+  fun listenForStateUpdates(): StateFlow<ProxySetupState> {
     return proxySetupState
   }
 

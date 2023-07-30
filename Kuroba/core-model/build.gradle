@@ -2,11 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'kotlin-kapt'
+apply plugin: 'com.google.devtools.ksp'
 
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdkVersion 32
+    compileSdk 33
 
     defaultConfig {
         minSdkVersion 21
@@ -59,13 +60,13 @@ dependencies {
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
     implementation "androidx.room:room-ktx:${versions.room_version}"
-    kapt "androidx.room:room-compiler:${versions.room_version}"
+    ksp "androidx.room:room-compiler:${versions.room_version}"
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
     implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
 
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"

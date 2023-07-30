@@ -167,11 +167,11 @@ class AudioMediaView(
     private val mediaViewContract: MediaViewContract,
   ) : GestureDetector.SimpleOnGestureListener() {
 
-    override fun onDown(e: MotionEvent?): Boolean {
+    override fun onDown(e: MotionEvent): Boolean {
       return true
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
       mediaViewContract.onTapped()
       return false
     }

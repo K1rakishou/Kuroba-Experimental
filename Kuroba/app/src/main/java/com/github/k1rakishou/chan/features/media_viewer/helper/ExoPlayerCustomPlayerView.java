@@ -173,13 +173,13 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
         setDescendantFocusability(FOCUS_AFTER_DESCENDANTS);
 
         // Content frame.
-        contentFrame = findViewById(R.id.exo_content_frame);
+        contentFrame = findViewById(com.google.android.exoplayer2.ui.R.id.exo_content_frame);
         if (contentFrame != null) {
             setResizeModeRaw(contentFrame, resizeMode);
         }
 
         // Shutter view.
-        shutterView = findViewById(R.id.exo_shutter);
+        shutterView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_shutter);
         if (shutterView != null && shutterColorSet) {
             shutterView.setBackgroundColor(shutterColor);
         }
@@ -233,34 +233,34 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
         this.surfaceViewIgnoresVideoAspectRatio = surfaceViewIgnoresVideoAspectRatio;
 
         // Ad overlay frame layout.
-        adOverlayFrameLayout = findViewById(R.id.exo_ad_overlay);
+        adOverlayFrameLayout = findViewById(com.google.android.exoplayer2.ui.R.id.exo_ad_overlay);
 
         // Overlay frame layout.
-        overlayFrameLayout = findViewById(R.id.exo_overlay);
+        overlayFrameLayout = findViewById(com.google.android.exoplayer2.ui.R.id.exo_overlay);
 
         // Artwork view.
-        artworkView = findViewById(R.id.exo_artwork);
+        artworkView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_artwork);
         this.useArtwork = useArtwork && artworkView != null;
         if (defaultArtworkId != 0) {
             defaultArtwork = ContextCompat.getDrawable(getContext(), defaultArtworkId);
         }
 
         // Subtitle view.
-        subtitleView = findViewById(R.id.exo_subtitles);
+        subtitleView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_subtitles);
         if (subtitleView != null) {
             subtitleView.setUserDefaultStyle();
             subtitleView.setUserDefaultTextSize();
         }
 
         // Buffering view.
-        bufferingView = findViewById(R.id.exo_buffering);
+        bufferingView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_buffering);
         if (bufferingView != null) {
             bufferingView.setVisibility(View.GONE);
         }
         this.showBuffering = showBuffering;
 
         // Error message view.
-        errorMessageView = findViewById(R.id.exo_error_message);
+        errorMessageView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_error_message);
         if (errorMessageView != null) {
             errorMessageView.setVisibility(View.GONE);
         }
@@ -273,7 +273,7 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
             ExoPlayerCustomPlayerControlView.VideoMediaViewCallbacks videoMediaViewCallbacks
     ) {
         this.controller = new ExoPlayerCustomPlayerControlView(getContext(), null, 0);
-        controller.setId(R.id.exo_controller);
+        controller.setId(com.google.android.exoplayer2.ui.R.id.exo_controller);
         controller.setLayoutParams(controllerPlaceholder.getLayoutParams());
         controller.setVideoMediaViewCallbacks(videoMediaViewCallbacks);
         ViewGroup parent = ((ViewGroup) controllerPlaceholder.getParent());
@@ -1152,11 +1152,11 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
         } else if (controller.getVisibility() == View.VISIBLE) {
             setContentDescription(
                     /* contentDescription= */ controllerHideOnTouch
-                            ? getResources().getString(R.string.exo_controls_hide)
+                            ? getResources().getString(com.google.android.exoplayer2.ui.R.string.exo_controls_hide)
                             : null);
         } else {
             setContentDescription(
-                    /* contentDescription= */ getResources().getString(R.string.exo_controls_show));
+                    /* contentDescription= */ getResources().getString(com.google.android.exoplayer2.ui.R.string.exo_controls_show));
         }
     }
 
@@ -1170,13 +1170,13 @@ public class ExoPlayerCustomPlayerView extends FrameLayout implements AdViewProv
 
     @RequiresApi(23)
     private static void configureEditModeLogoV23(Resources resources, ImageView logo) {
-        logo.setImageDrawable(resources.getDrawable(R.drawable.exo_edit_mode_logo, null));
-        logo.setBackgroundColor(resources.getColor(R.color.exo_edit_mode_background_color, null));
+        logo.setImageDrawable(resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_edit_mode_logo, null));
+        logo.setBackgroundColor(resources.getColor(com.google.android.exoplayer2.ui.R.color.exo_edit_mode_background_color, null));
     }
 
     private static void configureEditModeLogo(Resources resources, ImageView logo) {
-        logo.setImageDrawable(resources.getDrawable(R.drawable.exo_edit_mode_logo));
-        logo.setBackgroundColor(resources.getColor(R.color.exo_edit_mode_background_color));
+        logo.setImageDrawable(resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_edit_mode_logo));
+        logo.setBackgroundColor(resources.getColor(com.google.android.exoplayer2.ui.R.color.exo_edit_mode_background_color));
     }
 
     @SuppressWarnings("ResourceType")

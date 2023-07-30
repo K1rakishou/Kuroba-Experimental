@@ -33,16 +33,12 @@ class ReplyLayoutGestureListener(
   }
 
   override fun onScroll(
-    e1: MotionEvent?,
-    e2: MotionEvent?,
+    e1: MotionEvent,
+    e2: MotionEvent,
     distanceX: Float,
     distanceY: Float
   ): Boolean {
     if (blockGesture) {
-      return false
-    }
-
-    if (e1 == null || e2 == null) {
       return false
     }
 
@@ -59,17 +55,13 @@ class ReplyLayoutGestureListener(
   }
 
   override fun onFling(
-    e1: MotionEvent?,
-    e2: MotionEvent?,
+    e1: MotionEvent,
+    e2: MotionEvent,
     velocityX: Float,
     velocityY: Float
   ): Boolean {
     if (blockGesture) {
       return false
-    }
-
-    if (e1 == null || e2 == null) {
-      return true
     }
 
     val startY = e1.rawY

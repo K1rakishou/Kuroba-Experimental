@@ -157,7 +157,7 @@ open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener 
     val rippleAttrForThemeValue = TypedValue()
 
     context.theme.resolveAttribute(
-      R.attr.colorControlHighlight,
+      androidx.appcompat.R.attr.colorControlHighlight,
       rippleAttrForThemeValue,
       true
     )

@@ -284,15 +284,15 @@ class KurobaBottomNavigationView @JvmOverloads constructor(
       .setDuration(Toolbar.TOOLBAR_ANIMATION_DURATION_MS)
       .setInterpolator(Toolbar.TOOLBAR_ANIMATION_INTERPOLATOR)
       .setListener(object : SimpleAnimatorListener() {
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           animating = false
         }
 
-        override fun onAnimationCancel(animation: Animator?) {
+        override fun onAnimationCancel(animation: Animator) {
           animating = false
         }
 
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           animating = true
         }
       })

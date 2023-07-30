@@ -5,7 +5,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -17,7 +16,7 @@ import javax.inject.Inject
 class ColorizableButton @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  val defStyleAttr: Int = R.attr.materialButtonStyle
+  val defStyleAttr: Int = com.google.android.material.R.attr.materialButtonStyle
 ) : MaterialButton(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

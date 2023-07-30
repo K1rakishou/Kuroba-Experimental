@@ -2,12 +2,12 @@ apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'kotlin-kapt'
-apply plugin: 'de.undercouch.download'
+apply plugin: 'com.google.devtools.ksp'
 
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdkVersion 32
+    compileSdk 33
 
     def getCommitHash = { ->
         def stdout = new ByteArrayOutputStream()
@@ -24,7 +24,7 @@ android {
 
     defaultConfig {
         minSdkVersion 21
-        targetSdkVersion 31
+        targetSdkVersion 33
 
         // if you change this, also change the AndroidManifest package
         applicationId "com.github.k1rakishou.chan"
@@ -56,6 +56,10 @@ android {
             variant.outputs.all {
                 outputFileName = manifestPlaceholders.get("appName").toString() + ".apk"
             }
+        }
+
+        configurations.all {
+            resolutionStrategy { force 'androidx.emoji2:emoji2:1.3.0' }
         }
 
         vectorDrawables.useSupportLibrary = true
@@ -246,6 +250,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = versions.compose_compiler_version
@@ -275,20 +280,20 @@ dependencies {
 
     implementation "androidx.appcompat:appcompat:${versions.appcompat}"
     implementation "androidx.preference:preference-ktx:${versions.androidx_preferences_ktx}"
-    implementation 'androidx.constraintlayout:constraintlayout:2.1.2'
-    implementation 'androidx.slidingpanelayout:slidingpanelayout:1.1.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
-    implementation 'androidx.work:work-runtime-ktx:2.7.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.4.0'
+    implementation 'androidx.work:work-runtime-ktx:2.8.1'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
     implementation "com.google.android.material:material:${versions.material}"
 
     implementation("androidx.compose.ui:ui:${versions.compose_version}")
     implementation("androidx.compose.material:material:${versions.compose_version}")
     implementation("androidx.compose.ui:ui-tooling:${versions.compose_version}")
     implementation("androidx.compose.animation:animation-graphics:${versions.compose_version}")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.4.0")
-    implementation("androidx.activity:activity-compose:1.4.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
+    implementation("androidx.activity:activity-compose:1.7.2")
 
     implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
     implementation "com.google.android.exoplayer:exoplayer-ui:${versions.exoplayer}"
@@ -307,22 +312,22 @@ dependencies {
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-android:${versions.kotlin_coroutines_version}"
     implementation "org.jetbrains.kotlinx:kotlinx-coroutines-rx2:${versions.kotlin_coroutines_version}"
-    implementation 'io.coil-kt:coil-base:1.3.2'
+    implementation "io.coil-kt:coil-base:${versions.coil}"
 
     // noinspection GradleDependency wants to upgrade to older version
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
-    kapt "androidx.room:room-compiler:${versions.room_version}"
+    ksp "androidx.room:room-compiler:${versions.room_version}"
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
     kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
 
     implementation("com.squareup.moshi:moshi-kotlin:${versions.moshi}")
-    kapt("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
+    ksp("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
 
     implementation "com.airbnb.android:epoxy:${versions.epoxy}"
-    kapt "com.airbnb.android:epoxy-processor:${versions.epoxy}"
+    ksp "com.airbnb.android:epoxy-processor:${versions.epoxy}"
 
     testImplementation "junit:junit:${versions.junit}"
     testImplementation "org.robolectric:robolectric:${versions.robolectric}"
@@ -333,7 +338,7 @@ dependencies {
     testImplementation "org.powermock:powermock-api-mockito2:${versions.powermock}"
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:${versions.kotlin_coroutines_version}"
 
-    devImplementation 'com.squareup.leakcanary:leakcanary-android:2.7'
+    devImplementation 'com.squareup.leakcanary:leakcanary-android:2.9.1'
 }
 
 //====================================================================

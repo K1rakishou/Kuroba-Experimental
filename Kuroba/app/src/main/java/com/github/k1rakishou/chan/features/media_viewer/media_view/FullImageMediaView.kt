@@ -460,7 +460,7 @@ class FullImageMediaView(
   ) : GestureDetector.SimpleOnGestureListener() {
     private var doubleTapped = false
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
       if (actualImageView.visibility == View.VISIBLE) {
         mediaViewContract.onTapped()
         return true
@@ -471,12 +471,12 @@ class FullImageMediaView(
       return super.onSingleTapConfirmed(e)
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
       doubleTapped = true
       return super.onDoubleTap(e)
     }
 
-    override fun onLongPress(e: MotionEvent?) {
+    override fun onLongPress(e: MotionEvent) {
       if (!doubleTapped) {
         onMediaLongClick()
       }

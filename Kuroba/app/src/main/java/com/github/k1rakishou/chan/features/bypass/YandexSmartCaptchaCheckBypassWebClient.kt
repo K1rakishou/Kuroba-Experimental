@@ -37,6 +37,7 @@ class YandexSmartCaptchaCheckBypassWebClient(
     }
   }
 
+  @Deprecated("Deprecated in Java")
   override fun onReceivedError(
     view: WebView?,
     errorCode: Int,

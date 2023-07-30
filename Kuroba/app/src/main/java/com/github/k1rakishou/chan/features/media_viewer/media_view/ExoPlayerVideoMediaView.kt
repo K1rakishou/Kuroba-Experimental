@@ -123,7 +123,7 @@ class ExoPlayerVideoMediaView(
     muteUnmuteButton = findViewById(R.id.exo_mute)
     muteUnmuteButton.setEnabledFast(false)
 
-    val movableContainer = findViewById<View>(R.id.exo_content_frame)
+    val movableContainer = findViewById<View>(com.google.android.exoplayer2.ui.R.id.exo_content_frame)
       ?: actualVideoPlayerView
 
     closeMediaActionHelper = CloseMediaActionHelper(
@@ -459,7 +459,7 @@ class ExoPlayerVideoMediaView(
   }
 
   private fun updateExoBufferingViewColors() {
-    actualVideoPlayerView.findViewById<View>(R.id.exo_buffering)?.let { progressView ->
+    actualVideoPlayerView.findViewById<View>(com.google.android.exoplayer2.ui.R.id.exo_buffering)?.let { progressView ->
       (progressView as? ProgressBar)?.progressTintList =
         ColorStateList.valueOf(themeEngine.chanTheme.accentColor)
       (progressView as? ProgressBar)?.indeterminateTintList =
@@ -553,11 +553,11 @@ class ExoPlayerVideoMediaView(
     private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
-    override fun onDown(e: MotionEvent?): Boolean {
+    override fun onDown(e: MotionEvent): Boolean {
       return true
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
       if (actualVideoView.visibility == View.VISIBLE) {
         mediaViewContract.onTapped()
         return true
@@ -573,7 +573,7 @@ class ExoPlayerVideoMediaView(
       return false
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
       if (e == null || actualVideoView.visibility != View.VISIBLE) {
         return false
       }
@@ -585,7 +585,7 @@ class ExoPlayerVideoMediaView(
       return true
     }
 
-    override fun onLongPress(e: MotionEvent?) {
+    override fun onLongPress(e: MotionEvent) {
       onMediaLongClick()
     }
   }

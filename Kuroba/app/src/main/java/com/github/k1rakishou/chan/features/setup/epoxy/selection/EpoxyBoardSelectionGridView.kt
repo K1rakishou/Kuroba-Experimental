@@ -7,8 +7,8 @@ import com.airbnb.epoxy.EpoxyModelWithHolder
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 
-@EpoxyModelClass(layout = R.layout.epoxy_board_selection_grid_view)
-abstract class EpoxyBoardSelectionGridView : EpoxyModelWithHolder<BaseBoardSelectionViewHolder>()  {
+@EpoxyModelClass
+abstract class EpoxyBoardSelectionGridView : EpoxyModelWithHolder<BaseBoardSelectionViewHolder>() {
 
   @EpoxyAttribute
   var topTitle: String? = null
@@ -22,6 +22,8 @@ abstract class EpoxyBoardSelectionGridView : EpoxyModelWithHolder<BaseBoardSelec
   var searchQuery: String? = null
   @EpoxyAttribute(value = [EpoxyAttribute.Option.IgnoreRequireHashCode])
   var clickListener: (() -> Unit)? = null
+
+  override fun getDefaultLayout(): Int = R.layout.epoxy_board_selection_grid_view
 
   override fun bind(holder: BaseBoardSelectionViewHolder) {
     super.bind(holder)

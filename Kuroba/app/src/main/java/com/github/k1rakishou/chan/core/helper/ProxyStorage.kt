@@ -92,11 +92,10 @@ class ProxyStorage(
     }
   }
 
-  @Synchronized
   suspend fun enableDisableProxy(proxyEntryView: ProxyEntryView): ModularResult<Boolean> {
     val proxyKey = ProxyKey(proxyEntryView.address, proxyEntryView.port)
 
-    val proxy = allProxiesMap[proxyKey]
+    val proxy = synchronized(this) { allProxiesMap[proxyKey] }
       ?: return value(false)
 
     val prevEnabledState = proxy.enabled

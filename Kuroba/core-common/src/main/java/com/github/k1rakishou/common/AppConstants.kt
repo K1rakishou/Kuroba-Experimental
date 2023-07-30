@@ -165,21 +165,6 @@ open class AppConstants(
     mpvCertDir = File(context.filesDir, MPV_CERT_DIR_NAME)
 
     diskCacheDir = File(context.filesDir, DISK_CACHE_DIR_NAME)
-
-    // TODO(KurobaEx): remove me in v1.5.0
-    val oldFileCacheDir = File(context.filesDir, OLD_FILE_CACHE_DIR)
-    if (oldFileCacheDir.exists()) {
-      Logger.d(TAG, "Deleting oldFileCacheDir: '${oldFileCacheDir.absolutePath}'")
-      oldFileCacheDir.deleteRecursively()
-    }
-
-    // TODO(KurobaEx): remove me in v1.5.0
-    val oldFileCacheChunksDir = File(context.filesDir, OLD_FILE_CHUNKS_CACHE_DIR)
-    if (oldFileCacheChunksDir.exists()) {
-      Logger.d(TAG, "Deleting oldFileCacheChunksDir: '${oldFileCacheChunksDir.absolutePath}'")
-      oldFileCacheChunksDir.deleteRecursively()
-    }
-
     exoPlayerCacheDir = File(context.cacheDir, EXO_PLAYER_CACHE_DIR_NAME)
   }
 
@@ -229,11 +214,6 @@ open class AppConstants(
     private const val MPV_NATIVE_LIBS_DIR_NAME = "mpv_native_libs"
     private const val MPV_CERT_DIR_NAME = "certs/mpv"
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
-
-    // TODO(KurobaEx): remove me in v1.5.0
-    @Deprecated("Use DISK_CACHE_DIR_NAME") private const val OLD_FILE_CACHE_DIR = "filecache"
-    // TODO(KurobaEx): remove me in v1.5.0
-    @Deprecated("Moved into InnerCache") private const val OLD_FILE_CHUNKS_CACHE_DIR = "file_chunks_cache"
 
     const val DISK_CACHE_DIR_NAME = "disk_cache"
 

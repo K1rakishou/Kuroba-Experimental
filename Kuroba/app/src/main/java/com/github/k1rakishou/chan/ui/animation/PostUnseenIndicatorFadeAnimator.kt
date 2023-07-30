@@ -35,7 +35,7 @@ object PostUnseenIndicatorFadeAnimator {
             alphaFunc.invoke(valueAnimator.animatedValue as Float)
           }
           addListener(object : SimpleAnimatorListener() {
-            override fun onAnimationEnd(animation: Animator?) {
+            override fun onAnimationEnd(animation: Animator) {
               onAnimationEndFunc.invoke()
             }
           })

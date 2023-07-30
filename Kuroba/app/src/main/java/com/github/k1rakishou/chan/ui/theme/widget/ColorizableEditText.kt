@@ -7,7 +7,6 @@ import android.os.Build
 import android.util.AttributeSet
 import androidx.core.graphics.ColorUtils
 import androidx.core.view.ViewCompat
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
@@ -21,7 +20,7 @@ import javax.inject.Inject
 open class ColorizableEditText @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  defStyleAttr: Int = R.attr.editTextStyle
+  defStyleAttr: Int = androidx.appcompat.R.attr.editTextStyle
 ) : TextInputEditText(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

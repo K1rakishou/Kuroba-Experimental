@@ -27,8 +27,8 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.ExperimentalTime
-import kotlin.time.milliseconds
 
 class AddBoardsController(
   context: Context,

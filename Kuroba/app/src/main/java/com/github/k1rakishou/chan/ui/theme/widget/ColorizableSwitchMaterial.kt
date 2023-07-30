@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -14,7 +13,7 @@ import javax.inject.Inject
 class ColorizableSwitchMaterial @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  defStyleAttr: Int = R.attr.switchStyle
+  defStyleAttr: Int = androidx.appcompat.R.attr.switchStyle
 ) : SwitchMaterial(context, attrs, defStyleAttr),
   IColorizableWidget {
 

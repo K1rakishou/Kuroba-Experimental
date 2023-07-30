@@ -38,7 +38,7 @@ public class MPVLib {
 
     // When updating the player code or anything related to it update jin/main.cpp:player_version
     // variable as well as the MPVLib.SUPPORTED_MPV_PLAYER_VERSION
-    public static final int SUPPORTED_MPV_PLAYER_VERSION = 3;
+    public static final int SUPPORTED_MPV_PLAYER_VERSION = 4;
 
     /**
      * Libraries are sorted by the order of dependency.

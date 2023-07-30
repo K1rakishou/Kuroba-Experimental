@@ -90,7 +90,7 @@ class ProxyEditorController(
         context,
         null,
         0,
-        R.style.Widget_MaterialComponents_Chip_Choice
+        com.google.android.material.R.style.Widget_MaterialComponents_Chip_Choice
       )
       siteChip.setChipDrawable(chipDrawable)
 

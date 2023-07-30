@@ -1436,6 +1436,7 @@ class ImageLoaderV2(
       bitmapDrawable.colorFilter = colorFilter
     }
 
+    @Deprecated("Deprecated in Java")
     override fun getOpacity(): Int {
       return bitmapDrawable.opacity
     }

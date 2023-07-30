@@ -408,7 +408,7 @@ class DialogFactory(
       button.invalidate()
     }
 
-    dialog.findViewById<TextView>(R.id.alertTitle)?.let { title ->
+    dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)?.let { title ->
       title.setTextColor(themeEngine.chanTheme.textColorPrimary)
     }
 

@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.theme.widget
 import android.content.Context
 import android.content.res.ColorStateList
 import android.util.AttributeSet
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -14,7 +13,7 @@ import javax.inject.Inject
 class ColorizableSlider @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  val defStyleAttr: Int = R.attr.sliderStyle
+  val defStyleAttr: Int = com.google.android.material.R.attr.sliderStyle
 ) : Slider(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

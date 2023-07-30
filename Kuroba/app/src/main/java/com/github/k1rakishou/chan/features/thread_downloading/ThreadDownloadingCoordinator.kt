@@ -18,8 +18,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
 import java.util.concurrent.TimeUnit
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.seconds
 
 class ThreadDownloadingCoordinator(
   private val appContext: Context,
@@ -31,11 +30,10 @@ class ThreadDownloadingCoordinator(
   private val threadDownloadManager: ThreadDownloadManager
     get() = _threadDownloadManager.get()
 
-  @OptIn(ExperimentalTime::class)
   fun initialize() {
     appScope.launch {
       threadDownloadManager.threadDownloadUpdateFlow
-        .debounce(Duration.seconds(1))
+        .debounce(1.seconds)
         .collect { event -> onThreadDownloadUpdateEvent(event) }
     }
 

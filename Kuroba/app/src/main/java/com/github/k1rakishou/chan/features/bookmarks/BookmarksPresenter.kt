@@ -24,18 +24,15 @@ import io.reactivex.Flowable
 import io.reactivex.android.schedulers.AndroidSchedulers
 import io.reactivex.processors.PublishProcessor
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicBoolean
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.milliseconds
 
 class BookmarksPresenter(
   private val bookmarksToHighlight: Set<ChanDescriptor.ThreadDescriptor>,
@@ -53,17 +50,15 @@ class BookmarksPresenter(
   private val bookmarksControllerStateSubject = PublishProcessor.create<BookmarksControllerState>()
     .toSerialized()
 
-  @OptIn(ExperimentalCoroutinesApi::class)
   private val searchFlow = MutableStateFlow<SearchQuery>(SearchQuery.Closed)
 
-  @OptIn(ExperimentalTime::class)
   override fun onCreate(view: BookmarksView) {
     super.onCreate(view)
 
     scope.launch {
       scope.launch {
         bookmarksManager.listenForBookmarksChanges()
-          .debounce(Duration.milliseconds(100))
+          .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
               Logger.d(TAG, "calling showBookmarks() because bookmarks have changed")
@@ -80,7 +75,7 @@ class BookmarksPresenter(
 
       scope.launch {
         bookmarksSelectionHelper.listenForSelectionChanges()
-          .debounce(Duration.milliseconds(100))
+          .debounce(100.milliseconds)
           .collect {
             withContext(Dispatchers.Default) {
               Logger.d(TAG, "calling showBookmarks() because bookmark selection has changed")
@@ -97,7 +92,7 @@ class BookmarksPresenter(
 
       scope.launch {
         searchFlow
-          .debounce(Duration.milliseconds(125))
+          .debounce(125.milliseconds)
           .collect { searchQuery ->
             if (searchQuery is SearchQuery.Opened) {
               // To avoid refreshing bookmarks list twice

@@ -62,11 +62,11 @@ object AnimationUtils {
         alpha = animation.animatedValue as Float
       }
       addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           alpha = 1f
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           alpha = 0f
           setVisibilityFast(View.GONE)
           onEnd?.invoke()
@@ -95,11 +95,11 @@ object AnimationUtils {
         alpha = animation.animatedValue as Float
       }
       addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           alpha = 0f
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           alpha = 1f
           setVisibilityFast(View.VISIBLE)
           onEnd?.invoke()

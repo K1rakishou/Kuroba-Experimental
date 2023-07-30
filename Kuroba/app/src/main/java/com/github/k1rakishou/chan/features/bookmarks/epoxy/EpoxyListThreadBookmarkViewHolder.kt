@@ -14,7 +14,7 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import javax.inject.Inject
 
-@EpoxyModelClass(layout = R.layout.epoxy_list_thread_bookmark_view)
+@EpoxyModelClass
 abstract class EpoxyListThreadBookmarkViewHolder
   : EpoxyModelWithHolder<BaseThreadBookmarkViewHolder>(),
   ThemeEngine.ThemeChangesListener,
@@ -55,6 +55,7 @@ abstract class EpoxyListThreadBookmarkViewHolder
   private var holder: BaseThreadBookmarkViewHolder? = null
   var dragIndicator: AppCompatImageView? = null
 
+  override fun getDefaultLayout(): Int = R.layout.epoxy_list_thread_bookmark_view
   override fun getBookmarkGroupId(): String? = groupId
   override fun getBookmarkStats(): ThreadBookmarkStats? = threadBookmarkStats
   override fun getBookmarkDescriptor(): ChanDescriptor.ThreadDescriptor? = threadDescriptor

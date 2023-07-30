@@ -684,9 +684,9 @@ class MpvVideoMediaView(
 
   private fun updatePlaybackStatus(paused: Boolean) {
     val imageDrawable = if (paused) {
-      R.drawable.exo_controls_play
+      com.google.android.exoplayer2.ui.R.drawable.exo_controls_play
     } else {
-      R.drawable.exo_controls_pause
+      com.google.android.exoplayer2.ui.R.drawable.exo_controls_pause
     }
 
     mpvPlayPause.setImageResource(imageDrawable)
@@ -772,11 +772,11 @@ class MpvVideoMediaView(
         mpvControlsRoot.alpha = animation.animatedValue as Float
       }
       addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           mpvControlsRoot.alpha = 1f
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           mpvControlsRoot.alpha = 0f
           mpvControlsRoot.setVisibilityFast(View.GONE)
           hideShowAnimation = null
@@ -806,11 +806,11 @@ class MpvVideoMediaView(
         mpvControlsRoot.alpha = animation.animatedValue as Float
       }
       addListener(object : SimpleAnimatorListener() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           mpvControlsRoot.alpha = 0f
         }
 
-        override fun onAnimationEnd(animation: Animator?) {
+        override fun onAnimationEnd(animation: Animator) {
           mpvControlsRoot.alpha = 1f
           mpvControlsRoot.setVisibilityFast(View.VISIBLE)
           hideShowAnimation = null
@@ -828,11 +828,11 @@ class MpvVideoMediaView(
     private val onMediaLongClick: () -> Unit
   ) : GestureDetector.SimpleOnGestureListener() {
 
-    override fun onDown(e: MotionEvent?): Boolean {
+    override fun onDown(e: MotionEvent): Boolean {
       return true
     }
 
-    override fun onSingleTapConfirmed(e: MotionEvent?): Boolean {
+    override fun onSingleTapConfirmed(e: MotionEvent): Boolean {
       if (actualVideoView.visibility == View.VISIBLE) {
         mediaViewContract.onTapped()
         return true
@@ -848,7 +848,7 @@ class MpvVideoMediaView(
       return false
     }
 
-    override fun onDoubleTap(e: MotionEvent?): Boolean {
+    override fun onDoubleTap(e: MotionEvent): Boolean {
       if (e == null || actualVideoView.visibility != View.VISIBLE) {
         return false
       }
@@ -857,7 +857,7 @@ class MpvVideoMediaView(
       return true
     }
 
-    override fun onLongPress(e: MotionEvent?) {
+    override fun onLongPress(e: MotionEvent) {
       onMediaLongClick()
     }
   }

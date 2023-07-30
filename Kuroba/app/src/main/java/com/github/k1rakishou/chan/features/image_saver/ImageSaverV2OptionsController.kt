@@ -326,7 +326,9 @@ class ImageSaverV2OptionsController(
     fun updateRootDirIcon(rootDirAccessible: Boolean) {
       if (rootDirAccessible) {
         startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = true)
-        rootDirStatusIcon.setImageDrawable(getDrawable(R.drawable.exo_ic_check))
+        rootDirStatusIcon.setImageDrawable(
+          getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_ic_check)
+        )
       } else {
         rootDirButtonBackgroundAnimation.unlock()
         startOrStopRootDirBackgroundAnimation(stopAndLockAnimation = false)

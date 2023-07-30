@@ -23,7 +23,7 @@ object PostBackgroundBlinkAnimator {
             colorUpdateFunc.invoke(valueAnimator.animatedValue as Int)
           }
           addListener(object : SimpleAnimatorListener() {
-            override fun onAnimationEnd(animation: Animator?) {
+            override fun onAnimationEnd(animation: Animator) {
               onAnimationEndFunc.invoke()
             }
           })

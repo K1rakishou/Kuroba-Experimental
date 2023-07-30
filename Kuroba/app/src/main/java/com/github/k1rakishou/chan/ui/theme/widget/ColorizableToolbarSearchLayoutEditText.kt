@@ -5,7 +5,6 @@ import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
 import androidx.core.view.ViewCompat
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.ViewUtils.setEditTextCursorColor
 import com.github.k1rakishou.chan.utils.ViewUtils.setHandlesColors
@@ -17,7 +16,7 @@ import javax.inject.Inject
 class ColorizableToolbarSearchLayoutEditText @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  defStyleAttr: Int = R.attr.editTextStyle
+  defStyleAttr: Int = androidx.appcompat.R.attr.editTextStyle
 ) : TextInputEditText(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

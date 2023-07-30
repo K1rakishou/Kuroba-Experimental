@@ -2,11 +2,12 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
+apply plugin: 'com.google.devtools.ksp'
 
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdkVersion 32
+    compileSdk 33
 
     defaultConfig {
         minSdkVersion 21

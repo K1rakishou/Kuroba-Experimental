@@ -63,8 +63,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration
-import kotlin.time.ExperimentalTime
+import kotlin.time.Duration.Companion.milliseconds
 
 open class ViewThreadController(
   context: Context,
@@ -99,7 +98,6 @@ open class ViewThreadController(
     component.inject(this)
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
 
@@ -113,7 +111,7 @@ open class ViewThreadController(
     mainScope.launch {
       bookmarksManager.listenForBookmarksChanges()
         .filter { bookmarkChange: BookmarkChange? -> bookmarkChange !is BookmarksInitialized }
-        .debounce(Duration.milliseconds(350))
+        .debounce(350.milliseconds)
         .collect { bookmarkChange -> updatePinIconStateIfNeeded(bookmarkChange) }
     }
 

@@ -4,7 +4,6 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.EdgeEffect
 import androidx.recyclerview.widget.RecyclerView
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -13,7 +12,7 @@ import javax.inject.Inject
 open class ColorizableRecyclerView @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  val defStyleAttr: Int = R.attr.recyclerViewStyle
+  val defStyleAttr: Int = androidx.recyclerview.R.attr.recyclerViewStyle
 ) : RecyclerView(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

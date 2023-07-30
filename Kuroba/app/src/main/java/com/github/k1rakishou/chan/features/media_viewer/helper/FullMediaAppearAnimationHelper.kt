@@ -56,7 +56,7 @@ object FullMediaAppearAnimationHelper {
         onAnimationEnd()
       }
 
-      override fun onAnimationCancel(animation: Animator?) {
+      override fun onAnimationCancel(animation: Animator) {
         super.onAnimationCancel(animation)
 
         prevActiveView.setVisibilityFast(View.INVISIBLE)

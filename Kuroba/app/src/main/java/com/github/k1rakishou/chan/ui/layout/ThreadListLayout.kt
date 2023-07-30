@@ -918,7 +918,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       viewPropertyAnimator.translationY(0f)
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           notifyBottomNavBarVisibilityStateManager()
         }
 
@@ -931,7 +931,7 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
 
       viewPropertyAnimator.translationY(height.toFloat())
       viewPropertyAnimator.setListener(object : AnimatorListenerAdapter() {
-        override fun onAnimationStart(animation: Animator?) {
+        override fun onAnimationStart(animation: Animator) {
           notifyBottomNavBarVisibilityStateManager()
         }
 

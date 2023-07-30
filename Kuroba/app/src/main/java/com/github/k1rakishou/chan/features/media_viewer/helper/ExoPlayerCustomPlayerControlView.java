@@ -208,15 +208,15 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
         LayoutInflater.from(context).inflate(R.layout.exo_player_control_view, /* root= */ this);
         setDescendantFocusability(FOCUS_AFTER_DESCENDANTS);
 
-        TimeBar customTimeBar = findViewById(R.id.exo_progress);
-        View timeBarPlaceholder = findViewById(R.id.exo_progress_placeholder);
+        TimeBar customTimeBar = findViewById(com.google.android.exoplayer2.ui.R.id.exo_progress);
+        View timeBarPlaceholder = findViewById(com.google.android.exoplayer2.ui.R.id.exo_progress_placeholder);
         if (customTimeBar != null) {
             timeBar = customTimeBar;
         } else if (timeBarPlaceholder != null) {
             // Propagate playbackAttrs as timebarAttrs so that DefaultTimeBar's custom attributes are
             // transferred, but standard attributes (e.g. background) are not.
             DefaultTimeBar defaultTimeBar = new DefaultTimeBar(context, null, 0, playbackAttrs);
-            defaultTimeBar.setId(R.id.exo_progress);
+            defaultTimeBar.setId(com.google.android.exoplayer2.ui.R.id.exo_progress);
             defaultTimeBar.setLayoutParams(timeBarPlaceholder.getLayoutParams());
             ViewGroup parent = ((ViewGroup) timeBarPlaceholder.getParent());
             int timeBarIndex = parent.indexOfChild(timeBarPlaceholder);
@@ -226,69 +226,62 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
         } else {
             timeBar = null;
         }
-        durationView = findViewById(R.id.exo_duration);
-        positionView = findViewById(R.id.exo_position);
+        durationView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_duration);
+        positionView = findViewById(com.google.android.exoplayer2.ui.R.id.exo_position);
 
         if (timeBar != null) {
             timeBar.addListener(componentListener);
         }
-        playButton = findViewById(R.id.exo_play);
+        playButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_play);
         if (playButton != null) {
             playButton.setOnClickListener(componentListener);
         }
-        pauseButton = findViewById(R.id.exo_pause);
+        pauseButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_pause);
         if (pauseButton != null) {
             pauseButton.setOnClickListener(componentListener);
         }
-        previousButton = findViewById(R.id.exo_prev);
+        previousButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_prev);
         if (previousButton != null) {
             previousButton.setOnClickListener(componentListener);
         }
-        nextButton = findViewById(R.id.exo_next);
+        nextButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_next);
         if (nextButton != null) {
             nextButton.setOnClickListener(componentListener);
         }
-        rewindButton = findViewById(R.id.exo_rew);
+        rewindButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_rew);
         if (rewindButton != null) {
             rewindButton.setOnClickListener(componentListener);
         }
-        fastForwardButton = findViewById(R.id.exo_ffwd);
+        fastForwardButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_ffwd);
         if (fastForwardButton != null) {
             fastForwardButton.setOnClickListener(componentListener);
         }
-        repeatToggleButton = findViewById(R.id.exo_repeat_toggle);
+        repeatToggleButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_repeat_toggle);
         if (repeatToggleButton != null) {
             repeatToggleButton.setOnClickListener(componentListener);
         }
-        shuffleButton = findViewById(R.id.exo_shuffle);
+        shuffleButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_shuffle);
         if (shuffleButton != null) {
             shuffleButton.setOnClickListener(componentListener);
         }
-        vrButton = findViewById(R.id.exo_vr);
+        vrButton = findViewById(com.google.android.exoplayer2.ui.R.id.exo_vr);
         setShowVrButton(false);
         updateButton(false, false, vrButton);
 
         Resources resources = context.getResources();
 
-        buttonAlphaEnabled =
-                (float) resources.getInteger(R.integer.exo_media_button_opacity_percentage_enabled) / 100;
-        buttonAlphaDisabled =
-                (float) resources.getInteger(R.integer.exo_media_button_opacity_percentage_disabled) / 100;
-
-        repeatOffButtonDrawable = resources.getDrawable(R.drawable.exo_controls_repeat_off);
-        repeatOneButtonDrawable = resources.getDrawable(R.drawable.exo_controls_repeat_one);
-        repeatAllButtonDrawable = resources.getDrawable(R.drawable.exo_controls_repeat_all);
-        shuffleOnButtonDrawable = resources.getDrawable(R.drawable.exo_controls_shuffle_on);
-        shuffleOffButtonDrawable = resources.getDrawable(R.drawable.exo_controls_shuffle_off);
-        repeatOffButtonContentDescription =
-                resources.getString(R.string.exo_controls_repeat_off_description);
-        repeatOneButtonContentDescription =
-                resources.getString(R.string.exo_controls_repeat_one_description);
-        repeatAllButtonContentDescription =
-                resources.getString(R.string.exo_controls_repeat_all_description);
-        shuffleOnContentDescription = resources.getString(R.string.exo_controls_shuffle_on_description);
-        shuffleOffContentDescription =
-                resources.getString(R.string.exo_controls_shuffle_off_description);
+        buttonAlphaEnabled = (float) resources.getInteger(com.google.android.exoplayer2.ui.R.integer.exo_media_button_opacity_percentage_enabled) / 100;
+        buttonAlphaDisabled = (float) resources.getInteger(com.google.android.exoplayer2.ui.R.integer.exo_media_button_opacity_percentage_disabled) / 100;
+        repeatOffButtonDrawable = resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_off);
+        repeatOneButtonDrawable = resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_one);
+        repeatAllButtonDrawable = resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_controls_repeat_all);
+        shuffleOnButtonDrawable = resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_controls_shuffle_on);
+        shuffleOffButtonDrawable = resources.getDrawable(com.google.android.exoplayer2.ui.R.drawable.exo_controls_shuffle_off);
+        repeatOffButtonContentDescription = resources.getString(com.google.android.exoplayer2.ui.R.string.exo_controls_repeat_off_description);
+        repeatOneButtonContentDescription = resources.getString(com.google.android.exoplayer2.ui.R.string.exo_controls_repeat_one_description);
+        repeatAllButtonContentDescription = resources.getString(com.google.android.exoplayer2.ui.R.string.exo_controls_repeat_all_description);
+        shuffleOnContentDescription = resources.getString(com.google.android.exoplayer2.ui.R.string.exo_controls_shuffle_on_description);
+        shuffleOffContentDescription = resources.getString(com.google.android.exoplayer2.ui.R.string.exo_controls_shuffle_off_description);
 
         currentPosition = C.TIME_UNSET;
         currentBufferedPosition = C.TIME_UNSET;

@@ -101,7 +101,7 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration
+import kotlin.time.Duration.Companion.seconds
 import kotlin.time.ExperimentalTime
 
 class LocalArchiveController(
@@ -179,7 +179,7 @@ class LocalArchiveController(
 
     mainScope.launch {
       viewModel.controllerTitleInfoUpdatesFlow
-        .debounce(Duration.seconds(1))
+        .debounce(1.seconds)
         .collect { controllerTitleInfo -> updateControllerTitle(controllerTitleInfo) }
     }
 
@@ -655,7 +655,7 @@ class LocalArchiveController(
 
     if (downloadResultMsg == null) {
       Image(
-        painter = painterResource(id = R.drawable.exo_ic_check),
+        painter = painterResource(id = com.google.android.exoplayer2.ui.R.drawable.exo_ic_check),
         contentDescription = null,
         alpha = iconAlpha,
         colorFilter = colorFilter,

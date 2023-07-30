@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.res.ColorStateList
 import android.graphics.Color
 import android.util.AttributeSet
-import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.core_themes.IColorizableWidget
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -15,7 +14,7 @@ import javax.inject.Inject
 class ColorizableTextInputLayout @JvmOverloads constructor(
   context: Context,
   attrs: AttributeSet? = null,
-  defStyleAttr: Int = R.attr.textInputStyle
+  defStyleAttr: Int = com.google.android.material.R.attr.textInputStyle
 ) : TextInputLayout(context, attrs, defStyleAttr), IColorizableWidget {
 
   @Inject

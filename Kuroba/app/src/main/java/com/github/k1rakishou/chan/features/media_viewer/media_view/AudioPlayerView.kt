@@ -31,7 +31,6 @@ import com.github.k1rakishou.core_logger.Logger
 import com.google.android.exoplayer2.upstream.DataSource
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.parcelize.Parcelize
 
@@ -355,9 +354,9 @@ class AudioPlayerView @JvmOverloads constructor(
 
   private fun updatePlayIcon(isNowPlaying: Boolean) {
     val imageDrawable = if (isNowPlaying) {
-      R.drawable.exo_controls_pause
+      com.google.android.exoplayer2.ui.R.drawable.exo_controls_pause
     } else {
-      R.drawable.exo_controls_play
+      com.google.android.exoplayer2.ui.R.drawable.exo_controls_play
     }
 
     audioPlayerPlayPause.setImageResource(imageDrawable)
