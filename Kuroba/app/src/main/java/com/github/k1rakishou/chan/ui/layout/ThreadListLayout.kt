@@ -278,34 +278,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
       }
     }
 
-  private val topAdapterPosition: Int
-    get() {
-      if (layoutManager == null) {
-        return -1
-      }
-
-      when (boardPostViewMode) {
-        BoardPostViewMode.LIST -> return (layoutManager as FixedLinearLayoutManager).findFirstVisibleItemPosition()
-        BoardPostViewMode.GRID,
-        BoardPostViewMode.STAGGER -> {
-          val positions = (layoutManager as StaggeredGridLayoutManager).findFirstVisibleItemPositions(null)
-          if (positions.isEmpty()) {
-            return -1
-          }
-
-          val hasViewTouchingTop = positions.any { position -> position == 0 }
-          if (!hasViewTouchingTop) {
-            return -1
-          }
-
-          return 0
-        }
-        null -> -1
-      }
-
-      return -1
-    }
-
   private val completeBottomAdapterPosition: Int
     get() {
       if (layoutManager == null) {
@@ -959,10 +931,6 @@ class ThreadListLayout(context: Context, attrs: AttributeSet?)
   }
 
   fun canChildScrollUp(): Boolean {
-    if (topAdapterPosition != 0) {
-      return true
-    }
-
     if (replyLayout.presenter.isExpanded) {
       return true
     }
