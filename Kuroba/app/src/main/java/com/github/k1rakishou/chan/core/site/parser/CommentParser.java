@@ -348,7 +348,14 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             return text;
         }
 
-        long postId = Long.parseLong(matcher.group(1));
+        long postId;
+
+        try {
+            postId = Long.parseLong(matcher.group(1));
+        } catch (NumberFormatException error) {
+            // Some bugged value. May happen on 4chan.
+            return text;
+        }
 
         // TODO(KurobaEx / @GhostPosts):
         long postSubNo = 0;
@@ -705,16 +712,28 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             HtmlTag anchorTag,
             PostParser.Callback callback
     ) {
-        PostLinkable.Type type;
-        PostLinkable.Value value;
-
         String href = extractQuote(anchorTag.attrUnescapedOrNull("href"), post);
         Matcher externalMatcher = matchExternalQuote(href, post);
 
+        PostLinkable.Type type = PostLinkable.Type.LINK;
+        PostLinkable.Value value = new PostLinkable.Value.StringValue(href);
+
         if (externalMatcher.find()) {
             String board = externalMatcher.group(1);
-            long threadId = Long.parseLong(externalMatcher.group(2));
-            long postId = Long.parseLong(externalMatcher.group(3));
+
+            long threadId;
+            try {
+                threadId = Long.parseLong(externalMatcher.group(2));
+            } catch (NumberFormatException error) {
+                return new PostLinkable.Link(type, text, value);
+            }
+
+            long postId;
+            try {
+                postId = Long.parseLong(externalMatcher.group(3));
+            } catch (NumberFormatException e) {
+                return new PostLinkable.Link(type, text, value);
+            }
 
             boolean isInternalQuote = board.equals(post.boardDescriptor.getBoardCode())
                     && callback.isInternal(postId)
@@ -732,7 +751,12 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
         } else {
             Matcher quoteMatcher = matchInternalQuote(href, post);
             if (quoteMatcher.matches()) {
-                long postId = Long.parseLong(quoteMatcher.group(1));
+                long postId;
+                try {
+                    postId = Long.parseLong(quoteMatcher.group(1));
+                } catch (NumberFormatException error) {
+                    return new PostLinkable.Link(type, text, value);
+                }
 
                 if (callback.isInternal(postId)) {
                     // TODO(KurobaEx / @GhostPosts): archive ghost posts
@@ -785,11 +809,7 @@ public class CommentParser implements ICommentParser, HasQuotePatterns {
             }
         }
 
-        return new PostLinkable.Link(
-                type,
-                text,
-                value
-        );
+        return new PostLinkable.Link(type, text, value);
     }
 
     protected Matcher matchBoardSearch(String href, ChanPostBuilder post) {
