@@ -1,0 +1,13 @@
+v1.3.24
+Full version:
+- Update dependencies.
+- Implement solved captcha donation. Disabled by default, you will be asked whether you want to participate or not the first time you solve a 4chan captcha. Setting can be changed at any time on 'Experimental settings' screen.
+- Fix a crash when parsing post links which have post ids exceeding Long.MAX_VALUE.
+
+v1.3.23
+- Add a new setting to override the default User-Agent. If you experience problems with bypassing CloudFlare then this setting should help you. It seems like any random string will work, for example "KurobaEx/v1.2.3.4", but you might have to experiment with it.
+- Update Google reverse image search. (Thanks to @EsEnZeT).
+- Revert back the fix that should have consumed weird keyboard crashes. Some people said that it caused weird edit text behavior where it would longtap instead of doing tap to scroll.
+- Update domain for RozenArcana archive.
+- Add ability to use mpv.conf and edit it in the app. (Plugins - Edit mpv.conf).
+- Do not append the same quote multiple times.
