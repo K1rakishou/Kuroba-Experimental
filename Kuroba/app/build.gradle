@@ -165,24 +165,8 @@ android {
         }
 
         release {
-            def isRunningOnTravis = System.getenv("CI") == "true"
-            File propsFile = file('keys.properties')
-
-            if (isRunningOnTravis) {
-                signingConfigs {
-                    release {
-                        storeFile = file("kuroba_ex.jks")
-                        storePassword = System.getenv("keystore_password")
-                        keyAlias = System.getenv("keystore_alias")
-                        keyPassword = System.getenv("keystore_alias_password")
-
-                        v1SigningEnabled true
-                        v2SigningEnabled true
-                    }
-                }
-
-                signingConfig signingConfigs.release
-            } else if (propsFile.exists()) {
+            File propsFile = file('release.properties')
+            if (propsFile.exists()) {
                 Properties props = new Properties()
                 InputStream is = new FileInputStream(propsFile)
                 props.load(is)

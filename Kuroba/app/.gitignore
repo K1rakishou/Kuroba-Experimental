@@ -29,3 +29,6 @@ kuroba_ex.jks
 /src/main/jniLibs/
 /src/main/libs/
 /src/main/obj/
+
+kuroba_ex_release.jks
+release.properties
