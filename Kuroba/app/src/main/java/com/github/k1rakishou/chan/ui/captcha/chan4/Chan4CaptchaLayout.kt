@@ -94,7 +94,6 @@ import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.take
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
@@ -135,12 +134,6 @@ class Chan4CaptchaLayout(
     this.siteDescriptor = siteDescriptor
     this.siteAuthentication = authentication
     this.callback = callback
-
-    scope.launch {
-      viewModel.showCaptchaHelpFlow.take(1).collect {
-        showCaptchaHelp()
-      }
-    }
 
     scope.launch {
       viewModel.notifyUserAboutCaptchaSolverErrorFlow.collect { captchaSolverInfo ->

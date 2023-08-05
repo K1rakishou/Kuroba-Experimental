@@ -530,7 +530,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_mode_post_with_passcode">Post with passcode</string>
     <string name="reply_error_message_with_action">%1$s (Click for action)</string>
     <string name="reply_donate_captcha_title">Captcha donation</string>
-    <string name="reply_donate_captcha_description">Would you like to donate your solved captchas to train a new model for captcha solver?\nYou can change this setting on the \'Experimental settings\' screen at any time.\n\nYou can find more info here: https://github.com/moffatman/chan/issues/144</string>
+    <string name="reply_donate_captcha_description">Would you like to donate your solved captchas to train a new model for captcha solver?\nYou can change this setting on the \'Experimental settings\' screen at any time.\n\nYou can find more info here:\nhttps://github.com/moffatman/chan/issues/144</string>
     <string name="reply_donate_captcha_positive_button_text">Donate</string>
     <string name="reply_donate_captcha_negative_button_text">Do not</string>
 

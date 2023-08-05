@@ -79,10 +79,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)!!
   }
 
-  private val _showCaptchaHelpFlow = MutableSharedFlow<Unit>(extraBufferCapacity = 1)
-  val showCaptchaHelpFlow: SharedFlow<Unit>
-    get() = _showCaptchaHelpFlow.asSharedFlow()
-
   private val _captchaTtlMillisFlow = MutableStateFlow(-1L)
   val captchaTtlMillisFlow: StateFlow<Long>
     get() = _captchaTtlMillisFlow.asStateFlow()
@@ -112,12 +108,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   override suspend fun onViewModelReady() {
-    val captchaSettings = chan4CaptchaSettingsJson.get()
-
-    if (!captchaSettings.captchaHelpShown) {
-      _showCaptchaHelpFlow.tryEmit(Unit)
-      chan4CaptchaSettingsJson.set(captchaSettings.copy(captchaHelpShown = true))
-    }
   }
 
   fun cleanup() {
