@@ -20,6 +20,7 @@ import android.content.Context
 import android.view.KeyEvent
 import android.view.MotionEvent
 import android.widget.Toast
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout.OnRefreshListener
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
@@ -53,7 +54,6 @@ import com.github.k1rakishou.chan.ui.layout.ThreadLayout
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.Toolbar
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
-import com.github.k1rakishou.chan.ui.widget.KurobaSwipeRefreshLayout
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -145,7 +145,7 @@ abstract class ThreadController(
   protected lateinit var showPostsInExternalThreadHelper: ShowPostsInExternalThreadHelper
   protected lateinit var openExternalThreadHelper: OpenExternalThreadHelper
 
-  private lateinit var swipeRefreshLayout: KurobaSwipeRefreshLayout
+  private lateinit var swipeRefreshLayout: SwipeRefreshLayout
   private lateinit var serializedCoroutineExecutor: SerializedCoroutineExecutor
 
   val chanDescriptor: ChanDescriptor?
@@ -163,7 +163,7 @@ abstract class ThreadController(
     threadLayout.create(this, threadControllerType, mainControllerCallbacks.navigationViewContractType)
     threadLayout.setDrawerCallbacks(mainControllerCallbacks)
 
-    swipeRefreshLayout = KurobaSwipeRefreshLayout(context)
+    swipeRefreshLayout = SwipeRefreshLayout(context)
 
     swipeRefreshLayout.setOnChildScrollUpCallback { parent, child ->
       return@setOnChildScrollUpCallback threadLayout.canChildScrollUp()
