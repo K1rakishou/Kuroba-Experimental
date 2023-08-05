@@ -3,17 +3,23 @@ package com.github.k1rakishou.chan.ui.captcha.chan4
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.graphics.Canvas
+import android.graphics.Paint
+import android.graphics.RectF
 import android.util.Base64
 import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
+import androidx.core.graphics.withTranslation
 import androidx.lifecycle.viewModelScope
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
+import com.github.k1rakishou.chan.core.manager.CaptchaImageCache
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
@@ -62,6 +68,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper
+  @Inject
+  lateinit var captchaImageCache: CaptchaImageCache
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -120,6 +128,47 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     captchaTtlUpdateJob = null
 
     _captchaTtlMillisFlow.value = -1L
+  }
+
+  fun cacheCaptcha(uuid: String?, chanDescriptor: ChanDescriptor) {
+    if (uuid == null) {
+      return
+    }
+
+    if (ChanSettings.donateSolvedCaptchaForGreaterGood.get() != ChanSettings.NullableBoolean.True) {
+      return
+    }
+
+    val captchaInfo = (_captchaInfoToShow.value as? AsyncData.Data)?.data
+      ?: return
+
+    val imgBitmap = captchaInfo.imgBitmap ?: return
+
+    val width = imgBitmap.width
+    val height = imgBitmap.height
+    val scrollValue = captchaInfo.sliderValue.value
+
+    val bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+      color = 0xFFEEEEEE.toInt()
+      style = Paint.Style.FILL
+    }
+
+    with(canvas) {
+      drawRect(RectF(0f, 0f, width.toFloat(), height.toFloat()), paint)
+
+      if (captchaInfo.bgBitmapOriginal != null) {
+        canvas.withTranslation(x = (scrollValue * captchaInfo.widthDiff() * -1)) {
+          canvas.drawBitmap(captchaInfo.bgBitmapOriginal, 0f, 0f, null)
+        }
+      }
+
+      canvas.drawBitmap(captchaInfo.imgBitmap, 0f, 0f, null)
+    }
+
+    captchaImageCache.put(uuid, chanDescriptor, bitmap)
   }
 
   fun resetCaptchaForced(chanDescriptor: ChanDescriptor) {
@@ -301,6 +350,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       return CaptchaInfo(
         chanDescriptor = chanDescriptor,
         bgBitmap = null,
+        bgBitmapOriginal = null,
         imgBitmap = null,
         challenge = NOOP_CHALLENGE,
         startedAt = System.currentTimeMillis(),
@@ -318,9 +368,14 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       null
     }
     
-    val bgBitmap = captchaInfoRaw.bg?.let { bgBase64Img ->
+    val (bgBitmap, bgBitmapOriginal) = captchaInfoRaw.bg.let { bgBase64Img ->
+      if (bgBase64Img == null) {
+        return@let null to null
+      }
+
       val bgByteArray = Base64.decode(bgBase64Img, Base64.DEFAULT)
       val bitmap = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
+      val bitmapOriginal = BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
 
       val bgImageBitmap = if (chan4CaptchaSettingsJson.get().sliderCaptchaUseContrastBackground) {
         replaceColor(
@@ -332,7 +387,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         bitmap
       }
 
-      return@let bgImageBitmap
+      return@let bgImageBitmap to bitmapOriginal
     }
 
     val imgBitmap = captchaInfoRaw.img?.let { imgBase64Img ->
@@ -343,6 +398,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     return CaptchaInfo(
       chanDescriptor = chanDescriptor,
       bgBitmap = bgBitmap,
+      bgBitmapOriginal = bgBitmapOriginal,
       imgBitmap = imgBitmap,
       challenge = captchaInfoRaw.challenge!!,
       startedAt = System.currentTimeMillis(),
@@ -480,6 +536,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   class CaptchaInfo(
     val chanDescriptor: ChanDescriptor,
     val bgBitmap: Bitmap?,
+    val bgBitmapOriginal: Bitmap?,
     val imgBitmap: Bitmap?,
     val challenge: String,
     val startedAt: Long,

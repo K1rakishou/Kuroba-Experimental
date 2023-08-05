@@ -529,6 +529,10 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_mode_post_with_captcha_solver">Post with captcha solver</string>
     <string name="reply_mode_post_with_passcode">Post with passcode</string>
     <string name="reply_error_message_with_action">%1$s (Click for action)</string>
+    <string name="reply_donate_captcha_title">Captcha donation</string>
+    <string name="reply_donate_captcha_description">Would you like to donate your solved captchas to train a new model for captcha solver?\nYou can change this setting on the \'Experimental settings\' screen at any time.\n\nYou can find more info here: https://github.com/moffatman/chan/issues/144</string>
+    <string name="reply_donate_captcha_positive_button_text">Donate</string>
+    <string name="reply_donate_captcha_negative_button_text">Do not</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
@@ -731,7 +735,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_update_colors_for_text_selection_cursor_description">Some devices behave weirdly when text selection cursor colors are changed (for example on some xiaomi devices they become stretched vertically). Disabling this setting will make the text selection cursor use the default theme\'s color (which is gray)</string>
     <string name="setting_custom_user_agent">Custom user agent</string>
     <string name="setting_custom_user_agent_description">By default, currently installed WebView\'s user-agent is used for all requests (and for CloudFlare bypass). But it may not work in some situations. So if you experience problems with bypassing CloudFlare try changing this setting. Set it to empty string to use the WebView\'s user agent again.</string>
-
+    <string name="setting_donate_captcha">Donate solved captcha to train captcha solver</string>
 
     <!-- Behavior general group -->
     <string name="settings_screen_behavior">Behavior</string>

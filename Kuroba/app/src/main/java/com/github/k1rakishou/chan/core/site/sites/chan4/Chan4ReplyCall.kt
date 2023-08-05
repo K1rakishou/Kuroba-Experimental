@@ -58,6 +58,10 @@ class Chan4ReplyCall(
   private val boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
+  @get:Synchronized
+  @set:Synchronized
+  private var captchaSolution: CaptchaSolution? = null
+
   @Throws(IOException::class)
   override fun addParameters(
     formBuilder: MultipartBody.Builder,
@@ -106,6 +110,8 @@ class Chan4ReplyCall(
             formBuilder.addFormDataPart("t-response", captchaSolution.solution)
           }
         }
+
+        this.captchaSolution = reply.captchaSolution
       }
 
       if (site is Chan4) {
@@ -216,6 +222,7 @@ class Chan4ReplyCall(
 
     if (replyResponse.threadNo > 0 && replyResponse.postNo > 0) {
       replyResponse.posted = true
+      replyResponse.captchaSolution = this.captchaSolution
       return
     }
 

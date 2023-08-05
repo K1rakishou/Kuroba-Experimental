@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
 import com.github.k1rakishou.chan.core.manager.BookmarksManager;
+import com.github.k1rakishou.chan.core.manager.CaptchaImageCache;
 import com.github.k1rakishou.chan.core.manager.Chan4CloudFlareImagePreloaderManager;
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager;
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager;
@@ -90,6 +91,7 @@ import com.github.k1rakishou.chan.core.watcher.BookmarkWatcherDelegate;
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherCoordinator;
 import com.github.k1rakishou.chan.core.watcher.FilterWatcherDelegate;
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2ServiceDelegate;
+import com.github.k1rakishou.chan.features.posting.CaptchaDonation;
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository;
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate;
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver;
@@ -793,7 +795,8 @@ public class ManagerModule {
             Lazy<LastReplyRepository> lastReplyRepository,
             ChanPostRepository chanPostRepository,
             Lazy<TwoCaptchaSolver> twoCaptchaSolver,
-            Lazy<CaptchaHolder> captchaHolder
+            Lazy<CaptchaHolder> captchaHolder,
+            Lazy<CaptchaDonation> captchaDonation
     ) {
         Logger.deps("PostingServiceDelegate");
         return new PostingServiceDelegate(
@@ -808,7 +811,8 @@ public class ManagerModule {
                 lastReplyRepository,
                 chanPostRepository,
                 twoCaptchaSolver,
-                captchaHolder
+                captchaHolder,
+                captchaDonation
         );
     }
 
@@ -937,6 +941,30 @@ public class ManagerModule {
                 appScope,
                 applicationVisibilityManager
         );
+    }
+
+    @Singleton
+    @Provides
+    public CaptchaDonation provideCaptchaDonation(
+            CoroutineScope appScope,
+            CaptchaImageCache captchaImageCache,
+            RealProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        Logger.deps("CaptchaDonation");
+
+        return new CaptchaDonation(
+                appScope,
+                captchaImageCache,
+                proxiedOkHttpClient
+        );
+    }
+
+    @Singleton
+    @Provides
+    public CaptchaImageCache provideCaptchaImageCache() {
+        Logger.deps("CaptchaImageCache");
+
+        return new CaptchaImageCache();
     }
 
 }

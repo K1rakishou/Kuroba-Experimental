@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.site.http
 
 import com.github.k1rakishou.chan.features.posting.LastReplyRepository
+import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor.Companion.create
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
@@ -73,6 +74,10 @@ class ReplyResponse {
   @get:Synchronized
   @set:Synchronized
   var rateLimitInfo: RateLimitInfo? = null
+
+  @get:Synchronized
+  @set:Synchronized
+  var captchaSolution: CaptchaSolution? = null
 
   val errorMessageShort: String?
     get() = errorMessage?.take(256)

@@ -239,6 +239,24 @@ public class ChanSettings {
         }
     }
 
+    public enum NullableBoolean implements OptionSettingItem {
+        True("True"),
+        False("False"),
+        Undefined("Undefined");
+
+        String name;
+
+        NullableBoolean(String name) {
+            this.name = name;
+        }
+
+        @Override
+        public String getKey() {
+            return name;
+        }
+
+    }
+
     //region Declarations
     //region THREAD WATCHER
     public static BooleanSetting watchEnabled;
@@ -391,6 +409,7 @@ public class ChanSettings {
     public static BooleanSetting mpvUseConfigFile;
     public static BooleanSetting colorizeTextSelectionCursors;
     public static StringSetting customUserAgent;
+    public static OptionsSetting<NullableBoolean> donateSolvedCaptchaForGreaterGood;
     //endregion
 
     //region OTHER
@@ -636,6 +655,12 @@ public class ChanSettings {
             useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
             mpvUseConfigFile = new BooleanSetting(provider, "mpv_use_config_file", false);
             colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
+            donateSolvedCaptchaForGreaterGood = new OptionsSetting<>(
+                    provider,
+                    "donate_solved_captcha_for_greater_good",
+                    NullableBoolean.class,
+                    NullableBoolean.Undefined
+            );
             customUserAgent = new StringSetting(provider, "custom_user_agent", "");
             //endregion
 

@@ -5,6 +5,7 @@ import android.os.Looper
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaLayoutViewModel
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.unreachable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import java.text.SimpleDateFormat
@@ -21,6 +22,7 @@ class CaptchaHolder {
 
   @GuardedBy("itself")
   private val captchaQueue: MutableList<CaptchaInfo> = ArrayList()
+
   fun setListener(descriptor: ChanDescriptor, listener: CaptchaValidationListener?) {
     BackgroundUtils.ensureMainThread()
 
@@ -54,8 +56,16 @@ class CaptchaHolder {
     }
 
     synchronized(captchaQueue) {
-      captchaQueue.add(0, CaptchaInfo(solution, tokenLifetime + System.currentTimeMillis()))
-      Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, solution=$solution, tokenLifetime=$tokenLifetime")
+      captchaQueue.add(
+        0,
+        CaptchaInfo(
+          solution = solution,
+          validUntil = tokenLifetime + System.currentTimeMillis()
+        )
+      )
+
+      Logger.d(TAG, "A new token has been added, validCount: ${captchaQueue.size}, " +
+              "solution=$solution, tokenLifetime=$tokenLifetime")
     }
 
     notifyListener()
@@ -97,6 +107,18 @@ class CaptchaHolder {
         return solution
       }
     }
+
+  fun generateCaptchaUuid(): String {
+    while (true) {
+      val uuid = UUID.randomUUID().toString()
+
+      if (captchaQueue.none { captchaInfo -> captchaInfo.uuid == uuid }) {
+        return uuid
+      }
+    }
+
+    unreachable()
+  }
 
   private fun startTimer() {
     if (running.compareAndSet(false, true)) {
@@ -187,24 +209,41 @@ sealed class CaptchaSolution {
     }
   }
 
-  data class SimpleTokenSolution(val token: String) : CaptchaSolution() {
+  data class SimpleTokenSolution(
+    val token: String
+  ) : CaptchaSolution() {
     override fun toString(): String {
       return "SimpleTokenSolution{token=$token}"
     }
   }
 
-  data class ChallengeWithSolution(val challenge: String, val solution: String) : CaptchaSolution() {
+  data class ChallengeWithSolution(
+    val uuid: String,
+    val challenge: String,
+    val solution: String
+  ) : CaptchaSolution() {
     fun is4chanNoopChallenge(): Boolean {
       return challenge.equals(Chan4CaptchaLayoutViewModel.NOOP_CHALLENGE, ignoreCase = true)
     }
 
     override fun toString(): String {
-      return "ChallengeWithSolution{challenge=$challenge, solution=$solution}"
+      return "ChallengeWithSolution{uuid=${uuid}, challenge=$challenge, solution=$solution}"
     }
   }
 }
 
-class CaptchaInfo(val solution: CaptchaSolution, val validUntil: Long) {
+class CaptchaInfo(
+  val solution: CaptchaSolution,
+  val validUntil: Long
+) {
+  val uuid: String?
+    get() {
+      return when (val sol = solution) {
+        is CaptchaSolution.ChallengeWithSolution -> sol.uuid
+        is CaptchaSolution.SimpleTokenSolution -> null
+      }
+    }
+
   override fun hashCode(): Int {
     return (solution.hashCode()
       + 31 * (validUntil and 0x00000000FFFFFFFFL).toInt()

@@ -794,6 +794,7 @@ sealed class ExperimentalScreen(
     object ShowPrefetchLoadingIndicator : MainSettingsGroup("show_prefetch_loading_indicator")
     object HighResCells : MainSettingsGroup("high_res_cells")
     object ColorizeTextSelectionCursors : MainSettingsGroup("colorize_text_selection_cursors")
+    object DonateCaptchaForGreaterGood : MainSettingsGroup("donate_captcha_for_greater_good")
     object CustomUserAgent : MainSettingsGroup("override_user_agent")
 
     companion object : IGroupIdentifier() {

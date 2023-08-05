@@ -70,7 +70,8 @@ class PostingServiceDelegate(
   private val _lastReplyRepository: Lazy<LastReplyRepository>,
   private val chanPostRepository: ChanPostRepository,
   private val twoCaptchaSolver: Lazy<TwoCaptchaSolver>,
-  private val captchaHolder: Lazy<CaptchaHolder>
+  private val captchaHolder: Lazy<CaptchaHolder>,
+  private val captchaDonation: Lazy<CaptchaDonation>
 ) {
   private val mutex = Mutex()
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
@@ -1259,6 +1260,20 @@ class PostingServiceDelegate(
     }
 
     replyManager.deleteCachedDraftFromDisk(prevChanDescriptor)
+
+    if (ChanSettings.donateSolvedCaptchaForGreaterGood.get() == ChanSettings.NullableBoolean.True) {
+      replyResponse.captchaSolution?.let { captchaSolution ->
+        when (captchaSolution) {
+          is CaptchaSolution.ChallengeWithSolution -> {
+            captchaDonation.get().donateCaptcha(prevChanDescriptor, captchaSolution)
+          }
+
+          is CaptchaSolution.SimpleTokenSolution -> {
+            // no-op
+          }
+        }
+      }
+    }
   }
 
   private fun bookmarkThread(

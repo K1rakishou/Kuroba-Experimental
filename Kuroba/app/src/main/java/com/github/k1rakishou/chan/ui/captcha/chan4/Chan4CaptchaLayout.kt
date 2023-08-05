@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.withScale
 import androidx.core.graphics.withTranslation
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
@@ -656,7 +657,10 @@ class Chan4CaptchaLayout(
     }
 
     val challenge = captchaInfo.challenge
+    val uuid = captchaHolder.generateCaptchaUuid()
+
     val solution = CaptchaSolution.ChallengeWithSolution(
+      uuid = uuid,
       challenge = challenge,
       solution = currentInputValue
     )
@@ -667,9 +671,36 @@ class Chan4CaptchaLayout(
       return
     }
 
+    if (ChanSettings.donateSolvedCaptchaForGreaterGood.get() == ChanSettings.NullableBoolean.Undefined) {
+      dialogFactory.createSimpleConfirmationDialog(
+        context = context,
+        titleTextId = R.string.reply_donate_captcha_title,
+        descriptionTextId = R.string.reply_donate_captcha_description,
+        positiveButtonText = getString(R.string.reply_donate_captcha_positive_button_text),
+        onPositiveButtonClickListener = {
+          ChanSettings.donateSolvedCaptchaForGreaterGood.set(ChanSettings.NullableBoolean.True)
+          finishUpCaptchaVerification(solution, ttl, uuid)
+        },
+        negativeButtonText = getString(R.string.reply_donate_captcha_negative_button_text),
+        onNegativeButtonClickListener = {
+          ChanSettings.donateSolvedCaptchaForGreaterGood.set(ChanSettings.NullableBoolean.False)
+          finishUpCaptchaVerification(solution, ttl, uuid)
+        }
+      )
+    } else {
+      finishUpCaptchaVerification(solution, ttl, uuid)
+    }
+  }
+
+  private fun finishUpCaptchaVerification(
+      solution: CaptchaSolution.ChallengeWithSolution,
+      ttl: Long,
+      uuid: String
+  ) {
     captchaHolder.addNewSolution(solution, ttl)
     callback?.onAuthenticationComplete()
 
+    viewModel.cacheCaptcha(uuid, chanDescriptor)
     viewModel.resetCaptchaForced(chanDescriptor)
   }
 

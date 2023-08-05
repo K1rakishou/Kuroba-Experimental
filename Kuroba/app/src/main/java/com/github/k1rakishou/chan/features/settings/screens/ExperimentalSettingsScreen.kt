@@ -2,12 +2,14 @@ package com.github.k1rakishou.chan.features.settings.screens
 
 import android.content.Context
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.ChanSettings.NullableBoolean
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.ExperimentalScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
 import com.github.k1rakishou.chan.features.settings.setting.BooleanSettingV2
 import com.github.k1rakishou.chan.features.settings.setting.InputSettingV2
+import com.github.k1rakishou.chan.features.settings.setting.ListSettingV2
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 
 class ExperimentalSettingsScreen(
@@ -101,6 +103,23 @@ class ExperimentalSettingsScreen(
           bottomDescriptionIdFunc = { R.string.setting_update_colors_for_text_selection_cursor_description },
           setting = ChanSettings.colorizeTextSelectionCursors,
           requiresRestart = true
+        )
+
+        group += ListSettingV2.createBuilder(
+          context = context,
+          identifier = ExperimentalScreen.MainSettingsGroup.DonateCaptchaForGreaterGood,
+          items = listOf(NullableBoolean.True, NullableBoolean.False, NullableBoolean.Undefined),
+          itemNameMapper = { value ->
+            return@createBuilder when (value) {
+              NullableBoolean.True -> "True"
+              NullableBoolean.False -> "False"
+              NullableBoolean.Undefined -> "Not set"
+            }
+          },
+          topDescriptionIdFunc = { R.string.setting_donate_captcha },
+          bottomDescriptionStringFunc = { name -> name },
+          setting = ChanSettings.donateSolvedCaptchaForGreaterGood,
+          requiresRestart = false
         )
 
         group += InputSettingV2.createBuilder<String>(
