@@ -32,7 +32,6 @@ import com.github.k1rakishou.chan.utils.addOneshotModelBuildListener
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.updatePaddings
 import dagger.Lazy
-import kotlinx.coroutines.FlowPreview
 import javax.inject.Inject
 
 class MainSettingsControllerV2(
@@ -69,7 +68,6 @@ class MainSettingsControllerV2(
     component.inject(this)
   }
 
-  @OptIn(FlowPreview::class)
   override fun onCreate() {
     super.onCreate()
 

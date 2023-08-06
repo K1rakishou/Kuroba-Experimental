@@ -16,7 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.controller
 
+import android.Manifest
 import android.content.Context
+import android.os.Build
 import android.view.View
 import android.view.animation.Animation
 import android.view.animation.RotateAnimation
@@ -48,6 +50,7 @@ import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.ReplyAutoC
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController.SlideChangeListener
 import com.github.k1rakishou.chan.ui.controller.navigation.SplitNavigationController
 import com.github.k1rakishou.chan.ui.controller.navigation.StyledToolbarNavigationController
+import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadLayout.ThreadLayoutCallback
 import com.github.k1rakishou.chan.ui.toolbar.CheckableToolbarMenuSubItem
 import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
@@ -100,6 +103,8 @@ class BrowseController(
   lateinit var _siteResolver: Lazy<SiteResolver>
   @Inject
   lateinit var _firewallBypassManager: Lazy<FirewallBypassManager>
+  @Inject
+  lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
 
   private val boardManager: BoardManager
     get() = _boardManager.get()
@@ -171,6 +176,10 @@ class BrowseController(
           onFinished.complete(Unit)
         }
       }
+    }
+
+    mainScope.launch {
+      requestApi33NotificationsPermissionOnce()
     }
   }
 
@@ -1224,6 +1233,36 @@ class BrowseController(
       FirewallType.YandexSmartCaptcha -> {
         // No-op. We only handle Yandex's captcha in one place (ImageSearchController)
       }
+    }
+  }
+
+  private fun requestApi33NotificationsPermissionOnce() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
+      return
+    }
+
+    if (ChanSettings.api33NotificationPermissionRequested.get()) {
+      return
+    }
+
+    if (runtimePermissionsHelper.hasPermission(Manifest.permission.POST_NOTIFICATIONS)) {
+      return
+    }
+
+    runtimePermissionsHelper.requestPermission(
+      Manifest.permission.POST_NOTIFICATIONS
+    ) { granted ->
+      ChanSettings.api33NotificationPermissionRequested.set(true)
+
+      if (granted) {
+        return@requestPermission
+      }
+
+      dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = context.getString(R.string.api_33_android_13_notifications_permission_title),
+        descriptionText = context.getString(R.string.api_33_android_13_notifications_permission_descriptor),
+      )
     }
   }
 
