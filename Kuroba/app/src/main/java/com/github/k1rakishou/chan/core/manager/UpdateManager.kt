@@ -646,6 +646,12 @@ class UpdateManager(
   }
 
   private fun updateInstallRequested(responseRelease: ReleaseUpdateApiResponse) {
+    if (AndroidUtils.isAndroid13()) {
+      // Can't request WRITE_EXTERNAL_STORAGE on API 33+
+      doUpdate(responseRelease)
+      return
+    }
+
     val runtimePermissionsHelper = (context as ControllerHostActivity).runtimePermissionsHelper
 
     if (runtimePermissionsHelper.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
