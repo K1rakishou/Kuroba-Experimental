@@ -47,7 +47,7 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import java.io.IOException
-import java.util.*
+import java.util.Objects
 import java.util.concurrent.TimeUnit
 
 class DvachReplyCall internal constructor(
@@ -228,9 +228,7 @@ class DvachReplyCall internal constructor(
       }
 
       replyResponse.errorMessage = errorText
-      replyResponse.probablyBanned = replyResponse.errorMessage
-        ?.contains(PROBABLY_BANNED_TEXT, ignoreCase = true)
-        ?: false
+      replyResponse.banInfo = checkInBanned()
 
       return
     }
@@ -265,6 +263,18 @@ class DvachReplyCall internal constructor(
 
     Logger.e(TAG, "Couldn't handle server response! response = \"$result\"")
     replyResponse.errorMessage = "Failed to post, see the logs for more info"
+  }
+
+  private fun checkInBanned(): ReplyResponse.BanInfo? {
+    return replyResponse.errorMessage
+      ?.contains(PROBABLY_BANNED_TEXT, ignoreCase = true)
+      ?.let { isBanned ->
+        return@let if (isBanned) {
+          ReplyResponse.BanInfo.Banned
+        } else {
+          null
+        }
+      }
   }
 
   // usercode_auth=1234567890abcdef

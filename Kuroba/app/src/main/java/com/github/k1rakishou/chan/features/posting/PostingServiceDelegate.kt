@@ -754,6 +754,14 @@ class PostingServiceDelegate(
           actualPostResult = actualPostResult,
           chanDescriptor = chanDescriptor
         )
+      } else if (postResult.replyResponse.banInfo != null) {
+        emitTerminalEvent(
+          chanDescriptor = chanDescriptor,
+          postResult = PostResult.Banned(
+            banMessage = postResult.replyResponse.errorMessage,
+            banInfo = postResult.replyResponse.banInfo!!
+          )
+        )
       } else {
         emitTerminalEvent(
           chanDescriptor = chanDescriptor,
@@ -1097,7 +1105,7 @@ class PostingServiceDelegate(
 
     val lastReplyRepository = _lastReplyRepository.get()
 
-    when (postResult) {
+    when (val result = postResult) {
       PostResult.Canceled -> {
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Canceled)
         lastReplyRepository.onPostAttemptFinished(
@@ -1106,7 +1114,19 @@ class PostingServiceDelegate(
         )
       }
       is PostResult.Error -> {
-        val errorMessage = postResult.throwable.errorMessageOrClassName()
+        val errorMessage = result.throwable.errorMessageOrClassName()
+
+        updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
+        lastReplyRepository.onPostAttemptFinished(
+          chanDescriptor = chanDescriptor,
+          postedSuccessfully = false
+        )
+      }
+      is PostResult.Banned -> {
+        val errorMessage = when (result.banInfo) {
+          is ReplyResponse.BanInfo.Banned -> getString(R.string.post_service_response_probably_banned)
+          is ReplyResponse.BanInfo.Warned -> getString(R.string.post_service_response_probably_warned)
+        }
 
         updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Error(errorMessage))
         lastReplyRepository.onPostAttemptFinished(
@@ -1115,7 +1135,7 @@ class PostingServiceDelegate(
         )
       }
       is PostResult.Success -> {
-        val replyResponse = postResult.replyResponse
+        val replyResponse = result.replyResponse
         if (replyResponse.posted) {
           updateChildNotification(chanDescriptor, ChildNotificationInfo.Status.Posted(chanDescriptor))
           lastReplyRepository.onPostAttemptFinished(
@@ -1147,7 +1167,12 @@ class PostingServiceDelegate(
 
         val errorMessage = when {
           replyResponse.errorMessage.isNotNullNorBlank() -> replyResponse.errorMessage!!
-          replyResponse.probablyBanned -> getString(R.string.post_service_response_probably_banned)
+          replyResponse.banInfo != null -> {
+            when (replyResponse.banInfo!!) {
+              is ReplyResponse.BanInfo.Banned -> getString(R.string.post_service_response_probably_banned)
+              is ReplyResponse.BanInfo.Warned -> getString(R.string.post_service_response_probably_warned)
+            }
+          }
           replyResponse.requireAuthentication -> getString(R.string.post_service_response_authentication_required)
           replyResponse.additionalResponseData !is ReplyResponse.AdditionalResponseData.NoOp -> {
             when (replyResponse.additionalResponseData) {

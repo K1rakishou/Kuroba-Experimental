@@ -528,11 +528,13 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_mode_attempt_post_without_captcha">Attempt to post without captcha</string>
     <string name="reply_mode_post_with_captcha_solver">Post with captcha solver</string>
     <string name="reply_mode_post_with_passcode">Post with passcode</string>
-    <string name="reply_error_message_with_action">%1$s (Click for action)</string>
     <string name="reply_donate_captcha_title">Captcha donation</string>
     <string name="reply_donate_captcha_description">Would you like to donate your solved captchas to train a new model for captcha solver?\nYou can change this setting on the \'Experimental settings\' screen at any time.\n\nYou can find more info here:\nhttps://github.com/moffatman/chan/issues/144</string>
     <string name="reply_donate_captcha_positive_button_text">Donate</string>
     <string name="reply_donate_captcha_negative_button_text">Do not</string>
+    <string name="reply_layout_info_title">Information</string>
+    <string name="reply_layout_info_title_ban_info">Ban info</string>
+    <string name="reply_layout_info_title_warning_info">Warning info</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
@@ -1326,6 +1328,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="post_service_processing">Processing replies</string>
     <string name="post_service_processing_count">Processing %1$d replies</string>
     <string name="post_service_response_probably_banned">You are probably banned</string>
+    <string name="post_service_response_probably_warned">You are probably warned</string>
     <string name="post_service_response_authentication_required">Authentication required</string>
     <string name="post_service_response_dvach_antispam_detected">Dvach anti-spam script detected</string>
     <string name="post_service_response_unknown_error">Unknown error</string>

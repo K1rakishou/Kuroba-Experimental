@@ -2,29 +2,26 @@ package com.github.k1rakishou.chan.features.bypass
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.webkit.ConsoleMessage
 import android.webkit.CookieManager
-import android.webkit.WebChromeClient
 import android.webkit.WebSettings
 import android.webkit.WebStorage
 import android.webkit.WebView
 import android.webkit.WebViewDatabase
 import android.widget.FrameLayout
-import android.widget.LinearLayout
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.constraintlayout.widget.ConstraintLayout
-import androidx.core.view.updateLayoutParams
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.prefs.MapSetting
 import com.github.k1rakishou.prefs.StringSetting
 import kotlinx.coroutines.CompletableDeferred
@@ -38,15 +35,17 @@ class SiteFirewallBypassController(
   val firewallType: FirewallType,
   private val urlToOpen: String,
   private val onResult: (CookieResult) -> Unit
-) : BaseFloatingController(context) {
+) : BaseFloatingController(context), ThemeEngine.ThemeChangesListener {
 
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
   lateinit var siteResolver: SiteResolver
+  @Inject
+  lateinit var themeEngine: ThemeEngine
 
   private lateinit var webView: WebView
-  private lateinit var closeButton: ColorizableButton
+  private lateinit var closeButton: ImageView
 
   private var resultNotified = false
 
@@ -112,15 +111,30 @@ class SiteFirewallBypassController(
       webView.stopLoading()
     }
 
+    if (::themeEngine.isInitialized) {
+      themeEngine.removeListener(this)
+    }
+
     if (!cookieResultCompletableDeferred.isCompleted) {
       cookieResultCompletableDeferred.complete(CookieResult.Canceled)
       notifyAboutResult(CookieResult.Canceled)
     }
   }
 
+  override fun onThemeChanged() {
+    val tintedDrawable = themeEngine.tintDrawable(
+      drawable = closeButton.drawable,
+      isCurrentColorDark = ThemeEngine.isDarkColor(themeEngine.chanTheme.backColor)
+    )
+
+    closeButton.setImageDrawable(tintedDrawable)
+  }
+
   @SuppressLint("SetJavaScriptEnabled")
   private fun onCreateInternal() {
     val webViewContainer = view.findViewById<FrameLayout>(R.id.web_view_container)
+
+    themeEngine.addListener(this)
 
     webView = WebView(context, null, android.R.attr.webViewStyle).apply {
       layoutParams = FrameLayout.LayoutParams(
@@ -166,8 +180,15 @@ class SiteFirewallBypassController(
     webSettings.cacheMode = WebSettings.LOAD_DEFAULT
     webSettings.userAgentString = appConstants.userAgent
 
+    val siteRequestModifier = siteResolver.findSiteForUrl(urlToOpen)?.requestModifier()
+    if (siteRequestModifier != null) {
+      siteRequestModifier.modifyWebView(webView)
+    }
+
     webView.webViewClient = webClient
     webView.loadUrl(urlToOpen)
+
+    onThemeChanged()
 
     mainScope.launch {
       waitAndHandleResult()

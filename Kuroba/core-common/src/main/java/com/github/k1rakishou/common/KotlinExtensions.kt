@@ -1558,6 +1558,7 @@ fun MediaType.isJson(): Boolean {
 
 private const val HTTP = "http://"
 private const val HTTPS = "https://"
+private const val WWW = "www."
 
 fun fixUrlOrNull(inputUrlRaw: String?): String? {
   if (inputUrlRaw == null) {
@@ -1568,19 +1569,25 @@ fun fixUrlOrNull(inputUrlRaw: String?): String? {
 }
 
 fun fixUrl(inputUrlRaw: String): String {
-  if (inputUrlRaw.startsWith("//")) {
-    return HTTPS + inputUrlRaw.removePrefix("//")
+  var url = inputUrlRaw
+
+  if (url.startsWith("//")) {
+    url = url.removePrefix("//")
   }
 
-  if (inputUrlRaw.startsWith(HTTPS)) {
-    return inputUrlRaw
+  if (url.startsWith(WWW)) {
+    url = url.removePrefix(WWW)
   }
 
-  if (inputUrlRaw.startsWith(HTTP)) {
-    return HTTPS + inputUrlRaw.removePrefix(HTTP)
+  if (url.startsWith(HTTPS)) {
+    return url
   }
 
-  return HTTPS + inputUrlRaw
+  if (url.startsWith(HTTP)) {
+    return HTTPS + url.removePrefix(HTTP)
+  }
+
+  return HTTPS + url
 }
 
 fun HttpUrl.domain(): String? {

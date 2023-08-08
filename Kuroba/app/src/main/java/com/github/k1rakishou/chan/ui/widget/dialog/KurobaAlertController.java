@@ -75,6 +75,8 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
     private TextView mMessageView;
     private View mCustomTitleView;
 
+    private @Nullable LinkMovementMethod customLinkMovementMethod;
+
     Handler mHandler;
 
     @Inject
@@ -202,8 +204,13 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
         if (mMessageView != null) {
             mMessageView.setTextColor(themeEngine.getChanTheme().getTextColorPrimary());
             mMessageView.setLinkTextColor(themeEngine.getChanTheme().getPostLinkColor());
-            mMessageView.setMovementMethod(LinkMovementMethod.getInstance());
             mMessageView.setTextIsSelectable(true);
+
+            if (customLinkMovementMethod != null) {
+                mMessageView.setMovementMethod(customLinkMovementMethod);
+            } else {
+                mMessageView.setMovementMethod(LinkMovementMethod.getInstance());
+            }
 
             ViewUtils.setEditTextCursorColor(mMessageView, themeEngine.getChanTheme());
             ViewUtils.setHandlesColors(mMessageView, themeEngine.getChanTheme());
@@ -651,6 +658,10 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
         }
     }
 
+    private void setCustomLinkMovementMethod(LinkMovementMethod customLinkMovementMethod) {
+        this.customLinkMovementMethod = customLinkMovementMethod;
+    }
+
     private void centerButton(Button button) {
         LinearLayout.LayoutParams params = (LinearLayout.LayoutParams) button.getLayoutParams();
         params.gravity = Gravity.CENTER_HORIZONTAL;
@@ -671,6 +682,7 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
         public DialogInterface.OnClickListener mNegativeButtonListener;
         public CharSequence mNeutralButtonText;
         public DialogInterface.OnClickListener mNeutralButtonListener;
+        public @Nullable LinkMovementMethod customLinkMovementMethod;
         public boolean mCancelable;
         public int mViewLayoutResId;
         public View mView;
@@ -687,6 +699,8 @@ public class KurobaAlertController implements ThemeEngine.ThemeChangesListener {
         }
 
         public void apply(KurobaAlertController dialog) {
+            dialog.setCustomLinkMovementMethod(customLinkMovementMethod);
+
             if (mCustomTitleView != null) {
                 dialog.setCustomTitle(mCustomTitleView);
             } else {

@@ -10,7 +10,6 @@ interface ReplyLayoutFilesAreaView {
   fun hideLoadingView()
   fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int)
   fun showFileStatusMessage(fileStatusString: String)
-  fun showReplyLayoutMessage(message: String?, hideDelayMs: Int)
 
   fun onDontKeepActivitiesSettingDetected()
 }

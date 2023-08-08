@@ -7,11 +7,16 @@ import android.graphics.Typeface
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
+import android.text.method.LinkMovementMethod
 import android.text.style.BackgroundColorSpan
 import android.text.style.CharacterStyle
+import android.text.style.ClickableSpan
 import android.text.style.ImageSpan
 import android.text.style.StyleSpan
 import android.text.style.TypefaceSpan
+import android.view.MotionEvent
+import android.view.View
+import android.widget.TextView
 import androidx.core.graphics.ColorUtils
 import androidx.core.graphics.drawable.toBitmap
 import androidx.core.text.getSpans
@@ -297,6 +302,72 @@ object SpannableHelper {
 
     iconSpan.drawable.setBounds(0, 0, width, fontSizePx)
     return iconSpan
+  }
+
+}
+
+class WebViewLink(
+  val type: Type,
+  val link: String
+) : ClickableSpan() {
+
+  override fun onClick(widget: View) {
+  }
+
+  enum class Type {
+    BanMessage
+  }
+
+}
+
+class WebViewLinkMovementMethod(
+  private val webViewLinkClickListener: ClickListener
+) : LinkMovementMethod() {
+
+  override fun onTouchEvent(widget: TextView?, buffer: Spannable?, event: MotionEvent?): Boolean {
+    val actionMasked = event?.actionMasked
+
+    if (widget != null && buffer != null && actionMasked != null) {
+      var x = event.x.toInt()
+      var y = event.y.toInt()
+
+      x -= widget.totalPaddingLeft
+      y -= widget.totalPaddingTop
+      x += widget.scrollX
+      y += widget.scrollY
+
+      val layout = widget.layout
+      val line = layout.getLineForVertical(y)
+      val lineLeft = layout.getLineLeft(line)
+      val lineRight = layout.getLineRight(line)
+
+      if (clickCoordinatesHitPostComment(x, lineLeft, lineRight)) {
+        val offset = layout.getOffsetForHorizontal(line, x.toFloat())
+        val clickableSpan = buffer.getSpans(offset, offset, ClickableSpan::class.java)?.lastOrNull()
+        if (clickableSpan != null) {
+          if (actionMasked == MotionEvent.ACTION_UP) {
+            if (clickableSpan is WebViewLink) {
+              webViewLinkClickListener.onWebViewLinkClick(clickableSpan.type, clickableSpan.link)
+            } else {
+              clickableSpan.onClick(widget)
+            }
+          }
+
+          return true
+        }
+      }
+    }
+
+    return super.onTouchEvent(widget, buffer, event)
+  }
+
+
+  private fun clickCoordinatesHitPostComment(x: Int, lineLeft: Float, lineRight: Float): Boolean {
+    return x >= lineLeft && x < lineRight
+  }
+
+  interface ClickListener {
+    fun onWebViewLinkClick(type: WebViewLink.Type, link: String)
   }
 
 }

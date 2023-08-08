@@ -126,6 +126,7 @@ import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController;
 import com.github.k1rakishou.chan.ui.controller.LicensesController;
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController;
 import com.github.k1rakishou.chan.ui.controller.LogsController;
+import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController;
 import com.github.k1rakishou.chan.ui.controller.PopupController;
 import com.github.k1rakishou.chan.ui.controller.PostLinksController;
 import com.github.k1rakishou.chan.ui.controller.PostOmittedImagesController;
@@ -287,6 +288,7 @@ public interface ActivityComponent {
     void inject(AddOrEditBooruController addOrEditBooruController);
     void inject(ImageSearchController imageSearchController);
     void inject(EditMpvConfController editMpvConfController);
+    void inject(OpenUrlInWebViewController openUrlInWebViewController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

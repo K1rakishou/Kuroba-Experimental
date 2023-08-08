@@ -38,8 +38,6 @@ import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
-import com.github.k1rakishou.chan.features.reply.floating_message_actions.Chan4OpenBannedUrlClickAction
-import com.github.k1rakishou.chan.features.reply.floating_message_actions.IFloatingReplyMessageClickAction
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.controller.CaptchaContainerController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
@@ -48,6 +46,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.board.ChanBoard
@@ -90,15 +89,11 @@ class ReplyPresenter @Inject constructor(
 
   private var currentChanDescriptor: ChanDescriptor? = null
   private var previewOpen = false
-  private var floatingReplyMessageClickAction: IFloatingReplyMessageClickAction? = null
   private var postingStatusUpdatesJob: Job? = null
   private var postingCheckLastErrorJob: Job? = null
 
   private val job = SupervisorJob()
   private val commentEditingHistory = CommentEditingHistory(this)
-
-  val floatingReplyMessageHasClickAction: Boolean
-    get() = floatingReplyMessageClickAction != null
 
   private val replyManager: ReplyManager
     get() = _replyManager.get()
@@ -247,6 +242,9 @@ class ReplyPresenter @Inject constructor(
             }
             is PostResult.Error -> {
               onPostError(postResult.throwable)
+            }
+            is PostResult.Banned -> {
+              onPostErrorBanned(postResult.banMessage, postResult.banInfo)
             }
             is PostResult.Success -> {
               onPostComplete(
@@ -599,7 +597,7 @@ class ReplyPresenter @Inject constructor(
       .valueOrNull()
 
     if (hasSelectedFiles == null) {
-      callback.openMessage(getString(R.string.reply_failed_to_prepare_reply))
+      callback.dialogMessage(getString(R.string.reply_failed_to_prepare_reply))
       return false
     }
 
@@ -607,7 +605,7 @@ class ReplyPresenter @Inject constructor(
       callback.loadViewsIntoDraft(chanDescriptor)
 
       if (!isAuthenticateOnly && !hasSelectedFiles && reply.isCommentEmpty()) {
-        callback.openMessage(getString(R.string.reply_comment_empty))
+        callback.dialogMessage(getString(R.string.reply_comment_empty))
         return@readReply false
       }
 
@@ -710,13 +708,12 @@ class ReplyPresenter @Inject constructor(
     commentEditingHistory.clear()
 
     callback.highlightPosts(emptySet())
-    callback.openMessage(null)
+    callback.dialogMessage(null)
     callback.setExpanded(expanded = false, isCleaningUp = true)
     callback.openSubject(false)
     callback.hideFlag()
     callback.openNameOptions(false)
     callback.updateRevertChangeButtonVisibility(isBufferEmpty = true)
-    removeFloatingReplyMessageClickAction()
   }
 
   private fun makeSubmitCall(
@@ -738,7 +735,25 @@ class ReplyPresenter @Inject constructor(
     }
 
     val errorMessage = getString(R.string.reply_error_message, exception.errorMessageOrClassName())
-    callback.openMessage(errorMessage)
+    callback.dialogMessage(errorMessage)
+  }
+
+  private fun onPostErrorBanned(banMessage: CharSequence?, banInfo: ReplyResponse.BanInfo) {
+    val title = when (banInfo) {
+      ReplyResponse.BanInfo.Banned -> getString(R.string.reply_layout_info_title_ban_info)
+      ReplyResponse.BanInfo.Warned -> getString(R.string.reply_layout_info_title_warning_info)
+    }
+
+    val message = if (banMessage.isNotNullNorBlank()) {
+      banMessage
+    } else {
+      when (banInfo) {
+        ReplyResponse.BanInfo.Banned -> getString(R.string.post_service_response_probably_banned)
+        ReplyResponse.BanInfo.Warned -> getString(R.string.post_service_response_probably_warned)
+      }
+    }
+
+    callback.dialogMessage(title, message)
   }
 
   private suspend fun onPostComplete(
@@ -784,8 +799,6 @@ class ReplyPresenter @Inject constructor(
   }
 
   private fun onPostCompleteUnsuccessful(replyResponse: ReplyResponse, additionalErrorMessage: String? = null) {
-    updateFloatingReplyMessageClickAction(replyResponse)
-
     val errorMessage = when {
       additionalErrorMessage != null -> {
         getString(R.string.reply_error_message, additionalErrorMessage)
@@ -806,16 +819,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
-    callback.openMessage(errorMessage)
-  }
-
-  private fun updateFloatingReplyMessageClickAction(replyResponse: ReplyResponse) {
-    if (replyResponse.siteDescriptor?.is4chan() == true && replyResponse.probablyBanned) {
-      this.floatingReplyMessageClickAction = Chan4OpenBannedUrlClickAction()
-      return
-    }
-
-    removeFloatingReplyMessageClickAction()
+    callback.dialogMessage(errorMessage)
   }
 
   private suspend fun onPostedSuccessfully(
@@ -900,16 +904,6 @@ class ReplyPresenter @Inject constructor(
     }, 250)
   }
 
-  fun executeFloatingReplyMessageClickAction() {
-    floatingReplyMessageClickAction?.execute()
-    floatingReplyMessageClickAction = null
-  }
-
-  fun removeFloatingReplyMessageClickAction() {
-    callback.hideReplyInputErrorMessage()
-    floatingReplyMessageClickAction = null
-  }
-
   suspend fun isReplyLayoutEnabled(): Boolean {
     val descriptor = currentChanDescriptor
       ?: return true
@@ -923,13 +917,6 @@ class ReplyPresenter @Inject constructor(
     }, 125)
   }
 
-  fun onReplyInputErrorMessageClicked() {
-    val descriptor = currentChanDescriptor
-      ?: return
-
-    launch { postingServiceDelegate.cancel(descriptor) }
-  }
-
   interface ReplyPresenterCallback {
     val chanDescriptor: ChanDescriptor?
     val selectionStart: Int
@@ -940,8 +927,8 @@ class ReplyPresenter @Inject constructor(
     fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)
     fun adjustSelection(start: Int, amount: Int)
     fun setInputPage()
-    fun openMessage(message: String?)
-    fun openMessage(message: String?, hideDelayMs: Int)
+    fun dialogMessage(message: CharSequence?)
+    fun dialogMessage(title: String, message: CharSequence?)
     fun openOrCloseReply(open: Boolean)
     fun onPosted()
     fun setCommentHint(hint: String?)
@@ -961,7 +948,6 @@ class ReplyPresenter @Inject constructor(
     fun openCommentEqnButton(open: Boolean)
     fun openCommentMathButton(open: Boolean)
     fun openCommentSJISButton(open: Boolean)
-    fun hideReplyInputErrorMessage()
     fun updateCommentCount(count: Int, maxCount: Int, over: Boolean)
     fun highlightPosts(postDescriptors: Set<PostDescriptor>)
     fun showThread(threadDescriptor: ChanDescriptor.ThreadDescriptor)

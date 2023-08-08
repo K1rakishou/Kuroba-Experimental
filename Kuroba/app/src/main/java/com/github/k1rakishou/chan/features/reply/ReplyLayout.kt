@@ -25,6 +25,7 @@ import android.graphics.Typeface
 import android.os.Build
 import android.text.Editable
 import android.text.Selection
+import android.text.Spannable
 import android.text.TextWatcher
 import android.text.style.StrikethroughSpan
 import android.text.style.StyleSpan
@@ -46,8 +47,8 @@ import android.widget.TextView.BufferType
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.animation.doOnEnd
-import androidx.core.animation.doOnStart
 import androidx.core.content.ContextCompat
+import androidx.core.text.getSpans
 import androidx.core.widget.addTextChangedListener
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
@@ -56,6 +57,7 @@ import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
+import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
@@ -74,6 +76,7 @@ import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder.CaptchaValidationListener
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
+import com.github.k1rakishou.chan.ui.controller.OpenUrlInWebViewController
 import com.github.k1rakishou.chan.ui.controller.ThreadSlideController
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
 import com.github.k1rakishou.chan.ui.layout.ThreadListLayout
@@ -87,18 +90,20 @@ import com.github.k1rakishou.chan.ui.view.ReplyInputEditText.SelectionChangedLis
 import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.widget.CancellableToast
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog.AlertDialogHandle
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.WebViewLink
+import com.github.k1rakishou.chan.utils.WebViewLinkMovementMethod
 import com.github.k1rakishou.chan.utils.doIgnoringTextWatcher
-import com.github.k1rakishou.chan.utils.setAlphaFast
 import com.github.k1rakishou.chan.utils.setEnabledFast
 import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.findAllChildren
-import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isPointInsideView
 import com.github.k1rakishou.common.selectionEndSafe
@@ -113,7 +118,6 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
-import com.google.android.material.textview.MaterialTextView
 import dagger.Lazy
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -131,7 +135,8 @@ class ReplyLayout @JvmOverloads constructor(
   KeyboardStateListener,
   WindowInsetsListener,
   ThemeChangesListener,
-  ReplyLayoutFilesArea.ReplyLayoutCallbacks {
+  ReplyLayoutFilesArea.ReplyLayoutCallbacks,
+  WebViewLinkMovementMethod.ClickListener {
 
   @Inject
   lateinit var _presenter: Lazy<ReplyPresenter>
@@ -155,6 +160,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var _appSettingsUpdateAppRefreshHelper: Lazy<AppSettingsUpdateAppRefreshHelper>
   @Inject
   lateinit var _themeEngine: Lazy<ThemeEngine>
+  @Inject
+  lateinit var dialogFactory: DialogFactory
 
   val presenter: ReplyPresenter
     get() = _presenter.get()
@@ -184,13 +191,11 @@ class ReplyLayout @JvmOverloads constructor(
 
   private var blockSelectionChange = false
   private var replyLayoutEnabled = true
+  private var dialogHandle: AlertDialogHandle? = null
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
 
   // Reply views:
   private lateinit var replyInputLayout: ViewGroup
-  private lateinit var replyInputMessage: MaterialTextView
-  private lateinit var replyInputCloseErrorIcon: AppCompatImageView
-  private lateinit var replyInputMessageHolder: LinearLayout
   private lateinit var name: ColorizableEditText
   private lateinit var subject: ColorizableEditText
   private lateinit var flag: ColorizableTextView
@@ -247,10 +252,6 @@ class ReplyLayout @JvmOverloads constructor(
     context,
     replyLayoutGestureListener
   )
-
-  private val closeMessageRunnable = Runnable {
-    animateReplyInputMessage(appearance = false)
-  }
 
   private val customSelectionActionCallback = object : ActionMode.Callback {
     private var quoteMenuItem: MenuItem? = null
@@ -404,14 +405,6 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun onThemeChanged() {
-    val replyInputMessageHolderBackColor = if (themeEngine.chanTheme.isBackColorDark) {
-      ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, 1.2f)
-    } else {
-      ThemeEngine.manipulateColor(themeEngine.chanTheme.backColor, .8f)
-    }
-
-    replyInputMessageHolder.setBackgroundColor(replyInputMessageHolderBackColor)
-
     commentCounter.setTextColor(themeEngine.chanTheme.textColorSecondary)
     val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
 
@@ -425,10 +418,6 @@ class ReplyLayout @JvmOverloads constructor(
 
     if (submit.drawable != null) {
       submit.setImageDrawable(themeEngine.tintDrawable(submit.drawable, tintColor))
-    }
-
-    if (replyInputCloseErrorIcon.drawable != null) {
-      replyInputCloseErrorIcon.setImageDrawable(themeEngine.tintDrawable(replyInputCloseErrorIcon.drawable, tintColor))
     }
 
     commentCounter.setTextColor(
@@ -485,9 +474,6 @@ class ReplyLayout @JvmOverloads constructor(
       AppModuleAndroidUtils.inflate(context, R.layout.layout_reply_input, this, false) as ViewGroup
     }
 
-    replyInputMessage = replyInputLayout.findViewById(R.id.reply_input_message)
-    replyInputCloseErrorIcon = replyInputLayout.findViewById(R.id.reply_input_close_error_icon)
-    replyInputMessageHolder = replyInputLayout.findViewById(R.id.reply_input_message_holder)
     name = replyInputLayout.findViewById(R.id.name)
     subject = replyInputLayout.findViewById(R.id.subject)
     flag = replyInputLayout.findViewById(R.id.flag)
@@ -530,15 +516,6 @@ class ReplyLayout @JvmOverloads constructor(
     commentEqnButton.setOnClickListener(this)
     commentSJISButton.setOnClickListener(this)
     flag.setOnClickListener(this)
-
-    replyInputMessage.setOnClickListener {
-      onReplyInputErrorMessageClicked()
-      presenter.executeFloatingReplyMessageClickAction()
-    }
-
-    replyInputCloseErrorIcon.setOnClickListener {
-      onReplyInputErrorMessageClicked()
-    }
 
     commentRevertChangeButton.setOnClickListener(this)
     commentRevertChangeButton.setOnLongClickListener {
@@ -624,6 +601,16 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
+  override fun onWebViewLinkClick(type: WebViewLink.Type, link: String) {
+    Logger.d(TAG, "onWebViewLinkClick type: ${type}, link: ${link}")
+
+    when (type) {
+      WebViewLink.Type.BanMessage -> {
+        presentController(OpenUrlInWebViewController(context, link))
+      }
+    }
+  }
+
   fun onCreate(
     replyLayoutCallback: ThreadListLayoutCallbacks,
     threadListLayoutCallbacks: ReplyLayoutFilesArea.ThreadListLayoutCallbacks
@@ -676,7 +663,6 @@ class ReplyLayout @JvmOverloads constructor(
 
   fun cleanup() {
     presenter.unbindChanDescriptor()
-    removeCallbacks(closeMessageRunnable)
   }
 
   fun onOpen(open: Boolean) {
@@ -687,7 +673,7 @@ class ReplyLayout @JvmOverloads constructor(
       updateCommentButtonsHolderVisibility()
 
       if (proxyStorage.isDirty()) {
-        openMessage(getString(R.string.reply_proxy_list_is_dirty_message), 10000)
+        showToast(context, getString(R.string.reply_proxy_list_is_dirty_message))
       }
 
       updateCaptchaContainerVisibility()
@@ -788,10 +774,6 @@ class ReplyLayout @JvmOverloads constructor(
     BackgroundUtils.ensureMainThread()
 
     wrappingModeUpdateDebouncer.post({ updateWrappingMode() }, 250L)
-  }
-
-  override fun showReplyLayoutMessage(message: String, duration: Int) {
-    openMessage(message, duration)
   }
 
   fun onBack(): Boolean {
@@ -1092,7 +1074,6 @@ class ReplyLayout @JvmOverloads constructor(
     val enable = presenter.isReplyLayoutEnabled()
     replyLayoutEnabled = enable
 
-    replyInputMessage.setEnabledFast(enable)
     name.setEnabledFast(enable)
     subject.setEnabledFast(enable)
     flag.setEnabledFast(enable)
@@ -1146,57 +1127,42 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  override fun openMessage(message: String?) {
-    openMessage(message, 5000)
+  override fun dialogMessage(message: CharSequence?) {
+    dialogMessage(getString(R.string.reply_layout_info_title), message)
   }
 
-  override fun openMessage(message: String?, hideDelayMs: Int) {
-    require(hideDelayMs > 0) { "Bad hideDelayMs: $hideDelayMs" }
+  override fun dialogMessage(title: String, message: CharSequence?) {
+    post {
+      if (message == null) {
+        dialogHandle?.dismiss()
+        dialogHandle = null
+        return@post
+      }
 
-    if (message != null && presenter.floatingReplyMessageHasClickAction) {
-      replyInputMessage.text = getString(R.string.reply_error_message_with_action, message)
-    } else {
-      replyInputMessage.text = message
-    }
+      val linkMovementMethod = if (hasWebViewLinks(message)) {
+        WebViewLinkMovementMethod(webViewLinkClickListener = this@ReplyLayout)
+      } else {
+        null
+      }
 
-    if (message.isNotNullNorBlank()) {
-      animateReplyInputMessage(appearance = true)
-      removeCallbacks(closeMessageRunnable)
-      postDelayed(closeMessageRunnable, hideDelayMs.toLong())
+      dialogHandle?.dismiss()
+      dialogHandle = dialogFactory.createSimpleInformationDialog(
+        context = context,
+        titleText = title,
+        descriptionText = message,
+        customLinkMovementMethod = linkMovementMethod
+      )
     }
   }
 
-  private fun animateReplyInputMessage(appearance: Boolean) {
-    val valueAnimator = if (appearance) {
-      if (replyInputMessageHolder.visibility == View.VISIBLE) {
-        return
-      }
+  private fun hasWebViewLinks(message: CharSequence): Boolean {
+    var hasWebViewLinks = false
 
-      ValueAnimator.ofFloat(0f, 1f).apply {
-        doOnStart {
-          replyInputMessageHolder.setAlphaFast(0f)
-          replyInputMessageHolder.setVisibilityFast(View.VISIBLE)
-        }
-      }
-    } else {
-      if (replyInputMessageHolder.visibility == View.GONE) {
-        return
-      }
-
-      ValueAnimator.ofFloat(1f, 0f).apply {
-        doOnEnd {
-          replyInputMessageHolder.setVisibilityFast(View.GONE)
-          presenter.removeFloatingReplyMessageClickAction()
-        }
-      }
+    if (message is Spannable) {
+      hasWebViewLinks = message.getSpans<WebViewLink>().isNotEmpty()
     }
 
-    valueAnimator.setDuration(200)
-    valueAnimator.addUpdateListener { animator ->
-      val alpha = animator.animatedValue as Float
-      replyInputMessageHolder.alpha = alpha
-    }
-    valueAnimator.start()
+    return hasWebViewLinks
   }
 
   override fun openOrCloseReply(open: Boolean) {
@@ -1344,16 +1310,6 @@ class ReplyLayout @JvmOverloads constructor(
     if (commentButtonsHolder.visibility != View.GONE) {
       commentButtonsHolder.visibility = View.GONE
     }
-  }
-
-  private fun onReplyInputErrorMessageClicked() {
-    hideReplyInputErrorMessage()
-    presenter.onReplyInputErrorMessageClicked()
-  }
-
-  override fun hideReplyInputErrorMessage() {
-    removeCallbacks(closeMessageRunnable)
-    animateReplyInputMessage(appearance = false)
   }
 
   @SuppressLint("SetTextI18n")

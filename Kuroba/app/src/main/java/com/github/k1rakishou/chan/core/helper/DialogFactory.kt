@@ -6,6 +6,7 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.drawable.ColorDrawable
 import android.text.InputType
+import android.text.method.LinkMovementMethod
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -47,7 +48,8 @@ class DialogFactory(
     positiveButtonTextId: Int = R.string.ok,
     onDismissListener: () -> Unit = { },
     cancelable: Boolean = true,
-    checkAppVisibility: Boolean = true
+    checkAppVisibility: Boolean = true,
+    customLinkMovementMethod: LinkMovementMethod? = null
   ): KurobaAlertDialog.AlertDialogHandle? {
     if (checkAppVisibility && !applicationVisibilityManager.isAppInForeground()) {
       return null
@@ -65,6 +67,7 @@ class DialogFactory(
         .setPositiveButton(positiveButtonTextId) { _, _ ->
           onPositiveButtonClickListener.invoke()
         }
+        .setCustomLinkMovementMethod(customLinkMovementMethod)
         .setCancelable(cancelable)
 
       if (descriptionText != null) {

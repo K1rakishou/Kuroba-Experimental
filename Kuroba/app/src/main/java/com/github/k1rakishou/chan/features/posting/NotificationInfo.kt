@@ -70,10 +70,10 @@ data class ChildNotificationInfo(
     ) : Status("Posted in ${chanDescriptor.userReadableString()}")
 
     data class Error(
-      val errorMessage: String
+      val errorMessage: CharSequence
     ) : Status("Failed to post, error=${errorMessage}")
 
-    object Canceled : Status("Canceled")
+    data object Canceled : Status("Canceled")
   }
 
   companion object {

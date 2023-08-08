@@ -41,6 +41,7 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
@@ -629,14 +630,20 @@ open class Chan4 : SiteBase() {
       val cookieManager = CookieManager.getInstance()
       cookieManager.removeAllCookies(null)
 
+      val domain = sys.scheme + "://" + sys.host + "/"
+
       if (site.actions().isLoggedIn()) {
         val passTokenSetting = site.passToken
         val passCookies = arrayOf("pass_enabled=1;", "pass_id=" + passTokenSetting.get() + ";")
-        val domain = sys.scheme + "://" + sys.host + "/"
 
         for (cookie in passCookies) {
           cookieManager.setCookie(domain, cookie)
         }
+      }
+
+      val captchaCookie = getCaptchaCookie(site, sys.host)
+      if (captchaCookie.isNotNullNorBlank()) {
+        cookieManager.setCookie(domain, captchaCookie)
       }
     }
 
@@ -658,6 +665,18 @@ open class Chan4 : SiteBase() {
     }
 
     private fun addChan4CookieHeader(site: Chan4, requestBuilder: Request.Builder) {
+      val host = requestBuilder.build().url.host
+      val captchaCookie = getCaptchaCookie(site, host)
+
+      if (captchaCookie.isNullOrEmpty()) {
+        return
+      }
+
+      Logger.d(TAG, "addChan4CookieHeader(), host=${host}, captchaCookie=${formatToken(captchaCookie)}")
+      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
+    }
+
+    private fun getCaptchaCookie(site: Chan4, host: String): String? {
       val rememberCaptchaCookies = site
         .getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
         ?.get()
@@ -666,26 +685,17 @@ open class Chan4 : SiteBase() {
 
       if (!rememberCaptchaCookies) {
         Logger.d(TAG, "addChan4CookieHeader(), rememberCaptchaCookies is false")
-        return
+        return null
       }
 
-      val host = requestBuilder.build().url.host
-
-      val captchaCookie = when {
+      return when {
         host.contains("4channel") -> site.channel4CaptchaCookie.get()
         host.contains("4chan") -> site.chan4CaptchaCookie.get()
         else -> {
           Logger.e(TAG, "Unexpected host: '$host'")
-          return
+          null
         }
       }
-
-      if (captchaCookie.isEmpty()) {
-        return
-      }
-
-      Logger.d(TAG, "addChan4CookieHeader(), host=${host}, captchaCookie=${formatToken(captchaCookie)}")
-      requestBuilder.appendCookieHeader("$CAPTCHA_COOKIE_KEY=${captchaCookie}")
     }
   }
 

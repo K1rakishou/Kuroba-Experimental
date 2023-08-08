@@ -1,9 +1,12 @@
 package com.github.k1rakishou.chan.ui.widget.dialog;
 
+import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX;
+
 import android.app.Dialog;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.os.Message;
+import android.text.method.LinkMovementMethod;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -17,10 +20,10 @@ import androidx.annotation.StringRes;
 
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
-
-import static androidx.annotation.RestrictTo.Scope.LIBRARY_GROUP_PREFIX;
 
 public class KurobaAlertDialog implements DialogInterface {
     final KurobaAlertController mAlert;
@@ -167,6 +170,13 @@ public class KurobaAlertDialog implements DialogInterface {
         public KurobaAlertDialog.Builder setPositiveButton(@StringRes int textId, final OnClickListener listener) {
             P.mPositiveButtonText = P.mContext.getText(textId);
             P.mPositiveButtonListener = listener;
+            return this;
+        }
+
+
+        @NotNull
+        public KurobaAlertDialog.Builder setCustomLinkMovementMethod(@Nullable LinkMovementMethod customLinkMovementMethod) {
+            P.customLinkMovementMethod = customLinkMovementMethod;
             return this;
         }
 

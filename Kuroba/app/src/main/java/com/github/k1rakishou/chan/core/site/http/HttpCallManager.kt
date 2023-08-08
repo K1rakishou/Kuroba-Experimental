@@ -31,7 +31,6 @@ import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.IOException
 import javax.inject.Inject
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 /**
@@ -106,7 +105,6 @@ class HttpCallManager @Inject constructor(
     return makeHttpCallInternal(requestBuilder, httpCall)
   }
   
-  @OptIn(ExperimentalTime::class)
   @Suppress("BlockingMethodInNonBlockingContext")
   private suspend fun <T : HttpCall> makeHttpCallInternal(
     requestBuilder: Request.Builder,

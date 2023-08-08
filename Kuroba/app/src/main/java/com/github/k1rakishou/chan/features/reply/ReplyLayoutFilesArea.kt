@@ -48,7 +48,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.MainScope
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.UUID
 import javax.inject.Inject
 
 class ReplyLayoutFilesArea @JvmOverloads constructor(
@@ -469,10 +469,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     threadListLayoutCallbacks?.hideLoadingView()
   }
 
-  override fun showReplyLayoutMessage(message: String?, hideDelayMs: Int) {
-    replyLayoutCallbacks?.openMessage(message, hideDelayMs)
-  }
-
   override fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int) {
     replyLayoutCallbacks?.updateSelectedFilesCounter(selectedCount, maxAllowedCount, totalCount)
   }
@@ -525,9 +521,7 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
   interface ReplyLayoutCallbacks {
     fun hideKeyboard()
     fun requestWrappingModeUpdate()
-    fun openMessage(message: String?, hideDelayMs: Int)
     fun updateSelectedFilesCounter(selectedCount: Int, maxAllowedCount: Int, totalCount: Int)
-    fun showReplyLayoutMessage(message: String, duration: Int = 5000)
   }
 
   companion object {
