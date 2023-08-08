@@ -313,6 +313,10 @@ public class AndroidUtils {
         return Build.VERSION.SDK_INT;
     }
 
+    public static boolean isAndroid13() {
+        return Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU;
+    }
+
     public static boolean isAndroid11() {
         return Build.VERSION.SDK_INT >= Build.VERSION_CODES.R;
     }

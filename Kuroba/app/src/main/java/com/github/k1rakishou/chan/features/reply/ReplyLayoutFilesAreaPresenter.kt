@@ -29,6 +29,7 @@ import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.chan.utils.MediaUtils
+import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.ModularResult.Companion.Try
@@ -50,7 +51,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import java.io.File
-import java.util.*
+import java.util.UUID
 
 class ReplyLayoutFilesAreaPresenter(
   private val context: Context,
@@ -559,6 +560,11 @@ class ReplyLayoutFilesAreaPresenter(
   }
 
   private suspend fun requestPermissionIfNeededSuspend(): Boolean {
+    if (AndroidUtils.isAndroid10()) {
+      // Can't request READ_EXTERNAL_STORAGE on API 33+
+      return true
+    }
+
     val permission = Manifest.permission.READ_EXTERNAL_STORAGE
 
     if (runtimePermissionsHelper.hasPermission(permission)) {
