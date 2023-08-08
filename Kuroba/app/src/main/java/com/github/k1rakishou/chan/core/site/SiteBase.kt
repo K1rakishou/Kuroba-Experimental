@@ -36,7 +36,6 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.json.JsonSetting
 import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -56,7 +55,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import java.security.SecureRandom
-import java.util.*
+import java.util.Random
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 
@@ -105,6 +104,9 @@ abstract class SiteBase : Site, CoroutineScope {
 
   open val siteDomainSetting: StringSetting? = null
 
+  open val defaultChunksCount: ChanSettings.ConcurrentFileDownloadingChunks
+    get() = ChanSettings.ConcurrentFileDownloadingChunks.Two
+
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookieMap: MapSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
@@ -128,7 +130,7 @@ abstract class SiteBase : Site, CoroutineScope {
       prefs,
       "concurrent_download_chunk_count",
       ChanSettings.ConcurrentFileDownloadingChunks::class.java,
-      ChanSettings.ConcurrentFileDownloadingChunks.Two
+      defaultChunksCount
     )
 
     cloudFlareClearanceCookieMap = MapSetting(
