@@ -69,7 +69,7 @@ class ReplyResponse {
 
   @get:Synchronized
   @set:Synchronized
-  var additionalResponseData: AdditionalResponseData = ReplyResponse.AdditionalResponseData.NoOp
+  var additionalResponseData: AdditionalResponseData = AdditionalResponseData.NoOp
 
   @get:Synchronized
   @set:Synchronized
@@ -136,6 +136,23 @@ class ReplyResponse {
     this.rateLimitInfo = rateLimitInfo
   }
 
+  fun asFormattedText(): String {
+    return buildString(capacity = 128) {
+      appendLine("ThreadId: ${siteDescriptor?.siteName}/${boardCode}/${threadNo}/${postNo}")
+      appendLine("Posted: ${posted}")
+      appendLine("RequireAuthentication: ${requireAuthentication}")
+      appendLine("Password: ${password}")
+      appendLine("BanInfo: ${banInfo}")
+      appendLine("RequireAuthentication: ${requireAuthentication}")
+      appendLine("ErrorMessage: ${errorMessageShort}")
+      appendLine("RateLimitInfo: ${rateLimitInfo}")
+
+      if (additionalResponseData !is AdditionalResponseData.NoOp) {
+        appendLine("AdditionalResponseData: ${additionalResponseData}")
+      }
+    }
+  }
+
   sealed class AdditionalResponseData {
     data object NoOp : AdditionalResponseData()
   }
@@ -165,4 +182,5 @@ class ReplyResponse {
       ", additionalResponseData=" + additionalResponseData +
       '}'
   }
+
 }

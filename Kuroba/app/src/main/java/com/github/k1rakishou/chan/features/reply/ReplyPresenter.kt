@@ -815,7 +815,7 @@ class ReplyPresenter @Inject constructor(
 
         getString(R.string.reply_error_message, errorMessage)
       }
-      else -> getString(R.string.reply_error_message, replyResponse)
+      else -> getString(R.string.reply_error_unknown, replyResponse.asFormattedText())
     }
 
     Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
