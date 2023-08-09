@@ -525,8 +525,8 @@ public class ChanSettings {
             postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
             postFullDateUseLocalLocale = new BooleanSetting(provider, "preference_post_full_date_use_local_locale", false);
             postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
-            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
-            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignLeft);
+            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
+            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
             postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
             drawPostThumbnailBackground = new BooleanSetting(provider, "draw_post_thumbnail_background", true);
             textOnly = new BooleanSetting(provider, "preference_text_only", false);
@@ -592,7 +592,7 @@ public class ChanSettings {
 
             // Post
             volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
-            tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", false);
+            tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", true);
             postLinksTakeWholeHorizSpace = new BooleanSetting(provider, "post_links_take_whole_horiz_space", true);
             markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
             markSeenThreads = new BooleanSetting(provider, "preference_mark_seen_threads", true);
