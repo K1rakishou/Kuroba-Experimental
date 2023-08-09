@@ -551,8 +551,8 @@ class AppearanceSettingsScreen(
       ChanSettings.NetworkContentAutoLoadMode.ALL -> {
         context.getString(R.string.setting_image_auto_load_all)
       }
-      ChanSettings.NetworkContentAutoLoadMode.WIFI -> {
-        context.getString(R.string.setting_image_auto_load_wifi)
+      ChanSettings.NetworkContentAutoLoadMode.UNMETERED -> {
+        context.getString(R.string.setting_image_auto_load_unmetered)
       }
       ChanSettings.NetworkContentAutoLoadMode.NONE -> {
         context.getString(R.string.setting_image_auto_load_none)

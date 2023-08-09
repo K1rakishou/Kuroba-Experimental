@@ -164,8 +164,9 @@ public class ChanSettings {
     public enum NetworkContentAutoLoadMode implements OptionSettingItem {
         // Always auto load, either wifi or mobile
         ALL("all"),
-        // Only auto load if on wifi
-        WIFI("wifi"),
+        // Only auto load if on unmetered network (the setting name is still the same
+        // for backward compatibility)
+        UNMETERED("wifi"),
         // Never auto load
         NONE("none");
 
@@ -547,19 +548,19 @@ public class ChanSettings {
                     provider,
                     "parse_youtube_titles_and_duration_v2",
                     NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.UNMETERED
             );
             parseSoundCloudTitlesAndDuration = new OptionsSetting<>(
                     provider,
                     "parse_soundcloud_titles_and_duration",
                     NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.UNMETERED
             );
             parseStreamableTitlesAndDuration = new OptionsSetting<>(
                     provider,
                     "parse_streamable_titles_and_duration",
                     NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.UNMETERED
             );
             showLinkAlongWithTitleAndDuration = new BooleanSetting(provider, "show_link_along_with_title_and_duration", true);
 
@@ -619,12 +620,12 @@ public class ChanSettings {
             imageAutoLoadNetwork = new OptionsSetting<>(provider,
                     "preference_image_auto_load_network",
                     NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.UNMETERED
             );
             videoAutoLoadNetwork = new OptionsSetting<>(provider,
                     "preference_video_auto_load_network",
                     NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.WIFI
+                    NetworkContentAutoLoadMode.UNMETERED
             );
 
             // Misc

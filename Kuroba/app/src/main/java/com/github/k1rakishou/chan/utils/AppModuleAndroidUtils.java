@@ -377,18 +377,31 @@ public class AppModuleAndroidUtils {
     public static boolean shouldLoadForNetworkType(ChanSettings.NetworkContentAutoLoadMode networkType) {
         if (networkType == ChanSettings.NetworkContentAutoLoadMode.NONE) {
             return false;
-        } else if (networkType == ChanSettings.NetworkContentAutoLoadMode.WIFI) {
-            return isConnected(ConnectivityManager.TYPE_WIFI);
+        } else if (networkType == ChanSettings.NetworkContentAutoLoadMode.UNMETERED) {
+            return isConnectionUnmetered();
         } else {
             return networkType == ChanSettings.NetworkContentAutoLoadMode.ALL;
         }
     }
 
-    public static boolean isConnected(int type) {
+    public static boolean isConnectionUnmetered() {
         ConnectivityManager connectivityManager =
                 (ConnectivityManager) application.getSystemService(Context.CONNECTIVITY_SERVICE);
-        NetworkInfo networkInfo = connectivityManager.getNetworkInfo(type);
-        return networkInfo != null && networkInfo.isConnected();
+
+        NetworkInfo networkInfo = connectivityManager.getActiveNetworkInfo();
+        if (networkInfo == null) {
+            return false;
+        }
+
+        if (!networkInfo.isConnected()) {
+            return false;
+        }
+
+        if (connectivityManager.isActiveNetworkMetered()) {
+            return false;
+        }
+
+        return true;
     }
 
     public static int getScreenOrientation() {

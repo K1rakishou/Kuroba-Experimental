@@ -818,7 +818,7 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="setting_video_auto_load">Automatically load videos/sound posts</string>
     <string name="settings_group_media_loading">Media loading</string>
     <string name="setting_image_auto_load_all">Always</string>
-    <string name="setting_image_auto_load_wifi">Wi-Fi only</string>
+    <string name="setting_image_auto_load_unmetered">Unmetered network only</string>
     <string name="setting_image_auto_load_none">Never</string>
     <string name="setting_auto_load_thread_images">Enable media prefetching</string>
     <string name="setting_auto_load_thread_images_description">Loads all images or videos in a thread immediately. Uses it\'s own setting for the cache size which is greater than the regular cache size. (⚠ May become the reason of high battery/network traffic/disk consumption ⚠)</string>

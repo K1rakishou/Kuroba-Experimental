@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.features.thread_downloading
 
-import android.net.ConnectivityManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
@@ -195,7 +194,7 @@ class ThreadDownloadingDelegate(
     val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
       true
     } else {
-      AppModuleAndroidUtils.isConnected(ConnectivityManager.TYPE_WIFI)
+      AppModuleAndroidUtils.isConnectionUnmetered()
     }
 
     val canProcessThreadMedia = threadDownload.downloadMedia
@@ -297,7 +296,7 @@ class ThreadDownloadingDelegate(
       val isNetworkGoodForMediaDownload = if (ChanSettings.threadDownloaderDownloadMediaOnMeteredNetwork.get()) {
         true
       } else {
-        AppModuleAndroidUtils.isConnected(ConnectivityManager.TYPE_WIFI)
+        AppModuleAndroidUtils.isConnectionUnmetered()
       }
 
       if (!isNetworkGoodForMediaDownload) {
