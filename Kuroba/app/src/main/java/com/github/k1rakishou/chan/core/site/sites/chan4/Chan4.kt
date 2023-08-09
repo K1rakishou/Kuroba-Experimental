@@ -635,20 +635,24 @@ open class Chan4 : SiteBase() {
       cookieManager.removeAllCookies(null)
 
       val domain = sys.scheme + "://" + sys.host + "/"
+      val cookieStringBuilder = StringBuilder()
 
       if (site.actions().isLoggedIn()) {
-        val passTokenSetting = site.passToken
-        val passCookies = arrayOf("pass_enabled=1;", "pass_id=" + passTokenSetting.get() + ";")
-
-        for (cookie in passCookies) {
-          cookieManager.setCookie(domain, cookie)
-        }
+        cookieStringBuilder.append("pass_enabled=1;pass_id=${site.passToken.get()};")
       }
 
       val captchaCookie = getCaptchaCookie(site, sys.host)
       if (captchaCookie.isNotNullNorBlank()) {
-        cookieManager.setCookie(domain, captchaCookie)
+        cookieStringBuilder.append("4chan_pass=${captchaCookie};")
       }
+
+      if (cookieStringBuilder.isEmpty()) {
+        Logger.d(TAG, "modifyWebView() full cookie is empty")
+        return
+      }
+
+      cookieManager.setCookie(domain, cookieStringBuilder.toString())
+      Logger.d(TAG, "modifyWebView() full cookie: ${cookieManager.getCookie(domain)}")
     }
 
     override fun modifyCaptchaGetRequest(site: Chan4, requestBuilder: Request.Builder) {

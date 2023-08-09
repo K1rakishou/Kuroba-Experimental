@@ -19,6 +19,7 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.text.set
+import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
@@ -155,6 +156,17 @@ class Chan4ReplyCall(
   override fun process(response: Response, result: String) {
     setChan4CaptchaHeader(response.headers)
 
+    if (ChanSettings.verboseLogs.get()) {
+      Logger.d(TAG, "process() result:")
+
+      result
+        .filter { char -> char != '\n' }
+        .chunked(256)
+        .forEach { chunk ->
+          Logger.d(TAG, chunk)
+        }
+    }
+
     val forgotCaptcha = result.contains(FORGOT_TO_SOLVE_CAPTCHA, ignoreCase = true)
     val mistypedCaptcha = result.contains(MISTYPED_CAPTCHA, ignoreCase = true)
 
@@ -167,7 +179,6 @@ class Chan4ReplyCall(
     val errorMessageHtml = Jsoup.parse(result).selectFirst("span[id=errmsg]")
     if (errorMessageHtml != null) {
       val errorMessage = parseErrorMessageHtml(errorMessageHtml)
-
       replyResponse.errorMessage = errorMessage
       replyResponse.banInfo = checkIfBanned()
 
