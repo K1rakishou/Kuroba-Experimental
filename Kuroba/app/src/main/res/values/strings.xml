@@ -1570,6 +1570,7 @@ Actual error: \'%1$s\'</string>
     <string name="crash_report_activity_crash_stacktrace_section">Crash stacktrace</string>
     <string name="crash_report_activity_crash_logs_section">Last logs before the crash</string>
     <string name="crash_report_activity_additional_info_section">Additional information</string>
+    <string name="crash_report_activity_copy_for_github">Copy formatted for Github</string>
     <string name="crash_report_activity_loading_logs">Loading logs…</string>
     <string name="crash_report_activity_verbose_logs">+Verbose logs</string>
     <string name="crash_report_activity_mpv_logs">+MPV logs</string>

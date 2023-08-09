@@ -94,7 +94,7 @@ import org.joda.time.Duration
 import org.joda.time.format.PeriodFormatterBuilder
 import java.io.IOException
 import java.net.InetAddress
-import java.util.*
+import java.util.IdentityHashMap
 import javax.inject.Inject
 import kotlin.system.exitProcess
 
@@ -392,7 +392,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
       // if there's any uncaught crash stuff, just dump them to the log and exit immediately
       Logger.e(TAG, "Unhandled exception in thread: ${thread.name}", e)
       onUnhandledException(e)
-      exitProcess(999)
     }
   }
 
@@ -411,6 +410,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     val intent = Intent(this, CrashReportActivity::class.java)
     intent.putExtra(CrashReportActivity.EXCEPTION_BUNDLE_KEY, bundle)
+    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     startActivity(intent)
 

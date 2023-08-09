@@ -203,7 +203,10 @@ class ReportIssueController(
               return@withContext ""
             }
 
-            return@withContext logs + reportManager.getReportFooter(context)
+            return@withContext buildString(capacity = 65535) {
+              append(logs)
+              append(reportManager.getReportFooter(context))
+            }
           }
         })
 

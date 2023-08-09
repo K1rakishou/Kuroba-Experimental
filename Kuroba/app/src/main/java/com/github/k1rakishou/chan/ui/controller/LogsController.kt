@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
+import android.view.View
 import android.view.ViewGroup
 import android.widget.ScrollView
 import com.github.k1rakishou.ChanSettings
@@ -68,8 +69,11 @@ class LogsController(context: Context) : Controller(context) {
       .build()
 
     val container = ScrollView(context)
+    container.scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
+    container.isVerticalScrollBarEnabled = true
     container.setBackgroundColor(themeEngine.chanTheme.backColor)
     logTextView = ColorizableTextView(context)
+
     container.addView(
       logTextView,
       ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
@@ -83,7 +87,7 @@ class LogsController(context: Context) : Controller(context) {
 
       try {
         val logs = withContext(Dispatchers.IO) {
-          buildString(capacity = 4096) {
+          buildString(capacity = 65535) {
             val logs = loadLogs()
             if (logs == null) {
               return@buildString
@@ -97,6 +101,11 @@ class LogsController(context: Context) : Controller(context) {
         if (logs.isNotNullNorBlank()) {
           logText = logs
           logTextView.text = logText
+          logTextView.setTextIsSelectable(true)
+
+          container.post {
+            container.fullScroll(View.FOCUS_DOWN)
+          }
         } else {
           showToast(getString(R.string.settings_logs_loading_logs_error))
         }
@@ -113,7 +122,7 @@ class LogsController(context: Context) : Controller(context) {
 
   companion object {
     private const val TAG = "LogsController"
-    private const val DEFAULT_LINES_COUNT = 300
+    private const val DEFAULT_LINES_COUNT = 1500
     private const val ACTION_LOGS_COPY = 1
 
     fun loadLogs(): String? {
@@ -137,7 +146,7 @@ class LogsController(context: Context) : Controller(context) {
 
       // This filters our log output to just stuff we care about in-app
       // (and if a crash happens, the uncaught handler gets it and this will still allow it through)
-      val fullLogsString = StringBuilder(1024)
+      val fullLogsString = StringBuilder(65535)
       val lineTag = "${AndroidUtils.getApplicationLabel()} | "
 
       for (line in IOUtils.readString(outputStream).split("\n").toTypedArray()) {

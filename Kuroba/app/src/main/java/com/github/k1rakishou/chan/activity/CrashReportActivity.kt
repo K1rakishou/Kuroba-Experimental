@@ -1,5 +1,6 @@
 package com.github.k1rakishou.chan.activity
 
+import android.content.Context
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -35,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -54,10 +56,10 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
 import com.github.k1rakishou.chan.ui.controller.LogsController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
-import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.AndroidUtils.setClipboardContent
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -163,13 +165,11 @@ class CrashReportActivity : AppCompatActivity() {
     appLifetime: String
   ) {
     val chanTheme = LocalChanTheme.current
+    val context = LocalContext.current
     val insets by globalWindowInsetsManager.currentInsetsCompose
 
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
-
-    var blockSendReportButton by rememberSaveable { mutableStateOf(false) }
-    var blockRestartAppButton by rememberSaveable { mutableStateOf(false) }
 
     var logsMut by rememberSaveable { mutableStateOf<String?>(null) }
     val logs = logsMut
@@ -297,86 +297,38 @@ class CrashReportActivity : AppCompatActivity() {
             .wrapContentHeight(),
           horizontalAlignment = Alignment.CenterHorizontally
         ) {
+          Spacer(modifier = Modifier.height(16.dp))
+
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
-            text = stringResource(id = R.string.crash_report_activity_send_report),
-            enabled = !blockSendReportButton,
+            text = stringResource(id = R.string.crash_report_activity_copy_for_github),
             onClick = {
-              blockSendReportButton = true
-              blockRestartAppButton = true
-
               coroutineScope.launch {
-                val logsForSending = if (logs.isNullOrEmpty()) {
-                  withContext(Dispatchers.IO) { LogsController.loadLogs() }
-                } else {
-                  logs
-                }
-
-                val reportFooter = reportManager.getReportFooter(
-                  context = this@CrashReportActivity,
-                  appRunningTime = appLifetime,
-                  userAgent = userAgent
-                )
-
-                val title = "${className} ${message}"
-
-                val body = buildString(4096) {
-                  appendLine("Stacktrace")
-                  appendLine("```")
-                  appendLine(stacktrace)
-                  appendLine("```")
-                  appendLine()
-
-                  if (logsForSending.isNotNullNorEmpty()) {
-                    appendLine("Logs")
-                    appendLine("```")
-                    appendLine(logsForSending)
-                    appendLine("```")
-                  }
-
-                  appendLine("Additional information")
-                  appendLine("```")
-                  appendLine(reportFooter)
-                  appendLine("```")
-                }
-
-                reportManager.sendCrashlog(
-                  title = title,
-                  body = body,
-                  onReportSendResult = { sendReportResult ->
-                    when (sendReportResult) {
-                      is ModularResult.Error -> {
-                        blockSendReportButton = false
-                        blockRestartAppButton = false
-
-                        Toast.makeText(
-                          this@CrashReportActivity,
-                          "Failed to send report, error: ${sendReportResult.error.errorMessageOrClassName()}",
-                          Toast.LENGTH_LONG
-                        ).show()
-                      }
-                      is ModularResult.Value -> {
-                        blockRestartAppButton = false
-
-                        Toast.makeText(
-                          this@CrashReportActivity,
-                          "Report sent",
-                          Toast.LENGTH_LONG
-                        ).show()
-                      }
-                    }
-                  }
+                copyLogsFormattedToClipboard(
+                  context = context,
+                  className = className,
+                  message = message,
+                  stacktrace = stacktrace
                 )
               }
             }
           )
 
-          Spacer(modifier = Modifier.height(8.dp))
+          Spacer(modifier = Modifier.height(16.dp))
+
+          KurobaComposeTextButton(
+            modifier = Modifier.wrapContentWidth(),
+            text = stringResource(id = R.string.crash_report_activity_open_issue_tracker),
+            onClick = {
+              openLink(ISSUES_LINK)
+            }
+          )
+
+          Spacer(modifier = Modifier.height(16.dp))
 
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
             text = stringResource(id = R.string.crash_report_activity_restart_the_app),
-            enabled = !blockRestartAppButton,
             onClick = { appRestarter.restart() }
           )
         }
@@ -434,6 +386,48 @@ class CrashReportActivity : AppCompatActivity() {
     }
   }
 
+  private suspend fun copyLogsFormattedToClipboard(
+    context: Context,
+    className: String,
+    message: String,
+    stacktrace: String
+  ) {
+    val logs = withContext(Dispatchers.IO) { LogsController.loadLogs() }
+    val reportFooter = reportManager.getReportFooter(context)
+
+    val resultString = buildString(65535) {
+      appendLine("Exception: ${className}")
+      appendLine("Message: ${message}")
+      appendLine()
+
+      appendLine("Stacktrace")
+      appendLine("```")
+      appendLine(stacktrace)
+      appendLine("```")
+      appendLine()
+
+      if (logs.isNotNullNorEmpty()) {
+        appendLine("Logs")
+        appendLine("```")
+        appendLine(logs)
+        appendLine("```")
+      }
+
+      appendLine("Additional information")
+      appendLine("```")
+      appendLine(reportFooter)
+      appendLine("```")
+    }
+
+    setClipboardContent("Crash report", resultString)
+
+    Toast.makeText(
+      this,
+      resources.getString(R.string.crash_report_activity_copied_to_clipboard),
+      Toast.LENGTH_SHORT
+    ).show()
+  }
+
   companion object {
     private const val TAG = "CrashReportActivity"
 
@@ -443,6 +437,8 @@ class CrashReportActivity : AppCompatActivity() {
     const val EXCEPTION_STACKTRACE_KEY = "exception_stacktrace"
     const val USER_AGENT_KEY = "user_agent"
     const val APP_LIFE_TIME_KEY = "app_life_time"
+
+    private const val ISSUES_LINK = "https://github.com/K1rakishou/Kuroba-Experimental/issues"
   }
 
 }
