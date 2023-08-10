@@ -1,0 +1,16 @@
+v1.3.26
+Full version:
+- Fix being unable to pick files on API 33+.
+- Possibly fix updater + use correct API level check in reply layout pick local file function.
+- Handle ban/warning/ip block errors correctly + allow opening them within the app's webview (with all the cookies) to be able to clear expired bans (not tested).
+- Disable concurrent chunked file downloading for 4chan by default because it seems to be blocked by the site now.
+- Change the logic that decides whether full media/thread media should be downloaded or not. When imageAutoLoadNetwork or videoAutoLoadNetwork (also thread media download) setting is set to ChanSettings.NetworkContentAutoLoadMode.UNMETERED (ChanSettings.NetworkContentAutoLoadMode.WIFI previously) we now check if the current network is unmetered or not instead of checking if we are connected to WiFi because some WiFis can still be metered. If it's metered then we don't download full media.
+- Fix CrashReportActivity not showing up when the app crashes.
+- Take more lines of logs from logcat.
+- Remove send report button because report account was banned. Add copy logs + open github issue buttons.
+- Make LogsController's log text selectable.
+- Change the default values for these 3 settings: catalogPostAlignmentMode, threadPostAlignmentMode, tapNoReply.
+- Remove identical media duplicate check because it apparently doesn't work.
+
+v1.3.25
+- Fix notifications not working on API 33+ (Android 13+). Upon first app start (after update or on fresh install) you will be asked for notifications permission.
