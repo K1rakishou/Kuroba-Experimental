@@ -13,7 +13,6 @@ import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.chan.utils.HashingUtil
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -690,13 +689,6 @@ class ImageSaverV2ServiceDelegate(
       duplicatesResolution = imageDownloadRequest.duplicatesResolution
     }
 
-    // Do not process images with the same name, size and hash as the local ones
-    val areImagesExactlyTheSame = areImagesExactlyTheSame(chanPostImage, resultFile)
-    if (areImagesExactlyTheSame) {
-      val fileIsNotEmpty = fileManager.getLength(resultFile) > 0
-      return ResultFile.Skip(resultDirUri, resultFileUri, fileIsNotEmpty)
-    }
-
     when (duplicatesResolution) {
       ImageSaverV2Options.DuplicatesResolution.AskWhatToDo -> {
         return ResultFile.DuplicateFound(resultFileUri)
@@ -738,24 +730,6 @@ class ImageSaverV2ServiceDelegate(
       resultFileUri,
       resultFile
     )
-  }
-
-  private fun areImagesExactlyTheSame(
-    chanPostImage: ChanPostImage,
-    resultFile: AbstractFile
-  ): Boolean {
-    if (chanPostImage.size != fileManager.getLength(resultFile)) {
-      return false
-    }
-
-    if (chanPostImage.fileHash.isNullOrEmpty()) {
-      return false
-    }
-
-    val localFileMd5 = fileManager.getInputStream(resultFile)
-      ?.let { inputStream -> HashingUtil.inputStreamMd5(inputStream) }
-
-    return chanPostImage.fileHash.equals(localFileMd5, ignoreCase = true)
   }
 
   sealed class ResultFile {
