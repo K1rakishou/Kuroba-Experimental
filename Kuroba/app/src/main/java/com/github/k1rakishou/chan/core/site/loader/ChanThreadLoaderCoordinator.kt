@@ -128,7 +128,6 @@ class ChanThreadLoaderCoordinator(
     DatabasePostLoader(reloadPostsFromDatabaseUseCase)
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun loadThreadOrCatalog(
     page: Int?,
     site: Site,

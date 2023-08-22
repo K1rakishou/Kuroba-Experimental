@@ -635,20 +635,30 @@ open class Chan4 : SiteBase() {
       cookieManager.removeAllCookies(null)
 
       val domain = sys.scheme + "://" + sys.host + "/"
-      val cookieStringBuilder = StringBuilder()
+      val cookieParts = mutableListOf<String>()
 
       if (site.actions().isLoggedIn()) {
-        cookieStringBuilder.append("pass_enabled=1;pass_id=${site.passToken.get()};")
+        cookieParts += "pass_enabled=1"
+        cookieParts += "pass_id=${site.passToken.get()}"
       }
 
       val captchaCookie = getCaptchaCookie(site, sys.host)
       if (captchaCookie.isNotNullNorBlank()) {
-        cookieStringBuilder.append("4chan_pass=${captchaCookie};")
+        cookieParts += "4chan_pass=${captchaCookie}"
       }
 
-      if (cookieStringBuilder.isEmpty()) {
+      if (cookieParts.isEmpty()) {
         Logger.d(TAG, "modifyWebView() full cookie is empty")
         return
+      }
+
+      val cookieStringBuilder = StringBuilder()
+      cookieParts.forEachIndexed { index, cookiePart ->
+        cookieStringBuilder.append(cookiePart)
+
+        if (index != cookieParts.lastIndex) {
+          cookieStringBuilder.append("; ")
+        }
       }
 
       cookieManager.setCookie(domain, cookieStringBuilder.toString())

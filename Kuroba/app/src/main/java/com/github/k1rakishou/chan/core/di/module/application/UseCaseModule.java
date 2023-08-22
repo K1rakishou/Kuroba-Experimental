@@ -264,13 +264,13 @@ public class UseCaseModule {
     @Singleton
     public DownloadThemeJsonFilesUseCase provideDownloadThemeJsonFilesUseCase(
             RealProxiedOkHttpClient proxiedOkHttpClient,
-            Gson gson,
+            Moshi moshi,
             ThemeEngine themeEngine
     ) {
         Logger.deps("DownloadThemeJsonFilesUseCase");
         return new DownloadThemeJsonFilesUseCase(
                 proxiedOkHttpClient,
-                gson,
+                moshi,
                 themeEngine
         );
     }
