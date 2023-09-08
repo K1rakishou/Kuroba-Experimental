@@ -513,11 +513,15 @@ class ImageSaverV2OptionsController(
       if (currentImageSaverSetting.appendBoardCode) {
         append("\\<Board code>")
       }
-      if (currentImageSaverSetting.appendThreadId) {
-        append("\\<Thread id>")
-      }
-      if (currentImageSaverSetting.appendThreadSubject) {
-        append("\\<Thread subject>")
+      if (currentImageSaverSetting.appendThreadId && currentImageSaverSetting.appendThreadSubject) {
+        append("\\<Thread id>-<Thread subject>")
+      } else {
+        if (currentImageSaverSetting.appendThreadId) {
+          append("\\<Thread id>")
+        }
+        if (currentImageSaverSetting.appendThreadSubject) {
+          append("\\<Thread subject>")
+        }
       }
       if (subDirsString.isNotNullNorBlank()) {
         append("\\${subDirsString}")
