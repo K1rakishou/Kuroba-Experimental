@@ -56,7 +56,7 @@ class DvachReportPostRequest(
         .setType(MultipartBody.FORM)
         .addFormDataPart("board", postDescriptor.boardDescriptor().boardCode)
         .addFormDataPart("thread", postDescriptor.threadDescriptor().threadNo.toString())
-        .addFormDataPart("posts", postDescriptor.postNo.toString())
+        .addFormDataPart("post", postDescriptor.postNo.toString())
         .addFormDataPart("comment", reportReason)
         .build()
 
