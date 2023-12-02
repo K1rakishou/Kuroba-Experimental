@@ -217,7 +217,7 @@ class CreateOrUpdateFilterController(
     var filterWatchNotify by remember { chanFilterMutableState.filterWatchNotify }
     val arrowDropDownDrawable = remember { getTextDrawableContent() }
 
-    if (action == FilterAction.WATCH.id) {
+    if (action == FilterAction.WATCH.id || action == FilterAction.AVOID_WATCH.id  ) {
       applyToReplies = false
       applyToSaved = false
       applyToEmptyComments = false
@@ -385,7 +385,7 @@ class CreateOrUpdateFilterController(
         .fillMaxWidth()
         .wrapContentHeight(),
       text = stringResource(id = R.string.filter_only_on_op),
-      enabled = action != FilterAction.WATCH.id,
+      enabled = action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id,
       currentlyChecked = onlyOnOP,
       onCheckChanged = { checked -> onlyOnOP = checked }
     )
@@ -402,7 +402,7 @@ class CreateOrUpdateFilterController(
       )
     }
 
-    if (action != FilterAction.WATCH.id) {
+    if (action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id) {
       KurobaComposeCheckbox(
         modifier = Modifier
           .fillMaxWidth()
