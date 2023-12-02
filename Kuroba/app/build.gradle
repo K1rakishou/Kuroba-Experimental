@@ -245,10 +245,6 @@ android {
         abortOnError false
     }
 
-    packagingOptions {
-        exclude 'META-INF/*'
-    }
-
     kapt {
         correctErrorTypes = true
     }

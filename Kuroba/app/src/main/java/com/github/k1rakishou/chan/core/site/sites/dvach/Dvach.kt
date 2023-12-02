@@ -129,6 +129,12 @@ class Dvach : CommonSite() {
     )
   }
 
+  val dvachCaptchaPuzzle by lazy {
+    SiteAuthentication.idBased(
+      "${domainString}/api/captcha/puzzle"
+    )
+  }
+
   override val siteDomainSetting: StringSetting? by lazy {
     StringSetting(prefs, "site_domain", DEFAULT_DOMAIN.toString())
   }
@@ -704,6 +710,7 @@ class Dvach : CommonSite() {
         CaptchaType.V2NOJS -> captchaV2NoJs
         CaptchaType.V2_INVISIBLE -> captchaV2Invisible
         CaptchaType.DVACH_CAPTCHA -> dvachCaptcha
+        CaptchaType.DVACH_CAPTCHA_PUZZLE -> dvachCaptchaPuzzle
         else -> throw IllegalArgumentException()
       }
     }
@@ -795,7 +802,8 @@ class Dvach : CommonSite() {
     V2JS("v2js"),
     V2NOJS("v2nojs"),
     V2_INVISIBLE("v2_invisible"),
-    DVACH_CAPTCHA("dvach_captcha");
+    DVACH_CAPTCHA("dvach_captcha"),
+    DVACH_CAPTCHA_PUZZLE("dvach_captcha_puzzle");
 
     override fun getKey(): String {
       return value

@@ -23,6 +23,7 @@ import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import okhttp3.Request
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import java.nio.charset.StandardCharsets
 
 class YandexImageSearchUseCase(
@@ -84,76 +85,80 @@ class YandexImageSearchUseCase(
         )
       }
 
-      val serpControllerContent = yandexImageSearchDocument
-        .body()
-        .select("div[class=serp-controller__content]")
+      return@use parsePageHtml(yandexImageSearchDocument)
+    }
+  }
+
+  private fun parsePageHtml(yandexImageSearchDocument: Document): List<ImageSearchResult> {
+    val serpControllerContent = yandexImageSearchDocument
+      .body()
+      .select("div[class=serp-controller__content]")
+      .firstOrNull()
+
+    if (serpControllerContent == null) {
+      Logger.d(TAG, "serp-controller__content element not found")
+      return emptyList()
+    }
+
+    val serpItems = serpControllerContent
+      .childNodes()
+      .firstOrNull { node ->
+        node.attributes().any { attribute ->
+          attribute.value.contains("serp-list")
+        }
+      }
+      ?.childNodes()
+
+    if (serpItems.isNullOrEmpty()) {
+      Logger.d(TAG, "No serp-item elements found")
+      return emptyList()
+    }
+
+    val dataBems = serpItems
+      .map { serpItemNode -> serpItemNode.attr("data-bem") }
+      .filter { dataBemJsonRaw -> dataBemJsonRaw.isNotBlank() }
+      .mapNotNull { dataBemsJson ->
+        try {
+          moshi.adapter(DataBem::class.java).fromJson(dataBemsJson)
+        } catch (error: Throwable) {
+          Logger.e(TAG, "Failed to convert dataBemsJson into DataBem object, error=${error.errorMessageOrClassName()}")
+          null
+        }
+      }
+
+    if (dataBems.isEmpty()) {
+      Logger.d(TAG, "No data-bem elements found")
+      return emptyList()
+    }
+
+    return dataBems.mapNotNull { dataBem ->
+      val thumbUrl = fixUrlOrNull(dataBem.serpItem?.thumb?.url)?.toHttpUrlOrNull()
+        ?: return@mapNotNull null
+
+      val combinedPreviews = dataBem.serpItem?.combinedPreviews()
+
+      val preview = combinedPreviews?.firstOrNull { preview -> preview.isValid() }
+        ?: combinedPreviews?.firstOrNull()
+        ?: return@mapNotNull null
+
+      val fullUrls = combinedPreviews
+        ?.mapNotNull { preview -> fixUrlOrNull(preview.url)?.toHttpUrlOrNull() }
+        ?.toSet()
+        ?.toList()
+        ?: return@mapNotNull null
+
+      val extension = fullUrls
+        .mapNotNull { fullUrl -> StringUtils.extractFileNameExtension(fullUrl.toString()) }
         .firstOrNull()
 
-      if (serpControllerContent == null) {
-        Logger.d(TAG, "serp-controller__content element not found")
-        return@use emptyList()
-      }
-
-      val serpItems = serpControllerContent
-        .childNodes()
-        .firstOrNull { node ->
-          node.attributes().any { attribute ->
-            attribute.value.contains("serp-list")
-          }
-        }
-        ?.childNodes()
-
-      if (serpItems.isNullOrEmpty()) {
-        Logger.d(TAG, "No serp-item elements found")
-        return@use emptyList()
-      }
-
-      val dataBems = serpItems
-        .map { serpItemNode -> serpItemNode.attr("data-bem") }
-        .filter { dataBemJsonRaw -> dataBemJsonRaw.isNotBlank() }
-        .mapNotNull { dataBemsJson ->
-          try {
-            moshi.adapter(DataBem::class.java).fromJson(dataBemsJson)
-          } catch (error: Throwable) {
-            Logger.e(TAG, "Failed to convert dataBemsJson into DataBem object, error=${error.errorMessageOrClassName()}")
-            null
-          }
-        }
-
-      if (dataBems.isEmpty()) {
-        Logger.d(TAG, "No data-bem elements found")
-        return@use emptyList()
-      }
-
-      return@use dataBems.mapNotNull { dataBem ->
-        val thumbUrl = fixUrlOrNull(dataBem.serpItem?.thumb?.url)?.toHttpUrlOrNull()
-          ?: return@mapNotNull null
-
-        val combinedPreviews = dataBem.serpItem?.combinedPreviews()
-
-        val preview = combinedPreviews?.firstOrNull { preview -> preview.isValid() }
-          ?: combinedPreviews?.firstOrNull()
-          ?: return@mapNotNull null
-
-        val fullUrls = combinedPreviews
-          ?.mapNotNull { preview -> fixUrlOrNull(preview.url)?.toHttpUrlOrNull() }
-          ?.toSet()
-          ?.toList()
-          ?: return@mapNotNull null
-
-        val extension = fullUrls
-          .mapNotNull { fullUrl -> StringUtils.extractFileNameExtension(fullUrl.toString()) }
-          .firstOrNull()
-
-        return@mapNotNull ImageSearchResult(
-          thumbnailUrl = thumbUrl,
-          fullImageUrls = fullUrls,
-          sizeInByte = preview.size,
-          width = preview.width,
-          height = preview.height,
-          extension = extension
-        )
-      }
+      return@mapNotNull ImageSearchResult(
+        thumbnailUrl = thumbUrl,
+        fullImageUrls = fullUrls,
+        sizeInByte = preview.size,
+        width = preview.width,
+        height = preview.height,
+        extension = extension
+      )
     }
   }
 

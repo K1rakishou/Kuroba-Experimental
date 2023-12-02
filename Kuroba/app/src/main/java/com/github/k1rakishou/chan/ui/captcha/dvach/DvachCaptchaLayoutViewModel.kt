@@ -1,6 +1,10 @@
 package com.github.k1rakishou.chan.ui.captcha.dvach
 
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.geometry.Offset
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.compose.AsyncData
@@ -32,6 +36,7 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
   private var activeJob: Job? = null
   var captchaInfoToShow = mutableStateOf<AsyncData<CaptchaInfo>>(AsyncData.NotInitialized)
   var currentInputValue = mutableStateOf<String>("")
+  var currentPuzzlePieceOffsetValue = mutableStateOf<Offset>(Offset.Unspecified)
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -41,15 +46,16 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
 
   }
 
-  fun requestCaptcha(captchaIdUrl: String) {
+  fun requestCaptcha(captchaUrl: String) {
     activeJob?.cancel()
     activeJob = null
     currentInputValue.value = ""
+    currentPuzzlePieceOffsetValue.value = Offset.Unspecified
 
     activeJob = mainScope.launch {
       captchaInfoToShow.value = AsyncData.Loading
 
-      val result = ModularResult.Try { requestCaptchaIdInternal(captchaIdUrl) }
+      val result = ModularResult.Try { requestCaptchaIdInternal(captchaUrl) }
       captchaInfoToShow.value = when (result) {
         is ModularResult.Error -> AsyncData.Error(result.error)
         is ModularResult.Value -> AsyncData.Data(result.value)
@@ -57,11 +63,17 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
-  private suspend fun requestCaptchaIdInternal(captchaIdUrl: String): CaptchaInfo {
-    Logger.d(TAG, "requestCaptchaInternal() requesting $captchaIdUrl")
+  private suspend fun requestCaptchaIdInternal(captchaUrl: String): CaptchaInfo {
+    val captchaType = when {
+      captchaUrl.endsWith("captcha/2chcaptcha/id") -> DvachCaptchaType.Text
+      captchaUrl.endsWith("captcha/puzzle") -> DvachCaptchaType.Puzzle
+      else -> DvachCaptchaType.Text
+    }
+
+    Logger.d(TAG, "requestCaptchaInternal() requesting ${captchaUrl}, captchaType: ${captchaType}")
 
     val requestBuilder = Request.Builder()
-      .url(captchaIdUrl)
+      .url(captchaUrl)
       .get()
 
     siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR)?.let { site ->
@@ -69,27 +81,48 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
     }
 
     val request = requestBuilder.build()
-    val captchaInfoAdapter = moshi.adapter(CaptchaInfo::class.java)
 
-    val captchaInfo = proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
-      request = request,
-      adapter = captchaInfoAdapter
-    ).unwrap()
+    val captchaInfoData = when (captchaType) {
+      DvachCaptchaType.Text -> {
+        val captchaInfoAdapter = moshi.adapter(CaptchaInfoData.Text::class.java)
 
-    if (captchaInfo == null) {
+        proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
+          request = request,
+          adapter = captchaInfoAdapter
+        ).unwrap()
+      }
+      DvachCaptchaType.Puzzle -> {
+        val captchaInfoAdapter = moshi.adapter(CaptchaInfoData.Puzzle::class.java)
+
+        proxiedOkHttpClient.okHttpClient().suspendConvertIntoJsonObjectWithAdapter(
+          request = request,
+          adapter = captchaInfoAdapter
+        ).unwrap()
+      }
+    }
+
+    if (captchaInfoData == null) {
       throw DvachCaptchaError("Failed to convert json into CaptchaInfo")
     }
 
-    if (!captchaInfo.isValidDvachCaptcha()) {
-      throw DvachCaptchaError("Invalid dvach captcha info: ${captchaInfo}")
+    if (!captchaInfoData.isValidDvachCaptcha()) {
+      throw DvachCaptchaError("Invalid dvach captcha info: ${captchaInfoData}")
     }
 
-    return captchaInfo
+    val captchaInfo = CaptchaInfo.fromCaptchaInfoData(captchaInfoData)
+    val exception = captchaInfo.exceptionOrNull()
+
+    if (exception != null) {
+      throw DvachCaptchaError(exception.message ?: "Failed to convert CaptchaInfoData into CaptchaInfo")
+    }
+
+    return requireNotNull(captchaInfo.getOrNull()) { "Result<CaptchaInfo>.getOrNull() returned null!" }
   }
 
   fun cleanup() {
     currentInputValue.value = ""
     captchaInfoToShow.value = AsyncData.NotInitialized
+    currentPuzzlePieceOffsetValue.value = Offset.Unspecified
 
     activeJob?.cancel()
     activeJob = null
@@ -97,26 +130,116 @@ class DvachCaptchaLayoutViewModel : BaseViewModel() {
 
   class DvachCaptchaError(message: String) : Exception(message)
 
-  @JsonClass(generateAdapter = true)
-  data class CaptchaInfo(
-    val id: String?,
-    val type: String?,
-    val input: String?
-  ) {
-    fun isValidDvachCaptcha(): Boolean {
-      return id.isNotNullNorEmpty() && type == "2chcaptcha"
-    }
+  sealed interface CaptchaInfo {
 
-    fun fullRequestUrl(siteManager: SiteManager): HttpUrl? {
-      if (id == null) {
-        return null
+    data class Text(
+      val id: String,
+      val type: String,
+      val input: String
+    ) : CaptchaInfo {
+
+      fun fullRequestUrl(siteManager: SiteManager): HttpUrl? {
+        val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
+          ?: return null
+
+        return "${dvach.domainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
       }
 
-      val dvach = siteManager.bySiteDescriptor(Dvach.SITE_DESCRIPTOR) as? Dvach
-        ?: return null
-
-      return "${dvach.domainString}/api/captcha/2chcaptcha/show?id=$id".toHttpUrl()
     }
+
+    data class Puzzle(
+      val id: String,
+      val image: Bitmap,
+      val input: String,
+      val puzzle: Bitmap,
+      val type: String,
+    ) : CaptchaInfo {
+
+    }
+
+    companion object {
+      internal fun fromCaptchaInfoData(data: CaptchaInfoData): Result<CaptchaInfo> {
+        return Result.runCatching {
+          when (data) {
+            is CaptchaInfoData.Puzzle -> {
+              val id = requireNotNull(data.id) { "CaptchaInfoData.Puzzle.id is null!" }
+              val image = requireNotNull(data.image) { "CaptchaInfoData.Puzzle.image is null!" }
+              val input = requireNotNull(data.input) { "CaptchaInfoData.Puzzle.input is null!" }
+              val puzzle = requireNotNull(data.puzzle) { "CaptchaInfoData.Puzzle.puzzle is null!" }
+              val type = requireNotNull(data.type) { "CaptchaInfoData.Puzzle.type is null!" }
+
+              val imageBitmap = run {
+                val byteArray = Base64.decode(image, Base64.DEFAULT)
+                return@run BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+              }
+
+              val puzzleBitmap = run {
+                val byteArray = Base64.decode(puzzle, Base64.DEFAULT)
+                return@run BitmapFactory.decodeByteArray(byteArray, 0, byteArray.size)
+              }
+
+              return@runCatching CaptchaInfo.Puzzle(
+                id = id,
+                image = imageBitmap,
+                input = input,
+                puzzle = puzzleBitmap,
+                type = type
+              )
+            }
+            is CaptchaInfoData.Text -> {
+              val id = requireNotNull(data.id) { "CaptchaInfoData.Text.id is null!" }
+              val type = requireNotNull(data.type) { "CaptchaInfoData.Text.type is null!" }
+              val input = requireNotNull(data.input) { "CaptchaInfoData.Text.input is null!" }
+
+              return@runCatching CaptchaInfo.Text(
+                id = id,
+                type = type,
+                input = input
+              )
+            }
+          }
+        }
+      }
+    }
+
+  }
+
+  internal sealed interface CaptchaInfoData {
+    fun isValidDvachCaptcha(): Boolean
+
+    @JsonClass(generateAdapter = true)
+    data class Text(
+      val id: String?,
+      val type: String?,
+      val input: String?
+    ) : CaptchaInfoData {
+
+      override fun isValidDvachCaptcha(): Boolean {
+        return id.isNotNullNorEmpty() && type == "2chcaptcha"
+      }
+
+    }
+
+    @JsonClass(generateAdapter = true)
+    data class Puzzle(
+      val id: String?,
+      val image: String?,
+      val input: String?,
+      val puzzle: String?,
+      val type: String?,
+    ) : CaptchaInfoData {
+
+      override fun isValidDvachCaptcha(): Boolean {
+        return id.isNotNullNorEmpty() && image.isNotNullNorEmpty() && puzzle.isNotNullNorEmpty() && type == "puzzle"
+      }
+
+    }
+
+  }
+
+  enum class DvachCaptchaType {
+    Text,
+    Puzzle
   }
 
   companion object {

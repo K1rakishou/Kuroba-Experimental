@@ -127,6 +127,17 @@ class DvachReplyCall internal constructor(
     formBuilder: MultipartBody.Builder,
     captchaSolution: CaptchaSolution.ChallengeWithSolution
   ) {
+    val solution = captchaSolution.solution
+
+    val puzzleAnswer = DvachPuzzleSolution.decode(solution)
+    if (puzzleAnswer != null) {
+      formBuilder.addFormDataPart("captcha_type", "puzzle")
+      formBuilder.addFormDataPart("puzzle_id", captchaSolution.challenge)
+      formBuilder.addFormDataPart("puzzle_x", puzzleAnswer.puzzleX.toString())
+      formBuilder.addFormDataPart("puzzle_y", puzzleAnswer.puzzleY.toString())
+      return
+    }
+
     formBuilder.addFormDataPart("captcha_type", "2chcaptcha")
     formBuilder.addFormDataPart("2chcaptcha_value", captchaSolution.solution)
     formBuilder.addFormDataPart("2chcaptcha_id", captchaSolution.challenge)
