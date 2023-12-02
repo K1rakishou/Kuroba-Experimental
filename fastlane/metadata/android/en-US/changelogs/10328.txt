@@ -1,0 +1,10 @@
+v1.3.28
+Full version:
+- Add support for adaptive icon. Thanks to @rainfallmelonflysong
+- Fix report params from posts to post. Thanks to @Sweetsound
+- [2ch.hk] Add puzzle type captcha support.
+
+v1.3.27
+- Fix a crash when clicking "More themes" button on the themes settings screen.
+- Update Google reverse image search #2. Thanks to @SnZ
+- When append thread id and thread subject options are both on when downloading media, use them as one directory separated with '-' symbol, instead of two.
