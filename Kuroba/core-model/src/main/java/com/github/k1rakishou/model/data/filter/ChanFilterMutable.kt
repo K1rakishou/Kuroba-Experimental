@@ -17,7 +17,9 @@ class ChanFilterMutable(
   var onlyOnOP: Boolean = false,
   var applyToSaved: Boolean = false,
   var applyToEmptyComments: Boolean = false,
-  var filterWatchNotify: Boolean = false
+  var filterWatchNotify: Boolean = false,
+  var filterWatchAutoSave: Boolean = false,
+  var filterWatchAutoSaveMedia: Boolean = false
 ) {
   fun matchesBoard(boardDescriptor: BoardDescriptor): Boolean {
     return allBoards() || boards.contains(boardDescriptor)
@@ -68,6 +70,8 @@ class ChanFilterMutable(
       applyToSaved = this.applyToSaved,
       applyToEmptyComments = this.applyToEmptyComments,
       filterWatchNotify = this.filterWatchNotify,
+      filterWatchAutoSave = this.filterWatchAutoSave,
+      filterWatchAutoSaveMedia = this.filterWatchAutoSaveMedia,
     )
   }
 
@@ -88,6 +92,8 @@ class ChanFilterMutable(
         applyToSaved = chanFilter.applyToSaved,
         applyToEmptyComments = chanFilter.applyToEmptyComments,
         filterWatchNotify = chanFilter.filterWatchNotify,
+        filterWatchAutoSave = chanFilter.filterWatchAutoSave,
+        filterWatchAutoSaveMedia = chanFilter.filterWatchAutoSaveMedia,
       ).also { chanFilterMutable ->
         chanFilterMutable.boards.clear()
         chanFilterMutable.boards.addAll(chanFilter.boards)

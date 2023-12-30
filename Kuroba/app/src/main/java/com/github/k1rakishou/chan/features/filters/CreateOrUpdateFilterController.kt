@@ -215,6 +215,8 @@ class CreateOrUpdateFilterController(
     var applyToSaved by remember { chanFilterMutableState.applyToSaved }
     var applyToEmptyComments by remember { chanFilterMutableState.applyToEmptyComments }
     var filterWatchNotify by remember { chanFilterMutableState.filterWatchNotify }
+    var filterWatchAutoSave by remember { chanFilterMutableState.filterWatchAutoSave }
+    var filterWatchAutoSaveMedia by remember { chanFilterMutableState.filterWatchAutoSaveMedia }
     val arrowDropDownDrawable = remember { getTextDrawableContent() }
 
     if (action == FilterAction.WATCH.id || action == FilterAction.AVOID_WATCH.id  ) {
@@ -399,6 +401,26 @@ class CreateOrUpdateFilterController(
         enabled = true,
         currentlyChecked = filterWatchNotify,
         onCheckChanged = { checked -> filterWatchNotify = checked }
+      )
+
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_watcher_auto_save),
+        enabled = true,
+        currentlyChecked = filterWatchAutoSave,
+        onCheckChanged = { checked -> filterWatchAutoSave = checked }
+      )
+
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_watcher_auto_save_media),
+        enabled = filterWatchAutoSave,
+        currentlyChecked = filterWatchAutoSaveMedia,
+        onCheckChanged = { checked -> filterWatchAutoSaveMedia = checked }
       )
     }
 
@@ -783,6 +805,8 @@ class CreateOrUpdateFilterController(
     val applyToSaved: MutableState<Boolean> = mutableStateOf(false),
     val applyToEmptyComments: MutableState<Boolean> = mutableStateOf(false),
     val filterWatchNotify: MutableState<Boolean> = mutableStateOf(false),
+    val filterWatchAutoSave: MutableState<Boolean> = mutableStateOf(false),
+    val filterWatchAutoSaveMedia: MutableState<Boolean> = mutableStateOf(false),
 
     val testPattern: MutableState<String> = mutableStateOf(""),
     val filterValidationResult: MutableState<FilterValidationResult> = mutableStateOf(FilterValidationResult.Undefined)
@@ -804,6 +828,8 @@ class CreateOrUpdateFilterController(
         applyToSaved = applyToSaved.value,
         applyToEmptyComments = applyToEmptyComments.value,
         filterWatchNotify = filterWatchNotify.value,
+        filterWatchAutoSave = filterWatchAutoSave.value,
+        filterWatchAutoSaveMedia = filterWatchAutoSaveMedia.value,
       )
     }
 
@@ -824,6 +850,8 @@ class CreateOrUpdateFilterController(
           chanFilterMutableState.applyToSaved.value = chanFilterMutable.applyToSaved
           chanFilterMutableState.applyToEmptyComments.value = chanFilterMutable.applyToEmptyComments
           chanFilterMutableState.filterWatchNotify.value = chanFilterMutable.filterWatchNotify
+          chanFilterMutableState.filterWatchAutoSave.value = chanFilterMutable.filterWatchAutoSave
+          chanFilterMutableState.filterWatchAutoSaveMedia.value = chanFilterMutable.filterWatchAutoSaveMedia
 
           chanFilterMutableState.color.value = if (chanFilterMutable.color != 0) {
             chanFilterMutable.color

@@ -8,6 +8,7 @@ import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.manager.ThreadBookmarkGroupManager
+import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.parser.ChanReader
 import com.github.k1rakishou.chan.core.site.parser.search.SimpleCommentParser
 import com.github.k1rakishou.common.AppConstants
@@ -43,12 +44,14 @@ import okhttp3.Request
 import org.jsoup.parser.Parser
 import java.io.IOException
 import java.util.*
+import javax.inject.Inject
 
 class BookmarkFilterWatchableThreadsUseCase(
   private val verboseLogsEnabled: Boolean,
   private val appConstants: AppConstants,
   private val boardManager: BoardManager,
   private val bookmarksManager: BookmarksManager,
+  private val threadDownloadManager: Lazy<ThreadDownloadManager>,
   private val threadBookmarkGroupManager: ThreadBookmarkGroupManager,
   private val chanFilterManager: ChanFilterManager,
   private val siteManager: SiteManager,
@@ -154,6 +157,7 @@ class BookmarkFilterWatchableThreadsUseCase(
     val bookmarksToCreate = mutableListOf<BookmarksManager.SimpleThreadBookmark>()
     val bookmarksToUpdate = mutableListOf<ChanDescriptor.ThreadDescriptor>()
     val bookmarksToNotify = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
+    val bookmarksToAutoSave = mutableMapOf<ChanDescriptor.ThreadDescriptor,Boolean>()
     val bookmarkGroupsToCreate = mutableMapOf<String, MutableList<ChanDescriptor.ThreadDescriptor>>()
 
     matchedCatalogThreads.forEach { filterWatchCatalogThreadInfoObject ->
@@ -200,6 +204,10 @@ class BookmarkFilterWatchableThreadsUseCase(
 
             bookmarkDescriptorsToNotify.add(bookmarkThreadDescriptor)
           }
+          if (filterWatchCatalogThreadInfoObject.matchedFilter().filterWatcherAutoSaveThread()) {
+            bookmarksToAutoSave[bookmarkThreadDescriptor] = filterWatchCatalogThreadInfoObject.matchedFilter().filterWatcherAutoSaveThreadMedia()
+
+          }
         }
 
         return@forEach
@@ -236,6 +244,19 @@ class BookmarkFilterWatchableThreadsUseCase(
         "createdThreadBookmarks=${createdThreadBookmarks.size}")
 
       if (success) {
+        bookmarksToAutoSave.forEach { descriptorMap ->
+          val autoSavedThreadDescriptor = descriptorMap.key
+          val thumbnailUrlString = bookmarksManager.getBookmarkThumbnailByThreadId(autoSavedThreadDescriptor)?.toString()
+          val downloadMedia = descriptorMap.value
+
+          threadDownloadManager.get().startDownloading(
+            threadDescriptor =  autoSavedThreadDescriptor,
+            threadThumbnailUrl = thumbnailUrlString,
+            downloadMedia =  downloadMedia
+          )
+        }
+        Logger.d(TAG, "createOrUpdateBookmarks() success=$success created ${createdThreadBookmarks.size} " +
+                "out of ${bookmarksToCreate.size} bookmarks")
         createOrUpdateBookmarkGroups(bookmarkGroupsToCreate, createdThreadBookmarks)
       }
 

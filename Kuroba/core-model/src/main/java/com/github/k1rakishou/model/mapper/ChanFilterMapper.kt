@@ -30,6 +30,8 @@ object ChanFilterMapper {
       applyToSaved = chanFilterFull.chanFilterEntity.applyToSaved,
       applyToEmptyComments = chanFilterFull.chanFilterEntity.applyToEmptyComments,
       filterWatchNotify = chanFilterFull.chanFilterEntity.filterWatchNotify,
+      filterWatchAutoSave = chanFilterFull.chanFilterEntity.filterWatchAutoSave,
+      filterWatchAutoSaveMedia = chanFilterFull.chanFilterEntity.filterWatchAutoSaveMedia,
     )
   }
 
@@ -49,6 +51,8 @@ object ChanFilterMapper {
         applyToSaved = chanFilter.applyToSaved,
         applyToEmptyComments = chanFilter.applyToEmptyComments,
         filterWatchNotify = chanFilter.filterWatchNotify,
+        filterWatchAutoSave = chanFilter.filterWatchAutoSave,
+        filterWatchAutoSaveMedia = chanFilter.filterWatchAutoSaveMedia,
       ),
       chanFilterBoardConstraintEntityList = chanFilter.boards.map { boardDescriptor ->
         ChanFilterBoardConstraintEntity(

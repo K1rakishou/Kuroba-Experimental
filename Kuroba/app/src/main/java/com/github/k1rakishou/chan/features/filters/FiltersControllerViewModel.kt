@@ -379,16 +379,35 @@ class FiltersControllerViewModel : BaseViewModel() {
         append(chanFilter.applyToEmptyComments.toString())
       }
 
-      if (chanFilter.isWatchFilter() && chanFilter.filterWatchNotify) {
-        append("\n")
-        append(
-          AnnotatedString(getString(R.string.filter_filter_watch_notify),
-            SpanStyle(color = chanTheme.textColorSecondaryCompose))
-        )
-        append(" ")
-        append(chanFilter.filterWatchNotify.toString())
+      if (chanFilter.isWatchFilter()) {
+        if (chanFilter.filterWatchNotify) {
+          append("\n")
+          append(
+            AnnotatedString(getString(R.string.filter_filter_watch_notify),
+              SpanStyle(color = chanTheme.textColorSecondaryCompose))
+          )
+          append(" ")
+          append(chanFilter.filterWatchNotify.toString())
+        }
+        if (chanFilter.filterWatchAutoSave){
+          append("\n")
+          append(
+            AnnotatedString(getString(R.string.filter_filter_watch_auto_save),
+              SpanStyle(color = chanTheme.textColorSecondaryCompose))
+          )
+          append(" ")
+          append(chanFilter.filterWatchAutoSave.toString())
+        }
+        if (chanFilter.filterWatchAutoSaveMedia){
+          append("\n")
+          append(
+            AnnotatedString(getString(R.string.filter_filter_watch_auto_save_media),
+              SpanStyle(color = chanTheme.textColorSecondaryCompose))
+          )
+          append(" ")
+          append(chanFilter.filterWatchAutoSaveMedia.toString())
+        }
       }
-
       val filterNote = chanFilter.note
       if (filterNote.isNotNullNorBlank()) {
         append("\n")
