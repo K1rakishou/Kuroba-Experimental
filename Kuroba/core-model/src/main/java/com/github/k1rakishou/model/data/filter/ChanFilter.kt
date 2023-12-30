@@ -15,7 +15,9 @@ class ChanFilter(
   val onlyOnOP: Boolean = false,
   val applyToSaved: Boolean = false,
   val applyToEmptyComments: Boolean = false,
-  val filterWatchNotify: Boolean = false
+  val filterWatchNotify: Boolean = false,
+  val filterWatchAutoSave: Boolean = false,
+  val filterWatchAutoSaveMedia: Boolean = false
 ) {
 
   @Synchronized
@@ -35,6 +37,22 @@ class ChanFilter(
     }
 
     return filterWatchNotify
+  }
+
+  fun filterWatcherAutoSaveThread(): Boolean {
+    if (action != FilterAction.WATCH.id) {
+      return false
+    }
+
+    return filterWatchAutoSave
+  }
+
+  fun filterWatcherAutoSaveThreadMedia(): Boolean {
+    if (action != FilterAction.WATCH.id || !filterWatchAutoSave) {
+      return false
+    }
+
+    return filterWatchAutoSaveMedia
   }
 
   fun isEnabledWatchFilter(): Boolean {
@@ -78,6 +96,8 @@ class ChanFilter(
       applyToSaved = applyToSaved,
       applyToEmptyComments = applyToEmptyComments,
       filterWatchNotify = filterWatchNotify,
+      filterWatchAutoSave = filterWatchAutoSave,
+      filterWatchAutoSaveMedia = filterWatchAutoSaveMedia,
     )
   }
 
@@ -100,6 +120,8 @@ class ChanFilter(
     if (applyToSaved != other.applyToSaved) return false
     if (applyToEmptyComments != other.applyToEmptyComments) return false
     if (filterWatchNotify != other.filterWatchNotify) return false
+    if (filterWatchAutoSave != other.filterWatchAutoSave) return false
+    if (filterWatchAutoSaveMedia != other.filterWatchAutoSaveMedia) return false
 
     return true
   }
@@ -118,6 +140,8 @@ class ChanFilter(
     result = 31 * result + applyToSaved.hashCode()
     result = 31 * result + applyToEmptyComments.hashCode()
     result = 31 * result + filterWatchNotify.hashCode()
+    result = 31 * result + filterWatchAutoSave.hashCode()
+    result = 31 * result + filterWatchAutoSaveMedia.hashCode()
     return result
   }
 
@@ -125,7 +149,7 @@ class ChanFilter(
     return "ChanFilter(filterDatabaseId=$filterDatabaseId, enabled=$enabled, type=$type, " +
       "pattern=$pattern, boards=$boards, action=$action, color=$color, note=$note" +
       "applyToReplies=$applyToReplies, onlyOnOP=$onlyOnOP, applyToSaved=$applyToSaved, " +
-      "applyToEmptyComments=$applyToEmptyComments, filterWatchNotify=$filterWatchNotify)"
+      "applyToEmptyComments=$applyToEmptyComments, filterWatchNotify=$filterWatchNotify), filterWatchAutoSave=$filterWatchAutoSave, filterWatchAutoSaveMedia=$filterWatchAutoSaveMedia)"
   }
 
 }

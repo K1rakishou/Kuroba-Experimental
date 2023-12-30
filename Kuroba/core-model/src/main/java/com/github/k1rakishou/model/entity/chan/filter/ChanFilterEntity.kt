@@ -33,7 +33,11 @@ data class ChanFilterEntity(
   @ColumnInfo(name = APPLY_TO_POSTS_WITH_EMPTY_COMMENT)
   val applyToEmptyComments: Boolean = false,
   @ColumnInfo(name = FILTER_WATCH_NOTIFY_COLUMN_NAME)
-  val filterWatchNotify: Boolean = false
+  val filterWatchNotify: Boolean = false,
+  @ColumnInfo(name = FILTER_WATCH_AUTO_SAVE_COLUMN_NAME)
+  val filterWatchAutoSave: Boolean = false,
+  @ColumnInfo(name = FILTER_WATCH_AUTO_SAVE_MEDIA_COLUMN_NAME)
+  val filterWatchAutoSaveMedia: Boolean = false
 ) {
 
   companion object {
@@ -52,5 +56,7 @@ data class ChanFilterEntity(
     const val APPLY_TO_SAVED_COLUMN_NAME = "apply_to_saved"
     const val APPLY_TO_POSTS_WITH_EMPTY_COMMENT = "apply_to_posts_with_empty_comment"
     const val FILTER_WATCH_NOTIFY_COLUMN_NAME = "filter_watch_notify"
+    const val FILTER_WATCH_AUTO_SAVE_COLUMN_NAME = "filter_watch_autosave"
+    const val FILTER_WATCH_AUTO_SAVE_MEDIA_COLUMN_NAME = "filter_watch_autosave_media"
   }
 }
