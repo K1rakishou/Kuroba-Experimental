@@ -402,6 +402,26 @@ class CreateOrUpdateFilterController(
         currentlyChecked = filterWatchNotify,
         onCheckChanged = { checked -> filterWatchNotify = checked }
       )
+
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_watcher_auto_save),
+        enabled = true,
+        currentlyChecked = filterWatchAutoSave,
+        onCheckChanged = { checked -> filterWatchAutoSave = checked }
+      )
+
+      KurobaComposeCheckbox(
+        modifier = Modifier
+          .fillMaxWidth()
+          .wrapContentHeight(),
+        text = stringResource(id = R.string.filter_watcher_auto_save_media),
+        enabled = filterWatchAutoSave,
+        currentlyChecked = filterWatchAutoSaveMedia,
+        onCheckChanged = { checked -> filterWatchAutoSaveMedia = checked }
+      )
     }
 
     if (action != FilterAction.WATCH.id) {
