@@ -26,7 +26,7 @@ class ChanFilterMutable(
   fun allBoards(): Boolean = allBoardsSelected && boards.isEmpty()
 
   fun isWatchFilter(): Boolean {
-    return action == FilterAction.WATCH.id
+    return action == FilterAction.WATCH.id || action == FilterAction.AVOID_WATCH.id
   }
 
   fun applyToBoards(allBoardsChecked: Boolean, boards: List<ChanBoard>) {

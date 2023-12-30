@@ -388,12 +388,20 @@ class BookmarkFilterWatchableThreadsUseCase(
 
       if (filterEngine.typeMatches(watchFilter, FilterType.COMMENT)) {
         if (filterEngine.matches(watchFilter, parsedComment, false)) {
+          if (watchFilter.isAvoidWatchFilter())
+          {
+            return null;
+          }
           return watchFilter
         }
       }
 
       if (filterEngine.typeMatches(watchFilter, FilterType.SUBJECT)) {
         if (filterEngine.matches(watchFilter, subject, false)) {
+          if (watchFilter.isAvoidWatchFilter())
+          {
+            return null;
+          }
           return watchFilter
         }
       }

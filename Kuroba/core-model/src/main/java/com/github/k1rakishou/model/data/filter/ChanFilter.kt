@@ -38,7 +38,7 @@ class ChanFilter(
   }
 
   fun isEnabledWatchFilter(): Boolean {
-    return enabled && isWatchFilter()
+    return enabled && (isWatchFilter() || isAvoidWatchFilter())
   }
 
   fun isEnabledHighlightFilter(): Boolean {
@@ -47,6 +47,10 @@ class ChanFilter(
 
   fun isWatchFilter(): Boolean {
     return action == FilterAction.WATCH.id
+  }
+
+  fun isAvoidWatchFilter(): Boolean {
+    return action == FilterAction.AVOID_WATCH.id
   }
 
   fun isHighlightFilter(): Boolean {
