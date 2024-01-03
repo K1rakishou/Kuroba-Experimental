@@ -478,7 +478,7 @@ class KurobaSettingsImportUseCase(
             return@jsonObject
           }
 
-          if (action == FilterAction.WATCH.id || action == FilterAction.AVOID_WATCH.id) {
+          if (action == FilterAction.WATCH.id) {
             Logger.e(TAG, "readFilters() Skipping WATCH filter")
             return@jsonObject
           }
