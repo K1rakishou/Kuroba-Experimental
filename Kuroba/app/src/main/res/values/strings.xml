@@ -396,7 +396,10 @@ Usually that means that you forgot to remove a space from the beginning or the e
             <b>Remove:</b> Remove this post. It won\'t be visible at all.<br>
             <b>Watch:</b> If you have the filter watcher enabled, catalogs will be periodically checked
             based on your interval setting and any OP that matches the filter will be put into your bookmarks.
-            Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br><br>
+            Any catalogs loaded by the you navigating to them from the board select popup will also be checked.<br>
+            <b>Avoid watch:</b> Works together with watch filters, the same interval settings apply. Allows exceptions
+            in bookmark creation. Explicitly skips watching any matching OP that would otherwise be bookmarked by watch filters later in the filter order.
+            <br><br>
             Enabled filters have priority from top to bottom. Filter precedence for actions is as follows:<br>
             1) Capcode or sticky<br>
             2) OP<br>

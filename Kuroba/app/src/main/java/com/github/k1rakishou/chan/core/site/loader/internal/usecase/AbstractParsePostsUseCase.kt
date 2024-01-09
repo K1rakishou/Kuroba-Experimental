@@ -89,7 +89,7 @@ abstract class AbstractParsePostsUseCase(
     }
 
     for (filter in filters) {
-      if (filter.isWatchFilter()) {
+      if (filter.isWatchFilter() || filter.isAvoidWatchFilter()) {
         // Do not auto create watch filters, this may end up pretty bad
         continue
       }
@@ -136,6 +136,9 @@ abstract class AbstractParsePostsUseCase(
       }
       FilterAction.WATCH -> {
         throw IllegalStateException("Cannot auto-create WATCH filters")
+      }
+      FilterAction.AVOID_WATCH -> {
+        throw IllegalStateException("Cannot auto-create AVOID_WATCH filters")
       }
     }
   }
