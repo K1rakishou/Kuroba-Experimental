@@ -1,0 +1,10 @@
+v1.3.29
+Full version:
+- Added feature to avoid tread watching when filter pattern is matched. Thanks to @ressidell
+- Remove `4channel` domain from everywhere. This fixes captcha not being able to load on previously 4channel boards.
+- Do not donate auto-solved captchas.
+
+v1.3.28
+- Add support for adaptive icon. Thanks to @rainfallmelonflysong
+- Fix report params from posts to post. Thanks to @Sweetsound
+- [2ch.hk] Add puzzle type captcha support.
