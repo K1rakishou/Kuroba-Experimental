@@ -12,7 +12,7 @@ import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import okhttp3.MultipartBody
 import okhttp3.Request
-import java.util.*
+import java.util.Locale
 
 class Chan4ReportPostRequest(
   private val siteManager: SiteManager,
@@ -34,13 +34,11 @@ class Chan4ReportPostRequest(
     val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
       ?: return PostReportResult.Error("Bad endpoints()")
 
-    val sysEndpoint = endpoints.getSysEndpoint(postDescriptor.boardDescriptor())
-
     val result: ModularResult<PostReportResult> = ModularResult.Try {
       val reportPostEndpoint = String.format(
         Locale.ENGLISH,
         REPORT_POST_ENDPOINT_FORMAT,
-        sysEndpoint,
+        endpoints.sys4chan,
         postDescriptor.boardDescriptor().boardCode,
         postDescriptor.postNo
       )

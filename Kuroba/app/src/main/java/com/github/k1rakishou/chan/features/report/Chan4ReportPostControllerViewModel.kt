@@ -19,7 +19,7 @@ import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import okhttp3.Request
 import org.jsoup.nodes.Node
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.regex.Pattern
 import javax.inject.Inject
@@ -73,12 +73,10 @@ class Chan4ReportPostControllerViewModel : BaseViewModel() {
       val endpoints = site.endpoints() as? Chan4.Chan4Endpoints
         ?: throw CommonClientException("Bad endpoints()")
 
-      val sysEndpoint = endpoints.getSysEndpoint(postDescriptor.boardDescriptor())
-
       val reportCategoriesEndpoint = String.format(
         Locale.ENGLISH,
         Chan4ReportPostRequest.REPORT_POST_ENDPOINT_FORMAT,
-        sysEndpoint,
+        endpoints.sys4chan,
         postDescriptor.boardDescriptor().boardCode,
         postDescriptor.postNo
       )

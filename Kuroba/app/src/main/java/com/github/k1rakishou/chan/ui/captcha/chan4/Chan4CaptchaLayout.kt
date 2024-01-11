@@ -257,6 +257,7 @@ class Chan4CaptchaLayout(
     val scrollValueState = captchaInfo.sliderValue
     
     var captchaSuggestions by remember { mutableStateOf<List<String>>(emptyList()) }
+    var captchaEnteredManually by remember(key1 = captchaInfo) { mutableStateOf(false) }
 
     LaunchedEffect(
       key1 = Unit,
@@ -301,10 +302,13 @@ class Chan4CaptchaLayout(
 
             prevSolution = solution
             currentInputValue = solution
+            captchaEnteredManually = false
 
             captchaSolution.sliderOffset?.let { sliderOffset ->
               scrollValueState.value = sliderOffset.coerceIn(0f, 1f)
             }
+
+            viewModel.onGotAutoSolverSuggestions(captchaSolution.solutions)
           }
       })
 
@@ -314,7 +318,11 @@ class Chan4CaptchaLayout(
         .wrapContentHeight()
         .padding(horizontal = 16.dp),
       value = currentInputValue,
-      onValueChange = { newValue -> currentInputValue = newValue.uppercase(Locale.ENGLISH) },
+      onValueChange = { newValue ->
+        currentInputValue = newValue.uppercase(Locale.ENGLISH)
+        captchaEnteredManually = true
+        viewModel.resetAutoSolverSuggestions()
+      },
       keyboardActions = KeyboardActions(
         onDone = { verifyCaptcha(captchaInfo, currentInputValue) }
       ),
@@ -695,6 +703,8 @@ class Chan4CaptchaLayout(
 
     viewModel.cacheCaptcha(uuid, chanDescriptor)
     viewModel.resetCaptchaForced(chanDescriptor)
+
+    viewModel.onVerificationCompleted(solution.solution)
   }
 
   private fun showCaptchaHelp() {

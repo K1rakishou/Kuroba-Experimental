@@ -55,13 +55,12 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
-import kotlinx.coroutines.InternalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
-import java.util.*
+import java.util.Locale
 
 @Suppress("PropertyName")
 @DoNotStrip
@@ -77,7 +76,6 @@ open class Chan4 : SiteBase() {
   private lateinit var captchaType: OptionsSetting<CaptchaType>
   lateinit var lastUsedFlagPerBoard: StringSetting
   lateinit var chan4CaptchaCookie: StringSetting
-  lateinit var channel4CaptchaCookie: StringSetting
   lateinit var chan4CaptchaSettings: GsonJsonSetting<Chan4CaptchaSettings>
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
@@ -111,12 +109,6 @@ open class Chan4 : SiteBase() {
       ""
     )
 
-    channel4CaptchaCookie = StringSetting(
-      prefs,
-      "preference_4channel_captcha_cookie",
-      ""
-    )
-
     chan4CaptchaSettings = GsonJsonSetting(
       gson,
       Chan4CaptchaSettings::class.java,
@@ -138,8 +130,7 @@ open class Chan4 : SiteBase() {
     private val i = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
     private val t = HttpUrl.Builder().scheme("https").host("i.4cdn.org").build()
     private val s = HttpUrl.Builder().scheme("https").host("s.4cdn.org").build()
-    private val sys4chan = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
-    private val sys4channel = HttpUrl.Builder().scheme("https").host("sys.4channel.org").build()
+    val sys4chan = HttpUrl.Builder().scheme("https").host("sys.4chan.org").build()
     private val b = HttpUrl.Builder().scheme("https").host("boards.4chan.org").build()
     private val search = HttpUrl.Builder().scheme("https").host("find.4chan.org").build()
 
@@ -232,7 +223,7 @@ open class Chan4 : SiteBase() {
     }
 
     override fun reply(chanDescriptor: ChanDescriptor): HttpUrl {
-      return getSysEndpoint(chanDescriptor.boardDescriptor())
+      return sys4chan
         .newBuilder()
         .addPathSegment(chanDescriptor.boardCode())
         .addPathSegment("post")
@@ -242,7 +233,7 @@ open class Chan4 : SiteBase() {
     override fun delete(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
-      return getSysEndpoint(post.boardDescriptor)
+      return sys4chan
         .newBuilder()
         .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
@@ -252,7 +243,7 @@ open class Chan4 : SiteBase() {
     override fun report(post: ChanPost): HttpUrl {
       val boardCode = post.boardDescriptor.boardCode
 
-      return getSysEndpoint(post.boardDescriptor)
+      return sys4chan
         .newBuilder()
         .addPathSegment(boardCode)
         .addPathSegment("imgboard.php")
@@ -262,7 +253,7 @@ open class Chan4 : SiteBase() {
     }
 
     override fun login(): HttpUrl {
-      return getSysEndpoint(null)
+      return sys4chan
         .newBuilder()
         .addPathSegment("auth")
         .build()
@@ -278,24 +269,8 @@ open class Chan4 : SiteBase() {
         .addPathSegment("archive")
         .build()
     }
-
-    fun getSysEndpoint(boardDescriptor: BoardDescriptor?): HttpUrl {
-      if (boardDescriptor == null) {
-        return sys4channel
-      }
-
-      val workSafe = boardManager.byBoardDescriptor(boardDescriptor)?.workSafe
-      if (workSafe == null || workSafe == true) {
-        // sys4channel is the default in most cases, we only use sys4chan when we are sure it's
-        // a NSFW board.
-        return sys4channel
-      }
-
-      return sys4chan
-    }
   }
 
-  @OptIn(InternalCoroutinesApi::class)
   private val actions: SiteActions = object : SiteActions {
 
     override suspend fun boards(): ModularResult<SiteBoards> {
@@ -596,7 +571,6 @@ open class Chan4 : SiteBase() {
     settings.addAll(super.settings())
     settings.add(SiteOptionsSetting("Captcha type", null, "captcha_type", captchaType, listOf("Javascript", "Noscript")))
     settings.add(SiteSetting.SiteStringSetting("4chan captcha cookie", null, chan4CaptchaCookie))
-    settings.add(SiteSetting.SiteStringSetting("4channel captcha cookie", null, channel4CaptchaCookie))
 
     return settings
   }
@@ -706,14 +680,7 @@ open class Chan4 : SiteBase() {
         return null
       }
 
-      return when {
-        host.contains("4channel") -> site.channel4CaptchaCookie.get()
-        host.contains("4chan") -> site.chan4CaptchaCookie.get()
-        else -> {
-          Logger.e(TAG, "Unexpected host: '$host'")
-          null
-        }
-      }
+      return site.chan4CaptchaCookie.get()
     }
   }
 
@@ -740,13 +707,9 @@ open class Chan4 : SiteBase() {
     val URL_HANDLER: SiteUrlHandler = object : SiteUrlHandler {
       private val hosts = setOf(
         "4chan.org",
-        "4channel.org",
         "boards.4chan.org",
-        "boards.4channel.org",
         "sys.4chan.org",
-        "sys.4channel.org",
         "find.4chan.org",
-        "find.4channel.org",
         "a.4cdn.org",
         "i.4cdn.org",
         "s.4cdn.org",

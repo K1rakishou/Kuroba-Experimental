@@ -4,6 +4,7 @@ import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.manager.CaptchaImageCache
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.hashSetWithCap
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -23,6 +24,8 @@ class CaptchaDonation(
     private val captchaImageCache: CaptchaImageCache,
     private val proxiedOkHttpClient: RealProxiedOkHttpClient
 ) {
+    private val _autoSolvedCaptchas = hashSetWithCap<String>(initialCapacity = 256)
+
     @OptIn(ObsoleteCoroutinesApi::class)
     private val actor = appScope.actor<Data>(
         context = Dispatchers.IO + SupervisorJob(),
@@ -37,10 +40,20 @@ class CaptchaDonation(
         }
     }
 
+    fun addAutoSolvedCaptcha(captchaSolution: String) {
+        _autoSolvedCaptchas.add(captchaSolution)
+    }
+
     fun donateCaptcha(
         chanDescriptor: ChanDescriptor,
         captchaSolution: CaptchaSolution.ChallengeWithSolution
     ) {
+        if (_autoSolvedCaptchas.contains(captchaSolution.solution)) {
+            // Do not donate autosolved captchas because it doesn't make any sense.
+            Logger.d(TAG, "donateCaptcha() skipping '${captchaSolution.solution}' because it was autosolved")
+            return
+        }
+
         val captchaBytes = captchaImageCache.consume(captchaSolution.uuid, chanDescriptor)
         if (captchaBytes == null || captchaBytes.isEmpty()) {
             return

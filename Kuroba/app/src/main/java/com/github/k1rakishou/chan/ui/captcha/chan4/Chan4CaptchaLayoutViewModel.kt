@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
+import com.github.k1rakishou.chan.features.posting.CaptchaDonation
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
@@ -70,6 +71,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var chan4CaptchaSolverHelper: Chan4CaptchaSolverHelper
   @Inject
   lateinit var captchaImageCache: CaptchaImageCache
+  @Inject
+  lateinit var captchaDonation: CaptchaDonation
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -102,6 +105,8 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   private val _notifyUserAboutCaptchaSolverErrorFlow = MutableSharedFlow<CaptchaSolverInfo>(extraBufferCapacity = 1)
   val notifyUserAboutCaptchaSolverErrorFlow: SharedFlow<CaptchaSolverInfo>
     get() = _notifyUserAboutCaptchaSolverErrorFlow.asSharedFlow()
+
+  private val _captchaSuggestions = mutableListOf<String>()
 
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
@@ -203,6 +208,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       "(forced: $forced, ttl: ${prevCaptchaInfo?.ttlMillis()}, chanDescriptor=$chanDescriptor)")
 
     _captchaTtlMillisFlow.value = -1L
+    _captchaSuggestions.clear()
     getCachedCaptchaInfoOrNull(chanDescriptor)?.reset()
 
     captchaInfoCache.remove(chanDescriptor)
@@ -401,23 +407,15 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   private fun formatCaptchaUrl(chanDescriptor: ChanDescriptor, boardCode: String): String {
-    val chanBoard = boardManager.byBoardDescriptor(chanDescriptor.boardDescriptor())
-
-    val host = if (chanBoard == null || chanBoard.workSafe) {
-      "4channel"
-    } else {
-      "4chan"
-    }
-
     return when (chanDescriptor) {
       is ChanDescriptor.CompositeCatalogDescriptor -> {
         error("Cannot use CompositeCatalogDescriptor here")
       }
       is ChanDescriptor.CatalogDescriptor -> {
-        "https://sys.$host.org/captcha?board=${boardCode}"
+        "https://sys.4chan.org/captcha?board=${boardCode}"
       }
       is ChanDescriptor.ThreadDescriptor -> {
-        "https://sys.$host.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}"
+        "https://sys.4chan.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}"
       }
     }
   }
@@ -483,6 +481,25 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       }
 
       currentCaptchaInfo.captchaSolution.value = captchaSolution
+    }
+  }
+
+  fun onGotAutoSolverSuggestions(captchaSuggestions: List<String>) {
+    _captchaSuggestions.clear()
+    _captchaSuggestions.addAll(captchaSuggestions)
+  }
+
+  fun resetAutoSolverSuggestions() {
+    _captchaSuggestions.clear()
+  }
+
+  fun onVerificationCompleted(solution: String) {
+    if (_captchaSuggestions.isEmpty()) {
+      return
+    }
+
+    if (_captchaSuggestions.contains(solution)) {
+      captchaDonation.addAutoSolvedCaptcha(solution)
     }
   }
 

@@ -321,15 +321,7 @@ class Chan4ReplyCall(
       return
     }
 
-    val oldCookie = when {
-      domain.contains("4channel") -> chan4.channel4CaptchaCookie.get()
-      domain.contains("4chan") -> chan4.chan4CaptchaCookie.get()
-      else -> {
-        Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
-        null
-      }
-    }
-
+    val oldCookie = chan4.chan4CaptchaCookie.get()
     Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}', domain='${domain}'")
 
     if (oldCookie != null && oldCookie.isNotEmpty() && !expired) {
@@ -348,12 +340,7 @@ class Chan4ReplyCall(
       return
     }
 
-    when {
-      domain.contains("4channel") -> chan4.channel4CaptchaCookie.set(newCookie)
-      domain.contains("4chan") -> chan4.chan4CaptchaCookie.set(newCookie)
-      else -> Logger.e(TAG, "setChan4CaptchaHeader() unexpected domain: '$domain'")
-    }
-
+    chan4.chan4CaptchaCookie.set(newCookie)
     chan4.chan4CaptchaSettings.set(chan4CaptchaSettings.copy(cookieReceivedOn = now))
   }
 
