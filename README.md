@@ -81,7 +81,7 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 
 [All beta versions](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases)
 
-### [Latest release version (v1.3.28)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v1.3.28-release)
+### [Latest release version (v1.3.29)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v1.3.29-release)
 
 ##### Currently supported sites
 - 4Chan
