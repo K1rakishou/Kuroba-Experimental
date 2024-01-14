@@ -236,7 +236,8 @@ class Chan4ReplyCall(
     if (replyResponse.threadNo == 0L || replyResponse.postNo == 0L) {
       Logger.e(TAG, "process() Server returned incorrect thread/post id! response = \"$result\"")
       replyResponse.errorMessage = "Server returned incorrect thread/post id. " +
-              "On some boards this happens when the server thinks you are a spammer.\n\n"
+              "On some boards this happens when you are trying to make a post with an image and the server thinks you are a spammer.\n" +
+              "Try to make some regular posts without images.\n\n" +
               "threadNo: ${replyResponse.threadNo}, postNo: ${replyResponse.postNo}"
       return
     }
