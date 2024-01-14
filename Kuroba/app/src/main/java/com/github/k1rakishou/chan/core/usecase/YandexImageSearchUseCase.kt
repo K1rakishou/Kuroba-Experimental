@@ -9,12 +9,10 @@ import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.appendCookieHeader
-import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
-import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.Dispatchers
@@ -90,76 +88,61 @@ class YandexImageSearchUseCase(
   }
 
   private fun parsePageHtml(yandexImageSearchDocument: Document): List<ImageSearchResult> {
-    val serpControllerContent = yandexImageSearchDocument
+    val dataStateJson = yandexImageSearchDocument
       .body()
-      .select("div[class=serp-controller__content]")
-      .firstOrNull()
+      .selectFirst("div[class=page-layout__column page-layout__column_type_content]")
+      ?.selectFirst("div[class=Root]")
+      ?.attr("data-state")
 
-    if (serpControllerContent == null) {
-      Logger.d(TAG, "serp-controller__content element not found")
+    if (dataStateJson == null) {
+      Logger.d(TAG, "data-state not found")
       return emptyList()
     }
 
-    val serpItems = serpControllerContent
-      .childNodes()
-      .firstOrNull { node ->
-        node.attributes().any { attribute ->
-          attribute.value.contains("serp-list")
-        }
-      }
-      ?.childNodes()
+    val dataState = moshi
+      .adapter(DataState::class.java)
+      .fromJson(dataStateJson)
 
-    if (serpItems.isNullOrEmpty()) {
-      Logger.d(TAG, "No serp-item elements found")
+
+    if (dataState == null) {
+      Logger.d(TAG, "Failed to deserialize dataState")
       return emptyList()
     }
 
-    val dataBems = serpItems
-      .map { serpItemNode -> serpItemNode.attr("data-bem") }
-      .filter { dataBemJsonRaw -> dataBemJsonRaw.isNotBlank() }
-      .mapNotNull { dataBemsJson ->
-        try {
-          moshi.adapter(DataBem::class.java).fromJson(dataBemsJson)
-        } catch (error: Throwable) {
-          Logger.e(TAG, "Failed to convert dataBemsJson into DataBem object, error=${error.errorMessageOrClassName()}")
-          null
-        }
-      }
+    return dataState.initialState.serpList.items.entities.mapNotNull { (_, entity) ->
+      val viewerData = entity.viewerData
 
-    if (dataBems.isEmpty()) {
-      Logger.d(TAG, "No data-bem elements found")
-      return emptyList()
-    }
-
-    return dataBems.mapNotNull { dataBem ->
-      val thumbUrl = fixUrlOrNull(dataBem.serpItem?.thumb?.url)?.toHttpUrlOrNull()
+      val thumbUrl = fixUrlOrNull(viewerData.thumb?.url)?.toHttpUrlOrNull()
         ?: return@mapNotNull null
 
-      val combinedPreviews = dataBem.serpItem?.combinedPreviews()
+      val combinedPreviews = viewerData.combinedPreviews()
 
-      val preview = combinedPreviews?.firstOrNull { preview -> preview.isValid() }
-        ?: combinedPreviews?.firstOrNull()
+      val preview = combinedPreviews.firstOrNull { preview -> preview.isValid() }
+        ?: combinedPreviews.firstOrNull()
         ?: return@mapNotNull null
+
+      val sizeInByte = preview.fileSizeInBytes ?: return@mapNotNull null
+      val width = preview.w ?: return@mapNotNull null
+      val height = preview.h ?: return@mapNotNull null
 
       val fullUrls = combinedPreviews
-        ?.mapNotNull { preview -> fixUrlOrNull(preview.url)?.toHttpUrlOrNull() }
-        ?.toSet()
-        ?.toList()
-        ?: return@mapNotNull null
+        .mapNotNull { preview -> fixUrlOrNull(preview.url)?.toHttpUrlOrNull() }
+        .toSet()
+        .toList()
 
       val extension = fullUrls
-        .mapNotNull { fullUrl -> StringUtils.extractFileNameExtension(fullUrl.toString()) }
-        .firstOrNull()
+        .firstNotNullOfOrNull { fullUrl -> StringUtils.extractFileNameExtension(fullUrl.toString()) }
 
       return@mapNotNull ImageSearchResult(
         thumbnailUrl = thumbUrl,
         fullImageUrls = fullUrls,
-        sizeInByte = preview.size,
-        width = preview.width,
-        height = preview.height,
+        sizeInByte = sizeInByte,
+        width = width,
+        height = height,
         extension = extension
       )
     }
+
   }
 
   data class Params(
@@ -168,39 +151,66 @@ class YandexImageSearchUseCase(
   )
 
   @JsonClass(generateAdapter = true)
-  data class DataBem(
-    @Json(name = "serp-item") val serpItem: SerpItem? = null
+  data class DataState(
+    val initialState: InitialState
   )
 
   @JsonClass(generateAdapter = true)
-  data class SerpItem(
-    @Json(name = "thumb") val thumb: Thumb?,
-    @Json(name = "preview") val preview: List<Preview>?,
-    @Json(name = "dups") val dups: List<Preview>?
+  data class InitialState(
+    val serpList: SerpList
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class SerpList(
+    val items: Items
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class Items(
+    val entities: Map<String, Entity>
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class Entity(
+    val viewerData: ViewerData
+  )
+
+  @JsonClass(generateAdapter = true)
+  data class ViewerData(
+    val preview: List<ImageData>?,
+    val dups: List<ImageData>?,
+    val thumb: Thumb?
   ) {
 
-    fun combinedPreviews(): List<Preview> {
+    fun combinedPreviews(): List<ImageData> {
       return (preview ?: emptyList()) + (dups ?: emptyList())
     }
 
   }
 
   @JsonClass(generateAdapter = true)
+  data class ImageData(
+    val url: String?,
+    val fileSizeInBytes: Long?,
+    val w: Int?,
+    val h: Int?
+  ) {
+    fun isValid(): Boolean {
+      return fileSizeInBytes != null && url != null && w != null && h != null
+    }
+  }
+
+  @JsonClass(generateAdapter = true)
   data class Thumb(
-    @Json(name = "url") val url: String?
+    val url: String?,
+    val size: Size?
   )
 
   @JsonClass(generateAdapter = true)
-  data class Preview(
-    @Json(name = "fileSizeInBytes") val size: Long?,
-    @Json(name = "w") val width: Int?,
-    @Json(name = "h") val height: Int?,
-    @Json(name = "url") val url: String?,
-  ) {
-    fun isValid(): Boolean {
-      return size != null && url != null && width != null && height != null
-    }
-  }
+  data class Size(
+    val width: Int?,
+    val height: Int?
+  )
 
   companion object {
     private const val TAG = "YandexImageSearchUseCase"
