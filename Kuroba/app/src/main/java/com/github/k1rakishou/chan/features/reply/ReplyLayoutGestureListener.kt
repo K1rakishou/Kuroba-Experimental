@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.features.reply
 
 import android.graphics.Rect
 import android.os.SystemClock
-import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.View
 import androidx.recyclerview.widget.RecyclerView
@@ -15,7 +14,7 @@ class ReplyLayoutGestureListener(
   private val replyLayout: ReplyLayout,
   private val onSwipedUp: () -> Unit,
   private val onSwipedDown: () -> Unit
-) : GestureDetector.SimpleOnGestureListener() {
+) : ReplyLayoutGestureListenerWrapper() {
   private val viewHitRect = Rect()
 
   private var blockGesture = false
@@ -32,12 +31,7 @@ class ReplyLayoutGestureListener(
     blockGesture = false
   }
 
-  override fun onScroll(
-    e1: MotionEvent,
-    e2: MotionEvent,
-    distanceX: Float,
-    distanceY: Float
-  ): Boolean {
+  override fun scroll(e1: MotionEvent, e2: MotionEvent, distanceX: Float, distanceY: Float): Boolean {
     if (blockGesture) {
       return false
     }
@@ -54,12 +48,7 @@ class ReplyLayoutGestureListener(
     return false
   }
 
-  override fun onFling(
-    e1: MotionEvent,
-    e2: MotionEvent,
-    velocityX: Float,
-    velocityY: Float
-  ): Boolean {
+  override fun fling(e1: MotionEvent, e2: MotionEvent, velocityX: Float, velocityY: Float): Boolean {
     if (blockGesture) {
       return false
     }
@@ -76,8 +65,8 @@ class ReplyLayoutGestureListener(
     val diffY = endY - startY
 
     val isSwipeUpOrDown = (abs(velocityY) > FLING_MIN_VELOCITY)
-      && (abs(diffY) > abs(diffX))
-      && (abs(diffY) > MIN_Y_TRAVEL_DIST)
+            && (abs(diffY) > abs(diffX))
+            && (abs(diffY) > MIN_Y_TRAVEL_DIST)
 
     if (!isSwipeUpOrDown) {
       return false
