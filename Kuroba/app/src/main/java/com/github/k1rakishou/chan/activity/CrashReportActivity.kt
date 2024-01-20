@@ -1,6 +1,8 @@
 package com.github.k1rakishou.chan.activity
 
 import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
@@ -40,12 +42,15 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.github.k1rakishou.chan.BuildConfig
 import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
+import com.github.k1rakishou.chan.core.repository.ImportExportRepository
+import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.verticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.InsetsAwareBox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeDivider
@@ -56,27 +61,62 @@ import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
 import com.github.k1rakishou.chan.ui.controller.LogsController
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
 import com.github.k1rakishou.common.AndroidUtils.setClipboardContent
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
+import com.github.k1rakishou.fsaf.FileChooser
+import com.github.k1rakishou.fsaf.FileManager
+import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
+import com.github.k1rakishou.fsaf.callback.FileChooserCallback
+import com.github.k1rakishou.fsaf.callback.FileCreateCallback
+import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.ISODateTimeFormat
+import java.io.IOException
 import javax.inject.Inject
 
-class CrashReportActivity : AppCompatActivity() {
+class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
   @Inject
-  lateinit var themeEngine: ThemeEngine
+  lateinit var themeEngineLazy: Lazy<ThemeEngine>
   @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
+  lateinit var globalWindowInsetsManagerLazy: Lazy<GlobalWindowInsetsManager>
   @Inject
-  lateinit var appRestarter: AppRestarter
+  lateinit var appRestarterLazy: Lazy<AppRestarter>
   @Inject
-  lateinit var reportManager: ReportManager
+  lateinit var reportManagerLazy: Lazy<ReportManager>
+  @Inject
+  lateinit var importExportRepositoryLazy: Lazy<ImportExportRepository>
+  @Inject
+  lateinit var fileChooserLazy: Lazy<FileChooser>
+  @Inject
+  lateinit var fileManagerLazy: Lazy<FileManager>
+
+  private val themeEngine: ThemeEngine
+    get() = themeEngineLazy.get()
+  private val globalWindowInsetsManager: GlobalWindowInsetsManager
+    get() = globalWindowInsetsManagerLazy.get()
+  private val appRestarter: AppRestarter
+    get() = appRestarterLazy.get()
+  private val reportManager: ReportManager
+    get() = reportManagerLazy.get()
+  private val importExportRepository: ImportExportRepository
+    get() = importExportRepositoryLazy.get()
+  private val fileChooser: FileChooser
+    get() = fileChooserLazy.get()
+  private val fileManager: FileManager
+    get() = fileManagerLazy.get()
 
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
@@ -116,6 +156,7 @@ class CrashReportActivity : AppCompatActivity() {
       .build()
       .inject(this)
 
+    fileChooser.setCallbacks(this)
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)
     appRestarter.attachActivity(this)
 
@@ -151,8 +192,25 @@ class CrashReportActivity : AppCompatActivity() {
   override fun onDestroy() {
     super.onDestroy()
 
-    if (::appRestarter.isInitialized) {
+    if (::appRestarterLazy.isInitialized) {
       appRestarter.detachActivity(this)
+    }
+
+    if (::fileChooserLazy.isInitialized) {
+      fileChooser.removeCallbacks()
+    }
+  }
+
+  override fun fsafStartActivityForResult(intent: Intent, requestCode: Int) {
+    startActivityForResult(intent, requestCode)
+  }
+
+  @Deprecated("Deprecated in Java")
+  override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+    super.onActivityResult(requestCode, resultCode, data)
+
+    if (fileChooser.onActivityResult(requestCode, resultCode, data)) {
+      return
     }
   }
 
@@ -173,6 +231,8 @@ class CrashReportActivity : AppCompatActivity() {
 
     var logsMut by rememberSaveable { mutableStateOf<String?>(null) }
     val logs = logsMut
+
+    var blockButtons by rememberSaveable { mutableStateOf(false) }
 
     InsetsAwareBox(
       modifier = Modifier
@@ -301,6 +361,51 @@ class CrashReportActivity : AppCompatActivity() {
 
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
+            enabled = !blockButtons,
+            text = stringResource(id = R.string.crash_report_activity_import_backup),
+            onClick = {
+              coroutineScope.launch {
+                blockButtons = true
+                try {
+                  importFromBackup(context)
+                } finally {
+                  blockButtons = false
+                }
+              }
+            }
+          )
+
+          Spacer(modifier = Modifier.height(16.dp))
+
+          KurobaComposeTextButton(
+            modifier = Modifier.wrapContentWidth(),
+            enabled = !blockButtons,
+            text = stringResource(id = R.string.crash_report_activity_export_backup),
+            onClick = {
+              coroutineScope.launch {
+                blockButtons = true
+                try {
+                  exportToBackup(context)
+                } finally {
+                  blockButtons = false
+                }
+              }
+            }
+          )
+
+          Spacer(modifier = Modifier.height(8.dp))
+
+          KurobaComposeDivider(
+            modifier = Modifier
+              .weight(1f)
+              .height(1.dp)
+          )
+
+          Spacer(modifier = Modifier.height(8.dp))
+
+          KurobaComposeTextButton(
+            modifier = Modifier.wrapContentWidth(),
+            enabled = !blockButtons,
             text = stringResource(id = R.string.crash_report_activity_copy_for_github),
             onClick = {
               coroutineScope.launch {
@@ -318,6 +423,7 @@ class CrashReportActivity : AppCompatActivity() {
 
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
+            enabled = !blockButtons,
             text = stringResource(id = R.string.crash_report_activity_open_issue_tracker),
             onClick = {
               openLink(ISSUES_LINK)
@@ -328,6 +434,7 @@ class CrashReportActivity : AppCompatActivity() {
 
           KurobaComposeTextButton(
             modifier = Modifier.wrapContentWidth(),
+            enabled = !blockButtons,
             text = stringResource(id = R.string.crash_report_activity_restart_the_app),
             onClick = { appRestarter.restart() }
           )
@@ -428,6 +535,82 @@ class CrashReportActivity : AppCompatActivity() {
     ).show()
   }
 
+  private suspend fun importFromBackup(context: Context) {
+    val result = suspendCancellableCoroutine<Result<Uri>> { cancellableContinuation ->
+      fileChooser.openChooseFileDialog(
+        object : FileChooserCallback() {
+          override fun onResult(uri: Uri) {
+            cancellableContinuation.resumeValueSafe(Result.success(uri))
+          }
+
+          override fun onCancel(reason: String) {
+            cancellableContinuation.resumeValueSafe(Result.failure(IOException(reason)))
+          }
+        }
+      )
+    }
+
+    if (result.isFailure) {
+      result.exceptionOrNull()?.let { error ->
+        AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG)
+      }
+
+      return
+    }
+
+    val externalFile = fileManager.fromUri(result.getOrThrow())
+    if (externalFile == null) {
+      AppModuleAndroidUtils.showToast(context, "Failed to convert url to external file", Toast.LENGTH_LONG)
+      return
+    }
+
+    importExportRepository
+      .importFrom(externalFile)
+      .peekError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
+      .peekValue { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
+      .ignore()
+  }
+
+  private suspend fun exportToBackup(context: Context) {
+    val dateString = BACKUP_DATE_FORMAT.print(DateTime.now())
+    val exportFileName = "KurobaEx_v${BuildConfig.VERSION_CODE}_($dateString)_backup.zip"
+
+    val result = suspendCancellableCoroutine<Result<Uri>> { cancellableContinuation ->
+      fileChooser.openCreateFileDialog(
+        exportFileName,
+        object : FileCreateCallback() {
+          override fun onResult(uri: Uri) {
+            cancellableContinuation.resumeValueSafe(Result.success(uri))
+          }
+
+          override fun onCancel(reason: String) {
+            cancellableContinuation.resumeValueSafe(Result.failure(IOException(reason)))
+          }
+        }
+      )
+    }
+
+    if (result.isFailure) {
+      result.exceptionOrNull()?.let { error ->
+        AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG)
+      }
+
+      return
+    }
+
+    val externalFile = fileManager.fromUri(result.getOrThrow())
+    if (externalFile == null) {
+      AppModuleAndroidUtils.showToast(context, "Failed to convert url to external file", Toast.LENGTH_LONG)
+      return
+    }
+
+    importExportRepository
+      .exportTo(externalFile, ExportBackupOptions(exportDownloadedThreadsMedia = false))
+      .peekError { error -> AppModuleAndroidUtils.showToast(context, error.errorMessageOrClassName(), Toast.LENGTH_LONG) }
+      .peekValue { AppModuleAndroidUtils.showToast(context, getString(R.string.done), Toast.LENGTH_LONG) }
+      .ignore()
+  }
+
   companion object {
     private const val TAG = "CrashReportActivity"
 
@@ -439,6 +622,10 @@ class CrashReportActivity : AppCompatActivity() {
     const val APP_LIFE_TIME_KEY = "app_life_time"
 
     private const val ISSUES_LINK = "https://github.com/K1rakishou/Kuroba-Experimental/issues"
+
+    private val BACKUP_DATE_FORMAT = DateTimeFormatterBuilder()
+      .append(ISODateTimeFormat.date())
+      .toFormatter()
   }
 
 }

@@ -26,8 +26,9 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.file.ExternalFile
 import com.google.gson.Gson
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import java.io.IOException
-import java.util.*
 import javax.inject.Inject
 
 class ImportExportRepository @Inject constructor(
@@ -44,11 +45,11 @@ class ImportExportRepository @Inject constructor(
   ): ModularResult<Unit> {
     val params = ExportBackupFileUseCase.Params(backupFile, exportBackupOptions)
 
-    return exportBackupFileUseCase.execute(params)
+    return withContext(Dispatchers.IO) { exportBackupFileUseCase.execute(params) }
   }
 
   suspend fun importFrom(backupFile: ExternalFile): ModularResult<Unit> {
-    return importBackupFileUseCase.execute(backupFile)
+    return withContext(Dispatchers.IO) { importBackupFileUseCase.execute(backupFile) }
   }
 
   suspend fun importFromKuroba(settingsFile: ExternalFile): ModularResult<Boolean> {

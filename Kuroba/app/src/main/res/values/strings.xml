@@ -1576,6 +1576,8 @@ Actual error: \'%1$s\'</string>
     <string name="crash_report_activity_crash_logs_section">Last logs before the crash</string>
     <string name="crash_report_activity_additional_info_section">Additional information</string>
     <string name="crash_report_activity_copy_for_github">Copy formatted for Github</string>
+    <string name="crash_report_activity_import_backup">Import backup</string>
+    <string name="crash_report_activity_export_backup">Export backup</string>
     <string name="crash_report_activity_loading_logs">Loading logs…</string>
     <string name="crash_report_activity_verbose_logs">+Verbose logs</string>
     <string name="crash_report_activity_mpv_logs">+MPV logs</string>

@@ -109,10 +109,7 @@ class ImportExportSettingsDelegate(
         coroutineScope.launch {
           navigationController.presentController(loadingViewController)
 
-          val result = withContext(Dispatchers.Default) {
-            importExportRepository.exportTo(externalFile, exportBackupOptions)
-          }
-
+          val result = importExportRepository.exportTo(externalFile, exportBackupOptions)
           loadingViewController.stopPresenting()
 
           when (result) {
@@ -151,10 +148,7 @@ class ImportExportSettingsDelegate(
     coroutineScope.launch {
       navigationController.presentController(loadingViewController)
 
-      val result = withContext(Dispatchers.Default) {
-        importExportRepository.importFrom(externalFile)
-      }
-
+      val result = importExportRepository.importFrom(externalFile)
       loadingViewController.stopPresenting()
 
       when (result) {
