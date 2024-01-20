@@ -4,16 +4,21 @@ import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.snapshots.Snapshot
+import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase
 import com.github.k1rakishou.chan.core.usecase.YandexImageSearchUseCase
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
+import com.github.k1rakishou.persist_state.ImageSearchInstanceType
+import com.github.k1rakishou.persist_state.PersistableChanState
+import com.github.k1rakishou.persist_state.RemoteImageSearchInstanceSettings
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -21,6 +26,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import javax.inject.Inject
 
 class ImageSearchControllerViewModel : BaseViewModel() {
@@ -45,7 +51,9 @@ class ImageSearchControllerViewModel : BaseViewModel() {
   val solvingCaptcha: StateFlow<String?>
     get() = _solvingCaptcha.asStateFlow()
 
-  var searchQuery = mutableStateOf("")
+  val baseUrlError = mutableStateOf<String?>(null)
+  val baseUrl = mutableStateOf("")
+  val searchQuery = mutableStateOf("")
   val searchErrorToastFlow = MutableSharedFlow<String>(extraBufferCapacity = 1)
 
   private var activeSearchJob: Job? = null
@@ -56,14 +64,15 @@ class ImageSearchControllerViewModel : BaseViewModel() {
 
   override suspend fun onViewModelReady() {
     Snapshot.withMutableSnapshot {
-      // TODO(KurobaEx): load lastUsedSearchInstance
-
       ImageSearchInstance.createAll().forEach { imageSearchInstance ->
         _searchInstances[imageSearchInstance.type] = imageSearchInstance
+        baseUrl.value = imageSearchInstance.baseUrl().toString()
       }
 
-      _lastUsedSearchInstance.value = ImageSearchInstanceType.Yandex
-      searchQuery.value = ""
+      val lastUsedSearchType = PersistableChanState.remoteImageSearchSettings.get().lastUsedSearchType
+        ?: ImageSearchInstanceType.Yandex
+
+      changeSearchInstance(lastUsedSearchType)
     }
   }
 
@@ -87,12 +96,27 @@ class ImageSearchControllerViewModel : BaseViewModel() {
   fun changeSearchInstance(newImageSearchInstanceType: ImageSearchInstanceType) {
     _lastUsedSearchInstance.value = newImageSearchInstanceType
 
+    val baseUrlFromSettings = PersistableChanState.remoteImageSearchSettings.get()
+      .byImageSearchInstanceType(newImageSearchInstanceType)
+      ?.baseUrl
+      ?.toHttpUrlOrNull()
+
+    baseUrl.value = baseUrlFromSettings?.toString()
+      ?: _searchInstances[newImageSearchInstanceType]!!.baseUrl().toString()
+
+    onBaseUrlChanged(baseUrl.value)
+
     val prevQuery = getCurrentSearchInstance()?.searchQuery
     val newQuery = searchQuery.value
 
     val searchResults = _searchResults[newImageSearchInstanceType]
-    if ((searchResults !is AsyncData.Data || prevQuery != newQuery) && newQuery.isNotEmpty()) {
+    if ((searchResults !is AsyncData.Data || prevQuery != newQuery) && newQuery.isNotEmpty() && baseUrlFromSettings != null) {
       onSearchQueryChanged(newQuery)
+    }
+
+    val prev = PersistableChanState.remoteImageSearchSettings.get()
+    if (prev.lastUsedSearchType != newImageSearchInstanceType) {
+      PersistableChanState.remoteImageSearchSettings.set(prev.copy(lastUsedSearchType = newImageSearchInstanceType))
     }
   }
 
@@ -119,6 +143,32 @@ class ImageSearchControllerViewModel : BaseViewModel() {
 
   fun reloadCurrentPage() {
     doSearchInternal(searchQuery.value)
+  }
+
+  fun onBaseUrlChanged(newBaseUrlRaw: String) {
+    val imageSearchInstance = getCurrentSearchInstance()
+      ?: return
+
+    val newBaseUrl = newBaseUrlRaw.toHttpUrlOrNull()
+    if (newBaseUrl == null) {
+      baseUrlError.value = getString(R.string.image_search_controller_not_an_url_error)
+      return
+    }
+
+    baseUrlError.value = null
+    baseUrl.value = newBaseUrl.toString()
+
+    PersistableChanState.remoteImageSearchSettings.get().update(
+      instanceType = imageSearchInstance.type,
+      updater = { old -> old.copy(baseUrl = newBaseUrl.toString()) },
+      creator = {
+        RemoteImageSearchInstanceSettings(
+          instanceType = imageSearchInstance.type,
+          baseUrl = newBaseUrl.toString(),
+          cookies = null
+        )
+      }
+    )
   }
 
   fun onSearchQueryChanged(newQuery: String) {
@@ -160,6 +210,9 @@ class ImageSearchControllerViewModel : BaseViewModel() {
         return@launch
       }
 
+      val baseUrl = baseUrl.value.toHttpUrlOrNull()
+        ?: return@launch
+
       val currentImageSearchInstance = getCurrentSearchInstance()
         ?: return@launch
 
@@ -171,6 +224,7 @@ class ImageSearchControllerViewModel : BaseViewModel() {
       }
 
       val searchUrl = currentImageSearchInstance.buildSearchUrl(
+        baseUrl = baseUrl,
         query = query,
         page = currentImageSearchInstance.currentPage
       )

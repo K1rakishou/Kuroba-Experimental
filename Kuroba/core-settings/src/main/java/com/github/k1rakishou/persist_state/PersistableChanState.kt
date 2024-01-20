@@ -74,7 +74,7 @@ object PersistableChanState {
   @JvmStatic
   lateinit var dontKeepActivitiesWarningShown: BooleanSetting
   @JvmStatic
-  lateinit var yandexImageSearchCookies: StringSetting
+  lateinit var remoteImageSearchSettings: GsonJsonSetting<RemoteImageSearchSettings>
 
   fun init(persistableChanStateInfo: PersistableChanStateInfo) {
     PersistableChanState.persistableChanStateInfo = persistableChanStateInfo
@@ -156,7 +156,13 @@ object PersistableChanState {
 
       threadDownloaderArchiveWarningShown = BooleanSetting(provider, "thread_downloader_archive_warning_shown", false)
       dontKeepActivitiesWarningShown = BooleanSetting(provider, "dont_keep_activities_warning_shown", false)
-      yandexImageSearchCookies = StringSetting(provider, "yandex_image_search_cookies", "")
+      remoteImageSearchSettings = GsonJsonSetting(
+        gson,
+        RemoteImageSearchSettings::class.java,
+        provider,
+        "remote_image_search_settings",
+        RemoteImageSearchSettings.defaults()
+      )
     } catch (e: Exception) {
       Logger.e(TAG, "Error while initializing the state", e)
       throw e

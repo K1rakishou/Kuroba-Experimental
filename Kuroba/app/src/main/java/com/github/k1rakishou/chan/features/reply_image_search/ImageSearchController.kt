@@ -73,6 +73,7 @@ import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
+import com.github.k1rakishou.persist_state.ImageSearchInstanceType
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.launch
@@ -228,7 +229,9 @@ class ImageSearchController(
       return
     }
 
+    var baseUrl by viewModel.baseUrl
     var searchQuery by viewModel.searchQuery
+    val baseUrlError by viewModel.baseUrlError
     val topPd by topPadding
 
     Column(
@@ -244,6 +247,35 @@ class ImageSearchController(
       SearchInstanceSelector(
         searchInstance = searchInstance,
         onSelectorItemClicked = { showImageSearchInstances() }
+      )
+
+      Spacer(modifier = Modifier.height(8.dp))
+
+      KurobaComposeTextField(
+        value = baseUrl,
+        modifier = Modifier
+          .wrapContentHeight()
+          .fillMaxWidth(),
+        onValueChange = { newValue ->
+          baseUrl = newValue
+          viewModel.onBaseUrlChanged(newValue)
+        },
+        singleLine = true,
+        maxLines = 1,
+        label = {
+          val baseUrlErrorLocal = baseUrlError
+          if (baseUrlErrorLocal.isNullOrBlank()) {
+            KurobaComposeText(
+              text = stringResource(id = R.string.image_search_controller_base_url_hint),
+              color = chanTheme.textColorHintCompose
+            )
+          } else {
+            KurobaComposeText(
+              text = baseUrlErrorLocal,
+              color = chanTheme.errorColorCompose
+            )
+          }
+        }
       )
 
       Spacer(modifier = Modifier.height(8.dp))

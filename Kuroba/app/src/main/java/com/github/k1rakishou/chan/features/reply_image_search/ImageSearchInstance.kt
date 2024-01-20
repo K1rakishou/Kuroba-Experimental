@@ -3,6 +3,7 @@ package com.github.k1rakishou.chan.features.reply_image_search
 import androidx.annotation.DrawableRes
 import com.github.k1rakishou.chan.features.reply_image_search.instances.SearxInstance
 import com.github.k1rakishou.chan.features.reply_image_search.instances.YandexInstance
+import com.github.k1rakishou.persist_state.ImageSearchInstanceType
 import okhttp3.HttpUrl
 
 abstract class ImageSearchInstance(
@@ -28,8 +29,8 @@ abstract class ImageSearchInstance(
 
   abstract val cookies: String?
 
-  abstract suspend fun baseUrl(): HttpUrl
-  abstract suspend fun buildSearchUrl(query: String, page: Int?): HttpUrl
+  abstract fun baseUrl(): HttpUrl
+  abstract suspend fun buildSearchUrl(baseUrl: HttpUrl, query: String, page: Int?): HttpUrl
   abstract fun updateCookies(newCookies: String)
 
   fun updateLazyListState(firstVisibleItemIndex: Int, firstVisibleItemScrollOffset: Int) {
@@ -50,9 +51,4 @@ abstract class ImageSearchInstance(
       return listOf(SearxInstance(), YandexInstance())
     }
   }
-}
-
-enum class ImageSearchInstanceType {
-  Searx,
-  Yandex
 }
