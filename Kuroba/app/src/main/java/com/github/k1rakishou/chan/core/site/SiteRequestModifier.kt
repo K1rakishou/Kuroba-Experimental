@@ -24,6 +24,7 @@ import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.isNotNullNorEmpty
+import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.MapSetting
 import okhttp3.Request
@@ -35,13 +36,9 @@ abstract class SiteRequestModifier<T : Site>(
 
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
-    if (httpCall.site.siteDescriptor().is4chan()) {
-      requestBuilder.addHeader(userAgentHeaderKey, appConstants.kurobaExCustomUserAgent)
-    } else {
-      requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    }
-
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder
+      .addHeader(userAgentHeaderKey, appConstants.userAgent)
+      .addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -164,10 +161,14 @@ abstract class SiteRequestModifier<T : Site>(
 
     if (cookieForDomain.isNotNullNorEmpty()) {
       requestBuilder.appendCookieHeader("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cookieForDomain")
+    } else {
+      Logger.e(TAG, "addCloudFlareCookie() cookieForDomain '${domainOrHost}' is null or empty: '${cookieForDomain}'")
     }
   }
 
   companion object {
+    private const val TAG = "SiteRequestModifier"
+
     val userAgentHeaderKey = "User-Agent"
     val acceptEncodingHeaderKey = "Accept-Encoding"
     val gzipHeaderValue = "gzip"

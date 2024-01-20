@@ -5,7 +5,7 @@ import okhttp3.logging.HttpLoggingInterceptor
 class HttpLoggingInterceptorLazy {
   val loggingInterceptorLazyKt = lazy {
     val logging = HttpLoggingInterceptor()
-    logging.setLevel(HttpLoggingInterceptor.Level.HEADERS)
+    logging.setLevel(HttpLoggingInterceptor.Level.BODY)
     return@lazy logging
   }
 

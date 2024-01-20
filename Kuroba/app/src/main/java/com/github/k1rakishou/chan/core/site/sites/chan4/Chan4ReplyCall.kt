@@ -295,10 +295,6 @@ class Chan4ReplyCall(
       return
     }
 
-    val now = System.currentTimeMillis()
-    val cookieReceivedOn = chan4CaptchaSettings.cookieReceivedOn
-    val expired = (now - cookieReceivedOn) > Chan4CaptchaSettings.COOKIE_LIFE_TIME
-
     val wholeCookieHeader = headers
       .filter { (key, _) -> key.contains(SET_COOKIE_HEADER, ignoreCase = true) }
       .firstOrNull { (_, value) -> value.startsWith(CAPTCHA_COOKIE_PREFIX) }
@@ -326,16 +322,8 @@ class Chan4ReplyCall(
     val oldCookie = chan4.chan4CaptchaCookie.get()
     Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}', domain='${domain}'")
 
-    if (oldCookie != null && oldCookie.isNotEmpty() && !expired) {
-      Logger.d(TAG, "setChan4CaptchaHeader() cookie is still ok. " +
-        "oldCookie='${formatToken(oldCookie)}', now=$now, cookieReceivedOn=$cookieReceivedOn, " +
-        "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
-      return
-    }
-
     Logger.d(TAG, "setChan4CaptchaHeader() cookie needs to be updated. " +
-      "oldCookie='${formatToken(oldCookie)}', domain='${domain}', now=$now, cookieReceivedOn=$cookieReceivedOn, " +
-      "delta=${now - cookieReceivedOn}, lifetime=${Chan4CaptchaSettings.COOKIE_LIFE_TIME}")
+      "oldCookie='${formatToken(oldCookie)}', domain='${domain}'")
 
     if (domain.isNullOrEmpty() || newCookie.isNullOrEmpty()) {
       Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${formatToken(newCookie)}) or domain (${domain})")
@@ -343,7 +331,6 @@ class Chan4ReplyCall(
     }
 
     chan4.chan4CaptchaCookie.set(newCookie)
-    chan4.chan4CaptchaSettings.set(chan4CaptchaSettings.copy(cookieReceivedOn = now))
   }
 
   private fun createRateLimitInfo(rateLimitMatcher: Matcher): ReplyResponse.RateLimitInfo {

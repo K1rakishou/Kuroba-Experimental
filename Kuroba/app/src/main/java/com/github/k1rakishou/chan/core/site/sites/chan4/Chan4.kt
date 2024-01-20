@@ -661,6 +661,7 @@ open class Chan4 : SiteBase() {
       val captchaCookie = getCaptchaCookie(site, host)
 
       if (captchaCookie.isNullOrEmpty()) {
+        Logger.e(TAG, "addChan4CookieHeader() captchaCookie for host '${host}' is null or empty captchaCookie: '${captchaCookie}'")
         return
       }
 
