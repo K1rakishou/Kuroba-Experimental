@@ -1,0 +1,13 @@
+v1.3.30
+Full version:
+- Fix yandex remote image search.
+- Do not use custom user agent for 4chan.
+- Always update 4chan_pass cookie.
+- Add ability to change the base url of remote image search handlers.
+- Add ability to import/export backups from the crash activity.
+- Fix crash when starting to scroll the reply layout by accidentally clicking the question mark icon or image selection mark icon.
+
+v1.3.29
+- Added feature to avoid tread watching when filter pattern is matched. Thanks to @ressidell
+- Remove `4channel` domain from everywhere. This fixes captcha not being able to load on previously 4channel boards.
+- Do not donate auto-solved captchas.
