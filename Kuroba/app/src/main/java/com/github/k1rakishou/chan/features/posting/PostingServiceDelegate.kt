@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
+import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -30,6 +31,7 @@ import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
@@ -777,6 +779,12 @@ class PostingServiceDelegate(
     }
 
     try {
+      val responsePostDescriptor = postResult.replyResponse.postDescriptorOrNull
+
+      if (responsePostDescriptor != null && !checkPostActuallyExists(chanDescriptor, postResult)) {
+        throw PostDoesNotExistOnServer(responsePostDescriptor)
+      }
+
       onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
       actualPostResult.set(ActualPostResult.Posted)
 
@@ -794,6 +802,26 @@ class PostingServiceDelegate(
       emitTerminalEvent(chanDescriptor, PostResult.Error(error))
       Logger.e(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) error", error)
     }
+  }
+
+  private suspend fun checkPostActuallyExists(
+    chanDescriptor: ChanDescriptor,
+    postResult: SiteActions.PostResult.PostComplete
+  ): Boolean {
+    val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+    if (site == null) {
+      throw ClientException("Unknown site: '${chanDescriptor.siteName()}'")
+    }
+
+    val postDescriptor = postResult.replyResponse.postDescriptorOrNull
+    if (postDescriptor == null) {
+      throw ClientException("postResult.replyResponse.postDescriptorOrNull is null")
+    }
+
+    return site.actions().checkPostExists(postDescriptor)
+      .peekError { error -> Logger.e(TAG, "checkPostExists(${postDescriptor}) error: ${error.errorMessageOrClassName()}") }
+      .peekValue { postFound -> Logger.d(TAG, "checkPostExists(${postDescriptor}) postFound: ${postFound}") }
+      .mapErrorToValue { true }
   }
 
   /**
@@ -1448,18 +1476,16 @@ class PostingServiceDelegate(
   }
 
   sealed class ActualPostResult {
-    object Posted : ActualPostResult() {
-      override fun toString(): String {
-        return "Posted"
-      }
-    }
-    object FailedToPost : ActualPostResult() {
-      override fun toString(): String {
-        return "FailedToPost"
-      }
-    }
+    data object Posted : ActualPostResult()
+    data object FailedToPost : ActualPostResult()
     data class RateLimited(val timeMs: Long) : ActualPostResult()
   }
+
+  class PostDoesNotExistOnServer(val postDescriptor: PostDescriptor) : ClientException(
+    "Unable to find post '${postDescriptor.userReadableString()}' that you have just made on the server.\n" +
+    "This means that you have made a mistake in your captcha and 4chan completely discarded your post.\n" +
+    "Good news is that your post won't be discarded locally so you can try again with a new captcha."
+  )
 
   companion object {
     private const val TAG = "PostingServiceDelegate"

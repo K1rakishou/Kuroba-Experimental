@@ -34,6 +34,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
 import kotlinx.coroutines.flow.Flow
@@ -62,6 +63,8 @@ interface SiteActions {
   suspend fun <T : PostReportData> reportPost(
     postReportData: T
   ): PostReportResult = PostReportResult.NotSupported
+
+  suspend fun checkPostExists(postDescriptor: PostDescriptor): ModularResult<Boolean> = ModularResult.value(true)
 
   enum class LoginType {
     Passcode,

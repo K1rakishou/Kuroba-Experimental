@@ -48,6 +48,7 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.board.pages.BoardPages
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
+import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
@@ -147,6 +148,10 @@ open class Chan4 : SiteBase() {
         .addPathSegment("thread")
         .addPathSegment(threadDescriptor.threadNo.toString() + ".json")
         .build()
+    }
+
+    override fun threadHtml(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
+      return "https://boards.4chan.org/${threadDescriptor.boardDescriptor.boardCode}/thread/${threadDescriptor.threadNo}".toHttpUrl()
     }
 
     override fun imageUrl(boardDescriptor: BoardDescriptor, arg: Map<String, String>): HttpUrl {
@@ -460,6 +465,14 @@ open class Chan4 : SiteBase() {
         siteManager = siteManager,
         _proxiedOkHttpClient = proxiedOkHttpClient,
         postReportData = postReportData
+      ).execute()
+    }
+
+    override suspend fun checkPostExists(postDescriptor: PostDescriptor): ModularResult<Boolean> {
+      return Chan4CheckPostExistsRequest(
+        proxiedOkHttpClientLazy = proxiedOkHttpClient,
+        chan4 = this@Chan4,
+        postDescriptor = postDescriptor
       ).execute()
     }
 

@@ -100,7 +100,7 @@ open class ChanLoaderException(
 
 }
 
-class ClientException(message: String) : ChanLoaderException(Exception(message))
+open class ClientException(message: String) : ChanLoaderException(Exception(message))
 
 class SiteError(
   val errorCode: Int,
