@@ -1482,7 +1482,7 @@ class PostingServiceDelegate(
   }
 
   class PostDoesNotExistOnServer(val postDescriptor: PostDescriptor) : ClientException(
-    "Unable to find post '${postDescriptor.userReadableString()}' that you have just made on the server.\n" +
+    "Unable to find your post '${postDescriptor.userReadableString()}' on the server.\n" +
     "This means that you have made a mistake in your captcha and 4chan completely discarded your post.\n" +
     "Good news is that your post won't be discarded locally so you can try again with a new captcha."
   )
