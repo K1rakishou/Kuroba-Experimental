@@ -1,0 +1,11 @@
+v1.3.31
+Full version:
+- Implement a mechanism to check if a post was actually acknowledged by 4chan so that the user can try to post again, in case when it doesn't, without losing everything that he has typed. People say this happens now when you make a mistake in captcha (a very nice, reliable and user-friendly way to keep bots out, indeed). The setting is enabled by default. You can find it in the menu that can be accessed by long tapping the send reply button.
+
+v1.3.30
+- Fix yandex remote image search.
+- Do not use custom user agent for 4chan.
+- Always update 4chan_pass cookie.
+- Add ability to change the base url of remote image search handlers.
+- Add ability to import/export backups from the crash activity.
+- Fix crash when starting to scroll the reply layout by accidentally clicking the question mark icon or image selection mark icon.
