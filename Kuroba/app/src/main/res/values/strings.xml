@@ -539,6 +539,11 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <string name="reply_layout_info_title">Information</string>
     <string name="reply_layout_info_title_ban_info">Ban info</string>
     <string name="reply_layout_info_title_warning_info">Warning info</string>
+    <string name="reply_layout_reply_modes">Reply modes</string>
+    <string name="reply_layout_ignore_reply_cooldowns">Ignore reply cooldowns</string>
+    <string name="reply_layout_check_if_post_was_actually_acknowledged_by_4chan">Check if post was actually acknowledged by 4chan</string>
+    <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
+    <string name="reply_layout_loading_flags">Loading flags…</string>
 
     <string name="delete_confirm">Delete your post?</string>
     <string name="delete_wait">Deleting post…</string>
@@ -1166,7 +1171,6 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="link_value_copied_to_clipboard">Link value copied to clipboard</string>
 
     <string name="reply_comment_empty">Reply is empty (no comment body, no files attached).</string>
-    <string name="reply_layout_loading_flags">Loading flags…</string>
     <string name="reply_failed_to_prepare_reply">Failed to prepare reply.</string>
     <string name="image_reencode_format_error">Something is wrong with this file</string>
 
@@ -1603,7 +1607,6 @@ Actual error: \'%1$s\'</string>
     <string name="update_passcode_info">Update passcode info</string>
     <string name="must_be_logged_in">Must be logged in</string>
     <string name="attached_file_info">Attached file info</string>
-    <string name="reply_layout_comment_change_history_cleared">Comment change history cleared</string>
     <string name="android_day_night_mode_dialog_title">Android 10 Day/Night mode</string>
     <string name="android_day_night_mode_dialog_description">On Android 10 (and above) you may want to enable "Ignore system Day/Night mode" setting. Otherwise the app theme will be based on your system Day/Night mode which may seem as an unexpected behavior.</string>
     <string name="no_links_found">No links found in post</string>

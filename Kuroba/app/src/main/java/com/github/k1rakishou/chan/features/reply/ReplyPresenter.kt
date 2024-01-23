@@ -491,12 +491,12 @@ class ReplyPresenter @Inject constructor(
 
     menuItems += FloatingListMenuItem(
       key = ACTION_REPLY_MODES,
-      name = "Reply modes",
+      name = context.getString(R.string.reply_layout_reply_modes),
       more = availableReplyModes
     )
     menuItems += CheckableFloatingListMenuItem(
       key = ACTION_IGNORE_REPLY_COOLDOWNS,
-      name = "Ignore reply cooldowns",
+      name = context.getString(R.string.reply_layout_ignore_reply_cooldowns),
       isCurrentlySelected = ignoreReplyCooldowns?.get() == true
     )
 
@@ -504,7 +504,7 @@ class ReplyPresenter @Inject constructor(
       check4chanPostAcknowledgedSetting?.get()?.let { check4chanPostAcknowledged ->
         menuItems += CheckableFloatingListMenuItem(
           key = ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED,
-          name = "Check if post was actually acknowledged by 4chan",
+          name = context.getString(R.string.reply_layout_check_if_post_was_actually_acknowledged_by_4chan),
           isCurrentlySelected = check4chanPostAcknowledged
         )
       }
