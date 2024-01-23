@@ -36,6 +36,7 @@ import com.github.k1rakishou.model.data.post.ChanSavedReply
 import com.github.k1rakishou.model.repository.ChanPostRepository
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import dagger.Lazy
 import kotlinx.coroutines.CancellationException
@@ -808,6 +809,15 @@ class PostingServiceDelegate(
     chanDescriptor: ChanDescriptor,
     postResult: SiteActions.PostResult.PostComplete
   ): Boolean {
+    val check4chanPostAcknowledged = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+      ?.get()
+
+    if (check4chanPostAcknowledged == null || !check4chanPostAcknowledged) {
+      Logger.d(TAG, "checkPostActuallyExists() skipped. (check4chanPostAcknowledged: ${check4chanPostAcknowledged})")
+      return true
+    }
+
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
       throw ClientException("Unknown site: '${chanDescriptor.siteName()}'")
@@ -1484,7 +1494,8 @@ class PostingServiceDelegate(
   class PostDoesNotExistOnServer(val postDescriptor: PostDescriptor) : ClientException(
     "Unable to find your post '${postDescriptor.userReadableString()}' on the server.\n" +
     "This means that you have made a mistake in your captcha and 4chan completely discarded your post.\n" +
-    "Good news is that your post won't be discarded locally so you can try again with a new captcha."
+    "Good news is that your post won't be discarded locally so you can try again with a new captcha.\n\n" +
+    "You can change this setting at any time by long tapping the reply button and changing \'Check if post was actually acknowledged by 4chan\' setting."
   )
 
   companion object {

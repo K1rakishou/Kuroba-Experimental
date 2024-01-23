@@ -53,6 +53,7 @@ import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.post.ChanPost
 import com.github.k1rakishou.model.data.site.SiteBoards
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.BooleanSetting
 import com.github.k1rakishou.prefs.GsonJsonSetting
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
@@ -78,6 +79,7 @@ open class Chan4 : SiteBase() {
   lateinit var lastUsedFlagPerBoard: StringSetting
   lateinit var chan4CaptchaCookie: StringSetting
   lateinit var chan4CaptchaSettings: GsonJsonSetting<Chan4CaptchaSettings>
+  lateinit var check4chanPostAcknowledged: BooleanSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
 
@@ -116,6 +118,12 @@ open class Chan4 : SiteBase() {
       prefs,
       "chan4_captcha_settings",
       Chan4CaptchaSettings()
+    )
+
+    check4chanPostAcknowledged = BooleanSetting(
+      prefs,
+      "chan_4chan_post_acknowledged",
+      true
     )
 
     chunkDownloaderSiteProperties = ChunkDownloaderSiteProperties(
@@ -574,6 +582,7 @@ open class Chan4 : SiteBase() {
     return when (settingId) {
       SiteSetting.SiteSettingId.LastUsedCountryFlagPerBoard -> lastUsedFlagPerBoard as T
       SiteSetting.SiteSettingId.Chan4CaptchaSettings -> chan4CaptchaSettings as T
+      SiteSetting.SiteSettingId.Check4chanPostAcknowledged -> check4chanPostAcknowledged as T
       else -> super.getSettingBySettingId(settingId)
     }
   }

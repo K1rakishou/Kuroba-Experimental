@@ -486,6 +486,8 @@ class ReplyPresenter @Inject constructor(
       ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
     val lastUsedReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+    val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
+      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
 
     menuItems += FloatingListMenuItem(
       key = ACTION_REPLY_MODES,
@@ -497,6 +499,16 @@ class ReplyPresenter @Inject constructor(
       name = "Ignore reply cooldowns",
       isCurrentlySelected = ignoreReplyCooldowns?.get() == true
     )
+
+    if (chanDescriptor.siteDescriptor().is4chan()) {
+      check4chanPostAcknowledgedSetting?.get()?.let { check4chanPostAcknowledged ->
+        menuItems += CheckableFloatingListMenuItem(
+          key = ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED,
+          name = "Check if post was actually acknowledged by 4chan",
+          isCurrentlySelected = check4chanPostAcknowledged
+        )
+      }
+    }
 
     val floatingListMenuController = FloatingListMenuController(
       context = context,
@@ -510,6 +522,9 @@ class ReplyPresenter @Inject constructor(
             }
             ACTION_IGNORE_REPLY_COOLDOWNS -> {
               ignoreReplyCooldowns?.toggle()
+            }
+            ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED -> {
+              check4chanPostAcknowledgedSetting?.toggle()
             }
           }
         } else if (clickedItem.key is ReplyMode) {
@@ -969,6 +984,7 @@ class ReplyPresenter @Inject constructor(
 
     private const val ACTION_REPLY_MODES = 0
     private const val ACTION_IGNORE_REPLY_COOLDOWNS = 1
+    private const val ACTION_CHECK_4CHAN_POST_ACKNOWLEDGED = 2
   }
 
 }

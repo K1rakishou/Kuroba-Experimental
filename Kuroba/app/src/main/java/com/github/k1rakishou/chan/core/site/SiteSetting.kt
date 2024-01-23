@@ -59,7 +59,8 @@ sealed class SiteSetting(
     DvachAntiSpamCookie,
     LastUsedReplyMode,
     Chan4CaptchaSettings,
-    IgnoreReplyCooldowns
+    IgnoreReplyCooldowns,
+    Check4chanPostAcknowledged
   }
 
 }

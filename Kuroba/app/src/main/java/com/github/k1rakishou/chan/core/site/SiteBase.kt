@@ -227,6 +227,7 @@ abstract class SiteBase : Site, CoroutineScope {
       SiteSetting.SiteSettingId.DvachAntiSpamCookie -> null
       // 4chan only
       SiteSetting.SiteSettingId.Chan4CaptchaSettings -> null
+      SiteSetting.SiteSettingId.Check4chanPostAcknowledged -> null
     }
   }
 
