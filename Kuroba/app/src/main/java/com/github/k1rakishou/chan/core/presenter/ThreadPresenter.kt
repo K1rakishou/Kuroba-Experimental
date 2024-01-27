@@ -58,8 +58,8 @@ import com.github.k1rakishou.chan.core.site.http.DeleteRequest
 import com.github.k1rakishou.chan.core.site.http.report.PostReportData
 import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
-import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
+import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -895,17 +895,17 @@ class ThreadPresenter @Inject constructor(
     }
   }
 
-  private fun getPossibleChanLoadError(currentChanDescriptor: ChanDescriptor?): ClientException {
+  private fun getPossibleChanLoadError(currentChanDescriptor: ChanDescriptor?): UnknownClientException {
     if (currentChanDescriptor is ChanDescriptor.ICatalogDescriptor) {
       val catalogPostsCount = chanThreadManager.getChanCatalog(currentChanDescriptor)?.postsCount() ?: 0
       if (catalogPostsCount <= 0) {
-        return ClientException("Catalog is empty")
+        return UnknownClientException("Catalog is empty")
       }
 
       // fallthrough
     }
 
-    return ClientException("Failed to load catalog/thread because of unknown error. See logs for more info.")
+    return UnknownClientException("Failed to load catalog/thread because of unknown error. See logs for more info.")
   }
 
   fun onForegroundChanged(foreground: Boolean) {
@@ -1092,7 +1092,7 @@ class ThreadPresenter @Inject constructor(
     }
 
     when {
-      error is ClientException -> {
+      error is UnknownClientException -> {
         Logger.e(TAG, "onChanLoaderError($chanDescriptor) called, error=${error.errorMessageOrClassName()}")
       }
       error.isFirewallError() -> {

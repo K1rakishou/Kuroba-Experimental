@@ -158,6 +158,10 @@ open class Chan4 : SiteBase() {
         .build()
     }
 
+    override fun catalogHtml(catalogDescriptor: ChanDescriptor.CatalogDescriptor): HttpUrl {
+      return "https://boards.4chan.org/${catalogDescriptor.boardDescriptor.boardCode}/".toHttpUrl()
+    }
+
     override fun threadHtml(threadDescriptor: ChanDescriptor.ThreadDescriptor): HttpUrl {
       return "https://boards.4chan.org/${threadDescriptor.boardDescriptor.boardCode}/thread/${threadDescriptor.threadNo}".toHttpUrl()
     }
@@ -476,11 +480,14 @@ open class Chan4 : SiteBase() {
       ).execute()
     }
 
-    override suspend fun checkPostExists(postDescriptor: PostDescriptor): ModularResult<Boolean> {
+    override suspend fun checkPostExists(
+      chanDescriptor: ChanDescriptor,
+      replyPostDescriptor: PostDescriptor
+    ): ModularResult<Boolean> {
       return Chan4CheckPostExistsRequest(
         proxiedOkHttpClientLazy = proxiedOkHttpClient,
         chan4 = this@Chan4,
-        postDescriptor = postDescriptor
+        replyPostDescriptor = replyPostDescriptor
       ).execute()
     }
 

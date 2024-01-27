@@ -52,7 +52,7 @@ open class ChanLoaderException(
           getString(R.string.thread_load_failed_cloud_flare_detected)
         }
         is SiteError -> exception.shortMessage()
-        is ClientException -> exception.errorMessageOrClassName()
+        is UnknownClientException -> exception.errorMessageOrClassName()
         is ChanLoaderException -> exception.errorMessage
         else -> exception.message ?: getString(R.string.thread_load_failed_parsing)
       }
@@ -100,7 +100,9 @@ open class ChanLoaderException(
 
 }
 
-open class ClientException(message: String) : ChanLoaderException(Exception(message))
+open class UnknownClientException(message: String) : ChanLoaderException(Exception(message))
+
+open class ClientException(message: String) : Exception(message)
 
 class SiteError(
   val errorCode: Int,

@@ -2,7 +2,8 @@ package com.github.k1rakishou.common
 
 import android.util.Base64
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.Locale
+import java.util.Random
 
 object StringUtils {
   private val RANDOM = Random()
@@ -115,6 +116,34 @@ object StringUtils {
     val endTokenPart = token.substring(token.length - tokenPartLength)
 
     return "${startTokenPart}<cut>${endTokenPart}"
+  }
+
+  @JvmStatic
+  fun calculateSimilarity(str1: String, str2: String): Float {
+    if (str1.isEmpty() && str2.isEmpty()) {
+      return 1f
+    }
+
+    val len1 = str1.length
+    val len2 = str2.length
+
+    val dp = Array(len1 + 1) { IntArray(len2 + 1) }
+
+    for (i in 0..len1) {
+      for (j in 0..len2) {
+        when {
+          i == 0 -> dp[i][j] = j
+          j == 0 -> dp[i][j] = i
+          else -> {
+            val cost = if (str1[i - 1] == str2[j - 1]) 0 else 1
+            dp[i][j] = minOf(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost)
+          }
+        }
+      }
+    }
+
+    val levenshteinDistance = dp[len1][len2]
+    return 1.0f - (levenshteinDistance.toFloat() / maxOf(len1, len2).toFloat())
   }
 
 }

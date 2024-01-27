@@ -15,6 +15,7 @@ import com.github.k1rakishou.chan.core.site.SiteActions
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.core.site.loader.ClientException
+import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaResult
 import com.github.k1rakishou.chan.features.posting.solvers.two_captcha.TwoCaptchaSolver
 import com.github.k1rakishou.chan.ui.captcha.CaptchaHolder
@@ -781,9 +782,10 @@ class PostingServiceDelegate(
 
     try {
       val responsePostDescriptor = postResult.replyResponse.postDescriptorOrNull
-
-      if (responsePostDescriptor != null && !checkPostActuallyExists(chanDescriptor, postResult)) {
-        throw PostDoesNotExistOnServer(responsePostDescriptor)
+      if (responsePostDescriptor != null) {
+        if (!checkPostActuallyExists(chanDescriptor, responsePostDescriptor)) {
+          throw PostDoesNotExistOnServer(responsePostDescriptor)
+        }
       }
 
       onPostedSuccessfully(chanDescriptor, postResult.replyResponse)
@@ -807,7 +809,7 @@ class PostingServiceDelegate(
 
   private suspend fun checkPostActuallyExists(
     chanDescriptor: ChanDescriptor,
-    postResult: SiteActions.PostResult.PostComplete
+    responsePostDescriptor: PostDescriptor
   ): Boolean {
     val check4chanPostAcknowledged = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
       ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
@@ -820,17 +822,19 @@ class PostingServiceDelegate(
 
     val site = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
     if (site == null) {
-      throw ClientException("Unknown site: '${chanDescriptor.siteName()}'")
+      throw UnknownClientException("Unknown site: '${chanDescriptor.siteName()}'")
     }
 
-    val postDescriptor = postResult.replyResponse.postDescriptorOrNull
-    if (postDescriptor == null) {
-      throw ClientException("postResult.replyResponse.postDescriptorOrNull is null")
+    // Fast path. The server has returned a fake PostDescriptor with ThreadDescriptor that is not the same as
+    // the one where we are trying to make a post in.
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor && responsePostDescriptor.threadDescriptor() != chanDescriptor) {
+      throw ServerReturnedUnexpectedThreadId(responsePostDescriptor.threadDescriptor(), chanDescriptor)
     }
 
-    return site.actions().checkPostExists(postDescriptor)
-      .peekError { error -> Logger.e(TAG, "checkPostExists(${postDescriptor}) error: ${error.errorMessageOrClassName()}") }
-      .peekValue { postFound -> Logger.d(TAG, "checkPostExists(${postDescriptor}) postFound: ${postFound}") }
+    // Slow path. Actually check whether the post exists on the server or not.
+    return site.actions().checkPostExists(chanDescriptor, responsePostDescriptor)
+      .peekError { error -> Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}") }
+      .peekValue { postFound -> Logger.d(TAG, "checkPostActuallyExists(${responsePostDescriptor}) postFound: ${postFound}") }
       .mapErrorToValue { true }
   }
 
@@ -1491,11 +1495,26 @@ class PostingServiceDelegate(
     data class RateLimited(val timeMs: Long) : ActualPostResult()
   }
 
-  class PostDoesNotExistOnServer(val postDescriptor: PostDescriptor) : ClientException(
-    "Unable to find your post '${postDescriptor.userReadableString()}' on the server.\n" +
+  class ServerReturnedUnexpectedThreadId(
+    val replyThreadDescriptor: ChanDescriptor.ThreadDescriptor,
+    val currentThreadDescriptor: ChanDescriptor.ThreadDescriptor
+  ) : ClientException(
+    "The server has returned an unexpected threadId '${replyThreadDescriptor}' " +
+    "while you have tried to make a post in a thread '${currentThreadDescriptor}'.\n" +
     "This means that you have made a mistake in your captcha and 4chan completely discarded your post.\n" +
     "Good news is that your post won't be discarded locally so you can try again with a new captcha.\n\n" +
-    "You can change this setting at any time by long tapping the reply button and changing \'Check if post was actually acknowledged by 4chan\' setting."
+    "You can change this setting at any time by long tapping the reply button and changing " +
+    "\'Check if post was actually acknowledged by 4chan\' setting."
+  )
+
+  class PostDoesNotExistOnServer(
+    val postDescriptor: PostDescriptor
+  ) : ClientException(
+    "Unable to find your post '${postDescriptor.userReadableString()}' on the server in the same thread.\n" +
+    "This means that you have made a mistake in your captcha and 4chan completely discarded your post.\n" +
+    "Good news is that your post won't be discarded locally so you can try again with a new captcha.\n\n" +
+    "You can change this setting at any time by long tapping the reply button and changing " +
+    "\'Check if post was actually acknowledged by 4chan\' setting."
   )
 
   companion object {

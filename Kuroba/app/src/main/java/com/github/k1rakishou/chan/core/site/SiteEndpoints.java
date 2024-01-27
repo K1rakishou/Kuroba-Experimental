@@ -45,7 +45,12 @@ public interface SiteEndpoints {
     HttpUrl thread(ChanDescriptor.ThreadDescriptor threadDescriptor);
 
     @Nullable
-    default HttpUrl threadHtml(ChanDescriptor.ThreadDescriptor threadDescriptor) {
+    default HttpUrl catalogHtml(@NonNull ChanDescriptor.CatalogDescriptor catalogDescriptor) {
+        return null;
+    }
+
+    @Nullable
+    default HttpUrl threadHtml(@NonNull ChanDescriptor.ThreadDescriptor threadDescriptor) {
         return null;
     }
 

@@ -64,7 +64,10 @@ interface SiteActions {
     postReportData: T
   ): PostReportResult = PostReportResult.NotSupported
 
-  suspend fun checkPostExists(postDescriptor: PostDescriptor): ModularResult<Boolean> = ModularResult.value(true)
+  suspend fun checkPostExists(
+    chanDescriptor: ChanDescriptor,
+    replyPostDescriptor: PostDescriptor
+  ): ModularResult<Boolean> = ModularResult.value(true)
 
   enum class LoginType {
     Passcode,
