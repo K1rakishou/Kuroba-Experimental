@@ -304,29 +304,18 @@ class Chan4ReplyCall(
       ?.substringAfter(CAPTCHA_COOKIE_PREFIX)
       ?.substringBefore(';')
 
-    val domain = wholeCookieHeader
-      ?.substringAfter(DOMAIN_PREFIX)
-      ?.substringBefore(';')
-
     val headersDebugString = headers.joinToString(separator = ";") { (key, value) -> "${key}=${value}" }
 
-    Logger.d(TAG, "setChan4CaptchaHeader() newCookie='${newCookie}', " +
-      "domain='${domain}', wholeCookieHeader='${wholeCookieHeader}', " +
-      "headersDebugString='${headersDebugString}'")
-
-    if (domain == null) {
-      Logger.d(TAG, "setChan4CaptchaHeader() domain is null")
-      return
-    }
+    Logger.d(TAG, "setChan4CaptchaHeader() " +
+              "newCookie='${newCookie}', " +
+              "wholeCookieHeader='${wholeCookieHeader}', " +
+              "headersDebugString='${headersDebugString}'")
 
     val oldCookie = chan4.chan4CaptchaCookie.get()
-    Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}', domain='${domain}'")
+    Logger.d(TAG, "oldCookie='${formatToken(oldCookie)}', newCookie='${formatToken(newCookie)}'")
 
-    Logger.d(TAG, "setChan4CaptchaHeader() cookie needs to be updated. " +
-      "oldCookie='${formatToken(oldCookie)}', domain='${domain}'")
-
-    if (domain.isNullOrEmpty() || newCookie.isNullOrEmpty()) {
-      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${formatToken(newCookie)}) or domain (${domain})")
+    if (newCookie.isNullOrEmpty()) {
+      Logger.d(TAG, "setChan4CaptchaHeader() failed to parse 4chan_pass cookie (${formatToken(newCookie)})")
       return
     }
 
