@@ -833,6 +833,11 @@ class PostingServiceDelegate(
       throw ServerReturnedUnexpectedThreadId(responsePostDescriptor.threadDescriptor(), chanDescriptor)
     }
 
+    updateChildNotification(
+      chanDescriptor = chanDescriptor,
+      status = ChildNotificationInfo.Status.CheckingPostAcknowledgement()
+    )
+
     // Slow path. Actually check whether the post exists on the server or not.
     return site.actions().checkPostExists(chanDescriptor, responsePostDescriptor)
       .peekError { error -> Logger.e(TAG, "checkPostActuallyExists(${responsePostDescriptor}) error: ${error.errorMessageOrClassName()}") }

@@ -168,7 +168,8 @@ class PostingService : Service() {
       is ChildNotificationInfo.Status.WaitingForAdditionalService -> R.drawable.ic_baseline_access_time_24
       is ChildNotificationInfo.Status.Uploading -> android.R.drawable.stat_sys_upload
       is ChildNotificationInfo.Status.Uploaded -> android.R.drawable.stat_sys_upload_done
-      is ChildNotificationInfo.Status.Posted -> android.R.drawable.stat_sys_upload_done
+      is ChildNotificationInfo.Status.CheckingPostAcknowledgement -> R.drawable.ic_baseline_access_time_24
+      is ChildNotificationInfo.Status.Posted -> R.drawable.ic_check_all
       ChildNotificationInfo.Status.Canceled -> R.drawable.ic_stat_notify
       is ChildNotificationInfo.Status.Error -> android.R.drawable.stat_sys_warning
     }

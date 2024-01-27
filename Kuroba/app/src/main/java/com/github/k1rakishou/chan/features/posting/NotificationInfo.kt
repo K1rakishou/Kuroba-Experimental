@@ -18,6 +18,7 @@ data class ChildNotificationInfo(
         is Status.Preparing -> true
         is Status.Uploading -> status.totalProgress < .9f
         is Status.Uploaded,
+        is Status.CheckingPostAcknowledgement,
         is Status.Error,
         is Status.Posted,
         Status.Canceled -> false
@@ -29,6 +30,7 @@ data class ChildNotificationInfo(
       return when (status) {
         is Status.Uploading,
         is Status.Uploaded,
+        is Status.CheckingPostAcknowledgement,
         is Status.WaitingForSiteRateLimitToPass,
         is Status.WaitingForAdditionalService -> true
         is Status.Error,
@@ -62,6 +64,12 @@ data class ChildNotificationInfo(
     class Uploaded : Status("Uploaded") {
       override fun toString(): String {
         return "Uploaded"
+      }
+    }
+
+    class CheckingPostAcknowledgement : Status("Checking if post was actually acknowledged by the server") {
+      override fun toString(): String {
+        return "CheckingPostAcknowledgement"
       }
     }
 
