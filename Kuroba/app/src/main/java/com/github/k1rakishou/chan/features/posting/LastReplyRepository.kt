@@ -138,7 +138,7 @@ class LastReplyRepository(
     Logger.d(TAG, "getTimeUntilNextThreadCreationOrReply($chanDescriptor, $replyMode)")
 
     val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
       ?.get()
 
     if (ignoreReplyCooldowns == true) {

@@ -155,7 +155,7 @@ class PostingServiceDelegate(
       }
 
       val replyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-        ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+        ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
         ?.get()
         ?: ReplyMode.ReplyModeSolveCaptchaManually
 
@@ -810,7 +810,7 @@ class PostingServiceDelegate(
     postResult: SiteActions.PostResult.PostComplete
   ): Boolean {
     val check4chanPostAcknowledged = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
       ?.get()
 
     if (check4chanPostAcknowledged == null || !check4chanPostAcknowledged) {

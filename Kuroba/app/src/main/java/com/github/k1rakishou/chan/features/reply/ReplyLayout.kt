@@ -750,8 +750,9 @@ class ReplyLayout @JvmOverloads constructor(
       ?: return
 
     val replyMode = site
-      .requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
-      .get()
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
+      ?: return
 
     val siteDoesNotRequireAuthentication = site.actions().postAuthenticate().type == SiteAuthentication.Type.NONE
     if (siteDoesNotRequireAuthentication) {

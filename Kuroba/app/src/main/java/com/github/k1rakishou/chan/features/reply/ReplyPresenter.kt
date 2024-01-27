@@ -388,7 +388,7 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     val replyMode = siteManager.bySiteDescriptor(descriptor.siteDescriptor())
-      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
       ?: return
 
@@ -459,7 +459,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     val prevReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
       ?.get()
       ?: ReplyMode.Unknown
 
@@ -483,11 +483,11 @@ class ReplyPresenter @Inject constructor(
     val availableReplyModes = buildReplyModeOptions(chanDescriptor, prevReplyMode)
 
     val ignoreReplyCooldowns = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.IgnoreReplyCooldowns)
     val lastUsedReplyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
     val check4chanPostAcknowledgedSetting = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
-      ?.requireSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
+      ?.getSettingBySettingId<BooleanSetting>(SiteSetting.SiteSettingId.Check4chanPostAcknowledged)
 
     menuItems += FloatingListMenuItem(
       key = ACTION_REPLY_MODES,

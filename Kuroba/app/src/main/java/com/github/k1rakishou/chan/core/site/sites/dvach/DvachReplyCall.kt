@@ -150,9 +150,9 @@ class DvachReplyCall internal constructor(
   ) {
     formBuilder.addFormDataPart("captcha_type", "recaptcha")
 
-    val replyMode = site.requireSettingBySettingId<OptionsSetting<ReplyMode>>(
-      SiteSetting.SiteSettingId.LastUsedReplyMode
-    ).get()
+    val replyMode = site
+      .getSettingBySettingId<OptionsSetting<ReplyMode>>(SiteSetting.SiteSettingId.LastUsedReplyMode)
+      ?.get()
 
     if (replyMode == ReplyMode.ReplyModeSendWithoutCaptcha) {
       formBuilder.addFormDataPart("captcha_key", Dvach.INVISIBLE_CAPTCHA_KEY)

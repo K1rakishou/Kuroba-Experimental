@@ -27,7 +27,6 @@ import com.github.k1rakishou.model.data.board.ChanBoard
 import com.github.k1rakishou.model.data.descriptor.SiteDescriptor
 import com.github.k1rakishou.model.data.site.SiteBoards
 import kotlinx.coroutines.Job
-import okhttp3.HttpUrl
 
 @DoNotStrip
 interface Site {
@@ -185,10 +184,6 @@ interface Site {
   fun postingLimitationInfo(): SitePostingLimitation? = null
 
   fun redirectsToArchiveThread(): Boolean = false
-
-  fun <T : Setting<*>> requireSettingBySettingId(settingId: SiteSetting.SiteSettingId): T {
-    return requireNotNull(getSettingBySettingId(settingId)) { "Setting ${settingId} not found for site ${siteDescriptor()}" }
-  }
 
   fun <T : Setting<*>> getSettingBySettingId(settingId: SiteSetting.SiteSettingId): T?
 }
