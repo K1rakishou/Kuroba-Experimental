@@ -781,10 +781,12 @@ class PostingServiceDelegate(
     }
 
     try {
-      val responsePostDescriptor = postResult.replyResponse.postDescriptorOrNull
-      if (responsePostDescriptor != null) {
-        if (!checkPostActuallyExists(chanDescriptor, responsePostDescriptor)) {
-          throw PostDoesNotExistOnServer(responsePostDescriptor)
+      if (replyMode != ReplyMode.ReplyModeUsePasscode) {
+        val responsePostDescriptor = postResult.replyResponse.postDescriptorOrNull
+        if (responsePostDescriptor != null) {
+          if (!checkPostActuallyExists(chanDescriptor, responsePostDescriptor)) {
+            throw PostDoesNotExistOnServer(responsePostDescriptor)
+          }
         }
       }
 
