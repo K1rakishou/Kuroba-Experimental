@@ -16,12 +16,8 @@
  */
 package com.github.k1rakishou.chan.core.site
 
-import com.github.k1rakishou.chan.core.site.sites.Chan370
-import com.github.k1rakishou.chan.core.site.sites.CompositeCatalogSite
-import com.github.k1rakishou.chan.core.site.sites.Diochan
-import com.github.k1rakishou.chan.core.site.sites.Sushichan
+import com.github.k1rakishou.chan.core.site.sites.*
 import com.github.k1rakishou.chan.core.site.sites.wired7.Wired7
-import com.github.k1rakishou.chan.core.site.sites.Vhschan
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan420.Chan420
 import com.github.k1rakishou.chan.core.site.sites.dvach.Dvach
@@ -38,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.sites.foolfuuka.sites.WakarimasenMoe
 import com.github.k1rakishou.chan.core.site.sites.fuuka.sites.Warosu
 import com.github.k1rakishou.chan.core.site.sites.kun8.Kun8
 import com.github.k1rakishou.chan.core.site.sites.lainchan.Lainchan
+import com.github.k1rakishou.chan.core.site.sites.leftypol.Leftypol
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Endchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.Kohlchan
 import com.github.k1rakishou.chan.core.site.sites.lynxchan.YesHoney
@@ -75,6 +72,7 @@ object SiteRegistry {
     siteClasses.addSiteToSiteClassesMap(Kohlchan.SITE_NAME, Kohlchan::class.java)
     siteClasses.addSiteToSiteClassesMap(RozenArcana.SITE_NAME, RozenArcana::class.java)
     siteClasses.addSiteToSiteClassesMap(YesHoney.SITE_NAME, YesHoney::class.java)
+    siteClasses.addSiteToSiteClassesMap(Leftypol.SITE_NAME, Leftypol::class.java)
 
     // A synthetic site which only purpose is to have an order in the global site order for composed
     // catalogs when showing them on the board selection screen.

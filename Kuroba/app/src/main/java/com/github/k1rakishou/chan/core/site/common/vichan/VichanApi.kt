@@ -31,8 +31,7 @@ import java.io.InputStreamReader
 import java.util.*
 import kotlin.math.max
 
-@Suppress("BlockingMethodInNonBlockingContext")
-class VichanApi(
+open class VichanApi(
   private val siteManager: SiteManager,
   private val boardManager: BoardManager,
   commonSite: CommonSite
@@ -98,7 +97,7 @@ class VichanApi(
     reader.beginObject()
 
     while (reader.hasNext()) {
-      when (reader.nextName()) {
+      when (val name: String = reader.nextName()) {
         "no" -> builder.id(reader.nextInt().toLong())
         "sub" -> builder.subject(reader.nextString())
         "name" -> builder.name(reader.nextString())
@@ -143,7 +142,7 @@ class VichanApi(
         "md5" -> fileHash = reader.nextString()
         else -> {
           // Unknown/ignored key
-          reader.skipValue()
+          otherPostKey(name, reader, builder, board, endpoints)
         }
       }
     }
@@ -206,7 +205,7 @@ class VichanApi(
   }
 
   @Throws(IOException::class)
-  private fun readPostImage(
+  protected open fun readPostImage(
     reader: JsonReader,
     builder: ChanPostBuilder,
     board: ChanBoard,
@@ -271,6 +270,10 @@ class VichanApi(
     }
 
     return null
+  }
+
+  protected open fun otherPostKey(name: String, reader: JsonReader, builder: ChanPostBuilder, board: ChanBoard, endpoints: SiteEndpoints) {
+    reader.skipValue()
   }
 
   override suspend fun readThreadBookmarkInfoObject(
