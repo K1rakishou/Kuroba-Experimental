@@ -64,7 +64,6 @@ import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
 import java.util.Locale
 
-@Suppress("PropertyName")
 @DoNotStrip
 open class Chan4 : SiteBase() {
 

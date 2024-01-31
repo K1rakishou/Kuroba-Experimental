@@ -28,7 +28,8 @@ import com.github.k1rakishou.chan.features.posting.CaptchaDonation
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
@@ -93,6 +94,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     get() = _captchaInfoToShow
 
   @Volatile private var notifiedUserAboutCaptchaSolver = false
+  @Volatile private var currentTicket: String? = null
 
   private var _captchaSolverInstalled = mutableStateOf<Boolean>(false)
   val captchaSolverInstalled: State<Boolean>
@@ -227,20 +229,26 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         _captchaSolverInstalled.value = chan4CaptchaSolverInfo == CaptchaSolverInfo.Installed
       }
 
-      val result = ModularResult.Try { requestCaptchaInternal(appContext, chanDescriptor) }
+      val result = ModularResult.Try {
+        requestCaptchaInternal(
+          appContext = appContext,
+          chanDescriptor = chanDescriptor,
+          ticket = currentTicket
+        )
+      }
       when (result) {
         is ModularResult.Error -> {
-          Logger.e(TAG, "requestCaptcha() error=${result.error.errorMessageOrClassName()}")
-
           val error = result.error
-          if (error is CaptchaRateLimitError) {
+
+          Logger.e(TAG, "requestCaptcha()", error)
+          _captchaInfoToShow.value = AsyncData.Error(error)
+
+          if (error is CaptchaCooldownError) {
             waitUntilCaptchaRateLimitPassed(error.cooldownMs)
 
             withContext(Dispatchers.Main) { requestCaptcha(appContext, chanDescriptor, forced = true) }
             return@launch
           }
-
-          _captchaInfoToShow.value = AsyncData.Error(error)
         }
         is ModularResult.Value -> {
           Logger.d(TAG, "requestCaptcha() success")
@@ -257,7 +265,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   }
 
   private suspend fun CoroutineScope.waitUntilCaptchaRateLimitPassed(initialCooldownMs: Long) {
-    var remainingCooldownMs = initialCooldownMs + 1000L
+    var remainingCooldownMs = initialCooldownMs
 
     while (isActive) {
       if (remainingCooldownMs <= 0) {
@@ -266,7 +274,21 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
       delay(1000L)
 
-      _captchaInfoToShow.value = AsyncData.Error(CaptchaRateLimitError(remainingCooldownMs))
+      val previousError = (_captchaInfoToShow.value as? AsyncData.Error)?.throwable
+        ?: break
+
+      when (previousError) {
+        is CaptchaGenericRateLimitError -> {
+          _captchaInfoToShow.value = AsyncData.Error(CaptchaGenericRateLimitError(remainingCooldownMs))
+        }
+        is CaptchaThreadRateLimitError -> {
+          _captchaInfoToShow.value = AsyncData.Error(CaptchaThreadRateLimitError(remainingCooldownMs))
+        }
+        else -> {
+          break
+        }
+      }
+
       remainingCooldownMs -= 1000L
     }
   }
@@ -300,9 +322,13 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
   }
 
-  private suspend fun requestCaptchaInternal(appContext: Context, chanDescriptor: ChanDescriptor): CaptchaInfo {
+  private suspend fun requestCaptchaInternal(
+    appContext: Context,
+    chanDescriptor: ChanDescriptor,
+    ticket: String?
+  ): CaptchaInfo {
     val boardCode = chanDescriptor.boardDescriptor().boardCode
-    val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode)
+    val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket)
 
     Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) requesting $urlRaw")
 
@@ -332,12 +358,31 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       throw IOException("Failed to convert json to CaptchaInfoRaw")
     }
 
-    if (captchaInfoRaw.error?.contains(ERROR_MSG, ignoreCase = true) == true) {
+    val newTicket = captchaInfoRaw.ticket
+    if (newTicket?.isNotNullNorBlank() == true && currentTicket != newTicket) {
+      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) updating currentTicket with '${newTicket}'")
+
+      // TODO: can we persist it, I wonder?
+      currentTicket = newTicket
+    }
+
+    if (captchaInfoRaw.err?.contains(ERROR_MSG, ignoreCase = true) == true) {
       val cooldownMs = captchaInfoRaw.cooldown?.times(1000L)
         ?: DEFAULT_COOLDOWN_MS
 
       Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) rate limited! cooldownMs=$cooldownMs")
-      throw CaptchaRateLimitError(cooldownMs)
+      throw CaptchaGenericRateLimitError(cooldownMs)
+    }
+
+    if (captchaInfoRaw.pcdMsg != null) {
+      if (captchaInfoRaw.pcd == null) {
+        throw UnknownCaptchaError(captchaInfoRaw.pcdMsg)
+      }
+
+      val cooldownMs = captchaInfoRaw.pcd.times(1000L)
+
+      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs")
+      throw CaptchaThreadRateLimitError(cooldownMs)
     }
 
     if (captchaInfoRaw.isNoopChallenge()) {
@@ -391,14 +436,22 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       return@let BitmapFactory.decodeByteArray(bgByteArray, 0, bgByteArray.size)
     }
 
+    if (captchaInfoRaw.challenge == null) {
+      throw UnknownCaptchaError("Captcha 'challenge' json field does not exist in the server response!")
+    }
+
+    if (captchaInfoRaw.ttl == null) {
+      throw UnknownCaptchaError("Captcha 'ttl' json field does not exist in the server response!")
+    }
+
     return CaptchaInfo(
       chanDescriptor = chanDescriptor,
       bgBitmap = bgBitmap,
       bgBitmapOriginal = bgBitmapOriginal,
       imgBitmap = imgBitmap,
-      challenge = captchaInfoRaw.challenge!!,
+      challenge = captchaInfoRaw.challenge,
       startedAt = System.currentTimeMillis(),
-      ttlSeconds = captchaInfoRaw.ttl!!,
+      ttlSeconds = captchaInfoRaw.ttl,
       imgWidth = captchaInfoRaw.imgWidth,
       bgWidth = captchaInfoRaw.bgWidth,
       captchaInfoRawString = captchaInfoRawString,
@@ -406,16 +459,26 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     )
   }
 
-  private fun formatCaptchaUrl(chanDescriptor: ChanDescriptor, boardCode: String): String {
-    return when (chanDescriptor) {
-      is ChanDescriptor.CompositeCatalogDescriptor -> {
-        error("Cannot use CompositeCatalogDescriptor here")
-      }
-      is ChanDescriptor.CatalogDescriptor -> {
-        "https://sys.4chan.org/captcha?board=${boardCode}"
-      }
-      is ChanDescriptor.ThreadDescriptor -> {
-        "https://sys.4chan.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}"
+  private fun formatCaptchaUrl(chanDescriptor: ChanDescriptor, boardCode: String, ticket: String?): String {
+    return buildString {
+      when (chanDescriptor) {
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use CompositeCatalogDescriptor here")
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          append("https://sys.4chan.org/captcha?board=${boardCode}")
+
+          if (ticket.isNotNullNorEmpty()) {
+            append("&ticket=${ticket}")
+          }
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          append("https://sys.4chan.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
+
+          if (ticket.isNotNullNorEmpty()) {
+            append("&ticket=${ticket}")
+          }
+        }
       }
     }
   }
@@ -506,9 +569,13 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   @JsonClass(generateAdapter = true)
   data class CaptchaInfoRaw(
     @Json(name = "error")
-    val error: String?,
+    val err: String?,
+    @Json(name = "pcd_msg")
+    val pcdMsg: String?,
     @Json(name = "cd")
-    val cooldown: Int?,
+    val cd: Int?,
+    @Json(name = "pcd")
+    val pcd: Int?,
     
     // For Slider captcha
     @Json(name = "bg")
@@ -529,8 +596,23 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     @Json(name = "valid_until")
     val validUntil: Long?,
     @Json(name = "ttl")
-    val ttl: Int?
+    val ttl: Int?,
+    @Json(name = "ticket")
+    val ticket: String?
   ) {
+    val cooldown: Int?
+      get() {
+        if (pcd != null && pcd > 0) {
+          return pcd
+        }
+
+        if (cd != null && cd > 0) {
+          return cd
+        }
+
+        return null
+      }
+
     fun ttlSeconds(): Int {
       return ttl ?: 120
     }
@@ -584,8 +666,19 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
   }
 
-  class CaptchaRateLimitError(val cooldownMs: Long) :
-    Exception("4chan captcha rate-limit detected! Captcha will be reloaded automatically in ${cooldownMs / 1000L}s")
+  interface CaptchaCooldownError {
+    val cooldownMs: Long
+  }
+
+  class CaptchaGenericRateLimitError(override val cooldownMs: Long) :
+    Exception("4chan captcha rate-limit detected!\nCaptcha will be reloaded automatically in ${cooldownMs / 1000L}s"),
+    CaptchaCooldownError
+
+  class CaptchaThreadRateLimitError(override val cooldownMs: Long) :
+    Exception("4chan captcha rate-limit detected!\nPlease wait ${cooldownMs / 1000L} seconds before making a thread."),
+    CaptchaCooldownError
+
+  class UnknownCaptchaError(message: String) : java.lang.Exception(message)
 
   companion object {
     private const val TAG = "Chan4CaptchaLayoutViewModel"
