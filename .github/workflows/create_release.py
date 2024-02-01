@@ -3,10 +3,6 @@ import requests
 import json
 
 def create_github_release(token, repo, tag_name, release_name, body, asset_path):
-    if (len(token) == 0):
-        print("Token is empty.")
-        return
-
     url = f"https://api.github.com/repos/{repo}/releases"
 
     headers = {
@@ -24,14 +20,15 @@ def create_github_release(token, repo, tag_name, release_name, body, asset_path)
 
     response = requests.post(url, headers=headers, data=json.dumps(payload))
 
-    if response.status_code == 201:
-        print("Release created successfully.")
-        upload_url = response.json()["upload_url"].split("{")[0]
-        upload_asset(upload_url, asset_path, headers)
-    else:
+    if response.status_code != 201:
         print("Failed to create release.")
         print(response.status_code)
         print(response.content)
+        exit(-1)
+
+    print("Release created successfully.")
+    upload_url = response.json()["upload_url"].split("{")[0]
+    upload_asset(upload_url, asset_path, headers)
 
 def upload_asset(upload_url, asset_path, headers):
     headers["Content-Type"] = "application/octet-stream"
@@ -44,12 +41,13 @@ def upload_asset(upload_url, asset_path, headers):
 
     response = requests.post(asset_url, headers=headers, data=file_data)
 
-    if response.status_code == 201:
-        print("Asset uploaded successfully.")
-    else:
+    if response.status_code != 201:
         print("Failed to upload asset.")
         print(response.status_code)
         print(response.content)
+        exit(-1)
+
+    print("Asset uploaded successfully.")
 
 if __name__ == "__main__":
     token = os.getenv('GITHUB_TOKEN')
@@ -61,5 +59,12 @@ if __name__ == "__main__":
     # TODO: use actual release description based on commits diff
     body = 'Test release body'
     asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+
+    print(token[:10])
+    print(token[-10:])
+
+    if (len(token) == 0):
+        print("Token is empty.")
+        exit(-1)
 
     create_github_release(token, repo, tag_name, release_name, body, asset_path)
