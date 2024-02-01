@@ -13,7 +13,7 @@ jobs:
     - name: Checkout Repository
       uses: actions/checkout@v2
       with:
-        repository: 'https://github.com/K1rakishou/Kuroba-Experimental-beta'
+        repository: 'K1rakishou/Kuroba-Experimental-beta'
         token: ${{ secrets.PAT }}
     - name: Download APK
       uses: actions/download-artifact@v2
@@ -29,9 +29,6 @@ jobs:
         release_name: Release ${{ github.run_id }}
         draft: false
         prerelease: false
-    - name: Test
-      run: |
-        pwd
     - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
