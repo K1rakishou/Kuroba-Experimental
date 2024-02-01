@@ -26,4 +26,4 @@ jobs:
       uses: actions/upload-artifact@v2
       with:
         name: KurobaEx-beta.apk
-        path: app/build/outputs/apk/beta/release
+        path: Kuroba/app/build/outputs/apk/beta/release
