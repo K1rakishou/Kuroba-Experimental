@@ -2,7 +2,7 @@ name: Release APK
 
 on:
   workflow_run:
-    workflows: ["Build Android APK"]
+    workflows: ["Build and Sign Android APK"]
     types:
       - completed
 
