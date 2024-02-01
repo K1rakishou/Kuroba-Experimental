@@ -1128,11 +1128,11 @@ class ReplyLayout @JvmOverloads constructor(
     }
   }
 
-  override fun dialogMessage(message: CharSequence?) {
-    dialogMessage(getString(R.string.reply_layout_info_title), message)
+  override fun dialogMessage(message: CharSequence?, onDismissListener: (() -> Unit)?) {
+    dialogMessage(getString(R.string.reply_layout_info_title), message, onDismissListener)
   }
 
-  override fun dialogMessage(title: String, message: CharSequence?) {
+  override fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
     post {
       if (message == null) {
         dialogHandle?.dismiss()
@@ -1151,7 +1151,8 @@ class ReplyLayout @JvmOverloads constructor(
         context = context,
         titleText = title,
         descriptionText = message,
-        customLinkMovementMethod = linkMovementMethod
+        customLinkMovementMethod = linkMovementMethod,
+        onDismissListener = onDismissListener
       )
     }
   }

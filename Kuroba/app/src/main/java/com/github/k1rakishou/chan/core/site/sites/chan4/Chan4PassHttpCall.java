@@ -57,6 +57,7 @@ public class Chan4PassHttpCall extends HttpCall {
 
         requestBuilder.url(getSite().endpoints().login());
         requestBuilder.post(formBuilder.build());
+        getSite().requestModifier().modifyHttpCall(this, requestBuilder);
     }
 
     @Override

@@ -74,5 +74,6 @@ public abstract class MultipartHttpCall extends HttpCall {
 
         requestBuilder.addHeader("Referer", r);
         requestBuilder.post(formBuilder.build());
+        getSite().requestModifier().modifyHttpCall(this, requestBuilder);
     }
 }

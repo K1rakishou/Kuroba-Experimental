@@ -16,7 +16,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 class KurobaAlertDialogHostController(
   context: Context,
   private val cancelable: Boolean,
-  private val onDismissListener: () -> Unit,
+  private val onDismissListener: (() -> Unit)?,
   private val onReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
 ) : BaseFloatingController(context), KurobaAlertDialogHostControllerCallbacks {
 
@@ -58,7 +58,7 @@ class KurobaAlertDialogHostController(
   override fun onDestroy() {
     super.onDestroy()
 
-    onDismissListener()
+    onDismissListener?.invoke()
   }
 
   override fun onBack(): Boolean {

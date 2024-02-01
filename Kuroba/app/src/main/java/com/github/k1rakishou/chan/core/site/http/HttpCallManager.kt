@@ -77,8 +77,6 @@ class HttpCallManager @Inject constructor(
           return@channelFlow
         }
 
-        httpCall.site.requestModifier().modifyHttpCall(httpCall, requestBuilder)
-
         when (val httpCallResult = makeHttpCallInternal(requestBuilder, httpCall)) {
           is HttpCall.HttpCallResult.Success -> {
             send(HttpCall.HttpCallWithProgressResult.Success(httpCallResult.httpCall))

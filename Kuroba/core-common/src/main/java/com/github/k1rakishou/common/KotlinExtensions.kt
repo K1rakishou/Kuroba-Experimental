@@ -64,7 +64,8 @@ import java.io.InterruptedIOException
 import java.lang.Thread.currentThread
 import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.LinkedList
+import java.util.TreeMap
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 import javax.net.ssl.SSLException
@@ -73,6 +74,7 @@ import kotlin.contracts.contract
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
+private const val TAG = "KotlinExntesions"
 val ELLIPSIZE_SYMBOL: CharSequence = "…"
 
 suspend fun OkHttpClient.suspendCall(request: Request): Response {
@@ -1266,22 +1268,80 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
 
 private const val COOKIE_HEADER_NAME = "Cookie"
 
-fun Request.Builder.appendCookieHeader(value: String): Request.Builder {
+fun Request.Builder.appendCookieHeader(newCookie: String): Request.Builder {
   val request = build()
 
-  val cookies = request.header(COOKIE_HEADER_NAME)
-  if (cookies == null) {
-    return addHeader(COOKIE_HEADER_NAME, value)
+  val oldCookies = request.header(COOKIE_HEADER_NAME)
+  if (oldCookies.isNullOrBlank()) {
+    return addHeader(COOKIE_HEADER_NAME, newCookie)
   }
 
-  // Absolute retardiation but OkHttp doesn't allow doing it differently (or maybe I just don't know?)
-  val fullCookieValue = request.newBuilder()
-    .removeHeader(COOKIE_HEADER_NAME)
-    .addHeader(COOKIE_HEADER_NAME, "${cookies}; ${value}")
-    .build()
-    .header(COOKIE_HEADER_NAME)!!
+  if (!newCookie.contains(";")) {
+    val cookieParts = newCookie.indexOfFirstOrNull { char -> char == '=' }
+      ?.let { indexOfSeparator ->
+        return@let listOf(
+          newCookie.substringSafe(0, indexOfSeparator),
+          newCookie.substringSafe(indexOfSeparator + 1)
+        )
+      }
 
-  return header(COOKIE_HEADER_NAME, fullCookieValue)
+    if (cookieParts != null) {
+      val separateCookies = oldCookies.split("; ").map { it.trim() }
+      val key = cookieParts.get(0)
+
+      val cookieAlreadyAdded = separateCookies.any { cookie -> cookie.startsWith("${key}=") }
+      if (cookieAlreadyAdded) {
+        return this
+      }
+    }
+  } else {
+    Logger.e(TAG, "newCookie contains ';' separate cookies! newCookie: '${newCookie}'")
+  }
+
+  return removeHeader(COOKIE_HEADER_NAME)
+    .header(COOKIE_HEADER_NAME, "${oldCookies}; ${newCookie}")
+}
+
+fun String.indexOfFirstOrNull(
+  startIndex: Int = 0,
+  endIndex: Int = lastIndex,
+  predicate: (Char) -> Boolean
+): Int? {
+  for (i in startIndex until endIndex) {
+    val ch = this.getOrNull(i)
+      ?: break
+
+    if (predicate(ch)) {
+      return i
+    }
+  }
+
+  return null
+}
+
+
+fun String.substringSafe(startIndex: Int): String? {
+  if (startIndex < 0 || startIndex > lastIndex) {
+    return null
+  }
+
+  return substring(startIndex)
+}
+
+fun String.substringSafe(startIndex: Int, endIndex: Int): String? {
+  if (startIndex < 0 || startIndex > length) {
+    return null
+  }
+
+  if (endIndex < 0 || endIndex > length) {
+    return null
+  }
+
+  if (startIndex > endIndex) {
+    return null
+  }
+
+  return substring(startIndex, endIndex)
 }
 
 fun HttpUrl.extractFileName(): String? {

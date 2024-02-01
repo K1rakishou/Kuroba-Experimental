@@ -23,7 +23,7 @@ import com.github.k1rakishou.chan.core.site.Site;
 import com.github.k1rakishou.chan.core.site.http.HttpCall;
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody;
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse;
-import com.github.k1rakishou.common.StringUtils;
+import com.github.k1rakishou.chan.utils.Generators;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
 
 import java.io.IOException;
@@ -58,15 +58,17 @@ public abstract class CommonReplyHttpCall extends HttpCall {
             Request.Builder requestBuilder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
     ) throws IOException {
-        replyResponse.password = StringUtils.generatePassword();
+        replyResponse.password = Generators.generateRandomHexString(16);
 
-        MultipartBody.Builder formBuilder = new MultipartBody.Builder();
+        String boundary = "------WebKitFormBoundary" + Generators.generateHttpBoundary();
+        MultipartBody.Builder formBuilder = new MultipartBody.Builder(boundary);
         formBuilder.setType(MultipartBody.FORM);
-        addParameters(formBuilder, progressListener);
 
         HttpUrl replyUrl = getSite().endpoints().reply(this.replyChanDescriptor);
         requestBuilder.url(replyUrl);
-        requestBuilder.addHeader("Referer", replyUrl.toString());
+
+        addParameters(formBuilder, progressListener);
+        addHeaders(requestBuilder, boundary);
 
         requestBuilder.post(formBuilder.build());
     }
@@ -77,5 +79,10 @@ public abstract class CommonReplyHttpCall extends HttpCall {
     public abstract void addParameters(
             @NonNull MultipartBody.Builder builder,
             @Nullable ProgressRequestBody.ProgressRequestListener progressListener
+    ) throws IOException;
+
+    public abstract void addHeaders(
+            @NonNull Request.Builder requestBuilder,
+            @NonNull String boundary
     ) throws IOException;
 }

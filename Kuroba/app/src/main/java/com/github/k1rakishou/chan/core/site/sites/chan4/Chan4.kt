@@ -323,7 +323,8 @@ open class Chan4 : SiteBase() {
         replyChanDescriptor = replyChanDescriptor,
         replyMode = replyMode,
         replyManager = replyManager,
-        boardFlagInfoRepository = boardFlagInfoRepository
+        boardFlagInfoRepository = boardFlagInfoRepository,
+        appConstants = appConstants
       )
 
       return httpCallManager.get().makePostHttpCallWithProgress(replyCall)

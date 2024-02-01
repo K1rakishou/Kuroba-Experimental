@@ -30,7 +30,8 @@ import okhttp3.RequestBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import java.io.IOException
-import java.util.*
+import java.util.Locale
+import java.util.Objects
 import java.util.regex.Pattern
 
 class LynxchanReplyHttpCall(
@@ -60,6 +61,7 @@ class LynxchanReplyHttpCall(
 
     replyResponse.siteDescriptor = chanDescriptor.siteDescriptor()
     replyResponse.boardCode = chanDescriptor.boardCode()
+    site.requestModifier().modifyHttpCall(this, requestBuilder)
 
     replyManager.get().readReply(chanDescriptor) { reply ->
       val threadNo = if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {

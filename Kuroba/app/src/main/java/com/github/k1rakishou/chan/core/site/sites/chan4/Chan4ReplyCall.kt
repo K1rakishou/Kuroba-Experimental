@@ -20,9 +20,11 @@ import android.text.SpannableStringBuilder
 import android.text.TextUtils
 import androidx.core.text.set
 import com.github.k1rakishou.ChanSettings
+import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.core.repository.BoardFlagInfoRepository
 import com.github.k1rakishou.chan.core.site.Site
+import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.common.CommonReplyHttpCall
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody
 import com.github.k1rakishou.chan.core.site.http.ProgressRequestBody.ProgressRequestListener
@@ -32,8 +34,10 @@ import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileMeta
 import com.github.k1rakishou.chan.ui.captcha.CaptchaSolution
 import com.github.k1rakishou.chan.utils.WebViewLink
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils.formatToken
+import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.fixUrlOrNull
 import com.github.k1rakishou.common.groupOrNull
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -43,10 +47,13 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.CatalogDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor.ThreadDescriptor
 import com.github.k1rakishou.persist_state.ReplyMode
+import com.github.k1rakishou.prefs.MapSetting
 import dagger.Lazy
 import okhttp3.Headers
+import okhttp3.HttpUrl
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import org.jsoup.Jsoup
@@ -64,7 +71,8 @@ class Chan4ReplyCall(
   replyChanDescriptor: ChanDescriptor,
   val replyMode: ReplyMode,
   private val replyManager: Lazy<ReplyManager>,
-  private val boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>
+  private val boardFlagInfoRepository: Lazy<BoardFlagInfoRepository>,
+  private val appConstants: AppConstants
 ) : CommonReplyHttpCall(site, replyChanDescriptor) {
 
   @get:Synchronized
@@ -151,6 +159,28 @@ class Chan4ReplyCall(
         }
       }
     }
+  }
+
+  override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
+    arrayOf("Referer", "User-Agent", "Accept-Encoding", "Cookie", "Content-Type", "Content-Length", "Host", "Connection")
+      .forEach { header -> requestBuilder.removeHeader(header) }
+
+    val replyUrl = site.endpoints().reply(replyChanDescriptor)
+
+    requestBuilder.addHeader("Host", "sys.4chan.org")
+    requestBuilder.addHeader("User-Agent", appConstants.userAgent)
+    requestBuilder.addHeader("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8")
+    requestBuilder.addHeader("Accept-Language", "en-US,en;q=0.5")
+    requestBuilder.addHeader("Accept-Encoding", "gzip")
+    requestBuilder.addHeader("Content-Type", "multipart/form-data; boundary=${boundary}")
+    requestBuilder.addHeader("Origin", "https://boards.4chan.org")
+    requestBuilder.addHeader("Connection", "Keep-Alive")
+    requestBuilder.addHeader("Referer", replyUrl.toString())
+    requestBuilder.addHeader("Cookie", readCookies(replyUrl))
+    requestBuilder.addHeader("Sec-Fetch-Dest", "document")
+    requestBuilder.addHeader("Sec-Fetch-Mode", "navigate")
+    requestBuilder.addHeader("Sec-Fetch-Site", "same-site")
+    requestBuilder.addHeader("Sec-Fetch-User", "?1")
   }
 
   override fun process(response: Response, result: String) {
@@ -379,6 +409,38 @@ class Chan4ReplyCall(
     }
 
     formBuilder.addFormDataPart("upfile", replyFileMeta.fileName, requestBody)
+  }
+
+  private fun readCookies(requestUrl: HttpUrl): String {
+    val domainOrHost = requestUrl.domain() ?: requestUrl.host
+    val host = requestUrl.host
+
+    val cloudflareCookie = site
+      .getSettingBySettingId<MapSetting>(SiteSetting.SiteSettingId.CloudFlareClearanceCookie)
+      ?.get(domainOrHost)
+
+    return buildString {
+      if (cloudflareCookie.isNotNullNorEmpty()) {
+        Logger.d(TAG, "readCookies() domainOrHost=${domainOrHost}, cf_clearance=${formatToken(cloudflareCookie)}")
+        append("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cloudflareCookie")
+      }
+
+      val chan4SiteSettings = (site as Chan4).chan4CaptchaSettings.get()
+
+      val rememberCaptchaCookies = chan4SiteSettings.rememberCaptchaCookies
+      if (rememberCaptchaCookies) {
+        val captchaCookie = site.chan4CaptchaCookie.get()
+        if (captchaCookie.isNotBlank()) {
+          Logger.d(TAG, "readCookies() host=${host}, captchaCookie=${formatToken(captchaCookie)}")
+
+          if (isNotEmpty()) {
+            append("; ")
+          }
+
+          append("${Chan4.CAPTCHA_COOKIE_KEY}=${captchaCookie}")
+        }
+      }
+    }
   }
 
   companion object {

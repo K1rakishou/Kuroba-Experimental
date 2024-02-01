@@ -46,7 +46,7 @@ class DialogFactory(
     descriptionText: CharSequence? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
-    onDismissListener: () -> Unit = { },
+    onDismissListener: (() -> Unit)? = null,
     cancelable: Boolean = true,
     checkAppVisibility: Boolean = true,
     customLinkMovementMethod: LinkMovementMethod? = null
@@ -96,7 +96,7 @@ class DialogFactory(
     neutralButtonText: String? = null,
     onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { },
     negativeButtonText: String = getString(R.string.cancel),
-    onDismissListener: () -> Unit = { }
+    onDismissListener: (() -> Unit)? = null
   ): KurobaAlertDialog.AlertDialogHandle? {
     if (!applicationVisibilityManager.isAppInForeground()) {
       return null
@@ -152,7 +152,7 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = { onCanceled?.invoke() }
+      onDismissListener = onCanceled
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -218,7 +218,7 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = { onCanceled?.invoke() }
+      onDismissListener = onCanceled
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -282,7 +282,7 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = { onCanceled?.invoke() }
+      onDismissListener = onCanceled
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -323,7 +323,7 @@ class DialogFactory(
   private fun showKurobaAlertDialogHostController(
     context: Context,
     cancelable: Boolean,
-    onDismissListener: () -> Unit,
+    onDismissListener: (() -> Unit)? = null,
     onViewReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
   ) {
     containerController.presentController(

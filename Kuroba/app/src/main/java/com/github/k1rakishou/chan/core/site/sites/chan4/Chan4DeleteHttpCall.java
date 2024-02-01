@@ -59,6 +59,7 @@ public class Chan4DeleteHttpCall extends HttpCall {
 
         requestBuilder.url(getSite().endpoints().delete(deleteRequest.post));
         requestBuilder.post(formBuilder.build());
+        getSite().requestModifier().modifyHttpCall(this, requestBuilder);
     }
 
     @Override

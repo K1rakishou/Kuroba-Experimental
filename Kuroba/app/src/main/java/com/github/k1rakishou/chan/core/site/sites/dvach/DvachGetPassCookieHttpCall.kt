@@ -34,6 +34,7 @@ class DvachGetPassCookieHttpCall(
     requestBuilder.post(formBuilder.build())
 
     site.requestModifier().modifyLoginRequest(site, requestBuilder)
+    site.requestModifier().modifyHttpCall(this, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {

@@ -786,13 +786,17 @@ class ReplyPresenter @Inject constructor(
       }
       replyResponse.requireAuthentication -> {
         Logger.d(TAG, "onPostComplete() requireAuthentication==true replyResponse=$replyResponse")
-        onPostCompleteUnsuccessful(replyResponse, additionalErrorMessage = null)
-
-        showCaptcha(
-          chanDescriptor = chanDescriptor,
-          replyMode = replyMode,
-          autoReply = true,
-          afterPostingAttempt = true
+        onPostCompleteUnsuccessful(
+          replyResponse = replyResponse,
+          additionalErrorMessage = null,
+          onDismissListener = {
+            showCaptcha(
+              chanDescriptor = chanDescriptor,
+              replyMode = replyMode,
+              autoReply = true,
+              afterPostingAttempt = true
+            )
+          }
         )
       }
       else -> {
@@ -813,7 +817,11 @@ class ReplyPresenter @Inject constructor(
     }
   }
 
-  private fun onPostCompleteUnsuccessful(replyResponse: ReplyResponse, additionalErrorMessage: String? = null) {
+  private fun onPostCompleteUnsuccessful(
+    replyResponse: ReplyResponse,
+    additionalErrorMessage: String? = null,
+    onDismissListener: (() -> Unit)? = null
+  ) {
     val errorMessage = when {
       additionalErrorMessage != null -> {
         getString(R.string.reply_error_message, additionalErrorMessage)
@@ -834,7 +842,7 @@ class ReplyPresenter @Inject constructor(
     }
 
     Logger.e(TAG, "onPostCompleteUnsuccessful() error: $errorMessage")
-    callback.dialogMessage(errorMessage)
+    callback.dialogMessage(errorMessage, onDismissListener)
   }
 
   private suspend fun onPostedSuccessfully(
@@ -942,8 +950,8 @@ class ReplyPresenter @Inject constructor(
     fun loadDraftIntoViews(chanDescriptor: ChanDescriptor)
     fun adjustSelection(start: Int, amount: Int)
     fun setInputPage()
-    fun dialogMessage(message: CharSequence?)
-    fun dialogMessage(title: String, message: CharSequence?)
+    fun dialogMessage(message: CharSequence?, onDismissListener: (() -> Unit)? = null)
+    fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)? = null)
     fun openOrCloseReply(open: Boolean)
     fun onPosted()
     fun setCommentHint(hint: String?)

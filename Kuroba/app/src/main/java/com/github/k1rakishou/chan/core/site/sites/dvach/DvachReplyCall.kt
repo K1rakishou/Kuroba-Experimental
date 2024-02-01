@@ -44,6 +44,7 @@ import dagger.Lazy
 import okhttp3.Headers
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MultipartBody
+import okhttp3.Request
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.Response
 import java.io.IOException
@@ -121,6 +122,13 @@ class DvachReplyCall internal constructor(
         }
       }
     }
+  }
+
+  override fun addHeaders(requestBuilder: Request.Builder, boundary: String) {
+    site.requestModifier().modifyHttpCall(this, requestBuilder)
+
+    val replyUrl = site.endpoints().reply(replyChanDescriptor)
+    requestBuilder.addHeader("Referer", replyUrl.toString())
   }
 
   private fun dvachCaptchaAuth(

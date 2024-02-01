@@ -91,8 +91,8 @@ interface SiteActions {
   }
 
   sealed class GetPasscodeInfoResult {
-    object NotLoggedIn : GetPasscodeInfoResult()
-    object NotAllowedToRefreshFromNetwork : GetPasscodeInfoResult()
+    data object NotLoggedIn : GetPasscodeInfoResult()
+    data object NotAllowedToRefreshFromNetwork : GetPasscodeInfoResult()
     class Success(val postingLimitationsInfo: PasscodePostingLimitationsInfo) : GetPasscodeInfoResult()
     class Failure(val error: Throwable) : GetPasscodeInfoResult()
   }
