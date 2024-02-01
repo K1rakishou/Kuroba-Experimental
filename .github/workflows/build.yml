@@ -16,14 +16,12 @@ jobs:
         distribution: 'adopt'
     - name: Decode Keystore File
       run: |
-        echo ${{ secrets.KEYSTORE }} | base64 -d > Kuroba/app/kurobaex.jks
-        ls Kuroba/app
+        echo ${{ secrets.KEYSTORE }} | base64 -d > ${{ github.workspace }}/kurobaex.jks
     - name: Build and Sign APK
       run: |
         cd Kuroba
-        ls app
         chmod +x ./gradlew
-        ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+        ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
     - name: Upload Signed APK
       uses: actions/upload-artifact@v2
       with:
