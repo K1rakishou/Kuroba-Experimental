@@ -32,6 +32,6 @@ jobs:
         ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
     - name: Create release
       run: |
-        python create_release.py
+        python .github/workflows/create_release.py
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
