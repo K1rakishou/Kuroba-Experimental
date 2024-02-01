@@ -18,6 +18,7 @@ jobs:
       run: echo ${{ secrets.KEYSTORE }} | base64 -d > kurobaex.jks
     - name: Build and Sign APK
       run: |
+        cd Kuroba
         chmod +x ./gradlew
         ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
     - name: Upload Signed APK
