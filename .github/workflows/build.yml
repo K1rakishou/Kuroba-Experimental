@@ -22,12 +22,16 @@ jobs:
         cd Kuroba
         chmod +x ./gradlew
         ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=${{ github.workspace }}/kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
-    - name: Test
-      run: |
-        pwd
-        ls Kuroba/app/build/outputs/apk/beta/release
-    - name: Upload Signed APK
-      uses: actions/upload-artifact@v2
+    - name: Set up Python
+      uses: actions/setup-python@v2
       with:
-        name: KurobaEx-beta.apk
-        path: Kuroba/app/build/outputs/apk/beta/release
+        python-version: '3.x'
+    - name: Install/Upgrade pip and requests
+      run: |
+        python -m pip install --upgrade pip
+        pip install requests
+    - name: Create release
+      run: |
+        python create_release.py
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
