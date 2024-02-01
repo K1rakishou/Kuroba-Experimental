@@ -21,6 +21,21 @@ class GsonJsonSetting<T>(
   private var cached: T? = null
   private val settingState = BehaviorProcessor.create<T>()
 
+  fun update(sync: Boolean, updater: (T) -> T) {
+    val prev = get()
+    val new = updater(prev)
+
+    if (prev == new) {
+      return
+    }
+
+    if (sync) {
+      setSync(new)
+    } else {
+      set(new)
+    }
+  }
+
   override fun get(): T {
     if (hasCached) {
       return cached!!

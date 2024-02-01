@@ -10,5 +10,7 @@ data class Chan4CaptchaSettings(
   @SerializedName("remember_captcha_cookies")
   val rememberCaptchaCookies: Boolean = true,
   @SerializedName("use_captcha_solver")
-  val useCaptchaSolver: Boolean = false
+  val useCaptchaSolver: Boolean = false,
+  @SerializedName("captcha_ticket")
+  val captchaTicket: String? = null
 )

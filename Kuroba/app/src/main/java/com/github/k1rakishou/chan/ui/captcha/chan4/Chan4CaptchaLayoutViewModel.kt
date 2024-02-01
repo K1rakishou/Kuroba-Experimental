@@ -28,6 +28,7 @@ import com.github.k1rakishou.chan.features.posting.CaptchaDonation
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.StringUtils.formatToken
 import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.suspendCall
@@ -230,6 +231,13 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       }
 
       val result = ModularResult.Try {
+        if (currentTicket == null) {
+          val ticketFromSettings = chan4CaptchaSettingsJson.get().captchaTicket ?: ""
+          currentTicket = ticketFromSettings
+
+          Logger.d(TAG, "requestCaptcha() loaded 4chan captcha ticket from settings: '${formatToken(ticketFromSettings)}'")
+        }
+
         requestCaptchaInternal(
           appContext = appContext,
           chanDescriptor = chanDescriptor,
@@ -360,10 +368,12 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     val newTicket = captchaInfoRaw.ticket
     if (newTicket?.isNotNullNorBlank() == true && currentTicket != newTicket) {
-      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) updating currentTicket with '${newTicket}'")
+      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) updating currentTicket with '${formatToken(newTicket)}'")
 
-      // TODO: can we persist it, I wonder?
       currentTicket = newTicket
+      chan4CaptchaSettingsJson.update(sync = false) { chan4CaptchaSettings ->
+        chan4CaptchaSettings.copy(captchaTicket = newTicket)
+      }
     }
 
     if (captchaInfoRaw.err?.contains(ERROR_MSG, ignoreCase = true) == true) {
