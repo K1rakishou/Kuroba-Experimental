@@ -60,9 +60,6 @@ if __name__ == "__main__":
     body = 'Test release body'
     asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
 
-    print(token[:10])
-    print(token[-10:])
-
     if (len(token) == 0):
         print("Token is empty.")
         exit(-1)
