@@ -1,0 +1,40 @@
+name: Release APK
+
+on:
+  workflow_run:
+    workflows: ["Build Android APK"]
+    types:
+      - completed
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+      with:
+        repository: 'https://github.com/K1rakishou/Kuroba-Experimental-beta'
+        token: ${{ secrets.PAT }}
+    - name: Download APK
+      uses: actions/download-artifact@v2
+      with:
+        name: KurobaEx-beta.apk
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT }}
+      with:
+        tag_name: ${{ github.run_id }}
+        release_name: Release ${{ github.run_id }}
+        draft: false
+        prerelease: false
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.PAT }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./KurobaEx-beta.apk
+        asset_name: KurobaEx-beta.apk
+        asset_content_type: application/vnd.android.package-archive

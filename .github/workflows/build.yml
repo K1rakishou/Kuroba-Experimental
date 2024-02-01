@@ -1,0 +1,27 @@
+name: Build and Sign Android APK
+
+on:
+  push:
+    branches: [ develop ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up JDK 11
+      uses: actions/setup-java@v2
+      with:
+        java-version: '11'
+        distribution: 'adopt'
+    - name: Decode Keystore File
+      run: echo ${{ secrets.KEYSTORE }} | base64 -d > kurobaex.jks
+    - name: Build and Sign APK
+      run: |
+        chmod +x ./gradlew
+        ./gradlew assembleBetaRelease -Pandroid.injected.signing.store.file=kurobaex.jks -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
+    - name: Upload Signed APK
+      uses: actions/upload-artifact@v2
+      with:
+        name: KurobaEx-beta.apk
+        path: Kuroba/app/build/outputs/apk/beta/release
