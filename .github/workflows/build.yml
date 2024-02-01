@@ -34,4 +34,4 @@ jobs:
       run: |
         python ${{ github.workspace }}/.github/workflows/create_release.py
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        PAT: ${{ secrets.PAT }}

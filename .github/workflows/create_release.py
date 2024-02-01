@@ -50,7 +50,7 @@ def upload_asset(upload_url, asset_path, headers):
     print("Asset uploaded successfully.")
 
 if __name__ == "__main__":
-    token = os.getenv('GITHUB_TOKEN')
+    token = os.getenv('PAT')
     repo = 'K1rakishou/Kuroba-Experimental-beta'
     # TODO: use actual tag name which is going to be current version + build number
     tag_name = 'v1.0.0'
