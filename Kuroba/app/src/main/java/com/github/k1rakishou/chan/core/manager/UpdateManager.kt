@@ -242,18 +242,11 @@ class UpdateManager(
           is JsonReaderRequest.JsonReaderResponse.Success -> {
             Logger.d(TAG, "ReleaseUpdateApiRequest success")
 
-            val processed = processUpdateApiResponse(
+            processUpdateApiResponse(
               responseRelease = response.result,
               manual = manual,
               isRelease = flavorType == FlavorType.Stable
             )
-
-            if (!processed && manual) {
-              dialogFactory.get().createSimpleInformationDialog(
-                context = context,
-                titleText = getString(R.string.update_none, getApplicationLabel()),
-              )
-            }
           }
           is JsonReaderRequest.JsonReaderResponse.ServerError -> {
             Logger.e(TAG, "Error while trying to get new release apk, status code: ${response.statusCode}")
@@ -276,12 +269,12 @@ class UpdateManager(
     responseRelease: ReleaseUpdateApiResponse,
     manual: Boolean,
     isRelease: Boolean
-  ): Boolean {
+  ) {
     BackgroundUtils.ensureMainThread()
 
     if (!BackgroundUtils.isInForeground()) {
       Logger.d(TAG, "processUpdateApiResponse() not in foreground")
-      return false
+      return
     }
 
     val actuallyHasUpdate = when {
@@ -313,7 +306,15 @@ class UpdateManager(
 
     if (!actuallyHasUpdate) {
       cancelApkUpdateNotification()
-      return false
+
+      if (manual) {
+        dialogFactory.get().createSimpleInformationDialog(
+          context = context,
+          titleText = getString(R.string.update_none, getApplicationLabel()),
+        )
+      }
+
+      return
     }
 
     // Do not spam dialogs if this is not the manual update check, use the notifications
@@ -360,8 +361,6 @@ class UpdateManager(
       // build this method will be called in both cases so we do the check in this method)
       notifyNewApkUpdate()
     }
-
-    return true
   }
 
   private fun onBetaAlreadyUpdated(apkUpdateInfo: ApkUpdateInfo) {
