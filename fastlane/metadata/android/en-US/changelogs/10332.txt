@@ -1,0 +1,11 @@
+v1.3.32
+Full version:
+- Make posting on 4chan work as before. The POST request for making a thread/post on 4chan is now created manually (instead of solely relying OkHttp's Request.Builder()) which allows for a better control of how headers/request parts are structured which, in turn, allows the app to better mimic existing browsers and thus bypass some nasty 4chan checks that cause your posts to disappear into the void whenever you  make a mistake in captcha answer.
+- Add support for new cooldowns that are shown when creating a thread or making a post (Captcha tickets).
+- Make 4chan post acknowledgement check more durable. (But you should probably disable it now because the posting should be fixed).
+- Do not check for post acknowledgement if passcode is used.
+- Fix crashes when trying to make a post on 2ch.hk.
+- Initial Github infrastructure for making beta releases on each new commit. Yes, the beta releases will now be distributed on each new commit pushed into the main repository. Why would I do that? Because it will allow me to fix stuff way faster and for you to get the fixes faster (but only on beta branch). The main app will be updated as usual.
+
+v1.3.31
+- Implement a mechanism to check if a post was actually acknowledged by 4chan so that the user can try to post again, in case when it doesn't, without losing everything that he has typed. People say this happens now when you make a mistake in captcha (a very nice, reliable and user-friendly way to keep bots out, indeed). The setting is enabled by default. You can find it in the menu that can be accessed by long tapping the send reply button.
