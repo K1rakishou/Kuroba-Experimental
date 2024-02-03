@@ -1302,6 +1302,15 @@ fun Request.Builder.appendCookieHeader(newCookie: String): Request.Builder {
     .header(COOKIE_HEADER_NAME, "${oldCookies}; ${newCookie}")
 }
 
+fun Request.Builder.addHeaderIfNotExists(name: String, value: String): Request.Builder {
+  val request = build()
+  if (request.header(name) != null) {
+    return this
+  }
+
+  return this.addHeader(name, value)
+}
+
 fun String.indexOfFirstOrNull(
   startIndex: Int = 0,
   endIndex: Int = lastIndex,

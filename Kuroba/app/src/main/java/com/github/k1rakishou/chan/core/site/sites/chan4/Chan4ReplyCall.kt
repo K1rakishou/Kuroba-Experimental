@@ -181,6 +181,8 @@ class Chan4ReplyCall(
     requestBuilder.addHeader("Sec-Fetch-Mode", "navigate")
     requestBuilder.addHeader("Sec-Fetch-Site", "same-site")
     requestBuilder.addHeader("Sec-Fetch-User", "?1")
+
+    site.requestModifier().modifyHttpCall(this, requestBuilder)
   }
 
   override fun process(response: Response, result: String) {

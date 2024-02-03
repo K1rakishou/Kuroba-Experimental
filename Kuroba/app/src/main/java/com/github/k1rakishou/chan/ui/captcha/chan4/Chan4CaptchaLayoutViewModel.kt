@@ -364,7 +364,18 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       throw EmptyBodyResponseException()
     }
 
-    val captchaInfoRaw = captchaInfoRawAdapter.fromJson(captchaInfoRawString)
+    val captchaInfoRaw = try {
+      captchaInfoRawAdapter.fromJson(captchaInfoRawString)
+    } catch (error: Throwable) {
+      captchaInfoRawString
+        .windowed(1024)
+        .forEach { captchaChunk ->
+          Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) captchaChunk: ${captchaChunk}")
+        }
+
+      throw error
+    }
+
     if (captchaInfoRaw == null) {
       throw IOException("Failed to convert json to CaptchaInfoRaw")
     }

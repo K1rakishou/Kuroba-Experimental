@@ -617,7 +617,7 @@ open class Chan4 : SiteBase() {
       if (httpCall is Chan4ReplyCall && httpCall.replyMode == ReplyMode.ReplyModeUsePasscode) {
         if (site.actions().isLoggedIn()) {
           val passTokenSetting = site.passToken
-          requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+          requestBuilder.appendCookieHeader("pass_id=" + passTokenSetting.get())
         }
       }
 
@@ -679,7 +679,7 @@ open class Chan4 : SiteBase() {
 
       if (site.actions().isLoggedIn()) {
         val passTokenSetting = site.passToken
-        requestBuilder.addHeader("Cookie", "pass_id=" + passTokenSetting.get())
+        requestBuilder.appendCookieHeader("pass_id=" + passTokenSetting.get())
       }
 
       addChan4CookieHeader(site, requestBuilder)

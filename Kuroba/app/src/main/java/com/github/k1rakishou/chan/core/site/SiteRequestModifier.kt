@@ -21,6 +21,7 @@ import androidx.annotation.CallSuper
 import com.github.k1rakishou.chan.core.base.okhttp.CloudFlareHandlerInterceptor
 import com.github.k1rakishou.chan.core.site.http.HttpCall
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.addHeaderIfNotExists
 import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.isNotNullNorEmpty
@@ -36,9 +37,8 @@ abstract class SiteRequestModifier<T : Site>(
 
   @CallSuper
   open fun modifyHttpCall(httpCall: HttpCall, requestBuilder: Request.Builder) {
-    requestBuilder
-      .addHeader(userAgentHeaderKey, appConstants.userAgent)
-      .addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
+
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -49,8 +49,7 @@ abstract class SiteRequestModifier<T : Site>(
 
   @CallSuper
   open fun modifyThumbnailGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -60,8 +59,7 @@ abstract class SiteRequestModifier<T : Site>(
     chanDescriptor: ChanDescriptor,
     requestBuilder: Request.Builder
   ) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -70,7 +68,7 @@ abstract class SiteRequestModifier<T : Site>(
     site: T,
     requestBuilder: Request.Builder
   ) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
+    requestBuilder.addHeaderIfNotExists(userAgentHeaderKey, appConstants.userAgent)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -79,8 +77,7 @@ abstract class SiteRequestModifier<T : Site>(
     site: T,
     requestBuilder: Request.Builder
   ) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -89,8 +86,7 @@ abstract class SiteRequestModifier<T : Site>(
     site: T,
     requestBuilder: Request.Builder
   ) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -105,50 +101,43 @@ abstract class SiteRequestModifier<T : Site>(
 
   @CallSuper
   open fun modifyArchiveGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifySearchGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyCaptchaGetRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyPostReportRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyLoginRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyGetPasscodeInfoRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
   @CallSuper
   open fun modifyPagesRequest(site: T, requestBuilder: Request.Builder) {
-    requestBuilder.addHeader(userAgentHeaderKey, appConstants.userAgent)
-    requestBuilder.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+    requestBuilder.addDefaultHeaders(appConstants)
     addCloudFlareCookie(requestBuilder)
   }
 
@@ -174,8 +163,8 @@ abstract class SiteRequestModifier<T : Site>(
     val gzipHeaderValue = "gzip"
 
     fun Request.Builder.addDefaultHeaders(appConstants: AppConstants): Request.Builder {
-      this.addHeader(userAgentHeaderKey, appConstants.userAgent)
-      this.addHeader(acceptEncodingHeaderKey, gzipHeaderValue)
+      this.addHeaderIfNotExists(userAgentHeaderKey, appConstants.userAgent)
+      this.addHeaderIfNotExists(acceptEncodingHeaderKey, gzipHeaderValue)
 
       return this
     }

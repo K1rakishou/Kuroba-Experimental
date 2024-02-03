@@ -7,11 +7,11 @@ import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.utils.containsPattern
 import com.github.k1rakishou.common.FirewallDetectedException
 import com.github.k1rakishou.common.FirewallType
+import com.github.k1rakishou.common.appendCookieHeader
 import com.github.k1rakishou.common.domain
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.prefs.MapSetting
-import com.github.k1rakishou.prefs.StringSetting
 import okhttp3.Interceptor
 import okhttp3.Request
 import okhttp3.Response
@@ -211,7 +211,7 @@ class CloudFlareHandlerInterceptor(
     }
 
     return prevRequest.newBuilder()
-      .addHeader("Cookie", "$CF_CLEARANCE=$cookieValue")
+      .appendCookieHeader("$CF_CLEARANCE=$cookieValue")
       .build()
   }
 
