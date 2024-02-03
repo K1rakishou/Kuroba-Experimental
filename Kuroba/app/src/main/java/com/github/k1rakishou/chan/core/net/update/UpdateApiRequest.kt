@@ -21,6 +21,7 @@ import androidx.core.text.toSpanned
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.k1rakishou.chan.utils.ReleaseHelpers
 import com.github.k1rakishou.common.jsonArray
 import com.github.k1rakishou.common.jsonObject
 import com.google.gson.stream.JsonReader
@@ -28,8 +29,6 @@ import dagger.Lazy
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.Request
-import java.util.regex.Matcher
-import java.util.regex.Pattern
 
 class UpdateApiRequest(
   request: Request,
@@ -52,7 +51,7 @@ class UpdateApiRequest(
       }
     }
     
-    if (response.versionCode == 0 || response.apkURL == null || response.body == null) {
+    if (response.versionCode == 0L || response.apkURL == null || response.body == null) {
       throw UpdateRequestError("Update API response is incomplete! " +
         "versionCode=${response.versionCode}, " +
         "apkURL=${response.apkURL}, " +
@@ -91,34 +90,30 @@ class UpdateApiRequest(
     }
   }
   
-  @Suppress("NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
   private fun readVersionCode(responseRelease: ReleaseUpdateApiResponse, reader: JsonReader) {
     try {
-      responseRelease.versionCodeString = reader.nextString()
-      val versionPattern = if (isRelease) {
-        RELEASE_VERSION_CODE_PATTERN
+      if (isRelease) {
+        responseRelease.versionCodeString = reader.nextString()
+        responseRelease.versionCode = ReleaseHelpers.calculateReleaseVersionCode(responseRelease.versionCodeString)
       } else {
-        BETA_VERSION_CODE_PATTERN
-      }
+        responseRelease.versionCodeString = reader.nextString()
 
-      val versionMatcher = versionPattern.matcher(responseRelease.versionCodeString)
-      
-      if (versionMatcher.find()) {
-        responseRelease.versionCode = calculateVersionCode(versionMatcher)
+        val betaVersionCode = ReleaseHelpers.calculateBetaVersionCode(responseRelease.versionCodeString)
+        responseRelease.versionCode = betaVersionCode.versionCode
+        responseRelease.buildNumber = betaVersionCode.buildNumber
       }
     } catch (e: Exception) {
-      throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch)!")
+      if (isRelease) {
+        throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch)!")
+      } else {
+        throw UpdateRequestError("Tag name wasn't of the form v(major).(minor).(patch).(build)!")
+      }
     }
   }
   
-  @Suppress("RECEIVER_NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS")
-  private fun calculateVersionCode(versionMatcher: Matcher) =
-    versionMatcher.group(3).toInt() +
-      versionMatcher.group(2).toInt() * 100 +
-      versionMatcher.group(1).toInt() * 10000
-
   class ReleaseUpdateApiResponse(
-    var versionCode: Int = 0,
+    var versionCode: Long = 0L,
+    var buildNumber: Long = 0L,
     var versionCodeString: String? = null,
     var updateTitle: String = "",
     var apkURL: HttpUrl? = null,
@@ -129,12 +124,5 @@ class UpdateApiRequest(
       return "ReleaseUpdateApiResponse{versionCode=$versionCode, versionCodeString=${versionCodeString}, " +
         "updateTitle={$updateTitle}, apkURL=${apkURL}, body=${body?.take(60)}"
     }
-  }
-
-  companion object {
-    private const val TAG = "ReleaseUpdateApiRequest"
-
-    private val RELEASE_VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-release$")
-    private val BETA_VERSION_CODE_PATTERN = Pattern.compile("v(\\d+?)\\.(\\d{1,2})\\.(\\d{1,2})-beta$")
   }
 }

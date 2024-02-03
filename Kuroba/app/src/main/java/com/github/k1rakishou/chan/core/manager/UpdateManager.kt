@@ -47,6 +47,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isBetaBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isDevBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
+import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isStableBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -58,10 +59,13 @@ import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.fsaf.callback.FileCreateCallback
+import com.github.k1rakishou.persist_state.ApkUpdateInfo
+import com.github.k1rakishou.persist_state.ApkUpdateInfoJson
 import com.github.k1rakishou.persist_state.PersistableChanState
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineName
@@ -118,26 +122,34 @@ class UpdateManager(
     Logger.d(TAG, "autoUpdateCheck()")
 
     if (isDevBuild()) {
-      Logger.d(TAG, "Updater is disabled for dev builds!")
+      Logger.d(TAG, "autoUpdateCheck() Updater is disabled for dev builds!")
       return
     }
 
     if (isFdroidBuild()) {
-      Logger.d(TAG, "Updater is disabled for fdroid builds!")
+      Logger.d(TAG, "autoUpdateCheck() Updater is disabled for fdroid builds!")
       return
     }
 
-    if (
-      PersistableChanState.previousVersion.get() < BuildConfig.VERSION_CODE
-      && PersistableChanState.previousVersion.get() != 0
-    ) {
-      onReleaseAlreadyUpdated()
+    val apkUpdateInfo = getAndResetApkUpdateInfo()
+
+    Logger.d(TAG, "autoUpdateCheck() " +
+            "isStableBuild(): ${isStableBuild()}, " +
+            "isBetaBuild(): ${isBetaBuild()}, " +
+            "apkUpdateInfo: ${apkUpdateInfo}")
+
+    if (isStableBuild() && apkUpdateInfo != null) {
+      Logger.d(TAG, "autoUpdateCheck() isOnLatestRelease()")
+      onReleaseAlreadyUpdated(apkUpdateInfo)
+
       // Don't process the updater because a dialog is now already showing.
       return
     }
 
-    if (PersistableChanState.previousDevHash.get() != BuildConfig.COMMIT_HASH) {
-      onDevAlreadyUpdated()
+    if (isBetaBuild() && apkUpdateInfo != null) {
+      Logger.d(TAG, "autoUpdateCheck() isOnLatestBeta()")
+      onBetaAlreadyUpdated(apkUpdateInfo)
+
       return
     }
 
@@ -160,7 +172,6 @@ class UpdateManager(
     launch { runUpdateApi(true) }
   }
 
-  @Suppress("ConstantConditionIf", "WHEN_ENUM_CAN_BE_NULL_IN_JAVA")
   private suspend fun runUpdateApi(manual: Boolean) {
     BackgroundUtils.ensureBackgroundThread()
     Logger.d(TAG, "runUpdateApi() manual=$manual")
@@ -231,7 +242,13 @@ class UpdateManager(
           is JsonReaderRequest.JsonReaderResponse.Success -> {
             Logger.d(TAG, "ReleaseUpdateApiRequest success")
 
-            if (!processUpdateApiResponse(response.result, manual) && manual) {
+            val processed = processUpdateApiResponse(
+              responseRelease = response.result,
+              manual = manual,
+              isRelease = flavorType == FlavorType.Stable
+            )
+
+            if (!processed && manual) {
               dialogFactory.get().createSimpleInformationDialog(
                 context = context,
                 titleText = getString(R.string.update_none, getApplicationLabel()),
@@ -257,7 +274,8 @@ class UpdateManager(
 
   private fun processUpdateApiResponse(
     responseRelease: ReleaseUpdateApiResponse,
-    manual: Boolean
+    manual: Boolean,
+    isRelease: Boolean
   ): Boolean {
     BackgroundUtils.ensureMainThread()
 
@@ -266,12 +284,32 @@ class UpdateManager(
       return false
     }
 
-    val actuallyHasUpdate = responseRelease.versionCode > BuildConfig.VERSION_CODE
-      || !ChanSettings.checkUpdateApkVersionCode.get()
+    val actuallyHasUpdate = when {
+      !ChanSettings.checkUpdateApkVersionCode.get() -> {
+        Logger.d(TAG, "processUpdateApiResponse() checkUpdateApkVersionCode is false")
+        true
+      }
+      isRelease -> {
+        Logger.d(TAG, "processUpdateApiResponse() responseRelease.versionCode > BuildConfig.VERSION_CODE")
+        responseRelease.versionCode > BuildConfig.VERSION_CODE
+      }
+      !isRelease -> {
+        Logger.d(TAG, "processUpdateApiResponse() responseRelease.buildNumber > PersistableChanState.previousBuildNumber")
+        responseRelease.buildNumber > PersistableChanState.previousBuildNumber.get()
+      }
+      else -> false
+    }
 
-    Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}, manual=${manual}, " +
-      "actuallyHasUpdate=$actuallyHasUpdate, releaseVersionCode=${responseRelease.versionCode}, " +
-      "appVersionCode=${BuildConfig.VERSION_CODE}")
+    Logger.d(TAG,
+      "processUpdateApiResponse() " +
+              "manual: ${manual}, " +
+              "actuallyHasUpdate: $actuallyHasUpdate, " +
+              "releaseVersionCode: ${responseRelease.versionCode}, " +
+              "releaseBuildNumber: ${responseRelease.buildNumber}, " +
+              "appVersionCode=${BuildConfig.VERSION_CODE}"
+    )
+
+    Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}")
 
     if (!actuallyHasUpdate) {
       cancelApkUpdateNotification()
@@ -298,11 +336,23 @@ class UpdateManager(
         descriptionText = updateMessage,
         negativeButtonText = getString(R.string.update_later),
         positiveButtonText = getString(R.string.update_install),
-        onPositiveButtonClickListener = { updateInstallRequested(responseRelease) }
-      )
-    }
+        onPositiveButtonClickListener = {
+          updateInstallRequested(
+            responseRelease = responseRelease,
+            onUpdateClicked = {
+              val apkUpdateInfoJson = ApkUpdateInfoJson(
+                versionCode = responseRelease.versionCode,
+                buildNumber = responseRelease.buildNumber,
+                versionName = responseRelease.versionCodeString
+              )
 
-    if (actuallyHasUpdate) {
+              Logger.d(TAG, "processUpdateApiResponse() onUpdateClicked() updating apkUpdateInfoJson with ${apkUpdateInfoJson}")
+              PersistableChanState.apkUpdateInfoJson.setSync(apkUpdateInfoJson)
+            }
+          )
+        }
+      )
+    } else {
       // There is an update, show the notification.
       //
       // (In case of the dev build we check whether the apk hashes differ or not beforehand,
@@ -314,25 +364,32 @@ class UpdateManager(
     return true
   }
 
-  private fun onDevAlreadyUpdated() {
+  private fun onBetaAlreadyUpdated(apkUpdateInfo: ApkUpdateInfo) {
     BackgroundUtils.ensureMainThread()
 
-    // Show toast because dev updates may happen every day (to avoid alert dialog spam)
-    showToast(
-      context,
-      getApplicationLabel().toString() + " was updated to the latest commit."
-    )
+    val toastMessage = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
+      "${getApplicationLabel()} was updated to the latest version: ${apkUpdateInfo.versionName}."
+    } else {
+      "${getApplicationLabel()} was updated to the latest version."
+    }
+
+    showToast(context, toastMessage)
 
     PersistableChanState.previousDevHash.setSync(BuildConfig.COMMIT_HASH)
+    PersistableChanState.previousBuildNumber.setSync(apkUpdateInfo.buildNumber)
     cancelApkUpdateNotification()
   }
 
-  private fun onReleaseAlreadyUpdated() {
+  private fun onReleaseAlreadyUpdated(apkUpdateInfo: ApkUpdateInfo) {
     BackgroundUtils.ensureMainThread()
 
-    // Show dialog because release updates are infrequent so it's fine
-    val text = ("<h3>" + getApplicationLabel() + " was updated to " + BuildConfig.VERSION_NAME + "</h3>")
-      .parseAsHtml()
+    val text = if (apkUpdateInfo.versionName.isNotNullNorBlank()) {
+      "<h3> ${getApplicationLabel()} was updated to ${apkUpdateInfo.versionName}</h3>"
+        .parseAsHtml()
+    } else {
+      "<h3> ${getApplicationLabel()} was updated to the latest version</h3>"
+        .parseAsHtml()
+    }
 
     dialogFactory.get().createSimpleInformationDialog(
       context = context,
@@ -382,7 +439,10 @@ class UpdateManager(
    *
    * @param responseRelease that contains the APK file URL
    */
-  private fun doUpdate(responseRelease: ReleaseUpdateApiResponse) {
+  private fun doUpdate(
+    responseRelease: ReleaseUpdateApiResponse,
+    onUpdateClicked: () -> Unit
+  ) {
     BackgroundUtils.ensureMainThread()
 
     updateDownloadDialog = ProgressDialog(context).apply {
@@ -437,7 +497,7 @@ class UpdateManager(
             runOnMainThread({
               // Install from the filecache rather than downloads, as the
               // Environment.DIRECTORY_DOWNLOADS may not be "Download"
-              installApk(file, responseRelease)
+              installApk(file, responseRelease, onUpdateClicked)
             }, TimeUnit.SECONDS.toMillis(1))
           }
         }
@@ -573,7 +633,7 @@ class UpdateManager(
     showToast(context, R.string.update_manager_apk_copied)
   }
 
-  private fun installApk(apkFile: File, responseRelease: ReleaseUpdateApiResponse) {
+  private fun installApk(apkFile: File, responseRelease: ReleaseUpdateApiResponse, onUpdateClicked: () -> Unit) {
     BackgroundUtils.ensureMainThread()
 
     if (!BackgroundUtils.isInForeground()) {
@@ -589,10 +649,12 @@ class UpdateManager(
       descriptionText = getString(R.string.update_retry, getApplicationLabel()),
       negativeButtonText = getString(R.string.cancel),
       positiveButtonText = getString(R.string.update_retry_button),
-      onPositiveButtonClickListener = { installApk(apkFile, responseRelease) }
+      onPositiveButtonClickListener = { installApk(apkFile, responseRelease, onUpdateClicked) }
     )
 
     try {
+      onUpdateClicked()
+
       val intent = if (AndroidUtils.isAndroidN()) {
         Logger.d(TAG, "installApk() AndroidN and above, apkFile=${apkFile.absolutePath}")
 
@@ -645,23 +707,26 @@ class UpdateManager(
     }
   }
 
-  private fun updateInstallRequested(responseRelease: ReleaseUpdateApiResponse) {
+  private fun updateInstallRequested(
+    responseRelease: ReleaseUpdateApiResponse,
+    onUpdateClicked: () -> Unit
+  ) {
     if (AndroidUtils.isAndroid13()) {
       // Can't request WRITE_EXTERNAL_STORAGE on API 33+
-      doUpdate(responseRelease)
+      doUpdate(responseRelease, onUpdateClicked)
       return
     }
 
     val runtimePermissionsHelper = (context as ControllerHostActivity).runtimePermissionsHelper
 
     if (runtimePermissionsHelper.hasPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-      doUpdate(responseRelease)
+      doUpdate(responseRelease, onUpdateClicked)
       return
     }
 
     runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) { granted ->
       if (granted) {
-        doUpdate(responseRelease)
+        doUpdate(responseRelease, onUpdateClicked)
         return@requestPermission
       }
 
@@ -670,9 +735,26 @@ class UpdateManager(
         getString(R.string.update_storage_permission_required_title),
         getString(R.string.update_storage_permission_required)
       ) {
-        updateInstallRequested(responseRelease)
+        updateInstallRequested(responseRelease, onUpdateClicked)
       }
     }
+  }
+
+  private fun getAndResetApkUpdateInfo(): ApkUpdateInfo? {
+    val apkUpdateInfo = PersistableChanState.apkUpdateInfoJson.get().let { apkUpdateInfoJson ->
+      val versionCode = apkUpdateInfoJson.versionCode
+        ?.takeIf { it >= 0L }
+        ?: return@let null
+      val buildNumber = apkUpdateInfoJson.buildNumber
+        ?.takeIf { it >= 0L }
+        ?: return@let null
+      val versionName = apkUpdateInfoJson.versionName
+
+      return@let ApkUpdateInfo(versionCode, buildNumber, versionName)
+    }
+
+    PersistableChanState.apkUpdateInfoJson.setSync(ApkUpdateInfoJson())
+    return apkUpdateInfo
   }
 
   companion object {

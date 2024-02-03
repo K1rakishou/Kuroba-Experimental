@@ -299,6 +299,7 @@ dependencies {
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
+    testImplementation 'junit:junit:4.12'
     ksp "androidx.room:room-compiler:${versions.room_version}"
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"

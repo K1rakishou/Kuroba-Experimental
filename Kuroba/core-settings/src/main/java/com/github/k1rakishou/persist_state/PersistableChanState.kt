@@ -38,6 +38,10 @@ object PersistableChanState {
   @JvmStatic
   lateinit var previousDevHash: StringSetting
   @JvmStatic
+  lateinit var previousBuildNumber: LongSetting
+  @JvmStatic
+  lateinit var apkUpdateInfoJson: GsonJsonSetting<ApkUpdateInfoJson>
+  @JvmStatic
   lateinit var viewThreadBookmarksGridMode: BooleanSetting
   @JvmStatic
   lateinit var albumLayoutGridMode: BooleanSetting
@@ -91,6 +95,7 @@ object PersistableChanState {
       hasNewApkUpdate = BooleanSetting(provider, "has_new_apk_update", false)
       previousVersion = IntegerSetting(provider, "previous_version", persistableChanStateInfo.versionCode)
       updateCheckTime = LongSetting(provider, "update_check_time", 0L)
+      previousBuildNumber = LongSetting(provider, "previous_build_number", -1L)
       previousDevHash = StringSetting(provider, "previous_dev_hash", persistableChanStateInfo.commitHash)
       viewThreadBookmarksGridMode = BooleanSetting(provider, "view_thread_bookmarks_grid_mode", true)
       albumLayoutGridMode = BooleanSetting(provider, "album_layout_grid_mode", false)
@@ -125,6 +130,14 @@ object PersistableChanState {
         provider,
         "image_saver_options",
         ImageSaverV2Options()
+      )
+
+      apkUpdateInfoJson = GsonJsonSetting(
+        gson,
+        ApkUpdateInfoJson::class.java,
+        provider,
+        "apk_update_info",
+        ApkUpdateInfoJson()
       )
 
       reorderableBottomNavViewButtons = GsonJsonSetting(
