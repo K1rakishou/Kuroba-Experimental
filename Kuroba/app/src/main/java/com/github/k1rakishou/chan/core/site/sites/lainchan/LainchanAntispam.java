@@ -77,7 +77,6 @@ public class LainchanAntispam {
                 "raw",
                 "embed",
                 "g-recaptcha-response",
-                "spoiler",
                 "page",
                 "file_url",
                 "file_url1",
@@ -110,7 +109,8 @@ public class LainchanAntispam {
         binFields.addAll(Arrays.asList(
                 "file1",
                 "file2",
-                "file3"
+                "file3",
+                "spoiler"
         ));
     }
 

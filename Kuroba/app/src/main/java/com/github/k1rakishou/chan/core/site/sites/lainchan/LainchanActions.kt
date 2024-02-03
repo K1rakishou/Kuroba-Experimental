@@ -40,10 +40,10 @@ import java.io.IOException
 import java.util.regex.Pattern
 
 open class LainchanActions(
-  commonSite: CommonSite,
-  private val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
-  private val siteManager: SiteManager,
-  protected val replyManager: Lazy<ReplyManager>
+        commonSite: CommonSite,
+        protected val proxiedOkHttpClient: Lazy<RealProxiedOkHttpClient>,
+        private val siteManager: SiteManager,
+        protected val replyManager: Lazy<ReplyManager>
 ) : CommonActions(commonSite) {
 
   override fun setupPost(replyChanDescriptor: ChanDescriptor, call: MultipartHttpCall): ModularResult<Unit> {
