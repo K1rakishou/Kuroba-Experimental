@@ -52,10 +52,11 @@ class UpdateApiRequest(
     }
     
     if (response.versionCode == 0L || response.apkURL == null || response.body == null) {
-      throw UpdateRequestError("Update API response is incomplete! " +
-        "versionCode=${response.versionCode}, " +
-        "apkURL=${response.apkURL}, " +
-        "hasBody=${response.body != null}")
+      throw UpdateRequestError("Update API response is incomplete!\n" +
+        "versionCode: ${response.versionCode}\n" +
+        "apkURL: ${response.apkURL}\n" +
+        "hasBody: ${response.body != null}"
+      )
     }
     
     return response

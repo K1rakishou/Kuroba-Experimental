@@ -6,7 +6,10 @@ import android.content.Context
 import android.content.DialogInterface
 import android.graphics.drawable.ColorDrawable
 import android.text.InputType
+import android.text.SpannableStringBuilder
+import android.text.Spanned
 import android.text.method.LinkMovementMethod
+import android.text.style.URLSpan
 import android.view.View
 import android.view.ViewGroup
 import android.view.inputmethod.EditorInfo
@@ -16,6 +19,7 @@ import android.widget.TextView
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
+import com.github.k1rakishou.chan.core.site.parser.CommentParserHelper
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostController
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
@@ -24,6 +28,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.common.setSpanSafe
 import com.github.k1rakishou.core_themes.ThemeEngine
 import dagger.Lazy
 
@@ -71,7 +76,7 @@ class DialogFactory(
         .setCancelable(cancelable)
 
       if (descriptionText != null) {
-        builder.setMessage(descriptionText)
+        setDialogMessage(descriptionText, builder)
       }
 
       builder
@@ -320,6 +325,42 @@ class DialogFactory(
     return alertDialogHandle
   }
 
+  fun applyColorsToDialog(dialog: AlertDialog): AlertDialog {
+    val view = dialog.window
+      ?: return dialog
+
+    view.setBackgroundDrawable(ColorDrawable(themeEngine.chanTheme.backColor))
+
+    dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.getButton(DialogInterface.BUTTON_NEUTRAL)?.let { button ->
+      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
+      button.invalidate()
+    }
+
+    dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    dialog.findViewById<TextView>(android.R.id.message)?.let { title ->
+      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
+    }
+
+    if (dialog is ProgressDialog) {
+      dialog.changeProgressColor(themeEngine.chanTheme)
+    }
+
+    return dialog
+  }
+
   private fun showKurobaAlertDialogHostController(
     context: Context,
     cancelable: Boolean,
@@ -390,40 +431,39 @@ class DialogFactory(
     return this
   }
 
-  fun applyColorsToDialog(dialog: AlertDialog): AlertDialog {
-    val view = dialog.window
-      ?: return dialog
+  private fun setDialogMessage(
+    descriptionText: CharSequence,
+    builder: KurobaAlertDialog.Builder
+  ) {
+    val descriptionTextSpannable = SpannableStringBuilder(descriptionText)
+    var foundAnyLinks = false
 
-    view.setBackgroundDrawable(ColorDrawable(themeEngine.chanTheme.backColor))
+    CommentParserHelper.LINK_EXTRACTOR.extractLinks(descriptionText)
+      .forEach { linkSpan ->
+        val start = linkSpan.beginIndex
+        val end = linkSpan.endIndex
 
-    dialog.getButton(DialogInterface.BUTTON_POSITIVE)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
+        val url = try {
+          descriptionText.subSequence(start, end)
+        } catch (error: Throwable) {
+          return@forEach
+        }
+
+        descriptionTextSpannable.setSpanSafe(
+          span = URLSpan(url.toString()),
+          start = start,
+          end = end,
+          flags = Spanned.SPAN_EXCLUSIVE_EXCLUSIVE
+        )
+
+        foundAnyLinks = true
+      }
+
+    if (foundAnyLinks) {
+      builder.setMessage(descriptionTextSpannable)
+    } else {
+      builder.setMessage(descriptionText)
     }
-
-    dialog.getButton(DialogInterface.BUTTON_NEGATIVE)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
-    }
-
-    dialog.getButton(DialogInterface.BUTTON_NEUTRAL)?.let { button ->
-      button.setTextColor(themeEngine.chanTheme.textColorPrimary)
-      button.invalidate()
-    }
-
-    dialog.findViewById<TextView>(androidx.appcompat.R.id.alertTitle)?.let { title ->
-      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    }
-
-    dialog.findViewById<TextView>(android.R.id.message)?.let { title ->
-      title.setTextColor(themeEngine.chanTheme.textColorPrimary)
-    }
-
-    if (dialog is ProgressDialog) {
-      dialog.changeProgressColor(themeEngine.chanTheme)
-    }
-
-    return dialog
   }
 
   enum class DialogInputType {

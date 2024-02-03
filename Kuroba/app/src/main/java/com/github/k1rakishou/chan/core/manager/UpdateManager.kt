@@ -421,13 +421,23 @@ class UpdateManager(
       "release"
     }
 
+    val manualUpdateUrl = if (getFlavorType() == FlavorType.Beta) {
+      "https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest"
+    } else {
+      "https://github.com/K1rakishou/Kuroba-Experimental/releases/latest"
+    }
+
     Logger.e(TAG, "Failed to process $buildTag API call for updating")
 
     if (manual && BackgroundUtils.isInForeground()) {
       dialogFactory.get().createSimpleInformationDialog(
         context = context,
         titleText = getString(R.string.update_check_failed),
-        descriptionText = getString(R.string.update_install_download_failed_description, error.errorMessageOrClassName())
+        descriptionText = getString(
+          R.string.update_install_download_failed_description,
+          error.errorMessageOrClassName(),
+          manualUpdateUrl
+        )
       )
     }
   }

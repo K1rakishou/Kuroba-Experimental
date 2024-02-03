@@ -111,7 +111,7 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
     <string name="update_install">Install</string>
     <string name="update_install_download_failed">Download failed</string>
     <string name="update_check_failed">Failed to check for updates.</string>
-    <string name="update_install_download_failed_description">Reason: %1$s\n\nIf this error keeps appearing then you will have to update manually.</string>
+    <string name="update_install_download_failed_description">Reason: %1$s.\n\nIf this error keeps appearing then you will have to update manually by using this url:\n%2$s.</string>
     <string name="update_install_download_failed_canceled">Reason: canceled</string>
     <string name="update_retry_title">Retry update</string>
     <string name="update_already_updated">Already updated</string>
