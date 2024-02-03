@@ -2,6 +2,7 @@ import os
 import requests
 import json
 import re
+import subprocess
 
 def create_github_release(token, repo, tag_name, release_name, body, asset_path):
     url = f"https://api.github.com/repos/{repo}/releases"
@@ -60,6 +61,7 @@ def get_latest_release_tag(owner_repo):
 
 def get_new_tag_name(repo):
     tag_name = get_latest_release_tag(repo)
+    print(f"get_new_tag_name() tag_name: {tag_name}")
 
     pattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})(?:\.(\d+))?-beta$'
     
@@ -77,22 +79,75 @@ def get_new_tag_name(repo):
         return new_version
     else:
         return ""
+    
+def get_commits_since(commit_hash, repo_path=None):
+    if repo_path:
+        os.chdir(repo_path)
+    
+    cmd = ["git", "log", f"{commit_hash}..HEAD", "--pretty=format:%s", "--date=local"]
+    all_commits = ""
+    
+    try:
+        output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
+        
+        commits = output.strip().split('\n')
+        for commit in commits:
+            if commit.startswith('Merge'):
+                continue
+
+            all_commits += f"- {commit}\n"
+
+        return all_commits
+    except subprocess.CalledProcessError as e:
+        print(f"Failed to get commits: {e.output}")
+        return ""
+
+def get_latest_release_commit_hash(repo, access_token=None):
+    releases_url = f"https://api.github.com/repos/{repo}/releases/latest"
+    release_response = requests.get(releases_url)
+
+    if release_response.status_code == 200:
+        release_data = release_response.json()
+        tag_name = release_data['tag_name']
+
+        tags_url = f"https://api.github.com/repos/{repo}/git/refs/tags/{tag_name}"
+        tag_response = requests.get(tags_url)
+
+        if tag_response.status_code == 200:
+            tag_data = tag_response.json()
+            commit_hash = tag_data['object']['sha']
+            return commit_hash
+
+    return ""
 
 if __name__ == "__main__":
-    token = os.getenv('PAT')
-    repo = 'K1rakishou/Kuroba-Experimental-beta'
-
-    tag_name = get_new_tag_name(repo)
+    tag_name = get_new_tag_name('K1rakishou/Kuroba-Experimental-beta')
     if (len(tag_name) == 0):
         print("Failed to get the release tag.")
         exit(-1)
 
+    latest_release_commit_hash = get_latest_release_commit_hash('K1rakishou/Kuroba-Experimental')
+    if (len(latest_release_commit_hash) == 0):
+         print("Failed to get latest release commit hash.")
+         exit(-1)
+
+    commits = get_commits_since(latest_release_commit_hash)
+    if (len(commits) == 0):
+        print("Failed to get any commits.")
+        exit(-1)
+
     print(f'tag_name: {tag_name}')
+    print(f'commits:\n{commits}')
 
+    repo = 'K1rakishou/Kuroba-Experimental-beta'
     release_name = f'KurobaEx-beta release {tag_name}'
-    body = 'New release available, see the last commits for a changelog'
-    asset_path = 'D:/Projects/Kuroba-Experimental/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+    body = f'New release available it includes the following commits:\n{commits}'
 
+    # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+#     asset_path = 'D:/Projects/Kuroba-Experimental/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+
+    token = os.getenv('PAT')
     if (len(token) == 0):
         print("Token is empty.")
         exit(-1)

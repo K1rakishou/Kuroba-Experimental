@@ -412,7 +412,6 @@ class UpdateManager(
     settingsNotificationManager.cancel(SettingNotificationType.ApkUpdate)
   }
 
-  @Suppress("ConstantConditionIf")
   private fun failedUpdate(manual: Boolean, error: Throwable) {
     BackgroundUtils.ensureMainThread()
     Logger.e(TAG, "failedUpdate() manual=$manual", error)
