@@ -204,12 +204,12 @@ abstract class ChanPostDao {
             INNER JOIN ${ChanPostEntity.TABLE_NAME} 
                 ON ${ChanPostIdEntity.POST_ID_COLUMN_NAME} = ${ChanPostEntity.CHAN_POST_ID_COLUMN_NAME}
             WHERE 
-                ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} IN (:ownerThreadIds)
+                ${ChanPostIdEntity.OWNER_THREAD_ID_COLUMN_NAME} = :ownerThreadId
             AND 
                 ${ChanPostEntity.IS_OP_COLUMN_NAME} = ${KurobaDatabase.SQLITE_FALSE}
         )
     """)
-  abstract suspend fun deletePostsByThreadIds(ownerThreadIds: Set<Long>): Int
+  abstract suspend fun deletePostsByThreadId(ownerThreadId: Long): Int
 
   @Query("SELECT *FROM ${ChanPostIdEntity.TABLE_NAME}")
   abstract suspend fun testGetAll(): List<ChanPostFull>

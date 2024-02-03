@@ -1,5 +1,6 @@
 package com.github.k1rakishou.model.source.local
 
+import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.flatMapIndexed
 import com.github.k1rakishou.common.mutableMapWithCap
 import com.github.k1rakishou.core_logger.Logger
@@ -796,7 +797,15 @@ class ChanPostLocalSource(
           .sumBy { chanThreadsWithPosts -> chanThreadsWithPosts.postsCount }
 
         Logger.d(TAG, "deleteOldPosts() deleting a batch of ${threadIdSet.size} threads with ${totalPosts} posts")
-        chanPostDao.deletePostsByThreadIds(threadIdSet)
+        Logger.d(TAG, "deleteOldPosts() threadIdSet: ${threadIdSet}")
+
+        threadIdSet.forEach { threadId ->
+          try {
+            chanPostDao.deletePostsByThreadId(threadId)
+          } catch (error: Throwable) {
+            Logger.e(TAG, "deleteOldPosts() Failed to delete posts for thread: ${threadId}, error: ${error.errorMessageOrClassName()}")
+          }
+        }
       }
 
       offset += threadBatch.size
@@ -861,7 +870,15 @@ class ChanPostLocalSource(
           .sumBy { chanThreadsWithPosts -> chanThreadsWithPosts.postsCount }
 
         Logger.d(TAG, "deleteOldThreads() deleting a batch of ${threadIdSet.size} threads with $totalPosts posts")
-        deletedTotal += chanThreadDao.deleteThreads(threadIdSet)
+
+        threadIdSet.forEach { threadId ->
+          deletedTotal += try {
+            chanThreadDao.deleteThread(threadId)
+          } catch (error: Throwable) {
+            Logger.e(TAG, "deleteOldThreads() Failed to delete thread: ${threadId}, error: ${error.errorMessageOrClassName()}")
+            return@forEach
+          }
+        }
       }
 
       offset += threadBatch.size
