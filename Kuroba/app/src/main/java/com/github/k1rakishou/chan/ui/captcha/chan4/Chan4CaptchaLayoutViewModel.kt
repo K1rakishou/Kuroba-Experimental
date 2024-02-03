@@ -292,6 +292,9 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
         is CaptchaThreadRateLimitError -> {
           _captchaInfoToShow.value = AsyncData.Error(CaptchaThreadRateLimitError(remainingCooldownMs))
         }
+        is CaptchaPostRateLimitError -> {
+          _captchaInfoToShow.value = AsyncData.Error(CaptchaPostRateLimitError(remainingCooldownMs))
+        }
         else -> {
           break
         }
@@ -391,8 +394,19 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
       val cooldownMs = captchaInfoRaw.pcd.times(1000L)
 
-      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs")
-      throw CaptchaThreadRateLimitError(cooldownMs)
+      when (chanDescriptor) {
+        is ChanDescriptor.CompositeCatalogDescriptor -> {
+          error("Cannot use CompositeCatalogDescriptor here")
+        }
+        is ChanDescriptor.CatalogDescriptor -> {
+          Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new thread creation rate limited! cooldownMs=$cooldownMs")
+          throw CaptchaThreadRateLimitError(cooldownMs)
+        }
+        is ChanDescriptor.ThreadDescriptor -> {
+          Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) new post creation rate limited! cooldownMs=$cooldownMs")
+          throw CaptchaPostRateLimitError(cooldownMs)
+        }
+      }
     }
 
     if (captchaInfoRaw.isNoopChallenge()) {
@@ -686,6 +700,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
   class CaptchaThreadRateLimitError(override val cooldownMs: Long) :
     Exception("4chan captcha rate-limit detected!\nPlease wait ${cooldownMs / 1000L} seconds before making a thread."),
+    CaptchaCooldownError
+
+  class CaptchaPostRateLimitError(override val cooldownMs: Long) :
+    Exception("4chan captcha rate-limit detected!\nPlease wait ${cooldownMs / 1000L} seconds before making a post."),
     CaptchaCooldownError
 
   class UnknownCaptchaError(message: String) : java.lang.Exception(message)
