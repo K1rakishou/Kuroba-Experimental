@@ -131,17 +131,18 @@ if __name__ == "__main__":
          print("Failed to get latest release commit hash.")
          exit(-1)
 
-    commits = get_commits_since(latest_release_commit_hash)
-    if (len(commits) == 0):
-        print("Failed to get any commits.")
-        exit(-1)
+    # commits = get_commits_since(latest_release_commit_hash)
+    # if (len(commits) == 0):
+    #     print("Failed to get any commits.")
+    #     exit(-1)
 
     print(f'tag_name: {tag_name}')
-    print(f'commits:\n{commits}')
+    # print(f'commits:\n{commits}')
 
     repo = 'K1rakishou/Kuroba-Experimental-beta'
     release_name = f'KurobaEx-beta release {tag_name}'
-    body = f'New release available it includes the following commits:\n{commits}'
+    # body = f'New release available it includes the following commits:\n{commits}'
+    body = f'New release available'
 
     # TODO: !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
