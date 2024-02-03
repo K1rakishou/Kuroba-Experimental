@@ -1,6 +1,7 @@
 import os
 import requests
 import json
+import re
 
 def create_github_release(token, repo, tag_name, release_name, body, asset_path):
     url = f"https://api.github.com/repos/{repo}/releases"
@@ -49,16 +50,48 @@ def upload_asset(upload_url, asset_path, headers):
 
     print("Asset uploaded successfully.")
 
+def get_latest_release_tag(owner_repo):
+    url = f"https://api.github.com/repos/{owner_repo}/releases/latest"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return response.json()['tag_name']
+    else:
+        return f"Error: {response.status_code}"
+
+def get_new_tag_name(repo):
+    tag_name = get_latest_release_tag(repo)
+
+    pattern = r'v(\d+?)\.(\d{1,2})\.(\d{1,2})(?:\.(\d+))?-beta$'
+    
+    match = re.search(pattern, tag_name)
+    if match:
+        groups = match.groups()
+        last_group = groups[-1]
+        
+        if last_group is not None:
+            incremented = int(last_group) + 1
+        else:
+            incremented = 0
+        
+        new_version = f"v{groups[0]}.{groups[1]}.{groups[2]}.{incremented}-beta"
+        return new_version
+    else:
+        return ""
+
 if __name__ == "__main__":
     token = os.getenv('PAT')
     repo = 'K1rakishou/Kuroba-Experimental-beta'
-    # TODO: use actual tag name which is going to be current version + build number
-    tag_name = 'v1.0.0'
-    # TODO: use actual release name based on tag + build number
-    release_name = 'Test release'
-    # TODO: use actual release description based on commits diff
-    body = 'Test release body'
-    asset_path = 'Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
+
+    tag_name = get_new_tag_name(repo)
+    if (len(tag_name) == 0):
+        print("Failed to get the release tag.")
+        exit(-1)
+
+    print(f'tag_name: {tag_name}')
+
+    release_name = f'KurobaEx-beta release {tag_name}'
+    body = 'New release available, see the last commits for a changelog'
+    asset_path = 'D:/Projects/Kuroba-Experimental/Kuroba/app/build/outputs/apk/beta/release/KurobaEx-beta.apk'
 
     if (len(token) == 0):
         print("Token is empty.")
