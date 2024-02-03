@@ -368,7 +368,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       captchaInfoRawAdapter.fromJson(captchaInfoRawString)
     } catch (error: Throwable) {
       captchaInfoRawString
-        .windowed(1024)
+        .chunked(1024)
         .forEach { captchaChunk ->
           Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) captchaChunk: ${captchaChunk}")
         }
@@ -380,7 +380,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       throw IOException("Failed to convert json to CaptchaInfoRaw")
     }
 
-    val newTicket = captchaInfoRaw.ticket
+    val newTicket = captchaInfoRaw.ticketAsString
     if (newTicket?.isNotNullNorBlank() == true && currentTicket != newTicket) {
       Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) updating currentTicket with '${formatToken(newTicket)}'")
 
@@ -633,7 +633,7 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     @Json(name = "ttl")
     val ttl: Int?,
     @Json(name = "ticket")
-    val ticket: String?
+    val ticket: Any?
   ) {
     val cooldown: Int?
       get() {
@@ -647,6 +647,11 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
         return null
       }
+
+    val ticketAsString: String?
+      get() = ticket as? String
+    val ticketAsBoolean: Boolean?
+      get() = ticket as? Boolean
 
     fun ttlSeconds(): Int {
       return ttl ?: 120

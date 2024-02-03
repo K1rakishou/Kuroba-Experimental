@@ -91,11 +91,17 @@ def get_commits_since(commit_hash, repo_path=None):
         output = subprocess.check_output(cmd, stderr=subprocess.STDOUT, text=True)
         
         commits = output.strip().split('\n')
+        commit_counter = 0
+
         for commit in commits:
+            if commit_counter > 10:
+                break
+
             if commit.startswith('Merge'):
                 continue
 
             all_commits += f"- {commit}\n"
+            commit_counter += 1
 
         return all_commits
     except subprocess.CalledProcessError as e:
