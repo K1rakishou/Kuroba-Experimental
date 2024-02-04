@@ -3,6 +3,12 @@
 
 <p align="left"><a href="https://f-droid.org/packages/com.github.k1rakishou.chan.fdroid/"><img src="https://f-droid.org/assets/fdroid-logo-text.svg" width="250"></a></p> 
 
+[Latest beta version](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest)
+
+[All beta versions](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases)
+
+### [Latest release version (v1.3.32)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v1.3.32-release)
+
 
 KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan. It's a fork of Kuroba. This fork provides lots of new features:
 
@@ -76,12 +82,6 @@ KurobaEx is a fast Android app for browsing imageboards, such as 4chan and 8chan
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/24.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/24.png)
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/25.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/25.png)
 [<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/26.png" width=160>](fastlane/metadata/android/en-US/images/phoneScreenshots/26.png)
-
-[Latest beta version](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases/latest)
-
-[All beta versions](https://github.com/K1rakishou/Kuroba-Experimental-beta/releases)
-
-### [Latest release version (v1.3.32)](https://github.com/K1rakishou/Kuroba-Experimental/releases/tag/v1.3.32-release)
 
 ##### Currently supported sites
 - 4Chan
