@@ -1,0 +1,16 @@
+v1.3.33
+Full version:
+- Fix posting. The ticket parameter in the captcha json response was changed and it can now be either a string or a boolean which doesn't make any sense and seems like a 4chan's bug.
+- Fix passcode posting.
+- Added leftypol.org support. Thanks to @yuiopmbv
+- Do not crash when we can't delete an old post/thread during app startup.
+- Display latest release url in the failed to update dialog so that users know how to update manually in case something breaks.
+- Make update manager work with both versions of beta tags (v1.2.3-beta and v1.2.3.4-beta).
+
+v1.3.32
+- Make posting on 4chan work as before. The POST request for making a thread/post on 4chan is now created manually (instead of solely relying OkHttp's Request.Builder()) which allows for a better control of how headers/request parts are structured which, in turn, allows the app to better mimic existing browsers and thus bypass some nasty 4chan checks that cause your posts to disappear into the void whenever you  make a mistake in captcha answer.
+- Add support for new cooldowns that are shown when creating a thread or making a post (Captcha tickets).
+- Make 4chan post acknowledgement check more durable. (But you should probably disable it now because the posting should be fixed).
+- Do not check for post acknowledgement if passcode is used.
+- Fix crashes when trying to make a post on 2ch.hk.
+- Initial Github infrastructure for making beta releases on each new commit. Yes, the beta releases will now be distributed on each new commit pushed into the main repository. Why would I do that? Because it will allow me to fix stuff way faster and for you to get the fixes faster (but only on beta branch). The main app will be updated as usual.

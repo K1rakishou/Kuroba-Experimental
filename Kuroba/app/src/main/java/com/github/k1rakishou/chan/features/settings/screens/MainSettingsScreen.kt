@@ -38,6 +38,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isFdroidBuild
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.common.AndroidUtils.VerifiedBuildType
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
+import com.github.k1rakishou.persist_state.PersistableChanState
 
 class MainSettingsScreen(
   context: Context,
@@ -297,10 +298,13 @@ class MainSettingsScreen(
   }
 
   private fun createAppVersionString(): String {
+    val buildNumber = PersistableChanState.previousBuildNumber.get().coerceAtLeast(0)
+
     return String.format(
-      "%s %s %s (commit %s)",
+      "%s %s.%d %s (commit %s)",
       getApplicationLabel().toString(),
       BuildConfig.VERSION_NAME,
+      buildNumber,
       getVerificationBadge(),
       BuildConfig.COMMIT_HASH.take(12)
     )
