@@ -112,7 +112,7 @@ public class CaptchaNojsLayoutV1
         setWebChromeClient(new WebChromeClient() {
             @Override
             public boolean onConsoleMessage(@NonNull ConsoleMessage consoleMessage) {
-                Logger.i(TAG, consoleMessage.lineNumber() + ":" +
+                Logger.d(TAG, consoleMessage.lineNumber() + ":" +
                         consoleMessage.message() + " " + consoleMessage.sourceId());
                 return true;
             }

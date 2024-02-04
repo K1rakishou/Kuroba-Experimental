@@ -722,7 +722,7 @@ class ChanPostRepository(
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldPosts(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
-          Logger.d(TAG, "Error while trying to delete old posts", deleteMRResult.error)
+          Logger.e(TAG, "Error while trying to delete old posts", deleteMRResult.error)
           throw deleteMRResult.error
         } else {
           (deleteMRResult as ModularResult.Value).value
@@ -773,7 +773,7 @@ class ChanPostRepository(
 
         val (deleteMRResult, time) = measureTimedValue { Try { localSource.deleteOldThreads(toDeleteCount) } }
         val deleteResult = if (deleteMRResult is ModularResult.Error) {
-          Logger.d(TAG, "Error while trying to delete old threads", deleteMRResult.error)
+          Logger.e(TAG, "Error while trying to delete old threads", deleteMRResult.error)
           throw deleteMRResult.error
         } else {
           (deleteMRResult as ModularResult.Value).value

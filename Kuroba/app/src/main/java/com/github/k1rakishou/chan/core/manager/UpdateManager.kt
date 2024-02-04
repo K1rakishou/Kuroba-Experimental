@@ -277,26 +277,20 @@ class UpdateManager(
       return
     }
 
-    val actuallyHasUpdate = when {
+    val continueWithUpdate = when {
       !ChanSettings.checkUpdateApkVersionCode.get() -> {
         Logger.d(TAG, "processUpdateApiResponse() checkUpdateApkVersionCode is false")
         true
       }
-      isRelease -> {
-        Logger.d(TAG, "processUpdateApiResponse() responseRelease.versionCode > BuildConfig.VERSION_CODE")
-        responseRelease.versionCode > BuildConfig.VERSION_CODE
-      }
-      !isRelease -> {
-        Logger.d(TAG, "processUpdateApiResponse() responseRelease.buildNumber > PersistableChanState.previousBuildNumber")
-        responseRelease.buildNumber > PersistableChanState.previousBuildNumber.get()
-      }
+      isRelease -> canContinueReleaseUpdate(responseRelease)
+      !isRelease -> canContinueBetaUpdate(responseRelease)
       else -> false
     }
 
     Logger.d(TAG,
       "processUpdateApiResponse() " +
               "manual: ${manual}, " +
-              "actuallyHasUpdate: $actuallyHasUpdate, " +
+              "actuallyHasUpdate: $continueWithUpdate, " +
               "releaseVersionCode: ${responseRelease.versionCode}, " +
               "releaseBuildNumber: ${responseRelease.buildNumber}, " +
               "appVersionCode=${BuildConfig.VERSION_CODE}"
@@ -304,7 +298,7 @@ class UpdateManager(
 
     Logger.d(TAG, "processUpdateApiResponse() responseRelease=${responseRelease}")
 
-    if (!actuallyHasUpdate) {
+    if (!continueWithUpdate) {
       cancelApkUpdateNotification()
 
       if (manual) {
@@ -763,6 +757,38 @@ class UpdateManager(
 
     PersistableChanState.apkUpdateInfoJson.setSync(ApkUpdateInfoJson())
     return apkUpdateInfo
+  }
+
+  private fun canContinueBetaUpdate(responseRelease: ReleaseUpdateApiResponse): Boolean {
+    Logger.error(TAG) {
+      "canContinueBetaUpdate() " +
+      "responseRelease.versionCode (${responseRelease.versionCode}) > " +
+      "BuildConfig.VERSION_CODE (${BuildConfig.VERSION_CODE}) || " +
+      "responseRelease.buildNumber (${responseRelease.buildNumber}) > " +
+      "PersistableChanState.previousBuildNumber (${PersistableChanState.previousBuildNumber.get()})"
+    }
+
+    if (responseRelease.versionCode < BuildConfig.VERSION_CODE.toLong()) {
+      // Do not update if release's version code is less than ours
+      return false
+    }
+
+    if (responseRelease.versionCode > BuildConfig.VERSION_CODE) {
+      // Always update if the release's version code is greater than ours
+      return true
+    }
+
+    // If they are the same then check the build numbers
+    return responseRelease.buildNumber > PersistableChanState.previousBuildNumber.get()
+  }
+
+  private fun canContinueReleaseUpdate(responseRelease: ReleaseUpdateApiResponse): Boolean {
+    Logger.debug(TAG) {
+      "canContinueReleaseUpdate() responseRelease.versionCode (${responseRelease.versionCode}) > " +
+      "BuildConfig.VERSION_CODE (${BuildConfig.VERSION_CODE})"
+    }
+
+    return responseRelease.versionCode > BuildConfig.VERSION_CODE
   }
 
   companion object {

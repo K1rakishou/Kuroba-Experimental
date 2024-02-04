@@ -14,131 +14,134 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
-package com.github.k1rakishou.core_logger;
+package com.github.k1rakishou.core_logger
 
-import android.util.Log;
+import android.util.Log
+import org.joda.time.DateTime
+import org.joda.time.format.DateTimeFormatterBuilder
+import org.joda.time.format.ISODateTimeFormat
 
-import org.joda.time.DateTime;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
-import org.joda.time.format.ISODateTimeFormat;
+object Logger {
+    private var tagPrefix: String? = null
+    private var isCurrentBuildDev = false
+    const val DI_TAG = "Dependency Injection"
 
-public class Logger {
-    private static String tagPrefix;
-    private static boolean isCurrentBuildDev;
-    public static final String DI_TAG = "Dependency Injection";
+    private val logTimeFormatter = DateTimeFormatterBuilder()
+        .append(ISODateTimeFormat.hourMinuteSecondMillis())
+        .toFormatter()
 
-    private static final DateTimeFormatter LOG_TIME_FORMATTER = new DateTimeFormatterBuilder()
-            .append(ISODateTimeFormat.hourMinuteSecondMillis())
-            .toFormatter();
-
-    public static void init(String prefix, boolean isDevBuild) {
-        tagPrefix = prefix;
-        isCurrentBuildDev = isDevBuild;
+    fun init(prefix: String?, isDevBuild: Boolean) {
+        tagPrefix = prefix
+        isCurrentBuildDev = isDevBuild
     }
 
-    private static String getTime() {
-        if (isCurrentBuildDev) {
-            return "";
+    private val time: String
+        get() {
+            if (isCurrentBuildDev) {
+                return ""
+            }
+
+            return "(" + logTimeFormatter.print(DateTime.now()) + ") "
         }
 
-        return "(" + LOG_TIME_FORMATTER.print(DateTime.now()) + ") ";
-    }
-
-    //region VERBOSE
-    public static void v(String tag, String message) {
+    @JvmStatic
+    fun d(tag: String, message: String) {
         if (canLog()) {
-            Log.v(getTime() + tagPrefix + tag, message);
+            Log.d(time + tagPrefix + tag, message)
         }
     }
 
-    public static void v(String tag, String message, Throwable throwable) {
-        if (canLog()) {
-            Log.v(getTime() + tagPrefix + tag, message, throwable);
-        }
-    }
-    //endregion VERBOSE
-
-    //region DEBUG
-    public static void d(String tag, String message) {
-        if (canLog()) {
-            Log.d(getTime() + tagPrefix + tag, message);
-        }
+    @JvmStatic
+    fun w(tag: String, message: String) {
+        Log.w(time + tagPrefix + tag, message)
     }
 
-    public static void d(String tag, String message, Throwable throwable) {
-        if (canLog()) {
-            Log.d(getTime() + tagPrefix + tag, message, throwable);
-        }
-    }
-    //endregion DEBUG
-
-    //region INFO
-    public static void i(String tag, String message) {
-        Log.i(getTime() + tagPrefix + tag, message);
+    @JvmStatic
+    fun e(tag: String, message: String) {
+        Log.e(time + tagPrefix + tag, message)
     }
 
-    public static void i(String tag, String message, Throwable throwable) {
-        Log.i(getTime() + tagPrefix + tag, message, throwable);
+    @JvmStatic
+    fun e(tag: String, message: String, throwable: Throwable?) {
+        Log.e(time + tagPrefix + tag, message, throwable)
     }
 
-    //endregion INFO
-
-    //region WARN
-    public static void w(String tag, String message) {
-        Log.w(getTime() + tagPrefix + tag, message);
-    }
-
-    public static void w(String tag, String message, Throwable throwable) {
-        Log.w(getTime() + tagPrefix + tag, message, throwable);
-    }
-
-    //endregion WARN
-
-    //region ERROR
-    public static void e(String tag, String message) {
-        Log.e(getTime() + tagPrefix + tag, message);
-    }
-
-    public static void e(String tag, String message, Throwable throwable) {
-        Log.e(getTime() + tagPrefix + tag, message, throwable);
-    }
-    //endregion ERROR
-
-    //region WTF
-    public static void wtf(String tag, String message) {
-        Log.wtf(getTime() + tagPrefix + tag, message);
-    }
-
-    public static void wtf(String tag, String message, Throwable throwable) {
-        Log.wtf(getTime() + tagPrefix + tag, message, throwable);
-    }
-    //endregion WTF
-
-    //region TEST
-    public static void test(String message) {
-        if (canLog()) {
-            Log.i(getTime() + tagPrefix + "test", message);
-        }
-    }
-
-    public static void test(String message, Throwable throwable) {
-        if (canLog()) {
-            Log.i(getTime() + tagPrefix + "test", message, throwable);
-        }
-    }
-    //endregion TEST
-
-    public static void deps(String message) {
+    @JvmStatic
+    fun deps(message: String) {
         if (!isCurrentBuildDev) {
-            return;
+            return
         }
 
-        String tag = DI_TAG + " (" + Thread.currentThread().getName() + ":" + Thread.currentThread().getId() + ")";
-        Logger.d(tag, message);
+        val tag = DI_TAG + " (" + Thread.currentThread().name + ":" + Thread.currentThread().id + ")"
+        d(tag, message)
     }
 
-    private static boolean canLog() {
-        return true;
+    // ========================================================
+
+    fun debug(tag: String, message: () -> String) {
+        if (canLog()) {
+            Log.d(time + tagPrefix + tag, message())
+        }
     }
+
+    fun Any.debug(tag: String? = null, message: () -> String) {
+        if (canLog()) {
+            Log.d(time + tagPrefix + (tag ?: outerClassName()), message())
+        }
+    }
+
+    fun warning(tag: String, message: () -> String) {
+        if (canLog()) {
+            Log.w(time + tagPrefix + tag, message())
+        }
+    }
+
+    fun Any.warning(tag: String? = null, message: () -> String) {
+        if (canLog()) {
+            Log.w(time + tagPrefix + (tag ?: outerClassName()), message())
+        }
+    }
+
+    fun error(tag: String, message: () -> String) {
+        if (canLog()) {
+            Log.e(time + tagPrefix + tag, message())
+        }
+    }
+
+    fun Any.error(tag: String? = null, message: () -> String) {
+        if (canLog()) {
+            Log.e(time + tagPrefix + (tag ?: outerClassName()), message())
+        }
+    }
+
+    fun error(tag: String, throwable: Throwable, message: () -> String) {
+        if (canLog()) {
+            Log.e(time + tagPrefix + tag, message(), throwable)
+        }
+    }
+
+    fun Any.error(tag: String? = null, throwable: Throwable, message: () -> String) {
+        if (canLog()) {
+            Log.e(time + tagPrefix + (tag ?: outerClassName()), message(), throwable)
+        }
+    }
+
+    @PublishedApi
+    internal fun Any.outerClassName(): String {
+        val javaClass = this::class.java
+        val fullClassName = javaClass.name
+        val outerClassName = fullClassName.substringBefore('$')
+        val simplerOuterClassName = outerClassName.substringAfterLast('.')
+        return if (simplerOuterClassName.isEmpty()) {
+            fullClassName
+        } else {
+            simplerOuterClassName.removeSuffix("Kt")
+        }
+    }
+
+
+    private fun canLog(): Boolean {
+        return true
+    }
+
 }
