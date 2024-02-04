@@ -760,7 +760,7 @@ class UpdateManager(
   }
 
   private fun canContinueBetaUpdate(responseRelease: ReleaseUpdateApiResponse): Boolean {
-    Logger.error(TAG) {
+    Logger.debug(TAG) {
       "canContinueBetaUpdate() " +
       "responseRelease.versionCode (${responseRelease.versionCode}) > " +
       "BuildConfig.VERSION_CODE (${BuildConfig.VERSION_CODE}) || " +
