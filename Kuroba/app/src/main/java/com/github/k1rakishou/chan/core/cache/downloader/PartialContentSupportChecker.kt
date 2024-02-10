@@ -8,7 +8,6 @@ import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancel
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import io.reactivex.Single
@@ -33,8 +32,7 @@ internal class PartialContentSupportChecker(
   private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
   private val activeDownloads: ActiveDownloads,
   private val siteResolver: SiteResolver,
-  private val maxTimeoutMs: Long,
-  private val appConstants: AppConstants
+  private val maxTimeoutMs: Long
 ) {
   // Thread safe
   private val cachedResults = LruCache<String, PartialContentCheckResult>(1024)

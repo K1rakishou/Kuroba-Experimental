@@ -4,7 +4,6 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.scope.PerActivity;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper;
@@ -44,7 +43,6 @@ public class ActivityModule {
     @Provides
     public UpdateManager provideUpdateManager(
             AppCompatActivity activity,
-            Lazy<FileCacheV2> fileCacheV2,
             Lazy<CacheHandler> cacheHandler,
             Lazy<FileManager> fileManager,
             SettingsNotificationManager settingsNotificationManager,
@@ -56,7 +54,6 @@ public class ActivityModule {
         return new UpdateManager(
                 activity,
                 cacheHandler,
-                fileCacheV2,
                 fileManager,
                 settingsNotificationManager,
                 fileChooser,

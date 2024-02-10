@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
-import android.net.ConnectivityManager;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
@@ -27,7 +26,8 @@ import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient;
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader;
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloaderImpl;
 import com.github.k1rakishou.chan.core.helper.ProxyStorage;
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.site.SiteResolver;
@@ -88,23 +88,21 @@ public class NetModule {
 
     @Provides
     @Singleton
-    public FileCacheV2 provideFileCacheV2(
-            ConnectivityManager connectivityManager,
+    public ChunkedMediaDownloader provideChunkedMediaDownloaderImpl(
+            CoroutineScope appScope,
             FileManager fileManager,
-            Lazy<CacheHandler> cacheHandler,
             SiteResolver siteResolver,
-            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient,
-            AppConstants appConstants
+            Lazy<CacheHandler> cacheHandler,
+            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient
     ) {
-        Logger.deps("FileCacheV2");
+        Logger.deps("ChunkedMediaDownloader");
 
-        return new FileCacheV2(
+        return new ChunkedMediaDownloaderImpl(
+                appScope,
                 fileManager,
-                cacheHandler,
                 siteResolver,
-                realDownloaderOkHttpClient,
-                connectivityManager,
-                appConstants
+                cacheHandler,
+                realDownloaderOkHttpClient
         );
     }
 

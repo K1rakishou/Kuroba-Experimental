@@ -4,8 +4,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -30,7 +30,7 @@ class RemoteFilePicker(
   fileManager: FileManager,
   replyManager: ReplyManager,
   private val appScope: CoroutineScope,
-  private val fileCacheV2: Lazy<FileCacheV2>,
+  private val chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
   private val cacheHandler: Lazy<CacheHandler>
 ) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(appConstants, replyManager, fileManager) {
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
@@ -166,8 +166,8 @@ class RemoteFilePicker(
     val urlString = imageUrl.toString()
 
     return suspendCancellableCoroutine { cancellableContinuation ->
-      val cancelableDownload = fileCacheV2.get().enqueueDownloadFileRequest(
-        url = urlString,
+      val cancelableDownload = chunkedMediaDownloader.get().enqueueDownloadFileRequest(
+        url = imageUrl,
         cacheFileType = cacheFileType,
         callback = object : FileCacheListener() {
           override fun onSuccess(file: File) {
@@ -197,7 +197,12 @@ class RemoteFilePicker(
           private fun onError(error: FilePickerError) {
             cancellableContinuation.resumeValueSafe(ModularResult.error(error))
           }
-        })
+        }
+      )
+
+      if (cancelableDownload == null) {
+        return@suspendCancellableCoroutine
+      }
 
       cancellableContinuation.invokeOnCancellation { cause ->
         if (cause == null) {

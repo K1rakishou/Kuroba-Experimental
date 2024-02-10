@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ReplyManager
@@ -96,7 +97,7 @@ class ImageLoaderV2(
   private val _replyManager: Lazy<ReplyManager>,
   private val _themeEngine: Lazy<ThemeEngine>,
   private val _cacheHandler: Lazy<CacheHandler>,
-  private val _fileCacheV2: Lazy<FileCacheV2>,
+  private val _chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
   private val _imageLoaderFileManagerWrapper: Lazy<ImageLoaderFileManagerWrapper>,
   private val _siteResolver: Lazy<SiteResolver>,
   private val _coilOkHttpClient: Lazy<CoilOkHttpClient>,
@@ -115,8 +116,8 @@ class ImageLoaderV2(
     get() = _themeEngine.get()
   val cacheHandler: CacheHandler
     get() = _cacheHandler.get()
-  val fileCacheV2: FileCacheV2
-    get() = _fileCacheV2.get()
+  val chunkedMediaDownloader: ChunkedMediaDownloader
+    get() = _chunkedMediaDownloader.get()
   val imageLoaderFileManagerWrapper: ImageLoaderFileManagerWrapper
     get() = _imageLoaderFileManagerWrapper.get()
   val siteResolver: SiteResolver
@@ -493,7 +494,7 @@ class ImageLoaderV2(
         Logger.e(TAG, "applyTransformationsToDrawable() error, " +
           "fileLocation=${fileLocation}, error=${result.throwable.errorMessageOrClassName()}")
 
-        if (!fileCacheV2.isRunning(url)) {
+        if (!chunkedMediaDownloader.isRunning(url)) {
           cacheHandler.deleteCacheFileByUrl(cacheFileType, url)
         }
 
@@ -634,7 +635,7 @@ class ImageLoaderV2(
     val success = try {
       loadFromNetworkIntoFileInternal(url, cacheFileType, cacheFile)
     } catch (error: Throwable) {
-      if (!fileCacheV2.isRunning(url)) {
+      if (!chunkedMediaDownloader.isRunning(url)) {
         cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
       }
 
@@ -647,7 +648,7 @@ class ImageLoaderV2(
     }
 
     if (!success) {
-      if (!fileCacheV2.isRunning(url)) {
+      if (!chunkedMediaDownloader.isRunning(url)) {
         cacheHandler.deleteCacheFile(cacheFileType, cacheFile)
       }
 

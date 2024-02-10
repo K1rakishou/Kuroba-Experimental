@@ -1,14 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
-
-    <!--  Old disk cache directories are left here for compatibility  -->
-    <files-path
-        name="fc"
-        path="filecache/" />
-    <external-files-path
-        name="exfc"
-        path="filecache/" />
-
     <!-- This one is so that we are able to share stuff from the file cache into other apps/install apks -->
     <files-path
         name="dc"
@@ -22,4 +13,8 @@
         name="sf"
         path="share_files/" />
 
+    <!-- This one is for temporary files -->
+    <files-path
+        name="tf"
+        path="temp_files/" />
 </paths>

@@ -19,17 +19,20 @@ package com.github.k1rakishou.chan.core.cache
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.Generators
 import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.isNotNullNorBlank
 import com.github.k1rakishou.common.mbytesToBytes
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.util.ChanPostUtils
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.asCoroutineDispatcher
 import kotlinx.coroutines.withContext
 import java.io.File
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
-import kotlin.time.ExperimentalTime
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlin.time.measureTime
 
 /**
@@ -47,13 +50,14 @@ import kotlin.time.measureTime
  * CacheHandler now also caches file chunks that are used by [ConcurrentChunkedFileDownloader] as well
  * as all media files retrieved via [ImageLoaderV2]
  */
-@OptIn(ExperimentalTime::class)
 class CacheHandler(
   private val autoLoadThreadImages: Boolean,
   private val appConstants: AppConstants
 ) {
   private val innerCaches = ConcurrentHashMap<CacheFileType, InnerCache>()
   private val cacheHandlerDispatcher = Executors.newSingleThreadExecutor().asCoroutineDispatcher()
+
+  private val temporaryFilesCleared = AtomicBoolean(false)
 
   init {
     val duration = measureTime { init() }
@@ -79,7 +83,7 @@ class CacheHandler(
     Logger.d(TAG, "diskCacheDir=${diskCacheDir.absolutePath}, " +
       "totalFileCacheDiskSize=${ChanPostUtils.getReadableFileSize(totalFileCacheDiskSizeBytes)}")
 
-    for (cacheFileType in CacheFileType.values()) {
+    for (cacheFileType in CacheFileType.entries) {
       if (innerCaches.containsKey(cacheFileType)) {
         continue
       }
@@ -103,6 +107,42 @@ class CacheHandler(
       )
 
       innerCaches.put(cacheFileType, innerCache)
+    }
+  }
+
+  suspend fun createTemptFile(
+    fileName: String? = null,
+    extension: String? = null
+  ): File {
+    return withContext(Dispatchers.IO) {
+      if (temporaryFilesCleared.compareAndSet(false, true)) {
+        appConstants.tempFilesDir.listFiles()
+          ?.forEach { file -> file.delete() }
+      }
+
+      var attempts = 5
+
+      while (attempts > 0) {
+        val actualFileName = fileName
+          ?.takeIf { it.isNotNullNorBlank() }
+          ?: Generators.generateRandomHexString(symbolsCount = 32)
+
+        val actualExtension = extension
+          ?.takeIf { it.isNotNullNorBlank() }
+          ?: "tmp"
+
+        val fullName = "${actualFileName}.${actualExtension}"
+
+        val file = File(appConstants.tempFilesDir, fullName)
+        if (!file.exists()) {
+          check(file.createNewFile()) { "Failed to create file: ${file.absolutePath}" }
+          return@withContext file
+        }
+
+        --attempts
+      }
+
+      error("Failed to create a temporary file within 5 attempts!")
     }
   }
 

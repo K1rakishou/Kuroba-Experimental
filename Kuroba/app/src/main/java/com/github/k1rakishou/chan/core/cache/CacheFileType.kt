@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.cache
 
+import kotlin.math.absoluteValue
+
 enum class CacheFileType(
   val id: Int,
   val diskSizePercent: Float
@@ -19,14 +21,14 @@ enum class CacheFileType(
   companion object {
 
     fun checkValid() {
-      val totalPercent = values().map { it.diskSizePercent }.sum()
-      val diff = Math.abs(1f - totalPercent)
+      val totalPercent = entries.map { it.diskSizePercent }.sum()
+      val diff = (1f - totalPercent).absoluteValue
 
       check(diff < 0.001f) {
         "Bad totalPercent! diff=${diff}, totalPercent=${totalPercent}. Must be close to 0.0!"
       }
 
-      check(values().size == values().distinctBy { it.id }.size) {
+      check(entries.size == entries.distinctBy { it.id }.size) {
         "All ids must be unique!"
       }
     }

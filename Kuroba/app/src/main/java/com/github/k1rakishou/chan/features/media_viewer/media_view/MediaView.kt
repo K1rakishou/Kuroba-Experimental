@@ -12,8 +12,8 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -71,7 +71,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
   @Inject
   lateinit var themeEngine: ThemeEngine
   @Inject
-  lateinit var fileCacheV2: FileCacheV2
+  lateinit var chunkedMediaDownloader: ChunkedMediaDownloader
   @Inject
   lateinit var fileManager: FileManager
   @Inject
@@ -387,7 +387,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
       fileHash = viewableMedia.viewableMediaMeta.mediaHash
     )
 
-    return fileCacheV2.enqueueDownloadFileRequest(
+    return chunkedMediaDownloader.enqueueDownloadFileRequest(
       url = mediaLocationRemote.url,
       cacheFileType = CacheFileType.PostMediaFull,
       extraInfo = extraInfo,

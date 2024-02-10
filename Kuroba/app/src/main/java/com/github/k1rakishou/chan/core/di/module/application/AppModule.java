@@ -23,7 +23,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader;
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
@@ -151,7 +151,7 @@ public class AppModule {
             Lazy<ReplyManager> replyManager,
             Lazy<ThemeEngine> themeEngine,
             Lazy<CacheHandler> cacheHandler,
-            Lazy<FileCacheV2> fileCacheV2,
+            Lazy<ChunkedMediaDownloader> chunkedMediaDownloader,
             Lazy<ImageLoaderFileManagerWrapper> imageLoaderFileManagerWrapper,
             Lazy<SiteResolver> siteResolver,
             Lazy<CoilOkHttpClient> coilOkHttpClient,
@@ -166,7 +166,7 @@ public class AppModule {
                 replyManager,
                 themeEngine,
                 cacheHandler,
-                fileCacheV2,
+                chunkedMediaDownloader,
                 imageLoaderFileManagerWrapper,
                 siteResolver,
                 coilOkHttpClient,

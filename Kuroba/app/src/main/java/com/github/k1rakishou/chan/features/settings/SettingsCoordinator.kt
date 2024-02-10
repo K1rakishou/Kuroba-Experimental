@@ -6,7 +6,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.base.LazySuspend
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
@@ -80,7 +80,7 @@ class SettingsCoordinator(
   @Inject
   lateinit var appConstants: AppConstants
   @Inject
-  lateinit var fileCacheV2: FileCacheV2
+  lateinit var chunkedMediaDownloader: ChunkedMediaDownloader
   @Inject
   lateinit var cacheHandler: Lazy<CacheHandler>
   @Inject
@@ -240,7 +240,7 @@ class SettingsCoordinator(
     CachingSettingsScreen(
       context,
       cacheHandler,
-      fileCacheV2,
+      chunkedMediaDownloader,
       appConstants,
       dialogFactory
     )

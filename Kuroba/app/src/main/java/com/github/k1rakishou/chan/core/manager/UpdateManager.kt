@@ -34,13 +34,11 @@ import com.github.k1rakishou.chan.core.base.ControllerHostActivity
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
-import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest
 import com.github.k1rakishou.chan.core.net.update.UpdateApiRequest.ReleaseUpdateApiResponse
+import com.github.k1rakishou.chan.ui.helper.RuntimePermissionsHelper.PermissionRequiredDialogCallback
 import com.github.k1rakishou.chan.ui.settings.SettingNotificationType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getFlavorType
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
@@ -57,9 +55,12 @@ import com.github.k1rakishou.common.AndroidUtils.FlavorType
 import com.github.k1rakishou.common.AndroidUtils.getAppFileProvider
 import com.github.k1rakishou.common.AndroidUtils.getApplicationLabel
 import com.github.k1rakishou.common.BadStatusResponseException
+import com.github.k1rakishou.common.ModularResult
+import com.github.k1rakishou.common.downloadIntoFile
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.exhaustive
 import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.fsaf.FileChooser
 import com.github.k1rakishou.fsaf.FileManager
@@ -75,10 +76,10 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 import java.io.File
-import java.io.IOException
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.CoroutineContext
 
@@ -91,7 +92,6 @@ import kotlin.coroutines.CoroutineContext
 class UpdateManager(
   private val context: Context,
   private val cacheHandler: Lazy<CacheHandler>,
-  private val fileCacheV2: Lazy<FileCacheV2>,
   private val fileManager: Lazy<FileManager>,
   private val settingsNotificationManager: SettingsNotificationManager,
   private val fileChooser: Lazy<FileChooser>,
@@ -99,19 +99,15 @@ class UpdateManager(
   private val dialogFactory: Lazy<DialogFactory>
 ) : CoroutineScope {
   private var updateDownloadDialog: ProgressDialog? = null
-  private var cancelableDownload: CancelableDownload? = null
 
   private val job = SupervisorJob()
   private val cacheFileType = CacheFileType.Other
 
   override val coroutineContext: CoroutineContext
-    get() = Dispatchers.Default + job + CoroutineName("UpdateManager")
+    get() = Dispatchers.Main + job + CoroutineName("UpdateManager")
 
   fun onDestroy() {
     job.cancelChildren()
-
-    cancelableDownload?.cancel()
-    cancelableDownload = null
   }
 
   /**
@@ -173,7 +169,6 @@ class UpdateManager(
   }
 
   private suspend fun runUpdateApi(manual: Boolean) {
-    BackgroundUtils.ensureBackgroundThread()
     Logger.d(TAG, "runUpdateApi() manual=$manual")
 
     if (PersistableChanState.hasNewApkUpdate.get()) {
@@ -223,8 +218,6 @@ class UpdateManager(
   }
 
   private suspend fun updateApk(manual: Boolean, flavorType: FlavorType, updateUrl: String) {
-    BackgroundUtils.ensureBackgroundThread()
-
     val request = Request.Builder()
       .url(updateUrl)
       .get()
@@ -270,8 +263,6 @@ class UpdateManager(
     manual: Boolean,
     isRelease: Boolean
   ) {
-    BackgroundUtils.ensureMainThread()
-
     if (!BackgroundUtils.isInForeground()) {
       Logger.d(TAG, "processUpdateApiResponse() not in foreground")
       return
@@ -332,19 +323,21 @@ class UpdateManager(
         negativeButtonText = getString(R.string.update_later),
         positiveButtonText = getString(R.string.update_install),
         onPositiveButtonClickListener = {
-          updateInstallRequested(
-            responseRelease = responseRelease,
-            onUpdateClicked = {
-              val apkUpdateInfoJson = ApkUpdateInfoJson(
-                versionCode = responseRelease.versionCode,
-                buildNumber = responseRelease.buildNumber,
-                versionName = responseRelease.versionCodeString
-              )
+          launch {
+            updateInstallRequested(
+              responseRelease = responseRelease,
+              onUpdateClicked = {
+                val apkUpdateInfoJson = ApkUpdateInfoJson(
+                  versionCode = responseRelease.versionCode,
+                  buildNumber = responseRelease.buildNumber,
+                  versionName = responseRelease.versionCodeString
+                )
 
-              Logger.d(TAG, "processUpdateApiResponse() onUpdateClicked() updating apkUpdateInfoJson with ${apkUpdateInfoJson}")
-              PersistableChanState.apkUpdateInfoJson.setSync(apkUpdateInfoJson)
-            }
-          )
+                Logger.d(TAG, "processUpdateApiResponse() onUpdateClicked() updating apkUpdateInfoJson with ${apkUpdateInfoJson}")
+                PersistableChanState.apkUpdateInfoJson.setSync(apkUpdateInfoJson)
+              }
+            )
+          }
         }
       )
     } else {
@@ -406,7 +399,6 @@ class UpdateManager(
   }
 
   private fun failedUpdate(manual: Boolean, error: Throwable) {
-    BackgroundUtils.ensureMainThread()
     Logger.e(TAG, "failedUpdate() manual=$manual", error)
 
     val buildTag = if (getFlavorType() == FlavorType.Beta) {
@@ -441,7 +433,7 @@ class UpdateManager(
    *
    * @param responseRelease that contains the APK file URL
    */
-  private fun doUpdate(
+  private suspend fun doUpdate(
     responseRelease: ReleaseUpdateApiResponse,
     onUpdateClicked: () -> Unit
   ) {
@@ -463,98 +455,55 @@ class UpdateManager(
       dialogFactory.get().applyColorsToDialog(this)
     }
 
-    cancelableDownload?.cancel()
-    cancelableDownload = null
-
     val apkUrl = responseRelease.apkURL.toString()
     cacheHandler.get().deleteCacheFileByUrl(cacheFileType, apkUrl)
 
-    cancelableDownload = fileCacheV2.get().enqueueDownloadFileRequest(
-      url = apkUrl,
-      cacheFileType = cacheFileType,
-      callback = object : FileCacheListener() {
-        override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
-          BackgroundUtils.ensureMainThread()
+    val apkFile = cacheHandler.get().createTemptFile()
+    val request = Request.Builder().url(apkUrl).get().build()
 
-          if (updateDownloadDialog != null) {
-            updateDownloadDialog!!.progress =
-              (updateDownloadDialog!!.max * (downloaded / total.toDouble())).toInt()
-          }
+    val downloadFileResult = proxiedOkHttpClient.get().okHttpClient().downloadIntoFile(
+      request = request,
+      outputFile = apkFile,
+      onProgress = { percent ->
+        updateDownloadDialog?.let { dialog ->
+          dialog.progress = (dialog.max * percent).toInt()
         }
+      }
+    ).finally {
+      updateDownloadDialog?.let { dialog ->
+        dialog.setOnDismissListener(null)
+        dialog.dismiss()
+      }
+      updateDownloadDialog = null
+    }
 
-        override fun onSuccess(file: File) {
-          Logger.d(TAG, "APK download success")
-          BackgroundUtils.ensureMainThread()
+    when (downloadFileResult) {
+      is ModularResult.Error -> {
+        val exception = downloadFileResult.error
+        Logger.e(TAG, "APK download failed", exception)
 
-          if (updateDownloadDialog != null) {
-            updateDownloadDialog!!.setOnDismissListener(null)
-            updateDownloadDialog!!.dismiss()
-            updateDownloadDialog = null
-          }
+        val description = getString(
+          R.string.update_install_download_failed_description,
+          exception.message
+        )
 
-          val fileName = getApplicationLabel().toString() +
-            "_" + responseRelease.versionCodeString + ".apk"
+        dialogFactory.get().createSimpleInformationDialog(
+          context = context,
+          titleText = getString(R.string.update_install_download_failed),
+          descriptionText = description
+        )
+      }
+      is ModularResult.Value -> {
+        Logger.d(TAG, "APK download success")
+        val fileName = getApplicationLabel().toString() + "_" + responseRelease.versionCodeString + ".apk"
 
-          suggestCopyingApkToAnotherDirectory(file, fileName) {
-            runOnMainThread({
-              // Install from the filecache rather than downloads, as the
-              // Environment.DIRECTORY_DOWNLOADS may not be "Download"
-              installApk(file, responseRelease, onUpdateClicked)
-            }, TimeUnit.SECONDS.toMillis(1))
-          }
+        suggestCopyingApkToAnotherDirectory(apkFile, fileName) {
+          runOnMainThread({
+            installApk(apkFile, responseRelease, onUpdateClicked)
+          }, TimeUnit.SECONDS.toMillis(1))
         }
-
-        override fun onNotFound() {
-          onFail(IOException("Not found"))
-        }
-
-        override fun onFail(exception: Exception) {
-          Logger.e(TAG, "APK download failed", exception)
-
-          if (!BackgroundUtils.isInForeground()) {
-            return
-          }
-
-          BackgroundUtils.ensureMainThread()
-          val description = getString(
-            R.string.update_install_download_failed_description,
-            exception.message
-          )
-
-          if (updateDownloadDialog != null) {
-            updateDownloadDialog!!.setOnDismissListener(null)
-            updateDownloadDialog!!.dismiss()
-            updateDownloadDialog = null
-          }
-
-          dialogFactory.get().createSimpleInformationDialog(
-            context = context,
-            titleText = getString(R.string.update_install_download_failed),
-            descriptionText = description
-          )
-        }
-
-        override fun onCancel() {
-          Logger.e(TAG, "APK download canceled")
-
-          if (!BackgroundUtils.isInForeground()) {
-            return
-          }
-
-          BackgroundUtils.ensureMainThread()
-          if (updateDownloadDialog != null) {
-            updateDownloadDialog!!.setOnDismissListener(null)
-            updateDownloadDialog!!.dismiss()
-            updateDownloadDialog = null
-          }
-
-          dialogFactory.get().createSimpleInformationDialog(
-            context = context,
-            titleText = getString(R.string.update_install_download_failed),
-            descriptionText = getString(R.string.update_install_download_failed_canceled)
-          )
-        }
-      })
+      }
+    }
   }
 
   private fun suggestCopyingApkToAnotherDirectory(
@@ -655,8 +604,6 @@ class UpdateManager(
     )
 
     try {
-      onUpdateClicked()
-
       val intent = if (AndroidUtils.isAndroidN()) {
         Logger.d(TAG, "installApk() AndroidN and above, apkFile=${apkFile.absolutePath}")
 
@@ -694,6 +641,8 @@ class UpdateManager(
       StrictMode.setVmPolicy(VmPolicy.LAX)
       openIntent(intent)
       StrictMode.setVmPolicy(vmPolicy)
+
+      onUpdateClicked()
     } catch (error: Throwable) {
       if (isDevBuild() || isBetaBuild()) {
         throw error
@@ -709,7 +658,13 @@ class UpdateManager(
     }
   }
 
-  private fun updateInstallRequested(
+  private enum class RequestPermissionResult {
+    PermissionGranted,
+    RetryPermissionRequest,
+    Canceled
+  }
+
+  private suspend fun updateInstallRequested(
     responseRelease: ReleaseUpdateApiResponse,
     onUpdateClicked: () -> Unit
   ) {
@@ -726,18 +681,39 @@ class UpdateManager(
       return
     }
 
-    runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) { granted ->
-      if (granted) {
-        doUpdate(responseRelease, onUpdateClicked)
-        return@requestPermission
-      }
+    val requestPermissionResult = suspendCancellableCoroutine<RequestPermissionResult> { continuation ->
+      runtimePermissionsHelper.requestPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) { granted ->
+        if (granted) {
+          continuation.resumeValueSafe(RequestPermissionResult.PermissionGranted)
+          return@requestPermission
+        }
 
-      runtimePermissionsHelper.showPermissionRequiredDialog(
-        context,
-        getString(R.string.update_storage_permission_required_title),
-        getString(R.string.update_storage_permission_required)
-      ) {
+        runtimePermissionsHelper.showPermissionRequiredDialog(
+          context,
+          getString(R.string.update_storage_permission_required_title),
+          getString(R.string.update_storage_permission_required),
+          object : PermissionRequiredDialogCallback {
+            override fun retryPermissionRequest() {
+              continuation.resumeValueSafe(RequestPermissionResult.RetryPermissionRequest)
+            }
+
+            override fun onDismissed() {
+              continuation.resumeValueSafe(RequestPermissionResult.Canceled)
+            }
+          }
+        )
+      }
+    }
+
+    when (requestPermissionResult) {
+      RequestPermissionResult.PermissionGranted -> {
+        doUpdate(responseRelease, onUpdateClicked)
+      }
+      RequestPermissionResult.RetryPermissionRequest -> {
         updateInstallRequested(responseRelease, onUpdateClicked)
+      }
+      RequestPermissionResult.Canceled -> {
+        return
       }
     }
   }

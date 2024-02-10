@@ -3,7 +3,7 @@ package com.github.k1rakishou.chan.core.di.module.application
 import android.content.Context
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -117,7 +117,7 @@ class HelperModule {
   fun provideRemoteFilePicker(
     applicationScope: CoroutineScope,
     appConstants: AppConstants,
-    fileCacheV2: Lazy<FileCacheV2>,
+    chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
     fileManager: FileManager,
     replyManager: ReplyManager,
     cacheHandler: Lazy<CacheHandler>
@@ -128,7 +128,7 @@ class HelperModule {
       fileManager,
       replyManager,
       applicationScope,
-      fileCacheV2,
+      chunkedMediaDownloader,
       cacheHandler
     )
   }

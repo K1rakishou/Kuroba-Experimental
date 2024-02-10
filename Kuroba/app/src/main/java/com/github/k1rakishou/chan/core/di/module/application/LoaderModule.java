@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
@@ -41,7 +41,7 @@ public class LoaderModule {
     @Provides
     @Singleton
     public PrefetchLoader providePrefetchLoader(
-            Lazy<FileCacheV2> fileCacheV2,
+            Lazy<ChunkedMediaDownloader> chunkedMediaDownloader,
             Lazy<CacheHandler> cacheHandler,
             PrefetchStateManager prefetchStateManager,
             Lazy<ChanThreadManager> chanThreadManager,
@@ -51,7 +51,7 @@ public class LoaderModule {
         Logger.deps("PrefetchLoader");
 
         return new PrefetchLoader(
-                fileCacheV2,
+                chunkedMediaDownloader,
                 cacheHandler,
                 chanThreadManager,
                 archivesManager,

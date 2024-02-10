@@ -37,7 +37,6 @@ import androidx.recyclerview.widget.RecyclerView;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
-import com.github.k1rakishou.chan.core.cache.FileCacheV2;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager;
@@ -92,8 +91,6 @@ public class AlbumDownloadController
     GlobalWindowInsetsManager globalWindowInsetsManager;
     @Inject
     DialogFactory dialogFactory;
-    @Inject
-    FileCacheV2 fileCacheV2;
     @Inject
     FileManager fileManager;
 

@@ -5,7 +5,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.features.settings.CachingScreen
 import com.github.k1rakishou.chan.features.settings.SettingsGroup
@@ -24,7 +24,7 @@ import kotlinx.coroutines.withContext
 class CachingSettingsScreen(
   context: Context,
   private val cacheHandler: Lazy<CacheHandler>,
-  private val fileCacheV2: FileCacheV2,
+  private val chunkedMediaDownloader: ChunkedMediaDownloader,
   private val appConstants: AppConstants,
   private val dialogFactory: DialogFactory
 ) : BaseSettingsScreen(
@@ -68,7 +68,7 @@ class CachingSettingsScreen(
               )
             },
             callback = {
-              fileCacheV2.clearCache(cacheFileType)
+              chunkedMediaDownloader.clearCache(cacheFileType)
               AppModuleAndroidUtils.showToast(context, "Cleared ${cacheFileType.name} disk cache")
             }
           )

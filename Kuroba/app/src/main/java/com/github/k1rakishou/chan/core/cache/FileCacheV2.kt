@@ -74,8 +74,7 @@ class FileCacheV2(
     downloaderOkHttpClient,
     activeDownloads,
     siteResolver,
-    MAX_TIMEOUT_MS,
-    appConstants
+    MAX_TIMEOUT_MS
   )
 
   private val chunkDownloader = ChunkDownloader(

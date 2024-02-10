@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.loader.impl
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
+import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.FileCacheListener
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData
@@ -25,7 +25,7 @@ import java.io.File
 import kotlin.math.abs
 
 class PrefetchLoader(
-  private val fileCacheV2: Lazy<FileCacheV2>,
+  private val chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
   private val cacheHandler: Lazy<CacheHandler>,
   private val chanThreadManager: Lazy<ChanThreadManager>,
   private val archivesManager: Lazy<ArchivesManager>,
@@ -84,9 +84,14 @@ class PrefetchLoader(
     }
 
     prefetchList.forEach { prefetch ->
-      val cancelableDownload = fileCacheV2.get().enqueueMediaPrefetchRequest(
+      val url = prefetch.postImage.imageUrl
+      if (url == null) {
+        return@forEach
+      }
+
+      val cancelableDownload = chunkedMediaDownloader.get().enqueueDownloadFileRequest(
         cacheFileType = cacheFileType,
-        postImage = prefetch.postImage
+        url = url
       )
 
       if (cancelableDownload == null) {
@@ -96,7 +101,6 @@ class PrefetchLoader(
       }
 
       cancelableDownload.addCallback(object : FileCacheListener() {
-
         override fun onStart(chunksCount: Int) {
           super.onStart(chunksCount)
           require(chunksCount == 1) { "Bad chunksCount for prefetch: $chunksCount" }

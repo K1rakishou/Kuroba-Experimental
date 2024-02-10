@@ -57,6 +57,8 @@ import okio.source
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
+import java.io.File
+import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
 import java.io.InputStreamReader
@@ -100,6 +102,55 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
         continuation.resumeValueSafe(response)
       }
     })
+  }
+}
+
+suspend fun OkHttpClient.downloadIntoFile(
+  request: Request,
+  outputFile: File,
+  validateResponse: (suspend (Response) -> Unit)? = null,
+  onProgress: ((Float) -> Unit)? = null
+): ModularResult<Unit> {
+  return ModularResult.Try {
+    withContext(Dispatchers.IO) {
+      withContext(Dispatchers.Main) { onProgress?.invoke(0f) }
+
+      val response = suspendCall(request)
+      if (!response.isSuccessful) {
+        throw BadStatusResponseException(response.code)
+      }
+
+      val body = response.body
+      if (body == null) {
+        throw EmptyBodyResponseException()
+      }
+
+      validateResponse?.invoke(response)
+
+      body.byteStream().use { inputStream ->
+        FileOutputStream(outputFile).use { fileOutputStream ->
+          val totalBytes = body.contentLength()
+          val buffer = ByteArray(DEFAULT_BUFFER_SIZE)
+
+          var bytesCopied: Long = 0
+          var bytes = inputStream.read(buffer)
+
+          while (bytes >= 0) {
+            fileOutputStream.write(buffer, 0, bytes)
+            bytesCopied += bytes
+
+            val progress = if (totalBytes > 0) {
+              bytesCopied.toFloat() / totalBytes
+            } else {
+              1f
+            }
+
+            withContext(Dispatchers.Main) { onProgress?.invoke(progress) }
+            bytes = inputStream.read(buffer)
+          }
+        }
+      }
+    }
   }
 }
 

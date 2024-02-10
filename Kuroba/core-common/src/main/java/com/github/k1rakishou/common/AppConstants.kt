@@ -125,6 +125,16 @@ open class AppConstants(
       return field
     }
 
+  val tempFilesDir: File
+    get() {
+      if (field.exists()) {
+        return field
+      }
+
+      check(field.mkdir()) { "Failed to create temp files directory! tempFilesDir=${field.absolutePath}" }
+      return field
+    }
+
   val mpvNativeLibsDir: File
     get() {
       if (field.exists()) {
@@ -165,6 +175,7 @@ open class AppConstants(
     mpvCertDir = File(context.filesDir, MPV_CERT_DIR_NAME)
 
     diskCacheDir = File(context.filesDir, DISK_CACHE_DIR_NAME)
+    tempFilesDir = File(context.filesDir, TEMP_FILES_DIR_NAME)
     exoPlayerCacheDir = File(context.cacheDir, EXO_PLAYER_CACHE_DIR_NAME)
   }
 
@@ -216,6 +227,7 @@ open class AppConstants(
     private const val EXO_PLAYER_CACHE_DIR_NAME = "exo_player_cache"
 
     const val DISK_CACHE_DIR_NAME = "disk_cache"
+    const val TEMP_FILES_DIR_NAME = "temp_files"
 
     const val MPV_CERTIFICATE_FILE_NAME = "cacert.pem"
 

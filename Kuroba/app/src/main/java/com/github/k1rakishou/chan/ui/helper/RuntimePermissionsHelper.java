@@ -16,6 +16,9 @@
  */
 package com.github.k1rakishou.chan.ui.helper;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
+import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -31,9 +34,6 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.helper.DialogFactory;
 
 import kotlin.Unit;
-
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openIntent;
-import static com.github.k1rakishou.common.AndroidUtils.getAppContext;
 
 public class RuntimePermissionsHelper {
     private static final int RUNTIME_PERMISSION_RESULT_ID = 3;
@@ -119,11 +119,16 @@ public class RuntimePermissionsHelper {
                     callback.retryPermissionRequest();
                     return Unit.INSTANCE;
                 })
+                .withDismissListener(() -> {
+                    callback.onDismissed();
+                    return Unit.INSTANCE;
+                })
                 .create();
     }
 
     public interface PermissionRequiredDialogCallback {
         void retryPermissionRequest();
+        void onDismissed();
     }
 
     private static class CallbackHolder {
