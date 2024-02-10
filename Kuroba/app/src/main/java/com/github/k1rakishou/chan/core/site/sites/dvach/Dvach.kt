@@ -579,7 +579,7 @@ class Dvach : CommonSite() {
         replyManager = replyManager
       )
 
-      return httpCallManager.get().makePostHttpCallWithProgress(replyCall)
+      return httpCallManager.get().makePostHttpCallWithProgress(replyCall, replyChanDescriptor)
         .map { replyCallResult ->
           when (replyCallResult) {
             is HttpCall.HttpCallWithProgressResult.Success -> {

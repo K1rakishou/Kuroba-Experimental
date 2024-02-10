@@ -79,7 +79,7 @@ data class ChildNotificationInfo(
 
     data class Error(
       val errorMessage: CharSequence
-    ) : Status("Failed to post, error=${errorMessage}")
+    ) : Status("Failed to post, error: ${errorMessage}")
 
     data object Canceled : Status("Canceled")
   }
