@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.core.cache.downloader
 import android.util.LruCache
 import androidx.annotation.GuardedBy
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.cache.FileCacheV2
 import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.core.site.Site
 import com.github.k1rakishou.chan.core.site.SiteBase

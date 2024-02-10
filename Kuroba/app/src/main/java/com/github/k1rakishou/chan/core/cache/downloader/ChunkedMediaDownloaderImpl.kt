@@ -1,10 +1,8 @@
-package com.github.k1rakishou.chan.core.cache
+package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
-import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadState
+import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.fsaf.FileManager
 import dagger.Lazy

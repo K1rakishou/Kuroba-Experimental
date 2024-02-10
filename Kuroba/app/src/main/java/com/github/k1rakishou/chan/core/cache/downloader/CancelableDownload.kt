@@ -1,6 +1,5 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.core.cache.FileCacheListener
 import com.github.k1rakishou.core_logger.Logger
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.TimeUnit

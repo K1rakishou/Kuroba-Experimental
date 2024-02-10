@@ -3,8 +3,8 @@ package com.github.k1rakishou.chan.core.loader.impl
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader
-import com.github.k1rakishou.chan.core.cache.FileCacheListener
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
 import com.github.k1rakishou.chan.core.loader.PostLoaderData

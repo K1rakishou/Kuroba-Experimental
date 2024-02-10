@@ -1,24 +1,11 @@
-package com.github.k1rakishou.chan.core.cache
+package com.github.k1rakishou.chan.core.cache.downloader
 
 import android.annotation.SuppressLint
 import android.net.ConnectivityManager
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.cache.downloader.ActiveDownloads
-import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkDownloader
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkMerger
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkPersister
-import com.github.k1rakishou.chan.core.cache.downloader.ConcurrentChunkedFileDownloader
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadState
-import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
-import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadRequest
-import com.github.k1rakishou.chan.core.cache.downloader.FileDownloadResult
-import com.github.k1rakishou.chan.core.cache.downloader.PartialContentSupportChecker
-import com.github.k1rakishou.chan.core.cache.downloader.log
-import com.github.k1rakishou.chan.core.cache.downloader.logError
-import com.github.k1rakishou.chan.core.cache.downloader.logErrorsAndExtractErrorMessage
+import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getNetworkClass
 import com.github.k1rakishou.chan.utils.BackgroundUtils
@@ -238,7 +225,8 @@ class FileCacheV2(
     return synchronized(activeDownloads) {
       val prevRequest = activeDownloads.get(url)
       if (prevRequest != null) {
-        log(TAG, "Request $url is already active, re-subscribing to it, " +
+        log(
+          TAG, "Request $url is already active, re-subscribing to it, " +
           "state=${prevRequest.cancelableDownload.getState()}")
 
         val prevCancelableDownload = prevRequest.cancelableDownload
@@ -299,7 +287,8 @@ class FileCacheV2(
 
       when (result) {
         is FileDownloadResult.Start -> {
-          log(TAG, "Download (${request}) has started. " +
+          log(
+            TAG, "Download (${request}) has started. " +
             "Chunks count = ${result.chunksCount}. " +
             "Network class = $networkClass. " +
             "Downloads = $activeDownloadsCount")
@@ -330,7 +319,8 @@ class FileCacheV2(
           val downloadedString = ChanPostUtils.getReadableFileSize(downloaded)
           val totalString = ChanPostUtils.getReadableFileSize(total)
 
-          log(TAG, "Success (" +
+          log(
+            TAG, "Success (" +
             "cacheFileType = cacheFileType, " +
             "downloaded = ${downloadedString} ($downloaded B), " +
             "total = ${totalString} ($total B), " +
@@ -364,7 +354,8 @@ class FileCacheV2(
             val downloadedString = ChanPostUtils.getReadableFileSize(result.downloaded)
             val totalString = ChanPostUtils.getReadableFileSize(chunkSize)
 
-            log(TAG,
+            log(
+              TAG,
               "Progress " +
                 "chunkIndex = ${result.chunkIndex}, downloaded: (${downloadedString}) " +
                 "(${result.downloaded} B) / ${totalString} (${chunkSize} B), " +
@@ -406,7 +397,8 @@ class FileCacheV2(
             "stopped"
           }
 
-          log(TAG, "Request ${request} $causeText, " +
+          log(
+            TAG, "Request ${request} $causeText, " +
             "downloaded = $downloaded, " +
             "total = $total, " +
             "network class = $networkClass, " +

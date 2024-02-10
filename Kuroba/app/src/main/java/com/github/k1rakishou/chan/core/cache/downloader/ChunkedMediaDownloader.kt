@@ -1,7 +1,6 @@
-package com.github.k1rakishou.chan.core.cache
+package com.github.k1rakishou.chan.core.cache.downloader
 
-import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
-import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
+import com.github.k1rakishou.chan.core.cache.CacheFileType
 import okhttp3.HttpUrl
 
 interface ChunkedMediaDownloader {

@@ -23,7 +23,7 @@ import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer;
 import com.github.k1rakishou.chan.core.base.okhttp.CoilOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader;
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader;
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper;
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;

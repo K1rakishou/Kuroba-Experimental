@@ -2,7 +2,7 @@ package com.github.k1rakishou.chan.core.di.module.application;
 
 import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
-import com.github.k1rakishou.chan.core.cache.ChunkedMediaDownloader;
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader;
 import com.github.k1rakishou.chan.core.helper.FilterEngine;
 import com.github.k1rakishou.chan.core.loader.impl.Chan4CloudFlareImagePreloader;
 import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
