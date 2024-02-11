@@ -104,9 +104,6 @@ abstract class SiteBase : Site, CoroutineScope {
 
   open val siteDomainSetting: StringSetting? = null
 
-  open val defaultChunksCount: ChanSettings.ConcurrentFileDownloadingChunks
-    get() = ChanSettings.ConcurrentFileDownloadingChunks.Two
-
   lateinit var concurrentFileDownloadingChunks: OptionsSetting<ChanSettings.ConcurrentFileDownloadingChunks>
   lateinit var cloudFlareClearanceCookieMap: MapSetting
   lateinit var lastUsedReplyMode: OptionsSetting<ReplyMode>
@@ -130,7 +127,7 @@ abstract class SiteBase : Site, CoroutineScope {
       prefs,
       "concurrent_download_chunk_count",
       ChanSettings.ConcurrentFileDownloadingChunks::class.java,
-      defaultChunksCount
+      ChanSettings.ConcurrentFileDownloadingChunks.Two
     )
 
     cloudFlareClearanceCookieMap = MapSetting(

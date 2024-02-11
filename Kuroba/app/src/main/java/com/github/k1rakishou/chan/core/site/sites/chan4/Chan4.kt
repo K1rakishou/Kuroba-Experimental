@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.core.site.sites.chan4
 
 import android.webkit.CookieManager
 import android.webkit.WebView
-import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.OptionSettingItem
 import com.github.k1rakishou.Setting
 import com.github.k1rakishou.chan.core.net.JsonReaderRequest
@@ -81,9 +80,6 @@ open class Chan4 : SiteBase() {
   lateinit var check4chanPostAcknowledged: BooleanSetting
 
   private val siteRequestModifier by lazy { Chan4SiteRequestModifier(this, appConstants) }
-
-  override val defaultChunksCount: ChanSettings.ConcurrentFileDownloadingChunks
-    get() = ChanSettings.ConcurrentFileDownloadingChunks.One
 
   override fun initialize() {
     super.initialize()
