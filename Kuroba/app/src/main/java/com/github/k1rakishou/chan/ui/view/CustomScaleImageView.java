@@ -44,6 +44,8 @@ public class CustomScaleImageView extends SubsamplingScaleImageView {
     public CustomScaleImageView(Context context, AttributeSet attr) {
         super(context, attr);
 
+        setDoubleTapZoomDuration(250);
+
         if (ChanSettings.isLowRamDevice()) {
             Logger.d(TAG, "Using Bitmap.Config.RGB_565");
             setPreferredBitmapConfig(Bitmap.Config.RGB_565);
