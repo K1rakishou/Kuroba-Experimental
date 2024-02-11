@@ -1119,11 +1119,8 @@ class ImageLoaderV2(
         }
       }
 
-      videoFrameDecodeMaybe.errorOrNull()?.let { error ->
-        if (error.isCoroutineCancellationException()) {
-          throw error
-        }
-      }
+      videoFrameDecodeMaybe.errorOrNull()
+        ?.rethrowCancellationException()
 
       // Failed to decode the file as video let's try decoding it as an image
     }

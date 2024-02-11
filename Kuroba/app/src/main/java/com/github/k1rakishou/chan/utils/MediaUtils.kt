@@ -89,6 +89,7 @@ object MediaUtils {
 
     var bitmap: Bitmap? = null
     var compressFormat = getImageFormat(inputBitmapFile)
+      ?: return null
 
     if (reencodeType == ReencodeType.AS_JPEG) {
       compressFormat = CompressFormat.JPEG

@@ -5,7 +5,7 @@ apply plugin: 'kotlin-kapt'
 android {
     namespace "com.github.k1rakishou.chan"
 
-    compileSdk 33
+    compileSdk 34
 
     defaultConfig {
         minSdkVersion 21
