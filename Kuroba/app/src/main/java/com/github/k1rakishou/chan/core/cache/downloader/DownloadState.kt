@@ -1,6 +1,15 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 sealed class DownloadState {
+
+  fun isStoppedOrCanceled(): Boolean {
+    return when (this) {
+      Running -> false
+      Canceled,
+      Stopped -> true
+    }
+  }
+
   data object Running : DownloadState()
 
   /**

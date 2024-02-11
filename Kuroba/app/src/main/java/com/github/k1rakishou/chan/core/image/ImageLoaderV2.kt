@@ -56,6 +56,7 @@ import com.github.k1rakishou.common.isCoroutineCancellationException
 import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.common.removeIfKt
 import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
@@ -67,7 +68,6 @@ import com.github.k1rakishou.fsaf.file.RawFile
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.google.android.exoplayer2.util.MimeTypes
 import dagger.Lazy
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -1145,11 +1145,8 @@ class ImageLoaderV2(
       return fileImagePreviewMaybe.value
     }
 
-    fileImagePreviewMaybe.errorOrNull()?.let { error ->
-      if (error is CancellationException) {
-        throw error
-      }
-    }
+    fileImagePreviewMaybe.errorOrNull()
+      ?.rethrowCancellationException()
 
     // Do not recycle bitmaps that are supposed to always stay in memory
     return getImageErrorLoadingDrawable(context)

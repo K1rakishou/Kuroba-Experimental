@@ -21,6 +21,10 @@ class BadStatusResponseException(val status: Int) : IOException("Bad status: $st
     return status == 404
   }
 
+  fun isUnsatisfiableRangeStatus(): Boolean {
+    return status == 416
+  }
+
   override fun shortErrorMessage(): String {
     if (isAuthError()) {
       return "Auth error"

@@ -167,7 +167,7 @@ class RemoteFilePicker(
 
     return suspendCancellableCoroutine { cancellableContinuation ->
       val cancelableDownload = chunkedMediaDownloader.get().enqueueDownloadFileRequest(
-        url = imageUrl,
+        mediaUrl = imageUrl,
         cacheFileType = cacheFileType,
         callback = object : FileCacheListener() {
           override fun onSuccess(file: File) {

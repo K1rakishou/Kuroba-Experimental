@@ -17,6 +17,7 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
 import android.content.Context;
+import android.net.ConnectivityManager;
 
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.Chan;
@@ -89,20 +90,22 @@ public class NetModule {
     @Provides
     @Singleton
     public ChunkedMediaDownloader provideChunkedMediaDownloaderImpl(
-            CoroutineScope appScope,
+            AppConstants appConstants,
             FileManager fileManager,
             SiteResolver siteResolver,
             Lazy<CacheHandler> cacheHandler,
-            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient
+            Lazy<RealDownloaderOkHttpClient> realDownloaderOkHttpClient,
+            ConnectivityManager connectivityManager
     ) {
         Logger.deps("ChunkedMediaDownloader");
 
         return new ChunkedMediaDownloaderImpl(
-                appScope,
+                appConstants,
                 fileManager,
                 siteResolver,
                 cacheHandler,
-                realDownloaderOkHttpClient
+                realDownloaderOkHttpClient,
+                connectivityManager
         );
     }
 

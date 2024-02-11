@@ -12,10 +12,10 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
-import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
 import com.github.k1rakishou.chan.core.cache.downloader.CancelableDownload
+import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
+import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.features.media_viewer.MediaLocation
@@ -388,7 +388,7 @@ abstract class MediaView<T : ViewableMedia, S : MediaViewState> constructor(
     )
 
     return chunkedMediaDownloader.enqueueDownloadFileRequest(
-      url = mediaLocationRemote.url,
+      mediaUrl = mediaLocationRemote.url,
       cacheFileType = CacheFileType.PostMediaFull,
       extraInfo = extraInfo,
       callback = object : FileCacheListener() {

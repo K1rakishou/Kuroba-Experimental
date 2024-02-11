@@ -1,16 +1,14 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import okhttp3.HttpUrl
 import java.io.File
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicLong
 
 internal open class FileDownloadRequest(
-  val url: String,
-  // How many bytes were downloaded across all chunks
-  val downloaded: AtomicLong,
-  // How many bytes a file we download takes in total
-  val total: AtomicLong,
+  val mediaUrl: HttpUrl,
+  val total: AtomicLong = AtomicLong(0),
   // A handle to cancel the current download
   val cancelableDownload: CancelableDownload,
   val extraInfo: DownloadRequestExtraInfo,
@@ -19,12 +17,27 @@ internal open class FileDownloadRequest(
   val cacheFileType: CacheFileType
 ) {
   private var output: File? = null
-
   private var chunksCount = AtomicInteger(-1)
+  private var totalDownloaded: LongArray = LongArray(0)
 
   @Synchronized
   fun chunksCount(count: Int) {
     chunksCount.set(count)
+    totalDownloaded = LongArray(0) { 0 }
+  }
+
+  @Synchronized
+  fun updateDownloaded(chunkIndex: Int, downloaded: Long) {
+    if (totalDownloaded.getOrNull(chunkIndex) == null) {
+      return
+    }
+
+    totalDownloaded[chunkIndex] += downloaded
+  }
+
+  @Synchronized
+  fun calculateDownloaded(): Long {
+    return totalDownloaded.sumOf { it }
   }
 
   @Synchronized
@@ -50,11 +63,14 @@ internal open class FileDownloadRequest(
       }
     }
 
-    return "[FileDownloadRequest: url=$url, outputFileName = $outputFileName]"
+    return "[FileDownloadRequest: url: '$mediaUrl', outputFileName: '$outputFileName']"
   }
+
 }
 
 class DownloadRequestExtraInfo(
   val fileSize: Long = -1L,
-  val fileHash: String? = null
+  val fileHash: String? = null,
+  val isGalleryBatchDownload: Boolean = false,
+  val isPrefetchDownload: Boolean = false,
 )

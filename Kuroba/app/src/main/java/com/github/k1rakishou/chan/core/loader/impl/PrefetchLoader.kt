@@ -4,6 +4,7 @@ import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
+import com.github.k1rakishou.chan.core.cache.downloader.DownloadRequestExtraInfo
 import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
 import com.github.k1rakishou.chan.core.loader.LoaderResult
 import com.github.k1rakishou.chan.core.loader.OnDemandContentLoader
@@ -89,9 +90,14 @@ class PrefetchLoader(
         return@forEach
       }
 
+      if (prefetch.postImage.isInlined) {
+        return@forEach
+      }
+
       val cancelableDownload = chunkedMediaDownloader.get().enqueueDownloadFileRequest(
         cacheFileType = cacheFileType,
-        url = url
+        mediaUrl = url,
+        extraInfo = DownloadRequestExtraInfo(isPrefetchDownload = true)
       )
 
       if (cancelableDownload == null) {

@@ -4,52 +4,69 @@ import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.site.SiteBase
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.processDataCollectionConcurrentlyIndexed
+import com.github.k1rakishou.common.rethrowCancellationException
+import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
-import io.reactivex.Flowable
-import io.reactivex.Scheduler
-import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.ProducerScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.channelFlow
+import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.flow.toList
+import okhttp3.HttpUrl
 import java.io.File
 import java.io.IOException
-import java.util.concurrent.atomic.AtomicInteger
+import java.net.UnknownHostException
 import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 
-internal class ConcurrentChunkedFileDownloader @Inject constructor(
+internal open class ConcurrentChunkedFileDownloader @Inject constructor(
   private val siteResolver: SiteResolver,
   private val chunkDownloader: ChunkDownloader,
   private val chunkPersister: ChunkPersister,
   private val chunkMerger: ChunkMerger,
-  private val workerScheduler: Scheduler,
-  private val verboseLogs: Boolean,
-  activeDownloads: ActiveDownloads,
-  cacheHandler: Lazy<CacheHandler>
-) : FileDownloader(activeDownloads, cacheHandler) {
+  private val cacheHandlerLazy: Lazy<CacheHandler>,
+  private val activeDownloads: ActiveDownloads,
+  private val verboseLogs: Boolean
+) {
+  private val cacheHandler: CacheHandler
+    get() = cacheHandlerLazy.get()
 
-  override fun download(
+  suspend fun download(
+    producerScope: ProducerScope<FileDownloadEvent>,
     partialContentCheckResult: PartialContentCheckResult,
-    url: String,
-    supportsPartialContentDownload: Boolean
-  ): Flowable<FileDownloadResult> {
+    mediaUrl: HttpUrl
+  ) {
     BackgroundUtils.ensureBackgroundThread()
 
-    val output = activeDownloads.get(url)
+    val output = activeDownloads.get(mediaUrl)
       ?.getOutputFile()
-      ?: activeDownloads.throwCancellationException(url)
+      ?: activeDownloads.throwCancellationException(mediaUrl)
 
     if (!output.exists()) {
-      return Flowable.error(IOException("Output file does not exist!"))
+      error("Output file does not exist!")
     }
 
     // We can't use Partial Content if we don't know the file size
-    val chunksCount = getChunksCount(supportsPartialContentDownload, partialContentCheckResult, url)
-    check(chunksCount >= 1) { "Chunks count is less than 1 = $chunksCount" }
+    val chunksCount = getChunksCount(
+      supportsPartialContentDownload = partialContentCheckResult.supportsPartialContentDownload,
+      partialContentCheckResult = partialContentCheckResult,
+      mediaUrl = mediaUrl
+    )
+
+    check(chunksCount >= 1) { "Chunks count is less than 1: $chunksCount" }
+    Logger.debug(TAG) { "download(${mediaUrl}) chunksCount: ${chunksCount}" }
 
     // Split the whole file size into chunks
     val chunks = if (chunksCount > 1) {
       chunkLong(
-        partialContentCheckResult.length,
-        chunksCount,
-        FileCacheV2.MIN_CHUNK_SIZE
+        value = partialContentCheckResult.length,
+        chunksCount = chunksCount,
+        minChunkSize = MIN_CHUNK_SIZE
       )
     } else {
       // If there is only one chunk then we should download the whole file without using
@@ -57,29 +74,275 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
       listOf(Chunk.wholeFile())
     }
 
-    return Flowable.concat(
-      Flowable.just(FileDownloadResult.Start(chunksCount)),
-      Flowable.defer { downloadInternal(url, chunks, partialContentCheckResult, output) }
-        .doOnSubscribe { log(TAG, "Starting downloading ($url)") }
-        .doOnComplete {
-          log(TAG, "Completed downloading ($url)")
-          removeChunksFromDisk(url)
+    producerScope.send(FileDownloadEvent.Start(chunksCount))
+
+    try {
+      try {
+        downloadChunksIntoFile(
+          producerScope = producerScope,
+          mediaUrl = mediaUrl,
+          chunks = chunks,
+          partialContentCheckResult = partialContentCheckResult,
+          output = output
+        )
+      } finally {
+        removeChunksFromDisk(mediaUrl)
+      }
+    } catch (error: Throwable) {
+      if (error is MediaDownloadException.HttpCodeException && error.isUnsatisfiableRangeStatus()) {
+        Logger.error(TAG) { "download(${mediaUrl}) got UnsatisfiableRange error, restarting in single chunk mode" }
+
+        delay(250)
+
+        download(
+          producerScope = producerScope,
+          partialContentCheckResult = PartialContentCheckResult(supportsPartialContentDownload = false),
+          mediaUrl = mediaUrl
+        )
+
+        return
+      }
+
+      throw error
+    }
+  }
+
+  private suspend fun downloadChunksIntoFile(
+    producerScope: ProducerScope<FileDownloadEvent>,
+    mediaUrl: HttpUrl,
+    chunks: List<Chunk>,
+    partialContentCheckResult: PartialContentCheckResult,
+    output: File
+  ) {
+    BackgroundUtils.ensureBackgroundThread()
+    check(chunks.isNotEmpty()) { "chunks is empty!" }
+
+    Logger.debug(TAG) {
+      "downloadChunksIntoFile() File ($mediaUrl) was split into ${chunks.size} chunks: ${chunks}"
+    }
+
+    if (!partialContentCheckResult.couldDetermineFileSize() && chunks.size != 1) {
+      throw IllegalStateException(
+        "The size of the file is unknown but chunks size is not 1, size: ${chunks.size}, chunks: $chunks"
+      )
+    }
+
+    activeDownloads.ensureNotCanceled(mediaUrl)
+
+    if (partialContentCheckResult.couldDetermineFileSize()) {
+      activeDownloads.updateTotalLength(mediaUrl, partialContentCheckResult.length)
+    } else {
+      activeDownloads.updateTotalLength(mediaUrl, 0L)
+    }
+
+    val startTime = System.currentTimeMillis()
+    val totalDownloaded = AtomicLong(0L)
+
+    activeDownloads.updateChunks(mediaUrl, chunks)
+
+    val chunkTerminalEvents = channelFlow<ChunkDownloadEvent> {
+      processDataCollectionConcurrentlyIndexed(
+        dataList = chunks,
+        dispatcher = Dispatchers.IO,
+        rethrowErrors = true
+      ) { chunkIndex, chunk ->
+        processChunk(
+          producerScope = this,
+          chunk = chunk,
+          chunkIndex = chunkIndex,
+          totalChunksCount = chunks.size,
+          mediaUrl = mediaUrl,
+          totalDownloaded = totalDownloaded
+        )
+      }
+    }
+      .onEach { chunkDownloadEvent ->
+        processChunkDownloadEvent(
+          producerScope = producerScope,
+          mediaUrl = mediaUrl,
+          chunkDownloadEvent = chunkDownloadEvent
+        )
+      }
+      .catch { error ->
+        error.rethrowCancellationException()
+
+        processChunkDownloadEvent(
+          producerScope = producerScope,
+          mediaUrl = mediaUrl,
+          chunkDownloadEvent = ChunkDownloadEvent.ChunkError(error)
+        )
+      }
+      .filter { chunkDownloadEvent -> chunkDownloadEvent !is ChunkDownloadEvent.Progress }
+      .toList()
+
+    Logger.debug(TAG) {
+      val eventsAsString = chunkTerminalEvents.joinToString { event ->
+        buildString {
+          append(event::class.java.simpleName)
+
+          if (event is ChunkDownloadEvent.ChunkError) {
+            append(" ")
+            append("(error: ${event.error.errorMessageOrClassName()})")
+          }
         }
-        .doOnError { error ->
-          logErrorsAndExtractErrorMessage(TAG, "Error while trying to download", error)
-          removeChunksFromDisk(url)
+      }
+
+      "downloadChunksIntoFile() Got ${chunkTerminalEvents.size} terminal events: ${eventsAsString}"
+    }
+
+    try {
+      processTerminalEvents(
+        chunkTerminalEvents = chunkTerminalEvents,
+        expectedChunksCount = chunks.size,
+        mediaUrl = mediaUrl
+      )
+
+      chunkMerger.mergeChunksIntoCacheFile(
+        mediaUrl = mediaUrl,
+        chunkSuccessEvents = chunkTerminalEvents as List<ChunkDownloadEvent.ChunkSuccess>,
+        output = output
+      )
+
+      val requestTime = System.currentTimeMillis() - startTime
+      val fileDownloadEventSuccess = FileDownloadEvent.Success(output, requestTime)
+      producerScope.send(fileDownloadEventSuccess)
+
+      Logger.debug(TAG) { "downloadChunksIntoFile() success" }
+    } catch (error: Throwable) {
+      error.rethrowCancellationException()
+
+      if (error is MediaDownloadException.HttpCodeException && error.isUnsatisfiableRangeStatus()) {
+        throw error
+      }
+
+      Logger.error(TAG) { "downloadChunksIntoFile() error: ${error.errorMessageOrClassName()}" }
+      producerScope.send(FileDownloadEvent.UnknownException(error))
+    }
+  }
+
+  private fun processTerminalEvents(
+    chunkTerminalEvents: List<ChunkDownloadEvent>,
+    expectedChunksCount: Int,
+    mediaUrl: HttpUrl
+  ) {
+    if (chunkTerminalEvents.isEmpty()) {
+      activeDownloads.throwCancellationException(mediaUrl)
+    }
+
+    val chunkErrorEvents = chunkTerminalEvents
+      .filterIsInstance<ChunkDownloadEvent.ChunkError>()
+      .map { event -> event.error }
+
+    if (chunkErrorEvents.isNotEmpty()) {
+      val hasUnsatisfiableRangeErrors = chunkErrorEvents
+        .any { error -> (error is MediaDownloadException.HttpCodeException) && error.isUnsatisfiableRangeStatus() }
+
+      if (hasUnsatisfiableRangeErrors) {
+        throw MediaDownloadException.HttpCodeException(416)
+      }
+
+      val nonCancellationException = chunkErrorEvents.firstOrNull { error ->
+        error !is MediaDownloadException.CancellationException
+      }
+
+      if (nonCancellationException != null) {
+        // If there are any exceptions other than CancellationException - throw it
+        throw nonCancellationException
+      }
+
+      if (chunkErrorEvents.isEmpty()) {
+        error("Got no errors (wtf?). chunkTerminalEvents: ${chunkTerminalEvents}")
+      }
+
+      // Otherwise rethrow the first exception (which is CancellationException)
+      throw chunkErrorEvents.first()
+    }
+
+    val downloadedChunks = chunkTerminalEvents as List<ChunkDownloadEvent.ChunkSuccess>
+    if (downloadedChunks.size != expectedChunksCount) {
+      throw MediaDownloadException.GenericException(
+        "Failed to download some chunks. Expected ${expectedChunksCount} chunks but received ${downloadedChunks.size}"
+      )
+    }
+  }
+
+  private suspend fun processChunk(
+    producerScope: ProducerScope<ChunkDownloadEvent>,
+    chunk: Chunk,
+    chunkIndex: Int,
+    totalChunksCount: Int,
+    mediaUrl: HttpUrl,
+    totalDownloaded: AtomicLong
+  ) {
+    activeDownloads.ensureNotCanceled(mediaUrl)
+
+    val isPrefetchDownload = activeDownloads.isPrefetchDownload(mediaUrl)
+    var retries = MAX_RETRIES
+
+    while (retries > 0) {
+      try {
+        Logger.debug(TAG) { "processChunk(${mediaUrl}) chunk: ${chunk}, retries: ${retries} start" }
+        --retries
+
+        val chunkResponse = chunkDownloader.downloadChunk(
+          mediaUrl = mediaUrl,
+          chunk = chunk,
+          totalChunksCount = totalChunksCount
+        )
+
+        chunkPersister.storeChunkInFile(
+          producerScope = producerScope,
+          mediaUrl = mediaUrl,
+          chunkResponse = chunkResponse,
+          totalDownloaded = totalDownloaded,
+          chunkIndex = chunkIndex,
+          totalChunksCount = totalChunksCount
+        )
+
+        Logger.debug(TAG) { "processChunk(${mediaUrl}) chunk: ${chunk} success" }
+        return
+      } catch (error: Throwable) {
+        Logger.error(TAG) {
+          "processChunk(${mediaUrl}) chunk: ${chunk}, retries: ${retries} error: ${error.errorMessageOrClassName()}"
         }
-        .subscribeOn(workerScheduler)
-    )
+
+        error.rethrowCancellationException()
+
+        if (error is MediaDownloadException.HttpCodeException) {
+          throw error
+        }
+
+        if (error is MediaDownloadException.CancellationException) {
+          throw error
+        }
+
+        // Only use retry-on-IO-error with non-prefetch downloads (regular or gallery batch downloads).
+        if (error is IOException && !isPrefetchDownload) {
+          Logger.debug(TAG) { "processChunk(${mediaUrl}) chunk: ${chunk} retrying chunk download" }
+
+          if (error is UnknownHostException) {
+            // When UnknownHostException happens it ignores all the timeouts and can exhaust all the retries in a second
+            // so we need to use custom delay to avoid that.
+            delay(5000)
+          }
+
+          continue
+        }
+
+        throw error
+      }
+    }
+
+    throw MediaDownloadException.GenericException("Failed to download '${mediaUrl}' (Timeout)")
   }
 
   private fun getChunksCount(
     supportsPartialContentDownload: Boolean,
     partialContentCheckResult: PartialContentCheckResult,
-    url: String
+    mediaUrl: HttpUrl
   ): Int {
-    val activeDownload = activeDownloads.get(url)
-      ?: activeDownloads.throwCancellationException(url)
+    val activeDownload = activeDownloads.get(mediaUrl)
+      ?: activeDownloads.throwCancellationException(mediaUrl)
 
     if (!supportsPartialContentDownload || !partialContentCheckResult.couldDetermineFileSize()) {
       activeDownload.chunksCount(1)
@@ -92,7 +355,7 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
       return 1
     }
 
-    val host = url.toHttpUrlOrNull()?.host
+    val host = mediaUrl.host
     if (host == null) {
       activeDownload.chunksCount(1)
       return 1
@@ -110,225 +373,73 @@ internal class ConcurrentChunkedFileDownloader @Inject constructor(
     return chunksCount
   }
 
-  private fun removeChunksFromDisk(url: String) {
-    val chunks = activeDownloads.getChunks(url)
+  private fun removeChunksFromDisk(mediaUrl: HttpUrl) {
+    val chunks = activeDownloads.getChunks(mediaUrl)
     if (chunks.isEmpty()) {
       return
     }
 
-    val request = activeDownloads.get(url)
-      ?: activeDownloads.throwCancellationException(url)
+    val request = activeDownloads.get(mediaUrl)
+      ?: activeDownloads.throwCancellationException(mediaUrl)
 
     for (chunk in chunks) {
-      val chunkFile = cacheHandler.get().getChunkCacheFileOrNull(
+      val chunkFile = cacheHandler.getChunkCacheFileOrNull(
         cacheFileType = request.cacheFileType,
         chunkStart = chunk.start,
         chunkEnd = chunk.end,
-        url = url
+        url = mediaUrl.toString()
       ) ?: continue
 
       if (chunkFile.delete()) {
-        log(TAG, "Deleted chunk file ${chunkFile.absolutePath}")
+        Logger.debug(TAG) { "Deleted chunk file ${chunkFile.absolutePath}" }
       } else {
-        logError(TAG, "Couldn't delete chunk file ${chunkFile.absolutePath}")
+        Logger.error(TAG) { "Couldn't delete chunk file ${chunkFile.absolutePath}" }
       }
     }
 
-    activeDownloads.clearChunks(url)
+    activeDownloads.clearChunks(mediaUrl)
   }
 
-  private fun downloadInternal(
-    url: String,
-    chunks: List<Chunk>,
-    partialContentCheckResult: PartialContentCheckResult,
-    output: File
-  ): Flowable<FileDownloadResult> {
-    BackgroundUtils.ensureBackgroundThread()
-
+  private suspend fun processChunkDownloadEvent(
+    producerScope: ProducerScope<FileDownloadEvent>,
+    mediaUrl: HttpUrl,
+    chunkDownloadEvent: ChunkDownloadEvent
+  ) {
     if (verboseLogs) {
-      log(TAG, "File ($url) was split into chunks: ${chunks}")
+      Logger.debug(TAG) { "processChunkDownloadEvent(${mediaUrl}) chunkDownloadEvent: ${chunkDownloadEvent}" }
     }
 
-    if (!partialContentCheckResult.couldDetermineFileSize() && chunks.size != 1) {
-      throw IllegalStateException("The size of the file is unknown but chunks size is not 1, " +
-        "size = ${chunks.size}, chunks = $chunks")
-    }
-
-    if (isRequestStoppedOrCanceled(url)) {
-      activeDownloads.throwCancellationException(url)
-    }
-
-    if (partialContentCheckResult.couldDetermineFileSize()) {
-      activeDownloads.updateTotalLength(url, partialContentCheckResult.length)
-    }
-
-    val startTime = System.currentTimeMillis()
-    val totalDownloaded = AtomicLong(0L)
-    val chunkIndex = AtomicInteger(0)
-
-    activeDownloads.addChunks(url, chunks)
-
-    val downloadedChunks = Flowable.fromIterable(chunks)
-      .subscribeOn(workerScheduler)
-      .observeOn(workerScheduler)
-      .flatMap { chunk ->
-        return@flatMap processChunks(
-          url,
-          totalDownloaded,
-          chunkIndex.getAndIncrement(),
-          chunk,
-          chunks.size
+    val fileDownloadEvent = when (chunkDownloadEvent) {
+      is ChunkDownloadEvent.Progress -> {
+        FileDownloadEvent.Progress(
+          chunkDownloadEvent.chunkIndex,
+          chunkDownloadEvent.downloaded,
+          chunkDownloadEvent.chunkSize
         )
       }
-      .onErrorReturn { error -> ChunkDownloadEvent.ChunkError(error) }
+      is ChunkDownloadEvent.ChunkError -> {
+        chunkDownloadEvent.error.rethrowCancellationException()
 
-    val multicastEvent = downloadedChunks
-      .doOnNext { event ->
-        check(
-          event is ChunkDownloadEvent.Progress
-            || event is ChunkDownloadEvent.ChunkSuccess
-            || event is ChunkDownloadEvent.ChunkError
-        ) {
-          "Event is neither ChunkDownloadEvent.Progress " +
-            "nor ChunkDownloadEvent.ChunkSuccess " +
-            "nor ChunkDownloadEvent.ChunkError !!!"
-        }
-      }
-      .publish()
-      // This is fucking important! Do not change this value unless you
-      // want to change the amount of separate streams!!! Right now we need
-      // only two.
-      .autoConnect(2)
-
-    // First separate stream.
-    // We don't want to do anything with Progress events we just want to pass them
-    // to the downstream
-    val skipEvents = multicastEvent
-      .filter { event -> event is ChunkDownloadEvent.Progress }
-
-    // Second separate stream.
-    val successEvents = multicastEvent
-      .filter { event ->
-        return@filter event is ChunkDownloadEvent.ChunkSuccess
-          || event is ChunkDownloadEvent.ChunkError
-      }
-      .toList()
-      .toFlowable()
-      .flatMap { chunkEvents ->
-        if (chunkEvents.isEmpty()) {
-          activeDownloads.throwCancellationException(url)
+        if (chunkDownloadEvent.error is MediaDownloadException.HttpCodeException) {
+          throw chunkDownloadEvent.error
         }
 
-        if (chunkEvents.any { event -> event is ChunkDownloadEvent.ChunkError }) {
-          val errors = chunkEvents
-            .filterIsInstance<ChunkDownloadEvent.ChunkError>()
-            .map { event -> event.error }
-
-          val nonCancellationException = errors.firstOrNull { error ->
-            error !is FileCacheException.CancellationException
-          }
-
-          if (nonCancellationException != null) {
-            // If there are any exceptions other than CancellationException - throw it
-            throw nonCancellationException
-          } else {
-            // Otherwise rethrow the first exception (which is CancellationException)
-            throw errors.first()
-          }
-        }
-
-        @Suppress("UNCHECKED_CAST")
-        return@flatMap chunkMerger.mergeChunksIntoCacheFile(
-          url = url,
-          chunkSuccessEvents = chunkEvents as List<ChunkDownloadEvent.ChunkSuccess>,
-          output = output,
-          requestStartTime = startTime
-        )
+        FileDownloadEvent.UnknownException(chunkDownloadEvent.error)
       }
-
-    // So why are we splitting a reactive stream in two? Because we need to do some
-    // additional handling of ChunkSuccess events but we don't want to do that
-    // for Progress event (We want to pass them downstream right away).
-
-    // Merge them back into a single stream
-    return Flowable.merge(skipEvents, successEvents)
-      .map { cde ->
-        // Map ChunkDownloadEvent to FileDownloadResult
-        return@map when (cde) {
-          is ChunkDownloadEvent.Success -> {
-            FileDownloadResult.Success(
-              cde.output,
-              cde.requestTime
-            )
-          }
-          is ChunkDownloadEvent.Progress -> {
-            FileDownloadResult.Progress(
-              cde.chunkIndex,
-              cde.downloaded,
-              cde.chunkSize
-            )
-          }
-          is ChunkDownloadEvent.ChunkError,
-          is ChunkDownloadEvent.ChunkSuccess -> {
-            throw RuntimeException("Not used, ${cde.javaClass.name}")
-          }
-        }
+      is ChunkDownloadEvent.ChunkSuccess -> {
+        // Do not convert ChunkDownloadEvent.ChunkSuccess into FileDownloadEvent.Success event because we still need to
+        // merge all the chunks into a single file.
+        return
       }
-  }
-
-  private fun processChunks(
-    url: String,
-    totalDownloaded: AtomicLong,
-    chunkIndex: Int,
-    chunk: Chunk,
-    totalChunksCount: Int
-  ): Flowable<ChunkDownloadEvent> {
-    BackgroundUtils.ensureBackgroundThread()
-
-    if (isRequestStoppedOrCanceled(url)) {
-      activeDownloads.throwCancellationException(url)
     }
 
-    val isGalleryBatchDownload = activeDownloads.isGalleryBatchDownload(url)
-
-    // Download each chunk separately in parallel
-    return chunkDownloader.downloadChunk(url, chunk, totalChunksCount)
-      .subscribeOn(workerScheduler)
-      .observeOn(workerScheduler)
-      .map { response -> ChunkResponse(chunk, response) }
-      .flatMap { chunkResponse ->
-        // Here is where the most fun is happening. At this point we have sent multiple
-        // requests to the server and got responses. Now we need to read the bodies of
-        // those responses each into it's own chunk file. Then, after we have read
-        // them all, we need to sort them and write all chunks into the resulting
-        // file - cache file. After that we need to do clean up: delete chunk files
-        // (we also need to delete them in case of an error)
-        return@flatMap chunkPersister.storeChunkInFile(
-          url = url,
-          chunkResponse = chunkResponse,
-          totalDownloaded = totalDownloaded,
-          chunkIndex = chunkIndex,
-          totalChunksCount = totalChunksCount
-        )
-      }
-      // Retry on IO error mechanism. Apply it to each chunk individually
-      // instead of applying it to all chunks. Do not use it if the exception
-      // is CancellationException
-      .retry(MAX_RETRIES) { error ->
-        val retry = error !is FileCacheException.CancellationException
-          && error is IOException
-
-        // Only use retry-on-IO-error with batch gallery downloads
-        if (isGalleryBatchDownload && retry) {
-          log(TAG, "Retrying chunk ($chunk) for url $url, " +
-            "error = ${error.javaClass.simpleName}, msg = ${error.message}")
-        }
-
-        retry
-      }
+    producerScope.send(fileDownloadEvent)
   }
 
   companion object {
     private const val TAG = "ConcurrentChunkedFileDownloader"
+
+    private const val MAX_RETRIES = 5L
+    const val MIN_CHUNK_SIZE = 1024L * 8L // 8 KB
   }
 }

@@ -21,8 +21,8 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isCoroutineCancellationException
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.runInterruptible
 import java.io.File
 import java.io.FileInputStream
@@ -437,9 +437,7 @@ object MediaUtils {
         result = frameBitmap
       }
     } catch (error: Exception) {
-      if (error is CancellationException) {
-        throw error
-      }
+      error.rethrowCancellationException()
 
       val errorMsg = error.errorMessageOrClassName()
       Logger.e(TAG, "decodeVideoFilePreviewImage() error: $errorMsg")

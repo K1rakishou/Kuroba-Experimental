@@ -8,21 +8,36 @@ fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
   require(value >= chunksCount) { "Value ($value) must be greater or equal to chunksCount ($chunksCount)" }
 
   if (value < minChunkSize) {
-    return listOf(Chunk(0, value))
+    return listOf(
+      Chunk(
+        index = 0,
+        start = 0,
+        realEnd = value
+      )
+    )
   }
 
   val chunks = mutableListWithCap<Chunk>(chunksCount)
   val chunkSize = value / chunksCount
   var current = 0L
 
-  for (i in 0 until chunksCount) {
-    chunks += Chunk(current, (current + chunkSize).coerceAtMost(value))
+  for (chunkIndex in 0 until chunksCount) {
+    chunks += Chunk(
+      index = chunkIndex,
+      start = current,
+      realEnd = (current + chunkSize).coerceAtMost(value)
+    )
+
     current += chunkSize
   }
 
   if (current < value) {
     val lastChunk = chunks.removeAt(chunks.lastIndex)
-    chunks += Chunk(lastChunk.start, value)
+    chunks += Chunk(
+      index = chunksCount,
+      start = lastChunk.start,
+      realEnd = value
+    )
   }
 
   return chunks
@@ -31,7 +46,11 @@ fun chunkLong(value: Long, chunksCount: Int, minChunkSize: Long): List<Chunk> {
 /**
  * [realEnd] is only being used in tests.
  * */
-data class Chunk(val start: Long, val realEnd: Long) {
+data class Chunk(
+  val index: Int,
+  val start: Long,
+  val realEnd: Long
+) {
   // end must equal to realEnd - 1
   val end: Long
     get() = realEnd - 1
@@ -43,10 +62,16 @@ data class Chunk(val start: Long, val realEnd: Long) {
   fun chunkSize(): Long = realEnd - start
 
   override fun toString(): String {
-    return "Chunk(start=$start, end=$end)"
+    return "Chunk(${index}, $start..$end)"
   }
 
   companion object {
-    fun wholeFile(): Chunk = Chunk(0, Long.MAX_VALUE)
+    fun wholeFile(): Chunk {
+      return Chunk(
+        index = 0,
+        start = 0,
+        realEnd = Long.MAX_VALUE
+      )
+    }
   }
 }

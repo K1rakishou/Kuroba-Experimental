@@ -1,27 +1,27 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.core_logger.Logger
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.TimeUnit
-import java.util.concurrent.TimeoutException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import okhttp3.HttpUrl
 import java.util.concurrent.atomic.AtomicReference
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 /**
  * ThreadSafe
  * */
 class CancelableDownload(
-  val url: String,
-  val downloadType: DownloadType,
-  private val requestCancellationThread: ExecutorService
+  val mediaUrl: HttpUrl,
+  val downloadType: DownloadType
 ) {
   private val state: AtomicReference<DownloadState> = AtomicReference(DownloadState.Running)
   private val callbacks: MutableMap<Class<*>, FileCacheListener> = mutableMapOf()
 
-  /**
-   * These callbacks are used to cancel a lot of things, like the HEAD request, the get response
-   * body request and response body read loop.
-   * */
-  private val disposeFuncList: MutableList<() -> Unit> = mutableListOf()
+  private val coroutineScope = CoroutineScope(SupervisorJob())
 
   fun isRunning(): Boolean = state.get() == DownloadState.Running
   fun getState(): DownloadState = state.get()
@@ -32,10 +32,7 @@ class CancelableDownload(
       return
     }
 
-    if (callbacks.containsKey(callback::class.java)) {
-      return
-    }
-
+    check(coroutineScope.isActive)
     callbacks[callback::class.java] = callback
   }
 
@@ -51,11 +48,6 @@ class CancelableDownload(
     callbacks.clear()
   }
 
-  @Synchronized
-  fun addDisposeFuncList(disposeFunc: () -> Unit) {
-    disposeFuncList += disposeFunc
-  }
-
   /**
    * Use this to cancel prefetches. You can't cancel them via the regular cancel() method
    * to avoid canceling prefetches when swiping through the images in the album viewer. This
@@ -63,6 +55,7 @@ class CancelableDownload(
    * to use a regular [cancel] for that.
    * */
   fun cancelPrefetch() {
+    Logger.debug(TAG) { "cancelPrefetch(${mediaUrl})" }
     cancel(true)
   }
 
@@ -70,6 +63,7 @@ class CancelableDownload(
    * A regular [cancel] method that cancels active downloads but not prefetch downloads.
    * */
   fun cancel() {
+    Logger.debug(TAG) { "cancel(${mediaUrl})" }
     cancel(false)
   }
 
@@ -78,6 +72,8 @@ class CancelableDownload(
    * WebmStreamingSource, but we actually want to stop it when stopping a gallery download.
    * */
   fun stop() {
+    Logger.debug(TAG) { "stop(${mediaUrl})" }
+
     if (!state.compareAndSet(DownloadState.Running, DownloadState.Stopped)) {
       // Already canceled or stopped
       return
@@ -110,55 +106,19 @@ class CancelableDownload(
   }
 
   private fun dispose() {
-    // We need to cancel the network requests on a background thread because otherwise it will
-    // throw NetworkOnMainThread exception.
-    // We also want it to be blocking so that we won't end up in a race condition when you
-    // cancel a download and then start a new one with the same url right away. We need a little
-    // bit of time for it to get really canceled.
+    callbacks.clear()
 
-    try {
-      requestCancellationThread.submit {
-        val startTime = System.currentTimeMillis()
-        val funcsCount = disposeFuncList.size
+    if (coroutineScope.isActive) {
+      coroutineScope.cancel()
+    }
+  }
 
-        synchronized(this) {
-          // Cancel downloads
-          disposeFuncList.forEach { func ->
-            try {
-              func.invoke()
-            } catch (error: Throwable) {
-              Logger.e(TAG, "Unhandled error in dispose function, " +
-                "error = ${error.javaClass.simpleName}")
-            }
-          }
-
-          disposeFuncList.clear()
-        }
-
-        val totalTime = System.currentTimeMillis() - startTime
-
-        val action = when (state.get()) {
-          DownloadState.Running -> {
-            throw RuntimeException("Expected Stopped or Canceled but got Running!")
-          }
-          DownloadState.Stopped -> "Stopping"
-          DownloadState.Canceled -> "Cancelling"
-        }
-
-        Logger.d(TAG, "$action file download request (cleanup took: ${totalTime}ms, " +
-          "funcsCount=$funcsCount), url=$url")
-      }
-        // We use timeout here just in case to not get deadlocked
-        .get(MAX_CANCELLATION_WAIT_TIME_SECONDS, TimeUnit.SECONDS)
-    } catch (error: Throwable) {
-      if (error is TimeoutException) {
-        Logger.e(TAG, "POSSIBLE DEADLOCK in CancelableDownload.dispose() !!!", error)
-        return
-      }
-
-      // Catch all the exceptions. Otherwise some request info won't be cleared when an error
-      // occurs.
-      Logger.e(TAG, "Error while trying to dispose of a request for url=$url)", error)
+  fun launch(
+    context: CoroutineContext = EmptyCoroutineContext,
+    block: suspend CoroutineScope.() -> Unit
+  ) {
+    if (coroutineScope.isActive) {
+      coroutineScope.launch(context) { block() }
     }
   }
 
@@ -171,6 +131,5 @@ class CancelableDownload(
 
   companion object {
     private const val TAG = "CancelableDownload"
-    private const val MAX_CANCELLATION_WAIT_TIME_SECONDS = 10L
   }
 }

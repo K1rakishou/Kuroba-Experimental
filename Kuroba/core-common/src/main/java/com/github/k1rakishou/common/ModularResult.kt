@@ -1,8 +1,7 @@
 package com.github.k1rakishou.common
 
 import com.github.k1rakishou.core_logger.Logger
-import kotlinx.coroutines.CancellationException
-import java.util.*
+import java.util.Locale
 import java.util.concurrent.Callable
 import javax.annotation.CheckReturnValue
 
@@ -192,10 +191,7 @@ sealed class ModularResult<V : Any?> {
       return try {
         value(func())
       } catch (error: Throwable) {
-        if (error is CancellationException) {
-          throw error
-        }
-
+        error.rethrowCancellationException()
         error(error)
       }
     }
@@ -207,10 +203,7 @@ sealed class ModularResult<V : Any?> {
       return try {
         value(func.call())
       } catch (error: Throwable) {
-        if (error is CancellationException) {
-          throw error
-        }
-
+        error.rethrowCancellationException()
         error(error)
       }
     }

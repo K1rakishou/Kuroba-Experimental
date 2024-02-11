@@ -9,6 +9,7 @@ import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManag
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isExceptionImportant
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
@@ -16,12 +17,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.CoroutineStart
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.reactive.asFlow
@@ -29,7 +28,6 @@ import kotlinx.coroutines.withContext
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 
-@OptIn(ExperimentalCoroutinesApi::class)
 class BookmarkForegroundWatcher(
   private val verboseLogsEnabled: Boolean,
   private val appScope: CoroutineScope,
@@ -60,7 +58,7 @@ class BookmarkForegroundWatcher(
           } catch (error: Throwable) {
             if (error is CancellationException) {
               Logger.d(TAG, "updateBookmarksWorkerLoop() canceled, exiting")
-              throw error
+              error.rethrowCancellationException()
             }
 
             logErrorIfNeeded(error)

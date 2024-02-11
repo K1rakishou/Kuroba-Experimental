@@ -3,10 +3,10 @@ package com.github.k1rakishou.chan.core.helper
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.manager.ArchivesManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.common.rethrowCancellationException
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -156,7 +156,9 @@ class ChanThreadTicker(
         try {
           action.invoke(tickerAction.chanDescriptor)
         } catch (error: Throwable) {
-          if (error is CancellationException || isDevFlavor) {
+          error.rethrowCancellationException()
+
+          if (isDevFlavor) {
             throw error
           }
 
@@ -181,9 +183,7 @@ class ChanThreadTicker(
           "nextWaitTimeSeconds=${nextWaitTimeSeconds}")
 
     } catch (error: Throwable) {
-      if (error is CancellationException) {
-        return
-      }
+      error.rethrowCancellationException()
 
       if (isDevFlavor) {
         throw error

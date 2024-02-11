@@ -6,9 +6,10 @@ import okhttp3.HttpUrl
 interface ChunkedMediaDownloader {
     fun clearCache(cacheFileType: CacheFileType)
     fun isRunning(url: String): Boolean
+    fun isRunning(url: HttpUrl): Boolean
 
     fun enqueueDownloadFileRequest(
-        url: HttpUrl,
+        mediaUrl: HttpUrl,
         cacheFileType: CacheFileType,
         extraInfo: DownloadRequestExtraInfo = DownloadRequestExtraInfo(),
         callback: FileCacheListener? = null,

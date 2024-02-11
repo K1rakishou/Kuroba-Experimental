@@ -1,48 +1,40 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealDownloaderOkHttpClient
-import com.github.k1rakishou.chan.core.cache.downloader.DownloaderUtils.isCancellationError
 import com.github.k1rakishou.chan.core.site.SiteResolver
-import com.github.k1rakishou.chan.utils.BackgroundUtils
-import com.github.k1rakishou.common.AppConstants
+import com.github.k1rakishou.common.suspendCall
+import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
-import okhttp3.Call
-import okhttp3.Callback
+import okhttp3.HttpUrl
 import okhttp3.Request
-import okhttp3.Response
-import java.io.IOException
 
 internal class ChunkDownloader(
-  private val downloaderOkHttpClient: Lazy<RealDownloaderOkHttpClient>,
+  private val downloaderOkHttpClientLazy: Lazy<RealDownloaderOkHttpClient>,
   private val siteResolver: SiteResolver,
-  private val activeDownloads: ActiveDownloads,
-  private val verboseLogs: Boolean,
-  private val appConstants: AppConstants
+  private val activeDownloads: ActiveDownloads
 ) {
+  private val downloaderOkHttpClient: RealDownloaderOkHttpClient
+    get() = downloaderOkHttpClientLazy.get()
 
-  fun downloadChunk(
-    url: String,
+  suspend fun downloadChunk(
+    mediaUrl: HttpUrl,
     chunk: Chunk,
     totalChunksCount: Int
-  ): Flowable<Response> {
-    val request = activeDownloads.get(url)
-      ?: activeDownloads.throwCancellationException(url)
+  ): ChunkResponse {
+    activeDownloads.ensureNotCanceled(mediaUrl)
 
     if (chunk.isWholeFile() && totalChunksCount > 1) {
-      throw IllegalStateException("downloadChunk() Bad amount of chunks, " +
-        "should be only one but actual = $totalChunksCount")
+      throw IllegalStateException("Bad amount of chunks, should be only one but actual: $totalChunksCount")
     }
 
-    if (verboseLogs) {
-      log(TAG, "Start downloading url=$url, chunk ${chunk.start}..${chunk.end}")
+    Logger.debug(TAG) {
+      "downloadChunk() Start downloading '$mediaUrl', chunk: ${chunk}"
     }
 
     val requestBuilder = Request.Builder()
-      .url(url)
+      .url(mediaUrl)
 
-    siteResolver.findSiteForUrl(url)?.let { site ->
+    siteResolver.findSiteForUrl(mediaUrl.toString())?.let { site ->
       site.requestModifier().modifyFullImageGetRequest(site, requestBuilder)
     }
 
@@ -59,77 +51,25 @@ internal class ChunkDownloader(
     val httpRequest = requestBuilder.build()
     val startTime = System.currentTimeMillis()
 
-    return Flowable.create<Response>({ emitter ->
-      BackgroundUtils.ensureBackgroundThread()
+    val response = try {
+      downloaderOkHttpClient.okHttpClient().suspendCall(httpRequest)
+    } catch (error: Throwable) {
+      val diff = System.currentTimeMillis() - startTime
+      val exceptionMessage = error.message ?: "No message"
 
-      val serializedEmitter = emitter.serialize()
-      val call = downloaderOkHttpClient.get().okHttpClient().newCall(httpRequest)
-
-      // This function will be used to cancel a CHUNK (not the whole file) download upon
-      // cancellation
-      val disposeFunc = {
-        BackgroundUtils.ensureBackgroundThread()
-
-        if (!call.isCanceled()) {
-          log(TAG, "Disposing OkHttp Call for CHUNKED request ${request} via " +
-              "manual canceling (${chunk.start}..${chunk.end})")
-
-          call.cancel()
-        }
+      Logger.debug(TAG) {
+        "downloadChunk() Couldn't get chunk response. " +
+        "Reason: ${error.javaClass.simpleName}, message: '${exceptionMessage}', " +
+        "mediaUrl: '$mediaUrl', chunk: ${chunk}, time: ${diff}ms"
       }
 
-      val downloadState = activeDownloads.addDisposeFunc(url, disposeFunc)
-      if (downloadState != DownloadState.Running) {
-        when (downloadState) {
-          DownloadState.Canceled -> activeDownloads.get(url)?.cancelableDownload?.cancel()
-          DownloadState.Stopped -> activeDownloads.get(url)?.cancelableDownload?.stop()
-          else -> {
-            serializedEmitter.tryOnError(
-              RuntimeException("DownloadState must be either Stopped or Canceled")
-            )
-            return@create
-          }
-        }
+      throw error
+    }
 
-        serializedEmitter.tryOnError(
-          FileCacheException.CancellationException(
-            activeDownloads.getState(url),
-            url)
-        )
-        return@create
-      }
+    val diff = System.currentTimeMillis() - startTime
+    Logger.debug(TAG) { "downloadChunk() Got chunk response in '$mediaUrl' chunk: ${chunk} in ${diff}ms" }
 
-      call.enqueue(object : Callback {
-        override fun onFailure(call: Call, e: IOException) {
-          val diff = System.currentTimeMillis() - startTime
-          val exceptionMessage = e.message ?: "No message"
-
-          log(TAG, "Couldn't get chunk response, reason = ${e.javaClass.simpleName} ($exceptionMessage) " +
-              "($url) ${chunk.start}..${chunk.end}, time = ${diff}ms")
-
-          if (!isCancellationError(e)) {
-            serializedEmitter.tryOnError(e)
-          } else {
-            serializedEmitter.tryOnError(
-              FileCacheException.CancellationException(
-                activeDownloads.getState(url),
-                url
-              )
-            )
-          }
-        }
-
-        override fun onResponse(call: Call, response: Response) {
-          if (verboseLogs) {
-            val diff = System.currentTimeMillis() - startTime
-            log(TAG, "Got chunk response in ($url) ${chunk.start}..${chunk.end} in ${diff}ms")
-          }
-
-          serializedEmitter.onNext(response)
-          serializedEmitter.onComplete()
-        }
-      })
-    }, BackpressureStrategy.BUFFER)
+    return ChunkResponse(chunk, response)
   }
 
   companion object {

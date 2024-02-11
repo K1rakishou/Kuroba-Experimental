@@ -1,12 +1,11 @@
 package com.github.k1rakishou.chan.core.cache.downloader
 
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.exhaustive
+import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
-import io.reactivex.BackpressureStrategy
-import io.reactivex.Flowable
-import io.reactivex.FlowableEmitter
+import kotlinx.coroutines.channels.ProducerScope
+import okhttp3.HttpUrl
 import okhttp3.Response
 import okhttp3.ResponseBody
 import okhttp3.internal.closeQuietly
@@ -20,124 +19,123 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicLong
 
 internal class ChunkPersister(
-  private val cacheHandler: Lazy<CacheHandler>,
+  private val cacheHandlerLazy: Lazy<CacheHandler>,
   private val activeDownloads: ActiveDownloads,
   private val verboseLogs: Boolean
 ) {
+  private val cacheHandler: CacheHandler
+    get() = cacheHandlerLazy.get()
+
   fun storeChunkInFile(
-    url: String,
+    producerScope: ProducerScope<ChunkDownloadEvent>,
+    mediaUrl: HttpUrl,
     chunkResponse: ChunkResponse,
     totalDownloaded: AtomicLong,
     chunkIndex: Int,
     totalChunksCount: Int
-  ): Flowable<ChunkDownloadEvent> {
-    return Flowable.create({ emitter ->
-      BackgroundUtils.ensureBackgroundThread()
+  ) {
+    val request = activeDownloads.get(mediaUrl)
+      ?: activeDownloads.throwCancellationException(mediaUrl)
 
-      val request = activeDownloads.get(url)
-        ?: activeDownloads.throwCancellationException(url)
+    val chunk = chunkResponse.chunk
+    val response = chunkResponse.response
 
-      val serializedEmitter = emitter.serialize()
-      val chunk = chunkResponse.chunk
-      val response = chunkResponse.response
+    try {
+      if (verboseLogs) {
+        Logger.debug(TAG) { "storeChunkInFile($chunkIndex, $mediaUrl) called for chunk: ${chunk}" }
+      }
+
+      if (chunk.isWholeFile() && totalChunksCount > 1) {
+        throw IllegalStateException("storeChunkInFile($chunkIndex, $mediaUrl) Bad amount of chunks, " +
+                "should be only one but actual: $totalChunksCount")
+      }
+
+      if (!response.isSuccessful) {
+        if (response.code == 404) {
+          throw MediaDownloadException.FileNotFoundOnTheServerException(mediaUrl)
+        }
+
+        throw MediaDownloadException.HttpCodeException(response.code)
+      }
+
+      val chunkCacheFile = cacheHandler.getOrCreateChunkCacheFile(
+        cacheFileType = request.cacheFileType,
+        chunkStart = chunk.start,
+        chunkEnd = chunk.end,
+        url = mediaUrl.toString()
+      ) ?: throw IOException("Couldn't create chunk cache file")
 
       try {
-        if (verboseLogs) {
-          log(TAG, "storeChunkInFile($chunkIndex) ($url) called for chunk ${chunk.start}..${chunk.end}")
-        }
+        response.useAsResponseBody { responseBody ->
+          var chunkSize = responseBody.contentLength()
 
-        if (chunk.isWholeFile() && totalChunksCount > 1) {
-          throw IllegalStateException("storeChunkInFile($chunkIndex) Bad amount of chunks, " +
-            "should be only one but actual = $totalChunksCount")
-        }
-
-        if (!response.isSuccessful) {
-          if (response.code == 404) {
-            throw FileCacheException.FileNotFoundOnTheServerException()
-          }
-
-          throw FileCacheException.HttpCodeException(response.code)
-        }
-
-        val chunkCacheFile = cacheHandler.get().getOrCreateChunkCacheFile(
-          cacheFileType = request.cacheFileType,
-          chunkStart = chunk.start,
-          chunkEnd = chunk.end,
-          url = url
-        ) ?: throw IOException("Couldn't create chunk cache file")
-
-        try {
-          response.useAsResponseBody { responseBody ->
-            var chunkSize = responseBody.contentLength()
-
-            if (totalChunksCount == 1) {
-              if (chunkSize <= 0) {
-                chunkSize = activeDownloads.get(url)?.extraInfo?.fileSize ?: -1
-              }
-
-              // When downloading the whole file in a single chunk we can only know
-              // for sure the whole size of the file at this point since we probably
-              // didn't send the HEAD request
-              activeDownloads.updateTotalLength(url, chunkSize)
+          if (totalChunksCount == 1) {
+            if (chunkSize <= 0) {
+              chunkSize = activeDownloads.get(mediaUrl)?.extraInfo?.fileSize ?: -1
             }
 
-            responseBody.source().use { bufferedSource ->
-              if (!bufferedSource.isOpen) {
-                activeDownloads.throwCancellationException(url)
-              }
-
-              chunkCacheFile.useAsBufferedSink { bufferedSink ->
-                readBodyLoop(
-                  chunkSize,
-                  url,
-                  bufferedSource,
-                  bufferedSink,
-                  totalDownloaded,
-                  serializedEmitter,
-                  chunkIndex,
-                  chunkCacheFile,
-                  chunk
-                )
-              }
-            }
+            // When downloading the whole file in a single chunk we can only know
+            // for sure the whole size of the file at this point since we probably
+            // didn't send the HEAD request
+            activeDownloads.updateTotalLength(mediaUrl, chunkSize)
           }
 
-          log(TAG, "storeChunkInFile(${chunkIndex}) success, url=$url, chunk ${chunk.start}..${chunk.end}")
-        } catch (error: Throwable) {
-          deleteChunkFile(chunkCacheFile)
-          throw error
+          responseBody.source().use { bufferedSource ->
+            if (!bufferedSource.isOpen) {
+              activeDownloads.throwCancellationException(mediaUrl)
+            }
+
+            chunkCacheFile.useAsBufferedSink { bufferedSink ->
+              readBodyLoop(
+                producerScope = producerScope,
+                chunkSize = chunkSize,
+                mediaUrl = mediaUrl,
+                bufferedSource = bufferedSource,
+                bufferedSink = bufferedSink,
+                totalDownloaded = totalDownloaded,
+                chunkIndex = chunkIndex,
+                chunkCacheFile = chunkCacheFile,
+                chunk = chunk
+              )
+            }
+          }
+        }
+
+        Logger.debug(TAG) {
+          "storeChunkInFile($chunkIndex, $mediaUrl) success for chunk: ${chunk}"
         }
       } catch (error: Throwable) {
-        handleErrors(
-          url,
-          totalChunksCount,
-          error,
-          chunkIndex,
-          chunk,
-          serializedEmitter
-        )
-      } finally {
-        response.closeQuietly()
+        deleteChunkFile(chunkCacheFile)
+        throw error
       }
-    }, BackpressureStrategy.BUFFER)
+    } catch (error: Throwable) {
+      handleErrors(
+        mediaUrl = mediaUrl,
+        totalChunksCount = totalChunksCount,
+        error = error,
+        chunkIndex = chunkIndex,
+        chunk = chunk,
+      )
+    } finally {
+      response.closeQuietly()
+    }
   }
 
   @Synchronized
   private fun handleErrors(
-    url: String,
+    mediaUrl: HttpUrl,
     totalChunksCount: Int,
     error: Throwable,
     chunkIndex: Int,
     chunk: Chunk,
-    serializedEmitter: FlowableEmitter<ChunkDownloadEvent>
   ) {
-    val state = activeDownloads.getState(url)
+    val state = activeDownloads.getState(mediaUrl)
     val isStoppedOrCanceled = state == DownloadState.Canceled || state == DownloadState.Stopped
 
     // If totalChunksCount == 1 then there is nothing else to stop so we can just emit
     // one error
     if (isStoppedOrCanceled || totalChunksCount > 1 && error !is IOException) {
-      log(TAG, "handleErrors($chunkIndex) ($url) cancel for chunk ${chunk.start}..${chunk.end}")
+      Logger.error(TAG) { "handleErrors($chunkIndex, $mediaUrl) cancel for chunk: ${chunk}, state: ${state}" }
 
       // First emit an error
       if (isStoppedOrCanceled) {
@@ -145,23 +143,24 @@ internal class ChunkPersister(
         // when emitting more than one error concurrently they will be converted into
         // a CompositeException which is a set of exceptions and it's a pain in the
         // ass to deal with.
-        serializedEmitter.onComplete()
-      } else {
-        serializedEmitter.tryOnError(error)
+
+        // Only after that do the cancellation because otherwise we will always end up with
+        // CancellationException (because almost all dispose callbacks throw it) which is not
+        // an indicator of what had originally happened
+        when (state) {
+          DownloadState.Running,
+          DownloadState.Canceled -> activeDownloads.get(mediaUrl)?.cancelableDownload?.cancel()
+          DownloadState.Stopped -> activeDownloads.get(mediaUrl)?.cancelableDownload?.stop()
+        }.exhaustive
+
+        return
       }
 
-      // Only after that do the cancellation because otherwise we will always end up with
-      // CancellationException (because almost all dispose callbacks throw it) which is not
-      // an indicator of what had originally happened
-      when (state) {
-        DownloadState.Running,
-        DownloadState.Canceled -> activeDownloads.get(url)?.cancelableDownload?.cancel()
-        DownloadState.Stopped -> activeDownloads.get(url)?.cancelableDownload?.stop()
-      }.exhaustive
-    } else {
-      log(TAG, "handleErrors($chunkIndex) ($url) fail for chunk ${chunk.start}..${chunk.end}")
-      serializedEmitter.tryOnError(error)
+      throw error
     }
+
+    Logger.error(TAG) { "handleErrors($chunkIndex, $mediaUrl) fail for chunk: ${chunk}" }
+    throw error
   }
 
   private fun Response.useAsResponseBody(func: (ResponseBody) -> Unit) {
@@ -181,12 +180,12 @@ internal class ChunkPersister(
   }
 
   private fun readBodyLoop(
+    producerScope: ProducerScope<ChunkDownloadEvent>,
     chunkSize: Long,
-    url: String,
+    mediaUrl: HttpUrl,
     bufferedSource: BufferedSource,
     bufferedSink: BufferedSink,
     totalDownloaded: AtomicLong,
-    serializedEmitter: FlowableEmitter<ChunkDownloadEvent>,
     chunkIndex: Int,
     chunkCacheFile: File,
     chunk: Chunk
@@ -196,18 +195,18 @@ internal class ChunkPersister(
     val buffer = Buffer()
 
     val notifySize = if (chunkSize <= 0) {
-      FileDownloader.BUFFER_SIZE
+      DEFAULT_BUFFER_SIZE.toLong()
     } else {
       chunkSize / 24
     }
 
     try {
-      while (true) {
-        if (isRequestStoppedOrCanceled(url)) {
-          activeDownloads.throwCancellationException(url)
-        }
+      activeDownloads.updateDownloaded(mediaUrl, chunkIndex, 0L)
 
-        val read = bufferedSource.read(buffer, FileDownloader.BUFFER_SIZE)
+      while (true) {
+        activeDownloads.ensureNotCanceled(mediaUrl)
+
+        val read = bufferedSource.read(buffer, DEFAULT_BUFFER_SIZE.toLong())
         if (read == -1L) {
           break
         }
@@ -216,12 +215,12 @@ internal class ChunkPersister(
         bufferedSink.write(buffer, read)
 
         val total = totalDownloaded.addAndGet(read)
-        activeDownloads.updateDownloaded(url, chunkIndex, total)
+        activeDownloads.updateDownloaded(mediaUrl, chunkIndex, total)
 
         if (downloaded >= notifyTotal + notifySize) {
           notifyTotal = downloaded
 
-          serializedEmitter.onNext(
+          producerScope.trySend(
             ChunkDownloadEvent.Progress(
               chunkIndex,
               downloaded,
@@ -235,7 +234,7 @@ internal class ChunkPersister(
 
       // So that we have 100% progress for every chunk
       if (chunkSize >= 0) {
-        serializedEmitter.onNext(
+        producerScope.trySend(
           ChunkDownloadEvent.Progress(
             chunkIndex,
             chunkSize,
@@ -244,27 +243,26 @@ internal class ChunkPersister(
         )
 
         if (downloaded != chunkSize) {
-          logError(TAG, "downloaded (${downloaded}) != chunkSize (${chunkSize})")
-          activeDownloads.throwCancellationException(url)
+          Logger.error(TAG) { "readBodyLoop(${chunk}, $mediaUrl) downloaded (${downloaded}) != chunkSize (${chunkSize})" }
+          activeDownloads.throwCancellationException(mediaUrl)
         }
       }
 
       if (verboseLogs) {
-        log(TAG, "pipeChunk($chunkIndex) ($url) SUCCESS for chunk ${chunk.start}..${chunk.end}")
+        Logger.debug(TAG) { "readBodyLoop($chunk, $mediaUrl) SUCCESS for chunk: ${chunk}" }
       }
 
-      serializedEmitter.onNext(
+      producerScope.trySend(
         ChunkDownloadEvent.ChunkSuccess(
-          chunkIndex,
-          chunkCacheFile,
-          chunk
+          chunkIndex = chunkIndex,
+          chunkCacheFile = chunkCacheFile,
+          chunk = chunk
         )
       )
-      serializedEmitter.onComplete()
     } catch (error: Throwable) {
       // Handle StreamResetExceptions and such
       if (DownloaderUtils.isCancellationError(error)) {
-        activeDownloads.throwCancellationException(url)
+        activeDownloads.throwCancellationException(mediaUrl)
       } else {
         throw error
       }
@@ -273,18 +271,9 @@ internal class ChunkPersister(
     }
   }
 
-  private fun isRequestStoppedOrCanceled(url: String): Boolean {
-    BackgroundUtils.ensureBackgroundThread()
-
-    val request = activeDownloads.get(url)
-      ?: return true
-
-    return !request.cancelableDownload.isRunning()
-  }
-
   private fun deleteChunkFile(chunkFile: File) {
     if (!chunkFile.delete()) {
-      logError(TAG, "Couldn't delete chunk file: ${chunkFile.absolutePath}")
+      Logger.error(TAG) { "Couldn't delete chunk file: '${chunkFile.absolutePath}'" }
     }
   }
 

@@ -32,8 +32,7 @@ import com.github.k1rakishou.MpvSettings
 import com.github.k1rakishou.PersistableChanStateInfo
 import com.github.k1rakishou.chan.activity.CrashReportActivity
 import com.github.k1rakishou.chan.core.AppDependenciesInitializer
-import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException
-import com.github.k1rakishou.chan.core.cache.downloader.FileCacheException.FileNotFoundOnTheServerException
+import com.github.k1rakishou.chan.core.cache.downloader.MediaDownloadException
 import com.github.k1rakishou.chan.core.di.component.application.ApplicationComponent
 import com.github.k1rakishou.chan.core.di.component.application.DaggerApplicationComponent
 import com.github.k1rakishou.chan.core.di.module.application.AppModule
@@ -359,8 +358,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
         return@setErrorHandler
       }
 
-      if (error is FileCacheException.CancellationException
-        || error is FileNotFoundOnTheServerException
+      if (error is MediaDownloadException.CancellationException
+        || error is MediaDownloadException.FileNotFoundOnTheServerException
       ) {
         // fine, sometimes they get through all the checks but it doesn't really matter
         return@setErrorHandler

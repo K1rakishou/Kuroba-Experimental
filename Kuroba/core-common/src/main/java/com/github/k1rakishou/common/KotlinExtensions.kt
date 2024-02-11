@@ -31,9 +31,11 @@ import kotlinx.coroutines.CancellableContinuation
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.NonCancellable
+import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -68,6 +70,7 @@ import java.lang.reflect.Type
 import java.nio.charset.StandardCharsets
 import java.util.LinkedList
 import java.util.TreeMap
+import java.util.concurrent.TimeoutException
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.regex.Matcher
 import javax.net.ssl.SSLException
@@ -690,8 +693,10 @@ fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
 }
 
 fun Throwable.errorMessageOrClassName(): String {
+  val className = this::class.java.name
+
   if (!isExceptionImportant()) {
-    return this::class.java.name
+    return className
   }
 
   val actualMessage = if (cause?.message?.isNotNullNorBlank() == true) {
@@ -701,10 +706,10 @@ fun Throwable.errorMessageOrClassName(): String {
   }
 
   if (!actualMessage.isNullOrBlank()) {
-    return actualMessage
+    return "${actualMessage} (${className}) "
   }
 
-  return this::class.java.name
+  return className
 }
 
 fun Throwable.isExceptionImportant(): Boolean {
@@ -1251,14 +1256,15 @@ suspend fun <T, R> processDataCollectionConcurrently(
   dataList: Collection<T>,
   batchCount: Int = Runtime.getRuntime().availableProcessors(),
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  rethrowErrors: Boolean = false,
   processFunc: suspend (T) -> R?
 ): List<R> {
   if (dataList.isEmpty()) {
     return emptyList()
   }
 
-  return supervisorScope {
-    return@supervisorScope dataList
+  return newScope(rethrowErrors) {
+    return@newScope dataList
       .chunked(batchCount)
       .flatMap { dataChunk ->
         return@flatMap dataChunk
@@ -1268,6 +1274,10 @@ suspend fun <T, R> processDataCollectionConcurrently(
                 ensureActive()
                 return@async processFunc(data)
               } catch (error: Throwable) {
+                if (rethrowErrors) {
+                  throw error
+                }
+
                 return@async null
               }
             }
@@ -1285,6 +1295,7 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
   dataList: Collection<T>,
   batchCount: Int = Runtime.getRuntime().availableProcessors(),
   dispatcher: CoroutineDispatcher = Dispatchers.Default,
+  rethrowErrors: Boolean = false,
   processFunc: suspend (Int, T) -> R?
 ): List<R> {
   if (dataList.isEmpty()) {
@@ -1293,8 +1304,8 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
 
   val batchIndex = AtomicInteger(0)
 
-  return supervisorScope {
-    return@supervisorScope dataList
+  return newScope(rethrowErrors) {
+    return@newScope dataList
       .chunked(batchCount)
       .flatMap { dataChunk ->
         val results = dataChunk
@@ -1304,6 +1315,10 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
                 ensureActive()
                 return@async processFunc(batchIndex.get() + index, data)
               } catch (error: Throwable) {
+                if (rethrowErrors) {
+                  throw error
+                }
+
                 return@async null
               }
             }
@@ -1314,6 +1329,14 @@ suspend fun <T, R> processDataCollectionConcurrentlyIndexed(
         batchIndex.addAndGet(results.size)
         return@flatMap results
       }
+  }
+}
+
+private suspend fun <R> newScope(rethrowErrors: Boolean, block: suspend CoroutineScope.() -> R): R {
+  return if (rethrowErrors) {
+    coroutineScope(block)
+  } else {
+    supervisorScope(block)
   }
 }
 
@@ -1739,3 +1762,25 @@ fun HttpUrl.domain(): String? {
 }
 
 fun unreachable(message: String? = null): Nothing = error(message ?: "Unreachable!")
+
+fun Throwable.rethrowCancellationException() {
+  if (this is CancellationException) {
+    throw this
+  }
+}
+
+fun Throwable.isCancellationException(): Boolean {
+  if (this is CancellationException) {
+    return true
+  }
+
+  return false
+}
+
+fun Throwable.isTimeoutCancellationException(): Boolean {
+  if (this is TimeoutException || this is TimeoutCancellationException) {
+    return true
+  }
+
+  return false
+}

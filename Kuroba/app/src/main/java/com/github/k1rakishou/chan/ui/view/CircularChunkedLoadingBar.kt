@@ -80,6 +80,12 @@ class CircularChunkedLoadingBar @JvmOverloads constructor(
   }
 
   fun setChunksCount(chunks: Int) {
+    BackgroundUtils.ensureMainThread()
+
+    if (chunks <= 0) {
+      return
+    }
+
     val initialProgress = (0 until chunks).map { MIN_PROGRESS }
 
     chunkLoadingProgress.clear()
