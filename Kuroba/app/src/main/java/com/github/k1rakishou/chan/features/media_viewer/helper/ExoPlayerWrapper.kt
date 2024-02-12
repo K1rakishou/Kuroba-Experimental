@@ -360,7 +360,7 @@ class ExoPlayerWrapper(
 
   companion object {
     private const val TAG = "ExoPlayerWrapper"
-    private const val MAX_BG_AUDIO_DOWNLOAD_WAIT_TIME_MS = 15_000L
+    private const val MAX_BG_AUDIO_DOWNLOAD_WAIT_TIME_MS = 30_000L
 
     const val SEEK_POSITION_DELTA = 100
 
