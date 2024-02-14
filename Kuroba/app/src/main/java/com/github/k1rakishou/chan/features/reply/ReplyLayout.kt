@@ -59,6 +59,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
+import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.GlobalViewStateManager
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
@@ -119,6 +120,8 @@ import com.github.k1rakishou.persist_state.ReplyMode
 import com.github.k1rakishou.prefs.OptionsSetting
 import com.github.k1rakishou.prefs.StringSetting
 import dagger.Lazy
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -162,6 +165,8 @@ class ReplyLayout @JvmOverloads constructor(
   lateinit var _themeEngine: Lazy<ThemeEngine>
   @Inject
   lateinit var dialogFactory: DialogFactory
+  @Inject
+  lateinit var sitesSetupControllerOpenNotifier: SitesSetupControllerOpenNotifier
 
   val presenter: ReplyPresenter
     get() = _presenter.get()
@@ -634,6 +639,12 @@ class ReplyLayout @JvmOverloads constructor(
         Logger.d(TAG, "Updating ReplyLayout wrapping mode because app settings were updated")
         setWrappingMode(presenter.isExpanded)
       }
+    }
+
+    coroutineScope.launch {
+      sitesSetupControllerOpenNotifier.siteSelectionControllerOpenEventsFlow
+        .onEach { replyLayoutCallback.openReply(false) }
+        .collect()
     }
 
     onThemeChanged()

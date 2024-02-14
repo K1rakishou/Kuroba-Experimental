@@ -19,7 +19,7 @@ import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
 import org.jsoup.parser.Parser
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
-import java.util.*
+import java.util.UUID
 import java.util.regex.Pattern
 
 sealed class ViewableMediaParcelableHolder {
@@ -403,6 +403,7 @@ data class ViewableMediaMeta(
         return@lazy null
       }
 
+      // TODO: add support for videos
       if (!mimeType.startsWith("audio/")) {
         return@lazy null
       }

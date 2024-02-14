@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
-import coil.request.Disposable
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
@@ -44,7 +43,7 @@ internal class EpoxySearchPostView @JvmOverloads constructor(
   private val searchPostThumbnailSize: Int
 
   private var postDescriptor: PostDescriptor? = null
-  private var imageDisposable: Disposable? = null
+  private var imageDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   init {
     inflate(context, R.layout.epoxy_search_post_view, this)

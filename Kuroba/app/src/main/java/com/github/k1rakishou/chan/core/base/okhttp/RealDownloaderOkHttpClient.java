@@ -28,7 +28,7 @@ public class RealDownloaderOkHttpClient implements DownloaderOkHttpClient {
     private final SiteResolver siteResolver;
     private final FirewallBypassManager firewallBypassManager;
 
-    private OkHttpClient downloaderClient;
+    private volatile OkHttpClient downloaderClient;
 
     @Inject
     public RealDownloaderOkHttpClient(

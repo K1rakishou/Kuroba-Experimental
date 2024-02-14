@@ -35,7 +35,6 @@ import com.github.k1rakishou.common.ModularResult
 import okhttp3.HttpUrl
 import javax.net.ssl.SSLException
 
-@Suppress("UnnecessaryVariable")
 @Composable
 fun KurobaComposeImage(
   modifier: Modifier,
@@ -189,8 +188,8 @@ private suspend fun ProduceStateScope<ImageLoaderResult>.loadImage(
 }
 
 sealed class ImageLoaderResult {
-  object NotInitialized : ImageLoaderResult()
-  object Loading : ImageLoaderResult()
+  data object NotInitialized : ImageLoaderResult()
+  data object Loading : ImageLoaderResult()
   data class Success(val painter: BitmapPainter) : ImageLoaderResult()
   data class Error(val throwable: Throwable) : ImageLoaderResult()
 }

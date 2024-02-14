@@ -41,7 +41,6 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.collections.component1
 import kotlin.collections.component2
-import kotlin.time.ExperimentalTime
 
 class BoardSelectionController(
   context: Context,
@@ -89,7 +88,6 @@ class BoardSelectionController(
     component.inject(this)
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun onCreate() {
     super.onCreate()
 

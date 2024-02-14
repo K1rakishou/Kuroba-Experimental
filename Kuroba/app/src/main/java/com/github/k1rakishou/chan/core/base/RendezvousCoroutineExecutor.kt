@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.core.base
 
+import com.github.k1rakishou.common.errorMessageOrClassName
+import com.github.k1rakishou.common.isExceptionImportant
 import com.github.k1rakishou.core_logger.Logger
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -40,7 +42,11 @@ class RendezvousCoroutineExecutor(
         try {
           serializedAction.action()
         } catch (error: Throwable) {
-          Logger.e(TAG, "serializedAction unhandled exception", error)
+          if (error.isExceptionImportant()) {
+            Logger.e(TAG, "serializedAction unhandled exception", error)
+          } else {
+            Logger.e(TAG, "serializedAction unhandled exception: ${error.errorMessageOrClassName()}")
+          }
         }
       }
     }

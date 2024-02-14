@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.controller;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 import android.content.Context;
@@ -48,7 +47,6 @@ import java.util.Map;
 
 import javax.inject.Inject;
 
-import coil.request.Disposable;
 import okhttp3.HttpUrl;
 
 public class RemovedPostsController
@@ -232,7 +230,7 @@ public class RemovedPostsController
         private ThemeEngine themeEngine;
         private List<HiddenOrRemovedPost> hiddenOrRemovedPosts = new ArrayList<>();
 
-        private Map<PostDescriptor, Disposable> activeImageLoadRequests = new HashMap<>();
+        private Map<PostDescriptor, ImageLoaderV2.ImageLoaderRequestDisposable> activeImageLoadRequests = new HashMap<>();
 
         public RemovedPostAdapter(
                 @NonNull Context context,
@@ -290,8 +288,8 @@ public class RemovedPostsController
             postComment.setText(hiddenOrRemovedPost.comment);
             checkbox.setChecked(hiddenOrRemovedPost.isChecked());
 
-            Disposable activeRequestDisposable = activeImageLoadRequests.remove(postDescriptor);
-            if (activeRequestDisposable != null && !activeRequestDisposable.isDisposed()) {
+            ImageLoaderV2.ImageLoaderRequestDisposable activeRequestDisposable = activeImageLoadRequests.remove(postDescriptor);
+            if (activeRequestDisposable != null) {
                 activeRequestDisposable.dispose();
             }
 
@@ -303,7 +301,7 @@ public class RemovedPostsController
                     // load only the first image
                     postImage.setVisibility(VISIBLE);
 
-                    Disposable disposable = loadImage(postImage, thumbnailUrl);
+                    ImageLoaderV2.ImageLoaderRequestDisposable disposable = loadImage(postImage, thumbnailUrl);
                     activeImageLoadRequests.put(postDescriptor, disposable);
                 } else {
                     postImage.setImageBitmap(null);
@@ -346,7 +344,7 @@ public class RemovedPostsController
             return additionalPostHideInfo;
         }
 
-        private Disposable loadImage(
+        private ImageLoaderV2.ImageLoaderRequestDisposable loadImage(
                 AppCompatImageView postImage,
                 HttpUrl thumbnailUrl
         ) {

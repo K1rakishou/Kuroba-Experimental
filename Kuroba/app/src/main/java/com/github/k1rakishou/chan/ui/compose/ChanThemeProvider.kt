@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.core_themes.ChanTheme
 import com.github.k1rakishou.core_themes.ThemeEngine
 
@@ -17,6 +18,7 @@ val LocalChanTheme = staticCompositionLocalOf<ChanTheme> { error("Theme not prov
 @Composable
 fun ProvideChanTheme(
   themeEngine: ThemeEngine,
+  globalWindowInsetsManager: GlobalWindowInsetsManager,
   content: @Composable () -> Unit
 ) {
   var chanTheme by remember { mutableStateOf(themeEngine.chanTheme) }
@@ -44,7 +46,9 @@ fun ProvideChanTheme(
 
     MaterialTheme(colors = updatedColors) {
       ProvideKurobaViewConfiguration {
-        content()
+        ProvideWindowInsets(globalWindowInsetsManager) {
+          content()
+        }
       }
     }
   }

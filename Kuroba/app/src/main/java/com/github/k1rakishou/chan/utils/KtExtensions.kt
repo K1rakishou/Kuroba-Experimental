@@ -292,6 +292,14 @@ fun fixImageUrlIfNecessary(requestUrl: String, imageUrl: String?): String? {
   return null
 }
 
+fun <VM : ViewModel> ComponentActivity.viewModelByKeyWithClass(vmClass: Class<VM>, key: String? = null): VM {
+  if (key != null) {
+    return ViewModelProvider(this).get(key, vmClass)
+  } else {
+    return ViewModelProvider(this).get(vmClass)
+  }
+}
+
 inline fun <reified VM : ViewModel> ComponentActivity.viewModelByKey(key: String? = null): VM {
   if (key != null) {
     return ViewModelProvider(this).get(key, VM::class.java)

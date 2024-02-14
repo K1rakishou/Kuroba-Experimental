@@ -191,7 +191,7 @@ class LocalArchiveController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           Box(modifier = Modifier.fillMaxSize()) {
             BuildContent()
           }

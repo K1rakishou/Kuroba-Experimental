@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
-import coil.request.Disposable
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
@@ -35,7 +34,7 @@ class EpoxySiteSelectionView @JvmOverloads constructor(
   private val siteName: MaterialTextView
   private val divider: View
 
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   init {
     inflate(context, R.layout.epoxy_site_selection_view, this)

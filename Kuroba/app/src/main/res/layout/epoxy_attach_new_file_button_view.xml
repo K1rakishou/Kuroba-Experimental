@@ -25,6 +25,26 @@
             android:orientation="vertical">
 
             <androidx.appcompat.widget.AppCompatImageView
+                android:id="@+id/reply_attach_sound_to_media"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
+                android:clickable="true"
+                android:focusable="true"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:src="@drawable/ic_baseline_audio_file_24"/>
+
+        </LinearLayout>
+
+        <Space
+            android:layout_width="12dp"
+            android:layout_height="0dp"/>
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <androidx.appcompat.widget.AppCompatImageView
                 android:id="@+id/reply_attach_file_by_url_button"
                 android:layout_width="32dp"
                 android:layout_height="32dp"

@@ -111,7 +111,7 @@ class BookmarkGroupSettingsController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           val chanTheme = LocalChanTheme.current
 
           Box(

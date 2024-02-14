@@ -30,7 +30,7 @@ public class CoilOkHttpClient implements CustomOkHttpClient {
     private final SiteResolver siteResolver;
     private final FirewallBypassManager firewallBypassManager;
 
-    private OkHttpClient coilClient;
+    private volatile OkHttpClient coilClient;
 
     @Inject
     public CoilOkHttpClient(

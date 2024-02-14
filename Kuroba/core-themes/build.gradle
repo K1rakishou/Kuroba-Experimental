@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
 apply plugin: 'kotlin-parcelize'
 apply plugin: 'com.google.devtools.ksp'
 
@@ -60,7 +59,7 @@ dependencies {
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
-    kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
+    ksp("com.google.dagger:dagger-compiler:${versions.dagger_version}")
 
     testImplementation "junit:junit:${versions.junit}"
 }

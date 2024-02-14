@@ -2,7 +2,6 @@ package com.github.k1rakishou.chan.ui.compose
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
@@ -119,7 +118,14 @@ private val DefaultFillMaxSizeModifier: Modifier = Modifier.fillMaxSize()
 
 @Composable
 fun KurobaComposeProgressIndicator(modifier: Modifier = DefaultFillMaxSizeModifier, overrideColor: Color? = null) {
-  Box(modifier = modifier) {
+  val windowInsets = LocalWindowInsets.current
+
+  Box(
+    modifier = modifier.then(
+      Modifier
+        .padding(bottom = windowInsets.bottom)
+    )
+  ) {
     val color = if (overrideColor == null) {
       val chanTheme = LocalChanTheme.current
       remember(key1 = chanTheme.accentColor) { Color(chanTheme.accentColor) }
@@ -148,9 +154,11 @@ fun KurobaComposeErrorMessage(error: Throwable, modifier: Modifier = DefaultFill
 
 @Composable
 fun KurobaComposeErrorMessage(errorMessage: String, modifier: Modifier = DefaultFillMaxSizeModifier) {
+  val windowInsets = LocalWindowInsets.current
+
   Box(
     modifier = Modifier
-      .padding(8.dp)
+      .padding(bottom = windowInsets.bottom)
       .then(modifier)
   ) {
     KurobaComposeText(
@@ -808,8 +816,8 @@ fun KurobaComposeSlider(
 
 @Composable
 fun KurobaComposeIcon(
-  @DrawableRes drawableId: Int,
   modifier: Modifier = Modifier,
+  @DrawableRes drawableId: Int,
   colorBehindIcon: Color? = null
 ) {
   val chanTheme = LocalChanTheme.current

@@ -9,7 +9,6 @@ import android.view.View
 import android.widget.FrameLayout
 import android.widget.LinearLayout
 import android.widget.TextView
-import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
@@ -44,7 +43,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
   protected val cancellableToast by lazy { CancellableToast() }
 
   private var currentlyVisible = false
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   @Inject
   lateinit var imageLoaderV2: Lazy<ImageLoaderV2>
@@ -127,7 +126,7 @@ class ThumbnailMediaView @JvmOverloads constructor(
     postDescriptor: PostDescriptor?,
     parameters: ThumbnailMediaViewParameters,
     onThumbnailFullyLoaded: () -> Unit
-  ): Disposable {
+  ): ImageLoaderV2.ImageLoaderRequestDisposable {
     val listener = object : ImageLoaderV2.FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
         requestDisposable = null

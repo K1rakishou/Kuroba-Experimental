@@ -30,6 +30,7 @@ import com.github.k1rakishou.chan.controller.ui.NavigationControllerContainerLay
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager
@@ -105,6 +106,8 @@ class BrowseController(
   lateinit var _firewallBypassManager: Lazy<FirewallBypassManager>
   @Inject
   lateinit var runtimePermissionsHelper: RuntimePermissionsHelper
+  @Inject
+  lateinit var sitesSetupControllerOpenNotifier: SitesSetupControllerOpenNotifier
 
   private val boardManager: BoardManager
     get() = _boardManager.get()
@@ -269,6 +272,7 @@ class BrowseController(
       currentSiteDescriptor = siteDescriptor,
       callback = object : BoardSelectionController.UserSelectionListener {
         override fun onOpenSitesSettingsClicked() {
+          sitesSetupControllerOpenNotifier.onSitesSetupControllerOpened()
           openSitesSetupController()
         }
 

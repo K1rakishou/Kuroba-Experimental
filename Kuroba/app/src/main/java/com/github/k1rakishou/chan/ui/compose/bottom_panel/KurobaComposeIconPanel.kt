@@ -122,7 +122,7 @@ class KurobaComposeIconPanel(
 
   @Composable
   fun BuildPanel(onMenuItemClicked: (Int) -> Unit) {
-    ProvideChanTheme(themeEngine = themeEngine) {
+    ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
       BuildPanelInternal(onMenuItemClicked)
     }
   }

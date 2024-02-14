@@ -3,7 +3,6 @@ package com.github.k1rakishou.chan.ui.widget
 import android.view.View
 import android.view.ViewGroup
 import android.view.ViewTreeObserver
-import coil.size.PixelSize
 import coil.size.Size
 import coil.size.ViewSizeResolver
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -45,10 +44,10 @@ class FixedViewSizeResolver<T : View>(
     }
   }
 
-  private fun getSize(): PixelSize? {
-    val width = getWidth().also { if (it <= 0) return null }
-    val height = getHeight().also { if (it <= 0) return null }
-    return PixelSize(width, height)
+  private fun getSize(): Size? {
+    val width = getWidth() ?: return null
+    val height = getHeight() ?: return null
+    return Size(width, height)
   }
 
   private fun getWidth(): Int {

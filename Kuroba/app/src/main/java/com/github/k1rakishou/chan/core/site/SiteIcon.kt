@@ -20,7 +20,6 @@ import android.content.Context
 import android.graphics.drawable.BitmapDrawable
 import androidx.annotation.DrawableRes
 import androidx.core.graphics.drawable.toBitmap
-import coil.request.Disposable
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -39,7 +38,7 @@ class SiteIcon private constructor(
   var url: HttpUrl? = null
   var drawable: BitmapDrawable? = null
 
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   fun cancel() {
     requestDisposable?.dispose()

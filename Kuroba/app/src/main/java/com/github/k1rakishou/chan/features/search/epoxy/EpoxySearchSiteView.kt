@@ -5,7 +5,6 @@ import android.util.AttributeSet
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.core.view.doOnPreDraw
-import coil.request.Disposable
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
@@ -36,7 +35,7 @@ internal class EpoxySearchSiteView @JvmOverloads constructor(
   private val siteIcon: AppCompatImageView
   private val siteName: MaterialTextView
 
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   init {
     inflate(context, R.layout.epoxy_search_site_view, this)

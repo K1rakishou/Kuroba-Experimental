@@ -51,7 +51,6 @@ import com.github.k1rakishou.model.repository.ChanPostRepository
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
@@ -570,9 +569,7 @@ class ReplyNotificationsHelper(
           return@invokeOnCancellation
         }
 
-        if (!disposable.isDisposed) {
-          disposable.dispose()
-        }
+        disposable.dispose()
       }
     }
   }

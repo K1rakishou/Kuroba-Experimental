@@ -400,7 +400,7 @@ class MainController(
 
     val drawerComposeView = view.findViewById<ComposeView>(R.id.drawer_compose_view)
     drawerComposeView.setContent {
-      ProvideChanTheme(themeEngine) {
+      ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
         val chanTheme = LocalChanTheme.current
         val bgColor = chanTheme.backColorCompose
 

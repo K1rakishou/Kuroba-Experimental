@@ -66,7 +66,7 @@ class ReplyLayoutFilesAreaPresenter(
   private val pickFilesExecutor = RendezvousCoroutineExecutor(scope)
   private val refreshFilesExecutor = DebouncingCoroutineExecutor(scope)
   private val fileChangeExecutor = SerializedCoroutineExecutor(scope)
-  private val state = MutableStateFlow(ReplyLayoutFilesState(loading = true))
+  private val state = MutableStateFlow(ReplyLayoutFilesState(chanDescriptor = null))
 
   private var _boundChanDescriptor: ChanDescriptor? = null
   val boundChanDescriptor: ChanDescriptor?
@@ -340,7 +340,7 @@ class ReplyLayoutFilesAreaPresenter(
           replyManager.get().iterateSelectedFilesOrdered { _, replyFile, replyFileMeta ->
             val newFileName = replyManager.get().getNewImageName(replyFileMeta.fileName)
 
-            replyFile.updateFileName(newFileName)
+            replyManager.get().updateFileName(replyFileMeta.fileUuid, newFileName, false)
               .peekError { error -> Logger.e(TAG, "Failed to update file name", error) }
               .ignore()
           }
@@ -525,8 +525,8 @@ class ReplyLayoutFilesAreaPresenter(
 
         val oldState = state.value
         val newState = ReplyLayoutFilesState(
+          chanDescriptor = chanDescriptor,
           isReplyLayoutExpanded = isReplyLayoutExpanded,
-          loading = false,
           attachables = attachables
         )
         state.value = newState
@@ -594,7 +594,10 @@ class ReplyLayoutFilesAreaPresenter(
       }
 
       val newAttachFiles = enumerateReplyAttachables(chanDescriptor).unwrap()
-      state.value = ReplyLayoutFilesState(attachables = newAttachFiles)
+      state.value = ReplyLayoutFilesState(
+        chanDescriptor = chanDescriptor,
+        attachables = newAttachFiles
+      )
     }
   }
 
@@ -694,7 +697,7 @@ class ReplyLayoutFilesAreaPresenter(
           if (attachableCounter > MAX_VISIBLE_ATTACHABLES_COUNT) {
             newAttachFiles.add(TooManyAttachables(attachableCounter))
           } else {
-            newAttachFiles.add(ReplyNewAttachable())
+            newAttachFiles.add(0, ReplyNewAttachable())
           }
         }
 

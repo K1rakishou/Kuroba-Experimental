@@ -11,6 +11,8 @@ import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.runtime.Composable
@@ -31,6 +33,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.ExperimentalUnitApi
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
@@ -351,4 +354,19 @@ object ComposeHelpers {
 
   class DebugRef(var value: Int)
 
+}
+
+fun PaddingValues.update(
+  layoutDirection: LayoutDirection,
+  start: Dp = calculateStartPadding(layoutDirection),
+  top: Dp = calculateTopPadding(),
+  end: Dp = calculateEndPadding(layoutDirection),
+  bottom: Dp = calculateBottomPadding(),
+): PaddingValues {
+  return PaddingValues(
+    start = start,
+    top = top,
+    end = end,
+    bottom = bottom
+  )
 }

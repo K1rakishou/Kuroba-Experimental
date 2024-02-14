@@ -36,7 +36,6 @@ import android.view.MotionEvent
 import android.view.animation.Interpolator
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
-import coil.request.Disposable
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.Debouncer
@@ -59,7 +58,7 @@ import java.util.concurrent.atomic.AtomicInteger
 import javax.inject.Inject
 
 open class ThumbnailView : AppCompatImageView, ThemeEngine.ThemeChangesListener {
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
   private var errorText: String? = null
   private var foregroundCalculate = false
   private var imageForeground: Drawable? = null

@@ -7,15 +7,17 @@ import android.view.MotionEvent
 import android.view.View
 import android.view.Window
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.BiasAlignment
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.core.view.OnApplyWindowInsetsListener
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.github.k1rakishou.chan.ui.compose.KurobaWindowInsets
 import com.github.k1rakishou.chan.ui.misc.ConstraintLayoutBias
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.pxToDp
-import com.github.k1rakishou.chan.utils.FullScreenUtils
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.common.updateMargins
 
@@ -29,6 +31,10 @@ class GlobalWindowInsetsManager {
   private val lastTouchCoordinates = Point(0, 0)
 
   private val currentInsets = Rect()
+  private val _currentWindowInsets = mutableStateOf(KurobaWindowInsets())
+  val currentWindowInsets: State<KurobaWindowInsets>
+    get() = _currentWindowInsets
+
   var currentInsetsCompose = mutableStateOf(PaddingValues())
     private set
 
@@ -38,32 +44,59 @@ class GlobalWindowInsetsManager {
   private val insetsUpdatesListeners = HashSet<WindowInsetsListener>()
   private val keyboardUpdatesListeners = HashSet<KeyboardStateListener>()
 
+  private val attachStateChangeListener = object : View.OnAttachStateChangeListener {
+    override fun onViewAttachedToWindow(v: View) {
+      v.requestApplyInsets()
+    }
+
+    override fun onViewDetachedFromWindow(v: View) {
+
+    }
+  }
+
+  fun stopListeningForWindowInsetsChanges(window: Window) {
+    val view = window.decorView
+
+    ViewCompat.setOnApplyWindowInsetsListener(view, null)
+    view.removeOnAttachStateChangeListener(attachStateChangeListener)
+  }
+
   fun listenForWindowInsetsChanges(window: Window, mainRootLayoutMargins: View?) {
-    ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, insets ->
-      val isKeyboardOpen = FullScreenUtils.isKeyboardShown(view, insets.systemWindowInsetBottom)
-      val newInsets = insets.replaceSystemWindowInsets(
-        insets.systemWindowInsetLeft,
-        insets.systemWindowInsetTop,
-        insets.systemWindowInsetRight,
-        insets.systemWindowInsetBottom
-      )
+    val view = window.decorView
+
+    val applyWindowInsetsListener = OnApplyWindowInsetsListener { _, insets ->
+      val imeInsets = insets.getInsets(WindowInsetsCompat.Type.ime())
+      val systemBarInsets = insets.getInsets(WindowInsetsCompat.Type.systemBars())
+
+      val left = Math.max(imeInsets.left, systemBarInsets.left)
+      val top = Math.max(imeInsets.top, systemBarInsets.top)
+      val right = Math.max(imeInsets.right, systemBarInsets.right)
+      val bottom = Math.max(imeInsets.bottom, systemBarInsets.bottom)
+
+      val isKeyboardOpen = imeInsets.bottom > 0
+      val newInsets = Rect(left, top, right, bottom)
 
       if (updateInsets(newInsets) || isKeyboardOpened != isKeyboardOpen) {
-        updateKeyboardHeight(
-          FullScreenUtils.calculateDesiredRealBottomInset(view, insets.systemWindowInsetBottom)
-        )
-
+        updateKeyboardHeight(imeInsets.bottom)
         updateIsKeyboardOpened(isKeyboardOpen)
         fireCallbacks()
-
         mainRootLayoutMargins?.updateMargins(left = left(), right = right())
+
+        _currentWindowInsets.value = KurobaWindowInsets(
+          left = leftDp(),
+          right = rightDp(),
+          top = topDp(),
+          bottom = bottomDp(),
+          keyboardOpened = isKeyboardOpen
+        )
       }
 
-      return@setOnApplyWindowInsetsListener ViewCompat.onApplyWindowInsets(
-        view,
-        insets.replaceSystemWindowInsets(0, 0, 0, 0)
-      )
+      return@OnApplyWindowInsetsListener WindowInsetsCompat.CONSUMED
     }
+
+    ViewCompat.setOnApplyWindowInsetsListener(view, applyWindowInsetsListener)
+    view.addOnAttachStateChangeListener(attachStateChangeListener)
+    ViewCompat.requestApplyInsets(view)
   }
 
   fun updateDisplaySize(context: Context) {
@@ -142,29 +175,24 @@ class GlobalWindowInsetsManager {
     keyboardHeight = height.coerceAtLeast(0)
   }
 
-  private fun updateInsets(insets: WindowInsetsCompat): Boolean {
+  private fun updateInsets(newInsets: Rect): Boolean {
     if (
-      currentInsets.left == insets.systemWindowInsetLeft
-      && currentInsets.right == insets.systemWindowInsetRight
-      && currentInsets.top == insets.systemWindowInsetTop
-      && currentInsets.bottom == insets.systemWindowInsetBottom
+      currentInsets.left == newInsets.left
+      && currentInsets.right == newInsets.right
+      && currentInsets.top == newInsets.top
+      && currentInsets.bottom == newInsets.bottom
     ) {
       // Insets weren't changed no need to fire callbacks
       return false
     }
 
-    currentInsets.set(
-      insets.systemWindowInsetLeft,
-      insets.systemWindowInsetTop,
-      insets.systemWindowInsetRight,
-      insets.systemWindowInsetBottom
-    )
+    currentInsets.set(newInsets)
 
     currentInsetsCompose.value = PaddingValues(
-      start = pxToDp(insets.systemWindowInsetLeft.toFloat()).dp,
-      end = pxToDp(insets.systemWindowInsetRight.toFloat()).dp,
-      top = pxToDp(insets.systemWindowInsetTop.toFloat()).dp,
-      bottom = pxToDp(insets.systemWindowInsetBottom.toFloat()).dp,
+      start = pxToDp(newInsets.left.toFloat()).dp,
+      end = pxToDp(newInsets.right.toFloat()).dp,
+      top = pxToDp(newInsets.top.toFloat()).dp,
+      bottom = pxToDp(newInsets.bottom.toFloat()).dp,
     )
 
     return true

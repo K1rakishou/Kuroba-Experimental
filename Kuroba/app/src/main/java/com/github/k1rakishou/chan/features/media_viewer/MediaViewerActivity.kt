@@ -38,7 +38,7 @@ import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
 import kotlinx.coroutines.launch
-import java.util.*
+import java.util.UUID
 import javax.inject.Inject
 
 class MediaViewerActivity : ControllerHostActivity(),
@@ -159,6 +159,10 @@ class MediaViewerActivity : ControllerHostActivity(),
 
     if (::appRestarter.isInitialized) {
       appRestarter.detachActivity(this)
+    }
+
+    if (::globalWindowInsetsManager.isInitialized) {
+      globalWindowInsetsManager.stopListeningForWindowInsetsChanges(window)
     }
 
     AppModuleAndroidUtils.cancelLastToast()

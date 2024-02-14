@@ -4,7 +4,6 @@ import android.content.Context
 import android.graphics.BitmapFactory
 import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
-import coil.request.Disposable
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
@@ -25,7 +24,7 @@ class PostIconsHttpIcon(
   private val context: Context
   private val postIcons: PostIcons
   private val url: HttpUrl
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   var drawable: Drawable? = null
     private set

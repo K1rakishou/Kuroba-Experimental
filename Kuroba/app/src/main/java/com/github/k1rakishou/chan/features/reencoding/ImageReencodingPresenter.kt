@@ -257,7 +257,7 @@ class ImageReencodingPresenter(
         val fileName = newFileName
           ?: replyManager.getNewImageName(oldFileName, ReencodeType.AS_IS)
 
-        replyFile.updateFileName(fileName)
+        replyManager.updateFileName(fileUuid, fileName, false)
           .peekError { error ->
             Logger.e(TAG, "updateFileName() old='$oldFileName', new='$newFileName' error", error)
           }.ignore()

@@ -1413,6 +1413,12 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="image_search_controller_not_an_url_error">Not an url</string>
     <string name="image_search_controller_base_url_hint">Base url</string>
 
+    <string name="create_sound_media_controller_title">Create media with sound</string>
+    <string name="create_sound_media_controller_creation_success">Successfully created sound post for file \'%1$s\'</string>
+    <string name="create_sound_media_controller_creation_error">Failed to create sound post for file, error: \'%1$s\'</string>
+    <string name="create_sound_media_controller_creation_canceled">Sound post creation canceled</string>
+    <string name="create_sound_media_controller_attachment_full_file_name_dialog_title">Attachment file name</string>
+
     <string name="catalog_load_page">Loading page %1$d</string>
     <string name="catalog_load_catalog">Loading catalog \'%1$s\'</string>
 

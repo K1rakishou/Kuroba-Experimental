@@ -4,9 +4,9 @@ import android.content.Context
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -26,26 +26,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
-import com.github.k1rakishou.chan.controller.Controller
+import com.github.k1rakishou.chan.controller.BaseComposeController
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
-import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.WindowInsetsListener
 import com.github.k1rakishou.chan.features.bypass.CookieResult
 import com.github.k1rakishou.chan.features.bypass.SiteFirewallBypassController
@@ -58,19 +56,16 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeProgressIndicator
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextField
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
-import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.compose.kurobaClickable
+import com.github.k1rakishou.chan.ui.compose.update
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.view.floating_menu.FloatingListMenuItem
 import com.github.k1rakishou.chan.ui.view.floating_menu.HeaderFloatingListMenuItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.findControllerOrNull
-import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.common.FirewallType
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.core_logger.Logger
-import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.util.ChanPostUtils
 import com.github.k1rakishou.persist_state.ImageSearchInstanceType
@@ -85,29 +80,22 @@ class ImageSearchController(
   context: Context,
   private val boundChanDescriptor: ChanDescriptor,
   private val onImageSelected: (HttpUrl) -> Unit
-) : Controller(context), WindowInsetsListener {
+) : BaseComposeController<ImageSearchControllerViewModel>(
+  context = context,
+  viewModelClass = ImageSearchControllerViewModel::class.java,
+  titleStringId = R.string.image_search_controller_title
+), WindowInsetsListener {
 
-  @Inject
-  lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var dialogFactory: DialogFactory
-  @Inject
-  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-
-  private val topPadding = mutableStateOf(0)
-  private val bottomPadding = mutableStateOf(0)
-
-  private val viewModel by lazy { requireComponentActivity().viewModelByKey<ImageSearchControllerViewModel>() }
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
   }
 
-  override fun onCreate() {
-    super.onCreate()
-
+  override fun setupNavigation() {
     navigation.setTitle(R.string.image_search_controller_title)
     navigation.swipeable = false
 
@@ -116,22 +104,24 @@ class ImageSearchController(
       .withItem(ACTION_RELOAD, R.drawable.ic_refresh_white_24dp) {
         val currentCaptchaController = findControllerOrNull { controller ->
           return@findControllerOrNull controller is SiteFirewallBypassController &&
-            controller.firewallType == FirewallType.YandexSmartCaptcha
+                  controller.firewallType == FirewallType.YandexSmartCaptcha
         }
 
         currentCaptchaController?.stopPresenting()
-        viewModel.reload()
+        controllerViewModel.reload()
       }
       .build()
+  }
 
+  override fun onPrepare() {
     mainScope.launch {
-      viewModel.searchErrorToastFlow
+      controllerViewModel.searchErrorToastFlow
         .debounce(350L)
         .collect { errorMessage -> showToast(errorMessage) }
     }
 
     mainScope.launch {
-      viewModel.solvingCaptcha.collect { urlToOpen ->
+      controllerViewModel.solvingCaptcha.collect { urlToOpen ->
         if (urlToOpen == null) {
           return@collect
         }
@@ -158,34 +148,15 @@ class ImageSearchController(
 
           if (cookieResult !is CookieResult.CookieValue) {
             Logger.e(TAG, "Failed to bypass YandexSmartCaptcha, cookieResult: ${cookieResult}")
-            viewModel.reloadCurrentPage()
+            controllerViewModel.reloadCurrentPage()
             return@collect
           }
 
           Logger.d(TAG, "Get YandexSmartCaptcha cookies, cookieResult: ${cookieResult}")
-          viewModel.updateYandexSmartCaptchaCookies(cookieResult.cookie)
-          viewModel.reloadCurrentPage()
+          controllerViewModel.updateYandexSmartCaptchaCookies(cookieResult.cookie)
+          controllerViewModel.reloadCurrentPage()
         } finally {
-          viewModel.finishedSolvingCaptcha()
-        }
-      }
-    }
-
-    onInsetsChanged()
-    globalWindowInsetsManager.addInsetsUpdatesListener(this)
-
-    view = ComposeView(context).apply {
-      setContent {
-        ProvideChanTheme(themeEngine) {
-          val chanTheme = LocalChanTheme.current
-
-          Box(
-            modifier = Modifier
-              .fillMaxSize()
-              .background(chanTheme.backColorCompose)
-          ) {
-            BuildContent()
-          }
+          controllerViewModel.finishedSolvingCaptcha()
         }
       }
     }
@@ -194,45 +165,30 @@ class ImageSearchController(
   override fun onDestroy() {
     super.onDestroy()
 
-    globalWindowInsetsManager.removeInsetsUpdatesListener(this)
-    viewModel.cleanup()
-  }
-
-  override fun onInsetsChanged() {
-    val toolbarHeight = requireToolbarNavController().toolbar?.toolbarHeight
-      ?: AppModuleAndroidUtils.getDimen(R.dimen.toolbar_height)
-
-    topPadding.value = AppModuleAndroidUtils.pxToDp(toolbarHeight)
-
-    val bottomPaddingDp = calculateBottomPaddingForRecyclerInDp(
-      globalWindowInsetsManager = globalWindowInsetsManager,
-      mainControllerCallbacks = null
-    )
-
-    bottomPadding.value = bottomPaddingDp
+    controllerViewModel.cleanup()
   }
 
   @Composable
-  private fun BuildContent() {
+  override fun BuildContent() {
     val chanTheme = LocalChanTheme.current
     val focusManager = LocalFocusManager.current
 
-    val lastUsedSearchInstanceMut by viewModel.lastUsedSearchInstance
+    val lastUsedSearchInstanceMut by controllerViewModel.lastUsedSearchInstance
     val lastUsedSearchInstance = lastUsedSearchInstanceMut
     if (lastUsedSearchInstance == null) {
       return
     }
 
-    val searchInstanceMut = viewModel.searchInstances[lastUsedSearchInstance]
+    val searchInstanceMut = controllerViewModel.searchInstances[lastUsedSearchInstance]
     val searchInstance = searchInstanceMut
     if (searchInstance == null) {
       return
     }
 
-    var baseUrl by viewModel.baseUrl
-    var searchQuery by viewModel.searchQuery
-    val baseUrlError by viewModel.baseUrlError
-    val topPd by topPadding
+    var baseUrl by controllerViewModel.baseUrl
+    var searchQuery by controllerViewModel.searchQuery
+    val baseUrlError by controllerViewModel.baseUrlError
+    val controllerPaddings by controllerPaddingsState
 
     Column(
       modifier = Modifier
@@ -240,9 +196,11 @@ class ImageSearchController(
         .background(chanTheme.backColorCompose)
         .padding(horizontal = 8.dp)
     ) {
-      Spacer(modifier = Modifier.height(topPd.dp))
+      val topPadding = remember(controllerPaddings) {
+        controllerPaddings.calculateTopPadding() + 4.dp
+      }
 
-      Spacer(modifier = Modifier.height(4.dp))
+      Spacer(modifier = Modifier.height(topPadding))
 
       SearchInstanceSelector(
         searchInstance = searchInstance,
@@ -258,7 +216,7 @@ class ImageSearchController(
           .fillMaxWidth(),
         onValueChange = { newValue ->
           baseUrl = newValue
-          viewModel.onBaseUrlChanged(newValue)
+          controllerViewModel.onBaseUrlChanged(newValue)
         },
         singleLine = true,
         maxLines = 1,
@@ -287,7 +245,7 @@ class ImageSearchController(
           .fillMaxWidth(),
         onValueChange = { newValue ->
           searchQuery = newValue
-          viewModel.onSearchQueryChanged(newValue)
+          controllerViewModel.onSearchQueryChanged(newValue)
         },
         singleLine = true,
         maxLines = 1,
@@ -375,9 +333,20 @@ class ImageSearchController(
     lastUsedSearchInstance: ImageSearchInstanceType,
     onImageClicked: (ImageSearchResult) -> Unit
   ) {
-    val searchInstance = viewModel.searchInstances[lastUsedSearchInstance]
+    val chanTheme = LocalChanTheme.current
+    val layoutDirection = LocalLayoutDirection.current
+
+    val controllerPaddings by controllerPaddingsState
+    val controllerPaddingsUpdated = remember(key1 = controllerPaddings) {
+      controllerPaddings.update(
+        layoutDirection = layoutDirection,
+        top = 0.dp
+      )
+    }
+
+    val searchInstance = controllerViewModel.searchInstances[lastUsedSearchInstance]
       ?: return
-    val searchResults = viewModel.searchResults[lastUsedSearchInstance]
+    val searchResults = controllerViewModel.searchResults[lastUsedSearchInstance]
       ?: return
 
     val imageSearchResults = when (val result = searchResults) {
@@ -389,29 +358,25 @@ class ImageSearchController(
         return
       }
       is AsyncData.Error -> {
-        KurobaComposeErrorMessage(error = result.throwable)
+        KurobaComposeErrorMessage(
+          error = result.throwable
+        )
+
         return
       }
       is AsyncData.Data -> result.data
     }
-
-    val chanTheme = LocalChanTheme.current
-    val bottomPd by bottomPadding
 
     val state = rememberLazyGridState(
       initialFirstVisibleItemIndex = searchInstance.rememberedFirstVisibleItemIndex,
       initialFirstVisibleItemScrollOffset = searchInstance.rememberedFirstVisibleItemScrollOffset
     )
 
-    val contentPadding = remember(
-      key1 = bottomPd,
-    ) { PaddingValues(bottom = bottomPd.dp) }
-
     DisposableEffect(
       key1 = Unit,
       effect = {
         onDispose {
-          viewModel.updatePrevLazyListState(
+          controllerViewModel.updatePrevLazyListState(
             firstVisibleItemIndex = state.firstVisibleItemIndex,
             firstVisibleItemScrollOffset = state.firstVisibleItemScrollOffset
           )
@@ -425,11 +390,13 @@ class ImageSearchController(
         .simpleVerticalScrollbar(
           state = state,
           chanTheme = chanTheme,
-          contentPadding = contentPadding
+          contentPadding = controllerPaddingsUpdated
         ),
       state = state,
-      columns = GridCells.Adaptive(minSize = IMAGE_SIZE),
-      contentPadding = contentPadding
+      columns = GridCells.Adaptive(minSize = 128.dp),
+      verticalArrangement = Arrangement.spacedBy(4.dp),
+      horizontalArrangement = Arrangement.spacedBy(8.dp),
+      contentPadding = controllerPaddingsUpdated
     ) {
       val images = imageSearchResults.results
 
@@ -451,7 +418,7 @@ class ImageSearchController(
           contentType = { "loading_indicator" }
         ) {
           Box(
-            modifier = Modifier.size(IMAGE_SIZE)
+            modifier = Modifier.size(128.dp)
           ) {
             KurobaComposeProgressIndicator(
               modifier = Modifier
@@ -462,7 +429,7 @@ class ImageSearchController(
           }
 
           LaunchedEffect(key1 = images.lastIndex) {
-            viewModel.onNewPageRequested(page = searchInstance.currentPage + 1)
+            controllerViewModel.onNewPageRequested(page = searchInstance.currentPage + 1)
           }
         }
       } else {
@@ -488,12 +455,14 @@ class ImageSearchController(
   ) {
     val chanTheme = LocalChanTheme.current
 
-    val request = ImageLoaderRequest(
-      data = ImageLoaderRequestData.Url(
-        httpUrl = imageSearchResult.thumbnailUrl,
-        cacheFileType = CacheFileType.Other
+    val request = remember(imageSearchResult.thumbnailUrl) {
+      ImageLoaderRequest(
+        data = ImageLoaderRequestData.Url(
+          httpUrl = imageSearchResult.thumbnailUrl,
+          cacheFileType = CacheFileType.Other
+        )
       )
-    )
+    }
 
     val imageInfo = remember(key1 = imageSearchResult) {
       if (!imageSearchResult.hasImageInfo()) {
@@ -529,8 +498,7 @@ class ImageSearchController(
 
     Box(
       modifier = Modifier
-        .size(IMAGE_SIZE)
-        .padding(4.dp)
+        .size(128.dp)
         .background(chanTheme.backColorSecondaryCompose)
         .clickable { onImageClicked(imageSearchResult) }
     ) {
@@ -561,7 +529,7 @@ class ImageSearchController(
 
     menuItems += HeaderFloatingListMenuItem("header", "Select image search instance")
 
-    ImageSearchInstanceType.values().forEach { imageSearchInstanceType ->
+    ImageSearchInstanceType.entries.forEach { imageSearchInstanceType ->
       menuItems += FloatingListMenuItem(
         key = imageSearchInstanceType,
         name = imageSearchInstanceType.name,
@@ -577,7 +545,7 @@ class ImageSearchController(
         val selectedImageSearchInstanceType = (clickedItem.value as? ImageSearchInstanceType)
           ?: return@FloatingListMenuController
 
-        viewModel.changeSearchInstance(selectedImageSearchInstanceType)
+        controllerViewModel.changeSearchInstance(selectedImageSearchInstanceType)
       }
     )
 
@@ -613,8 +581,6 @@ class ImageSearchController(
     private const val TAG = "ImageSearchController"
 
     private const val ACTION_RELOAD = 0
-
-    private val IMAGE_SIZE = 128.dp
   }
 
 }

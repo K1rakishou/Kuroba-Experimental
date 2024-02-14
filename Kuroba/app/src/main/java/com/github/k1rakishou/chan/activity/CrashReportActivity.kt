@@ -166,7 +166,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
     setContent {
-      ProvideChanTheme(themeEngine) {
+      ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
         val chanTheme = LocalChanTheme.current
 
         val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
@@ -191,6 +191,10 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
 
   override fun onDestroy() {
     super.onDestroy()
+
+    if (::globalWindowInsetsManagerLazy.isInitialized) {
+      globalWindowInsetsManager.stopListeningForWindowInsetsChanges(window)
+    }
 
     if (::appRestarterLazy.isInitialized) {
       appRestarter.detachActivity(this)

@@ -2,26 +2,25 @@ package com.github.k1rakishou.chan.ui.helper.picker
 
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
-import com.github.k1rakishou.chan.core.cache.downloader.FileCacheListener
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.features.reply.data.ReplyFile
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.common.downloadIntoFile
 import com.github.k1rakishou.fsaf.FileManager
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
+import okhttp3.Request
 import java.io.File
 import java.io.IOException
 
@@ -30,9 +29,14 @@ class RemoteFilePicker(
   fileManager: FileManager,
   replyManager: ReplyManager,
   private val appScope: CoroutineScope,
-  private val chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
-  private val cacheHandler: Lazy<CacheHandler>
+  private val proxiedOkHttpClientLazy: Lazy<ProxiedOkHttpClient>,
+  private val cacheHandlerLazy: Lazy<CacheHandler>
 ) : AbstractFilePicker<RemoteFilePicker.RemoteFilePickerInput>(appConstants, replyManager, fileManager) {
+  private val proxiedOkHttpClient: ProxiedOkHttpClient
+    get() = proxiedOkHttpClientLazy.get()
+  private val cacheHandler: CacheHandler
+    get() = cacheHandlerLazy.get()
+
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
   private val cacheFileType = CacheFileType.Other
 
@@ -133,7 +137,7 @@ class RemoteFilePicker(
       }
 
       copyDownloadedFileIntoReplyFile(downloadedFile, replyFile)
-      cacheHandler.get().deleteCacheFile(
+      cacheHandler.deleteCacheFile(
         cacheFileType = cacheFileType,
         cacheFile = downloadedFile
       )
@@ -163,54 +167,19 @@ class RemoteFilePicker(
   private suspend fun downloadFile(
     imageUrl: HttpUrl,
   ): ModularResult<File> {
-    val urlString = imageUrl.toString()
+    return ModularResult.Try {
+      val outputFile = cacheHandler.createTemptFile()
 
-    return suspendCancellableCoroutine { cancellableContinuation ->
-      val cancelableDownload = chunkedMediaDownloader.get().enqueueDownloadFileRequest(
-        mediaUrl = imageUrl,
-        cacheFileType = cacheFileType,
-        callback = object : FileCacheListener() {
-          override fun onSuccess(file: File) {
-            super.onSuccess(file)
+      val request = Request.Builder()
+        .url(imageUrl)
+        .get()
+        .build()
 
-            cancellableContinuation.resumeValueSafe(ModularResult.value(file))
-          }
+      proxiedOkHttpClient.okHttpClient()
+        .downloadIntoFile(request, outputFile)
+        .unwrap()
 
-          override fun onNotFound() {
-            super.onNotFound()
-
-            onError(FilePickerError.FileNotFound(urlString))
-          }
-
-          override fun onFail(exception: Exception) {
-            super.onFail(exception)
-
-            onError(FilePickerError.UnknownError(exception))
-          }
-
-          override fun onCancel() {
-            super.onCancel()
-
-            onError(FilePickerError.Canceled())
-          }
-
-          private fun onError(error: FilePickerError) {
-            cancellableContinuation.resumeValueSafe(ModularResult.error(error))
-          }
-        }
-      )
-
-      if (cancelableDownload == null) {
-        return@suspendCancellableCoroutine
-      }
-
-      cancellableContinuation.invokeOnCancellation { cause ->
-        if (cause == null) {
-          return@invokeOnCancellation
-        }
-
-        cancelableDownload.cancel()
-      }
+      return@Try outputFile
     }
   }
 

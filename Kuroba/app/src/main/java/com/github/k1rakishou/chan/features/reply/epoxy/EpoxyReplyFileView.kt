@@ -13,12 +13,12 @@ import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.widget.ImageViewCompat
 import coil.size.Scale
-import coil.transform.GrayscaleTransformation
 import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
+import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.reply.data.AttachAdditionalInfo
 import com.github.k1rakishou.chan.features.reply.data.ReplyFileAttachable

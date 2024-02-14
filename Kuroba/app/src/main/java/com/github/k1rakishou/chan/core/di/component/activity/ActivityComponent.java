@@ -62,6 +62,7 @@ import com.github.k1rakishou.chan.features.reply.ReplyLayoutFilesArea;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyAttachNewFileButtonWideView;
 import com.github.k1rakishou.chan.features.reply.epoxy.EpoxyReplyFileView;
+import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController;
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController;
 import com.github.k1rakishou.chan.features.report.Chan4ReportPostController;
 import com.github.k1rakishou.chan.features.search.GlobalSearchController;
@@ -289,6 +290,7 @@ public interface ActivityComponent {
     void inject(ImageSearchController imageSearchController);
     void inject(EditMpvConfController editMpvConfController);
     void inject(OpenUrlInWebViewController openUrlInWebViewController);
+    void inject(CreateSoundMediaController createSoundMediaController);
 
     void inject(ColorizableBarButton colorizableBarButton);
     void inject(ColorizableButton colorizableButton);

@@ -11,9 +11,7 @@ import android.widget.TextView
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.swiperefreshlayout.widget.CircularProgressDrawable
-import coil.request.Disposable
 import coil.size.Scale
-import coil.transform.GrayscaleTransformation
 import coil.transform.Transformation
 import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.CallbackProp
@@ -22,6 +20,7 @@ import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.image_saver.DupImage
@@ -72,9 +71,9 @@ internal class EpoxyDuplicateImageView  @JvmOverloads constructor(
   private var localImage: LocalImage? = null
   private var dupImage: DupImage? = null
 
-  private var serverImageRequestDisposable: Disposable? = null
-  private var localImageRequestDisposable: Disposable? = null
-  private var duplicateImageRequestDisposable: Disposable? = null
+  private var serverImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
+  private var localImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
+  private var duplicateImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   private var wholeViewLocked = false
 

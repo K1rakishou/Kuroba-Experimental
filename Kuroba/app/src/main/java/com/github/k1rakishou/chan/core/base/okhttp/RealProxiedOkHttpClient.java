@@ -21,7 +21,7 @@ import okhttp3.OkHttpClient;
 
 // this is basically the same as OkHttpClient, but with a singleton for a proxy instance
 public class RealProxiedOkHttpClient implements ProxiedOkHttpClient {
-    private OkHttpClient proxiedClient;
+    private volatile OkHttpClient proxiedClient;
 
     private final NormalDnsSelectorFactory normalDnsSelectorFactory;
     private final DnsOverHttpsSelectorFactory dnsOverHttpsSelectorFactory;

@@ -83,7 +83,7 @@ class ReportIssueController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           BuildContent()
         }
       }

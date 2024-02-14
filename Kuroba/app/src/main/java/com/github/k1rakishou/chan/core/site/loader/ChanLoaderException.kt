@@ -104,6 +104,8 @@ open class UnknownClientException(message: String) : ChanLoaderException(Excepti
 
 open class ClientException(message: String) : Exception(message)
 
+class CanceledByUserException : ClientException("Canceled by user")
+
 class SiteError(
   val errorCode: Int,
   val errorMessage: String?

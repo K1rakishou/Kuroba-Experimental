@@ -204,6 +204,10 @@ class StartActivity : ControllerHostActivity(),
         themeEngine.checkNoListenersLeft()
       }
     }
+
+    if (::globalWindowInsetsManager.isInitialized) {
+      globalWindowInsetsManager.stopListeningForWindowInsetsChanges(window)
+    }
   }
 
   override fun onThemeChanged() {

@@ -5,14 +5,13 @@ import android.util.AttributeSet
 import android.view.View
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
-import coil.request.Disposable
-import coil.transform.GrayscaleTransformation
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.site.SiteIcon
 import com.github.k1rakishou.chan.features.setup.data.SiteEnableState
@@ -49,7 +48,7 @@ class EpoxySiteView @JvmOverloads constructor(
     private set
 
   private var descriptor: SiteDescriptor? = null
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
 
   init {
     inflate(context, R.layout.epoxy_site_view, this)

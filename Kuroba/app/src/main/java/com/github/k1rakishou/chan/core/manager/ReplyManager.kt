@@ -39,7 +39,7 @@ import okio.buffer
 import okio.source
 import java.io.File
 import java.io.IOException
-import java.util.*
+import java.util.UUID
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTime
 import kotlin.time.measureTimedValue
@@ -102,6 +102,12 @@ class ReplyManager(
   fun updateFileSpoilerFlag(fileUuid: UUID, spoiler: Boolean, notifyListeners: Boolean): ModularResult<Boolean> {
     ensureFilesLoaded()
     return replyFilesStorage.updateFileSpoilerFlag(fileUuid, spoiler, notifyListeners)
+  }
+
+  @Synchronized
+  fun updateFileName(fileUuid: UUID, newFileName: String, notifyListeners: Boolean): ModularResult<Boolean> {
+    ensureFilesLoaded()
+    return replyFilesStorage.updateFileName(fileUuid, newFileName, notifyListeners)
   }
 
   @Synchronized
@@ -215,6 +221,17 @@ class ReplyManager(
   @Synchronized
   fun iterateFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
     replyFilesStorage.iterateFilesOrdered(iterator)
+  }
+
+  @Synchronized
+  fun iterateNonTakenFilesOrdered(iterator: (Int, ReplyFile, ReplyFileMeta) -> Unit) {
+    replyFilesStorage.iterateFilesOrdered { order, replyFile, replyFileMeta ->
+      if (replyFileMeta.isTaken()) {
+        return@iterateFilesOrdered
+      }
+
+      iterator(order, replyFile, replyFileMeta)
+    }
   }
 
   @Synchronized

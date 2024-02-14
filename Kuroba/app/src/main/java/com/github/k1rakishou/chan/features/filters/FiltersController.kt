@@ -109,7 +109,6 @@ import com.github.k1rakishou.model.data.filter.ChanFilterMutable
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.HttpUrl.Companion.toHttpUrlOrNull
@@ -217,7 +216,7 @@ class FiltersController(
 
     view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           val chanTheme = LocalChanTheme.current
 
           Box(

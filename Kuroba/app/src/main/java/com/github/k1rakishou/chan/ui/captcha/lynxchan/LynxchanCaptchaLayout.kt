@@ -40,6 +40,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.ui.captcha.AuthenticationLayoutCallback
@@ -79,6 +80,8 @@ class LynxchanCaptchaLayout(
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val viewModel by lazy { (context as ComponentActivity).viewModelByKey<LynxchanCaptchaLayoutViewModel>() }
   private val scope = KurobaCoroutineScope()
@@ -103,7 +106,7 @@ class LynxchanCaptchaLayout(
 
     val view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           val chanTheme = LocalChanTheme.current
 
           Box(

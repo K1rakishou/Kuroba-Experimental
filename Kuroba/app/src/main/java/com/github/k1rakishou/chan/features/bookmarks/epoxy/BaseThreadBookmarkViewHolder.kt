@@ -10,16 +10,15 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import coil.request.Disposable
 import coil.size.Scale
 import coil.transform.CircleCropTransformation
-import coil.transform.GrayscaleTransformation
 import coil.transform.RoundedCornersTransformation
 import coil.transform.Transformation
 import com.airbnb.epoxy.EpoxyHolder
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.cache.CacheFileType
+import com.github.k1rakishou.chan.core.image.GrayscaleTransformation
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkSelection
 import com.github.k1rakishou.chan.features.bookmarks.data.ThreadBookmarkStats
@@ -45,7 +44,7 @@ open class BaseThreadBookmarkViewHolder : EpoxyHolder() {
   lateinit var themeEngine: ThemeEngine
 
   private var imageLoaderRequestData: ImageLoaderRequestData? = null
-  private var requestDisposable: Disposable? = null
+  private var requestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
   private var threadDescriptor: ChanDescriptor.ThreadDescriptor? = null
   private var threadBookmarkSelection: ThreadBookmarkSelection? = null
 

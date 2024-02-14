@@ -1,6 +1,5 @@
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'kotlin-kapt'
 apply plugin: 'com.google.devtools.ksp'
 
 android {
@@ -47,5 +46,5 @@ dependencies {
     ksp("com.squareup.moshi:moshi-kotlin-codegen:${versions.moshi}")
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"
-    kapt "com.google.dagger:dagger-compiler:${versions.dagger_version}"
+    ksp("com.google.dagger:dagger-compiler:${versions.dagger_version}")
 }

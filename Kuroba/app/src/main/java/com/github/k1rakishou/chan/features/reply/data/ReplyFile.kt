@@ -10,7 +10,6 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.io.IOException
-import java.util.*
 
 class ReplyFile(
   private val gson: Gson,
@@ -88,32 +87,32 @@ class ReplyFile(
   }
 
   @Synchronized
-  fun updateFileSelection(selected: Boolean): ModularResult<Boolean> {
+  fun updateFileSelection(selected: Boolean): ModularResult<Unit> {
     return Try {
       val replyFileMeta = getReplyFileMeta().unwrap()
       if (replyFileMeta.selected == selected) {
-        return@Try true
+        return@Try
       }
 
       replyFileMeta.selected = selected
       storeFileMetaInfo().unwrap()
 
-      return@Try true
+      return@Try
     }
   }
 
   @Synchronized
-  fun updateFileName(newFileName: String): ModularResult<Boolean> {
+  fun updateFileName(newFileName: String): ModularResult<Unit> {
     return Try {
       val replyFileMeta = getReplyFileMeta().unwrap()
       if (replyFileMeta.fileName == newFileName) {
-        return@Try true
+        return@Try
       }
 
       replyFileMeta.fileNameNullable = newFileName
       storeFileMetaInfo().unwrap()
 
-      return@Try true
+      return@Try
     }
   }
 
@@ -129,17 +128,17 @@ class ReplyFile(
   }
 
   @Synchronized
-  fun updateFileSpoilerFlag(spoiler: Boolean): ModularResult<Boolean> {
+  fun updateFileSpoilerFlag(spoiler: Boolean): ModularResult<Unit> {
     return Try {
       val replyFileMeta = getReplyFileMeta().unwrap()
       if (replyFileMeta.spoiler == spoiler) {
-        return@Try true
+        return@Try
       }
 
       replyFileMeta.spoiler = spoiler
       storeFileMetaInfo().unwrap()
 
-      return@Try true
+      return@Try
     }
   }
 

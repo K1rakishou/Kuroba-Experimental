@@ -9,7 +9,6 @@ import android.widget.FrameLayout
 import android.widget.LinearLayout
 import androidx.appcompat.widget.AppCompatImageView
 import androidx.appcompat.widget.AppCompatTextView
-import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.CallbackProp
@@ -40,8 +39,8 @@ class EpoxyHistoryListEntryView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
-  private var threadImageRequestDisposable: Disposable? = null
-  private var siteImageRequestDisposable: Disposable? = null
+  private var threadImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
+  private var siteImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
   private var descriptor: ChanDescriptor? = null
   private var additionalInfo: NavHistoryBookmarkAdditionalInfo? = null
 

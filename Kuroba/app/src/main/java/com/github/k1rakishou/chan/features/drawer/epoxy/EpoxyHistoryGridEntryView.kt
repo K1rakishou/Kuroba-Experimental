@@ -12,7 +12,6 @@ import androidx.appcompat.widget.AppCompatTextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.core.view.updateLayoutParams
 import androidx.core.view.updatePadding
-import coil.request.Disposable
 import coil.transform.CircleCropTransformation
 import coil.transform.RoundedCornersTransformation
 import com.airbnb.epoxy.AfterPropsSet
@@ -43,8 +42,8 @@ class EpoxyHistoryGridEntryView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private var imagesLoaderRequestData: ImagesLoaderRequestData? = null
-  private var threadImageRequestDisposable: Disposable? = null
-  private var siteImageRequestDisposable: Disposable? = null
+  private var threadImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
+  private var siteImageRequestDisposable: ImageLoaderV2.ImageLoaderRequestDisposable? = null
   private var descriptor: ChanDescriptor? = null
   private var additionalInfo: NavHistoryBookmarkAdditionalInfo? = null
 

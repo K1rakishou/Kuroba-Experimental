@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import java.io.File
-import java.util.*
+import java.util.UUID
 
 class ReplyFilesStorage(
   private val gson: Gson,
@@ -32,6 +32,62 @@ class ReplyFilesStorage(
 
   private fun onReplyFilesChanged() {
     replyFilesUpdates.tryEmit(Unit)
+  }
+
+  @Synchronized
+  fun addNewReplyFile(replyFile: ReplyFile): Boolean {
+    if (!replyFile.fileOnDisk.exists()) {
+      Logger.e(TAG, "addNewReplyFile() fileOnDisk does not exist (file='${replyFile.fileOnDisk}')")
+      return false
+    }
+
+    if (!replyFile.fileOnDisk.canRead()) {
+      Logger.e(TAG, "addNewReplyFile() fileOnDisk cannot be read (file='${replyFile.fileOnDisk}')")
+      return false
+    }
+
+    if (!replyFile.fileMetaOnDisk.exists()) {
+      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk does not exist (file='${replyFile.fileMetaOnDisk}')")
+      return false
+    }
+
+    if (!replyFile.fileMetaOnDisk.canRead()) {
+      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk cannot be read (file='${replyFile.fileMetaOnDisk}')")
+      return false
+    }
+
+    val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
+      Logger.e(TAG, "addNewReplyFile() getReplyFileMeta() error", error)
+      return false
+    }
+
+    if (!replyFileMeta.isValidMeta()) {
+      Logger.e(TAG, "addNewReplyFile() isValidMeta() is false, meta=${replyFileMeta}")
+      return false
+    }
+
+    if (replyFileMeta.fileTakenBy != null) {
+      Logger.e(TAG, "addNewReplyFile() fileTakenBy != null (fileTakenBy='${replyFileMeta.fileTakenBy}')")
+      return false
+    }
+
+    if (replyFile.fileOnDisk.name != ReplyManager.getFileName(replyFileMeta.fileUuidString)) {
+      Logger.e(TAG, "addNewReplyFile() fileOnDisk bad name " +
+              "(fileOnDisk.name='${replyFile.fileOnDisk.name}')")
+      return false
+    }
+
+    if (replyFile.fileMetaOnDisk.name != ReplyManager.getMetaFileName(replyFileMeta.fileUuidString)) {
+      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk bad name " +
+              "(fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')")
+      return false
+    }
+
+    replyFiles += replyFile
+    ensureFilesSorted()
+    onReplyFilesChanged()
+
+    return true
   }
 
   @Synchronized
@@ -112,11 +168,13 @@ class ReplyFilesStorage(
         return@Try false
       }
 
+      replyFile.updateFileSelection(selected).unwrap()
+
       if (notifyListeners) {
         onReplyFilesChanged()
       }
 
-      return@Try replyFile.updateFileSelection(selected).unwrap()
+      return@Try true
     }
   }
 
@@ -134,11 +192,37 @@ class ReplyFilesStorage(
         return@Try false
       }
 
+      replyFile.updateFileSpoilerFlag(spoiler).unwrap()
+
       if (notifyListeners) {
         onReplyFilesChanged()
       }
 
-      return@Try replyFile.updateFileSpoilerFlag(spoiler).unwrap()
+      return@Try true
+    }
+  }
+
+  @Synchronized
+  fun updateFileName(fileUuid: UUID, newFileName: String, notifyListeners: Boolean): ModularResult<Boolean> {
+    return Try {
+      val replyFile = replyFiles
+        .firstOrNull { replyFile -> replyFile.getReplyFileMeta().unwrap().fileUuid == fileUuid }
+
+      if (replyFile == null) {
+        return@Try false
+      }
+
+      if (replyFile.getReplyFileMeta().unwrap().isTaken()) {
+        return@Try false
+      }
+
+      replyFile.updateFileName(newFileName).unwrap()
+
+      if (notifyListeners) {
+        onReplyFilesChanged()
+      }
+
+      return@Try true
     }
   }
 
@@ -483,61 +567,6 @@ class ReplyFilesStorage(
       return@Try newAttachFiles
         .sortedBy { newAttachFile -> newAttachFile.getReplyFileMeta().unwrap().addedOn }
     }
-  }
-
-  @Synchronized
-  fun addNewReplyFile(replyFile: ReplyFile): Boolean {
-    if (!replyFile.fileOnDisk.exists()) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk does not exist (file='${replyFile.fileOnDisk}')")
-      return false
-    }
-
-    if (!replyFile.fileOnDisk.canRead()) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk cannot be read (file='${replyFile.fileOnDisk}')")
-      return false
-    }
-
-    if (!replyFile.fileMetaOnDisk.exists()) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk does not exist (file='${replyFile.fileMetaOnDisk}')")
-      return false
-    }
-
-    if (!replyFile.fileMetaOnDisk.canRead()) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk cannot be read (file='${replyFile.fileMetaOnDisk}')")
-      return false
-    }
-
-    val replyFileMeta = replyFile.getReplyFileMeta().safeUnwrap { error ->
-      Logger.e(TAG, "addNewReplyFile() getReplyFileMeta() error", error)
-      return false
-    }
-
-    if (!replyFileMeta.isValidMeta()) {
-      Logger.e(TAG, "addNewReplyFile() isValidMeta() is false, meta=${replyFileMeta}")
-      return false
-    }
-
-    if (replyFileMeta.fileTakenBy != null) {
-      Logger.e(TAG, "addNewReplyFile() fileTakenBy != null (fileTakenBy='${replyFileMeta.fileTakenBy}')")
-      return false
-    }
-
-    if (replyFile.fileOnDisk.name != ReplyManager.getFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(TAG, "addNewReplyFile() fileOnDisk bad name " +
-        "(fileOnDisk.name='${replyFile.fileOnDisk.name}')")
-      return false
-    }
-
-    if (replyFile.fileMetaOnDisk.name != ReplyManager.getMetaFileName(replyFileMeta.fileUuidString)) {
-      Logger.e(TAG, "addNewReplyFile() fileMetaOnDisk bad name " +
-        "(fileMetaOnDisk.name='${replyFile.fileMetaOnDisk.name}')")
-      return false
-    }
-
-    replyFiles += replyFile
-    ensureFilesSorted()
-
-    return true
   }
 
   private fun ensureFilesSorted() {

@@ -13,6 +13,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.core.math.MathUtils
 import androidx.core.util.Pair
 import androidx.exifinterface.media.ExifInterface
+import coil.size.Dimension
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.image.InputFile
 import com.github.k1rakishou.chan.features.reencoding.ImageReencodingPresenter.ReencodeSettings
@@ -356,8 +357,8 @@ object MediaUtils {
   suspend fun decodeVideoFilePreviewImageInterruptible(
     context: Context,
     inputFile: InputFile,
-    maxWidth: Int,
-    maxHeight: Int,
+    maxWidth: Dimension,
+    maxHeight: Dimension,
     addAudioIcon: Boolean
   ): BitmapDrawable? {
     return runInterruptible {
@@ -374,8 +375,8 @@ object MediaUtils {
   private fun decodeVideoFilePreviewImage(
     context: Context,
     inputFile: InputFile,
-    maxWidth: Int,
-    maxHeight: Int,
+    maxWidth: Dimension,
+    maxHeight: Dimension,
     addAudioIcon: Boolean
   ): BitmapDrawable? {
     BackgroundUtils.ensureBackgroundThread()
@@ -404,12 +405,12 @@ object MediaUtils {
       val hasAudio = "yes" == audioMetaResult
 
       if (hasAudio && frameBitmap != null && addAudioIcon) {
-        var newWidth = min(frameBitmap.width, maxWidth)
+        var newWidth = min(frameBitmap.width, maxWidth.asPixelsOr(frameBitmap.width))
         if (newWidth <= 0) {
           newWidth = frameBitmap.width
         }
 
-        var newHeight = min(frameBitmap.height, maxHeight)
+        var newHeight = min(frameBitmap.height, maxHeight.asPixelsOr(frameBitmap.height))
         if (newHeight <= 0) {
           newHeight = frameBitmap.height
         }

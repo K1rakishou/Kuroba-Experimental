@@ -86,13 +86,13 @@ suspend fun OkHttpClient.suspendCall(request: Request): Response {
   return suspendCancellableCoroutine { continuation ->
     val call = newCall(request)
 
-    continuation.invokeOnCancellation { throwable ->
-      if (throwable != null) {
-        Try {
-          if (!call.isCanceled()) {
-            call.cancel()
-          }
-        }.ignore()
+    continuation.invokeOnCancellation {
+      try {
+        if (!call.isCanceled()) {
+          call.cancel()
+        }
+      } catch (error: Throwable) {
+        Logger.error(TAG) { "suspendCall() call.cancel() error: ${error.errorMessageOrClassName()}" }
       }
     }
 
@@ -693,7 +693,7 @@ fun <K, V> TreeMap<K, V>.firstKeyOrNull(): K? {
 }
 
 fun Throwable.errorMessageOrClassName(): String {
-  val className = this::class.java.name
+  val className = this::class.java.simpleName
 
   if (!isExceptionImportant()) {
     return className

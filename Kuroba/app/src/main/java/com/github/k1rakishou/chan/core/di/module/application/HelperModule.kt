@@ -1,11 +1,12 @@
 package com.github.k1rakishou.chan.core.di.module.application
 
 import android.content.Context
+import com.github.k1rakishou.chan.core.base.okhttp.ProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient
 import com.github.k1rakishou.chan.core.cache.CacheHandler
-import com.github.k1rakishou.chan.core.cache.downloader.ChunkedMediaDownloader
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.ChanLoadProgressNotifier
+import com.github.k1rakishou.chan.core.helper.SitesSetupControllerOpenNotifier
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -26,6 +27,7 @@ import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerScroll
 import com.github.k1rakishou.chan.features.thread_downloading.ThreadDownloadProgressNotifier
 import com.github.k1rakishou.chan.ui.captcha.chan4.Chan4CaptchaSolverHelper
 import com.github.k1rakishou.chan.ui.helper.AppSettingsUpdateAppRefreshHelper
+import com.github.k1rakishou.chan.ui.helper.FileHelper
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.LocalFilePicker
 import com.github.k1rakishou.chan.ui.helper.picker.RemoteFilePicker
@@ -117,7 +119,7 @@ class HelperModule {
   fun provideRemoteFilePicker(
     applicationScope: CoroutineScope,
     appConstants: AppConstants,
-    chunkedMediaDownloader: Lazy<ChunkedMediaDownloader>,
+    proxiedOkHttpClient: Lazy<ProxiedOkHttpClient>,
     fileManager: FileManager,
     replyManager: ReplyManager,
     cacheHandler: Lazy<CacheHandler>
@@ -128,7 +130,7 @@ class HelperModule {
       fileManager,
       replyManager,
       applicationScope,
-      chunkedMediaDownloader,
+      proxiedOkHttpClient,
       cacheHandler
     )
   }
@@ -236,6 +238,20 @@ class HelperModule {
   fun provideChan4CaptchaSolverHelper(moshi: Lazy<Moshi>): Chan4CaptchaSolverHelper {
     Logger.deps("Chan4CaptchaSolverHelper");
     return Chan4CaptchaSolverHelper(moshi)
+  }
+
+  @Provides
+  @Singleton
+  fun provideSiteSelectionControllerOpenNotifier(): SitesSetupControllerOpenNotifier {
+    Logger.deps("SiteSelectionControllerOpenNotifier");
+    return SitesSetupControllerOpenNotifier()
+  }
+
+  @Provides
+  @Singleton
+  fun provideFileHelper(appContext: Context): FileHelper {
+    Logger.deps("FileHelper");
+    return FileHelper(appContext)
   }
 
 }

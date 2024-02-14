@@ -52,6 +52,7 @@ import com.google.gson.Gson;
 import javax.inject.Singleton;
 
 import coil.ImageLoader;
+import coil.memory.MemoryCache;
 import coil.request.CachePolicy;
 import dagger.Lazy;
 import dagger.Module;
@@ -129,7 +130,11 @@ public class AppModule {
                 // caching system.
                 .diskCachePolicy(CachePolicy.DISABLED)
                 .callFactory(coilOkHttpClient.okHttpClient())
-                .availableMemoryPercentage(availableMemoryPercentage)
+                .memoryCache(() -> {
+                    return new MemoryCache.Builder(applicationContext)
+                            .maxSizePercent(availableMemoryPercentage)
+                            .build();
+                })
                 .build();
     }
 

@@ -15,16 +15,12 @@ import androidx.annotation.GuardedBy
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.Lifecycle
 import coil.ImageLoader
-import coil.annotation.ExperimentalCoilApi
-import coil.bitmap.BitmapPool
 import coil.memory.MemoryCache
 import coil.network.HttpException
-import coil.request.Disposable
 import coil.request.ErrorResult
 import coil.request.ImageRequest
 import coil.request.SuccessResult
-import coil.size.OriginalSize
-import coil.size.PixelSize
+import coil.size.Dimension
 import coil.size.Scale
 import coil.size.Size
 import coil.size.ViewSizeResolver
@@ -84,8 +80,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.util.*
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 @DoNotStrip
@@ -163,9 +159,7 @@ class ImageLoaderV2(
           return@invokeOnCancellation
         }
 
-        if (!disposable.isDisposed) {
-          disposable.dispose()
-        }
+        disposable.dispose()
       }
     }
   }
@@ -203,9 +197,7 @@ class ImageLoaderV2(
           return@invokeOnCancellation
         }
 
-        if (!disposable.isDisposed) {
-          disposable.dispose()
-        }
+        disposable.dispose()
       }
     }
   }
@@ -243,9 +235,7 @@ class ImageLoaderV2(
           return@invokeOnCancellation
         }
 
-        if (!disposable.isDisposed) {
-          disposable.dispose()
-        }
+        disposable.dispose()
       }
     }
   }
@@ -259,7 +249,7 @@ class ImageLoaderV2(
     listener: SimpleImageListener,
     @DrawableRes errorDrawableId: Int = R.drawable.ic_image_error_loading,
     @DrawableRes notFoundDrawableId: Int = R.drawable.ic_image_not_found
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     return loadFromNetwork(
       context = context,
       url = url,
@@ -283,7 +273,7 @@ class ImageLoaderV2(
     transformations: List<Transformation>,
     listener: FailureAwareImageListener,
     postDescriptor: PostDescriptor? = null
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     return loadFromNetwork(
       context = context,
       url = requestUrl,
@@ -305,7 +295,7 @@ class ImageLoaderV2(
     // If postDescriptor is not null we will attempt to search for this file among downloaded
     // threads files' first and if not found then attempt to load it from the network.
     postDescriptor: PostDescriptor? = null
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     val completableDeferred = CompletableDeferred<Unit>()
 
     val job = appScope.launch(Dispatchers.IO) {
@@ -401,7 +391,7 @@ class ImageLoaderV2(
 
             if (resultBitmapDrawable == null) {
               val transformationKeys = activeListener.transformations
-                .joinToString { transformation -> transformation.key() }
+                .joinToString { transformation -> transformation.cacheKey }
 
               Logger.e(TAG, "Failed to apply transformations '$url' $imageSize, " +
                 "transformations: ${transformationKeys}, fromCache=$isFromCache")
@@ -444,7 +434,7 @@ class ImageLoaderV2(
       }
     }
 
-    return ImageLoaderRequestDisposable(
+    return ImageLoaderRequestDisposableImpl(
       imageLoaderJob = job,
       imageLoaderCompletableDeferred = completableDeferred
     )
@@ -767,7 +757,7 @@ class ImageLoaderV2(
     scale: Scale,
     transformations: List<Transformation>,
     listener: SimpleImageListener
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     val completableDeferred = CompletableDeferred<Unit>()
 
     val job = appScope.launch(Dispatchers.Main.immediate) {
@@ -795,7 +785,7 @@ class ImageLoaderV2(
       }
     }
 
-    return ImageLoaderRequestDisposable(
+    return ImageLoaderRequestDisposableImpl(
       imageLoaderJob = job,
       imageLoaderCompletableDeferred = completableDeferred
     )
@@ -808,7 +798,7 @@ class ImageLoaderV2(
     scale: Scale,
     transformations: List<Transformation>,
     listener: SimpleImageListener
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     return loadFromDisk(context, inputFile, imageSize, scale, transformations, object : FailureAwareImageListener {
       override fun onResponse(drawable: BitmapDrawable, isImmediate: Boolean) {
         listener.onResponse(drawable)
@@ -831,7 +821,7 @@ class ImageLoaderV2(
     scale: Scale,
     transformations: List<Transformation>,
     listener: FailureAwareImageListener
-  ): Disposable {
+  ): ImageLoaderRequestDisposable {
     val lifecycle = context.getLifecycleFromContext()
     val completableDeferred = CompletableDeferred<Unit>()
 
@@ -853,8 +843,8 @@ class ImageLoaderV2(
           if (fileIsProbablyVideoInterruptible(fileName, inputFile)) {
             val (width, height) = checkNotNull(imageSize.size())
 
-            val key = MemoryCache.Key.invoke(inputFile.path())
-            val fromCache = imageLoader.memoryCache[key]
+            val key = MemoryCache.Key(inputFile.path())
+            val fromCache = imageLoader.memoryCache?.get(key)?.bitmap
             if (fromCache != null) {
               return BitmapDrawable(context.resources, fromCache)
             }
@@ -870,7 +860,7 @@ class ImageLoaderV2(
             )
 
             if (decoded !is CachedTintedErrorDrawable) {
-              imageLoader.memoryCache[key] = decoded.bitmap
+              imageLoader.memoryCache?.set(key, MemoryCache.Value(decoded.bitmap))
             }
 
             return decoded
@@ -925,7 +915,7 @@ class ImageLoaderV2(
       }
     }
 
-    return ImageLoaderRequestDisposable(
+    return ImageLoaderRequestDisposableImpl(
       imageLoaderJob = job,
       imageLoaderCompletableDeferred = completableDeferred
     )
@@ -1059,8 +1049,8 @@ class ImageLoaderV2(
       isProbablyVideo = isProbablyVideo,
       inputFile = inputFile,
       context = context,
-      width = PREVIEW_SIZE,
-      height = PREVIEW_SIZE,
+      width = Dimension(PREVIEW_SIZE),
+      height = Dimension(PREVIEW_SIZE),
       scale = scale,
       addAudioIcon = true
     ).bitmap
@@ -1085,13 +1075,12 @@ class ImageLoaderV2(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   private suspend fun decodedFilePreview(
     isProbablyVideo: Boolean,
     inputFile: InputFile,
     context: Context,
-    width: Int,
-    height: Int,
+    width: Dimension,
+    height: Dimension,
     scale: Scale,
     addAudioIcon: Boolean
   ): BitmapDrawable {
@@ -1171,8 +1160,8 @@ class ImageLoaderV2(
     inputFile: InputFile,
     transformations: List<Transformation>,
     scale: Scale,
-    width: Int,
-    height: Int
+    width: Dimension,
+    height: Dimension
   ): ModularResult<BitmapDrawable> {
     return Try {
       val lifecycle = context.getLifecycleFromContext()
@@ -1302,15 +1291,15 @@ class ImageLoaderV2(
   }
 
   sealed class ImageSize {
-    suspend fun size(): PixelSize? {
+    suspend fun size(): Size {
       return when (this) {
-        is FixedImageSize -> PixelSize(width, height)
-        is MeasurableImageSize -> sizeResolver.size() as PixelSize
-        is Unspecified -> PixelSize(0, 0)
+        is FixedImageSize -> Size(width, height)
+        is MeasurableImageSize -> sizeResolver.size()
+        is Unspecified -> Size(0, 0)
       }
     }
 
-    object Unspecified : ImageSize()
+    data object Unspecified : ImageSize()
 
     data class FixedImageSize(val width: Int, val height: Int) : ImageSize() {
       override fun toString(): String = "FixedImageSize{${width}x${height}}"
@@ -1328,37 +1317,42 @@ class ImageLoaderV2(
     }
   }
 
-  class ImageLoaderRequestDisposable(
+  interface ImageLoaderRequestDisposable {
+    fun dispose()
+  }
+
+  class ImageLoaderRequestDisposableImpl(
     private val imageLoaderJob: Job,
     private val imageLoaderCompletableDeferred: CompletableDeferred<Unit>
-  ) : Disposable {
-
-    override val isDisposed: Boolean
-      get() = !imageLoaderJob.isActive
-
-    @ExperimentalCoilApi
-    override suspend fun await() {
-      imageLoaderCompletableDeferred.await()
-    }
+  ) : ImageLoaderRequestDisposable {
+    private val disposeFlag = AtomicBoolean(false)
 
     override fun dispose() {
-      imageLoaderJob.cancel()
-      imageLoaderCompletableDeferred.cancel()
+      if (disposeFlag.compareAndSet(false, true)) {
+        if (imageLoaderJob.isActive) {
+          imageLoaderJob.cancel()
+        }
+
+        if (imageLoaderCompletableDeferred.isActive) {
+          imageLoaderCompletableDeferred.cancel()
+        }
+      }
     }
 
   }
 
   private class ResizeTransformation : Transformation {
-    override fun key(): String = "${TAG}_ResizeTransformation"
+    override val cacheKey: String = "${TAG}_ResizeTransformation"
 
-    override suspend fun transform(pool: BitmapPool, input: Bitmap, size: Size): Bitmap {
-      val (availableWidth, availableHeight) = when (size) {
-        OriginalSize -> null to null
-        is PixelSize -> size.width to size.height
+    override suspend fun transform(input: Bitmap, size: Size): Bitmap {
+      val availableWidth = when (val width = size.width) {
+        is Dimension.Pixels -> width.px
+        Dimension.Undefined -> input.width
       }
 
-      if (availableWidth == null || availableHeight == null) {
-        return input
+      val availableHeight = when (val height = size.height) {
+        is Dimension.Pixels -> height.px
+        Dimension.Undefined -> input.height
       }
 
       if (input.width <= availableWidth && input.height <= availableHeight) {
@@ -1367,7 +1361,7 @@ class ImageLoaderV2(
         return input
       }
 
-      return scale(pool, input, availableWidth, availableHeight)
+      return scale(input, availableWidth, availableHeight)
     }
 
     private fun config(): Bitmap.Config {
@@ -1378,7 +1372,7 @@ class ImageLoaderV2(
       return Bitmap.Config.ARGB_8888
     }
 
-    private fun scale(pool: BitmapPool, bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+    private fun scale(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
       val width: Int
       val height: Int
       val widthRatio = bitmap.width.toFloat() / maxWidth
@@ -1392,7 +1386,7 @@ class ImageLoaderV2(
         width = (height.toFloat() / bitmap.height * bitmap.width).toInt()
       }
 
-      val scaledBitmap = pool.get(width, height, bitmap.config ?: config())
+      val scaledBitmap = Bitmap.createBitmap(width, height, bitmap.config ?: config())
       val ratioX = width.toFloat() / bitmap.width
       val ratioY = height.toFloat() / bitmap.height
       val middleX = width / 2.0f
@@ -1430,7 +1424,7 @@ class ImageLoaderV2(
       bitmapDrawable.colorFilter = colorFilter
     }
 
-    @Deprecated("Deprecated in Java")
+    @Deprecated("Deprecated in Java", ReplaceWith("bitmapDrawable.opacity"))
     override fun getOpacity(): Int {
       return bitmapDrawable.opacity
     }

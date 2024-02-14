@@ -50,6 +50,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.compose.AsyncData
 import com.github.k1rakishou.chan.core.image.ImageLoaderV2
+import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.sites.dvach.DvachPuzzleSolution
@@ -82,6 +83,8 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
   lateinit var imageLoaderV2: ImageLoaderV2
   @Inject
   lateinit var siteManager: SiteManager
+  @Inject
+  lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
 
   private val viewModel by lazy { (context as ComponentActivity).viewModelByKey<DvachCaptchaLayoutViewModel>() }
   private val scope = KurobaCoroutineScope()
@@ -106,7 +109,7 @@ class DvachCaptchaLayout(context: Context) : TouchBlockingFrameLayout(context),
 
     val view = ComposeView(context).apply {
       setContent {
-        ProvideChanTheme(themeEngine) {
+        ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
           val chanTheme = LocalChanTheme.current
 
           Box(

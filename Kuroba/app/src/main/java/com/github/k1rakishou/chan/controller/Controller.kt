@@ -516,16 +516,7 @@ abstract class Controller(@JvmField var context: Context) {
   ): ModularResult<T> {
     when (this) {
       is ModularResult.Error -> {
-        val message = message?.invoke(this.error)
-          ?: this.error.errorMessageOrClassName()
-
-        val duration = if (longToast) {
-          Toast.LENGTH_LONG
-        } else {
-          Toast.LENGTH_SHORT
-        }
-
-        showToast(message, duration)
+        error.toastOnError(longToast, message)
       }
       is ModularResult.Value -> {
         // no-op
@@ -533,6 +524,22 @@ abstract class Controller(@JvmField var context: Context) {
     }
 
     return this
+  }
+
+  protected fun Throwable.toastOnError(
+    longToast: Boolean = false,
+    message: ((Throwable) -> String)? = null
+  ) {
+    val message = message?.invoke(this)
+      ?: this.errorMessageOrClassName()
+
+    val duration = if (longToast) {
+      Toast.LENGTH_LONG
+    } else {
+      Toast.LENGTH_SHORT
+    }
+
+    showToast(message, duration)
   }
 
   protected fun <T> ModularResult<T>.toastOnSuccess(
