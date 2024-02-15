@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.controller;
 
 import static android.view.View.GONE;
 import static android.view.View.VISIBLE;
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
 import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.inflate;
 
 import android.content.Context;

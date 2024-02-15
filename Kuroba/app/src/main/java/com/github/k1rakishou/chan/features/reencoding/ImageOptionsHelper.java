@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.features.reencoding;
 
+import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
+
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.widget.Toast;
