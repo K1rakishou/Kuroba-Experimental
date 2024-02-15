@@ -24,7 +24,6 @@ import com.github.k1rakishou.chan.features.reply.data.TooManyAttachables
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyAttachNewFileButtonWideView
 import com.github.k1rakishou.chan.features.reply.epoxy.epoxyReplyFileView
-import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController
 import com.github.k1rakishou.chan.features.reply_image_search.ImageSearchController
 import com.github.k1rakishou.chan.ui.controller.FloatingListMenuController
 import com.github.k1rakishou.chan.ui.epoxy.epoxyLoadingView
@@ -216,7 +215,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
           chanDescriptor(state.chanDescriptor)
           onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
           onLongClickListener { showPickFileOptions() }
-          onAttachSoundToMediaClickListener { onPickFileItemClicked(ACTION_ATTACH_SOUND_TO_MEDIA) }
           onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
           onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
         }
@@ -245,7 +243,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
               expandedMode(state.isReplyLayoutExpanded)
               onClickListener { presenter.pickLocalFile(showFilePickerChooser = false) }
               onLongClickListener { showPickFileOptions() }
-              onAttachSoundToMediaClickListener { onPickFileItemClicked(ACTION_ATTACH_SOUND_TO_MEDIA) }
               onAttachImageByUrlClickListener { onPickFileItemClicked(ACTION_PICK_REMOTE_FILE) }
               onImageRemoteSearchClickListener { onPickFileItemClicked(ACTION_USE_REMOTE_IMAGE_SEARCH) }
             }
@@ -441,17 +438,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
         replyLayoutCallbacks?.hideKeyboard()
         threadListLayoutCallbacks?.pushController(imageSearchController)
       }
-      ACTION_ATTACH_SOUND_TO_MEDIA -> {
-        val boundChanDescriptor = presenter.boundChanDescriptor
-          ?: return
-
-        val imageSearchController = CreateSoundMediaController(
-          context = context
-        )
-
-        replyLayoutCallbacks?.hideKeyboard()
-        threadListLayoutCallbacks?.pushController(imageSearchController)
-      }
     }
   }
 
@@ -552,7 +538,6 @@ class ReplyLayoutFilesArea @JvmOverloads constructor(
     private const val ACTION_PICK_LOCAL_FILE_SHOW_ALL_FILE_PICKERS = 100
     private const val ACTION_PICK_REMOTE_FILE = 101
     private const val ACTION_USE_REMOTE_IMAGE_SEARCH = 102
-    private const val ACTION_ATTACH_SOUND_TO_MEDIA = 103
 
     private const val MIN_FILES_PER_ROW = 2
 

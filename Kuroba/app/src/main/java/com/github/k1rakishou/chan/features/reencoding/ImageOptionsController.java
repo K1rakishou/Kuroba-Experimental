@@ -16,8 +16,6 @@
  */
 package com.github.k1rakishou.chan.features.reencoding;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -36,8 +34,10 @@ import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent;
 import com.github.k1rakishou.chan.core.navigation.RequiresNoBottomNavBar;
 import com.github.k1rakishou.chan.features.media_viewer.MediaViewerActivity;
+import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController;
 import com.github.k1rakishou.chan.ui.controller.BaseFloatingController;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableBarButton;
+import com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCardView;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableCheckBox;
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText;
@@ -65,6 +65,7 @@ public class ImageOptionsController
     private ImageReencodingPresenter presenter;
     private ImageOptionsHelper imageReencodingHelper;
     private ImageOptionsControllerCallbacks callbacks;
+    private ChanDescriptor chanDescriptor;
 
     private ConstraintLayout viewHolder;
     private ColorizableCardView container;
@@ -76,6 +77,7 @@ public class ImageOptionsController
     private AppCompatImageView generateNewFileName;
     private ColorizableCheckBox changeImageChecksum;
     private ColorizableCheckBox reencode;
+    private ColorizableButton createSoundMedia;
     private ColorizableBarButton imageOptionsCancel;
     private ColorizableBarButton imageOptionsApply;
 
@@ -104,6 +106,7 @@ public class ImageOptionsController
 
         this.imageReencodingHelper = imageReencodingHelper;
         this.callbacks = callbacks;
+        this.chanDescriptor = chanDescriptor;
 
         lastSettings = lastOptions;
         reencodeEnabled = supportsReencode;
@@ -130,6 +133,7 @@ public class ImageOptionsController
         imageFileName = view.findViewById(R.id.image_options_filename);
         generateNewFileName = view.findViewById(R.id.image_option_generate_new_name);
         reencode = view.findViewById(R.id.image_options_reencode);
+        createSoundMedia = view.findViewById(R.id.image_options_create_sound_media);
         imageOptionsCancel = view.findViewById(R.id.image_options_cancel);
         imageOptionsApply = view.findViewById(R.id.image_options_ok);
 
@@ -137,6 +141,13 @@ public class ImageOptionsController
         removeMetadata.setOnCheckedChangeListener(this);
         reencode.setOnCheckedChangeListener(this);
         changeImageChecksum.setOnCheckedChangeListener(this);
+        createSoundMedia.setOnClickListener(this);
+
+        if (chanDescriptor != null && chanDescriptor.siteDescriptor().is4chan()) {
+            createSoundMedia.setVisibility(View.VISIBLE);
+        } else {
+            createSoundMedia.setVisibility(View.GONE);
+        }
 
         // setup last settings first before checking other conditions to enable/disable stuff
         if (lastSettings != null) {
@@ -236,6 +247,14 @@ public class ImageOptionsController
             presenter.applyImageOptions(newFileName);
         } else if (v == viewHolder) {
             imageReencodingHelper.pop();
+        } else if (v == createSoundMedia) {
+            ChanDescriptor boundChanDescriptor = chanDescriptor;
+            if (boundChanDescriptor != null) {
+                imageReencodingHelper.pop();
+
+                CreateSoundMediaController createSoundMediaController = new CreateSoundMediaController(context);
+                callbacks.pushCreateSoundMediaController(createSoundMediaController);
+            }
         }
     }
 
@@ -330,5 +349,7 @@ public class ImageOptionsController
         );
 
         void onImageOptionsApplied();
+
+        void pushCreateSoundMediaController(CreateSoundMediaController controller);
     }
 }

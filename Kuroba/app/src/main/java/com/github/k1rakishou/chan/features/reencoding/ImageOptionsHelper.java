@@ -1,7 +1,5 @@
 package com.github.k1rakishou.chan.features.reencoding;
 
-import static com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.showToast;
-
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.widget.Toast;
@@ -12,6 +10,7 @@ import androidx.core.util.Pair;
 import com.github.k1rakishou.ChanSettings;
 import com.github.k1rakishou.chan.R;
 import com.github.k1rakishou.chan.controller.Controller;
+import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController;
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils;
 import com.github.k1rakishou.chan.utils.BackgroundUtils;
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor;
@@ -121,6 +120,13 @@ public class ImageOptionsHelper
     }
 
     @Override
+    public void pushCreateSoundMediaController(CreateSoundMediaController controller) {
+        BackgroundUtils.ensureMainThread();
+
+        callbacks.pushCreateSoundMediaController(controller);
+    }
+
+    @Override
     public void onCanceled() {
         if (imageOptionsController != null) {
             imageOptionsController.onReencodingCanceled();
@@ -145,5 +151,6 @@ public class ImageOptionsHelper
     public interface ImageReencodingHelperCallback {
         void presentReencodeOptionsController(Controller controller);
         void onImageOptionsComplete();
+        void pushCreateSoundMediaController(CreateSoundMediaController controller);
     }
 }

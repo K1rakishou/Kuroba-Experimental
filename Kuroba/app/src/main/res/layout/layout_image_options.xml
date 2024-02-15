@@ -47,8 +47,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                 <ImageView
                     android:id="@+id/image_options_preview"
                     android:layout_width="match_parent"
-                    android:layout_height="300dp"
-                    android:scaleType="fitCenter" />
+                    android:layout_height="200dp"
+                    android:scaleType="centerCrop" />
 
                 <com.github.k1rakishou.chan.ui.theme.widget.TouchBlockingLinearLayout
                     android:id="@+id/reencode_options_group"
@@ -105,6 +105,23 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
                         android:layout_width="match_parent"
                         android:layout_height="36dp"
                         android:text="@string/image_options_re_encode" />
+
+                    <Space
+                        android:layout_width="wrap_content"
+                        android:layout_height="8dp"/>
+
+                    <com.github.k1rakishou.chan.ui.theme.widget.ColorizableButton
+                        android:id="@+id/image_options_create_sound_media"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="8dp"
+                        android:visibility="gone"
+                        tools:visibility="visible"
+                        android:text="@string/image_options_create_sound_media" />
+
+                    <Space
+                        android:layout_width="wrap_content"
+                        android:layout_height="8dp"/>
 
                     <androidx.constraintlayout.widget.ConstraintLayout
                         android:layout_width="match_parent"

@@ -1004,6 +1004,7 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="image_options_fix_exif">Fix EXIF orientation</string>
     <string name="image_options_remove_metadata">Remove metadata</string>
     <string name="image_options_re_encode">Re-encode</string>
+    <string name="image_options_create_sound_media">Create sound media</string>
     <string name="reencode_image_re_encode_image_text">Re-encode image</string>
     <string name="reencode_image_as_is">AS IS (%1$s)</string>
     <string name="reencode_image_as_jpeg">AS JPEG</string>

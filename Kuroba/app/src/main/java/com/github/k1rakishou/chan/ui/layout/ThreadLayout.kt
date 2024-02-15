@@ -52,6 +52,7 @@ import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.features.drawer.MainControllerCallbacks
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper
 import com.github.k1rakishou.chan.features.reencoding.ImageOptionsHelper.ImageReencodingHelperCallback
+import com.github.k1rakishou.chan.features.reply_attach_sound.CreateSoundMediaController
 import com.github.k1rakishou.chan.ui.adapter.PostsFilter
 import com.github.k1rakishou.chan.ui.cell.PostCellData
 import com.github.k1rakishou.chan.ui.controller.PostLinksController
@@ -1332,6 +1333,10 @@ class ThreadLayout @JvmOverloads constructor(
   override fun onImageOptionsComplete() {
     BackgroundUtils.ensureMainThread()
     threadListLayout.onImageOptionsComplete()
+  }
+
+  override fun pushCreateSoundMediaController(controller: CreateSoundMediaController) {
+    threadListLayout.pushController(controller)
   }
 
   override fun presentRemovedPostsController(controller: Controller) {

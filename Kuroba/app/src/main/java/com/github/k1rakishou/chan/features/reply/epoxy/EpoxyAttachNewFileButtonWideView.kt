@@ -4,14 +4,12 @@ import android.content.Context
 import android.util.AttributeSet
 import android.widget.FrameLayout
 import androidx.appcompat.widget.AppCompatImageView
-import com.airbnb.epoxy.AfterPropsSet
 import com.airbnb.epoxy.CallbackProp
 import com.airbnb.epoxy.ModelProp
 import com.airbnb.epoxy.ModelView
 import com.airbnb.epoxy.OnViewRecycled
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.setVisibilityFast
 import com.github.k1rakishou.common.updateMargins
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -28,7 +26,6 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
   lateinit var themeEngine: ThemeEngine
 
   private val newAttachableButton: FrameLayout
-  private val attachSoundToMedia: AppCompatImageView
   private val attachImageByUrl: AppCompatImageView
   private val imageRemoteSearch: AppCompatImageView
 
@@ -41,7 +38,6 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
       .inject(this)
 
     newAttachableButton = findViewById(R.id.reply_new_attachable_button_wide)
-    attachSoundToMedia = findViewById(R.id.reply_attach_sound_to_media)
     attachImageByUrl = findViewById(R.id.reply_attach_file_by_url_button)
     imageRemoteSearch = findViewById(R.id.reply_image_remote_search)
 
@@ -73,7 +69,6 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
   override fun onThemeChanged() {
     val tintColor = ThemeEngine.resolveDrawableTintColor(themeEngine.chanTheme.isBackColorDark)
 
-    attachSoundToMedia.setImageDrawable(themeEngine.tintDrawable(attachSoundToMedia.drawable, tintColor))
     attachImageByUrl.setImageDrawable(themeEngine.tintDrawable(attachImageByUrl.drawable, tintColor))
     imageRemoteSearch.setImageDrawable(themeEngine.tintDrawable(imageRemoteSearch.drawable, tintColor))
   }
@@ -81,15 +76,6 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
   @OnViewRecycled
   fun onViewRecycled() {
     this.chanDescriptor = null
-  }
-
-  @AfterPropsSet
-  fun afterPropsSet() {
-    if (chanDescriptor?.siteDescriptor()?.is4chan() == true) {
-      attachSoundToMedia.setVisibilityFast(VISIBLE)
-    } else {
-      attachSoundToMedia.setVisibilityFast(GONE)
-    }
   }
 
   @ModelProp
@@ -105,18 +91,6 @@ class EpoxyAttachNewFileButtonWideView @JvmOverloads constructor(
     }
 
     newAttachableButton.setOnClickListener {
-      listener.invoke()
-    }
-  }
-
-  @CallbackProp
-  fun setOnAttachSoundToMediaClickListener(listener: (() -> Unit)?) {
-    if (listener == null) {
-      attachSoundToMedia.setOnClickListener(null)
-      return
-    }
-
-    attachSoundToMedia.setOnClickListener {
       listener.invoke()
     }
   }
