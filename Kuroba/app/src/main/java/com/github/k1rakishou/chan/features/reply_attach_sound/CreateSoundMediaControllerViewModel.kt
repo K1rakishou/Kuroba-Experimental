@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.core.site.loader.ClientException
 import com.github.k1rakishou.chan.core.usecase.UploadFileToCatBoxUseCase
 import com.github.k1rakishou.chan.ui.helper.FileHelper
 import com.github.k1rakishou.chan.utils.openChooseFileDialogAsync
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
@@ -47,7 +48,10 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
     lateinit var uploadFileToCatBoxUseCase: UploadFileToCatBoxUseCase
 
     private val _activeRequests = mutableMapOf<UUID, Job>()
-    private val _selectedFiles = mutableMapOf<UUID, Uri>()
+
+    private val _selectedFiles = mutableStateMapOf<UUID, Uri>()
+    val selectedFiles: Map<UUID, Uri>
+        get() = _selectedFiles
 
     private val _attachments = mutableStateListOf<Attachment>()
     val attachments: List<Attachment>
@@ -84,6 +88,13 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
         _processingAttachments[clickedAttachment.fileUUID] = AsyncData.NotInitialized
     }
 
+    fun checkMediaAlreadyHasSoundAttached(
+        clickedAttachment: Attachment
+    ): Boolean {
+        val matcher = AppConstants.SOUND_POST_PATTERN.matcher(clickedAttachment.attachmentName)
+        return matcher.find()
+    }
+
     fun tryToCreateSoundMedia(
         fileChooser: FileChooser,
         clickedAttachment: Attachment,
@@ -91,8 +102,6 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
         showSuccessToast: (String) -> Unit
     ) {
         // TODO: show 'open sound file' dialog on first use
-        // TODO: check if attachment already has sound attached (check file name for 'sound=' string) and ask the user
-        //  if he want to replace the sound with new one
         // TODO: consider allowing attaching videos after we start supporting sound posts with videos
 
         val job = viewModelScope.launch {
@@ -129,6 +138,8 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
 
                     throw ClientException("File '${pickedFileUri}' has no extension")
                 }
+
+                _selectedFiles[clickedAttachment.fileUUID] = pickedFileUri
 
                 val uploadResult = uploadFileToCatBoxUseCase.await(
                     fileUri = pickedFileUri,
@@ -189,7 +200,6 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
             return null
         }
 
-        _selectedFiles[clickedAttachment.fileUUID] = pickedFileUri
         return pickedFileUri
     }
 
@@ -209,8 +219,20 @@ class CreateSoundMediaControllerViewModel : BaseViewModel() {
             .getReplyFileMeta()
             .unwrap()
 
-        val oldFileNameWithoutExtension = replyFileMeta.fileName.substringBeforeLast('.')
-        val oldFileNameExtension = replyFileMeta.fileName.substringAfterLast('.')
+        var oldFileName = replyFileMeta.fileName
+
+        // Remove all previously added '[sound=xxx]' substrings.
+        val matcher = AppConstants.SOUND_POST_PATTERN_WHOLE.matcher(replyFileMeta.fileName)
+        while (matcher.find()) {
+            // Do not catch exceptions here because we want to catch them in parent's exception handler
+            val start = matcher.start(1)
+            val end = matcher.end(1)
+
+            oldFileName = oldFileName.removeRange(start, end)
+        }
+
+        val oldFileNameWithoutExtension = oldFileName.substringBeforeLast('.')
+        val oldFileNameExtension = oldFileName.substringAfterLast('.')
 
         val newFileName = buildString {
             append(oldFileNameWithoutExtension)

@@ -4,6 +4,7 @@ import android.os.Parcelable
 import android.webkit.MimeTypeMap
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.features.image_saver.ImageSaverV2
+import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.extractFileName
 import com.github.k1rakishou.common.groupOrNull
@@ -20,7 +21,6 @@ import org.jsoup.parser.Parser
 import java.net.URLDecoder
 import java.nio.charset.StandardCharsets
 import java.util.UUID
-import java.util.regex.Pattern
 
 sealed class ViewableMediaParcelableHolder {
 
@@ -330,8 +330,6 @@ sealed class ViewableMedia(
 
 }
 
-private val SOUND_POST_PATTERN by lazy { Pattern.compile("\\[sound=(.*?)\\]") }
-
 data class ViewableMediaMeta(
   val ownerPostDescriptor: PostDescriptor?,
   val serverMediaName: String?,
@@ -373,7 +371,7 @@ data class ViewableMediaMeta(
     }
 
     try {
-      val matcher = SOUND_POST_PATTERN.matcher(originalMediaName)
+      val matcher = AppConstants.SOUND_POST_PATTERN.matcher(originalMediaName)
       if (!matcher.find()) {
         return@lazy null
       }

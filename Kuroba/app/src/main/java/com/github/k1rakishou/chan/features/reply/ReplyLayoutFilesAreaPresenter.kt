@@ -914,7 +914,7 @@ class ReplyLayoutFilesAreaPresenter(
     private const val TAG = "ReplyLayoutFilesAreaPresenter"
     const val MAX_VISIBLE_ATTACHABLES_COUNT = 32
 
-    private const val REFRESH_FILES_DEBOUNCE_TIME = 250L
+    private const val REFRESH_FILES_DEBOUNCE_TIME = 32L
     private const val FILE_SELECTION_UPDATE_DEBOUNCE_TIME = 25L
     private const val REFRESH_FILES_APPROX_DURATION = 125L
   }

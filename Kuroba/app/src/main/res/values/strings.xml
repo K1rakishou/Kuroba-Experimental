@@ -1418,6 +1418,8 @@ If you ever log out or if the passcode expires you will have to change reply mod
     <string name="create_sound_media_controller_creation_error">Failed to create sound post for file, error: \'%1$s\'</string>
     <string name="create_sound_media_controller_creation_canceled">Sound post creation canceled</string>
     <string name="create_sound_media_controller_attachment_full_file_name_dialog_title">Attachment file name</string>
+    <string name="create_sound_media_controller_media_already_has_sound_dialog_title">Replace existing sound?</string>
+    <string name="create_sound_media_controller_media_already_has_sound_dialog_description">Selected media already has sound attached. Do you want to replace it with new one?</string>
 
     <string name="catalog_load_page">Loading page %1$d</string>
     <string name="catalog_load_catalog">Loading catalog \'%1$s\'</string>

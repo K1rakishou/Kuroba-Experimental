@@ -65,6 +65,7 @@ class CreateSoundMediaController(
     override fun BuildContent() {
         val attachments = controllerViewModel.attachments
         val processingAttachments = controllerViewModel.processingAttachments
+        val selectedFiles = controllerViewModel.selectedFiles
 
         val paddingValues by controllerPaddingsState
 
@@ -85,9 +86,13 @@ class CreateSoundMediaController(
 
                     Attachment(
                         attachment = attachment,
+                        canRetryOnError = selectedFiles.containsKey(attachment.fileUUID),
                         processingAttachment = processingAttachment,
-                        createSoundMedia = { clickedAttachment ->
-                            createSoundMedia(clickedAttachment)
+                        createSoundMedia = { clickedAttachment, checkMediaHasSound ->
+                            tryToCreateSoundMedia(
+                                clickedAttachment = clickedAttachment,
+                                checkMediaHasSound = checkMediaHasSound
+                            )
                         }
                     )
                 }
@@ -98,8 +103,9 @@ class CreateSoundMediaController(
     @Composable
     private fun Attachment(
         attachment: CreateSoundMediaControllerViewModel.Attachment,
+        canRetryOnError: Boolean,
         processingAttachment: AsyncData<Unit>,
-        createSoundMedia: (CreateSoundMediaControllerViewModel.Attachment) -> Unit
+        createSoundMedia: (CreateSoundMediaControllerViewModel.Attachment, checkMediaHasSound: Boolean) -> Unit
     ) {
         val request = remember(attachment.imagePath) {
             ImageLoaderRequest(
@@ -116,7 +122,7 @@ class CreateSoundMediaController(
                 .kurobaClickable(
                     enabled = processingAttachment !is AsyncData.Loading,
                     bounded = true,
-                    onClick = { createSoundMedia(attachment) }
+                    onClick = { createSoundMedia(attachment, true) }
                 )
         ) {
             KurobaComposeImage(
@@ -146,7 +152,8 @@ class CreateSoundMediaController(
 
             AttachmentOverlay(
                 processingAttachment = processingAttachment,
-                retryCreatingSoundMedia = { createSoundMedia(attachment) },
+                canRetryOnError = canRetryOnError,
+                retryCreatingSoundMedia = { createSoundMedia(attachment, false) },
                 cancelCreatingSoundMedia = {
                     controllerViewModel.cancelCreatingSoundMedia(attachment)
                     showToast(R.string.create_sound_media_controller_creation_canceled)
@@ -158,6 +165,7 @@ class CreateSoundMediaController(
     @Composable
     private fun AttachmentOverlay(
         processingAttachment: AsyncData<Unit>,
+        canRetryOnError: Boolean,
         retryCreatingSoundMedia: () -> Unit,
         cancelCreatingSoundMedia: () -> Unit,
     ) {
@@ -172,7 +180,10 @@ class CreateSoundMediaController(
                 )
                 .fillMaxSize()
                 .drawBehind {
-                    if (processingAttachment is AsyncData.Loading || processingAttachment is AsyncData.Error) {
+                    val drawDimmedBackground = processingAttachment is AsyncData.Loading
+                            || (processingAttachment is AsyncData.Error && canRetryOnError)
+
+                    if (drawDimmedBackground) {
                         drawRect(color = bgColor)
                     }
                 }
@@ -201,13 +212,15 @@ class CreateSoundMediaController(
                     }
                 }
                 is AsyncData.Error -> {
-                    KurobaComposeIcon(
-                        modifier = Modifier
-                            .size(42.dp)
-                            .align(Alignment.Center),
-                        drawableId = R.drawable.ic_refresh_white_24dp,
-                        colorBehindIcon = bgColor
-                    )
+                    if (canRetryOnError) {
+                        KurobaComposeIcon(
+                            modifier = Modifier
+                                .size(42.dp)
+                                .align(Alignment.Center),
+                            drawableId = R.drawable.ic_refresh_white_24dp,
+                            colorBehindIcon = bgColor
+                        )
+                    }
                 }
                 is AsyncData.Data -> {
                     // no-op
@@ -242,7 +255,21 @@ class CreateSoundMediaController(
         }
     }
 
-    private fun createSoundMedia(clickedAttachment: CreateSoundMediaControllerViewModel.Attachment) {
+    private fun tryToCreateSoundMedia(
+        clickedAttachment: CreateSoundMediaControllerViewModel.Attachment,
+        checkMediaHasSound: Boolean = true
+    ) {
+        if (checkMediaHasSound && controllerViewModel.checkMediaAlreadyHasSoundAttached(clickedAttachment)) {
+            dialogFactory.createSimpleConfirmationDialog(
+                context = context,
+                titleTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_title,
+                descriptionTextId = R.string.create_sound_media_controller_media_already_has_sound_dialog_description,
+                onPositiveButtonClickListener = { tryToCreateSoundMedia(clickedAttachment, false) }
+            )
+
+            return
+        }
+
         controllerViewModel.tryToCreateSoundMedia(
             fileChooser = fileChooser,
             clickedAttachment = clickedAttachment,

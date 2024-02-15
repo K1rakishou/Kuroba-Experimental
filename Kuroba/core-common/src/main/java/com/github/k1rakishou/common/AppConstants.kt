@@ -8,6 +8,7 @@ import android.webkit.WebSettings
 import com.github.k1rakishou.core_logger.Logger
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import java.io.File
+import java.util.regex.Pattern
 
 open class AppConstants(
   context: Context,
@@ -242,5 +243,8 @@ open class AppConstants(
     // This is a hack to be able to store into the database and load back an url to the composition
     // icon which we store in the resources
     val COMPOSITE_ICON_URL_LAZY by lazy { "https://composite-icon.resource".toHttpUrl() }
+
+    val SOUND_POST_PATTERN by lazy { Pattern.compile("\\[sound=(.*?)\\]") }
+    val SOUND_POST_PATTERN_WHOLE by lazy { Pattern.compile("(\\[sound=.*?\\])") }
   }
 }
