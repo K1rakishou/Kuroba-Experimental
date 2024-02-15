@@ -308,7 +308,7 @@ class ReplyLayoutFilesAreaPresenter(
   fun deleteFile(fileUuid: UUID) {
     fileChangeExecutor.post {
       handleStateUpdate {
-        replyManager.get().deleteFile(fileUuid = fileUuid, notifyListeners = false)
+        replyManager.get().deleteFile(fileUuid = fileUuid, notifyListeners = true)
           .safeUnwrap { error ->
             Logger.e(TAG, "deleteFile($fileUuid) error", error)
             return@handleStateUpdate
@@ -322,7 +322,7 @@ class ReplyLayoutFilesAreaPresenter(
   fun deleteSelectedFiles() {
     fileChangeExecutor.post {
       handleStateUpdate {
-        replyManager.get().deleteSelectedFiles(notifyListeners = false)
+        replyManager.get().deleteSelectedFiles(notifyListeners = true)
           .safeUnwrap { error ->
             Logger.e(TAG, "deleteSelectedFiles() error", error)
             return@handleStateUpdate

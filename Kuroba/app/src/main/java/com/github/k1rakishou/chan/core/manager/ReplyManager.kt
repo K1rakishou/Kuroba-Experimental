@@ -75,7 +75,6 @@ class ReplyManager(
     }
   }
 
-  @OptIn(ExperimentalTime::class)
   suspend fun awaitUntilFilesAreLoaded() {
     if (filesLoadedInitializer.isInitialized()) {
       return

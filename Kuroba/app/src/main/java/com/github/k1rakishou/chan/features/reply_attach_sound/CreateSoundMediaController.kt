@@ -206,7 +206,7 @@ class CreateSoundMediaController(
                         KurobaComposeIcon(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(4.dp),
+                                .padding(8.dp),
                             drawableId = R.drawable.ic_clear_white_24dp
                         )
                     }
