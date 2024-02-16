@@ -108,8 +108,6 @@ import kotlinx.coroutines.launch
 import okhttp3.HttpUrl
 import java.util.*
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
-import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
 /**
@@ -127,7 +125,6 @@ class ThreadLayout @JvmOverloads constructor(
   RemovedPostsCallbacks,
   View.OnClickListener,
   ThreadListLayoutCallback,
-  CoroutineScope,
   ThemeEngine.ThemeChangesListener {
 
   private enum class Visible {
@@ -208,9 +205,7 @@ class ThreadLayout @JvmOverloads constructor(
 
   private val scrollToBottomDebouncer = Debouncer(false)
   private val job = SupervisorJob()
-
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("ThreadLayout")
+  private val coroutineScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("ThreadLayout"))
 
   override val toolbar: Toolbar?
     get() = callback.toolbar
@@ -260,7 +255,7 @@ class ThreadLayout @JvmOverloads constructor(
     navigationViewContractType: NavigationViewContract.Type
   ) {
     this.callback = callback
-    this.serializedCoroutineExecutor = SerializedCoroutineExecutor(this)
+    this.serializedCoroutineExecutor = SerializedCoroutineExecutor(coroutineScope)
     this.threadControllerType = threadControllerType
 
     Logger.d(TAG, "ThreadLayout.create(threadControllerType=$threadControllerType)")
@@ -301,7 +296,7 @@ class ThreadLayout @JvmOverloads constructor(
       replyButton.setToolbar(callback.toolbar!!)
     }
 
-    launch {
+    coroutineScope.launch {
       chanLoadProgressNotifier.progressEventsFlow.collect { chanLoadProgressEvent ->
         if (chanDescriptor != chanLoadProgressEvent.chanDescriptor) {
           return@collect
@@ -464,7 +459,6 @@ class ThreadLayout @JvmOverloads constructor(
     callback.unpresentController(predicate)
   }
 
-  @OptIn(ExperimentalTime::class)
   override suspend fun showPostsForChanDescriptor(
     descriptor: ChanDescriptor?,
     filter: PostsFilter,

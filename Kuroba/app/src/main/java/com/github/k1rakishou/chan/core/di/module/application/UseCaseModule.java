@@ -43,7 +43,9 @@ import com.github.k1rakishou.chan.core.usecase.ImportFiltersUseCase;
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromGithubUseCase;
 import com.github.k1rakishou.chan.core.usecase.InstallMpvNativeLibrariesFromLocalDirectoryUseCase;
 import com.github.k1rakishou.chan.core.usecase.KurobaSettingsImportUseCase;
+import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase;
 import com.github.k1rakishou.chan.core.usecase.ParsePostRepliesUseCase;
+import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase;
 import com.github.k1rakishou.chan.core.usecase.SearxImageSearchUseCase;
 import com.github.k1rakishou.chan.core.usecase.ThreadDataPreloader;
 import com.github.k1rakishou.chan.core.usecase.ThreadDownloaderPersistPostsInDatabaseUseCase;
@@ -513,6 +515,25 @@ public class UseCaseModule {
         Logger.deps("UploadFileToCatBoxUseCase");
 
         return new UploadFileToCatBoxUseCase(proxiedOkHttpClient, fileManager);
+    }
+
+    @Provides
+    @Singleton
+    public LoadChan4CaptchaUseCase provideLoadChan4CaptchaUseCase(
+            Moshi moshi,
+            SiteManager siteManager,
+            ProxiedOkHttpClient proxiedOkHttpClient
+    ) {
+        return new LoadChan4CaptchaUseCase(moshi, siteManager, proxiedOkHttpClient);
+    }
+
+    @Provides
+    @Singleton
+    public RefreshChan4CaptchaTicketUseCase provideRefreshChan4CaptchaTicketUseCase(
+            SiteManager siteManager,
+            LoadChan4CaptchaUseCase loadChan4CaptchaUseCase
+    ) {
+        return new RefreshChan4CaptchaTicketUseCase(siteManager, loadChan4CaptchaUseCase);
     }
 
 }

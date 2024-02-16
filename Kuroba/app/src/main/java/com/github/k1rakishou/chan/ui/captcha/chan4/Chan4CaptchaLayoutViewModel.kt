@@ -24,20 +24,14 @@ import com.github.k1rakishou.chan.core.manager.SiteManager
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
 import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4CaptchaSettings
+import com.github.k1rakishou.chan.core.usecase.LoadChan4CaptchaUseCase
+import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.chan.features.posting.CaptchaDonation
-import com.github.k1rakishou.common.BadStatusResponseException
-import com.github.k1rakishou.common.EmptyBodyResponseException
 import com.github.k1rakishou.common.ModularResult
-import com.github.k1rakishou.common.StringUtils.formatToken
-import com.github.k1rakishou.common.isNotNullNorBlank
-import com.github.k1rakishou.common.isNotNullNorEmpty
-import com.github.k1rakishou.common.suspendCall
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.prefs.GsonJsonSetting
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
 import com.squareup.moshi.Moshi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -52,8 +46,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import okhttp3.Request
-import java.io.IOException
 import javax.inject.Inject
 import kotlin.math.abs
 
@@ -75,6 +67,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
   lateinit var captchaImageCache: CaptchaImageCache
   @Inject
   lateinit var captchaDonation: CaptchaDonation
+  @Inject
+  lateinit var loadChan4CaptchaUseCase: LoadChan4CaptchaUseCase
+  @Inject
+  lateinit var refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase
 
   private var activeJob: Job? = null
   private var captchaTtlUpdateJob: Job? = null
@@ -95,7 +91,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     get() = _captchaInfoToShow
 
   @Volatile private var notifiedUserAboutCaptchaSolver = false
-  @Volatile private var currentTicket: String? = null
 
   private var _captchaSolverInstalled = mutableStateOf<Boolean>(false)
   val captchaSolverInstalled: State<Boolean>
@@ -231,17 +226,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
       }
 
       val result = ModularResult.Try {
-        if (currentTicket == null) {
-          val ticketFromSettings = chan4CaptchaSettingsJson.get().captchaTicket ?: ""
-          currentTicket = ticketFromSettings
-
-          Logger.d(TAG, "requestCaptcha() loaded 4chan captcha ticket from settings: '${formatToken(ticketFromSettings)}'")
-        }
-
         requestCaptchaInternal(
           appContext = appContext,
           chanDescriptor = chanDescriptor,
-          ticket = currentTicket
+          ticket = chan4CaptchaSettingsJson.get().captchaTicket
         )
       }
       when (result) {
@@ -338,57 +326,10 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     chanDescriptor: ChanDescriptor,
     ticket: String?
   ): CaptchaInfo {
-    val boardCode = chanDescriptor.boardDescriptor().boardCode
-    val urlRaw = formatCaptchaUrl(chanDescriptor, boardCode, ticket)
-
-    Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) requesting $urlRaw")
-
-    val requestBuilder = Request.Builder()
-      .url(urlRaw)
-      .get()
-
-    siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())?.let { chan4 ->
-      chan4.requestModifier().modifyCaptchaGetRequest(chan4, requestBuilder)
-    }
-
-    val request = requestBuilder.build()
-    val captchaInfoRawAdapter = moshi.adapter(CaptchaInfoRaw::class.java)
-
-    val response = proxiedOkHttpClient.okHttpClient().suspendCall(request)
-    if (!response.isSuccessful) {
-      throw BadStatusResponseException(response.code)
-    }
-
-    val captchaInfoRawString = response.body?.string()
-    if (captchaInfoRawString == null) {
-      throw EmptyBodyResponseException()
-    }
-
-    val captchaInfoRaw = try {
-      captchaInfoRawAdapter.fromJson(captchaInfoRawString)
-    } catch (error: Throwable) {
-      captchaInfoRawString
-        .chunked(1024)
-        .forEach { captchaChunk ->
-          Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) captchaChunk: ${captchaChunk}")
-        }
-
-      throw error
-    }
-
-    if (captchaInfoRaw == null) {
-      throw IOException("Failed to convert json to CaptchaInfoRaw")
-    }
-
-    val newTicket = captchaInfoRaw.ticketAsString
-    if (newTicket?.isNotNullNorBlank() == true && currentTicket != newTicket) {
-      Logger.d(TAG, "requestCaptchaInternal($chanDescriptor) updating currentTicket with '${formatToken(newTicket)}'")
-
-      currentTicket = newTicket
-      chan4CaptchaSettingsJson.update(sync = false) { chan4CaptchaSettings ->
-        chan4CaptchaSettings.copy(captchaTicket = newTicket)
-      }
-    }
+    val (captchaInfoRaw, captchaInfoRawString) = getCachedCaptchaOrLoadFresh(
+      chanDescriptor = chanDescriptor,
+      ticket = ticket
+    )
 
     if (captchaInfoRaw.err?.contains(ERROR_MSG, ignoreCase = true) == true) {
       val cooldownMs = captchaInfoRaw.cooldown?.times(1000L)
@@ -494,28 +435,32 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     )
   }
 
-  private fun formatCaptchaUrl(chanDescriptor: ChanDescriptor, boardCode: String, ticket: String?): String {
-    return buildString {
-      when (chanDescriptor) {
-        is ChanDescriptor.CompositeCatalogDescriptor -> {
-          error("Cannot use CompositeCatalogDescriptor here")
-        }
-        is ChanDescriptor.CatalogDescriptor -> {
-          append("https://sys.4chan.org/captcha?board=${boardCode}")
+  private suspend fun getCachedCaptchaOrLoadFresh(
+    chanDescriptor: ChanDescriptor,
+    ticket: String?
+  ): Pair<LoadChan4CaptchaUseCase.CaptchaInfoRaw, String> {
+    val lastRefreshedCaptcha = refreshChan4CaptchaTicketUseCase.lastRefreshedCaptcha
 
-          if (ticket.isNotNullNorEmpty()) {
-            append("&ticket=${ticket}")
-          }
-        }
-        is ChanDescriptor.ThreadDescriptor -> {
-          append("https://sys.4chan.org/captcha?board=${boardCode}&thread_id=${chanDescriptor.threadNo}")
+    if (lastRefreshedCaptcha != null && lastRefreshedCaptcha.chanDescriptor == chanDescriptor) {
+      Logger.debug(TAG) { "getCachedCaptchaOrLoadFresh(${chanDescriptor}) using cached captcha" }
 
-          if (ticket.isNotNullNorEmpty()) {
-            append("&ticket=${ticket}")
-          }
-        }
-      }
+      val captchaInfoRaw = lastRefreshedCaptcha.captchaResult.captchaInfoRaw
+      val captchaInfoRawString = lastRefreshedCaptcha.captchaResult.captchaInfoRawString
+
+      return captchaInfoRaw to captchaInfoRawString
     }
+
+    Logger.debug(TAG) { "getCachedCaptchaOrLoadFresh(${chanDescriptor}) requesting fresh captcha" }
+
+    val captchaResult = loadChan4CaptchaUseCase.await(
+      chanDescriptor = chanDescriptor,
+      ticket = ticket
+    ).unwrap()
+
+    val captchaInfoRaw = captchaResult.captchaInfoRaw
+    val captchaInfoRawString = captchaResult.captchaInfoRawString
+
+    return captchaInfoRaw to captchaInfoRawString
   }
 
   private fun replaceColor(src: Bitmap, fromColor: Int, targetColor: Int): Bitmap {
@@ -598,67 +543,6 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
 
     if (_captchaSuggestions.contains(solution)) {
       captchaDonation.addAutoSolvedCaptcha(solution)
-    }
-  }
-
-  @JsonClass(generateAdapter = true)
-  data class CaptchaInfoRaw(
-    @Json(name = "error")
-    val err: String?,
-    @Json(name = "pcd_msg")
-    val pcdMsg: String?,
-    @Json(name = "cd")
-    val cd: Int?,
-    @Json(name = "pcd")
-    val pcd: Int?,
-    
-    // For Slider captcha
-    @Json(name = "bg")
-    val bg: String?,
-    @Json(name = "bg_width")
-    val bgWidth: Int?,
-
-    @Json(name = "cd_until")
-    val cooldownUntil: Long?,
-    @Json(name = "challenge")
-    val challenge: String?,
-    @Json(name = "img")
-    val img: String?,
-    @Json(name = "img_width")
-    val imgWidth: Int?,
-    @Json(name = "img_height")
-    val imgHeight: Int?,
-    @Json(name = "valid_until")
-    val validUntil: Long?,
-    @Json(name = "ttl")
-    val ttl: Int?,
-    @Json(name = "ticket")
-    val ticket: Any?
-  ) {
-    val cooldown: Int?
-      get() {
-        if (pcd != null && pcd > 0) {
-          return pcd
-        }
-
-        if (cd != null && cd > 0) {
-          return cd
-        }
-
-        return null
-      }
-
-    val ticketAsString: String?
-      get() = ticket as? String
-    val ticketAsBoolean: Boolean?
-      get() = ticket as? Boolean
-
-    fun ttlSeconds(): Int {
-      return ttl ?: 120
-    }
-
-    fun isNoopChallenge(): Boolean {
-      return challenge?.equals(NOOP_CHALLENGE, ignoreCase = true) == true
     }
   }
 

@@ -365,7 +365,6 @@ open class SiteManager(
     suspendableInitializer.runWhenInitialized(func)
   }
 
-  @OptIn(ExperimentalTime::class)
   open suspend fun awaitUntilInitialized() {
     if (isReady()) {
       return

@@ -546,7 +546,10 @@ class Chan4CaptchaLayout(
             KurobaComposeProgressIndicator(
               modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 16.dp),
+                .padding(
+                  vertical = 16.dp,
+                  horizontal = 8.dp
+                ),
             )
 
             null
@@ -556,7 +559,10 @@ class Chan4CaptchaLayout(
             KurobaComposeErrorMessage(
               modifier = Modifier
                 .fillMaxSize()
-                .padding(vertical = 16.dp),
+                .padding(
+                  vertical = 16.dp,
+                  horizontal = 8.dp
+                ),
               error = error
             )
 
@@ -572,7 +578,10 @@ class Chan4CaptchaLayout(
                 .fillMaxWidth()
                 .height(128.dp)
                 .align(Alignment.Center)
-                .padding(vertical = 16.dp)
+                .padding(
+                  vertical = 16.dp,
+                  horizontal = 8.dp
+                )
             ) {
               KurobaComposeText(
                 text = stringResource(id = R.string.captcha_layout_verification_not_required),

@@ -110,6 +110,10 @@ object StringUtils {
       return "<empty>"
     }
 
+    if (token.isBlank()) {
+      return "<blank>"
+    }
+
     val tokenPartLength = (token.length.toFloat() * 0.2f).toInt() / 2
 
     val startTokenPart = token.substring(0, tokenPartLength)
@@ -144,6 +148,34 @@ object StringUtils {
 
     val levenshteinDistance = dp[len1][len2]
     return 1.0f - (levenshteinDistance.toFloat() / maxOf(len1, len2).toFloat())
+  }
+
+  fun findJsonEnd(json: String, startIndex: Int): Int? {
+    var jsonBracketsCounter = 1
+    var offset = startIndex + 1
+
+    while (true) {
+      val ch = json.getOrNull(offset)
+        ?: break
+
+      if (ch == '{') {
+        ++jsonBracketsCounter
+      } else if (ch == '}') {
+        --jsonBracketsCounter
+      }
+
+      if (jsonBracketsCounter == 0) {
+        return offset + 1
+      }
+
+      if (jsonBracketsCounter < 0) {
+        error("Invalid json")
+      }
+
+      ++offset
+    }
+
+    return null
   }
 
 }

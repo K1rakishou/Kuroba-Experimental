@@ -60,6 +60,8 @@ import com.github.k1rakishou.chan.core.site.http.report.PostReportResult
 import com.github.k1rakishou.chan.core.site.loader.ChanLoaderException
 import com.github.k1rakishou.chan.core.site.loader.ThreadLoadResult
 import com.github.k1rakishou.chan.core.site.loader.UnknownClientException
+import com.github.k1rakishou.chan.core.site.sites.chan4.Chan4
+import com.github.k1rakishou.chan.core.usecase.RefreshChan4CaptchaTicketUseCase
 import com.github.k1rakishou.chan.features.drawer.data.NavigationHistoryEntry
 import com.github.k1rakishou.chan.features.media_viewer.helper.MediaViewerGoToPostHelper
 import com.github.k1rakishou.chan.ui.adapter.PostAdapter.PostAdapterCallback
@@ -160,7 +162,8 @@ class ThreadPresenter @Inject constructor(
   private val _postHighlightManager: Lazy<PostHighlightManager>,
   private val _currentOpenedDescriptorStateManager: Lazy<CurrentOpenedDescriptorStateManager>,
   private val _chanCatalogSnapshotCache: Lazy<ChanCatalogSnapshotCache>,
-  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>
+  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>,
+  private val _refreshChan4CaptchaTicketUseCase: Lazy<RefreshChan4CaptchaTicketUseCase>
 ) : PostAdapterCallback,
   PostCellCallback,
   ThreadStatusCell.Callback,
@@ -219,23 +222,8 @@ class ThreadPresenter @Inject constructor(
     get() = _compositeCatalogManager.get()
   private val mediaViewerGoToPostHelper: MediaViewerGoToPostHelper
     get() = _mediaViewerGoToPostHelper.get()
-
-  private val chanThreadTicker by lazy {
-    ChanThreadTicker(
-      scope = this,
-      isDevFlavor = isDevBuild(),
-      _archivesManager = _archivesManager,
-      _chanThreadManager = _chanThreadManager,
-      action = this::onChanTickerTick
-    )
-  }
-
-  private var threadPresenterCallback: ThreadPresenterCallback? = null
-  private var forcePageUpdate = false
-  private val alreadyCreatedNavElement = AtomicBoolean(false)
-  private var currentFocusedController = CurrentFocusedController.None
-  private var currentNormalLoadThreadJob: Job? = null
-  private var currentFullLoadThreadJob: Job? = null
+  private val refreshChan4CaptchaTicketUseCase: RefreshChan4CaptchaTicketUseCase
+    get() = _refreshChan4CaptchaTicketUseCase.get()
 
   override val endOfCatalogReached: Boolean
     get() {
@@ -310,6 +298,24 @@ class ThreadPresenter @Inject constructor(
 
       return chanCatalogSnapshotCache.get(descriptor)?.isEndReached ?: false
     }
+
+  private val chanThreadTicker by lazy {
+    ChanThreadTicker(
+      scope = this,
+      isDevFlavor = isDevBuild(),
+      _archivesManager = _archivesManager,
+      _chanThreadManager = _chanThreadManager,
+      action = this::onChanTickerTick
+    )
+  }
+
+  private var threadPresenterCallback: ThreadPresenterCallback? = null
+  private var forcePageUpdate = false
+  private val alreadyCreatedNavElement = AtomicBoolean(false)
+  private var currentFocusedController = CurrentFocusedController.None
+  private var currentNormalLoadThreadJob: Job? = null
+  private var currentFullLoadThreadJob: Job? = null
+  private var refreshChan4CaptchaTicketJob: Job? = null
 
   var chanThreadLoadingState = ChanThreadLoadingState.Uninitialized
     private set
@@ -458,6 +464,17 @@ class ThreadPresenter @Inject constructor(
 
     Logger.d(TAG, "chanThreadTicker.startTicker($chanDescriptor)")
     chanThreadTicker.startTicker(chanDescriptor)
+
+    if (chanDescriptor is ChanDescriptor.ThreadDescriptor) {
+      refreshChan4CaptchaTicketJob?.cancel()
+      refreshChan4CaptchaTicketJob = launch {
+        siteManager.awaitUntilInitialized()
+
+        if (siteManager.isSiteActive(Chan4.SITE_DESCRIPTOR)) {
+          refreshChan4CaptchaTicketUseCase.await(chanDescriptor)
+        }
+      }
+    }
   }
 
   fun unbindChanDescriptor(isDestroying: Boolean) {

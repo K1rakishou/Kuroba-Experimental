@@ -52,16 +52,19 @@ class EmptyBodyResponseException : IOException("Response has no body"), Exceptio
     return message!!
   }
 }
+
 class NotFoundException : IOException("Not found"), ExceptionWithShortErrorMessage {
   override fun shortErrorMessage(): String {
     return message!!
   }
 }
+
 class BadContentTypeException(contentType: String?) : Exception("Unexpected content type: '${contentType}'"), ExceptionWithShortErrorMessage {
   override fun shortErrorMessage(): String {
     return message!!
   }
 }
+
 class ParsingException(message: String) : IOException(message), ExceptionWithShortErrorMessage {
   override fun shortErrorMessage(): String {
     return "Parsing error"
