@@ -151,7 +151,7 @@ abstract class SiteRequestModifier<T : Site>(
     if (cookieForDomain.isNotNullNorEmpty()) {
       requestBuilder.appendCookieHeader("${CloudFlareHandlerInterceptor.CF_CLEARANCE}=$cookieForDomain")
     } else {
-      Logger.e(TAG, "addCloudFlareCookie() cookieForDomain '${domainOrHost}' is null or empty: '${cookieForDomain}'")
+      Logger.w(TAG, "addCloudFlareCookie() cookieForDomain '${domainOrHost}' is null or empty: '${cookieForDomain}'")
     }
   }
 

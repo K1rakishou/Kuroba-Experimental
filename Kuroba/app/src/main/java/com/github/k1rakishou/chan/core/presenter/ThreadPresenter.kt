@@ -347,7 +347,7 @@ class ThreadPresenter @Inject constructor(
       val currentDescriptor = chanThreadTicker.currentChanDescriptor
       if (currentDescriptor == null) {
         if (verboseLogs) {
-          Logger.e(TAG, "isBound() currentChanDescriptor == null")
+          Logger.w(TAG, "isBound() currentChanDescriptor == null")
         }
 
         return false
@@ -365,7 +365,7 @@ class ThreadPresenter @Inject constructor(
       val currentDescriptor = chanThreadTicker.currentChanDescriptor
       if (!chanThreadManager.isCached(currentDescriptor)) {
         if (verboseLogs) {
-          Logger.e(TAG, "isBound() currentChanDescriptor (${currentDescriptor}) is not cached")
+          Logger.w(TAG, "isBound() currentChanDescriptor (${currentDescriptor}) is not cached")
         }
 
         return false

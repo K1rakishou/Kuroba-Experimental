@@ -16,24 +16,20 @@
  */
 package com.github.k1rakishou.core_logger
 
+import android.content.Context
 import android.util.Log
 import org.joda.time.DateTime
-import org.joda.time.format.DateTimeFormatterBuilder
-import org.joda.time.format.ISODateTimeFormat
+import org.joda.time.Duration
+import org.joda.time.format.DateTimeFormatter
 
 object Logger {
     private var tagPrefix: String? = null
     private var isCurrentBuildDev = false
+    private var verboseLogsEnabled = false
+
     const val DI_TAG = "Dependency Injection"
 
-    private val logTimeFormatter = DateTimeFormatterBuilder()
-        .append(ISODateTimeFormat.hourMinuteSecondMillis())
-        .toFormatter()
-
-    fun init(prefix: String?, isDevBuild: Boolean) {
-        tagPrefix = prefix
-        isCurrentBuildDev = isDevBuild
-    }
+    private val logStorage = LogStorage()
 
     private val time: String
         get() {
@@ -41,29 +37,70 @@ object Logger {
                 return ""
             }
 
-            return "(" + logTimeFormatter.print(DateTime.now()) + ") "
+            return "(" + LogStorage.logTimeFormatter.print(DateTime.now()) + ") "
         }
+
+    fun init(prefix: String, isDevBuild: Boolean, verboseLogs: Boolean, appContext: Context) {
+        tagPrefix = prefix
+        isCurrentBuildDev = isDevBuild
+        verboseLogsEnabled = verboseLogs
+        logStorage.init(prefix, appContext)
+    }
+
+    suspend fun <T> selectLogs(
+        duration: Duration,
+        logLevels: Array<LogStorage.LogLevel> = allLogLevels(),
+        logSortOrder: LogStorage.LogSortOrder,
+        logFormatter: (List<LogEntryEntity>, DateTimeFormatter) -> T = LogStorage.defaultFormatter()
+    ): T? {
+        return logStorage.selectLogs(
+            duration = duration,
+            logLevels = logLevels,
+            logSortOrder = logSortOrder,
+            logFormatter = logFormatter
+        )
+    }
+
+    fun allLogLevels(): Array<LogStorage.LogLevel> {
+        return arrayOf(
+            LogStorage.LogLevel.Dependencies,
+            LogStorage.LogLevel.Verbose,
+            LogStorage.LogLevel.Debug,
+            LogStorage.LogLevel.Warning,
+            LogStorage.LogLevel.Error,
+        )
+    }
 
     @JvmStatic
     fun d(tag: String, message: String) {
         if (canLog()) {
             Log.d(time + tagPrefix + tag, message)
+            logStorage.persistLog(LogStorage.LogLevel.Debug, tag, message)
         }
     }
 
     @JvmStatic
     fun w(tag: String, message: String) {
-        Log.w(time + tagPrefix + tag, message)
+        if (canLog()) {
+            Log.w(time + tagPrefix + tag, message)
+            logStorage.persistLog(LogStorage.LogLevel.Warning, tag, message)
+        }
     }
 
     @JvmStatic
     fun e(tag: String, message: String) {
-        Log.e(time + tagPrefix + tag, message)
+        if (canLog()) {
+            Log.e(time + tagPrefix + tag, message)
+            logStorage.persistLog(LogStorage.LogLevel.Error, tag, message)
+        }
     }
 
     @JvmStatic
     fun e(tag: String, message: String, throwable: Throwable?) {
-        Log.e(time + tagPrefix + tag, message, throwable)
+        if (canLog()) {
+            Log.e(time + tagPrefix + tag, message, throwable)
+            logStorage.persistLog(LogStorage.LogLevel.Error, tag, message, throwable)
+        }
     }
 
     @JvmStatic
@@ -72,57 +109,109 @@ object Logger {
             return
         }
 
-        val tag = DI_TAG + " (" + Thread.currentThread().name + ":" + Thread.currentThread().id + ")"
-        d(tag, message)
+        if (canLog()) {
+            val threadName = "[" + Thread.currentThread().name + ":" + Thread.currentThread().id + "]"
+            val actualMessage = "${threadName} ${message}"
+
+            d(DI_TAG, actualMessage)
+            logStorage.persistLog(LogStorage.LogLevel.Dependencies, DI_TAG, actualMessage)
+        }
     }
 
     // ========================================================
 
+    fun verbose(tag: String, message: () -> String) {
+        if (canLog() && verboseLogsEnabled) {
+            val msg = message()
+
+            Log.d(time + tagPrefix + tag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Verbose, tag, msg)
+        }
+    }
+
+    fun Any.verbose(tag: String? = null, message: () -> String) {
+        if (canLog() && verboseLogsEnabled) {
+            val msg = message()
+            val actualTag = (tag ?: outerClassName())
+
+            Log.d(time + tagPrefix + actualTag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Verbose, actualTag, msg)
+        }
+    }
+
     fun debug(tag: String, message: () -> String) {
         if (canLog()) {
-            Log.d(time + tagPrefix + tag, message())
+            val msg = message()
+
+            Log.d(time + tagPrefix + tag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Debug, tag, msg)
         }
     }
 
     fun Any.debug(tag: String? = null, message: () -> String) {
         if (canLog()) {
-            Log.d(time + tagPrefix + (tag ?: outerClassName()), message())
+            val msg = message()
+            val actualTag = (tag ?: outerClassName())
+
+            Log.d(time + tagPrefix + actualTag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Debug, actualTag, msg)
         }
     }
 
     fun warning(tag: String, message: () -> String) {
         if (canLog()) {
-            Log.w(time + tagPrefix + tag, message())
+            val msg = message()
+
+            Log.w(time + tagPrefix + tag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Warning, tag, msg)
         }
     }
 
     fun Any.warning(tag: String? = null, message: () -> String) {
         if (canLog()) {
-            Log.w(time + tagPrefix + (tag ?: outerClassName()), message())
+            val msg = message()
+            val actualTag = (tag ?: outerClassName())
+
+            Log.w(time + tagPrefix + actualTag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Warning, actualTag, msg)
         }
     }
 
     fun error(tag: String, message: () -> String) {
         if (canLog()) {
-            Log.e(time + tagPrefix + tag, message())
+            val msg = message()
+
+            Log.e(time + tagPrefix + tag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Error, tag, msg)
         }
     }
 
     fun Any.error(tag: String? = null, message: () -> String) {
         if (canLog()) {
-            Log.e(time + tagPrefix + (tag ?: outerClassName()), message())
+            val msg = message()
+            val actualTag = (tag ?: outerClassName())
+
+            Log.e(time + tagPrefix + actualTag, msg)
+            logStorage.persistLog(LogStorage.LogLevel.Error, actualTag, msg)
         }
     }
 
     fun error(tag: String, throwable: Throwable, message: () -> String) {
         if (canLog()) {
-            Log.e(time + tagPrefix + tag, message(), throwable)
+            val msg = message()
+
+            Log.e(time + tagPrefix + tag, msg, throwable)
+            logStorage.persistLog(LogStorage.LogLevel.Error, tag, msg)
         }
     }
 
     fun Any.error(tag: String? = null, throwable: Throwable, message: () -> String) {
         if (canLog()) {
-            Log.e(time + tagPrefix + (tag ?: outerClassName()), message(), throwable)
+            val msg = message()
+            val actualTag = (tag ?: outerClassName())
+
+            Log.e(time + tagPrefix + actualTag, msg, throwable)
+            logStorage.persistLog(LogStorage.LogLevel.Error, actualTag, msg)
         }
     }
 
@@ -138,7 +227,6 @@ object Logger {
             simplerOuterClassName.removeSuffix("Kt")
         }
     }
-
 
     private fun canLog(): Boolean {
         return true

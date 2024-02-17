@@ -20,6 +20,7 @@ import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
+import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
@@ -33,6 +34,8 @@ import com.github.k1rakishou.fsaf.callback.FSAFActivityCallbacks
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
 import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import com.github.k1rakishou.persist_state.PersistableChanState
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import java.util.UUID
 import javax.inject.Inject
@@ -52,6 +55,8 @@ class MediaViewerActivity : ControllerHostActivity(),
   lateinit var dialogFactory: DialogFactory
   @Inject
   lateinit var appRestarter: AppRestarter
+  @Inject
+  lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
   private lateinit var activityComponent: ActivityComponent
   private lateinit var viewModelComponent: ViewModelComponent
@@ -116,6 +121,12 @@ class MediaViewerActivity : ControllerHostActivity(),
       if (!handleNewIntent(isNotActivityRecreation = savedInstanceState == null, intent = intent)) {
         finish()
       }
+    }
+
+    lifecycleScope.launch {
+      applicationCrashNotifier.applicationCrashedEventFlow
+        .onEach { finish() }
+        .collect()
     }
   }
 

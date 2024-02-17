@@ -136,17 +136,6 @@ open class ThemeEngine(
     listeners.remove(listener.hashCode().toLong())
   }
 
-  fun checkNoListenersLeft() {
-    if (listeners.isEmpty()) {
-      return
-    }
-
-    val remainingListeners = listeners.values
-      .joinToString { listener -> listener.javaClass.simpleName }
-
-    throw RuntimeException("Not all listeners were removed from the ThemeEngine! remainingListeners=${remainingListeners}")
-  }
-
   fun toggleTheme() {
     val isNextThemeDark = !ChanSettings.isCurrentThemeDark.get()
     ChanSettings.isCurrentThemeDark.setSync(isNextThemeDark)

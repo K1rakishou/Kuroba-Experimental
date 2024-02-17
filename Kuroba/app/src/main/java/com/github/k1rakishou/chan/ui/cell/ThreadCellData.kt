@@ -626,7 +626,7 @@ class ThreadCellData(
       val calculatedValue = lazyDataCalcFunc.value
 
       if (!isAlreadyCalculated && !isPrecalculating && isDevBuild()) {
-        Logger.e(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
+        Logger.w(TAG, "getOrCalculate(${Thread.currentThread().name}) value was not already calculated, " +
           "index=${calculatedValue.postIndex}, postNo=${calculatedValue.postNo}")
       }
 

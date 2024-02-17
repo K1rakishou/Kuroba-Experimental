@@ -883,8 +883,6 @@ Usually that means that you forgot to remove a space from the beginning or the e
     <!-- Developer settings -->
     <string name="settings_check_update_apk_version_code">Check update apk version code</string>
     <string name="settings_check_update_apk_version_code_description">For development only! When turned off you will always be suggested to install the apk update.</string>
-    <string name="settings_check_show_mpv_internal_logs">Show MPV internal logs</string>
-    <string name="settings_check_show_mpv_internal_logs_description">When set to true we will include MPV (video player) logs when taking them for reports. This is mandatory when you want to report a video that cannot be played by MPV. Such reports without MPV logs will be discarded.</string>
     <string name="settings_force_low_ram_device">Force low ram device</string>
     <string name="settings_force_low_ram_device_description">This setting should only be used by old devices with less than ~2GB of memory (very approximate number because this heavily depends on the device). It will enable some additional optimizations and attempt to reduce the amount of memory that is used by memory caches. Additionally it will force media viewer view pager to only have 1 offscreen page instead of 2 (which should reduce OutOfMemory and other similar crashes).</string>
     <string name="settings_open_logs">View logs</string>
@@ -1593,6 +1591,7 @@ Actual error: \'%1$s\'</string>
     <string name="crash_report_activity_import_backup">Import backup</string>
     <string name="crash_report_activity_export_backup">Export backup</string>
     <string name="crash_report_activity_loading_logs">Loading logs…</string>
+    <string name="crash_report_activity_no_logs">No logs to display. Check log filtering levels.</string>
     <string name="crash_report_activity_verbose_logs">+Verbose logs</string>
     <string name="crash_report_activity_mpv_logs">+MPV logs</string>
     <string name="crash_report_activity_send_report">Send crash report</string>

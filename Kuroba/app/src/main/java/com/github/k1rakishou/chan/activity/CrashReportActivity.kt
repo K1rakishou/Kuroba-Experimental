@@ -7,8 +7,10 @@ import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -18,14 +20,14 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -34,8 +36,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.BuildConfig
@@ -49,13 +53,13 @@ import com.github.k1rakishou.chan.core.repository.ImportExportRepository
 import com.github.k1rakishou.chan.features.settings.screens.delegate.ExportBackupOptions
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.verticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.InsetsAwareBox
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCollapsableContent
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeDivider
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeTextButton
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
-import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.openLink
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
@@ -64,6 +68,7 @@ import com.github.k1rakishou.common.AndroidUtils.setClipboardContent
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.resumeValueSafe
+import com.github.k1rakishou.core_logger.LogStorage
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.fsaf.FileChooser
@@ -77,10 +82,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
 import org.joda.time.DateTime
+import org.joda.time.Duration
 import org.joda.time.format.DateTimeFormatterBuilder
 import org.joda.time.format.ISODateTimeFormat
 import java.io.IOException
 import javax.inject.Inject
+import kotlin.system.exitProcess
 
 class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
   @Inject
@@ -162,24 +169,13 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
 
     setContent {
       ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
-        val chanTheme = LocalChanTheme.current
-
-        val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
-          TextSelectionColors(
-            handleColor = chanTheme.accentColorCompose,
-            backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
-          )
-        }
-
-        CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-          Content(
-            className = className,
-            message = message,
-            stacktrace = stacktrace,
-            userAgent = userAgent,
-            appLifetime = appLifetime
-          )
-        }
+        Content(
+          className = className,
+          message = message,
+          stacktrace = stacktrace,
+          userAgent = userAgent,
+          appLifetime = appLifetime
+        )
       }
     }
   }
@@ -197,6 +193,10 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
 
     if (::fileChooserLazy.isInitialized) {
       fileChooser.removeCallbacks()
+    }
+
+    if (isFinishing) {
+      exitProcess(-1)
     }
   }
 
@@ -228,7 +228,7 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
     val scrollState = rememberScrollState()
     val coroutineScope = rememberCoroutineScope()
 
-    var logsMut by rememberSaveable { mutableStateOf<String?>(null) }
+    var logsMut by rememberSaveable { mutableStateOf<AnnotatedString?>(null) }
     val logs = logsMut
 
     var blockButtons by rememberSaveable { mutableStateOf(false) }
@@ -237,6 +237,16 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
     var stacktraceSectionCollapsed by rememberSaveable { mutableStateOf(true) }
     var crashLogsSectionCollapsed by rememberSaveable { mutableStateOf(true) }
     var additionalInfoSectionCollapsed by rememberSaveable { mutableStateOf(true) }
+
+    val checkedStates = remember {
+      mutableStateMapOf(
+        LogStorage.LogLevel.Dependencies to false,
+        LogStorage.LogLevel.Verbose to false,
+        LogStorage.LogLevel.Debug to true,
+        LogStorage.LogLevel.Warning to true,
+        LogStorage.LogLevel.Error to true,
+      )
+    }
 
     InsetsAwareBox(
       modifier = Modifier
@@ -312,27 +322,85 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
           collapsed = crashLogsSectionCollapsed,
           onCollapsedStateChanged = { nowCollapsed -> crashLogsSectionCollapsed = nowCollapsed }
         ) {
+          var forceReloadLogs by remember { mutableIntStateOf(0) }
+
           LaunchedEffect(
-            key1 = Unit,
+            key1 = forceReloadLogs,
             block = {
               logsMut = withContext(Dispatchers.IO) {
-                LogsController.loadLogs()
+                val logLevels = checkedStates
+                  .filter { (_, checked) -> checked }
+                  .map { (logLevel, _) -> logLevel }
+                  .toTypedArray()
+
+                if (logLevels.isEmpty()) {
+                  return@withContext AnnotatedString("")
+                }
+
+                val hasOnlyWarningsOrErrors = logLevels.none { logLevel ->
+                  when (logLevel) {
+                    LogStorage.LogLevel.Dependencies -> true
+                    LogStorage.LogLevel.Verbose -> true
+                    LogStorage.LogLevel.Debug -> true
+                    LogStorage.LogLevel.Warning -> false
+                    LogStorage.LogLevel.Error -> false
+                  }
+                }
+
+                val duration = if (hasOnlyWarningsOrErrors) {
+                  Duration.standardMinutes(10)
+                } else {
+                  Duration.standardMinutes(3)
+                }
+
+                return@withContext Logger.selectLogs<AnnotatedString>(
+                  duration = duration,
+                  logLevels = logLevels,
+                  logSortOrder = LogStorage.LogSortOrder.Ascending,
+                  logFormatter = LogStorage.composeFormatter()
+                )
               }
             }
           )
 
-          if (logs == null) {
+          if (logs == null || logs.text.isBlank()) {
+            val text = if (logs == null) {
+              stringResource(id = R.string.crash_report_activity_loading_logs)
+            } else {
+              stringResource(id = R.string.crash_report_activity_no_logs)
+            }
+
             KurobaComposeText(
               modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 8.dp),
               color = chanTheme.textColorSecondaryCompose,
-              text = stringResource(id = R.string.crash_report_activity_loading_logs)
+              text = text
             )
           } else {
+            Column {
+              for (logLevel in LogStorage.LogLevel.entries) {
+                key(logLevel) {
+                  Row(verticalAlignment = Alignment.CenterVertically) {
+                    KurobaComposeCheckbox(
+                      modifier = Modifier.wrapContentSize(),
+                      currentlyChecked = checkedStates[logLevel] ?: false,
+                      text = "Display ${logLevel.logLevelName} logs",
+                      onCheckChanged = { nowChecked ->
+                        checkedStates[logLevel] = nowChecked
+                        forceReloadLogs += 1
+                      }
+                    )
+                  }
+                }
+              }
+            }
+
             SelectionContainer {
               KurobaComposeText(
-                modifier = Modifier.fillMaxSize(),
+                modifier = Modifier
+                  .fillMaxSize()
+                  .background(Color.Black),
                 color = chanTheme.textColorSecondaryCompose,
                 text = logs,
                 fontSize = 12.sp
@@ -430,7 +498,8 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
                   context = context,
                   className = className,
                   message = message,
-                  stacktrace = stacktrace
+                  stacktrace = stacktrace,
+                  checkedStates = checkedStates
                 )
               }
             }
@@ -466,12 +535,51 @@ class CrashReportActivity : AppCompatActivity(), FSAFActivityCallbacks {
     context: Context,
     className: String,
     message: String,
-    stacktrace: String
+    stacktrace: String,
+    checkedStates: Map<LogStorage.LogLevel, Boolean>
   ) {
-    val logs = withContext(Dispatchers.IO) { LogsController.loadLogs() }
+    val logs = withContext(Dispatchers.IO) {
+      val logLevels = checkedStates
+        .filter { (_, checked) -> checked }
+        .map { (logLevel, _) -> logLevel }
+        .toTypedArray()
+
+      if (logLevels.isEmpty()) {
+        return@withContext AnnotatedString("")
+      }
+
+      val hasOnlyWarningsOrErrors = logLevels.none { logLevel ->
+        when (logLevel) {
+          LogStorage.LogLevel.Dependencies -> true
+          LogStorage.LogLevel.Verbose -> true
+          LogStorage.LogLevel.Debug -> true
+          LogStorage.LogLevel.Warning -> false
+          LogStorage.LogLevel.Error -> false
+        }
+      }
+
+      val duration = if (hasOnlyWarningsOrErrors) {
+        Duration.standardMinutes(10)
+      } else {
+        Duration.standardMinutes(3)
+      }
+
+      return@withContext Logger.selectLogs<String>(
+        duration = duration,
+        logSortOrder = LogStorage.LogSortOrder.Ascending,
+        logLevels = logLevels
+      )
+    }
+
     val reportFooter = reportManager.getReportFooter(context)
 
-    val resultString = buildString(65535) {
+    val capacity = if (logs != null) {
+      logs.length + 4096
+    } else {
+      4096
+    }
+
+    val resultString = buildString(capacity) {
       appendLine("Exception: ${className}")
       appendLine("Message: ${message}")
       appendLine()

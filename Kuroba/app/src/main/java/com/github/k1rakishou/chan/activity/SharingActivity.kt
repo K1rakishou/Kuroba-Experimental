@@ -12,6 +12,7 @@ import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
+import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.ReplyManager
 import com.github.k1rakishou.chan.ui.helper.picker.ImagePickHelper
 import com.github.k1rakishou.chan.ui.helper.picker.PickedFile
@@ -22,6 +23,8 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.core_logger.Logger
 import dagger.Lazy
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import javax.inject.Inject
@@ -36,6 +39,8 @@ class SharingActivity : AppCompatActivity() {
   lateinit var appConstants: AppConstants
   @Inject
   lateinit var appRestarter: AppRestarter
+  @Inject
+  lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
   private val mainScope = KurobaCoroutineScope()
 
@@ -59,6 +64,12 @@ class SharingActivity : AppCompatActivity() {
     imagePickHelper.onActivityCreated(this)
 
     mainScope.launch(Dispatchers.Main.immediate) { handleNewIntent(intent) }
+
+    mainScope.launch {
+      applicationCrashNotifier.applicationCrashedEventFlow
+        .onEach { finish() }
+        .collect()
+    }
   }
 
   override fun onNewIntent(intent: Intent?) {

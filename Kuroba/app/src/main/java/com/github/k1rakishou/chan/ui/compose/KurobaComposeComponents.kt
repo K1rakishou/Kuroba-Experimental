@@ -47,8 +47,6 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.text.selection.LocalTextSelectionColors
-import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
@@ -61,13 +59,13 @@ import androidx.compose.material.Text
 import androidx.compose.material.TextField
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.State
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
@@ -312,35 +310,26 @@ fun KurobaComposeTextField(
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  keyboardActions: KeyboardActions = KeyboardActions(),
+  keyboardActions: KeyboardActions = remember { KeyboardActions() },
   textStyle: TextStyle = LocalTextStyle.current,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null
 ) {
   val chanTheme = LocalChanTheme.current
 
-  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
-    TextSelectionColors(
-      handleColor = chanTheme.accentColorCompose,
-      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
-    )
-  }
-
-  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-    TextField(
-      enabled = enabled,
-      value = value,
-      label = label,
-      onValueChange = onValueChange,
-      maxLines = maxLines,
-      singleLine = singleLine,
-      modifier = modifier,
-      keyboardOptions = keyboardOptions,
-      keyboardActions = keyboardActions,
-      colors = chanTheme.textFieldColors(),
-      textStyle = textStyle
-    )
-  }
+  TextField(
+    enabled = enabled,
+    value = value,
+    label = label,
+    onValueChange = onValueChange,
+    maxLines = maxLines,
+    singleLine = singleLine,
+    modifier = modifier,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    colors = chanTheme.textFieldColors(),
+    textStyle = textStyle
+  )
 }
 
 @Composable
@@ -351,35 +340,26 @@ fun KurobaComposeTextField(
   maxLines: Int = Int.MAX_VALUE,
   singleLine: Boolean = false,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  keyboardActions: KeyboardActions = KeyboardActions(),
+  keyboardActions: KeyboardActions = remember { KeyboardActions() },
   textStyle: TextStyle = LocalTextStyle.current,
   enabled: Boolean = true,
   label: @Composable (() -> Unit)? = null
 ) {
   val chanTheme = LocalChanTheme.current
 
-  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
-    TextSelectionColors(
-      handleColor = chanTheme.accentColorCompose,
-      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
-    )
-  }
-
-  CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-    TextField(
-      enabled = enabled,
-      value = value,
-      label = label,
-      onValueChange = onValueChange,
-      maxLines = maxLines,
-      singleLine = singleLine,
-      modifier = modifier,
-      keyboardOptions = keyboardOptions,
-      keyboardActions = keyboardActions,
-      colors = chanTheme.textFieldColors(),
-      textStyle = textStyle
-    )
-  }
+  TextField(
+    enabled = enabled,
+    value = value,
+    label = label,
+    onValueChange = onValueChange,
+    maxLines = maxLines,
+    singleLine = singleLine,
+    modifier = modifier,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    colors = chanTheme.textFieldColors(),
+    textStyle = textStyle
+  )
 }
 
 @Composable
@@ -397,7 +377,57 @@ fun KurobaComposeCustomTextField(
   labelText: String? = null,
   maxTextLength: Int = Int.MAX_VALUE,
   keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
-  keyboardActions: KeyboardActions = KeyboardActions(),
+  keyboardActions: KeyboardActions = remember { KeyboardActions() },
+  interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
+) {
+  var prevTextFieldValue by remember { mutableStateOf<TextFieldValue?>(null) }
+
+  val currentTextFieldValueMut by produceState<TextFieldValue?>(initialValue = prevTextFieldValue, key1 = value) {
+    val newTextFieldValue = prevTextFieldValue?.copy(text = value) ?: TextFieldValue(text = value)
+    prevTextFieldValue = newTextFieldValue
+    this.value = newTextFieldValue
+  }
+
+  val currentTextFieldValue = currentTextFieldValueMut
+  if (currentTextFieldValue == null) {
+    return
+  }
+
+  KurobaComposeCustomTextField(
+    value = currentTextFieldValue,
+    onValueChange = { newTextFieldValue -> onValueChange(newTextFieldValue.text) },
+    modifier = modifier,
+    enabled = enabled,
+    textColor = textColor,
+    parentBackgroundColor = parentBackgroundColor,
+    drawBottomIndicator = drawBottomIndicator,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    singleLine = singleLine,
+    labelText = labelText,
+    maxTextLength = maxTextLength,
+    keyboardOptions = keyboardOptions,
+    keyboardActions = keyboardActions,
+    interactionSource = interactionSource,
+  )
+}
+
+@Composable
+fun KurobaComposeCustomTextField(
+  value: TextFieldValue,
+  onValueChange: (TextFieldValue) -> Unit,
+  modifier: Modifier = Modifier,
+  enabled: Boolean = true,
+  textColor: Color = Color.Unspecified,
+  parentBackgroundColor: Color = Color.Unspecified,
+  drawBottomIndicator: Boolean = true,
+  fontSize: TextUnit = 16.sp,
+  maxLines: Int = Int.MAX_VALUE,
+  singleLine: Boolean = false,
+  labelText: String? = null,
+  maxTextLength: Int = Int.MAX_VALUE,
+  keyboardOptions: KeyboardOptions = KeyboardOptions.Default,
+  keyboardActions: KeyboardActions = remember { KeyboardActions() },
   interactionSource: MutableInteractionSource = remember { MutableInteractionSource() }
 ) {
   val chanTheme = LocalChanTheme.current
@@ -436,13 +466,6 @@ fun KurobaComposeCustomTextField(
     Modifier
   }
 
-  val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
-    TextSelectionColors(
-      handleColor = chanTheme.accentColorCompose,
-      backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
-    )
-  }
-
   var localInput by remember { mutableStateOf(value) }
 
   KurobaComposeCustomTextFieldInternal(
@@ -454,7 +477,7 @@ fun KurobaComposeCustomTextField(
       val isFocused by interactionSource.collectIsFocusedAsState()
 
       AnimatedVisibility(
-        visible = !enabled || (!isFocused && localInput.isEmpty()),
+        visible = !enabled || (!isFocused && localInput.text.isEmpty()),
         enter = fadeIn(),
         exit = fadeOut()
       ) {
@@ -484,28 +507,26 @@ fun KurobaComposeCustomTextField(
       }
     },
     textFieldContent = {
-      CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
-        BasicTextField(
-          modifier = indicatorLineModifier
-            .padding(bottom = lineTotalHeight),
-          enabled = enabled,
-          textStyle = textStyle,
-          singleLine = singleLine,
-          maxLines = maxLines,
-          cursorBrush = cursorBrush,
-          value = value,
-          keyboardOptions = keyboardOptions,
-          keyboardActions = keyboardActions,
-          interactionSource = interactionSource,
-          onValueChange = { text ->
-            localInput = text
-            onValueChange(text)
-          }
-        )
-      }
+      BasicTextField(
+        modifier = indicatorLineModifier
+          .padding(bottom = lineTotalHeight),
+        enabled = enabled,
+        textStyle = textStyle,
+        singleLine = singleLine,
+        maxLines = maxLines,
+        cursorBrush = cursorBrush,
+        value = value,
+        keyboardOptions = keyboardOptions,
+        keyboardActions = keyboardActions,
+        interactionSource = interactionSource,
+        onValueChange = { text ->
+          localInput = text
+          onValueChange(text)
+        }
+      )
     },
     textCounterContent = {
-      val currentCounter = localInput.length
+      val currentCounter = localInput.text.length
       val maxCounter = maxTextLength
       val counterText = remember(key1 = currentCounter, key2 = maxCounter) { "$currentCounter / $maxCounter" }
       val counterTextColor = if (currentCounter > maxCounter) {

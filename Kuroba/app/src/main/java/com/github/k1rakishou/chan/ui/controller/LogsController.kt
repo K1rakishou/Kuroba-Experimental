@@ -17,27 +17,50 @@
 package com.github.k1rakishou.chan.ui.controller
 
 import android.content.Context
-import android.view.View
-import android.view.ViewGroup
-import android.widget.ScrollView
-import com.github.k1rakishou.ChanSettings
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.ComposeView
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.di.component.activity.ActivityComponent
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
-import com.github.k1rakishou.chan.core.manager.ReportManager
-import com.github.k1rakishou.chan.ui.theme.widget.ColorizableTextView
+import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.verticalScrollbar
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
+import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
+import com.github.k1rakishou.chan.ui.compose.LocalWindowInsets
+import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
+import com.github.k1rakishou.chan.ui.toolbar.NavigationItem
 import com.github.k1rakishou.chan.ui.toolbar.ToolbarMenuSubItem
-import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
-import com.github.k1rakishou.chan.utils.IOUtils
 import com.github.k1rakishou.common.AndroidUtils
-import com.github.k1rakishou.common.isNotNullNorBlank
+import com.github.k1rakishou.core_logger.LogStorage
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
-import java.io.IOException
+import org.joda.time.Duration
 import javax.inject.Inject
 
 class LogsController(context: Context) : Controller(context) {
@@ -45,11 +68,19 @@ class LogsController(context: Context) : Controller(context) {
   lateinit var themeEngine: ThemeEngine
   @Inject
   lateinit var globalWindowInsetsManager: GlobalWindowInsetsManager
-  @Inject
-  lateinit var reportManager: ReportManager
 
-  private lateinit var logTextView: ColorizableTextView
-  private lateinit var logText: String
+  private var logsToCopy: String? = null
+  private var addInitialDelay = true
+
+  private val forceLogReloadState = mutableIntStateOf(0)
+
+  private val checkStates = mutableMapOf<Int, Boolean>(
+    ACTION_SHOW_DEPENDENCY_LOGS to false,
+    ACTION_SHOW_VERBOSE_LOGS to false,
+    ACTION_SHOW_DEBUG_LOGS to true,
+    ACTION_SHOW_WARNING_LOGS to true,
+    ACTION_SHOW_ERROR_LOGS to true,
+  )
 
   override fun injectDependencies(component: ActivityComponent) {
     component.inject(this)
@@ -64,100 +95,192 @@ class LogsController(context: Context) : Controller(context) {
       .withOverflow(navigationController)
       .withSubItem(
         ACTION_LOGS_COPY,
-        R.string.settings_logs_copy, ToolbarMenuSubItem.ClickCallback { item -> copyLogsClicked(item) })
+        R.string.settings_logs_copy, ToolbarMenuSubItem.ClickCallback { item -> copyLogsClicked(item) }
+      )
+      .addLogLevelFilters()
       .build()
       .build()
 
-    val container = ScrollView(context)
-    container.scrollBarStyle = View.SCROLLBARS_INSIDE_OVERLAY
-    container.isVerticalScrollBarEnabled = true
-    container.setBackgroundColor(themeEngine.chanTheme.backColor)
-    logTextView = ColorizableTextView(context)
+    view = ComposeView(context)
+      .also { composeView ->
+        composeView.setContent {
+          ProvideChanTheme(themeEngine, globalWindowInsetsManager) {
+            ControllerContent()
+          }
+        }
+      }
+  }
 
-    container.addView(
-      logTextView,
-      ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
+  @Composable
+  private fun ControllerContent() {
+    val chanTheme = LocalChanTheme.current
+    val insets = LocalWindowInsets.current
+
+    var logsMut by rememberSaveable { mutableStateOf<AnnotatedString?>(null) }
+    val logs = logsMut
+
+    val scrollState = rememberScrollState()
+    val forceLogReload by forceLogReloadState
+
+    LaunchedEffect(
+      key1 = forceLogReload,
+      block = {
+        if (addInitialDelay) {
+          delay(1000)
+        }
+
+        logsMut = null
+        logsToCopy = null
+
+        val loadedLogs = withContext(Dispatchers.IO) {
+          val logLevels = checkStates
+            .filter { (_, checked) -> checked }
+            .mapNotNull { (checkedLogLevelId, _) ->
+              when (checkedLogLevelId) {
+                ACTION_SHOW_DEPENDENCY_LOGS -> LogStorage.LogLevel.Dependencies
+                ACTION_SHOW_VERBOSE_LOGS -> LogStorage.LogLevel.Verbose
+                ACTION_SHOW_DEBUG_LOGS -> LogStorage.LogLevel.Debug
+                ACTION_SHOW_WARNING_LOGS -> LogStorage.LogLevel.Warning
+                ACTION_SHOW_ERROR_LOGS -> LogStorage.LogLevel.Error
+                else -> return@mapNotNull null
+              }
+            }
+            .toTypedArray()
+
+          if (logLevels.isEmpty()) {
+            return@withContext null
+          }
+
+          val hasOnlyWarningsOrErrors = logLevels.none { logLevel ->
+            when (logLevel) {
+              LogStorage.LogLevel.Dependencies -> true
+              LogStorage.LogLevel.Verbose -> true
+              LogStorage.LogLevel.Debug -> true
+              LogStorage.LogLevel.Warning -> false
+              LogStorage.LogLevel.Error -> false
+            }
+          }
+
+          val duration = if (hasOnlyWarningsOrErrors) {
+            Duration.standardMinutes(10)
+          } else {
+            Duration.standardMinutes(3)
+          }
+
+          return@withContext Logger.selectLogs<AnnotatedString>(
+            duration = duration,
+            logLevels = logLevels,
+            logSortOrder = LogStorage.LogSortOrder.Ascending,
+            logFormatter = LogStorage.composeFormatter()
+          )
+        }
+
+        logsMut = loadedLogs
+        logsToCopy = loadedLogs?.text
+        addInitialDelay = false
+
+        delay(250)
+
+        scrollState.scrollTo(scrollState.maxValue - 1)
+      }
     )
 
-    view = container
 
-    mainScope.launch {
-      val loadingController = LoadingViewController(context, true, getString(R.string.settings_logs_loading_logs))
-      presentController(loadingController)
-
-      try {
-        val logs = withContext(Dispatchers.IO) {
-          buildString(capacity = 65535) {
-            val logs = loadLogs()
-            if (logs == null) {
-              return@buildString
-            }
-
-            appendLine(logs)
-            appendLine(reportManager.getReportFooter(context))
+    Box(
+      modifier = Modifier
+        .fillMaxSize()
+        .background(Color.Black)
+        .verticalScrollbar(
+          thumbColor = chanTheme.accentColorCompose,
+          contentPadding = remember(insets) { insets.asPaddingValues() },
+          scrollState = scrollState
+        )
+        .padding(horizontal = 4.dp, vertical = 8.dp)
+    ) {
+      Column(
+        modifier = Modifier
+          .fillMaxSize()
+          .verticalScroll(scrollState)
+      ) {
+        if (logs.isNullOrBlank()) {
+          val text = if (logs == null) {
+            stringResource(id = R.string.crash_report_activity_loading_logs)
+          } else {
+            stringResource(id = R.string.crash_report_activity_no_logs)
           }
-        }
 
-        if (logs.isNotNullNorBlank()) {
-          logText = logs
-          logTextView.text = logText
-          logTextView.setTextIsSelectable(true)
-
-          container.post {
-            container.fullScroll(View.FOCUS_DOWN)
-          }
+          KurobaComposeText(
+            modifier = Modifier
+              .fillMaxWidth()
+              .padding(horizontal = 16.dp, vertical = 8.dp),
+            color = chanTheme.textColorSecondaryCompose,
+            text = text,
+            textAlign = TextAlign.Center
+          )
         } else {
-          showToast(getString(R.string.settings_logs_loading_logs_error))
+          SelectionContainer {
+            KurobaComposeText(
+              modifier = Modifier
+                .fillMaxSize(),
+              color = chanTheme.textColorSecondaryCompose,
+              text = logs,
+              fontSize = 12.sp
+            )
+          }
         }
-      } finally {
-        loadingController.stopPresenting()
       }
     }
   }
 
+  private fun NavigationItem.MenuOverflowBuilder.addLogLevelFilters(): NavigationItem.MenuOverflowBuilder {
+    LogStorage.LogLevel.entries.forEach { logLevel ->
+      val id = when (logLevel) {
+        LogStorage.LogLevel.Dependencies -> ACTION_SHOW_DEPENDENCY_LOGS
+        LogStorage.LogLevel.Verbose -> ACTION_SHOW_VERBOSE_LOGS
+        LogStorage.LogLevel.Debug -> ACTION_SHOW_DEBUG_LOGS
+        LogStorage.LogLevel.Warning -> ACTION_SHOW_WARNING_LOGS
+        LogStorage.LogLevel.Error -> ACTION_SHOW_ERROR_LOGS
+      }
+
+      val isChecked = checkStates[id] ?: false
+
+      withCheckableSubItem(id, "Show '${logLevel.logLevelName}' logs", true, isChecked) { clickedSubItem ->
+        when (clickedSubItem.id) {
+          ACTION_SHOW_DEPENDENCY_LOGS -> checkStates[id] = (checkStates[id] ?: false).not()
+          ACTION_SHOW_VERBOSE_LOGS -> checkStates[id] = (checkStates[id] ?: false).not()
+          ACTION_SHOW_DEBUG_LOGS -> checkStates[id] = (checkStates[id] ?: false).not()
+          ACTION_SHOW_WARNING_LOGS -> checkStates[id] = (checkStates[id] ?: false).not()
+          ACTION_SHOW_ERROR_LOGS -> checkStates[id] = (checkStates[id] ?: false).not()
+          else -> return@withCheckableSubItem
+        }
+
+        navigation.findCheckableSubItem(clickedSubItem.id)?.let { subItem ->
+          subItem.isChecked = checkStates[subItem.id] ?: false
+          forceLogReloadState.intValue += 1
+        }
+      }
+    }
+
+    return this
+  }
+
   private fun copyLogsClicked(item: ToolbarMenuSubItem) {
-    AndroidUtils.setClipboardContent("Logs", logText)
+    if (logsToCopy == null) {
+      return
+    }
+
+    AndroidUtils.setClipboardContent("Logs", logsToCopy)
     showToast(R.string.settings_logs_copied_to_clipboard)
   }
 
   companion object {
     private const val TAG = "LogsController"
-    private const val DEFAULT_LINES_COUNT = 1500
     private const val ACTION_LOGS_COPY = 1
 
-    fun loadLogs(): String? {
-      val logMpv = ChanSettings.showMpvInternalLogs.get()
-
-      val process = try {
-        ProcessBuilder().command(
-          "logcat",
-          "-v",
-          "tag",
-          "-t",
-          DEFAULT_LINES_COUNT.toString(),
-          "StrictMode:S"
-        ).start()
-      } catch (e: IOException) {
-        Logger.e(TAG, "Error starting logcat", e)
-        return null
-      }
-
-      val outputStream = process.inputStream
-
-      // This filters our log output to just stuff we care about in-app
-      // (and if a crash happens, the uncaught handler gets it and this will still allow it through)
-      val fullLogsString = StringBuilder(65535)
-      val lineTag = "${AndroidUtils.getApplicationLabel()} | "
-
-      for (line in IOUtils.readString(outputStream).split("\n").toTypedArray()) {
-        if (line.contains(lineTag, ignoreCase = true)) {
-          fullLogsString.appendLine(line)
-        } else if (logMpv && line.contains("mpv", ignoreCase = true)) {
-          fullLogsString.appendLine(line)
-        }
-      }
-
-      return fullLogsString.toString()
-    }
+    private const val ACTION_SHOW_DEPENDENCY_LOGS = 100
+    private const val ACTION_SHOW_VERBOSE_LOGS = 101
+    private const val ACTION_SHOW_DEBUG_LOGS = 102
+    private const val ACTION_SHOW_WARNING_LOGS = 103
+    private const val ACTION_SHOW_ERROR_LOGS = 104
   }
 }

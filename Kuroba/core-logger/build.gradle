@@ -9,6 +9,12 @@ android {
 
     defaultConfig {
         minSdkVersion 21
+
+        javaCompileOptions {
+            annotationProcessorOptions {
+                arguments = ["room.schemaLocation": "$projectDir/schemas".toString()]
+            }
+        }
     }
 
     buildTypes {
@@ -28,9 +34,21 @@ android {
     kotlinOptions {
         jvmTarget = '17'
     }
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = versions.compose_compiler_version
+    }
 }
 
 dependencies {
+    implementation("androidx.compose.ui:ui:${versions.compose_version}")
     implementation "org.jetbrains.kotlin:kotlin-stdlib:${versions.kotlin_version}"
     implementation "joda-time:joda-time:${versions.joda_time}"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:${versions.kotlin_coroutines_version}"
+
+    implementation "androidx.room:room-runtime:${versions.room_version}"
+    implementation "androidx.room:room-ktx:${versions.room_version}"
+    ksp "androidx.room:room-compiler:${versions.room_version}"
 }

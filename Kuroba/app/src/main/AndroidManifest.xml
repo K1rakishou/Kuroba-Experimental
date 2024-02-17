@@ -194,7 +194,6 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
         <activity
             android:name=".activity.CrashReportActivity"
-            android:process=":crashReportProcess"
             android:launchMode="singleTask" />
 
         <service

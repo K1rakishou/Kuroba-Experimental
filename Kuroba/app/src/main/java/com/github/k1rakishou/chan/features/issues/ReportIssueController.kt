@@ -20,7 +20,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.github.k1rakishou.chan.R
@@ -35,16 +38,17 @@ import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
 import com.github.k1rakishou.chan.ui.compose.LocalChanTheme
 import com.github.k1rakishou.chan.ui.compose.ProvideChanTheme
 import com.github.k1rakishou.chan.ui.controller.LoadingViewController
-import com.github.k1rakishou.chan.ui.controller.LogsController
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.updatePaddings
+import com.github.k1rakishou.core_logger.LogStorage
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.core_themes.ThemeEngine
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import org.joda.time.Duration
 import javax.inject.Inject
 
 class ReportIssueController(
@@ -61,7 +65,7 @@ class ReportIssueController(
   private val issueNumberState = mutableStateOf("")
   private val reportTitleState = mutableStateOf("")
   private val reportDescriptionState = mutableStateOf("")
-  private val reportLogsState = mutableStateOf("")
+  private val reportLogsState = mutableStateOf<TextFieldValue?>(null)
   private val attachLogsState = mutableStateOf(true)
 
   override fun injectDependencies(component: ActivityComponent) {
@@ -194,23 +198,39 @@ class ReportIssueController(
       })
 
       if (attachLogs) {
-        var reportLogs by reportLogsState
+        var reportLogsMut by reportLogsState
+        val reportLogs = reportLogsMut
 
-        LaunchedEffect(key1 = Unit, block = {
-          reportLogs = withContext(Dispatchers.Default) {
-            val logs = LogsController.loadLogs()
-            if (logs.isNullOrEmpty()) {
-              return@withContext ""
+        LaunchedEffect(
+          key1 = Unit,
+          block = {
+            val logsAsAnnotatedString = withContext(Dispatchers.IO) {
+              val logs = Logger.selectLogs<AnnotatedString>(
+                duration = Duration.standardMinutes(2),
+                logLevels = arrayOf(
+                  LogStorage.LogLevel.Warning,
+                  LogStorage.LogLevel.Debug,
+                  LogStorage.LogLevel.Error,
+                ),
+                logSortOrder = LogStorage.LogSortOrder.Ascending,
+                logFormatter = LogStorage.composeFormatter()
+              )
+
+              if (logs.isNullOrEmpty()) {
+                return@withContext AnnotatedString("")
+              }
+
+              return@withContext buildAnnotatedString {
+                append(logs)
+                append(reportManager.getReportFooter(context))
+              }
             }
 
-            return@withContext buildString(capacity = 65535) {
-              append(logs)
-              append(reportManager.getReportFooter(context))
-            }
+            reportLogsMut = TextFieldValue(logsAsAnnotatedString)
           }
-        })
+        )
 
-        if (reportLogs.isNotEmpty()) {
+        if (reportLogs != null) {
           KurobaComposeCustomTextField(
             modifier = Modifier
               .fillMaxWidth()
@@ -220,7 +240,7 @@ class ReportIssueController(
             value = reportLogs,
             maxTextLength = ReportManager.MAX_LOGS_LENGTH,
             fontSize = 12.sp,
-            onValueChange = { logs -> reportLogs = logs }
+            onValueChange = { logs -> reportLogsMut = logs }
           )
         }
       }
@@ -265,7 +285,7 @@ class ReportIssueController(
     }
 
     val logs = if (attachLogsState.value) {
-      reportLogsState.value.takeLast(ReportManager.MAX_LOGS_LENGTH)
+      reportLogsState.value?.text?.takeLast(ReportManager.MAX_LOGS_LENGTH)
     } else {
       null
     }
@@ -309,7 +329,7 @@ class ReportIssueController(
     }
 
     val logs = if (attachLogsState.value) {
-      reportLogsState.value.takeLast(ReportManager.MAX_LOGS_LENGTH)
+      reportLogsState.value?.text?.takeLast(ReportManager.MAX_LOGS_LENGTH)
     } else {
       null
     }

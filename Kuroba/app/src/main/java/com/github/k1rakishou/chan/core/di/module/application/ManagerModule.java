@@ -43,6 +43,7 @@ import com.github.k1rakishou.chan.core.loader.impl.PostExtraContentLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PostHighlightFilterLoader;
 import com.github.k1rakishou.chan.core.loader.impl.PrefetchLoader;
 import com.github.k1rakishou.chan.core.loader.impl.ThirdEyeLoader;
+import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier;
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager;
 import com.github.k1rakishou.chan.core.manager.ArchivesManager;
 import com.github.k1rakishou.chan.core.manager.BoardManager;
@@ -965,6 +966,14 @@ public class ManagerModule {
         Logger.deps("CaptchaImageCache");
 
         return new CaptchaImageCache();
+    }
+
+    @Singleton
+    @Provides
+    public ApplicationCrashNotifier provideApplicationCrashNotifier() {
+        Logger.deps("ApplicationCrashNotifier");
+
+        return new ApplicationCrashNotifier();
     }
 
 }

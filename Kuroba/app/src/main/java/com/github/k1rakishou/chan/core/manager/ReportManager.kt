@@ -29,8 +29,6 @@ import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
-import org.joda.time.Duration
-import org.joda.time.format.PeriodFormatterBuilder
 
 class ReportManager(
   private val appScope: CoroutineScope,
@@ -55,8 +53,6 @@ class ReportManager(
     logs: String?,
     onReportSendResult: (ModularResult<Unit>) -> Unit
   ) {
-    require(description.isNotEmpty() || logs != null) { "description is empty" }
-
     serializedCoroutineExecutor.post {
       val body = buildString(8192) {
         appendLine(description)

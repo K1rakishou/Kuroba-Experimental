@@ -1,7 +1,7 @@
 package com.github.k1rakishou.common
 
 import androidx.annotation.AnyThread
-import java.util.*
+import java.util.Locale
 import java.util.regex.Pattern
 import java.util.regex.PatternSyntaxException
 
@@ -145,7 +145,7 @@ object RegexPatternCompiler {
       }
 
     data class Success(val pattern: Pattern, val mode: RegexMode) : PatternCompilationResult()
-    object PatternIsEmpty : PatternCompilationResult()
+    data object PatternIsEmpty : PatternCompilationResult()
     data class Error(val errorMessage: String) : PatternCompilationResult()
   }
 

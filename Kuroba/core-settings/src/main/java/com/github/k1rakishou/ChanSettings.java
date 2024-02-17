@@ -25,7 +25,6 @@ import static java.util.concurrent.TimeUnit.MINUTES;
 
 import android.app.ActivityManager;
 
-import com.github.k1rakishou.core_logger.Logger;
 import com.github.k1rakishou.prefs.BooleanSetting;
 import com.github.k1rakishou.prefs.CounterSetting;
 import com.github.k1rakishou.prefs.IntegerSetting;
@@ -421,7 +420,6 @@ public class ChanSettings {
     public static BooleanSetting crashOnSafeThrow;
     public static BooleanSetting verboseLogs;
     public static BooleanSetting checkUpdateApkVersionCode;
-    public static BooleanSetting showMpvInternalLogs;
 
     public static BooleanSetting funThingsAreFun;
     public static BooleanSetting force4chanBirthdayMode;
@@ -465,309 +463,301 @@ public class ChanSettings {
     //endregion
 
     private static void initInternal() {
-        try {
-            SettingProvider provider = new SharedPreferencesSettingProvider(getAppMainPreferences());
+        SettingProvider provider = new SharedPreferencesSettingProvider(getAppMainPreferences());
 
-            // Must be initialized first to avoid NPEs
-            isLowRamDeviceForced = new BooleanSetting(
-                    provider,
-                    "is_low_ram_device_forced",
-                    false
-            );
+        // Must be initialized first to avoid NPEs
+        isLowRamDeviceForced = new BooleanSetting(
+                provider,
+                "is_low_ram_device_forced",
+                false
+        );
 
-            //region THREAD WATCHER
-            watchEnabled = new BooleanSetting(provider, "preference_watch_enabled", false);
-            watchBackground = new BooleanSetting(provider, "preference_watch_background_enabled", false);
-            watchBackgroundInterval = new IntegerSetting(provider, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
-            watchForegroundInterval = new IntegerSetting(provider, "preference_watch_foreground_interval", (int) MINUTES.toMillis(1));
-            watchForegroundAdaptiveInterval = new BooleanSetting(provider, "preference_watch_foreground_adaptive_interval", true);
-            replyNotifications = new BooleanSetting(provider, "reply_notifications", true);
-            useSoundForReplyNotifications = new BooleanSetting(provider, "use_sound_for_reply_notifications", false);
-            watchLastPageNotify = new BooleanSetting(provider, "preference_watch_last_page_notify", false);
-            useSoundForLastPageNotifications = new BooleanSetting(provider, "use_sound_for_last_page_notifications", false);
-            //endregion
+        //region THREAD WATCHER
+        watchEnabled = new BooleanSetting(provider, "preference_watch_enabled", false);
+        watchBackground = new BooleanSetting(provider, "preference_watch_background_enabled", false);
+        watchBackgroundInterval = new IntegerSetting(provider, "preference_watch_background_interval", (int) MINUTES.toMillis(30));
+        watchForegroundInterval = new IntegerSetting(provider, "preference_watch_foreground_interval", (int) MINUTES.toMillis(1));
+        watchForegroundAdaptiveInterval = new BooleanSetting(provider, "preference_watch_foreground_adaptive_interval", true);
+        replyNotifications = new BooleanSetting(provider, "reply_notifications", true);
+        useSoundForReplyNotifications = new BooleanSetting(provider, "use_sound_for_reply_notifications", false);
+        watchLastPageNotify = new BooleanSetting(provider, "preference_watch_last_page_notify", false);
+        useSoundForLastPageNotifications = new BooleanSetting(provider, "use_sound_for_last_page_notifications", false);
+        //endregion
 
-            //region FILTER WATCHER
-            filterWatchEnabled = new BooleanSetting(provider, "preference_filter_watch_enabled", false);
-            filterWatchInterval = new IntegerSetting(provider, "preference_filter_watch_interval", (int) HOURS.toMillis(12));
-            filterWatchUseFilterPatternForGroup = new BooleanSetting(provider, "preference_filter_use_filter_pattern_for_group", true);
-            //endregion
+        //region FILTER WATCHER
+        filterWatchEnabled = new BooleanSetting(provider, "preference_filter_watch_enabled", false);
+        filterWatchInterval = new IntegerSetting(provider, "preference_filter_watch_interval", (int) HOURS.toMillis(12));
+        filterWatchUseFilterPatternForGroup = new BooleanSetting(provider, "preference_filter_use_filter_pattern_for_group", true);
+        //endregion
 
-            // region THREAD DOWNLOADER
-            threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1));
-            threadDownloaderDownloadMediaOnMeteredNetwork = new BooleanSetting(provider, "preference_thread_downloader_download_media_on_metered_network", false);
-            //endregion
+        // region THREAD DOWNLOADER
+        threadDownloaderUpdateInterval = new IntegerSetting(provider, "preference_thread_downloader_update_interval", (int) HOURS.toMillis(1));
+        threadDownloaderDownloadMediaOnMeteredNetwork = new BooleanSetting(provider, "preference_thread_downloader_download_media_on_metered_network", false);
+        //endregion
 
-            //region APPEARANCE
-            // Theme
-            isCurrentThemeDark = new BooleanSetting(provider, "is_current_theme_dark", true);
+        //region APPEARANCE
+        // Theme
+        isCurrentThemeDark = new BooleanSetting(provider, "is_current_theme_dark", true);
 
-            //Layout
-            bottomNavigationViewEnabled = new BooleanSetting(provider, "bottom_navigation_mode", true);
-            layoutMode = new OptionsSetting<>(provider, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
-            catalogSpanCount = new IntegerSetting(provider, "preference_board_grid_span_count", 0);
-            albumSpanCount = new IntegerSetting(provider, "preference_album_span_count", 0);
-            neverHideToolbar = new BooleanSetting(provider, "preference_never_hide_toolbar", false);
-            enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
-            captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
-            neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
+        //Layout
+        bottomNavigationViewEnabled = new BooleanSetting(provider, "bottom_navigation_mode", true);
+        layoutMode = new OptionsSetting<>(provider, "preference_layout_mode", LayoutMode.class, LayoutMode.AUTO);
+        catalogSpanCount = new IntegerSetting(provider, "preference_board_grid_span_count", 0);
+        albumSpanCount = new IntegerSetting(provider, "preference_album_span_count", 0);
+        neverHideToolbar = new BooleanSetting(provider, "preference_never_hide_toolbar", false);
+        enableReplyFab = new BooleanSetting(provider, "preference_enable_reply_fab", true);
+        captchaOnBottom = new BooleanSetting(provider, "captcha_on_bottom", true);
+        neverShowPages = new BooleanSetting(provider, "never_show_page_number", false);
 
-            draggableScrollbars = new OptionsSetting<>(
-                    provider,
-                    "draggable_scrollbars",
-                    FastScrollerType.class,
-                    FastScrollerType.ScrollByClickingAnyPointOfTrack
-            );
+        draggableScrollbars = new OptionsSetting<>(
+                provider,
+                "draggable_scrollbars",
+                FastScrollerType.class,
+                FastScrollerType.ScrollByClickingAnyPointOfTrack
+        );
 
-            // Post
-            fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
-            postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 125);
-            postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
-            postFullDateUseLocalLocale = new BooleanSetting(provider, "preference_post_full_date_use_local_locale", false);
-            postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
-            catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
-            threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
-            postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
-            drawPostThumbnailBackground = new BooleanSetting(provider, "draw_post_thumbnail_background", true);
-            textOnly = new BooleanSetting(provider, "preference_text_only", false);
-            revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
-            anonymize = new BooleanSetting(provider, "preference_anonymize", false);
-            showAnonymousName = new BooleanSetting(provider, "preference_show_anonymous_name", false);
-            anonymizeIds = new BooleanSetting(provider, "preference_anonymize_ids", false);
-            markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
-            markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
-            markDeletedPostsOnScrollbar = new BooleanSetting(provider, "mark_deleted_on_scrollbar", true);
-            markHotPostsOnScrollbar = new BooleanSetting(provider, "mark_hot_posts_on_scrollbar", false);
-            markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
-            shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
-            forceShiftPostComment = new BooleanSetting(provider, "force_shift_post_comment", false);
-            postMultipleImagesCompactMode = new BooleanSetting(provider, "post_multiple_images_compact_mode", true);
+        // Post
+        fontSize = new StringSetting(provider, "preference_font", String.valueOf(defaultFontSize()));
+        postCellThumbnailSizePercents = new RangeSetting(provider, "post_cell_thumbnail_size_percents", 75, 50, 125);
+        postFullDate = new BooleanSetting(provider, "preference_post_full_date", false);
+        postFullDateUseLocalLocale = new BooleanSetting(provider, "preference_post_full_date_use_local_locale", false);
+        postFileInfo = new BooleanSetting(provider, "preference_post_file_name", true);
+        catalogPostAlignmentMode = new OptionsSetting<>(provider, "catalog_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
+        threadPostAlignmentMode = new OptionsSetting<>(provider, "thread_post_alignment_mode", PostAlignmentMode.class, PostAlignmentMode.AlignRight);
+        postThumbnailScaling = new OptionsSetting<>(provider, "post_thumbnail_scaling", PostThumbnailScaling.class, PostThumbnailScaling.FitCenter);
+        drawPostThumbnailBackground = new BooleanSetting(provider, "draw_post_thumbnail_background", true);
+        textOnly = new BooleanSetting(provider, "preference_text_only", false);
+        revealTextSpoilers = new BooleanSetting(provider, "preference_reveal_text_spoilers", false);
+        anonymize = new BooleanSetting(provider, "preference_anonymize", false);
+        showAnonymousName = new BooleanSetting(provider, "preference_show_anonymous_name", false);
+        anonymizeIds = new BooleanSetting(provider, "preference_anonymize_ids", false);
+        markYourPostsOnScrollbar = new BooleanSetting(provider, "mark_your_posts_on_scrollbar", true);
+        markRepliesToYourPostOnScrollbar = new BooleanSetting(provider, "mark_replies_to_your_posts_on_scrollbar", true);
+        markDeletedPostsOnScrollbar = new BooleanSetting(provider, "mark_deleted_on_scrollbar", true);
+        markHotPostsOnScrollbar = new BooleanSetting(provider, "mark_hot_posts_on_scrollbar", false);
+        markCrossThreadQuotesOnScrollbar = new BooleanSetting(provider, "mark_cross_thread_quotes_on_scrollbar", false);
+        shiftPostComment = new BooleanSetting(provider, "shift_post_comment", true);
+        forceShiftPostComment = new BooleanSetting(provider, "force_shift_post_comment", false);
+        postMultipleImagesCompactMode = new BooleanSetting(provider, "post_multiple_images_compact_mode", true);
 
-            // Post links parsing
-            parseYoutubeTitlesAndDuration = new OptionsSetting<>(
-                    provider,
-                    "parse_youtube_titles_and_duration_v2",
-                    NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.UNMETERED
-            );
-            parseSoundCloudTitlesAndDuration = new OptionsSetting<>(
-                    provider,
-                    "parse_soundcloud_titles_and_duration",
-                    NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.UNMETERED
-            );
-            parseStreamableTitlesAndDuration = new OptionsSetting<>(
-                    provider,
-                    "parse_streamable_titles_and_duration",
-                    NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.UNMETERED
-            );
-            showLinkAlongWithTitleAndDuration = new BooleanSetting(provider, "show_link_along_with_title_and_duration", true);
+        // Post links parsing
+        parseYoutubeTitlesAndDuration = new OptionsSetting<>(
+                provider,
+                "parse_youtube_titles_and_duration_v2",
+                NetworkContentAutoLoadMode.class,
+                NetworkContentAutoLoadMode.UNMETERED
+        );
+        parseSoundCloudTitlesAndDuration = new OptionsSetting<>(
+                provider,
+                "parse_soundcloud_titles_and_duration",
+                NetworkContentAutoLoadMode.class,
+                NetworkContentAutoLoadMode.UNMETERED
+        );
+        parseStreamableTitlesAndDuration = new OptionsSetting<>(
+                provider,
+                "parse_streamable_titles_and_duration",
+                NetworkContentAutoLoadMode.class,
+                NetworkContentAutoLoadMode.UNMETERED
+        );
+        showLinkAlongWithTitleAndDuration = new BooleanSetting(provider, "show_link_along_with_title_and_duration", true);
 
-            // Images
-            hideImages = new BooleanSetting(provider, "preference_hide_images", false);
-            postThumbnailRemoveImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
-            mediaViewerRevealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
-            transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
+        // Images
+        hideImages = new BooleanSetting(provider, "preference_hide_images", false);
+        postThumbnailRemoveImageSpoilers = new BooleanSetting(provider, "preference_reveal_image_spoilers", false);
+        mediaViewerRevealImageSpoilers = new BooleanSetting(provider, "preference_auto_unspoil_images", true);
+        transparencyOn = new BooleanSetting(provider, "image_transparency_on", false);
 
-            //Elsewhere
-            boardPostViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", BoardPostViewMode.class, BoardPostViewMode.LIST);
-            boardOrder = new StringSetting(provider, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
-            //endregion
+        //Elsewhere
+        boardPostViewMode = new OptionsSetting<>(provider, "preference_board_view_mode", BoardPostViewMode.class, BoardPostViewMode.LIST);
+        boardOrder = new StringSetting(provider, "preference_board_order", chanSettingsInfo.getDefaultFilterOrderName());
+        //endregion
 
-            //region BEHAVIOUR
-            // General
-            autoRefreshThread = new BooleanSetting(provider, "preference_auto_refresh_thread", true);
-            controllerSwipeable = new BooleanSetting(provider, "preference_controller_swipeable", true);
-            viewThreadControllerSwipeable = new BooleanSetting(provider, "preference_view_thread_controller_swipeable", true);
-            replyLayoutOpenCloseGestures = new BooleanSetting(provider, "reply_layout_open_close_gestures", true);
-            openLinkConfirmation = new BooleanSetting(provider, "preference_open_link_confirmation", false);
-            jsCaptchaCookies = new StringSetting(provider, "js_captcha_cookies", EMPTY_JSON);
-            loadLastOpenedBoardUponAppStart = new BooleanSetting(provider, "load_last_opened_board_upon_app_start", true);
-            loadLastOpenedThreadUponAppStart = new BooleanSetting(provider, "load_last_opened_thread_upon_app_start", true);
+        //region BEHAVIOUR
+        // General
+        autoRefreshThread = new BooleanSetting(provider, "preference_auto_refresh_thread", true);
+        controllerSwipeable = new BooleanSetting(provider, "preference_controller_swipeable", true);
+        viewThreadControllerSwipeable = new BooleanSetting(provider, "preference_view_thread_controller_swipeable", true);
+        replyLayoutOpenCloseGestures = new BooleanSetting(provider, "reply_layout_open_close_gestures", true);
+        openLinkConfirmation = new BooleanSetting(provider, "preference_open_link_confirmation", false);
+        jsCaptchaCookies = new StringSetting(provider, "js_captcha_cookies", EMPTY_JSON);
+        loadLastOpenedBoardUponAppStart = new BooleanSetting(provider, "load_last_opened_board_upon_app_start", true);
+        loadLastOpenedThreadUponAppStart = new BooleanSetting(provider, "load_last_opened_thread_upon_app_start", true);
 
-            // Reply
-            postPinThread = new BooleanSetting(provider, "preference_pin_on_post", false);
-            postDefaultName = new StringSetting(provider, "preference_default_name", "");
+        // Reply
+        postPinThread = new BooleanSetting(provider, "preference_pin_on_post", false);
+        postDefaultName = new StringSetting(provider, "preference_default_name", "");
 
-            // Post
-            volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
-            tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", true);
-            postLinksTakeWholeHorizSpace = new BooleanSetting(provider, "post_links_take_whole_horiz_space", true);
-            markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
-            markSeenThreads = new BooleanSetting(provider, "preference_mark_seen_threads", true);
+        // Post
+        volumeKeysScrolling = new BooleanSetting(provider, "preference_volume_key_scrolling", false);
+        tapNoReply = new BooleanSetting(provider, "preference_tap_no_reply", true);
+        postLinksTakeWholeHorizSpace = new BooleanSetting(provider, "post_links_take_whole_horiz_space", true);
+        markUnseenPosts = new BooleanSetting(provider, "preference_mark_unseen_posts", true);
+        markSeenThreads = new BooleanSetting(provider, "preference_mark_seen_threads", true);
 
-            // Other options
-            fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);
-            showCopyApkUpdateDialog = new BooleanSetting(provider, "show_copy_apk_update_dialog", true);
-            androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
-            //endregion
+        // Other options
+        fullUserRotationEnable = new BooleanSetting(provider, "full_user_rotation_enable", true);
+        showCopyApkUpdateDialog = new BooleanSetting(provider, "show_copy_apk_update_dialog", true);
+        androidTenGestureZones = new StringSetting(provider, "android_ten_gesture_zones", EMPTY_JSON);
+        //endregion
 
-            //region MEDIA
+        //region MEDIA
 
-            // Video Settings
-            videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
-            videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
-            headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
-            videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
-            mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", 1);
-            mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
-            mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
-            mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
-            mediaViewerPausePlayersWhenInBackground = new BooleanSetting(provider, "preference_media_viewer_pause_players_when_in_background", true);
+        // Video Settings
+        videoAutoLoop = new BooleanSetting(provider, "preference_video_loop", true);
+        videoDefaultMuted = new BooleanSetting(provider, "preference_video_default_muted", true);
+        headsetDefaultMuted = new BooleanSetting(provider, "preference_headset_default_muted", true);
+        videoAlwaysResetToStart = new BooleanSetting(provider, "preference_video_always_reset_to_start", false);
+        mediaViewerMaxOffscreenPages = new IntegerSetting(provider, "preference_media_viewer_max_offscreen_pages", 1);
+        mediaViewerAutoSwipeAfterDownload = new BooleanSetting(provider, "preference_media_viewer_auto_swipe_after_download", false);
+        mediaViewerDrawBehindNotch = new BooleanSetting(provider, "preference_media_viewer_draw_behind_notch", true);
+        mediaViewerSoundPostsEnabled = new BooleanSetting(provider, "preference_media_viewer_sound_posts_enabled", false);
+        mediaViewerPausePlayersWhenInBackground = new BooleanSetting(provider, "preference_media_viewer_pause_players_when_in_background", true);
 
-            // Media loading
-            imageAutoLoadNetwork = new OptionsSetting<>(provider,
-                    "preference_image_auto_load_network",
-                    NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.UNMETERED
-            );
-            videoAutoLoadNetwork = new OptionsSetting<>(provider,
-                    "preference_video_auto_load_network",
-                    NetworkContentAutoLoadMode.class,
-                    NetworkContentAutoLoadMode.UNMETERED
-            );
+        // Media loading
+        imageAutoLoadNetwork = new OptionsSetting<>(provider,
+                "preference_image_auto_load_network",
+                NetworkContentAutoLoadMode.class,
+                NetworkContentAutoLoadMode.UNMETERED
+        );
+        videoAutoLoadNetwork = new OptionsSetting<>(provider,
+                "preference_video_auto_load_network",
+                NetworkContentAutoLoadMode.class,
+                NetworkContentAutoLoadMode.UNMETERED
+        );
 
-            // Misc
-            alwaysRandomizePickedFilesNames = new BooleanSetting(provider, "always_randomized_picked_files_names", false);
-            //endregion
+        // Misc
+        alwaysRandomizePickedFilesNames = new BooleanSetting(provider, "always_randomized_picked_files_names", false);
+        //endregion
 
-            forceHttpsUrlScheme = new BooleanSetting(provider, "force_https_url_scheme", true);
+        forceHttpsUrlScheme = new BooleanSetting(provider, "force_https_url_scheme", true);
 
-            //region CACHING
-            diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 256, diskCacheSizeGetMin(), 1024);
-            prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 512, diskCacheSizePrefetchGetMin(), 2048);
-            diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
-            //endregion
+        //region CACHING
+        diskCacheSizeMegabytes = new RangeSetting(provider, "disk_cache_size", 256, diskCacheSizeGetMin(), 1024);
+        prefetchDiskCacheSizeMegabytes = new RangeSetting(provider, "prefetch_disk_cache_size", 512, diskCacheSizePrefetchGetMin(), 2048);
+        diskCacheCleanupRemovePercent = new RangeSetting(provider, "disk_cache_cleanup_remove_files_percent", 25, cleanupPercentsGetMin(), 75);
+        //endregion
 
-            // region Captcha-solvers
-            twoCaptchaSolverEnabled = new BooleanSetting(provider, "two_captcha_solver_enabled", false);
-            twoCaptchaSolverUrl = new StringSetting(provider, "two_captcha_solver_url", "https://2captcha.com");
-            twoCaptchaSolverApiKey = new StringSetting(provider, "two_captcha_solver_api_key", "");
-            //endregion
+        // region Captcha-solvers
+        twoCaptchaSolverEnabled = new BooleanSetting(provider, "two_captcha_solver_enabled", false);
+        twoCaptchaSolverUrl = new StringSetting(provider, "two_captcha_solver_url", "https://2captcha.com");
+        twoCaptchaSolverApiKey = new StringSetting(provider, "two_captcha_solver_api_key", "");
+        //endregion
 
-            //region EXPERIMENTAL
-            okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
-            okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);
-            okHttpUseDnsOverHttps = new BooleanSetting(provider, "ok_http_use_dns_over_https", false);
-            prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
-            showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
-            cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
-            highResCells = new BooleanSetting(provider, "high_res_cells", false);
-            useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
-            mpvUseConfigFile = new BooleanSetting(provider, "mpv_use_config_file", false);
-            colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
-            donateSolvedCaptchaForGreaterGood = new OptionsSetting<>(
-                    provider,
-                    "donate_solved_captcha_for_greater_good",
-                    NullableBoolean.class,
-                    NullableBoolean.Undefined
-            );
-            customUserAgent = new StringSetting(provider, "custom_user_agent", "");
-            //endregion
+        //region EXPERIMENTAL
+        okHttpAllowHttp2 = new BooleanSetting(provider, "ok_http_allow_http_2", true);
+        okHttpAllowIpv6 = new BooleanSetting(provider, "ok_http_allow_ipv6", false);
+        okHttpUseDnsOverHttps = new BooleanSetting(provider, "ok_http_use_dns_over_https", false);
+        prefetchMedia = new BooleanSetting(provider, "preference_auto_load_thread", false);
+        showPrefetchLoadingIndicator = new BooleanSetting(provider, "show_prefetch_loading_indicator", false);
+        cloudflareForcePreload = new BooleanSetting(provider, "cloudflare_force_preload", false);
+        highResCells = new BooleanSetting(provider, "high_res_cells", false);
+        useMpvVideoPlayer = new BooleanSetting(provider, "use_mpv_video_player", false);
+        mpvUseConfigFile = new BooleanSetting(provider, "mpv_use_config_file", false);
+        colorizeTextSelectionCursors = new BooleanSetting(provider, "colorize_text_selection_cursors", true);
+        donateSolvedCaptchaForGreaterGood = new OptionsSetting<>(
+                provider,
+                "donate_solved_captcha_for_greater_good",
+                NullableBoolean.class,
+                NullableBoolean.Undefined
+        );
+        customUserAgent = new StringSetting(provider, "custom_user_agent", "");
+        //endregion
 
-            //region OTHER
-            historyEnabled = new BooleanSetting(provider, "preference_history_enabled", true);
-            //endregion
+        //region OTHER
+        historyEnabled = new BooleanSetting(provider, "preference_history_enabled", true);
+        //endregion
 
-            //region DEVELOPER
-            crashOnSafeThrow = new BooleanSetting(
-                    provider,
-                    "crash_on_safe_throw",
-                    // Always true by default for dev/beta flavors
-                    chanSettingsInfo.isDevOrBetaBuild()
-            );
-            verboseLogs = new BooleanSetting(
-                    provider,
-                    "verbose_logs",
-                    // Always true by default for dev/beta flavors
-                    chanSettingsInfo.isDevOrBetaBuild()
-            );
-            checkUpdateApkVersionCode = new BooleanSetting(provider, "check_update_apk_version_code", true);
-            showMpvInternalLogs = new BooleanSetting(provider, "show_mpv_internal_logs", chanSettingsInfo.isDevBuild());
+        //region DEVELOPER
+        crashOnSafeThrow = new BooleanSetting(
+                provider,
+                "crash_on_safe_throw",
+                // Always true by default for dev/beta flavors
+                chanSettingsInfo.isDevOrBetaBuild()
+        );
+        verboseLogs = new BooleanSetting(
+                provider,
+                "verbose_logs",
+                // Always true by default for dev/beta flavors
+                chanSettingsInfo.isDevOrBetaBuild()
+        );
+        checkUpdateApkVersionCode = new BooleanSetting(provider, "check_update_apk_version_code", true);
 
-            funThingsAreFun = new BooleanSetting(provider, "fun_things_are_fun", true);
-            force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
-            forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
-            forceChristmasMode = new BooleanSetting(provider, "force_christmas_mode", false);
-            forceNewYearMode = new BooleanSetting(provider, "force_new_year_mode", false);
-            //endregion
+        funThingsAreFun = new BooleanSetting(provider, "fun_things_are_fun", true);
+        force4chanBirthdayMode = new BooleanSetting(provider, "force_4chan_birthday_mode", false);
+        forceHalloweenMode = new BooleanSetting(provider, "force_halloween_mode", false);
+        forceChristmasMode = new BooleanSetting(provider, "force_christmas_mode", false);
+        forceNewYearMode = new BooleanSetting(provider, "force_new_year_mode", false);
+        //endregion
 
-            //region DATA
-            lastImageOptions = new StringSetting(provider, "last_image_options", "");
-            historyOpenCounter = new CounterSetting(provider, "counter_history_open");
-            threadOpenCounter = new CounterSetting(provider, "counter_thread_open");
-            drawerAutoOpenCount = new IntegerSetting(provider, "drawer_auto_open_count", 0);
-            reencodeHintShown = new BooleanSetting(provider, "preference_reencode_hint_already_shown", false);
-            ignoreDarkNightMode = new BooleanSetting(provider, "ignore_dark_night_mode", true);
+        //region DATA
+        lastImageOptions = new StringSetting(provider, "last_image_options", "");
+        historyOpenCounter = new CounterSetting(provider, "counter_history_open");
+        threadOpenCounter = new CounterSetting(provider, "counter_thread_open");
+        drawerAutoOpenCount = new IntegerSetting(provider, "drawer_auto_open_count", 0);
+        reencodeHintShown = new BooleanSetting(provider, "preference_reencode_hint_already_shown", false);
+        ignoreDarkNightMode = new BooleanSetting(provider, "ignore_dark_night_mode", true);
 
-            bookmarksSortOrder = new OptionsSetting<>(provider,
-                    "bookmarks_comparator",
-                    BookmarksSortOrder.class,
-                    BookmarksSortOrder.defaultOrder()
-            );
+        bookmarksSortOrder = new OptionsSetting<>(provider,
+                "bookmarks_comparator",
+                BookmarksSortOrder.class,
+                BookmarksSortOrder.defaultOrder()
+        );
 
-            moveNotActiveBookmarksToBottom = new BooleanSetting(provider, "move_not_active_bookmarks_to_bottom", false);
-            moveBookmarksWithUnreadRepliesToTop = new BooleanSetting(provider, "move_bookmarks_with_unread_replies_to_top", false);
-            //endregion
+        moveNotActiveBookmarksToBottom = new BooleanSetting(provider, "move_not_active_bookmarks_to_bottom", false);
+        moveBookmarksWithUnreadRepliesToTop = new BooleanSetting(provider, "move_bookmarks_with_unread_replies_to_top", false);
+        //endregion
 
-            scrollingTextForThreadTitles = new BooleanSetting(provider, "scrolling_text_for_thread_titles", true);
+        scrollingTextForThreadTitles = new BooleanSetting(provider, "scrolling_text_for_thread_titles", true);
 
-            bookmarkGridViewWidth = new RangeSetting(
-                    provider,
-                    "bookmark_grid_view_width",
-                    chanSettingsInfo.getBookmarkGridViewInfo().getDefaultWidth(),
-                    chanSettingsInfo.getBookmarkGridViewInfo().getMinWidth(),
-                    chanSettingsInfo.getBookmarkGridViewInfo().getMaxWidth()
-            );
+        bookmarkGridViewWidth = new RangeSetting(
+                provider,
+                "bookmark_grid_view_width",
+                chanSettingsInfo.getBookmarkGridViewInfo().getDefaultWidth(),
+                chanSettingsInfo.getBookmarkGridViewInfo().getMinWidth(),
+                chanSettingsInfo.getBookmarkGridViewInfo().getMaxWidth()
+        );
 
-            mediaViewerTopGestureAction = new OptionsSetting<>(
-                    provider,
-                    "media_viewer_top_gesture_action",
-                    ImageGestureActionType.class,
-                    ImageGestureActionType.CloseImage
-            );
-            mediaViewerBottomGestureAction = new OptionsSetting<>(
-                    provider,
-                    "media_viewer_bottom_gesture_action",
-                    ImageGestureActionType.class,
-                    ImageGestureActionType.SaveImage
-            );
-            drawerMoveLastAccessedThreadToTop = new BooleanSetting(
-                    provider,
-                    "drawer_move_last_accessed_thread_to_top",
-                    true
-            );
-            drawerGridMode = new BooleanSetting(
-                    provider,
-                    "drawer_grid_mode",
-                    true
-            );
-            drawerShowBookmarkedThreads = new BooleanSetting(
-                    provider,
-                    "drawer_show_bookmarked_threads",
-                    true
-            );
-            drawerShowNavigationHistory = new BooleanSetting(
-                    provider,
-                    "drawer_show_navigation_history",
-                    true
-            );
-            drawerShowDeleteButtonShortcut = new BooleanSetting(
-                    provider,
-                    "drawer_show_delete_button_shortcut",
-                    true
-            );
-            drawerDeleteBookmarksWhenDeletingNavHistory = new BooleanSetting(provider, "drawer_delete_bookmarks_when_deleting_nav_history", false);
-            drawerDeleteNavHistoryWhenBookmarkDeleted = new BooleanSetting(provider, "drawer_delete_nav_history_when_bookmark_deleted", false);
-            globalNsfwMode = new BooleanSetting(provider, "global_nsfw_mode", false);
-            api33NotificationPermissionRequested = new BooleanSetting(provider, "api33_notification_permission_requested", false);
-        } catch (Throwable error) {
-            // If something crashes while the settings are initializing we at least will have the
-            // stacktrace. Otherwise we won't because of Feather.
-            Logger.e(TAG, "Error while initializing the settings", error);
-            throw error;
-        }
+        mediaViewerTopGestureAction = new OptionsSetting<>(
+                provider,
+                "media_viewer_top_gesture_action",
+                ImageGestureActionType.class,
+                ImageGestureActionType.CloseImage
+        );
+        mediaViewerBottomGestureAction = new OptionsSetting<>(
+                provider,
+                "media_viewer_bottom_gesture_action",
+                ImageGestureActionType.class,
+                ImageGestureActionType.SaveImage
+        );
+        drawerMoveLastAccessedThreadToTop = new BooleanSetting(
+                provider,
+                "drawer_move_last_accessed_thread_to_top",
+                true
+        );
+        drawerGridMode = new BooleanSetting(
+                provider,
+                "drawer_grid_mode",
+                true
+        );
+        drawerShowBookmarkedThreads = new BooleanSetting(
+                provider,
+                "drawer_show_bookmarked_threads",
+                true
+        );
+        drawerShowNavigationHistory = new BooleanSetting(
+                provider,
+                "drawer_show_navigation_history",
+                true
+        );
+        drawerShowDeleteButtonShortcut = new BooleanSetting(
+                provider,
+                "drawer_show_delete_button_shortcut",
+                true
+        );
+        drawerDeleteBookmarksWhenDeletingNavHistory = new BooleanSetting(provider, "drawer_delete_bookmarks_when_deleting_nav_history", false);
+        drawerDeleteNavHistoryWhenBookmarkDeleted = new BooleanSetting(provider, "drawer_delete_nav_history_when_bookmark_deleted", false);
+        globalNsfwMode = new BooleanSetting(provider, "global_nsfw_mode", false);
+        api33NotificationPermissionRequested = new BooleanSetting(provider, "api33_notification_permission_requested", false);
     }
 
     public static int mediaViewerOffscreenPagesCount() {

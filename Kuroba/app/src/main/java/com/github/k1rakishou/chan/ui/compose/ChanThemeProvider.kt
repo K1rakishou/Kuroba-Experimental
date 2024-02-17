@@ -1,5 +1,7 @@
 package com.github.k1rakishou.chan.ui.compose
 
+import androidx.compose.foundation.text.selection.LocalTextSelectionColors
+import androidx.compose.foundation.text.selection.TextSelectionColors
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -44,10 +46,19 @@ fun ProvideChanTheme(
       )
     }
 
+    val textSelectionColors = remember(key1 = chanTheme.accentColorCompose) {
+      TextSelectionColors(
+        handleColor = chanTheme.accentColorCompose,
+        backgroundColor = chanTheme.accentColorCompose.copy(alpha = 0.4f)
+      )
+    }
+
     MaterialTheme(colors = updatedColors) {
-      ProvideKurobaViewConfiguration {
-        ProvideWindowInsets(globalWindowInsetsManager) {
-          content()
+      CompositionLocalProvider(LocalTextSelectionColors provides textSelectionColors) {
+        ProvideKurobaViewConfiguration {
+          ProvideWindowInsets(globalWindowInsetsManager) {
+            content()
+          }
         }
       }
     }

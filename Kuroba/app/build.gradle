@@ -260,16 +260,16 @@ dependencies {
     implementation 'androidx.slidingpanelayout:slidingpanelayout:1.2.0'
     implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
     implementation "androidx.core:core-ktx:${versions.core_ktx}"
-    implementation 'androidx.work:work-runtime-ktx:2.8.1'
-    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.6.1'
+    implementation 'androidx.work:work-runtime-ktx:2.9.0'
+    implementation 'androidx.lifecycle:lifecycle-runtime-ktx:2.7.0'
     implementation "com.google.android.material:material:${versions.material}"
 
     implementation("androidx.compose.ui:ui:${versions.compose_version}")
     implementation("androidx.compose.material:material:${versions.compose_version}")
     implementation("androidx.compose.ui:ui-tooling:${versions.compose_version}")
     implementation("androidx.compose.animation:animation-graphics:${versions.compose_version}")
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.6.1")
-    implementation("androidx.activity:activity-compose:1.7.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
 
     implementation "com.google.android.exoplayer:exoplayer-core:${versions.exoplayer}"
     implementation "com.google.android.exoplayer:exoplayer-ui:${versions.exoplayer}"
@@ -294,7 +294,7 @@ dependencies {
     implementation "com.github.K1rakishou:Fuck-Storage-Access-Framework:${versions.fsaf}"
 
     implementation "androidx.room:room-runtime:${versions.room_version}"
-    testImplementation 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.13.2'
     ksp("androidx.room:room-compiler:${versions.room_version}")
 
     implementation "com.google.dagger:dagger:${versions.dagger_version}"

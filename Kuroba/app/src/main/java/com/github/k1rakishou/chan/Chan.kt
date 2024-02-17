@@ -48,6 +48,7 @@ import com.github.k1rakishou.chan.core.di.module.application.UseCaseModule
 import com.github.k1rakishou.chan.core.helper.ImageLoaderFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.helper.ThreadDownloaderFileManagerWrapper
+import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.ApplicationMigrationManager
 import com.github.k1rakishou.chan.core.manager.ApplicationVisibilityManager
 import com.github.k1rakishou.chan.core.manager.ReportManager
@@ -95,7 +96,6 @@ import java.io.IOException
 import java.net.InetAddress
 import java.util.IdentityHashMap
 import javax.inject.Inject
-import kotlin.system.exitProcess
 
 class Chan : Application(), ActivityLifecycleCallbacks {
   private var activityForegroundCounter = 0
@@ -106,7 +106,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   private lateinit var applicationScope: CoroutineScope
 
   private val coroutineExceptionHandler = CoroutineExceptionHandler { _, exception ->
-    Logger.e(TAG, "Coroutine undeliverable exception", exception)
+    Logger.e(TAG, "Coroutine unhandled exception exception", exception)
     onUnhandledException(exception)
   }
 
@@ -124,6 +124,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   lateinit var reportManager: ReportManager
   @Inject
   lateinit var appConstants: Lazy<AppConstants>
+  @Inject
+  lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
   private val normalDnsCreatorFactory: NormalDnsSelectorFactory = object : NormalDnsSelectorFactory {
     override fun createDnsSelector(okHttpClient: OkHttpClient): NormalDnsSelector {
@@ -207,8 +209,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
 
     AndroidUtils.init(this)
     AppModuleAndroidUtils.init(this)
-    Logger.init(tagPrefix, isDevBuild())
     ChanSettings.init(createChanSettingsInfo())
+    Logger.init(tagPrefix, isDevBuild(), ChanSettings.verboseLogs.get(), this)
     PersistableChanState.init(createPersistableChanStateInfo())
     MpvSettings.init()
   }
@@ -383,7 +385,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
         return@setErrorHandler
       }
 
-      Logger.e(TAG, "RxJava undeliverable exception", error)
+      Logger.e(TAG, "RxJava unhandled exception exception", error)
       onUnhandledException(error)
     }
 
@@ -395,6 +397,8 @@ class Chan : Application(), ActivityLifecycleCallbacks {
   }
 
   private fun onUnhandledException(exception: Throwable) {
+    applicationCrashNotifier.onApplicationCrashed()
+
     val message = extractExceptionMessage(exception)
     val stacktrace = exception.stackTraceToString()
 
@@ -412,8 +416,6 @@ class Chan : Application(), ActivityLifecycleCallbacks {
     intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP)
     intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     startActivity(intent)
-
-    exitProcess(-1)
   }
 
   private fun extractExceptionMessage(exception: Throwable): String? {

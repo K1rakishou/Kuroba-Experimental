@@ -251,7 +251,7 @@ public class NavigationItem {
                 boolean checked,
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
-            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, getString(textId), clickCallback, visible, null, checked));
+            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, getString(textId), clickCallback, visible, null, null, checked));
 
             return this;
         }
@@ -263,7 +263,7 @@ public class NavigationItem {
                 boolean checked,
                 ToolbarMenuSubItem.ClickCallback clickCallback
         ) {
-            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, text, clickCallback, visible, null, checked));
+            menuItem.addSubItem(new CheckableToolbarMenuSubItem(id, text, clickCallback, visible, null, null, checked));
 
             return this;
         }

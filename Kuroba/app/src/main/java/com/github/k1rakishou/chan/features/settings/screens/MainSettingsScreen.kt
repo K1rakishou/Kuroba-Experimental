@@ -110,6 +110,7 @@ class MainSettingsScreen(
         group += LinkSettingV2.createBuilder(
           context = context,
           identifier = MainScreen.AboutAppGroup.Reports,
+          isEnabledFunc = { false },
           topDescriptionIdFunc = { R.string.settings_report },
           bottomDescriptionIdFunc = { R.string.settings_report_description },
           callback = {

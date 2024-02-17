@@ -37,6 +37,7 @@ import com.github.k1rakishou.chan.core.di.module.activity.ActivityModule
 import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.StartActivityStartupHandlerHelper
+import com.github.k1rakishou.chan.core.manager.ApplicationCrashNotifier
 import com.github.k1rakishou.chan.core.manager.BottomNavBarVisibilityStateManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadViewableInfoManager
 import com.github.k1rakishou.chan.core.manager.ControllerNavigationManager
@@ -71,6 +72,8 @@ import com.github.k1rakishou.model.data.descriptor.PostDescriptor
 import dagger.Lazy
 import io.reactivex.disposables.CompositeDisposable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.collect
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import kotlin.time.ExperimentalTime
@@ -107,6 +110,8 @@ class StartActivity : ControllerHostActivity(),
   lateinit var chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>
   @Inject
   lateinit var updateManager: Lazy<UpdateManager>
+  @Inject
+  lateinit var applicationCrashNotifier: ApplicationCrashNotifier
 
   private val compositeDisposable = CompositeDisposable()
   private var intentMismatchWorkaroundActive = false
@@ -121,7 +126,6 @@ class StartActivity : ControllerHostActivity(),
     return activityComponent
   }
 
-  @OptIn(ExperimentalTime::class)
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
 
@@ -165,6 +169,12 @@ class StartActivity : ControllerHostActivity(),
       Logger.d(TAG, "initializeDependencies took $initializeDepsTime")
     }
 
+    lifecycleScope.launch {
+      applicationCrashNotifier.applicationCrashedEventFlow
+        .onEach { finish() }
+        .collect()
+    }
+
     mainController.loadMainControllerDrawerData()
     Logger.d(TAG, "onCreate() end isFreshStart: $isFreshStart")
   }
@@ -199,10 +209,6 @@ class StartActivity : ControllerHostActivity(),
     if (::themeEngine.isInitialized) {
       themeEngine.removeRootView(this)
       themeEngine.removeListener(this)
-
-      if (isDevBuild()) {
-        themeEngine.checkNoListenersLeft()
-      }
     }
 
     if (::globalWindowInsetsManager.isInitialized) {
