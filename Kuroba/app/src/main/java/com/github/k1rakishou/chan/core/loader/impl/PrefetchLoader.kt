@@ -109,14 +109,12 @@ class PrefetchLoader(
       cancelableDownload.addCallback(object : FileCacheListener() {
         override fun onStart(chunksCount: Int) {
           super.onStart(chunksCount)
-          require(chunksCount == 1) { "Bad chunksCount for prefetch: $chunksCount" }
 
           onPrefetchStarted(prefetch.postImage)
         }
 
         override fun onProgress(chunkIndex: Int, downloaded: Long, total: Long) {
           super.onProgress(chunkIndex, downloaded, total)
-          require(chunkIndex == 0) { "Bad chunkIndex for prefetch: $chunkIndex" }
 
           val progress = if (total != 0L) {
             downloaded.toFloat() / total.toFloat()
