@@ -56,6 +56,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -1590,8 +1591,10 @@ class MainController(
       )
     }
 
-    if (drawerOpened) {
-      prevAdditionalInfoState.value = additionalInfo.copy()
+    SideEffect {
+      if (drawerOpened) {
+        prevAdditionalInfoState.value = additionalInfo.copy()
+      }
     }
   }
 

@@ -227,7 +227,8 @@ fun KurobaComposeText(
     textColorPrimary.copy(alpha = ContentAlpha.disabled)
   }
 
-  Text(
+  ComposeText(
+    modifier = modifier,
     color = actualTextColorPrimary,
     text = text,
     fontSize = fontSize,
@@ -236,8 +237,7 @@ fun KurobaComposeText(
     softWrap = softWrap,
     textAlign = textAlign,
     fontWeight = fontWeight,
-    inlineContent = inlineContent,
-    modifier = modifier,
+    inlineContent = inlineContent
   )
 }
 
@@ -288,7 +288,7 @@ fun KurobaComposeClickableText(
     }
   }
 
-  Text(
+  ComposeText(
     color = textColorPrimary,
     text = text,
     fontSize = fontSize,
@@ -475,7 +475,7 @@ fun KurobaComposeCustomTextField(
           }
         }
 
-        Text(
+        ComposeText(
           text = labelText!!,
           fontSize = fontSize,
           color = hintColor
@@ -514,7 +514,7 @@ fun KurobaComposeCustomTextField(
       }
 
       Column {
-        Text(
+        ComposeText(
           text = counterText,
           fontSize = 12.sp,
           color = counterTextColor,
@@ -730,7 +730,7 @@ fun KurobaComposeTextButton(
     enabled = enabled,
     modifier = modifier,
     buttonContent = {
-      Text(
+      ComposeText(
         text = text,
         modifier = Modifier.fillMaxSize(),
         textAlign = TextAlign.Center
@@ -782,7 +782,7 @@ fun KurobaComposeTextBarButton(
         chanTheme.textColorPrimaryCompose.copy(alpha = ContentAlpha.disabled)
       }
 
-      Text(
+      ComposeText(
         text = text.uppercase(Locale.ENGLISH),
         color = textColor,
         modifier = Modifier
@@ -1344,5 +1344,71 @@ fun KurobaComposeDivider(
       .then(indentMod)
       .height(targetThickness)
       .background(color = dividerColorWithAlpha)
+  )
+}
+
+@Composable
+private fun ComposeText(
+  text: String,
+  modifier: Modifier = Modifier,
+  color: Color = Color.Unspecified,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  fontWeight: FontWeight? = null,
+  onTextLayout: (TextLayoutResult) -> Unit = {},
+  style: TextStyle = LocalTextStyle.current
+) {
+  Text(
+    modifier = modifier,
+    color = color,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    onTextLayout = onTextLayout,
+    style = remember(style) { kurobaTextStyle(style) }
+  )
+}
+
+@Composable
+private fun ComposeText(
+  text: AnnotatedString,
+  modifier: Modifier = Modifier,
+  color: Color = Color.Unspecified,
+  fontSize: TextUnit = TextUnit.Unspecified,
+  maxLines: Int = Int.MAX_VALUE,
+  overflow: TextOverflow = TextOverflow.Clip,
+  softWrap: Boolean = true,
+  textAlign: TextAlign? = null,
+  fontWeight: FontWeight? = null,
+  inlineContent: Map<String, InlineTextContent> = mapOf(),
+  onTextLayout: (TextLayoutResult) -> Unit = {},
+  style: TextStyle = LocalTextStyle.current
+) {
+  Text(
+    modifier = modifier,
+    color = color,
+    text = text,
+    fontSize = fontSize,
+    maxLines = maxLines,
+    overflow = overflow,
+    softWrap = softWrap,
+    textAlign = textAlign,
+    fontWeight = fontWeight,
+    inlineContent = inlineContent,
+    onTextLayout = onTextLayout,
+    style = remember(style) { kurobaTextStyle(style) }
+  )
+}
+
+private fun kurobaTextStyle(style: TextStyle): TextStyle {
+  return style.copy(
+    lineHeight = style.lineHeight * 0.7f
   )
 }

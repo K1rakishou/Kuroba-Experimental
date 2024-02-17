@@ -26,7 +26,6 @@ import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -456,7 +455,7 @@ class CreateOrUpdateFilterController(
       FilterValidationResult.Undefined -> ""
     }
 
-    Text(
+    KurobaComposeText(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight()
@@ -518,7 +517,7 @@ class CreateOrUpdateFilterController(
       }
     }
 
-    Text(
+    KurobaComposeText(
       modifier = Modifier
         .fillMaxWidth()
         .wrapContentHeight()

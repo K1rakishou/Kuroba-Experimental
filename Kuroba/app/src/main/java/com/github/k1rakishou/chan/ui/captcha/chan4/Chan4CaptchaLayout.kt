@@ -27,7 +27,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -347,7 +346,7 @@ class Chan4CaptchaLayout(
     Spacer(modifier = Modifier.height(8.dp))
 
     if (captchaInfo.needSlider()) {
-      BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+      Box(modifier = Modifier.fillMaxWidth()) {
         KurobaComposeSnappingSlider(
           slideOffsetState = scrollValueState,
           slideSteps = SLIDE_STEPS,
@@ -425,7 +424,7 @@ class Chan4CaptchaLayout(
         backgroundColor = bgColor,
         shape = remember { RoundedCornerShape(4.dp) }
       ) {
-        Text(
+        KurobaComposeText(
           modifier = Modifier
             .padding(horizontal = 8.dp, vertical = 4.dp),
           text = captchaSuggestion,
