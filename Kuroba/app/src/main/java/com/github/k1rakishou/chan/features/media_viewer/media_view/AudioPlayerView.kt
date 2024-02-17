@@ -240,7 +240,7 @@ class AudioPlayerView @JvmOverloads constructor(
     if (soundPostVideoPlayerLazy.isInitialized() && soundPostVideoPlayer.isPlaying()) {
       Logger.d(TAG, "loadAndPlaySoundPostAudioIfPossible() isPlaying == true")
 
-      if (!mediaViewContract.isSystemUiHidden()) {
+      if (!mediaViewContract.isImmersiveModeEnabled()) {
         showAudioPlayerView()
       }
 
@@ -262,7 +262,7 @@ class AudioPlayerView @JvmOverloads constructor(
       if ((isForceLoad || canAutoLoad) && loadImageBgAudio(isLifecycleChange, soundPostActualSoundMedia)) {
         positionAndDurationUpdateJob?.start()
 
-        if (!mediaViewContract.isSystemUiHidden()) {
+        if (!mediaViewContract.isImmersiveModeEnabled()) {
           showAudioPlayerView()
         }
 

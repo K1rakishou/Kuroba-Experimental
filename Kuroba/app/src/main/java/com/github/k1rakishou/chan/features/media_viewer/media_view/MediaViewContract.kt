@@ -15,7 +15,7 @@ interface MediaViewContract {
   fun toggleSoundMuteState()
   fun isSoundCurrentlyMuted(): Boolean
 
-  fun isSystemUiHidden(): Boolean
+  fun isImmersiveModeEnabled(): Boolean
   fun onTapped()
   fun closeMediaViewer()
   suspend fun onDownloadButtonClick(viewableMedia: ViewableMedia, longClick: Boolean): Boolean

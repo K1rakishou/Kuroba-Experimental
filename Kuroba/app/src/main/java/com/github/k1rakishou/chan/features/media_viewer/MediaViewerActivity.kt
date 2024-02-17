@@ -22,12 +22,8 @@ import com.github.k1rakishou.chan.core.helper.AppRestarter
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.manager.GlobalWindowInsetsManager
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
-import com.github.k1rakishou.chan.utils.FullScreenUtils.hideSystemUI
-import com.github.k1rakishou.chan.utils.FullScreenUtils.isSystemUIHidden
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupEdgeToEdge
 import com.github.k1rakishou.chan.utils.FullScreenUtils.setupStatusAndNavBarColors
-import com.github.k1rakishou.chan.utils.FullScreenUtils.showSystemUI
-import com.github.k1rakishou.chan.utils.FullScreenUtils.toggleSystemUI
 import com.github.k1rakishou.chan.utils.startActivitySafe
 import com.github.k1rakishou.common.AndroidUtils
 import com.github.k1rakishou.core_logger.Logger
@@ -108,13 +104,7 @@ class MediaViewerActivity : ControllerHostActivity(),
     window.setupEdgeToEdge()
     window.setupStatusAndNavBarColors(themeEngine.chanTheme)
 
-    if (PersistableChanState.imageViewerImmersiveModeEnabled.get()) {
-      window.hideSystemUI(themeEngine.chanTheme)
-    } else {
-      window.showSystemUI(themeEngine.chanTheme)
-    }
-
-    mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
+    mediaViewerController.onSystemUiVisibilityChanged(isImmersiveModeEnabled())
 
     globalWindowInsetsManager.listenForWindowInsetsChanges(window, null)
     globalWindowInsetsManager.updateDisplaySize(this)
@@ -189,16 +179,14 @@ class MediaViewerActivity : ControllerHostActivity(),
     finish()
   }
 
-  override fun isSystemUiHidden(): Boolean {
-    return window.isSystemUIHidden()
+  override fun isImmersiveModeEnabled(): Boolean {
+    return PersistableChanState.imageViewerImmersiveModeEnabled.get()
   }
 
   override fun toggleFullScreenMode() {
     if (::themeEngine.isInitialized && ::mediaViewerController.isInitialized) {
-      window.toggleSystemUI(themeEngine.chanTheme)
-
-      mediaViewerController.onSystemUiVisibilityChanged(window.isSystemUIHidden())
-      PersistableChanState.imageViewerImmersiveModeEnabled.set(window.isSystemUIHidden())
+      toggleImmersiveMode()
+      mediaViewerController.onSystemUiVisibilityChanged(isImmersiveModeEnabled())
     }
   }
 
@@ -237,6 +225,10 @@ class MediaViewerActivity : ControllerHostActivity(),
     super.onConfigurationChanged(newConfig)
 
     globalWindowInsetsManager.updateDisplaySize(this)
+  }
+
+  private fun toggleImmersiveMode() {
+    PersistableChanState.imageViewerImmersiveModeEnabled.toggle()
   }
 
   private suspend fun handleNewIntent(isNotActivityRecreation: Boolean, intent: Intent?): Boolean {

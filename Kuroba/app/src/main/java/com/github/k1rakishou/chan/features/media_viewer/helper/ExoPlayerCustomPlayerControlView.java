@@ -551,7 +551,7 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
      * be automatically hidden after this duration of time has elapsed without user input.
      */
     public void show() {
-        if (videoMediaViewCallbacks.isSystemUiHidden()) {
+        if (videoMediaViewCallbacks.isImmersiveModeEnabled()) {
             return;
         }
 
@@ -1168,7 +1168,7 @@ public class ExoPlayerCustomPlayerControlView extends FrameLayout {
     }
 
     public interface VideoMediaViewCallbacks {
-        public boolean isSystemUiHidden();
+        public boolean isImmersiveModeEnabled();
         public void initializePlayerAndStartPlaying();
     }
 }

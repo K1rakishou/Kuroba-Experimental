@@ -429,8 +429,8 @@ class MediaViewerController(
     return viewModel.isSoundMuted
   }
 
-  override fun isSystemUiHidden(): Boolean {
-    return mediaViewerCallbacks.isSystemUiHidden()
+  override fun isImmersiveModeEnabled(): Boolean {
+    return mediaViewerCallbacks.isImmersiveModeEnabled()
   }
 
   override fun onTapped() {
@@ -799,7 +799,7 @@ class MediaViewerController(
       fileDataSourceFactory = FileDataSource.Factory(),
       contentDataSourceFactory = DataSource.Factory { ContentDataSource(context) },
       chan4CloudFlareImagePreloaderManager = chan4CloudFlareImagePreloaderManager,
-      isSystemUiHidden = { mediaViewerCallbacks.isSystemUiHidden() },
+      isSystemUiHidden = { mediaViewerCallbacks.isImmersiveModeEnabled() },
       swipeDirection = { pager.swipeDirection },
       getAndConsumeLifecycleChangeFlag = {
         val wasLifecycleChange = lifecycleChange
@@ -894,7 +894,7 @@ class MediaViewerController(
   interface MediaViewerCallbacks {
     fun finishActivity()
 
-    fun isSystemUiHidden(): Boolean
+    fun isImmersiveModeEnabled(): Boolean
     fun toggleFullScreenMode()
   }
 

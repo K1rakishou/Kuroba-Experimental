@@ -244,7 +244,7 @@ class ExoPlayerVideoMediaView(
   override fun show(isLifecycleChange: Boolean) {
     super.updateComponentsWithViewableMedia(pagerPosition, totalPageItemsCount, viewableMedia)
 
-    onSystemUiVisibilityChanged(isSystemUiHidden())
+    onSystemUiVisibilityChanged(isImmersiveModeEnabled())
     updateMuteUnMuteState()
     thumbnailMediaView.show()
 
@@ -374,8 +374,8 @@ class ExoPlayerVideoMediaView(
   override fun onInsetsChanged() {
   }
 
-  override fun isSystemUiHidden(): Boolean {
-    return mediaViewContract.isSystemUiHidden()
+  override fun isImmersiveModeEnabled(): Boolean {
+    return mediaViewContract.isImmersiveModeEnabled()
   }
 
   override fun initializePlayerAndStartPlaying() {
