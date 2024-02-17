@@ -149,22 +149,8 @@ class LoadChan4CaptchaUseCase(
             ?.getSettingBySettingId<GsonJsonSetting<Chan4CaptchaSettings>>(SiteSetting.SiteSettingId.Chan4CaptchaSettings)
             ?: return
 
-        val ticket = captchaResult.captchaInfoRaw.ticket
-        if (ticket == null) {
-            Logger.debug(TAG) { "updateCaptchaTicket() newTicket is null or blank, removing cached ticket" }
-
-            chan4CaptchaSettingsSetting.update(sync = true) { chan4CaptchaSettings ->
-                chan4CaptchaSettings.copy(
-                    captchaTicket = null,
-                    lastRefreshTime = System.currentTimeMillis()
-                )
-            }
-
-            return
-        }
-
         val newTicket = captchaResult.captchaInfoRaw.ticketAsString
-        if (newTicket == null || newTicket.isBlank()) {
+        if (newTicket.isNullOrBlank()) {
             Logger.debug(TAG) { "updateCaptchaTicket($chanDescriptor) ticked is null or blank" }
             return
         }

@@ -413,10 +413,12 @@ class Chan4CaptchaLayoutViewModel : BaseViewModel() {
     }
 
     if (captchaInfoRaw.challenge == null) {
+      Logger.error(TAG) { "captchaInfoRawString: '${captchaInfoRawString}'" }
       throw UnknownCaptchaError("Captcha 'challenge' json field does not exist in the server response!")
     }
 
     if (captchaInfoRaw.ttl == null) {
+      Logger.error(TAG) { "captchaInfoRawString: '${captchaInfoRawString}'" }
       throw UnknownCaptchaError("Captcha 'ttl' json field does not exist in the server response!")
     }
 
