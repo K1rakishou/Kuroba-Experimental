@@ -60,6 +60,7 @@ import com.github.k1rakishou.chan.core.manager.ChanFilterManager
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
+import com.github.k1rakishou.chan.ui.compose.KurobaComposeCollapsableContent
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCustomTextField
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -74,6 +75,7 @@ import com.github.k1rakishou.chan.ui.view.floating_menu.CheckableFloatingListMen
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.SpannableHelper
+import com.github.k1rakishou.chan.utils.viewModelByKey
 import com.github.k1rakishou.core_themes.ThemeEngine
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.filter.ChanFilterMutable
@@ -98,6 +100,10 @@ class CreateOrUpdateFilterController(
   lateinit var archivesManager: ArchivesManager
   @Inject
   lateinit var dialogFactory: DialogFactory
+
+  private val viewModel by lazy(LazyThreadSafetyMode.NONE) {
+    requireComponentActivity().viewModelByKey<FilterBoardSelectorControllerViewModel>()
+  }
 
   private val chanFilterMutableState = ChanFilterMutableState.fromChanFilterMutable(previousChanFilterMutable)
 
@@ -196,7 +202,7 @@ class CreateOrUpdateFilterController(
   }
 
   @Composable
-  private fun ColumnScope.BuildFilterSettingsSection(
+  private fun BuildFilterSettingsSection(
     onChangeFilterTypesClicked: () -> Unit,
     onChangeFilterBoardsClicked: () -> Unit,
     onChangeFilterActionClicked: () -> Unit,
@@ -365,65 +371,72 @@ class CreateOrUpdateFilterController(
 
         Spacer(modifier = Modifier.width(8.dp))
       }
-
     }
 
-    if (action == FilterAction.HIDE.id || action == FilterAction.REMOVE.id) {
-      KurobaComposeCheckbox(
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight(),
-        text = stringResource(id = R.string.filter_apply_to_replies),
-        currentlyChecked = applyToReplies,
-        onCheckChanged = { checked -> applyToReplies = checked }
-      )
-    }
+    val filtersAdditionalSectionCollapsed by viewModel.filtersAdditionalSectionCollapsed
 
-    KurobaComposeCheckbox(
-      modifier = Modifier
-        .fillMaxWidth()
-        .wrapContentHeight(),
-      text = stringResource(id = R.string.filter_only_on_op),
-      enabled = action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id,
-      currentlyChecked = onlyOnOP,
-      onCheckChanged = { checked -> onlyOnOP = checked }
-    )
-
-    if (action == FilterAction.WATCH.id) {
-      KurobaComposeCheckbox(
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight(),
-        text = stringResource(id = R.string.filter_watcher_notify),
-        enabled = true,
-        currentlyChecked = filterWatchNotify,
-        onCheckChanged = { checked -> filterWatchNotify = checked }
-      )
-    }
-
-    if (action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id) {
-      KurobaComposeCheckbox(
-        modifier = Modifier
-          .fillMaxWidth()
-          .wrapContentHeight(),
-        text = stringResource(id = R.string.filter_apply_to_own_posts),
-        currentlyChecked = applyToSaved,
-        onCheckChanged = { checked -> applyToSaved = checked }
-      )
+    KurobaComposeCollapsableContent(
+      title = stringResource(id = R.string.filter_additional_options),
+      collapsed = filtersAdditionalSectionCollapsed,
+      onCollapsedStateChanged = { nowCollapsed -> viewModel.onAdditionalFilterOptionsCollapsableSectionStateChanged(nowCollapsed) }
+    ) {
+      if (action == FilterAction.HIDE.id || action == FilterAction.REMOVE.id) {
+        KurobaComposeCheckbox(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          text = stringResource(id = R.string.filter_apply_to_replies),
+          currentlyChecked = applyToReplies,
+          onCheckChanged = { checked -> applyToReplies = checked }
+        )
+      }
 
       KurobaComposeCheckbox(
         modifier = Modifier
           .fillMaxWidth()
           .wrapContentHeight(),
-        text = stringResource(id = R.string.filter_apply_to_post_with_empty_comment),
-        currentlyChecked = applyToEmptyComments,
-        onCheckChanged = { checked -> applyToEmptyComments = checked }
+        text = stringResource(id = R.string.filter_only_on_op),
+        enabled = action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id,
+        currentlyChecked = onlyOnOP,
+        onCheckChanged = { checked -> onlyOnOP = checked }
       )
+
+      if (action == FilterAction.WATCH.id) {
+        KurobaComposeCheckbox(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          text = stringResource(id = R.string.filter_watcher_notify),
+          enabled = true,
+          currentlyChecked = filterWatchNotify,
+          onCheckChanged = { checked -> filterWatchNotify = checked }
+        )
+      }
+
+      if (action != FilterAction.WATCH.id && action != FilterAction.AVOID_WATCH.id) {
+        KurobaComposeCheckbox(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          text = stringResource(id = R.string.filter_apply_to_own_posts),
+          currentlyChecked = applyToSaved,
+          onCheckChanged = { checked -> applyToSaved = checked }
+        )
+
+        KurobaComposeCheckbox(
+          modifier = Modifier
+            .fillMaxWidth()
+            .wrapContentHeight(),
+          text = stringResource(id = R.string.filter_apply_to_post_with_empty_comment),
+          currentlyChecked = applyToEmptyComments,
+          onCheckChanged = { checked -> applyToEmptyComments = checked }
+        )
+      }
     }
   }
 
   @Composable
-  private fun ColumnScope.BuildFilterPatternSection() {
+  private fun BuildFilterPatternSection() {
     val chanTheme = LocalChanTheme.current
     var pattern by remember { chanFilterMutableState.pattern }
     var testText by remember { chanFilterMutableState.testPattern }
@@ -470,7 +483,8 @@ class CreateOrUpdateFilterController(
     KurobaComposeCustomTextField(
       modifier = Modifier
         .fillMaxWidth()
-        .wrapContentHeight(),
+        .wrapContentHeight()
+        .padding(vertical = 4.dp),
       enabled = !applyToEmptyComments,
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
@@ -532,7 +546,8 @@ class CreateOrUpdateFilterController(
     KurobaComposeCustomTextField(
       modifier = Modifier
         .fillMaxWidth()
-        .wrapContentHeight(),
+        .wrapContentHeight()
+        .padding(vertical = 4.dp),
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = testText,
@@ -547,7 +562,8 @@ class CreateOrUpdateFilterController(
     KurobaComposeCustomTextField(
       modifier = Modifier
         .fillMaxWidth()
-        .wrapContentHeight(),
+        .wrapContentHeight()
+        .padding(vertical = 4.dp),
       fontSize = 18.sp,
       keyboardOptions = keyboardOptions,
       value = note ?: "",

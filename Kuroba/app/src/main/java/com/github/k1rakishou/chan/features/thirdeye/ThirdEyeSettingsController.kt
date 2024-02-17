@@ -31,7 +31,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -47,7 +50,6 @@ import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.consumeClicks
 import com.github.k1rakishou.chan.ui.compose.ComposeHelpers.simpleVerticalScrollbar
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCardView
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeCheckbox
-import com.github.k1rakishou.chan.ui.compose.KurobaComposeCollapsable
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeErrorMessage
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeIcon
 import com.github.k1rakishou.chan.ui.compose.KurobaComposeText
@@ -465,7 +467,7 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
         ),
       backgroundColor = chanTheme.backColorSecondaryCompose
     ) {
-      KurobaComposeCollapsable(
+      CollapsableContent(
         enabled = enabled,
         gradientEndColor = chanTheme.backColorSecondaryCompose
       ) {
@@ -539,6 +541,77 @@ class ThirdEyeSettingsController(context: Context) : BaseFloatingComposeControll
       color = chanTheme.textColorPrimaryCompose,
       fontSize = 15.sp
     )
+  }
+
+  @Composable
+  fun CollapsableContent(
+    gradientEndColor: Color,
+    enabled: Boolean = true,
+    defaultCollapsed: Boolean = true,
+    contentMaxAllowedHeight: Dp = 128.dp,
+    content: @Composable () -> Unit
+  ) {
+    val indicatorHeight = 32.dp
+    var collapsed by remember { mutableStateOf(defaultCollapsed) }
+
+    BoxWithConstraints(
+      modifier = Modifier.wrapContentHeight()
+    ) {
+      val takenHeight = maxHeight
+      val exceedsAllowedHeight = takenHeight > contentMaxAllowedHeight
+
+      val targetContainerHeight = if (exceedsAllowedHeight && collapsed) {
+        contentMaxAllowedHeight
+      } else {
+        takenHeight + indicatorHeight
+      }
+
+      val targetContentHeight = if (exceedsAllowedHeight && collapsed) {
+        contentMaxAllowedHeight
+      } else {
+        takenHeight
+      }
+
+      Box(modifier = Modifier.height(targetContainerHeight)) {
+        Box(modifier = Modifier.height(targetContentHeight)) {
+          content()
+        }
+
+        if (exceedsAllowedHeight) {
+          val verticalGradientBrush = remember(key1 = gradientEndColor) {
+            val topColor = Color.Transparent
+            val bottomColor = gradientEndColor.copy(alpha = 0.8f)
+
+            Brush.verticalGradient(colors = listOf(topColor, bottomColor))
+          }
+
+          Box(
+            modifier = Modifier
+              .fillMaxWidth()
+              .height(indicatorHeight)
+              .align(Alignment.BottomCenter)
+              .background(brush = verticalGradientBrush)
+              .kurobaClickable(
+                enabled = enabled,
+                bounded = true,
+                onClick = { collapsed = !collapsed }
+              ),
+            contentAlignment = Alignment.Center
+          ) {
+            val rotationModifier = if (collapsed) {
+              Modifier.rotate(270f)
+            } else {
+              Modifier.rotate(90f)
+            }
+
+            KurobaComposeIcon(
+              modifier = rotationModifier,
+              drawableId = R.drawable.ic_chevron_left_black_24dp
+            )
+          }
+        }
+      }
+    }
   }
 
   private fun showBooruSettingLongClickOptions(

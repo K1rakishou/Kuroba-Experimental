@@ -74,7 +74,7 @@ class FilterBoardSelectorController(
   @Inject
   lateinit var imageLoaderV2: ImageLoaderV2
 
-  private val viewModel by lazy {
+  private val viewModel by lazy(LazyThreadSafetyMode.NONE) {
     requireComponentActivity().viewModelByKey<FilterBoardSelectorControllerViewModel>()
   }
 

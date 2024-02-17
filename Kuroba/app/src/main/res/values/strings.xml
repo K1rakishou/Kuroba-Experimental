@@ -338,6 +338,7 @@ Re-enable this permission in the app settings if you permanently disabled it."</
     <string name="filter_color_pick">Pick color</string>
     <string name="filter_controller_selection_mode">Selected %1$d filter(s)</string>
     <string name="filter_controller_not_filters">No filters created yet</string>
+    <string name="filter_additional_options">Additional filter options</string>
 
     <string name="filter_pattern_part_no_pattern">No pattern</string>
     <string name="filter_pattern_part">Pattern:</string>

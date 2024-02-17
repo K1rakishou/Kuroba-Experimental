@@ -2,6 +2,7 @@ package com.github.k1rakishou.chan.ui.compose
 
 import androidx.annotation.DrawableRes
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.Canvas
@@ -27,6 +28,7 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
@@ -73,10 +75,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.composed
 import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
@@ -84,6 +84,7 @@ import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.drawscope.translate
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.isUnspecified
 import androidx.compose.ui.input.pointer.consumeAllChanges
 import androidx.compose.ui.input.pointer.pointerInput
@@ -692,7 +693,6 @@ fun KurobaComposeCheckbox(
           onCheckChanged(isChecked)
         }
       )
-      .padding(vertical = 4.dp)
       .then(modifier)
   ) {
     Checkbox(
@@ -1245,71 +1245,56 @@ private fun Modifier.sliderPressModifier(
 }
 
 @Composable
-fun KurobaComposeCollapsable(
-  gradientEndColor: Color,
-  enabled: Boolean = true,
-  defaultCollapsed: Boolean = true,
-  contentMaxAllowedHeight: Dp = 128.dp,
-  content: @Composable () -> Unit
+fun KurobaComposeCollapsableContent(
+  title: String,
+  collapsed: Boolean = true,
+  onCollapsedStateChanged: (Boolean) -> Unit,
+  content: @Composable ColumnScope.() -> Unit
 ) {
-  val indicatorHeight = 32.dp
-  var collapsed by remember { mutableStateOf(defaultCollapsed) }
-
-  BoxWithConstraints(
-    modifier = Modifier.wrapContentHeight()
+  Column(
+    modifier = Modifier
+      .fillMaxWidth()
+      .wrapContentHeight()
+      .animateContentSize()
   ) {
-    val takenHeight = maxHeight
-    val exceedsAllowedHeight = takenHeight > contentMaxAllowedHeight
+    Row(
+      modifier = Modifier
+        .fillMaxWidth()
+        .wrapContentHeight()
+        .kurobaClickable(
+          bounded = true,
+          onClick = { onCollapsedStateChanged(!collapsed) }
+        ),
+      verticalAlignment = Alignment.CenterVertically
+    ) {
+      KurobaComposeIcon(
+        modifier = Modifier
+          .graphicsLayer { rotationZ = if (collapsed) 0f else 90f },
+        drawableId = R.drawable.ic_baseline_arrow_right_24
+      )
 
-    val targetContainerHeight = if (exceedsAllowedHeight && collapsed) {
-      contentMaxAllowedHeight
-    } else {
-      takenHeight + indicatorHeight
+      Spacer(modifier = Modifier.width(4.dp))
+
+      KurobaComposeText(text = title)
+
+      Spacer(modifier = Modifier.width(4.dp))
+
+      KurobaComposeDivider(
+        modifier = Modifier
+          .weight(1f)
+          .height(1.dp)
+      )
     }
 
-    val targetContentHeight = if (exceedsAllowedHeight && collapsed) {
-      contentMaxAllowedHeight
-    } else {
-      takenHeight
-    }
-
-    Box(modifier = Modifier.height(targetContainerHeight)) {
-      Box(modifier = Modifier.height(targetContentHeight)) {
-        content()
-      }
-
-      if (exceedsAllowedHeight) {
-        val verticalGradientBrush = remember(key1 = gradientEndColor) {
-          val topColor = Color.Transparent
-          val bottomColor = gradientEndColor.copy(alpha = 0.8f)
-
-          Brush.verticalGradient(colors = listOf(topColor, bottomColor))
-        }
-
-        Box(
-          modifier = Modifier
-            .fillMaxWidth()
-            .height(indicatorHeight)
-            .align(Alignment.BottomCenter)
-            .background(brush = verticalGradientBrush)
-            .kurobaClickable(
-              enabled = enabled,
-              bounded = true,
-              onClick = { collapsed = !collapsed }
-            ),
-          contentAlignment = Alignment.Center
-        ) {
-          val rotationModifier = if (collapsed) {
-            Modifier.rotate(270f)
-          } else {
-            Modifier.rotate(90f)
-          }
-
-          KurobaComposeIcon(
-            modifier = rotationModifier,
-            drawableId = R.drawable.ic_chevron_left_black_24dp
+    if (!collapsed) {
+      Column(
+        modifier = Modifier
+          .padding(
+            horizontal = 4.dp,
+            vertical = 2.dp
           )
-        }
+      ) {
+        content()
       }
     }
   }

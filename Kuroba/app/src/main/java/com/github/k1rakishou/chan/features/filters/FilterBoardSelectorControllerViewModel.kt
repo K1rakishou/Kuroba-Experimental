@@ -1,7 +1,9 @@
 package com.github.k1rakishou.chan.features.filters
 
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
+import androidx.compose.runtime.mutableStateOf
 import com.github.k1rakishou.chan.core.base.BaseViewModel
 import com.github.k1rakishou.chan.core.di.component.viewmodel.ViewModelComponent
 import com.github.k1rakishou.chan.core.manager.BoardManager
@@ -34,11 +36,17 @@ class FilterBoardSelectorControllerViewModel  : BaseViewModel() {
   val cellDataList: List<CellData>
     get() = _cellDataList
 
+  private val _filtersAdditionalSectionCollapsed = mutableStateOf(false)
+  val filtersAdditionalSectionCollapsed: State<Boolean>
+    get() = _filtersAdditionalSectionCollapsed
+
   override fun injectDependencies(component: ViewModelComponent) {
     component.inject(this)
   }
 
-  override suspend fun onViewModelReady() {}
+  override suspend fun onViewModelReady() {
+
+  }
 
   fun reload(newCurrentlySelectedBoards: Set<BoardDescriptor>?) {
     val resultMap = linkedMapOf<SiteCellData, List<CatalogCellData>>()
@@ -111,6 +119,10 @@ class FilterBoardSelectorControllerViewModel  : BaseViewModel() {
         _currentlySelectedBoards.remove(boardDescriptor, Unit)
       }
     }
+  }
+
+  fun onAdditionalFilterOptionsCollapsableSectionStateChanged(nowCollapsed: Boolean) {
+    _filtersAdditionalSectionCollapsed.value = nowCollapsed
   }
 
   private fun collectBoards(chanSiteData: ChanSiteData): List<CatalogCellData> {
