@@ -259,7 +259,7 @@ class PostingService : Service() {
     childNotificationInfo: ChildNotificationInfo
   ): NotificationCompat.Builder {
     val intent = Intent(applicationContext, PostingServiceBroadcastReceiver::class.java).apply {
-      setAction(ACTION_TYPE_CANCEL)
+      setAction(ACTION_TYPE_SWIPE_AWAY)
 
       putExtra(CHAN_DESCRIPTOR, DescriptorParcelable.fromDescriptor(childNotificationInfo.chanDescriptor))
     }
@@ -354,6 +354,7 @@ class PostingService : Service() {
 
     const val ACTION_TYPE_CANCEL_ALL = "${TAG}_ACTION_CANCEL_ALL"
     const val ACTION_TYPE_CANCEL = "${TAG}_ACTION_CANCEL"
+    const val ACTION_TYPE_SWIPE_AWAY = "${TAG}_ACTION_SWIPE_AWAY"
 
     fun enqueueReplyChanDescriptor(
       context: Context,

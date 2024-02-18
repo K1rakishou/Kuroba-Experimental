@@ -32,7 +32,8 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
     }
 
     when (intent.action) {
-      PostingService.ACTION_TYPE_CANCEL -> {
+      PostingService.ACTION_TYPE_CANCEL,
+      PostingService.ACTION_TYPE_SWIPE_AWAY -> {
         val chanDescriptor = intent.extras
           ?.getParcelable<DescriptorParcelable>(PostingService.CHAN_DESCRIPTOR)
           ?.toChanDescriptor()
@@ -41,7 +42,12 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
           return
         }
 
-        Logger.d(TAG, "Canceling post upload for ${chanDescriptor}")
+        if (intent.action == PostingService.ACTION_TYPE_CANCEL) {
+          Logger.d(TAG, "Canceling post upload for ${chanDescriptor} because notification 'Cancel' button was clicked")
+        } else {
+          Logger.d(TAG, "Canceling post upload for ${chanDescriptor} because notification was swiped away")
+        }
+
         val pendingResult = goAsync()
 
         serializedExecutor.post {
@@ -53,7 +59,7 @@ class PostingServiceBroadcastReceiver : BroadcastReceiver() {
         }
       }
       PostingService.ACTION_TYPE_CANCEL_ALL -> {
-        Logger.d(TAG, "Canceling all post uploads")
+        Logger.d(TAG, "Canceling all post uploads because notification 'Cancel all' button was clicked")
         val pendingResult = goAsync()
 
         serializedExecutor.post {
