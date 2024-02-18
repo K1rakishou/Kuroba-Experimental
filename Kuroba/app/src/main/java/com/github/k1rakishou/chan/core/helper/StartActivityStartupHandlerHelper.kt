@@ -44,7 +44,8 @@ class StartActivityStartupHandlerHelper(
   private val _bookmarksManager: Lazy<BookmarksManager>,
   private val _chanThreadViewableInfoManager: Lazy<ChanThreadViewableInfoManager>,
   private val _siteResolver: Lazy<SiteResolver>,
-  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>
+  private val _compositeCatalogManager: Lazy<CompositeCatalogManager>,
+  private val notificationManagerCompat: NotificationManagerCompat
 ) {
   // We only want to load a board upon the application start when nothing is loaded yet. Afterwards
   // we don't want to do that anymore so that we won't override the currently opened board when
@@ -373,7 +374,7 @@ class StartActivityStartupHandlerHelper(
       ?.let { uriRaw -> Uri.parse(uriRaw) }
 
     extras.getString(ImageSaverV2Service.UNIQUE_ID)?.let { uniqueId ->
-      hideImageSaverNotification(context!!, uniqueId)
+      hideImageSaverNotification(uniqueId)
     }
 
     if (outputDirUri != null) {
@@ -388,8 +389,7 @@ class StartActivityStartupHandlerHelper(
     return false
   }
 
-  private fun hideImageSaverNotification(context: Context, uniqueId: String) {
-    val notificationManagerCompat = NotificationManagerCompat.from(context)
+  private fun hideImageSaverNotification(uniqueId: String) {
     notificationManagerCompat.cancel(uniqueId, uniqueId.hashCode())
   }
 

@@ -1,11 +1,11 @@
 package com.github.k1rakishou.chan.core.base
 
 import com.github.k1rakishou.core_logger.Logger
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.channels.Channel
@@ -16,7 +16,6 @@ import kotlinx.coroutines.launch
  * Executes all callbacks sequentially using an unlimited channel. This means that there won't
  * be two callbacks running at the same, they will be queued and executed sequentially instead.
  * */
-@OptIn(ExperimentalCoroutinesApi::class)
 class SerializedCoroutineExecutor(
   private val scope: CoroutineScope,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main.immediate
@@ -34,6 +33,10 @@ class SerializedCoroutineExecutor(
         try {
           serializedAction.action()
         } catch (error: Throwable) {
+          if (error is CancellationException) {
+            return@consumeEach
+          }
+
           if (error is RuntimeException) {
             throw error
           }

@@ -24,6 +24,7 @@ import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostCont
 import com.github.k1rakishou.chan.ui.controller.dialog.KurobaAlertDialogHostControllerCallbacks
 import com.github.k1rakishou.chan.ui.theme.widget.ColorizableEditText
 import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog
+import com.github.k1rakishou.chan.ui.widget.dialog.KurobaAlertDialog.AlertDialogHandle
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.dp
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.getString
 import com.github.k1rakishou.chan.utils.ViewUtils.changeProgressColor
@@ -42,15 +43,24 @@ class DialogFactory(
   private val themeEngine: ThemeEngine
     get() = _themeEngine.get()
 
+  private val visibleDialogs = mutableMapOf<String, AlertDialogHandle>()
+
   lateinit var containerController: Controller
+
+  fun dismissDialogById(dialogId: String) {
+    visibleDialogs.remove(dialogId)
+      ?.dismiss()
+  }
 
   @JvmOverloads
   fun createSimpleInformationDialog(
     context: Context,
     titleText: String,
+    dialogId: String? = null,
     descriptionText: CharSequence? = null,
     onPositiveButtonClickListener: (() -> Unit) = { },
     positiveButtonTextId: Int = R.string.ok,
+    onAppearListener: (() -> Unit)? = null,
     onDismissListener: (() -> Unit)? = null,
     cancelable: Boolean = true,
     checkAppVisibility: Boolean = true,
@@ -65,7 +75,14 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context = context,
       cancelable = cancelable,
-      onDismissListener = onDismissListener,
+      onAppearListener = onAppearListener,
+      onDismissListener = {
+        if (dialogId != null) {
+          visibleDialogs.remove(dialogId)
+        }
+
+        onDismissListener?.invoke()
+      },
     ) { viewGroup, callbacks ->
       val builder = KurobaAlertDialog.Builder(context)
         .setTitle(titleText)
@@ -83,12 +100,17 @@ class DialogFactory(
         .create(viewGroup, callbacks, alertDialogHandle)
     }
 
+    if (dialogId != null) {
+      visibleDialogs[dialogId] = alertDialogHandle
+    }
+
     return alertDialogHandle
   }
 
   @JvmOverloads
   fun createSimpleConfirmationDialog(
     context: Context,
+    dialogId: String? = null,
     titleTextId: Int? = null,
     titleText: CharSequence? = null,
     descriptionTextId: Int? = null,
@@ -101,6 +123,7 @@ class DialogFactory(
     neutralButtonText: String? = null,
     onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { },
     negativeButtonText: String = getString(R.string.cancel),
+    onAppearListener: (() -> Unit)? = null,
     onDismissListener: (() -> Unit)? = null
   ): KurobaAlertDialog.AlertDialogHandle? {
     if (!applicationVisibilityManager.isAppInForeground()) {
@@ -112,7 +135,14 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context = context,
       cancelable = true,
-      onDismissListener = onDismissListener
+      onAppearListener = onAppearListener,
+      onDismissListener = {
+        if (dialogId != null) {
+          visibleDialogs.remove(dialogId)
+        }
+
+        onDismissListener?.invoke()
+      }
     ) { viewGroup, callbacks ->
       KurobaAlertDialog.Builder(context)
         .setCustomViewInternal(customView)
@@ -129,19 +159,25 @@ class DialogFactory(
         .create(viewGroup, callbacks, alertDialogHandle)
     }
 
+    if (dialogId != null) {
+      visibleDialogs[dialogId] = alertDialogHandle
+    }
+
     return alertDialogHandle
   }
 
   @JvmOverloads
   fun createSimpleDialogWithInputAndResetButton(
     context: Context,
+    dialogId: String? = null,
     titleTextId: Int? = null,
     titleText: CharSequence? = null,
     descriptionTextId: Int? = null,
     descriptionText: CharSequence? = null,
     onValueEntered: (String) -> Unit,
     inputType: DialogInputType = DialogInputType.Integer,
-    onCanceled: (() -> Unit)? = null,
+    onAppearListener: (() -> Unit)? = null,
+    onDismissListener: (() -> Unit)? = null,
     currentValue: String? = null,
     defaultValue: String? = null,
     positiveButtonTextId: Int = R.string.ok,
@@ -157,7 +193,14 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = onCanceled
+      onAppearListener = onAppearListener,
+      onDismissListener = {
+        if (dialogId != null) {
+          visibleDialogs.remove(dialogId)
+        }
+
+        onDismissListener?.invoke()
+      }
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -195,12 +238,17 @@ class DialogFactory(
       editText.requestFocus()
     }
 
+    if (dialogId != null) {
+      visibleDialogs[dialogId] = alertDialogHandle
+    }
+
     return alertDialogHandle
   }
 
   @JvmOverloads
   fun createSimpleDialogWithInputAndRemoveButton(
     context: Context,
+    dialogId: String? = null,
     onRemoveClicked: (() -> Unit),
     titleTextId: Int? = null,
     titleText: CharSequence? = null,
@@ -208,7 +256,8 @@ class DialogFactory(
     descriptionText: CharSequence? = null,
     onValueEntered: (String) -> Unit,
     inputType: DialogInputType = DialogInputType.Integer,
-    onCanceled: (() -> Unit)? = null,
+    onAppearListener: (() -> Unit)? = null,
+    onDismissListener: (() -> Unit)? = null,
     currentValue: String? = null,
     positiveButtonTextId: Int = R.string.ok,
     negativeButtonTextId: Int = R.string.cancel,
@@ -223,7 +272,14 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = onCanceled
+      onAppearListener = onAppearListener,
+      onDismissListener = {
+        if (dialogId != null) {
+          visibleDialogs.remove(dialogId)
+        }
+
+        onDismissListener?.invoke()
+      }
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -261,19 +317,25 @@ class DialogFactory(
       editText.requestFocus()
     }
 
+    if (dialogId != null) {
+      visibleDialogs[dialogId] = alertDialogHandle
+    }
+
     return alertDialogHandle
   }
 
   @JvmOverloads
   fun createSimpleDialogWithInput(
     context: Context,
+    dialogId: String? = null,
     titleTextId: Int? = null,
     titleText: CharSequence? = null,
     descriptionTextId: Int? = null,
     descriptionText: CharSequence? = null,
     onValueEntered: (String) -> Unit,
     inputType: DialogInputType = DialogInputType.Integer,
-    onCanceled: (() -> Unit)? = null,
+    onAppearListener: (() -> Unit)? = null,
+    onDismissListener: (() -> Unit)? = null,
     defaultValue: String? = null,
     positiveButtonTextId: Int = R.string.ok,
     negativeButtonTextId: Int = R.string.cancel
@@ -287,7 +349,14 @@ class DialogFactory(
     showKurobaAlertDialogHostController(
       context,
       cancelable = true,
-      onDismissListener = onCanceled
+      onAppearListener = onAppearListener,
+      onDismissListener = {
+        if (dialogId != null) {
+          visibleDialogs.remove(dialogId)
+        }
+
+        onDismissListener?.invoke()
+      }
     ) { viewGroup, callbacks ->
       val container = LinearLayout(context)
       container.setPadding(dp(24f), dp(8f), dp(24f), 0)
@@ -320,6 +389,10 @@ class DialogFactory(
         .create(viewGroup, callbacks, alertDialogHandle)
 
       editText.requestFocus()
+    }
+
+    if (dialogId != null) {
+      visibleDialogs[dialogId] = alertDialogHandle
     }
 
     return alertDialogHandle
@@ -364,6 +437,7 @@ class DialogFactory(
   private fun showKurobaAlertDialogHostController(
     context: Context,
     cancelable: Boolean,
+    onAppearListener: (() -> Unit)? = null,
     onDismissListener: (() -> Unit)? = null,
     onViewReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
   ) {
@@ -371,6 +445,7 @@ class DialogFactory(
       KurobaAlertDialogHostController(
         context = context,
         cancelable = cancelable,
+        onAppearListener = onAppearListener,
         onDismissListener = onDismissListener,
         onReady = { viewGroup, callbacks -> onViewReady(viewGroup, callbacks) }
       )
@@ -471,7 +546,11 @@ class DialogFactory(
     Integer
   }
 
-  class Builder(private val context: Context, private val dialogFactory: DialogFactory) {
+  class Builder(
+    private val context: Context,
+    private val dialogFactory: DialogFactory
+  ) {
+    private var dialogId: String? = null
     private var titleTextId: Int? = null
     private var titleText: CharSequence? = null
     private var descriptionTextId: Int? = null
@@ -484,7 +563,13 @@ class DialogFactory(
     private var neutralButtonTextId: String? = null
     private var onNegativeButtonClickListener: ((DialogInterface) -> Unit) = { }
     private var negativeButtonText: String = getString(R.string.cancel)
-    private var dismissListener: () -> Unit = { }
+    private var appearListener: (() -> Unit)? = null
+    private var dismissListener: (() -> Unit)? = null
+
+    fun withDialogId(dialogId: String?): Builder {
+      this.dialogId = dialogId
+      return this
+    }
 
     fun withTitle(titleTextId: Int): Builder {
       this.titleTextId = titleTextId
@@ -546,6 +631,11 @@ class DialogFactory(
       return this
     }
 
+    fun withAppearListener(appearListener: () -> Unit): Builder {
+      this.appearListener = appearListener
+      return this
+    }
+
     fun withDismissListener(dismissListener: () -> Unit): Builder {
       this.dismissListener = dismissListener
       return this
@@ -553,20 +643,22 @@ class DialogFactory(
 
     fun create(): KurobaAlertDialog.AlertDialogHandle? {
       return dialogFactory.createSimpleConfirmationDialog(
-        context,
-        titleTextId,
-        titleText,
-        descriptionTextId,
-        descriptionText,
-        customView,
-        cancelable,
-        onPositiveButtonClickListener,
-        positiveButtonText,
-        onNeutralButtonClickListener,
-        neutralButtonTextId,
-        onNegativeButtonClickListener,
-        negativeButtonText,
-        dismissListener
+        context = context,
+        dialogId = dialogId,
+        titleTextId = titleTextId,
+        titleText = titleText,
+        descriptionTextId = descriptionTextId,
+        descriptionText = descriptionText,
+        customView = customView,
+        cancelable = cancelable,
+        onPositiveButtonClickListener = onPositiveButtonClickListener,
+        positiveButtonText = positiveButtonText,
+        onNeutralButtonClickListener = onNeutralButtonClickListener,
+        neutralButtonText = neutralButtonTextId,
+        onNegativeButtonClickListener = onNegativeButtonClickListener,
+        negativeButtonText = negativeButtonText,
+        onAppearListener = appearListener,
+        onDismissListener = dismissListener
       )
     }
 
@@ -594,8 +686,10 @@ class DialogFactory(
     }
 
     override fun dismiss() {
-      dialog?.dismiss()
-      dismissed = true
+      if (!dismissed) {
+        dialog?.dismiss()
+        dismissed = true
+      }
     }
   }
 }

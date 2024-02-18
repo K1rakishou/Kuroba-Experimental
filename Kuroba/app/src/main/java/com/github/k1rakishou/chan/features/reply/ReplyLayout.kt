@@ -56,6 +56,7 @@ import com.github.k1rakishou.chan.controller.Controller
 import com.github.k1rakishou.chan.core.base.Debouncer
 import com.github.k1rakishou.chan.core.base.DebouncingCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.helper.CommentEditingHistory.CommentInputState
 import com.github.k1rakishou.chan.core.helper.DialogFactory
 import com.github.k1rakishou.chan.core.helper.ProxyStorage
@@ -107,6 +108,7 @@ import com.github.k1rakishou.common.buildSpannableString
 import com.github.k1rakishou.common.findAllChildren
 import com.github.k1rakishou.common.isNotNullNorEmpty
 import com.github.k1rakishou.common.isPointInsideView
+import com.github.k1rakishou.common.resumeValueSafe
 import com.github.k1rakishou.common.selectionEndSafe
 import com.github.k1rakishou.common.selectionStartSafe
 import com.github.k1rakishou.core_logger.Logger
@@ -123,6 +125,8 @@ import dagger.Lazy
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import java.util.concurrent.atomic.AtomicReference
 import javax.inject.Inject
 
 class ReplyLayout @JvmOverloads constructor(
@@ -196,7 +200,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   private var blockSelectionChange = false
   private var replyLayoutEnabled = true
-  private var dialogHandle: AlertDialogHandle? = null
+  private var dialogHandle = AtomicReference<AlertDialogHandle?>(null)
   private var currentOrientation: Int = Configuration.ORIENTATION_UNDEFINED
 
   // Reply views:
@@ -235,6 +239,7 @@ class ReplyLayout @JvmOverloads constructor(
 
   private val coroutineScope = KurobaCoroutineScope()
   private val debouncingCoroutineExecutor = DebouncingCoroutineExecutor(coroutineScope)
+  private val showPostingDialogExecutor = SerializedCoroutineExecutor(coroutineScope)
   private val wrappingModeUpdateDebouncer = Debouncer(false)
   private val replyLayoutMessageToast = CancellableToast()
 
@@ -1144,27 +1149,44 @@ class ReplyLayout @JvmOverloads constructor(
   }
 
   override fun dialogMessage(title: String, message: CharSequence?, onDismissListener: (() -> Unit)?) {
-    post {
-      if (message == null) {
-        dialogHandle?.dismiss()
-        dialogHandle = null
-        return@post
-      }
+    if (message == null) {
+      dialogHandle.getAndSet(null)
+        ?.dismiss()
 
+      return
+    }
+
+    showPostingDialogExecutor.post {
       val linkMovementMethod = if (hasWebViewLinks(message)) {
         WebViewLinkMovementMethod(webViewLinkClickListener = this@ReplyLayout)
       } else {
         null
       }
 
-      dialogHandle?.dismiss()
-      dialogHandle = dialogFactory.createSimpleInformationDialog(
-        context = context,
-        titleText = title,
-        descriptionText = message,
-        customLinkMovementMethod = linkMovementMethod,
-        onDismissListener = onDismissListener
-      )
+      val dialogId = "ReplyPresenterPostingErrorDialog"
+
+      try {
+        suspendCancellableCoroutine<Unit> { continuation ->
+          continuation.invokeOnCancellation { dialogHandle.getAndSet(null)?.dismiss() }
+
+          // Since
+          dialogFactory.dismissDialogById(dialogId)
+
+          val handle = dialogFactory.createSimpleInformationDialog(
+            context = context,
+            dialogId = dialogId,
+            titleText = title,
+            descriptionText = message,
+            customLinkMovementMethod = linkMovementMethod,
+            onDismissListener = { continuation.resumeValueSafe(Unit) }
+          )
+
+          dialogHandle.getAndSet(handle)
+            ?.dismiss()
+        }
+      } finally {
+        onDismissListener?.invoke()
+      }
     }
   }
 

@@ -84,7 +84,7 @@ def get_commits_since(commit_hash, repo_path=None):
     if repo_path:
         os.chdir(repo_path)
     
-    cmd = ["git", "log", f"{commit_hash}..HEAD", "--pretty=format:%s", "--date=local"]
+    cmd = ["git", "log", f"{commit_hash}..HEAD", "--pretty=format:%B", "--date=local"]
     all_commits = ""
     
     try:
@@ -100,7 +100,7 @@ def get_commits_since(commit_hash, repo_path=None):
             if commit.startswith('Merge'):
                 continue
 
-            all_commits += f"- {commit}\n"
+            all_commits += f"{commit_counter + 1}. {commit}\n"
             commit_counter += 1
 
         return all_commits

@@ -47,7 +47,6 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 
-import androidx.core.app.NotificationManagerCompat;
 import androidx.preference.PreferenceManager;
 
 import java.io.File;
@@ -295,10 +294,6 @@ public class AndroidUtils {
 
     public static NotificationManager getNotificationManager() {
         return (NotificationManager) application.getSystemService(NOTIFICATION_SERVICE);
-    }
-
-    public static NotificationManagerCompat getNotificationManagerCompat() {
-        return NotificationManagerCompat.from(application);
     }
 
     public static JobScheduler getJobScheduler() {

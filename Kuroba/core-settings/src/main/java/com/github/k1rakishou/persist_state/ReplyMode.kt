@@ -25,7 +25,7 @@ enum class ReplyMode(val modeRaw: String) : OptionSettingItem {
         return ReplyModeSolveCaptchaManually
       }
 
-      return values().firstOrNull { replyMode -> replyMode.modeRaw == value }
+      return entries.firstOrNull { replyMode -> replyMode.modeRaw == value }
         ?: ReplyModeSolveCaptchaManually
     }
   }

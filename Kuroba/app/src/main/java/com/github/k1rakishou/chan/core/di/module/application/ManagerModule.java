@@ -17,7 +17,6 @@
 package com.github.k1rakishou.chan.core.di.module.application;
 
 import static com.github.k1rakishou.common.AndroidUtils.getNotificationManager;
-import static com.github.k1rakishou.common.AndroidUtils.getNotificationManagerCompat;
 
 import android.content.Context;
 
@@ -57,6 +56,7 @@ import com.github.k1rakishou.chan.core.manager.CompositeCatalogManager;
 import com.github.k1rakishou.chan.core.manager.CurrentOpenedDescriptorStateManager;
 import com.github.k1rakishou.chan.core.manager.FirewallBypassManager;
 import com.github.k1rakishou.chan.core.manager.HistoryNavigationManager;
+import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager;
 import com.github.k1rakishou.chan.core.manager.OnDemandContentLoaderManager;
 import com.github.k1rakishou.chan.core.manager.PageRequestManager;
 import com.github.k1rakishou.chan.core.manager.PostFilterHighlightManager;
@@ -140,6 +140,12 @@ import kotlinx.coroutines.Dispatchers;
 
 @Module
 public class ManagerModule {
+
+    @Provides
+    @Singleton
+    public NotificationManagerCompat provideNotificationManagerCompat(Context applicationContext) {
+        return NotificationManagerCompat.from(applicationContext);
+    }
 
     @Provides
     @Singleton
@@ -481,6 +487,7 @@ public class ManagerModule {
     public ReplyNotificationsHelper provideReplyNotificationsHelper(
             Context appContext,
             CoroutineScope appScope,
+            NotificationManagerCompat notificationManagerCompat,
             Lazy<BookmarksManager> bookmarksManager,
             Lazy<ChanPostRepository> chanPostRepository,
             Lazy<ImageLoaderV2> imageLoaderV2,
@@ -493,7 +500,7 @@ public class ManagerModule {
                 ChanSettings.verboseLogs.get(),
                 appContext,
                 appScope,
-                getNotificationManagerCompat(),
+                notificationManagerCompat,
                 getNotificationManager(),
                 bookmarksManager,
                 chanPostRepository,
@@ -507,12 +514,13 @@ public class ManagerModule {
     @Singleton
     public FilterWatcherNotificationHelper provideFilterWatcherNotificationHelper(
             Context appContext,
+            NotificationManagerCompat notificationManagerCompat,
             Lazy<ThemeEngine> themeEngine
     ) {
         Logger.deps("FilterWatcherNotificationHelper");
         return new FilterWatcherNotificationHelper(
                 appContext,
-                getNotificationManagerCompat(),
+                notificationManagerCompat,
                 themeEngine
         );
     }
@@ -521,6 +529,7 @@ public class ManagerModule {
     @Singleton
     public LastPageNotificationsHelper provideLastPageNotificationsHelper(
             Context appContext,
+            NotificationManagerCompat notificationManagerCompat,
             Lazy<PageRequestManager> pageRequestManager,
             BookmarksManager bookmarksManager,
             ThemeEngine themeEngine,
@@ -530,7 +539,7 @@ public class ManagerModule {
         return new LastPageNotificationsHelper(
                 AppModuleAndroidUtils.isDevBuild(),
                 appContext,
-                getNotificationManagerCompat(),
+                notificationManagerCompat,
                 pageRequestManager,
                 bookmarksManager,
                 themeEngine,
@@ -737,32 +746,35 @@ public class ManagerModule {
     @Singleton
     @Provides
     public ImageSaverV2ServiceDelegate provideImageSaverV2Delegate(
-            Context appContext,
             CoroutineScope appScope,
             AppConstants appConstants,
             Lazy<CacheHandler> cacheHandler,
             Lazy<RealDownloaderOkHttpClient> downloaderOkHttpClient,
+            NotificationManagerCompat notificationManagerCompat,
             ImageSaverFileManagerWrapper imageSaverFileManagerWrapper,
             SiteResolver siteResolver,
             ChanPostImageRepository chanPostImageRepository,
             ImageDownloadRequestRepository imageDownloadRequestRepository,
             ChanThreadManager chanThreadManager,
-            ThreadDownloadManager threadDownloadManager
+            ThreadDownloadManager threadDownloadManager,
+            NotificationAutoDismissManager notificationAutoDismissManager
     ) {
         Logger.deps("ImageSaverV2ServiceDelegate");
+
         return new ImageSaverV2ServiceDelegate(
                 ChanSettings.verboseLogs.get(),
                 appScope,
                 appConstants,
                 cacheHandler,
                 downloaderOkHttpClient,
-                NotificationManagerCompat.from(appContext),
+                notificationManagerCompat,
                 imageSaverFileManagerWrapper,
                 siteResolver,
                 chanPostImageRepository,
                 imageDownloadRequestRepository,
                 chanThreadManager,
-                threadDownloadManager
+                threadDownloadManager,
+                notificationAutoDismissManager
         );
     }
 
@@ -974,6 +986,20 @@ public class ManagerModule {
         Logger.deps("ApplicationCrashNotifier");
 
         return new ApplicationCrashNotifier();
+    }
+
+    @Singleton
+    @Provides
+    public NotificationAutoDismissManager provideNotificationAutoDismissManager(
+            CoroutineScope appScope,
+            NotificationManagerCompat notificationManagerCompat
+    ) {
+        Logger.deps("NotificationAutoDismissManager");
+
+        return new NotificationAutoDismissManager(
+                appScope,
+                notificationManagerCompat
+        );
     }
 
 }

@@ -1,8 +1,14 @@
 package com.github.k1rakishou.chan.core.base
 
-import kotlinx.coroutines.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicLong
 
@@ -13,8 +19,6 @@ import java.util.concurrent.atomic.AtomicLong
  * callback is already being executed and a new one is posted, then the new one is ignored. In other
  * words this executor DOES NOT cancel callbacks that are already in execution progress.
  * */
-@Suppress("JoinDeclarationAndAssignment")
-@OptIn(ExperimentalCoroutinesApi::class)
 class DebouncingCoroutineExecutor(
   scope: CoroutineScope
 ) {
@@ -52,6 +56,12 @@ class DebouncingCoroutineExecutor(
 
           try {
             payload.func.invoke()
+          } catch (error: Throwable) {
+            if (error is CancellationException) {
+              return@launch
+            }
+
+            throw error
           } finally {
             isProgress.set(false)
           }

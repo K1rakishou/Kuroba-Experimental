@@ -7,12 +7,12 @@ import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.channels.consumeEach
 import kotlinx.coroutines.launch
+import kotlin.coroutines.cancellation.CancellationException
 
 /**
  * Executes all callbacks sequentially using an rendezvous channel. This means that if a callback
@@ -20,7 +20,6 @@ import kotlinx.coroutines.launch
  * need to run a function only once at a time and the function can be executed from multiple places
  * asynchronously.
  * */
-@OptIn(ExperimentalCoroutinesApi::class)
 class RendezvousCoroutineExecutor(
   private val scope: CoroutineScope,
   private val dispatcher: CoroutineDispatcher = Dispatchers.Main
@@ -42,6 +41,10 @@ class RendezvousCoroutineExecutor(
         try {
           serializedAction.action()
         } catch (error: Throwable) {
+          if (error is CancellationException) {
+            return@consumeEach
+          }
+
           if (error.isExceptionImportant()) {
             Logger.e(TAG, "serializedAction unhandled exception", error)
           } else {

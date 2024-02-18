@@ -45,7 +45,11 @@ data class ChildNotificationInfo(
   ) {
     class Preparing(
       chanDescriptor: ChanDescriptor
-    ) : Status("Preparing to send a reply to ${chanDescriptor.userReadableString()}")
+    ) : Status("Preparing to send a reply to ${chanDescriptor.userReadableString()}") {
+      override fun toString(): String {
+        return "Preparing"
+      }
+    }
 
     data class WaitingForSiteRateLimitToPass(
       val remainingWaitTimeMs: Long,

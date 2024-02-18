@@ -4,6 +4,7 @@ import androidx.annotation.GuardedBy
 import com.github.k1rakishou.ChanSettings
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.core.base.SerializedCoroutineExecutor
+import com.github.k1rakishou.chan.core.helper.withReentrantLock
 import com.github.k1rakishou.chan.core.manager.BoardManager
 import com.github.k1rakishou.chan.core.manager.BookmarksManager
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
@@ -28,7 +29,6 @@ import com.github.k1rakishou.common.ModularResult
 import com.github.k1rakishou.common.StringUtils
 import com.github.k1rakishou.common.errorMessageOrClassName
 import com.github.k1rakishou.common.isNotNullNorBlank
-import com.github.k1rakishou.common.withLockNonCancellable
 import com.github.k1rakishou.core_logger.Logger
 import com.github.k1rakishou.model.data.descriptor.BoardDescriptor
 import com.github.k1rakishou.model.data.descriptor.ChanDescriptor
@@ -47,14 +47,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 import java.io.IOException
 import java.util.concurrent.TimeUnit
@@ -107,15 +105,15 @@ class PostingServiceDelegate(
   suspend fun cancelAll() {
     Logger.d(TAG, "cancelAll()")
 
-    mutex.withLockNonCancellable {
+    mutex.withReentrantLock {
       activeReplyDescriptors.values.forEach { replyInfo ->
         if (!replyInfo.cancelReplyUpload()) {
-          return@withLockNonCancellable
+          return@withReentrantLock
         }
 
-        updateChildNotification(
+        emitTerminalEvent(
           chanDescriptor = replyInfo.chanDescriptor,
-          status = ChildNotificationInfo.Status.Canceled
+          postResult = PostResult.Canceled
         )
         _closeChildNotificationFlow.emit(replyInfo.chanDescriptor)
       }
@@ -129,17 +127,17 @@ class PostingServiceDelegate(
   suspend fun cancel(chanDescriptor: ChanDescriptor) {
     Logger.d(TAG, "cancel($chanDescriptor)")
 
-    mutex.withLockNonCancellable {
+    mutex.withReentrantLock {
       twoCaptchaSolver.get().cancel(chanDescriptor)
 
       val replyInfo = activeReplyDescriptors[chanDescriptor]
       if (replyInfo != null && !replyInfo.cancelReplyUpload()) {
-        return@withLockNonCancellable
+        return@withReentrantLock
       }
 
-      updateChildNotification(
+      emitTerminalEvent(
         chanDescriptor = chanDescriptor,
-        status = ChildNotificationInfo.Status.Canceled
+        postResult = PostResult.Canceled
       )
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
@@ -147,12 +145,12 @@ class PostingServiceDelegate(
     checkAllRepliesProcessed()
   }
 
-  suspend fun listenForPostingStatusUpdates(chanDescriptor: ChanDescriptor): StateFlow<PostingStatus> {
+  suspend fun listenForPostingStatusUpdates(chanDescriptor: ChanDescriptor): SharedFlow<PostingStatus> {
     Logger.d(TAG, "listenForPostingStatusUpdates($chanDescriptor)")
 
-    return mutex.withLock {
+    return mutex.withReentrantLock {
       if (activeReplyDescriptors.containsKey(chanDescriptor)) {
-        return@withLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
+        return@withReentrantLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
       }
 
       val replyMode = siteManager.bySiteDescriptor(chanDescriptor.siteDescriptor())
@@ -165,11 +163,12 @@ class PostingServiceDelegate(
         ReplyInfo(
           chanDescriptor = chanDescriptor,
           initialStatus = PostingStatus.Attached(chanDescriptor),
-          initialReplyMode = replyMode
+          initialReplyMode = replyMode,
+          retrying = false
         )
       )
 
-      return@withLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
+      return@withReentrantLock activeReplyDescriptors[chanDescriptor]!!.statusUpdates
     }
   }
 
@@ -177,31 +176,44 @@ class PostingServiceDelegate(
     BackgroundUtils.ensureMainThread()
 
     serializedCoroutineExecutor.post {
-      val shouldStartCoroutine = mutex.withLock { addOrUpdateReplyInfo(chanDescriptor, replyMode, retrying) }
-      if (!shouldStartCoroutine) {
-        return@post
+      try {
+        val shouldStartCoroutine = mutex.withReentrantLock { addOrUpdateReplyInfo(chanDescriptor, replyMode, retrying) }
+        if (!shouldStartCoroutine) {
+          return@post
+        }
+
+        val result = awaitUntilEverythingIsInitialized(chanDescriptor)
+        if (result is ModularResult.Error) {
+          Logger.e(TAG, "awaitUntilEverythingIsInitialized($chanDescriptor) error", result.error)
+          throw result.error
+        }
+
+        Logger.d(TAG, "onNewReply($chanDescriptor)")
+        updateMainNotification()
+
+        val job = appScope.launch {
+          supervisorScope { onNewReplyInternal(chanDescriptor) }
+        }
+
+        readReplyInfo(chanDescriptor) { setJob(job) }
+      } catch (error: Throwable) {
+        val errorText = error.errorMessageOrClassName()
+
+        Logger.error(TAG) { "onNewReply(${chanDescriptor}) unhandled exception! error: ${errorText}" }
+
+        emitTerminalEvent(
+          chanDescriptor = chanDescriptor,
+          postResult = PostResult.Error(
+            PostingException("Unhandled exception when trying to process new reply. error: ${errorText}")
+          )
+        )
       }
-
-      val result = awaitUntilEverythingIsInitialized(chanDescriptor)
-      if (result is ModularResult.Error) {
-        Logger.e(TAG, "awaitUntilEverythingIsInitialized($chanDescriptor) error", result.error)
-        return@post
-      }
-
-      Logger.d(TAG, "onNewReply($chanDescriptor)")
-      updateMainNotification()
-
-      val job = appScope.launch {
-        supervisorScope { onNewReplyInternal(chanDescriptor) }
-      }
-
-      readReplyInfo(chanDescriptor) { setJob(job) }
     }
   }
 
   private suspend fun CoroutineScope.onNewReplyInternal(chanDescriptor: ChanDescriptor) {
-    Logger.d(TAG, "onNewReplyInternal($chanDescriptor)")
     val postedSuccessfully = AtomicBoolean(false)
+    Logger.d(TAG, "onNewReplyInternal($chanDescriptor) start")
 
     try {
       processNewReply(chanDescriptor, postedSuccessfully)
@@ -231,16 +243,19 @@ class PostingServiceDelegate(
       }
     }
 
+    Logger.d(TAG, "onNewReplyInternal($chanDescriptor) end, postedSuccessfully: ${postedSuccessfully.get()}")
+
     if (!postedSuccessfully.get()) {
+      Logger.d(TAG, "onNewReplyInternal($chanDescriptor) restoring files")
       replyManager.restoreFiles(chanDescriptor)
     }
 
-    val allRepliesPerBoardProcessed = mutex.withLock {
+    val allRepliesPerBoardProcessed = mutex.withReentrantLock {
       if (activeReplyDescriptors.isEmpty()) {
-        return@withLock true
+        return@withReentrantLock true
       }
 
-      return@withLock activeReplyDescriptors.values
+      return@withReentrantLock activeReplyDescriptors.values
         .filter { info -> info.chanDescriptor.boardDescriptor() == chanDescriptor.boardDescriptor() }
         .all { info -> info.currentStatus is PostingStatus.Attached || info.currentStatus.isTerminalEvent() }
     }
@@ -258,6 +273,7 @@ class PostingServiceDelegate(
 
     val canceled = readReplyInfo(chanDescriptor) { canceled }
     if (canceled || !isActive) {
+      Logger.d(TAG, "onNewReplyInternal($chanDescriptor) end, postedSuccessfully: ${postedSuccessfully.get()}")
       _closeChildNotificationFlow.emit(chanDescriptor)
     }
 
@@ -265,31 +281,13 @@ class PostingServiceDelegate(
   }
 
   private suspend fun checkAllRepliesProcessed() {
-    val allRepliesProcessed = mutex.withLock {
+    val allRepliesProcessed = mutex.withReentrantLock {
       if (activeReplyDescriptors.isEmpty()) {
-        return@withLock true
+        return@withReentrantLock true
       }
 
-      return@withLock activeReplyDescriptors.values.all { replyInfo ->
-        if (replyInfo.currentStatus is PostingStatus.Attached) {
-          return@all true
-        }
-
-        if (replyInfo.currentStatus !is PostingStatus.AfterPosting) {
-          return@all false
-        }
-
-        val postResult = (replyInfo.currentStatus as PostingStatus.AfterPosting).postResult
-        if (postResult is PostResult.Success && postResult.replyResponse.posted) {
-          return@all true
-        }
-
-        if (postResult is PostResult.Canceled) {
-          return@all true
-        }
-
-        return@all false
-      }
+      return@withReentrantLock activeReplyDescriptors.values
+        .none { replyInfo -> replyInfo.needsUserAttention() }
     }
 
     if (allRepliesProcessed) {
@@ -319,12 +317,14 @@ class PostingServiceDelegate(
         is PostingStatus.WaitingForAdditionalService -> false
       }
 
-      if (replyInfo.currentStatus is PostingStatus.Attached
-        || replyInfo.currentStatus is PostingStatus.AfterPosting
+      if (
+        replyInfo.currentStatus is PostingStatus.Attached ||
+        replyInfo.currentStatus is PostingStatus.AfterPosting
       ) {
         replyInfo.reset(chanDescriptor)
       }
 
+      // If replyInfo.canceled is true then we need to start a new coroutine
       return shouldStartCoroutine || replyInfo.canceled
     }
 
@@ -332,16 +332,15 @@ class PostingServiceDelegate(
       initialStatus = PostingStatus.Enqueued(chanDescriptor),
       initialReplyMode = replyMode,
       chanDescriptor = chanDescriptor,
-      retrying = AtomicBoolean(retrying),
-      replyModeRef = AtomicReference(replyMode)
+      retrying = retrying
     )
 
     return true
   }
 
   private suspend fun updateMainNotification() {
-    val activeRepliesCount = mutex.withLock {
-      return@withLock activeReplyDescriptors.values
+    val activeRepliesCount = mutex.withReentrantLock {
+      return@withReentrantLock activeReplyDescriptors.values
         .count { replyInfo -> replyInfo.currentStatus.isActive() }
     }
 
@@ -370,7 +369,7 @@ class PostingServiceDelegate(
 
       emitTerminalEvent(
         chanDescriptor = chanDescriptor,
-        postResult = PostResult.Error(IOException("Canceled"))
+        postResult = PostResult.Error(PostingCancellationException(chanDescriptor))
       )
 
       return
@@ -397,7 +396,7 @@ class PostingServiceDelegate(
 
     val takeFilesResult = replyManager.takeSelectedFiles(chanDescriptor)
       .safeUnwrap { error ->
-        Logger.e(TAG, "makeSubmitCall() takeSelectedFiles(${chanDescriptor}) error")
+        Logger.e(TAG, "makeSubmitCall() takeSelectedFiles(${chanDescriptor}) error: ${error.errorMessageOrClassName()}")
         emitTerminalEvent(chanDescriptor, PostResult.Error(error))
         return
       }
@@ -444,8 +443,9 @@ class PostingServiceDelegate(
 
       if (System.currentTimeMillis() - startTime > MAX_POST_QUEUE_TIME_MS) {
         val timeSpent = System.currentTimeMillis() - startTime
-        Logger.e(TAG, "runPostWaitQueueLoop($chanDescriptor) spent too much time in the loop " +
-          "(${timeSpent}ms), exiting")
+        Logger.error(TAG) {
+          "runPostWaitQueueLoop($chanDescriptor) spent too much time in the loop (${timeSpent}ms), exiting"
+        }
 
         cancel(chanDescriptor)
         break
@@ -804,8 +804,8 @@ class PostingServiceDelegate(
 
       Logger.d(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) success")
     } catch (error: Throwable) {
-      emitTerminalEvent(chanDescriptor, PostResult.Error(error))
       Logger.e(TAG, "SiteActions.PostResult.PostComplete($chanDescriptor) error", error)
+      emitTerminalEvent(chanDescriptor, PostResult.Error(error))
     }
   }
 
@@ -886,9 +886,9 @@ class PostingServiceDelegate(
    * queued replies first. Basically it's a FIFO queue.
    * */
   private suspend fun isOldestEnqueuedReply(chanDescriptor: ChanDescriptor): Boolean {
-    return mutex.withLock {
+    return mutex.withReentrantLock {
       if (activeReplyDescriptors.isEmpty()) {
-        return@withLock true
+        return@withReentrantLock true
       }
 
       var actualOldestReplyDescriptor: ChanDescriptor? = null
@@ -906,10 +906,10 @@ class PostingServiceDelegate(
       }
 
       if (actualOldestReplyDescriptor == null) {
-        return@withLock true
+        return@withReentrantLock true
       }
 
-      return@withLock actualOldestReplyDescriptor == chanDescriptor
+      return@withReentrantLock actualOldestReplyDescriptor == chanDescriptor
     }
   }
 
@@ -1435,9 +1435,9 @@ class PostingServiceDelegate(
   }
 
   private suspend fun ensureNotCanceled(replyDescriptor: ChanDescriptor) {
-    val canceled = mutex.withLock {
+    val canceled = mutex.withReentrantLock {
       val replyInfo = activeReplyDescriptors[replyDescriptor]
-      return@withLock replyInfo == null || replyInfo.canceled
+      return@withReentrantLock replyInfo == null || replyInfo.canceled
     }
 
     if (canceled) {
@@ -1449,7 +1449,7 @@ class PostingServiceDelegate(
     replyDescriptor: ChanDescriptor,
     func: ReplyInfo.() -> T
   ): T {
-    return mutex.withLock {
+    return mutex.withReentrantLock {
       activeReplyDescriptors[replyDescriptor]
         ?.let { replyInfo -> func(replyInfo) }
         ?: throw PostingCancellationException(replyDescriptor)
@@ -1457,13 +1457,13 @@ class PostingServiceDelegate(
   }
 
   suspend fun isReplyCurrentlyInProgress(replyDescriptor: ChanDescriptor): Boolean {
-    return mutex.withLock {
+    return mutex.withReentrantLock {
       val isReplyUploadActive = activeReplyDescriptors[replyDescriptor]
         ?.currentStatus
         ?.isActive()
         ?: false
 
-      return@withLock isReplyUploadActive.not()
+      return@withReentrantLock isReplyUploadActive.not()
     }
   }
 
@@ -1473,26 +1473,26 @@ class PostingServiceDelegate(
    * recently posted.
    * */
   suspend fun consumeTerminalEvent(replyDescriptor: ChanDescriptor) {
-    val consumed = mutex.withLock {
+    val consumed = mutex.withReentrantLock {
       val replyInfo = activeReplyDescriptors[replyDescriptor]
       if (replyInfo == null) {
-        return@withLock false
+        return@withReentrantLock false
       }
 
       if (!replyInfo.currentStatus.isTerminalEvent()) {
-        return@withLock false
+        return@withReentrantLock false
       }
 
       replyInfo.updateStatus(PostingStatus.Attached(replyDescriptor))
-      return@withLock true
+      return@withReentrantLock true
     }
 
     Logger.d(TAG, "consumeTerminalEvent($replyDescriptor) consumed=$consumed")
   }
 
   suspend fun lastUnsuccessfulReplyResponseOrNull(replyDescriptor: ChanDescriptor): ReplyResponse? {
-    return mutex.withLock {
-      return@withLock activeReplyDescriptors[replyDescriptor]?.lastUnsuccessfulReplyResponse
+    return mutex.withReentrantLock {
+      return@withReentrantLock activeReplyDescriptors[replyDescriptor]?.lastUnsuccessfulReplyResponse
     }
   }
 

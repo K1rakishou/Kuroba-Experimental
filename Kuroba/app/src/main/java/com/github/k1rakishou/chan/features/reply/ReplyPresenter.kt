@@ -34,6 +34,7 @@ import com.github.k1rakishou.chan.core.site.SiteAuthentication
 import com.github.k1rakishou.chan.core.site.SiteSetting
 import com.github.k1rakishou.chan.core.site.http.ReplyResponse
 import com.github.k1rakishou.chan.features.posting.PostResult
+import com.github.k1rakishou.chan.features.posting.PostingCancellationException
 import com.github.k1rakishou.chan.features.posting.PostingService
 import com.github.k1rakishou.chan.features.posting.PostingServiceDelegate
 import com.github.k1rakishou.chan.features.posting.PostingStatus
@@ -70,7 +71,6 @@ import kotlinx.coroutines.withContext
 import java.nio.charset.StandardCharsets
 import java.util.regex.Pattern
 import javax.inject.Inject
-import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.cancellation.CancellationException
 
 class ReplyPresenter @Inject constructor(
@@ -84,17 +84,7 @@ class ReplyPresenter @Inject constructor(
   private val _globalWindowInsetsManager: Lazy<GlobalWindowInsetsManager>,
   private val _captchaHolder: Lazy<CaptchaHolder>,
   private val _themeEngine: Lazy<ThemeEngine>
-) : CoroutineScope,
-  CommentEditingHistory.CommentEditingHistoryListener {
-
-  private var currentChanDescriptor: ChanDescriptor? = null
-  private var previewOpen = false
-  private var postingStatusUpdatesJob: Job? = null
-  private var postingCheckLastErrorJob: Job? = null
-
-  private val job = SupervisorJob()
-  private val commentEditingHistory = CommentEditingHistory(this)
-
+) : CommentEditingHistory.CommentEditingHistoryListener {
   private val replyManager: ReplyManager
     get() = _replyManager.get()
   private val siteManager: SiteManager
@@ -119,16 +109,21 @@ class ReplyPresenter @Inject constructor(
   private lateinit var callback: ReplyPresenterCallback
   private lateinit var context: Context
 
+  private var currentChanDescriptor: ChanDescriptor? = null
+  private var previewOpen = false
+  private var postingStatusUpdatesJob: Job? = null
+  private var postingCheckLastErrorJob: Job? = null
+
+  private val commentEditingHistory = CommentEditingHistory(this)
   private val highlightQuotesDebouncer = Debouncer(false)
   private val updatePostTextSpansDebouncer = Debouncer(false)
   private val rememberDraftDebounder = Debouncer(false)
 
+  private val job = SupervisorJob()
+  private val coroutineScope = CoroutineScope(job + Dispatchers.Main + CoroutineName("ReplyPresenter"))
+
   var isExpanded = false
     private set
-
-  override val coroutineContext: CoroutineContext
-    get() = job + Dispatchers.Main + CoroutineName("ReplyPresenter")
-
   fun create(context: Context, callback: ReplyPresenterCallback) {
     this.context = context
     this.callback = callback
@@ -163,11 +158,11 @@ class ReplyPresenter @Inject constructor(
 
     callback.setCommentHint(getString(stringId))
 
-    if (chanDescriptor is ChanDescriptor.CompositeCatalogDescriptor) {
-      postingStatusUpdatesJob?.cancel()
-      postingStatusUpdatesJob = null
-    } else {
-      postingStatusUpdatesJob = launch {
+    postingStatusUpdatesJob?.cancel()
+    postingStatusUpdatesJob = null
+
+    if (chanDescriptor !is ChanDescriptor.CompositeCatalogDescriptor) {
+      postingStatusUpdatesJob = coroutineScope.launch {
         postingServiceDelegate.listenForPostingStatusUpdates(chanDescriptor)
           .collect { status -> processPostingStatusUpdates(status, chanDescriptor) }
       }
@@ -238,7 +233,7 @@ class ReplyPresenter @Inject constructor(
 
           when (val postResult = status.postResult) {
             PostResult.Canceled -> {
-              onPostError(CancellationException("Canceled"))
+              onPostError(PostingCancellationException(chanDescriptor))
             }
             is PostResult.Error -> {
               onPostError(postResult.throwable)
@@ -298,7 +293,7 @@ class ReplyPresenter @Inject constructor(
     postingCheckLastErrorJob?.cancel()
     postingCheckLastErrorJob = null
 
-    postingCheckLastErrorJob = launch {
+    postingCheckLastErrorJob = coroutineScope.launch {
       val descriptor = currentChanDescriptor
         ?: return@launch
 
@@ -441,7 +436,7 @@ class ReplyPresenter @Inject constructor(
 
     callback.hideKeyboard()
 
-    launch {
+    coroutineScope.launch {
       // Wait a little bit for the keyboard to get hidden
       delay(100)
 
@@ -454,6 +449,7 @@ class ReplyPresenter @Inject constructor(
       ?: return
 
     if (!isReplyLayoutEnabled()) {
+      Logger.debug(TAG) { "Canceling posting attempt for ${chanDescriptor} because cancel button was clicked" }
       postingServiceDelegate.cancel(chanDescriptor)
       return
     }

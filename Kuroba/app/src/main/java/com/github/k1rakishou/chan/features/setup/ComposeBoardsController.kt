@@ -190,7 +190,7 @@ class ComposeBoardsController(
         inputType = DialogFactory.DialogInputType.String,
         defaultValue = this.prevCompositeCatalog?.name ?: getString(R.string.controller_compose_boards_default_name),
         onValueEntered = { compositeCatalogName -> cancellableContinuation.resumeValueSafe(compositeCatalogName) },
-        onCanceled = { cancellableContinuation.cancel() }
+        onDismissListener = { cancellableContinuation.cancel() }
       )
 
       cancellableContinuation.invokeOnCancellation { cause ->

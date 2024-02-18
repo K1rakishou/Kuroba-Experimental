@@ -9,10 +9,12 @@ import com.github.k1rakishou.chan.core.cache.CacheFileType
 import com.github.k1rakishou.chan.core.cache.CacheHandler
 import com.github.k1rakishou.chan.core.helper.ImageSaverFileManagerWrapper
 import com.github.k1rakishou.chan.core.manager.ChanThreadManager
+import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.manager.ThreadDownloadManager
 import com.github.k1rakishou.chan.core.site.SiteResolver
 import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils
 import com.github.k1rakishou.chan.utils.BackgroundUtils
+import com.github.k1rakishou.chan.utils.NotificationConstants
 import com.github.k1rakishou.common.AppConstants
 import com.github.k1rakishou.common.BadStatusResponseException
 import com.github.k1rakishou.common.EmptyBodyResponseException
@@ -39,17 +41,12 @@ import com.github.k1rakishou.persist_state.ImageSaverV2Options
 import dagger.Lazy
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
-import kotlinx.coroutines.ObsoleteCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
-import kotlinx.coroutines.isActive
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.supervisorScope
 import kotlinx.coroutines.sync.Mutex
@@ -62,14 +59,12 @@ import okhttp3.internal.closeQuietly
 import java.io.IOException
 import java.io.InputStream
 import java.util.*
-import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicInteger
 import java.util.concurrent.atomic.AtomicReference
 import kotlin.time.ExperimentalTime
 import kotlin.time.measureTimedValue
 
-@OptIn(ObsoleteCoroutinesApi::class)
 class ImageSaverV2ServiceDelegate(
   private val verboseLogs: Boolean,
   private val appScope: CoroutineScope,
@@ -82,7 +77,8 @@ class ImageSaverV2ServiceDelegate(
   private val chanPostImageRepository: ChanPostImageRepository,
   private val imageDownloadRequestRepository: ImageDownloadRequestRepository,
   private val chanThreadManager: ChanThreadManager,
-  private val threadDownloadManager: ThreadDownloadManager
+  private val threadDownloadManager: ThreadDownloadManager,
+  private val notificationAutoDismissManager: NotificationAutoDismissManager
 ) {
   private val mutex = Mutex()
 
@@ -90,7 +86,6 @@ class ImageSaverV2ServiceDelegate(
   private val activeDownloads = hashMapOf<String, DownloadContext>()
   @GuardedBy("mutex")
   private val activeNotificationIdQueue = LinkedList<String>()
-  private val cancelNotificationJobMap = ConcurrentHashMap<String, Job>()
 
   private val serializedCoroutineExecutor = SerializedCoroutineExecutor(appScope)
 
@@ -117,7 +112,12 @@ class ImageSaverV2ServiceDelegate(
 
   suspend fun deleteDownload(uniqueId: String) {
     Logger.d(TAG, "deleteDownload('$uniqueId')")
-    ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
+
+    val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+    NotificationAutoDismissManager.imageSaverV2ServiceCancelNotification(
+      notificationManagerCompat = notificationManagerCompat,
+      notificationId = notificationId
+    )
 
     imageDownloadRequestRepository.deleteByUniqueId(uniqueId)
       .peekError { error -> Logger.e(TAG, "imageDownloadRequestRepository.deleteByUniqueId($uniqueId) error", error) }
@@ -132,7 +132,11 @@ class ImageSaverV2ServiceDelegate(
   suspend fun cancelDownload(uniqueId: String) {
     Logger.d(TAG, "cancelDownload('$uniqueId')")
 
-    ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
+    val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+    NotificationAutoDismissManager.imageSaverV2ServiceCancelNotification(
+      notificationManagerCompat = notificationManagerCompat,
+      notificationId = notificationId
+    )
 
     mutex.withLock {
       activeNotificationIdQueue.remove(uniqueId)
@@ -149,8 +153,11 @@ class ImageSaverV2ServiceDelegate(
       // If we were waiting the timeout before auto-closing the notification, we need to cancel it
       // since we are restarting the download request. Otherwise the notification may get hidden
       // while we preparing to start downloading it.
-      cancelNotificationJobMap[uniqueId]?.cancel()
-      cancelNotificationJobMap.remove(uniqueId)
+      val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
+      notificationAutoDismissManager.cancel(
+        notificationId = notificationId,
+        notificationType = NotificationAutoDismissManager.NotificationType.ImageSaverV2Service
+      )
 
       // Otherwise the download already exist, just wait until it's completed. But this shouldn't
       // really happen since we always check duplicate requests in the database before even starting
@@ -993,25 +1000,6 @@ class ImageSaverV2ServiceDelegate(
     imageDownloadInputData: ImageSaverV2Service.ImageDownloadInputData
   ): DownloadContext? {
     return mutex.withLock { activeDownloads.get(imageDownloadInputData.uniqueId) }
-  }
-
-  fun enqueueDeleteNotification(uniqueId: String, timeoutMs: Long) {
-    cancelDeleteNotification(uniqueId)
-
-    val job = appScope.launch {
-      delay(timeoutMs)
-      cancelNotificationJobMap.remove(uniqueId)
-
-      if (isActive) {
-        ImageSaverV2Service.cancelNotification(notificationManagerCompat, uniqueId)
-      }
-    }
-
-    cancelNotificationJobMap[uniqueId] = job
-  }
-
-  fun cancelDeleteNotification(uniqueId: String) {
-    cancelNotificationJobMap.remove(uniqueId)?.cancel()
   }
 
   class ResultFileAccessError(val resultFileUri: String) : Exception("Failed to access result file: $resultFileUri")

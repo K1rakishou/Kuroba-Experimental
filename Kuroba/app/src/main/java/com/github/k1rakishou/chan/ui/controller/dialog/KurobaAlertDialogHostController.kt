@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.utils.AppModuleAndroidUtils.isTablet
 class KurobaAlertDialogHostController(
   context: Context,
   private val cancelable: Boolean,
+  private val onAppearListener: (() -> Unit)?,
   private val onDismissListener: (() -> Unit)?,
   private val onReady: (ViewGroup, KurobaAlertDialogHostControllerCallbacks) -> Unit
 ) : BaseFloatingController(context), KurobaAlertDialogHostControllerCallbacks {
@@ -29,6 +30,8 @@ class KurobaAlertDialogHostController(
 
   override fun onCreate() {
     super.onCreate()
+
+    onAppearListener?.invoke()
 
     view.findViewById<TouchBlockingFrameLayout>(R.id.dialog_container).let { dialogContainer ->
       onReady(dialogContainer, this)

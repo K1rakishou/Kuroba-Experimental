@@ -16,6 +16,7 @@ import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.KeyBasedSerializedCoroutineExecutor
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.receiver.ImageSaverBroadcastReceiver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
@@ -39,9 +40,12 @@ class ImageSaverV2Service : Service() {
   @Inject
   lateinit var imageSaverV2ServiceDelegate: Lazy<ImageSaverV2ServiceDelegate>
   @Inject
+  lateinit var notificationAutoDismissManager: NotificationAutoDismissManager
+  @Inject
   lateinit var gson: Gson
+  @Inject
+  lateinit var notificationManagerCompat: NotificationManagerCompat
 
-  private val notificationManagerCompat by lazy { NotificationManagerCompat.from(applicationContext) }
   private val kurobaScope = KurobaCoroutineScope()
   private val verboseLogs = ChanSettings.verboseLogs.get()
   private val notificationUpdateExecutor = KeyBasedSerializedCoroutineExecutor<String>(kurobaScope)
@@ -541,14 +545,17 @@ class ImageSaverV2Service : Service() {
       && imageSaverDelegateResult.hasOnlyCompletedRequests()
       && !imageSaverDelegateResult.hasAnyErrors()
 
+    val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(imageSaverDelegateResult.uniqueId)
+
     if (canAutoDismiss) {
-      imageSaverV2ServiceDelegate.get().enqueueDeleteNotification(
-        imageSaverDelegateResult.uniqueId,
-        NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS
+      notificationAutoDismissManager.enqueue(
+        notificationId = notificationId,
+        notificationType = NotificationAutoDismissManager.NotificationType.ImageSaverV2Service,
       )
     } else {
-      imageSaverV2ServiceDelegate.get().cancelDeleteNotification(
-        imageSaverDelegateResult.uniqueId
+      notificationAutoDismissManager.cancel(
+        notificationId = notificationId,
+        notificationType = NotificationAutoDismissManager.NotificationType.ImageSaverV2Service
       )
     }
 
@@ -627,8 +634,7 @@ class ImageSaverV2Service : Service() {
 
   companion object {
     private const val TAG = "ImageSaverV2Service"
-    private const val NOTIFICATION_AUTO_DISMISS_TIMEOUT_MS = 10_000L
-    private const val IMAGE_SAVER_NOTIFICATIONS_TAG = "ImageSaverNotification"
+    const val IMAGE_SAVER_NOTIFICATIONS_TAG = "ImageSaverNotification"
 
     const val UNIQUE_ID = "unique_id"
     const val DOWNLOAD_TYPE_KEY = "download_type"
@@ -655,19 +661,6 @@ class ImageSaverV2Service : Service() {
         IMAGE_SAVER_NOTIFICATIONS_TAG,
         NotificationConstants.ImageSaverNotifications.notificationId(uniqueId),
         notification
-      )
-    }
-
-    fun cancelNotification(
-      notificationManagerCompat: NotificationManagerCompat,
-      uniqueId: String
-    ) {
-      val notificationId = NotificationConstants.ImageSaverNotifications.notificationId(uniqueId)
-      Logger.d(TAG, "cancelNotification('$uniqueId', '$notificationId')")
-
-      notificationManagerCompat.cancel(
-        IMAGE_SAVER_NOTIFICATIONS_TAG,
-        notificationId
       )
     }
 

@@ -14,6 +14,7 @@ import com.github.k1rakishou.chan.Chan
 import com.github.k1rakishou.chan.R
 import com.github.k1rakishou.chan.activity.StartActivity
 import com.github.k1rakishou.chan.core.base.KurobaCoroutineScope
+import com.github.k1rakishou.chan.core.manager.NotificationAutoDismissManager
 import com.github.k1rakishou.chan.core.receiver.PostingServiceBroadcastReceiver
 import com.github.k1rakishou.chan.utils.BackgroundUtils
 import com.github.k1rakishou.chan.utils.NotificationConstants
@@ -31,8 +32,11 @@ class PostingService : Service() {
 
   @Inject
   lateinit var postingServiceDelegate: Lazy<PostingServiceDelegate>
+  @Inject
+  lateinit var notificationAutoDismissManager: NotificationAutoDismissManager
+  @Inject
+  lateinit var notificationManagerCompat: NotificationManagerCompat
 
-  private val notificationManagerCompat by lazy { NotificationManagerCompat.from(applicationContext) }
   private val kurobaScope = KurobaCoroutineScope()
 
   override fun onBind(intent: Intent?): IBinder? {
@@ -78,7 +82,7 @@ class PostingService : Service() {
           val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
           notificationManagerCompat.notify(
-            "${CHILD_NOTIFICATION_TAG}_${chanDescriptor.serializeToString()}",
+            CHILD_NOTIFICATION_TAG,
             notificationId,
             createChildNotification(childNotificationInfo)
           )
@@ -92,7 +96,7 @@ class PostingService : Service() {
           val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(chanDescriptor)
 
           notificationManagerCompat.cancel(
-            "${CHILD_NOTIFICATION_TAG}_${chanDescriptor.serializeToString()}",
+            CHILD_NOTIFICATION_TAG,
             notificationId
           )
         }
@@ -191,7 +195,7 @@ class PostingService : Service() {
       .addCancelAction(childNotificationInfo)
       .addNotificationClickAction(childNotificationInfo)
       .addNotificationSwipeAwayAction(childNotificationInfo)
-      .setTimeoutEx(childNotificationInfo)
+      .setTimeoutAfterEx(childNotificationInfo)
       .build()
   }
 
@@ -329,15 +333,28 @@ class PostingService : Service() {
     return this
   }
 
-  private fun NotificationCompat.Builder.setTimeoutEx(
+  private fun NotificationCompat.Builder.setTimeoutAfterEx(
     childNotificationInfo: ChildNotificationInfo
   ): NotificationCompat.Builder {
-    if (childNotificationInfo.status !is ChildNotificationInfo.Status.Posted
-      && childNotificationInfo.status !is ChildNotificationInfo.Status.Canceled) {
-      return this
+    val canAutoDismiss = childNotificationInfo.status is ChildNotificationInfo.Status.Posted
+            || childNotificationInfo.status is ChildNotificationInfo.Status.Canceled
+
+    val notificationId = NotificationConstants.PostingServiceNotifications.notificationId(
+      childNotificationInfo.chanDescriptor
+    )
+
+    if (canAutoDismiss) {
+      notificationAutoDismissManager.enqueue(
+        notificationId = notificationId,
+        notificationType = NotificationAutoDismissManager.NotificationType.PostingService
+      )
+    } else {
+      notificationAutoDismissManager.cancel(
+        notificationId = notificationId,
+        notificationType = NotificationAutoDismissManager.NotificationType.PostingService
+      )
     }
 
-    setTimeoutAfter(10_000)
     return this
   }
 
@@ -348,7 +365,7 @@ class PostingService : Service() {
     const val REPLY_MODE = "posting_service_reply_mode"
     const val RETRYING = "posting_service_retrying"
 
-    private const val CHILD_NOTIFICATION_TAG = "${TAG}_ChildNotification"
+    const val CHILD_NOTIFICATION_TAG = "${TAG}_ChildNotification"
 
     const val CHAN_DESCRIPTOR = "chan_descriptor"
 

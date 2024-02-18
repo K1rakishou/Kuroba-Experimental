@@ -1,6 +1,7 @@
 package com.github.k1rakishou.chan.core.di.module.activity;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationManagerCompat;
 
 import com.github.k1rakishou.chan.core.base.okhttp.RealProxiedOkHttpClient;
 import com.github.k1rakishou.chan.core.cache.CacheHandler;
@@ -84,7 +85,8 @@ public class ActivityModule {
             Lazy<BookmarksManager> bookmarksManager,
             Lazy<ChanThreadViewableInfoManager> chanThreadViewableInfoManager,
             Lazy<SiteResolver> siteResolver,
-            Lazy<CompositeCatalogManager> compositeCatalogManager
+            Lazy<CompositeCatalogManager> compositeCatalogManager,
+            NotificationManagerCompat notificationManagerCompat
     ) {
         Logger.deps("StartActivityStartupHandlerHelper");
         return new StartActivityStartupHandlerHelper(
@@ -94,7 +96,8 @@ public class ActivityModule {
                 bookmarksManager,
                 chanThreadViewableInfoManager,
                 siteResolver,
-                compositeCatalogManager
+                compositeCatalogManager,
+                notificationManagerCompat
         );
     }
 
