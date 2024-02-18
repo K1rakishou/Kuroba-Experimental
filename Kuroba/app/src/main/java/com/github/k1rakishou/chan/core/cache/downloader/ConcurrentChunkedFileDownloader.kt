@@ -241,13 +241,13 @@ internal open class ConcurrentChunkedFileDownloader @Inject constructor(
         throw MediaDownloadException.HttpCodeException(416)
       }
 
-      val nonCancellationException = chunkErrorEvents.firstOrNull { error ->
-        error !is MediaDownloadException.CancellationException
+      val nonFileDownloadCanceled = chunkErrorEvents.firstOrNull { error ->
+        error !is MediaDownloadException.FileDownloadCanceled
       }
 
-      if (nonCancellationException != null) {
+      if (nonFileDownloadCanceled != null) {
         // If there are any exceptions other than CancellationException - throw it
-        throw nonCancellationException
+        throw nonFileDownloadCanceled
       }
 
       if (chunkErrorEvents.isEmpty()) {
@@ -312,7 +312,7 @@ internal open class ConcurrentChunkedFileDownloader @Inject constructor(
           throw error
         }
 
-        if (error is MediaDownloadException.CancellationException) {
+        if (error is MediaDownloadException.FileDownloadCanceled) {
           throw error
         }
 

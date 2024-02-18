@@ -168,7 +168,7 @@ internal class FileDownloadEventHandler(
 
                     resultHandler(mediaUrl, request, fileDownloadEvent) {
                         when (val error = fileDownloadEvent.error) {
-                            is MediaDownloadException.CancellationException -> {
+                            is MediaDownloadException.FileDownloadCanceled -> {
                                 throw RuntimeException("Not used")
                             }
                             is MediaDownloadException.FileNotFoundOnTheServerException -> {

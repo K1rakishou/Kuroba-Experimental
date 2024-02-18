@@ -177,7 +177,7 @@ internal class PartialContentSupportChecker(
         }
       }
 
-      throw MediaDownloadException.CancellationException(downloadState, mediaUrl)
+      throw MediaDownloadException.FileDownloadCanceled(downloadState, mediaUrl)
     }
 
     val response = downloaderOkHttpClient.okHttpClient().suspendCall(headRequest)

@@ -1441,7 +1441,7 @@ class PostingServiceDelegate(
     }
 
     if (canceled) {
-      throw CancellationException("Canceled")
+      throw PostingCancellationException(replyDescriptor)
     }
   }
 
@@ -1452,7 +1452,7 @@ class PostingServiceDelegate(
     return mutex.withLock {
       activeReplyDescriptors[replyDescriptor]
         ?.let { replyInfo -> func(replyInfo) }
-        ?: throw CancellationException("Canceled")
+        ?: throw PostingCancellationException(replyDescriptor)
     }
   }
 

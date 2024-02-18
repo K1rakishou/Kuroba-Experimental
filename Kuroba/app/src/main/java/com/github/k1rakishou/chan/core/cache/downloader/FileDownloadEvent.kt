@@ -63,7 +63,7 @@ internal sealed class MediaDownloadException(message: String) : Exception(messag
                 }
             }
             is GenericException,
-            is CancellationException,
+            is FileDownloadCanceled,
             is FileNotFoundOnTheServerException -> {
                 // no-op
             }
@@ -72,8 +72,8 @@ internal sealed class MediaDownloadException(message: String) : Exception(messag
 
     class GenericException(message: String) : MediaDownloadException(message)
 
-    class CancellationException(val state: DownloadState, mediaUrl: HttpUrl) : MediaDownloadException(
-        "CancellationException for request with url: '$mediaUrl', state: ${state.javaClass.simpleName}"
+    class FileDownloadCanceled(val state: DownloadState, mediaUrl: HttpUrl) : MediaDownloadException(
+        "File download canceled for request with url: '$mediaUrl', state: ${state.javaClass.simpleName}"
     )
 
     class FileNotFoundOnTheServerException(mediaUrl: HttpUrl): MediaDownloadException(

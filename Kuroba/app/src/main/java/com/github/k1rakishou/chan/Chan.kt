@@ -360,7 +360,7 @@ class Chan : Application(), ActivityLifecycleCallbacks {
         return@setErrorHandler
       }
 
-      if (error is MediaDownloadException.CancellationException
+      if (error is MediaDownloadException.FileDownloadCanceled
         || error is MediaDownloadException.FileNotFoundOnTheServerException
       ) {
         // fine, sometimes they get through all the checks but it doesn't really matter

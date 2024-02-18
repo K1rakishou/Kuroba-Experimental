@@ -165,7 +165,7 @@ class ChunkedMediaDownloaderImpl(
             val state = request?.cancelableDownload?.getState()
                 ?: DownloadState.Canceled
 
-            throw MediaDownloadException.CancellationException(state, mediaUrl)
+            throw MediaDownloadException.FileDownloadCanceled(state, mediaUrl)
         }
 
         val cacheFileType = request.cacheFileType

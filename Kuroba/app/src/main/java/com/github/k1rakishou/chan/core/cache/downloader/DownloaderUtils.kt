@@ -8,7 +8,7 @@ internal object DownloaderUtils {
 
   fun isCancellationError(error: Throwable): Boolean {
     if (error is CancellationException
-      || error is MediaDownloadException.CancellationException
+      || error is MediaDownloadException.FileDownloadCanceled
       || error is StreamResetException) {
       return true
     }

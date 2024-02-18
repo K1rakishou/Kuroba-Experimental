@@ -136,12 +136,12 @@ internal open class ActiveDownloads {
     }
 
     if (prevState == DownloadState.Running || prevState == DownloadState.Canceled) {
-      throw MediaDownloadException.CancellationException(
+      throw MediaDownloadException.FileDownloadCanceled(
         DownloadState.Canceled,
         mediaUrl
       )
     } else {
-      throw MediaDownloadException.CancellationException(
+      throw MediaDownloadException.FileDownloadCanceled(
         DownloadState.Stopped,
         mediaUrl
       )
